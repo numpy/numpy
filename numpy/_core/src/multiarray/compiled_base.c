@@ -16,7 +16,9 @@
 #include "ctors.h"
 #include "common.h"
 #include "dtypemeta.h"
+#include "dtype_transfer.h"
 #include "simd/simd.h"
+#include "module_state.h"
 
 #include <string.h>
 
@@ -393,18 +395,66 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     j = 0;
 
     copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(array))->copyswap;
-    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
-    for (i = 0; i < ni; i++) {
-        if (mask_data[i]) {
-            if (j >= nv) {
-                j = 0;
-            }
+    if (copyswap == NULL || PyDataType_REFCHK(PyArray_DESCR(array))) {
+        NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS flags;
+        const npy_intp one = 1;
+        const npy_intp elsize = chunk;
+        const npy_intp strides[2] = {elsize, elsize};
 
-            copyswap(dest + i*chunk, src + j*chunk, 0, array);
-            j++;
+        NPY_cast_info_init(&cast_info);
+        if (PyArray_GetDTypeTransferFunction(
+                PyArray_ISALIGNED(values) && PyArray_ISALIGNED(array),
+                strides[0], strides[1],
+                PyArray_DESCR(values), PyArray_DESCR(array), 0,
+                &cast_info, &flags) < 0) {
+            goto fail;
+        }
+        if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS;
+        }
+        for (i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                if (j >= nv) {
+                    j = 0;
+                }
+
+                char *data[2] = {src + j*chunk, dest + i*chunk};
+                if (cast_info.func(
+                        &cast_info.context, data, &one, strides,
+                        cast_info.auxdata) < 0) {
+                    NPY_END_THREADS;
+                    NPY_cast_info_xfree(&cast_info);
+                    goto fail;
+                }
+                j++;
+            }
+        }
+        NPY_END_THREADS;
+        NPY_cast_info_xfree(&cast_info);
+    }
+    else {
+        int needs_api = PyDataType_FLAGCHK(PyArray_DESCR(array), NPY_NEEDS_PYAPI);
+        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
+        for (i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                if (j >= nv) {
+                    j = 0;
+                }
+
+                copyswap(dest + i*chunk, src + j*chunk, 0, array);
+                if (needs_api && PyErr_Occurred()) {
+                    /* e.g. a structured dtype field that does not support copyswap */
+                    break;
+                }
+                j++;
+            }
+        }
+        NPY_END_THREADS;
+        if (PyErr_Occurred()) {
+            goto fail;
         }
     }
-    NPY_END_THREADS;
 
     Py_XDECREF(values);
     Py_XDECREF(mask);
@@ -414,7 +464,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
  fail:
     Py_XDECREF(mask);
-    PyArray_ResolveWritebackIfCopy(array);
+    PyArray_DiscardWritebackIfCopy(array);
     Py_XDECREF(array);
     Py_XDECREF(values);
     return NULL;
@@ -573,7 +623,8 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
         goto fail;
     }
     lenxp = PyArray_SIZE(axp);
-    if (lenxp == 0) {
+    lenx = PyArray_SIZE(ax);
+    if (lenxp == 0 && lenx != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "array of sample points is empty");
         goto fail;
@@ -589,7 +640,9 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
     if (af == NULL) {
         goto fail;
     }
-    lenx = PyArray_SIZE(ax);
+    if (lenx == 0) {
+        goto finish;
+    }
 
     dy = (const npy_double *)PyArray_DATA(afp);
     dx = (const npy_double *)PyArray_DATA(axp);
@@ -633,7 +686,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_double));
+            slopes = PyMem_RawMalloc((lenxp - 1) * sizeof(npy_double));
             if (slopes == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -689,7 +742,9 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
         NPY_END_THREADS;
     }
 
-    PyArray_free(slopes);
+    PyMem_RawFree(slopes);
+
+finish:
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
@@ -746,7 +801,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         goto fail;
     }
     lenxp = PyArray_SIZE(axp);
-    if (lenxp == 0) {
+    lenx = PyArray_SIZE(ax);
+    if (lenxp == 0 && lenx != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "array of sample points is empty");
         goto fail;
@@ -757,7 +813,6 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         goto fail;
     }
 
-    lenx = PyArray_SIZE(ax);
     dx = (const npy_double *)PyArray_DATA(axp);
     dz = (const npy_double *)PyArray_DATA(ax);
 
@@ -765,6 +820,9 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
                                             PyArray_DIMS(ax), NPY_CDOUBLE);
     if (af == NULL) {
         goto fail;
+    }
+    if (lenx == 0) {
+        goto finish;
     }
 
     dy = (const npy_cdouble *)PyArray_DATA(afp);
@@ -816,7 +874,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_cdouble));
+            slopes = PyMem_RawMalloc((lenxp - 1) * sizeof(npy_cdouble));
             if (slopes == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -889,8 +947,9 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
         NPY_END_THREADS;
     }
-    PyArray_free(slopes);
+    PyMem_RawFree(slopes);
 
+finish:
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
@@ -1444,7 +1503,7 @@ fail:
 
 /* Can only be called if doc is currently NULL */
 NPY_NO_EXPORT PyObject *
-arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
+arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *obj;
     PyObject *str;
@@ -1453,12 +1512,17 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
 
     /* Don't add docstrings */
 #if PY_VERSION_HEX > 0x030b0000
-    if (npy_static_cdata.optimize > 1) {
+    {
+        multiarray_umath_state *st = get_module_state(module);
+        if (st->static_cdata.optimize > 1) {
+            Py_RETURN_NONE;
+        }
+    }
 #else
     if (Py_OptimizeFlag > 1) {
-#endif
         Py_RETURN_NONE;
     }
+#endif
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("add_docstring", args, len_args, NULL,
@@ -1908,6 +1972,8 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_Size((PyObject *)out) / 8);
 
+    npy_static_cdata_struct *cdata = &_npy_module_state->static_cdata;
+
     while (PyArray_ITER_NOTDONE(it)) {
         npy_intp index;
         unsigned const char *inptr = PyArray_ITER_DATA(it);
@@ -1917,7 +1983,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             /* for unity stride we can just copy out of the lookup table */
             if (order == 'b') {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                     memcpy(outptr, &v, 8);
                     outptr += 8;
                     inptr += in_stride;
@@ -1925,7 +1991,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             else {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                     if (order != 'b') {
                         v = npy_bswap8(v);
                     }
@@ -1936,7 +2002,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             /* Clean up the tail portion */
             if (in_tail) {
-                npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                 if (order != 'b') {
                     v = npy_bswap8(v);
                 }

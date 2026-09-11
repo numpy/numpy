@@ -46,8 +46,8 @@ def main(install_dir, tests_check):
 
     if tests_check == "--no-tests":
         if len(installed_test_files) > 0:
-            raise Exception("Test files aren't expected to be installed in %s"
-                        ", found %s" % (INSTALLED_DIR, installed_test_files))
+            raise Exception("Test files aren't expected to be installed in "
+                            f"{INSTALLED_DIR}, found {installed_test_files}")
         print("----------- No test files were installed --------------")
     else:
         # Check test files detected in repo are installed

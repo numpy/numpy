@@ -146,6 +146,21 @@ class TestUfuncGenericLoops:
         x = np.full(10, foo(), dtype=object)
         assert_(np.all(np.conjugate(x) == True))
 
+    def test_unary_PyUFunc_O_O_method_reentrant_mutation(self):
+        # gh-31988: the error path read the type of the input operand after
+        # the attribute lookup ran code that cleared the operand's array
+        # slot (use-after-free, detectable with PYTHONMALLOC=debug).
+        class Evil:
+            @property
+            def conjugate(self):
+                arr[0] = None  # drops the slot's reference
+                return 42  # not callable
+
+        arr = np.empty(1, dtype=object)
+        arr[0] = Evil()
+        with pytest.raises(TypeError, match="no callable conjugate method"):
+            np.conjugate(arr)
+
     def test_binary_PyUFunc_OO_O(self):
         x = np.ones(10, dtype=object)
         assert_(np.all(np.add(x, x) == 2))
@@ -732,7 +747,6 @@ class TestUfunc:
         a = np.ones(500, dtype=np.float64)
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 13)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_sum(self):
         for dt in (int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
@@ -894,6 +908,19 @@ class TestUfunc:
                         arr2.reshape(shape2).astype("object"))
         expected3 = expected1.astype(object)
         assert_array_equal(actual3, expected3)
+
+    @pytest.mark.parametrize("func", [
+        lambda A, x, **kw: np.matvec(A, x, **kw),
+        lambda A, x, **kw: np.vecmat(x, A, **kw),
+    ])
+    def test_matvec_vecmat_out(self, func):
+        # overlapping memory: out=input should not produce zeros
+        a = np.arange(18, dtype=float).reshape(2, 3, 3)
+        b = np.arange(6, dtype=float).reshape(2, 3)
+        expected = func(a, b)
+        c = func(a, b, out=b)
+        assert c is b
+        assert_allclose(c, expected)
 
     def test_vecdot_subclass(self):
         class MySubclass(np.ndarray):
@@ -1778,7 +1805,7 @@ class TestUfunc:
         a = a[1:, 1:, 1:]
         yield a
 
-    @pytest.mark.parametrize("arrs", identityless_reduce_arrs())
+    @pytest.mark.parametrize("arrs", list(identityless_reduce_arrs()))
     @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
     def test_identityless_reduction(self, arrs, pos):
         # np.minimum.reduce is an identityless reduction
@@ -2156,6 +2183,7 @@ class TestUfunc:
     @pytest.mark.parametrize("a", (
                              np.arange(10, dtype=int),
                              np.arange(10, dtype=_rational_tests.rational),
+                             np.arange(10, dtype=_rational_tests.rational2),
                              ))
     def test_ufunc_at_basic(self, a):
 
@@ -2682,6 +2710,16 @@ class TestUfunc:
         np.add.accumulate(arr, out=out)
         assert_array_equal(expected, out)
 
+    @pytest.mark.parametrize("method", ["reduce", "accumulate", "reduceat"])
+    def test_reducelike_no_output_raises(self, method):
+        # A ufunc without outputs has nothing to accumulate into.  Reductions
+        # must reject it rather than resolving a nonexistent output loop.
+        # See gh-31816, which segfaulted here.
+        ufunc = np.frompyfunc(lambda a, b: None, 2, 0)
+        args = ([1, 2, 3], [0, 1]) if method == "reduceat" else ([1, 2, 3],)
+        with pytest.raises(ValueError, match="returning no value"):
+            getattr(ufunc, method)(*args)
+
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
         # appropriately.
@@ -2718,6 +2756,38 @@ class TestUfunc:
 
         with pytest.raises(ValueError, match="(shape|size)"):
             np.add.accumulate(arr, out=out)
+
+    @pytest.mark.parametrize("shape, out_shape", [
+        ((0,), (1,)),       # Empty input must not bypass shape validation.
+        ((1, 3), (2, 3)),   # The outer iterator must not broadcast the input.
+    ])
+    def test_accumulate_out_shape_mismatch(self, shape, out_shape):
+        arr = np.ones(shape, dtype=np.int64)
+        out = np.empty(out_shape, dtype=arr.dtype)
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.add.accumulate(arr, out=out)
+
+    def test_cumsum_scalar_out_shape_mismatch(self):
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.array(1).cumsum(out=np.empty((), dtype=np.intp))
+
+    def test_reduceat_and_accumulate_out_dtype_resolution_failure(self):
+        # gh-31691: the out= error path leaked a reference to out when the
+        # ufunc dtype resolution failed (no matching loop for the out dtype).
+        arr = np.arange(3)
+        out = np.empty(3, dtype="U5")  # no add loop resolves to this
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np.add.reduceat(arr, [0, 1, 2], out=out)
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np.add.accumulate(arr, out=out)
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError) as exc:
+            np.array(b"1").cumsum(
+                dtype="timedelta64[D]", out=np.empty(1)
+            )
+        assert exc.value.dtypes[2] is None
 
     @pytest.mark.parametrize('out_shape',
                              [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
@@ -2857,14 +2927,8 @@ def test_ufunc_types(ufunc):
         if 'O' in typ or '?' in typ:
             continue
         inp, out = typ.split('->')
-        if 'm' in inp:
-            with pytest.warns(
-                DeprecationWarning,
-                match="Using 'generic' unit for NumPy timedelta is deprecated",
-            ):
-                args = [np.ones((3, 3), t) for t in inp]
-        else:
-            args = [np.ones((3, 3), t) for t in inp]
+        _inp_dtypes = [t if t.lower() != 'm' else t + "8[D]" for t in inp]
+        args = [np.ones((3, 3), t) for t in _inp_dtypes]
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res = ufunc(*args)
@@ -2872,9 +2936,9 @@ def test_ufunc_types(ufunc):
             outs = tuple(out)
             assert len(res) == len(outs)
             for r, t in zip(res, outs):
-                assert r.dtype == np.dtype(t)
+                assert r.dtype.char == t
         else:
-            assert res.dtype == np.dtype(out)
+            assert res.dtype.char == out
 
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                 if isinstance(getattr(np, x), np.ufunc)])
@@ -3189,6 +3253,22 @@ def test_addition_unicode_inverse_byte_order(order1, order2):
     assert result == 2 * element
 
 
+def test_pystr_scalar_converted_with_resolved_descriptor():
+    # an object loop receives the original str object
+    arr = np.array(["x"], dtype=object)
+    res = (arr + "y\0")[0]
+    assert type(res) is str
+    assert res == "xy\0"
+    # for fixed-width unicode trailing nulls are padding
+    assert (np.array(["x"], dtype="U1") + "y\0")[0] == "xy"
+    # np.str_ is a fixed-width scalar, not special-cased like exact str
+    assert (arr + np.str_("y\0"))[0] == "xy"
+
+    # unary object loops also receive the original str object
+    identity = np.frompyfunc(lambda value: value, 1, 1)
+    assert identity("y\0") == "y\0"
+
+
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
 def test_find_non_long_args(dtype):
     element = 'abcd'
@@ -3230,8 +3310,22 @@ class TestLowlevelAPIAccess:
         r = np.add.resolve_dtypes((f4, int, None))
         assert r == (f4, f4, f4)
 
+        msg = r"cannot cast Python.*under the casting rule 'equiv'"
+        for pytype, dtype in [(int, "uint8"), (float, "float32"),
+                              (complex, "complex64")]:
+            with pytest.raises(TypeError, match=msg):
+                np.add.resolve_dtypes((np.dtype(dtype), pytype, None),
+                                      casting="equiv")
+
         with pytest.raises(TypeError):
             np.add.resolve_dtypes((i4, f4, None), casting="no")
+
+    def test_resolve_dtypes_unary_weak_scalar(self):
+        assert np.sin.resolve_dtypes((int, None)) == (
+            np.dtype("f8"), np.dtype("f8"))
+        with pytest.raises(TypeError,
+                match="Output descriptors must be NumPy dtypes or None."):
+            np.sin.resolve_dtypes((int, int))
 
     def test_resolve_dtypes_comparison(self):
         i4 = np.dtype("i4")

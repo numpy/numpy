@@ -2,9 +2,8 @@
 import argparse
 import os
 
-import genapi
-import numpy_api
-from genapi import BoolValuesApi, FunctionApi, GlobalVarApi, TypeApi
+from . import genapi, numpy_api
+from .genapi import BoolValuesApi, FunctionApi, GlobalVarApi, TypeApi
 
 # use annotated api when running under cpychecker
 h_template = r"""
@@ -58,7 +57,7 @@ static int PyArray_RUNTIME_VERSION = 0;
 #include "numpy/_public_dtype_api_table.h"
 
 #if !defined(NO_IMPORT_ARRAY) && !defined(NO_IMPORT)
-static int
+static inline int
 _import_array(void)
 {
   int st;

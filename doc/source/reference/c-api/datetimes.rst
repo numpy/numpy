@@ -3,7 +3,7 @@ Datetime API
 
 NumPy represents dates internally using an int64 counter and a unit metadata
 struct. Time differences are represented similarly using an int64 and a unit
-metadata struct. The functions described below are available to to facilitate
+metadata struct. The functions described below are available to facilitate
 converting between ISO 8601 date strings, NumPy datetimes, and Python datetime
 objects in C.
 

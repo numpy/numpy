@@ -16,4 +16,4 @@ Configuration
 .. autosummary:: 
    :toctree: generated/
 
-   numpy.polynomial.set_default_printstyle
+   set_default_printstyle

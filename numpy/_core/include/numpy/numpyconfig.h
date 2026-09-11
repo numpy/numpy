@@ -79,7 +79,8 @@
 #define NPY_2_2_API_VERSION 0x00000013
 #define NPY_2_3_API_VERSION 0x00000014
 #define NPY_2_4_API_VERSION 0x00000015
-#define NPY_2_5_API_VERSION 0x00000015
+#define NPY_2_5_API_VERSION 0x00000016
+#define NPY_2_6_API_VERSION 0x00000016
 
 
 /*
@@ -122,6 +123,10 @@
 #else
     /* Use the default (increase when dropping Python 3.12 support) */
     #define NPY_FEATURE_VERSION NPY_1_25_API_VERSION
+#endif
+
+#if defined(Py_TARGET_ABI3T) && NPY_TARGET_VERSION < NPY_2_5_API_VERSION
+    #error "NumPy 2.5 or later is required when compiling Py_TARGET_ABI3T"
 #endif
 
 /* Sanity check the (requested) feature version */
@@ -167,13 +172,13 @@
     #define NPY_FEATURE_VERSION_STRING "1.25"
 #elif NPY_FEATURE_VERSION == NPY_2_0_API_VERSION
     #define NPY_FEATURE_VERSION_STRING "2.0"
-#elif NPY_FEATURE_VERSION == NPY_2_1_API_VERSION
+#elif NPY_FEATURE_VERSION == NPY_2_1_API_VERSION  /* also 2.2 */
     #define NPY_FEATURE_VERSION_STRING "2.1"
 #elif NPY_FEATURE_VERSION == NPY_2_3_API_VERSION
     #define NPY_FEATURE_VERSION_STRING "2.3"
 #elif NPY_FEATURE_VERSION == NPY_2_4_API_VERSION
     #define NPY_FEATURE_VERSION_STRING "2.4"
-#elif NPY_FEATURE_VERSION == NPY_2_5_API_VERSION
+#elif NPY_FEATURE_VERSION == NPY_2_5_API_VERSION  /* also 2.6 */
     #define NPY_FEATURE_VERSION_STRING "2.5"
 #else
     #error "Missing version string define for new NumPy version."

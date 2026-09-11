@@ -51,8 +51,8 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000013 - 2.2.x
 # 0x00000014 - 2.3.x
 # 0x00000015 - 2.4.x
-# 0x00000015 - 2.5.x
-C_API_VERSION = '0x00000015'
+# 0x00000016 - 2.5.x
+C_API_VERSION = '0x00000016'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -123,6 +123,7 @@ if use_highway
   )
 else
   highway_lib = []
+  add_project_arguments(['-DNPY_DISABLE_HIGHWAY'], language: ['cpp'])
 endif
 
 use_intel_sort = not get_option('disable-intel-sort') and cpu_family in ['x86', 'x86_64']
@@ -179,7 +180,7 @@ if not cc.has_header('complex.h')
   error('"complex.h" header not found')
 endif
 
-if cc.get_argument_syntax() == 'msvc'
+if cc.get_id() == 'msvc' or cc.get_id() == 'clang-cl'
   complex_types_to_check = [
     ['NPY_SIZEOF_COMPLEX_FLOAT', '_Fcomplex'],
     ['NPY_SIZEOF_COMPLEX_DOUBLE', '_Dcomplex'],
@@ -200,9 +201,43 @@ foreach symbol_type: complex_types_to_check
   cdata.set(symbol_type[0], cc.sizeof(symbol_type[1], prefix: '#include <complex.h>'))
 endforeach
 
-# Mandatory functions: if not found, fail the build
-# Some of these can still be blocklisted if the C99 implementation
-# is buggy, see numpy/_core/src/common/npy_config.h
+# Mandatory and optional math functions are detected via batched cc.links()
+# probes that take each function's address through a static array, forcing the
+# linker to resolve the symbol. On failure we fall back to per-function probes
+# so a missing mandatory symbol is reported by name, and so optional functions
+# that are partially available on an unusual libm are still detected
+# individually.
+#
+# Platform-specific libm bugs are handled via `#undef HAVE_*` in
+# numpy/_core/src/common/npy_config.h.
+
+inc_curdir = include_directories('.')
+
+# Shared C-source boilerplate. '@INCLUDES@' and '@REFS@' are substituted
+# per-batch via .replace() below.
+_batch_probe_template = '''
+#include <stdint.h>
+#include <stddef.h>
+@INCLUDES@
+
+typedef void (*funcptr)(void);
+
+static const funcptr funcs[] = {
+@REFS@};
+
+int main(int argc, char **argv) {
+    volatile uintptr_t s = 0;
+    unsigned i;
+    (void)argc; (void)argv;
+    for (i = 0; i < sizeof(funcs)/sizeof(funcs[0]); i++) {
+        s ^= (uintptr_t)funcs[i];
+    }
+    return (int)(s & 1);
+}
+'''
+
+# Mandatory functions: if the batched link fails, fall back to per-function
+# checks to identify which symbol is actually missing.
 mandatory_math_funcs = [
   'sin', 'cos', 'tan', 'sinh', 'cosh', 'tanh', 'fabs',
   'floor', 'ceil', 'sqrt', 'log10', 'log', 'exp', 'asin',
@@ -211,26 +246,41 @@ mandatory_math_funcs = [
   'rint', 'trunc', 'exp2', 'copysign', 'nextafter', 'cbrt',
   'log2', 'pow', 'hypot', 'atan2',
 ]
-foreach func: mandatory_math_funcs
-  if not cc.has_function(func, prefix: '#include <math.h>', dependencies: m_dep)
-    error(f'Function `@func@` not found')
-  endif
-endforeach
-
 mandatory_complex_math_funcs = [
   'csin', 'csinh', 'ccos', 'ccosh', 'ctan', 'ctanh', 'creal', 'cimag', 'conj'
 ]
-foreach func: mandatory_complex_math_funcs
-  if not cc.has_function(func, prefix: '#include <complex.h>', dependencies: m_dep)
-    error(f'Function `@func@` not found')
-  endif
-endforeach
+mandatory_strto_funcs = ['strtoll', 'strtoull']
 
-foreach func: ['strtoll', 'strtoull']
-  if not cc.has_function(func, prefix: '#include <stdlib.h>')
-    error(f'Function `@func@` not found')
-  endif
+_mandatory_refs = ''
+foreach _f : mandatory_math_funcs + mandatory_complex_math_funcs + mandatory_strto_funcs
+  _mandatory_refs += '    (funcptr)' + _f + ',\n'
 endforeach
+_mandatory_src = _batch_probe_template.replace(
+  '@INCLUDES@',
+  '#include "feature_detection_math.h"\n#include "feature_detection_cmath.h"'
+).replace('@REFS@', _mandatory_refs)
+
+if not cc.links(_mandatory_src,
+    include_directories: inc_curdir,
+    dependencies: m_dep,
+    name: 'mandatory libm functions (batched)')
+  # Re-run per-function to name the missing symbol for the user.
+  foreach func: mandatory_math_funcs
+    if not cc.has_function(func, prefix: '#include <math.h>', dependencies: m_dep)
+      error(f'Function `@func@` not found')
+    endif
+  endforeach
+  foreach func: mandatory_complex_math_funcs
+    if not cc.has_function(func, prefix: '#include <complex.h>', dependencies: m_dep)
+      error(f'Function `@func@` not found')
+    endif
+  endforeach
+  foreach func: mandatory_strto_funcs
+    if not cc.has_function(func, prefix: '#include <stdlib.h>')
+      error(f'Function `@func@` not found')
+    endif
+  endforeach
+endif
 
 c99_complex_funcs = [
   'cabs', 'cacos', 'cacosh', 'carg', 'casin', 'casinh', 'catan',
@@ -239,19 +289,33 @@ c99_complex_funcs = [
   # but are missing in FreeBSD. Issue gh-22850
   'csin', 'csinh', 'ccos', 'ccosh', 'ctan', 'ctanh',
 ]
-foreach func: c99_complex_funcs
-  func_single = func + 'f'
-  func_longdouble = func + 'l'
-  if cc.has_function(func, prefix: '#include <complex.h>', dependencies: m_dep)
-    cdata.set10('HAVE_' + func.to_upper(), true)
-  endif
-  if cc.has_function(func_single, prefix: '#include <complex.h>', dependencies: m_dep)
-    cdata.set10('HAVE_' + func_single.to_upper(), true)
-  endif
-  if cc.has_function(func_longdouble, prefix: '#include <complex.h>', dependencies: m_dep)
-    cdata.set10('HAVE_' + func_longdouble.to_upper(), true)
-  endif
+c99_complex_funcs_all = []
+foreach _f : c99_complex_funcs
+  c99_complex_funcs_all += [_f, _f + 'f', _f + 'l']
 endforeach
+
+_c99cplx_refs = ''
+foreach _f : c99_complex_funcs_all
+  _c99cplx_refs += '    (funcptr)' + _f + ',\n'
+endforeach
+_c99cplx_src = _batch_probe_template.replace(
+  '@INCLUDES@', '#include "feature_detection_cmath.h"'
+).replace('@REFS@', _c99cplx_refs)
+
+if cc.links(_c99cplx_src,
+    include_directories: inc_curdir,
+    dependencies: m_dep,
+    name: 'C99 complex funcs (batched)')
+  foreach func: c99_complex_funcs_all
+    cdata.set10('HAVE_' + func.to_upper(), true)
+  endforeach
+else
+  foreach func: c99_complex_funcs_all
+    if cc.has_function(func, prefix: '#include <complex.h>', dependencies: m_dep)
+      cdata.set10('HAVE_' + func.to_upper(), true)
+    endif
+  endforeach
+endif
 
 # We require C99 so these should always be found at build time. But for
 # libnpymath as a C99 compat layer, these may still be relevant.
@@ -293,7 +357,6 @@ foreach optional_attr: optional_variable_attributes
   endif
 endforeach
 
-inc_curdir = include_directories('.')
 optional_file_funcs = ['fallocate', 'ftello', 'fseeko']
 foreach filefunc_maybe: optional_file_funcs
   config_value = 'HAVE_' + filefunc_maybe.to_upper()
@@ -402,6 +465,8 @@ optional_intrinsics = [
   ['__builtin_expect', '5, 0', [], []],
   # Test `long long` for arm+clang 13 (gh-22811, but we use all versions):
   ['__builtin_mul_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_add_overflow', '(long long)5, 5, (int*)5', [], []],
+  ['__builtin_sub_overflow', '(long long)5, 5, (int*)5', [], []],
   ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
 ]
 foreach intrin: optional_intrinsics
@@ -440,7 +505,35 @@ endforeach
 # as well as https://github.com/mesonbuild/meson/issues/11068
 longdouble_format = meson.get_external_property('longdouble_format', 'UNKNOWN')
 if longdouble_format == 'UNKNOWN'
-  longdouble_format = meson.get_compiler('c').run(
+  # We can't run the auto-detection program when cross-compiling, so we need to specify
+  # what format each system uses.
+  if host_machine.system() == 'android'
+    # Android defines `long double` as 128-bit quad precision on 64-bit platforms, and
+    # 64-bit double precision on 32-bit platforms. This is true even on x86 and x86_64,
+    # where `long double` is usually 80 bits padded to 96 or 128:
+    #  * https://developer.android.com/ndk/guides/abis
+    #  * https://gitlab.com/x86-psABIs/x86-64-ABI
+    if host_machine.cpu_family().contains('64')
+      longdouble_format = 'IEEE_QUAD_LE'
+    else
+      longdouble_format = 'IEEE_DOUBLE_LE'
+    endif
+  elif host_machine.system() == 'ios'
+    if host_machine.cpu_family() == 'x86_64'
+      # The x86_64 iOS simulator runs on x86_64 macOS hosts. Apple's x86-64
+      # calling conventions defer to the System V AMD64 psABI, which defines
+      # `long double` as the 80-bit x87 extended-precision format stored in
+      # 16 bytes (unlike arm64, where `long double` == `double`):
+      #  * https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/LowLevelABI/140-x86-64_Function_Calling_Conventions/x86_64.html
+      #  * https://gitlab.com/x86-psABIs/x86-64-ABI
+      longdouble_format = 'INTEL_EXTENDED_16_BYTES_LE'
+    else
+      # On arm64 iOS, long double is identical to the double type:
+      # https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms#Handle-data-types-and-data-alignment-properly
+      longdouble_format = 'IEEE_DOUBLE_LE'
+    endif
+  else
+    longdouble_format = meson.get_compiler('c').run(
 '''
 #include <stdio.h>
 #include <string.h>
@@ -520,6 +613,7 @@ int main(void) {
   }
 }
   ''').stdout()
+  endif
 endif
 if longdouble_format == 'UNKNOWN' or longdouble_format == 'UNDEFINED'
   error('Unknown long double format of size: ' + cc.sizeof('long double').to_string())
@@ -592,6 +686,9 @@ npymath_sources = [
   'src/npymath/halffloat.cpp',
   'src/npymath/npy_math.c',
 ]
+if host_machine.system() == 'emscripten'
+  npymath_sources += 'src/common/npy_fenv.c'
+endif
 npymath_lib = static_library('npymath',
   npymath_sources,
   c_args: staticlib_cflags,
@@ -630,23 +727,44 @@ endif
 # building, but we can't add it to the sources of that extension (this C file
 # doesn't compile, it's only included in another r file. Hence use the slightly
 # hacky --ignore argument to the next custom_target().
+codegen_files = [
+  'code_generators/__init__.py',
+  'code_generators/genapi.py',
+  'code_generators/generate_numpy_api.py',
+  'code_generators/generate_ufunc_api.py',
+  'code_generators/generate_umath_doc.py',
+  'code_generators/generate_umath.py',
+  'code_generators/numpy_api.py',
+  'code_generators/ufunc_docstrings.py',
+]
+codegen_env = {
+  # Explicitly set PYTHONPATH to avoid depending on the current working directory
+  # at build time, and on unsafe paths that may be prepended to sys.path and can be
+  # disabled by PYTHONSAFEPATH. See:
+  # [1] https://github.com/numpy/numpy/issues/24907
+  # [2] https://docs.python.org/3/library/sys.html#sys.path
+  'PYTHONPATH': meson.current_source_dir(),
+}
+
 src_umath_api_c = custom_target('__umath_generated',
   output : '__umath_generated.c',
-  input : 'code_generators/generate_umath.py',
-  command: [py, '@INPUT@', '-o', '@OUTPUT@'],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_umath', '-o', '@OUTPUT@'],
+  env: codegen_env,
 )
 
 src_umath_doc_h = custom_target('_umath_doc_generated',
   output : '_umath_doc_generated.h',
-  input : ['code_generators/generate_umath_doc.py',
-           'code_generators/ufunc_docstrings.py'],
-  command: [py, '@INPUT0@', '-o', '@OUTPUT@'],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_umath_doc', '-o', '@OUTPUT@'],
+  env: codegen_env,
 )
 
 src_numpy_api = custom_target('__multiarray_api',
   output : ['__multiarray_api.c', '__multiarray_api.h'],
-  input : 'code_generators/generate_numpy_api.py',
-  command: [py, '@INPUT@', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_numpy_api', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
+  env: codegen_env,
   install: true,  # NOTE: setup.py build installs all, but just need .h?
   install_dir: np_dir / '_core/include/numpy',
   install_tag: 'devel'
@@ -654,8 +772,9 @@ src_numpy_api = custom_target('__multiarray_api',
 
 src_ufunc_api = custom_target('__ufunc_api',
   output : ['__ufunc_api.c', '__ufunc_api.h'],
-  input : 'code_generators/generate_ufunc_api.py',
-  command: [py, '@INPUT@', '-o', '@OUTDIR@'],
+  depend_files: codegen_files,
+  command: [py, '-m', 'code_generators.generate_ufunc_api', '-o', '@OUTDIR@'],
+  env: codegen_env,
   install: true,  # NOTE: setup.py build installs all, but just need .h?
   install_dir: np_dir / '_core/include/numpy',
   install_tag: 'devel'
@@ -743,8 +862,17 @@ py.extension_module('_multiarray_tests',
   gnu_symbol_visibility: 'default',
   install: true,
   subdir: 'numpy/_core',
+  limited_api: py_limited_api,
   install_tag: 'tests'
 )
+
+# `limited_api:` only reaches an extension module's own sources, so a static
+# library linked into one is still built against the unrestricted API and must
+# be passed these args too. Drop this once
+# https://github.com/mesonbuild/meson/issues/13824 is resolved.
+py_limited_api_args = (get_option('python.allow_limited_api')
+                       and py_limited_api_hex != '') \
+  ? ['-DPy_LIMITED_API=' + py_limited_api_hex] : []
 
 _umath_tests_mtargets = mod_features.multi_targets(
   '_umath_tests.dispatch.h',
@@ -757,19 +885,23 @@ _umath_tests_mtargets = mod_features.multi_targets(
   ],
   baseline: CPU_BASELINE,
   prefix: 'NPY_',
-  dependencies: [py_dep, np_core_dep]
+  dependencies: [py_dep, np_core_dep],
+  c_args: py_limited_api_args,
 )
 
+# [module name, sources, libraries to link with, limited API version ('' to
+# build against the full API)]
 test_modules_src = [
   ['_umath_tests', [
       src_file.process('src/umath/_umath_tests.c.src'),
       'src/common/npy_cpu_features.c',
     ],
-    _umath_tests_mtargets.static_lib('_umath_tests_mtargets')
+    _umath_tests_mtargets.static_lib('_umath_tests_mtargets'), py_limited_api
   ],
-  ['_rational_tests', 'src/umath/_rational_tests.c', []],
-  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', []],
-  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', []],
+  ['_rational_tests', 'src/umath/_rational_tests.c', [], py_limited_api],
+  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', [], py_limited_api],
+  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', [], py_limited_api],
+  ['_reduction_loop_tests', 'src/umath/_reduction_loop_tests.c', [], py_limited_api],
 ]
 foreach gen: test_modules_src
   py.extension_module(gen[0],
@@ -780,6 +912,7 @@ foreach gen: test_modules_src
     install: true,
     subdir: 'numpy/_core',
     link_with: gen[2],
+    limited_api: gen[3],
     install_tag: 'tests'
   )
 endforeach
@@ -788,7 +921,6 @@ endforeach
 # --------------------------------------
 multiarray_gen_headers = [
   src_file.process('src/multiarray/arraytypes.h.src'),
-  src_file.process('src/common/npy_sort.h.src'),
 ]
 foreach gen_mtargets : [
   [
@@ -911,6 +1043,17 @@ foreach gen_mtargets : [
   [
     'loops_arithmetic.dispatch.h',
     src_file.process('src/umath/loops_arithmetic.dispatch.c.src'),
+    [
+      X86_V4, X86_V3, X86_V2,
+      NEON,
+      VSX4, VSX2,
+      VX,
+      LSX,
+    ]
+  ],
+  [
+    'loops_arithmetic_timedelta.dispatch.h',
+    'src/umath/loops_arithmetic_timedelta.dispatch.cpp',
     [
       X86_V4, X86_V3, X86_V2,
       NEON,
@@ -1106,7 +1249,7 @@ endif
 
 src_multiarray = multiarray_gen_headers + [
   'src/multiarray/abstractdtypes.c',
-  'src/multiarray/alloc.cpp',
+  'src/multiarray/alloc.c',
   'src/multiarray/arrayobject.c',
   'src/multiarray/array_coercion.c',
   'src/multiarray/array_converter.c',
@@ -1168,13 +1311,12 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/temp_elide.c',
   'src/multiarray/usertypes.c',
   'src/multiarray/vdot.c',
-  'src/npysort/quicksort.cpp',
-  'src/npysort/mergesort.cpp',
-  'src/npysort/timsort.cpp',
+  'src/npysort/quicksort_generic.cpp',
+  'src/npysort/timsort_generic.cpp',
   'src/npysort/heapsort.cpp',
-  'src/npysort/radixsort.cpp',
+  'src/npysort/npysort_methods.cpp',
   'src/common/npy_partition.h',
-  'src/npysort/selection.cpp',
+  'src/npysort/selection_methods.cpp',
   'src/common/npy_binsearch.h',
   'src/npysort/binsearch.cpp',
   'src/multiarray/textreading/conversions.c',
@@ -1196,6 +1338,8 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/loops.c.src'),
   src_file.process('src/umath/matmul.c.src'),
   src_file.process('src/umath/matmul.h.src'),
+  'src/umath/unwrap.cpp',
+  'src/umath/unwrap.h',
   'src/umath/ufunc_type_resolution.c',
   'src/umath/clip.cpp',
   'src/umath/clip.h',
@@ -1207,6 +1351,8 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/scalarmath.c.src'),
   'src/umath/ufunc_object.c',
   'src/umath/umathmodule.c',
+  'src/umath/minmax.cpp',
+  'src/umath/minmax.h',
   'src/umath/real_imag_ufuncs.cpp',
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
@@ -1335,7 +1481,7 @@ _simd_mtargets = mod_features.multi_targets(
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep],
   include_directories: ['src/_simd', 'src/npymath'],
-  c_args: c_args_common,
+  c_args: c_args_common + py_limited_api_args,
   cpp_args: cpp_args_common,
 )
 
@@ -1351,6 +1497,7 @@ py.extension_module('_simd',
   install: true,
   subdir: 'numpy/_core',
   install_tag: 'tests',
+  limited_api: py_limited_api,
 )
 
 python_sources = [

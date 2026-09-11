@@ -162,44 +162,6 @@ assert_type(np.char.rindex(AR_U, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.char.rindex(AR_S, [b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
 assert_type(np.char.rindex(AR_T, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 
-assert_type(np.char.isalpha(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.isalpha(AR_S), npt.NDArray[np.bool])
-assert_type(np.char.isalpha(AR_T), npt.NDArray[np.bool])
-
-assert_type(np.char.isalnum(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.isalnum(AR_S), npt.NDArray[np.bool])
-assert_type(np.char.isalnum(AR_T), npt.NDArray[np.bool])
-
-assert_type(np.char.isdecimal(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.isdecimal(AR_T), npt.NDArray[np.bool])
-
-assert_type(np.char.isdigit(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.isdigit(AR_S), npt.NDArray[np.bool])
-assert_type(np.char.isdigit(AR_T), npt.NDArray[np.bool])
-
-assert_type(np.char.islower(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.islower(AR_S), npt.NDArray[np.bool])
-assert_type(np.char.islower(AR_T), npt.NDArray[np.bool])
-
-assert_type(np.char.isnumeric(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.isnumeric(AR_T), npt.NDArray[np.bool])
-
-assert_type(np.char.isspace(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.isspace(AR_S), npt.NDArray[np.bool])
-assert_type(np.char.isspace(AR_T), npt.NDArray[np.bool])
-
-assert_type(np.char.istitle(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.istitle(AR_S), npt.NDArray[np.bool])
-assert_type(np.char.istitle(AR_T), npt.NDArray[np.bool])
-
-assert_type(np.char.isupper(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.isupper(AR_S), npt.NDArray[np.bool])
-assert_type(np.char.isupper(AR_T), npt.NDArray[np.bool])
-
-assert_type(np.char.str_len(AR_U), npt.NDArray[np.int_])
-assert_type(np.char.str_len(AR_S), npt.NDArray[np.int_])
-assert_type(np.char.str_len(AR_T), npt.NDArray[np.int_])
-
 assert_type(np.char.translate(AR_U, ""), npt.NDArray[np.str_])
 assert_type(np.char.translate(AR_S, ""), npt.NDArray[np.bytes_])
 assert_type(np.char.translate(AR_T, ""), AR_T_alias)

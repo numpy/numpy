@@ -14,6 +14,7 @@ import platform
 import pprint
 import re
 import shutil
+import subprocess
 import sys
 import sysconfig
 import threading
@@ -39,9 +40,10 @@ __all__ = [
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
-        'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
-        'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
-        'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
+        'HAS_REFCOUNT', 'IS_IOS', 'IS_WASM',
+        'suppress_warnings', 'assert_array_compare',
+        'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'HAS_SUBPROCESSES',
+        'IS_PYSTON', 'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
         'IS_EDITABLE', 'IS_INSTALLED', 'NUMPY_ROOT', 'run_threaded', 'IS_64BIT',
         'BLAS_SUPPORTS_FPE',
         ]
@@ -54,6 +56,19 @@ class KnownFailureException(Exception):
 
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
+
+
+try:
+    import pytest
+except ImportError:
+    pass  # This is only used by NumPy's own test suite.
+else:
+    longdouble_fpe_mark = pytest.mark.xfail(
+        any(name in sys.platform for name in ["android", "bsd"]),
+        reason="(c)longdouble may not raise FPE errors as expected on this platform, "
+        "see gh-24876, gh-23379",
+    )
+
 
 NUMPY_ROOT = pathlib.Path(np.__file__).parent
 
@@ -88,9 +103,15 @@ else:
         IS_INSTALLED = False
 
 IS_WASM = platform.machine() in ["wasm32", "wasm64"]
+IS_IOS = sys.platform == "ios"
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
+HAS_SUBPROCESSES = getattr(subprocess, "_can_fork_exec", True) and sys.platform not in [
+    # Although Android can create subprocesses, it can't run executables included with
+    # the app.
+    "android"
+]
 BLAS_SUPPORTS_FPE = np._core._multiarray_umath._blas_supports_fpe(None)
 
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
@@ -106,6 +127,10 @@ if 'musl' in _v:
 
 NOGIL_BUILD = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 IS_64BIT = np.dtype(np.intp).itemsize == 8
+
+LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE = (platform.machine().startswith("ppc")
+                                    and str(np.finfo(np.longdouble).max)
+                                    == "1.79769313486231580793728971405301e+308")
 
 def assert_(val, msg=''):
     """
@@ -172,7 +197,7 @@ elif sys.platform[:5] == 'linux':
         """
         _proc_pid_stat = _proc_pid_stat or f'/proc/{os.getpid()}/stat'
         try:
-            with open(_proc_pid_stat) as f:
+            with open(_proc_pid_stat, encoding='utf-8') as f:
                 l = f.readline().split(' ')
             return int(l[22])
         except Exception:
@@ -201,7 +226,7 @@ if sys.platform[:5] == 'linux':
         if not _load_time:
             _load_time.append(time.time())
         try:
-            with open(_proc_pid_stat) as f:
+            with open(_proc_pid_stat, encoding='utf-8') as f:
                 l = f.readline().split(' ')
             return int(l[13])
         except Exception:
@@ -589,7 +614,7 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
         usecomplex = False
 
     def _build_err_msg():
-        header = ('Arrays are not almost equal to %d decimals' % decimal)
+        header = (f'Arrays are not almost equal to {decimal} decimals')
         return build_err_msg([actual, desired], err_msg, verbose=verbose,
                              header=header)
 
@@ -712,7 +737,7 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
         sc_actual = 0.0
     msg = build_err_msg(
         [actual, desired], err_msg,
-        header='Items are not equal to %d significant digits:' % significant,
+        header=f'Items are not equal to {significant} significant digits:',
         verbose=verbose)
     try:
         # If one of desired/actual is not finite, handle it specially here:
@@ -784,8 +809,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         if robust_any_difference(x_id, y_id):
             msg = build_err_msg(
                 [x, y],
-                err_msg + '\n%s location mismatch:'
-                % (hasval), verbose=verbose, header=header,
+                err_msg + f'\n{hasval} location mismatch:',
+                verbose=verbose, header=header,
                 names=names,
                 precision=precision)
             raise AssertionError(msg)
@@ -1222,9 +1247,8 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
 
         return z < 1.5 * 10.0**(-decimal)
 
-    assert_array_compare(compare, actual, desired, err_msg=err_msg,
-                         verbose=verbose,
-             header=('Arrays are not almost equal to %d decimals' % decimal),
+    assert_array_compare(compare, actual, desired, err_msg=err_msg, verbose=verbose,
+             header=f'Arrays are not almost equal to {decimal} decimals',
              precision=decimal)
 
 
@@ -1465,7 +1489,8 @@ def rundocs(filename=None, raise_on_error=True):
         runner.run(test, out=out)
 
     if runner.failures > 0 and raise_on_error:
-        raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
+        err_msg = '\n'.join(msg)
+        raise AssertionError(f"Some doctests failed:\n{err_msg}")
 
 
 def check_support_sve(__cache=[]):
@@ -1479,7 +1504,7 @@ def check_support_sve(__cache=[]):
     import subprocess
     cmd = 'lscpu'
     try:
-        output = subprocess.run(cmd, capture_output=True, text=True)
+        output = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
         result = 'sve' in output.stdout
     except (OSError, subprocess.SubprocessError):
         result = False
@@ -1570,7 +1595,7 @@ def decorate_methods(cls, decorator, testmatch=None):
 
     """
     if testmatch is None:
-        testmatch = re.compile(r'(?:^|[\\b_\\.%s-])[Tt]est' % os.sep)
+        testmatch = re.compile(rf'(?:^|[\\b_\\.{os.sep}-])[Tt]est')
     else:
         testmatch = re.compile(testmatch)
     cls_attr = cls.__dict__
@@ -1887,9 +1912,8 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     import numpy as np
     ret = nulp_diff(a, b, dtype)
     if not np.all(ret <= maxulp):
-        raise AssertionError("Arrays are not almost equal up to %g "
-                             "ULP (max difference is %g ULP)" %
-                             (maxulp, np.max(ret)))
+        raise AssertionError(f"Arrays are not almost equal up to {maxulp:g} "
+                             f"ULP (max difference is {np.max(ret):g} ULP)")
     return ret
 
 
@@ -2071,7 +2095,7 @@ def _assert_no_warnings_context(name=None):
         yield
         if len(l) > 0:
             name_str = f' when calling {name}' if name is not None else ''
-            raise AssertionError(f'Got warnings{name_str}: {l}')
+            raise AssertionError(f'Got warnings{name_str}: {[e.message for e in l]}')
 
 
 def assert_no_warnings(*args, **kwargs):
@@ -2475,8 +2499,8 @@ class suppress_warnings:
             raise RuntimeError("cannot enter suppress_warnings twice.")
 
         self._orig_show = warnings.showwarning
-        self._filters = warnings.filters
-        warnings.filters = self._filters[:]
+        self._catch_warnings = warnings.catch_warnings()
+        self._catch_warnings.__enter__()
 
         self._entered = True
         self._tmp_suppressions = []
@@ -2504,11 +2528,11 @@ class suppress_warnings:
 
     def __exit__(self, *exc_info):
         warnings.showwarning = self._orig_show
-        warnings.filters = self._filters
+        self._catch_warnings.__exit__(*exc_info)
         self._clear_registries()
         self._entered = False
         del self._orig_show
-        del self._filters
+        del self._catch_warnings
 
     def _showwarning(self, message, category, filename, lineno,
                      *args, use_warnmsg=None, **kwargs):
@@ -2757,7 +2781,7 @@ def _get_mem_available():
 
     if sys.platform.startswith('linux'):
         info = {}
-        with open('/proc/meminfo') as f:
+        with open('/proc/meminfo', encoding='utf-8') as f:
             for line in f:
                 p = line.split()
                 info[p[0].strip(':').lower()] = int(p[1]) * 1024
@@ -2865,3 +2889,36 @@ def requires_deep_recursion(func):
                         "deep recursion")
         return func(*args, **kwargs)
     return wrapper
+
+
+def run_subprocess(cmd, cwd=None, **kwargs):
+    """Run ``cmd`` in a subprocess, failing the test with its captured output
+    if it exits with a nonzero status.
+
+    Output that a subprocess merely inherits is lost in pytest-xdist workers
+    when a test fails, making CI failures hard to debug.  Routing a
+    build/compile/run step through this helper captures the child's stdout and
+    stderr and folds them into the failure message so they reach the report.
+    Returns the ``subprocess.CompletedProcess`` for callers that want to
+    inspect the output.  Extra keyword arguments are passed to
+    ``subprocess.run``.
+    """
+    import subprocess
+
+    import pytest
+
+    env = kwargs.pop("env", None)
+    env = dict(env) if env is not None else dict(os.environ)
+    env["PYTHONIOENCODING"] = "utf-8"
+    res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
+                         encoding="utf-8", errors="replace", env=env,
+                         **kwargs)
+    if res.returncode != 0:
+        cmd_str = cmd if isinstance(cmd, str) else " ".join(map(str, cmd))
+        in_dir = f" in {cwd}" if cwd is not None else ""
+        pytest.fail(
+            f"`{cmd_str}` failed (exit {res.returncode}){in_dir}\n"
+            f"----- stdout -----\n{res.stdout}\n"
+            f"----- stderr -----\n{res.stderr}",
+            pytrace=False)
+    return res

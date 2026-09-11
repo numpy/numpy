@@ -108,7 +108,7 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
     if (npy_half_isnan(x) || npy_half_isnan(y)) {
         ret = NPY_HALF_NAN;
     } else if (npy_half_eq_nonan(x, y)) {
-        ret = x;
+        ret = y;
     } else if (npy_half_iszero(x)) {
         ret = (y&0x8000u) + 1; /* Smallest subnormal half */
     } else if (!(x&0x8000u)) { /* x > 0 */

@@ -1,6 +1,8 @@
 import builtins
 import collections.abc
 import functools
+import math
+import operator
 import re
 import warnings
 
@@ -37,6 +39,7 @@ from numpy._core.numeric import (
 )
 from numpy._core.numerictypes import typecodes
 from numpy._core.umath import (
+    _unwrap,
     add,
     arctan2,
     cos,
@@ -246,6 +249,16 @@ def rot90(m, k=1, axes=(0, 1)):
     if (axes[0] >= m.ndim or axes[0] < -m.ndim
         or axes[1] >= m.ndim or axes[1] < -m.ndim):
         raise ValueError(f"Axes={axes} out of range for array of ndim={m.ndim}.")
+
+    try:
+        k = operator.index(k)
+    except TypeError:
+        # DEPRECATED 2026-04-27, NumPy 2.5
+        msg = (f"Passing a value for k ({k!r}) that is not an integer type has been "
+               "deprecated in NumPy 2.5. The value will be cast to an integer.  In "
+               "the future this will be an error.")
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        k = int(k)
 
     k %= 4
 
@@ -1732,6 +1745,33 @@ def angle(z, deg=False):
         a *= 180 / pi
     return a
 
+def _unwrap_fallback(p, discont, period, axis):
+    nd = p.ndim
+    dd = diff(p, axis=axis)
+    slice1 = [slice(None, None)] * nd     # full slices
+    slice1[axis] = slice(1, None)
+    slice1 = tuple(slice1)
+    dtype = np.result_type(dd, period)
+    if _nx.issubdtype(dtype, _nx.integer):
+        interval_high, rem = divmod(period, 2)
+        boundary_ambiguous = rem == 0
+    else:
+        interval_high = period / 2
+        boundary_ambiguous = True
+    interval_low = -interval_high
+    ddmod = mod(dd - interval_low, period) + interval_low
+    if boundary_ambiguous:
+        # for `mask = (abs(dd) == period/2)`, the above line made
+        # `ddmod[mask] == -period/2`. correct these such that
+        # `ddmod[mask] == sign(dd[mask])*period/2`.
+        _nx.copyto(ddmod, interval_high,
+                   where=(ddmod == interval_low) & (dd > 0))
+    ph_correct = ddmod - dd
+    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
+    up = asanyarray(p, dtype=dtype, copy=True)
+    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
+    return up
+
 
 def _unwrap_dispatcher(p, discont=None, axis=None, *, period=None):
     return (p,)
@@ -1762,7 +1802,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         larger than ``period/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
-    period : float, optional
+    period : float or int, optional
         Size of the range over which the input wraps. By default, it is
         ``2 pi``.
 
@@ -1771,17 +1811,24 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     Returns
     -------
     out : ndarray
-        Output array.
+        Output array. Its dtype is ``numpy.result_type(p, period)``.
+        In particular an integer array unwrapped with an integer `period`
+        keeps its integer dtype, while any float `period` (including the
+        default ``2 pi``) produces a floating-point result.
 
     See Also
     --------
     rad2deg, deg2rad
+    numpy.ma.unwrap : Mask-aware equivalent for masked arrays.
 
     Notes
     -----
     If the discontinuity in `p` is smaller than ``period/2``,
     but larger than `discont`, no unwrapping is done because taking
     the complement would only make the discontinuity larger.
+
+    This function does not work properly with masked arrays,
+    use `numpy.ma.unwrap` instead.
 
     Examples
     --------
@@ -1822,34 +1869,27 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     >>> plt.legend(framealpha=1, shadow=True)
     >>> plt.show()
     """
-    p = asarray(p)
-    nd = p.ndim
-    dd = diff(p, axis=axis)
+    p = asanyarray(p)
     if discont is None:
         discont = period / 2
-    slice1 = [slice(None, None)] * nd     # full slices
-    slice1[axis] = slice(1, None)
-    slice1 = tuple(slice1)
-    dtype = np.result_type(dd, period)
-    if _nx.issubdtype(dtype, _nx.integer):
-        interval_high, rem = divmod(period, 2)
-        boundary_ambiguous = rem == 0
-    else:
-        interval_high = period / 2
-        boundary_ambiguous = True
-    interval_low = -interval_high
-    ddmod = mod(dd - interval_low, period) + interval_low
-    if boundary_ambiguous:
-        # for `mask = (abs(dd) == period/2)`, the above line made
-        # `ddmod[mask] == -period/2`. correct these such that
-        # `ddmod[mask] == sign(dd[mask])*period/2`.
-        _nx.copyto(ddmod, interval_high,
-                   where=(ddmod == interval_low) & (dd > 0))
-    ph_correct = ddmod - dd
-    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-    up = array(p, copy=True, dtype=dtype)
-    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
-    return up
+    try:
+        dtype = np.result_type(p, period)
+        discont_type = (
+            type(dtype) if _nx.issubdtype(dtype, _nx.floating) else np.float64
+        )
+        return _unwrap(p, discont, period,
+                       signature=(type(dtype), discont_type, type(dtype), type(dtype)),
+                       axis=axis)
+    except np._core._exceptions._UFuncNoLoopError:
+        # object and user DTypes fall back. check p.dtype, not the promoted
+        # dtype, since a user DType can promote through a builtin
+        if p.dtype.isbuiltin == 1 and p.dtype != object:
+            raise
+        return _unwrap_fallback(p, discont, period, axis)
+    except TypeError:
+        # p's __array_ufunc__ declined the private _unwrap gufunc. the
+        # fallback only uses public ufuncs, which it may still implement
+        return _unwrap_fallback(p, discont, period, axis)
 
 
 def _sort_complex(a):
@@ -3523,7 +3563,8 @@ def _i0_1(x):
 
 
 def _i0_2(x):
-    return exp(x) * _chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)
+    half_exp = exp(0.5 * x)
+    return half_exp * (_chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)) * half_exp
 
 
 def _i0_dispatcher(x):
@@ -3588,7 +3629,7 @@ def i0(x):
     if x.dtype.kind != 'f':
         x = x.astype(float)
     x = np.abs(x)
-    return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
+    return piecewise(x, [x <= 8.0, np.isinf(x)], [_i0_1, lambda x: x, _i0_2])
 
 ## End of cephes code for i0
 
@@ -3865,7 +3906,7 @@ def _ureduce(a, func, keepdims=False, **kwargs):
                 # move axis that should not be reduced to front
                 a = np.moveaxis(a, keep, range(nkeep))
                 # merge reduced axis
-                return a.reshape(a.shape[:nkeep] + (-1,))
+                return a.reshape(a.shape[:nkeep] + (math.prod(a.shape[nkeep:]),))
 
             a = reshape_arr(a)
 
@@ -3937,10 +3978,9 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     Returns
     -------
     median : ndarray
-        A new array holding the result. If the input contains integers
-        or floats smaller than ``float64``, then the output data-type is
-        ``np.float64``.  Otherwise, the data-type of the output is the
-        same as that of the input. If `out` is specified, that array is
+        A new array holding the result. If the input contains integers,
+        the output data-type is ``float64``. Otherwise, the output data-type
+        is the same as that of the input. If `out` is specified, that array is
         returned instead.
 
     See Also
@@ -4136,10 +4176,9 @@ def percentile(a,
         is a scalar. If multiple percentiles are given, first axis of
         the result corresponds to the percentiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out`
+        is specified, that array is returned instead.
 
     See Also
     --------
@@ -4339,10 +4378,9 @@ def quantile(a,
         is a scalar. If multiple probability levels are given, first axis
         of the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out` is
+        specified, that array is returned instead.
 
     See Also
     --------
@@ -4752,9 +4790,10 @@ def _quantile(
         try:
             method_props = _QuantileMethods[method]
         except KeyError:
+            valid_methods = ", ".join(map(repr, _QuantileMethods))
             raise ValueError(
-                f"{method!r} is not a valid method. Use one of: "
-                f"{_QuantileMethods.keys()}") from None
+                f"{method!r} is not a valid method. "
+                f"Use one of: {valid_methods}") from None
         virtual_indexes = method_props["get_virtual_index"](values_count,
                                                             quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
@@ -4918,9 +4957,9 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
 
     Integrate `y` (`x`) along each 1d slice on the given axis, compute
     :math:`\int y(x) dx`.
-    When `x` is specified, this integrates along the parametric curve,
-    computing :math:`\int_t y(t) dt =
-    \int_t y(t) \left.\frac{dx}{dt}\right|_{x=x(t)} dt`.
+    When `x` is specified, this integrates along the parametric curve
+    :math:`C` given by :math:`(x(t), y(t))`, computing the line integral
+    :math:`\int_C y \, dx = \int y(t) \frac{dx}{dt} \, dt`.
 
     .. versionadded:: 2.0.0
 
@@ -5554,6 +5593,15 @@ def insert(arr, obj, values, axis=None):
         # Can safely cast the empty list to intp
         indices = indices.astype(intp)
 
+    if indices.size > 0:
+        min_idx = indices.min()
+        max_idx = indices.max()
+        if min_idx < -N or max_idx > N:
+            oob = min_idx if min_idx < -N else max_idx
+            raise IndexError(
+                f"index {oob} is out of bounds "
+                f"for axis {axis} with size {N}"
+            )
     indices[indices < 0] += N
 
     numnew = len(indices)

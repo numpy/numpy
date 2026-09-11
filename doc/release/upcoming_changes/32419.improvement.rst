@@ -1,0 +1,5 @@
+* `numpy.minimum` and `numpy.maximum` along with the ``min`` and ``max``
+  reductions now correctly handle cases when one operand is a fixed-width
+  string array and one operand is StringDType. These cases used to raise
+  `numpy._UFuncNoLoopError`.
+  

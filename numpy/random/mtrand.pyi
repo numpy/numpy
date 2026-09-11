@@ -1,6 +1,7 @@
 from builtins import bytes as py_bytes
 from collections.abc import Callable
 from typing import Any, Literal, overload
+from typing_extensions import disjoint_base
 
 import numpy as np
 from numpy._typing import (
@@ -82,6 +83,7 @@ __all__ = [
     "zipf",
 ]
 
+@disjoint_base
 class RandomState:
     _bit_generator: BitGenerator
 
@@ -93,13 +95,13 @@ class RandomState:
     def __reduce__(self) -> tuple[Callable[[BitGenerator], RandomState], tuple[BitGenerator], dict[str, Any]]: ...
 
     #
-    def seed(self, seed: _ArrayLikeFloat_co | None = None) -> None: ...
+    def seed(self, seed: _ArrayLikeInt_co | None = None) -> None: ...
 
     #
     @overload
-    def get_state(self, legacy: Literal[False] = False) -> dict[str, Any]: ...
+    def get_state(self, legacy: Literal[False]) -> dict[str, Any]: ...
     @overload
-    def get_state(self, legacy: Literal[True] = True) -> dict[str, Any] | tuple[str, NDArray[np.uint32], int, int, float]: ...
+    def get_state(self, legacy: Literal[True] = True) -> tuple[str, NDArray[np.uint32], int, int, float]: ...
 
     #
     def set_state(self, state: dict[str, Any] | tuple[str, NDArray[np.uint32], int, int, float]) -> None: ...
@@ -458,7 +460,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-    ) -> int: ...
+    ) -> np.long: ...
     @overload
     def random_integers(
         self,

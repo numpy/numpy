@@ -172,6 +172,27 @@ class TestEvaluation:
         res = herm.hermval3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3))
 
+    def test_hermvalnd(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+        pts = (x1, x2, x3)
+
+        # test exceptions
+        assert_raises(ValueError, herm.hermvalnd, (x1, x2, x3[:2]), self.c3d)
+
+        # test values
+        tgt = y1 * y2 * y3
+        res = herm.hermvalnd(pts, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        # test shape
+        z = np.ones((2, 3))
+        res = herm.hermvalnd((z, z, z), self.c3d)
+        assert_(res.shape == (2, 3))
+
+        # test 1D fallback
+        assert_almost_equal(herm.hermvalnd((x1,), self.c1d), y1)
+
     def test_hermgrid2d(self):
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y

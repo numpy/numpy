@@ -169,6 +169,9 @@ _any_to_object_auxdata_clone(NpyAuxData *auxdata)
     _any_to_object_auxdata *data = (_any_to_object_auxdata *)auxdata;
 
     _any_to_object_auxdata *res = PyMem_Malloc(sizeof(_any_to_object_auxdata));
+    if (res == NULL) {
+        return NULL;
+    }
 
     res->base = data->base;
     res->getitem = data->getitem;
@@ -348,6 +351,7 @@ object_to_any_get_loop(
     /* NOTE: auxdata is only really necessary to flag `move_references` */
     _object_to_any_auxdata *data = PyMem_Malloc(sizeof(*data));
     if (data == NULL) {
+        PyErr_NoMemory();
         return -1;
     }
     data->base.free = &_object_to_any_auxdata_free;
@@ -821,14 +825,8 @@ _strided_to_strided_datetime_cast(
     while (N > 0) {
         memcpy(&dt, src, sizeof(dt));
 
-        if (dt != NPY_DATETIME_NAT) {
-            /* Apply the scaling */
-            if (dt < 0) {
-                dt = (dt * num - (denom - 1)) / denom;
-            }
-            else {
-                dt = dt * num / denom;
-            }
+        if (_datetime_scale_with_overflow_check(&dt, num, denom, "datetime64") < 0) {
+            return -1;
         }
 
         memcpy(dst, &dt, sizeof(dt));
@@ -857,14 +855,8 @@ _aligned_strided_to_strided_datetime_cast(
     while (N > 0) {
         dt = *(npy_int64 *)src;
 
-        if (dt != NPY_DATETIME_NAT) {
-            /* Apply the scaling */
-            if (dt < 0) {
-                dt = (dt * num - (denom - 1)) / denom;
-            }
-            else {
-                dt = dt * num / denom;
-            }
+        if (_datetime_scale_with_overflow_check(&dt, num, denom, "datetime64") < 0) {
+            return -1;
         }
 
         *(npy_int64 *)dst = dt;
@@ -1588,6 +1580,7 @@ static NpyAuxData *_n_to_n_data_clone(NpyAuxData *data)
 
     if (NPY_cast_info_copy(&newdata->wrapped, &d->wrapped) < 0) {
         _n_to_n_data_free((NpyAuxData *)newdata);
+        return NULL;
     }
 
     return (NpyAuxData *)newdata;

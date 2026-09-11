@@ -22,12 +22,23 @@ type _1D = tuple[int]
 
 integer_types: Final[tuple[type[int], type[np.integer]]] = ...
 
+# keep in sync with `ifftshift` below
+@overload
+def fftshift[ShapeT: _Shape, DTypeT: np.dtype](
+    x: np.ndarray[ShapeT, DTypeT],
+    axes: _ShapeLike | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload
 def fftshift[ScalarT: np.generic](x: _ArrayLike[ScalarT], axes: _ShapeLike | None = None) -> NDArray[ScalarT]: ...
 @overload
 def fftshift(x: ArrayLike, axes: _ShapeLike | None = None) -> NDArray[Any]: ...
 
-#
+# keep in sync with `fftshift` above
+@overload
+def ifftshift[ShapeT: _Shape, DTypeT: np.dtype](
+    x: np.ndarray[ShapeT, DTypeT],
+    axes: _ShapeLike | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload
 def ifftshift[ScalarT: np.generic](x: _ArrayLike[ScalarT], axes: _ShapeLike | None = None) -> NDArray[ScalarT]: ...
 @overload

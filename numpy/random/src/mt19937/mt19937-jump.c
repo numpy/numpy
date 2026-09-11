@@ -1,3 +1,4 @@
+#include <Python.h>
 #include "mt19937-jump.h"
 #include "mt19937.h"
 
@@ -66,7 +67,7 @@ void horner1(unsigned long *pf, mt19937_state *state) {
   int i = MEXP - 1;
   mt19937_state *temp;
 
-  temp = (mt19937_state *)calloc(1, sizeof(mt19937_state));
+  temp = (mt19937_state *)PyMem_RawCalloc(1, sizeof(mt19937_state));
 
   while (get_coef(pf, i) == 0)
     i--;
@@ -92,14 +93,14 @@ void horner1(unsigned long *pf, mt19937_state *state) {
     ;
 
   copy_state(state, temp);
-  free(temp);
+  PyMem_RawFree(temp);
 }
 
 void mt19937_jump_state(mt19937_state *state) {
   unsigned long *pf;
   int i;
 
-  pf = (unsigned long *)calloc(P_SIZE, sizeof(unsigned long));
+  pf = (unsigned long *)PyMem_RawCalloc(P_SIZE, sizeof(unsigned long));
   for (i = 0; i<P_SIZE; i++) {
     pf[i] = poly_coef[i];
   }
@@ -110,5 +111,5 @@ void mt19937_jump_state(mt19937_state *state) {
 
   horner1(pf, state);
 
-  free(pf);
+  PyMem_RawFree(pf);
 }

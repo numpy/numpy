@@ -34,17 +34,33 @@ import re
 import sys
 import warnings
 from argparse import ArgumentParser
+from typing import ClassVar
 
 import docutils.core
 from docutils.parsers.rst import directives
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
+# Enable specific Sphinx directives (Sphinx 8+)
+# Make seealso more lenient for numpydoc content (Sphinx 8+)
+from docutils.parsers.rst.directives.misc import Directive
 from numpydoc.docscrape_sphinx import get_doc_object
 
-# Enable specific Sphinx directives
-from sphinx.directives.other import Only, SeeAlso
 
-directives.register_directive('seealso', SeeAlso)
+class LenientSeeAlso(Directive):
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 1
+    final_argument_whitespace = True
+    option_spec: ClassVar[dict] = {}
+
+    def run(self):
+        return []
+
+
+directives.register_directive('seealso', LenientSeeAlso)
+
+from sphinx.directives.other import Only
+
 directives.register_directive('only', Only)
 
 
@@ -460,7 +476,7 @@ def validate_rst_syntax(text, name, dots=True):
     if not success:
         output += "    " + "-" * 72 + "\n"
         for lineno, line in enumerate(text.splitlines()):
-            output += "    %-4d    %s\n" % (lineno + 1, line)
+            output += f"    {lineno + 1:<4}    {line}\n"
         output += "    " + "-" * 72 + "\n\n"
 
     if dots:
@@ -522,8 +538,8 @@ def check_rest(module, names, dots=True):
 
         m = re.search("([\x00-\x09\x0b-\x1f])", text)
         if m:
-            msg = ("Docstring contains a non-printable character %r! "
-                   "Maybe forgot r\"\"\"?" % (m.group(1),))
+            msg = (f"Docstring contains a non-printable character {m.group(1)!r}! "
+                   "Maybe forgot r\"\"\"?")
             results.append((full_name, False, msg))
             continue
 

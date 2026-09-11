@@ -1,0 +1,4 @@
+np.positive no longer raises _UfuncNoLoopError when called on boolean arrays
+---------------------------------------------------------------------------- 
+``np.positive`` and the unary ``+`` operator now register a loop for boolean arrays.
+``np.positive(np.array([True, False]))`` now returns ``[True, False]``

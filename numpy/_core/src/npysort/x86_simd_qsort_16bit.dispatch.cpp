@@ -1,6 +1,7 @@
 #include "x86_simd_qsort.hpp"
 #ifndef __CYGWIN__
 
+#include <cassert>
 #include "x86-simd-sort/src/x86simdsort-static-incl.h"
 /*
  * MSVC doesn't set the macro __AVX512VBMI2__ which is required for the 16-bit
@@ -37,20 +38,23 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(int16_t *arr, npy_intp num, npy_
 /*
  * QSort dispatch functions:
  */
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, npy_intp size, bool reverse)
 {
+    assert(!reverse); (void)reverse;
 #if defined(NPY_HAVE_AVX512_SPR)
     x86simdsortStatic::qsort(reinterpret_cast<_Float16*>(arr), size, true);
 #else
     avx512_qsort_fp16(reinterpret_cast<uint16_t*>(arr), size, true, false);
 #endif
 }
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint16_t *arr, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint16_t *arr, npy_intp size, bool reverse)
 {
+    assert(!reverse); (void)reverse;
     x86simdsortStatic::qsort(arr, size);
 }
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, npy_intp size, bool reverse)
 {
+    assert(!reverse); (void)reverse;
     x86simdsortStatic::qsort(arr, size);
 }
 

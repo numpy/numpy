@@ -1,0 +1,10 @@
+NumPy DTypes are heap-allocated and can use ``PyType_FromMetaType``
+-------------------------------------------------------------------
+Most of NumPy DType classes, except ``np.dtype`` itself, are now
+heap-allocated types and downstream DTypes can now create their own
+DType classes using ``PyType_FromMetaType``.
+
+DType authors using ``PyArrayInitDTypeMeta_FromSpec`` may notice this if the
+DType has incorrect reference counting, since DTypes are no longer immortal.
+In theory this also means that you cannot subclass abstract DTypes anymore
+unless converting your DType to a heap-allocated type itself.

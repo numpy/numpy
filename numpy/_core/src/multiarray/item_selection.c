@@ -17,6 +17,7 @@
 
 
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "common.h"
 #include "dtype_transfer.h"
 #include "dtypemeta.h"
@@ -34,6 +35,8 @@
 #include "arraytypes.h"
 #include "array_coercion.h"
 #include "simd/simd.h"
+
+#include "stringdtype/dtype.h"
 
 static NPY_GCC_OPT_3 inline int
 npy_fasttake_impl(
@@ -437,6 +440,9 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         Py_INCREF(PyArray_DESCR(self));
         obj = (PyArrayObject *)PyArray_FromArray(self,
                                                  PyArray_DESCR(self), flags);
+        if (obj == NULL) {
+            goto fail;
+        }
         copied = 1;
         assert(self != obj);
         self = obj;
@@ -452,9 +458,10 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         NPY_BEGIN_THREADS_THRESHOLDED(ni);
     }
     else {
-        PyArray_Descr *dtype = PyArray_DESCR(self);
         if (PyArray_GetDTypeTransferFunction(
-                PyArray_ISALIGNED(self), itemsize, itemsize, dtype, dtype, 0,
+                PyArray_ISALIGNED(self) && PyArray_ISALIGNED(values),
+                itemsize, itemsize,
+                PyArray_DESCR(values), PyArray_DESCR(self), 0,
                 &cast_info, &flags) < 0) {
             goto fail;
         }
@@ -730,6 +737,9 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         dtype = PyArray_DESCR(self);
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_FromArray(self, dtype, flags);
+        if (obj == NULL) {
+            goto fail;
+        }
         if (obj != self) {
             copied = 1;
         }
@@ -747,7 +757,9 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 
         NPY_cast_info_init(&cast_info);
         if (PyArray_GetDTypeTransferFunction(
-                PyArray_ISALIGNED(self), itemsize, itemsize, dtype, dtype, 0,
+                PyArray_ISALIGNED(self) && PyArray_ISALIGNED(values),
+                itemsize, itemsize,
+                PyArray_DESCR(values), PyArray_DESCR(self), 0,
                 &cast_info, &flags) < 0) {
             goto fail;
         }
@@ -770,14 +782,14 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                 }
             }
         }
+        NPY_END_THREADS;
         NPY_cast_info_xfree(&cast_info);
     }
     else {
         NPY_BEGIN_THREADS;
         npy_fastputmask(dest, src, mask_data, ni, nv, itemsize);
+        NPY_END_THREADS;
     }
-
-    NPY_END_THREADS;
 
     Py_XDECREF(values);
     Py_XDECREF(mask);
@@ -1016,7 +1028,10 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyArrayObject **mps, *ap;
     PyArrayMultiIterObject *multi = NULL;
     npy_intp mi;
-    NPY_cast_info cast_info = {.func = NULL};
+    /* PyArray_MultiIterFromObjects below bounds n by NPY_MAXARGS */
+    NPY_cast_info cast_infos[NPY_MAXARGS];
+    int needs_transfer = 0;
+    NPY_BEGIN_THREADS_DEF;
     ap = NULL;
 
     /*
@@ -1110,23 +1125,35 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     npy_intp transfer_strides[2] = {elsize, elsize};
     npy_intp one = 1;
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
-    if (PyDataType_REFCHK(dtype)) {
-        int is_aligned = IsUintAligned(obj);
+    needs_transfer = PyDataType_REFCHK(dtype);
+    if (needs_transfer) {
         PyArray_Descr *obj_dtype = PyArray_DESCR(obj);
-        PyArray_GetDTypeTransferFunction(
-                    is_aligned,
-                    dtype->elsize,
-                    obj_dtype->elsize,
-                    dtype,
-                    obj_dtype, 0, &cast_info,
-                    &transfer_flags);
+        for (i = 0; i < n; i++) {
+            NPY_cast_info_init(&cast_infos[i]);
+        }
+        for (i = 0; i < n; i++) {
+            int is_aligned = IsUintAligned(obj) && IsUintAligned(mps[i]);
+            if (PyArray_GetDTypeTransferFunction(
+                        is_aligned,
+                        PyArray_DESCR(mps[i])->elsize,
+                        obj_dtype->elsize,
+                        PyArray_DESCR(mps[i]),
+                        obj_dtype, 0, &cast_infos[i],
+                        &transfer_flags) < 0) {
+                goto fail;
+            }
+        }
     }
 
+    if (!(transfer_flags & NPY_METH_REQUIRES_PYAPI)) {
+        NPY_BEGIN_THREADS_THRESHOLDED(multi->size);
+    }
     while (PyArray_MultiIter_NOTDONE(multi)) {
         mi = *((npy_intp *)PyArray_MultiIter_DATA(multi, n));
         if (mi < 0 || mi >= n) {
             switch(clipmode) {
             case NPY_RAISE:
+                NPY_END_THREADS;
                 PyErr_SetString(PyExc_ValueError,
                         "invalid entry in choice "\
                         "array");
@@ -1153,22 +1180,28 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                 break;
             }
         }
-        if (cast_info.func == NULL) {
+        if (!needs_transfer) {
             /* We ensure memory doesn't overlap, so can use memcpy */
             memcpy(ret_data, PyArray_MultiIter_DATA(multi, mi), elsize);
         }
         else {
             char *args[2] = {PyArray_MultiIter_DATA(multi, mi), ret_data};
-            if (cast_info.func(&cast_info.context, args, &one,
-                                transfer_strides, cast_info.auxdata) < 0) {
+            if (cast_infos[mi].func(&cast_infos[mi].context, args, &one,
+                                    transfer_strides,
+                                    cast_infos[mi].auxdata) < 0) {
                 goto fail;
             }
         }
         ret_data += elsize;
         PyArray_MultiIter_NEXT(multi);
     }
+    NPY_END_THREADS;
 
-    NPY_cast_info_xfree(&cast_info);
+    if (needs_transfer) {
+        for (i = 0; i < n; i++) {
+            NPY_cast_info_xfree(&cast_infos[i]);
+        }
+    }
     Py_DECREF(multi);
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
@@ -1186,7 +1219,12 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     return (PyObject *)obj;
 
  fail:
-    NPY_cast_info_xfree(&cast_info);
+    NPY_END_THREADS;
+    if (needs_transfer) {
+        for (i = 0; i < n; i++) {
+            NPY_cast_info_xfree(&cast_infos[i]);
+        }
+    }
     Py_XDECREF(multi);
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
@@ -1208,9 +1246,9 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
  */
 static int
 _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
+              npy_intp const *kth, npy_intp nkth,
               PyArrayMethod_StridedLoop *strided_loop, PyArrayMethod_Context *context,
-              NpyAuxData *auxdata, NPY_ARRAYMETHOD_FLAGS *method_flags,
-              PyArray_PartitionFunc *part, npy_intp const *kth, npy_intp nkth)
+              NpyAuxData *auxdata, NPY_ARRAYMETHOD_FLAGS *method_flags)
 {
     npy_intp N = PyArray_DIM(op, axis);
     npy_intp elsize = (npy_intp)PyArray_ITEMSIZE(op);
@@ -1331,11 +1369,11 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
          * sort or part, the unswapping is still done before returning.
          */
 
-        if (part == NULL) {
+        if (kth == NULL) {
             if (strided_loop != NULL) {
                 char *const data[2] = {bufptr, bufptr};
                 npy_intp strides[2] = {elsize, elsize};
-                ret = strided_loop(context, data, &N, strides, NULL);
+                ret = strided_loop(context, data, &N, strides, auxdata);
             }
             else {
                 ret = sort(bufptr, N, op);
@@ -1348,17 +1386,15 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
             }
         }
         else {
-            npy_intp pivots[NPY_MAX_PIVOT_STACK];
-            npy_intp npiv = 0;
-            npy_intp i;
-            for (i = 0; i < nkth; ++i) {
-                ret = part(bufptr, N, kth[i], pivots, &npiv, nkth, op);
-                if (needs_api && PyErr_Occurred()) {
-                    ret = -1;
-                }
-                if (ret < 0) {
-                    goto fail;
-                }
+            char *const data[3] = {bufptr, (char *)kth, bufptr};
+            npy_intp strides[3] = {elsize, sizeof(npy_intp), elsize};
+            npy_intp dimensions[2] = {N, nkth};
+            ret = strided_loop(context, data, dimensions, strides, auxdata);
+            if (needs_api && PyErr_Occurred()) {
+                ret = -1;
+            }
+            if (ret < 0) {
+                goto fail;
             }
         }
 
@@ -1407,9 +1443,9 @@ fail:
 
 static PyObject*
 _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
+                npy_intp const *kth, npy_intp nkth,
                  PyArrayMethod_StridedLoop *strided_loop, PyArrayMethod_Context *context,
-                 NpyAuxData *auxdata, NPY_ARRAYMETHOD_FLAGS *method_flags,
-                 PyArray_ArgPartitionFunc *argpart, npy_intp const *kth, npy_intp nkth)
+                 NpyAuxData *auxdata, NPY_ARRAYMETHOD_FLAGS *method_flags)
 {
     npy_intp N = PyArray_DIM(op, axis);
     npy_intp elsize = (npy_intp)PyArray_ITEMSIZE(op);
@@ -1552,11 +1588,11 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
             *iptr++ = i;
         }
 
-        if (argpart == NULL) {
+        if (kth == NULL) {
             if (strided_loop != NULL) {
                 char *const data[2] = {valptr, (char *)idxptr};
                 npy_intp strides[2] = {elsize, sizeof(npy_intp)};
-                ret = strided_loop(context, data, &N, strides, NULL);
+                ret = strided_loop(context, data, &N, strides, auxdata);
             }
             else {
                 ret = argsort(valptr, idxptr, N, op);
@@ -1570,18 +1606,15 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
             }
         }
         else {
-            npy_intp pivots[NPY_MAX_PIVOT_STACK];
-            npy_intp npiv = 0;
-
-            for (i = 0; i < nkth; ++i) {
-                ret = argpart(valptr, idxptr, N, kth[i], pivots, &npiv, nkth, op);
-                /* Object comparisons may raise an exception */
-                if (needs_api && PyErr_Occurred()) {
-                    ret = -1;
-                }
-                if (ret < 0) {
-                    goto fail;
-                }
+            char *const data[3] = {valptr, (char *)kth, (char *)idxptr};
+            npy_intp strides[3] = {elsize, sizeof(npy_intp), sizeof(npy_intp)};
+            npy_intp dimensions[2] = {N, nkth};
+            ret = strided_loop(context, data, dimensions, strides, auxdata);
+            if (needs_api && PyErr_Occurred()) {
+                ret = -1;
+            }
+            if (ret < 0) {
+                goto fail;
             }
         }
 
@@ -1694,11 +1727,17 @@ NPY_NO_EXPORT int
 PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
                   NPY_SELECTKIND which)
 {
+    PyArrayMethodObject *method = NULL;
+    PyArrayMethod_StridedLoop *strided_loop = NULL;
+    PyArrayMethod_PartitionParameters part_params = {which};
+    PyArrayMethod_Context context = {0};
+    PyArray_Descr *loop_descrs[3];
+    NpyAuxData *auxdata = NULL;
+    NPY_ARRAYMETHOD_FLAGS method_flags = 0;
+
     PyArrayObject *kthrvl;
-    PyArray_PartitionFunc *part;
-    PyArray_SortFunc *sort;
     int n = PyArray_NDIM(op);
-    int ret;
+    int ret = -1;
 
     if (check_and_adjust_axis(&axis, n) < 0) {
         return -1;
@@ -1712,18 +1751,6 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         PyErr_SetString(PyExc_ValueError, "not a valid partition kind");
         return -1;
     }
-    part = get_partition_func(PyArray_TYPE(op), which);
-    if (part == NULL) {
-        /* Use sorting, slower but equivalent */
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
-            sort = npy_quicksort;
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                            "type does not have compare function");
-            return -1;
-        }
-    }
 
     /* Process ktharray even if using sorting to do bounds checking */
     kthrvl = partition_prep_kth_array(ktharray, op, axis);
@@ -1731,11 +1758,52 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         return -1;
     }
 
-    ret = _new_sortlike(op, axis, sort, NULL, NULL, NULL, NULL, part,
-                        PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl));
+    method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->part_meth;
+    if (method == NULL) {
+        /* Use sorting, slower but equivalent */
+        Py_DECREF(kthrvl);
+        return PyArray_Sort(op, axis, (NPY_SORTKIND)which);
+    }
 
+    PyArray_Descr *descr = PyArray_DESCR(op);
+    PyArray_Descr *kdescr = PyArray_DESCR(kthrvl);
+    PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
+    PyArray_DTypeMeta *kdt = NPY_DTYPE(kdescr);
+
+    PyArray_DTypeMeta *dtypes[3] = {dt, kdt, dt};
+    PyArray_Descr *given_descrs[3] = {descr, kdescr, descr};
+    // Partition cannot be a view, so view offset is unused
+    npy_intp view_offset = NPY_MIN_INTP;
+
+    if (method->resolve_descriptors(
+            method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
+        goto fail;
+    }
+    context.descriptors = loop_descrs;
+    context.parameters = &part_params;
+    context.method = method;
+
+    // Arrays are always contiguous for partitioning
+    npy_intp strides[3] = {
+        loop_descrs[0]->elsize, loop_descrs[1]->elsize, loop_descrs[2]->elsize};
+
+    if (method->get_strided_loop(
+            &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
+        goto fail;
+    }
+
+    ret = _new_sortlike(op, axis, NULL, PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl),
+        strided_loop, &context, auxdata, &method_flags);
+
+fail:
     Py_DECREF(kthrvl);
 
+    if (context.descriptors != NULL) {
+        NPY_AUXDATA_FREE(auxdata);
+        Py_DECREF(context.descriptors[0]);
+        Py_DECREF(context.descriptors[1]);
+        Py_DECREF(context.descriptors[2]);
+    }
     return ret;
 }
 
@@ -1747,10 +1815,17 @@ NPY_NO_EXPORT PyObject *
 PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
                      NPY_SELECTKIND which)
 {
+    PyArrayMethodObject *method = NULL;
+    PyArrayMethod_StridedLoop *strided_loop = NULL;
+    PyArrayMethod_PartitionParameters part_params = {which};
+    PyArrayMethod_Context context = {0};
+    PyArray_Descr *loop_descrs[3];
+    NpyAuxData *auxdata = NULL;
+    NPY_ARRAYMETHOD_FLAGS method_flags = 0;
+
     PyArrayObject *op2, *kthrvl;
-    PyArray_ArgPartitionFunc *argpart;
-    PyArray_ArgSortFunc *argsort;
-    PyObject *ret;
+    PyArray_Descr *odescr = NULL;
+    PyObject *ret = NULL;
 
     /*
      * As a C-exported function, enum NPY_SELECTKIND loses its enum property
@@ -1760,19 +1835,6 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         PyErr_SetString(PyExc_ValueError,
                         "not a valid partition kind");
         return NULL;
-    }
-
-    argpart = get_argpartition_func(PyArray_TYPE(op), which);
-    if (argpart == NULL) {
-        /* Use sorting, slower but equivalent */
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
-            argsort = npy_aquicksort;
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                            "type does not have compare function");
-            return NULL;
-        }
     }
 
     op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
@@ -1787,12 +1849,63 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         return NULL;
     }
 
-    ret = _new_argsortlike(op2, axis, argsort, NULL, NULL, NULL, NULL, argpart,
-                           PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl));
+    method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op2)))->argpart_meth;
+    if (method == NULL) {
+        /* Use sorting, slower but equivalent */
+        Py_DECREF(kthrvl);
+        ret = PyArray_ArgSort(op2, axis, (NPY_SORTKIND)which);
+        Py_DECREF(op2);
+        return ret;
+    }
 
+    PyArray_Descr *descr = PyArray_DESCR(op2);
+    PyArray_Descr *kdescr = PyArray_DESCR(kthrvl);
+    odescr = PyArray_DescrFromType(NPY_INTP);
+    if (odescr == NULL) {
+        Py_DECREF(kthrvl);
+        Py_DECREF(op2);
+        return NULL;
+    }
+    PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
+    PyArray_DTypeMeta *kdt = NPY_DTYPE(kdescr);
+    PyArray_DTypeMeta *odt = NPY_DTYPE(odescr);
+
+    PyArray_DTypeMeta *dtypes[3] = { dt, kdt, odt };
+    PyArray_Descr *given_descrs[3] = { descr, kdescr, odescr };
+    // Partition cannot be a view, so view offset is unused
+    npy_intp view_offset = NPY_MIN_INTP;
+
+    if (method->resolve_descriptors(
+            method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
+        goto fail;
+    }
+    context.descriptors = loop_descrs;
+    context.parameters = &part_params;
+    context.method = method;
+
+    // Arrays are always contiguous for partitioning
+    npy_intp strides[3] = {
+        loop_descrs[0]->elsize, loop_descrs[1]->elsize, loop_descrs[2]->elsize};
+
+    if (method->get_strided_loop(
+            &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
+        goto fail;
+    }
+
+    ret = _new_argsortlike(op2, axis, NULL, PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl),
+        strided_loop, &context, auxdata, &method_flags);
+
+fail:
     Py_DECREF(kthrvl);
     Py_DECREF(op2);
+    Py_XDECREF(odescr);
 
+    if (context.descriptors != NULL) {
+        NPY_AUXDATA_FREE(auxdata);
+        Py_DECREF(context.descriptors[0]);
+        Py_DECREF(context.descriptors[1]);
+        Py_DECREF(context.descriptors[2]);
+    }
     return ret;
 }
 
@@ -1828,13 +1941,13 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 "need sequence of keys with len > 0 in lexsort");
         return NULL;
     }
-    mps = (PyArrayObject **) PyArray_malloc(n * sizeof(PyArrayObject *));
+    mps = (PyArrayObject **) PyMem_RawMalloc(n * sizeof(PyArrayObject *));
     if (mps == NULL) {
         return PyErr_NoMemory();
     }
-    its = (PyArrayIterObject **) PyArray_malloc(n * sizeof(PyArrayIterObject *));
+    its = (PyArrayIterObject **) PyMem_RawMalloc(n * sizeof(PyArrayIterObject *));
     if (its == NULL) {
-        PyArray_free(mps);
+        PyMem_RawFree(mps);
         return PyErr_NoMemory();
     }
     for (i = 0; i < n; i++) {
@@ -1960,7 +2073,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             PyDataMem_FREE(valbuffer);
             goto fail;
         }
-        swaps = malloc(NPY_LIKELY(n > 0) ? n * sizeof(int) : 1);
+        swaps = PyMem_RawMalloc(NPY_LIKELY(n > 0) ? n * sizeof(int) : 1);
         if (swaps == NULL) {
             PyDataMem_FREE(valbuffer);
             PyDataMem_FREE(indbuffer);
@@ -1993,7 +2106,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                             && PyErr_Occurred())) {
                     PyDataMem_FREE(valbuffer);
                     PyDataMem_FREE(indbuffer);
-                    free(swaps);
+                    PyMem_RawFree(swaps);
                     goto fail;
                 }
                 PyArray_ITER_NEXT(its[j]);
@@ -2004,7 +2117,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         }
         PyDataMem_FREE(valbuffer);
         PyDataMem_FREE(indbuffer);
-        free(swaps);
+        PyMem_RawFree(swaps);
     }
     else {
         while (size--) {
@@ -2039,8 +2152,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         Py_XDECREF(its[i]);
     }
     Py_XDECREF(rit);
-    PyArray_free(mps);
-    PyArray_free(its);
+    PyMem_RawFree(mps);
+    PyMem_RawFree(its);
     return (PyObject *)ret;
 
  fail:
@@ -2055,9 +2168,19 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         Py_XDECREF(mps[i]);
         Py_XDECREF(its[i]);
     }
-    PyArray_free(mps);
-    PyArray_free(its);
+    PyMem_RawFree(mps);
+    PyMem_RawFree(its);
     return NULL;
+}
+
+
+static int
+binsearch_compare_default(const void *a, const void *b,
+                          PyArrayObject *arr_a, PyArrayObject *NPY_UNUSED(arr_b))
+{
+    PyArray_CompareFunc *compare =
+            PyDataType_GetArrFuncs(PyArray_DESCR(arr_a))->compare;
+    return compare(a, b, arr_a);
 }
 
 
@@ -2193,21 +2316,36 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         goto fail;
     }
 
+    /*
+     * TODO: add a way to register per-dtype searchsorted loops and move all this
+     * stringdtype-specific code into a loop defined for StringDType
+     */
+    int error = 0;
+    PyArray_Descr *cmp_descrs[2] = {PyArray_DESCR(ap1), PyArray_DESCR(ap2)};
+    npy_string_allocator *allocators[2] = {NULL, NULL};
+
+    PyArray_BinSearchCompareFunc *cmp_func = &binsearch_compare_default;
+    if (NPY_DTYPE(PyArray_DESCR(ap2)) == &PyArray_StringDType) {
+        cmp_func = &stringdtype_binsearch_compare;
+    }
+
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
+
+    if (NPY_DTYPE(PyArray_DESCR(ap2)) == &PyArray_StringDType) {
+        NpyString_acquire_allocators(2, cmp_descrs, allocators);
+    }
+
     if (ap3 == NULL) {
         /* do regular binsearch */
-        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
         binsearch((const char *)PyArray_DATA(ap1),
                   (const char *)PyArray_DATA(ap2),
                   (char *)PyArray_DATA(ret),
                   PyArray_SIZE(ap1), PyArray_SIZE(ap2),
                   PyArray_STRIDES(ap1)[0], PyArray_ITEMSIZE(ap2),
-                  NPY_SIZEOF_INTP, ap2);
-        NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+                  NPY_SIZEOF_INTP, ap2, ap1, cmp_func);
     }
     else {
         /* do binsearch with a sorter array */
-        int error = 0;
-        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
         error = argbinsearch((const char *)PyArray_DATA(ap1),
                              (const char *)PyArray_DATA(ap2),
                              (const char *)PyArray_DATA(sorter),
@@ -2215,13 +2353,21 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                              PyArray_SIZE(ap1), PyArray_SIZE(ap2),
                              PyArray_STRIDES(ap1)[0],
                              PyArray_ITEMSIZE(ap2),
-                             PyArray_STRIDES(sorter)[0], NPY_SIZEOF_INTP, ap2);
-        NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
-        if (error < 0) {
-            PyErr_SetString(PyExc_ValueError,
-                        "Sorter index out of range.");
-            goto fail;
-        }
+                             PyArray_STRIDES(sorter)[0], NPY_SIZEOF_INTP, ap2,
+                             ap1, cmp_func);
+    }
+
+    if (NPY_DTYPE(PyArray_DESCR(ap2)) == &PyArray_StringDType) {
+        NpyString_release_allocators(2, allocators);
+    }
+
+    NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+
+    if (error < 0) {
+        PyErr_SetString(PyExc_ValueError, "Sorter index out of range.");
+        goto fail;
+    }
+    if (ap3 != NULL) {
         Py_DECREF(ap3);
         Py_DECREF(sorter);
     }
@@ -2268,10 +2414,11 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     }
 
     /* Handle negative axes with standard Python indexing rules */
-    if (check_and_adjust_axis_msg(&axis1, ndim, npy_interned_str.axis1) < 0) {
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
+    if (check_and_adjust_axis_msg(&axis1, ndim, interned_str->axis1) < 0) {
         return NULL;
     }
-    if (check_and_adjust_axis_msg(&axis2, ndim, npy_interned_str.axis2) < 0) {
+    if (check_and_adjust_axis_msg(&axis2, ndim, interned_str->axis2) < 0) {
         return NULL;
     }
     if (axis1 == axis2) {
@@ -3138,11 +3285,6 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
 }
 
 
-/* Table of generic sort functions for use in PyArray_SortEx*/
-static PyArray_SortFunc* const generic_sort_table[] = {npy_quicksort,
-                                                       npy_heapsort,
-                                                       npy_timsort};
-
 /*NUMPY_API
  * Sort an array in-place with extended parameters
  */
@@ -3151,7 +3293,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
     PyArrayMethodObject *sort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
-    PyArrayMethod_SortParameters sort_params = {.flags = flags};
+    PyArrayMethod_SortParameters sort_params;
     PyArrayMethod_Context context = {0};
     PyArray_Descr *loop_descrs[2];
     NpyAuxData *auxdata = NULL;
@@ -3172,6 +3314,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
     // Zero the NPY_HEAPSORT bit, maps NPY_HEAPSORT to NPY_QUICKSORT
     flags &= ~_NPY_SORT_HEAPSORT;
+    sort_params = (PyArrayMethod_SortParameters){.flags = flags};
 
     // Look for type specific functions
     sort_method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->sort_meth;
@@ -3186,8 +3329,6 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
         if (sort_method->resolve_descriptors(
             sort_method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "unable to resolve descriptors for sort");
             return -1;
         }
         context.descriptors = loop_descrs;
@@ -3225,10 +3366,10 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             }
             switch (flags) {
                 case NPY_SORT_DEFAULT:
-                    sort = generic_sort_table[NPY_QUICKSORT];
+                    sort = npy_quicksort;
                     break;
                 case NPY_SORT_STABLE:
-                    sort = generic_sort_table[NPY_STABLESORT];
+                    sort = npy_timsort;
                     break;
                 default:
                     break;
@@ -3242,8 +3383,8 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         }
     }
 
-    ret = _new_sortlike(op, axis, sort, strided_loop,
-                        &context, auxdata, &method_flags, NULL, NULL, 0);
+    ret = _new_sortlike(op, axis, sort, NULL, 0,
+                        strided_loop, &context, auxdata, &method_flags);
 
 fail:
     if (sort_method != NULL) {
@@ -3254,10 +3395,6 @@ fail:
     return ret;
 }
 
-/* Table of generic argsort function for use by PyArray_ArgSortEx */
-static PyArray_ArgSortFunc* const generic_argsort_table[] = {npy_aquicksort,
-                                                             npy_aheapsort,
-                                                             npy_atimsort};
 
 /*NUMPY_API
  * ArgSort an array with extended parameters
@@ -3269,7 +3406,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyObject *ret;
     PyArrayMethodObject *argsort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
-    PyArrayMethod_SortParameters sort_params = {.flags = flags};
+    PyArrayMethod_SortParameters sort_params;
     PyArrayMethod_Context context = {0};
     PyArray_Descr *loop_descrs[2];
     NpyAuxData *auxdata = NULL;
@@ -3280,6 +3417,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
     // Zero the NPY_HEAPSORT bit, maps NPY_HEAPSORT to NPY_QUICKSORT
     flags &= ~_NPY_SORT_HEAPSORT;
+    sort_params = (PyArrayMethod_SortParameters){.flags = flags};
 
     // Look for type specific functions
     argsort_method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->argsort_meth;
@@ -3298,8 +3436,6 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             argsort_method, dtypes, given_descrs, loop_descrs, &view_offset);
         Py_DECREF(odescr);
         if (resolve_ret < 0) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "unable to resolve descriptors for argsort");
             return NULL;
         }
         context.descriptors = loop_descrs;
@@ -3337,10 +3473,10 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             }
             switch (flags) {
                 case NPY_SORT_DEFAULT:
-                    argsort = generic_argsort_table[NPY_QUICKSORT];
+                    argsort = npy_aquicksort;
                     break;
                 case NPY_SORT_STABLE:
-                    argsort = generic_argsort_table[NPY_STABLESORT];
+                    argsort = npy_atimsort;
                     break;
                 default:
                     break;
@@ -3360,8 +3496,8 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         goto fail;
     }
 
-    ret = _new_argsortlike(op2, axis, argsort, strided_loop,
-                           &context, auxdata, &method_flags, NULL, NULL, 0);
+    ret = _new_argsortlike(op2, axis, argsort, NULL, 0,
+                           strided_loop, &context, auxdata, &method_flags);
     Py_DECREF(op2);
 
 fail:

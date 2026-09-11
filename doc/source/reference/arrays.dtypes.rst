@@ -270,16 +270,23 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    ``'L'``             unsigned long integer
    ``'q'``             (signed) long long integer
    ``'Q'``             unsigned long long integer
+   ``'n'``             signed :class:`intp`
+   ``'N'``             unsigned :class:`uintp`
+   ``'p'``             signed integer large enough for pointers
+   ``'P'``             unsigned integer large enough for pointers
+   ``'e'``             half precision
    ``'f'``             single precision
    ``'F'``             complex single precision
    ``'d'``             double precision
    ``'D'``             complex double precision
    ``'g'``             long precision
    ``'G'``             complex long double precision
-   ``'O'``             (Python) objects
    ``'S'``             zero-terminated bytes (not recommended)
    ``'U'``             Unicode string
    ``'V'``             raw data (:class:`void`)
+   ``'O'``             (Python) objects
+   ``'M'``             :class:`datetime64`
+   ``'m'``             :class:`timedelta64`
    ==================  ========================
 
    .. admonition:: Example

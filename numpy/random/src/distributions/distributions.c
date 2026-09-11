@@ -7,6 +7,7 @@
 #endif
 
 #include <assert.h>
+#include <stdlib.h>
 
 /* Inline generators for internal use */
 static inline uint32_t next_uint32(bitgen_t *bitgen_state) {
@@ -19,6 +20,13 @@ static inline uint64_t next_uint64(bitgen_t *bitgen_state) {
 static inline float next_float(bitgen_t *bitgen_state) {
   return (next_uint32(bitgen_state) >> 8) * (1.0f / 16777216.0f);
 }
+
+/* Multiplying by +/-1.0 is exact in IEEE-754 for every finite value, including
+ * the 0.0 -> -0.0 case, so indexing these tables with the random sign bit
+ * reproduces `if (sign) x = -x;` bit for bit while avoiding a branch on a
+ * uniformly distributed (hence unpredictable) bit. */
+static const double ziggurat_sign_double[2] = {1.0, -1.0};
+static const float ziggurat_sign_float[2] = {1.0f, -1.0f};
 
 /* Random generators for external use */
 float random_standard_uniform_f(bitgen_t *bitgen_state) {
@@ -136,7 +144,6 @@ void random_standard_exponential_inv_fill_f(bitgen_t * bitgen_state, npy_intp cn
 
 double random_standard_normal(bitgen_t *bitgen_state) {
   uint64_t r;
-  int sign;
   uint64_t rabs;
   int idx;
   double x, xx, yy;
@@ -145,11 +152,8 @@ double random_standard_normal(bitgen_t *bitgen_state) {
     r = next_uint64(bitgen_state);
     idx = r & 0xff;
     r >>= 8;
-    sign = r & 0x1;
     rabs = (r >> 1) & 0x000fffffffffffff;
-    x = rabs * wi_double[idx];
-    if (sign & 0x1)
-      x = -x;
+    x = rabs * wi_double[idx] * ziggurat_sign_double[r & 0x1];
     if (rabs < ki_double[idx])
       return x; /* 99.3% of the time return here */
     if (idx == 0) {
@@ -178,7 +182,6 @@ void random_standard_normal_fill(bitgen_t *bitgen_state, npy_intp cnt, double *o
 
 float random_standard_normal_f(bitgen_t *bitgen_state) {
   uint32_t r;
-  int sign;
   uint32_t rabs;
   int idx;
   float x, xx, yy;
@@ -186,11 +189,8 @@ float random_standard_normal_f(bitgen_t *bitgen_state) {
     /* r = n23sb8 */
     r = next_uint32(bitgen_state);
     idx = r & 0xff;
-    sign = (r >> 8) & 0x1;
     rabs = (r >> 9) & 0x0007fffff;
-    x = rabs * wi_float[idx];
-    if (sign & 0x1)
-      x = -x;
+    x = rabs * wi_float[idx] * ziggurat_sign_float[(r >> 8) & 0x1];
     if (rabs < ki_float[idx])
       return x; /* # 99.3% of the time return here */
     if (idx == 0) {
@@ -741,15 +741,21 @@ Step52:
   f2 = f1 * f1;
   z2 = z * z;
   w2 = w * w;
+  /*
+   * Note that the third and fourth error terms are subtracted.
+   * This is a correction from the original 1988 paper
+   * (Kachitvichyanukul & Schmeiser) which erroneously adds
+   * all four terms
+   */
   if (A > (xm * log(f1 / x1) + (n - m + 0.5) * log(z / w) +
            (y - m) * log(w * r / (x1 * q)) +
-           (13680. - (462. - (132. - (99. - 140. / f2) / f2) / f2) / f2) / f1 /
+           (13860. - (462. - (132. - (99. - 140. / f2) / f2) / f2) / f2) / f1 /
                166320. +
-           (13680. - (462. - (132. - (99. - 140. / z2) / z2) / z2) / z2) / z /
-               166320. +
-           (13680. - (462. - (132. - (99. - 140. / x2) / x2) / x2) / x2) / x1 /
-               166320. +
-           (13680. - (462. - (132. - (99. - 140. / w2) / w2) / w2) / w2) / w /
+           (13860. - (462. - (132. - (99. - 140. / z2) / z2) / z2) / z2) / z /
+               166320. -
+           (13860. - (462. - (132. - (99. - 140. / x2) / x2) / x2) / x2) / x1 /
+               166320. -
+           (13860. - (462. - (132. - (99. - 140. / w2) / w2) / w2) / w2) / w /
                166320.)) {
     goto Step10;
   }

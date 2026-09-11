@@ -1,5 +1,4 @@
-from _typeshed import Incomplete
-from collections.abc import Container, Iterable
+from collections.abc import Container, Iterable, Sequence
 from typing import Any, Literal as L, Protocol, overload, type_check_only
 from typing_extensions import deprecated
 
@@ -10,9 +9,11 @@ from numpy._typing import (
     _16Bit,
     _32Bit,
     _64Bit,
+    _AnyShape,
     _ArrayLike,
     _NestedSequence,
     _ScalarLike_co,
+    _Shape,
     _SupportsArray,
 )
 
@@ -38,6 +39,9 @@ type _ToReal = _Real | np.bool
 type _InexactMax32 = np.inexact[_32Bit] | np.float16
 type _NumberMax64 = np.number[_64Bit] | np.number[_32Bit] | np.number[_16Bit] | np.integer
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+
 @type_check_only
 class _HasReal[T](Protocol):
     @property
@@ -57,27 +61,53 @@ class _HasDType[ScalarT: np.generic](Protocol):
 
 def mintypecode(typechars: Iterable[str | ArrayLike], typeset: str | Container[str] = "GDFgdf", default: str = "d") -> str: ...
 
-#
-@overload
+# keep in sync with `imag`
+@overload  # T.real
 def real[T](val: _HasReal[T]) -> T: ...
-@overload
+@overload  # 1d bool
+def real(val: list[bool]) -> _Array1D[np.bool]: ...
+@overload  # 1d int
+def real(val: list[int]) -> _Array1D[np.int_]: ...
+@overload  # 1d float | complex
+def real(val: list[float] | list[complex]) -> _Array1D[np.float64]: ...
+@overload  # 2d bool
+def real(val: Sequence[list[bool]]) -> _Array2D[np.bool]: ...
+@overload  # 2d int
+def real(val: Sequence[list[int]]) -> _Array2D[np.int_]: ...
+@overload  # 2d float | complex
+def real(val: Sequence[list[float]] | Sequence[list[complex]]) -> _Array2D[np.float64]: ...
+@overload  # Nd T
 def real[RealT: _ToReal](val: _ArrayLike[RealT]) -> NDArray[RealT]: ...
-@overload
+@overload  # fallback
 def real(val: ArrayLike) -> NDArray[Any]: ...
 
-#
-@overload
+# keep in sync with `real`
+@overload  # T.imag
 def imag[T](val: _HasImag[T]) -> T: ...
-@overload
+@overload  # 1d bool
+def imag(val: list[bool]) -> _Array1D[np.bool]: ...
+@overload  # 1d int
+def imag(val: list[int]) -> _Array1D[np.int_]: ...
+@overload  # 1d float | complex
+def imag(val: list[float] | list[complex]) -> _Array1D[np.float64]: ...
+@overload  # 2d bool
+def imag(val: Sequence[list[bool]]) -> _Array2D[np.bool]: ...
+@overload  # 2d int
+def imag(val: Sequence[list[int]]) -> _Array2D[np.int_]: ...
+@overload  # 2d float | complex
+def imag(val: Sequence[list[float]] | Sequence[list[complex]]) -> _Array2D[np.float64]: ...
+@overload  # Nd T
 def imag[RealT: _ToReal](val: _ArrayLike[RealT]) -> NDArray[RealT]: ...
-@overload
+@overload  # fallback
 def imag(val: ArrayLike) -> NDArray[Any]: ...
 
 #
 @overload
 def iscomplex(x: _ScalarLike_co) -> np.bool: ...
 @overload
-def iscomplex(x: NDArray[Any] | _NestedSequence[ArrayLike]) -> NDArray[np.bool]: ...
+def iscomplex[ShapeT: _Shape](x: np.ndarray[ShapeT, np.dtype[Any]]) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+@overload
+def iscomplex(x: _NestedSequence[ArrayLike]) -> NDArray[np.bool]: ...
 @overload
 def iscomplex(x: ArrayLike) -> np.bool | NDArray[np.bool]: ...
 
@@ -85,7 +115,9 @@ def iscomplex(x: ArrayLike) -> np.bool | NDArray[np.bool]: ...
 @overload
 def isreal(x: _ScalarLike_co) -> np.bool: ...
 @overload
-def isreal(x: NDArray[Any] | _NestedSequence[ArrayLike]) -> NDArray[np.bool]: ...
+def isreal[ShapeT: _Shape](x: np.ndarray[ShapeT, np.dtype[Any]]) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+@overload
+def isreal(x: _NestedSequence[ArrayLike]) -> NDArray[np.bool]: ...
 @overload
 def isreal(x: ArrayLike) -> np.bool | NDArray[np.bool]: ...
 
@@ -94,56 +126,212 @@ def iscomplexobj(x: _HasDType[Any] | ArrayLike) -> bool: ...
 def isrealobj(x: _HasDType[Any] | ArrayLike) -> bool: ...
 
 #
-@overload
+@overload  # 0d | Nd T  (`ndarray` subclasses pass through)
+def nan_to_num[ScalarOrArrayT: np.generic | np.ndarray[tuple[int, *tuple[int, ...]], Any]](
+    x: ScalarOrArrayT,
+    copy: bool | None = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> ScalarOrArrayT: ...
+@overload  # 0d T
 def nan_to_num[ScalarT: np.generic](
-    x: ScalarT,
+    x: np.ndarray[tuple[()], np.dtype[ScalarT]],
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
 ) -> ScalarT: ...
-@overload
+@overload  # Nd T
 def nan_to_num[ScalarT: np.generic](
-    x: NDArray[ScalarT] | _NestedSequence[_ArrayLike[ScalarT]],
-    copy: bool = True,
+    x: _NestedSequence[_ArrayLike[ScalarT]],
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
-def nan_to_num[ScalarT: np.generic](
-    x: _SupportsArray[np.dtype[ScalarT]],
+@overload  # ?d T
+def nan_to_num[DTypeT: np.dtype](
+    x: _SupportsArray[DTypeT],
+    copy: bool | None = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.ndarray[_AnyShape, DTypeT] | Any: ...
+@overload  # 0d bool
+def nan_to_num(
+    x: bool,
+    copy: bool | None = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.bool: ...
+@overload  # 0d ~int  (overlaps with bool)
+def nan_to_num(
+    x: int,
+    copy: bool | None = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.int_ | Any: ...
+@overload  # 0d ~float  (overlaps with int)
+def nan_to_num(
+    x: float,
+    copy: bool | None = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.float64 | Any: ...
+@overload  # 0d ~complex  (overlaps with float)
+def nan_to_num(
+    x: complex,
+    copy: bool | None = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> np.complex128 | Any: ...
+@overload  # 1d bool
+def nan_to_num(
+    x: Sequence[bool],
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> ScalarT | NDArray[ScalarT]: ...
-@overload
+) -> _Array1D[np.bool]: ...
+@overload  # 1d ~int
+def nan_to_num(
+    x: list[int],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> _Array1D[np.int_]: ...
+@overload  # 1d ~float
+def nan_to_num(
+    x: list[float],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d ~complex
+def nan_to_num(
+    x: list[complex],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> _Array1D[np.complex128]: ...
+@overload  # 2d bool
+def nan_to_num(
+    x: Sequence[Sequence[bool]],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> _Array2D[np.bool]: ...
+@overload  # 2d ~int
+def nan_to_num(
+    x: Sequence[list[int]],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> _Array2D[np.int_]: ...
+@overload  # 2d ~float
+def nan_to_num(
+    x: Sequence[list[float]],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> _Array2D[np.float64]: ...
+@overload  # 2d ~complex
+def nan_to_num(
+    x: Sequence[list[complex]],
+    copy: bool = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> _Array2D[np.complex128]: ...
+@overload  # Nd bool
+def nan_to_num(
+    x: _NestedSequence[bool],
+    copy: bool | None = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.bool]: ...
+@overload  # Nd ~int
+def nan_to_num(
+    x: _NestedSequence[list[int]] | list[int],
+    copy: bool | None = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.int_]: ...
+@overload  # Nd ~float
+def nan_to_num(
+    x: _NestedSequence[list[float]] | list[float],
+    copy: bool | None = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # Nd ~complex
+def nan_to_num(
+    x: _NestedSequence[list[complex]] | list[complex],
+    copy: bool | None = True,
+    nan: float = 0.0,
+    posinf: float | None = None,
+    neginf: float | None = None,
+) -> NDArray[np.complex128]: ...
+@overload  # Nd  (fallback)
 def nan_to_num(
     x: _NestedSequence[ArrayLike],
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> NDArray[Incomplete]: ...
-@overload
+) -> NDArray[Any]: ...
+@overload  # ?d  (fallback)
 def nan_to_num(
     x: ArrayLike,
-    copy: bool = True,
+    copy: bool | None = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> Incomplete: ...
+) -> NDArray[Any] | Any: ...
 
-# NOTE: The [overload-overlap] mypy error is a false positive
+#
+@overload
+def real_if_close[ShapeT: _Shape, DTypeT: np.dtype[_ToReal]](
+    a: np.ndarray[ShapeT, DTypeT],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload
+def real_if_close[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.complex64]],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, np.dtype[np.float32 | np.complex64]]: ...
+@overload
+def real_if_close[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.complex128]],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, np.dtype[np.float64 | np.complex128]]: ...
+@overload
+def real_if_close[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.clongdouble]],
+    tol: float = 100,
+) -> np.ndarray[ShapeT, np.dtype[np.longdouble | np.clongdouble]]: ...
+@overload
+def real_if_close[RealT: _ToReal](a: _ArrayLike[RealT], tol: float = 100) -> NDArray[RealT]: ...
 @overload
 def real_if_close(a: _ArrayLike[np.complex64], tol: float = 100) -> NDArray[np.float32 | np.complex64]: ...
 @overload
 def real_if_close(a: _ArrayLike[np.complex128], tol: float = 100) -> NDArray[np.float64 | np.complex128]: ...
 @overload
 def real_if_close(a: _ArrayLike[np.clongdouble], tol: float = 100) -> NDArray[np.longdouble | np.clongdouble]: ...
-@overload
-def real_if_close[RealT: _ToReal](a: _ArrayLike[RealT], tol: float = 100) -> NDArray[RealT]: ...
 @overload
 def real_if_close(a: ArrayLike, tol: float = 100) -> NDArray[Any]: ...
 

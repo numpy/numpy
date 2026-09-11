@@ -1,0 +1,46 @@
+# Adapted from SciPy's ccache action:
+# https://github.com/scipy/scipy/blob/main/.github/ccache/action.yml
+name: Setup Compiler Cache
+description: Prepare and restore compiler cache using ccache
+inputs:
+  workflow_name:
+    description: "Name of the calling workflow to use as cache key prefix"
+    required: true
+  job_name:
+    description: "Name of the calling job, used as cache key prefix"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Prepare compiler cache
+      id: prep-ccache
+      shell: bash
+      run: |
+        mkdir -p "${CCACHE_DIR:-$HOME/.ccache}"
+        echo "dir=${CCACHE_DIR:-$HOME/.ccache}" >> $GITHUB_OUTPUT
+        NOW=$(date -u +"%F-%T")
+        echo "timestamp=${NOW}" >> $GITHUB_OUTPUT
+    - name: Setup compiler cache and save it
+      # Run a restore and save if running on main
+      # Note: we can't simply use restore followed by save because composite actions
+      # are not capable of running post job steps.
+      if: ${{ github.ref == 'refs/heads/main' }}
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.prep-ccache.outputs.dir }}
+        key: ${{ inputs.workflow_name }}-${{ inputs.job_name }}-ccache-linux-${{ steps.prep-ccache.outputs.timestamp }}
+        restore-keys: ${{ inputs.workflow_name }}-${{ inputs.job_name }}-ccache-linux-
+    - name: Setup compiler cache
+      # Run just the restore if not running on main
+      if: ${{ github.ref != 'refs/heads/main' }}
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.prep-ccache.outputs.dir }}
+        key: ${{ inputs.workflow_name }}-${{ inputs.job_name }}-ccache-linux-${{ steps.prep-ccache.outputs.timestamp }}
+        restore-keys: ${{ inputs.workflow_name }}-${{ inputs.job_name }}-ccache-linux-
+    - name: Reset stats
+      shell: bash
+      run: |
+        # Restoring the cache also restored the stats from the previous run
+        ccache --zero-stats

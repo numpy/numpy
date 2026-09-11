@@ -3,10 +3,9 @@ import sys
 import textwrap
 
 import pytest
-from hypothesis import given
-from hypothesis.extra import numpy as hynp
 
 import numpy as np
+from numpy._core._rational_tests import rational, rational2
 from numpy._core.arrayprint import _typelessdata
 from numpy._utils import _pep440
 from numpy.testing import (
@@ -18,6 +17,7 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, given, hynp
 from numpy.testing._private.utils import run_threaded
 
 
@@ -278,7 +278,7 @@ class TestArray2String:
         try:
             # for issue #5692
             A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
-            A[5:].fill(np.datetime64('NaT'))
+            A[5:].fill(np.datetime64('NaT', 'D'))
             date_string = '1970-01-01T00:00:00'
             assert_equal(
                 np.array2string(A),
@@ -303,7 +303,7 @@ class TestArray2String:
 
         # and again, with timedeltas
         A = np.full(10, 123456, dtype=[("A", "m8[s]")])
-        A[5:].fill(np.datetime64('NaT'))
+        A[5:].fill(np.datetime64('NaT', 'D'))
         assert_equal(
             np.array2string(A),
             textwrap.dedent("""\
@@ -535,6 +535,7 @@ class TestArray2String:
             '                     [1.]])]], dtype=object)'
         )
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @given(hynp.from_dtype(np.dtype("U")))
     def test_any_text(self, text):
         # This test checks that, given any value that can be represented in an
@@ -1351,3 +1352,12 @@ def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
     res = np.array(str(arr).strip("[] "), dtype=QuadPrecDType())
     # Check that the string representation round-trips correctly.
     assert_array_equal(res, arr)
+
+
+@pytest.mark.parametrize("sctype", [np.int8, np.float32, rational, rational2])
+def test_array_dtype_short_repr(sctype):
+    # Mainly test that rational/rational2 (both legacy dtypes) use short repr
+    # which in the end should just be the name for these (not default dtypes).
+    arr = np.zeros(1, dtype=sctype)
+    res = repr(arr)
+    assert f"dtype={sctype.__name__}" in res

@@ -46,8 +46,8 @@ np.sort(A, axis="bob")  # type: ignore[call-overload]
 np.sort(A, kind="bob")  # type: ignore[call-overload]
 np.sort(A, order=range(5))  # type: ignore[arg-type]
 
-np.argsort(A, axis="bob")  # type: ignore[arg-type]
-np.argsort(A, kind="bob")  # type: ignore[arg-type]
+np.argsort(A, axis="bob")  # type: ignore[call-overload]
+np.argsort(A, kind="bob")  # type: ignore[call-overload]
 np.argsort(A, order=range(5))  # type: ignore[arg-type]
 
 np.argmax(A, axis="bob")  # type: ignore[call-overload]
@@ -75,7 +75,7 @@ np.trace(A, axis2=[])  # type: ignore[call-overload]
 
 np.ravel(a, order="bob")  # type: ignore[call-overload]
 
-np.nonzero(0)  # type: ignore[arg-type]
+np.nonzero(0)  # type: ignore[call-overload]
 
 np.compress([True], A, axis=1.0)  # type: ignore[call-overload]
 
@@ -118,17 +118,17 @@ np.prod(a, out=False)  # type: ignore[call-overload]
 np.prod(a, keepdims=1.0)  # type: ignore[call-overload]
 np.prod(a, initial=int)  # type: ignore[call-overload]
 np.prod(a, where=1.0)  # type: ignore[call-overload]
-np.prod(AR_U)  # type: ignore[arg-type]
+np.prod(AR_U)  # type: ignore[type-var]
 
 np.cumprod(a, axis=1.0)  # type: ignore[call-overload]
 np.cumprod(a, out=False)  # type: ignore[call-overload]
-np.cumprod(AR_U)  # type: ignore[arg-type]
+np.cumprod(AR_U)  # type: ignore[type-var]
 
 np.size(a, axis=1.0)  # type: ignore[arg-type]
 
 np.around(a, decimals=1.0)  # type: ignore[call-overload]
 np.around(a, out=type)  # type: ignore[call-overload]
-np.around(AR_U)  # type: ignore[arg-type]
+np.around(AR_U)  # type: ignore[type-var]
 
 np.mean(a, axis=1.0)  # type: ignore[call-overload]
 np.mean(a, out=False)  # type: ignore[call-overload]

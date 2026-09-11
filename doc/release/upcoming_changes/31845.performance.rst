@@ -1,0 +1,6 @@
+Faster reductions on small arrays
+---------------------------------
+``numpy.sum``, ``numpy.prod``, ``numpy.min``, ``numpy.max``, ``numpy.any``,
+and ``numpy.all`` are now faster for small arrays. This reduces the
+Python-level overhead of calling these reductions, which is most noticeable
+when the reduction itself is cheap.

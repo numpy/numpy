@@ -968,7 +968,7 @@ def _parse_eq_to_pure_multiplication(a_term, shape_a, b_term, shape_b, out):
 @functools.lru_cache(2**12)
 def _parse_eq_to_batch_matmul(eq, shape_a, shape_b):
     """Cached parsing of a two term einsum equation into the necessary
-    sequence of arguments for contracttion via batched matrix multiplication.
+    sequence of arguments for contraction via batched matrix multiplication.
     The steps we need to specify are:
 
         1. Remove repeated and trivial indices from the left and right terms,
@@ -1223,7 +1223,7 @@ def bmm_einsum(eq, a, b, out=None, **kwargs):
     if (out is not None) and (not matmul_out_compatible):
         # handle case where out is specified, but we also needed
         # to reshape / transpose ``ab`` after the matmul
-        out[:] = ab
+        out[...] = ab
         ab = out
     elif output_order is not None:
         ab = asanyarray(ab, order=output_order)
@@ -1300,8 +1300,20 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
 
     Returns
     -------
-    output : ndarray
+    output : ndarray or scalar
         The calculation based on the Einstein summation convention.
+
+        An output with one or more indices is always returned as an
+        ndarray. When the output has no indices (e.g. ``'i,i->'``) the
+        result is 0-dimensional and the exact type depends on the
+        arguments:
+
+        - If `out` is given, it is returned unchanged (an ndarray).
+        - With the default ``optimize=False``, a scalar (e.g.
+          ``np.float64``) is returned rather than a 0-d array.
+        - With ``optimize`` enabled the 0-d result may be either a scalar
+          or a 0-d ndarray depending on the contraction path, and should
+          not be relied upon. Pass `out` to guarantee an ndarray.
 
     See Also
     --------

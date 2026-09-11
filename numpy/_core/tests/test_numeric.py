@@ -7,13 +7,11 @@ import warnings
 from decimal import Decimal
 
 import pytest
-from hypothesis import given, strategies as st
-from hypothesis.extra import numpy as hynp
 
 import numpy as np
 from numpy import ma
 from numpy._core import sctypes
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy._core.numerictypes import obj2sctype
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
@@ -29,6 +27,8 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, given, hynp, st
+from numpy.testing._private.utils import longdouble_fpe_mark
 
 
 class TestResize:
@@ -345,6 +345,12 @@ class TestNonarrayArgs:
             out = np.take(x, ind)
             assert_equal(out, tgt)
             assert_equal(out.dtype, tgt.dtype)
+
+    def test_top_k(self):
+        a = [[1, 2], [2, 1]]
+        y = ([[2], [2]], [[1], [0]])
+        out = np.top_k(a, 1)
+        assert_equal(out, y)
 
     def test_trace(self):
         c = [[1, 2], [3, 4], [5, 6]]
@@ -979,13 +985,14 @@ class TestFloatExceptions:
 
     # Test for all real and complex float types
     @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
-    @pytest.mark.parametrize("typecode", np.typecodes["AllFloat"])
+    @pytest.mark.parametrize(
+        "typecode",
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code in "gG" else [])
+            for code in np.typecodes["AllFloat"]
+        ],
+    )
     def test_floating_exceptions(self, typecode):
-        if 'bsd' in sys.platform and typecode in 'gG':
-            pytest.skip(reason="Fallback impl for (c)longdouble may not raise "
-                               "FPE errors as expected on BSD OSes, "
-                               "see gh-24876, gh-23379")
-
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
             ftype = obj2sctype(typecode)
@@ -1298,7 +1305,8 @@ class TestTypes:
 
     @pytest.mark.parametrize("dtype",
             list(np.typecodes["All"]) +
-            ["i,i", "10i", "S3", "S100", "U3", "U100", rational])
+            ["i,i", "10i", "S3", "S100", "U3", "U100",
+             rational, rational2])
     def test_promote_identical_types_metadata(self, dtype):
         # The same type passed in twice to promote types always
         # preserves metadata
@@ -1326,11 +1334,14 @@ class TestTypes:
 
     @pytest.mark.slow
     @pytest.mark.filterwarnings('ignore:Promotion of numbers:FutureWarning')
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            itertools.product(
-                list(np.typecodes["All"]) +
-                ["i,i", "S3", "S100", "U3", "U100", rational],
-                repeat=2))
+    @pytest.mark.parametrize(
+        "dtype1",
+        [*np.typecodes["All"], "i,i", "S3", "S100", "U3", "U100", rational, rational2],
+    )
+    @pytest.mark.parametrize(
+        "dtype2",
+        [*np.typecodes["All"], "i,i", "S3", "S100", "U3", "U100", rational, rational2],
+    )
     def test_promote_types_metadata(self, dtype1, dtype2):
         """Metadata handling in promotion does not appear formalized
         right now in NumPy. This test should thus be considered to
@@ -1506,7 +1517,7 @@ class TestTypes:
             np.can_cast(4j, "complex128", casting="unsafe")
 
     @pytest.mark.parametrize("dtype",
-            list("?bhilqBHILQefdgFDG") + [rational])
+            list("?bhilqBHILQefdgFDG") + [rational, rational2])
     def test_can_cast_scalars(self, dtype):
         # Basic test to ensure that scalars are supported in can-cast
         # (does not check behavior exhaustively).
@@ -1628,6 +1639,38 @@ class TestFromiter:
         iterable = ((2, 3, 4) for i in range(5))
         with pytest.raises(ValueError):
             np.fromiter(iterable, dtype=np.dtype((int, 2)))
+
+
+class TestWrapFunc:
+    # Functions like np.take, np.nonzero and np.argsort dispatch through
+    # the C helpers _wrapfunc/_wrapit (see gh-32165).
+
+    def test_typeerror_fallback_exception_chain(self):
+        # If the object's own method raises TypeError, _wrapfunc retries
+        # via array conversion.  A failure in the fallback must chain the
+        # original TypeError as __context__ while preserving any nested
+        # context raised inside the fallback, exactly as when _wrapit was
+        # called from within an `except TypeError:` clause in Python.
+        class FailingDuckArray:
+            def nonzero(self):
+                raise TypeError("direct method failed")
+
+            def __array__(self, dtype=None, copy=None):
+                try:
+                    raise KeyError("inner conversion error")
+                except KeyError:
+                    raise ValueError("fallback conversion failed")
+
+        with pytest.raises(ValueError,
+                           match="fallback conversion failed") as exc_info:
+            np.nonzero(FailingDuckArray())
+
+        chain = []
+        err = exc_info.value
+        while err is not None:
+            chain.append(type(err))
+            err = err.__context__
+        assert chain == [ValueError, KeyError, TypeError]
 
 
 class TestNonzero:
@@ -1784,7 +1827,7 @@ class TestNonzero:
                 elif dt == 'm':
                     with pytest.warns(
                         DeprecationWarning,
-                        match="Using 'generic' unit for NumPy timedelta is deprecated",
+                        match="The 'generic' unit for NumPy timedelta is deprecated",
                     ):
                         m = np.zeros((3, 3), dtype=dt)
                         n = np.ones(1, dtype=dt)
@@ -1835,6 +1878,17 @@ class TestNonzero:
                              expected, err_msg=err_msg)
                 assert_equal(np.count_nonzero(m),
                              expected, err_msg=err_msg)
+
+    @pytest.mark.parametrize("dtype", ["S5", "U5", "T"])
+    def test_count_nonzero_character_axis(self, dtype):
+        a = np.array([
+            ["", "0", " "],
+            ["1", "", "False"],
+        ], dtype=dtype)
+
+        assert_array_equal(np.count_nonzero(a, axis=1), [2, 2])
+        assert_array_equal(np.count_nonzero(a, axis=0), [1, 1, 2])
+        assert np.count_nonzero(a) == 4
 
     def test_count_nonzero_axis_consistent(self):
         # Check that the axis behaviour for valid axes in
@@ -2216,7 +2270,7 @@ def _test_array_equal_parametrizations():
 
 class TestArrayComparisons:
     @pytest.mark.parametrize(
-        "bx,by,equal_nan,expected", _test_array_equal_parametrizations()
+        "bx,by,equal_nan,expected", list(_test_array_equal_parametrizations())
     )
     def test_array_equal_equal_nan(self, bx, by, equal_nan, expected):
         """
@@ -2859,6 +2913,7 @@ class TestClip:
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @given(
         data=st.data(),
         arr=hynp.arrays(
@@ -4004,7 +4059,7 @@ class TestCross:
     def test_zero_dimension(self, a, b):
         with pytest.raises(ValueError) as exc:
             np.cross(a, b)
-        assert "At least one array has zero dimension" in str(exc.value)
+        assert "Input arrays must be at least 1-dimensional" in str(exc.value)
 
 
 def test_outer_out_param():

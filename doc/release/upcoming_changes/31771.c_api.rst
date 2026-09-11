@@ -1,0 +1,15 @@
+``PyArray_StringDTypeObject`` is opaque under the abi3t stable ABI
+------------------------------------------------------------------
+
+The ``PyArray_StringDTypeObject`` was accidentally exposed in NumPy
+2.5 when targeting the free-threading-compatible stable ABI
+(``Py_TARGET_ABI3T``). ``PyArray_StringDTypeObject`` is now an opaque
+struct: extensions compiled that way cannot access its fields, since
+the struct layout depends on the size of the object header. Any code
+that accessed ``PyArray_StringDTypeObject`` fields in an abi3t build
+would have crashed, so we are making this API change in a bugfix
+release.
+
+The ``NpyString`` allocator API remains usable by passing the
+descriptor object pointer, e.g.
+``NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr)``.

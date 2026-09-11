@@ -777,6 +777,17 @@ class TestFancyIndexingCast:
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
 
+    def test_fancy_assign_buffered_cast_error(self):
+        # gh-31974: a cast failure while refilling the iterator buffer
+        # (only possible when the array exceeds one buffer chunk) ended
+        # iteration silently, leaving the error set but unraised.
+        N = 20000
+        dst = np.zeros(N, dtype=int)
+        vals = np.arange(N, dtype=object)
+        vals[9000] = None
+        with pytest.raises(TypeError):
+            dst[np.arange(N)] = vals
+
 
 class TestFancyIndexingEquivalence:
     def test_object_assign(self):
@@ -1364,6 +1375,22 @@ class TestBooleanIndexing:
             "boolean index did not match indexed array along axis 1; "
             "size of axis is 1 but size of corresponding boolean axis is 2",
             lambda: a[idx])
+
+    def test_assignment_cast_error_aborts_iteration(self):
+        # A failing cast must abort the assignment: no further chunks may
+        # be processed and the error must be raised. The iteration used to
+        # continue after a failed chunk, relying on every later cast call
+        # failing fast on the pending exception to keep the error alive.
+        a = np.zeros((40, 30))[:, ::2]
+        mask = np.zeros(a.shape, dtype=bool)
+        mask[:2] = True
+        mask[2:, :5] = True
+        vals = np.arange(float(mask.sum())).astype(object)
+        vals[29] = object()
+        with pytest.raises(TypeError):
+            a[mask] = vals
+        # rows after the failing chunk are untouched
+        assert not a[2:].any()
 
 
 class TestArrayToIndexDeprecation:

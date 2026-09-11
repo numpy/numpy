@@ -121,10 +121,10 @@ for type_info in typeinfo.values():
 
     del type_info, concrete_type
 
-# sort sctype groups by bitsize
+# sort sctype groups by bitsize, then by name (sort needs to be deterministic)
 for sctype_key in sctypes.keys():
     sctype_list = list(sctypes[sctype_key])
-    sctype_list.sort(key=lambda x: dtype(x).itemsize)
+    sctype_list.sort(key=lambda x: (dtype(x).itemsize, x.__name__))
     sctypes[sctype_key] = sctype_list
 
     del sctype_key, sctype_list

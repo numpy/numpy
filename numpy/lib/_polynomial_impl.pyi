@@ -9,6 +9,7 @@ from typing import (
     SupportsIndex,
     SupportsInt,
     overload,
+    override,
 )
 
 import numpy as np
@@ -142,6 +143,12 @@ class poly1d:
     #
     def __truediv__(self, other: ArrayLike, /) -> Self: ...
     def __rtruediv__(self, other: ArrayLike, /) -> Self: ...
+
+    #
+    @override
+    def __eq__(self, other: poly1d, /) -> bool: ...  # type:ignore[override]
+    @override
+    def __ne__(self, other: poly1d, /) -> bool: ...  # type:ignore[override]
 
     #
     def deriv(self, /, m: ConvertibleToInt = 1) -> Self: ...

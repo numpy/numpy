@@ -33,8 +33,11 @@ else:
         cdll = load_library(
             '_multiarray_umath', np._core._multiarray_umath.__file__)
     if test_cdll is None:
+        # Pass the file name: under the Limited API the suffix is
+        # `.abi3.so`, which `load_library` does not guess.
         test_cdll = load_library(
-            '_multiarray_tests', np._core._multiarray_tests.__file__
+            Path(np._core._multiarray_tests.__file__).name,
+            np._core._multiarray_tests.__file__
         )
 
     c_forward_pointer = test_cdll.forward_pointer
@@ -65,7 +68,7 @@ class TestLoadLibrary:
                          np._core._multiarray_umath.__file__)
         except ImportError as e:
             msg = ("ctypes is not available on this python: skipping the test"
-                   " (import error was: %s)" % str(e))
+                   f" (import error was: {e})")
             print(msg)
 
 
@@ -255,6 +258,7 @@ class TestAsArray:
         check(as_array(pointer(c_array[0][0]), shape=(2, 3)))
 
     @pytest.mark.thread_unsafe(reason="garbage collector is global state")
+    @pytest.mark.slow
     def test_reference_cycles(self):
         # related to gh-6511
         import ctypes

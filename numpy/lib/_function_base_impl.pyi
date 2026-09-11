@@ -38,6 +38,7 @@ from numpy._typing import (
     _ShapeLike,
     _SupportsArray,
 )
+from numpy._typing._array_like import _DualArrayLike
 
 __all__ = [
     "select",
@@ -82,6 +83,7 @@ __all__ = [
 type _ArrayLike1D[ScalarT: np.generic] = _SupportsArray[np.dtype[ScalarT]] | Sequence[ScalarT]
 
 type _integer_co = np.integer | np.bool
+type _float32_co = np.float32 | np.float16 | _integer_co
 type _float64_co = np.float64 | _integer_co
 type _floating_co = np.floating | _integer_co
 
@@ -101,12 +103,16 @@ type _SortsToComplex128 = (
 )
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
 type _InexactDouble = np.float64 | np.longdouble | np.complex128 | np.clongdouble
+type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[np.number | np.bool | np.timedelta64 | np.object_], complex]
+type _RealDouble = np.float64 | np.longdouble
+type _Time = np.timedelta64 | np.datetime64
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
 # workaround for mypy and pyright not following the typing spec for overloads
 type _ArrayNoD[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
@@ -114,7 +120,11 @@ type _ArrayNoD[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Neve
 type _Seq1D[T] = Sequence[T]
 type _Seq2D[T] = Sequence[Sequence[T]]
 type _Seq3D[T] = Sequence[Sequence[Sequence[T]]]
+type _Seq4D[T] = Sequence[Sequence[Sequence[Sequence[T]]]]
 type _ListSeqND[T] = list[T] | _SeqND[list[T]]
+
+type _ToArray1D[ScalarT: np.generic, T] = _Array1D[ScalarT] | _Seq1D[T]
+type _ToArrayND[ScalarT: np.generic, T] = _SupportsArray[np.dtype[ScalarT]] | _SeqND[_SupportsArray[np.dtype[ScalarT]] | T]
 
 type _Tuple2[T] = tuple[T, T]
 type _Tuple3[T] = tuple[T, T, T]
@@ -450,7 +460,9 @@ def average(
 
 #
 @overload
-def asarray_chkfinite[ArrayT: np.ndarray](a: ArrayT, dtype: None = None, order: _OrderKACF = None) -> ArrayT: ...
+def asarray_chkfinite[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT], dtype: None = None, order: _OrderKACF = None
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload
 def asarray_chkfinite[ShapeT: _Shape, ScalarT: np.generic](
     a: np.ndarray[ShapeT], dtype: _DTypeLike[ScalarT], order: _OrderKACF = None
@@ -470,6 +482,12 @@ def asarray_chkfinite(a: object, dtype: DTypeLike | None = None, order: _OrderKA
 # `[condlist]`. And even though the documentation says these should be boolean, in
 # practice anything that `np.array(condlist, dtype=bool)` accepts will work, i.e. any
 # array-like.
+@overload  # this overload is required to avoid pyright rejecting all-scalar `funclist`
+def piecewise[ShapeT: _Shape, ScalarT: np.generic](
+    x: _Array[ShapeT, ScalarT],
+    condlist: ArrayLike,
+    funclist: _SizedIterable[_ScalarLike_co],
+) -> _Array[ShapeT, ScalarT]: ...
 @overload
 def piecewise[ShapeT: _Shape, ScalarT: np.generic, **Tss](
     x: _Array[ShapeT, ScalarT],
@@ -535,13 +553,23 @@ def select(
 ) -> np.ndarray: ...
 
 # keep roughly in sync with `ma.core.copy`
-@overload
+@overload  # known array, subok=True (positional)
 def copy[ArrayT: np.ndarray](a: ArrayT, order: _OrderKACF, subok: L[True]) -> ArrayT: ...
-@overload
+@overload  # known array, subok=True (keyword)
 def copy[ArrayT: np.ndarray](a: ArrayT, order: _OrderKACF = "K", *, subok: L[True]) -> ArrayT: ...
-@overload
-def copy[ScalarT: np.generic](a: _ArrayLike[ScalarT], order: _OrderKACF = "K", subok: L[False] = False) -> NDArray[ScalarT]: ...
-@overload
+@overload  # known array, subok=False (default)
+def copy[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    order: _OrderKACF = "K",
+    subok: L[False] = False,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # known array-like dtype
+def copy[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    order: _OrderKACF = "K",
+    subok: bool = False,
+) -> NDArray[ScalarT]: ...
+@overload  # fallback
 def copy(a: ArrayLike, order: _OrderKACF = "K", subok: L[False] = False) -> NDArray[Incomplete]: ...
 
 #
@@ -884,7 +912,15 @@ def unwrap[ArrayT: NDArray[np.floating | np.object_]](
     discont: float | None = None,
     axis: int = -1,
     *,
-    period: float = ...,  # = τ
+    period: float | int = ...,  # = τ
+) -> ArrayT: ...
+@overload  # integer array + integer period keeps the integer dtype
+def unwrap[ArrayT: NDArray[np.integer]](
+    p: ArrayT,
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: int,
 ) -> ArrayT: ...
 @overload  # known shape, float64
 def unwrap[ShapeT: _Shape](
@@ -950,6 +986,8 @@ def sort_complex(a: _ArrayLike[_SortsToComplex128]) -> NDArray[np.complex128]: .
 def sort_complex[ShapeT: _Shape](a: _Array[ShapeT, np.longdouble]) -> _Array[ShapeT, np.clongdouble]: ...
 @overload  # clongdouble, shape unknown
 def sort_complex(a: _ArrayLike[np.longdouble]) -> NDArray[np.clongdouble]: ...
+@overload  # builtin +complex, shape unknown
+def sort_complex(a: _SeqND[complex]) -> NDArray[np.complex128]: ...
 
 #
 def trim_zeros[T](filt: _TrimZerosSequence[T], trim: L["f", "b", "fb", "bf"] = "fb", axis: _ShapeLike | None = None) -> T: ...
@@ -1350,9 +1388,24 @@ def sinc(x: _Seq2D[list[complex]]) -> _Array3D[np.complex128]: ...
 @overload
 def sinc(x: _ArrayLikeComplex_co) -> np.ndarray | Any: ...
 
-# NOTE: We assume that `axis` is only provided for >=1-D arrays because for <1-D arrays
-# it has no effect, and would complicate the overloads significantly.
-@overload  # known scalar-type, keepdims=False (default)
+#
+@overload  # Nd +f64, axis=None  (default)
+def median(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.float64: ...
+@overload  # Nd ~object_, axis=None  (default)
+def median(
+    a: _ArrayLike[np.object_],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> Any: ...
+@overload  # Nd ~inexact | timedelta64, axis=None  (default)
 def median[ScalarT: np.inexact | np.timedelta64](
     a: _ArrayLike[ScalarT],
     axis: None = None,
@@ -1360,15 +1413,7 @@ def median[ScalarT: np.inexact | np.timedelta64](
     overwrite_input: bool = False,
     keepdims: L[False] = False,
 ) -> ScalarT: ...
-@overload  # float array-like, keepdims=False (default)
-def median(
-    a: _ArrayLikeInt_co | _SeqND[float] | float,
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    keepdims: L[False] = False,
-) -> np.float64: ...
-@overload  # complex array-like, keepdims=False (default)
+@overload  # Nd ~complex, axis=None  (default)
 def median(
     a: _ListSeqND[complex],
     axis: None = None,
@@ -1376,7 +1421,7 @@ def median(
     overwrite_input: bool = False,
     keepdims: L[False] = False,
 ) -> np.complex128: ...
-@overload  # complex scalar, keepdims=False (default)
+@overload  # 0d ~builtins.complex, axis=None  (default)
 def median(
     a: complex,
     axis: None = None,
@@ -1384,7 +1429,176 @@ def median(
     overwrite_input: bool = False,
     keepdims: L[False] = False,
 ) -> np.complex128 | Any: ...
-@overload  # known array-type, keepdims=True
+@overload  # ?d +integer, axis=<given>  (workaround)
+def median(
+    a: _ArrayNoD[_integer_co],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> NDArray[np.float64] | Any: ...
+@overload  # ?d ~inexact | timedelta64 | object_, axis=<given>  (workaround)
+def median[ScalarT: _ScalarNumeric](
+    a: _ArrayNoD[ScalarT],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # fallback, ?d, axis=<given>  (workaround)
+def median(
+    a: _ArrayNoD[np.number | np.bool | np.timedelta64 | np.object_],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> NDArray[Any] | Any: ...
+@overload  # 1d +f64, axis=<given>
+def median(
+    a: _Array1D[_integer_co] | _Seq1D[float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.float64: ...
+@overload  # 1d ~object_, axis=<given>
+def median(
+    a: _Array1D[np.object_],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> Any: ...
+@overload  # 1d ~inexact | timedelta64, axis=<given>
+def median[ScalarT: np.inexact | np.timedelta64](
+    a: _Array1D[ScalarT] | _Seq1D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> ScalarT: ...
+@overload  # 1d ~complex, axis=<given>
+def median(
+    a: list[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.complex128: ...
+@overload  # fallback, 1d, axis=<given>
+def median(
+    a: _Array1D[np.number | np.bool | np.timedelta64 | np.object_] | _Seq1D[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> Any: ...
+@overload  # 2d +f64, axis=<given>
+def median(
+    a: _Array2D[_integer_co] | _Seq2D[float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array1D[np.float64]: ...
+@overload  # 2d ~inexact | timedelta64 | object_, axis=<given>
+def median[ScalarT: _ScalarNumeric](
+    a: _Array2D[ScalarT] | _Seq2D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array1D[ScalarT]: ...
+@overload  # 2d ~complex, axis=<given>
+def median(
+    a: _Seq1D[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array1D[np.complex128]: ...
+@overload  # fallback, 2d, axis=<given>
+def median(
+    a: _Array2D[np.number | np.bool | np.timedelta64 | np.object_] | _Seq2D[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array1D[Any]: ...
+@overload  # 3d +f64, axis=<given>
+def median(
+    a: _Array3D[_integer_co] | _Seq3D[float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array2D[np.float64]: ...
+@overload  # 3d ~inexact | timedelta64 | object_, axis=<given>
+def median[ScalarT: _ScalarNumeric](
+    a: _Array3D[ScalarT] | _Seq3D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array2D[ScalarT]: ...
+@overload  # 3d ~complex, axis=<given>
+def median(
+    a: _Seq2D[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array2D[np.complex128]: ...
+@overload  # fallback, 3d, axis=<given>
+def median(
+    a: _Array3D[np.number | np.bool | np.timedelta64 | np.object_] | _Seq3D[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array2D[Any]: ...
+@overload  # 4d +f64, axis=<given>
+def median(
+    a: _Array4D[_integer_co] | _Seq4D[float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array3D[np.float64]: ...
+@overload  # 4d ~inexact | timedelta64 | object_, axis=<given>
+def median[ScalarT: _ScalarNumeric](
+    a: _Array4D[ScalarT] | _Seq4D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array3D[ScalarT]: ...
+@overload  # 4d ~complex, axis=<given>
+def median(
+    a: _Seq3D[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array3D[np.complex128]: ...
+@overload  # fallback, 4d, axis=<given>
+def median(
+    a: _Array4D[np.number | np.bool | np.timedelta64 | np.object_] | _Seq4D[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> _Array3D[Any]: ...
+@overload  # Nd +integer, keepdims=True
+def median[ShapeT: _Shape](
+    a: _Array[ShapeT, _integer_co],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> _Array[ShapeT, np.float64]: ...
+@overload  # Nd ~inexact | timedelta64 | object_, keepdims=True
 def median[ArrayT: NDArray[_ScalarNumeric]](
     a: ArrayT,
     axis: _ShapeLike | None = None,
@@ -1393,7 +1607,16 @@ def median[ArrayT: NDArray[_ScalarNumeric]](
     *,
     keepdims: L[True],
 ) -> ArrayT: ...
-@overload  # known scalar-type, keepdims=True
+@overload  # Nd +f64, keepdims=True  (fallback)
+def median(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> NDArray[np.float64]: ...
+@overload  # Nd ~inexact | timedelta64 | object_, keepdims=True  (fallback)
 def median[ScalarT: _ScalarNumeric](
     a: _ArrayLike[ScalarT],
     axis: _ShapeLike | None = None,
@@ -1402,77 +1625,133 @@ def median[ScalarT: _ScalarNumeric](
     *,
     keepdims: L[True],
 ) -> NDArray[ScalarT]: ...
-@overload  # known scalar-type, axis=<given>
+@overload  # Nd ~complex, keepdims=True  (fallback)
+def median(
+    a: _ListSeqND[complex],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> NDArray[np.complex128]: ...
+@overload  # fallback, keepdims=True
+def median(
+    a: _ArrayLikeNumeric_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> NDArray[Any]: ...
+@overload  # Nd +f64, axis=<given>  (fallback)
+def median(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> NDArray[np.float64] | Any: ...
+@overload  # Nd ~inexact | timedelta64 | object_, axis=<given>  (fallback)
 def median[ScalarT: _ScalarNumeric](
     a: _ArrayLike[ScalarT],
     axis: _ShapeLike,
     out: None = None,
     overwrite_input: bool = False,
     keepdims: bool = False,
-) -> NDArray[ScalarT]: ...
-@overload  # float array-like, keepdims=True
-def median(
-    a: _SeqND[float],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    *,
-    keepdims: L[True],
-) -> NDArray[np.float64]: ...
-@overload  # float array-like, axis=<given>
-def median(
-    a: _SeqND[float],
-    axis: _ShapeLike,
-    out: None = None,
-    overwrite_input: bool = False,
-    keepdims: bool = False,
-) -> NDArray[np.float64]: ...
-@overload  # complex array-like, keepdims=True
-def median(
-    a: _ListSeqND[complex],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    *,
-    keepdims: L[True],
-) -> NDArray[np.complex128]: ...
-@overload  # complex array-like, axis=<given>
+) -> NDArray[ScalarT] | Any: ...
+@overload  # Nd ~complex, axis=<given>  (fallback)
 def median(
     a: _ListSeqND[complex],
     axis: _ShapeLike,
     out: None = None,
     overwrite_input: bool = False,
     keepdims: bool = False,
-) -> NDArray[np.complex128]: ...
-@overload  # out=<given> (keyword)
+) -> NDArray[np.complex128] | Any: ...
+@overload  # fallback, axis=<given>
+def median(
+    a: _ArrayLikeNumeric_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> NDArray[Any] | Any: ...
+@overload  # fallback
+def median(
+    a: _ArrayLikeNumeric_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> Any: ...
+@overload  # out=<given>  (keyword)
 def median[ArrayT: np.ndarray](
-    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    a: _ArrayLikeNumeric_co,
     axis: _ShapeLike | None = None,
     *,
     out: ArrayT,
     overwrite_input: bool = False,
     keepdims: bool = False,
 ) -> ArrayT: ...
-@overload  # out=<given> (positional)
+@overload  # out=<given>  (positional)
 def median[ArrayT: np.ndarray](
-    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    a: _ArrayLikeNumeric_co,
     axis: _ShapeLike | None,
     out: ArrayT,
     overwrite_input: bool = False,
     keepdims: bool = False,
 ) -> ArrayT: ...
-@overload  # fallback
-def median(
-    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    keepdims: bool = False,
-) -> Incomplete: ...
 
 # NOTE: keep in sync with `quantile`
-@overload  # inexact, scalar, axis=None
-def percentile[ScalarT: np.inexact | np.timedelta64 | np.datetime64](
+@overload  # Nd +f64, 0d, axis=None  (default)
+def percentile(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    q: _FloatLike_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> np.float64: ...
+@overload  # Nd +f64, ?d  (workaround)
+def percentile(
+    a: _DualArrayLike[np.dtype[_float32_co], float],
+    q: _ArrayNoD[_float64_co],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # Nd +f64, 1d, axis=None  (default)
+def percentile(
+    a: _DualArrayLike[np.dtype[_float32_co], float],
+    q: _ToArray1D[_float64_co, float],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # Nd +f64, Nd, axis=None  (default)
+def percentile[ShapeT: _Shape](
+    a: _DualArrayLike[np.dtype[_float32_co], float],
+    q: _Array[ShapeT, _float64_co],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array[ShapeT, np.float64]: ...
+@overload  # Nd T, 0d, axis=None  (default)
+def percentile[ScalarT: np.floating | _Time](
     a: _ArrayLike[ScalarT],
     q: _FloatLike_co,
     axis: None = None,
@@ -1483,32 +1762,32 @@ def percentile[ScalarT: np.inexact | np.timedelta64 | np.datetime64](
     *,
     weights: _ArrayLikeFloat_co | None = None,
 ) -> ScalarT: ...
-@overload  # inexact, scalar, axis=<given>
-def percentile[ScalarT: np.inexact | np.timedelta64 | np.datetime64](
+@overload  # Nd T, ?d  (workaround)
+def percentile[ScalarT: _RealDouble | _Time](
     a: _ArrayLike[ScalarT],
-    q: _FloatLike_co,
-    axis: _ShapeLike,
+    q: _ArrayNoD[_floating_co],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # Nd T, 1d, axis=None  (default)
+def percentile[ScalarT: _RealDouble | _Time](
+    a: _ArrayLike[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: None = None,
     out: None = None,
     overwrite_input: bool = False,
     method: _InterpolationMethod = "linear",
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[ScalarT]: ...
-@overload  # inexact, scalar, keepdims=True
-def percentile[ScalarT: np.inexact | np.timedelta64 | np.datetime64](
-    a: _ArrayLike[ScalarT],
-    q: _FloatLike_co,
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    *,
-    keepdims: L[True],
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[ScalarT]: ...
-@overload  # inexact, array, axis=None
-def percentile[ScalarT: np.inexact | np.timedelta64 | np.datetime64, ShapeT: _Shape](
+) -> _Array1D[ScalarT]: ...
+@overload  # Nd T, Nd, axis=None  (default)
+def percentile[ScalarT: _RealDouble | _Time, ShapeT: _Shape](
     a: _ArrayLike[ScalarT],
     q: _Array[ShapeT, _floating_co],
     axis: None = None,
@@ -1519,177 +1798,9 @@ def percentile[ScalarT: np.inexact | np.timedelta64 | np.datetime64, ShapeT: _Sh
     *,
     weights: _ArrayLikeFloat_co | None = None,
 ) -> _Array[ShapeT, ScalarT]: ...
-@overload  # inexact, array-like
-def percentile[ScalarT: np.inexact | np.timedelta64 | np.datetime64](
-    a: _ArrayLike[ScalarT],
-    q: NDArray[_floating_co] | _SeqND[_FloatLike_co],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: bool = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[ScalarT]: ...
-@overload  # float, scalar, axis=None
-def percentile(
-    a: _SeqND[float] | _ArrayLikeInt_co,
-    q: _FloatLike_co,
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> np.float64: ...
-@overload  # float, scalar, axis=<given>
-def percentile(
-    a: _SeqND[float] | _ArrayLikeInt_co,
-    q: _FloatLike_co,
-    axis: _ShapeLike,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.float64]: ...
-@overload  # float, scalar, keepdims=True
-def percentile(
-    a: _SeqND[float] | _ArrayLikeInt_co,
-    q: _FloatLike_co,
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    *,
-    keepdims: L[True],
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.float64]: ...
-@overload  # float, array, axis=None
+@overload  # Nd ~object_, Nd, axis=None  (default)
 def percentile[ShapeT: _Shape](
-    a: _SeqND[float] | _ArrayLikeInt_co,
-    q: _Array[ShapeT, _floating_co],
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> _Array[ShapeT, np.float64]: ...
-@overload  # float, array-like
-def percentile(
-    a: _SeqND[float] | _ArrayLikeInt_co,
-    q: NDArray[_floating_co] | _SeqND[_FloatLike_co],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: bool = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.float64]: ...
-@overload  # complex, scalar, axis=None
-def percentile(
-    a: _ListSeqND[complex],
-    q: _FloatLike_co,
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> np.complex128: ...
-@overload  # complex, scalar, axis=<given>
-def percentile(
-    a: _ListSeqND[complex],
-    q: _FloatLike_co,
-    axis: _ShapeLike,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.complex128]: ...
-@overload  # complex, scalar, keepdims=True
-def percentile(
-    a: _ListSeqND[complex],
-    q: _FloatLike_co,
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    *,
-    keepdims: L[True],
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.complex128]: ...
-@overload  # complex, array, axis=None
-def percentile[ShapeT: _Shape](
-    a: _ListSeqND[complex],
-    q: _Array[ShapeT, _floating_co],
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> _Array[ShapeT, np.complex128]: ...
-@overload  # complex, array-like
-def percentile(
-    a: _ListSeqND[complex],
-    q: NDArray[_floating_co] | _SeqND[_FloatLike_co],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: bool = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.complex128]: ...
-@overload  # object_, scalar, axis=None
-def percentile(
-    a: _ArrayLikeObject_co,
-    q: _FloatLike_co,
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> Any: ...
-@overload  # object_, scalar, axis=<given>
-def percentile(
-    a: _ArrayLikeObject_co,
-    q: _FloatLike_co,
-    axis: _ShapeLike,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.object_]: ...
-@overload  # object_, scalar, keepdims=True
-def percentile(
-    a: _ArrayLikeObject_co,
-    q: _FloatLike_co,
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    *,
-    keepdims: L[True],
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.object_]: ...
-@overload  # object_, array, axis=None
-def percentile[ShapeT: _Shape](
-    a: _ArrayLikeObject_co,
+    a: _ArrayLike[np.object_],
     q: _Array[ShapeT, _floating_co],
     axis: None = None,
     out: None = None,
@@ -1699,11 +1810,395 @@ def percentile[ShapeT: _Shape](
     *,
     weights: _ArrayLikeFloat_co | None = None,
 ) -> _Array[ShapeT, np.object_]: ...
-@overload  # object_, array-like
+@overload  # ?d +integer, 0d, axis=<given>  (workaround)
 def percentile(
-    a: _ArrayLikeObject_co,
-    q: NDArray[_floating_co] | _SeqND[_FloatLike_co],
+    a: _ArrayNoD[_integer_co],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64] | Any: ...
+@overload  # ?d +f32, 1d, axis=<given>  (workaround)
+def percentile(
+    a: _ArrayNoD[_float32_co],
+    q: _ToArray1D[_float64_co, float],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # ?d T, 0d, axis=<given>  (workaround)
+def percentile[ScalarT: np.floating | _Time](
+    a: _ArrayNoD[ScalarT],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # ?d T, 1d, axis=<given>  (workaround)
+def percentile[ScalarT: _RealDouble | _Time](
+    a: _ArrayNoD[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # 1d +f64, 0d, axis=<given>
+def percentile(
+    a: _Array1D[_integer_co] | _Seq1D[float],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> np.float64: ...
+@overload  # 1d +f64, 1d, axis=<given>
+def percentile(
+    a: _Array1D[_float32_co] | _Seq1D[float],
+    q: _ToArray1D[_float64_co, float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d T, 0d, axis=<given>
+def percentile[ScalarT: np.floating | _Time](
+    a: _Array1D[ScalarT] | _Seq1D[ScalarT],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> ScalarT: ...
+@overload  # 1d T, 1d, axis=<given>
+def percentile[ScalarT: _RealDouble | _Time](
+    a: _Array1D[ScalarT] | _Seq1D[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 2d +f64, 0d, axis=<given>
+def percentile(
+    a: _Array2D[_integer_co] | _Seq2D[float],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # 2d +f64, 1d, axis=<given>
+def percentile(
+    a: _Array2D[_float32_co] | _Seq2D[float],
+    q: _ToArray1D[_float64_co, float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array2D[np.float64]: ...
+@overload  # 2d T, 0d, axis=<given>
+def percentile[ScalarT: np.floating | _Time](
+    a: _Array2D[ScalarT] | _Seq2D[ScalarT],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 2d T, 1d, axis=<given>
+def percentile[ScalarT: _RealDouble | _Time](
+    a: _Array2D[ScalarT] | _Seq2D[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array2D[ScalarT]: ...
+@overload  # 3d +f64, 0d, axis=<given>
+def percentile(
+    a: _Array3D[_integer_co] | _Seq3D[float],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array2D[np.float64]: ...
+@overload  # 3d +f64, 1d, axis=<given>
+def percentile(
+    a: _Array3D[_float32_co] | _Seq3D[float],
+    q: _ToArray1D[_float64_co, float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array3D[np.float64]: ...
+@overload  # 3d T, 0d, axis=<given>
+def percentile[ScalarT: np.floating | _Time](
+    a: _Array3D[ScalarT] | _Seq3D[ScalarT],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array2D[ScalarT]: ...
+@overload  # 3d T, 1d, axis=<given>
+def percentile[ScalarT: _RealDouble | _Time](
+    a: _Array3D[ScalarT] | _Seq3D[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array3D[ScalarT]: ...
+@overload  # 4d +f64, 0d, axis=<given>
+def percentile(
+    a: _Array4D[_integer_co] | _Seq4D[float],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array3D[np.float64]: ...
+@overload  # 4d +f64, 1d, axis=<given>
+def percentile(
+    a: _Array4D[_float32_co] | _Seq4D[float],
+    q: _ToArray1D[_float64_co, float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array4D[np.float64]: ...
+@overload  # 4d T, 0d, axis=<given>
+def percentile[ScalarT: np.floating | _Time](
+    a: _Array4D[ScalarT] | _Seq4D[ScalarT],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array3D[ScalarT]: ...
+@overload  # 4d T, 1d, axis=<given>
+def percentile[ScalarT: _RealDouble | _Time](
+    a: _Array4D[ScalarT] | _Seq4D[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array4D[ScalarT]: ...
+@overload  # Nd +integer, 0d, keepdims=True
+def percentile[ShapeT: _Shape](
+    a: _Array[ShapeT, _integer_co],
+    q: _FloatLike_co,
     axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array[ShapeT, np.float64]: ...
+@overload  # Nd +f64, 0d, keepdims=True  (fallback)
+def percentile(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    q: _FloatLike_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # Nd +f64, 0d, axis=<given>  (fallback)
+def percentile(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64] | Any: ...
+@overload  # Nd +f64, Nd, axis=None  (fallback)
+def percentile(
+    a: _DualArrayLike[np.dtype[_float32_co], float],
+    q: _ToArrayND[_float64_co, float],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # Nd +f64, Nd, axis=<given>  (fallback)
+def percentile(
+    a: _DualArrayLike[np.dtype[_float32_co], float],
+    q: _ToArrayND[_float64_co, float],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # Nd T, 0d, keepdims=True
+def percentile[ArrayT: NDArray[np.floating | _Time]](
+    a: ArrayT,
+    q: _FloatLike_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> ArrayT: ...
+@overload  # Nd T, 0d, keepdims=True  (fallback)
+def percentile[ScalarT: np.floating | _Time](
+    a: _ArrayLike[ScalarT],
+    q: _FloatLike_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # Nd T, 0d, axis=<given>  (fallback)
+def percentile[ScalarT: np.floating | _Time](
+    a: _ArrayLike[ScalarT],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # Nd T, Nd, axis=None  (fallback)
+def percentile[ScalarT: _RealDouble | _Time](
+    a: _ArrayLike[ScalarT],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # Nd T, Nd, axis=<given>  (fallback)
+def percentile[ScalarT: _RealDouble | _Time](
+    a: _ArrayLike[ScalarT],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # Nd ~object_, 0d, keepdims=True
+def percentile(
+    a: _ArrayLike[np.object_],
+    q: _FloatLike_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.object_]: ...
+@overload  # Nd ~object_, 0d, axis=<given>  (fallback)
+def percentile(
+    a: _ArrayLike[np.object_],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.object_] | Any: ...
+@overload  # Nd ~object_, Nd, axis=None  (fallback)
+def percentile(
+    a: _ArrayLike[np.object_],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: None = None,
     out: None = None,
     overwrite_input: bool = False,
     method: _InterpolationMethod = "linear",
@@ -1711,7 +2206,91 @@ def percentile(
     *,
     weights: _ArrayLikeFloat_co | None = None,
 ) -> NDArray[np.object_]: ...
-@overload  # out=<given> (keyword)
+@overload  # Nd ~object_, Nd, axis=<given>  (fallback)
+def percentile(
+    a: _ArrayLike[np.object_],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.object_]: ...
+@overload  # fallback, 0d, keepdims=True
+def percentile(
+    a: _DualArrayLike[np.dtype[_floating_co | _Time | np.object_], float],
+    q: _FloatLike_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[Any]: ...
+@overload  # fallback, 0d, axis=None  (default)
+def percentile(
+    a: _DualArrayLike[np.dtype[_floating_co | _Time | np.object_], float],
+    q: _FloatLike_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> Any: ...
+@overload  # fallback, 0d, axis=<given>
+def percentile(
+    a: _DualArrayLike[np.dtype[_floating_co | _Time | np.object_], float],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[Any] | Any: ...
+@overload  # fallback, Nd, axis=None
+def percentile(
+    a: _DualArrayLike[np.dtype[_floating_co | _Time | np.object_], float],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[Any]: ...
+@overload  # fallback, Nd, axis=<given>
+def percentile(
+    a: _DualArrayLike[np.dtype[_floating_co | _Time | np.object_], float],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[Any]: ...
+@overload  # out=<given>  (keyword)
+def percentile[ArrayT: np.ndarray](
+    a: ArrayLike,
+    q: _ArrayLikeFloat_co,
+    axis: _ShapeLike | None = None,
+    *,
+    out: ArrayT,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> ArrayT: ...
+@overload  # out=<given>  (positional)
 def percentile[ArrayT: np.ndarray](
     a: ArrayLike,
     q: _ArrayLikeFloat_co,
@@ -1723,34 +2302,58 @@ def percentile[ArrayT: np.ndarray](
     *,
     weights: _ArrayLikeFloat_co | None = None,
 ) -> ArrayT: ...
-@overload  # out=<given> (positional)
-def percentile[ArrayT: np.ndarray](
-    a: ArrayLike,
-    q: _ArrayLikeFloat_co,
-    axis: _ShapeLike | None = None,
-    *,
-    out: ArrayT,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: bool = False,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> ArrayT: ...
-@overload  # fallback
-def percentile(
-    a: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    q: _ArrayLikeFloat_co,
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: bool = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> Incomplete: ...
 
 # NOTE: keep in sync with `percentile`
-@overload  # inexact, scalar, axis=None
-def quantile[ScalarT: np.inexact | np.timedelta64 | np.datetime64](
+@overload  # Nd +f64, 0d, axis=None  (default)
+def quantile(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    q: _FloatLike_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> np.float64: ...
+@overload  # Nd +f64, ?d  (workaround)
+def quantile(
+    a: _DualArrayLike[np.dtype[_float32_co], float],
+    q: _ArrayNoD[_float64_co],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # Nd +f64, 1d, axis=None  (default)
+def quantile(
+    a: _DualArrayLike[np.dtype[_float32_co], float],
+    q: _ToArray1D[_float64_co, float],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # Nd +f64, Nd, axis=None  (default)
+def quantile[ShapeT: _Shape](
+    a: _DualArrayLike[np.dtype[_float32_co], float],
+    q: _Array[ShapeT, _float64_co],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array[ShapeT, np.float64]: ...
+@overload  # Nd T, 0d, axis=None  (default)
+def quantile[ScalarT: np.floating | _Time](
     a: _ArrayLike[ScalarT],
     q: _FloatLike_co,
     axis: None = None,
@@ -1761,32 +2364,32 @@ def quantile[ScalarT: np.inexact | np.timedelta64 | np.datetime64](
     *,
     weights: _ArrayLikeFloat_co | None = None,
 ) -> ScalarT: ...
-@overload  # inexact, scalar, axis=<given>
-def quantile[ScalarT: np.inexact | np.timedelta64 | np.datetime64](
+@overload  # Nd T, ?d  (workaround)
+def quantile[ScalarT: _RealDouble | _Time](
     a: _ArrayLike[ScalarT],
-    q: _FloatLike_co,
-    axis: _ShapeLike,
+    q: _ArrayNoD[_floating_co],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # Nd T, 1d, axis=None  (default)
+def quantile[ScalarT: _RealDouble | _Time](
+    a: _ArrayLike[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: None = None,
     out: None = None,
     overwrite_input: bool = False,
     method: _InterpolationMethod = "linear",
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[ScalarT]: ...
-@overload  # inexact, scalar, keepdims=True
-def quantile[ScalarT: np.inexact | np.timedelta64 | np.datetime64](
-    a: _ArrayLike[ScalarT],
-    q: _FloatLike_co,
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    *,
-    keepdims: L[True],
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[ScalarT]: ...
-@overload  # inexact, array, axis=None
-def quantile[ScalarT: np.inexact | np.timedelta64 | np.datetime64, ShapeT: _Shape](
+) -> _Array1D[ScalarT]: ...
+@overload  # Nd T, Nd, axis=None  (default)
+def quantile[ScalarT: _RealDouble | _Time, ShapeT: _Shape](
     a: _ArrayLike[ScalarT],
     q: _Array[ShapeT, _floating_co],
     axis: None = None,
@@ -1797,177 +2400,9 @@ def quantile[ScalarT: np.inexact | np.timedelta64 | np.datetime64, ShapeT: _Shap
     *,
     weights: _ArrayLikeFloat_co | None = None,
 ) -> _Array[ShapeT, ScalarT]: ...
-@overload  # inexact, array-like
-def quantile[ScalarT: np.inexact | np.timedelta64 | np.datetime64](
-    a: _ArrayLike[ScalarT],
-    q: NDArray[_floating_co] | _SeqND[_FloatLike_co],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: bool = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[ScalarT]: ...
-@overload  # float, scalar, axis=None
-def quantile(
-    a: _SeqND[float] | _ArrayLikeInt_co,
-    q: _FloatLike_co,
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> np.float64: ...
-@overload  # float, scalar, axis=<given>
-def quantile(
-    a: _SeqND[float] | _ArrayLikeInt_co,
-    q: _FloatLike_co,
-    axis: _ShapeLike,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.float64]: ...
-@overload  # float, scalar, keepdims=True
-def quantile(
-    a: _SeqND[float] | _ArrayLikeInt_co,
-    q: _FloatLike_co,
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    *,
-    keepdims: L[True],
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.float64]: ...
-@overload  # float, array, axis=None
+@overload  # Nd ~object_, Nd, axis=None  (default)
 def quantile[ShapeT: _Shape](
-    a: _SeqND[float] | _ArrayLikeInt_co,
-    q: _Array[ShapeT, _floating_co],
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> _Array[ShapeT, np.float64]: ...
-@overload  # float, array-like
-def quantile(
-    a: _SeqND[float] | _ArrayLikeInt_co,
-    q: NDArray[_floating_co] | _SeqND[_FloatLike_co],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: bool = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.float64]: ...
-@overload  # complex, scalar, axis=None
-def quantile(
-    a: _ListSeqND[complex],
-    q: _FloatLike_co,
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> np.complex128: ...
-@overload  # complex, scalar, axis=<given>
-def quantile(
-    a: _ListSeqND[complex],
-    q: _FloatLike_co,
-    axis: _ShapeLike,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.complex128]: ...
-@overload  # complex, scalar, keepdims=True
-def quantile(
-    a: _ListSeqND[complex],
-    q: _FloatLike_co,
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    *,
-    keepdims: L[True],
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.complex128]: ...
-@overload  # complex, array, axis=None
-def quantile[ShapeT: _Shape](
-    a: _ListSeqND[complex],
-    q: _Array[ShapeT, _floating_co],
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> _Array[ShapeT, np.complex128]: ...
-@overload  # complex, array-like
-def quantile(
-    a: _ListSeqND[complex],
-    q: NDArray[_floating_co] | _SeqND[_FloatLike_co],
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: bool = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.complex128]: ...
-@overload  # object_, scalar, axis=None
-def quantile(
-    a: _ArrayLikeObject_co,
-    q: _FloatLike_co,
-    axis: None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> Any: ...
-@overload  # object_, scalar, axis=<given>
-def quantile(
-    a: _ArrayLikeObject_co,
-    q: _FloatLike_co,
-    axis: _ShapeLike,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: L[False] = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.object_]: ...
-@overload  # object_, scalar, keepdims=True
-def quantile(
-    a: _ArrayLikeObject_co,
-    q: _FloatLike_co,
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    *,
-    keepdims: L[True],
-    weights: _ArrayLikeFloat_co | None = None,
-) -> NDArray[np.object_]: ...
-@overload  # object_, array, axis=None
-def quantile[ShapeT: _Shape](
-    a: _ArrayLikeObject_co,
+    a: _ArrayLike[np.object_],
     q: _Array[ShapeT, _floating_co],
     axis: None = None,
     out: None = None,
@@ -1977,11 +2412,395 @@ def quantile[ShapeT: _Shape](
     *,
     weights: _ArrayLikeFloat_co | None = None,
 ) -> _Array[ShapeT, np.object_]: ...
-@overload  # object_, array-like
+@overload  # ?d +integer, 0d, axis=<given>  (workaround)
 def quantile(
-    a: _ArrayLikeObject_co,
-    q: NDArray[_floating_co] | _SeqND[_FloatLike_co],
+    a: _ArrayNoD[_integer_co],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64] | Any: ...
+@overload  # ?d +f32, 1d, axis=<given>  (workaround)
+def quantile(
+    a: _ArrayNoD[_float32_co],
+    q: _ToArray1D[_float64_co, float],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # ?d T, 0d, axis=<given>  (workaround)
+def quantile[ScalarT: np.floating | _Time](
+    a: _ArrayNoD[ScalarT],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # ?d T, 1d, axis=<given>  (workaround)
+def quantile[ScalarT: _RealDouble | _Time](
+    a: _ArrayNoD[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # 1d +f64, 0d, axis=<given>
+def quantile(
+    a: _Array1D[_integer_co] | _Seq1D[float],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> np.float64: ...
+@overload  # 1d +f64, 1d, axis=<given>
+def quantile(
+    a: _Array1D[_float32_co] | _Seq1D[float],
+    q: _ToArray1D[_float64_co, float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d T, 0d, axis=<given>
+def quantile[ScalarT: np.floating | _Time](
+    a: _Array1D[ScalarT] | _Seq1D[ScalarT],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> ScalarT: ...
+@overload  # 1d T, 1d, axis=<given>
+def quantile[ScalarT: _RealDouble | _Time](
+    a: _Array1D[ScalarT] | _Seq1D[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 2d +f64, 0d, axis=<given>
+def quantile(
+    a: _Array2D[_integer_co] | _Seq2D[float],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # 2d +f64, 1d, axis=<given>
+def quantile(
+    a: _Array2D[_float32_co] | _Seq2D[float],
+    q: _ToArray1D[_float64_co, float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array2D[np.float64]: ...
+@overload  # 2d T, 0d, axis=<given>
+def quantile[ScalarT: np.floating | _Time](
+    a: _Array2D[ScalarT] | _Seq2D[ScalarT],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 2d T, 1d, axis=<given>
+def quantile[ScalarT: _RealDouble | _Time](
+    a: _Array2D[ScalarT] | _Seq2D[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array2D[ScalarT]: ...
+@overload  # 3d +f64, 0d, axis=<given>
+def quantile(
+    a: _Array3D[_integer_co] | _Seq3D[float],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array2D[np.float64]: ...
+@overload  # 3d +f64, 1d, axis=<given>
+def quantile(
+    a: _Array3D[_float32_co] | _Seq3D[float],
+    q: _ToArray1D[_float64_co, float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array3D[np.float64]: ...
+@overload  # 3d T, 0d, axis=<given>
+def quantile[ScalarT: np.floating | _Time](
+    a: _Array3D[ScalarT] | _Seq3D[ScalarT],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array2D[ScalarT]: ...
+@overload  # 3d T, 1d, axis=<given>
+def quantile[ScalarT: _RealDouble | _Time](
+    a: _Array3D[ScalarT] | _Seq3D[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array3D[ScalarT]: ...
+@overload  # 4d +f64, 0d, axis=<given>
+def quantile(
+    a: _Array4D[_integer_co] | _Seq4D[float],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array3D[np.float64]: ...
+@overload  # 4d +f64, 1d, axis=<given>
+def quantile(
+    a: _Array4D[_float32_co] | _Seq4D[float],
+    q: _ToArray1D[_float64_co, float],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array4D[np.float64]: ...
+@overload  # 4d T, 0d, axis=<given>
+def quantile[ScalarT: np.floating | _Time](
+    a: _Array4D[ScalarT] | _Seq4D[ScalarT],
+    q: _FloatLike_co,
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array3D[ScalarT]: ...
+@overload  # 4d T, 1d, axis=<given>
+def quantile[ScalarT: _RealDouble | _Time](
+    a: _Array4D[ScalarT] | _Seq4D[ScalarT],
+    q: _ToArray1D[_floating_co, _FloatLike_co],
+    axis: int | tuple[int],
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array4D[ScalarT]: ...
+@overload  # Nd +integer, 0d, keepdims=True
+def quantile[ShapeT: _Shape](
+    a: _Array[ShapeT, _integer_co],
+    q: _FloatLike_co,
     axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _Array[ShapeT, np.float64]: ...
+@overload  # Nd +f64, 0d, keepdims=True  (fallback)
+def quantile(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    q: _FloatLike_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # Nd +f64, 0d, axis=<given>  (fallback)
+def quantile(
+    a: _DualArrayLike[np.dtype[_integer_co], float],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64] | Any: ...
+@overload  # Nd +f64, Nd, axis=None  (fallback)
+def quantile(
+    a: _DualArrayLike[np.dtype[_float32_co], float],
+    q: _ToArrayND[_float64_co, float],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # Nd +f64, Nd, axis=<given>  (fallback)
+def quantile(
+    a: _DualArrayLike[np.dtype[_float32_co], float],
+    q: _ToArrayND[_float64_co, float],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.float64]: ...
+@overload  # Nd T, 0d, keepdims=True
+def quantile[ArrayT: NDArray[np.floating | _Time]](
+    a: ArrayT,
+    q: _FloatLike_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> ArrayT: ...
+@overload  # Nd T, 0d, keepdims=True  (fallback)
+def quantile[ScalarT: np.floating | _Time](
+    a: _ArrayLike[ScalarT],
+    q: _FloatLike_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # Nd T, 0d, axis=<given>  (fallback)
+def quantile[ScalarT: np.floating | _Time](
+    a: _ArrayLike[ScalarT],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT] | Any: ...
+@overload  # Nd T, Nd, axis=None  (fallback)
+def quantile[ScalarT: _RealDouble | _Time](
+    a: _ArrayLike[ScalarT],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # Nd T, Nd, axis=<given>  (fallback)
+def quantile[ScalarT: _RealDouble | _Time](
+    a: _ArrayLike[ScalarT],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # Nd ~object_, 0d, keepdims=True
+def quantile(
+    a: _ArrayLike[np.object_],
+    q: _FloatLike_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.object_]: ...
+@overload  # Nd ~object_, 0d, axis=<given>  (fallback)
+def quantile(
+    a: _ArrayLike[np.object_],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.object_] | Any: ...
+@overload  # Nd ~object_, Nd, axis=None  (fallback)
+def quantile(
+    a: _ArrayLike[np.object_],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: None = None,
     out: None = None,
     overwrite_input: bool = False,
     method: _InterpolationMethod = "linear",
@@ -1989,7 +2808,91 @@ def quantile(
     *,
     weights: _ArrayLikeFloat_co | None = None,
 ) -> NDArray[np.object_]: ...
-@overload  # out=<given> (keyword)
+@overload  # Nd ~object_, Nd, axis=<given>  (fallback)
+def quantile(
+    a: _ArrayLike[np.object_],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.object_]: ...
+@overload  # fallback, 0d, keepdims=True
+def quantile(
+    a: _DualArrayLike[np.dtype[_floating_co | _Time | np.object_], float],
+    q: _FloatLike_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    *,
+    keepdims: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[Any]: ...
+@overload  # fallback, 0d, axis=None  (default)
+def quantile(
+    a: _DualArrayLike[np.dtype[_floating_co | _Time | np.object_], float],
+    q: _FloatLike_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> Any: ...
+@overload  # fallback, 0d, axis=<given>
+def quantile(
+    a: _DualArrayLike[np.dtype[_floating_co | _Time | np.object_], float],
+    q: _FloatLike_co,
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[Any] | Any: ...
+@overload  # fallback, Nd, axis=None
+def quantile(
+    a: _DualArrayLike[np.dtype[_floating_co | _Time | np.object_], float],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[Any]: ...
+@overload  # fallback, Nd, axis=<given>
+def quantile(
+    a: _DualArrayLike[np.dtype[_floating_co | _Time | np.object_], float],
+    q: _ToArrayND[_floating_co, _FloatLike_co],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> NDArray[Any]: ...
+@overload  # out=<given>  (keyword)
+def quantile[ArrayT: np.ndarray](
+    a: ArrayLike,
+    q: _ArrayLikeFloat_co,
+    axis: _ShapeLike | None = None,
+    *,
+    out: ArrayT,
+    overwrite_input: bool = False,
+    method: _InterpolationMethod = "linear",
+    keepdims: bool = False,
+    weights: _ArrayLikeFloat_co | None = None,
+) -> ArrayT: ...
+@overload  # out=<given>  (positional)
 def quantile[ArrayT: np.ndarray](
     a: ArrayLike,
     q: _ArrayLikeFloat_co,
@@ -2001,30 +2904,6 @@ def quantile[ArrayT: np.ndarray](
     *,
     weights: _ArrayLikeFloat_co | None = None,
 ) -> ArrayT: ...
-@overload  # out=<given> (positional)
-def quantile[ArrayT: np.ndarray](
-    a: ArrayLike,
-    q: _ArrayLikeFloat_co,
-    axis: _ShapeLike | None = None,
-    *,
-    out: ArrayT,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: bool = False,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> ArrayT: ...
-@overload  # fallback
-def quantile(
-    a: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    q: _ArrayLikeFloat_co,
-    axis: _ShapeLike | None = None,
-    out: None = None,
-    overwrite_input: bool = False,
-    method: _InterpolationMethod = "linear",
-    keepdims: bool = False,
-    *,
-    weights: _ArrayLikeFloat_co | None = None,
-) -> Incomplete: ...
 
 #
 @overload  # ?d, known inexact/timedelta64 scalar-type

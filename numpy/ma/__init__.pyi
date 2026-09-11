@@ -128,6 +128,7 @@ from .core import (
     min,
     minimum,
     minimum_fill_value,
+    minmax,
     mod,
     multiply,
     mvoid,
@@ -224,6 +225,7 @@ from .extras import (
     stack,
     union1d,
     unique,
+    unwrap,
     vander,
     vstack,
 )
@@ -359,6 +361,7 @@ __all__ = [
     "min",
     "minimum",
     "minimum_fill_value",
+    "minmax",
     "mod",
     "multiply",
     "mvoid",
@@ -453,6 +456,7 @@ __all__ = [
     "stack",
     "unique",
     "union1d",
+    "unwrap",
     "vander",
     "vstack",
 ]

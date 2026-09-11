@@ -650,12 +650,21 @@ npy_lcm@c@(@type@ a, @type@ b)
  *
  * #type = (npy_int, npy_long, npy_longlong)*2#
  * #c = (,l,ll)*2#
+ * #utype = (npy_uint, npy_ulong, npy_ulonglong)*2#
  * #func=gcd*3,lcm*3#
  */
 NPY_INPLACE @type@
 npy_@func@@c@(@type@ a, @type@ b)
 {
-    return npy_@func@u@c@(a < 0 ? -a : a, b < 0 ? -b : b);
+    /*
+     * Cast to unsigned to avoid overflow when negating minimum signed value.
+     * For negative values, cast to unsigned first, then apply negation in
+     * unsigned arithmetic to avoid undefined behavior.
+     * This ensures correct behavior across all architectures. #31359
+     */
+    @utype@ a_abs = a < 0 ? (@utype@)(0) - (@utype@)a : (@utype@)a;
+    @utype@ b_abs = b < 0 ? (@utype@)(0) - (@utype@)b : (@utype@)b;
+    return (@type@)npy_@func@u@c@(a_abs, b_abs);
 }
 /**end repeat**/
 

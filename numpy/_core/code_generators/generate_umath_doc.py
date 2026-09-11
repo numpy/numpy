@@ -1,12 +1,9 @@
 import argparse
 import os
-import sys
 import textwrap
 
-sys.path.insert(0, os.path.dirname(__file__))
-import ufunc_docstrings as docstrings
+from . import ufunc_docstrings as docstrings
 
-sys.path.pop(0)
 
 def normalize_doc(docstring):
     docstring = textwrap.dedent(docstring).strip()

@@ -93,7 +93,7 @@ Here ``<fortran files>`` may also contain signature files. Among other options
   ``--freethreading-compatible``, as ``f2py`` does not analyze fortran code for
   thread safety issues.
 
-``--include-paths "<path1>:<path2>..."``
+``--include-paths "<path1><pathsep><path2>..."``
   Search include files from given directories.
 
   .. note:: The paths are to be separated by the correct operating system

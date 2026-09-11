@@ -432,7 +432,7 @@ def _wrap_header_guess_version(header):
     except UnicodeEncodeError:
         pass
     else:
-        warnings.warn("Stored array in format 2.0. It can only be"
+        warnings.warn("Stored array in format 2.0. It can only be "
                       "read by NumPy >= 1.9", UserWarning, stacklevel=2)
         return ret
 
@@ -519,6 +519,9 @@ def read_array_header_1_0(fp, max_header_size=_MAX_HEADER_SIZE):
     ----------
     fp : filelike object
         A file object or something with a `.read()` method like a file.
+        Must be positioned at the start of the header, just after the
+        magic string and version bytes. This can be done by calling
+        `read_magic` on ``fp`` first.
 
     Returns
     -------
@@ -557,6 +560,9 @@ def read_array_header_2_0(fp, max_header_size=_MAX_HEADER_SIZE):
     ----------
     fp : filelike object
         A file object or something with a `.read()` method like a file.
+        Must be positioned at the start of the header, just after the
+        magic string and version bytes. This can be done by calling
+        `read_magic` on ``fp`` first.
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.

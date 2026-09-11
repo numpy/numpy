@@ -1,1 +1,0 @@
-* ``numpy.distutils`` has been removed

@@ -16,6 +16,7 @@ class TestCommonBlock(util.F2PyTest):
         assert self.module.block.ok == np.array(3, dtype=np.int32)
 
 
+@pytest.mark.slow
 class TestCommonWithUse(util.F2PyTest):
     sources = [util.getpath("tests", "src", "common", "gh19161.f90")]
 

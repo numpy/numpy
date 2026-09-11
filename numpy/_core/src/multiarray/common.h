@@ -12,6 +12,7 @@
 
 #include "npy_static_data.h"
 #include "npy_import.h"
+#include "module_state.h"
 #include <limits.h>
 #include <string.h>
 
@@ -21,6 +22,23 @@ extern "C" {
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
+static inline void
+multi_DECREF(PyObject *const *objects, npy_intp n)
+{
+    assert(n == 0 || objects != NULL);
+    for (npy_intp i = 0; i < n; i++) {
+        Py_DECREF(objects[i]);
+    }
+}
+
+static inline void
+multi_XDECREF(PyObject *const *objects, npy_intp n)
+{
+    assert(n == 0 || objects != NULL);
+    for (npy_intp i = 0; i < n; i++) {
+        Py_XDECREF(objects[i]);
+    }
+}
 
 NPY_NO_EXPORT PyObject *
 build_array_interface(PyObject *dataptr, PyObject *descr, PyObject *strides,
@@ -59,6 +77,27 @@ _array_find_python_scalar_type(PyObject *op);
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
+/*
+ * Check whether a missing legacy copyswap/copyswapn slot can be replaced for
+ * a dtype (for example one written using the new DType API).  A dtype whose
+ * byteorder is NPY_IGNORE ('|') declares that byte order does not apply to it,
+ * so copyswap degenerates to a plain copy.  The fallback is allowed when that
+ * copy is one numpy can make on its own:
+ *
+ *   - `inplace_swap` (the caller passes src == NULL): there is no data to
+ *     copy at all, so the fallback does nothing.
+ *   - otherwise the dtype must be trivially copyable, i.e. its value is
+ *     exactly its bytes, so copying them is the whole operation.
+ *
+ * Anything else raises: a dtype with a real byte order gave numpy no way to
+ * swap it, and one that owns references cannot be copied by moving bytes.
+ * Callers that can copy some other way -- np.place and `.flat` assignment
+ * go through the casting machinery -- should do that instead of asking here.
+ * Returns 1 when the fallback is safe; otherwise sets TypeError and returns 0.
+ */
+NPY_NO_EXPORT int
+can_substitute_copyswap(PyArray_Descr *dtype, int inplace_swap);
+
 NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 
@@ -94,6 +133,40 @@ _unpack_field_index(
  */
 NPY_NO_EXPORT int
 _may_have_objects(PyArray_Descr *dtype);
+
+/*
+ * For a sub-array descriptor, return the base descriptor,
+ * set newnd to nd plus the number of subarray dimensions,
+ * and fill newdims by copying nd items from dims and appending
+ * newnd-nd items from the subarray.
+ * If newstrides != NULL, they are similarly filled.
+ *
+ * Note: caller has to ensure that descr is a subarray, and that
+ * newdims and newstrides are big enough (i.e., NPY_MAXDIMS if
+ * the new size is not yet known).
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_get_subarray_base_and_dimensions(
+    const PyArray_Descr *descr,
+    const int nd, const npy_intp *dims, const npy_intp *strides,
+    int *newnd, npy_intp *newdims, npy_intp *newstrides);
+
+/*
+ * Check whether self can be viewed with the given dtype.
+ * If so, return a new reference to the dtype (possibly changed).
+ * If needed, also determine new dimensions and strides:
+ * - For views, *newdims and *newstrides hold storage.  If a change is
+ *   required, copy old dims and strides and make the change.
+ *   If no change is needed, set *dims and *strides to self's versions.
+ * - For _set_dtype, *newdims and *newstrides are NULL. Allocate a new
+ *   array if the number of dimensions increases (because type is a
+ *   subarray), and otherwise use self's dims and strides, possibly
+ *   changing the last element in-place.
+ */
+NPY_NO_EXPORT PyArray_Descr*
+_check_compatibility_with_new_dtype(
+    PyArrayObject *self, PyArray_Descr *type,
+    int *newnd, npy_intp **newdims, npy_intp **newstrides);
 
 /*
  * Returns -1 and sets an exception if *index is an invalid index for
@@ -145,13 +218,14 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
     /* Check that index is valid, taking into account negative indices */
     if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
         /* Invoke the AxisError constructor */
+        multiarray_umath_state *state = _npy_module_state;
         PyObject *exc = PyObject_CallFunction(
-                npy_static_pydata.AxisError, "iiO", *axis, ndim,
+                state->static_pydata.AxisError, "iiO", *axis, ndim,
                 msg_prefix);
         if (exc == NULL) {
             return -1;
         }
-        PyErr_SetObject(npy_static_pydata.AxisError, exc);
+        PyErr_SetObject(state->static_pydata.AxisError, exc);
         Py_DECREF(exc);
 
         return -1;
@@ -315,7 +389,14 @@ PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
             tmp = Py_None;
         }
         Py_INCREF(tmp);
+#if defined(Py_LIMITED_API)
+        if (PyTuple_SetItem(tuple, i, tmp) < 0) {
+            Py_DECREF(tuple);
+            return NULL;
+        }
+#else
         PyTuple_SET_ITEM(tuple, i, tmp);
+#endif
     }
     return tuple;
 }

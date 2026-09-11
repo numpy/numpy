@@ -1,0 +1,10 @@
+Ensure F2Py defines required typedefs in generated C wrapper
+------------------------------------------------------------
+
+Ensure F2Py includes the typedefs required for kinds in the ISO C
+Binding module and the ISO Fortran Environment module in the generated
+C wrapper.
+
+This also allows the ``int8`` integer kind from the ISO Fortran
+Environment module and the ``c_int8_t`` integer kind from the ISO C
+Binding module to work.

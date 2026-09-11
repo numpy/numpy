@@ -72,8 +72,10 @@ Set up:
     >>>
     >>>
     >>> NbufferT = [
-    ...     ([3,2], (6j, 6., ('nn', [6j,4j], [6.,4.], [1,2]), 'NN', True), 'cc', ('NN', 6j), [[6.,4.],[6.,4.]], 8),
-    ...     ([4,3], (7j, 7., ('oo', [7j,5j], [7.,5.], [2,1]), 'OO', False), 'dd', ('OO', 7j), [[7.,5.],[7.,5.]], 9),
+    ...     ([3,2], (6j, 6., ('nn', [6j,4j], [6.,4.], [1,2]), 'NN', True), 'cc',
+    ...         ('NN', 6j), [[6.,4.],[6.,4.]], 8),
+    ...     ([4,3], (7j, 7., ('oo', [7j,5j], [7.,5.], [2,1]), 'OO', False), 'dd',
+    ...         ('OO', 7j), [[7.,5.],[7.,5.]], 9),
     ...     ]
     >>>
     >>>
@@ -110,7 +112,8 @@ Test the header writing.
 
     >>> for arr in basic_arrays + record_arrays:
     ...     f = BytesIO()
-    ...     format.write_array_header_1_0(f, arr)   # XXX: arr is not a dict, items gets called on it
+    ...     # XXX: arr is not a dict, items gets called on it
+    ...     format.write_array_header_1_0(f, arr)
     ...     print(repr(f.getvalue()))
     ...
     "F\x00{'descr': '|u1', 'fortran_order': False, 'shape': (0,)}              \n"
@@ -273,7 +276,7 @@ Test the header writing.
     "\x16\x02{'descr': [('x', '<i4', (2,)),\n           ('Info',\n            [('value', '<c16'),\n             ('y2', '<f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '<c16', (2,)),\n               ('y3', '<f8', (2,)),\n               ('z3', '<u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '<U8'), ('Value', '<c16')]),\n           ('y', '<f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
-'''
+'''  # noqa: E501
 import os
 import sys
 import warnings

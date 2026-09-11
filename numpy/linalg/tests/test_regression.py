@@ -167,6 +167,7 @@ class TestRegression:
         assert res.shape == (4,)
 
     @pytest.mark.thread_unsafe(reason="test is already testing threads with openblas")
+    @pytest.mark.slow
     def test_openblas_threading(self):
         # gh-27036
         # Test whether matrix multiplication involving a large matrix always

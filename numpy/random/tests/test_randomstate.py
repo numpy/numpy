@@ -333,8 +333,7 @@ class TestRandint:
                 rng.randint(lbnd, ubnd, dtype=dt)
             except Exception as e:
                 raise AssertionError("No error should have been raised, "
-                                     "but one was with the following "
-                                     "message:\n\n%s" % str(e))
+                                     f"but one was with the following message:\n\n{e}")
 
     def test_in_bounds_fuzz(self):
         # Don't use fixed seed
@@ -2059,6 +2058,15 @@ def test_seed_alt_bit_gen(restore_singleton_bitgen):
     assert state["bit_generator"] == "PCG64"
     assert state["state"]["state"] != new_state["state"]["state"]
     assert state["state"]["inc"] != new_state["state"]["inc"]
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+def test_seed_alt_bit_gen_resets_gauss_cache(restore_singleton_bitgen):
+    np.random.set_bit_generator(PCG64(0))
+    np.random.seed(12345)
+    expected = np.random.standard_normal()
+    np.random.seed(12345)
+    assert np.random.standard_normal() == expected
 
 
 @pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")

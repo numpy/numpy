@@ -15,15 +15,13 @@
 #include "lowlevel_strided_loops.h"
 #include "loops_utils.h"
 #include "gil_utils.h"
+#include "npy_extint128.h"
 
 #include "npy_pycompat.h"
 
 #include "ufunc_object.h"
 
 #include <string.h> /* for memchr */
-
-/* Use Libdivide for faster division */
-#include "numpy/libdivide/libdivide.h"
 
 /*
  * cutoff blocksize for pairwise summation
@@ -200,7 +198,10 @@ PyUFunc_O_O(char **args, npy_intp const *dimensions, npy_intp const *steps, void
         PyObject **out = (PyObject **)op1;
         /* We allow NULL, but try to guarantee non-NULL to downstream */
         assert(in1 != NULL);
-        PyObject *ret = f(in1 ? in1 : Py_None);
+        /* hold in1: the call can run Python code that clears its array slot */
+        in1 = Py_NewRef(in1 ? in1 : Py_None);
+        PyObject *ret = f(in1);
+        Py_DECREF(in1);
         if (ret == NULL) {
             return;
         }
@@ -214,37 +215,47 @@ NPY_NO_EXPORT void
 PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
     char *meth = (char *)func;
+    PyObject *meth_name = PyUnicode_FromString(meth);
+    if (meth_name == NULL) {
+        return;
+    }
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
         /* We allow NULL, but try to guarantee non-NULL to downstream */
         assert(in1 != NULL);
         PyObject *ret, *func;
-        func = PyObject_GetAttrString(in1 ? in1 : Py_None, meth);
+        /* hold obj: the attribute lookup can clear its array slot */
+        PyObject *obj = Py_NewRef(in1 ? in1 : Py_None);
+        func = PyObject_GetAttr(obj, meth_name);
         if (func != NULL && !PyCallable_Check(func)) {
             Py_DECREF(func);
             func = NULL;
         }
         if (func == NULL) {
             PyObject *exc, *val, *tb;
-            PyTypeObject *type = in1 ? Py_TYPE(in1) : Py_TYPE(Py_None);
+            PyTypeObject *type = Py_TYPE(obj);
             PyErr_Fetch(&exc, &val, &tb);
             PyErr_Format(PyExc_TypeError,
                          "loop of ufunc does not support argument %d of "
                          "type %s which has no callable %s method",
                          i, type->tp_name, meth);
             npy_PyErr_ChainExceptionsCause(exc, val, tb);
-            Py_XDECREF(func);
+            Py_DECREF(obj);
+            Py_DECREF(meth_name);
             return;
         }
-        ret = PyObject_CallObject(func, NULL);
+        Py_DECREF(obj);
+        ret = PyObject_CallNoArgs(func);
         Py_DECREF(func);
         if (ret == NULL) {
+            Py_DECREF(meth_name);
             return;
         }
         Py_XDECREF(*out);
         *out = ret;
     }
+    Py_DECREF(meth_name);
 }
 
 /*UFUNC_API*/
@@ -259,7 +270,13 @@ PyUFunc_OO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, voi
         /* We allow NULL, but try to guarantee non-NULL to downstream */
         assert(in1 != NULL);
         assert(in2 != NULL);
-        PyObject *ret = f(in1 ? in1 : Py_None, in2 ? in2 : Py_None);
+        /* hold the operands: the call can run Python code that clears
+         * their array slots */
+        in1 = Py_NewRef(in1 ? in1 : Py_None);
+        in2 = Py_NewRef(in2 ? in2 : Py_None);
+        PyObject *ret = f(in1, in2);
+        Py_DECREF(in1);
+        Py_DECREF(in2);
         if (ret == NULL) {
             return;
         }
@@ -281,11 +298,15 @@ PyUFunc_OOO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
         assert(in1 != NULL);
         assert(in2 != NULL);
         assert(in3 != NULL);
-        PyObject *ret = f(
-            in1 ? in1 : Py_None,
-            in2 ? in2 : Py_None,
-            in3 ? in3 : Py_None
-        );
+        /* hold the operands: the call can run Python code that clears
+         * their array slots */
+        in1 = Py_NewRef(in1 ? in1 : Py_None);
+        in2 = Py_NewRef(in2 ? in2 : Py_None);
+        in3 = Py_NewRef(in3 ? in3 : Py_None);
+        PyObject *ret = f(in1, in2, in3);
+        Py_DECREF(in1);
+        Py_DECREF(in2);
+        Py_DECREF(in3);
         if (ret == NULL) {
             return;
         }
@@ -299,6 +320,10 @@ NPY_NO_EXPORT void
 PyUFunc_OO_O_method(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
     char *meth = (char *)func;
+    PyObject *meth_name = PyUnicode_FromString(meth);
+    if (meth_name == NULL) {
+        return;
+    }
     BINARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
@@ -306,14 +331,20 @@ PyUFunc_OO_O_method(char **args, npy_intp const *dimensions, npy_intp const *ste
         /* We allow NULL, but try to guarantee non-NULL to downstream */
         assert(in1 != NULL);
         assert(in2 != NULL);
-        PyObject *ret = PyObject_CallMethod(in1 ? in1 : Py_None,
-                                            meth, "(O)", in2);
+        /* hold the operands: the call can clear their array slots */
+        PyObject *obj = Py_NewRef(in1 ? in1 : Py_None);
+        PyObject *arg = Py_NewRef(in2 ? in2 : Py_None);
+        PyObject *ret = PyObject_CallMethodOneArg(obj, meth_name, arg);
+        Py_DECREF(obj);
+        Py_DECREF(arg);
         if (ret == NULL) {
+            Py_DECREF(meth_name);
             return;
         }
         Py_XDECREF(*out);
         *out = ret;
     }
+    Py_DECREF(meth_name);
 }
 
 /*
@@ -331,7 +362,9 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
     int nout = data->nout;
     PyObject *tocall = data->callable;
     char *ptrs[NPY_MAXARGS];
-    PyObject *arglist, *result;
+    /* one extra slot so PY_VECTORCALL_ARGUMENTS_OFFSET can be used */
+    PyObject *stack_args[NPY_MAXARGS + 1];
+    PyObject *result;
     PyObject *in, **op;
     npy_intp i, j, ntot;
 
@@ -341,10 +374,6 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
         ptrs[j] = args[j];
     }
     for(i = 0; i < n; i++) {
-        arglist = PyTuple_New(nin);
-        if (arglist == NULL) {
-            return;
-        }
         for(j = 0; j < nin; j++) {
             in = *((PyObject **)ptrs[j]);
             /* We allow NULL, but try to guarantee non-NULL to downstream */
@@ -352,11 +381,14 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
             if (in == NULL) {
                 in = Py_None;
             }
-            PyTuple_SET_ITEM(arglist, j, in);
-            Py_INCREF(in);
+            /* own the references in case the call mutates the input arrays */
+            stack_args[j + 1] = Py_NewRef(in);
         }
-        result = PyObject_CallObject(tocall, arglist);
-        Py_DECREF(arglist);
+        result = PyObject_Vectorcall(tocall, stack_args + 1,
+                nin | PY_VECTORCALL_ARGUMENTS_OFFSET, NULL);
+        for(j = 0; j < nin; j++) {
+            Py_DECREF(stack_args[j + 1]);
+        }
         if (result == NULL) {
             return;
         }
@@ -406,6 +438,46 @@ BOOL__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, 
     OUTPUT_LOOP {
         *((npy_bool *)op1) = 1;
     }
+}
+
+NPY_NO_EXPORT void
+BOOL_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const npy_bool in1 = *(npy_bool *)ip1;
+        const npy_bool in2 = *(npy_bool *)ip2;
+        *((npy_bool *)op1) = in1 && in2;
+        *((npy_bool *)op2) = in1 || in2;
+    }
+}
+
+/*
+ * TODO: for booleans `minimum`/`maximum` are `logical_and`/`logical_or`, whose
+ * reduce loops are vectorized, so `np.min`/`np.max` still beat this scalar loop
+ * on input that does not exit early.  Vectorizing it would close that gap.
+ */
+NPY_NO_EXPORT int
+BOOL_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data, npy_intp const *dimensions,
+        npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+    /* only scalar accumulators (contiguous axis) may bail out early */
+    const int scalar_acc = strides[3] == 0 && strides[4] == 0;
+    for (npy_intp k = 0; k < n; k++) {
+        const npy_bool v = *(npy_bool *)x;
+        *(npy_bool *)out_min = (*(npy_bool *)acc_min) && v;
+        *(npy_bool *)out_max = (*(npy_bool *)acc_max) || v;
+        /* no further value can change a False minimum or a True maximum */
+        if (scalar_acc && !*(npy_bool *)out_min && *(npy_bool *)out_max) {
+            return 0;
+        }
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
 }
 
 /*
@@ -805,8 +877,72 @@ NPY_NO_EXPORT void
 }
 /**end repeat1**/
 
+NPY_NO_EXPORT void
+@TYPE@_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        @type@ lo, hi;
+        if (in1 == NPY_DATETIME_NAT) {
+            lo = in1;
+            hi = in1;
+        }
+        else if (in2 == NPY_DATETIME_NAT) {
+            lo = in2;
+            hi = in2;
+        }
+        else if (in1 < in2) {
+            lo = in1;
+            hi = in2;
+        }
+        else {
+            lo = in2;
+            hi = in1;
+        }
+        *((@type@ *)op1) = lo;
+        *((@type@ *)op2) = hi;
+    }
+}
+
+NPY_NO_EXPORT int
+@TYPE@_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data, npy_intp const *dimensions,
+        npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+    for (npy_intp k = 0; k < n; k++) {
+        const @type@ v = *(@type@ *)x;
+        const @type@ cmin = *(@type@ *)acc_min;
+        const @type@ cmax = *(@type@ *)acc_max;
+        @type@ lo, hi;
+        if (cmin == NPY_DATETIME_NAT) { lo = cmin; }
+        else if (v == NPY_DATETIME_NAT) { lo = v; }
+        else { lo = (cmin < v) ? cmin : v; }
+        if (cmax == NPY_DATETIME_NAT) { hi = cmax; }
+        else if (v == NPY_DATETIME_NAT) { hi = v; }
+        else { hi = (cmax > v) ? cmax : v; }
+        *(@type@ *)out_min = lo;
+        *(@type@ *)out_max = hi;
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
+
 /**end repeat**/
 
+/*
+ * Overflow-checked arithmetic for datetime64/timedelta64.
+ *
+ * The datetime64/timedelta64 add, subtract, and integer-multiply loops
+ * defined below raise OverflowError on signed int64 overflow rather
+ * than silently wrapping.  NPY_DATETIME_NAT == NPY_MIN_INT64, so a
+ * valid arithmetic result that happens to equal NPY_MIN_INT64 would be
+ * silently misinterpreted as NaT; we treat that as overflow as well.
+ */
 NPY_NO_EXPORT void
 DATETIME_Mm_M_add(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
@@ -817,7 +953,14 @@ DATETIME_Mm_M_add(char **args, npy_intp const *dimensions, npy_intp const *steps
             *((npy_datetime *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_datetime *)op1) = in1 + in2;
+            char overflow = 0;
+            const npy_int64 result = safe_add(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in datetime64 + timedelta64 addition");
+                return;
+            }
+            *((npy_datetime *)op1) = result;
         }
     }
 }
@@ -832,7 +975,14 @@ DATETIME_mM_M_add(char **args, npy_intp const *dimensions, npy_intp const *steps
             *((npy_datetime *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_datetime *)op1) = in1 + in2;
+            char overflow = 0;
+            const npy_int64 result = safe_add(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in timedelta64 + datetime64 addition");
+                return;
+            }
+            *((npy_datetime *)op1) = result;
         }
     }
 }
@@ -847,7 +997,14 @@ TIMEDELTA_mm_m_add(char **args, npy_intp const *dimensions, npy_intp const *step
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = in1 + in2;
+            char overflow = 0;
+            const npy_int64 result = safe_add(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in timedelta64 + timedelta64 addition");
+                return;
+            }
+            *((npy_timedelta *)op1) = result;
         }
     }
 }
@@ -862,7 +1019,14 @@ DATETIME_Mm_M_subtract(char **args, npy_intp const *dimensions, npy_intp const *
             *((npy_datetime *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_datetime *)op1) = in1 - in2;
+            char overflow = 0;
+            const npy_int64 result = safe_sub(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in datetime64 - timedelta64 subtraction");
+                return;
+            }
+            *((npy_datetime *)op1) = result;
         }
     }
 }
@@ -877,7 +1041,14 @@ DATETIME_MM_m_subtract(char **args, npy_intp const *dimensions, npy_intp const *
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = in1 - in2;
+            char overflow = 0;
+            const npy_int64 result = safe_sub(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in datetime64 - datetime64 subtraction");
+                return;
+            }
+            *((npy_timedelta *)op1) = result;
         }
     }
 }
@@ -892,7 +1063,14 @@ TIMEDELTA_mm_m_subtract(char **args, npy_intp const *dimensions, npy_intp const 
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = in1 - in2;
+            char overflow = 0;
+            const npy_int64 result = safe_sub(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in timedelta64 - timedelta64 subtraction");
+                return;
+            }
+            *((npy_timedelta *)op1) = result;
         }
     }
 }
@@ -908,7 +1086,14 @@ TIMEDELTA_mq_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = in1 * in2;
+            char overflow = 0;
+            const npy_int64 result = safe_mul(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in timedelta64 * int64 multiplication");
+                return;
+            }
+            *((npy_timedelta *)op1) = result;
         }
     }
 }
@@ -924,7 +1109,14 @@ TIMEDELTA_qm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            *((npy_timedelta *)op1) = in1 * in2;
+            char overflow = 0;
+            const npy_int64 result = safe_mul(in1, in2, &overflow);
+            if (overflow || result == NPY_DATETIME_NAT) {
+                npy_gil_error(PyExc_OverflowError,
+                        "Overflow in int64 * timedelta64 multiplication");
+                return;
+            }
+            *((npy_timedelta *)op1) = result;
         }
     }
 }
@@ -966,56 +1158,6 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
             }
             else {
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-            }
-        }
-    }
-}
-
-/* Note: Assuming 'q' == NPY_LONGLONG */
-NPY_NO_EXPORT void
-TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /* NOTE: This code is similar to array floor divide */
-    BINARY_DEFS
-
-    /* When the divisor is a constant, use libdivide for faster division */
-    if (steps[1] == 0) {
-        /* In case of empty array, just return */
-        if (n == 0) {
-            return;
-        }
-
-        const npy_int64 in2 = *(npy_int64 *)ip2;
-
-        /* If divisor is 0, we need not compute anything */
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            BINARY_LOOP_SLIDING {
-                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-            }
-        }
-        else {
-            struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
-            BINARY_LOOP_SLIDING {
-                const npy_timedelta in1 = *(npy_timedelta *)ip1;
-                if (in1 == NPY_DATETIME_NAT) {
-                    *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-                }
-                else {
-                    *((npy_timedelta *)op1) = libdivide_s64_do(in1, &fast_d);
-                }
-            }
-        }
-    }
-    else {
-        BINARY_LOOP_SLIDING {
-            const npy_timedelta in1 = *(npy_timedelta *)ip1;
-            const npy_int64 in2 = *(npy_int64 *)ip2;
-            if (in1 == NPY_DATETIME_NAT || in2 == 0) {
-                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
-            }
-            else {
-                *((npy_timedelta *)op1) = in1 / in2;
             }
         }
     }
@@ -1079,77 +1221,6 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const
                 }
                 else {
                     *((npy_timedelta *)op1) = rem + in2;
-                }
-            }
-        }
-    }
-}
-
-NPY_NO_EXPORT void
-TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /* NOTE: This code is similar to array floor divide */
-    BINARY_DEFS
-
-    /* When the divisor is a constant, use libdivide for faster division */
-    if (steps[1] == 0) {
-        /* In case of empty array, just return */
-        if (n == 0) {
-            return;
-        }
-
-        const npy_timedelta in2 = *(npy_timedelta *)ip2;
-
-        /* If divisor is 0 or NAT, we need not compute anything */
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            BINARY_LOOP_SLIDING {
-                *((npy_int64 *)op1) = 0;
-            }
-        }
-        else if (in2 == NPY_DATETIME_NAT) {
-            npy_set_floatstatus_invalid();
-            BINARY_LOOP_SLIDING {
-                *((npy_int64 *)op1) = 0;
-            }
-        }
-        else {
-            struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
-             BINARY_LOOP_SLIDING {
-                const npy_timedelta in1 = *(npy_timedelta *)ip1;
-                if (in1 == NPY_DATETIME_NAT) {
-                    npy_set_floatstatus_invalid();
-                    *((npy_int64 *)op1) = 0;
-                }
-                else {
-                    *((npy_int64 *)op1) = libdivide_s64_do(in1, &fast_d);
-
-                    /* Negative quotients needs to be rounded down */
-                    if (((in1 > 0) != (in2 > 0)) && (*((npy_int64 *)op1) * in2 != in1)) {
-                        *((npy_int64 *)op1) = *((npy_int64 *)op1) - 1;
-                    }
-                }
-            }
-        }
-    }
-    else {
-        BINARY_LOOP_SLIDING {
-            const npy_timedelta in1 = *(npy_timedelta *)ip1;
-            const npy_timedelta in2 = *(npy_timedelta *)ip2;
-            if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
-                npy_set_floatstatus_invalid();
-                *((npy_int64 *)op1) = 0;
-            }
-            else if (in2 == 0) {
-                npy_set_floatstatus_divbyzero();
-                *((npy_int64 *)op1) = 0;
-            }
-            else {
-                *((npy_int64 *)op1) = in1/in2;
-
-                /* Negative quotients needs to be rounded down */
-                if (((in1 > 0) != (in2 > 0)) && (*((npy_int64 *)op1) * in2 != in1)) {
-                    *((npy_int64 *)op1) = *((npy_int64 *)op1) - 1;
                 }
             }
         }
@@ -1508,9 +1579,7 @@ LONGDOUBLE_absolute(char **args, npy_intp const *dimensions, npy_intp const *ste
 {
     UNARY_LOOP {
         const npy_longdouble in1 = *(npy_longdouble *)ip1;
-        const npy_longdouble tmp = in1 > 0 ? in1 : -in1;
-        /* add 0 to clear -0.0 */
-        *((npy_longdouble *)op1) = tmp + 0;
+        *((npy_longdouble *)op1) = npy_fabsl(in1);
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
@@ -1777,6 +1846,42 @@ HALF_@kind@_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
 }
 
 /**end repeat**/
+
+NPY_NO_EXPORT void
+HALF_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const npy_half in1 = *(npy_half *)ip1;
+        const npy_half in2 = *(npy_half *)ip2;
+        *((npy_half *)op1) =
+                (npy_half_le(in1, in2) || npy_half_isnan(in1)) ? in1 : in2;
+        *((npy_half *)op2) =
+                (npy_half_ge(in1, in2) || npy_half_isnan(in1)) ? in1 : in2;
+    }
+    /* npy_half_isnan will never set floatstatus_invalid, so do not clear */
+}
+
+NPY_NO_EXPORT int
+HALF_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data, npy_intp const *dimensions,
+        npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+    for (npy_intp k = 0; k < n; k++) {
+        const npy_half v = *(npy_half *)x;
+        const npy_half cmin = *(npy_half *)acc_min;
+        const npy_half cmax = *(npy_half *)acc_max;
+        *(npy_half *)out_min =
+                (npy_half_le(cmin, v) || npy_half_isnan(cmin)) ? cmin : v;
+        *(npy_half *)out_max =
+                (npy_half_ge(cmax, v) || npy_half_isnan(cmax)) ? cmax : v;
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
 
 NPY_NO_EXPORT void
 HALF_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -2369,6 +2474,72 @@ NPY_NO_EXPORT void
 }
 /**end repeat1**/
 
+NPY_NO_EXPORT void
+@TYPE@_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @ftype@ in1r = ((@ftype@ *)ip1)[0];
+        const @ftype@ in1i = ((@ftype@ *)ip1)[1];
+        const @ftype@ in2r = ((@ftype@ *)ip2)[0];
+        const @ftype@ in2i = ((@ftype@ *)ip2)[1];
+        const int nan1 = npy_isnan(in1r) || npy_isnan(in1i);
+        if (nan1 || CLE(in1r, in1i, in2r, in2i)) {
+            ((@ftype@ *)op1)[0] = in1r;
+            ((@ftype@ *)op1)[1] = in1i;
+        }
+        else {
+            ((@ftype@ *)op1)[0] = in2r;
+            ((@ftype@ *)op1)[1] = in2i;
+        }
+        if (nan1 || CGE(in1r, in1i, in2r, in2i)) {
+            ((@ftype@ *)op2)[0] = in1r;
+            ((@ftype@ *)op2)[1] = in1i;
+        }
+        else {
+            ((@ftype@ *)op2)[0] = in2r;
+            ((@ftype@ *)op2)[1] = in2i;
+        }
+    }
+    npy_clear_floatstatus_barrier((char*)dimensions);
+}
+
+NPY_NO_EXPORT int
+@TYPE@_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data, npy_intp const *dimensions,
+        npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+    for (npy_intp k = 0; k < n; k++) {
+        const @ftype@ vr = ((@ftype@ *)x)[0];
+        const @ftype@ vi = ((@ftype@ *)x)[1];
+        const @ftype@ ar = ((@ftype@ *)acc_min)[0];
+        const @ftype@ ai = ((@ftype@ *)acc_min)[1];
+        const @ftype@ br = ((@ftype@ *)acc_max)[0];
+        const @ftype@ bi = ((@ftype@ *)acc_max)[1];
+        if (npy_isnan(ar) || npy_isnan(ai) || CLE(ar, ai, vr, vi)) {
+            ((@ftype@ *)out_min)[0] = ar;
+            ((@ftype@ *)out_min)[1] = ai;
+        }
+        else {
+            ((@ftype@ *)out_min)[0] = vr;
+            ((@ftype@ *)out_min)[1] = vi;
+        }
+        if (npy_isnan(br) || npy_isnan(bi) || CGE(br, bi, vr, vi)) {
+            ((@ftype@ *)out_max)[0] = br;
+            ((@ftype@ *)out_max)[1] = bi;
+        }
+        else {
+            ((@ftype@ *)out_max)[0] = vr;
+            ((@ftype@ *)out_max)[1] = vi;
+        }
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
+
 /**end repeat**/
 
 #undef CGE
@@ -2429,6 +2600,69 @@ OBJECT@suffix@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *s
 }
 /**end repeat1**/
 /**end repeat**/
+
+NPY_NO_EXPORT PyObject *npy_ObjectMin(PyObject *i1, PyObject *i2);
+NPY_NO_EXPORT PyObject *npy_ObjectMax(PyObject *i1, PyObject *i2);
+
+NPY_NO_EXPORT void
+OBJECT_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        if (in1 == NULL) {
+            in1 = Py_None;
+        }
+        if (in2 == NULL) {
+            in2 = Py_None;
+        }
+        PyObject *lo = npy_ObjectMin(in1, in2);
+        PyObject *hi = lo != NULL ? npy_ObjectMax(in1, in2) : NULL;
+        if (lo == NULL || hi == NULL) {
+            Py_XDECREF(lo);
+            Py_XDECREF(hi);
+            return;
+        }
+        Py_XSETREF(*(PyObject **)op1, lo);
+        Py_XSETREF(*(PyObject **)op2, hi);
+    }
+}
+
+NPY_NO_EXPORT int
+OBJECT_minimummaximum_reduce(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data, npy_intp const *dimensions,
+        npy_intp const *strides, NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+    for (npy_intp k = 0; k < n; k++) {
+        PyObject *cur_min = *(PyObject **)acc_min;
+        PyObject *cur_max = *(PyObject **)acc_max;
+        PyObject *val = *(PyObject **)x;
+        if (cur_min == NULL) {
+            cur_min = Py_None;
+        }
+        if (cur_max == NULL) {
+            cur_max = Py_None;
+        }
+        if (val == NULL) {
+            val = Py_None;
+        }
+        PyObject *lo = npy_ObjectMin(cur_min, val);
+        PyObject *hi = lo != NULL ? npy_ObjectMax(cur_max, val) : NULL;
+        if (lo == NULL || hi == NULL) {
+            Py_XDECREF(lo);
+            Py_XDECREF(hi);
+            return -1;
+        }
+        Py_XSETREF(*(PyObject **)out_min, lo);
+        Py_XSETREF(*(PyObject **)out_max, hi);
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
 
 NPY_NO_EXPORT void
 OBJECT_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))

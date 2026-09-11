@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, SupportsIndex, overload
+from typing import Any, overload
 
 import numpy as np
 from numpy._typing import ArrayLike, NDArray, _AnyShape, _ArrayLike, _ShapeLike
@@ -40,7 +40,7 @@ def as_strided(
 def sliding_window_view[ScalarT: np.generic](
     x: _ArrayLike[ScalarT],
     window_shape: int | Iterable[int],
-    axis: SupportsIndex | None = None,
+    axis: int | tuple[int, ...] | None = None,
     *,
     subok: bool = False,
     writeable: bool = False,
@@ -49,25 +49,51 @@ def sliding_window_view[ScalarT: np.generic](
 def sliding_window_view(
     x: ArrayLike,
     window_shape: int | Iterable[int],
-    axis: SupportsIndex | None = None,
+    axis: int | tuple[int, ...] | None = None,
     *,
     subok: bool = False,
     writeable: bool = False,
 ) -> NDArray[Any]: ...
 
-@overload
+#
+@overload  # known dtype, 1d shape
 def broadcast_to[ScalarT: np.generic](
     array: _ArrayLike[ScalarT],
-    shape: int | Iterable[int],
+    shape: int,
+    subok: bool = False,
+) -> np.ndarray[tuple[int], np.dtype[ScalarT]]: ...
+@overload  # known dtype, known shape
+def broadcast_to[ScalarT: np.generic, ShapeT: tuple[int, ...]](
+    array: _ArrayLike[ScalarT],
+    shape: ShapeT,
+    subok: bool = False,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # known dtype, unknown shape
+def broadcast_to[ScalarT: np.generic](
+    array: _ArrayLike[ScalarT],
+    shape: Iterable[int],
     subok: bool = False,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # unknown dtype, 1d shape
 def broadcast_to(
     array: ArrayLike,
-    shape: int | Iterable[int],
+    shape: int,
+    subok: bool = False,
+) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+@overload  # unknown dtype, known shape
+def broadcast_to[ShapeT: tuple[int, ...]](
+    array: ArrayLike,
+    shape: ShapeT,
+    subok: bool = False,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # unknown dtype, unknown shape
+def broadcast_to(
+    array: ArrayLike,
+    shape: Iterable[int],
     subok: bool = False,
 ) -> NDArray[Any]: ...
 
+#
 def broadcast_shapes(*args: _ShapeLike) -> _AnyShape: ...
 def broadcast_arrays(*args: ArrayLike, subok: bool = False) -> tuple[NDArray[Any], ...]: ...
 

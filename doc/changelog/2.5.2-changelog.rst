@@ -1,0 +1,57 @@
+
+Contributors
+============
+
+A total of 16 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Abhijeetsingh Meena +
+* Charalampos Stratakis
+* Charles Harris
+* Chris Ninham +
+* David Woods
+* Geonho +
+* Gopu Yeshwanth Reddy +
+* Iason Krommydas
+* Ijtihed Kilani
+* Jelle Zijlstra +
+* Joren Hammudoglu
+* Kumar Aditya
+* Mike Boyle
+* Nathan Goldbaum
+* Raghuveer Devulapalli
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 28 pull requests were merged for this release.
+
+* `#31864 <https://github.com/numpy/numpy/pull/31864>`__: MAINT: Prepare 2.5.x for further development
+* `#31889 <https://github.com/numpy/numpy/pull/31889>`__: TYP: Backport multiple static typing fixes 1.
+* `#31900 <https://github.com/numpy/numpy/pull/31900>`__: TST: add tests for stable ABI numpy extensions (#31822)
+* `#31901 <https://github.com/numpy/numpy/pull/31901>`__: BUG: fix ``StringDType`` coerce flag in binary ufunc promotion...
+* `#31902 <https://github.com/numpy/numpy/pull/31902>`__: BLD: fix meson deprecation warnings (#31892)
+* `#31921 <https://github.com/numpy/numpy/pull/31921>`__: TYP: Backport multiple typing fixes 2.
+* `#31947 <https://github.com/numpy/numpy/pull/31947>`__: MAINT: Update x86-simd-sort subproject (5adb334 → fa944ef) (#31908)
+* `#31949 <https://github.com/numpy/numpy/pull/31949>`__: BUG: fix crash on 32 bit systems using abi3t (#31771)
+* `#31950 <https://github.com/numpy/numpy/pull/31950>`__: MNT: remove some obsolete string to bool workarounds (#31859)
+* `#31952 <https://github.com/numpy/numpy/pull/31952>`__: BUG: centralized helper for output coerce and na_object in stringdtype...
+* `#31953 <https://github.com/numpy/numpy/pull/31953>`__: BUG: fix CPU feature env diagnostic buffer overruns (#31905)
+* `#31954 <https://github.com/numpy/numpy/pull/31954>`__: BUG: restore ndarray.conjugate() for legacy user-defined dtypes...
+* `#31955 <https://github.com/numpy/numpy/pull/31955>`__: TYP: Avoid shadowed dtype annotations
+* `#32077 <https://github.com/numpy/numpy/pull/32077>`__: MAINT: Update verdored-meson/meson to match main.
+* `#32114 <https://github.com/numpy/numpy/pull/32114>`__: BUG: fix refcount leak on overlapping copyto with where=False
+* `#32115 <https://github.com/numpy/numpy/pull/32115>`__: BUG: fix swallowed cast error in fancy indexing assignment (#31975)
+* `#32116 <https://github.com/numpy/numpy/pull/32116>`__: BUG: Fix buffered iterator stride after removing multi-index
+* `#32117 <https://github.com/numpy/numpy/pull/32117>`__: BUG: fix ``np.fromiter`` corruption when reusing a ``StringDType``...
+* `#32119 <https://github.com/numpy/numpy/pull/32119>`__: BUG: add a special case for StringDType in np.isdtype (#32030)
+* `#32121 <https://github.com/numpy/numpy/pull/32121>`__: BUG: reference leak in ``simd_sequence_from_iterable`` (#32038)
+* `#32122 <https://github.com/numpy/numpy/pull/32122>`__: BUG: ensure lock is held when accessing or writing to RNG state...
+* `#32123 <https://github.com/numpy/numpy/pull/32123>`__: BUG: fully reset cached RNG state for non-MT19937 RNGs (#32062)
+* `#32135 <https://github.com/numpy/numpy/pull/32135>`__: TYP: type capabilities max dimensions
+* `#32158 <https://github.com/numpy/numpy/pull/32158>`__: BUG: avoid possible stack overflow in arraydescr_dealloc (#32133)
+* `#32206 <https://github.com/numpy/numpy/pull/32206>`__: MAINT: Update cibuildwheel to v4.2.0
+* `#32214 <https://github.com/numpy/numpy/pull/32214>`__: MAINT: Skip limited_api tests on some platforms.
+* `#32220 <https://github.com/numpy/numpy/pull/32220>`__: TYP: ``isclose`` shape-typing fix for 2d array-likes (#32205)
+* `#32221 <https://github.com/numpy/numpy/pull/32221>`__: BUG: avoid segfaults when legacy copyswap slot is not defined...

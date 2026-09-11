@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy.exceptions import AxisError, ComplexWarning
-from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
+from numpy.lib._nanfunctions_impl import _divide_by_count, _nan_mask, _replace_nan
 from numpy.testing import (
     assert_,
     assert_almost_equal,
@@ -1273,6 +1273,7 @@ class TestNanFunctions_Percentile:
         assert_equal(q_weighted, result)
 
     @pytest.mark.parametrize("axis", [0, 1, 2])
+    @pytest.mark.slow
     def test_nan_value_with_weight_ndim(self, axis):
         # Create a multi-dimensional array to test
         np.random.seed(1)
@@ -1446,3 +1447,14 @@ def test_memmap_takes_fast_route(tmpdir):
         # For completeness, same for nanmin.
         with pytest.raises(ValueError, match="reduction operation fmin"):
             np.nanmin(mm, out=np.zeros(2))
+
+
+def test_divide_by_count_read_only():
+    # gh-29117: `a` is normally divided into in place, but some reductions
+    # return a read-only array, so that is not always possible.
+    a = np.array([6.0], dtype=np.float32)
+    a.flags.writeable = False
+    res = _divide_by_count(a, np.array([2], dtype=np.intp))
+    assert_equal(res, np.array([3.0], dtype=np.float32))
+    # the fallback must not promote the result to float64
+    assert_equal(res.dtype, np.float32)

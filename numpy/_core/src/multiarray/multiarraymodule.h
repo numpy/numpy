@@ -5,14 +5,7 @@
 extern "C" {
 #endif
 
-/*
- * A struct storing global state for the _multiarray_umath
- * module. The state is initialized when the module is imported
- * so no locking is necessary to access it.
- *
- * These globals will need to move to per-module state to
- * support reloading or subinterpreters.
- */
+/* Embedded as the global_state field of multiarray_umath_state. */
 typedef struct npy_global_state_struct {
     /*
      * Used to test the internal-only scaled float test dtype
@@ -36,11 +29,9 @@ typedef struct npy_global_state_struct {
     int warn_if_no_mem_policy;
 } npy_global_state_struct;
 
-
-NPY_VISIBILITY_HIDDEN extern npy_global_state_struct npy_global_state;
-
 NPY_NO_EXPORT int
 get_legacy_print_mode(void);
+
 #ifdef __cplusplus
 }
 #endif

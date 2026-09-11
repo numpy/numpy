@@ -10,6 +10,7 @@ from numpy.exceptions import AxisError
 from numpy.linalg import LinAlgError
 from numpy.random import MT19937, Generator, RandomState, SeedSequence
 from numpy.testing import (
+    IS_64BIT,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -462,7 +463,7 @@ class TestIntegers:
             except Exception as e:
                 raise AssertionError("No error should have been raised, "
                                      "but one was with the following "
-                                     "message:\n\n%s" % str(e))
+                                     f"message:\n\n{e}")
 
     def test_full_range_array(self, endpoint):
         # Test for ticket #1690
@@ -477,7 +478,7 @@ class TestIntegers:
             except Exception as e:
                 raise AssertionError("No error should have been raised, "
                                      "but one was with the following "
-                                     "message:\n\n%s" % str(e))
+                                     f"message:\n\n{e}")
 
     def test_in_bounds_fuzz(self, endpoint):
         # Don't use fixed seed
@@ -1267,6 +1268,10 @@ class TestRandomDist:
 
     @pytest.mark.slow
     @pytest.mark.thread_unsafe(reason="crashes with low memory")
+    @pytest.mark.skipif(
+        not IS_64BIT,
+        reason="the 458 MiB sample array may not fit in a 32-bit "
+               "address space fragmented by earlier tests")
     def test_dirichlet_moderately_small_alpha(self):
         # Use alpha.max() < 0.1 to trigger stick breaking code path
         alpha = np.array([0.02, 0.04, 0.03])
@@ -1450,7 +1455,6 @@ class TestRandomDist:
                              [5, 5, 3, 1, 2, 4]]])
         assert_array_equal(actual, desired)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("method", ["svd", "eigh", "cholesky"])
     def test_multivariate_normal(self, method):
         random = Generator(MT19937(self.seed))

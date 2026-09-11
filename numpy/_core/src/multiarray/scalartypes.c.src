@@ -20,7 +20,7 @@
 #include "mapping.h"
 #include "ctors.h"
 #include "dtypemeta.h"
-#include "descriptor.h" 
+#include "descriptor.h"
 #include "usertypes.h"
 #include "number.h"
 #include "numpyos.h"
@@ -36,7 +36,9 @@
 #include "dragon4.h"
 #include "npy_longdouble.h"
 #include "npy_buffer.h"
+#include "npy_dlpack.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 #include "array_api_standard.h"
 
@@ -125,6 +127,28 @@ gentype_free(PyObject *v)
 
 
 static PyObject *
+gentype_generic_vectorcall(PyObject *self, PyObject *const *args,
+        Py_ssize_t len_args, PyObject *kwnames, const char *str)
+{
+    PyObject *arr = PyArray_FromScalar(self, NULL);
+    if (arr == NULL) {
+        return NULL;
+    }
+    PyObject *meth = PyObject_GetAttrString(arr, str);
+    Py_DECREF(arr);
+    if (meth == NULL) {
+        return NULL;
+    }
+    PyObject *ret = PyObject_Vectorcall(meth, args, len_args, kwnames);
+    Py_DECREF(meth);
+    if (ret != NULL && PyArray_Check(ret)) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    return ret;
+}
+
+
+static PyObject *
 gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
         char *str)
 {
@@ -189,6 +213,7 @@ static inline int
 find_binary_operation_path(
     PyObject *self, PyObject *other, PyObject **self_op, PyObject **other_op)
 {
+    multiarray_umath_state *state = _npy_module_state;
     *other_op = NULL;
     *self_op = NULL;
 
@@ -212,7 +237,7 @@ find_binary_operation_path(
      * It may be nice to avoid double lookup in `BINOP_GIVE_UP_IF_NEEDED`.
      */
     PyObject *attr;
-    if (PyArray_LookupSpecial(other, npy_interned_str.array_ufunc, &attr) < 0) {
+    if (PyArray_LookupSpecial(other, state->interned_str.array_ufunc, &attr) < 0) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
     else if (attr != NULL) {
@@ -227,13 +252,13 @@ find_binary_operation_path(
      */
     int was_scalar;
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny_int(
-                other, NULL, NULL, 0, NPY_MAXDIMS, 0, NULL, &was_scalar);
+                other, NULL, NULL, 0, NPY_MAXDIMS, 0, &was_scalar);
     if (arr == NULL) {
         return -1;
     }
 
     if (!was_scalar || PyArray_DESCR(arr)->type_num != NPY_OBJECT) {
-        /* 
+        /*
          * The array is OK for usage and we can simply forward it.  There
          * is a theoretical subtlety here:  If the other object implements
          * `__array_wrap__`, we may ignore that.  However, this only matters
@@ -259,7 +284,7 @@ find_binary_operation_path(
      * Retrying then succeeds. So if (and only if) `self.item()` returns a new
      * type, we can safely attempt the operation (again) with that.
      */
-    PyObject *self_item = PyObject_CallMethodNoArgs(self, npy_interned_str.item);
+    PyObject *self_item = PyObject_CallMethodNoArgs(self, state->interned_str.item);
     if (self_item == NULL) {
         return -1;
     }
@@ -300,6 +325,7 @@ gentype_multiply(PyObject *m1, PyObject *m2);
 static PyObject *
 gentype_@name@@suff@(PyObject *m1, PyObject *m2)
 {
+    multiarray_umath_state *state = _npy_module_state;
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
 
     PyObject *self = NULL;
@@ -332,10 +358,10 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
         /* Call the corresponding ufunc (with the array) */
         PyObject *res;
         if (self == m1) {
-            res = PyArray_GenericBinaryFunction(m1, other_op, n_ops.@ufunc@);
+            res = PyArray_GenericBinaryFunction(m1, other_op, state->n_ops.@ufunc@);
         }
         else {
-            res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.@ufunc@);
+            res = PyArray_GenericBinaryFunction(other_op, m2, state->n_ops.@ufunc@);
         }
         Py_DECREF(other_op);
         return res;
@@ -404,6 +430,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
 static PyObject *
 gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
 {
+    multiarray_umath_state *state = _npy_module_state;
     if (modulo != Py_None) {
         /* modular exponentiation is not implemented (gh-8804) */
         Py_INCREF(Py_NotImplemented);
@@ -447,10 +474,10 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
          */
         PyObject *res;
         if (self == m1) {
-            res = PyArray_GenericBinaryFunction(m1, other_op, n_ops.power);
+            res = PyArray_GenericBinaryFunction(m1, other_op, state->n_ops.power);
         }
         else {
-            res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.power);
+            res = PyArray_GenericBinaryFunction(other_op, m2, state->n_ops.power);
         }
         Py_DECREF(other_op);
         return res;
@@ -862,14 +889,15 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 
 static PyObject *
 _void_scalar_to_string(PyObject *obj, int repr) {
+    multiarray_umath_state *state = _npy_module_state;
     if (npy_cache_import_runtime(
                 "numpy._core.arrayprint", "_void_scalar_to_string",
-                &npy_runtime_imports._void_scalar_to_string) == -1) {
+                &state->runtime_imports._void_scalar_to_string) == -1) {
         return NULL;
     }
     PyObject *is_repr = repr ? Py_True : Py_False;
     return PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._void_scalar_to_string, obj, is_repr, NULL);
+            state->runtime_imports._void_scalar_to_string, obj, is_repr, NULL);
 }
 
 static PyObject *
@@ -1596,10 +1624,6 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
      * If the other object is None, False is always right. This avoids
      * the array None comparison, at least until deprecation it is fixed.
      * After that, this may be removed and numpy false would be returned.
-     *
-     * NOTE: np.equal(NaT, None) evaluates to TRUE! This is an
-     *       an inconsistency, which may has to be considered
-     *       when the deprecation is finished.
      */
     if (other == Py_None) {
         if (cmp_op == Py_EQ) {
@@ -1746,8 +1770,8 @@ gentype_struct_free(PyObject *ptr)
     }
     Py_XDECREF(context);
     Py_XDECREF(arrif->descr);
-    PyArray_free(arrif->shape);
-    PyArray_free(arrif);
+    PyMem_RawFree(arrif->shape);
+    PyMem_RawFree(arrif);
 }
 
 static PyObject *
@@ -1758,7 +1782,7 @@ gentype_struct_get(PyObject *self, void *NPY_UNUSED(ignored))
     PyObject *ret;
 
     arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
+    inter = (PyArrayInterface *)PyMem_RawMalloc(sizeof(PyArrayInterface));
     inter->two = 2;
     inter->nd = 0;
     inter->flags = PyArray_FLAGS(arr);
@@ -1827,7 +1851,7 @@ gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
     if (strides == NULL) {
         goto finish;
     }
-    
+
     /* descr */
     descr = array_protocol_descr_get(array_descr);
     if (descr == NULL) {
@@ -2172,21 +2196,83 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         char *data;
         PyArray_Descr *descr;
         PyObject *new;
-        char *newmem;
 
         descr = PyArray_DescrFromScalar(self);
         data = (void *)scalar_value(self, descr);
-
-        newmem = PyObject_Malloc(descr->elsize);
-        if (newmem == NULL) {
+        if (data == NULL) {
+            if (PyErr_Occurred()) {
+                /* e.g. allocating the unicode scalar's UCS4 buffer failed */
+                Py_DECREF(descr);
+                return NULL;
+            }
+            /*
+             * Zero-sized void scalars have no data to swap; return an
+             * equivalent empty scalar.  PyArray_Scalar does not read data
+             * when descr->elsize is 0.
+             */
+            assert(descr->elsize == 0);
+            PyObject *ret = PyArray_Scalar(data, descr, NULL);
             Py_DECREF(descr);
-            return PyErr_NoMemory();
+            return ret;
+        }
+
+        /*
+         * The scalar is rebuilt by copying into fresh memory, so this is not
+         * a pure in-place swap: inplace_swap is 0 and only a dtype whose
+         * value is exactly its bytes can stand in for a missing slot.  The
+         * copy is inlined rather than fetched as a function because there is
+         * no array here to pass to it.
+         */
+        PyArray_CopySwapFunc *copyswap =
+                PyDataType_GetArrFuncs(descr)->copyswap;
+        if (copyswap == NULL && !can_substitute_copyswap(descr, 0)) {
+            Py_DECREF(descr);
+            return NULL;
+        }
+
+        if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
+            /*
+             * NPY_NEEDS_INIT means copyswap reads the destination before it
+             * writes it so the buffer cannot be a bare malloc.  This is
+             * equivalent to np.array([scalar]).byteswap()[0].
+             */
+            Py_INCREF(descr);
+            PyArrayObject *tmp = (PyArrayObject *)PyArray_NewFromDescr_int(
+                    &PyArray_Type, descr, 0, NULL, NULL, NULL, 0, NULL, NULL,
+                    _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
+            if (tmp == NULL) {
+                Py_DECREF(descr);
+                return NULL;
+            }
+            copyswap(PyArray_DATA(tmp), data, 1, tmp);
+            new = PyArray_Scalar(PyArray_DATA(tmp), descr, (PyObject *)tmp);
+            Py_DECREF(tmp);
         }
         else {
-            PyDataType_GetArrFuncs(descr)->copyswap(newmem, data, 1, NULL);
+            char *newmem = PyMem_Calloc(1, descr->elsize);
+            if (newmem == NULL) {
+                Py_DECREF(descr);
+                return PyErr_NoMemory();
+            }
+            if (PyDataType_ISFLEXIBLE(descr)) {
+                /*
+                 * Need a dummy array because these types use it to access the
+                 * descriptor. This is much faster than the heap-allocated
+                 * temp array path that dtypes with embedded objects need.
+                 */
+                PyArrayObject_fields dummy_fields;
+                memset(&dummy_fields, 0, sizeof(dummy_fields));
+                dummy_fields.descr = descr;
+                dummy_fields.flags = NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS |
+                                     NPY_ARRAY_F_CONTIGUOUS;
+                copyswap(newmem, data, 1, (PyArrayObject *)&dummy_fields);
+            }
+            else {
+                copyswap(newmem, data, 1, NULL);
+            }
+            new = PyArray_Scalar(newmem, descr, NULL);
+            PyMem_Free(newmem);
         }
-        new = PyArray_Scalar(newmem, descr, NULL);
-        PyObject_Free(newmem);
         Py_DECREF(descr);
         return new;
     }
@@ -2195,7 +2281,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
 
 /*
  * These gentype_* functions take keyword arguments.
- * The proper flag is METH_VARARGS | METH_KEYWORDS.
+ * The proper flag is METH_FASTCALL | METH_KEYWORDS.
  */
 /**begin repeat
  *
@@ -2206,9 +2292,10 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *         flatten, ravel, squeeze#
  */
 static PyObject *
-gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
+gentype_@name@(PyObject *self, PyObject *const *args, Py_ssize_t len_args,
+        PyObject *kwnames)
 {
-    return gentype_generic_method(self, args, kwds, "@name@");
+    return gentype_generic_vectorcall(self, args, len_args, kwnames, "@name@");
 }
 /**end repeat**/
 
@@ -2225,20 +2312,9 @@ static PyObject *
         return NULL;
     }
 
-    PyObject *tup;
-    if (ndigits == Py_None) {
-        tup = PyTuple_Pack(0);
-    }
-    else {
-        tup = PyTuple_Pack(1, ndigits);
-    }
-
-    if (tup == NULL) {
-        return NULL;
-    }
-
-    PyObject *obj = gentype_round(self, tup, NULL);
-    Py_DECREF(tup);
+    /* `ndigits` defaulting to None means it was not passed at all */
+    Py_ssize_t nargs = (ndigits == Py_None) ? 0 : 1;
+    PyObject *obj = gentype_round(self, &ndigits, nargs, NULL);
     if (obj == NULL) {
         return NULL;
     }
@@ -2505,6 +2581,13 @@ numbertype_class_getitem(PyObject *cls, PyObject *args)
     return NULL;
 }
 
+/* Returns `np.object_` itself, so that e.g. `np.object_[str]` stays dtype-like */
+static PyObject *
+objecttype_class_getitem(PyObject *cls, PyObject *NPY_UNUSED(args))
+{
+    return Py_NewRef(cls);
+}
+
 /*
  * casting complex numbers (that don't inherit from Python complex)
  * to Python complex
@@ -2656,28 +2739,28 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS, NULL},
     {"tobytes",
         (PyCFunction)gentype_tobytes,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"tofile",
         (PyCFunction)gentype_tofile,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)gentype_byteswap,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"astype",
         (PyCFunction)gentype_astype,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"getfield",
         (PyCFunction)gentype_getfield,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"setfield",
         (PyCFunction)gentype_setfield,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"copy",
         (PyCFunction)gentype_copy,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"resize",
         (PyCFunction)gentype_resize,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"__array__",
         (PyCFunction)gentype_getarray,
         METH_VARARGS, doc_getarray},
@@ -2722,61 +2805,61 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS, NULL},
     {"take",
         (PyCFunction)gentype_take,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"put",
         (PyCFunction)gentype_put,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"repeat",
         (PyCFunction)gentype_repeat,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"choose",
         (PyCFunction)gentype_choose,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"sort",
         (PyCFunction)gentype_sort,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"argsort",
         (PyCFunction)gentype_argsort,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"searchsorted",
         (PyCFunction)gentype_searchsorted,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"argmax",
         (PyCFunction)gentype_argmax,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"argmin",
         (PyCFunction)gentype_argmin,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"reshape",
         (PyCFunction)gentype_reshape,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"squeeze",
         (PyCFunction)gentype_squeeze,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"view",
         (PyCFunction)gentype_view,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"swapaxes",
         (PyCFunction)gentype_swapaxes,
         METH_VARARGS, NULL},
     {"max",
         (PyCFunction)gentype_max,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"min",
         (PyCFunction)gentype_min,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"mean",
         (PyCFunction)gentype_mean,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"trace",
         (PyCFunction)gentype_trace,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"diagonal",
         (PyCFunction)gentype_diagonal,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"clip",
         (PyCFunction)gentype_clip,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"conj",
         (PyCFunction)gentype_conj,
         METH_VARARGS, NULL},
@@ -2788,40 +2871,40 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS, NULL},
     {"std",
         (PyCFunction)gentype_std,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"var",
         (PyCFunction)gentype_var,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"sum",
         (PyCFunction)gentype_sum,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"cumsum",
         (PyCFunction)gentype_cumsum,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"prod",
         (PyCFunction)gentype_prod,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"cumprod",
         (PyCFunction)gentype_cumprod,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"all",
         (PyCFunction)gentype_all,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"any",
         (PyCFunction)gentype_any,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"compress",
         (PyCFunction)gentype_compress,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"flatten",
         (PyCFunction)gentype_flatten,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"ravel",
         (PyCFunction)gentype_ravel,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"round",
         (PyCFunction)gentype_round,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     /* For the format function */
     {"__format__",
         gentype_format,
@@ -2830,6 +2913,14 @@ static PyMethodDef gentype_methods[] = {
     {"setflags",
         (PyCFunction)gentype_setflags,
         METH_VARARGS | METH_KEYWORDS, NULL},
+
+    /* For data interchange between libraries */
+    {"__dlpack__",
+        (PyCFunction)gentype_dlpack,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"__dlpack_device__",
+        (PyCFunction)gentype_dlpack_device,
+        METH_NOARGS, NULL},
 
     /* For Array API compatibility */
     {"__array_namespace__",
@@ -2903,6 +2994,14 @@ static PyMethodDef @name@type_methods[] = {
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 /**end repeat**/
+
+static PyMethodDef objecttype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)objecttype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
 
 /**begin repeat
  * #name = cfloat,clongdouble#
@@ -3430,7 +3529,7 @@ object_arrtype_alloc(PyTypeObject *type, Py_ssize_t items)
      * Object scalars should not actually exist, if they exist we should
      * consider it to be a bug.
      */
-    if (PyErr_WarnEx(npy_static_pydata.VisibleDeprecationWarning,
+    if (PyErr_WarnEx(_npy_module_state->static_pydata.VisibleDeprecationWarning,
             "Creating a NumPy object scalar.  NumPy object scalars should "
             "never be created.  If you see this message please inform the "
             "NumPy developers.  Since this message should never be shown "
@@ -3457,6 +3556,27 @@ unicode_arrtype_dealloc(PyObject *v)
     /* delegate to the base class */
     PyUnicode_Type.tp_dealloc(v);
 }
+
+static inline int
+scalar_new_parse_posargs(PyObject *args, PyObject *kwds, const char *format,
+        char **kwnames, PyObject **arg0)
+{
+    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+
+    assert(format[0] == '|' && format[1] == 'O');
+    assert(kwnames[0] != NULL && kwnames[1] == NULL);
+    if (NPY_LIKELY(nargs <= 1
+                   && (kwds == NULL || PyDict_GET_SIZE(kwds) == 0))) {
+        if (nargs == 1) {
+            *arg0 = PyTuple_GET_ITEM(args, 0);
+        }
+        return 0;
+    }
+    /* Always an error; the generic parser phrases it. */
+    return PyArg_ParseTupleAndKeywords(args, kwds, format, kwnames,
+                                       arg0) ? 0 : -1;
+}
+
 
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
@@ -3528,7 +3648,7 @@ static PyObject *
     }
 #else
     static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
+    if (scalar_new_parse_posargs(args, kwds, "|O", kwnames, &obj) < 0) {
         return NULL;
     }
 #endif
@@ -3618,7 +3738,7 @@ object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwd
 {
     PyObject *obj = Py_None;
     static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:object_", kwnames, &obj)) {
+    if (scalar_new_parse_posargs(args, kwds, "|O:object_", kwnames, &obj) < 0) {
         return NULL;
     }
     PyArray_Descr *typecode = PyArray_DescrFromType(NPY_OBJECT);
@@ -3684,6 +3804,17 @@ static PyObject *
 #else
         ret->obval = 0;
 #endif
+
+        if (ret->obmeta.base == NPY_FR_GENERIC) {
+            if (DEPRECATE(
+                        "The 'generic' unit for NumPy timedelta is deprecated, "
+                        "and will raise an error in the future. "
+                        "Please use a specific unit instead.") < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+        }
+
     }
     else if (convert_pyobject_to_@name@(&ret->obmeta, obj,
                             NPY_SAME_KIND_CASTING, &ret->obval) < 0) {
@@ -3703,7 +3834,7 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
     PyArrayObject *arr;
 
     static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:bool_", kwnames, &obj)) {
+    if (scalar_new_parse_posargs(args, kwds, "|O:bool_", kwnames, &obj) < 0) {
         return NULL;
     }
     if (obj == NULL) {
@@ -4529,6 +4660,8 @@ initialize_numeric_types(void)
     PyVoidArrType_Type.tp_as_sequence = &voidtype_as_sequence;
     PyVoidArrType_Type.tp_repr = voidtype_repr;
     PyVoidArrType_Type.tp_str = voidtype_str;
+
+    PyObjectArrType_Type.tp_methods = objecttype_methods;
 
     PyIntegerArrType_Type.tp_getset = inttype_getsets;
 

@@ -4,7 +4,7 @@ import pytest
 
 import numpy as np
 import numpy._core.umath as ncu
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy.lib import stride_tricks
 from numpy.testing import (
     HAS_REFCOUNT,
@@ -190,11 +190,12 @@ def test___array___refcount():
     assert_equal(old_refcount2, sys.getrefcount(dt2))
 
 
+@pytest.mark.parametrize("rat_cls", [rational, rational2])
 @pytest.mark.parametrize("array", [True, False])
-def test_array_impossible_casts(array):
+def test_array_impossible_casts(array, rat_cls):
     # All builtin types can be forcibly cast, at least theoretically,
     # but user dtypes cannot necessarily.
-    rt = rational(1, 2)
+    rt = rat_cls(1, 2)
     if array:
         rt = np.array(rt)
     with assert_raises(TypeError):
@@ -445,6 +446,18 @@ def test_copyto():
     assert_raises(TypeError, np.copyto, [1, 2, 3], [2, 3, 4])
 
 
+def test_copyto_overlapping_where_false_no_leak():
+    # gh-31968: overlapping copyto with scalar where=False used to leak the
+    # overlap temp (missing Py_DECREF on the early-return path). No refcount
+    # assertion is made here; a leak sanitizer build is expected to catch
+    # the regression.
+    a = np.arange(36, dtype=object).reshape(6, 6)
+    original = a.copy()
+    np.copyto(a, a[::-1, :], where=False)
+    # where=False must write nothing
+    assert_array_equal(a, original)
+
+
 def test_copyto_cast_safety():
     with pytest.raises(TypeError):
         np.copyto(np.arange(3), 3., casting="safe")
@@ -465,6 +478,14 @@ def test_copyto_cast_safety():
 
     # As a special thing, object is equiv currently:
     np.copyto(np.arange(3, dtype=object), 3, casting="equiv")
+
+    # A Python str adopts a StringDType's semantics in the same way
+    np.copyto(np.empty(3, dtype=np.dtypes.StringDType()), "x", casting="safe")
+    with pytest.raises(TypeError):
+        np.copyto(np.empty(3, dtype=np.dtypes.StringDType()), "x",
+                  casting="equiv")
+    # and object is equiv for a str, too:
+    np.copyto(np.empty(3, dtype=object), "x", casting="equiv")
 
     # The following raises an overflow error/gives a warning but not
     # type error (due to casting), though:
@@ -588,6 +609,21 @@ def test_copy_order():
     check_copy_result(res, b, ccontig=False, fcontig=True, strides=True)
     res = np.copy(c, order='K')
     check_copy_result(res, c, ccontig=False, fcontig=False, strides=True)
+
+
+def test_forbid_to_copyto_generic_datetime():
+    # See gh-30903
+    with pytest.warns(
+        DeprecationWarning,
+        match="The 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        a = np.array(["NaT"], dtype='M8')
+
+    with pytest.raises(
+        ValueError,
+        match="Converting an integer to a NumPy datetime requires a specified unit",
+    ):
+        np.copyto(a, 1, casting="unsafe")
 
 def test_contiguous_flags():
     a = np.ones((4, 4, 1))[::2, :, :]

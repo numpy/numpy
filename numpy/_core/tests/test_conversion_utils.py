@@ -161,6 +161,12 @@ class TestClipmodeConverter(StringConverterTestCase):
         assert self.conv(WRAP) == 'NPY_WRAP'
         assert self.conv(RAISE) == 'NPY_RAISE'
 
+    def test_invalid(self):
+        with pytest.raises(ValueError):
+            self.conv('invalid')
+        with pytest.raises(ValueError):
+            self.conv(99)
+
 
 class TestCastingConverter(StringConverterTestCase):
     """ Tests of PyArray_CastingConverter """

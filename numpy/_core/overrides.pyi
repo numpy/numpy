@@ -1,6 +1,8 @@
+import enum
 from collections.abc import Callable, Iterable
 from typing import Any, Final, NamedTuple
 
+import numpy as np
 from numpy._utils import set_module as set_module
 
 type _FuncLike = type | Callable[..., object]
@@ -10,6 +12,10 @@ type _Dispatcher[**_Tss] = Callable[_Tss, Iterable[object]]
 
 ARRAY_FUNCTIONS: set[Callable[..., Any]] = ...
 array_function_like_doc: Final[str] = ...
+class _ReductionKind(enum.IntEnum):
+    SUM_PROD = 1
+    MIN_MAX = 2
+    ANY_ALL = 3
 
 class ArgSpec(NamedTuple):
     args: list[str]
@@ -33,6 +39,7 @@ def array_function_dispatch[**Tss, FuncLikeT: _FuncLike](
     module: str | None = None,
     verify: bool = True,
     docs_from_dispatcher: bool = False,
+    reduction: tuple[np.ufunc, _ReductionKind] | None = None,
 ) -> Callable[[FuncLikeT], FuncLikeT]: ...
 
 #

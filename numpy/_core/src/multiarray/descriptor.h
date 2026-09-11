@@ -20,7 +20,7 @@ PyArray_DTypeOrDescrConverterOptional(PyObject *, npy_dtype_info *dt_info);
 NPY_NO_EXPORT int
 PyArray_DTypeOrDescrConverterRequired(PyObject *, npy_dtype_info *dt_info);
 
-NPY_NO_EXPORT int
+NPY_NO_EXPORT void
 PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
         PyArray_Descr **out_descr, PyArray_DTypeMeta **out_DType);
 

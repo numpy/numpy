@@ -981,6 +981,7 @@ static GCC_CAST_OPT_LEVEL int
 #   pragma GCC diagnostic push
 #   ifdef __clang__
 #   pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+#   pragma GCC diagnostic ignored "-Wimplicit-const-int-float-conversion"
 #   endif
 #   pragma GCC diagnostic ignored "-Wtautological-compare"
 #   endif
@@ -2152,6 +2153,11 @@ mapiter_@name@(
             NPY_END_THREADS;
         }
 /**end repeat1**/
+    }
+
+    /* Check if the above iteration ended with an error */
+    if (PyErr_Occurred()) {
+        return -1;
     }
     return 0;
 }

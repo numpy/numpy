@@ -1,13 +1,13 @@
 [build-system]
 build-backend = "mesonpy"
 requires = [
-    "meson-python>=0.18.0",
-    "Cython>=3.0.6",  # keep in sync with version check in meson.build
+    "meson-python>=0.20.0",
+    "Cython>=3.1.0",  # keep in sync with version check in meson.build
 ]
 
 [project]
 name = "numpy"
-version = "2.5.0.dev0"
+version = "2.6.0.dev0"
 description = "Fundamental package for array computing in Python"
 authors = [{name = "Travis E. Oliphant et al."}]
 maintainers = [
@@ -48,10 +48,9 @@ classifiers = [
 #         - libquadmath : LGPL-2.1-or-later                         (all except arm64 macOS>=14 and Windows)
 #         The licenses for these vendored components are dynamically included
 #         in the build process for PyPI wheels.
-license = 'BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0'
+license = 'BSD-3-Clause AND 0BSD AND MIT AND CC0-1.0'
 license-files = [
     'LICENSE.txt',                                       # BSD-3-Clause
-    'numpy/_core/include/numpy/libdivide/LICENSE.txt',   # Zlib
     'numpy/_core/src/common/pythoncapi-compat/COPYING',  # 0BSD
     'numpy/_core/src/highway/LICENSE',                   # Dual-licensed: Apache 2.0 or BSD 3-Clause
     'numpy/_core/src/multiarray/dragon4_LICENSE.txt',    # MIT
@@ -192,16 +191,34 @@ skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
-enable = ["cpython-freethreading", "cpython-prerelease"]
+enable = ["cpython-prerelease"]
 
 # The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
 [tool.cibuildwheel.config-settings]
 setup-args = ["-Duse-ilp64=true", "-Dallow-noblas=false"]
 build-dir = "build"
 
+[tool.cibuildwheel.android.config-settings]
+# ILP64 causes many failures on Android, for unknown reasons.
+setup-args = ["-Duse-ilp64=false", "-Dallow-noblas=false"]
+build-dir = "build"
+
+[tool.cibuildwheel.android.environment]
+PKG_CONFIG_PATH = "$(pwd)/.openblas/chaquopy/lib/pkgconfig"
+AUDITWHEEL_LD_LIBRARY_PATH = "$(pwd)/.openblas/chaquopy/lib"
+
+[tool.cibuildwheel.ios]
+# The ILP64 version of Accelerate is only available on iOS 16.4 or above.
+config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
+# On older iOS versions, use the following configuration
+# config-settings = "setup-args=-Dallow-noblas=false build-dir=build"
+before-build = []
+xbuild-tools = ["ninja"]
+
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
+manylinux-riscv64-image = "manylinux_2_39"
 musllinux-x86_64-image = "musllinux_1_2"
 musllinux-aarch64-image = "musllinux_1_2"
 
@@ -221,11 +238,31 @@ select = ["*-win32"]
 config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=true"], build-dir="build"}
 repair-wheel-command = ""
 
+[[tool.cibuildwheel.overrides]]
+select = ["*-android*", "*-ios*", "*-pyodide*"]
+before-test = ""
+
+# Any packages which appear both here and in test_requirements.txt should be kept in
+# sync. Note: hypothesis is deliberately omitted here, as are Cython and Meson
+# - we use them in regular CI only.
+test-requires = [
+    "pytest==9.1.1",
+    "tzdata",
+    "pytest-xdist",
+]
+
+# Mobile and WASM platforms can't run the cibw_test_command shell script, so they must
+# run Python directly.
+test-command = """
+    python -m pytest --pyargs numpy \
+        -m 'not slow' \
+        -W ignore::PendingDeprecationWarning \
+        -p no:cacheprovider
+"""
+
 [tool.cibuildwheel.pyodide]
-before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
 # Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
 repair-wheel-command = ""
-test-command = "python -m pytest --pyargs numpy -m 'not slow'"
 
 [tool.cibuildwheel.pyodide.config-settings]
 build-dir = "build"
