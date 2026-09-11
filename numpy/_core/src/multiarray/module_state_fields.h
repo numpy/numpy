@@ -274,11 +274,25 @@ extern "C" {
     F(global_pytype_to_type_dict)
 
 /*
+ * Heap types created with PyType_FromModuleAndSpec during module execution.
+ * The names match the static types they replaced.
+ */
+#define NPY_MODULE_STATE_TYPE_FIELDS(F) \
+    F(PyArrayFlags_Type)              \
+    F(PyArrayArrayConverter_Type)     \
+    F(PyArrayFunctionDispatcher_Type) \
+    F(NpyBusDayCalendar_Type)
+
+/*
  * Expand a field list into the PyObject * members it names, so the structs
  * below are declared from the same list the traverse and clear functions use.
  */
 #define NPY_DECLARE_ONE_PYOBJECT_FIELD(name) PyObject *name;
 #define NPY_DECLARE_PYOBJECT_FIELDS(list) list(NPY_DECLARE_ONE_PYOBJECT_FIELD)
+
+/* The same, for the lists whose members are types. */
+#define NPY_DECLARE_ONE_TYPE_FIELD(name) PyTypeObject *name;
+#define NPY_DECLARE_TYPE_FIELDS(list) list(NPY_DECLARE_ONE_TYPE_FIELD)
 
 #define NPY_FIELD_COUNT_ONE(name) + 1
 #define NPY_FIELD_COUNT(list) (0 list(NPY_FIELD_COUNT_ONE))
