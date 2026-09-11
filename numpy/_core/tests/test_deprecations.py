@@ -583,3 +583,27 @@ class TestTakeOutDtype(_DeprecationTestCase):
         different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
 
         self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
+
+
+class TestDatetimeIntConversion(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-09
+    message = "Converting a datetime64 or timedelta64 scalar to int or float"
+
+    @pytest.mark.parametrize("scalar", [
+        np.timedelta64(123, "ns"),
+        np.timedelta64(5, "Y"),
+        np.timedelta64(5, "M"),
+        np.timedelta64(10**18, "D"),
+        np.datetime64(123, "ns"),
+        np.datetime64(20000, "Y").astype("M8[s]"),
+    ])
+    def test_int_float_deprecated(self, scalar):
+        # gh-12550: these have no datetime.datetime/datetime.timedelta
+        # representation, so they used to convert to an int.
+        self.assert_deprecated(lambda: int(scalar))
+        self.assert_deprecated(lambda: float(scalar))
+
+    def test_setitem_deprecated(self):
+        arr = np.ones((), dtype=np.int64)
+        self.assert_deprecated(
+            lambda: arr.__setitem__((), np.timedelta64(123, "ns")))

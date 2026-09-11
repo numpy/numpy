@@ -1,0 +1,33 @@
+``datetime64`` and ``timedelta64`` now convert to NumPy scalars
+---------------------------------------------------------------
+
+``.item()``, ``.tolist()`` and ``.astype(object)`` on ``datetime64`` and
+``timedelta64`` arrays and scalars previously returned a mix of Python types
+that depended on the unit and the value: ``datetime.datetime``,
+``datetime.date``, ``datetime.timedelta``, ``None`` for ``NaT``, or a raw
+``int`` for sub-microsecond units, non-linear units (``Y``/``M``), generic
+units, and values too large for the Python types.  They now always return
+``numpy.datetime64`` or ``numpy.timedelta64`` scalars, so the result no longer
+loses the unit and round-trips back to the original dtype.
+
+Code that relied on the old return types needs updating:
+
+* ``arr.astype(object)`` no longer produces Python ``datetime``/``date``/
+  ``timedelta`` objects.  There is currently no supported conversion to those
+  types; ``arr.astype(datetime.datetime)`` has always been a spelling of
+  ``arr.astype(object)`` and is affected in the same way.
+* ``np.datetime64("NaT").item()`` returns ``NaT`` rather than ``None``, so
+  ``x.item() is None`` no longer detects missing values.  Use
+  ``np.isnat(x)`` instead.
+* ``.tolist()`` yields NumPy scalars rather than Python scalars.
+* Arithmetic that mixed NumPy and Python datetime types, such as
+  ``np.timedelta64(1, "h") - datetime.timedelta(seconds=5)``, raises
+  ``TypeError``.  It previously worked for units of microseconds or coarser by
+  converting the NumPy operand to a Python object, and already failed for
+  finer units.  See :issue:`30985`.
+
+``int()`` and ``float()`` on ``datetime64`` and ``timedelta64`` scalars are
+deprecated for the values that previously supported them (those that converted
+to an ``int``), and continue to work with a ``DeprecationWarning``.  Use
+``.astype("int64")`` or ``.astype("float64")``.  For all other values they
+raise ``TypeError`` as before.
