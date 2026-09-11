@@ -20,6 +20,7 @@
 #include "array_method.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
+#include "module_state.h"
 
 #include "loops.h"
 #include "minmax.h"
@@ -132,7 +133,8 @@ init_minimummaximum(PyObject *umath)
         if (info == NULL) {
             goto fail;
         }
-        if (info == Py_None || !PyObject_TypeCheck(info, &PyArrayMethod_Type)) {
+        if (info == Py_None || !PyObject_TypeCheck(
+                info, _npy_module_state->PyArrayMethod_Type)) {
             PyErr_SetString(PyExc_RuntimeError,
                     "internal NumPy error: minimummaximum loop not found");
             goto fail;

@@ -1809,14 +1809,15 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
 
 static PyType_Slot neighiter_slots[] = {
     {Py_tp_dealloc, neighiter_dealloc},
-    {Py_tp_new, PyType_GenericNew},
     {0, NULL},
 };
 
+/* Only `PyArray_NeighborhoodIterNew` can build one; the dealloc assumes it. */
 static PyType_Spec neighiter_spec = {
     .name = "numpy.neigh_internal_iter",
     .basicsize = sizeof(PyArrayNeighborhoodIterObject),
-    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE
+              | Py_TPFLAGS_DISALLOW_INSTANTIATION),
     .slots = neighiter_slots,
 };
 
