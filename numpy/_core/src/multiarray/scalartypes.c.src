@@ -135,9 +135,9 @@ gentype_free(PyObject *v)
 #define NPY_SCALAR_FORWARD_STACK_SIZE 10
 
 /*
- * Forward a scalar method to the equivalent 0-d array.  `self` must be in
- * `args[0]`, so the arguments are copied into a buffer with two leading slots:
- * the array, and before it the `PY_VECTORCALL_ARGUMENTS_OFFSET` scratch slot.
+ * Forward a scalar method to the equivalent 0-d array.  The object goes in
+ * `stack[0]`, which `PY_VECTORCALL_ARGUMENTS_OFFSET` allows the callee to
+ * overwrite temporarily, so the arguments are copied one slot up.
  */
 static PyObject *
 gentype_generic_vectorcall(PyObject *self, PyObject *const *args,
@@ -152,13 +152,12 @@ gentype_generic_vectorcall(PyObject *self, PyObject *const *args,
     if (kwnames != NULL) {
         nargs += PyTuple_GET_SIZE(kwnames);
     }
-    NPY_ALLOC_WORKSPACE(buffer, PyObject *, NPY_SCALAR_FORWARD_STACK_SIZE,
-            nargs + 2);
-    if (buffer == NULL) {
+    NPY_ALLOC_WORKSPACE(stack, PyObject *, NPY_SCALAR_FORWARD_STACK_SIZE,
+            nargs + 1);
+    if (stack == NULL) {
         Py_DECREF(arr);
         return NULL;
     }
-    PyObject **stack = buffer + 1;  /* buffer[0] is the scratch slot */
     stack[0] = arr;
     if (nargs > 0) {
         memcpy(stack + 1, args, nargs * sizeof(PyObject *));
@@ -167,7 +166,7 @@ gentype_generic_vectorcall(PyObject *self, PyObject *const *args,
     PyObject *ret = PyObject_VectorcallMethod(name, stack,
             ((size_t)len_args + 1) | PY_VECTORCALL_ARGUMENTS_OFFSET, kwnames);
 
-    npy_free_workspace(buffer);
+    npy_free_workspace(stack);
     Py_DECREF(arr);
     if (ret != NULL && PyArray_Check(ret)) {
         return PyArray_Return((PyArrayObject *)ret);
