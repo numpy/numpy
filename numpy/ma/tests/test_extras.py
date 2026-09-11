@@ -1405,7 +1405,6 @@ class TestCov:
         # gh-15601: each entry must equal np.cov computed on the
         # observations where both variables are unmasked.
         rng = np.random.default_rng(15601)
-        # variables in rows, observations in columns
         data = rng.random((4, 30))
         m = rng.random((4, 30)) < 0.3
         x = array(data, mask=m) if rowvar else array(data.T, mask=m.T)
@@ -1419,9 +1418,7 @@ class TestCov:
 
     def test_one_shared_observation(self):
         # gh-15601: a pair sharing one observation has no covariance, since
-        # both deviations from that pair's mean are zero.  ``ddof=1`` masks
-        # it; ``ddof=0`` gives 0, where the deviations from each variable's
-        # own mean used to leave a value behind.
+        # both deviations from that pair's mean are zero.
         x = array([[1., 5., 9.], [3., 7., 2.]],
                   mask=[[0, 0, 1], [0, 1, 0]])
         assert_(cov(x)[0, 1] is masked)
@@ -1478,8 +1475,7 @@ class TestCorrcoef:
         assert_almost_equal(test[:-1, :-1], control[:-1, :-1])
 
     def test_gh_15601(self):
-        # gh-15601: the coefficient was normalized by each variable's own
-        # variance, so it could leave [-1, 1].  This case returned -2.449.
+        # gh-15601
         d = np.array([[6., 8.], [6., 4.], [3., 9.], [1., 7.], [9., 5.]])
         m = np.array([[0, 1], [0, 1], [0, 0], [1, 0], [0, 0]], dtype=bool)
         # rows 2 and 4 are the only ones the two variables share
@@ -1495,7 +1491,6 @@ class TestCorrcoef:
         # that reference rather than against the [-1, 1] bound, which the
         # final clip would satisfy on its own.
         rng = np.random.default_rng(15601)
-        # variables in rows, observations in columns
         data = rng.random((4, 30))
         m = rng.random((4, 30)) < frac
         x = array(data, mask=m) if rowvar else array(data.T, mask=m.T)
@@ -1519,9 +1514,7 @@ class TestCorrcoef:
     @pytest.mark.parametrize("rowvar", [True, False])
     def test_matches_pairwise_call(self, rowvar):
         # gh-15601, gh-20586: an entry of the matrix must equal the
-        # coefficient of that pair on its own.  ``_covhelper`` gives two
-        # arrays a common mask, so the two-argument form already uses the
-        # observations a pair shares; the matrix form must agree with it.
+        # coefficient of that pair on its own.
         rng = np.random.default_rng(15601)
         data = rng.random((4, 25))
         m = rng.random((4, 25)) < 0.35
@@ -1537,8 +1530,6 @@ class TestCorrcoef:
                                                ((1, 5), True),
                                                ((5, 1), False)])
     def test_single_variable(self, shape, rowvar):
-        # A variable correlates perfectly with itself, matching the diagonal
-        # of the matrix returned when other variables are present.
         x = array(np.arange(5.).reshape(shape))
         result = corrcoef(x, rowvar=rowvar)
         # ``assert_almost_equal`` holds against a masked value, so the mask

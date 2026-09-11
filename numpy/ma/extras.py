@@ -1721,26 +1721,13 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
 
 
 def _pairwise_cov_sums(x, xnotmask, rowvar):
-    """
-    Covariance sums over the observations that each pair of variables shares.
-
-    Takes the values returned by `_covhelper`, where ``x`` holds the deviation
-    of each variable from the mean over that variable's own unmasked
-    observations.  With variables along the first axis, ``npair[i, j]`` counts
-    the observations where variables ``i`` and ``j`` are both unmasked, and
-    ``xpsum[i, j]`` sums variable ``i`` over those observations.  Subtracting
-    ``xpsum * xpsum.T / npair`` from the sum of products moves the means onto
-    those same observations, giving ``cpair``.  See gh-15601.
-
-    ``xdev``, ``xpsum`` and ``xnotmask`` are returned as well; `corrcoef`
-    needs them for the variances over each pair.
-
-    """
     if not rowvar:
         x, xnotmask = x.T, xnotmask.T
     xdev = filled(x, 0)
     npair = np.dot(xnotmask, xnotmask.T)
     xpsum = np.dot(xdev, xnotmask.T)
+    # Subtracting ``xpsum * xpsum.T / npair`` moves the means onto the
+    # observations each pair shares.
     with np.errstate(divide="ignore", invalid="ignore"):
         cpair = np.dot(xdev, xdev.T.conj()) - xpsum * xpsum.T.conj() / npair
     return npair, cpair, xdev, xpsum, xnotmask
@@ -1912,9 +1899,8 @@ def corrcoef(x, y=None, rowvar=True, allow_masked=True,
       dtype=float64)
 
     """
-    # The variances cannot be read off the diagonal of `cov`.  Each pair is
-    # computed over the observations it shares, so the variance of a variable
-    # differs from one pair to the next.  See gh-15601.
+    # The variances cannot be read off the diagonal of `cov`: a variable's
+    # variance differs from one pair to the next.  See gh-15601.
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     npair, cpair, xdev, xpsum, xnotmask = _pairwise_cov_sums(x, xnotmask, rowvar)
     if xdev.shape[0] == 1:
@@ -1922,9 +1908,8 @@ def corrcoef(x, y=None, rowvar=True, allow_masked=True,
             return ma.array(1.0)
         return masked
     with np.errstate(divide="ignore", invalid="ignore"):
-        # The ``- ddof`` normalization cancels between the covariance and the
-        # two standard deviations, as in np.corrcoef.  It cancels only
-        # because all three are taken over the same observations.
+        # ``- ddof`` cancels between the covariance and the two standard
+        # deviations, but only because all three use the same observations.
         sumsq = np.dot(xdev * xdev.conj(), xnotmask.T).real
         vpair = sumsq - (xpsum * xpsum.conj()).real / npair
         stddev = np.sqrt(vpair)
