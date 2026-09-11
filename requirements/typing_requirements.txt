@@ -5,3 +5,4 @@
 
 mypy==2.3.1
 pyrefly==1.2.0
+types-PyYAML
