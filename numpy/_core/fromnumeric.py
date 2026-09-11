@@ -6,7 +6,6 @@ import math
 import types
 
 import numpy as np
-from numpy._utils import set_module
 
 from . import _methods, multiarray as mu, numerictypes as nt, overrides, umath as um
 from ._multiarray_umath import _wrapfunc, _wrapit
@@ -3053,7 +3052,6 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
 
 
 @array_function_dispatch(("a", "out"), reduction=um.maximum)
-@set_module('numpy')
 def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
          where=np._NoValue):
     """
