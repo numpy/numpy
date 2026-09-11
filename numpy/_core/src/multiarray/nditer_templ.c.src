@@ -220,6 +220,7 @@ npyiter_buffered_iternext(NpyIter *iter)
     int nop = NIT_NOP(iter);
 
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
+    char **ptrs = NIT_USERPTRS(iter);
 
     /*
      * If the iterator handles the inner loop, need to increment all
@@ -230,10 +231,8 @@ npyiter_buffered_iternext(NpyIter *iter)
         if (++NIT_ITERINDEX(iter) < NBF_BUFITEREND(bufferdata)) {
             int iop;
             npy_intp *strides;
-            char **ptrs;
 
             strides = NBF_STRIDES(bufferdata);
-            ptrs = NIT_USERPTRS(iter);
             for (iop = 0; iop < nop; ++iop) {
                 ptrs[iop] += strides[iop];
             }
@@ -243,6 +242,12 @@ npyiter_buffered_iternext(NpyIter *iter)
     else {
         NIT_ITERINDEX(iter) += NBF_SIZE(bufferdata);
     }
+
+    /*
+     * Save the previous data pointers so that copy_to_buffers can re-use the
+     * buffers of operands that did not move, as the reduce iternext does.
+     */
+    memcpy(ptrs, NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
 
     /* Write back to the arrays */
     if (npyiter_copy_from_buffers(iter) < 0) {
@@ -261,7 +266,7 @@ npyiter_buffered_iternext(NpyIter *iter)
     }
 
     /* Prepare the next buffers and set iterend/size */
-    if (npyiter_copy_to_buffers(iter, NULL) < 0) {
+    if (npyiter_copy_to_buffers(iter, ptrs) < 0) {
         npyiter_clear_buffers(iter);
         return 0;
     }
