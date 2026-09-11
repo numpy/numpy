@@ -681,6 +681,24 @@ def split_by_unquoted(line, characters):
         return (d["before"], d["after"])
     return (line, "")
 
+
+_quoted_string_re = re.compile(
+    r"('([^'\\]|(\\.))*')|(\"([^\"\\]|(\\.))*\")")
+
+
+def mask_string_literals(expr):
+    """Blank the contents of Fortran string literals in *expr*.
+
+    Dependency scanning matches variable names against the right-hand
+    side of a declaration. A character parameter such as
+    ``mkdir = 'mkdir '`` must not be treated as depending on the
+    identifiers that happen to appear inside its own literal value, so
+    the quoted text is collapsed to empty quotes before the scan while
+    identifiers outside the quotes (e.g. in ``'x '//name``) are kept.
+    """
+    return _quoted_string_re.sub("''", expr)
+
+
 def _simplifyargs(argsline):
     a = []
     for n in markoutercomma(argsline).split('@,@'):
@@ -2129,6 +2147,35 @@ def postcrack(block, args=None, tab=''):
     return block
 
 
+def _sort_cyclic_dependents(dep, vars):
+    """Order variables in a dependency cycle for initialization.
+
+    When a cycle cannot be resolved topologically, prefer:
+
+    1. intent(in) inputs (e.g. ``a``) so shape-based hide vars can run
+    2. variables defined via ``=`` (e.g. ``n = shape(a, 1)``,
+       ``lda = MAX(1, n)``) so dimension expressions see real values
+    3. remaining hide arrays (e.g. ``work`` with ``dimension(3*n)``)
+
+    This restores a usable order after literal masking removes accidental
+    edges such as ``diag = 'N'`` matching ``n`` inside the quotes.
+    ``getarrdims`` blanks any dimension that names a later depargs
+    entry, so workspace arrays must not sort ahead of the scalars they
+    size from.
+    """
+    def sort_key(name):
+        var = vars[name]
+        if isintent_in(var) and not isintent_hide(var):
+            tier = 0
+        elif '=' in var:
+            tier = 1
+        else:
+            tier = 2
+        return (tier, dep.index(name))
+
+    return sorted(dep, key=sort_key)
+
+
 def sortvarnames(vars):
     indep = []
     dep = []
@@ -2153,7 +2200,7 @@ def sortvarnames(vars):
                 errmess('sortvarnames: failed to compute dependencies because'
                         ' of cyclic dependencies between '
                         + ', '.join(dep) + '\n')
-                indep = indep + dep
+                indep = indep + _sort_cyclic_dependents(dep, vars)
                 break
         else:
             indep.append(v)
@@ -2877,8 +2924,12 @@ def analyzevars(block):
                 vars[n]['attrspec'].append('optional')
             if 'depend' not in vars[n]:
                 vars[n]['depend'] = []
+                # Mask string-literal contents so an identifier appearing
+                # only inside a character value is not harvested as a
+                # dependency (gh-28700).
+                rhs = mask_string_literals(vars[n]['='])
                 for v, m in list(dep_matches.items()):
-                    if m(vars[n]['=']):
+                    if m(rhs):
                         vars[n]['depend'].append(v)
                 if not vars[n]['depend']:
                     del vars[n]['depend']
