@@ -857,6 +857,52 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             (below_memory_constraint or kind == 'table')
         ):
 
+            # Check if ar2_min - 1 fits in intp for index arithmetic
+            intp_info = np.iinfo(np.intp)
+            shift_val = ar2_min - 1
+            can_use_clipping = (
+                shift_val >= intp_info.min and shift_val <= intp_info.max
+            )
+
+            if can_use_clipping:
+                # Quick data-overlap test: sample ~384 evenly-spaced
+                # elements from ar1 to estimate what fraction falls
+                # within [ar2_min, ar2_max].  The strided view is O(1)
+                # and the check touches ~3 KB — negligible vs the
+                # O(N) main work.
+                #
+                # A dense stride (N//384) rather than a coarser one
+                # reduces sensitivity to periodic or block-sorted data.
+                #
+                # When most of ar1 is in range, clipped indexing is
+                # faster because it avoids boolean masking and
+                # scatter/gather overhead.  When most of ar1 is out
+                # of range, masking is faster because it skips
+                # out-of-range elements entirely.
+                _stride = max(1, ar1.size // 384)
+                _sample = ar1[::_stride]
+                _n_in = np.count_nonzero((_sample >= ar2_min) & (_sample <= ar2_max))
+
+                # Threshold determined empirically: clipping beats
+                # masking when ≥ 5 % of ar1 falls inside
+                # [ar2_min, ar2_max].  Below this, masking's
+                # early-exit on out-of-range elements is cheaper.
+                # See the sweep experiment in the PR description.
+                _OVERLAP_THRESHOLD = 0.05
+                if _n_in >= _OVERLAP_THRESHOLD * len(_sample):
+                    # --- Clipped indexing path ---
+                    if invert:
+                        extended_table = np.ones(ar2_range + 3, dtype=bool)
+                        extended_table[ar2 - ar2_min + 1] = False
+                    else:
+                        extended_table = np.zeros(ar2_range + 3, dtype=bool)
+                        extended_table[ar2 - ar2_min + 1] = True
+
+                    ar1_indices = (ar1.astype(np.intp, copy=False) - shift_val)
+                    np.clip(ar1_indices, 0, ar2_range + 2, out=ar1_indices)
+
+                    return extended_table[ar1_indices]
+
             if invert:
                 outgoing_array = np.ones_like(ar1, dtype=bool)
             else:
