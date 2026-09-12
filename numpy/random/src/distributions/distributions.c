@@ -25,8 +25,8 @@ static inline float next_float(bitgen_t *bitgen_state) {
  * the 0.0 -> -0.0 case, so indexing these tables with the random sign bit
  * reproduces `if (sign) x = -x;` bit for bit while avoiding a branch on a
  * uniformly distributed (hence unpredictable) bit. */
-static const double ziggurat_sign_double[2] = {1.0, -1.0};
-static const float ziggurat_sign_float[2] = {1.0f, -1.0f};
+static const double sign_double[2] = {1.0, -1.0};
+static const float sign_float[2] = {1.0f, -1.0f};
 
 /* Random generators for external use */
 float random_standard_uniform_f(bitgen_t *bitgen_state) {
@@ -153,7 +153,7 @@ double random_standard_normal(bitgen_t *bitgen_state) {
     idx = r & 0xff;
     r >>= 8;
     rabs = (r >> 1) & 0x000fffffffffffff;
-    x = rabs * wi_double[idx] * ziggurat_sign_double[r & 0x1];
+    x = rabs * wi_double[idx] * sign_double[r & 0x1];
     if (rabs < ki_double[idx])
       return x; /* 99.3% of the time return here */
     if (idx == 0) {
@@ -190,7 +190,7 @@ float random_standard_normal_f(bitgen_t *bitgen_state) {
     r = next_uint32(bitgen_state);
     idx = r & 0xff;
     rabs = (r >> 9) & 0x0007fffff;
-    x = rabs * wi_float[idx] * ziggurat_sign_float[(r >> 8) & 0x1];
+    x = rabs * wi_float[idx] * sign_float[(r >> 8) & 0x1];
     if (rabs < ki_float[idx])
       return x; /* # 99.3% of the time return here */
     if (idx == 0) {
@@ -498,15 +498,13 @@ double random_laplace(bitgen_t *bitgen_state, double loc, double scale) {
   double U;
 
   U = next_double(bitgen_state);
-  if (U >= 0.5) {
-    U = loc - scale * log(2.0 - U - U);
-  } else if (U > 0.0) {
-    U = loc + scale * log(U + U);
-  } else {
-    /* Reject U == 0.0 and call again to get next value */
-    U = random_laplace(bitgen_state, loc, scale);
+  if (U > 0.0) {
+    const double lo = U + U;
+    const double hi = 2.0 - U - U;
+    return loc + sign_double[U >= 0.5] * scale * log(lo < hi ? lo : hi);
   }
-  return U;
+  /* Reject U == 0.0 and call again to get next value */
+  return random_laplace(bitgen_state, loc, scale);
 }
 
 double random_gumbel(bitgen_t *bitgen_state, double loc, double scale) {
