@@ -51,13 +51,6 @@ pyobject_array_insert(PyObject **array, int length, int index, PyObject *item)
 }
 
 
-static inline int
-cannot_carry_override(PyObject *a)
-{
-    return PyArray_CheckExact(a) || _is_basic_python_type(Py_TYPE(a));
-}
-
-
 /*
  * Collects arguments with __array_function__ and their corresponding methods
  * in the order in which they should be tried (i.e., skipping redundant types).
@@ -85,10 +78,13 @@ get_implementing_args_and_methods(
         PyObject *argument = items[i];
 
         if (in_safe_prefix) {
-            if (cannot_carry_override(argument)) {
-                if (deferred_ndarray == NULL && PyArray_CheckExact(argument)) {
+            if (PyArray_CheckExact(argument)) {
+                if (deferred_ndarray == NULL) {
                     deferred_ndarray = argument;
                 }
+                continue;
+            }
+            if (_is_basic_python_type(Py_TYPE(argument))) {
                 continue;
             }
             in_safe_prefix = 0;
@@ -477,9 +473,9 @@ typedef struct {
     int where_slot;
     /* Bit s set: the parameter for slot s defaults to np._NoValue, so
      * an explicit _NoValue means "not passed". */
-    int novalue_slots;
+    unsigned int novalue_slots;
     /* Bit s set: slot s has no default; missing it declines. */
-    int required_slots;
+    unsigned int required_slots;
     int slots[];
 } npy_forward_info;
 
@@ -492,13 +488,13 @@ typedef struct {
     /* Tuple-spec parameter table (set instead of relevant_arg_func).
      * Parameter i may be matched positionally iff i < n_pos_max and by
      * keyword iff param_names[i] is not None (None: positional-only). */
-    int n_params;
+    Py_ssize_t n_params;
     int n_pos_max;
     int n_required;
     int has_varkw;
     PyObject *param_names;
     /* The relevant args are parameter indices into param_names. */
-    int n_relevant_args;
+    Py_ssize_t n_relevant_args;
     uint8_t relevant_idx[NPY_MAXARGS];
     /* NULL unless this dispatcher has a forward fast path. */
     npy_forward_info *forward;
@@ -514,13 +510,11 @@ typedef struct {
 static inline Py_ssize_t
 find_string(PyObject *needle, PyObject *const *items, Py_ssize_t n)
 {
+    assert(PyUnicode_Check(needle));
     for (Py_ssize_t i = 0; i < n; i++) {
         if (items[i] == needle) {
             return i;
         }
-    }
-    if (!PyUnicode_Check(needle)) {
-        return -1;
     }
     for (Py_ssize_t i = 0; i < n; i++) {
         PyObject *s = items[i];
@@ -583,8 +577,8 @@ try_forward(PyArray_ArrayFunctionDispatcherObject *self,
         }
         slots[slot] = args[nargs + k];
     }
-    if (slots[0] == NULL) {
-        /* required `a` missing */
+    /* `a` must be an exact ndarray */
+    if (slots[0] == NULL || !PyArray_CheckExact(slots[0])) {
         return 0;
     }
     for (int s = 1; s < fwd->n_slots; s++) {
@@ -592,8 +586,8 @@ try_forward(PyArray_ArrayFunctionDispatcherObject *self,
          * own default is _NoValue. */
         if (slots[s] == NULL
                 || (slots[s] == _npy_module_state->static_pydata._NoValue
-                    && (fwd->novalue_slots & (1 << s)))) {
-            if (fwd->required_slots & (1 << s)) {
+                    && (fwd->novalue_slots & (1u << s)))) {
+            if (fwd->required_slots & (1u << s)) {
                 /* missing required argument */
                 return 0;
             }
@@ -601,9 +595,6 @@ try_forward(PyArray_ArrayFunctionDispatcherObject *self,
         }
     }
 
-    if (!PyArray_CheckExact(slots[0])) {
-        return 0;
-    }
     if (fwd->out_slot >= 0) {
         PyObject *out = slots[fwd->out_slot];
         if (out != Py_None && !PyArray_CheckExact(out)) {
@@ -619,9 +610,10 @@ try_forward(PyArray_ArrayFunctionDispatcherObject *self,
     }
     /* Every dispatch-relevant arg must be override-free, not just
      * a/out/where: e.g. searchsorted also dispatches on `v` and `sorter`. */
-    for (int i = 0; i < self->n_relevant_args; i++) {
+    for (Py_ssize_t i = 0; i < self->n_relevant_args; i++) {
         int slot = fwd->slots[self->relevant_idx[i]];
-        if (slot >= 0 && !cannot_carry_override(slots[slot])) {
+        if (slot >= 0 && !PyArray_CheckExact(slots[slot])
+                && !_is_basic_python_type(Py_TYPE(slots[slot]))) {
             return 0;
         }
     }
@@ -722,7 +714,7 @@ fix_name_if_typeerror(PyArray_ArrayFunctionDispatcherObject *self)
  */
 static inline PyObject *
 lookup_relevant_arg(
-        const PyArray_ArrayFunctionDispatcherObject *self, int i,
+        const PyArray_ArrayFunctionDispatcherObject *self, Py_ssize_t i,
         PyObject *const *args, Py_ssize_t nargs,
         PyObject *kwnames, Py_ssize_t nkwargs)
 {
@@ -834,7 +826,7 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
         Py_ssize_t nargs = PyVectorcall_NARGS(len_args);
         Py_ssize_t nkwargs = (kwnames != NULL) ? PyTuple_GET_SIZE(kwnames) : 0;
 
-        for (int i = 0; i < self->n_relevant_args; i++) {
+        for (Py_ssize_t i = 0; i < self->n_relevant_args; i++) {
             items[i] = lookup_relevant_arg(
                     self, i, args, nargs, kwnames, nkwargs);
         }
@@ -1028,7 +1020,7 @@ init_relevant_arg_spec(
     }
     /* Stored immediately: dispatcher_dealloc releases a partial tuple. */
     self->param_names = names;
-    self->n_params = (int)n_params;
+    self->n_params = n_params;
     for (Py_ssize_t i = 0; i < n_params; i++) {
         PyObject *name = PyTuple_GET_ITEM(sig_names, i);
         if (name == Py_None) {
@@ -1061,7 +1053,7 @@ init_relevant_arg_spec(
                 "too many relevant args (%zd > %d)", n, NPY_MAXARGS);
         return -1;
     }
-    self->n_relevant_args = (int)n;
+    self->n_relevant_args = n;
     for (Py_ssize_t i = 0; i < n; i++) {
         long idx = PyLong_AsLong(PyTuple_GET_ITEM(spec, i));
         if (idx < 0 || idx >= n_params) {
@@ -1076,8 +1068,9 @@ init_relevant_arg_spec(
 
     if (forward_spec != Py_None) {
         PyObject *fwd_call, *slots_tup, *defaults_tup, *fwd_kwnames;
-        int n_slots, out_slot, where_slot, novalue_slots, required_slots;
-        if (!PyArg_ParseTuple(forward_spec, "OO!O!Oiiiii:forward",
+        int n_slots, out_slot, where_slot;
+        unsigned int novalue_slots, required_slots;
+        if (!PyArg_ParseTuple(forward_spec, "OO!O!OiiiII:forward",
                 &fwd_call, &PyTuple_Type, &slots_tup,
                 &PyTuple_Type, &defaults_tup, &fwd_kwnames,
                 &n_slots, &out_slot, &where_slot,
