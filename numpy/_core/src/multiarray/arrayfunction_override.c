@@ -455,6 +455,14 @@ cleanup:
 /* Maximum number of target argument slots (ufunc.reduce has 7). */
 #define NPY_FORWARD_MAX_SLOTS 8
 
+/* What try_forward requires of the value in a target slot. */
+enum {
+    NPY_FORWARD_CHECK_NONE = 0,     /* not dispatch-relevant */
+    NPY_FORWARD_CHECK_NO_OVERRIDE,  /* exact ndarray or basic Python type */
+    NPY_FORWARD_CHECK_OUT,          /* None or exact ndarray */
+    NPY_FORWARD_CHECK_WHERE,        /* None, bool or exact ndarray */
+};
+
 /*
  * Forward fast-path state (see _resolve_forward_spec): `call` is invoked
  * directly for exact-ndarray calls with `n_slots` arguments; `slots[i]`
@@ -469,13 +477,13 @@ typedef struct {
     /* Positional argument count of the target call (n_slots minus the
      * trailing keyword slots). */
     int n_pos;
-    int out_slot;
-    int where_slot;
     /* Bit s set: the parameter for slot s defaults to np._NoValue, so
      * an explicit _NoValue means "not passed". */
     unsigned int novalue_slots;
     /* Bit s set: slot s has no default; missing it declines. */
     unsigned int required_slots;
+    /* NPY_FORWARD_CHECK_* for each slot; slot 0 (`a`) is checked first. */
+    uint8_t slot_check[NPY_FORWARD_MAX_SLOTS];
     int slots[];
 } npy_forward_info;
 
@@ -582,39 +590,38 @@ try_forward(PyArray_ArrayFunctionDispatcherObject *self,
         return 0;
     }
     for (int s = 1; s < fwd->n_slots; s++) {
+        PyObject *value = slots[s];
         /* np._NoValue means "not passed", but only for parameters whose
          * own default is _NoValue. */
-        if (slots[s] == NULL
-                || (slots[s] == _npy_module_state->static_pydata._NoValue
+        if (value == NULL
+                || (value == _npy_module_state->static_pydata._NoValue
                     && (fwd->novalue_slots & (1u << s)))) {
             if (fwd->required_slots & (1u << s)) {
                 /* missing required argument */
                 return 0;
             }
-            slots[s] = PyTuple_GET_ITEM(fwd->defaults, s);
+            value = slots[s] = PyTuple_GET_ITEM(fwd->defaults, s);
         }
-    }
-
-    if (fwd->out_slot >= 0) {
-        PyObject *out = slots[fwd->out_slot];
-        if (out != Py_None && !PyArray_CheckExact(out)) {
-            return 0;
-        }
-    }
-    if (fwd->where_slot >= 0) {
-        PyObject *where = slots[fwd->where_slot];
-        if (where != Py_None && !PyBool_Check(where)
-                && !PyArray_CheckExact(where)) {
-            return 0;
-        }
-    }
-    /* Every dispatch-relevant arg must be override-free, not just
-     * a/out/where: e.g. searchsorted also dispatches on `v` and `sorter`. */
-    for (Py_ssize_t i = 0; i < self->n_relevant_args; i++) {
-        int slot = fwd->slots[self->relevant_idx[i]];
-        if (slot >= 0 && !PyArray_CheckExact(slots[slot])
-                && !_is_basic_python_type(Py_TYPE(slots[slot]))) {
-            return 0;
+        switch (fwd->slot_check[s]) {
+            case NPY_FORWARD_CHECK_NONE:
+                break;
+            case NPY_FORWARD_CHECK_NO_OVERRIDE:
+                if (!PyArray_CheckExact(value)
+                        && !_is_basic_python_type(Py_TYPE(value))) {
+                    return 0;
+                }
+                break;
+            case NPY_FORWARD_CHECK_OUT:
+                if (value != Py_None && !PyArray_CheckExact(value)) {
+                    return 0;
+                }
+                break;
+            case NPY_FORWARD_CHECK_WHERE:
+                if (value != Py_None && !PyBool_Check(value)
+                        && !PyArray_CheckExact(value)) {
+                    return 0;
+                }
+                break;
         }
     }
 
@@ -1095,8 +1102,9 @@ init_relevant_arg_spec(
                 || n_kw >= n_slots
                 || PyTuple_GET_SIZE(slots_tup) != n_params
                 || PyTuple_GET_SIZE(defaults_tup) != n_slots
-                || out_slot < -1 || out_slot >= n_slots
-                || where_slot < -1 || where_slot >= n_slots) {
+                || out_slot < -1 || out_slot == 0 || out_slot >= n_slots
+                || where_slot < -1 || where_slot == 0
+                || where_slot >= n_slots) {
             PyErr_SetString(PyExc_ValueError,
                     "forward spec does not match the signature table");
             return -1;
@@ -1121,8 +1129,23 @@ init_relevant_arg_spec(
         }
         fwd->n_slots = n_slots;
         fwd->n_pos = n_slots - (int)n_kw;
-        fwd->out_slot = out_slot;
-        fwd->where_slot = where_slot;
+        /* Every dispatch-relevant arg must be override-free, not just `a`:
+         * e.g. searchsorted also dispatches on `v` and `sorter`.  out and
+         * where are stricter than that, so their rules take precedence. */
+        memset(fwd->slot_check, NPY_FORWARD_CHECK_NONE,
+               sizeof(fwd->slot_check));
+        for (Py_ssize_t i = 0; i < self->n_relevant_args; i++) {
+            int slot = fwd->slots[self->relevant_idx[i]];
+            if (slot > 0) {
+                fwd->slot_check[slot] = NPY_FORWARD_CHECK_NO_OVERRIDE;
+            }
+        }
+        if (out_slot > 0) {
+            fwd->slot_check[out_slot] = NPY_FORWARD_CHECK_OUT;
+        }
+        if (where_slot > 0) {
+            fwd->slot_check[where_slot] = NPY_FORWARD_CHECK_WHERE;
+        }
         fwd->novalue_slots = novalue_slots;
         fwd->required_slots = required_slots;
         fwd->call = Py_NewRef(fwd_call);
