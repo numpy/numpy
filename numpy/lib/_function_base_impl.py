@@ -2002,8 +2002,10 @@ def trim_zeros(filt, trim='fb', axis=None):
     Returns
     -------
     trimmed : ndarray or sequence
-        The result of trimming the input. The number of dimensions and the
-        input data type are preserved.
+        The result of trimming the input. The number of dimensions is
+        preserved, and so is the input type where possible: arrays and
+        1-D sequences keep their type, while nested sequences (such as a
+        list of lists) are returned as an ``ndarray``.
 
     Notes
     -----
@@ -2072,9 +2074,12 @@ def trim_zeros(filt, trim='fb', axis=None):
         # filt is 1D -> avoid multi-dimensional slicing to preserve
         # non-array input types
         return filt[sl[0]]
-    if isinstance(filt, np.ndarray):
+    try:
+        # Index the input directly to preserve its type (ndarray subclasses
+        # and duck arrays that support multi-dimensional indexing).
         return filt[sl]
-    return filt_[sl]
+    except TypeError:
+        return filt_[sl]
 
 
 def _extract_dispatcher(condition, arr):
