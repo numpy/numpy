@@ -67,7 +67,9 @@ npy_half npy_half_spacing(npy_half h)
     npy_half ret;
     npy_uint16 h_exp = h&0x7c00u;
     npy_uint16 h_sig = h&0x03ffu;
-    if (h_exp == 0x7c00u) {
+    if (h_exp == 0x7c00u && h_sig != 0) {
+        ret = NPY_HALF_NAN;
+    } else if (h_exp == 0x7c00u) {
 #if NPY_HALF_GENERATE_INVALID
         npy_set_floatstatus_invalid();
 #endif

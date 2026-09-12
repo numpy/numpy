@@ -1966,16 +1966,10 @@ class TestSpecialFloats:
             return
         # FIXME: NAN raises FP invalid exception:
         #  - ceil/float16 on MSVC:32-bit
-        #  - spacing/float16 on almost all platforms
-        #  - spacing/float32,float64 on Windows MSVC with VS2022
         #  - arccos/float16,float32 on Android
-        if ufunc in (np.spacing, np.ceil) and dtype == 'e':
+        if ufunc is np.ceil and dtype == 'e':
             return
-        # Skip spacing tests with NaN on Windows MSVC (all dtypes)
-        import platform
-        if ((ufunc, platform.system()) in [
-                (np.spacing, 'Windows'), (np.arccos, 'Android')
-            ] and
+        if (ufunc is np.arccos and platform.system() == 'Android' and
             any(np.isnan(d) if isinstance(d, (int, float)) else False for d in data)):
             pytest.skip(f"{ufunc} with NaN generates warnings on this platform")
         array = np.array(data, dtype=dtype)
@@ -5112,6 +5106,14 @@ def test_spacingf():
                     reason="IBM double double")
 def test_spacingl():
     return _test_spacing(np.longdouble)
+
+@pytest.mark.parametrize(
+    "dtype", [np.float16, np.float32, np.float64, np.longdouble]
+)
+def test_spacing_nan_no_warning(dtype):
+    with np.errstate(all="raise"):
+        assert np.isnan(np.spacing(dtype(np.nan)))
+
 
 def test_spacing_gfortran():
     # Reference from this fortran file, built with gfortran 4.3.3 on linux

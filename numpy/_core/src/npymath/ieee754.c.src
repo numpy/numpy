@@ -304,6 +304,9 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
 @type@ npy_spacing@suff@(@type@ x)
 {
     /* XXX: npy isnan/isinf may be optimized by bit twiddling */
+    if (npy_isnan(x)) {
+        return x;
+    }
     if (npy_isinf(x)) {
         return NPY_NAN@SUFF@;
     }
