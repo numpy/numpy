@@ -1,0 +1,6 @@
+* Functions whose array parameters are positional-only (such as
+  ``np.matrix_transpose``, ``np.linalg.svdvals`` and ``np.linalg.outer``)
+  now raise ``TypeError`` when those parameters are passed by keyword,
+  also for arguments implementing ``__array_function__``.  Previously such
+  calls dispatched to the override even though the same call with a plain
+  ``ndarray`` raised.

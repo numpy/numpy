@@ -54,11 +54,7 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.char')
 
 
-def _binary_op_dispatcher(x1, x2):
-    return (x1, x2)
-
-
-@array_function_dispatch(_binary_op_dispatcher)
+@array_function_dispatch(("x1", "x2"))
 def equal(x1, x2):
     """
     Return (x1 == x2) element-wise.
@@ -92,7 +88,7 @@ def equal(x1, x2):
     return compare_chararrays(x1, x2, '==', True)
 
 
-@array_function_dispatch(_binary_op_dispatcher)
+@array_function_dispatch(("x1", "x2"))
 def not_equal(x1, x2):
     """
     Return (x1 != x2) element-wise.
@@ -126,7 +122,7 @@ def not_equal(x1, x2):
     return compare_chararrays(x1, x2, '!=', True)
 
 
-@array_function_dispatch(_binary_op_dispatcher)
+@array_function_dispatch(("x1", "x2"))
 def greater_equal(x1, x2):
     """
     Return (x1 >= x2) element-wise.
@@ -161,7 +157,7 @@ def greater_equal(x1, x2):
     return compare_chararrays(x1, x2, '>=', True)
 
 
-@array_function_dispatch(_binary_op_dispatcher)
+@array_function_dispatch(("x1", "x2"))
 def less_equal(x1, x2):
     """
     Return (x1 <= x2) element-wise.
@@ -195,7 +191,7 @@ def less_equal(x1, x2):
     return compare_chararrays(x1, x2, '<=', True)
 
 
-@array_function_dispatch(_binary_op_dispatcher)
+@array_function_dispatch(("x1", "x2"))
 def greater(x1, x2):
     """
     Return (x1 > x2) element-wise.
@@ -229,7 +225,7 @@ def greater(x1, x2):
     return compare_chararrays(x1, x2, '>', True)
 
 
-@array_function_dispatch(_binary_op_dispatcher)
+@array_function_dispatch(("x1", "x2"))
 def less(x1, x2):
     """
     Return (x1 < x2) element-wise.

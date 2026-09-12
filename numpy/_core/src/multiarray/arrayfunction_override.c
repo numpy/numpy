@@ -7,7 +7,6 @@
 #include "numpy/ndarrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "get_attr_string.h"
-#include "npy_argparse.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
 #include "module_state.h"
@@ -55,22 +54,48 @@ pyobject_array_insert(PyObject **array, int length, int index, PyObject *item)
 /*
  * Collects arguments with __array_function__ and their corresponding methods
  * in the order in which they should be tried (i.e., skipping redundant types).
- * `relevant_args` is expected to have been produced by PySequence_Fast.
- * Returns the number of arguments, or -1 on failure.
+ * `items` is a C array of `length` borrowed references.
+ * Returns the number of arguments, or -1 on failure.  Returns 0 without
+ * collecting when no argument can carry an override (the caller then
+ * dispatches to the default implementation).
  */
 static int
-get_implementing_args_and_methods(PyObject *relevant_args,
-                                  PyObject **implementing_args,
-                                  PyObject **methods)
+get_implementing_args_and_methods(
+        PyObject *const *items, Py_ssize_t length,
+        PyObject **implementing_args, PyObject **methods)
 {
     int num_implementing_args = 0;
-
-    PyObject **items = PySequence_Fast_ITEMS(relevant_args);
-    Py_ssize_t length = PySequence_Fast_GET_SIZE(relevant_args);
+    /*
+     * Skip the leading run of args that cannot carry an override; the
+     * first exact ndarray is remembered and only collected when a later
+     * override candidate ends the prefix (keeping `types` unchanged).
+     */
+    int in_safe_prefix = 1;
+    PyObject *deferred_ndarray = NULL;
 
     for (Py_ssize_t i = 0; i < length; i++) {
         int new_class = 1;
         PyObject *argument = items[i];
+
+        if (in_safe_prefix) {
+            if (PyArray_CheckExact(argument)) {
+                if (deferred_ndarray == NULL) {
+                    deferred_ndarray = argument;
+                }
+                continue;
+            }
+            if (_is_basic_python_type(Py_TYPE(argument))) {
+                continue;
+            }
+            in_safe_prefix = 0;
+            if (deferred_ndarray != NULL) {
+                Py_INCREF(deferred_ndarray);
+                Py_INCREF(_npy_module_state->static_pydata.ndarray_array_function);
+                implementing_args[0] = deferred_ndarray;
+                methods[0] = _npy_module_state->static_pydata.ndarray_array_function;
+                num_implementing_args = 1;
+            }
+        }
 
         /* Have we seen this type before? */
         for (int j = 0; j < num_implementing_args; j++) {
@@ -384,9 +409,26 @@ array__get_implementing_args(
     }
 
     int num_implementing_args = get_implementing_args_and_methods(
-        relevant_args, implementing_args, array_function_methods);
+            PySequence_Fast_ITEMS(relevant_args),
+            PySequence_Fast_GET_SIZE(relevant_args),
+            implementing_args, array_function_methods);
     if (num_implementing_args == -1) {
         goto cleanup;
+    }
+    if (num_implementing_args == 0) {
+        /* Keep the documented NEP-18 result: the first exact ndarray
+         * stands in for ndarray's default __array_function__. */
+        PyObject **items = PySequence_Fast_ITEMS(relevant_args);
+        Py_ssize_t length = PySequence_Fast_GET_SIZE(relevant_args);
+        for (Py_ssize_t i = 0; i < length; i++) {
+            if (PyArray_CheckExact(items[i])) {
+                implementing_args[0] = Py_NewRef(items[i]);
+                array_function_methods[0] = Py_NewRef(
+                        _npy_module_state->static_pydata.ndarray_array_function);
+                num_implementing_args = 1;
+                break;
+            }
+        }
     }
 
     /* create a Python object for implementing_args */
@@ -410,13 +452,34 @@ cleanup:
 }
 
 
-// Keep in sync with the enum in _core/overrides.py
-typedef enum {
-    REDUCTION_NONE = 0,
-    REDUCTION_SUM_PROD = 1,
-    REDUCTION_MIN_MAX = 2,
-    REDUCTION_ANY_ALL = 3,
-} npy_reduction_kind;
+/* Maximum number of target argument slots (ufunc.reduce has 7). */
+#define NPY_FORWARD_MAX_SLOTS 8
+
+/*
+ * Forward fast-path state (see _resolve_forward_spec): `call` is invoked
+ * directly for exact-ndarray calls with `n_slots` arguments; `slots[i]`
+ * is the target-slot of the i-th public parameter (-1: no slot, declines
+ * when passed), `defaults` fills omitted slots.
+ */
+typedef struct {
+    PyObject *call;
+    PyObject *defaults;
+    PyObject *kwnames;
+    int n_slots;
+    /* Positional argument count of the target call (n_slots minus the
+     * trailing keyword slots). */
+    int n_pos;
+    /* Bit s set: the parameter for slot s defaults to np._NoValue, so
+     * an explicit _NoValue means "not passed". */
+    unsigned int novalue_slots;
+    /* Bit s set: slot s has no default; missing it declines. */
+    unsigned int required_slots;
+    /* Bit s set: slot s is out/where (see forward_value_ok). */
+    unsigned int strict_slots;
+    /* Bit s set: slot s is another relevant arg. */
+    unsigned int relevant_slots;
+    int slots[];
+} npy_forward_info;
 
 typedef struct {
     PyObject_HEAD
@@ -424,103 +487,151 @@ typedef struct {
     PyObject *dict;
     PyObject *relevant_arg_func;
     PyObject *default_impl;
-    PyObject *reduction;
-    npy_reduction_kind reduction_kind;
+    /* Tuple-spec parameter table (set instead of relevant_arg_func).
+     * Parameter i may be matched positionally iff i < n_pos_max and by
+     * keyword iff param_names[i] is not None (None: positional-only). */
+    Py_ssize_t n_params;
+    int n_pos_max;
+    int n_required;
+    int has_varkw;
+    PyObject *param_names;
+    /* The relevant args are parameter indices into param_names. */
+    Py_ssize_t n_relevant_args;
+    uint8_t relevant_idx[NPY_MAXARGS];
+    /* NULL unless this dispatcher has a forward fast path. */
+    npy_forward_info *forward;
     /* The following fields are used to clean up TypeError messages only: */
     PyObject *dispatcher_name;
     PyObject *public_name;
 } PyArray_ArrayFunctionDispatcherObject;
 
 /*
- * Try the exact-ndarray reduction fast path by calling the configured ufunc's
- * reduce method directly from C, bypassing calling back into Python implementation;
- * returns 1 if handled, 0 fallback to normal dispatch, and -1 on error.
+ * Index of the str `needle` in `items[0..n)`, or -1 when absent.  Both
+ * sides are normally interned, so the pointer pass usually decides.
  */
-static int
-try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
-        PyObject *const *args, Py_ssize_t nargsf, PyObject *kwnames, PyObject **result)
+static inline Py_ssize_t
+find_string(PyObject *needle, PyObject *const *items, Py_ssize_t n)
 {
-    PyObject *a = NULL, *axis = Py_None, *out = Py_None;
-    PyObject *dtype = self->reduction_kind == REDUCTION_ANY_ALL ? (PyObject *)&PyBool_Type : Py_None;
-    PyObject *no_value = _npy_module_state->static_pydata._NoValue;
-    PyObject *keepdims = no_value, *where = no_value;
-    PyObject *initial = no_value;
-    int parsed = 0;
-    switch (self->reduction_kind) {
-        case REDUCTION_SUM_PROD: {
-            NPY_PREPARE_ARGPARSER;
-            parsed = npy_parse_arguments("sum-like", args, PyVectorcall_NARGS(nargsf), kwnames,
-                {"a", NULL, &a},
-                {"|axis", NULL, &axis},
-                {"|dtype", NULL, &dtype},
-                {"|out", NULL, &out},
-                {"|keepdims", NULL, &keepdims},
-                {"|initial", NULL, &initial},
-                {"|where", NULL, &where});
-            break;
+    assert(PyUnicode_Check(needle));
+    for (Py_ssize_t i = 0; i < n; i++) {
+        if (items[i] == needle) {
+            return i;
         }
-        case REDUCTION_MIN_MAX: {
-            NPY_PREPARE_ARGPARSER;
-            parsed = npy_parse_arguments("min-like", args, PyVectorcall_NARGS(nargsf), kwnames,
-                {"a", NULL, &a},
-                {"|axis", NULL, &axis},
-                {"|out", NULL, &out},
-                {"|keepdims", NULL, &keepdims},
-                {"|initial", NULL, &initial},
-                {"|where", NULL, &where});
-            break;
-        }
-        case REDUCTION_ANY_ALL: {
-            NPY_PREPARE_ARGPARSER;
-            parsed = npy_parse_arguments("any-like", args, PyVectorcall_NARGS(nargsf), kwnames,
-                {"a", NULL, &a},
-                {"|axis", NULL, &axis},
-                {"|out", NULL, &out},
-                {"|keepdims", NULL, &keepdims},
-                {"$where", NULL, &where});
-            break;
-        }
-        default:
-            return 0;
     }
+    for (Py_ssize_t i = 0; i < n; i++) {
+        PyObject *s = items[i];
+        if (PyUnicode_Check(s) && PyUnicode_Compare(needle, s) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
 
-    /* The call does not match this fast-path signature, use normal dispatch. */
-    if (parsed == NPY_ARGPARSE_MISMATCH) {
-        PyErr_Clear();
-        return 0;
-    }
-    if (parsed < 0) {
-        return -1;
-    }
-    if (!PyArray_CheckExact(a) ||
-        (out != Py_None && !PyArray_CheckExact(out)) ||
-        (where != no_value && where != Py_None &&
-            !PyBool_Check(where) && !PyArray_CheckExact(where))) {
-        return 0;
-    }
 
-    // This set of arguments must exactly match ufunc.reduce positional argument order
-    PyObject *call_args[] = {
-        a, axis, dtype, out,
-        keepdims == no_value ? Py_False : keepdims,
-        initial,
-        where == no_value ? Py_True : where,
-    };
-    *result = PyObject_Vectorcall(self->reduction, call_args, 7, NULL);
-    if (*result == NULL) {
-        /*
-         * The fast-path ufunc has no loop for this dtype; defer to the Python
-         * implementation, which may provide a fallback (e.g. `minmax` reducing
-         * via `min`/`max`).  Any other error propagates.
-         */
-        if (PyErr_ExceptionMatches(
-                _npy_module_state->static_pydata._UFuncNoLoopError)) {
-            PyErr_Clear();
-            return 0;
-        }
-        return -1;
+/* Index of keyword `kw` in the full parameter table, or -1 when unknown. */
+static inline Py_ssize_t
+find_param_index(const PyArray_ArrayFunctionDispatcherObject *self,
+                 PyObject *kw)
+{
+    return find_string(
+            kw, PySequence_Fast_ITEMS(self->param_names), self->n_params);
+}
+
+
+/* Whether `value` in slot `s` cannot carry an override.  out/where are
+ * stricter: the forwarded call passes defaults the wrapper omits. */
+static inline int
+forward_value_ok(const npy_forward_info *fwd, int s, PyObject *value)
+{
+    unsigned int bit = 1u << s;
+    if (fwd->strict_slots & bit) {
+        return value == Py_None || PyBool_Check(value)
+                || PyArray_CheckExact(value);
+    }
+    if (fwd->relevant_slots & bit) {
+        return PyArray_CheckExact(value)
+                || _is_basic_python_type(Py_TYPE(value));
     }
     return 1;
+}
+
+
+/* forward_value_ok for a passed value; _NoValue may stand for the default */
+static inline int
+forward_arg_ok(const npy_forward_info *fwd, int s, PyObject *value)
+{
+    return forward_value_ok(fwd, s, value)
+            || (value == _npy_module_state->static_pydata._NoValue
+                && (fwd->novalue_slots & (1u << s)));
+}
+
+
+/*
+ * Scatter an exact-ndarray call into the target's argument slots and call
+ * the target (ufunc.reduce, an ndarray method, ...) directly, bypassing
+ * the Python wrapper.
+ * Returns 1 if handled (*result set), 0 to fall back, and -1 on error.
+ */
+static int
+try_forward(PyArray_ArrayFunctionDispatcherObject *self,
+        PyObject *const *args, Py_ssize_t nargsf, PyObject *kwnames,
+        PyObject **result)
+{
+    const npy_forward_info *fwd = self->forward;
+    PyObject *slots[NPY_FORWARD_MAX_SLOTS] = {NULL};
+    Py_ssize_t nargs = PyVectorcall_NARGS(nargsf);
+
+    if (nargs > self->n_pos_max) {
+        return 0;
+    }
+    /* defaults are validated at init, so only passed values are checked */
+    for (Py_ssize_t p = 0; p < nargs; p++) {
+        int slot = fwd->slots[p];
+        if (slot < 0) {
+            /* parameter with no target slot was passed */
+            return 0;
+        }
+        if (!forward_arg_ok(fwd, slot, args[p])) {
+            return 0;
+        }
+        slots[slot] = args[p];
+    }
+    Py_ssize_t nkwargs = (kwnames != NULL) ? PyTuple_GET_SIZE(kwnames) : 0;
+    for (Py_ssize_t k = 0; k < nkwargs; k++) {
+        PyObject *kw = PyTuple_GET_ITEM(kwnames, k);
+        Py_ssize_t i = find_param_index(self, kw);
+        /* Positional params form a prefix of param_names, so i < nargs is
+         * a duplicate of a positional arg; i < 0 an unknown keyword. */
+        if (i < nargs) {
+            return 0;
+        }
+        int slot = fwd->slots[i];
+        if (slot < 0 || !forward_arg_ok(fwd, slot, args[nargs + k])) {
+            return 0;
+        }
+        slots[slot] = args[nargs + k];
+    }
+    /* `a` must be an exact ndarray */
+    if (slots[0] == NULL || !PyArray_CheckExact(slots[0])) {
+        return 0;
+    }
+    for (int s = 1; s < fwd->n_slots; s++) {
+        /* np._NoValue means "not passed", but only for parameters whose
+         * own default is _NoValue. */
+        if (slots[s] == NULL
+                || (slots[s] == _npy_module_state->static_pydata._NoValue
+                    && (fwd->novalue_slots & (1u << s)))) {
+            if (fwd->required_slots & (1u << s)) {
+                /* missing required argument */
+                return 0;
+            }
+            slots[s] = PyTuple_GET_ITEM(fwd->defaults, s);
+        }
+    }
+
+    *result = PyObject_Vectorcall(
+            fwd->call, slots, fwd->n_pos, fwd->kwnames);
+    return *result != NULL ? 1 : -1;
 }
 
 
@@ -529,10 +640,16 @@ dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
 {
     Py_CLEAR(self->relevant_arg_func);
     Py_CLEAR(self->default_impl);
-    Py_CLEAR(self->reduction);
     Py_CLEAR(self->dict);
     Py_CLEAR(self->dispatcher_name);
     Py_CLEAR(self->public_name);
+    Py_CLEAR(self->param_names);
+    if (self->forward != NULL) {
+        Py_XDECREF(self->forward->call);
+        Py_XDECREF(self->forward->defaults);
+        Py_XDECREF(self->forward->kwnames);
+        PyMem_Free(self->forward);
+    }
     PyObject_FREE(self);
 }
 
@@ -541,6 +658,10 @@ static void
 fix_name_if_typeerror(PyArray_ArrayFunctionDispatcherObject *self)
 {
     if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+        return;
+    }
+    /* Nothing to rewrite for tuple-spec dispatchers. */
+    if (self->dispatcher_name == NULL) {
         return;
     }
 
@@ -597,6 +718,86 @@ fix_name_if_typeerror(PyArray_ArrayFunctionDispatcherObject *self)
 }
 
 
+/*
+ * For a tuple-spec dispatcher, extract the value of the i-th relevant arg
+ * from positional/keyword arguments.  Returns Py_None if the arg is missing
+ * (so downstream checks can short-circuit on None).
+ */
+static inline PyObject *
+lookup_relevant_arg(
+        const PyArray_ArrayFunctionDispatcherObject *self, Py_ssize_t i,
+        PyObject *const *args, Py_ssize_t nargs,
+        PyObject *kwnames, Py_ssize_t nkwargs)
+{
+    assert(i >= 0 && i < self->n_relevant_args);
+    /* idx is the positional slot iff idx < n_pos_max. */
+    int idx = self->relevant_idx[i];
+    if (idx < self->n_pos_max && idx < nargs) {
+        return args[idx];
+    }
+    PyObject *name = PyTuple_GET_ITEM(self->param_names, idx);
+    /* None: positional-only, never matched by keyword. */
+    if (name != Py_None && nkwargs > 0) {
+        Py_ssize_t k = find_string(
+                name, PySequence_Fast_ITEMS(kwnames), nkwargs);
+        if (k >= 0) {
+            return args[nargs + k];
+        }
+    }
+    return Py_None;
+}
+
+
+/*
+ * Validate the call shape before forwarding to an __array_function__
+ * override (the no-override path is validated by default_impl itself).
+ * Returns 0 if valid, -1 with a TypeError set otherwise.
+ */
+static int
+validate_call_signature(
+        const PyArray_ArrayFunctionDispatcherObject *self,
+        Py_ssize_t nargs, PyObject *kwnames, Py_ssize_t nkwargs)
+{
+    if (nargs > self->n_pos_max) {
+        PyErr_Format(PyExc_TypeError,
+                "%U() takes at most %d positional arguments but %zd were "
+                "given", self->public_name, self->n_pos_max, nargs);
+        return -1;
+    }
+    Py_ssize_t missing = self->n_required - nargs;  /* <= 0 when satisfied */
+    for (Py_ssize_t k = 0; k < nkwargs; k++) {
+        PyObject *kw = PyTuple_GET_ITEM(kwnames, k);
+        Py_ssize_t i = find_param_index(self, kw);
+        if (i < 0) {
+            if (self->has_varkw) {
+                continue;
+            }
+            /* %S: `kw` need not be str for misbehaving vectorcall callers */
+            PyErr_Format(PyExc_TypeError,
+                    "%U() got an unexpected keyword argument '%S'",
+                    self->public_name, kw);
+            return -1;
+        }
+        if (i < nargs) {
+            PyErr_Format(PyExc_TypeError,
+                    "%U() got multiple values for argument '%U'",
+                    self->public_name, kw);
+            return -1;
+        }
+        if (i < self->n_required) {
+            missing--;
+        }
+    }
+    if (missing > 0) {
+        PyErr_Format(PyExc_TypeError,
+                "%U() missing %zd required positional argument%s",
+                self->public_name, missing, missing == 1 ? "" : "s");
+        return -1;
+    }
+    return 0;
+}
+
+
 static PyObject *
 dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
@@ -616,17 +817,45 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
 
     int num_implementing_args;
 
-    if (self->reduction != NULL) {
-        int reduction_status = try_reduction(self, args, len_args, kwnames, &result);
-        if (reduction_status < 0) {
+    if (self->forward != NULL) {
+        int forward_status = try_forward(
+                self, args, len_args, kwnames, &result);
+        if (forward_status < 0) {
             return NULL;
         }
-        if (reduction_status == 1) {
+        if (forward_status == 1) {
             return result;
         }
     }
 
-    if (self->relevant_arg_func != NULL) {
+    if (self->param_names != NULL) {
+        /* Tuple-spec: extract relevant args from the call directly.  When
+         * all are safe, get_implementing_args_and_methods returns 0 and the
+         * shared no-overrides path below calls default_impl. */
+        public_api = (PyObject *)self;
+        PyObject *items[NPY_MAXARGS];
+        Py_ssize_t nargs = PyVectorcall_NARGS(len_args);
+        Py_ssize_t nkwargs = (kwnames != NULL) ? PyTuple_GET_SIZE(kwnames) : 0;
+
+        for (Py_ssize_t i = 0; i < self->n_relevant_args; i++) {
+            items[i] = lookup_relevant_arg(
+                    self, i, args, nargs, kwnames, nkwargs);
+        }
+
+        num_implementing_args = get_implementing_args_and_methods(
+                items, self->n_relevant_args,
+                implementing_args, array_function_methods);
+        if (num_implementing_args < 0) {
+            return NULL;
+        }
+        /* An override takes the call as-is, so check the signature first
+         * (the no-override path is checked by default_impl itself). */
+        if (num_implementing_args > 0
+                && validate_call_signature(self, nargs, kwnames, nkwargs) < 0) {
+            goto cleanup;
+        }
+    }
+    else if (self->relevant_arg_func != NULL) {
         public_api = (PyObject *)self;
 
         /* Typical path, need to call the relevant_arg_func and unpack them */
@@ -643,7 +872,9 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
         }
 
         num_implementing_args = get_implementing_args_and_methods(
-                relevant_args, implementing_args, array_function_methods);
+                PySequence_Fast_ITEMS(relevant_args),
+                PySequence_Fast_GET_SIZE(relevant_args),
+                implementing_args, array_function_methods);
         if (num_implementing_args < 0) {
             Py_DECREF(relevant_args);
             return NULL;
@@ -755,21 +986,194 @@ cleanup:
 }
 
 
+/*
+ * Fill self's tuple-spec fields from ``(spec, sig_info, forward_spec)``
+ * as built by array_function_dispatch.  Returns -1 with an exception set
+ * on error; partial fields are released by dispatcher_dealloc.
+ */
+static int
+init_relevant_arg_spec(
+        PyArray_ArrayFunctionDispatcherObject *self, PyObject *full_spec)
+{
+    PyObject *spec, *sig_info, *forward_spec;
+    if (!PyArg_ParseTuple(full_spec, "O!O!O:_ArrayFunctionDispatcher",
+            &PyTuple_Type, &spec, &PyTuple_Type, &sig_info,
+            &forward_spec)) {
+        return -1;
+    }
+
+    PyObject *sig_names;
+    int has_varkw;
+    if (!PyArg_ParseTuple(sig_info, "O!iip:_ArrayFunctionDispatcher",
+            &PyTuple_Type, &sig_names,
+            &self->n_pos_max, &self->n_required, &has_varkw)) {
+        return -1;
+    }
+    self->has_varkw = has_varkw;
+    Py_ssize_t n_params = PyTuple_GET_SIZE(sig_names);
+    if (n_params > UINT8_MAX) {
+        /* relevant_idx stores uint8_t parameter indices */
+        PyErr_Format(PyExc_ValueError,
+                "too many parameters (%zd) for a tuple-spec dispatcher",
+                n_params);
+        return -1;
+    }
+    if (self->n_required < 0 || self->n_required > self->n_pos_max
+            || self->n_pos_max > n_params) {
+        PyErr_SetString(PyExc_ValueError,
+                "inconsistent signature info (need "
+                "0 <= n_required <= n_pos_max <= number of parameters)");
+        return -1;
+    }
+    PyObject *names = PyTuple_New(n_params);
+    if (names == NULL) {
+        return -1;
+    }
+    /* Stored immediately: dispatcher_dealloc releases a partial tuple. */
+    self->param_names = names;
+    self->n_params = n_params;
+    for (Py_ssize_t i = 0; i < n_params; i++) {
+        PyObject *name = PyTuple_GET_ITEM(sig_names, i);
+        if (name == Py_None) {
+            /* positional-only: never matched by keyword */
+            PyTuple_SET_ITEM(names, i, Py_NewRef(Py_None));
+            continue;
+        }
+        if (!PyUnicode_Check(name)) {
+            PyErr_Format(PyExc_TypeError,
+                    "signature param name must be str or None, got %.200s",
+                    Py_TYPE(name)->tp_name);
+            return -1;
+        }
+        /* Own the reference before interning: InternInPlace may
+         * replace (and release) the object it is given. */
+        Py_INCREF(name);
+        PyUnicode_InternInPlace(&name);
+        PyTuple_SET_ITEM(names, i, name);
+    }
+
+    Py_ssize_t n = PyTuple_GET_SIZE(spec);
+    if (n == 0) {
+        /* User-facing validation lives in _resolve_relevant_arg_spec;
+         * this only guards direct private-constructor calls. */
+        PyErr_SetString(PyExc_ValueError, "empty relevant-argument spec");
+        return -1;
+    }
+    if (n > NPY_MAXARGS) {
+        PyErr_Format(PyExc_ValueError,
+                "too many relevant args (%zd > %d)", n, NPY_MAXARGS);
+        return -1;
+    }
+    self->n_relevant_args = n;
+    for (Py_ssize_t i = 0; i < n; i++) {
+        long idx = PyLong_AsLong(PyTuple_GET_ITEM(spec, i));
+        if (idx < 0 || idx >= n_params) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_ValueError,
+                        "relevant arg index out of range");
+            }
+            return -1;
+        }
+        self->relevant_idx[i] = (uint8_t)idx;
+    }
+
+    if (forward_spec != Py_None) {
+        PyObject *fwd_call, *slots_tup, *defaults_tup, *fwd_kwnames;
+        int n_slots, out_slot, where_slot;
+        unsigned int novalue_slots, required_slots;
+        if (!PyArg_ParseTuple(forward_spec, "OO!O!OiiiII:forward",
+                &fwd_call, &PyTuple_Type, &slots_tup,
+                &PyTuple_Type, &defaults_tup, &fwd_kwnames,
+                &n_slots, &out_slot, &where_slot,
+                &novalue_slots, &required_slots)) {
+            return -1;
+        }
+        if (!PyCallable_Check(fwd_call)) {
+            PyErr_SetString(PyExc_TypeError,
+                    "forward target must be callable");
+            return -1;
+        }
+        Py_ssize_t n_kw = 0;
+        if (fwd_kwnames != Py_None) {
+            if (!PyTuple_CheckExact(fwd_kwnames)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "forward kwnames must be a tuple or None");
+                return -1;
+            }
+            n_kw = PyTuple_GET_SIZE(fwd_kwnames);
+        }
+        if (n_slots <= 0 || n_slots > NPY_FORWARD_MAX_SLOTS
+                || n_kw >= n_slots
+                || PyTuple_GET_SIZE(slots_tup) != n_params
+                || PyTuple_GET_SIZE(defaults_tup) != n_slots
+                || out_slot < -1 || out_slot == 0 || out_slot >= n_slots
+                || where_slot < -1 || where_slot == 0
+                || where_slot >= n_slots) {
+            PyErr_SetString(PyExc_ValueError,
+                    "forward spec does not match the signature table");
+            return -1;
+        }
+        npy_forward_info *fwd = PyMem_Malloc(
+                sizeof(npy_forward_info) + n_params * sizeof(int));
+        if (fwd == NULL) {
+            PyErr_NoMemory();
+            return -1;
+        }
+        for (Py_ssize_t i = 0; i < n_params; i++) {
+            long slot = PyLong_AsLong(PyTuple_GET_ITEM(slots_tup, i));
+            if (slot < -1 || slot >= n_slots) {
+                if (!PyErr_Occurred()) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "forward slot out of range");
+                }
+                PyMem_Free(fwd);
+                return -1;
+            }
+            fwd->slots[i] = (int)slot;
+        }
+        fwd->n_slots = n_slots;
+        fwd->n_pos = n_slots - (int)n_kw;
+        /* all relevant args, e.g. searchsorted's `v` and `sorter` */
+        fwd->relevant_slots = 0;
+        for (Py_ssize_t i = 0; i < self->n_relevant_args; i++) {
+            int slot = fwd->slots[self->relevant_idx[i]];
+            if (slot > 0) {
+                fwd->relevant_slots |= 1u << slot;
+            }
+        }
+        fwd->strict_slots = 0;
+        if (out_slot > 0) {
+            fwd->strict_slots |= 1u << out_slot;
+        }
+        if (where_slot > 0) {
+            fwd->strict_slots |= 1u << where_slot;
+        }
+        /* try_forward only checks passed values */
+        for (int s = 1; s < n_slots; s++) {
+            if (!forward_value_ok(fwd, s, PyTuple_GET_ITEM(defaults_tup, s))) {
+                PyErr_Format(PyExc_ValueError,
+                        "forward default for slot %d could bypass an "
+                        "override", s);
+                PyMem_Free(fwd);
+                return -1;
+            }
+        }
+        fwd->novalue_slots = novalue_slots;
+        fwd->required_slots = required_slots;
+        fwd->call = Py_NewRef(fwd_call);
+        fwd->defaults = Py_NewRef(defaults_tup);
+        fwd->kwnames = fwd_kwnames == Py_None ? NULL : Py_NewRef(fwd_kwnames);
+        /* Set last: its presence enables try_forward. */
+        self->forward = fwd;
+    }
+    return 0;
+}
+
+
 static PyObject *
 dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
 {
     PyArray_ArrayFunctionDispatcherObject *self;
-    PyObject *reduction = Py_None;
-    PyObject *relevant_arg_func;
-    PyObject *default_impl;
-
-    char *kwlist[] = {"", "", "reduction", NULL};
-    if (!PyArg_ParseTupleAndKeywords(
-            args, kwargs, "OO|O:_ArrayFunctionDispatcher", kwlist,
-            &relevant_arg_func, &default_impl, &reduction)) {
-        return NULL;
-    }
-
     self = PyObject_New(
             PyArray_ArrayFunctionDispatcherObject,
             &PyArrayFunctionDispatcher_Type);
@@ -777,20 +1181,49 @@ dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
         return PyErr_NoMemory();
     }
 
+    /* Init all fields before any fallible call so dispatcher_dealloc is safe. */
     self->vectorcall = (vectorcallfunc)dispatcher_vectorcall;
     self->dict = NULL;
-    self->reduction = NULL;
-    self->reduction_kind = REDUCTION_NONE;
     self->dispatcher_name = NULL;
     self->public_name = NULL;
-    self->relevant_arg_func = Py_NewRef(relevant_arg_func);
-    self->default_impl = Py_NewRef(default_impl);
+    self->relevant_arg_func = NULL;
+    self->default_impl = NULL;
+    self->n_relevant_args = 0;
+    self->param_names = NULL;
+    self->n_params = 0;
+    self->n_pos_max = 0;
+    self->n_required = 0;
+    self->has_varkw = 0;
+    self->forward = NULL;
 
-    if (self->relevant_arg_func == Py_None) {
-        /* NULL in the relevant arg function means we use `like=` */
-        Py_CLEAR(self->relevant_arg_func);
+    PyObject *relevant_arg_spec;
+    PyObject *default_impl;
+    char *kwlist[] = {"", "", NULL};
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "OO:_ArrayFunctionDispatcher", kwlist,
+            &relevant_arg_spec, &default_impl)) {
+        goto fail;
+    }
+    Py_INCREF(default_impl);
+    self->default_impl = default_impl;
+
+    if (relevant_arg_spec == Py_None) {
+        /* NULL relevant_arg_func means we use `like=` */
+    }
+    else if (PyTuple_CheckExact(relevant_arg_spec)) {
+        /* dispatcher_name stays NULL (nothing to rewrite in errors);
+         * public_name is used by validate_call_signature. */
+        self->public_name = PyObject_GetAttrString(
+            self->default_impl, "__qualname__");
+        if (self->public_name == NULL) {
+            goto fail;
+        }
+        if (init_relevant_arg_spec(self, relevant_arg_spec) < 0) {
+            goto fail;
+        }
     }
     else {
+        self->relevant_arg_func = Py_NewRef(relevant_arg_spec);
         /* Fetch names to clean up TypeErrors (show actual name) */
         self->dispatcher_name = PyObject_GetAttrString(
             self->relevant_arg_func, "__qualname__");
@@ -802,32 +1235,6 @@ dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
         if (self->public_name == NULL) {
             goto fail;
         }
-    }
-
-    if (reduction != Py_None) {
-        PyObject *callable;
-        int kind;
-
-        if (self->relevant_arg_func == NULL) {
-            PyErr_SetString(
-                    PyExc_TypeError,
-                    "reduction is not supported for like= dispatchers");
-            goto fail;
-        }
-        if (!PyTuple_Check(reduction) ||
-                !PyArg_ParseTuple(reduction, "Oi:reduction", &callable, &kind) ||
-                !PyCallable_Check(callable)) {
-            PyErr_SetString(
-                    PyExc_TypeError,
-                    "reduction must be a (callable, kind) tuple");
-            goto fail;
-        }
-        if (kind < REDUCTION_SUM_PROD || kind > REDUCTION_ANY_ALL) {
-            PyErr_SetString(PyExc_ValueError, "invalid reduction kind");
-            goto fail;
-        }
-        self->reduction = Py_NewRef(callable);
-        self->reduction_kind = kind;
     }
 
     /* Need to be like a Python function that has arbitrary attributes */
