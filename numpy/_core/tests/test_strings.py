@@ -1437,6 +1437,13 @@ class TestReplaceOnArrays:
             ["01234ABCDE6789" * i for i in range(3)]
             + ["01234ABCDE6789" + "0123456789" * 2], dtype=dt))
 
+    def test_replace_old_new_not_truncated(self, dt):
+        a = np.array(["a"], dtype=dt)
+        r1 = np.strings.replace(a, "ab", "X")
+        assert_array_equal(r1, np.array(["a"], dtype=dt))
+        r2 = np.strings.replace(a, "a", "XY")
+        assert_array_equal(r2, np.array(["XY"], dtype=dt))
+
     def test_replace_broadcasting(self, dt):
         a = np.array("0,0,0", dtype=dt)
         r1 = np.strings.replace(a, "0", "1", np.arange(3))
