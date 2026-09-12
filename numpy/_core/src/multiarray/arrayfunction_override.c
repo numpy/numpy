@@ -455,14 +455,6 @@ cleanup:
 /* Maximum number of target argument slots (ufunc.reduce has 7). */
 #define NPY_FORWARD_MAX_SLOTS 8
 
-/* What try_forward requires of the value in a target slot. */
-enum {
-    NPY_FORWARD_CHECK_NONE = 0,     /* not dispatch-relevant */
-    NPY_FORWARD_CHECK_NO_OVERRIDE,  /* exact ndarray or basic Python type */
-    NPY_FORWARD_CHECK_OUT,          /* None or exact ndarray */
-    NPY_FORWARD_CHECK_WHERE,        /* None, bool or exact ndarray */
-};
-
 /*
  * Forward fast-path state (see _resolve_forward_spec): `call` is invoked
  * directly for exact-ndarray calls with `n_slots` arguments; `slots[i]`
@@ -482,8 +474,10 @@ typedef struct {
     unsigned int novalue_slots;
     /* Bit s set: slot s has no default; missing it declines. */
     unsigned int required_slots;
-    /* NPY_FORWARD_CHECK_* for each slot; slot 0 (`a`) is checked first. */
-    uint8_t slot_check[NPY_FORWARD_MAX_SLOTS];
+    /* Bit s set: slot s is out/where (see forward_value_ok). */
+    unsigned int strict_slots;
+    /* Bit s set: slot s is another relevant arg. */
+    unsigned int relevant_slots;
     int slots[];
 } npy_forward_info;
 
@@ -544,6 +538,34 @@ find_param_index(const PyArray_ArrayFunctionDispatcherObject *self,
 }
 
 
+/* Whether `value` in slot `s` cannot carry an override.  out/where are
+ * stricter: the forwarded call passes defaults the wrapper omits. */
+static inline int
+forward_value_ok(const npy_forward_info *fwd, int s, PyObject *value)
+{
+    unsigned int bit = 1u << s;
+    if (fwd->strict_slots & bit) {
+        return value == Py_None || PyBool_Check(value)
+                || PyArray_CheckExact(value);
+    }
+    if (fwd->relevant_slots & bit) {
+        return PyArray_CheckExact(value)
+                || _is_basic_python_type(Py_TYPE(value));
+    }
+    return 1;
+}
+
+
+/* forward_value_ok for a passed value; _NoValue may stand for the default */
+static inline int
+forward_arg_ok(const npy_forward_info *fwd, int s, PyObject *value)
+{
+    return forward_value_ok(fwd, s, value)
+            || (value == _npy_module_state->static_pydata._NoValue
+                && (fwd->novalue_slots & (1u << s)));
+}
+
+
 /*
  * Scatter an exact-ndarray call into the target's argument slots and call
  * the target (ufunc.reduce, an ndarray method, ...) directly, bypassing
@@ -562,10 +584,14 @@ try_forward(PyArray_ArrayFunctionDispatcherObject *self,
     if (nargs > self->n_pos_max) {
         return 0;
     }
+    /* defaults are validated at init, so only passed values are checked */
     for (Py_ssize_t p = 0; p < nargs; p++) {
         int slot = fwd->slots[p];
         if (slot < 0) {
             /* parameter with no target slot was passed */
+            return 0;
+        }
+        if (!forward_arg_ok(fwd, slot, args[p])) {
             return 0;
         }
         slots[slot] = args[p];
@@ -580,7 +606,7 @@ try_forward(PyArray_ArrayFunctionDispatcherObject *self,
             return 0;
         }
         int slot = fwd->slots[i];
-        if (slot < 0) {
+        if (slot < 0 || !forward_arg_ok(fwd, slot, args[nargs + k])) {
             return 0;
         }
         slots[slot] = args[nargs + k];
@@ -590,38 +616,16 @@ try_forward(PyArray_ArrayFunctionDispatcherObject *self,
         return 0;
     }
     for (int s = 1; s < fwd->n_slots; s++) {
-        PyObject *value = slots[s];
         /* np._NoValue means "not passed", but only for parameters whose
          * own default is _NoValue. */
-        if (value == NULL
-                || (value == _npy_module_state->static_pydata._NoValue
+        if (slots[s] == NULL
+                || (slots[s] == _npy_module_state->static_pydata._NoValue
                     && (fwd->novalue_slots & (1u << s)))) {
             if (fwd->required_slots & (1u << s)) {
                 /* missing required argument */
                 return 0;
             }
-            value = slots[s] = PyTuple_GET_ITEM(fwd->defaults, s);
-        }
-        switch (fwd->slot_check[s]) {
-            case NPY_FORWARD_CHECK_NONE:
-                break;
-            case NPY_FORWARD_CHECK_NO_OVERRIDE:
-                if (!PyArray_CheckExact(value)
-                        && !_is_basic_python_type(Py_TYPE(value))) {
-                    return 0;
-                }
-                break;
-            case NPY_FORWARD_CHECK_OUT:
-                if (value != Py_None && !PyArray_CheckExact(value)) {
-                    return 0;
-                }
-                break;
-            case NPY_FORWARD_CHECK_WHERE:
-                if (value != Py_None && !PyBool_Check(value)
-                        && !PyArray_CheckExact(value)) {
-                    return 0;
-                }
-                break;
+            slots[s] = PyTuple_GET_ITEM(fwd->defaults, s);
         }
     }
 
@@ -1129,22 +1133,30 @@ init_relevant_arg_spec(
         }
         fwd->n_slots = n_slots;
         fwd->n_pos = n_slots - (int)n_kw;
-        /* Every dispatch-relevant arg must be override-free, not just `a`:
-         * e.g. searchsorted also dispatches on `v` and `sorter`.  out and
-         * where are stricter than that, so their rules take precedence. */
-        memset(fwd->slot_check, NPY_FORWARD_CHECK_NONE,
-               sizeof(fwd->slot_check));
+        /* all relevant args, e.g. searchsorted's `v` and `sorter` */
+        fwd->relevant_slots = 0;
         for (Py_ssize_t i = 0; i < self->n_relevant_args; i++) {
             int slot = fwd->slots[self->relevant_idx[i]];
             if (slot > 0) {
-                fwd->slot_check[slot] = NPY_FORWARD_CHECK_NO_OVERRIDE;
+                fwd->relevant_slots |= 1u << slot;
             }
         }
+        fwd->strict_slots = 0;
         if (out_slot > 0) {
-            fwd->slot_check[out_slot] = NPY_FORWARD_CHECK_OUT;
+            fwd->strict_slots |= 1u << out_slot;
         }
         if (where_slot > 0) {
-            fwd->slot_check[where_slot] = NPY_FORWARD_CHECK_WHERE;
+            fwd->strict_slots |= 1u << where_slot;
+        }
+        /* try_forward only checks passed values */
+        for (int s = 1; s < n_slots; s++) {
+            if (!forward_value_ok(fwd, s, PyTuple_GET_ITEM(defaults_tup, s))) {
+                PyErr_Format(PyExc_ValueError,
+                        "forward default for slot %d could bypass an "
+                        "override", s);
+                PyMem_Free(fwd);
+                return -1;
+            }
         }
         fwd->novalue_slots = novalue_slots;
         fwd->required_slots = required_slots;

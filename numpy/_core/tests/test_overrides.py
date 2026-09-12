@@ -343,6 +343,14 @@ class TestVerifyMatchingSignatures:
             def _k(a):
                 return a
 
+        # a default that could bypass an override is rejected
+        with pytest.raises(ValueError, match="bypass"):
+            @array_function_dispatch(
+                    ("a", "out"), reduction=np.add,
+                    reduction_defaults={"where": [True]})
+            def _l(a, out=None, where=np._NoValue):
+                return a
+
     def test_reduction_explicit_novalue_argument(self):
         # explicit _NoValue for a parameter not defaulting to _NoValue
         # must be rejected, matching the Python wrapper (gh-31943)
@@ -497,6 +505,39 @@ class TestForwardDispatch:
         calls.clear()
         assert np.searchsorted(a, 1.5, sorter=Duck()) == "duck"
         assert calls == [np.searchsorted]
+
+    def test_forward_hides_filled_defaults_from_array_ufunc(self):
+        # __array_ufunc__ via out/where must not see the filled defaults
+        class Duck:
+            kwargs = None
+
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                self.kwargs = sorted(kwargs)
+                return NotImplemented
+
+        a = np.arange(3.0)
+        for make in (lambda d: {"where": d}, lambda d: {"out": (d,)}):
+            fast, slow = Duck(), Duck()
+            with pytest.raises(TypeError):
+                np.sum(a, **make(fast))
+            with pytest.raises(TypeError):
+                np.sum._implementation(a, **make(slow))
+            assert fast.kwargs == slow.kwargs
+
+    def test_forward_checks_passed_values_only(self):
+        @array_function_dispatch(("a", "out"), reduction=np.add)
+        def my_sum(a, axis=None, dtype=None, out=None, where=np._NoValue):
+            return "python-impl"
+
+        arr = np.array([1, 2, 3])
+        # defaults and explicit _NoValue take the fast path
+        assert my_sum(arr) == 6
+        assert my_sum(arr, where=np._NoValue) == 6
+        assert my_sum(arr, where=True) == 6
+        # passed values that could carry an override decline
+        assert my_sum(arr, where=[True, False, True]) == "python-impl"
+        assert my_sum(arr, out=(np.zeros(()),)) == "python-impl"
+        assert my_sum(arr, None, None, (np.zeros(()),)) == "python-impl"
 
     def test_forward_keyword_slots(self):
         # keepdims exists only as a keyword slot on ndarray.argmax
