@@ -1339,8 +1339,8 @@ def replace(a, old, new, count=-1):
         return _replace(arr, old, new, count)
 
     a_dt = arr.dtype
-    old = old.astype(old_dtype or a_dt, copy=False)
-    new = new.astype(new_dtype or a_dt, copy=False)
+    old = old.astype(old_dtype or a_dt.char, copy=False)
+    new = new.astype(new_dtype or a_dt.char, copy=False)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
@@ -1583,7 +1583,7 @@ def partition(a, sep):
     if np.result_type(a, sep).char == "T":
         return _partition(a, sep)
 
-    sep = sep.astype(a.dtype, copy=False)
+    sep = sep.astype(a.dtype.char, copy=False)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1652,7 +1652,7 @@ def rpartition(a, sep):
     if np.result_type(a, sep).char == "T":
         return _rpartition(a, sep)
 
-    sep = sep.astype(a.dtype, copy=False)
+    sep = sep.astype(a.dtype.char, copy=False)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
