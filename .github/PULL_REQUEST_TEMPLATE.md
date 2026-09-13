@@ -15,7 +15,7 @@ and fill out the AI disclosure section below.
 
 -->
 
-### First time committer introduction
+### First time contributor introduction
 <!-- If you are new to the NumPy contributor community, please introduce yourself and
 share how you use NumPy. It helps us get to know you, understand the context of your
 contribution, and collaborate more effectively during the review process. 2-3
