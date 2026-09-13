@@ -1509,6 +1509,8 @@ arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
     PyObject *str;
     const char *docstr;
     static const char msg[] = "already has a different docstring";
+    /* CPython's separator between a docstring's signature line and its body */
+    static const char SIGNATURE_END[] = "\n--\n\n";
 
     /* Don't add docstrings */
 #if PY_VERSION_HEX > 0x030b0000
@@ -1557,21 +1559,36 @@ arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
     }
     else if (PyObject_TypeCheck(obj, &PyType_Type)) {
         /*
-         * We add it to both `tp_doc` and `__doc__` here.  Note that in theory
-         * `tp_doc` extracts the signature line, but we currently do not use
-         * it.  It may make sense to only add it as `__doc__` and
-         * `__text_signature__` to the dict in the future.
-         * The dictionary path is only necessary for heaptypes (currently not
-         * used) and metaclasses.
-         * If `__doc__` as stored in `tp_dict` is None, we assume this was
-         * filled in by `PyType_Ready()` and should also be replaced.
+         * We add it to both `tp_doc` and `__doc__` here.  `tp_doc` keeps the
+         * leading signature line, which is where `__text_signature__` comes
+         * from.  `__doc__` in `tp_dict` is what a heap type reports, so it
+         * gets the docstring with that line removed, matching what a static
+         * type reports from `tp_doc`.
+         * The dictionary path is only necessary for heaptypes and
+         * metaclasses.  If `__doc__` as stored in `tp_dict` is None, we
+         * assume this was filled in by `PyType_Ready()` and should also be
+         * replaced.
          */
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
         if (new->tp_dict != NULL && PyDict_CheckExact(new->tp_dict) &&
                 PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) { // noqa: borrowed-ref - manual fix needed
+            PyObject *body;
+            const char *after_signature = strstr(docstr, SIGNATURE_END);
+            if (after_signature == NULL) {
+                body = Py_NewRef(str);
+            }
+            else {
+                body = PyUnicode_FromString(
+                        after_signature + strlen(SIGNATURE_END));
+                if (body == NULL) {
+                    return NULL;
+                }
+            }
             /* Warning: Modifying `tp_dict` is not generally safe! */
-            if (PyDict_SetItemString(new->tp_dict, "__doc__", str) < 0) {
+            int ret = PyDict_SetItemString(new->tp_dict, "__doc__", body);
+            Py_DECREF(body);
+            if (ret < 0) {
                 return NULL;
             }
         }

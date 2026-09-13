@@ -22,6 +22,7 @@
 #include "_datetime.h"
 #include "datetime_busday.h"
 #include "datetime_busdaycal.h"
+#include "module_state.h"
 
 /* Gets the day of the week for a datetime64[D] value */
 static int
@@ -936,7 +937,7 @@ finish:
  * from Python.
  */
 NPY_NO_EXPORT PyObject *
-array_busday_offset(PyObject *NPY_UNUSED(self),
+array_busday_offset(PyObject *self,
                       PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"dates", "offsets", "roll",
@@ -959,7 +960,8 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
                                     &PyArray_BusDayRollConverter, &roll,
                                     &PyArray_WeekMaskConverter, &weekmask[0],
                                     &PyArray_HolidaysConverter, &holidays,
-                                    &NpyBusDayCalendar_Type, &busdaycal,
+                                    get_module_state(self)->NpyBusDayCalendar_Type,
+                                    &busdaycal,
                                     &out_in)) {
         goto fail;
     }
@@ -1067,7 +1069,7 @@ fail:
  * from Python.
  */
 NPY_NO_EXPORT PyObject *
-array_busday_count(PyObject *NPY_UNUSED(self),
+array_busday_count(PyObject *self,
                       PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"begindates", "enddates",
@@ -1088,7 +1090,8 @@ array_busday_count(PyObject *NPY_UNUSED(self),
                                     &dates_end_in,
                                     &PyArray_WeekMaskConverter, &weekmask[0],
                                     &PyArray_HolidaysConverter, &holidays,
-                                    &NpyBusDayCalendar_Type, &busdaycal,
+                                    get_module_state(self)->NpyBusDayCalendar_Type,
+                                    &busdaycal,
                                     &out_in)) {
         goto fail;
     }
@@ -1212,7 +1215,7 @@ fail:
  * from Python.
  */
 NPY_NO_EXPORT PyObject *
-array_is_busday(PyObject *NPY_UNUSED(self),
+array_is_busday(PyObject *self,
                       PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"dates",
@@ -1232,7 +1235,8 @@ array_is_busday(PyObject *NPY_UNUSED(self),
                                     &dates_in,
                                     &PyArray_WeekMaskConverter, &weekmask[0],
                                     &PyArray_HolidaysConverter, &holidays,
-                                    &NpyBusDayCalendar_Type, &busdaycal,
+                                    get_module_state(self)->NpyBusDayCalendar_Type,
+                                    &busdaycal,
                                     &out_in)) {
         goto fail;
     }
