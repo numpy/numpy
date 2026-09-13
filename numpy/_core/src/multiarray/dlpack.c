@@ -848,11 +848,6 @@ from_dlpack(PyObject *self,
             case 16: typenum = NPY_FLOAT16; break;
             case 32: typenum = NPY_FLOAT32; break;
             case 64: typenum = NPY_FLOAT64; break;
-            case 128:
-                if (NPY_LDOUBLE_IS_IEEE_QUAD) {
-                    typenum = NPY_FLOAT128;
-                }
-                break;
         }
         break;
     case kDLComplex:
