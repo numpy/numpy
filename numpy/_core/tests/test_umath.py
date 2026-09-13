@@ -5115,6 +5115,13 @@ def test_spacing_nan_no_warning(dtype):
         assert np.isnan(np.spacing(dtype(np.nan)))
 
 
+def test_spacing_half_nan_preserves_bits():
+    nan = np.array(0xfe01, dtype=np.uint16).view(np.float16)
+    with np.errstate(all="raise"):
+        result = np.spacing(nan)
+    assert_equal(result.view(np.uint16), nan.view(np.uint16))
+
+
 def test_spacing_gfortran():
     # Reference from this fortran file, built with gfortran 4.3.3 on linux
     # 32bits:

@@ -73,8 +73,10 @@ npy_half npy_half_spacing(npy_half h)
 #if NPY_HALF_GENERATE_INVALID
             npy_set_floatstatus_invalid();
 #endif
+            ret = NPY_HALF_NAN;
+        } else {
+            ret = h;
         }
-        ret = NPY_HALF_NAN;
     } else if (h == 0x7bffu) {
 #if NPY_HALF_GENERATE_OVERFLOW
         npy_set_floatstatus_overflow();
