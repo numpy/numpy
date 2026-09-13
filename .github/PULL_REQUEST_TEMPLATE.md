@@ -2,9 +2,9 @@
 <!-- Please take some time to make it easier for us to review
 your pull request (PR). Describe the PR using the questions below as guidance.<br>
 
-What problem does this PR solve? Link any relevant issues and PRs.<br>
-Why are you interested in working on this PR?<br>
-How does the proposed change help you?<br>
+- What problem does this PR solve? Link any relevant issues and PRs.
+- Why are you interested in working on this PR?
+- How does the proposed change help you?
 
 Please keep in mind that even seemingly small changes can have unexpected consequences
 for workflows unrelated to the ones you may be familiar with. For this reason, maintainers
