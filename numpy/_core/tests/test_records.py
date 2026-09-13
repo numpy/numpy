@@ -138,6 +138,15 @@ class TestFromrecords:
             item = actual["x"][0][1]
             assert_allclose(item, 1)
 
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=4.3e9)
+    def test_recarray_massive_byteswap_err(self):
+        kind = [("x", np.float64, 2 ** 29)]
+        kind_dtype = np.dtype(kind)
+        rec_arr = np.array((1,), dtype=kind_dtype)
+        with pytest.raises(TypeError, match="itemsize larger than"):
+            rec_arr.byteswap(inplace=True)
+
     def test_recarray_from_obj(self):
         count = 10
         a = np.zeros(count, dtype='O')

@@ -549,6 +549,12 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
     PyArray_CopySwapNFunc *copyswapn;
     PyArrayIterObject *it;
 
+    if (PyArray_DESCR(self)->elsize > NPY_MAX_INT) {
+        PyErr_SetString(PyExc_TypeError,
+                "byte-swapping with itemsize larger than INT_MAX "
+                "is not supported");
+        return NULL;
+    }
     if (inplace && PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
         return NULL;
     }
