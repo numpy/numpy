@@ -5110,25 +5110,19 @@ def test_spacingl():
 @pytest.mark.parametrize(
     "dtype", [np.float16, np.float32, np.float64, np.longdouble]
 )
-def test_spacing_nan_no_warning(dtype):
+def test_spacing_special_values(dtype):
+    values = np.array([-np.nan, np.inf, -np.inf], dtype=dtype)
     with np.errstate(all="raise"):
-        assert np.isnan(np.spacing(dtype(np.nan)))
+        result = np.spacing(values)
 
+    assert np.isnan(result).all()
 
-def test_spacing_half_nan_preserves_bits():
-    nan = np.array(0xfe01, dtype=np.uint16).view(np.float16)
-    with np.errstate(all="raise"):
-        result = np.spacing(nan)
-    assert_equal(result.view(np.uint16), nan.view(np.uint16))
-
-
-@pytest.mark.parametrize(
-    "dtype", [np.float16, np.float32, np.float64, np.longdouble]
-)
-@pytest.mark.parametrize("value", [np.inf, -np.inf])
-def test_spacing_inf_no_warning(dtype, value):
-    with np.errstate(all="raise"):
-        assert np.isnan(np.spacing(dtype(value)))
+    if np.dtype(dtype).itemsize <= 8:
+        assert_array_equal(result[:1].view(np.uint8),
+                           values[:1].view(np.uint8))
+    else:
+        # Avoid comparing padding bytes in extended-precision long doubles.
+        assert np.signbit(result[0]) == np.signbit(values[0])
 
 
 def test_spacing_gfortran():
