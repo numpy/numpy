@@ -2331,13 +2331,6 @@ get_byteswap_loop(
     PyArray_Descr *const *descrs = context->descriptors;
     assert(descrs[0]->kind == descrs[1]->kind);
     assert(descrs[0]->elsize == descrs[1]->elsize);
-    if (descrs[0]->elsize > NPY_MAX_INT) {
-        // TODO: add a regression test for >INT_MAX byte-swap itemsize support.
-        PyErr_SetString(PyExc_TypeError,
-                "byte-swapping with itemsize larger than INT_MAX "
-                "is not supported");
-        return -1;
-    }
     int itemsize = (int)descrs[0]->elsize;
     *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
     *out_transferdata = NULL;
