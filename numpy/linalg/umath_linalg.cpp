@@ -990,6 +990,12 @@ zero_matrix(typ *dst, const linearize_data* data)
     }
 }
 
+/*
+ * The LAPACK SVD drivers loop forever on some inputs containing inf, and
+ * return garbage for the rest of them, so their callers check the input with
+ * this first.  See https://github.com/numpy/numpy/issues/32591 and the
+ * upstream report https://github.com/Reference-LAPACK/lapack/issues/1409.
+ */
 template<typename typ>
 static inline bool
 all_finite(const typ *a, size_t count)
@@ -998,11 +1004,12 @@ all_finite(const typ *a, size_t count)
     /* complex values are stored as (real, imag) pairs */
     const basetyp *p = (const basetyp *)a;
     size_t len = count * (sizeof(typ) / sizeof(basetyp));
-    bool finite = true;
+    /* counting instead of returning early keeps the loop vectorizable */
+    size_t nonfinite = 0;
     for (size_t i = 0; i < len; i++) {
-        finite &= npy_isfinite(p[i]) != 0;
+        nonfinite += !std::isfinite(p[i]);
     }
-    return finite;
+    return nonfinite == 0;
 }
 
                /* identity square matrix generation */
