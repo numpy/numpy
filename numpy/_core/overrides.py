@@ -24,44 +24,9 @@ _REDUCE_DEFAULTS = {
 
 
 def _signature_items(implementation):
-    """Yield ``(name, kind, default)`` for ``implementation``'s parameters.
-
-    Reads the code object directly (``inspect.signature`` is 10x slower
-    and would be paid per decoration at import time); wrapped
-    implementations fall back to ``inspect.signature``.
-    """
-    Parameter = inspect.Parameter
-    if (hasattr(implementation, "__signature__")
-            or hasattr(implementation, "__wrapped__")
-            or not hasattr(implementation, "__code__")):
-        for name, param in inspect.signature(
-                implementation).parameters.items():
-            yield name, param.kind, param.default
-        return
-    code = implementation.__code__
-    names = code.co_varnames
-    n_posonly = code.co_posonlyargcount
-    n_positional = code.co_argcount
-    n_kwonly = code.co_kwonlyargcount
-    defaults = implementation.__defaults__ or ()
-    kwdefaults = implementation.__kwdefaults__ or {}
-    first_default = n_positional - len(defaults)
-    for i in range(n_positional):
-        kind = (Parameter.POSITIONAL_ONLY if i < n_posonly
-                else Parameter.POSITIONAL_OR_KEYWORD)
-        default = (defaults[i - first_default] if i >= first_default
-                   else Parameter.empty)
-        yield names[i], kind, default
-    if code.co_flags & inspect.CO_VARARGS:
-        yield (names[n_positional + n_kwonly], Parameter.VAR_POSITIONAL,
-               Parameter.empty)
-    for i in range(n_positional, n_positional + n_kwonly):
-        yield (names[i], Parameter.KEYWORD_ONLY,
-               kwdefaults.get(names[i], Parameter.empty))
-    if code.co_flags & inspect.CO_VARKEYWORDS:
-        index = (n_positional + n_kwonly
-                 + bool(code.co_flags & inspect.CO_VARARGS))
-        yield names[index], Parameter.VAR_KEYWORD, Parameter.empty
+    """Yield ``(name, kind, default)`` for ``implementation``'s parameters."""
+    for param in inspect.signature(implementation).parameters.values():
+        yield param.name, param.kind, param.default
 
 
 def _resolve_forward_spec(implementation, target, slot_names,

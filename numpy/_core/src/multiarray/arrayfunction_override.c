@@ -469,14 +469,12 @@ typedef struct {
     /* Positional argument count of the target call (n_slots minus the
      * trailing keyword slots). */
     int n_pos;
-    /* Bit s set: the parameter for slot s defaults to np._NoValue, so
-     * an explicit _NoValue means "not passed". */
+    /* Slot bitmasks. novalue: explicit np._NoValue means "not passed";
+     * required: no default, missing declines; strict: out/where;
+     * relevant: another relevant arg. */
     unsigned int novalue_slots;
-    /* Bit s set: slot s has no default; missing it declines. */
     unsigned int required_slots;
-    /* Bit s set: slot s is out/where (see forward_value_ok). */
     unsigned int strict_slots;
-    /* Bit s set: slot s is another relevant arg. */
     unsigned int relevant_slots;
     int slots[];
 } npy_forward_info;
@@ -498,7 +496,6 @@ typedef struct {
     /* The relevant args are parameter indices into param_names. */
     Py_ssize_t n_relevant_args;
     uint8_t relevant_idx[NPY_MAXARGS];
-    /* NULL unless this dispatcher has a forward fast path. */
     npy_forward_info *forward;
     /* The following fields are used to clean up TypeError messages only: */
     PyObject *dispatcher_name;
