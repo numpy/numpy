@@ -19,7 +19,12 @@ from typing import NamedTuple
 
 import numpy as np
 from numpy._core import overrides
-from numpy._core._multiarray_umath import _array_converter, _unique_hash
+from numpy._core._multiarray_umath import (
+    _array_converter,
+    _stringdtype_compatible_na,
+    _stringdtype_na_is_nan_like,
+    _unique_hash,
+)
 from numpy.lib.array_utils import normalize_axis_index
 
 array_function_dispatch = functools.partial(
@@ -803,6 +808,107 @@ def setxor1d(ar1, ar2, assume_unique=False):
     return aux[flag[1:] & flag[:-1]]
 
 
+def _isin_sorting(ar1, ar2, assume_unique, invert):
+    if not assume_unique:
+        ar1, rev_idx = np.unique(ar1, return_inverse=True)
+        ar2 = np.unique(ar2)
+
+    ar = np.concatenate((ar1, ar2))
+    # We need this to be a stable sort, so always use 'mergesort' here. The
+    # values from the first array should always come before the values from the
+    # second array.
+    order = ar.argsort(kind='mergesort')
+    sar = ar[order]
+    if invert:
+        bool_ar = (sar[1:] != sar[:-1])
+    else:
+        bool_ar = (sar[1:] == sar[:-1])
+    flag = np.concatenate((bool_ar, [invert]))
+    ret = np.empty(ar.shape, dtype=bool)
+    ret[order] = flag
+
+    if assume_unique:
+        return ret[:len(ar1)]
+    return ret[rev_idx]
+
+
+def _filter_stringdtype_nulls(ar, typed_na, na_is_nan):
+    """Return the non-null values and their selection mask, if needed."""
+    if ar.dtype.kind != "T":
+        return ar, None
+
+    if na_is_nan:
+        selection = np.isnan(ar)
+    else:
+        selection = np.equal(ar, typed_na)
+    if not np.any(selection):
+        return ar, None
+
+    np.logical_not(selection, out=selection)
+    return ar[selection], selection
+
+
+def _isin_stringdtype(ar1, ar2, assume_unique, invert,
+                      scalar_comparisons_are_faster):
+    # Compatible descriptors either share an NA or only one defines it.  Use
+    # that descriptor to apply the effective NA semantics to both arrays.
+    na_dtype = ar1.dtype
+    na_object = getattr(na_dtype, "na_object", np._NoValue)
+    if na_object is np._NoValue:
+        na_dtype = ar2.dtype
+        na_object = getattr(na_dtype, "na_object", np._NoValue)
+    na_is_nan = (
+        na_object is not np._NoValue and
+        _stringdtype_na_is_nan_like(na_dtype)
+    )
+
+    if scalar_comparisons_are_faster:
+        mask = np.zeros(len(ar1), dtype=bool)
+        for value in ar2:
+            # A NaN-like sentinel never matches.  Skipping it also avoids
+            # scalar object comparison for objects such as pandas.NA.
+            if na_is_nan and value is na_object:
+                continue
+            mask |= (ar1 == value)
+        if invert:
+            np.logical_not(mask, out=mask)
+        return mask
+
+    # A string-valued sentinel has ordinary string sorting and equality
+    # semantics, so only non-string sentinels need to be filtered.
+    if na_object is np._NoValue or isinstance(na_object, str):
+        return _isin_sorting(ar1, ar2, assume_unique, invert)
+
+    # Sorting only ordinary strings avoids every sentinel-specific ordering
+    # rule.  Keep the sentinel typed so pandas-like missing values do not go
+    # through object comparison.
+    if na_is_nan:
+        typed_na = None
+    else:
+        # StringDType has no scalar type, so use a 0-D array to carry the
+        # descriptor into the equality ufunc.
+        typed_na = np.asarray(na_object, dtype=na_dtype)
+
+    non_null_ar1, ar1_selection = _filter_stringdtype_nulls(
+        ar1, typed_na, na_is_nan
+    )
+    non_null_ar2, ar2_selection = _filter_stringdtype_nulls(
+        ar2, typed_na, na_is_nan
+    )
+    non_null_result = _isin_sorting(
+        non_null_ar1, non_null_ar2, assume_unique, invert
+    )
+    if ar1_selection is None:
+        return non_null_result
+
+    null_result = ar2_selection is not None and not na_is_nan
+    if invert:
+        null_result = not null_result
+    result = np.full(ar1.shape, null_result, dtype=bool)
+    result[ar1_selection] = non_null_result
+    return result
+
+
 def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     # Ravel both arrays, behavior for the first array could be different
     ar1 = np.asarray(ar1).ravel()
@@ -909,45 +1015,57 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
+    # Scalar comparisons are O(len(ar1) * len(ar2)), but faster than sorting
+    # when there are few test elements.
+    scalar_comparisons_are_faster = len(ar2) < 10 * len(ar1) ** 0.145
 
-    # This code is run when
-    # a) the first condition is true, making the code significantly faster
-    # b) the second condition is true (i.e. `ar1` or `ar2` may contain
-    #    arbitrary objects), since then sorting is not guaranteed to work
-    if len(ar2) < 10 * len(ar1) ** 0.145 or contains_object:
-        if invert:
-            mask = np.ones(len(ar1), dtype=bool)
-            for a in ar2:
-                mask &= (ar1 != a)
-        else:
-            mask = np.zeros(len(ar1), dtype=bool)
-            for a in ar2:
-                mask |= (ar1 == a)
-        return mask
+    if contains_object:
+        # StringDType sets ``hasobject`` because its dtype instance may own an
+        # arbitrary Python object as a missing-value sentinel.  Compatible
+        # StringDType arrays nevertheless contain only strings and null
+        # markers, so they can use the specialized sorting path.
+        dtype_kinds = (ar1.dtype.kind, ar2.dtype.kind)
+        if dtype_kinds == ("T", "T"):
+            if ar1.dtype == ar2.dtype:
+                return _isin_stringdtype(
+                    ar1, ar2, assume_unique, invert,
+                    scalar_comparisons_are_faster
+                )
 
-    # Otherwise use sorting
-    if not assume_unique:
-        ar1, rev_idx = np.unique(ar1, return_inverse=True)
-        ar2 = np.unique(ar2)
+            # Unequal descriptors only need a compatibility check when it
+            # unlocks sorting; small arrays use the scalar fallback below.
+            if (
+                not scalar_comparisons_are_faster and
+                _stringdtype_compatible_na(ar1.dtype, ar2.dtype)
+            ):
+                return _isin_stringdtype(
+                    ar1, ar2, assume_unique, invert, False
+                )
 
-    ar = np.concatenate((ar1, ar2))
-    # We need this to be a stable sort, so always use 'mergesort'
-    # here. The values from the first array should always come before
-    # the values from the second array.
-    order = ar.argsort(kind='mergesort')
-    sar = ar[order]
+        # Fixed-width Unicode promotes to StringDType and cannot contain
+        # missing markers.
+        elif (
+            not scalar_comparisons_are_faster and
+            dtype_kinds in (("T", "U"), ("U", "T"))
+        ):
+            return _isin_stringdtype(
+                ar1, ar2, assume_unique, invert, False
+            )
+    elif not scalar_comparisons_are_faster:
+        return _isin_sorting(ar1, ar2, assume_unique, invert)
+
+    # Small ordinary arrays use scalar comparisons because they are faster.
+    # Arbitrary objects also require this potentially slow fallback because
+    # they cannot be sorted reliably.
     if invert:
-        bool_ar = (sar[1:] != sar[:-1])
+        mask = np.ones(len(ar1), dtype=bool)
+        for a in ar2:
+            mask &= (ar1 != a)
     else:
-        bool_ar = (sar[1:] == sar[:-1])
-    flag = np.concatenate((bool_ar, [invert]))
-    ret = np.empty(ar.shape, dtype=bool)
-    ret[order] = flag
-
-    if assume_unique:
-        return ret[:len(ar1)]
-    else:
-        return ret[rev_idx]
+        mask = np.zeros(len(ar1), dtype=bool)
+        for a in ar2:
+            mask |= (ar1 == a)
+    return mask
 
 
 def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None,
