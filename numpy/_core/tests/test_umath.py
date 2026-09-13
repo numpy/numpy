@@ -5110,19 +5110,19 @@ def test_spacingl():
 @pytest.mark.parametrize(
     "dtype", [np.float16, np.float32, np.float64, np.longdouble]
 )
-def test_spacing_special_values(dtype):
-    values = np.array([-np.nan, np.inf, -np.inf], dtype=dtype)
+@pytest.mark.parametrize("value", [np.nan, -np.nan, np.inf, -np.inf])
+def test_spacing_special_values(dtype, value):
+    input_value = np.array([value], dtype=dtype)
     with np.errstate(all="raise"):
-        result = np.spacing(values)
+        result = np.spacing(input_value)
 
     assert np.isnan(result).all()
 
-    if np.dtype(dtype).itemsize <= 8:
-        assert_array_equal(result[:1].view(np.uint8),
-                           values[:1].view(np.uint8))
-    else:
-        # Avoid comparing padding bytes in extended-precision long doubles.
-        assert np.signbit(result[0]) == np.signbit(values[0])
+    if np.isnan(input_value).all():
+        assert_equal(np.signbit(result), np.signbit(input_value))
+        if dtype != np.longdouble:
+            assert_array_equal(result.view(np.uint8),
+                               input_value.view(np.uint8))
 
 
 def test_spacing_gfortran():
