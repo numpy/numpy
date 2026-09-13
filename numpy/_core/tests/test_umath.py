@@ -5112,17 +5112,17 @@ def test_spacingl():
 )
 @pytest.mark.parametrize("value", [np.nan, -np.nan, np.inf, -np.inf])
 def test_spacing_special_values(dtype, value):
-    input_value = np.array([value], dtype=dtype)
+    input_value = np.array(value, dtype=dtype)
     with np.errstate(all="raise"):
         result = np.spacing(input_value)
 
-    assert np.isnan(result).all()
+    assert np.isnan(result)
 
-    if np.isnan(input_value).all():
+    if np.isnan(input_value):
         assert_equal(np.signbit(result), np.signbit(input_value))
+        # Long doubles may have padding bytes which need not be preserved.
         if dtype != np.longdouble:
-            assert_array_equal(result.view(np.uint8),
-                               input_value.view(np.uint8))
+            assert result.tobytes() == input_value.tobytes()
 
 
 def test_spacing_gfortran():
