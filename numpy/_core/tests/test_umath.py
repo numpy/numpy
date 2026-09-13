@@ -5122,6 +5122,15 @@ def test_spacing_half_nan_preserves_bits():
     assert_equal(result.view(np.uint16), nan.view(np.uint16))
 
 
+@pytest.mark.parametrize(
+    "dtype", [np.float16, np.float32, np.float64, np.longdouble]
+)
+@pytest.mark.parametrize("value", [np.inf, -np.inf])
+def test_spacing_inf_no_warning(dtype, value):
+    with np.errstate(all="raise"):
+        assert np.isnan(np.spacing(dtype(value)))
+
+
 def test_spacing_gfortran():
     # Reference from this fortran file, built with gfortran 4.3.3 on linux
     # 32bits:
