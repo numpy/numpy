@@ -31,6 +31,6 @@ If no AI tools were used, please write "No AI tools used" in this section.<br>
 
 All interactions with reviewers must be performed by humans, including the submission of PRs.<br>
 
-Read the NumPy policy on AI generated code at [https://numpy.org/devdocs/dev/ai_policy.html](https://numpy.org/devdocs/dev/ai_policy.html).
+Read the NumPy policy on AI generated code at https://numpy.org/devdocs/dev/ai_policy.html.
 
 -->
