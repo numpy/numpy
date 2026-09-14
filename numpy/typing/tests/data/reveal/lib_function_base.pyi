@@ -16,7 +16,9 @@ AR_LIKE_i8: list[int]
 AR_LIKE_f8: list[float]
 AR_LIKE_c16: list[complex]
 AR_LIKE_O: list[Fraction]
+AR_LIKE_b_2d: list[list[bool]]
 AR_LIKE_i8_2d: list[list[int]]
+AR_LIKE_f8_2d: list[list[float]]
 AR_LIKE_c16_2d: list[list[complex]]
 
 AR_u1: npt.NDArray[np.uint8]
@@ -47,6 +49,7 @@ AR_f8_3d: _Array3D[np.float64]
 AR_f8_4d: _Array4D[np.float64]
 AR_c16_1d: _Array1D[np.complex128]
 
+AR_f8_list: list[np.float64]
 AR_b_list: list[npt.NDArray[np.bool]]
 
 @type_check_only
@@ -77,9 +80,17 @@ assert_type(np.rot90(AR_f8, k=2), npt.NDArray[np.float64])
 assert_type(np.rot90(AR_LIKE_f8, axes=(0, 1)), np.ndarray)
 
 # flip
-assert_type(np.flip(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.flip(AR_f8, axis=(0, 1)), npt.NDArray[np.float64])
-assert_type(np.flip(AR_LIKE_f8, axis=0), np.ndarray)
+assert_type(np.flip(AR_f8_1d), _Array1D[np.float64])
+assert_type(np.flip(AR_LIKE_b), _Array1D[np.bool])
+assert_type(np.flip(AR_LIKE_b_2d), _Array2D[np.bool])
+assert_type(np.flip(AR_LIKE_i8), _Array1D[np.int_])
+assert_type(np.flip(AR_LIKE_i8_2d), _Array2D[np.int_])
+assert_type(np.flip(AR_f8_list), _Array1D[np.float64])
+assert_type(np.flip(AR_LIKE_f8, axis=0), _Array1D[np.float64])
+assert_type(np.flip(AR_LIKE_f8_2d, axis=(0, 1)), _Array2D[np.float64])
+assert_type(np.flip(AR_LIKE_c16), _Array1D[np.complex128])
+assert_type(np.flip(AR_LIKE_c16_2d), _Array2D[np.complex128])
+assert_type(np.flip(AR_b_list), npt.NDArray[np.bool])
 
 # iterable
 assert_type(np.iterable(1), bool)
