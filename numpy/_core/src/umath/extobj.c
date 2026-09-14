@@ -176,6 +176,21 @@ errmodeconverter(PyObject *obj, int *mode)
     if (obj == Py_None) {
         return 1;
     }
+    if (!PyUnicode_Check(obj)) {
+        /*
+         * Reject non-strings before comparing against the candidate mode
+         * strings below. `PyObject_RichCompareBool` invokes the object's
+         * own `__eq__`/`__req__`, which for e.g. an ndarray dispatches into
+         * (possibly recursive, in the case of self-referencing object
+         * arrays) elementwise comparison machinery. Type-checking first
+         * avoids that entirely, rather than just capping the recursion
+         * depth: see gh-32609, gh-8306/gh-9077 for the same underlying
+         * hazard class.
+         */
+        PyErr_Format(PyExc_TypeError,
+                "invalid error mode %.100R, must be a string or None", obj);
+        return 0;
+    }
     npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     int i = 0;
     for (; i <= UFUNC_ERR_LOG; i++) {

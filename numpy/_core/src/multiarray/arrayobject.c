@@ -1041,6 +1041,33 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     return result;
 }
 
+/*
+ * `array_richcompare` can recurse into itself arbitrarily deeply when an
+ * object array contains a reference to itself (directly, or via a
+ * container reachable from one of its elements), since comparing such an
+ * array elementwise re-enters `array_richcompare` on the same object with
+ * no way to detect that this has already happened. Without a guard, this
+ * recurses until it exhausts the C stack and crashes the interpreter with
+ * a segmentation fault instead of raising a Python exception.
+ *
+ * This mirrors the guard already used for `_array_nonzero`/`bool(array)`
+ * self-containment (see gh-8306, gh-9077); this one is separate because it
+ * protects a different entry point (`==`/`!=`/`<`/`<=`/`>`/`>=`, dispatched
+ * through the ufunc machinery) and was not covered by that earlier fix
+ * (see gh-32609).
+ */
+static PyObject *
+array_richcompare_guarded(PyArrayObject *self, PyObject *other, int cmp_op)
+{
+    PyObject *result;
+    if (Py_EnterRecursiveCall(" while comparing array elements")) {
+        return NULL;
+    }
+    result = array_richcompare(self, other, cmp_op);
+    Py_LeaveRecursiveCall();
+    return result;
+}
+
 /*NUMPY_API
  */
 NPY_NO_EXPORT int
@@ -1279,7 +1306,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     .tp_as_buffer = &array_as_buffer,
     .tp_flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_SEQUENCE),
 
-    .tp_richcompare = (richcmpfunc)array_richcompare,
+    .tp_richcompare = (richcmpfunc)array_richcompare_guarded,
     .tp_weaklistoffset = offsetof(PyArrayObject_fields, weakreflist),
     .tp_iter = (getiterfunc)array_iter,
     .tp_methods = array_methods,
