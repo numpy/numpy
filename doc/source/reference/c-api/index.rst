@@ -53,68 +53,68 @@ Cython 3.0 or newer.
 In a Cython source file, ``cimport numpy`` loads these declarations at compile
 time, while a regular ``import numpy`` imports the Python package at runtime.
 The regular import is only needed when the extension also uses Python-level
-NumPy functions, such as ``numpy.asarray`` or ``numpy.empty``. For example:
+NumPy functions, such as ``numpy.asarray`` or ``numpy.empty``. The following
+example uses NumPy's C API to expose memory allocated in C as a NumPy array:
 
 .. code-block:: cython
 
-   import numpy as np
+   from libc.stdlib cimport free, malloc
+
    cimport numpy as cnp
+
 
    cnp.import_array()
 
-   def first_cumulative_index(values, double threshold):
-       cdef cnp.ndarray[cnp.double_t, ndim=1] array = np.asarray(
-           values, dtype=np.float64
-       )
-       cdef cnp.npy_intp i
-       cdef double total = 0.0
 
-       for i in range(array.shape[0]):
-           total += array[i]
-           if total >= threshold:
-               return i
+   cdef class DoubleBuffer:
+       cdef double *data
+       cdef cnp.npy_intp size
 
-       return -1
+       def __cinit__(self, cnp.npy_intp size):
+           if size <= 0:
+               raise ValueError("size must be positive")
 
-Here, ``np.asarray`` and ``np.float64`` are looked up through NumPy's Python API
-at runtime, while ``cnp.ndarray``, ``cnp.double_t``, and ``cnp.npy_intp`` come
-from the declarations loaded by ``cimport``. Calling ``cnp.import_array()``
-initializes the NumPy C-API when the extension module is imported. Cython 3 can
-add this call automatically when it is needed, but explicitly calling it is
-recommended.
+           self.data = <double *>malloc(size * sizeof(double))
+           if self.data == NULL:
+               raise MemoryError()
+           self.size = size
 
-If callers are expected to provide a compatible NumPy array, the function can
-instead accept ``cnp.ndarray[cnp.double_t, ndim=1]`` directly, avoiding the call
-to ``np.asarray`` and the regular NumPy import. This form rejects inputs with an
-incompatible type or number of dimensions rather than converting them.
+       def __dealloc__(self):
+           free(self.data)
+
+       def as_array(self):
+           cdef cnp.ndarray arr = cnp.PyArray_SimpleNewFromData(
+               1, &self.size, cnp.NPY_DOUBLE, self.data
+           )
+           cnp.set_array_base(arr, self)
+           return arr
+
+The ``DoubleBuffer`` class owns the memory allocated by ``malloc``.
+``cnp.PyArray_SimpleNewFromData`` creates a one-dimensional NumPy array that
+uses this memory without copying it. Since NumPy did not allocate the memory,
+``cnp.set_array_base`` makes the ``DoubleBuffer`` object the array's base and
+keeps it alive while the array is using its memory.
+
+Here, ``cnp.npy_intp``, ``cnp.ndarray``, ``cnp.NPY_DOUBLE``,
+``cnp.PyArray_SimpleNewFromData``, and ``cnp.set_array_base`` come from the
+declarations loaded by ``cimport``. The example does not require a regular
+NumPy import because it does not use Python-level NumPy functions. Calling
+``cnp.import_array()`` initializes the NumPy C-API when the extension module is
+imported.
 
 .. note::
 
    For efficient access to array elements, typed memoryviews are generally
-   preferred over the older NumPy-specific ``cnp.ndarray[...]`` buffer syntax.
-   When callers already provide a compatible buffer, the example above can be
-   written using a typed memoryview argument:
-
-   .. code-block:: cython
-
-      def first_cumulative_index(const double[:] values, double threshold):
-          cdef Py_ssize_t i
-          cdef double total = 0.0
-
-          for i in range(values.shape[0]):
-              total += values[i]
-              if total >= threshold:
-                  return i
-
-          return -1
-
-   Here, ``const`` indicates that the function only reads from the values, and
-   ``[:]`` declares a one-dimensional view of C doubles.
-   Typed memoryviews use Python's buffer protocol and therefore work with
-   NumPy arrays and other compatible buffer providers. They do not require
+   preferred when a NumPy-specific C-API operation is not needed. Typed
+   memoryviews use Python's buffer protocol and therefore work with NumPy
+   arrays and other compatible buffer providers. They do not require
    ``cimport numpy`` unless the code also uses NumPy-specific declarations.
    See `Cython's typed memoryview documentation
    <https://cython.readthedocs.io/en/latest/src/userguide/memoryviews.html>`__.
+
+For an example of using Cython to create a NumPy ufunc, see the `Cython section
+of NumPy's ufunc tutorial
+<https://numpy.org/devdocs/user/c-info.ufunc-tutorial.html#cython>`__.
 
 For a longer introduction to building Cython extensions that use NumPy, see
 `Cython's Working with NumPy tutorial
