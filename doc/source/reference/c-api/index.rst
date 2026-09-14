@@ -40,12 +40,15 @@ code.
 Using the C-API from Cython
 ===========================
 
-The NumPy C API can be used from Cython. Cython translates Python or Cython
+The NumPy C API can be used from `Cython <https://cython.readthedocs.io/>`__.
+Cython translates Python or Cython
 source into C code, which is then compiled into a native Python extension
 module. The extension still runs as part of Python rather than becoming an
-independent C program. NumPy provides Cython declaration files (``.pxd`` files)
-that give Cython access to NumPy C-API types and functions. These declarations
-require Cython 3.0 or newer.
+independent C program. NumPy provides Cython declaration files (``.pxd`` files),
+including `numpy/__init__.cython-30.pxd
+<https://github.com/numpy/numpy/blob/main/numpy/__init__.cython-30.pxd>`__, that
+give Cython access to NumPy C-API types and functions. These declarations require
+Cython 3.0 or newer.
 
 In a Cython source file, ``cimport numpy`` loads these declarations at compile
 time, while a regular ``import numpy`` imports the Python package at runtime.
