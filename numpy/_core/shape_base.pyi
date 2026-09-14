@@ -25,6 +25,7 @@ type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dt
 # input only
 type _AtLeast1D = tuple[int, *tuple[Any, ...]]
 type _AtLeast2D = tuple[int, int, *tuple[Any, ...]]
+type _AtLeast3D = tuple[int, int, int, *tuple[Any, ...]]
 type _ToJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
 type _To0D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _To1D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]
@@ -146,29 +147,65 @@ def atleast_2d(
     *ai: ArrayLike,
 ) -> tuple[NDArray[Any], NDArray[Any], *tuple[NDArray[Any], ...]]: ...
 
-# keep in sync with `numpy.ma.extras.atleast_3d`
-@overload
-def atleast_3d[ArrayT: _Array3D[Any]](a0: ArrayT, /) -> ArrayT: ...
-@overload
-def atleast_3d[ScalarT: np.generic](a0: _Array0D[ScalarT] | _Array1D[ScalarT] | _Array2D[ScalarT], /) -> _Array3D[ScalarT]: ...
-@overload
-def atleast_3d[ScalarT: np.generic](a0: ScalarT, /) -> _Array3D[ScalarT]: ...
-@overload
-def atleast_3d[ScalarT: np.generic](a0: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
-@overload
-def atleast_3d[ScalarT1: np.generic, ScalarT2: np.generic](
-    a0: _ArrayLike[ScalarT1], a1: _ArrayLike[ScalarT2], /
-) -> tuple[NDArray[ScalarT1], NDArray[ScalarT2]]: ...
-@overload
+#
+@overload  # >=3d T
+def atleast_3d[ArrayT: np.ndarray[_AtLeast3D]](a0: ArrayT, /) -> ArrayT: ...
+@overload  # <=3d T
 def atleast_3d[ScalarT: np.generic](
-    a0: _ArrayLike[ScalarT], a1: _ArrayLike[ScalarT], /, *arys: _ArrayLike[ScalarT]
-) -> tuple[NDArray[ScalarT], ...]: ...
-@overload
+    a0: _To2D[ScalarT] | Sequence[ScalarT] | Sequence[Sequence[ScalarT]] | Sequence[Sequence[Sequence[ScalarT]]], /
+) -> _Array3D[ScalarT]: ...
+@overload  # <=3d bool
+def atleast_3d(
+    a0: bool | Sequence[bool] | Sequence[Sequence[bool]] | Sequence[Sequence[Sequence[bool]]], /
+) -> _Array3D[np.bool]: ...
+@overload  # 0d ~int
+def atleast_3d(a0: int, /) -> _Array3D[np.int_ | Any]: ...
+@overload  # 0d ~float
+def atleast_3d(a0: float, /) -> _Array3D[np.float64 | Any]: ...
+@overload  # 0d ~complex
+def atleast_3d(a0: complex, /) -> _Array3D[np.complex128 | Any]: ...
+@overload  # 1d | 2d | 3d ~int
+def atleast_3d(a0: list[int] | Sequence[list[int]] | Sequence[Sequence[list[int]]], /) -> _Array3D[np.int_]: ...
+@overload  # 1d | 2d | 3d ~float
+def atleast_3d(a0: list[float] | Sequence[list[float]] | Sequence[Sequence[list[float]]], /) -> _Array3D[np.float64]: ...
+@overload  # 1d | 2d | 3d ~complex
+def atleast_3d(a0: list[complex] | Sequence[list[complex]] | Sequence[Sequence[list[complex]]], /) -> _Array3D[np.complex128]: ...
+@overload  # ?d T
+def atleast_3d[ScalarT: np.generic](a0: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
+@overload  # ?d
 def atleast_3d(a0: ArrayLike, /) -> NDArray[Any]: ...
-@overload
-def atleast_3d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[NDArray[Any], NDArray[Any]]: ...
-@overload
-def atleast_3d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray[Any], ...]: ...
+@overload  # >=3d T, >=3d T
+def atleast_3d[ArrayT0: np.ndarray[_AtLeast3D], ArrayT1: np.ndarray[_AtLeast3D]](
+    a0: ArrayT0,
+    a1: ArrayT1,
+    /,
+) -> tuple[ArrayT0, ArrayT1]: ...
+@overload  # ?d T, ?d T
+def atleast_3d[ScalarT0: np.generic, ScalarT1: np.generic](
+    a0: _ArrayLike[ScalarT0],
+    a1: _ArrayLike[ScalarT1],
+    /,
+) -> tuple[NDArray[ScalarT0], NDArray[ScalarT1]]: ...
+@overload  # ?d, ?d
+def atleast_3d(
+    a0: ArrayLike,
+    a1: ArrayLike,
+    /,
+) -> tuple[NDArray[Any], NDArray[Any]]: ...
+@overload  # ?d T, *?d T
+def atleast_3d[ScalarT: np.generic](
+    a0: _ArrayLike[ScalarT],
+    a1: _ArrayLike[ScalarT],
+    /,
+    *ai: _ArrayLike[ScalarT],
+) -> tuple[NDArray[ScalarT], NDArray[ScalarT], *tuple[NDArray[ScalarT], ...]]: ...
+@overload  # ?d, *?d
+def atleast_3d(
+    a0: ArrayLike,
+    a1: ArrayLike,
+    /,
+    *ai: ArrayLike,
+) -> tuple[NDArray[Any], NDArray[Any], *tuple[NDArray[Any], ...]]: ...
 
 # used by numpy.lib._shape_base_impl
 def _arrays_for_stack_dispatcher[T](arrays: Sequence[T]) -> tuple[T, ...]: ...
