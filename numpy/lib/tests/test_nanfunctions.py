@@ -265,6 +265,56 @@ class TestNanFunctions_MinMax:
             assert ret2.dtype == dtype
             assert ret2 == reference
 
+    def test_initial_slow_path(self):
+        # gh-31087: in the slow path (non-ndarray input), nanmin/nanmax
+        # should ignore a NaN ``initial`` and use a non-NaN ``initial``
+        # as the fallback value for all-NaN or empty slices.
+
+        # NaN initial must not propagate, including with multi-element input.
+        assert np.nanmax([1.0], initial=np.nan) == 1.0
+        assert np.nanmin([1.0], initial=np.nan) == 1.0
+        assert np.nanmax([1.0, 2.0, 3.0], initial=np.nan) == 3.0
+        assert np.nanmin([1.0, 2.0, 3.0], initial=np.nan) == 1.0
+
+        # Non-NaN initial provides a fallback for empty or all-NaN input,
+        # without a RuntimeWarning.
+        assert np.nanmax([], initial=1.0) == 1.0
+        assert np.nanmin([], initial=1.0) == 1.0
+        for f in self.nanfuncs:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                assert f([np.nan, np.nan], initial=5.0) == 5.0
+                assert len(w) == 0
+
+        # Empty input with a NaN initial preserves the existing
+        # all-NaN behaviour: a RuntimeWarning is raised and NaN is returned.
+        for f in self.nanfuncs:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                res = f([], initial=np.nan)
+                assert np.isnan(res)
+                assert len(w) == 1
+                assert issubclass(w[0].category, RuntimeWarning)
+
+        # A ``where`` mask that excludes every element behaves like an
+        # empty input: non-NaN initial is returned, NaN initial yields a
+        # RuntimeWarning and NaN.
+        where_none = np.array([False, False, False])
+        for f in self.nanfuncs:
+            assert f([1.0, 2.0, 3.0], where=where_none, initial=5.0) == 5.0
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                res = f([1.0, 2.0, 3.0], where=where_none, initial=np.nan)
+                assert np.isnan(res)
+                assert len(w) == 1
+                assert issubclass(w[0].category, RuntimeWarning)
+
+        # A non-floating scalar such as ``decimal.Decimal`` should not raise
+        # in the NaN detection path.
+        from decimal import Decimal
+        assert np.nanmin([Decimal(1), Decimal(2)], initial=Decimal(0)) == Decimal(0)
+        assert np.nanmax([Decimal(1), Decimal(2)], initial=Decimal(0)) == Decimal(2)
+
 
 class TestNanFunctions_ArgminArgmax:
 
