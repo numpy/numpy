@@ -4,6 +4,7 @@
 #include "numpy/ndarraytypes.h"
 #include "arrayobject.h"
 #include "dtypemeta.h"
+#include "module_state.h"
 
 
 #ifdef __cplusplus
@@ -65,8 +66,8 @@ NPY_NO_EXPORT extern PyArray_DTypeMeta *_PyComplexDType;
  * ``PyArrayDTypeMeta_Type`` is ready and before any code that uses these
  * abstracts as ``tp_base`` (e.g. ``set_typeinfo``).
  */
-NPY_NO_EXPORT int
-initialize_abstract_dtypes(void);
+ NPY_NO_EXPORT int
+ initialize_abstract_dtypes(multiarray_umath_state *state);
 
 /*
  * Map the Python ``str`` / ``bytes`` / ``bool`` types to the corresponding

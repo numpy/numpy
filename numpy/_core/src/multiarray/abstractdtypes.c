@@ -214,7 +214,7 @@ static NPY_DType_Slots pycomplexdtype_slots;
 
 
 NPY_NO_EXPORT int
-initialize_abstract_dtypes(void)
+initialize_abstract_dtypes(multiarray_umath_state *state)
 {
     /*
      * Create the abstract DType classes that mirror the array-API "kind"
@@ -226,7 +226,7 @@ initialize_abstract_dtypes(void)
      * classes can use these abstracts as ``tp_base``.
      */
     if (npy_cache_import_runtime("numpy.dtypes", "_add_dtype_helper",
-                                 &npy_runtime_imports._add_dtype_helper) < 0) {
+                                 &state->runtime_imports._add_dtype_helper) < 0) {
         return -1;
     }
     for (size_t i = 0; i < Py_ARRAY_LENGTH(abstract_dtype_specs); ++i) {
@@ -241,7 +241,7 @@ initialize_abstract_dtypes(void)
         }
         *spec->out = dt;
         PyObject *res = PyObject_CallFunctionObjArgs(
-                npy_runtime_imports._add_dtype_helper,
+                state->runtime_imports._add_dtype_helper,
                 (PyObject *)dt, Py_None, NULL);
         if (res == NULL) {
             return -1;
