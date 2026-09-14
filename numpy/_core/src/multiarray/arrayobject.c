@@ -1041,7 +1041,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     return result;
 }
 
-/* gh-32609 */
 static PyObject *
 array_richcompare_guarded(PyArrayObject *self, PyObject *other, int cmp_op)
 {
