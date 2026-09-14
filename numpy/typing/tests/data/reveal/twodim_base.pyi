@@ -31,6 +31,9 @@ _to_2d_bool: list[list[bool]]
 
 _to_1d_f64: list[float]
 _to_1d_c128: list[complex]
+_to_2d_i64: list[list[int]]
+_to_2d_f64: list[list[float]]
+_to_2d_c128: list[list[complex]]
 
 @type_check_only
 def func1[ScalarT: np.generic](ar: npt.NDArray[ScalarT], a: int) -> npt.NDArray[ScalarT]: ...
@@ -46,11 +49,11 @@ class _Cube:
 
 # fliplr
 assert_type(np.fliplr(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
-assert_type(np.fliplr(_1d_bool), np.ndarray[_1D, np.dtype[np.bool]])
 assert_type(np.fliplr(_2d_bool), np.ndarray[_2D, np.dtype[np.bool]])
-assert_type(np.fliplr(_to_nd_bool), np.ndarray)
-assert_type(np.fliplr(_to_1d_bool), np.ndarray)
-assert_type(np.fliplr(_to_2d_bool), np.ndarray)
+assert_type(np.fliplr(_to_2d_bool), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.fliplr(_to_2d_i64), np.ndarray[_2D, np.dtype[np.int_]])
+assert_type(np.fliplr(_to_2d_f64), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.fliplr(_to_2d_c128), np.ndarray[_2D, np.dtype[np.complex128]])
 
 # flipud
 assert_type(np.flipud(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
