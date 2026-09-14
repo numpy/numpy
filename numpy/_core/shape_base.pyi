@@ -80,14 +80,14 @@ def atleast_1d[ScalarT: np.generic](
     a1: _ArrayLike[ScalarT],
     /,
     *ai: _ArrayLike[ScalarT],
-) -> tuple[NDArray[ScalarT], NDArray[ScalarT], *tuple[NDArray[ScalarT], ...]]: ...
+) -> tuple[NDArray[ScalarT], ...]: ...
 @overload  # ?d, *?d
 def atleast_1d(
     a0: ArrayLike,
     a1: ArrayLike,
     /,
     *ai: ArrayLike,
-) -> tuple[NDArray[Any], NDArray[Any], *tuple[NDArray[Any], ...]]: ...
+) -> tuple[NDArray[Any], ...]: ...
 
 #
 @overload  # >=2d T
@@ -138,14 +138,14 @@ def atleast_2d[ScalarT: np.generic](
     a1: _ArrayLike[ScalarT],
     /,
     *ai: _ArrayLike[ScalarT],
-) -> tuple[NDArray[ScalarT], NDArray[ScalarT], *tuple[NDArray[ScalarT], ...]]: ...
+) -> tuple[NDArray[ScalarT], ...]: ...
 @overload  # ?d, *?d
 def atleast_2d(
     a0: ArrayLike,
     a1: ArrayLike,
     /,
     *ai: ArrayLike,
-) -> tuple[NDArray[Any], NDArray[Any], *tuple[NDArray[Any], ...]]: ...
+) -> tuple[NDArray[Any], ...]: ...
 
 #
 @overload  # >=3d T
@@ -198,14 +198,14 @@ def atleast_3d[ScalarT: np.generic](
     a1: _ArrayLike[ScalarT],
     /,
     *ai: _ArrayLike[ScalarT],
-) -> tuple[NDArray[ScalarT], NDArray[ScalarT], *tuple[NDArray[ScalarT], ...]]: ...
+) -> tuple[NDArray[ScalarT], ...]: ...
 @overload  # ?d, *?d
 def atleast_3d(
     a0: ArrayLike,
     a1: ArrayLike,
     /,
     *ai: ArrayLike,
-) -> tuple[NDArray[Any], NDArray[Any], *tuple[NDArray[Any], ...]]: ...
+) -> tuple[NDArray[Any], ...]: ...
 
 # used by numpy.lib._shape_base_impl
 def _arrays_for_stack_dispatcher[T](arrays: Sequence[T]) -> tuple[T, ...]: ...
