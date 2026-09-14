@@ -7070,6 +7070,8 @@ def minmax(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
     This is equivalent to ``(ma.min(obj, ...), ma.max(obj, ...))`` but returns
     both in a single call.
 
+    .. versionadded:: 2.6.0
+
     Parameters
     ----------
     axis : None or int or tuple of ints, optional

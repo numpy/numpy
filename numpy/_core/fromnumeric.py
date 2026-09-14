@@ -3473,6 +3473,8 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     This is equivalent to ``(np.min(a, ...), np.max(a, ...))`` but computes
     both the minimum and the maximum in a single pass over `a`.
 
+    .. versionadded:: 2.6.0
+
     Parameters
     ----------
     a : array_like
