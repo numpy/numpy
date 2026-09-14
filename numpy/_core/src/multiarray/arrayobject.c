@@ -1041,21 +1041,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     return result;
 }
 
-/*
- * `array_richcompare` can recurse into itself arbitrarily deeply when an
- * object array contains a reference to itself (directly, or via a
- * container reachable from one of its elements), since comparing such an
- * array elementwise re-enters `array_richcompare` on the same object with
- * no way to detect that this has already happened. Without a guard, this
- * recurses until it exhausts the C stack and crashes the interpreter with
- * a segmentation fault instead of raising a Python exception.
- *
- * This mirrors the guard already used for `_array_nonzero`/`bool(array)`
- * self-containment (see gh-8306, gh-9077); this one is separate because it
- * protects a different entry point (`==`/`!=`/`<`/`<=`/`>`/`>=`, dispatched
- * through the ufunc machinery) and was not covered by that earlier fix
- * (see gh-32609).
- */
+/* gh-32609 */
 static PyObject *
 array_richcompare_guarded(PyArrayObject *self, PyObject *other, int cmp_op)
 {

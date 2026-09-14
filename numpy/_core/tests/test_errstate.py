@@ -14,13 +14,7 @@ arm_softfloat = False if hosttype is None else hosttype.endswith('gnueabi')
 
 class TestErrstate:
     def test_seterr_self_referencing_array_raises(self):
-        # gh-32609: passing a non-string, non-None object for `all` (or
-        # `divide`/`over`/`under`/`invalid`) used to be compared against
-        # candidate mode strings via `==`, which for an ndarray dispatches
-        # into elementwise comparison. A self-referencing object array
-        # recurses in there forever, causing a RecursionError or (on
-        # platforms with larger per-frame C stack usage) a segfault.
-        # It should raise TypeError instead.
+        # gh-32609
         obj_array = np.empty(2, dtype=object)
         obj_array[0] = obj_array
         obj_array[1] = [obj_array, obj_array]
@@ -31,8 +25,6 @@ class TestErrstate:
             np.seterr(divide=obj_array)
 
     def test_seterr_invalid_mode_type(self):
-        # Non-string, non-None, non-crashing objects should still cleanly
-        # raise TypeError rather than recursing at all.
         with assert_raises(TypeError):
             np.seterr(all=123)
         with assert_raises(TypeError):
