@@ -59,22 +59,54 @@ NumPy functions, such as ``numpy.asarray`` or ``numpy.empty``. For example:
 
    cnp.import_array()
 
-   def ensure_2d(obj):
-       cdef cnp.ndarray arr = np.asarray(obj)
-       if cnp.PyArray_NDIM(arr) != 2:
-           raise ValueError("expected a two-dimensional array")
-       return arr
+   def first_cumulative_index(values, double threshold):
+       cdef cnp.ndarray[cnp.double_t, ndim=1] array = np.asarray(
+           values, dtype=np.float64
+       )
+       cdef cnp.npy_intp i
+       cdef double total = 0.0
 
-Here, ``np.asarray`` is looked up through NumPy's Python API at runtime, while
-``cnp.ndarray`` and ``cnp.PyArray_NDIM`` come from the declarations loaded by
-``cimport``. Calling ``cnp.import_array()`` initializes the NumPy C-API when
-the extension module is imported. Cython 3 can add this call automatically
-when it is needed, but explicitly calling it is recommended.
+       for i in range(array.shape[0]):
+           total += array[i]
+           if total >= threshold:
+               return i
+
+       return -1
+
+Here, ``np.asarray`` and ``np.float64`` are looked up through NumPy's Python API
+at runtime, while ``cnp.ndarray``, ``cnp.double_t``, and ``cnp.npy_intp`` come
+from the declarations loaded by ``cimport``. Calling ``cnp.import_array()``
+initializes the NumPy C-API when the extension module is imported. Cython 3 can
+add this call automatically when it is needed, but explicitly calling it is
+recommended.
+
+If callers are expected to provide a compatible NumPy array, the function can
+instead accept ``cnp.ndarray[cnp.double_t, ndim=1]`` directly, avoiding the call
+to ``np.asarray`` and the regular NumPy import. This form rejects inputs with an
+incompatible type or number of dimensions rather than converting them.
 
 .. note::
 
    For efficient access to array elements, typed memoryviews are generally
    preferred over the older NumPy-specific ``cnp.ndarray[...]`` buffer syntax.
+   When callers already provide a compatible buffer, the example above can be
+   written using a typed memoryview argument:
+
+   .. code-block:: cython
+
+      def first_cumulative_index(const double[:] values, double threshold):
+          cdef Py_ssize_t i
+          cdef double total = 0.0
+
+          for i in range(values.shape[0]):
+              total += values[i]
+              if total >= threshold:
+                  return i
+
+          return -1
+
+   Here, ``const`` indicates that the function only reads from the values, and
+   ``[:]`` declares a one-dimensional view of C doubles.
    Typed memoryviews use Python's buffer protocol and therefore work with
    NumPy arrays and other compatible buffer providers. They do not require
    ``cimport numpy`` unless the code also uses NumPy-specific declarations.
