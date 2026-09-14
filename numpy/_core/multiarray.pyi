@@ -205,12 +205,20 @@ type _Array0D[ScalarT: np.generic] = ndarray[tuple[()], dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = ndarray[tuple[int], dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = ndarray[tuple[int, int], dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = ndarray[tuple[int, int, int], dtype[ScalarT]]
-# workaround for mypy's and pyright's typing spec non-compliance regarding overloads
+
+type _Tuple2[T] = tuple[T, T]
+type _Tuple3[T] = tuple[T, T, T]
+type _Tuple4[T] = tuple[T, T, T, T]
+
+# workaround for mypy and pyright not following the typing spec for overloads
+type _JustAnyShape = tuple[Never, Never, Never, Never, Never]
 type _ArrayJustND[ScalarT: np.generic] = ndarray[tuple[Never, Never, Never, Never], dtype[ScalarT]]
 
 type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
 type _ToArray2D[ScalarT: np.generic] = _Array2D[ScalarT] | Sequence[Sequence[ScalarT]]
 type _ToArray3D[ScalarT: np.generic] = _Array3D[ScalarT] | Sequence[Sequence[Sequence[ScalarT]]]
+
+type _ToIntND = _ArrayLike[np.integer | np.bool] | _NestedSequence[int]
 
 # Valid time units
 type _UnitKind = L[
@@ -1106,10 +1114,78 @@ def ravel_multi_index(
 ) -> NDArray[intp]: ...
 
 #
-@overload
+@overload  # Nd +int, ?d  (workaround)
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: _JustAnyShape,
+    order: _OrderCF = "C",
+) -> tuple[ndarray[ShapeT, dtype[intp]], ...]: ...
+@overload  # Nd +int, 1d
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: int | tuple[SupportsIndex],
+    order: _OrderCF = "C",
+) -> tuple[ndarray[ShapeT, dtype[intp]]]: ...
+@overload  # Nd +int, 2d
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: _Tuple2[SupportsIndex],
+    order: _OrderCF = "C",
+) -> _Tuple2[ndarray[ShapeT, dtype[intp]]]: ...
+@overload  # Nd +int, 3d
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: _Tuple3[SupportsIndex],
+    order: _OrderCF = "C",
+) -> _Tuple3[ndarray[ShapeT, dtype[intp]]]: ...
+@overload  # Nd +int, 4d
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: _Tuple4[SupportsIndex],
+    order: _OrderCF = "C",
+) -> _Tuple4[ndarray[ShapeT, dtype[intp]]]: ...
+@overload  # Nd +int, ?d  (fallback)
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: _ShapeLike,
+    order: _OrderCF = "C",
+) -> tuple[ndarray[ShapeT, dtype[intp]], ...]: ...
+@overload  # 0d ~int, ?d  (workaround)
+def unravel_index(indices: _IntLike_co, shape: _JustAnyShape, order: _OrderCF = "C") -> tuple[intp, ...]: ...
+@overload  # 0d ~int, 1d
+def unravel_index(indices: _IntLike_co, shape: int | tuple[SupportsIndex], order: _OrderCF = "C") -> tuple[intp]: ...
+@overload  # 0d ~int, 2d
+def unravel_index(indices: _IntLike_co, shape: _Tuple2[SupportsIndex], order: _OrderCF = "C") -> _Tuple2[intp]: ...
+@overload  # 0d ~int, 3d
+def unravel_index(indices: _IntLike_co, shape: _Tuple3[SupportsIndex], order: _OrderCF = "C") -> _Tuple3[intp]: ...
+@overload  # 0d ~int, 4d
+def unravel_index(indices: _IntLike_co, shape: _Tuple4[SupportsIndex], order: _OrderCF = "C") -> _Tuple4[intp]: ...
+@overload  # 0d ~int, ?d  (fallback)
 def unravel_index(indices: _IntLike_co, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[intp, ...]: ...
-@overload
-def unravel_index(indices: _ArrayLikeInt_co, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[NDArray[intp], ...]: ...
+@overload  # 1d ~int, ?d  (workaround)
+def unravel_index(indices: Sequence[int], shape: _JustAnyShape, order: _OrderCF = "C") -> tuple[_Array1D[intp], ...]: ...
+@overload  # 1d ~int, 1d
+def unravel_index(indices: Sequence[int], shape: int | tuple[SupportsIndex], order: _OrderCF = "C") -> tuple[_Array1D[intp]]: ...
+@overload  # 1d ~int, 2d
+def unravel_index(indices: Sequence[int], shape: _Tuple2[SupportsIndex], order: _OrderCF = "C") -> _Tuple2[_Array1D[intp]]: ...
+@overload  # 1d ~int, 3d
+def unravel_index(indices: Sequence[int], shape: _Tuple3[SupportsIndex], order: _OrderCF = "C") -> _Tuple3[_Array1D[intp]]: ...
+@overload  # 1d ~int, 4d
+def unravel_index(indices: Sequence[int], shape: _Tuple4[SupportsIndex], order: _OrderCF = "C") -> _Tuple4[_Array1D[intp]]: ...
+@overload  # 1d ~int, ?d  (fallback)
+def unravel_index(indices: Sequence[int], shape: _ShapeLike, order: _OrderCF = "C") -> tuple[_Array1D[intp], ...]: ...
+@overload  # ?d, ?d  (workaround)
+def unravel_index(indices: _ToIntND, shape: _JustAnyShape, order: _OrderCF = "C") -> tuple[NDArray[intp], ...]: ...
+@overload  # ?d, 1d
+def unravel_index(indices: _ToIntND, shape: int | tuple[SupportsIndex], order: _OrderCF = "C") -> tuple[NDArray[intp]]: ...
+@overload  # ?d, 2d
+def unravel_index(indices: _ToIntND, shape: _Tuple2[SupportsIndex], order: _OrderCF = "C") -> _Tuple2[NDArray[intp]]: ...
+@overload  # ?d, 3d
+def unravel_index(indices: _ToIntND, shape: _Tuple3[SupportsIndex], order: _OrderCF = "C") -> _Tuple3[NDArray[intp]]: ...
+@overload  # ?d, 4d
+def unravel_index(indices: _ToIntND, shape: _Tuple4[SupportsIndex], order: _OrderCF = "C") -> _Tuple4[NDArray[intp]]: ...
+@overload  # ?d, ?d  (fallback)
+def unravel_index(indices: _ToIntND, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[NDArray[intp], ...]: ...
 
 #
 def normalize_axis_index(axis: int, ndim: int, msg_prefix: str | None = None) -> int: ...
