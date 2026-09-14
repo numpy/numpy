@@ -88,29 +88,63 @@ def atleast_1d(
     *ai: ArrayLike,
 ) -> tuple[NDArray[Any], NDArray[Any], *tuple[NDArray[Any], ...]]: ...
 
-# keep in sync with `numpy.ma.extras.atleast_2d`
-@overload
-def atleast_2d[ArrayT: _Array2D[Any] | _Array3D[Any]](a0: ArrayT, /) -> ArrayT: ...
-@overload
-def atleast_2d[ScalarT: np.generic](a0: _Array0D[ScalarT] | _Array1D[ScalarT], /) -> _Array2D[ScalarT]: ...
-@overload
-def atleast_2d[ScalarT: np.generic](a0: ScalarT, /) -> _Array2D[ScalarT]: ...
-@overload
-def atleast_2d[ScalarT: np.generic](a0: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
-@overload
-def atleast_2d[ScalarT1: np.generic, ScalarT2: np.generic](
-    a0: _ArrayLike[ScalarT1], a1: _ArrayLike[ScalarT2], /
-) -> tuple[NDArray[ScalarT1], NDArray[ScalarT2]]: ...
-@overload
+#
+@overload  # >=2d T
+def atleast_2d[ArrayT: np.ndarray[_AtLeast2D]](a0: ArrayT, /) -> ArrayT: ...
+@overload  # <=2d T
 def atleast_2d[ScalarT: np.generic](
-    a0: _ArrayLike[ScalarT], a1: _ArrayLike[ScalarT], /, *arys: _ArrayLike[ScalarT]
-) -> tuple[NDArray[ScalarT], ...]: ...
-@overload
+    a0: _To1D[ScalarT] | Sequence[ScalarT] | Sequence[Sequence[ScalarT]], /
+) -> _Array2D[ScalarT]: ...
+@overload  # <=2d bool
+def atleast_2d(a0: bool | Sequence[bool] | Sequence[Sequence[bool]], /) -> _Array2D[np.bool]: ...
+@overload  # 0d ~int
+def atleast_2d(a0: int, /) -> _Array2D[np.int_ | Any]: ...
+@overload  # 0d ~float
+def atleast_2d(a0: float, /) -> _Array2D[np.float64 | Any]: ...
+@overload  # 0d ~complex
+def atleast_2d(a0: complex, /) -> _Array2D[np.complex128 | Any]: ...
+@overload  # 1d | 2d ~int
+def atleast_2d(a0: list[int] | Sequence[list[int]], /) -> _Array2D[np.int_]: ...
+@overload  # 1d | 2d ~float
+def atleast_2d(a0: list[float] | Sequence[list[float]], /) -> _Array2D[np.float64]: ...
+@overload  # 1d | 2d ~complex
+def atleast_2d(a0: list[complex] | Sequence[list[complex]], /) -> _Array2D[np.complex128]: ...
+@overload  # ?d T
+def atleast_2d[ScalarT: np.generic](a0: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
+@overload  # ?d
 def atleast_2d(a0: ArrayLike, /) -> NDArray[Any]: ...
-@overload
-def atleast_2d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[NDArray[Any], NDArray[Any]]: ...
-@overload
-def atleast_2d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray[Any], ...]: ...
+@overload  # >=2d T, >=2d T
+def atleast_2d[ArrayT0: np.ndarray[_AtLeast2D], ArrayT1: np.ndarray[_AtLeast2D]](
+    a0: ArrayT0,
+    a1: ArrayT1,
+    /,
+) -> tuple[ArrayT0, ArrayT1]: ...
+@overload  # ?d T, ?d T
+def atleast_2d[ScalarT0: np.generic, ScalarT1: np.generic](
+    a0: _ArrayLike[ScalarT0],
+    a1: _ArrayLike[ScalarT1],
+    /,
+) -> tuple[NDArray[ScalarT0], NDArray[ScalarT1]]: ...
+@overload  # ?d, ?d
+def atleast_2d(
+    a0: ArrayLike,
+    a1: ArrayLike,
+    /,
+) -> tuple[NDArray[Any], NDArray[Any]]: ...
+@overload  # ?d T, *?d T
+def atleast_2d[ScalarT: np.generic](
+    a0: _ArrayLike[ScalarT],
+    a1: _ArrayLike[ScalarT],
+    /,
+    *ai: _ArrayLike[ScalarT],
+) -> tuple[NDArray[ScalarT], NDArray[ScalarT], *tuple[NDArray[ScalarT], ...]]: ...
+@overload  # ?d, *?d
+def atleast_2d(
+    a0: ArrayLike,
+    a1: ArrayLike,
+    /,
+    *ai: ArrayLike,
+) -> tuple[NDArray[Any], NDArray[Any], *tuple[NDArray[Any], ...]]: ...
 
 # keep in sync with `numpy.ma.extras.atleast_3d`
 @overload
