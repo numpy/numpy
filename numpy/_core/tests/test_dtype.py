@@ -953,6 +953,15 @@ class TestMonsterType:
         with pytest.raises(RecursionError):
             np.dtype(d)
 
+    @requires_deep_recursion
+    def test_nested_structured_dtype_zerofill_recursion(self):
+        # gh-32488
+        dt = np.dtype([("v", "i4")])
+        for _ in range(50000):
+            dt = np.dtype([("v", "i4"), ("next", dt)])
+        with pytest.raises(RecursionError):
+            np.zeros(1, dtype=dt)
+
 
 class TestMetadata:
     def test_no_metadata(self):
