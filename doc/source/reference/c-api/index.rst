@@ -104,12 +104,12 @@ imported.
 
 .. note::
 
-   For efficient access to array elements, typed memoryviews are generally
-   preferred when a NumPy-specific C-API operation is not needed. Typed
-   memoryviews use Python's buffer protocol and therefore work with NumPy
-   arrays and other compatible buffer providers. They do not require
-   ``cimport numpy`` unless the code also uses NumPy-specific declarations.
-   See `Cython's typed memoryview documentation
+   For efficient access to array elements, generally avoid the older
+   NumPy-specific ``cnp.ndarray[...]`` buffer syntax and prefer typed
+   memoryviews instead. Typed memoryviews use Python's buffer protocol
+   and therefore work with NumPy arrays and other compatible buffer providers.
+   They do not require ``cimport numpy`` unless the code also uses
+   NumPy-specific declarations. See `Cython's typed memoryview documentation
    <https://cython.readthedocs.io/en/latest/src/userguide/memoryviews.html>`__.
 
 For an example of using Cython to create a NumPy ufunc, see the `Cython section
