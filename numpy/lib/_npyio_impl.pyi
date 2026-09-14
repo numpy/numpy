@@ -330,6 +330,7 @@ def genfromtxt(
     encoding: str | None = None,
     *,
     ndmin: L[0, 1, 2] = 0,
+    commented_names: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 @overload
@@ -359,6 +360,7 @@ def genfromtxt[ScalarT: np.generic](
     encoding: str | None = None,
     *,
     ndmin: L[0, 1, 2] = 0,
+    commented_names: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload
@@ -388,5 +390,6 @@ def genfromtxt(
     encoding: str | None = None,
     *,
     ndmin: L[0, 1, 2] = 0,
+    commented_names: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...

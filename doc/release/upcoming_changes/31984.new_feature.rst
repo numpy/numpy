@@ -1,0 +1,17 @@
+New ``commented_names`` keyword for ``np.genfromtxt``
+-----------------------------------------------------
+A new ``commented_names`` keyword argument has been added to
+`numpy.genfromtxt` to give explicit control over how column
+names are extracted when ``names=True``:
+
+``None`` (default) preserves the historical behavior: names are
+  taken from the first line after ``skip_header``, whether or not
+  that line is a comment.
+``True``: names are taken from the *last* comment line before
+  the first line of data. A ``ValueError`` is raised if no comment
+  line precedes the data.
+``False``: names are taken from the first non-comment line,
+  skipping any number of leading comment lines.
+
+Passing ``commented_names`` without ``names=True`` raises
+``ValueError``.
