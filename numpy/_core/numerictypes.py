@@ -114,7 +114,11 @@ from ._string_helpers import (  # noqa: F401
     english_lower,
     english_upper,
 )
-from ._type_aliases import allTypes, sctypeDict
+from ._type_aliases import (
+    allTypes,
+    sctypeDict,
+    sctypes,  # noqa: F401  # re-exported, `numpy._core` imports it from here
+)
 
 # We use this later
 generic = allTypes['generic']
@@ -303,10 +307,6 @@ def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
 
-class _PreprocessDTypeError(Exception):
-    pass
-
-
 def _preprocess_dtype(obj):
     """
     Preprocess dtype argument to allow only NumPy dtypes and scalar
@@ -320,9 +320,8 @@ def _preprocess_dtype(obj):
         except TypeError:
             pass
         else:
-            # If the discovered dtype has the input type as
-            # it's type, then it should be a valid input.
-            # (rejects e.g. the abstract types)
+            # If the discovered dtype has the input type as its type, then it
+            # should be a valid input.  (rejects e.g. the abstract types)
             if dtype.type is obj:
                 return dtype
 
@@ -332,26 +331,22 @@ def _preprocess_dtype(obj):
     ) from None
 
 
-_kind_to_dtypes = {
-    "bool": (np.dtypes.BoolDType,),
-    "signed integer": (np.dtypes.SignedIntegerAbstractDType,),
-    "unsigned integer": (np.dtypes.UnsignedIntegerAbstractDType,),
-    "integral": (np.dtypes.IntegerAbstractDType,),
-    "real floating": (np.dtypes.FloatingAbstractDType,),
-    "complex floating": (np.dtypes.ComplexFloatingAbstractDType,),
-    # The Array API "numeric" kind excludes bool, so do not use
-    # NumericAbstractDType directly here.
-    "numeric": (
-        np.dtypes.IntegerAbstractDType,
-        np.dtypes.InexactAbstractDType,
-    ),
+_kind_to_dtype = {
+    "bool": np.dtypes.BoolDType,
+    "signed integer": np.dtypes.SignedIntegerAbstractDType,
+    "unsigned integer": np.dtypes.UnsignedIntegerAbstractDType,
+    "integral": np.dtypes.IntegerAbstractDType,
+    "real floating": np.dtypes.FloatingAbstractDType,
+    "complex floating": np.dtypes.ComplexFloatingAbstractDType,
+    # `NumberAbstractDType` excludes bool, matching the Array API "numeric".
+    "numeric": np.dtypes.NumberAbstractDType,
 }
 
 
 def _preprocess_kind(kind):
     if isinstance(kind, str):
         try:
-            return _kind_to_dtypes[kind]
+            return _kind_to_dtype[kind]
         except KeyError:
             raise ValueError(
                 "kind argument is a string, but"
@@ -387,7 +382,7 @@ def _preprocess_kind(kind):
     raise TypeError(
         "kind argument must be a DType class or string, "
         f"but it is a {type(kind)}."
-    ) from None
+    )
 
 
 @set_module('numpy')
@@ -438,8 +433,9 @@ def isdtype(dtype, kind):
     After normalization of the input arguments, this function is equivalent to
     ``isinstance(dtype, np.dtypes.<kind>)``.
 
-    User defined dtypes can pass a ``isdtype(dt, "real floating")`` check if
-    they register via ``numpy.dtypes.FloatAbstractDType.register(type(dt))``.
+    User defined dtypes pass these checks if their DType class inherits from
+    the matching abstract DType in `numpy.dtypes`.  Additionally, a DType
+    using the ``NPY_DT_NUMERIC`` flag passes the ``"numeric"`` check.
 
     """
     dtype = _preprocess_dtype(dtype)
@@ -458,11 +454,11 @@ def issubdtype(arg1, arg2):
     Returns True if first argument is a typecode lower/equal in type hierarchy.
 
     .. note::
-        This function relies on the scalar type hierarchy. This works in
-        practice for NumPy dtypes and some user-defines ones but does not
-        generalize necessarily.
-        ``isdtype()`` has slightly clearer semantics although NumPy 2.6 is
-        requires to work with user defined dtypes in general.
+        This function relies on the scalar type hierarchy.  That works in
+        practice for NumPy dtypes and some user defined ones, but does not
+        generalize.  `isdtype` has slightly clearer semantics, although
+        NumPy 2.6 or later is required for it to work with user defined
+        dtypes in general.
 
     Parameters
     ----------

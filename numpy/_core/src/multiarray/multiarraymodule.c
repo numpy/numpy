@@ -5492,12 +5492,9 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     }
 
     /*
-     * Create the abstract DType classes (NumericAbstractDType,
-     * IntegerAbstractDType, SignedIntegerAbstractDType,
-     * UnsignedIntegerAbstractDType, InexactAbstractDType,
-     * FloatAbstractDType, ComplexAbstractDType) and expose them on
-     * ``numpy.dtypes``.  Must run before ``set_typeinfo`` so the legacy
-     * concrete DType classes can use them as ``tp_base`` directly.
+     * Create the abstract DType classes and expose them on ``numpy.dtypes``.
+     * Must run before ``set_typeinfo`` so the legacy concrete DType classes
+     * can use them as ``tp_base`` directly.
      */
     if (initialize_abstract_dtypes() < 0) {
         return -1;

@@ -22,7 +22,7 @@
  * ``tp_base`` directly.  See ``abstractdtypes.h`` for the
  * ``PyArray_*AbstractDType`` macro accessors.
  */
-NPY_NO_EXPORT PyArray_DTypeMeta *_NumericAbstract_dtype = NULL;
+NPY_NO_EXPORT PyArray_DTypeMeta *_NumberAbstract_dtype = NULL;
 NPY_NO_EXPORT PyArray_DTypeMeta *_IntegerAbstract_dtype = NULL;
 NPY_NO_EXPORT PyArray_DTypeMeta *_SignedIntegerAbstract_dtype = NULL;
 NPY_NO_EXPORT PyArray_DTypeMeta *_UnsignedIntegerAbstract_dtype = NULL;
@@ -120,16 +120,16 @@ typedef struct {
 } abstract_dtype_spec;
 
 static abstract_dtype_spec abstract_dtype_specs[] = {
-    {"numpy.dtypes.NumericAbstractDType",
-     &_NumericAbstract_dtype, NULL, NPY_DT_NUMERIC},
+    {"numpy.dtypes.NumberAbstractDType",
+     &_NumberAbstract_dtype, NULL, NPY_DT_NUMERIC},
     {"numpy.dtypes.IntegerAbstractDType",
-     &_IntegerAbstract_dtype, &_NumericAbstract_dtype, 0},
+     &_IntegerAbstract_dtype, &_NumberAbstract_dtype, 0},
     {"numpy.dtypes.SignedIntegerAbstractDType",
      &_SignedIntegerAbstract_dtype, &_IntegerAbstract_dtype, 0},
     {"numpy.dtypes.UnsignedIntegerAbstractDType",
      &_UnsignedIntegerAbstract_dtype, &_IntegerAbstract_dtype, 0},
     {"numpy.dtypes.InexactAbstractDType",
-     &_InexactAbstract_dtype, &_NumericAbstract_dtype, 0},
+     &_InexactAbstract_dtype, &_NumberAbstract_dtype, 0},
     {"numpy.dtypes.FloatingAbstractDType",
      &_FloatAbstract_dtype, &_InexactAbstract_dtype, 0},
     {"numpy.dtypes.ComplexFloatingAbstractDType",
@@ -218,12 +218,12 @@ initialize_abstract_dtypes(void)
 {
     /*
      * Create the abstract DType classes that mirror the array-API "kind"
-     * hierarchy (NumericAbstractDType -> IntegerAbstractDType ->
+     * hierarchy (NumberAbstractDType -> IntegerAbstractDType ->
      * SignedIntegerAbstractDType / UnsignedIntegerAbstractDType, and
-     * NumericAbstractDType -> InexactAbstractDType -> FloatAbstractDType /
-     * ComplexAbstractDType) and expose them on ``numpy.dtypes``.  This must
-     * run before ``set_typeinfo`` so the legacy concrete DType classes can
-     * use these abstracts as ``tp_base``.
+     * NumberAbstractDType -> InexactAbstractDType -> FloatingAbstractDType /
+     * ComplexFloatingAbstractDType) and expose them on ``numpy.dtypes``.
+     * This must run before ``set_typeinfo`` so the legacy concrete DType
+     * classes can use these abstracts as ``tp_base``.
      */
     if (npy_cache_import_runtime("numpy.dtypes", "_add_dtype_helper",
                                  &npy_runtime_imports._add_dtype_helper) < 0) {
@@ -240,13 +240,13 @@ initialize_abstract_dtypes(void)
             return -1;
         }
         *spec->out = dt;
-        if (PyObject_CallFunctionObjArgs(
-                    npy_runtime_imports._add_dtype_helper,
-                    (PyObject *)dt,
-                    Py_None,
-                    NULL) == NULL) {
+        PyObject *res = PyObject_CallFunctionObjArgs(
+                npy_runtime_imports._add_dtype_helper,
+                (PyObject *)dt, Py_None, NULL);
+        if (res == NULL) {
             return -1;
         }
+        Py_DECREF(res);
     }
 
     /*

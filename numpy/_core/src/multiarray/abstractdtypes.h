@@ -12,17 +12,23 @@ extern "C" {
 
 /*
  * Abstract DType classes representing the numerical "kind" hierarchy that
- * mirrors the NumPy scalar type tree (numeric -> integer -> signed/unsigned,
- * numeric -> inexact -> float/complex).  They are dynamically created during
- * module init via ``PyType_FromMetaclass`` so the storage is held in
- * pointer variables; the public ``PyArray_*AbstractDType`` names below remain
- * usable as struct lvalues (and ``&PyArray_*AbstractDType`` resolves to the
- * pointer).
+ * mirrors the NumPy scalar type tree (number -> integer -> signed/unsigned,
+ * number -> inexact -> floating/complex floating).  They are dynamically
+ * created during module init via ``PyType_FromMetaclass`` so the storage is
+ * held in pointer variables; the public ``PyArray_*AbstractDType`` names below
+ * remain usable as struct lvalues (and ``&PyArray_*AbstractDType`` resolves to
+ * the pointer).
+ *
+ * NOTE: A few of the C names are older than the ``numpy.dtypes`` ones and kept
+ *       for backwards compatibility: ``PyArray_IntAbstractDType`` is
+ *       ``IntegerAbstractDType``, ``PyArray_FloatAbstractDType`` is
+ *       ``FloatingAbstractDType``, and ``PyArray_ComplexAbstractDType`` is
+ *       ``ComplexFloatingAbstractDType``.
  *
  * They are mainly needed for value based promotion in ufuncs and for the
  * array-API "kind" classifications used by ``isdtype`` / ``issubdtype``.
  */
-NPY_NO_EXPORT extern PyArray_DTypeMeta *_NumericAbstract_dtype;
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_NumberAbstract_dtype;
 NPY_NO_EXPORT extern PyArray_DTypeMeta *_IntegerAbstract_dtype;
 NPY_NO_EXPORT extern PyArray_DTypeMeta *_SignedIntegerAbstract_dtype;
 NPY_NO_EXPORT extern PyArray_DTypeMeta *_UnsignedIntegerAbstract_dtype;
@@ -30,7 +36,7 @@ NPY_NO_EXPORT extern PyArray_DTypeMeta *_InexactAbstract_dtype;
 NPY_NO_EXPORT extern PyArray_DTypeMeta *_FloatAbstract_dtype;
 NPY_NO_EXPORT extern PyArray_DTypeMeta *_ComplexAbstract_dtype;
 
-#define PyArray_NumericAbstractDType (*_NumericAbstract_dtype)
+#define PyArray_NumberAbstractDType (*_NumberAbstract_dtype)
 #define PyArray_IntAbstractDType (*_IntegerAbstract_dtype)
 #define PyArray_SignedIntegerAbstractDType (*_SignedIntegerAbstract_dtype)
 #define PyArray_UnsignedIntegerAbstractDType (*_UnsignedIntegerAbstract_dtype)
@@ -53,13 +59,11 @@ NPY_NO_EXPORT extern PyArray_DTypeMeta *_PyComplexDType;
 #define PyArray_PyComplexDType (*_PyComplexDType)
 
 /*
- * Create the abstract DType classes (NumericAbstractDType, IntegerAbstractDType,
- * SignedIntegerAbstractDType, UnsignedIntegerAbstractDType, InexactAbstractDType,
- * FloatAbstractDType, ComplexAbstractDType), expose them on ``numpy.dtypes``,
- * and set up the implicit ``PyLongDType`` / ``PyFloatDType`` / ``PyComplexDType``
- * value-based-promotion helpers.  Must be called after ``PyArrayDTypeMeta_Type``
- * is ready and before any code that uses these abstracts as ``tp_base``
- * (e.g. ``set_typeinfo``).
+ * Create the abstract DType classes above, expose them on ``numpy.dtypes``,
+ * and set up the implicit ``PyLongDType`` / ``PyFloatDType`` /
+ * ``PyComplexDType`` value-based-promotion helpers.  Must be called after
+ * ``PyArrayDTypeMeta_Type`` is ready and before any code that uses these
+ * abstracts as ``tp_base`` (e.g. ``set_typeinfo``).
  */
 NPY_NO_EXPORT int
 initialize_abstract_dtypes(void);

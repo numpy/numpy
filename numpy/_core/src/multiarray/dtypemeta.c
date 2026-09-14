@@ -192,7 +192,8 @@ dtypemeta_initialize_struct_from_spec(
     }
 
     DType->flags = spec->flags;
-    if (PyObject_TypeCheck(spec->typeobj, (PyTypeObject *)&PyArray_NumericAbstractDType)) {
+    if (PyType_IsSubtype((PyTypeObject *)DType,
+                         (PyTypeObject *)&PyArray_NumberAbstractDType)) {
         DType->flags |= NPY_DT_NUMERIC;
         // TODO(seberg): Eventually remove opposite, setting the flag but not
         // subclassing explicitly. (Then maybe even remove __subclasscheck__)
@@ -517,9 +518,13 @@ dtypemeta_is_gc(PyObject *dtype_class)
 static int
 dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
 {
+    /*
+     * ``dt_slots`` may still be NULL: a DType class created via
+     * ``PyType_FromMetaclass`` is tracked by the GC before we get a chance
+     * to fill it in.
+     */
     if (type->dt_slots != NULL) {
-        NPY_DType_Slots *slots = NPY_DT_SLOTS(type);
-        Py_VISIT(slots->castingimpls);
+        Py_VISIT(NPY_DT_SLOTS(type)->castingimpls);
     }
     Py_VISIT((PyObject *)type->singleton);
     Py_VISIT((PyObject *)type->scalar_type);
@@ -1318,6 +1323,12 @@ dtypemeta_wrap_legacy_descriptor(
         }
     }
 
+    /*
+     * NOTE: ``PyTypeNum_ISNUMBER`` includes bool, so ``NPY_DT_NUMERIC``
+     * disagrees with ``NumberAbstractDType`` for it.
+     * TODO(seberg): Consider aligning the flag to exclude bool. Having an `_`
+     * in Python hopefully means downstream doesn't really rely on it.
+     */
     if (PyTypeNum_ISNUMBER(descr->type_num)) {
         dtype_class->flags |= NPY_DT_NUMERIC;
     }
@@ -1362,8 +1373,7 @@ static PyObject *
 dtypemeta_subclasscheck(PyArray_DTypeMeta *self, PyObject *arg)
 {
     if (!PyType_Check(arg)) {
-        PyErr_SetString(PyExc_TypeError,
-                "issubclass() arg 2 must be a class, type, or tuple of types");
+        PyErr_SetString(PyExc_TypeError, "issubclass() arg 1 must be a class");
         return NULL;
     }
     /*
@@ -1384,15 +1394,17 @@ dtypemeta_subclasscheck(PyArray_DTypeMeta *self, PyObject *arg)
         Py_RETURN_FALSE;
     }
     /*
-     * NumericAbstractDType: any DType class with the ``NPY_DT_NUMERIC`` flag
-     * is considered a (virtual) subclass.
+     * NumberAbstractDType: a new-style DType class may opt in via the
+     * ``NPY_DT_NUMERIC`` flag rather than subclassing.  Legacy DTypes are
+     * excluded, since they all subclass the correct abstract already; the
+     * flag is set for bool as well, but bool is not a "number" here (this
+     * matches ``np.number`` and the array API "numeric" kind).
      * TODO(seberg): Eventually force downstream to subclass.
      */
-    if (self == &PyArray_NumericAbstractDType) {
-        if (NPY_DT_is_numeric((PyArray_DTypeMeta *)arg)) {
-            Py_RETURN_TRUE;
-        }
-        Py_RETURN_FALSE;
+    if (self == &PyArray_NumberAbstractDType
+            && !NPY_DT_is_legacy((PyArray_DTypeMeta *)arg)
+            && NPY_DT_is_numeric((PyArray_DTypeMeta *)arg)) {
+        Py_RETURN_TRUE;
     }
     Py_RETURN_FALSE;
 }
@@ -1402,10 +1414,10 @@ static PyObject *
 dtypemeta_instancecheck(PyArray_DTypeMeta *self, PyObject *arg)
 {
     /*
-     * Defer to ``__subclasscheck__`` so ``isinstance()`` honors virtual
-     * subclasses registered via ``register()`` on abstract DType classes.
-     * The default ``type.__instancecheck__`` only consults the C-level
-     * ``tp_base`` chain, which doesn't include cache-registered subclasses.
+     * Defer to ``__subclasscheck__`` so that ``isinstance()`` also honors the
+     * DTypes that are only virtual subclasses of an abstract DType.  The
+     * default ``type.__instancecheck__`` only consults the C-level
+     * ``tp_base`` chain.
      */
     return dtypemeta_subclasscheck(self, (PyObject *)Py_TYPE(arg));
 }
@@ -1457,9 +1469,7 @@ static PyMethodDef dtypemeta_methods[] = {
     {"__instancecheck__",
             (PyCFunction)(void *)dtypemeta_instancecheck,
             METH_O,
-            "Return whether the argument is an instance of this dtype "
-            "type, including virtual subclasses registered via "
-            "``register()``."},
+            "Return whether the argument is an instance of this dtype type."},
     {NULL, NULL, 0, NULL}
 };
 
