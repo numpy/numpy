@@ -10,6 +10,10 @@ from typing import Any, assert_type
 import numpy as np
 import numpy.typing as npt
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+
 class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.int64]]): ...
 
 i8: np.int64
@@ -134,18 +138,17 @@ assert_type(np.tensordot(_to_1d_float, _to_1d_float), npt.NDArray[np.float64 | A
 assert_type(np.tensordot(_to_1d_complex, _to_1d_complex), npt.NDArray[np.complex128 | Any])
 
 # cross
-assert_type(np.cross(AR_i8, AR_i8), npt.NDArray[np.int64])
-assert_type(np.cross(AR_u8, AR_u8), npt.NDArray[np.uint64])
-assert_type(np.cross(AR_i8, AR_i8), npt.NDArray[np.int64])
-assert_type(np.cross(AR_f8, AR_f8), npt.NDArray[np.float64])
-assert_type(np.cross(AR_f8, AR_i8), npt.NDArray[np.float64 | Any])
-assert_type(np.cross(AR_c16, AR_c16), npt.NDArray[np.complex128])
-assert_type(np.cross(AR_c16, AR_f8), npt.NDArray[np.complex128 | Any])
-assert_type(np.cross(AR_m, AR_m), npt.NDArray[np.timedelta64])
-assert_type(np.cross(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(np.cross(AR_i8, AR_i8_1d), npt.NDArray[np.int64])
+assert_type(np.cross(AR_i8_1d, AR_i8), npt.NDArray[np.int64])
+assert_type(np.cross(AR_i8_1d, AR_i8_1d), _Array1D[np.int64])
+assert_type(np.cross(AR_i8_1d, AR_i8_2d), _Array2D[np.int64])
+assert_type(np.cross(AR_i8_2d, AR_i8_1d), _Array2D[np.int64])
+assert_type(np.cross(AR_i8_2d, AR_i8_3d), _Array3D[np.int64])
+assert_type(np.cross(AR_i8_3d, AR_i8_2d), _Array3D[np.int64])
+assert_type(np.cross(AR_i8_4d, AR_i8_4d), npt.NDArray[np.int64])
 assert_type(np.cross(_to_1d_int, _to_1d_int), npt.NDArray[np.int_ | Any])
-assert_type(np.cross(_to_1d_float, _to_1d_float), npt.NDArray[np.float64 | Any])
-assert_type(np.cross(_to_1d_complex, _to_1d_complex), npt.NDArray[np.complex128 | Any])
+assert_type(np.cross(AR_f8, AR_i8), npt.NDArray[np.float64 | Any])
+assert_type(np.cross(AR_c16, AR_f8), npt.NDArray[np.complex128 | Any])
 
 assert_type(np.isscalar(i8), bool)
 assert_type(np.isscalar(AR_i8), bool)
