@@ -1041,18 +1041,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     return result;
 }
 
-static PyObject *
-array_richcompare_guarded(PyArrayObject *self, PyObject *other, int cmp_op)
-{
-    PyObject *result;
-    if (Py_EnterRecursiveCall(" while comparing array elements")) {
-        return NULL;
-    }
-    result = array_richcompare(self, other, cmp_op);
-    Py_LeaveRecursiveCall();
-    return result;
-}
-
 /*NUMPY_API
  */
 NPY_NO_EXPORT int
@@ -1291,7 +1279,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     .tp_as_buffer = &array_as_buffer,
     .tp_flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_SEQUENCE),
 
-    .tp_richcompare = (richcmpfunc)array_richcompare_guarded,
+    .tp_richcompare = (richcmpfunc)array_richcompare,
     .tp_weaklistoffset = offsetof(PyArrayObject_fields, weakreflist),
     .tp_iter = (getiterfunc)array_iter,
     .tp_methods = array_methods,
