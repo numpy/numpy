@@ -1,9 +1,10 @@
 from _typeshed import ConvertibleToInt, Incomplete
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from typing import (
     Any,
     ClassVar,
     Literal as L,
+    Never,
     NoReturn,
     Self,
     SupportsIndex,
@@ -38,8 +39,17 @@ from numpy._typing import (
     _ScalarLike_co,
 )
 
+type _Float_co = np.floating | np.integer | np.bool
+type _Number_co = np.number | np.bool
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+
+# workaround for mypy and pyright not following the typing spec for overloads
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
+
 type _2Tup[T] = tuple[T, T]
-type _5Tup[T] = tuple[T, NDArray[float64], NDArray[int32], NDArray[float64], NDArray[float64]]
+type _5Tup[T] = tuple[T, _Array1D[float64], int32, _Array1D[float64], float | floating]
 
 ###
 
@@ -207,7 +217,28 @@ def polyder(
     m: SupportsInt | SupportsIndex = 1,
 ) -> NDArray[object_]: ...
 
-@overload
+#
+@overload  # ?d +f64, ?d +f64  (workaround)
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayJustND[_Float_co],
+    deg: SupportsIndex | SupportsInt,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    cov: L[False] = False,
+) -> NDArray[float64]: ...
+@overload  # ?d +f64, 1d +f64
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _Array1D[_Float_co] | Sequence[float],
+    deg: SupportsIndex | SupportsInt,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    cov: L[False] = False,
+) -> _Array1D[float64]: ...
+@overload  # ?d +f64, ?d +f64  (fallback)
 def polyfit(
     x: _ArrayLikeFloat_co,
     y: _ArrayLikeFloat_co,
@@ -217,17 +248,29 @@ def polyfit(
     w: _ArrayLikeFloat_co | None = None,
     cov: L[False] = False,
 ) -> NDArray[float64]: ...
-@overload
+@overload  # ?d +f64, ?d +f64, cov=<given>  (workaround)
 def polyfit(
-    x: _ArrayLikeComplex_co,
-    y: _ArrayLikeComplex_co,
+    x: _ArrayLikeFloat_co,
+    y: _ArrayJustND[_Float_co],
     deg: SupportsIndex | SupportsInt,
     rcond: float | None = None,
     full: L[False] = False,
     w: _ArrayLikeFloat_co | None = None,
-    cov: L[False] = False,
-) -> NDArray[complex128]: ...
-@overload
+    *,
+    cov: L[True, "unscaled"],
+) -> _2Tup[NDArray[float64]]: ...
+@overload  # ?d +f64, 1d +f64, cov=<given>
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _Array1D[_Float_co] | Sequence[float],
+    deg: SupportsIndex | SupportsInt,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    *,
+    cov: L[True, "unscaled"],
+) -> tuple[_Array1D[float64], _Array2D[float64]]: ...
+@overload  # ?d +f64, ?d +f64, cov=<given>  (fallback)
 def polyfit(
     x: _ArrayLikeFloat_co,
     y: _ArrayLikeFloat_co,
@@ -238,7 +281,80 @@ def polyfit(
     *,
     cov: L[True, "unscaled"],
 ) -> _2Tup[NDArray[float64]]: ...
-@overload
+@overload  # ?d +f64, ?d +f64, full=True  (positional)
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayLikeFloat_co,
+    deg: SupportsIndex | SupportsInt,
+    rcond: float | None,
+    full: L[True],
+    w: _ArrayLikeFloat_co | None = None,
+    cov: bool | L["unscaled"] = False,
+) -> _5Tup[NDArray[float64]]: ...
+@overload  # ?d +f64, ?d +f64, full=True  (keyword)
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayLikeFloat_co,
+    deg: SupportsIndex | SupportsInt,
+    rcond: float | None = None,
+    *,
+    full: L[True],
+    w: _ArrayLikeFloat_co | None = None,
+    cov: bool | L["unscaled"] = False,
+) -> _5Tup[NDArray[float64]]: ...
+@overload  # ?d ~c128, ?d ~c128  (workaround)
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayJustND[_Number_co],
+    deg: SupportsIndex | SupportsInt,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    cov: L[False] = False,
+) -> NDArray[complex128 | Any]: ...
+@overload  # ?d ~c128, 1d ~c128
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _Array1D[_Number_co] | Sequence[complex],
+    deg: SupportsIndex | SupportsInt,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    cov: L[False] = False,
+) -> _Array1D[complex128 | Any]: ...
+@overload  # ?d ~c128, ?d ~c128  (fallback)
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayLikeComplex_co,
+    deg: SupportsIndex | SupportsInt,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    cov: L[False] = False,
+) -> NDArray[complex128 | Any]: ...
+@overload  # ?d ~c128, ?d ~c128, cov=<given>  (workaround)
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayJustND[_Number_co],
+    deg: SupportsIndex | SupportsInt,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    *,
+    cov: L[True, "unscaled"],
+) -> tuple[NDArray[complex128 | Any], NDArray[Any]]: ...
+@overload  # ?d ~c128, 1d ~c128, cov=<given>
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _Array1D[_Number_co] | Sequence[complex],
+    deg: SupportsIndex | SupportsInt,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    *,
+    cov: L[True, "unscaled"],
+) -> tuple[_Array1D[complex128 | Any], _Array2D[Any]]: ...
+@overload  # ?d ~c128, ?d ~c128, cov=<given>  (fallback)
 def polyfit(
     x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co,
@@ -248,29 +364,8 @@ def polyfit(
     w: _ArrayLikeFloat_co | None = None,
     *,
     cov: L[True, "unscaled"],
-) -> _2Tup[NDArray[complex128]]: ...
-@overload
-def polyfit(
-    x: _ArrayLikeFloat_co,
-    y: _ArrayLikeFloat_co,
-    deg: SupportsIndex | SupportsInt,
-    rcond: float | None,
-    full: L[True],
-    w: _ArrayLikeFloat_co | None = None,
-    cov: bool | L["unscaled"] = False,
-) -> _5Tup[NDArray[float64]]: ...
-@overload
-def polyfit(
-    x: _ArrayLikeFloat_co,
-    y: _ArrayLikeFloat_co,
-    deg: SupportsIndex | SupportsInt,
-    rcond: float | None = None,
-    *,
-    full: L[True],
-    w: _ArrayLikeFloat_co | None = None,
-    cov: bool | L["unscaled"] = False,
-) -> _5Tup[NDArray[float64]]: ...
-@overload
+) -> tuple[NDArray[complex128 | Any], NDArray[Any]]: ...
+@overload  # ?d ~c128, ?d ~c128, full=True  (positional)
 def polyfit(
     x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co,
@@ -279,8 +374,8 @@ def polyfit(
     full: L[True],
     w: _ArrayLikeFloat_co | None = None,
     cov: bool | L["unscaled"] = False,
-) -> _5Tup[NDArray[complex128]]: ...
-@overload
+) -> _5Tup[NDArray[complex128 | Any]]: ...
+@overload  # ?d ~c128, ?d ~c128, full=True  (keyword)
 def polyfit(
     x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co,
@@ -290,8 +385,9 @@ def polyfit(
     full: L[True],
     w: _ArrayLikeFloat_co | None = None,
     cov: bool | L["unscaled"] = False,
-) -> _5Tup[NDArray[complex128]]: ...
+) -> _5Tup[NDArray[complex128 | Any]]: ...
 
+#
 @overload
 def polyval(
     p: _ArrayLikeBool_co,
