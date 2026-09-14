@@ -1,0 +1,12 @@
+Faster broadcasting in ufuncs
+-----------------------------
+Ufunc calls that broadcast an operand along the last axis of a C-contiguous
+array, such as ``a + v`` with ``a.shape == (n, 3)`` and ``v.shape == (3,)``,
+now re-use the iterator buffer of the broadcast operand instead of refilling it
+one row at a time. Such calls can be several times faster when the trailing
+axis is short.
+
+As a side effect, a reduction with a ``dtype=`` wider than its ``out`` no longer
+reads the running result back from ``out`` after every buffer refill, so results
+such as ``np.add.reduce(x, dtype=np.float64, out=np.zeros((), dtype=np.float32))``
+are more accurate and no longer depend on `numpy.setbufsize`.
