@@ -18,6 +18,12 @@ AR_c16: npt.NDArray[np.complex128]
 AR_c16_1d: _Array1D[np.complex128]
 AR_O: npt.NDArray[np.object_]
 
+_f8: np.float64
+
+_py_i_1d: list[int]
+_py_f_1d: list[float]
+_py_c_1d: list[complex]
+
 poly_obj: np.poly1d
 
 assert_type(poly_obj.variable, str)
@@ -123,12 +129,19 @@ assert_type(
     ],
 )
 
-assert_type(np.polyval(AR_b, AR_b), npt.NDArray[np.int64])
-assert_type(np.polyval(AR_u4, AR_b), npt.NDArray[np.unsignedinteger])
-assert_type(np.polyval(AR_i8, AR_i8), npt.NDArray[np.signedinteger])
-assert_type(np.polyval(AR_f8, AR_i8), npt.NDArray[np.floating])
-assert_type(np.polyval(AR_i8, AR_c16), npt.NDArray[np.complexfloating])
-assert_type(np.polyval(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(np.polyval(AR_i8, 1), np.int_ | Any)
+assert_type(np.polyval(AR_i8, AR_b), npt.NDArray[np.int_ | Any])
+assert_type(np.polyval(AR_i8, _py_c_1d), npt.NDArray[np.complex128 | Any])
+assert_type(np.polyval(AR_f8, poly_obj), np.poly1d)
+assert_type(np.polyval(AR_f8, _f8), np.float64)
+assert_type(np.polyval(AR_f8, 1.0), np.float64 | Any)
+assert_type(np.polyval(AR_f8, AR_i8), npt.NDArray[np.float64 | Any])
+assert_type(np.polyval(AR_f8, AR_O), npt.NDArray[Any] | Any)
+assert_type(np.polyval(AR_f8_1d, AR_f8_2d), _Array2D[np.float64])
+assert_type(np.polyval(AR_c16, 1j), np.complex128 | Any)
+assert_type(np.polyval(AR_c16_1d, AR_f8_2d), _Array2D[np.complex128 | Any])
+assert_type(np.polyval(_py_i_1d, _py_i_1d), npt.NDArray[np.int_ | Any])
+assert_type(np.polyval(_py_f_1d, _py_i_1d), npt.NDArray[np.float64 | Any])
 
 assert_type(np.polyadd(poly_obj, AR_i8), np.poly1d)
 assert_type(np.polyadd(AR_f8, poly_obj), np.poly1d)
