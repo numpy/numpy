@@ -1394,15 +1394,15 @@ dtypemeta_subclasscheck(PyArray_DTypeMeta *self, PyObject *arg)
         Py_RETURN_FALSE;
     }
     /*
-     * NumberAbstractDType: a new-style DType class may opt in via the
-     * ``NPY_DT_NUMERIC`` flag rather than subclassing.  Legacy DTypes are
-     * excluded, since they all subclass the correct abstract already; the
-     * flag is set for bool as well, but bool is not a "number" here (this
-     * matches ``np.number`` and the array API "numeric" kind).
+     * NumberAbstractDType: a DType may opt in via the ``NPY_DT_NUMERIC`` flag
+     * rather than subclassing.  This is an escape hatch for DTypes written
+     * before the abstract hierarchy existed.  ``bool`` sets the flag but is
+     * not a "number" here (matching ``np.number`` and the array API
+     * "numeric" kind).
      * TODO(seberg): Eventually force downstream to subclass.
      */
     if (self == &PyArray_NumberAbstractDType
-            && !NPY_DT_is_legacy((PyArray_DTypeMeta *)arg)
+            && arg != (PyObject *)&PyArray_BoolDType
             && NPY_DT_is_numeric((PyArray_DTypeMeta *)arg)) {
         Py_RETURN_TRUE;
     }
