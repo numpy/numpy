@@ -177,7 +177,6 @@ errmodeconverter(PyObject *obj, int *mode)
         return 1;
     }
     if (!PyUnicode_Check(obj)) {
-        /* gh-32609 */
         PyErr_Format(PyExc_TypeError,
                 "invalid error mode %.100R, must be a string or None", obj);
         return 0;
