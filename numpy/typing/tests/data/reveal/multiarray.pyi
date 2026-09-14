@@ -214,7 +214,10 @@ assert_type(np.where(AR_b_nd, AR_u1, AR_u1), npt.NDArray[np.uint8])
 assert_type(np.where(AR_b_nd, AR_f4_nd, AR_f4_nd), npt.NDArray[np.float32])
 assert_type(np.where([True, True, False], 1, 0), npt.NDArray[Any])
 
-assert_type(np.lexsort([0, 1, 2]), npt.NDArray[np.intp])
+assert_type(np.lexsort((AR_f8, AR_f8)), npt.NDArray[np.intp])
+assert_type(np.lexsort([0, 1, 2]), np.intp)
+assert_type(np.lexsort((AR_f4_1d, AR_f4_1d)), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.lexsort(AR_f4_3d), np.ndarray[tuple[int, int], np.dtype[np.intp]])
 
 assert_type(np.can_cast(np.dtype("i8"), int), bool)
 assert_type(np.can_cast(AR_f8, "f8"), bool)

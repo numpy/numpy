@@ -210,6 +210,9 @@ type _Tuple2[T] = tuple[T, T]
 type _Tuple3[T] = tuple[T, T, T]
 type _Tuple4[T] = tuple[T, T, T, T]
 
+type _Keys1D = _Array1D[Any] | Sequence[complex | np.generic]
+type _Keys2D = _Array2D[Any] | Sequence[_Keys1D]
+
 # workaround for mypy and pyright not following the typing spec for overloads
 type _JustAnyShape = tuple[Never, Never, Never, Never, Never]
 type _ArrayJustND[ScalarT: np.generic] = ndarray[tuple[Never, Never, Never, Never], dtype[ScalarT]]
@@ -1491,8 +1494,18 @@ def where(condition: ArrayLike, x: _ArrayLike[_AnyScalarT], y: _ArrayLike[_AnySc
 def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike, /) -> NDArray[Any]: ...
 
 #
-def lexsort(keys: ArrayLike, axis: SupportsIndex = -1) -> NDArray[intp]: ...
+@overload  # ?d  (workaround)
+def lexsort(keys: _ArrayJustND[Any] | Sequence[_ArrayJustND[Any]], axis: SupportsIndex = -1) -> NDArray[intp]: ...
+@overload  # 1d
+def lexsort(keys: _Keys1D, axis: SupportsIndex = -1) -> intp: ...
+@overload  # 2d
+def lexsort(keys: _Keys2D, axis: SupportsIndex = -1) -> _Array1D[intp]: ...
+@overload  # 3d
+def lexsort(keys: _Array3D[Any] | Sequence[_Keys2D], axis: SupportsIndex = -1) -> _Array2D[intp]: ...
+@overload  # ?d  (fallback)
+def lexsort(keys: ArrayLike, axis: SupportsIndex = -1) -> NDArray[intp] | Any: ...
 
+#
 def can_cast(from_: ArrayLike | DTypeLike, to: DTypeLike, casting: _CastingKind = "safe") -> bool: ...
 
 def min_scalar_type(a: ArrayLike, /) -> dtype: ...
