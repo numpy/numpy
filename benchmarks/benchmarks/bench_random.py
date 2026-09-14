@@ -124,6 +124,9 @@ class RNG(Benchmark):
     def time_normal_zig(self, bitgen):
         self.rg.standard_normal(nom_size)
 
+    def time_laplace(self, bitgen):
+        self.rg.laplace(0.0, 1.0, nom_size)
+
 class Bounded(Benchmark):
     u8 = np.uint8
     u16 = np.uint16
