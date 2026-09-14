@@ -96,12 +96,12 @@ assert_type(np.tri(10, k=2, dtype=int), np.ndarray[_2D])
 
 # tril
 assert_type(np.tril(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
-assert_type(np.tril(_to_nd_bool, k=0), np.ndarray)
-assert_type(np.tril(_to_1d_bool, k=0), np.ndarray)
-assert_type(np.tril(_to_2d_bool, k=0), np.ndarray)
-assert_type(np.tril(_1d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
 assert_type(np.tril(_2d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
-assert_type(np.tril(_3d_bool, k=0), np.ndarray[_3D, np.dtype[np.bool]])
+assert_type(np.tril(_1d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.tril(_to_2d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.tril(_to_1d_i64), np.ndarray[_2D, np.dtype[np.int_]])
+assert_type(np.tril(_to_2d_f64), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.tril(_to_1d_c128), np.ndarray[_2D, np.dtype[np.complex128]])
 
 # triu
 assert_type(np.triu(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
