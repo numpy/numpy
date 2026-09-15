@@ -534,10 +534,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
 
     else if (indices[0].type == HAS_NEWAXIS) {
-        PyErr_SetString(PyExc_IndexError,
-            "only integers, slices (`:`), ellipsis (`...`) and integer or boolean "
-            "arrays are valid indices"
-        );
+        PyErr_Format(PyExc_IndexError, "cannot index with %R",
+                     Py_TYPE(ind));
         goto finish;
     }
 
@@ -654,10 +652,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         goto finish;
     }
 
-    PyErr_SetString(PyExc_IndexError,
-        "only integers, slices (`:`), ellipsis (`...`) and integer or boolean "
-        "arrays are valid indices"
-    );
+    PyErr_Format(PyExc_IndexError, "cannot index with %R", Py_TYPE(ind));
 finish:
     NPY_cast_info_xfree(&cast_info);
     for (int i = 0; i < index_num; i++) {
@@ -803,10 +798,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         goto finish;
     }
     else if (indices[0].type == HAS_NEWAXIS) {
-        PyErr_SetString(PyExc_IndexError,
-            "only integers, slices (`:`), ellipsis (`...`) and integer or boolean "
-            "arrays are valid indices"
-        );
+        PyErr_Format(PyExc_IndexError, "cannot index with %R",
+                     Py_TYPE(ind));
         goto finish;
     }
 
@@ -927,10 +920,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         goto finish;
     }
 
-    PyErr_SetString(PyExc_IndexError,
-        "only integers, slices (`:`), ellipsis (`...`) and integer or boolean "
-        "arrays are valid indices"
-    );
+    PyErr_Format(PyExc_IndexError, "cannot index with %R", Py_TYPE(ind));
 finish:
     NPY_cast_info_xfree(&cast_info);
     for (int i = 0; i < index_num; i++) {
