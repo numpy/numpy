@@ -548,24 +548,42 @@ def average(
 ) -> _Tuple2[NDArray[Any] | Any]: ...
 
 #
-@overload
+@overload  # Nd T
 def asarray_chkfinite[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT], dtype: None = None, order: _OrderKACF = None
 ) -> np.ndarray[ShapeT, DTypeT]: ...
-@overload
+@overload  # Nd T, dtype=<known>
 def asarray_chkfinite[ShapeT: _Shape, ScalarT: np.generic](
-    a: np.ndarray[ShapeT], dtype: _DTypeLike[ScalarT], order: _OrderKACF = None
+    a: _Array[ShapeT, Any], dtype: _DTypeLike[ScalarT], order: _OrderKACF = None
 ) -> _Array[ShapeT, ScalarT]: ...
-@overload
+@overload  # Nd T, dtype=<unknown>
+def asarray_chkfinite[ShapeT: _Shape](
+    a: _Array[ShapeT, Any], dtype: DTypeLike, order: _OrderKACF = None
+) -> _Array[ShapeT, Any]: ...
+@overload  # ?d T
 def asarray_chkfinite[ScalarT: np.generic](
     a: _ArrayLike[ScalarT], dtype: None = None, order: _OrderKACF = None
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # 1d bool
+def asarray_chkfinite(a: Sequence[bool], dtype: None = None, order: _OrderKACF = None) -> _Array1D[np.bool]: ...
+@overload  # 1d ~int
+def asarray_chkfinite(a: list[int], dtype: None = None, order: _OrderKACF = None) -> _Array1D[np.int_]: ...
+@overload  # 1d ~float
+def asarray_chkfinite(a: list[float], dtype: None = None, order: _OrderKACF = None) -> _Array1D[np.float64]: ...
+@overload  # 1d ~complex
+def asarray_chkfinite(a: list[complex], dtype: None = None, order: _OrderKACF = None) -> _Array1D[np.complex128]: ...
+@overload  # 1d, dtype=<known>
+def asarray_chkfinite[ScalarT: np.generic](
+    a: Sequence[complex | np.generic], dtype: _DTypeLike[ScalarT], order: _OrderKACF = None
+) -> _Array1D[ScalarT]: ...
+@overload  # 1d, dtype=<unknown>
+def asarray_chkfinite(a: Sequence[complex | np.generic], dtype: DTypeLike, order: _OrderKACF = None) -> _Array1D[Any]: ...
+@overload  # ?d, dtype=<known>
 def asarray_chkfinite[ScalarT: np.generic](
     a: object, dtype: _DTypeLike[ScalarT], order: _OrderKACF = None
 ) -> NDArray[ScalarT]: ...
-@overload
-def asarray_chkfinite(a: object, dtype: DTypeLike | None = None, order: _OrderKACF = None) -> NDArray[Incomplete]: ...
+@overload  # ?d  (fallback)
+def asarray_chkfinite(a: object, dtype: DTypeLike | None = None, order: _OrderKACF = None) -> NDArray[Any]: ...
 
 # NOTE: Contrary to the documentation, scalars are also accepted and treated as
 # `[condlist]`. And even though the documentation says these should be boolean, in
