@@ -1624,10 +1624,6 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
      * If the other object is None, False is always right. This avoids
      * the array None comparison, at least until deprecation it is fixed.
      * After that, this may be removed and numpy false would be returned.
-     *
-     * NOTE: np.equal(NaT, None) evaluates to TRUE! This is an
-     *       an inconsistency, which may has to be considered
-     *       when the deprecation is finished.
      */
     if (other == Py_None) {
         if (cmp_op == Py_EQ) {
@@ -3921,6 +3917,71 @@ static PyObject *
 static PyNumberMethods @name@_arrtype_as_number;
 /**end repeat**/
 
+static PyNumberMethods datetime_arrtype_as_number;
+static PyNumberMethods timedelta_arrtype_as_number;
+
+/*
+ * gentype_int/gentype_float would recurse through getitem, which now returns
+ * numpy scalars, so datetime64/timedelta64 need their own.  The TypeError
+ * messages are the ones Python gives for datetime.datetime.
+ */
+static PyObject *
+datetime_scalar_as_number(PyObject *self, npy_int64 val, int deprecated,
+                          int as_float)
+{
+    if (deprecated < 0) {
+        return NULL;
+    }
+    if (!deprecated) {
+        if (as_float) {
+            PyErr_Format(PyExc_TypeError,
+                    "float() argument must be a string or a real number, "
+                    "not '%.200s'",
+                    Py_TYPE(self)->tp_name);
+        }
+        else {
+            PyErr_Format(PyExc_TypeError,
+                    "int() argument must be a string, a bytes-like object "
+                    "or a real number, not '%.200s'",
+                    Py_TYPE(self)->tp_name);
+        }
+        return NULL;
+    }
+
+    /* Deprecated in NumPy 2.6, 2026-09 */
+    if (DEPRECATE("Converting a datetime64 or timedelta64 scalar to int or "
+                  "float is deprecated and will raise TypeError in the "
+                  "future. Use .astype('int64') or .astype('float64') "
+                  "instead.") < 0) {
+        return NULL;
+    }
+    if (as_float) {
+        return PyFloat_FromDouble((double)val);
+    }
+    return PyLong_FromLongLong(val);
+}
+
+/**begin repeat
+ * #name = datetime, timedelta#
+ * #Name = Datetime, Timedelta#
+ */
+
+/**begin repeat1
+ * #kind = int, float#
+ * #as_float = 0, 1#
+ */
+static PyObject *
+@name@type_@kind@(PyObject *self)
+{
+    Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
+    return datetime_scalar_as_number(self, scalar->obval,
+            @name@_int_conversion_is_deprecated(scalar->obval,
+                                                &scalar->obmeta),
+            @as_float@);
+}
+/**end repeat1**/
+/**end repeat**/
+
 /* Arithmetic methods -- only so we can override &, |, ^. */
 NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
     .nb_bool = (inquiry)bool_arrtype_nonzero,
@@ -4610,6 +4671,16 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
 
     /**end repeat**/
+
+    datetime_arrtype_as_number = gentype_as_number;
+    datetime_arrtype_as_number.nb_int = (unaryfunc)datetimetype_int;
+    datetime_arrtype_as_number.nb_float = (unaryfunc)datetimetype_float;
+    PyDatetimeArrType_Type.tp_as_number = &datetime_arrtype_as_number;
+
+    timedelta_arrtype_as_number = gentype_as_number;
+    timedelta_arrtype_as_number.nb_int = (unaryfunc)timedeltatype_int;
+    timedelta_arrtype_as_number.nb_float = (unaryfunc)timedeltatype_float;
+    PyTimedeltaArrType_Type.tp_as_number = &timedelta_arrtype_as_number;
 
     PyStringArrType_Type.tp_alloc = NULL;
     PyStringArrType_Type.tp_free = NULL;
