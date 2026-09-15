@@ -1,5 +1,5 @@
-from collections.abc import Iterable
-from typing import Any, Never, overload
+from collections.abc import Iterable, Sequence
+from typing import Any, Never, SupportsIndex, overload
 
 import numpy as np
 from numpy._typing import ArrayLike, NDArray, _AnyShape, _ArrayLike, _Shape, _ShapeLike
@@ -10,6 +10,9 @@ type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
+
+type _ToShape1D = int | np.integer | tuple[int]
+type _ToShape2D = _ToShape1D | tuple[int, int]
 
 # workaround for mypy and pyright not following the typing spec for overloads
 type _ShapeNoD = tuple[Never, Never, Never, Never]
@@ -102,6 +105,29 @@ def broadcast_to(
 ) -> NDArray[Any]: ...
 
 #
+@overload  # ()
+def broadcast_shapes() -> tuple[()]: ...
+@overload  # 1d
+def broadcast_shapes(a0: int | np.integer, /) -> tuple[int]: ...
+@overload  # Nd
+def broadcast_shapes[ShapeT: _Shape](a0: ShapeT, /) -> ShapeT: ...
+@overload  # ?d
+def broadcast_shapes(a0: Sequence[SupportsIndex], /) -> _AnyShape: ...
+@overload  # ?d, ?d  (workaround)
+def broadcast_shapes(a0: tuple[int, int, int, int], a1: _ShapeLike, /) -> _AnyShape: ...
+@overload  # ?d, ?d  (workaround)
+def broadcast_shapes(a0: _ShapeLike, a1: tuple[int, int, int, int], /) -> _AnyShape: ...
+@overload  # 1d, 1d
+def broadcast_shapes(a0: _ToShape1D, a1: _ToShape1D, /) -> tuple[int]: ...
+@overload  # 1d, 2d
+def broadcast_shapes(a0: _ToShape1D, a1: tuple[int, int], /) -> tuple[int, int]: ...
+@overload  # 2d, <=2d
+def broadcast_shapes(a0: tuple[int, int], a1: _ToShape2D, /) -> tuple[int, int]: ...
+@overload  # <=2d, 3d
+def broadcast_shapes(a0: _ToShape2D, a1: tuple[int, int, int], /) -> tuple[int, int, int]: ...
+@overload  # 3d, <=3d
+def broadcast_shapes(a0: tuple[int, int, int], a1: _ToShape2D | tuple[int, int, int], /) -> tuple[int, int, int]: ...
+@overload  # ?d, *?d  (fallback)
 def broadcast_shapes(*args: _ShapeLike) -> _AnyShape: ...
 
 #
