@@ -5644,11 +5644,6 @@ def append(arr, values, axis=None):
         The axis along which `values` are appended.  If `axis` is not
         given, both `arr` and `values` are flattened before use.
 
-    .. versionchanged:: 2.6
-        Python scalar inputs follow NumPy's scalar promotion rules.
-        For example, appending a Python integer to a ``uint8`` array keeps
-        the ``uint8`` dtype and raises ``OverflowError`` if it is out of bounds.
-
     Returns
     -------
     append : ndarray
@@ -5692,6 +5687,12 @@ def append(arr, values, axis=None):
     `float64` when appended with dtype `int64`
 
     """
+    arr = asanyarray(arr)
+    if axis is None:
+        if arr.ndim != 1:
+            arr = arr.ravel()
+        values = ravel(values)
+        axis = arr.ndim - 1
     return concatenate((arr, values), axis=axis)
 
 

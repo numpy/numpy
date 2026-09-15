@@ -1,8 +1,6 @@
 Python scalar promotion and casting
 -----------------------------------
 
-- `numpy.append` now follows NEP 50 promotion rules. Appending ``1`` to a
-  ``uint8`` array keeps ``uint8``; appending ``300`` raises ``OverflowError``.
 - `numpy.concatenate` with ``axis=None`` and `numpy.choose` now raise
   ``OverflowError`` for Python integers outside the result dtype's range,
   instead of wrapping.
