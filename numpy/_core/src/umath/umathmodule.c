@@ -24,6 +24,7 @@
 #include "npy_pycompat.h"
 #include "npy_argparse.h"
 #include "abstract.h"
+#include "all_equal.h"
 
 #include "numpy/npy_math.h"
 #include "number.h"
@@ -189,6 +190,10 @@ int initumath(PyObject *m)
     d = PyModule_GetDict(m);
 
     if (InitOperators(d) < 0) {
+        return -1;
+    }
+
+    if (init_all_equal(d) < 0) {
         return -1;
     }
 
