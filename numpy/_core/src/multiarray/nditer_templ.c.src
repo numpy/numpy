@@ -181,7 +181,10 @@ npyiter_buffered_reduce_iternext_iters@tag_nop@(NpyIter *iter)
         return 1;
     }
 
-    /* Save the previously used data pointers in the user pointers */
+    /*
+     * Save the previously used data pointers in the user pointers. Re-use is safe:
+     * buffer copies never cross a core boundary, see `npyiter_find_buffering_setup`.
+     */
     memcpy(ptrs, NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
 
     /* Write back to the arrays */
@@ -244,9 +247,8 @@ npyiter_buffered_iternext(NpyIter *iter)
     }
 
     /*
-     * Save the data pointers so the next fill can skip operands that did not
-     * move.  This is only valid because the buffer strides are fixed when the
-     * iterator is set up, so an unchanged pointer means unchanged buffer.
+     * Save the previously used data pointers in the user pointers. Re-use is safe:
+     * buffer copies never cross a core boundary, see `npyiter_find_buffering_setup`.
      */
     memcpy(ptrs, NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
 
