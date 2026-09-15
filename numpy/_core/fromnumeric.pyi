@@ -2020,109 +2020,134 @@ def cumulative_sum[ArrayT: np.ndarray](
 ) -> ArrayT: ...
 
 #
-@overload  # ~builtins.int
+@overload  # ?d Any  (workaround)
 def ptp(
-    a: _NestedSequence[list[int]] | list[int],
+    a: _NestedSequence[Never],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> np.int_: ...
-@overload  # ~builtins.int, axis: <given>
-def ptp(
-    a: _NestedSequence[list[int]] | list[int],
-    axis: int | tuple[int, ...],
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[np.int_]: ...
-@overload  # ~builtins.int, keepdims=True
-def ptp(
-    a: _NestedSequence[list[int]] | list[int],
-    axis: int | tuple[int, ...] | None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[True],
-) -> NDArray[np.int_]: ...
-@overload  # ~builtins.float
-def ptp(
-    a: _NestedSequence[list[float]] | list[float],
-    axis: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> np.float64: ...
-@overload  # ~builtins.float, axis: <given>
-def ptp(
-    a: _NestedSequence[list[float]] | list[float],
-    axis: int | tuple[int, ...],
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[np.float64]: ...
-@overload  # ~builtins.float, keepdims=True
-def ptp(
-    a: _NestedSequence[list[float]] | list[float],
-    axis: int | tuple[int, ...] | None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[True],
-) -> NDArray[np.float64]: ...
-@overload  # ~builtins.complex
-def ptp(
-    a: _NestedSequence[list[complex]] | list[complex],
-    axis: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> np.complex128: ...
-@overload  # ~builtins.complex, axis: <given>
-def ptp(
-    a: _NestedSequence[list[complex]] | list[complex],
-    axis: int | tuple[int, ...],
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[np.complex128]: ...
-@overload  # ~builtins.complex, keepdims=True
-def ptp(
-    a: _NestedSequence[list[complex]] | list[complex],
-    axis: int | tuple[int, ...] | None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[True],
-) -> NDArray[np.complex128]: ...
-@overload  # ~number | timedelta64
+) -> Any: ...
+@overload  # Nd T, axis=None  (default)
 def ptp[ScalarT: np.number | np.timedelta64](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
 ) -> ScalarT: ...
-@overload  # ~number | timedelta64 | object_, axis: <given>
-def ptp[ScalarT: np.number | np.timedelta64 | np.object_](
-    a: _ArrayLike[ScalarT],
-    axis: int | tuple[int, ...],
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[ScalarT]: ...
-@overload  # ~number | timedelta64 | datetime64 | object_, keepdims=True
-def ptp[ArrayT: NDArray[np.number | np.timedelta64 | np.object_]](
-    a: ArrayT,
-    axis: int | tuple[int, ...] | None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[True],
-) -> ArrayT: ...
-@overload  # datetime64
+@overload  # Nd ~datetime64, axis=None  (default)
 def ptp(
     a: _ArrayLike[np.datetime64],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
 ) -> np.timedelta64[Any]: ...
-@overload  # datetime64, axis: <given>
+@overload  # Nd ~object_, axis=None  (default)
 def ptp(
-    a: _ArrayLike[np.datetime64],
+    a: _ArrayLike[np.object_],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> Any: ...
+@overload  # Nd ~int, axis=None  (default)
+def ptp(
+    a: _NestedList[int],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # Nd ~float, axis=None  (default)
+def ptp(
+    a: _NestedList[float],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.float64: ...
+@overload  # Nd ~complex, axis=None  (default)
+def ptp(
+    a: _NestedList[complex],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.complex128: ...
+@overload  # ?d T, axis=<given>  (workaround)
+def ptp[ScalarT: np.number | np.timedelta64](
+    a: _ArrayJustND[ScalarT],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[np.timedelta64]: ...
-@overload  # datetime64, keepdims=True
+) -> NDArray[ScalarT] | Any: ...
+@overload  # 1d T, axis=<given>
+def ptp[ScalarT: np.number | np.timedelta64](
+    a: _ToArray1D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> ScalarT: ...
+@overload  # 1d ~int, axis=<given>
+def ptp(
+    a: list[int],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # 1d ~float, axis=<given>
+def ptp(
+    a: list[float],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.float64: ...
+@overload  # 1d ~complex, axis=<given>
+def ptp(
+    a: list[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.complex128: ...
+@overload  # 2d T, axis=<given>
+def ptp[ScalarT: np.number | np.timedelta64](
+    a: _ToArray2D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array1D[ScalarT]: ...
+@overload  # 2d ~int, axis=<given>
+def ptp(
+    a: Sequence[list[int]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array1D[np.int_]: ...
+@overload  # 2d ~float, axis=<given>
+def ptp(
+    a: Sequence[list[float]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array1D[np.float64]: ...
+@overload  # 2d ~complex, axis=<given>
+def ptp(
+    a: Sequence[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array1D[np.complex128]: ...
+@overload  # 3d T, axis=<given>
+def ptp[ScalarT: np.number | np.timedelta64](
+    a: _ToArray3D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array2D[ScalarT]: ...
+@overload  # Nd T, keepdims=True
+def ptp[ArrayT: NDArray[np.number | np.timedelta64]](
+    a: ArrayT,
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+) -> ArrayT: ...
+@overload  # Nd ~datetime64, keepdims=True
 def ptp[ShapeT: _Shape](
     a: np.ndarray[ShapeT, np.dtype[np.datetime64]],
     axis: int | tuple[int, ...] | None = None,
@@ -2130,14 +2155,81 @@ def ptp[ShapeT: _Shape](
     *,
     keepdims: Literal[True],
 ) -> np.ndarray[ShapeT, np.dtype[np.timedelta64]]: ...
-@overload  # object_
+@overload  # Nd ~object_, keepdims=True
+def ptp[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.object_]],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+@overload  # Nd ~int, keepdims=True
 def ptp(
-    a: _ArrayLike[np.object_],
-    axis: None = None,
+    a: _NestedList[int],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+) -> NDArray[np.int_]: ...
+@overload  # Nd ~float, keepdims=True
+def ptp(
+    a: _NestedList[float],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+) -> NDArray[np.float64]: ...
+@overload  # Nd ~complex, keepdims=True
+def ptp(
+    a: _NestedList[complex],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+) -> NDArray[np.complex128]: ...
+@overload  # ?d T, axis=<given>  (fallback)
+def ptp[ScalarT: np.number | np.timedelta64](
+    a: _ArrayLike[ScalarT],
+    axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> Any: ...
-@overload  # out: ArrayT
+) -> NDArray[ScalarT] | Any: ...
+@overload  # ?d ~datetime64, axis=<given>  (fallback)
+def ptp(
+    a: _ArrayLike[np.datetime64],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.timedelta64] | Any: ...
+@overload  # ?d ~object_, axis=<given>  (fallback)
+def ptp(
+    a: _ArrayLike[np.object_],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.object_] | Any: ...
+@overload  # ?d ~int, axis=<given>  (fallback)
+def ptp(
+    a: _NestedSequence[list[int]],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.int_] | Any: ...
+@overload  # ?d ~float, axis=<given>  (fallback)
+def ptp(
+    a: _NestedSequence[list[float]],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.float64] | Any: ...
+@overload  # ?d ~complex, axis=<given>  (fallback)
+def ptp(
+    a: _NestedSequence[list[complex]],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.complex128] | Any: ...
+@overload  # out=<given>
 def ptp[ArrayT: np.ndarray](
     a: _ArrayLikeNumeric_co,
     axis: int | tuple[int, ...] | None = None,
@@ -2152,13 +2244,13 @@ def ptp(
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
 ) -> Any: ...
-@overload  # fallback, axis: <given>
+@overload  # fallback, axis=<given>
 def ptp(
     a: _ArrayLikeNumeric_co,
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[Any]: ...
+) -> NDArray[Any] | Any: ...
 @overload  # fallback, keepdims=True
 def ptp(
     a: _ArrayLikeNumeric_co,
