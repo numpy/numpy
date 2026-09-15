@@ -5717,8 +5717,9 @@ def append(arr, values, axis=None):
             "np.append converted Python numeric scalars to arrays before "
             f"choosing the result dtype, producing dtype {result.dtype}. "
             "This behavior is deprecated since NumPy 2.6. In a future release, "
-            f"{change}. Convert Python scalars with np.asarray() to keep the "
-            "current result.", DeprecationWarning, stacklevel=2)
+            f"{change}. Wrap each Python scalar in a list or convert it with "
+            "np.asarray() to keep the current result.",
+            DeprecationWarning, stacklevel=2)
         return result
     inputs = tuple(obj if scalar else a for obj, scalar, a in
                    zip((arr, values), conv.scalar_input, arrays))

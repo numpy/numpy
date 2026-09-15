@@ -607,11 +607,13 @@ class TestAppendScalarPromotion(_DeprecationTestCase):
             rf".*producing dtype {re.escape(str(expected.dtype))}.*"
             rf"{re.escape(change)}")
 
-        def append():
+        def append(*args):
             assert_array_equal(np.append(*args), expected, strict=True)
 
-        self.assert_deprecated(append)
-        self.assert_not_deprecated(np.append, args=explicit_args)
+        self.assert_deprecated(append, args=args)
+        self.assert_not_deprecated(append, args=explicit_args)
+        list_args = ([scalar], a) if reverse else (a, [scalar])
+        self.assert_not_deprecated(append, args=list_args)
 
     @pytest.mark.parametrize("dtype, scalar", [
         (np.intp, 1), (np.float64, 1.5), (np.complex128, 1j),

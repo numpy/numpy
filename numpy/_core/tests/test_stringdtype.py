@@ -2215,7 +2215,7 @@ def test_ufunc_multiply(dtype, string_list, other, other_dtype, use_out):
 
     try:
         len(other)
-        other = np.append(other, 3)
+        other = np.append(other, [3])
         if other_dtype is not None:
             other = other.astype(other_dtype)
     except TypeError:
