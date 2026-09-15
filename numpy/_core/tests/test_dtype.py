@@ -957,10 +957,12 @@ class TestMonsterType:
     @requires_deep_recursion
     def test_nested_structured_dtype_zerofill_recursion(self):
         # gh-32488
+        # depending on OS, build, and available stack size, this might
+        # succeed rather than raise -- see test_tuple_recursion above
         dt = np.dtype([("v", "i4")])
         for _ in range(50000):
             dt = np.dtype([("v", "i4"), ("next", dt)])
-        with pytest.raises(RecursionError):
+        with contextlib.suppress(RecursionError):
             np.zeros(1, dtype=dt)
 
 
