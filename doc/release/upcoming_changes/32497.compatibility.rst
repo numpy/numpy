@@ -1,23 +1,12 @@
-Python scalars in ``concatenate`` and ``choose`` follow NEP 50 value rules
---------------------------------------------------------------------------
-`numpy.concatenate` with ``axis=None`` and `numpy.choose` now convert Python
-scalars with the result dtype, as ufuncs and `numpy.copyto` do. A Python
-integer that does not fit the result dtype raises ``OverflowError`` instead of
-wrapping. For example, ``np.concatenate((np.ones(2, "int8"), 300), axis=None)``
-previously returned ``44`` for the new element.
+Python scalar promotion and casting
+-----------------------------------
 
-Python scalars in ``append`` participate in NEP 50 promotion
-----------------------------------------------------------
-`numpy.append` now preserves Python scalar inputs until `numpy.concatenate`
-resolves the result dtype. For example, appending ``1`` to a ``uint8`` array
-retains ``uint8`` instead of promoting to the default integer dtype, while
-appending ``300`` raises ``OverflowError``. NumPy scalars and array inputs
-continue to participate in promotion with their own dtypes.
+- `numpy.append` now follows NEP 50 promotion rules. Appending ``1`` to a
+  ``uint8`` array keeps ``uint8``; appending ``300`` raises ``OverflowError``.
+- `numpy.concatenate` with ``axis=None`` and `numpy.choose` now raise
+  ``OverflowError`` for Python integers outside the result dtype's range,
+  instead of wrapping.
+- Ufuncs, `numpy.copyto`, and `numpy.concatenate` now enforce the same Python
+  scalar restrictions for ``casting="no"`` as for ``casting="equiv"``.
 
-``casting="no"`` rejects a Python scalar that changes dtype
------------------------------------------------------------
-A Python scalar that would be converted to a dtype other than its default
-(``int64``, ``float64`` or ``complex128``) or ``object`` now raises
-``TypeError`` under ``casting="no"``, as it already did under
-``casting="equiv"``. This applies to ufuncs, `numpy.copyto` and
-`numpy.concatenate`.
+See :ref:`arrays.promotion.python-scalar-casting` for the detailed rules.
