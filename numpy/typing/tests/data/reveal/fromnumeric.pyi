@@ -20,6 +20,7 @@ AR_i1: npt.NDArray[np.int8]
 AR_u8: npt.NDArray[np.uint64]
 AR_i8: npt.NDArray[np.int64]
 AR_i8_0d: np.ndarray[tuple[()], np.dtype[np.int64]]
+AR_i8_1d: np.ndarray[tuple[int], np.dtype[np.int64]]
 AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
 AR_O: npt.NDArray[np.object_[int]]
 AR_subclass: NDArraySubclass
@@ -87,10 +88,15 @@ assert_type(np.reshape(f, 1), np.ndarray[tuple[int], np.dtype])
 assert_type(np.reshape(AR_b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.reshape(AR_f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
 
-assert_type(np.choose(1, [True, True]), Any)
+assert_type(np.choose(1, AR_f4), Any)
+assert_type(np.choose(AR_i8, AR_f4), npt.NDArray[np.float32])
+assert_type(np.choose(AR_i8_1d, (AR_f4_1d, AR_f4)), npt.NDArray[np.float32])
+assert_type(np.choose(AR_i8_1d, (AR_f4_1d, AR_f4_1d)), _Array1D[np.float32])
+assert_type(np.choose(AR_i8_1d, (AR_f4_2d, AR_f4_2d)), _Array2D[np.float32])
+assert_type(np.choose(AR_i8_2d, (AR_f4_2d, AR_f4_1d)), _Array2D[np.float32])
 assert_type(np.choose([1], [True, True]), npt.NDArray[Any])
-assert_type(np.choose([1], AR_b), npt.NDArray[np.bool])
 assert_type(np.choose([1], AR_b, out=AR_f4), npt.NDArray[np.float32])
+assert_type(np.choose(_py_list_1d, AR_f4_4d), npt.NDArray[np.float32])
 
 assert_type(np.repeat(b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.repeat(b, 1, axis=0), npt.NDArray[np.bool])

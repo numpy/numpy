@@ -452,29 +452,64 @@ def reshape(
     copy: bool | None = None,
 ) -> NDArray[Any]: ...
 
-# keep in sync with `ma.core.choose`
-@overload
-def choose(
-    a: _IntLike_co,
-    choices: ArrayLike,
+#
+@overload  # 0d, ?d
+def choose(a: _IntLike_co, choices: ArrayLike, out: None = None, mode: _ModeKind = "raise") -> Any: ...
+@overload  # ?d, ?d T  (workaround)
+def choose[ScalarT: np.generic](
+    a: _ArrayJustND[np.integer | np.bool],
+    choices: _ArrayLike[ScalarT],
     out: None = None,
     mode: _ModeKind = "raise",
-) -> Any: ...
-@overload
+) -> NDArray[ScalarT]: ...
+@overload  # ?d, ?d T  (workaround)
+def choose[ScalarT: np.generic](
+    a: _ArrayLikeInt_co,
+    choices: (
+        _ArrayJustND[ScalarT]
+        | Sequence[_ArrayJustND[ScalarT]]
+        | tuple[_ArrayJustND[ScalarT], _ArrayLike[ScalarT]]
+        | tuple[_ArrayLike[ScalarT], _ArrayJustND[ScalarT]]
+    ),
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> NDArray[ScalarT]: ...
+@overload  # 1d, <=1d T
+def choose[ScalarT: np.generic](
+    a: _ToInt1D,
+    choices: _Array2D[ScalarT] | Sequence[_Array1D[ScalarT] | ScalarT],
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array1D[ScalarT]: ...
+@overload  # 1d, 2d T
+def choose[ScalarT: np.generic](
+    a: _ToInt1D,
+    choices: _Array3D[ScalarT] | Sequence[_Array2D[ScalarT]],
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array2D[ScalarT]: ...
+@overload  # 2d, <=2d T
+def choose[ScalarT: np.generic](
+    a: _ToInt2D,
+    choices: _Array3D[ScalarT] | Sequence[_Array2D[ScalarT] | _Array1D[ScalarT] | ScalarT],
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array2D[ScalarT]: ...
+@overload  # ?d, ?d T
 def choose[ScalarT: np.generic](
     a: _ArrayLikeInt_co,
     choices: _ArrayLike[ScalarT],
     out: None = None,
     mode: _ModeKind = "raise",
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, ?d  (fallback)
 def choose(
     a: _ArrayLikeInt_co,
     choices: ArrayLike,
     out: None = None,
     mode: _ModeKind = "raise",
 ) -> NDArray[Any]: ...
-@overload
+@overload  # out=<given>
 def choose[ArrayT: np.ndarray](
     a: _ArrayLikeInt_co,
     choices: ArrayLike,
