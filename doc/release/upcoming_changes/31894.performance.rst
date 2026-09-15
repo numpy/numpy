@@ -1,0 +1,3 @@
+``np.roll`` is faster for no-op shifts
+--------------------------------------
+``np.roll`` now skips unnecessary work when the requested shift is zero, reducing overhead for no-op roll cases.
