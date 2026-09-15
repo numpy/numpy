@@ -624,34 +624,90 @@ def matrix_transpose[ScalarT: np.generic](x: _ArrayLike[ScalarT], /) -> NDArray[
 def matrix_transpose(x: ArrayLike, /) -> NDArray[Any]: ...
 
 #
-@overload  # Nd
+@overload  # known array, axis=<given> (default)
 def partition[ArrayT: np.ndarray](
     a: ArrayT,
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
     kind: _PartitionKind | _NoValueType = ...,
-    order: str | Sequence[str] | None = None,
+    order: None = None,
     descending: bool | _NoValueType = ...,
 ) -> ArrayT: ...
-@overload  # ?d
+@overload  # known void array, axis=<given> (default), order=<given>
+def partition[ArrayT: NDArray[np.void]](
+    a: ArrayT,
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind | _NoValueType = ...,
+    *,
+    order: str | Sequence[str] | None,
+    descending: bool | _NoValueType = ...,
+) -> ArrayT: ...
+@overload  # 1d ~bool
+def partition(
+    a: list[bool],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind | _NoValueType = ...,
+    order: None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.bool]: ...
+@overload  # 1d ~int
+def partition(
+    a: list[int],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind | _NoValueType = ...,
+    order: None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.int_]: ...
+@overload  # 1d ~float
+def partition(
+    a: list[float],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind | _NoValueType = ...,
+    order: None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d ~complex
+def partition(
+    a: list[complex],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind | _NoValueType = ...,
+    order: None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.complex128]: ...
+@overload  # ?d, axis=<given> (default)
 def partition[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
     kind: _PartitionKind | _NoValueType = ...,
-    order: str | Sequence[str] | None = None,
+    order: None = None,
     descending: bool | _NoValueType = ...,
 ) -> NDArray[ScalarT]: ...
-@overload  # axis: None
+@overload  # ?d void, axis=None, order=<given>
+def partition[ScalarT: np.void](
+    a: _ArrayLike[ScalarT],
+    kth: _ArrayLikeInt,
+    axis: None,
+    kind: _PartitionKind | _NoValueType = ...,
+    *,
+    order: str | Sequence[str] | None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[ScalarT]: ...
+@overload  # ?d T, axis: None
 def partition[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     kth: _ArrayLikeInt,
     axis: None,
     kind: _PartitionKind | _NoValueType = ...,
-    order: str | Sequence[str] | None = None,
+    order: None = None,
     descending: bool | _NoValueType = ...,
 ) -> _Array1D[ScalarT]: ...
-@overload  # fallback
+@overload  # fallback, axis=<given> (default)
 def partition(
     a: ArrayLike,
     kth: _ArrayLikeInt,
