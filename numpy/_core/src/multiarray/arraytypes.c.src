@@ -1515,6 +1515,12 @@ BOOL_to_@TOTYPE@(void *input, void *output, npy_intp n,
 /**end repeat**/
 
 
+/* S/U can use the cheap getitem object; VOID needs a real scalar (gh-9847) */
+#define _GETOBJ_STRING(ip, aip) STRING_getitem(ip, aip)
+#define _GETOBJ_UNICODE(ip, aip) UNICODE_getitem(ip, aip)
+#define _GETOBJ_SCALAR(ip, aip) \
+    PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)(aip))
+
 /**begin repeat
  *
  * #from = STRING*23, UNICODE*23, VOID*23#
@@ -1537,6 +1543,9 @@ BOOL_to_@TOTYPE@(void *input, void *output, npy_intp n,
  * #oskip = 1*18,(PyArray_ITEMSIZE(aop))*3,1*2,
  *          1*18,(PyArray_ITEMSIZE(aop))*3,1*2,
  *          1*18,(PyArray_ITEMSIZE(aop))*3,1*2#
+ * #getobj = (_GETOBJ_STRING)*20, _GETOBJ_SCALAR, (_GETOBJ_STRING)*2,
+ *           (_GETOBJ_UNICODE)*20, _GETOBJ_SCALAR, (_GETOBJ_UNICODE)*2,
+ *           (_GETOBJ_SCALAR)*23#
  */
 
 static void
@@ -1552,7 +1561,7 @@ static void
     int oskip = @oskip@;
 
     for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
-        PyObject *temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
+        PyObject *temp = @getobj@(ip, aip);
         if (temp == NULL) {
             return;
         }
