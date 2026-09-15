@@ -2231,15 +2231,27 @@ class TestDigitize:
 
     def test_large_integers_increasing(self):
         # gh-11022
-        x = 2**54  # loses precision in a float
-        assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
+        x = 2**54  # float64 cannot distinguish adjacent integers near here
+        for dtype in (np.int64, np.uint64):
+            bins = np.array([x - 1, x + 1], dtype=dtype)
+            x_value = np.array(x, dtype=dtype)[()]
+            for right in (False, True):
+                assert_equal(np.digitize(x_value, bins, right=right), 1)
 
-    @pytest.mark.xfail(
-        reason="gh-11022: np._core.multiarray._monoticity loses precision")
     def test_large_integers_decreasing(self):
         # gh-11022
-        x = 2**54  # loses precision in a float
-        assert_equal(np.digitize(x, [x + 1, x - 1]), 1)
+        x = 2**54  # float64 cannot distinguish adjacent integers near here
+        for dtype in (np.int64, np.uint64):
+            bins = np.array([x + 1, x - 1], dtype=dtype)
+            x_value = np.array(x, dtype=dtype)[()]
+            for right in (False, True):
+                assert_equal(np.digitize(x_value, bins, right=right), 1)
+
+    def test_large_integer_bins_with_strides_and_byte_order(self):
+        x = 2**54
+        bins = np.array([x - 1, x + 1, x + 3], dtype=np.int64)
+        bins = bins[::-1].byteswap().view(bins.dtype.newbyteorder())[::-1]
+        assert_equal(np.digitize(x, bins), 1)
 
 
 class TestUnwrap:

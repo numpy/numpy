@@ -33,6 +33,98 @@ typedef enum {
  * and 0 if the array is not monotonic.
  */
 static int
+check_array_monotonic_int64(const npy_int64 *a, npy_intp lena)
+{
+    npy_intp i;
+    npy_int64 next;
+    npy_int64 last;
+
+    if (lena == 0) {
+        /* all bin edges hold the same value */
+        return 1;
+    }
+    last = a[0];
+
+    /* Skip repeated values at the beginning of the array */
+    for (i = 1; (i < lena) && (a[i] == last); i++);
+
+    if (i == lena) {
+        /* all bin edges hold the same value */
+        return 1;
+    }
+
+    next = a[i];
+    if (last < next) {
+        /* Possibly monotonic increasing */
+        for (i += 1; i < lena; i++) {
+            last = next;
+            next = a[i];
+            if (last > next) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+    else {
+        /* last > next, possibly monotonic decreasing */
+        for (i += 1; i < lena; i++) {
+            last = next;
+            next = a[i];
+            if (last < next) {
+                return 0;
+            }
+        }
+        return -1;
+    }
+}
+
+static int
+check_array_monotonic_uint64(const npy_uint64 *a, npy_intp lena)
+{
+    npy_intp i;
+    npy_uint64 next;
+    npy_uint64 last;
+
+    if (lena == 0) {
+        /* all bin edges hold the same value */
+        return 1;
+    }
+    last = a[0];
+
+    /* Skip repeated values at the beginning of the array */
+    for (i = 1; (i < lena) && (a[i] == last); i++);
+
+    if (i == lena) {
+        /* all bin edges hold the same value */
+        return 1;
+    }
+
+    next = a[i];
+    if (last < next) {
+        /* Possibly monotonic increasing */
+        for (i += 1; i < lena; i++) {
+            last = next;
+            next = a[i];
+            if (last > next) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+    else {
+        /* last > next, possibly monotonic decreasing */
+        for (i += 1; i < lena; i++) {
+            last = next;
+            next = a[i];
+            if (last < next) {
+                return 0;
+            }
+        }
+        return -1;
+    }
+}
+
+static int
 check_array_monotonic(const double *a, npy_intp lena)
 {
     npy_intp i;
@@ -288,22 +380,51 @@ arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    /*
-     * TODO:
-     *  `x` could be strided, needs change to check_array_monotonic
-     *  `x` is forced to double for this check
-     */
-    arr_x = (PyArrayObject *)PyArray_FROMANY(
-        obj_x, NPY_DOUBLE, 1, 1, NPY_ARRAY_CARRAY_RO);
-    if (arr_x == NULL) {
-        return NULL;
-    }
+    if (PyArray_Check(obj_x) &&
+            PyArray_TYPE((PyArrayObject *)obj_x) == NPY_INT64) {
+        /* Casting to double loses ordering information for large integers. */
+        arr_x = (PyArrayObject *)PyArray_CheckFromAny(
+            obj_x, NULL, 1, 1,
+            NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED, NULL);
+        if (arr_x == NULL) {
+            return NULL;
+        }
 
-    len_x = PyArray_SIZE(arr_x);
-    NPY_BEGIN_THREADS_THRESHOLDED(len_x)
-    monotonic = check_array_monotonic(
-        (const double *)PyArray_DATA(arr_x), len_x);
-    NPY_END_THREADS
+        len_x = PyArray_SIZE(arr_x);
+        NPY_BEGIN_THREADS_THRESHOLDED(len_x)
+        monotonic = check_array_monotonic_int64(
+            (const npy_int64 *)PyArray_DATA(arr_x), len_x);
+        NPY_END_THREADS
+    }
+    else if (PyArray_Check(obj_x) &&
+            PyArray_TYPE((PyArrayObject *)obj_x) == NPY_UINT64) {
+        /* Casting to double loses ordering information for large integers. */
+        arr_x = (PyArrayObject *)PyArray_CheckFromAny(
+            obj_x, NULL, 1, 1,
+            NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED, NULL);
+        if (arr_x == NULL) {
+            return NULL;
+        }
+
+        len_x = PyArray_SIZE(arr_x);
+        NPY_BEGIN_THREADS_THRESHOLDED(len_x)
+        monotonic = check_array_monotonic_uint64(
+            (const npy_uint64 *)PyArray_DATA(arr_x), len_x);
+        NPY_END_THREADS
+    }
+    else {
+        arr_x = (PyArrayObject *)PyArray_FROMANY(
+            obj_x, NPY_DOUBLE, 1, 1, NPY_ARRAY_CARRAY_RO);
+        if (arr_x == NULL) {
+            return NULL;
+        }
+
+        len_x = PyArray_SIZE(arr_x);
+        NPY_BEGIN_THREADS_THRESHOLDED(len_x)
+        monotonic = check_array_monotonic(
+            (const double *)PyArray_DATA(arr_x), len_x);
+        NPY_END_THREADS
+    }
     Py_DECREF(arr_x);
 
     return PyLong_FromLong(monotonic);
