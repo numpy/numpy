@@ -544,7 +544,7 @@ _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
                 // nan-like nulls sort to the end even in a descending
                 // sort, matching how NaN sorts for floats
                 if (a_is_null) {
-                    return 1;
+                    return b_is_null ? 0 : 1;
                 }
                 else if (b_is_null) {
                     return -1;
