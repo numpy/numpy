@@ -1856,10 +1856,10 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     Parameters
     ----------
     function : callable
-        The function is called once with N array parameters, where N is the rank of
-        `shape`.  Each array parameter represents the coordinates of the array
-        varying along a specific axis.  For example, if `shape`
-        were ``(2, 2)``, then the parameters would be
+        The function is called once with N coordinate arrays as parameters,
+        where N is the rank of `shape`. Each array represents the
+        coordinates along a specific axis.  For example,
+        if `shape` were ``(2, 2)``, then the parameters would be
         ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
     shape : (N,) tuple of ints
         Shape of the coordinate arrays passed to `function`. The shape of the output
@@ -1888,6 +1888,12 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     -----
     Keywords other than `dtype` and `like` are passed to `function`.
 
+    .. warning::
+        `shape` determines the shape of the coordinate arrays passed to
+        `function`. It does not determine the shape of the result. If
+        `function` returns a scalar, the result is a scalar rather than an
+        array with the given `shape`.
+
     Examples
     --------
     >>> import numpy as np
@@ -1908,12 +1914,6 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     array([[0, 1, 2],
            [1, 2, 3],
            [2, 3, 4]])
-
-    The result and its shape is determined by the return value of the function.
-    For example, a function that returns a scalar produces a scalar:
-
-    >>> np.fromfunction(lambda i, j: 3, (2, 2), dtype=float)
-    3
 
     """
     if like is not None:
