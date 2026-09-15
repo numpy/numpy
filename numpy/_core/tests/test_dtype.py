@@ -953,6 +953,7 @@ class TestMonsterType:
         with pytest.raises(RecursionError):
             np.dtype(d)
 
+    @pytest.mark.thread_unsafe(reason="deep recursion needs a guaranteed stack size")
     @requires_deep_recursion
     def test_nested_structured_dtype_zerofill_recursion(self):
         # gh-32488
