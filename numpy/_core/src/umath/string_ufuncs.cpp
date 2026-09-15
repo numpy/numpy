@@ -100,6 +100,44 @@ string_comparison_loop(PyArrayMethod_Context *context,
 }
 
 
+enum class MINMAX { MIN, MAX };
+
+template <bool rstrip, MINMAX minmax, ENCODING enc>
+static int
+string_minmax_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int elsize1 = context->descriptors[0]->elsize;
+    int elsize2 = context->descriptors[1]->elsize;
+    int outsize = context->descriptors[2]->elsize;
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> buf1(in1, elsize1);
+        Buffer<enc> buf2(in2, elsize2);
+        Buffer<enc> outbuf(out, outsize);
+        int cmp = buf1.strcmp(buf2, rstrip);
+        Buffer<enc> &winner = (minmax == MINMAX::MIN)
+                ? (cmp <= 0 ? buf1 : buf2)
+                : (cmp >= 0 ? buf1 : buf2);
+        size_t winner_len = winner.num_codepoints();
+        winner.buffer_memcpy(outbuf, winner_len);
+        outbuf.buffer_fill_with_zeros_after_index(winner_len);
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+    return 0;
+}
+
+
 template <ENCODING enc>
 static int
 string_str_len_loop(PyArrayMethod_Context *context,
@@ -771,6 +809,37 @@ string_addition_resolve_descriptors(
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
     loop_descrs[2]->elsize += loop_descrs[1]->elsize;
+
+    return NPY_NO_CASTING;
+}
+
+
+static NPY_CASTING
+string_minmax_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
+        PyArray_Descr *const given_descrs[3],
+        PyArray_Descr *loop_descrs[3],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
+    if (loop_descrs[0] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+    if (loop_descrs[1] == NULL) {
+        Py_DECREF(loop_descrs[0]);
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    loop_descrs[2] = PyArray_DescrNew(loop_descrs[0]);
+    if (loop_descrs[2] == NULL) {
+        Py_DECREF(loop_descrs[0]);
+        Py_DECREF(loop_descrs[1]);
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+    loop_descrs[2]->elsize = PyArray_MAX(loop_descrs[0]->elsize, loop_descrs[1]->elsize);
 
     return NPY_NO_CASTING;
 }
@@ -1508,6 +1577,32 @@ init_string_ufuncs(PyObject *umath)
             umath, "add", 2, 1, dtypes, ENCODING::UTF32,
             string_add_loop<ENCODING::UTF32>, string_addition_resolve_descriptors,
             NULL) < 0) {
+        return -1;
+    }
+
+    dtypes[0] = dtypes[1] = dtypes[2] = NPY_OBJECT;
+    if (init_ufunc(
+            umath, "minimum", 2, 1, dtypes, ENCODING::ASCII,
+            string_minmax_loop<false, MINMAX::MIN, ENCODING::ASCII>,
+            string_minmax_resolve_descriptors, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc(
+            umath, "minimum", 2, 1, dtypes, ENCODING::UTF32,
+            string_minmax_loop<false, MINMAX::MIN, ENCODING::UTF32>,
+            string_minmax_resolve_descriptors, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc(
+            umath, "maximum", 2, 1, dtypes, ENCODING::ASCII,
+            string_minmax_loop<false, MINMAX::MAX, ENCODING::ASCII>,
+            string_minmax_resolve_descriptors, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc(
+            umath, "maximum", 2, 1, dtypes, ENCODING::UTF32,
+            string_minmax_loop<false, MINMAX::MAX, ENCODING::UTF32>,
+            string_minmax_resolve_descriptors, NULL) < 0) {
         return -1;
     }
 
