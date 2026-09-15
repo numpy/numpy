@@ -222,6 +222,9 @@ type _ToArray2D[ScalarT: np.generic] = _Array2D[ScalarT] | Sequence[Sequence[Sca
 type _ToArray3D[ScalarT: np.generic] = _Array3D[ScalarT] | Sequence[Sequence[Sequence[ScalarT]]]
 
 type _ToIntND = _ArrayLike[np.integer | np.bool] | _NestedSequence[int]
+type _ToIndex1D = _Array1D[np.integer | np.bool] | Sequence[_IntLike_co]
+type _ToIndex2D = _Array2D[np.integer | np.bool] | Sequence[_ToIndex1D]
+type _ToIndex3D = _Array3D[np.integer | np.bool] | Sequence[_ToIndex2D]
 
 # Valid time units
 type _UnitKind = L[
@@ -1101,20 +1104,45 @@ def array(
 ) -> NDArray[Any]: ...
 
 #
-@overload
+@overload  # ?d  (workaround)
 def ravel_multi_index(
-    multi_index: SupportsLenAndGetItem[_IntLike_co],
+    multi_index: (
+        _ArrayJustND[np.integer | np.bool]
+        | Sequence[_ArrayJustND[np.integer | np.bool]]
+        | Sequence[Sequence[_ArrayJustND[np.integer | np.bool]]]
+    ),
+    dims: _ShapeLike,
+    mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
+    order: _OrderCF = "C",
+) -> NDArray[intp] | Any: ...
+@overload  # 1d
+def ravel_multi_index(
+    multi_index: _ToIndex1D,
     dims: _ShapeLike,
     mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
     order: _OrderCF = "C",
 ) -> intp: ...
-@overload
+@overload  # 2d
+def ravel_multi_index(
+    multi_index: _ToIndex2D,
+    dims: _ShapeLike,
+    mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
+    order: _OrderCF = "C",
+) -> _Array1D[intp]: ...
+@overload  # 3d
+def ravel_multi_index(
+    multi_index: _ToIndex3D,
+    dims: _ShapeLike,
+    mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
+    order: _OrderCF = "C",
+) -> _Array2D[intp]: ...
+@overload  # ?d  (fallback)
 def ravel_multi_index(
     multi_index: SupportsLenAndGetItem[_ArrayLikeInt_co],
     dims: _ShapeLike,
     mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
     order: _OrderCF = "C",
-) -> NDArray[intp]: ...
+) -> NDArray[intp] | Any: ...
 
 #
 @overload  # Nd +int, ?d  (workaround)

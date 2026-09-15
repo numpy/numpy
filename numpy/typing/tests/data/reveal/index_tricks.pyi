@@ -13,6 +13,7 @@ AR_LIKE_U: list[str]
 AR_LIKE_O: list[object]
 
 AR_i8: npt.NDArray[np.int64]
+AR_i8_1d: np.ndarray[tuple[int], np.dtype[np.int64]]
 AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
 AR_i8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.int64]]
 AR_i8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.int64]]
@@ -70,12 +71,11 @@ assert_type(np.unravel_index([AR_LIKE_i], (7, 6)), tuple[_IntND, _IntND])
 assert_type(np.unravel_index([AR_LIKE_i], (6, 7, 8)), tuple[_IntND, _IntND, _IntND])
 assert_type(np.unravel_index([AR_LIKE_i], [6, 7, 8]), tuple[_IntND, ...])
 
-assert_type(np.ravel_multi_index([[1]], (7, 6)), npt.NDArray[np.intp])
-assert_type(np.ravel_multi_index(AR_LIKE_i, (7, 6)), np.intp)
-assert_type(np.ravel_multi_index(AR_LIKE_i, (7, 6), order="F"), np.intp)
-assert_type(np.ravel_multi_index(AR_LIKE_i, (4, 6), mode="clip"), np.intp)
-assert_type(np.ravel_multi_index(AR_LIKE_i, (4, 4), mode=("clip", "wrap")), np.intp)
-assert_type(np.ravel_multi_index((3, 1, 4, 1), (6, 7, 8, 9)), np.intp)
+assert_type(np.ravel_multi_index((AR_i8, AR_i8), (7, 6)), _IntND | Any)
+assert_type(np.ravel_multi_index((AR_i8_1d, AR_i8_1d), (7, 6)), _Int1D)
+assert_type(np.ravel_multi_index((AR_i8_1d, 1), (7, 6)), _IntND | Any)
+assert_type(np.ravel_multi_index((AR_i8_2d, AR_i8_2d), (7, 6)), _Int2D)
+assert_type(np.ravel_multi_index(AR_LIKE_i, (7, 6), mode=("clip", "wrap"), order="F"), np.intp)
 
 assert_type(np.mgrid[1:1:2], npt.NDArray[Any])
 assert_type(np.mgrid[1:1:2, None:10], npt.NDArray[Any])
