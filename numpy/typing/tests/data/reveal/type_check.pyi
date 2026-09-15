@@ -30,6 +30,8 @@ AR_LIKE_b_2d: list[list[bool]]
 AR_LIKE_i_2d: list[list[int]]
 AR_LIKE_f_2d: list[list[float]]
 AR_LIKE_c_2d: list[list[complex]]
+AR_LIKE_f_3d: list[list[list[float]]]
+AR_LIKE_any: npt.ArrayLike
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
@@ -74,13 +76,16 @@ assert_type(np.iscomplex(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.bool
 assert_type(np.iscomplex(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.iscomplex(AR_c16_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 
+assert_type(np.isreal(1), bool)
+assert_type(np.isreal(1.0), bool | Any)
 assert_type(np.isreal(f8), np.bool)
 assert_type(np.isreal(AR_f8), npt.NDArray[np.bool])
-assert_type(np.isreal(AR_LIKE_f), npt.NDArray[np.bool])
-assert_type(np.isreal(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
-assert_type(np.isreal(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
-assert_type(np.isreal(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.bool]])
-assert_type(np.isreal(AR_c16_2d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isreal(AR_f8_1d), _Array1D[np.bool])
+assert_type(np.isreal(AR_c16_2d), _Array2D[np.bool])
+assert_type(np.isreal(AR_LIKE_c), _Array1D[np.bool])
+assert_type(np.isreal(AR_LIKE_c_2d), _Array2D[np.bool])
+assert_type(np.isreal(AR_LIKE_f_3d), npt.NDArray[np.bool])
+assert_type(np.isreal(AR_LIKE_any), npt.NDArray[np.bool] | Any)
 
 assert_type(np.iscomplexobj(f8), bool)
 assert_type(np.isrealobj(f8), bool)
