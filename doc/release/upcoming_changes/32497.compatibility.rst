@@ -6,6 +6,14 @@ integer that does not fit the result dtype raises ``OverflowError`` instead of
 wrapping. For example, ``np.concatenate((np.ones(2, "int8"), 300), axis=None)``
 previously returned ``44`` for the new element.
 
+Python scalars in ``append`` participate in NEP 50 promotion
+----------------------------------------------------------
+`numpy.append` now preserves Python scalar inputs until `numpy.concatenate`
+resolves the result dtype. For example, appending ``1`` to a ``uint8`` array
+retains ``uint8`` instead of promoting to the default integer dtype, while
+appending ``300`` raises ``OverflowError``. NumPy scalars and array inputs
+continue to participate in promotion with their own dtypes.
+
 ``casting="no"`` rejects a Python scalar that changes dtype
 -----------------------------------------------------------
 A Python scalar that would be converted to a dtype other than its default

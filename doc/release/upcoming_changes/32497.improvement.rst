@@ -6,3 +6,9 @@ An ``int`` into any integer dtype or a ``float`` into any floating point dtype
 is "safe", lowering the kind requires ``"unsafe"``, and a value that does not
 fit raises ``OverflowError``. These rules are now documented in
 :ref:`arrays.promotion.python-scalar-casting`.
+
+``append`` preserves trailing NUL characters in Python strings
+------------------------------------------------------------
+`numpy.append` now converts a Python string with the resolved result dtype.
+Trailing NUL characters are preserved when the result uses
+`~numpy.dtypes.StringDType`.

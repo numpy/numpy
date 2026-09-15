@@ -600,6 +600,59 @@ class TestSelect:
         select(conditions, choices)
 
 
+class TestAppend:
+    @pytest.mark.parametrize("value", ["x\0", "\0", "long string" * 10 + "\0\0"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_string_scalar_trailing_nulls(self, value, reverse):
+        a = np.array([["a", value]], dtype=np.dtypes.StringDType(coerce=False))
+        args = (value, a) if reverse else (a, value)
+        expected = [value, "a", value] if reverse else ["a", value, value]
+        result = np.append(*args)
+        assert result.tolist() == expected
+        assert result.dtype == a.dtype
+
+    @pytest.mark.parametrize("dtype, scalar", [
+        ("uint8", 2), ("float32", 1.5), ("complex64", 1j),
+    ])
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_python_scalar_promotion(self, dtype, scalar, reverse):
+        a = np.array([1], dtype=dtype)
+        args = (scalar, a) if reverse else (a, scalar)
+        expected = [scalar, 1] if reverse else [1, scalar]
+        assert_array_equal(np.append(*args), np.array(expected, dtype=dtype),
+                           strict=True)
+
+    @pytest.mark.parametrize("scalar", [-1, 300])
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_python_scalar_out_of_bounds(self, scalar, reverse):
+        a = np.array([1], dtype="uint8")
+        args = (scalar, a) if reverse else (a, scalar)
+        with pytest.raises(OverflowError, match="out of bounds"):
+            np.append(*args)
+
+    @pytest.mark.parametrize("values", [[300], np.array(300), np.int64(300)])
+    def test_strong_promotion(self, values):
+        a = np.array([1], dtype="uint8")
+        result = np.append(a, values)
+        assert result.dtype == np.result_type(a, np.asarray(values))
+        assert result.tolist() == [1, 300]
+
+    @pytest.mark.parametrize("axis, expected", [
+        (None, [0, 1, 2, 3, 4, 5, 6, 7]),
+        (0, [[0, 1], [2, 3], [4, 5], [6, 7]]),
+        (1, [[0, 1, 4, 5], [2, 3, 6, 7]]),
+        (-1, [[0, 1, 4, 5], [2, 3, 6, 7]]),
+    ])
+    def test_shape(self, axis, expected):
+        a = np.arange(4).reshape(2, 2)
+        b = [[4, 5], [6, 7]]
+        assert_array_equal(np.append(a, b, axis=axis), expected)
+
+    def test_explicit_axis_rejects_scalar(self):
+        with pytest.raises(ValueError, match="dimensions"):
+            np.append(np.array(["a"], dtype="T"), "x\0", axis=0)
+
+
 class TestInsert:
 
     def test_basic(self):
