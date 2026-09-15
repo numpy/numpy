@@ -73,6 +73,25 @@ class Mean(Benchmark):
         np.mean(self.array, axis=1)
 
 
+class Insert(Benchmark):
+    params = [
+        [(1000,), (100, 100)],
+        [None, 0],
+        ["list", "array"],
+    ]
+    param_names = ["shape", "axis", "indexer_type"]
+
+    def setup(self, shape, axis, indexer_type):
+        self.arr = np.arange(np.prod(shape)).reshape(shape)
+        if indexer_type == "list":
+            self.empty_indices = []
+        else:
+            self.empty_indices = np.array([], dtype=np.intp)
+
+    def time_empty_indices(self, shape, axis, indexer_type):
+        np.insert(self.arr, self.empty_indices, 9, axis=axis)
+
+
 class Median(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
