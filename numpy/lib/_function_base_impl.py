@@ -1968,8 +1968,7 @@ def _arg_trim_zeros(filt):
     if nonzero.size == 0:
         start = stop = np.array([], dtype=np.intp)
     else:
-        start = nonzero.min(axis=0)
-        stop = nonzero.max(axis=0)
+        start, stop = np.minmax(nonzero, axis=0)
     return start, stop
 
 
@@ -4564,8 +4563,10 @@ def _quantile_is_valid(q):
         for i in range(q.size):
             if not (0.0 <= q[i] <= 1.0):
                 return False
-    elif not (q.min() >= 0 and q.max() <= 1):
-        return False
+    else:
+        q_min, q_max = np.minmax(q)
+        if not (q_min >= 0 and q_max <= 1):
+            return False
     return True
 
 
@@ -5594,8 +5595,7 @@ def insert(arr, obj, values, axis=None):
         indices = indices.astype(intp)
 
     if indices.size > 0:
-        min_idx = indices.min()
-        max_idx = indices.max()
+        min_idx, max_idx = np.minmax(indices)
         if min_idx < -N or max_idx > N:
             oob = min_idx if min_idx < -N else max_idx
             raise IndexError(
