@@ -745,6 +745,22 @@ class TestSVD(SVDCases, SVDBaseTests):
         s_from_svdvals = linalg.svdvals(x)
         assert_almost_equal(s_from_svd, s_from_svdvals)
 
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    @pytest.mark.parametrize('val', [np.inf, -np.inf, np.nan])
+    def test_nonfinite(self, dtype, val):
+        a = np.ones((3, 3), dtype=dtype)
+        a[0, 0] = val
+        with pytest.raises(LinAlgError):
+            linalg.svd(a)
+        with pytest.raises(LinAlgError):
+            linalg.svd(a, full_matrices=False)
+        with pytest.raises(LinAlgError):
+            linalg.svd(a, compute_uv=False)
+        with pytest.raises(LinAlgError):
+            linalg.svd(np.stack([np.eye(3, dtype=dtype), a]))
+        with pytest.raises(LinAlgError):
+            linalg.pinv(a)
+
 
 class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
@@ -1059,6 +1075,14 @@ class TestLstsq(LstsqCases):
         assert_(rank == 3)
         x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
         assert_(rank == 3)
+
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    @pytest.mark.parametrize('val', [np.inf, -np.inf, np.nan])
+    def test_nonfinite(self, dtype, val):
+        a = np.ones((3, 3), dtype=dtype)
+        a[0, 0] = val
+        with pytest.raises(LinAlgError):
+            linalg.lstsq(a, np.ones(3, dtype=dtype))
 
     @pytest.mark.parametrize(["m", "n", "n_rhs"], [
         (4, 2, 2),
