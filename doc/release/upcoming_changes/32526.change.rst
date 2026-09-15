@@ -1,0 +1,7 @@
+``timedelta64 // int`` floors for negative values
+-------------------------------------------------
+Floor division of a negative ``timedelta64`` by an integer previously
+truncated toward zero because ``floor_divide`` reused the true-division
+loop. It now floors, matching ``int64 // int``, ``timedelta64 // timedelta64``,
+and Python's ``datetime.timedelta // int``. True division
+(``timedelta64 / int``) is unchanged.
