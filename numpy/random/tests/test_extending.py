@@ -72,7 +72,7 @@ def test_cython(tmp_path):
     # Ensure we use the correct Python interpreter even when `meson` is
     # installed in a different Python environment (see gh-24956)
     native_file = str(build_dir / 'interpreter-native-file.ini')
-    with open(native_file, 'w') as f:
+    with open(native_file, 'w', encoding='utf-8') as f:
         f.write("[binaries]\n")
         f.write(f"python = '{sys.executable}'\n")
         f.write(f"python3 = '{sys.executable}'")
@@ -92,7 +92,7 @@ def test_cython(tmp_path):
     # not really part of this test, but it is a convenient place to check
 
     g = glob.glob(str(target_dir / "*" / "extending.pyx.c"))
-    with open(g[0]) as fid:
+    with open(g[0], encoding="utf-8") as fid:
         txt_to_find = 'NumPy API declarations from "numpy/__init__'
         for line in fid:
             if txt_to_find in line:

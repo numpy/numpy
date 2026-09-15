@@ -1096,7 +1096,7 @@ class TestLoadTxt(LoadTxtBase):
 
     def test_universal_newline(self):
         with temppath() as name:
-            with open(name, 'w') as f:
+            with open(name, 'w', encoding='utf-8') as f:
                 f.write('1 21\r3 42\r')
             data = np.loadtxt(name)
         assert_array_equal(data, [[1, 21], [3, 42]])
@@ -2297,7 +2297,7 @@ M   33  21.99
                         'unable to encode utf8 in preferred encoding')
 
         with temppath() as path:
-            with open(path, "wt") as f:
+            with open(path, "wt", encoding="utf-8") as f:
                 f.write("norm1,norm2,norm3\n")
                 f.write("norm1," + latin1 + ",norm3\n")
                 f.write("test1,testNonethe" + utf8 + ",test3\n")
@@ -2378,7 +2378,7 @@ M   33  21.99
         for sep in linesep:
             data = '0 1 2' + sep + '3 4 5'
             with temppath() as name:
-                with open(name, 'w') as f:
+                with open(name, 'w', encoding='utf-8') as f:
                     f.write(data)
                 res = np.genfromtxt(name)
             assert_array_equal(res, tgt)
@@ -2395,7 +2395,7 @@ M   33  21.99
                 g.write(asbytes(data))
 
             with temppath(suffix='.gz2') as name:
-                with open(name, 'w') as f:
+                with open(name, 'w', encoding='utf-8') as f:
                     f.write(data)
                 assert_array_equal(np.genfromtxt(name), wanted)
 
