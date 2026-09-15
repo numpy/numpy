@@ -1844,8 +1844,7 @@ def indices(dimensions, dtype=int, sparse=False):
 @set_module('numpy')
 def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
-    Construct an array by applying a function to coordinate arrays generated
-    from `shape`.
+    Construct an array by executing a function over each coordinate.
 
     The function is called once with one coordinate array for each dimension
     of `shape` instead of once per coordinate.
