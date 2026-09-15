@@ -275,13 +275,19 @@ extern "C" {
 
 /*
  * Heap types created with PyType_FromModuleAndSpec during module execution.
- * The names match the static types they replaced.
+ * The names match the static types they replaced, except where that name is
+ * already an object-like macro from `__multiarray_api.h` -- every type in
+ * `PyArray_API` is one outside the files defining `_MULTIARRAYMODULE`, so
+ * those fields carry the Python name instead.
  */
 #define NPY_MODULE_STATE_TYPE_FIELDS(F) \
     F(PyArrayFlags_Type)              \
     F(PyArrayArrayConverter_Type)     \
     F(PyArrayFunctionDispatcher_Type) \
-    F(NpyBusDayCalendar_Type)
+    F(NpyBusDayCalendar_Type)         \
+    F(flatiter_type)                  \
+    F(broadcast_type)                 \
+    F(nditer_type)
 
 /*
  * Expand a field list into the PyObject * members it names, so the structs
