@@ -12,7 +12,6 @@ from numpy._typing import (
     _AnyShape,
     _ArrayLike,
     _NestedSequence,
-    _ScalarLike_co,
     _Shape,
     _SupportsArray,
 )
@@ -101,17 +100,21 @@ def imag[RealT: _ToReal](val: _ArrayLike[RealT]) -> NDArray[RealT]: ...
 @overload  # fallback
 def imag(val: ArrayLike) -> NDArray[Any]: ...
 
-#
-@overload
-def iscomplex(x: _ScalarLike_co) -> np.bool: ...
-@overload
+# keep (roughly) in sync with `isreal`
+@overload  # 0d
+def iscomplex(x: complex | str | np.generic) -> np.bool: ...
+@overload  # Nd
 def iscomplex[ShapeT: _Shape](x: np.ndarray[ShapeT, np.dtype[Any]]) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
-@overload
+@overload  # 1d
+def iscomplex(x: Sequence[complex | np.generic]) -> _Array1D[np.bool]: ...
+@overload  # 2d
+def iscomplex(x: Sequence[Sequence[complex | np.generic]]) -> _Array2D[np.bool]: ...
+@overload  # Nd
 def iscomplex(x: _NestedSequence[ArrayLike]) -> NDArray[np.bool]: ...
-@overload
-def iscomplex(x: ArrayLike) -> np.bool | NDArray[np.bool]: ...
+@overload  # ?d  (fallback)
+def iscomplex(x: ArrayLike) -> NDArray[np.bool] | Any: ...
 
-#
+# keep (roughly) in sync with `iscomplex`
 @overload  # 0d
 def isreal(x: np.generic | str) -> np.bool: ...
 @overload  # 0d +int
