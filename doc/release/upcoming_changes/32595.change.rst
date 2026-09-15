@@ -1,0 +1,3 @@
+Reductions with a narrower ``out`` are more accurate
+----------------------------------------------------
+The result is rounded to ``out`` once at the end, not at every buffer refill.
