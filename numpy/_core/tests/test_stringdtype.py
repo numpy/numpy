@@ -158,6 +158,17 @@ def test_dtype_equality(dtype):
         assert dtype != np.dtype(f"{ch}8")
 
 
+def test_dtype_hash(dtype, dtype2):
+    assert len({dtype, dtype2}) == (1 if dtype == dtype2 else 2)
+
+
+def test_dtype_hash_float64_nan(coerce):
+    dtype = StringDType(na_object=np.float64("nan"), coerce=coerce)
+    other = StringDType(na_object=float("nan"), coerce=coerce)
+    assert dtype == other
+    assert hash(dtype) == hash(other)
+
+
 def test_dtype_repr(dtype):
     if not hasattr(dtype, "na_object") and dtype.coerce:
         assert repr(dtype) == "StringDType()"
@@ -1010,6 +1021,7 @@ def test_pickle(dtype, string_list):
 
     assert_array_equal(res[0], arr)
     assert res[1] == dtype
+    assert hash(res[1]) == hash(dtype)
 
     os.remove(f.name)
 
