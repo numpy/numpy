@@ -2,7 +2,7 @@ import pathlib
 import re
 import zipfile
 from collections.abc import Mapping
-from typing import IO, Any, assert_type
+from typing import IO, Any, Literal, assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -12,6 +12,8 @@ str_path: str
 pathlib_path: pathlib.Path
 str_file: IO[str]
 bytes_file: IO[bytes]
+
+ndmin: Literal[0, 2]
 
 npz_file: np.lib.npyio.NpzFile
 
@@ -80,10 +82,16 @@ assert_type(np.fromregex(str_path, re.compile("test"), dtype=np.str_, encoding="
 assert_type(np.fromregex(pathlib_path, "test", np.float64), _Array1D[np.float64])
 assert_type(np.fromregex(bytes_reader, "test", np.float64), _Array1D[np.float64])
 
-assert_type(np.genfromtxt(bytes_file), npt.NDArray[Any])
+assert_type(np.genfromtxt(bytes_file), npt.NDArray[np.float64 | Any])
+assert_type(np.genfromtxt(str_path, dtype=None, delimiter="\n"), npt.NDArray[Any])
+assert_type(np.genfromtxt(str_path, dtype=int), npt.NDArray[np.int_ | Any])
+assert_type(np.genfromtxt(str_path, dtype=complex), npt.NDArray[np.complex128 | Any])
+assert_type(np.genfromtxt(str_path, dtype=str, skip_header=2), npt.NDArray[np.str_])
+assert_type(np.genfromtxt(str_path, ndmin=2), _Array2D[np.float64 | Any])
+assert_type(np.genfromtxt(str_path, dtype=np.float32, ndmin=2), _Array2D[np.float32])
+assert_type(np.genfromtxt(str_path, dtype=None, ndmin=2), _Array2D[Any])
+assert_type(np.genfromtxt(str_path, ndmin=ndmin), npt.NDArray[np.float64 | Any])
+assert_type(np.genfromtxt(str_path, dtype=np.float32, ndmin=ndmin), npt.NDArray[np.float32])
+assert_type(np.genfromtxt(str_path, dtype=None, ndmin=ndmin), npt.NDArray[Any])
+assert_type(np.genfromtxt(str_path, names=True), npt.NDArray[np.void])
 assert_type(np.genfromtxt(pathlib_path, dtype=np.str_), npt.NDArray[np.str_])
-assert_type(np.genfromtxt(str_path, dtype=str, skip_header=2), npt.NDArray[Any])
-assert_type(np.genfromtxt(str_file, comments="test"), npt.NDArray[Any])
-assert_type(np.genfromtxt(str_path, delimiter="\n"), npt.NDArray[Any])
-assert_type(np.genfromtxt(str_path, ndmin=2), npt.NDArray[Any])
-assert_type(np.genfromtxt(["1", "2", "3"], ndmin=2), npt.NDArray[Any])
