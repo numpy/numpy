@@ -1171,6 +1171,13 @@ def diagonal[ScalarT: np.generic](
     axis1: SupportsIndex = 0,
     axis2: SupportsIndex = 1,
 ) -> _Array2D[ScalarT]: ...
+@overload  # 4d
+def diagonal[ScalarT: np.generic](
+    a: _ToArray4D[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+) -> _Array3D[ScalarT]: ...
 @overload  # Nd
 def diagonal[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
