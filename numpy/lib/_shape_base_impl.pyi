@@ -100,11 +100,18 @@ type _To3D[ScalarT: np.generic] = (
 
 ###
 
+@overload  # Nd T, Nd, axis=<given>
+def take_along_axis[ScalarT: np.generic, ShapeT: _Shape](
+    arr: ScalarT | NDArray[ScalarT],
+    indices: np.ndarray[ShapeT, np.dtype[np.integer]],
+    axis: int = -1,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # Nd T, 1d, axis=None
 def take_along_axis[ScalarT: np.generic](
     arr: ScalarT | NDArray[ScalarT],
     indices: NDArray[np.integer],
-    axis: int | None = -1,
-) -> NDArray[ScalarT]: ...
+    axis: None,
+) -> _Array1D[ScalarT]: ...
 
 #
 def put_along_axis[ScalarT: np.generic](

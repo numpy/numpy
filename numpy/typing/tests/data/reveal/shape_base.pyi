@@ -34,8 +34,8 @@ class _SplitableArray:
 
 splitable: _SplitableArray
 
-assert_type(np.take_along_axis(AR_f8, AR_i8, axis=1), npt.NDArray[np.float64])
-assert_type(np.take_along_axis(f8, AR_i8, axis=None), npt.NDArray[np.float64])
+assert_type(np.take_along_axis(AR_f8, AR_i8_2d, axis=1), _Array2D[np.float64])
+assert_type(np.take_along_axis(f8, AR_i8, axis=None), _Array1D[np.float64])
 
 assert_type(np.put_along_axis(AR_f8, AR_i8, "1.0", axis=1), None)
 
