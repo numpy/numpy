@@ -1,7 +1,6 @@
 import ctypes as ct
 import inspect
 import itertools
-import math
 import pickle
 import sys
 import warnings
@@ -2698,29 +2697,25 @@ class TestUfunc:
                                                          bufsize):
         # With a `dtype=` wider than `out`, the running result used to be
         # written to `out` and read back at every buffer refill, accumulating
-        # float32 rounding.  It is now kept in float64 and cast once, so the
-        # result stays within one float32 ulp of the exact sum for any buffer
-        # size.
+        # float32 rounding.  It is now kept in float64 and cast once, which is
+        # exactly what reducing without `out=` and casting at the end does.
         x = np.full(100_000, 1e-3)
         kwargs = {}
-        values = x
         if variant == "initial":
             kwargs["initial"] = 5.0
         elif variant == "keepdims":
             kwargs["keepdims"] = True
         elif variant == "where":
-            mask = np.arange(x.size) % 2 == 0
-            kwargs["where"] = mask
-            values = x[mask]
-        exact = math.fsum(values) + kwargs.get("initial", 0.0)
+            kwargs["where"] = np.arange(x.size) % 2 == 0
         out = np.zeros((1,) if variant == "keepdims" else (),
                        dtype=np.float32)
 
         with np.errstate():
             np.setbufsize(bufsize)
+            expected = np.add.reduce(x, dtype=np.float64, **kwargs)
             np.add.reduce(x, dtype=np.float64, out=out, **kwargs)
 
-        assert abs(out.item() - exact) <= float(np.spacing(np.float32(exact)))
+        assert out == expected.astype(np.float32)
 
     @pytest.mark.parametrize("bufsize", [32, 128, 8192])
     @pytest.mark.parametrize("trailing", [1, 3, 7])
