@@ -90,6 +90,7 @@ type _Min3D = tuple[int, int, int, *tuple[int, ...]]
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
 type _To1D[ScalarT: np.generic] = np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]] | ScalarT
 type _To2D[ScalarT: np.generic] = np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]] | ScalarT
@@ -219,11 +220,15 @@ def column_stack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDA
 @overload  # fallback
 def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
-# keep in sync with `numpy.ma.extras.dstack`
-@overload
+#
+@overload  # >=3d T
+def dstack[ShapeT: _Min3D, DTypeT: np.dtype](tup: Sequence[np.ndarray[ShapeT, DTypeT]]) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # <=3d T
+def dstack[ScalarT: np.generic](tup: Sequence[_To3D[ScalarT]]) -> _Array3D[ScalarT]: ...
+@overload  # ?d T
 def dstack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDArray[ScalarT]: ...
-@overload
-def dstack(tup: Sequence[ArrayLike]) -> NDArray[Incomplete]: ...
+@overload  # fallback
+def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
 #
 @overload
