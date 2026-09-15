@@ -1,0 +1,11 @@
+Python scalar promotion in ``append`` will change
+-------------------------------------------------
+
+`numpy.append` now emits a ``DeprecationWarning`` when passing a
+Python numeric scalars changes the result dtype or cause a promotion
+error. For example, appending ``1`` to a ``uint8`` array will eventually keep
+``uint8``, and appending ``300`` will raise ``OverflowError``.
+
+Convert Python scalars with `numpy.asarray` or wrapping in a list to keep the
+current behavior. Use ``np.concatenate((arr, values), axis=None)`` to adopt
+the future behavior.

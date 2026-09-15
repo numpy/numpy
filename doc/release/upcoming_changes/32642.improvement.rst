@@ -1,0 +1,5 @@
+``append`` preserves trailing NUL characters
+--------------------------------------------
+
+`numpy.append` now preserves trailing NUL characters in Python strings when
+the result uses `~numpy.dtypes.StringDType`.

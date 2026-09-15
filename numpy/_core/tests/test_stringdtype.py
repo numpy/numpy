@@ -347,6 +347,16 @@ def test_pystr_scalar_concatenate_preserves_nulls(dtype):
     assert res[0] == scalar
 
 
+@pytest.mark.parametrize("value", ["x\0", "\0", "long string" * 10 + "\0\0"])
+@pytest.mark.parametrize("reverse", [False, True])
+def test_pystr_scalar_append_preserves_nulls(dtype, value, reverse):
+    arr = np.array([["a", value]], dtype=dtype)
+    args = (value, arr) if reverse else (arr, value)
+    expected = [value, "a", value] if reverse else ["a", value, value]
+    assert_array_equal(np.append(*args), np.array(expected, dtype=dtype),
+                       strict=True)
+
+
 def test_pystr_scalar_choose_preserves_nulls(dtype):
     scalar = "x\0"
     arr = np.array(["y"], dtype=dtype)
@@ -2205,7 +2215,7 @@ def test_ufunc_multiply(dtype, string_list, other, other_dtype, use_out):
 
     try:
         len(other)
-        other = np.append(other, 3)
+        other = np.append(other, [3])
         if other_dtype is not None:
             other = other.astype(other_dtype)
     except TypeError:
