@@ -1,0 +1,8 @@
+Faster unary ufunc calls on plain arrays
+----------------------------------------
+Calling a unary ufunc such as ``np.sin`` or ``np.abs`` on a plain ``ndarray``
+(not a subclass) with a builtin numeric dtype that is 0-d, 1-d or
+C/F-contiguous now takes a fast path that skips argument parsing, override
+checks and type resolution, and constructs the scalar result of a 0-d input
+directly. Such calls on small arrays are roughly 40% faster and calls on 0-d
+arrays roughly 4x faster.

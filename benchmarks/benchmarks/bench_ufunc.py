@@ -74,6 +74,31 @@ class Broadcast(Benchmark):
         self.d - self.e
 
 
+class UnaryOverhead(Benchmark):
+    """Call overhead of unary ufuncs on 0-d and small contiguous arrays."""
+
+    def setup(self):
+        self.arr_0d = np.array(0.5)
+        self.f64_4 = np.arange(4, dtype=np.float64)
+        self.i64_4 = np.arange(4, dtype=np.int64)
+        self.strided = np.arange(8, dtype=np.float64)[::2]
+
+    def time_sin_0d(self):
+        np.sin(self.arr_0d)
+
+    def time_sin_small(self):
+        np.sin(self.f64_4)
+
+    def time_abs_small_float(self):
+        np.abs(self.f64_4)
+
+    def time_abs_small_int(self):
+        np.abs(self.i64_4)
+
+    def time_sin_strided(self):
+        np.sin(self.strided)
+
+
 class At(Benchmark):
     def setup(self):
         rng = np.random.default_rng(1)
