@@ -328,22 +328,32 @@ def write_file(filename, data):
 
 # Those *Api classes instances know how to output strings for the generated code
 class TypeApi:
-    def __init__(self, name, index, ptr_cast, api_name, internal_type=None):
+    def __init__(self, name, index, ptr_cast, api_name, internal_type=None,
+                 heap_type=False):
         self.index = index
         self.name = name
         self.ptr_cast = ptr_cast
         self.api_name = api_name
         # The type used internally, if None, same as exported (ptr_cast)
         self.internal_type = internal_type
+        # Whether the type is created at import time rather than statically
+        self.heap_type = heap_type
 
     def define_from_array_api_string(self):
         return (f"#define {self.name} (*({self.ptr_cast} *)"
                 f"{self.api_name}[{self.index}])")
 
     def array_api_define(self):
+        if self.heap_type:
+            return "        NULL  /* filled in by _fill_heap_type_api */"
         return f"        (void *) &{self.name}"
 
     def internal_define(self):
+        if self.heap_type:
+            # Internal code reaches the type through the module state, so only
+            # the slot index is needed.
+            return (f"/* {self.name} is a heap type, filled in at import. */\n"
+                    f"#define NPY_API_INDEX_{self.name} {self.index}\n")
         if self.internal_type is None:
             return f"extern NPY_NO_EXPORT {self.ptr_cast} {self.name};\n"
 
