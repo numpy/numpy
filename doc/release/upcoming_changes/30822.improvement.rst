@@ -1,0 +1,10 @@
+Bugfix for the `np.unique` function with `equal_nan=True` and `axis!=None`.
+---------------------------------------
+
+The unique function had the limitation that for `equal_nan=True` and `axis!=None`, the result was wrong. For example, `np.unique([np.nan, np.nan], axis=0, equal_nan=True)` returns `array([nan, nan])` and `np.unique([[0, np.nan], [0,np.nan]], axis=0, equal_nan=True)` returns `array([[ 0., nan], [ 0., nan]])`. For more examples, see the list of fixed issues below.
+
+Fixed issues: gh-29336 , gh-23286 , gh-20873.
+
+Now, the behavior is fixed. For instance, the first example returns `array([nan])` and the second `array([[ 0., nan], [ 0., nan]])`.
+
+Note: this bugfix respects the previously established behavior of complex numbers with `equal_nan=True`. The comparison for equality between `x` and `y` is basically `(x == y) | (is_nan(x) & is_nan(y))`, so, for instance, `0+nanj` is considered equal to `1+nanj` and to `nan+3j`.
