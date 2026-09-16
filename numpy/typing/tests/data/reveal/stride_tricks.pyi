@@ -15,6 +15,10 @@ AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
 AR_i8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.int64]]
 AR_i8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.int64]]
 f8: np.float64
+
+shape_1d: tuple[int]
+shape_2d: tuple[int, int]
+shape_3d: tuple[int, int, int]
 interface_dict: dict[str, Any]
 
 assert_type(np.lib.stride_tricks.as_strided(AR_f8), npt.NDArray[np.float64])
@@ -39,6 +43,19 @@ assert_type(np.broadcast_to(AR_LIKE_f, (1, 2)), np.ndarray[tuple[int, int], np.d
 assert_type(np.broadcast_to(AR_LIKE_f, (1, 2, 3)), np.ndarray[tuple[int, int, int], np.dtype[Any]])
 assert_type(np.broadcast_to(AR_LIKE_f, [1, 2]), npt.NDArray[Any])
 
+assert_type(np.broadcast_shapes(), tuple[()])
+assert_type(np.broadcast_shapes(1), tuple[int])
+assert_type(np.broadcast_shapes(shape_2d), tuple[int, int])
+assert_type(np.broadcast_shapes([3, 1]), tuple[Any, ...])
+assert_type(np.broadcast_shapes(AR_f8.shape, shape_2d), tuple[Any, ...])
+assert_type(np.broadcast_shapes(shape_2d, AR_f8.shape), tuple[Any, ...])
+assert_type(np.broadcast_shapes((1, *AR_f8.shape), shape_1d), tuple[Any, ...])
+assert_type(np.broadcast_shapes(shape_1d, (1, *AR_f8.shape)), tuple[Any, ...])
+assert_type(np.broadcast_shapes(1, shape_1d), tuple[int])
+assert_type(np.broadcast_shapes(shape_1d, shape_2d), tuple[int, int])
+assert_type(np.broadcast_shapes(shape_2d, 2), tuple[int, int])
+assert_type(np.broadcast_shapes(shape_2d, shape_3d), tuple[int, int, int])
+assert_type(np.broadcast_shapes(shape_3d, shape_2d), tuple[int, int, int])
 assert_type(np.broadcast_shapes((1, 2), [3, 1], (3, 2)), tuple[Any, ...])
 assert_type(np.broadcast_shapes((6, 7), (5, 6, 1), 7, (5, 1, 7)), tuple[Any, ...])
 
