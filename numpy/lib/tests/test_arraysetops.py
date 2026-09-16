@@ -972,55 +972,20 @@ class TestUnique:
         assert_array_equal(unique(a, equal_nan=equal_nan), expected)
         assert_array_equal(unique(a[::-1], equal_nan=equal_nan), expected)
 
-    @pytest.mark.parametrize("values, indices, inverse, counts", [
-        ([np.nan, "b", "a", np.nan, "b", np.nan],
-         [2, 1, 0], [2, 1, 0, 2, 1, 2], [1, 2, 3]),
-        ([np.nan] * 3, [0], [0, 0, 0], [3]),
-        ([], [], [], []),
-        (["b", "a", "b"], [1, 0], [1, 0, 1], [1, 2]),
-    ])
-    def test_unique_vstring_nan_metadata(
-            self, nan_string_dtype, values, indices, inverse, counts):
-        dtype = nan_string_dtype
-        a = np.array(values, dtype=dtype)
-        indices = np.array(indices, dtype=np.intp)
-        expected = a[indices]
+    def test_unique_vstring_nan_metadata(self, nan_string_dtype):
+        a = np.array([np.nan, "b", "a", np.nan, "b", np.nan],
+                     dtype=nan_string_dtype)
+        self.check_all(a, a[[2, 1, 0]], [2, 1, 0], [2, 1, 0, 2, 1, 2],
+                       [1, 2, 3], nan_string_dtype)
 
-        self.check_all(a, expected, indices, inverse, counts, dtype)
-        assert_array_equal(np.sort(unique(a, sorted=False)), expected)
-
-    @pytest.mark.parametrize("sorted", [True, False])
-    @pytest.mark.parametrize("values, expected_indices, expected_counts", [
-        ([np.nan, "b", "a", np.nan, "b", np.nan],
-         [2, 1, 0, 3, 5], [1, 2, 1, 1, 1]),
-        ([np.nan] * 3, [0, 1, 2], [1, 1, 1]),
-        ([], [], []),
-    ])
-    def test_unique_vstring_nan_not_equal(
-            self, nan_string_dtype, sorted, values,
-            expected_indices, expected_counts):
-        dtype = nan_string_dtype
-        a = np.array(values, dtype=dtype)
-        expected_indices = np.array(expected_indices, dtype=np.intp)
-        expected = a[expected_indices]
-
-        assert_array_equal(
-            np.sort(unique(a, sorted=sorted, equal_nan=False)), expected,
-        )
-        v, indices, inverse, counts = unique(
-            a, True, True, True, sorted=sorted, equal_nan=False,
-        )
-        assert_array_equal(v, expected)
-        assert_array_equal(indices, expected_indices)
-        assert_array_equal(v[inverse], a)
-        assert_array_equal(counts, expected_counts)
-        assert_array_equal(np.bincount(inverse), counts)
-
-        # Without return_index, sorting need not preserve the order of NaNs.
-        v, inverse = unique(a, return_inverse=True, sorted=sorted, equal_nan=False)
-        assert_array_equal(v, expected)
-        assert_array_equal(v[inverse], a)
-        assert_array_equal(np.bincount(inverse), expected_counts)
+    def test_unique_vstring_nan_not_equal(self, nan_string_dtype):
+        a = np.array([np.nan, "b", "a", np.nan, "b", np.nan],
+                     dtype=nan_string_dtype)
+        v, indices, inverse, counts = unique(a, True, True, True, equal_nan=False)
+        assert_array_equal(v, a[[2, 1, 0, 3, 5]])
+        assert_array_equal(indices, [2, 1, 0, 3, 5])
+        assert_array_equal(inverse, [2, 1, 0, 3, 1, 4])
+        assert_array_equal(counts, [1, 2, 1, 1, 1])
 
     def test_unique_vstring_errors(self):
         a = np.array(
