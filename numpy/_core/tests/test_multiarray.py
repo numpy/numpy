@@ -8918,7 +8918,7 @@ class TestDotFamilyFallback:
     # when available, end-to-end through a real new-style DType (quaddtype).
 
     @pytest.mark.parametrize("sa,sb", [
-        ((), ()), ((), (3, 4)), ((4, 3), ()), ((5,), (5,)), ((3,), (3, 4)),
+        ((5,), (5,)), ((3,), (3, 4)),
         ((4, 3), (3,)), ((4, 3), (3, 5)), ((2, 3, 4), (4,)),
         ((2, 3, 4), (4, 5)), ((4,), (2, 4, 5)),
         ((0, 3), (3, 4)), ((4, 0), (0, 5)),
@@ -8943,6 +8943,14 @@ class TestDotFamilyFallback:
         with assert_raises_regex(ValueError, "tensordot"):
             _dot_fallback(a, b)
 
+    def test_dot_fallback_rejects_scalar_operands(self):
+        # matmul has no 0-D form; `dot` keeps 0-D on its own multiply path.
+        a = np.arange(6, dtype=np.float64).reshape(2, 3)
+        for x, y in [(np.array(3.0), a), (a, np.array(3.0)),
+                     (np.array(3.0), np.array(4.0))]:
+            with assert_raises_regex(ValueError, "enough dimensions"):
+                _dot_fallback(x, y)
+
     def test_dot_fallback_unsupported_type(self):
         s = np.array(["a", "b", "c"])
         assert_raises(ValueError, _dot_fallback, s, s)
@@ -8951,12 +8959,10 @@ class TestDotFamilyFallback:
         assert_raises(ValueError, np.vdot, s, s)
 
     def test_dot_scalar_operands_bypass_fallback(self):
-        # `dot` handles a 0-D operand with `multiply` for every dtype, and
-        # casts both operands to their common dtype first.  That must keep
-        # happening for dtypes without a dotfunc: routing them through the
-        # fallback would skip the cast and reach `multiply`'s heterogeneous
-        # loops, so `np.dot` would start repeating strings instead of
-        # raising.  See the `out=` cases below.
+        # `dot` handles 0-D with `multiply`, casting to the common dtype
+        # first.  That must keep happening for dtypes without a dotfunc: the
+        # errors below come from `multiply`, whereas the fallback would raise
+        # a plain ValueError -- which is what proves 0-D never reaches it.
         s = np.array("ab")
         assert_raises(_UFuncNoLoopError, np.dot, s, 3)
         assert_raises(_UFuncNoLoopError, np.dot, 3, s)
@@ -8983,7 +8989,6 @@ class TestDotFamilyFallback:
         a = np.arange(12, dtype=np.float64).reshape(4, 3)
         b = np.arange(15, dtype=np.float64).reshape(3, 5)
         inputs = [
-            (np.array(3.0), np.asfortranarray(a)),
             (np.asfortranarray(a), np.asfortranarray(b)),
             (np.arange(24.).reshape(4, 6)[:, ::2],
              np.arange(30.).reshape(6, 5)[::2]),
@@ -8992,8 +8997,7 @@ class TestDotFamilyFallback:
             ref = np.dot(x, y)
             got = _dot_fallback(x, y)
             assert_array_equal(got, ref, strict=True)
-            if x.ndim and y.ndim:
-                assert got.flags["C_CONTIGUOUS"]
+            assert got.flags["C_CONTIGUOUS"]
 
     def test_dot_fallback_does_not_conjugate(self):
         # dot (unlike vdot) must not conjugate, even for complex input
@@ -9050,6 +9054,13 @@ class TestDotFamilyFallback:
         scalar = np.dot(q(a), q(b))
         assert np.ndim(scalar) == 0
         assert float(scalar) == np.dot(a, b)
+
+        # 0-D stays on dot's own multiply path, for user dtypes too
+        assert_array_equal(f(np.dot(q(3.0), q(A))), np.dot(3.0, A))
+        assert_array_equal(f(np.dot(q(A), q(3.0))), np.dot(A, 3.0))
+        scalar_out = np.empty(A.shape, dtype=qd)
+        assert np.dot(q(3.0), q(A), scalar_out) is scalar_out
+        assert_array_equal(f(scalar_out), np.dot(3.0, A))
 
         assert_array_equal(f(np.dot(q(A), q(B))), np.dot(A, B))
         assert_array_equal(f(np.inner(q(A), q(A))), np.inner(A, A))

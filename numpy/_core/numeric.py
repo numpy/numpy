@@ -1233,25 +1233,18 @@ def tensordot(a, b, axes=2):
 
 
 def _dot_fallback(a, b, out=None):
-    """``dot`` via ``matmul``/``multiply`` for dtypes without a legacy dotfunc."""
-    # Do not cast the operands here -- ``multiply``/``matmul`` do that anyway,
-    # and leaving them untouched keeps ndarray subclasses (and other
-    # array-likes such as dask arrays with custom dtypes) intact.
-    a_ndim = np.ndim(a)
-    b_ndim = np.ndim(b)
-
-    if a_ndim >= 2 and b_ndim >= 3:
+    """``dot`` via ``matmul`` for dtypes without a legacy dotfunc."""
+    # Not cast here: ``matmul`` casts anyway, and leaving the operands alone
+    # keeps subclasses (and array-likes such as dask arrays) intact.  ``dot``
+    # handles 0-D itself, so only ``matmul`` is needed.
+    if np.ndim(a) >= 2 and np.ndim(b) >= 3:
         raise ValueError(
             "'dot' does not support the stacked outer-product semantics of "
             "'a.ndim >= 2 and b.ndim >= 3' for user-defined dtypes; "
             "use 'numpy.tensordot' instead."
         )
-    # ``dot`` itself handles 0-D operands with ``multiply`` before it ever
-    # reaches this fallback, so in practice only the ``matmul`` branch is
-    # used; the 0-D one is kept so the helper stands on its own.
-    op = np.multiply if a_ndim == 0 or b_ndim == 0 else np.matmul
     try:
-        return op(a, b, out=out)
+        return np.matmul(a, b, out=out)
     except _UFuncNoLoopError:
         # Keep the error the same as it was before we had support for dot
         # for user types.
