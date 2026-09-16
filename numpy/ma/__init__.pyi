@@ -1,3 +1,7 @@
+from typing import Final
+
+from numpy._pytesttester import PytestTester
+
 from . import core, extras
 from .core import (
     MAError,
@@ -456,3 +460,5 @@ __all__ = [
     "vander",
     "vstack",
 ]
+
+test: Final[PytestTester] = ...
