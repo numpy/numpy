@@ -6,7 +6,7 @@ Development workflow
 
 You already have your own forked copy of the NumPy repository, have configured
 Git, and have linked the upstream repository as explained in
-:ref:`linking-to-upstream`. What is described below is a recommended workflow
+the :ref:`Development process summary <devindex>`. What is described below is a recommended workflow
 with Git.
 
 Basic workflow
@@ -480,7 +480,7 @@ If you want to work on some stuff with other people, where you are all
 committing into the same repository, or even the same branch, then just
 share it via GitHub.
 
-First fork NumPy into your account, as from :ref:`forking`.
+First fork NumPy into your account, as from the :ref:`Development process summary <devindex>`.
 
 Then, go to your forked repository github page, say
 ``https://github.com/your-user-name/numpy``
@@ -511,7 +511,7 @@ If you want to test the changes in a pull request or continue the work in a
 new pull request, the commits are to be cloned into a local branch in your
 forked repository
 
-First ensure your upstream points to the main repo, as from :ref:`linking-to-upstream`
+First ensure your upstream points to the main repo, as from the :ref:`Development process summary <devindex>`
 
 Then, fetch the changes and create a local branch. Assuming ``$ID`` is the pull request number
 and ``$BRANCHNAME`` is the name of the *new local* branch you wish to create::
@@ -621,4 +621,5 @@ them to ``upstream`` as follows:
     It's usually a good idea to use the ``-n`` flag to ``git push`` to check
     first that you're about to push the changes you want to the place you
     want.
+
 
