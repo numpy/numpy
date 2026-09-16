@@ -4,6 +4,7 @@ Note that other such tests exist, e.g., in `test_api.py` and many corner-cases
 are tested (sometimes indirectly) elsewhere.
 """
 
+import warnings
 from itertools import permutations, product
 
 import pytest
@@ -429,10 +430,13 @@ class TestTimeScalars:
         arr = np.array(scalar, dtype=dtype)
         cast = np.array(scalar).astype(dtype)
         ass = np.ones((), dtype=dtype)
-        ass[()] = scalar  # raises, as would np.array([scalar], dtype=dtype)
+        with warnings.catch_warnings():
+            # integer assignment goes through int(), see test_deprecations
+            warnings.simplefilter("ignore", DeprecationWarning)
+            ass[()] = scalar
 
         assert_array_equal(arr, cast)
-        assert_array_equal(cast, cast)
+        assert_array_equal(ass, cast)
 
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
     @pytest.mark.parametrize("value, unit",
@@ -446,10 +450,13 @@ class TestTimeScalars:
             arr = np.array(scalar, dtype=dtype)
             cast = np.array(scalar).astype(dtype)
             ass = np.ones((), dtype=dtype)
-            ass[()] = scalar  # raises, as would np.array([scalar], dtype=dtype)
+            with warnings.catch_warnings():
+                # integer assignment goes through int(), see test_deprecations
+                warnings.simplefilter("ignore", DeprecationWarning)
+                ass[()] = scalar
 
             assert_array_equal(arr, cast)
-            assert_array_equal(cast, cast)
+            assert_array_equal(ass, cast)
 
     @pytest.mark.parametrize("dtype", ["S6", "U6"])
     @pytest.mark.parametrize(["val", "unit"],
