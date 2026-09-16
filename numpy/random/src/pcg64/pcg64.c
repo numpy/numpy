@@ -63,7 +63,6 @@ extern inline void pcg_setseq_128_advance_r(pcg_state_setseq_128 *rng,
                                             pcg128_t delta);
 extern inline uint64_t pcg_cm_random_r(pcg_state_setseq_128 *rng);
 extern inline void pcg_cm_step_r(pcg_state_setseq_128 *rng);
-extern inline uint64_t pcg_output_cm_128_64(pcg128_t state);
 extern inline void pcg_cm_srandom_r(pcg_state_setseq_128 *rng, pcg128_t initstate, pcg128_t initseq);
 
 /* Multi-step advance functions (jump-ahead, jump-back)
