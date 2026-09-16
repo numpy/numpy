@@ -16,7 +16,7 @@ NumPy as of version ``2.0`` requires C11 and C++17 compliant compilers.
 Having compiled code also means that importing NumPy from the development
 sources needs some additional steps, which are explained below.  For the rest
 of this chapter we assume that you have set up your git repo as described in
-:ref:`using-git`.
+:ref:`development-process-summary`.
 
 .. note::
 
