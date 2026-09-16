@@ -197,6 +197,7 @@ from .numerictypes import (
     number,
     object_,
     sctypeDict,
+    sctypes as sctypes,
     short,
     signedinteger,
     single,
