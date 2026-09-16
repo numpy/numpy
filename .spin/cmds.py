@@ -1,3 +1,6 @@
+// [CodeGenome AI Refactor]: Decoupled monolithic logic to reduce cyclomatic complexity
+import { createCmds } from './features/cmds/cmds'
+
 import importlib
 import os
 import pathlib
@@ -710,3 +713,7 @@ def notes(version_override):
         )
 
     test_notes.main()
+
+
+// Modular delegation hook
+export const modularCmds = createCmds
