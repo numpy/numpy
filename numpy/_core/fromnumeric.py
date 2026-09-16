@@ -140,7 +140,9 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     Returns
     -------
     out : ndarray (Ni..., Nj..., Nk...)
-        The returned array has the same type as `a`.
+        The returned array has the same type as `a`. If `out` is not
+        given, the result is always C-contiguous, regardless of the
+        memory layout of `a`.
 
     See Also
     --------
@@ -163,6 +165,12 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     of `apply_along_axis`::
 
         out = np.apply_along_axis(lambda a_1d: a_1d[indices], axis, a)
+
+    `take` always traverses `a` in C order and, when `out` is not given,
+    produces a C-contiguous result, regardless of the memory layout of
+    `a`. Fancy indexing, in contrast, may choose a different traversal
+    and output layout, so the memory order of equivalent results can
+    differ between the two.
 
     Examples
     --------
