@@ -1,3 +1,5 @@
+import datetime as dt
+
 import numpy as np
 import numpy.typing as npt
 
@@ -40,7 +42,8 @@ np.datetime_data(int)  # type: ignore[arg-type]
 
 np.busday_offset("2012", 10)  # type: ignore[call-overload]
 
-np.datetime_as_string("2012")  # type: ignore[call-overload]
+np.datetime_as_string("2012")  # type: ignore[arg-type]
+np.datetime_as_string(dt.date.today())  # type: ignore[call-overload]
 
 np.char.compare_chararrays("a", b"a", "==", False)  # type: ignore[call-overload]
 
