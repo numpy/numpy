@@ -2297,8 +2297,6 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                                     NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED |
                                     NPY_ARRAY_SAME_KIND_CASTING);
         if (sorter == NULL) {
-            PyErr_SetString(PyExc_ValueError,
-                        "could not parse sorter argument");
             goto fail;
         }
         if (PyArray_SIZE(sorter) != PyArray_SIZE(ap1)) {
