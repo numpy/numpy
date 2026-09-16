@@ -70,6 +70,7 @@ __all__ = [
     "mean",
     "max",
     "min",
+    "minmax",
     "matrix_transpose",
     "ndim",
     "nonzero",
@@ -451,29 +452,64 @@ def reshape(
     copy: bool | None = None,
 ) -> NDArray[Any]: ...
 
-# keep in sync with `ma.core.choose`
-@overload
-def choose(
-    a: _IntLike_co,
-    choices: ArrayLike,
+#
+@overload  # 0d, ?d
+def choose(a: _IntLike_co, choices: ArrayLike, out: None = None, mode: _ModeKind = "raise") -> Any: ...
+@overload  # ?d, ?d T  (workaround)
+def choose[ScalarT: np.generic](
+    a: _ArrayJustND[np.integer | np.bool],
+    choices: _ArrayLike[ScalarT],
     out: None = None,
     mode: _ModeKind = "raise",
-) -> Any: ...
-@overload
+) -> NDArray[ScalarT]: ...
+@overload  # ?d, ?d T  (workaround)
+def choose[ScalarT: np.generic](
+    a: _ArrayLikeInt_co,
+    choices: (
+        _ArrayJustND[ScalarT]
+        | Sequence[_ArrayJustND[ScalarT]]
+        | tuple[_ArrayJustND[ScalarT], _ArrayLike[ScalarT]]
+        | tuple[_ArrayLike[ScalarT], _ArrayJustND[ScalarT]]
+    ),
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> NDArray[ScalarT]: ...
+@overload  # 1d, <=1d T
+def choose[ScalarT: np.generic](
+    a: _ToInt1D,
+    choices: _Array2D[ScalarT] | Sequence[_Array1D[ScalarT] | ScalarT],
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array1D[ScalarT]: ...
+@overload  # 1d, 2d T
+def choose[ScalarT: np.generic](
+    a: _ToInt1D,
+    choices: _Array3D[ScalarT] | Sequence[_Array2D[ScalarT]],
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array2D[ScalarT]: ...
+@overload  # 2d, <=2d T
+def choose[ScalarT: np.generic](
+    a: _ToInt2D,
+    choices: _Array3D[ScalarT] | Sequence[_Array2D[ScalarT] | _Array1D[ScalarT] | ScalarT],
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _Array2D[ScalarT]: ...
+@overload  # ?d, ?d T
 def choose[ScalarT: np.generic](
     a: _ArrayLikeInt_co,
     choices: _ArrayLike[ScalarT],
     out: None = None,
     mode: _ModeKind = "raise",
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, ?d  (fallback)
 def choose(
     a: _ArrayLikeInt_co,
     choices: ArrayLike,
     out: None = None,
     mode: _ModeKind = "raise",
 ) -> NDArray[Any]: ...
-@overload
+@overload  # out=<given>
 def choose[ArrayT: np.ndarray](
     a: _ArrayLikeInt_co,
     choices: ArrayLike,
@@ -515,12 +551,28 @@ def put(
     mode: _ModeKind = "raise",
 ) -> None: ...
 
-# keep in sync with `ndarray.swapaxes` and `ma.core.swapaxes`
-@overload
+# keep in sync with `ndarray.swapaxes` and `transpose`
+@overload  # known array
 def swapaxes[ArrayT: np.ndarray](a: ArrayT, axis1: SupportsIndex, axis2: SupportsIndex) -> ArrayT: ...
-@overload
+@overload  # 1d bool
+def swapaxes(a: list[bool], axis1: SupportsIndex, axis2: SupportsIndex) -> _Array1D[np.bool]: ...
+@overload  # 1d int
+def swapaxes(a: list[int], axis1: SupportsIndex, axis2: SupportsIndex) -> _Array1D[np.int_]: ...
+@overload  # 1d float
+def swapaxes(a: list[float], axis1: SupportsIndex, axis2: SupportsIndex) -> _Array1D[np.float64]: ...
+@overload  # 1d complex
+def swapaxes(a: list[complex], axis1: SupportsIndex, axis2: SupportsIndex) -> _Array1D[np.complex128]: ...
+@overload  # 2d bool
+def swapaxes(a: Sequence[list[bool]], axis1: SupportsIndex, axis2: SupportsIndex) -> _Array2D[np.bool]: ...
+@overload  # 2d int
+def swapaxes(a: Sequence[list[int]], axis1: SupportsIndex, axis2: SupportsIndex) -> _Array2D[np.int_]: ...
+@overload  # 2d float
+def swapaxes(a: Sequence[list[float]], axis1: SupportsIndex, axis2: SupportsIndex) -> _Array2D[np.float64]: ...
+@overload  # 2d complex
+def swapaxes(a: Sequence[list[complex]], axis1: SupportsIndex, axis2: SupportsIndex) -> _Array2D[np.complex128]: ...
+@overload  # known dtype
 def swapaxes[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis1: SupportsIndex, axis2: SupportsIndex) -> NDArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def swapaxes(a: ArrayLike, axis1: SupportsIndex, axis2: SupportsIndex) -> NDArray[Any]: ...
 
 # keep in sync with `matrix_transpose`  (but start at 1d lists)
@@ -572,34 +624,90 @@ def matrix_transpose[ScalarT: np.generic](x: _ArrayLike[ScalarT], /) -> NDArray[
 def matrix_transpose(x: ArrayLike, /) -> NDArray[Any]: ...
 
 #
-@overload  # Nd
+@overload  # known array, axis=<given> (default)
 def partition[ArrayT: np.ndarray](
     a: ArrayT,
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
     kind: _PartitionKind | _NoValueType = ...,
-    order: str | Sequence[str] | None = None,
+    order: None = None,
     descending: bool | _NoValueType = ...,
 ) -> ArrayT: ...
-@overload  # ?d
+@overload  # known void array, axis=<given> (default), order=<given>
+def partition[ArrayT: NDArray[np.void]](
+    a: ArrayT,
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind | _NoValueType = ...,
+    *,
+    order: str | Sequence[str] | None,
+    descending: bool | _NoValueType = ...,
+) -> ArrayT: ...
+@overload  # 1d ~bool
+def partition(
+    a: list[bool],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind | _NoValueType = ...,
+    order: None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.bool]: ...
+@overload  # 1d ~int
+def partition(
+    a: list[int],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind | _NoValueType = ...,
+    order: None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.int_]: ...
+@overload  # 1d ~float
+def partition(
+    a: list[float],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind | _NoValueType = ...,
+    order: None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d ~complex
+def partition(
+    a: list[complex],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind | _NoValueType = ...,
+    order: None = None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[np.complex128]: ...
+@overload  # ?d, axis=<given> (default)
 def partition[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     kth: _ArrayLikeInt,
     axis: SupportsIndex = -1,
     kind: _PartitionKind | _NoValueType = ...,
-    order: str | Sequence[str] | None = None,
+    order: None = None,
     descending: bool | _NoValueType = ...,
 ) -> NDArray[ScalarT]: ...
-@overload  # axis: None
+@overload  # ?d void, axis=None, order=<given>
+def partition[ScalarT: np.void](
+    a: _ArrayLike[ScalarT],
+    kth: _ArrayLikeInt,
+    axis: None,
+    kind: _PartitionKind | _NoValueType = ...,
+    *,
+    order: str | Sequence[str] | None,
+    descending: bool | _NoValueType = ...,
+) -> _Array1D[ScalarT]: ...
+@overload  # ?d T, axis: None
 def partition[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     kth: _ArrayLikeInt,
     axis: None,
     kind: _PartitionKind | _NoValueType = ...,
-    order: str | Sequence[str] | None = None,
+    order: None = None,
     descending: bool | _NoValueType = ...,
 ) -> _Array1D[ScalarT]: ...
-@overload  # fallback
+@overload  # fallback, axis=<given> (default)
 def partition(
     a: ArrayLike,
     kth: _ArrayLikeInt,
@@ -1102,13 +1210,35 @@ def resize[AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](a: ArrayLike, new_shape: AnySha
 @overload
 def resize(a: ArrayLike, new_shape: _ShapeLike) -> NDArray[Any]: ...
 
-# TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
-@overload
+#
+@overload  # 0d T
 def squeeze[ScalarT: np.generic](a: ScalarT, axis: _ShapeLike | None = None) -> ScalarT: ...
-@overload
-def squeeze[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: _ShapeLike | None = None) -> NDArray[ScalarT]: ...
-@overload
-def squeeze(a: ArrayLike, axis: _ShapeLike | None = None) -> NDArray[Any]: ...
+@overload  # 0d  (the generic shape catches `tuple[Any, ...]`)
+def squeeze[ShapeT: _0D, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT], axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # 1d, axis=<single>
+def squeeze[DTypeT: np.dtype](
+    a: np.ndarray[_1D, DTypeT], axis: SupportsIndex | tuple[SupportsIndex]
+) -> np.ndarray[_0D, DTypeT]: ...
+@overload  # 2d, axis=<single>
+def squeeze[DTypeT: np.dtype](
+    a: np.ndarray[_2D, DTypeT], axis: SupportsIndex | tuple[SupportsIndex]
+) -> np.ndarray[_1D, DTypeT]: ...
+@overload  # 3d, axis=<single>
+def squeeze[DTypeT: np.dtype](
+    a: np.ndarray[_3D, DTypeT], axis: SupportsIndex | tuple[SupportsIndex]
+) -> np.ndarray[_2D, DTypeT]: ...
+@overload  # 4d, axis=<single>
+def squeeze[DTypeT: np.dtype](
+    a: np.ndarray[_4D, DTypeT], axis: SupportsIndex | tuple[SupportsIndex]
+) -> np.ndarray[_3D, DTypeT]: ...
+@overload  # Nd T
+def squeeze[ScalarT: np.generic](
+    a: NDArray[ScalarT] | _NestedSequence[_SupportsArray[np.dtype[ScalarT]]], axis: _ShapeLike | None = None
+) -> NDArray[ScalarT]: ...
+@overload  # fallback
+def squeeze(a: ArrayLike, axis: _ShapeLike | None = None) -> NDArray[Any] | Any: ...
 
 # keep in sync with `ma.core.diagonal`
 @overload  # ?d  (workaround)
@@ -1132,6 +1262,13 @@ def diagonal[ScalarT: np.generic](
     axis1: SupportsIndex = 0,
     axis2: SupportsIndex = 1,
 ) -> _Array2D[ScalarT]: ...
+@overload  # 4d
+def diagonal[ScalarT: np.generic](
+    a: _ToArray4D[ScalarT],
+    offset: SupportsIndex = 0,
+    axis1: SupportsIndex = 0,
+    axis2: SupportsIndex = 1,
+) -> _Array3D[ScalarT]: ...
 @overload  # Nd
 def diagonal[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
@@ -1403,30 +1540,58 @@ def shape(a: memoryview | bytearray) -> _1D: ...
 def shape(a: ArrayLike) -> _AnyShape: ...
 
 #
-@overload
+@overload  # Nd T, axis=None  (default)
 def compress[ScalarT: np.generic](
-    condition: _ArrayLikeBool_co,  # 1D bool array
+    condition: _ArrayLikeBool_co,
     a: _ArrayLike[ScalarT],
-    axis: SupportsIndex | None = None,
+    axis: None = None,
+    out: None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # Nd, axis=None  (fallback)
+def compress(
+    condition: _ArrayLikeBool_co,
+    a: ArrayLike,
+    axis: None = None,
+    out: None = None,
+) -> _Array1D[Any]: ...
+@overload  # >=1d T, axis=<given>
+def compress[ShapeT: tuple[int, *tuple[int, ...]], DTypeT: np.dtype](
+    condition: _ArrayLikeBool_co,
+    a: np.ndarray[ShapeT, DTypeT],
+    axis: SupportsIndex,
+    out: None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # 0d T, axis=<given>
+def compress[DTypeT: np.dtype](
+    condition: _ArrayLikeBool_co,
+    a: np.ndarray[tuple[()], DTypeT],
+    axis: SupportsIndex,
+    out: None = None,
+) -> np.ndarray[_1D, DTypeT]: ...
+@overload  # ?d T, axis=<given>  (fallback)
+def compress[ScalarT: np.generic](
+    condition: _ArrayLikeBool_co,
+    a: _ArrayLike[ScalarT],
+    axis: SupportsIndex,
     out: None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, axis=<given>  (fallback)
 def compress(
-    condition: _ArrayLikeBool_co,  # 1D bool array
+    condition: _ArrayLikeBool_co,
     a: ArrayLike,
-    axis: SupportsIndex | None = None,
+    axis: SupportsIndex,
     out: None = None,
 ) -> NDArray[Any]: ...
-@overload
+@overload  # out=<given>  (positional)
 def compress[ArrayT: np.ndarray](
-    condition: _ArrayLikeBool_co,  # 1D bool array
+    condition: _ArrayLikeBool_co,
     a: ArrayLike,
     axis: SupportsIndex | None,
     out: ArrayT,
 ) -> ArrayT: ...
-@overload
+@overload  # out=<given>  (keyword)
 def compress[ArrayT: np.ndarray](
-    condition: _ArrayLikeBool_co,  # 1D bool array
+    condition: _ArrayLikeBool_co,
     a: ArrayLike,
     axis: SupportsIndex | None = None,
     *,
@@ -1981,109 +2146,134 @@ def cumulative_sum[ArrayT: np.ndarray](
 ) -> ArrayT: ...
 
 #
-@overload  # ~builtins.int
+@overload  # ?d Any  (workaround)
 def ptp(
-    a: _NestedSequence[list[int]] | list[int],
+    a: _NestedSequence[Never],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> np.int_: ...
-@overload  # ~builtins.int, axis: <given>
-def ptp(
-    a: _NestedSequence[list[int]] | list[int],
-    axis: int | tuple[int, ...],
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[np.int_]: ...
-@overload  # ~builtins.int, keepdims=True
-def ptp(
-    a: _NestedSequence[list[int]] | list[int],
-    axis: int | tuple[int, ...] | None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[True],
-) -> NDArray[np.int_]: ...
-@overload  # ~builtins.float
-def ptp(
-    a: _NestedSequence[list[float]] | list[float],
-    axis: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> np.float64: ...
-@overload  # ~builtins.float, axis: <given>
-def ptp(
-    a: _NestedSequence[list[float]] | list[float],
-    axis: int | tuple[int, ...],
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[np.float64]: ...
-@overload  # ~builtins.float, keepdims=True
-def ptp(
-    a: _NestedSequence[list[float]] | list[float],
-    axis: int | tuple[int, ...] | None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[True],
-) -> NDArray[np.float64]: ...
-@overload  # ~builtins.complex
-def ptp(
-    a: _NestedSequence[list[complex]] | list[complex],
-    axis: None = None,
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> np.complex128: ...
-@overload  # ~builtins.complex, axis: <given>
-def ptp(
-    a: _NestedSequence[list[complex]] | list[complex],
-    axis: int | tuple[int, ...],
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[np.complex128]: ...
-@overload  # ~builtins.complex, keepdims=True
-def ptp(
-    a: _NestedSequence[list[complex]] | list[complex],
-    axis: int | tuple[int, ...] | None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[True],
-) -> NDArray[np.complex128]: ...
-@overload  # ~number | timedelta64
+) -> Any: ...
+@overload  # Nd T, axis=None  (default)
 def ptp[ScalarT: np.number | np.timedelta64](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
 ) -> ScalarT: ...
-@overload  # ~number | timedelta64 | object_, axis: <given>
-def ptp[ScalarT: np.number | np.timedelta64 | np.object_](
-    a: _ArrayLike[ScalarT],
-    axis: int | tuple[int, ...],
-    out: None = None,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[ScalarT]: ...
-@overload  # ~number | timedelta64 | datetime64 | object_, keepdims=True
-def ptp[ArrayT: NDArray[np.number | np.timedelta64 | np.object_]](
-    a: ArrayT,
-    axis: int | tuple[int, ...] | None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[True],
-) -> ArrayT: ...
-@overload  # datetime64
+@overload  # Nd ~datetime64, axis=None  (default)
 def ptp(
     a: _ArrayLike[np.datetime64],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
 ) -> np.timedelta64[Any]: ...
-@overload  # datetime64, axis: <given>
+@overload  # Nd ~object_, axis=None  (default)
 def ptp(
-    a: _ArrayLike[np.datetime64],
+    a: _ArrayLike[np.object_],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> Any: ...
+@overload  # Nd ~int, axis=None  (default)
+def ptp(
+    a: _NestedList[int],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # Nd ~float, axis=None  (default)
+def ptp(
+    a: _NestedList[float],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.float64: ...
+@overload  # Nd ~complex, axis=None  (default)
+def ptp(
+    a: _NestedList[complex],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.complex128: ...
+@overload  # ?d T, axis=<given>  (workaround)
+def ptp[ScalarT: np.number | np.timedelta64](
+    a: _ArrayJustND[ScalarT],
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[np.timedelta64]: ...
-@overload  # datetime64, keepdims=True
+) -> NDArray[ScalarT] | Any: ...
+@overload  # 1d T, axis=<given>
+def ptp[ScalarT: np.number | np.timedelta64](
+    a: _ToArray1D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> ScalarT: ...
+@overload  # 1d ~int, axis=<given>
+def ptp(
+    a: list[int],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.int_: ...
+@overload  # 1d ~float, axis=<given>
+def ptp(
+    a: list[float],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.float64: ...
+@overload  # 1d ~complex, axis=<given>
+def ptp(
+    a: list[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> np.complex128: ...
+@overload  # 2d T, axis=<given>
+def ptp[ScalarT: np.number | np.timedelta64](
+    a: _ToArray2D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array1D[ScalarT]: ...
+@overload  # 2d ~int, axis=<given>
+def ptp(
+    a: Sequence[list[int]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array1D[np.int_]: ...
+@overload  # 2d ~float, axis=<given>
+def ptp(
+    a: Sequence[list[float]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array1D[np.float64]: ...
+@overload  # 2d ~complex, axis=<given>
+def ptp(
+    a: Sequence[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array1D[np.complex128]: ...
+@overload  # 3d T, axis=<given>
+def ptp[ScalarT: np.number | np.timedelta64](
+    a: _ToArray3D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _Array2D[ScalarT]: ...
+@overload  # Nd T, keepdims=True
+def ptp[ArrayT: NDArray[np.number | np.timedelta64]](
+    a: ArrayT,
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+) -> ArrayT: ...
+@overload  # Nd ~datetime64, keepdims=True
 def ptp[ShapeT: _Shape](
     a: np.ndarray[ShapeT, np.dtype[np.datetime64]],
     axis: int | tuple[int, ...] | None = None,
@@ -2091,14 +2281,81 @@ def ptp[ShapeT: _Shape](
     *,
     keepdims: Literal[True],
 ) -> np.ndarray[ShapeT, np.dtype[np.timedelta64]]: ...
-@overload  # object_
+@overload  # Nd ~object_, keepdims=True
+def ptp[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.object_]],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+@overload  # Nd ~int, keepdims=True
 def ptp(
-    a: _ArrayLike[np.object_],
-    axis: None = None,
+    a: _NestedList[int],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+) -> NDArray[np.int_]: ...
+@overload  # Nd ~float, keepdims=True
+def ptp(
+    a: _NestedList[float],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+) -> NDArray[np.float64]: ...
+@overload  # Nd ~complex, keepdims=True
+def ptp(
+    a: _NestedList[complex],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+) -> NDArray[np.complex128]: ...
+@overload  # ?d T, axis=<given>  (fallback)
+def ptp[ScalarT: np.number | np.timedelta64](
+    a: _ArrayLike[ScalarT],
+    axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> Any: ...
-@overload  # out: ArrayT
+) -> NDArray[ScalarT] | Any: ...
+@overload  # ?d ~datetime64, axis=<given>  (fallback)
+def ptp(
+    a: _ArrayLike[np.datetime64],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.timedelta64] | Any: ...
+@overload  # ?d ~object_, axis=<given>  (fallback)
+def ptp(
+    a: _ArrayLike[np.object_],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.object_] | Any: ...
+@overload  # ?d ~int, axis=<given>  (fallback)
+def ptp(
+    a: _NestedSequence[list[int]],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.int_] | Any: ...
+@overload  # ?d ~float, axis=<given>  (fallback)
+def ptp(
+    a: _NestedSequence[list[float]],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.float64] | Any: ...
+@overload  # ?d ~complex, axis=<given>  (fallback)
+def ptp(
+    a: _NestedSequence[list[complex]],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> NDArray[np.complex128] | Any: ...
+@overload  # out=<given>
 def ptp[ArrayT: np.ndarray](
     a: _ArrayLikeNumeric_co,
     axis: int | tuple[int, ...] | None = None,
@@ -2113,13 +2370,13 @@ def ptp(
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
 ) -> Any: ...
-@overload  # fallback, axis: <given>
+@overload  # fallback, axis=<given>
 def ptp(
     a: _ArrayLikeNumeric_co,
     axis: int | tuple[int, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
-) -> NDArray[Any]: ...
+) -> NDArray[Any] | Any: ...
 @overload  # fallback, keepdims=True
 def ptp(
     a: _ArrayLikeNumeric_co,
@@ -2834,6 +3091,44 @@ def amin(
 ) -> NDArray[Any]: ...
 
 min = amin
+
+@overload
+def minmax[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[ScalarT, ScalarT]: ...
+@overload
+def minmax(
+    a: ArrayLike,
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    keepdims: bool | _NoValueType = ...,
+    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[Any, Any]: ...
+@overload
+def minmax[ArrayT: np.ndarray](
+    a: ArrayLike,
+    axis: int | tuple[int, ...] | None,
+    out: tuple[ArrayT, ArrayT],
+    keepdims: bool | _NoValueType = ...,
+    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[ArrayT, ArrayT]: ...
+@overload
+def minmax[ArrayT: np.ndarray](
+    a: ArrayLike,
+    axis: int | tuple[int, ...] | None = None,
+    *,
+    out: tuple[ArrayT, ArrayT],
+    keepdims: bool | _NoValueType = ...,
+    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[ArrayT, ArrayT]: ...
 
 # keep in sync with `cumsum` above (minus `timedelta64` and `StringDType`)
 @overload

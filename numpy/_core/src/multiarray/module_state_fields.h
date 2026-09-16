@@ -5,8 +5,8 @@
  * Field lists for the PyObject members of multiarray_umath_state, used to
  * expand the module traverse and clear functions.
  *
- * interned_str.errmode_strings is an array, so it is handled separately at
- * each use site.
+ * interned_str.errmode_strings and interned_str.scalar_method_names are
+ * arrays, handled separately at each use site.
  */
 
 #ifdef __cplusplus
@@ -276,16 +276,46 @@ extern "C" {
     F(global_pytype_to_type_dict)
 
 /*
+ * Heap types created with PyType_FromModuleAndSpec during module execution.
+ * The names match the static types they replaced.
+ */
+#define NPY_MODULE_STATE_TYPE_FIELDS(F) \
+    F(PyArrayFlags_Type)              \
+    F(PyArrayArrayConverter_Type)     \
+    F(PyArrayFunctionDispatcher_Type) \
+    F(NpyBusDayCalendar_Type)
+
+/*
  * Expand a field list into the PyObject * members it names, so the structs
  * below are declared from the same list the traverse and clear functions use.
  */
 #define NPY_DECLARE_ONE_PYOBJECT_FIELD(name) PyObject *name;
 #define NPY_DECLARE_PYOBJECT_FIELDS(list) list(NPY_DECLARE_ONE_PYOBJECT_FIELD)
 
+/* The same, for the lists whose members are types. */
+#define NPY_DECLARE_ONE_TYPE_FIELD(name) PyTypeObject *name;
+#define NPY_DECLARE_TYPE_FIELDS(list) list(NPY_DECLARE_ONE_TYPE_FIELD)
+
 #define NPY_FIELD_COUNT_ONE(name) + 1
 #define NPY_FIELD_COUNT(list) (0 list(NPY_FIELD_COUNT_ONE))
 
 #define NPY_ERRMODE_STRING_COUNT 6
+
+/* Names of the 0-d array methods the scalars forward to; the forwarders in
+ * `scalartypes.c.src` are generated from this list too. */
+#define NPY_SCALAR_METHOD_NAMES(F)                               \
+    F(__copy__)     F(__deepcopy__) F(all)          F(any)       \
+    F(argmax)       F(argmin)       F(argsort)      F(astype)    \
+    F(choose)       F(clip)         F(compress)     F(conj)      \
+    F(conjugate)    F(copy)         F(cumprod)      F(cumsum)    \
+    F(diagonal)     F(fill)         F(flatten)      F(getfield)  \
+    F(item)         F(max)          F(mean)         F(min)       \
+    F(nonzero)      F(prod)         F(put)          F(ravel)     \
+    F(repeat)       F(reshape)      F(resize)       F(round)     \
+    F(searchsorted) F(sort)         F(squeeze)      F(std)       \
+    F(sum)          F(swapaxes)     F(take)         F(tobytes)   \
+    F(tofile)       F(tolist)       F(trace)        F(transpose) \
+    F(var)          F(view)
 
 #ifdef __cplusplus
 }

@@ -233,6 +233,7 @@ from numpy._core.fromnumeric import (
     ptp,
     max,
     min,
+    minmax,
     amax,
     amin,
     prod,
@@ -715,7 +716,7 @@ __all__ = [
     "shares_memory", "may_share_memory",
     "all", "amax", "amin", "any", "argmax", "argmin", "argpartition", "argsort",
     "around", "choose", "clip", "compress", "cumprod", "cumsum", "cumulative_prod",
-    "cumulative_sum", "diagonal", "mean", "max", "min", "matrix_transpose", "ndim",
+    "cumulative_sum", "diagonal", "mean", "max", "min", "minmax", "matrix_transpose", "ndim",
     "nonzero", "partition", "prod", "ptp", "put", "ravel", "repeat", "reshape",
     "resize", "round", "searchsorted", "shape", "size", "sort", "squeeze", "std", "sum",
     "swapaxes", "take", "top_k", "trace", "transpose", "var",
@@ -2582,7 +2583,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def squeeze(
         self,
         /,
-        axis: SupportsIndex | tuple[SupportsIndex] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     ) -> ndarray[_AnyShape, _DTypeT_co]: ...
 
     #
@@ -12883,17 +12884,17 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __truediv__(self: timedelta64[dt.timedelta], b: dt.timedelta, /) -> float: ...
     @overload
-    def __truediv__(self: timedelta64[Never], b: float | floating | integer, /) -> timedelta64: ...
+    def __truediv__(self: timedelta64[Never], b: _FloatLike_co, /) -> timedelta64: ...
     @overload
     def __truediv__[AnyItemT: (dt.timedelta, int, None)](
-        self: timedelta64[AnyItemT], b: int | integer, /
+        self: timedelta64[AnyItemT], b: _IntLike_co, /
     ) -> timedelta64[AnyItemT]: ...
     @overload
     def __truediv__[AnyItemT: (dt.timedelta, int, None)](
         self: timedelta64[AnyItemT], b: float | floating, /
     ) -> timedelta64[AnyItemT | None]: ...
     @overload
-    def __truediv__(self, b: float | floating | integer, /) -> timedelta64: ...
+    def __truediv__(self, b: _FloatLike_co, /) -> timedelta64: ...
 
     @overload
     def __rtruediv__(self, a: timedelta64, /) -> float64: ...
@@ -12905,10 +12906,10 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __floordiv__(self: timedelta64[dt.timedelta], b: dt.timedelta, /) -> int: ...
     @overload
-    def __floordiv__(self: timedelta64[Never], b: float | floating | integer, /) -> timedelta64: ...
+    def __floordiv__(self: timedelta64[Never], b: _FloatLike_co, /) -> timedelta64: ...
     @overload
     def __floordiv__[AnyItemT: (dt.timedelta, int, None)](
-        self: timedelta64[AnyItemT], b: int | integer, /
+        self: timedelta64[AnyItemT], b: _IntLike_co, /
     ) -> timedelta64[AnyItemT]: ...
     @overload
     def __floordiv__[AnyItemT: (dt.timedelta, int, None)](

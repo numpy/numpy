@@ -21,7 +21,7 @@ In short:
 
 3. When finished:
 
-   - *Contributors*: push your feature branch to your own Github repo, and
+   - *Contributors*: push your feature branch to your own GitHub repo, and
      :ref:`create a pull request <asking-for-merging>`.
 
    - *Core developers*: If you want to push changes without
@@ -62,7 +62,7 @@ Overview
    git diff # Optional
    git add modified_file
    git commit
-   # push the branch to your own Github repo
+   # push the branch to your own GitHub repo
    git push origin my-new-feature
 
 In more detail
@@ -110,7 +110,7 @@ In more detail
    -a``. The extra ``-a`` flag automatically commits all modified files and
    removes all deleted files. This can save you some typing of numerous ``git
    add`` commands; however, it can add unwanted changes to a commit if you're
-   not careful. 
+   not careful.
 
 #. Push the changes to your fork on GitHub::
 
@@ -119,7 +119,7 @@ In more detail
 .. note::
 
    Assuming you have followed the instructions in these pages, git will create
-   a default link to your GitHb repo called ``origin``.  You
+   a default link to your GitHub repo called ``origin``.  You
    can ensure that the link to origin is permanently set by using the
    ``--set-upstream`` option::
 
@@ -257,7 +257,7 @@ OK to ping the list again.
 Asking for your changes to be merged with the main repo
 =======================================================
 
-When you feel your work is finished, you can create a pull request (PR). 
+When you feel your work is finished, you can create a pull request (PR).
 If your changes involve modifications to the API or addition/modification of a
 function, add a release note to the ``doc/release/upcoming_changes/``
 directory, following the instructions and format in the
@@ -273,8 +273,8 @@ of your PR.
 Open pull request limit
 =======================
 
-To keep the review queue manageable, GitHub is configured to allow only one
-open non-draft pull request per non-maintainer at a time. Draft pull requests
+To keep the review queue manageable, GitHub is configured to allow only two
+open non-draft pull requests per non-maintainer at a time. Draft pull requests
 do not count towards the limit. The maintainer team can, at its discretion,
 add contributors to the list of accounts allowed to open more pull requests
 at once. We liberally add contributors who attend the community and triage
@@ -574,12 +574,12 @@ backport.
    use ``git blame`` to see the difference between main and the
    backported branch to make sure nothing gets screwed up.
 
-4. Push the new branch to your Github repository::
+4. Push the new branch to your GitHub repository::
 
     git push -u origin backport-3324
 
-5. Finally make a pull request using Github. Make sure it is against the
-   maintenance branch and not main, Github will usually suggest you
+5. Finally make a pull request using GitHub. Make sure it is against the
+   maintenance branch and not main, GitHub will usually suggest you
    make the pull request against main.
 
 .. _pushing-to-main:

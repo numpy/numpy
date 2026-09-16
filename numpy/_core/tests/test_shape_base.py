@@ -441,6 +441,61 @@ class TestConcatenate:
         with assert_raises(TypeError):
             concatenate(to_concat, out=out, dtype=out_dtype, axis=axis)
 
+    @pytest.mark.parametrize("scalar, dtype",
+        [(300, "int8"), (-1, "uint8"), (2**64, "int64")])
+    def test_pyscalar_out_of_bounds(self, scalar, dtype):
+        arr = np.ones(2, dtype=dtype)
+        with pytest.raises(OverflowError):
+            concatenate((arr, scalar), axis=None)
+        with pytest.raises(OverflowError):
+            concatenate((scalar, arr), axis=None, out=np.empty(3, dtype=dtype))
+
+    @pytest.mark.parametrize("scalar, dtype",
+        [(3, "uint8"), (3, "float32"), (3.0, "float32"), (3.0, "complex64"),
+         (300, "int8"), (3.0, "int64"), (1j, "float64"), (3, bool),
+         (3, object), ("x", np.dtypes.StringDType()), ("x", "U5")])
+    @pytest.mark.parametrize("casting",
+        ["no", "equiv", "safe", "same_kind", "unsafe"])
+    def test_pyscalar_casting_matches_copyto(self, scalar, dtype, casting):
+        # dtype= fixes the result so that only the scalar's conversion differs
+        arr = np.ones(2, dtype=dtype)
+
+        def outcome(func):
+            try:
+                return func()
+            except Exception as e:
+                return type(e)
+
+        dst = arr.copy()
+        expected = outcome(lambda: np.copyto(dst, scalar, casting=casting))
+        res = outcome(lambda: concatenate(
+                (arr, scalar), axis=None, dtype=arr.dtype, casting=casting))
+        if isinstance(expected, type):
+            assert res is expected
+        else:
+            assert_array_equal(res, np.array([1, 1, dst[0]], dtype=arr.dtype))
+
+    @pytest.mark.parametrize("scalar, dtype",
+        [(3, "uint8"), (3, "float32"), (3.0, "float32"), (3.0, "complex64"),
+         (300, "int8"), (3, object), ("x", np.dtypes.StringDType())])
+    @pytest.mark.parametrize("casting",
+        ["no", "equiv", "safe", "same_kind", "unsafe"])
+    def test_pyscalar_casting_matches_ufunc(self, scalar, dtype, casting):
+        arr = np.ones(2, dtype=dtype)
+
+        def outcome(func):
+            try:
+                return func()
+            except Exception as e:
+                return type(e)
+
+        expected = outcome(lambda: np.copyto(arr.copy(), scalar, casting=casting))
+        res = outcome(lambda: np.add(arr, scalar, casting=casting))
+        if isinstance(expected, type):
+            assert res is expected
+        else:
+            assert res.dtype == arr.dtype
+
     @pytest.mark.parametrize("axis", [None, 0])
     @pytest.mark.parametrize("string_dt", ["S", "U", "S0", "U0"])
     @pytest.mark.parametrize("arrs",

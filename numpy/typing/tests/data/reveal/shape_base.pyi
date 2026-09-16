@@ -22,8 +22,11 @@ AR_i8_2d: _Array2D[np.int64]
 AR_i8_3d: _Array3D[np.int64]
 AR_i8_4d: _Array4D[np.int64]
 AR_f8: npt.NDArray[np.float64]
+AR_O: npt.NDArray[np.object_]
 
+AR_LIKE_b: list[bool]
 AR_LIKE_f8: list[float]
+AR_LIKE_c16: list[complex]
 
 # Duck-typed class implementing _SupportsSplitOps protocol for testing
 class _SplitableArray:
@@ -34,8 +37,8 @@ class _SplitableArray:
 
 splitable: _SplitableArray
 
-assert_type(np.take_along_axis(AR_f8, AR_i8, axis=1), npt.NDArray[np.float64])
-assert_type(np.take_along_axis(f8, AR_i8, axis=None), npt.NDArray[np.float64])
+assert_type(np.take_along_axis(AR_f8, AR_i8_2d, axis=1), _Array2D[np.float64])
+assert_type(np.take_along_axis(f8, AR_i8, axis=None), _Array1D[np.float64])
 
 assert_type(np.put_along_axis(AR_f8, AR_i8, "1.0", axis=1), None)
 
@@ -73,6 +76,8 @@ assert_type(np.column_stack([AR_i8_2d, AR_i8_2d]), _Array2D[np.int64])
 assert_type(np.column_stack([AR_i8_3d, AR_i8_3d]), _Array3D[np.int64])
 
 assert_type(np.dstack([AR_i8]), npt.NDArray[np.int64])
+assert_type(np.dstack([AR_i8_2d]), _Array3D[np.int64])
+assert_type(np.dstack([AR_i8_4d]), _Array4D[np.int64])
 assert_type(np.dstack([AR_LIKE_f8]), npt.NDArray[Any])
 
 assert_type(np.array_split(AR_i8, [3, 5, 6, 10]), list[npt.NDArray[np.int64]])
@@ -96,8 +101,19 @@ assert_type(np.dsplit(AR_LIKE_f8, [3, 5, 6, 10]), list[npt.NDArray[Any]])
 assert_type(np.dsplit(splitable, 2), list[_SplitableArray])
 
 assert_type(np.kron(AR_b, AR_b), npt.NDArray[np.bool])
-assert_type(np.kron(AR_b, AR_i8), npt.NDArray[np.signedinteger])
-assert_type(np.kron(AR_f8, AR_f8), npt.NDArray[np.floating])
+assert_type(np.kron(AR_b, AR_i8), npt.NDArray[np.int_ | Any])
+assert_type(np.kron(AR_i8, AR_f8), npt.NDArray[np.float64 | Any])
+assert_type(np.kron(AR_i8, AR_O), npt.NDArray[np.object_])
+assert_type(np.kron(AR_i8_1d, AR_i8), npt.NDArray[np.int64])
+assert_type(np.kron(AR_i8_1d, AR_i8_1d), _Array1D[np.int64])
+assert_type(np.kron(AR_i8_1d, AR_i8_2d), _Array2D[np.int64])
+assert_type(np.kron(AR_i8_2d, AR_i8_1d), _Array2D[np.int64])
+assert_type(np.kron(AR_i8_2d, AR_i8_3d), _Array3D[np.int64])
+assert_type(np.kron(AR_i8_3d, AR_i8_2d), _Array3D[np.int64])
+assert_type(np.kron(AR_i8_4d, AR_i8_4d), npt.NDArray[np.int64])
+assert_type(np.kron(AR_f8, AR_LIKE_c16), npt.NDArray[np.complex128 | Any])
+assert_type(np.kron(AR_O, AR_i8), npt.NDArray[np.object_])
+assert_type(np.kron(AR_LIKE_b, AR_LIKE_b), npt.NDArray[np.bool])
 
 assert_type(np.tile(AR_i8, 1), npt.NDArray[np.int64])
 assert_type(np.tile(AR_i8, (1,)), npt.NDArray[np.int64])

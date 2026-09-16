@@ -58,7 +58,7 @@ npy_ObjectPower(PyObject *x, PyObject *y)
  * #Kind = Max, Min#
  * #OP = Py_GE, Py_LE#
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 npy_Object@Kind@(PyObject *i1, PyObject *i2)
 {
     PyObject *result;

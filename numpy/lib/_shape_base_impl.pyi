@@ -7,6 +7,7 @@ from typing import (
     Protocol,
     Self,
     SupportsIndex,
+    TypeVar,
     overload,
     type_check_only,
 )
@@ -23,7 +24,6 @@ from numpy._typing import (
     _ArrayLikeInt,
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
-    _ArrayLikeUInt_co,
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
@@ -90,6 +90,9 @@ type _Min3D = tuple[int, int, int, *tuple[int, ...]]
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustAnyShape, np.dtype[ScalarT]]
 
 type _To1D[ScalarT: np.generic] = np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]] | ScalarT
 type _To2D[ScalarT: np.generic] = np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]] | ScalarT
@@ -97,13 +100,30 @@ type _To3D[ScalarT: np.generic] = (
     np.ndarray[tuple[()] | tuple[int] | tuple[int, int] | tuple[int, int, int], np.dtype[ScalarT]] | ScalarT
 )
 
+_AnyNumberT = TypeVar(
+    "_AnyNumberT",
+    np.bool,
+    np.int8, np.int16, np.int32, np.int64,
+    np.uint8, np.uint16, np.uint32, np.uint64,
+    np.float16, np.float32, np.float64, np.longdouble,
+    np.complex64, np.complex128, np.clongdouble,
+    np.object_,
+)
+
 ###
 
+@overload  # Nd T, Nd, axis=<given>
+def take_along_axis[ScalarT: np.generic, ShapeT: _Shape](
+    arr: ScalarT | NDArray[ScalarT],
+    indices: np.ndarray[ShapeT, np.dtype[np.integer]],
+    axis: int = -1,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # Nd T, 1d, axis=None
 def take_along_axis[ScalarT: np.generic](
     arr: ScalarT | NDArray[ScalarT],
     indices: NDArray[np.integer],
-    axis: int | None = -1,
-) -> NDArray[ScalarT]: ...
+    axis: None,
+) -> _Array1D[ScalarT]: ...
 
 #
 def put_along_axis[ScalarT: np.generic](
@@ -219,11 +239,15 @@ def column_stack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDA
 @overload  # fallback
 def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
-# keep in sync with `numpy.ma.extras.dstack`
-@overload
+#
+@overload  # >=3d T
+def dstack[ShapeT: _Min3D, DTypeT: np.dtype](tup: Sequence[np.ndarray[ShapeT, DTypeT]]) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # <=3d T
+def dstack[ScalarT: np.generic](tup: Sequence[_To3D[ScalarT]]) -> _Array3D[ScalarT]: ...
+@overload  # ?d T
 def dstack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDArray[ScalarT]: ...
-@overload
-def dstack(tup: Sequence[ArrayLike]) -> NDArray[Incomplete]: ...
+@overload  # fallback
+def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
 #
 @overload
@@ -282,19 +306,57 @@ def dsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _
 def dsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
 
 #
-@overload
+@overload  # ?d T, ?d T  (workaround)
+def kron(  # noqa: UP047
+    a: _ArrayJustND[_AnyNumberT],
+    b: _ArrayLike[_AnyNumberT],
+) -> NDArray[_AnyNumberT]: ...
+@overload  # ?d T, ?d T  (workaround)
+def kron(  # noqa: UP047
+    a: _ArrayLike[_AnyNumberT],
+    b: _ArrayJustND[_AnyNumberT],
+) -> NDArray[_AnyNumberT]: ...
+@overload  # 1d T, 1d T
+def kron(  # noqa: UP047
+    a: _Array1D[_AnyNumberT],
+    b: _Array1D[_AnyNumberT],
+) -> _Array1D[_AnyNumberT]: ...
+@overload  # 1d T, 2d T
+def kron(  # noqa: UP047
+    a: _Array1D[_AnyNumberT],
+    b: _Array2D[_AnyNumberT],
+) -> _Array2D[_AnyNumberT]: ...
+@overload  # 2d T, <=2d T
+def kron(  # noqa: UP047
+    a: _Array2D[_AnyNumberT],
+    b: _ArrayMax2D[_AnyNumberT],
+) -> _Array2D[_AnyNumberT]: ...
+@overload  # <=2d T, 3d T
+def kron(  # noqa: UP047
+    a: _ArrayMax2D[_AnyNumberT],
+    b: _Array3D[_AnyNumberT],
+) -> _Array3D[_AnyNumberT]: ...
+@overload  # 3d T, <=3d T
+def kron(  # noqa: UP047
+    a: _Array3D[_AnyNumberT],
+    b: np.ndarray[tuple[int] | tuple[int, int] | tuple[int, int, int], np.dtype[_AnyNumberT]],
+) -> _Array3D[_AnyNumberT]: ...
+@overload  # ?d T, ?d T
+def kron(  # noqa: UP047
+    a: _ArrayLike[_AnyNumberT],
+    b: _ArrayLike[_AnyNumberT],
+) -> NDArray[_AnyNumberT]: ...
+@overload  # ?d bool, ?d bool
 def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[np.bool]: ...
-@overload
-def kron(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co) -> NDArray[np.unsignedinteger]: ...
-@overload
-def kron(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co) -> NDArray[np.signedinteger]: ...
-@overload
-def kron(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> NDArray[np.floating]: ...
-@overload
-def kron(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[np.complexfloating]: ...
-@overload
+@overload  # ?d +int, ?d +int
+def kron(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co) -> NDArray[np.int_ | Any]: ...
+@overload  # ?d +f64, ?d +f64
+def kron(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> NDArray[np.float64 | Any]: ...
+@overload  # ?d +c128, ?d +c128
+def kron(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[np.complex128 | Any]: ...
+@overload  # ?d ~object_, ?d
 def kron(a: _ArrayLikeObject_co, b: object) -> NDArray[np.object_]: ...
-@overload
+@overload  # ?d, ?d ~object_
 def kron(a: object, b: _ArrayLikeObject_co) -> NDArray[np.object_]: ...
 
 #

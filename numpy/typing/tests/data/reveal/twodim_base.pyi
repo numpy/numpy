@@ -29,8 +29,12 @@ _to_nd_bool: list[bool] | list[list[bool]]
 _to_1d_bool: list[bool]
 _to_2d_bool: list[list[bool]]
 
+_to_1d_i64: list[int]
 _to_1d_f64: list[float]
 _to_1d_c128: list[complex]
+_to_2d_i64: list[list[int]]
+_to_2d_f64: list[list[float]]
+_to_2d_c128: list[list[complex]]
 
 @type_check_only
 def func1[ScalarT: np.generic](ar: npt.NDArray[ScalarT], a: int) -> npt.NDArray[ScalarT]: ...
@@ -46,19 +50,23 @@ class _Cube:
 
 # fliplr
 assert_type(np.fliplr(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
-assert_type(np.fliplr(_1d_bool), np.ndarray[_1D, np.dtype[np.bool]])
 assert_type(np.fliplr(_2d_bool), np.ndarray[_2D, np.dtype[np.bool]])
-assert_type(np.fliplr(_to_nd_bool), np.ndarray)
-assert_type(np.fliplr(_to_1d_bool), np.ndarray)
-assert_type(np.fliplr(_to_2d_bool), np.ndarray)
+assert_type(np.fliplr(_to_2d_bool), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.fliplr(_to_2d_i64), np.ndarray[_2D, np.dtype[np.int_]])
+assert_type(np.fliplr(_to_2d_f64), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.fliplr(_to_2d_c128), np.ndarray[_2D, np.dtype[np.complex128]])
 
 # flipud
 assert_type(np.flipud(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
 assert_type(np.flipud(_1d_bool), np.ndarray[_1D, np.dtype[np.bool]])
-assert_type(np.flipud(_2d_bool), np.ndarray[_2D, np.dtype[np.bool]])
-assert_type(np.flipud(_to_nd_bool), np.ndarray)
-assert_type(np.flipud(_to_1d_bool), np.ndarray)
-assert_type(np.flipud(_to_2d_bool), np.ndarray)
+assert_type(np.flipud(_to_1d_bool), np.ndarray[_1D, np.dtype[np.bool]])
+assert_type(np.flipud(_to_2d_bool), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.flipud(_to_1d_i64), np.ndarray[_1D, np.dtype[np.int_]])
+assert_type(np.flipud(_to_2d_i64), np.ndarray[_2D, np.dtype[np.int_]])
+assert_type(np.flipud(_to_1d_f64), np.ndarray[_1D, np.dtype[np.float64]])
+assert_type(np.flipud(_to_2d_f64), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.flipud(_to_1d_c128), np.ndarray[_1D, np.dtype[np.complex128]])
+assert_type(np.flipud(_to_2d_c128), np.ndarray[_2D, np.dtype[np.complex128]])
 
 # eye
 assert_type(np.eye(10), np.ndarray[_2D, np.dtype[np.float64]])
@@ -88,21 +96,21 @@ assert_type(np.tri(10, k=2, dtype=int), np.ndarray[_2D])
 
 # tril
 assert_type(np.tril(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
-assert_type(np.tril(_to_nd_bool, k=0), np.ndarray)
-assert_type(np.tril(_to_1d_bool, k=0), np.ndarray)
-assert_type(np.tril(_to_2d_bool, k=0), np.ndarray)
-assert_type(np.tril(_1d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
 assert_type(np.tril(_2d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
-assert_type(np.tril(_3d_bool, k=0), np.ndarray[_3D, np.dtype[np.bool]])
+assert_type(np.tril(_1d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.tril(_to_2d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.tril(_to_1d_i64), np.ndarray[_2D, np.dtype[np.int_]])
+assert_type(np.tril(_to_2d_f64), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.tril(_to_1d_c128), np.ndarray[_2D, np.dtype[np.complex128]])
 
 # triu
 assert_type(np.triu(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
-assert_type(np.triu(_to_nd_bool, k=0), np.ndarray)
-assert_type(np.triu(_to_1d_bool, k=0), np.ndarray)
-assert_type(np.triu(_to_2d_bool, k=0), np.ndarray)
-assert_type(np.triu(_1d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
 assert_type(np.triu(_2d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
-assert_type(np.triu(_3d_bool, k=0), np.ndarray[_3D, np.dtype[np.bool]])
+assert_type(np.triu(_1d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.triu(_to_2d_bool, k=0), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.triu(_to_1d_i64), np.ndarray[_2D, np.dtype[np.int_]])
+assert_type(np.triu(_to_2d_f64), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.triu(_to_1d_c128), np.ndarray[_2D, np.dtype[np.complex128]])
 
 # vander
 assert_type(np.vander(_nd_bool), np.ndarray[_2D, np.dtype[np.int_]])

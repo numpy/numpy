@@ -94,6 +94,15 @@ intern_strings(void)
     INTERN_STRING(total_seconds, "total_seconds");
     INTERN_STRING(reduce, "reduce");
     INTERN_STRING(accumulate, "accumulate");
+
+    static const char *const method_name_strings[] = {
+#define NPY_SCALAR_METHOD_NAME_STRING(name) #name,
+        NPY_SCALAR_METHOD_NAMES(NPY_SCALAR_METHOD_NAME_STRING)
+#undef NPY_SCALAR_METHOD_NAME_STRING
+    };
+    for (int i = 0; i < NPY_SCALAR_METHOD_COUNT; i++) {
+        INTERN_STRING(scalar_method_names[i], method_name_strings[i]);
+    }
     return 0;
 }
 

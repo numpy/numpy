@@ -321,6 +321,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         if (identity_obj != Py_None) {
             get_reduction_initial = &get_initial_from_ufunc;
         }
+        Py_DECREF(identity_obj);
     }
     for (int i = 0; i < ufunc->nin+ufunc->nout; i++) {
         if (signature[i]->singleton->flags & (
