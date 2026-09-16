@@ -1849,14 +1849,14 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     The function is called once with one coordinate array for each dimension
     of `shape` instead of once per coordinate.
 
-    The resulting array therefore has a value ``fn(x, y, z)`` at
-    coordinate ``(x, y, z)``.
+    For functions that operate elementwise on array arguments, the resulting
+    array has a value ``fn(x, y, z)`` at coordinate ``(x, y, z)``.
 
     Parameters
     ----------
     function : callable
         The function is called once with N coordinate arrays as parameters,
-        where N is the rank of `shape`. Each array represents the
+        where N is the length of `shape`. Each array represents the
         coordinates along a specific axis.  For example,
         if `shape` were ``(2, 2)``, then the parameters would be
         ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
@@ -1889,9 +1889,9 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     .. warning::
         `shape` determines the shape of the coordinate arrays passed to
-        `function`. It does not determine the shape of the result. If
-        `function` returns a scalar, the result is a scalar rather than an
-        array with the given `shape`.
+        `function`. It does not enforce that the function returns a result
+        with that shape. If `function` returns a scalar, the result is a scalar
+        rather than an array with the given `shape`.
 
     Examples
     --------
