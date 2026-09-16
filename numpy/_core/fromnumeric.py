@@ -96,9 +96,9 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     Take elements from an array along an axis.
 
     When axis is not None, this function does the same thing as "fancy"
-    indexing (indexing arrays using arrays); however, it can be easier to use
-    if you need elements along a given axis. A call such as
-    ``np.take(arr, indices, axis=3)`` is equivalent to
+    indexing with integer arrays (indexing arrays using arrays); however,
+    it can be easier to use if you need elements along a given axis. A call
+    such as ``np.take(arr, indices, axis=3)`` is equivalent to
     ``arr[:,:,:,indices,...]``.
 
     Explained without fancy indexing, this is equivalent to the following use
@@ -119,6 +119,11 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     indices : array_like (Nj...)
         The indices of the values to extract.
         Also allow scalars for indices.
+
+        .. note::
+            Unlike with boolean fancy indexing, a boolean array is not
+            interpreted as a mask: its elements are cast to integers first
+            (``False`` becomes 0 and ``True`` becomes 1).
     axis : int, optional
         The axis over which to select values. By default, the flattened
         input array is used.
