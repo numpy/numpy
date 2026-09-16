@@ -1026,6 +1026,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
+        Py_DECREF(typec);
         return NULL;
     }
 
@@ -1042,6 +1043,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
                 _npy_module_state->n_ops.multiply, ap1, ap2, out, NULL);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
+        Py_DECREF(typec);
         return mul_res;
     }
 
