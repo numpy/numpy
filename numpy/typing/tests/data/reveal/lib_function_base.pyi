@@ -10,7 +10,10 @@ type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[Scalar
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 
+u1: np.uint8
 f8: np.float64
+f10: np.longdouble
+c8: np.complex64
 AR_LIKE_b: list[bool]
 AR_LIKE_i8: list[int]
 AR_LIKE_f8: list[float]
@@ -20,6 +23,9 @@ AR_LIKE_b_2d: list[list[bool]]
 AR_LIKE_i8_2d: list[list[int]]
 AR_LIKE_f8_2d: list[list[float]]
 AR_LIKE_c16_2d: list[list[complex]]
+AR_LIKE_u1_3d: list[list[list[np.uint8]]]
+AR_LIKE_f10_3d: list[list[list[np.longdouble]]]
+AR_LIKE_c16_3d: list[list[list[complex]]]
 
 AR_u1: npt.NDArray[np.uint8]
 AR_i8: npt.NDArray[np.int64]
@@ -38,6 +44,7 @@ AR_b: npt.NDArray[np.bool]
 AR_U: npt.NDArray[np.str_]
 CHAR_AR_U: np.char.chararray[tuple[int], np.dtype[np.str_]]  # type: ignore[deprecated]
 MAR_f8_1d: np.ma.MaskedArray[tuple[int], np.dtype[np.float64]]
+MAR_c16_1d: np.ma.MaskedArray[tuple[int], np.dtype[np.complex128]]
 
 AR_i8_2d: _Array2D[np.int64]
 AR_i8_3d: _Array3D[np.int64]
@@ -51,6 +58,10 @@ AR_c16_1d: _Array1D[np.complex128]
 
 AR_f8_list: list[np.float64]
 AR_b_list: list[npt.NDArray[np.bool]]
+
+@type_check_only
+class _ArrayLikeComplex64:
+    def __array__(self) -> npt.NDArray[np.complex64]: ...
 
 @type_check_only
 def func(a: np.ndarray, posarg: bool = ..., /, arg: int = ..., *, kwarg: str = ...) -> np.ndarray: ...
@@ -260,11 +271,21 @@ assert_type(np.unwrap(AR_i8), npt.NDArray[np.float64])
 
 # sort_complex
 assert_type(np.sort_complex(AR_u1), npt.NDArray[np.complex64])
-assert_type(np.sort_complex(AR_f8), npt.NDArray[np.complex128])
+assert_type(np.sort_complex(AR_f8_1d), _Array1D[np.complex128])
 assert_type(np.sort_complex(AR_f10), npt.NDArray[np.clongdouble])
-assert_type(np.sort_complex(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
-assert_type(np.sort_complex(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
-assert_type(np.sort_complex(AR_LIKE_f8), npt.NDArray[np.complex128])
+assert_type(np.sort_complex(_ArrayLikeComplex64()), npt.NDArray[np.complex64])
+assert_type(np.sort_complex(MAR_c16_1d), _Array1D[np.complex128])
+assert_type(np.sort_complex([u1]), _Array1D[np.complex64])
+assert_type(np.sort_complex([[u1]]), _Array2D[np.complex64])
+assert_type(np.sort_complex(AR_LIKE_u1_3d), npt.NDArray[np.complex64])
+assert_type(np.sort_complex([1.0]), _Array1D[np.complex128])
+assert_type(np.sort_complex([f10]), _Array1D[np.clongdouble])
+assert_type(np.sort_complex([[f10]]), _Array2D[np.clongdouble])
+assert_type(np.sort_complex(AR_LIKE_f10_3d), npt.NDArray[np.clongdouble])
+assert_type(np.sort_complex([c8]), _Array1D[np.complex64])
+assert_type(np.sort_complex([[c8]]), _Array2D[np.complex64])
+assert_type(np.sort_complex([[1j]]), _Array2D[np.complex128])
+assert_type(np.sort_complex(AR_LIKE_c16_3d), npt.NDArray[np.complex128])
 
 # trim_zeros
 assert_type(np.trim_zeros(AR_f8), npt.NDArray[np.float64])
