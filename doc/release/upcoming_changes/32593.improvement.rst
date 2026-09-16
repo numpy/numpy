@@ -1,0 +1,6 @@
+`numpy.linalg.cond` handles non-finite input consistently
+---------------------------------------------------------
+`numpy.linalg.cond` now returns ``nan`` for input containing ``nan`` and
+``inf`` for input containing ``inf``, for every ``p`` and independent of the
+LAPACK implementation. With ``p='nuc'`` it also returns ``inf`` for singular
+input instead of raising.
