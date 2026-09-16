@@ -601,7 +601,7 @@ class TestAppendScalarPromotion(_DeprecationTestCase):
         explicit_args = tuple(np.asarray(x) for x in args)
         expected = np.concatenate(explicit_args, axis=None)
         if dtype == "U1":
-            change = "these inputs will have no common dtype and raise an error"
+            change = "these inputs have no common dtype and will raise an error"
         else:
             change = f"use dtype {dtype}, which may round values differently"
         self.message += (

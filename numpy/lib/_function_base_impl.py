@@ -5706,7 +5706,7 @@ def append(arr, values, axis=None):
         try:
             future_dtype = conv.result_type()
         except np.exceptions.DTypePromotionError:
-            change = "these inputs will have no common dtype and raise an error"
+            change = "these inputs have no common dtype and will raise an error"
         else:
             if future_dtype == result.dtype:
                 return result
@@ -5716,7 +5716,7 @@ def append(arr, values, axis=None):
         warnings.warn(
             "np.append converted Python numeric scalars to arrays before "
             f"choosing the result dtype, producing dtype {result.dtype}. "
-            "This behavior is deprecated since NumPy 2.6. In a future release, "
+            "This behavior will change in a future release, "
             f"{change}. Use np.concatenate((arr, values), axis=None) for the "
             f"future behavior; add dtype={str(result.dtype)!r} to that call to "
             "keep the current result.", FutureWarning, stacklevel=2)
