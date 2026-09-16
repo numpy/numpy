@@ -1,6 +1,7 @@
 from collections import deque
 from pathlib import Path
 from typing import Any, assert_type
+from typing_extensions import CapsuleType
 
 import numpy as np
 import numpy.typing as npt
@@ -24,6 +25,11 @@ B: SubClass[np.float64]
 C: list[int]
 D: SubClass[np.float64 | np.int64]
 E: IntoSubClass[np.float64 | np.int64]
+
+class _SupportsDLPack:
+    def __dlpack__(self, /, *, stream: None = None) -> CapsuleType: ...
+
+_dlpack_obj: _SupportsDLPack
 
 _f32_0d: np.float32
 _f32_1d: _Array1D[np.float32]
@@ -310,6 +316,12 @@ assert_type(np.fromiter("12345", object), _Array1D[Any])
 assert_type(np.frombuffer(A), _Array1D[np.float64])
 assert_type(np.frombuffer(A, dtype=np.int64), _Array1D[np.int64])
 assert_type(np.frombuffer(A, dtype="c16"), _Array1D[Any])
+
+assert_type(np.from_dlpack(i8), _Array0D[np.int64])
+assert_type(np.from_dlpack(A), npt.NDArray[np.float64])
+assert_type(np.from_dlpack(B), npt.NDArray[np.float64])
+assert_type(np.from_dlpack(_f32_2d), _Array2D[np.float32])
+assert_type(np.from_dlpack(_dlpack_obj), npt.NDArray[np.number | np.bool])
 
 _x_bool: bool
 _x_int: int

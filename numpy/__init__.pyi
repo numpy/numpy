@@ -13358,6 +13358,24 @@ class broadcast:
     def __iter__(self) -> Self: ...
     def reset(self) -> None: ...
 
+#
+@overload  # 0d T
+def from_dlpack[ScalarT: number | bool_](
+    x: ScalarT,
+    /,
+    *,
+    device: L["cpu"] | None = None,
+    copy: py_bool | None = None,
+) -> ndarray[tuple[()], _dtype[ScalarT]]: ...
+@overload  # Nd T
+def from_dlpack[ShapeT: _Shape, DTypeT: _dtype[number | bool_]](
+    x: ndarray[ShapeT, DTypeT],
+    /,
+    *,
+    device: L["cpu"] | None = None,
+    copy: py_bool | None = None,
+) -> ndarray[ShapeT, DTypeT]: ...
+@overload  # ?d
 def from_dlpack(
     x: _SupportsDLPack[None],
     /,
