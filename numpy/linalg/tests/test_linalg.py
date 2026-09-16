@@ -1686,6 +1686,63 @@ class TestNorm_NonSystematic:
             assert np.isnan(norm(np.array([np.nan, 1.0])))
             assert norm(np.zeros(5)) == 0.0
 
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                       np.longdouble, np.complex64,
+                                       np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("factor", [0.01, 0.25, 0.5, 1, 2])
+    def test_norm_near_subnormal_boundary(self, dtype, factor):
+        # Four equal elements put the sum of squares on either side of the
+        # dtype's normal/subnormal boundary. The norm remains representable.
+        real_dtype = np.empty((), dtype=dtype).real.dtype
+        info = np.finfo(real_dtype)
+        value = np.sqrt(info.smallest_normal) * real_dtype.type(factor)
+        x = np.full(4, value, dtype=dtype)
+        expected = 2 * value
+        with np.errstate(under="ignore"):
+            for result in (norm(x), norm(x, axis=0),
+                           norm(x.reshape(2, 2), axis=(0, 1))):
+                assert_allclose(result, expected, rtol=8 * info.eps, atol=0)
+                assert isinstance(result, np.floating)
+                assert result.dtype == real_dtype
+
+    @pytest.mark.parametrize("order", [None, 2, 3])
+    def test_float16_large_reduction(self, order):
+        # Even after max-scaling, a sum of 65536 ones overflows float16.
+        x = np.ones(65536, dtype=np.float16)
+        expected = np.float16(x.size ** (1 / (2 if order is None else order)))
+        with np.errstate(over="ignore", invalid="ignore"):
+            for axis in (None, 0):
+                result = norm(x, ord=order, axis=axis)
+                assert result.dtype == np.float16
+                assert isinstance(result, np.floating)
+                assert_allclose(result, expected, rtol=2e-3)
+            matrix = x.reshape(256, 256)
+            if order is None:
+                assert_equal(norm(matrix, axis=(0, 1)), np.float16(256))
+                assert_equal(norm(matrix, axis=(0, 1), keepdims=True),
+                             np.array([[256]], dtype=np.float16))
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                       np.longdouble, np.complex64,
+                                       np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("keepdims", [False, True])
+    @pytest.mark.parametrize("shape,axis,order", [
+        ((0, 4), 1, None), ((4, 0), 1, None),
+        ((0, 4), 1, 3), ((4, 0), 1, 3),
+        ((0, 2, 4), (1, 2), "fro"), ((3, 0, 4), (1, 2), "fro"),
+    ])
+    def test_norm_empty_axis_results(self, dtype, keepdims, shape, axis, order):
+        # Distinguish empty outputs from nonempty outputs of empty reductions.
+        # Both must remain valid when the rescale gate omits `initial`.
+        x = np.empty(shape, dtype=dtype)
+        axes = (axis,) if isinstance(axis, int) else axis
+        expected_shape = tuple(1 if i in axes else n
+                               for i, n in enumerate(shape)) if keepdims else (
+            tuple(n for i, n in enumerate(shape) if i not in axes))
+        expected = np.zeros(expected_shape, dtype=x.real.dtype)
+        result = norm(x, ord=order, axis=axis, keepdims=keepdims)
+        assert_array_equal(result, expected, strict=True)
+
     def test_overflow_axis(self):
         # gh-8775: the axis reductions (ord==2, arbitrary ord>1, and the
         # Frobenius matrix norm) have the same over/underflow issue as the
