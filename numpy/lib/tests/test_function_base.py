@@ -2218,7 +2218,13 @@ class TestDigitize:
         bins = [1, 2, 3]
         assert_raises(TypeError, digitize, x, bins)
         x, bins = bins, x
-        assert_raises(TypeError, digitize, x, bins)
+        with pytest.raises(TypeError, match="bins may not be complex"):
+            digitize(x, bins)
+
+    @pytest.mark.parametrize("bins", [np.array(1), np.array([[1, 2]])])
+    def test_bins_must_be_one_dimensional(self, bins):
+        with pytest.raises(ValueError, match="bins must be one-dimensional"):
+            digitize([1], bins)
 
     def test_return_type(self):
         # Functions returning indices should always return base ndarrays
