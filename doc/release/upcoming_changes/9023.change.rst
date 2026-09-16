@@ -1,0 +1,8 @@
+``assert_equal`` and ``assert_array_equal`` now handle NaN in object arrays
+-----------------------------------------------------------------------------
+``numpy.testing.assert_equal`` and ``assert_array_equal`` previously raised
+a spurious ``AssertionError`` when comparing ``dtype=object`` arrays
+containing ``NaN`` values in matching positions, since object arrays were
+excluded from the existing NaN-position matching used for numeric dtypes.
+NaN values in the same position are now treated as equal, consistent with
+the existing behavior for numeric arrays.

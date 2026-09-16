@@ -777,6 +777,22 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def isvstring(x):
         return x.dtype.char == "T"
 
+    def isobject(x):
+        return x.dtype.char == "O"
+
+    def isnan_object(a):
+        # np.isnan doesn't support dtype=object; use nan's
+        # self-inequality (nan != nan) instead.
+        def _isnan(v):
+            try:
+                return v != v
+            except Exception:
+                return False
+        if a.ndim == 0:
+            return np.bool_(_isnan(a.item()))
+        return np.array([_isnan(v) for v in a.ravel()],
+                         dtype=bool).reshape(a.shape)
+
     def robust_any_difference(x, y):
         # We include work-arounds here to handle three types of slightly
         # pathological ndarray subclasses:
@@ -902,6 +918,11 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     # nan-like NA object
                     flagged = func_assert_same_pos(
                         x, y, func=isnan, hasval=x.dtype.na_object)
+
+        elif isobject(x) and isobject(y):
+            if equal_nan:
+                flagged = func_assert_same_pos(
+                    x, y, func=isnan_object, hasval='nan')
 
         if flagged.ndim > 0:
             x, y = x[~flagged], y[~flagged]

@@ -401,6 +401,15 @@ class TestEqual(TestArrayEqual):
         self._test_not_equal(np.nan, [np.nan])
         self._test_not_equal(np.nan, 1)
 
+    def test_object_array_nan_items(self):
+        # gh-9023
+        a = np.array([1, 2, np.nan], dtype=object)
+        self._assert_func(a, a)
+
+        b = np.array([1, np.nan], dtype=object)
+        c = np.array([1, 2], dtype=object)
+        self._test_not_equal(b, c)
+
     def test_inf_items(self):
         self._assert_func(np.inf, np.inf)
         self._assert_func([np.inf], [np.inf])
