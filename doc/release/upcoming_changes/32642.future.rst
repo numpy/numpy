@@ -3,8 +3,9 @@ Python scalar promotion in ``append`` will change
 
 In a future NumPy verison, `numpy.append` will follow the scalar promotion rules
 of `numpy.concatenate`.  For example, appending ``1`` to a ``uint8`` array will
-keep ``uint8``, and appending ``300`` will raise ``OverflowError``. Such
-operations will now generate a ``FutureWarning``.
+leave the dtype of the result ``uint8``. Appending ``300`` will raise
+``OverflowError``. Operations that will result in a different dtype or a warning
+in the future now generate a ``FutureWarning``.
 
 Use ``np.concatenate((arr, values), axis=None)`` to adopt the future behavior,
 or specify its ``dtype=`` argument to choose the result dtype explicitly. To
