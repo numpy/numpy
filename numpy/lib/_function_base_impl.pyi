@@ -1097,7 +1097,18 @@ def sort_complex(a: _ArrayLike[np.longdouble]) -> NDArray[np.clongdouble]: ...
 def sort_complex(a: _SeqND[complex]) -> NDArray[np.complex128]: ...
 
 #
-def trim_zeros[T](filt: _TrimZerosSequence[T], trim: L["f", "b", "fb", "bf"] = "fb", axis: _ShapeLike | None = None) -> T: ...
+@overload  # Nd T
+def trim_zeros[ArrayT: np.ndarray](
+    filt: ArrayT,
+    trim: L["f", "b", "fb", "bf"] = "fb",
+    axis: _ShapeLike | None = None,
+) -> ArrayT: ...
+@overload  # 1d T
+def trim_zeros[T](
+    filt: _TrimZerosSequence[T],
+    trim: L["f", "b", "fb", "bf"] = "fb",
+    axis: _ShapeLike | None = None,
+) -> T: ...
 
 # NOTE: keep in sync with `corrcoef`
 @overload  # ?d, known inexact scalar-type >=64 precision, y=<given>.

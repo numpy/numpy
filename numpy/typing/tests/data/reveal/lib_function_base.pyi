@@ -268,6 +268,8 @@ assert_type(np.sort_complex(AR_LIKE_f8), npt.NDArray[np.complex128])
 
 # trim_zeros
 assert_type(np.trim_zeros(AR_f8), npt.NDArray[np.float64])
+assert_type(np.trim_zeros(AR_f8_1d), _Array1D[np.float64])
+assert_type(np.trim_zeros(AR_f8_2d), _Array2D[np.float64])
 assert_type(np.trim_zeros(AR_LIKE_f8), list[float])
 
 # cov
