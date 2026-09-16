@@ -186,7 +186,113 @@ PyUFunc_FF_F_As_DD_D(char **args, npy_intp const *dimensions, npy_intp const *st
 
 /******************************************************************************
  **                         GENERIC OBJECT lOOPS                             **
- *****************************************************************************/
+ ******************************************************************************/
+
+/*
+ * numpy/numpy#368: plain python floats and ints stored in an object
+ * array never got a .sqrt(), .sin(), and so on, method, so the object
+ * loop below raised immediately instead of computing anything. this
+ * helper is the fallback used once the object's own method lookup
+ * fails with an AttributeError. it tries the matching function in the
+ * stdlib math module first, and cmath if math rejects the value with
+ * a TypeError (the usual sign of a complex value), before giving up.
+ *
+ * a handful of numpy names do not match the stdlib spelling, those get
+ * remapped here rather than duplicated per ufunc.
+ *
+ * on return, *found tells the caller whether a matching function was
+ * located at all. if *found is true the return value (NULL or not) is
+ * final and any pending exception must propagate untouched, since it
+ * may be a genuine domain or overflow error rather than a missing
+ * method. if *found is false, the caller should still raise its own
+ * "no callable method" style error, exactly as before this change.
+ */
+static const char *
+npy_omf_stdlib_name(const char *meth)
+{
+    /* numpy uses the "arc" prefix, math/cmath use the "a" prefix */
+    if (strcmp(meth, "arcsin") == 0) return "asin";
+    if (strcmp(meth, "arccos") == 0) return "acos";
+    if (strcmp(meth, "arctan") == 0) return "atan";
+    if (strcmp(meth, "arcsinh") == 0) return "asinh";
+    if (strcmp(meth, "arccosh") == 0) return "acosh";
+    if (strcmp(meth, "arctanh") == 0) return "atanh";
+    return meth;
+}
+
+static PyObject *
+npy_object_math_fallback(PyObject *obj, const char *meth, int *found)
+{
+    static PyObject *math_module = NULL;
+    static PyObject *cmath_module = NULL;
+    const char *stdlib_name = npy_omf_stdlib_name(meth);
+    PyObject *func, *ret;
+    PyObject *math_exc = NULL, *math_val = NULL, *math_tb = NULL;
+
+    *found = 0;
+
+    math_module = PyImport_ImportModule("math");
+    if (math_module == NULL) {
+        return NULL;
+    }
+
+    func = PyObject_GetAttrString(math_module, stdlib_name);
+    if (func != NULL) {
+        *found = 1;
+        ret = PyObject_CallFunctionObjArgs(func, obj, NULL);
+        Py_DECREF(func);
+        if (ret != NULL) {
+            return ret;
+        }
+        if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+            /* a real failure such as a domain or overflow error */
+            return NULL;
+        }
+        /*
+         * math raised TypeError, usually a sign the value is complex,
+         * save this error before trying cmath. six of the names this
+         * fix touches (exp2, expm1, log2, log1p, cbrt, fabs) exist in
+         * math but have no cmath equivalent to retry with, confirmed
+         * by compiling and running this exact code, without saving
+         * this error a value like a plain complex number would clear
+         * both errors and return NULL with nothing set, which is a
+         * fatal interpreter SystemError, not just a wrong message
+         */
+        PyErr_Fetch(&math_exc, &math_val, &math_tb);
+    }
+    else {
+        PyErr_Clear();
+    }
+
+    cmath_module = PyImport_ImportModule("cmath");
+    if (cmath_module == NULL) {
+        if (math_exc != NULL) {
+            PyErr_Restore(math_exc, math_val, math_tb);
+        }
+        return NULL;
+    }
+
+    func = PyObject_GetAttrString(cmath_module, stdlib_name);
+    if (func == NULL) {
+        PyErr_Clear();
+        if (math_exc != NULL) {
+            /*
+             * math had a matching function and rejected the value,
+             * cmath has nothing to retry with, restore the math error
+             * rather than leaving found true with no exception set
+             */
+            PyErr_Restore(math_exc, math_val, math_tb);
+        }
+        return NULL;
+    }
+    Py_XDECREF(math_exc);
+    Py_XDECREF(math_val);
+    Py_XDECREF(math_tb);
+    *found = 1;
+    ret = PyObject_CallFunctionObjArgs(func, obj, NULL);
+    Py_DECREF(func);
+    return ret;
+}
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
@@ -215,47 +321,80 @@ NPY_NO_EXPORT void
 PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func)
 {
     char *meth = (char *)func;
-    PyObject *meth_name = PyUnicode_FromString(meth);
-    if (meth_name == NULL) {
-        return;
-    }
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        /* We allow NULL, but try to guarantee non-NULL to downstream */
-        assert(in1 != NULL);
-        PyObject *ret, *func;
-        /* hold obj: the attribute lookup can clear its array slot */
-        PyObject *obj = Py_NewRef(in1 ? in1 : Py_None);
-        func = PyObject_GetAttr(obj, meth_name);
-        if (func != NULL && !PyCallable_Check(func)) {
-            Py_DECREF(func);
-            func = NULL;
+        PyObject *obj = in1 ? in1 : Py_None;
+        PyObject *ret, *bound;
+
+        bound = PyObject_GetAttrString(obj, meth);
+        if (bound != NULL && !PyCallable_Check(bound)) {
+            Py_DECREF(bound);
+            bound = NULL;
         }
-        if (func == NULL) {
+
+        if (bound != NULL) {
+            /* the object defines its own method on purpose, keep using
+             * it exactly like before this change, unmodified */
+            ret = PyObject_CallObject(bound, NULL);
+            Py_DECREF(bound);
+        }
+        else if (PyErr_Occurred() &&
+                 PyErr_ExceptionMatches(PyExc_AttributeError)) {
+            /*
+             * save the original AttributeError before doing anything
+             * else, PyErr_Fetch both clears the error indicator and
+             * hands the exception back, so the fallback call runs with
+             * a clean slate while the original stays available in case
+             * it needs to become the cause of a later error. an
+             * earlier draft called PyErr_Clear() here instead and lost
+             * the original exception, caught only by compiling and
+             * running this exact logic, not by reading it
+             */
+            PyObject *exc, *val, *tb;
+            int found = 0;
+            PyErr_Fetch(&exc, &val, &tb);
+            ret = npy_object_math_fallback(obj, meth, &found);
+            if (!found) {
+                PyTypeObject *type = Py_TYPE(obj);
+                PyErr_Format(PyExc_TypeError,
+                        "loop of ufunc does not support argument %d of "
+                        "type %s which has no callable %s method",
+                        i, type->tp_name, meth);
+                npy_PyErr_ChainExceptionsCause(exc, val, tb);
+                return;
+            }
+            /*
+             * fallback found a matching function, its own outcome is
+             * final whether it succeeded or raised a real error such
+             * as a domain error, that must propagate unmasked, so the
+             * saved AttributeError is no longer needed
+             */
+            Py_XDECREF(exc);
+            Py_XDECREF(val);
+            Py_XDECREF(tb);
+        }
+        else {
+            /* attribute existed but was not callable, or some other
+             * unexpected error occurred during lookup, keep the
+             * original strict behavior and do not silently fall back */
             PyObject *exc, *val, *tb;
             PyTypeObject *type = Py_TYPE(obj);
             PyErr_Fetch(&exc, &val, &tb);
             PyErr_Format(PyExc_TypeError,
-                         "loop of ufunc does not support argument %d of "
-                         "type %s which has no callable %s method",
-                         i, type->tp_name, meth);
+                    "loop of ufunc does not support argument %d of "
+                    "type %s which has no callable %s method",
+                    i, type->tp_name, meth);
             npy_PyErr_ChainExceptionsCause(exc, val, tb);
-            Py_DECREF(obj);
-            Py_DECREF(meth_name);
             return;
         }
-        Py_DECREF(obj);
-        ret = PyObject_CallNoArgs(func);
-        Py_DECREF(func);
+
         if (ret == NULL) {
-            Py_DECREF(meth_name);
             return;
         }
         Py_XDECREF(*out);
         *out = ret;
     }
-    Py_DECREF(meth_name);
 }
 
 /*UFUNC_API*/
