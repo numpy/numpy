@@ -587,6 +587,7 @@ class TestTakeOutDtype(_DeprecationTestCase):
 
 class TestAppendScalarPromotion(_DeprecationTestCase):
     # Deprecated in NumPy 2.6, 2026-09
+    warning_cls = FutureWarning
     message = "np.append converted Python numeric scalars to arrays"
 
     @pytest.mark.parametrize("dtype, scalar", [
@@ -605,7 +606,8 @@ class TestAppendScalarPromotion(_DeprecationTestCase):
             change = f"use dtype {dtype}, which may round values differently"
         self.message += (
             rf".*producing dtype {re.escape(str(expected.dtype))}.*"
-            rf"{re.escape(change)}")
+            rf"{re.escape(change)}.*np\.concatenate.*"
+            rf"dtype={re.escape(repr(str(expected.dtype)))}")
 
         def append(*args):
             assert_array_equal(np.append(*args), expected, strict=True)
@@ -614,6 +616,9 @@ class TestAppendScalarPromotion(_DeprecationTestCase):
         self.assert_not_deprecated(append, args=explicit_args)
         list_args = ([scalar], a) if reverse else (a, [scalar])
         self.assert_not_deprecated(append, args=list_args)
+        assert_array_equal(
+            np.concatenate(args, axis=None, dtype=str(expected.dtype)),
+            expected, strict=True)
 
     @pytest.mark.parametrize("dtype, scalar", [
         (np.intp, 1), (np.float64, 1.5), (np.complex128, 1j),
