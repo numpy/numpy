@@ -550,28 +550,14 @@ def polysub(
 # NOTE: Not an alias, but they do have the same signature (that we can reuse)
 polymul = polyadd
 
-@overload
-def polydiv(
-    u: poly1d,
-    v: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-) -> _2Tup[poly1d]: ...
-@overload
-def polydiv(
-    u: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    v: poly1d,
-) -> _2Tup[poly1d]: ...
-@overload
-def polydiv(
-    u: _ArrayLikeFloat_co,
-    v: _ArrayLikeFloat_co,
-) -> _2Tup[NDArray[floating]]: ...
-@overload
-def polydiv(
-    u: _ArrayLikeComplex_co,
-    v: _ArrayLikeComplex_co,
-) -> _2Tup[NDArray[complexfloating]]: ...
-@overload
-def polydiv(
-    u: _ArrayLikeObject_co,
-    v: _ArrayLikeObject_co,
-) -> _2Tup[NDArray[Any]]: ...
+#
+@overload  # poly1d, 1d
+def polydiv(u: poly1d, v: _ArrayLikeComplex_co | _ArrayLikeObject_co | poly1d) -> _2Tup[poly1d]: ...
+@overload  # 1d, poly1d
+def polydiv(u: _ArrayLikeComplex_co | _ArrayLikeObject_co, v: poly1d) -> _2Tup[poly1d]: ...
+@overload  # 1d T, 1d T
+def polydiv[ScalarT: np.inexact](u: _ArrayLike[ScalarT], v: _ArrayLike[ScalarT]) -> _2Tup[_Array1D[ScalarT]]: ...
+@overload  # 1d +f64, 1d +f64
+def polydiv(u: _ArrayLikeFloat_co, v: _ArrayLikeFloat_co) -> _2Tup[_Array1D[np.float64 | Any]]: ...
+@overload  # 1d +c128, 1d +c128
+def polydiv(u: _ArrayLikeComplex_co, v: _ArrayLikeComplex_co) -> _2Tup[_Array1D[np.complex128 | Any]]: ...
