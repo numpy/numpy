@@ -352,7 +352,8 @@ class TypeApi:
         if self.heap_type:
             # Internal code reaches the type through the module state, so only
             # the slot index is needed.
-            return (f"/* {self.name} is a heap type, filled in at import. */\n"
+            return (f"/* {self.name} is a heap type; its slot is filled "
+                    f"at import. */\n"
                     f"#define NPY_API_INDEX_{self.name} {self.index}\n")
         if self.internal_type is None:
             return f"extern NPY_NO_EXPORT {self.ptr_cast} {self.name};\n"

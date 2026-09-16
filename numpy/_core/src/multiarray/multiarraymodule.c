@@ -5659,7 +5659,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     c_api = PyCapsule_New((void *)PyArray_API, NULL, NULL);
     /* The dtype API is not auto-filled/generated via Python scripts: */
     _fill_dtype_api(PyArray_API);
-    /* Neither are the types that are created at import time: */
+    /* Nor are the slots of the types created at import time: */
     _fill_heap_type_api(PyArray_API, state);
     if (c_api == NULL) {
         return -1;

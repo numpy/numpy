@@ -1105,8 +1105,8 @@ static PyType_Slot arrayiter_slots[] = {
 };
 
 /*
- * The static type got `Py_TPFLAGS_DISALLOW_INSTANTIATION` automatically for
- * having no `tp_new`; a heap type would inherit `object.__new__` instead.
+ * `PyType_Ready` gave the static type `Py_TPFLAGS_DISALLOW_INSTANTIATION`
+ * because it had no `tp_new`; a heap type would inherit `object.__new__`.
  */
 static PyType_Spec arrayiter_spec = {
     .name = "numpy.flatiter",

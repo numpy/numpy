@@ -99,8 +99,8 @@ multiarray_types_api = {
 }
 
 # Types from `multiarray_types_api` that are created as heap types at import
-# time.  `&name` is not a compile time constant for those, so their slot is
-# left NULL in the generated table and `_fill_heap_type_api` fills it in.
+# time.  Their address is not a compile time constant, so the generated table
+# leaves their slot NULL and `_fill_heap_type_api` fills it in.
 multiarray_heap_types = {
     'PyArrayIter_Type',
     'PyArrayMultiIter_Type',

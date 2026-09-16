@@ -275,10 +275,10 @@ extern "C" {
 
 /*
  * Heap types created with PyType_FromModuleAndSpec during module execution.
- * The names match the static types they replaced, except where that name is
- * already an object-like macro from `__multiarray_api.h` -- every type in
- * `PyArray_API` is one outside the files defining `_MULTIARRAYMODULE`, so
- * those fields carry the Python name instead.
+ * The names match the static types they replaced, except for the ones
+ * exported through `PyArray_API`: `__multiarray_api.h` defines those names
+ * as macros in every file that does not define `_MULTIARRAYMODULE`, so those
+ * fields carry the Python name instead.
  */
 #define NPY_MODULE_STATE_TYPE_FIELDS(F) \
     F(PyArrayFlags_Type)              \
