@@ -739,6 +739,7 @@ class TestSVD(SVDCases, SVDBaseTests):
         s_from_svdvals = linalg.svdvals(x)
         assert_almost_equal(s_from_svd, s_from_svdvals)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     @pytest.mark.parametrize('val', [np.inf, -np.inf, np.nan])
     def test_nonfinite(self, dtype, val):
@@ -1079,6 +1080,7 @@ class TestLstsq(LstsqCases):
         x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
         assert_(rank == 3)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     @pytest.mark.parametrize('val', [np.inf, -np.inf, np.nan])
     def test_nonfinite(self, dtype, val):
