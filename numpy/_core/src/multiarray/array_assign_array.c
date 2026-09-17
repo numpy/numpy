@@ -73,21 +73,13 @@ copycast_isaligned(int ndim, npy_intp const *shape,
 }
 
 /*
- * Cache blocking for transposed copies (gh-32453).
- *
- * After the raw iterator sorts and coalesces the axes, a transposed copy
- * (F->C, C->F, or any operand whose inner stride jumps between cache lines
- * while its next outer stride stays within one) touches one cache line per
- * inner element and then touches the very same lines again on every outer
- * iteration. Once that line set outgrows the private cache, every line is
- * fetched once per element it holds, and the copy runs at memory bandwidth
- * divided by the number of elements per line. Splitting the inner dimension
- * into chunks whose line set fits in cache keeps the lines resident across
- * the outer iterations. The 1-D transfer function is unchanged; only the
- * order in which the raw iteration visits the array changes.
+ * gh-32453: limit the inner extent of a transposed copy so the cache lines
+ * one inner pass touches stay resident across outer iterations. Once the
+ * line set exceeds the cache, each line is re-fetched for every element it
+ * holds and the copy runs at a fraction of memory bandwidth.
  */
-#define NPY_COPY_CACHE_LINE 128
-#define NPY_COPY_CHUNK_BUDGET (256 * 1024)
+#define NPY_COPY_CACHE_LINE 128 /* covers both 64- and 128-byte lines */
+#define NPY_COPY_CHUNK_BUDGET (256 * 1024) /* 256 KiB chosen by measurement */
 
 static npy_intp
 transposed_copy_chunk(npy_intp n_inner,
@@ -107,10 +99,6 @@ transposed_copy_chunk(npy_intp n_inner,
     return n_inner;
 }
 
-/*
- * The raw iteration of one copy: the inner dimension through the transfer
- * function, the outer dimensions through the raw iterator.
- */
 static inline int
 raw_array_assign_run(int ndim, npy_intp const *shape_it,
                      char *src_data, npy_intp const *src_strides_it,
@@ -209,11 +197,6 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
 
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
-    /*
-     * Visit the inner dimension in chunks when a transposed layout would
-     * otherwise thrash the cache (gh-32453); everything else runs the
-     * iteration once, exactly as before.
-     */
     npy_intp n_inner = shape_it[0];
     npy_intp chunk = n_inner;
     if (ndim >= 2) {

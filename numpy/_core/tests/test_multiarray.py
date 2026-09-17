@@ -1876,10 +1876,8 @@ class TestStructured:
         assert np.asarray(scalar).base is None
 
 class TestTransposedCopyChunking:
-    """gh-32453: copies whose source or destination strides across cache lines
-    along the inner dimension (F->C, C->F) visit that dimension in chunks so
-    the lines stay cached across the outer iterations. The chunk is 2048
-    elements; every case below must agree with the unchunked comparison."""
+    """gh-32453: the chunk is 2048 elements; every case below must agree
+    with the unchunked comparison."""
 
     dtypes = ["i1", "f2", "f8", "c16", "M8[ns]", "V16", "O"]
 
@@ -1910,7 +1908,6 @@ class TestTransposedCopyChunking:
     @pytest.mark.parametrize("n_inner", [2047, 2048, 2049, 10007])
     @pytest.mark.parametrize("dtype", dtypes)
     def test_c_to_f(self, n_inner, dtype):
-        # the destination is the strided operand here
         a = self._source(n_inner, dtype)
         f = np.asfortranarray(a)
         assert f.flags.f_contiguous
