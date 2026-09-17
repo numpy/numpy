@@ -93,19 +93,46 @@ static npy_intp
 transposed_copy_chunk(npy_intp n_inner,
                       npy_intp const *src_strides, npy_intp const *dst_strides)
 {
+    if (n_inner * NPY_COPY_CACHE_LINE <= NPY_COPY_CHUNK_BUDGET) {
+        return n_inner;
+    }
     npy_intp const *strides[2] = {src_strides, dst_strides};
-    int thrashes = 0;
     for (int i = 0; i < 2; i++) {
         npy_intp inner = strides[i][0] < 0 ? -strides[i][0] : strides[i][0];
         npy_intp outer = strides[i][1] < 0 ? -strides[i][1] : strides[i][1];
         if (inner >= NPY_COPY_CACHE_LINE && outer < NPY_COPY_CACHE_LINE) {
-            thrashes = 1;
+            return NPY_COPY_CHUNK_BUDGET / NPY_COPY_CACHE_LINE;
         }
     }
-    if (!thrashes || n_inner * NPY_COPY_CACHE_LINE <= NPY_COPY_CHUNK_BUDGET) {
-        return n_inner;
-    }
-    return NPY_COPY_CHUNK_BUDGET / NPY_COPY_CACHE_LINE;
+    return n_inner;
+}
+
+/*
+ * The raw iteration of one copy: the inner dimension through the transfer
+ * function, the outer dimensions through the raw iterator.
+ */
+static inline int
+raw_array_assign_run(int ndim, npy_intp const *shape_it,
+                     char *src_data, npy_intp const *src_strides_it,
+                     char *dst_data, npy_intp const *dst_strides_it,
+                     npy_intp const *strides, NPY_cast_info *cast_info)
+{
+    int idim;
+    npy_intp coord[NPY_MAXDIMS];
+
+    NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+        /* Process the innermost dimension */
+        char *args[2] = {src_data, dst_data};
+        int result = cast_info->func(&cast_info->context,
+                                     args, &shape_it[0], strides,
+                                     cast_info->auxdata);
+        if (result < 0) {
+            return result;
+        }
+    } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
+                            dst_data, dst_strides_it,
+                            src_data, src_strides_it);
+    return 0;
 }
 
 /*
@@ -120,11 +147,9 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
         PyArray_Descr *src_dtype, char *src_data, npy_intp const *src_strides,
         int flags)
 {
-    int idim;
     npy_intp shape_it[NPY_MAXDIMS];
     npy_intp dst_strides_it[NPY_MAXDIMS];
     npy_intp src_strides_it[NPY_MAXDIMS];
-    npy_intp coord[NPY_MAXDIMS];
 
     int aligned = (flags & NPY_ALIGNED_CASTING_FLAG) != 0;
     int same_value_cast = (flags & NPY_SAME_VALUE_CASTING_FLAG) != 0;
@@ -186,32 +211,37 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
 
     /*
      * Visit the inner dimension in chunks when a transposed layout would
-     * otherwise thrash the cache; a single chunk is the plain iteration.
+     * otherwise thrash the cache (gh-32453); everything else runs the
+     * iteration once, exactly as before.
      */
     npy_intp n_inner = shape_it[0];
     npy_intp chunk = n_inner;
     if (ndim >= 2) {
         chunk = transposed_copy_chunk(n_inner, src_strides_it, dst_strides_it);
     }
-    char *src_chunk = src_data, *dst_chunk = dst_data;
 
-    int result = 0;
-    for (npy_intp start = 0; start < n_inner; start += chunk) {
-        shape_it[0] = (n_inner - start < chunk) ? n_inner - start : chunk;
-        src_data = src_chunk + start * src_strides_it[0];
-        dst_data = dst_chunk + start * dst_strides_it[0];
-        NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
-            /* Process the innermost dimension */
-            char *args[2] = {src_data, dst_data};
-            result = cast_info.func(&cast_info.context,
-                                    args, &shape_it[0], strides,
-                                    cast_info.auxdata);
-            if (result < 0) {
-                goto fail;
-            }
-        } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
-                                dst_data, dst_strides_it,
-                                src_data, src_strides_it);
+    int result;
+    if (chunk >= n_inner) {
+        result = raw_array_assign_run(ndim, shape_it,
+                                      src_data, src_strides_it,
+                                      dst_data, dst_strides_it,
+                                      strides, &cast_info);
+    }
+    else {
+        result = 0;
+        for (npy_intp start = 0; start < n_inner && result == 0;
+                start += chunk) {
+            shape_it[0] = (n_inner - start < chunk) ? n_inner - start : chunk;
+            result = raw_array_assign_run(ndim, shape_it,
+                                          src_data + start * src_strides_it[0],
+                                          src_strides_it,
+                                          dst_data + start * dst_strides_it[0],
+                                          dst_strides_it,
+                                          strides, &cast_info);
+        }
+    }
+    if (result < 0) {
+        goto fail;
     }
 
     NPY_END_THREADS;
