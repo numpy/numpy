@@ -997,16 +997,26 @@ def test_nan_like_comparisons(nan_like_na_object, op):
     assert_array_equal(op(left, "a"), op(numeric_left, 0))
 
 
+@pytest.mark.parametrize("op", comparison_operators)
 @pytest.mark.parametrize("na_object", [None, object()], ids=["None", "object"])
-def test_non_string_na_comparisons(dtype):
+def test_non_string_na_comparisons(dtype, op):
     na = dtype.na_object
     left = np.array(["", na, "x", na, "", "x"], dtype=dtype)
     right = np.array([na, "", na, na, "", "x"], dtype=dtype)
-    expected = np.array([False, False, False, True, True, True])
-    assert_array_equal(left == right, expected)
-    assert_array_equal(left != right, ~expected)
-    assert_array_equal(left == "", [True, False, False, False, True, False])
-    assert_array_equal("" != left, [False, True, True, True, False, True])
+    if op not in (np.equal, np.not_equal):
+        with pytest.raises(ValueError, match="not supported for null values"):
+            op(left, right)
+        with pytest.raises(ValueError, match="not supported for null values"):
+            op(left, "")
+        assert_array_equal(op(left[4:], right[4:]), op(["", "x"], ["", "x"]))
+        return
+    equal = np.array([False, False, False, True, True, True])
+    equal_empty = np.array([True, False, False, False, True, False])
+    if op is np.not_equal:
+        equal, equal_empty = ~equal, ~equal_empty
+    assert_array_equal(op(left, right), equal)
+    assert_array_equal(op(left, ""), equal_empty)
+    assert_array_equal(op("", left), equal_empty)
 
 
 def test_isnan(dtype, string_list):
