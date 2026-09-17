@@ -230,6 +230,9 @@ npy_object_math_fallback(PyObject *obj, const char *meth, int *found)
     PyObject *math_exc = NULL, *math_val = NULL, *math_tb = NULL;
 
     *found = 0;
+    if (!PyNumber_Check(obj)) {
+        return NULL;
+    }
 
     math_module = PyImport_ImportModule("math");
     if (math_module == NULL) {
