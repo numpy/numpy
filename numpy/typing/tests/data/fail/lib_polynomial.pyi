@@ -28,4 +28,4 @@ np.polyfit(AR_f8, AR_f8, 1, cov="bob")  # type: ignore[call-overload]
 
 np.polyval(AR_f8, AR_U)  # type: ignore[type-var]
 np.polyadd(AR_f8, AR_U)  # type: ignore[type-var]
-np.polysub(AR_f8, AR_U)  # type: ignore[arg-type]
+np.polysub(AR_f8, AR_U)  # type: ignore[type-var]
