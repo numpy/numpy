@@ -1,6 +1,7 @@
 /* The implementation of the StringDType class */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdatomic.h>
 #include "structmember.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -18,6 +19,7 @@
 #include "conversion_utils.h"
 #include "npy_import.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 #include "npy_sort.h"
 
 /*
@@ -941,20 +943,21 @@ stringdtype_repr(PyArray_StringDTypeObject *self)
 static PyObject *
 stringdtype__reduce__(PyArray_StringDTypeObject *self, PyObject *NPY_UNUSED(args))
 {
+    multiarray_umath_state *state = _npy_module_state;
     if (npy_cache_import_runtime(
                 "numpy._core._internal", "_convert_to_stringdtype_kwargs",
-                &npy_runtime_imports._convert_to_stringdtype_kwargs) == -1) {
+                &state->runtime_imports._convert_to_stringdtype_kwargs) == -1) {
         return NULL;
     }
 
     if (self->na_object != NULL) {
         return Py_BuildValue(
-                "O(iO)", npy_runtime_imports._convert_to_stringdtype_kwargs,
+                "O(iO)", state->runtime_imports._convert_to_stringdtype_kwargs,
                 self->coerce, self->na_object);
     }
 
     return Py_BuildValue(
-            "O(i)", npy_runtime_imports._convert_to_stringdtype_kwargs,
+            "O(i)", state->runtime_imports._convert_to_stringdtype_kwargs,
             self->coerce);
 }
 
@@ -1007,16 +1010,39 @@ static Py_hash_t
 PyArray_StringDType_hash(PyObject *self)
 {
     PyArray_StringDTypeObject *sself = (PyArray_StringDTypeObject *)self;
+    /* PyArrayDescr_Type.tp_new initializes base.hash to -1. */
+    Py_hash_t hash = atomic_load_explicit(
+            (_Atomic(npy_hash_t) *)&sself->base.hash, memory_order_relaxed);
+    if (hash != -1) {
+        return hash;
+    }
+
     PyObject *hash_tup = NULL;
     if (sself->na_object != NULL) {
-        hash_tup = Py_BuildValue("(iO)", sself->coerce, sself->na_object);
+        if (PyFloat_Check(sself->na_object) &&
+                npy_isnan(PyFloat_AS_DOUBLE(sself->na_object))) {
+            // na_eq_cmp treats distinct float NaNs as equal, so use a fixed
+            // value instead of their identity-dependent hashes.
+            hash_tup = Py_BuildValue("(ii)", sself->coerce, 0);
+        }
+        else {
+            hash_tup = Py_BuildValue("(iO)", sself->coerce, sself->na_object);
+        }
     }
     else {
         hash_tup = Py_BuildValue("(i)", sself->coerce);
     }
+    if (hash_tup == NULL) {
+        return -1;
+    }
 
     Py_hash_t ret = PyObject_Hash(hash_tup);
     Py_DECREF(hash_tup);
+    if (ret != -1) {
+        atomic_store_explicit(
+                (_Atomic(npy_hash_t) *)&sself->base.hash, ret,
+                memory_order_relaxed);
+    }
     return ret;
 }
 

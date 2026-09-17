@@ -22,6 +22,8 @@ AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
 AR_M_1d: np.ndarray[tuple[int], np.dtype[np.datetime64]]
 AR_M_2d: np.ndarray[tuple[int, int], np.dtype[np.datetime64]]
+AR_LIKE_M_1d: list[np.datetime64[dt.datetime]]
+AR_LIKE_M_2d: list[list[np.datetime64[dt.datetime]]]
 AR_O_nd: npt.NDArray[np.object_[int]]
 AR_O_1d: np.ndarray[tuple[int], np.dtype[np.object_[int]]]
 AR_O_2d: np.ndarray[tuple[int, int], np.dtype[np.object_[int]]]
@@ -214,7 +216,10 @@ assert_type(np.where(AR_b_nd, AR_u1, AR_u1), npt.NDArray[np.uint8])
 assert_type(np.where(AR_b_nd, AR_f4_nd, AR_f4_nd), npt.NDArray[np.float32])
 assert_type(np.where([True, True, False], 1, 0), npt.NDArray[Any])
 
-assert_type(np.lexsort([0, 1, 2]), npt.NDArray[np.intp])
+assert_type(np.lexsort((AR_f8, AR_f8)), npt.NDArray[np.intp])
+assert_type(np.lexsort([0, 1, 2]), np.intp)
+assert_type(np.lexsort((AR_f4_1d, AR_f4_1d)), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.lexsort(AR_f4_3d), np.ndarray[tuple[int, int], np.dtype[np.intp]])
 
 assert_type(np.can_cast(np.dtype("i8"), int), bool)
 assert_type(np.can_cast(AR_f8, "f8"), bool)
@@ -327,13 +332,13 @@ assert_type(np.is_busday("2012"), np.bool)
 assert_type(np.is_busday(date_scalar), np.bool)
 assert_type(np.is_busday(["2012"]), npt.NDArray[np.bool])
 
-# NOTE: Mypy incorrectly infers `Any` for the scalar case and `ndarray[Any, Any]` for the
-# shaped cases, but pyright behaves correctly.
-assert_type(np.datetime_as_string(M), np.str_)  # type: ignore[assert-type]
+# NOTE: Mypy incorrectly infers `ndarray[Any, Any]` for the shaped cases, but pyright behaves correctly.
+assert_type(np.datetime_as_string(M), np.str_)
 assert_type(np.datetime_as_string(AR_M), npt.NDArray[np.str_])
 assert_type(np.datetime_as_string(AR_M_1d), np.ndarray[tuple[int], np.dtype[np.str_]])  # type: ignore[assert-type]
 assert_type(np.datetime_as_string(AR_M_2d), np.ndarray[tuple[int, int], np.dtype[np.str_]])  # type: ignore[assert-type]
-assert_type(np.datetime_as_string(date_seq), npt.NDArray[np.str_])
+assert_type(np.datetime_as_string(AR_LIKE_M_1d), np.ndarray[tuple[int], np.dtype[np.str_]])
+assert_type(np.datetime_as_string(AR_LIKE_M_2d), np.ndarray[tuple[int, int], np.dtype[np.str_]])
 
 assert_type(np.busdaycalendar(holidays=date_seq), np.busdaycalendar)
 assert_type(np.busdaycalendar(holidays=[M]), np.busdaycalendar)

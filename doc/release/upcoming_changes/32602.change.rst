@@ -1,0 +1,1 @@
+* `np.spacing` with NaN input no longer emits a `RuntimeWarning`.

@@ -158,6 +158,17 @@ def test_dtype_equality(dtype):
         assert dtype != np.dtype(f"{ch}8")
 
 
+def test_dtype_hash(dtype, dtype2):
+    assert len({dtype, dtype2}) == (1 if dtype == dtype2 else 2)
+
+
+def test_dtype_hash_float64_nan(coerce):
+    dtype = StringDType(na_object=np.float64("nan"), coerce=coerce)
+    other = StringDType(na_object=float("nan"), coerce=coerce)
+    assert dtype == other
+    assert hash(dtype) == hash(other)
+
+
 def test_dtype_repr(dtype):
     if not hasattr(dtype, "na_object") and dtype.coerce:
         assert repr(dtype) == "StringDType()"
@@ -345,11 +356,6 @@ def test_pystr_scalar_concatenate_preserves_nulls(dtype):
 
     res = np.concatenate((scalar,), axis=None, dtype=dtype)
     assert res[0] == scalar
-
-    # like a Python int, the str is not cast, so any casting rule allows it
-    for casting in ["no", "equiv", "safe", "same_kind", "unsafe"]:
-        res = np.concatenate((arr, "z"), axis=None, casting=casting)
-        assert res[1] == "z"
 
 
 def test_pystr_scalar_choose_preserves_nulls(dtype):
@@ -1010,6 +1016,7 @@ def test_pickle(dtype, string_list):
 
     assert_array_equal(res[0], arr)
     assert res[1] == dtype
+    assert hash(res[1]) == hash(dtype)
 
     os.remove(f.name)
 

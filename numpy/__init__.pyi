@@ -233,6 +233,7 @@ from numpy._core.fromnumeric import (
     ptp,
     max,
     min,
+    minmax,
     amax,
     amin,
     prod,
@@ -715,7 +716,7 @@ __all__ = [
     "shares_memory", "may_share_memory",
     "all", "amax", "amin", "any", "argmax", "argmin", "argpartition", "argsort",
     "around", "choose", "clip", "compress", "cumprod", "cumsum", "cumulative_prod",
-    "cumulative_sum", "diagonal", "mean", "max", "min", "matrix_transpose", "ndim",
+    "cumulative_sum", "diagonal", "mean", "max", "min", "minmax", "matrix_transpose", "ndim",
     "nonzero", "partition", "prod", "ptp", "put", "ravel", "repeat", "reshape",
     "resize", "round", "searchsorted", "shape", "size", "sort", "squeeze", "std", "sum",
     "swapaxes", "take", "top_k", "trace", "transpose", "var",
@@ -838,6 +839,8 @@ type _1D = tuple[int]
 type _2D = tuple[int, int]
 type _3D = tuple[int, int, int]
 type _4D = tuple[int, int, int, int]
+
+type _AtLeast1D = tuple[int, *tuple[int, ...]]
 
 # workaround for microsoft/pyright#10232
 type _JustND = tuple[Never, Never, Never, Never]
@@ -2504,7 +2507,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     #
     @property
-    def strides(self) -> _Shape: ...
+    def strides(self) -> _ShapeT_co: ...
     @strides.setter
     @deprecated("Setting the strides on a NumPy array has been deprecated in NumPy 2.4")
     def strides(self, value: _ShapeLike) -> None: ...
@@ -2580,7 +2583,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def squeeze(
         self,
         /,
-        axis: SupportsIndex | tuple[SupportsIndex] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     ) -> ndarray[_AnyShape, _DTypeT_co]: ...
 
     #
@@ -5993,10 +5996,82 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         descending: py_bool | None = None,
     ) -> ndarray[tuple[int], dtype[intp]]: ...
 
-    # Keep in sync with `MaskedArray.trace`
-    @overload
+    #
+    @overload  # ?d  (workaround)
+    def trace[ScalarT: inexact | timedelta64 | object_](
+        self: _ArrayJustND[ScalarT],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[ScalarT]] | Any: ...
+    @overload  # ?d, +integer  (workaround)
     def trace(
-        self,  # >= 2D array
+        self: _ArrayJustND[integer | bool_],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[int_]] | Any: ...
+    @overload  # ?d, dtype=<known>  (workaround)
+    def trace[ScalarT: generic](
+        self: _ArrayJustND[number | bool_ | timedelta64 | object_],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[ScalarT]] | Any: ...
+    @overload  # ?d, dtype=<unknown>  (workaround)
+    def trace(
+        self: _ArrayJustND[number | bool_ | timedelta64 | object_],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+    ) -> ndarray | Any: ...
+    @overload  # 2d
+    def trace[ScalarT: inexact | timedelta64](
+        self: ndarray[_2D, _dtype[ScalarT]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ScalarT: ...
+    @overload  # 2d, +integer
+    def trace(
+        self: ndarray[_2D, _dtype[integer | bool_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> int_: ...
+    @overload  # 2d, dtype=<known>
+    def trace[ScalarT: generic](
+        self: ndarray[_2D, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ScalarT: ...
+    @overload  # 2d, dtype=<unknown>
+    def trace(
+        self: ndarray[_2D, _dtype[number | bool_ | timedelta64 | object_]],
         /,
         offset: SupportsIndex = 0,
         axis1: SupportsIndex = 0,
@@ -6004,9 +6079,132 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         dtype: DTypeLike | None = None,
         out: None = None,
     ) -> Any: ...
-    @overload
+    @overload  # 3d
+    def trace[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[_3D, _dtype[ScalarT]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 3d, +integer
+    def trace(
+        self: ndarray[_3D, _dtype[integer | bool_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[int_]]: ...
+    @overload  # 3d, dtype=<known>
+    def trace[ScalarT: generic](
+        self: ndarray[_3D, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 3d, dtype=<unknown>
+    def trace(
+        self: ndarray[_3D, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+    ) -> ndarray[_1D, _dtype[Any]]: ...
+    @overload  # 4d
+    def trace[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[_4D, _dtype[ScalarT]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # 4d, +integer
+    def trace(
+        self: ndarray[_4D, _dtype[integer | bool_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_2D, _dtype[int_]]: ...
+    @overload  # 4d, dtype=<known>
+    def trace[ScalarT: generic](
+        self: ndarray[_4D, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[_2D, _dtype[ScalarT]]: ...
+    @overload  # 4d, dtype=<unknown>
+    def trace(
+        self: ndarray[_4D, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+    ) -> ndarray[_2D, _dtype[Any]]: ...
+    @overload  # Nd  (fallback)
+    def trace[ScalarT: inexact | timedelta64 | object_](
+        self: ndarray[Any, _dtype[ScalarT]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[ScalarT]] | Any: ...
+    @overload  # Nd, +integer  (fallback)
+    def trace(
+        self: ndarray[Any, _dtype[integer | bool_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: None = None,
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[int_]] | Any: ...
+    @overload  # Nd, dtype=<known>  (fallback)
+    def trace[ScalarT: generic](
+        self: ndarray[Any, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+    ) -> ndarray[_AnyShape, _dtype[ScalarT]] | Any: ...
+    @overload  # Nd, dtype=<unknown>  (fallback)
+    def trace(
+        self: ndarray[Any, _dtype[number | bool_ | timedelta64 | object_]],
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+    ) -> NDArray[Any] | Any: ...
+    @overload  # out=<given>
     def trace[ArrayT: ndarray](
-        self,  # >= 2D array
+        self,
         /,
         offset: SupportsIndex = 0,
         axis1: SupportsIndex = 0,
@@ -6015,15 +6213,152 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         *,
         out: ArrayT,
     ) -> ArrayT: ...
-    @overload
-    def trace[ArrayT: ndarray](
-        self,  # >= 2D array
+
+    #
+    @override  # type: ignore[override]
+    @overload  # Nd, ?d  (workaround)
+    def choose[DTypeT: _dtype](
+        self: NDArray[integer | bool_],
         /,
-        offset: SupportsIndex,
-        axis1: SupportsIndex,
-        axis2: SupportsIndex,
-        dtype: DTypeLike | None,
+        choices: ndarray[_JustND, DTypeT] | Sequence[ndarray[_JustND, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_AnyShape, DTypeT]: ...
+    @overload  # >=1d, 1d
+    def choose[ShapeT: _AtLeast1D, DTypeT: _dtype](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_1D, DTypeT],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # >=1d, 1d bool
+    def choose[ShapeT: _AtLeast1D](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: Sequence[py_bool],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # >=1d, 1d ~int
+    def choose[ShapeT: _AtLeast1D](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: list[int],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[int_]]: ...
+    @overload  # >=1d, 1d ~float
+    def choose[ShapeT: _AtLeast1D](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: list[float],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[float64]]: ...
+    @overload  # >=1d, 1d ~complex
+    def choose[ShapeT: _AtLeast1D](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: list[complex],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[complex128]]: ...
+    @overload  # >=1d, 1d ~T
+    def choose[ShapeT: _AtLeast1D, ScalarT: generic](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: Sequence[ScalarT],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
+    @overload  # >=1d, 1d _
+    def choose[ShapeT: _AtLeast1D](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: Sequence[complex | generic],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, _dtype[Any]]: ...
+    @overload  # >=1d, 2d
+    def choose[ShapeT: _AtLeast1D, DTypeT: _dtype](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_2D, DTypeT] | Sequence[ndarray[_1D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # >=2d, 3d
+    def choose[ShapeT: tuple[int, int, *tuple[int, ...]], DTypeT: _dtype](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_3D, DTypeT] | Sequence[ndarray[_2D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # >=3d, 4d
+    def choose[ShapeT: tuple[int, int, int, *tuple[int, ...]], DTypeT: _dtype](
+        self: ndarray[ShapeT, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_4D, DTypeT] | Sequence[ndarray[_3D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[ShapeT, DTypeT]: ...
+    @overload  # <=2d, 4d
+    def choose[DTypeT: _dtype](
+        self: ndarray[_0D | _1D | _2D, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_4D, DTypeT] | Sequence[ndarray[_3D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_3D, DTypeT]: ...
+    @overload  # <=1d, 3d
+    def choose[DTypeT: _dtype](
+        self: ndarray[_0D | _1D, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_3D, DTypeT] | Sequence[ndarray[_2D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_2D, DTypeT]: ...
+    @overload  # 0d, 1d
+    def choose[ScalarT: generic](
+        self: ndarray[_0D, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_1D, _dtype[ScalarT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ScalarT: ...
+    @overload  # 0d, 1d ~T
+    def choose[ScalarT: generic](
+        self: ndarray[_0D, _dtype[integer | bool_]],
+        /,
+        choices: Sequence[ScalarT],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ScalarT: ...
+    @overload  # 0d, 2d
+    def choose[DTypeT: _dtype](
+        self: ndarray[_0D, _dtype[integer | bool_]],
+        /,
+        choices: ndarray[_2D, DTypeT] | Sequence[ndarray[_1D, DTypeT]],
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> ndarray[_1D, DTypeT]: ...
+    @overload  # fallback
+    def choose(
+        self,
+        /,
+        choices: ArrayLike,
+        out: None = None,
+        mode: _ModeKind = "raise",
+    ) -> Any: ...
+    @overload  # out=<given>
+    def choose[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        /,
+        choices: ArrayLike,
         out: ArrayT,
+        mode: _ModeKind = "raise",
     ) -> ArrayT: ...
 
     #
@@ -12549,17 +12884,17 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __truediv__(self: timedelta64[dt.timedelta], b: dt.timedelta, /) -> float: ...
     @overload
-    def __truediv__(self: timedelta64[Never], b: float | floating | integer, /) -> timedelta64: ...
+    def __truediv__(self: timedelta64[Never], b: _FloatLike_co, /) -> timedelta64: ...
     @overload
     def __truediv__[AnyItemT: (dt.timedelta, int, None)](
-        self: timedelta64[AnyItemT], b: int | integer, /
+        self: timedelta64[AnyItemT], b: _IntLike_co, /
     ) -> timedelta64[AnyItemT]: ...
     @overload
     def __truediv__[AnyItemT: (dt.timedelta, int, None)](
         self: timedelta64[AnyItemT], b: float | floating, /
     ) -> timedelta64[AnyItemT | None]: ...
     @overload
-    def __truediv__(self, b: float | floating | integer, /) -> timedelta64: ...
+    def __truediv__(self, b: _FloatLike_co, /) -> timedelta64: ...
 
     @overload
     def __rtruediv__(self, a: timedelta64, /) -> float64: ...
@@ -12571,10 +12906,10 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __floordiv__(self: timedelta64[dt.timedelta], b: dt.timedelta, /) -> int: ...
     @overload
-    def __floordiv__(self: timedelta64[Never], b: float | floating | integer, /) -> timedelta64: ...
+    def __floordiv__(self: timedelta64[Never], b: _FloatLike_co, /) -> timedelta64: ...
     @overload
     def __floordiv__[AnyItemT: (dt.timedelta, int, None)](
-        self: timedelta64[AnyItemT], b: int | integer, /
+        self: timedelta64[AnyItemT], b: _IntLike_co, /
     ) -> timedelta64[AnyItemT]: ...
     @overload
     def __floordiv__[AnyItemT: (dt.timedelta, int, None)](
@@ -13023,6 +13358,24 @@ class broadcast:
     def __iter__(self) -> Self: ...
     def reset(self) -> None: ...
 
+#
+@overload  # 0d T
+def from_dlpack[ScalarT: number | bool_](
+    x: ScalarT,
+    /,
+    *,
+    device: L["cpu"] | None = None,
+    copy: py_bool | None = None,
+) -> ndarray[tuple[()], _dtype[ScalarT]]: ...
+@overload  # Nd T
+def from_dlpack[ShapeT: _Shape, DTypeT: _dtype[number | bool_]](
+    x: ndarray[ShapeT, DTypeT],
+    /,
+    *,
+    device: L["cpu"] | None = None,
+    copy: py_bool | None = None,
+) -> ndarray[ShapeT, DTypeT]: ...
+@overload  # ?d
 def from_dlpack(
     x: _SupportsDLPack[None],
     /,

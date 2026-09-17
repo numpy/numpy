@@ -109,6 +109,17 @@ assert_type(np.ma.max(MAR_f4, out=MAR_subclass), MaskedArraySubclassC)
 assert_type(np.ma.max(MAR_f4, 0, MAR_subclass), MaskedArraySubclassC)
 assert_type(np.ma.max(MAR_f4, None, MAR_subclass), MaskedArraySubclassC)
 
+assert_type(np.ma.minmax(MAR_b), tuple[np.bool, np.bool])
+assert_type(np.ma.minmax(MAR_b, axis=0), tuple[Any, Any])
+assert_type(
+    np.ma.minmax(MAR_f4, out=(MAR_subclass, MAR_subclass)),
+    tuple[MaskedArraySubclassC, MaskedArraySubclassC],
+)
+assert_type(
+    np.ma.minmax(MAR_f4, 0, (MAR_subclass, MAR_subclass)),
+    tuple[MaskedArraySubclassC, MaskedArraySubclassC],
+)
+
 assert_type(MAR_b.max(), np.bool)
 assert_type(MAR_f4.max(), np.float32)
 assert_type(MAR_b.max(axis=0), Any)
@@ -389,6 +400,9 @@ assert_type(MAR_2d_f4.baseclass, type[NDArray[Any]])
 
 assert_type(MAR_b.swapaxes(0, 1), MaskedArray[np.bool])
 assert_type(MAR_2d_f4.swapaxes(1, 0), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+
+assert_type(MAR_2d_f4.squeeze(axis=0), _MArray1D[np.float32])
+assert_type(MAR_2d_f4.squeeze(axis=(0, 1)), MaskedArray[np.float32])
 
 assert_type(MAR_2d_f4[AR_i8], MaskedArray[np.float32])
 assert_type(MAR_2d_f4[[1, 2, 3]], MaskedArray[np.float32])

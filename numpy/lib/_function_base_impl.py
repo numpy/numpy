@@ -1,6 +1,7 @@
 import builtins
 import collections.abc
 import functools
+import math
 import operator
 import re
 import warnings
@@ -3905,7 +3906,7 @@ def _ureduce(a, func, keepdims=False, **kwargs):
                 # move axis that should not be reduced to front
                 a = np.moveaxis(a, keep, range(nkeep))
                 # merge reduced axis
-                return a.reshape(a.shape[:nkeep] + (-1,))
+                return a.reshape(a.shape[:nkeep] + (math.prod(a.shape[nkeep:]),))
 
             a = reshape_arr(a)
 
@@ -4789,9 +4790,10 @@ def _quantile(
         try:
             method_props = _QuantileMethods[method]
         except KeyError:
+            valid_methods = ", ".join(map(repr, _QuantileMethods))
             raise ValueError(
-                f"{method!r} is not a valid method. Use one of: "
-                f"{_QuantileMethods.keys()}") from None
+                f"{method!r} is not a valid method. "
+                f"Use one of: {valid_methods}") from None
         virtual_indexes = method_props["get_virtual_index"](values_count,
                                                             quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)

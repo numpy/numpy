@@ -18,6 +18,7 @@
 #include "dtypemeta.h"
 #include "dtype_transfer.h"
 #include "simd/simd.h"
+#include "module_state.h"
 
 #include <string.h>
 
@@ -1502,21 +1503,28 @@ fail:
 
 /* Can only be called if doc is currently NULL */
 NPY_NO_EXPORT PyObject *
-arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
+arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *obj;
     PyObject *str;
     const char *docstr;
     static const char msg[] = "already has a different docstring";
+    /* CPython's separator between a docstring's signature line and its body */
+    static const char SIGNATURE_END[] = "\n--\n\n";
 
     /* Don't add docstrings */
 #if PY_VERSION_HEX > 0x030b0000
-    if (npy_static_cdata.optimize > 1) {
+    {
+        multiarray_umath_state *st = get_module_state(module);
+        if (st->static_cdata.optimize > 1) {
+            Py_RETURN_NONE;
+        }
+    }
 #else
     if (Py_OptimizeFlag > 1) {
-#endif
         Py_RETURN_NONE;
     }
+#endif
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("add_docstring", args, len_args, NULL,
@@ -1551,21 +1559,36 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
     }
     else if (PyObject_TypeCheck(obj, &PyType_Type)) {
         /*
-         * We add it to both `tp_doc` and `__doc__` here.  Note that in theory
-         * `tp_doc` extracts the signature line, but we currently do not use
-         * it.  It may make sense to only add it as `__doc__` and
-         * `__text_signature__` to the dict in the future.
-         * The dictionary path is only necessary for heaptypes (currently not
-         * used) and metaclasses.
-         * If `__doc__` as stored in `tp_dict` is None, we assume this was
-         * filled in by `PyType_Ready()` and should also be replaced.
+         * We add it to both `tp_doc` and `__doc__` here.  `tp_doc` keeps the
+         * leading signature line, which is where `__text_signature__` comes
+         * from.  `__doc__` in `tp_dict` is what a heap type reports, so it
+         * gets the docstring with that line removed, matching what a static
+         * type reports from `tp_doc`.
+         * The dictionary path is only necessary for heaptypes and
+         * metaclasses.  If `__doc__` as stored in `tp_dict` is None, we
+         * assume this was filled in by `PyType_Ready()` and should also be
+         * replaced.
          */
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
         if (new->tp_dict != NULL && PyDict_CheckExact(new->tp_dict) &&
                 PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) { // noqa: borrowed-ref - manual fix needed
+            PyObject *body;
+            const char *after_signature = strstr(docstr, SIGNATURE_END);
+            if (after_signature == NULL) {
+                body = Py_NewRef(str);
+            }
+            else {
+                body = PyUnicode_FromString(
+                        after_signature + strlen(SIGNATURE_END));
+                if (body == NULL) {
+                    return NULL;
+                }
+            }
             /* Warning: Modifying `tp_dict` is not generally safe! */
-            if (PyDict_SetItemString(new->tp_dict, "__doc__", str) < 0) {
+            int ret = PyDict_SetItemString(new->tp_dict, "__doc__", body);
+            Py_DECREF(body);
+            if (ret < 0) {
                 return NULL;
             }
         }
@@ -1966,6 +1989,8 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_Size((PyObject *)out) / 8);
 
+    npy_static_cdata_struct *cdata = &_npy_module_state->static_cdata;
+
     while (PyArray_ITER_NOTDONE(it)) {
         npy_intp index;
         unsigned const char *inptr = PyArray_ITER_DATA(it);
@@ -1975,7 +2000,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             /* for unity stride we can just copy out of the lookup table */
             if (order == 'b') {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                     memcpy(outptr, &v, 8);
                     outptr += 8;
                     inptr += in_stride;
@@ -1983,7 +2008,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             else {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                     if (order != 'b') {
                         v = npy_bswap8(v);
                     }
@@ -1994,7 +2019,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             /* Clean up the tail portion */
             if (in_tail) {
-                npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                 if (order != 'b') {
                     v = npy_bswap8(v);
                 }
