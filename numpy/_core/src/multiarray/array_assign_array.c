@@ -85,7 +85,7 @@ static npy_intp
 transposed_copy_chunk(npy_intp n_inner,
                       npy_intp const *src_strides, npy_intp const *dst_strides)
 {
-    if (n_inner * NPY_COPY_CACHE_LINE <= NPY_COPY_CHUNK_BUDGET) {
+    if (n_inner <= NPY_COPY_CHUNK_BUDGET / NPY_COPY_CACHE_LINE) {
         return n_inner;
     }
     npy_intp const *strides[2] = {src_strides, dst_strides};
