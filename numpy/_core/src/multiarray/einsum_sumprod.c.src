@@ -1261,7 +1261,7 @@ get_sum_of_products_function(int nop, int type_num,
 {
     int iop;
 
-    if (type_num >= NPY_NTYPES_LEGACY) {
+    if (type_num < 0 || type_num >= NPY_NTYPES_LEGACY) {
         return NULL;
     }
 

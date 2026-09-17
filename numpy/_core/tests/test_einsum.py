@@ -84,6 +84,12 @@ class TestEinsum:
             # einsum_path does not yet accept kwarg 'casting'
             np.einsum('ij->j', [a, a], casting='same_value')
 
+    def test_einsum_rejects_new_style_dtype(self):
+        a = np.array(["a", "b"], dtype=np.dtypes.StringDType())
+
+        with pytest.raises(TypeError, match="invalid data type for einsum"):
+            np.einsum("i->", a)
+
     def test_einsum_sorting_behavior(self):
         # Case 1: 26 dimensions (all lowercase indices)
         n1 = 26
