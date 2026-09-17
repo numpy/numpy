@@ -14,6 +14,7 @@ AR_f4: npt.NDArray[np.float32]
 AR_f8: npt.NDArray[np.float64]
 AR_f8_1d: _Array1D[np.float64]
 AR_f8_2d: _Array2D[np.float64]
+AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
 AR_c16_1d: _Array1D[np.complex128]
 AR_O: npt.NDArray[np.object_]
@@ -66,6 +67,14 @@ assert_type(poly_obj.integ(), np.poly1d)
 assert_type(np.poly(poly_obj), npt.NDArray[np.floating])
 assert_type(np.poly(AR_f8), npt.NDArray[np.floating])
 assert_type(np.poly(AR_c16), npt.NDArray[np.floating])
+
+assert_type(np.roots(poly_obj), _Array1D[Any])
+assert_type(np.roots(AR_c8), _Array1D[np.complex64])
+assert_type(np.roots(AR_c16), _Array1D[np.complex128])
+assert_type(np.roots(AR_f4), _Array1D[np.float32 | np.complex64])
+assert_type(np.roots([1, 2.0]), _Array1D[np.float64 | np.complex128])
+assert_type(np.roots([1j, 2]), _Array1D[np.complex128])
+assert_type(np.roots(AR_f8_2d), _Array1D[Any])
 
 assert_type(np.polyint(poly_obj), np.poly1d)
 assert_type(np.polyint(AR_f8), npt.NDArray[np.floating])
