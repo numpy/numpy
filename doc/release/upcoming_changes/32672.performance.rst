@@ -1,0 +1,9 @@
+Faster transposed copies of arrays larger than the cache
+--------------------------------------------------------
+Copies that change memory order, such as ``np.ascontiguousarray(a.T)``,
+``np.asfortranarray(a)`` and assignments between C- and Fortran-ordered
+arrays, now visit the strided axis in cache-sized chunks. Previously, once
+the array outgrew the CPU cache, each cache line was fetched once per
+element it held and the copy ran several times slower than a plain copy;
+large arrays are now copied several times faster, and small arrays are
+unaffected.
