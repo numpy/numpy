@@ -5,6 +5,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <stdatomic.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "numpy/ndarraytypes.h"
@@ -57,6 +58,7 @@ PyArray_PythonPyIntFromInt(PyObject *obj, int *value)
 
     PyObject *index;
     long result;
+    bool used_legacy = false;
 
     index = PyNumber_Index(obj);
 
@@ -86,12 +88,24 @@ PyArray_PythonPyIntFromInt(PyObject *obj, int *value)
         if (NPY_UNLIKELY((result == -1) && PyErr_Occurred())) {
             return NPY_FAIL;
         }
+
+        used_legacy = true;
     }
 
     if (NPY_UNLIKELY((result > INT_MAX) || (result < INT_MIN))) {
         PyErr_SetString(PyExc_OverflowError,
                         "Python int too large to convert to C int");
         return NPY_FAIL;
+    }
+
+    if (used_legacy) {
+        if (PyErr_WarnEx(
+                PyExc_DeprecationWarning,
+                "Conversion of a Python object that does not implement __index__ to "
+                "an integer is being deprecated and will raise an error in future.",
+                1) < 0) {
+            return NPY_FAIL;
+        }
     }
         
     *value = (int)result;
