@@ -45,7 +45,6 @@ from numpy import (
     matmul,
     ndarray,
     signedinteger,
-    str_,
     timedelta64,
     ufunc,
     uint8,
@@ -205,12 +204,27 @@ type _Array0D[ScalarT: np.generic] = ndarray[tuple[()], dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = ndarray[tuple[int], dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = ndarray[tuple[int, int], dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = ndarray[tuple[int, int, int], dtype[ScalarT]]
-# workaround for mypy's and pyright's typing spec non-compliance regarding overloads
+
+type _Tuple2[T] = tuple[T, T]
+type _Tuple3[T] = tuple[T, T, T]
+type _Tuple4[T] = tuple[T, T, T, T]
+type _AtLeast1D = tuple[int, *tuple[int, ...]]
+
+type _Keys1D = _Array1D[Any] | Sequence[complex | np.generic]
+type _Keys2D = _Array2D[Any] | Sequence[_Keys1D]
+
+# workaround for mypy and pyright not following the typing spec for overloads
+type _JustAnyShape = tuple[Never, Never, Never, Never, Never]
 type _ArrayJustND[ScalarT: np.generic] = ndarray[tuple[Never, Never, Never, Never], dtype[ScalarT]]
 
 type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
 type _ToArray2D[ScalarT: np.generic] = _Array2D[ScalarT] | Sequence[Sequence[ScalarT]]
 type _ToArray3D[ScalarT: np.generic] = _Array3D[ScalarT] | Sequence[Sequence[Sequence[ScalarT]]]
+
+type _ToIntND = _ArrayLike[np.integer | np.bool] | _NestedSequence[int]
+type _ToIndex1D = _Array1D[np.integer | np.bool] | Sequence[_IntLike_co]
+type _ToIndex2D = _Array2D[np.integer | np.bool] | Sequence[_ToIndex1D]
+type _ToIndex3D = _Array3D[np.integer | np.bool] | Sequence[_ToIndex2D]
 
 # Valid time units
 type _UnitKind = L[
@@ -252,10 +266,13 @@ type _ToDeltas = dt.timedelta | _NestedSequence[dt.timedelta]
 
 type _BitOrder = L["big", "little"]
 type _MaxWork = L[-1, 0]
+type _TimezoneContext = L["naive", "UTC", "local"] | dt.tzinfo
 
 @type_check_only
 class _SupportsArray[ArrayT_co: np.ndarray](Protocol):
     def __array__(self, /) -> ArrayT_co: ...
+
+###
 
 # using `Final` or `TypeAlias` will break stubtest
 error = Exception
@@ -1090,26 +1107,119 @@ def array(
 ) -> NDArray[Any]: ...
 
 #
-@overload
+@overload  # ?d  (workaround)
 def ravel_multi_index(
-    multi_index: SupportsLenAndGetItem[_IntLike_co],
+    multi_index: (
+        _ArrayJustND[np.integer | np.bool]
+        | Sequence[_ArrayJustND[np.integer | np.bool]]
+        | Sequence[Sequence[_ArrayJustND[np.integer | np.bool]]]
+    ),
+    dims: _ShapeLike,
+    mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
+    order: _OrderCF = "C",
+) -> NDArray[intp] | Any: ...
+@overload  # 1d
+def ravel_multi_index(
+    multi_index: _ToIndex1D,
     dims: _ShapeLike,
     mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
     order: _OrderCF = "C",
 ) -> intp: ...
-@overload
+@overload  # 2d
+def ravel_multi_index(
+    multi_index: _ToIndex2D,
+    dims: _ShapeLike,
+    mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
+    order: _OrderCF = "C",
+) -> _Array1D[intp]: ...
+@overload  # 3d
+def ravel_multi_index(
+    multi_index: _ToIndex3D,
+    dims: _ShapeLike,
+    mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
+    order: _OrderCF = "C",
+) -> _Array2D[intp]: ...
+@overload  # ?d  (fallback)
 def ravel_multi_index(
     multi_index: SupportsLenAndGetItem[_ArrayLikeInt_co],
     dims: _ShapeLike,
     mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
     order: _OrderCF = "C",
-) -> NDArray[intp]: ...
+) -> NDArray[intp] | Any: ...
 
 #
-@overload
+@overload  # Nd +int, ?d  (workaround)
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: _JustAnyShape,
+    order: _OrderCF = "C",
+) -> tuple[ndarray[ShapeT, dtype[intp]], ...]: ...
+@overload  # Nd +int, 1d
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: int | tuple[SupportsIndex],
+    order: _OrderCF = "C",
+) -> tuple[ndarray[ShapeT, dtype[intp]]]: ...
+@overload  # Nd +int, 2d
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: _Tuple2[SupportsIndex],
+    order: _OrderCF = "C",
+) -> _Tuple2[ndarray[ShapeT, dtype[intp]]]: ...
+@overload  # Nd +int, 3d
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: _Tuple3[SupportsIndex],
+    order: _OrderCF = "C",
+) -> _Tuple3[ndarray[ShapeT, dtype[intp]]]: ...
+@overload  # Nd +int, 4d
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: _Tuple4[SupportsIndex],
+    order: _OrderCF = "C",
+) -> _Tuple4[ndarray[ShapeT, dtype[intp]]]: ...
+@overload  # Nd +int, ?d  (fallback)
+def unravel_index[ShapeT: _Shape](
+    indices: ndarray[ShapeT, dtype[np.integer | np.bool]],
+    shape: _ShapeLike,
+    order: _OrderCF = "C",
+) -> tuple[ndarray[ShapeT, dtype[intp]], ...]: ...
+@overload  # 0d ~int, ?d  (workaround)
+def unravel_index(indices: _IntLike_co, shape: _JustAnyShape, order: _OrderCF = "C") -> tuple[intp, ...]: ...
+@overload  # 0d ~int, 1d
+def unravel_index(indices: _IntLike_co, shape: int | tuple[SupportsIndex], order: _OrderCF = "C") -> tuple[intp]: ...
+@overload  # 0d ~int, 2d
+def unravel_index(indices: _IntLike_co, shape: _Tuple2[SupportsIndex], order: _OrderCF = "C") -> _Tuple2[intp]: ...
+@overload  # 0d ~int, 3d
+def unravel_index(indices: _IntLike_co, shape: _Tuple3[SupportsIndex], order: _OrderCF = "C") -> _Tuple3[intp]: ...
+@overload  # 0d ~int, 4d
+def unravel_index(indices: _IntLike_co, shape: _Tuple4[SupportsIndex], order: _OrderCF = "C") -> _Tuple4[intp]: ...
+@overload  # 0d ~int, ?d  (fallback)
 def unravel_index(indices: _IntLike_co, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[intp, ...]: ...
-@overload
-def unravel_index(indices: _ArrayLikeInt_co, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[NDArray[intp], ...]: ...
+@overload  # 1d ~int, ?d  (workaround)
+def unravel_index(indices: Sequence[int], shape: _JustAnyShape, order: _OrderCF = "C") -> tuple[_Array1D[intp], ...]: ...
+@overload  # 1d ~int, 1d
+def unravel_index(indices: Sequence[int], shape: int | tuple[SupportsIndex], order: _OrderCF = "C") -> tuple[_Array1D[intp]]: ...
+@overload  # 1d ~int, 2d
+def unravel_index(indices: Sequence[int], shape: _Tuple2[SupportsIndex], order: _OrderCF = "C") -> _Tuple2[_Array1D[intp]]: ...
+@overload  # 1d ~int, 3d
+def unravel_index(indices: Sequence[int], shape: _Tuple3[SupportsIndex], order: _OrderCF = "C") -> _Tuple3[_Array1D[intp]]: ...
+@overload  # 1d ~int, 4d
+def unravel_index(indices: Sequence[int], shape: _Tuple4[SupportsIndex], order: _OrderCF = "C") -> _Tuple4[_Array1D[intp]]: ...
+@overload  # 1d ~int, ?d  (fallback)
+def unravel_index(indices: Sequence[int], shape: _ShapeLike, order: _OrderCF = "C") -> tuple[_Array1D[intp], ...]: ...
+@overload  # ?d, ?d  (workaround)
+def unravel_index(indices: _ToIntND, shape: _JustAnyShape, order: _OrderCF = "C") -> tuple[NDArray[intp], ...]: ...
+@overload  # ?d, 1d
+def unravel_index(indices: _ToIntND, shape: int | tuple[SupportsIndex], order: _OrderCF = "C") -> tuple[NDArray[intp]]: ...
+@overload  # ?d, 2d
+def unravel_index(indices: _ToIntND, shape: _Tuple2[SupportsIndex], order: _OrderCF = "C") -> _Tuple2[NDArray[intp]]: ...
+@overload  # ?d, 3d
+def unravel_index(indices: _ToIntND, shape: _Tuple3[SupportsIndex], order: _OrderCF = "C") -> _Tuple3[NDArray[intp]]: ...
+@overload  # ?d, 4d
+def unravel_index(indices: _ToIntND, shape: _Tuple4[SupportsIndex], order: _OrderCF = "C") -> _Tuple4[NDArray[intp]]: ...
+@overload  # ?d, ?d  (fallback)
+def unravel_index(indices: _ToIntND, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[NDArray[intp], ...]: ...
 
 #
 def normalize_axis_index(axis: int, ndim: int, msg_prefix: str | None = None) -> int: ...
@@ -1415,8 +1525,18 @@ def where(condition: ArrayLike, x: _ArrayLike[_AnyScalarT], y: _ArrayLike[_AnySc
 def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike, /) -> NDArray[Any]: ...
 
 #
-def lexsort(keys: ArrayLike, axis: SupportsIndex = -1) -> NDArray[intp]: ...
+@overload  # ?d  (workaround)
+def lexsort(keys: _ArrayJustND[Any] | Sequence[_ArrayJustND[Any]], axis: SupportsIndex = -1) -> NDArray[intp]: ...
+@overload  # 1d
+def lexsort(keys: _Keys1D, axis: SupportsIndex = -1) -> intp: ...
+@overload  # 2d
+def lexsort(keys: _Keys2D, axis: SupportsIndex = -1) -> _Array1D[intp]: ...
+@overload  # 3d
+def lexsort(keys: _Array3D[Any] | Sequence[_Keys2D], axis: SupportsIndex = -1) -> _Array2D[intp]: ...
+@overload  # ?d  (fallback)
+def lexsort(keys: ArrayLike, axis: SupportsIndex = -1) -> NDArray[intp] | Any: ...
 
+#
 def can_cast(from_: ArrayLike | DTypeLike, to: DTypeLike, casting: _CastingKind = "safe") -> bool: ...
 
 def min_scalar_type(a: ArrayLike, /) -> dtype: ...
@@ -2101,21 +2221,21 @@ def asanyarray(
 
 # keep in sync with `asfortranarray` and `asarray` (modulo the 3 0d overloads)
 @overload  # Nd
-def ascontiguousarray[ShapeT: tuple[int, *tuple[int, ...]], DTypeT: np.dtype](
+def ascontiguousarray[ShapeT: _AtLeast1D, DTypeT: np.dtype](
     a: ndarray[ShapeT, DTypeT],
     dtype: None = None,
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, DTypeT]: ...
 @overload  # Nd, dtype=<known>
-def ascontiguousarray[ShapeT: tuple[int, *tuple[int, ...]], ScalarT: np.generic](
+def ascontiguousarray[ShapeT: _AtLeast1D, ScalarT: np.generic](
     a: ndarray[ShapeT],
     dtype: _DTypeLike[ScalarT],
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, dtype[ScalarT]]: ...
 @overload  # Nd, dtype=<unknown>
-def ascontiguousarray[ShapeT: tuple[int, *tuple[int, ...]]](
+def ascontiguousarray[ShapeT: _AtLeast1D](
     a: ndarray[ShapeT],
     dtype: DTypeLike,
     *,
@@ -2341,21 +2461,21 @@ def ascontiguousarray(
 
 # keep in sync with `ascontiguousarray` and `asarray` (modulo the 3 0d overloads)
 @overload  # Nd
-def asfortranarray[ShapeT: tuple[int, *tuple[int, ...]], DTypeT: np.dtype](
+def asfortranarray[ShapeT: _AtLeast1D, DTypeT: np.dtype](
     a: ndarray[ShapeT, DTypeT],
     dtype: None = None,
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, DTypeT]: ...
 @overload  # Nd, dtype=<known>
-def asfortranarray[ShapeT: tuple[int, *tuple[int, ...]], ScalarT: np.generic](
+def asfortranarray[ShapeT: _AtLeast1D, ScalarT: np.generic](
     a: ndarray[ShapeT],
     dtype: _DTypeLike[ScalarT],
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, dtype[ScalarT]]: ...
 @overload  # Nd, dtype=<unknown>
-def asfortranarray[ShapeT: tuple[int, *tuple[int, ...]]](
+def asfortranarray[ShapeT: _AtLeast1D](
     a: ndarray[ShapeT],
     dtype: DTypeLike,
     *,
@@ -3081,30 +3201,44 @@ def is_busday[OutT: np.ndarray](
     out: OutT,
 ) -> OutT: ...
 
-type _TimezoneContext = L["naive", "UTC", "local"] | dt.tzinfo
-
-@overload
+#
+@overload  # 0d
 def datetime_as_string(
-    arr: datetime64 | dt.date,
+    arr: np.datetime64,
     unit: L["auto"] | _UnitKind | None = None,
     timezone: _TimezoneContext = "naive",
     casting: _CastingKind = "same_kind",
-) -> str_: ...
-@overload
-def datetime_as_string[ShapeT: tuple[int, *tuple[int, ...]]](
-    arr: ndarray[ShapeT, dtype[datetime64[Any]]],
+) -> np.str_: ...
+@overload  # Nd T
+def datetime_as_string[ShapeT: _Shape](
+    arr: ndarray[ShapeT, np.dtype[np.datetime64]],
     unit: L["auto"] | _UnitKind | None = None,
     timezone: _TimezoneContext = "naive",
     casting: _CastingKind = "same_kind",
-) -> ndarray[ShapeT, dtype[str_]]: ...
-@overload
+) -> np.ndarray[ShapeT, np.dtype[np.str_]]: ...
+@overload  # 1d
 def datetime_as_string(
-    arr: _ArrayLikeDT64_co | _NestedSequence[dt.date],
+    arr: Sequence[np.datetime64],
     unit: L["auto"] | _UnitKind | None = None,
     timezone: _TimezoneContext = "naive",
     casting: _CastingKind = "same_kind",
-) -> NDArray[str_]: ...
+) -> _Array1D[np.str_]: ...
+@overload  # 2d
+def datetime_as_string(
+    arr: Sequence[Sequence[np.datetime64]],
+    unit: L["auto"] | _UnitKind | None = None,
+    timezone: _TimezoneContext = "naive",
+    casting: _CastingKind = "same_kind",
+) -> _Array2D[np.str_]: ...
+@overload  # Nd (using `_ArrayLikeDT64_co` here will cause mypy to infer `Any` for many inputs)
+def datetime_as_string(
+    arr: _SupportsArray[np.ndarray[_AtLeast1D, np.dtype[np.datetime64]]] | _NestedSequence[_ArrayLikeDT64_co],
+    unit: L["auto"] | _UnitKind | None = None,
+    timezone: _TimezoneContext = "naive",
+    casting: _CastingKind = "same_kind",
+) -> NDArray[np.str_]: ...
 
+#
 @overload
 def compare_chararrays(
     a1: _ArrayLikeStr_co,
@@ -3350,3 +3484,8 @@ def nested_iters(
     casting: _CastingKind = ...,
     buffersize: SupportsIndex = ...,
 ) -> tuple[nditer, ...]: ...
+
+# semi-public
+def _get_madvise_hugepage() -> bool: ...
+def _set_madvise_hugepage(enabled: object, /) -> bool: ...
+def _get_ndarray_c_version() -> int: ...

@@ -176,6 +176,11 @@ errmodeconverter(PyObject *obj, int *mode)
     if (obj == Py_None) {
         return 1;
     }
+    if (!PyUnicode_Check(obj)) {
+        PyErr_Format(PyExc_TypeError,
+                "invalid error mode %.100R, must be a string or None", obj);
+        return 0;
+    }
     npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     int i = 0;
     for (; i <= UFUNC_ERR_LOG; i++) {

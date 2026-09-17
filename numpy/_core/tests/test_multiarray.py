@@ -4731,6 +4731,10 @@ class TestMethods:
         e = np.array(['1+1j'], 'U')
         assert_raises(TypeError, complex, e)
 
+    def test_item_multi_index_tuple(self):
+        a = np.arange(6).reshape(2, 3)
+        assert a.item((1, 2)) == a.item(1, 2) == 5
+
 class TestCequenceMethods:
     def test_array_contains(self):
         assert_(4.0 in np.arange(16.).reshape(4, 4))
@@ -8927,13 +8931,21 @@ class TestChoose:
         assert_equal(A, [[2, 2, 3], [2, 2, 3]])
 
     @pytest.mark.parametrize("ops",
-        [(1000, np.array([1], dtype=np.uint8)),
-         (-1, np.array([1], dtype=np.uint8)),
+        [(100, np.array([1], dtype=np.uint8)),
+         (-1, np.array([1], dtype=np.int8)),
          (1., np.float32(3)),
          (1., np.array([3], dtype=np.float32))],)
     def test_output_dtype(self, ops):
         expected_dt = np.result_type(*ops)
         assert np.choose([0], ops).dtype == expected_dt
+
+    @pytest.mark.parametrize("scalar", [1000, -1])
+    def test_pyscalar_out_of_bounds(self, scalar):
+        arr = np.array([1], dtype=np.uint8)
+        with pytest.raises(OverflowError):
+            np.choose([0], (scalar, arr))
+        with pytest.raises(OverflowError):
+            np.choose([1], (arr, scalar))
 
     def test_dimension_and_args_limit(self):
         # Maxdims for the legacy iterator is 32, but the maximum number

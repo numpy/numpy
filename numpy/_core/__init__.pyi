@@ -1,5 +1,9 @@
 # keep in sync with https://github.com/numpy/numtype/blob/main/src/numpy-stubs/_core/__init__.pyi
 
+from typing import Final
+
+from numpy._pytesttester import PytestTester
+
 from ._asarray import require
 from ._ufunc_config import (
     errstate,
@@ -197,6 +201,7 @@ from .numerictypes import (
     number,
     object_,
     sctypeDict,
+    sctypes as sctypes,
     short,
     signedinteger,
     single,
@@ -668,3 +673,5 @@ __all__ = [
     "zeros",
     "zeros_like",
 ]
+
+test: Final[PytestTester] = ...

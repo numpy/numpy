@@ -649,7 +649,10 @@ type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
-type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, ...], np.dtype[ScalarT]]
+type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
+
+# workaround for mypy and pyright not following the typing spec for overloads
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
 
 type _ToArray0D = _Array0D[Any] | complex | str | np.generic
 type _ToArray1D = _Array1D[Any] | Sequence[complex | np.generic]
@@ -1447,7 +1450,70 @@ def tensordot(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, axes: _TensorAxes = 
 def tensordot(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, axes: _TensorAxes = 2) -> NDArray[np.complex128 | Any]: ...
 
 #
-@overload
+@overload  # ?d T, ?d T  (workaround)
+def cross(  # noqa: UP047
+    a: _ArrayJustND[_AnyNumberT],
+    b: _ArrayLike[_AnyNumberT],
+    axisa: int = -1,
+    axisb: int = -1,
+    axisc: int = -1,
+    axis: int | None = None,
+) -> NDArray[_AnyNumberT]: ...
+@overload  # ?d T, ?d T  (workaround)
+def cross(  # noqa: UP047
+    a: _ArrayLike[_AnyNumberT],
+    b: _ArrayJustND[_AnyNumberT],
+    axisa: int = -1,
+    axisb: int = -1,
+    axisc: int = -1,
+    axis: int | None = None,
+) -> NDArray[_AnyNumberT]: ...
+@overload  # 1d T, 1d T
+def cross(  # noqa: UP047
+    a: _Array1D[_AnyNumberT],
+    b: _Array1D[_AnyNumberT],
+    axisa: int = -1,
+    axisb: int = -1,
+    axisc: int = -1,
+    axis: int | None = None,
+) -> _Array1D[_AnyNumberT]: ...
+@overload  # 1d T, 2d T
+def cross(  # noqa: UP047
+    a: _Array1D[_AnyNumberT],
+    b: _Array2D[_AnyNumberT],
+    axisa: int = -1,
+    axisb: int = -1,
+    axisc: int = -1,
+    axis: int | None = None,
+) -> _Array2D[_AnyNumberT]: ...
+@overload  # 2d T, <=2d T
+def cross(  # noqa: UP047
+    a: _Array2D[_AnyNumberT],
+    b: _ArrayMax2D[_AnyNumberT],
+    axisa: int = -1,
+    axisb: int = -1,
+    axisc: int = -1,
+    axis: int | None = None,
+) -> _Array2D[_AnyNumberT]: ...
+@overload  # <=2d T, 3d T
+def cross(  # noqa: UP047
+    a: _ArrayMax2D[_AnyNumberT],
+    b: _Array3D[_AnyNumberT],
+    axisa: int = -1,
+    axisb: int = -1,
+    axisc: int = -1,
+    axis: int | None = None,
+) -> _Array3D[_AnyNumberT]: ...
+@overload  # 3d T, <=3d T
+def cross(  # noqa: UP047
+    a: _Array3D[_AnyNumberT],
+    b: np.ndarray[tuple[int] | tuple[int, int] | tuple[int, int, int], np.dtype[_AnyNumberT]],
+    axisa: int = -1,
+    axisb: int = -1,
+    axisc: int = -1,
+    axis: int | None = None,
+) -> _Array3D[_AnyNumberT]: ...
+@overload  # ?d T, ?d T
 def cross(  # noqa: UP047
     a: _ArrayLike[_AnyNumberT],
     b: _ArrayLike[_AnyNumberT],
@@ -1456,7 +1522,7 @@ def cross(  # noqa: UP047
     axisc: int = -1,
     axis: int | None = None,
 ) -> NDArray[_AnyNumberT]: ...
-@overload
+@overload  # ?d +int, ?d +int
 def cross(
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
@@ -1465,7 +1531,7 @@ def cross(
     axisc: int = -1,
     axis: int | None = None,
 ) -> NDArray[np.int_ | Any]: ...
-@overload
+@overload  # ?d +f64, ?d +f64
 def cross(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
@@ -1474,7 +1540,7 @@ def cross(
     axisc: int = -1,
     axis: int | None = None,
 ) -> NDArray[np.float64 | Any]: ...
-@overload
+@overload  # ?d +c128, ?d +c128
 def cross(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
