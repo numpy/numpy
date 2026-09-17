@@ -94,11 +94,14 @@ type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[S
 type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
 type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustAnyShape, np.dtype[ScalarT]]
 
+type _To0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]] | ScalarT
 type _To1D[ScalarT: np.generic] = np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]] | ScalarT
 type _To2D[ScalarT: np.generic] = np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]] | ScalarT
 type _To3D[ScalarT: np.generic] = (
     np.ndarray[tuple[()] | tuple[int] | tuple[int, int] | tuple[int, int, int], np.dtype[ScalarT]] | ScalarT
 )
+
+type _Func1D[ScalarT: np.generic, **Tss, ReturnT] = Callable[Concatenate[_Array1D[ScalarT], Tss], ReturnT]
 
 _AnyNumberT = TypeVar(
     "_AnyNumberT",
@@ -134,17 +137,185 @@ def put_along_axis[ScalarT: np.generic](
 ) -> None: ...
 
 #
-@overload
-def apply_along_axis[**Tss, ScalarT: np.generic](
-    func1d: Callable[Concatenate[np.ndarray, Tss], _ArrayLike[ScalarT]],
+@overload  # (1d T) -> ?d T, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _ArrayJustND[ResultT]],
+    axis: SupportsIndex,
+    arr: NDArray[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[ResultT]: ...
+@overload  # (1d T) -> ?d T, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _ArrayLike[ResultT]],
+    axis: SupportsIndex,
+    arr: _ArrayJustND[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[ResultT]: ...
+@overload  # (1d T) -> bool, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, bool],
+    axis: SupportsIndex,
+    arr: _ArrayJustND[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[np.bool]: ...
+@overload  # (1d T) -> ~int, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, int],
+    axis: SupportsIndex,
+    arr: _ArrayJustND[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[np.int_]: ...
+@overload  # (1d T) -> ~float, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, float],
+    axis: SupportsIndex,
+    arr: _ArrayJustND[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[np.float64]: ...
+@overload  # (1d T) -> ~complex, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, complex],
+    axis: SupportsIndex,
+    arr: _ArrayJustND[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[np.complex128]: ...
+@overload  # (1d T) -> 0d T, 1d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _To0D[ResultT]],
+    axis: SupportsIndex,
+    arr: _Array1D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> np.ndarray[tuple[()], np.dtype[ResultT]]: ...
+@overload  # (1d T) -> 1d T, 1d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _Array1D[ResultT]],
+    axis: SupportsIndex,
+    arr: _Array1D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array1D[ResultT]: ...
+@overload  # (1d T) -> 0d T, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _To0D[ResultT]],
+    axis: SupportsIndex,
+    arr: _Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array1D[ResultT]: ...
+@overload  # (1d T) -> 1d T, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _Array1D[ResultT]],
+    axis: SupportsIndex,
+    arr: _Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array2D[ResultT]: ...
+@overload  # (1d T) -> 2d T, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _Array2D[ResultT]],
+    axis: SupportsIndex,
+    arr: _Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array3D[ResultT]: ...
+@overload  # (1d T) -> bool, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, bool],
+    axis: SupportsIndex,
+    arr: _Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array1D[np.bool]: ...
+@overload  # (1d T) -> ~int, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, int],
+    axis: SupportsIndex,
+    arr: _Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array1D[np.int_]: ...
+@overload  # (1d T) -> ~float, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, float],
+    axis: SupportsIndex,
+    arr: _Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array1D[np.float64]: ...
+@overload  # (1d T) -> ~complex, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, complex],
+    axis: SupportsIndex,
+    arr: _Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array1D[np.complex128]: ...
+@overload  # (1d T) -> 0d T, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _To0D[ResultT]],
+    axis: SupportsIndex,
+    arr: _Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array2D[ResultT]: ...
+@overload  # (1d T) -> 1d T, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _Array1D[ResultT]],
+    axis: SupportsIndex,
+    arr: _Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array3D[ResultT]: ...
+@overload  # (1d T) -> bool, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, bool],
+    axis: SupportsIndex,
+    arr: _Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array2D[np.bool]: ...
+@overload  # (1d T) -> ~int, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, int],
+    axis: SupportsIndex,
+    arr: _Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array2D[np.int_]: ...
+@overload  # (1d T) -> ~float, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, float],
+    axis: SupportsIndex,
+    arr: _Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array2D[np.float64]: ...
+@overload  # (1d T) -> ~complex, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, complex],
+    axis: SupportsIndex,
+    arr: _Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _Array2D[np.complex128]: ...
+@overload  # (1d) -> ?d T, ?d
+def apply_along_axis[**Tss, ResultT: np.generic](
+    func1d: _Func1D[Any, Tss, _ArrayLike[ResultT]],
     axis: SupportsIndex,
     arr: ArrayLike,
     *args: Tss.args,
     **kwargs: Tss.kwargs,
-) -> NDArray[ScalarT]: ...
-@overload
+) -> NDArray[ResultT]: ...
+@overload  # (1d) -> ?, ?d  (fallback)
 def apply_along_axis[**Tss](
-    func1d: Callable[Concatenate[np.ndarray, Tss], Any],
+    func1d: _Func1D[Any, Tss, Any],
     axis: SupportsIndex,
     arr: ArrayLike,
     *args: Tss.args,
