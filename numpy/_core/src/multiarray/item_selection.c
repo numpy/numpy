@@ -1047,7 +1047,11 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
             goto fail;
         }
     }
-    ap = (PyArrayObject *)PyArray_FROM_OT((PyObject *)ip, NPY_INTP);
+    ap = (PyArrayObject *)PyArray_FromAny((PyObject *)ip,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 0,
+            NPY_ARRAY_SAME_KIND_CASTING,
+            NULL);
     if (ap == NULL) {
         goto fail;
     }
