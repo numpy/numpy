@@ -39,7 +39,6 @@ from numpy import (
     float64,
     floating,
     from_dlpack,
-    int_,
     interp,
     intp,
     matmul,
@@ -3052,46 +3051,100 @@ class busdaycalendar:
     @property
     def holidays(self) -> _Array1D[np.datetime64[dt.date]]: ...
 
-#
-@overload
+# keep in sync with `busday_offset`
+@overload  # ?d, ?d  (workaround)
 def busday_count(
-    begindates: _ScalarLike_co | dt.date,
-    enddates: _ScalarLike_co | dt.date,
-    weekmask: ArrayLike = "1111100",
+    begindates: _ArrayJustND[np.datetime64],
+    enddates: _ToDatesND,
+    weekmask: _ToWeekmask = "1111100",
     holidays: ArrayLike | _ToDates = (),
     busdaycal: busdaycalendar | None = None,
     out: None = None,
-) -> int_: ...
-@overload
+) -> NDArray[np.int_]: ...
+@overload  # ?d, ?d  (workaround)
 def busday_count(
-    begindates: ArrayLike | _ToDates,
-    enddates: ArrayLike | _ToDates,
-    weekmask: ArrayLike = "1111100",
+    begindates: _ToDatesND,
+    enddates: _ArrayJustND[np.datetime64],
+    weekmask: _ToWeekmask = "1111100",
     holidays: ArrayLike | _ToDates = (),
     busdaycal: busdaycalendar | None = None,
     out: None = None,
-) -> NDArray[int_]: ...
-@overload
+) -> NDArray[np.int_]: ...
+@overload  # 0d, 0d
+def busday_count(
+    begindates: _ToDate,
+    enddates: _ToDate,
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates = (),
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> np.int_: ...
+@overload  # 0d, 1d
+def busday_count(
+    begindates: _ToDate,
+    enddates: _ToDates1D,
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates = (),
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> _Array1D[np.int_]: ...
+@overload  # 1d, <=1d
+def busday_count(
+    begindates: _ToDates1D,
+    enddates: _ToDate | _ToDates1D,
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates = (),
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> _Array1D[np.int_]: ...
+@overload  # <=1d, 2d
+def busday_count(
+    begindates: _ToDate | _ToDates1D,
+    enddates: _ToDates2D,
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates = (),
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> _Array2D[np.int_]: ...
+@overload  # 2d, <=2d
+def busday_count(
+    begindates: _ToDates2D,
+    enddates: _ToDate | _ToDates1D | _ToDates2D,
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates = (),
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> _Array2D[np.int_]: ...
+@overload  # >=3d, ?d  (fallback)
+def busday_count(
+    begindates: np.ndarray[_AtLeast3D, np.dtype[np.datetime64]] | Sequence[_ToDates2D],
+    enddates: _ToDatesND,
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates = (),
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> NDArray[np.int_]: ...
+@overload  # ?d, >=3d  (fallback)
+def busday_count(
+    begindates: _ToDatesND,
+    enddates: np.ndarray[_AtLeast3D, np.dtype[np.datetime64]] | Sequence[_ToDates2D],
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates = (),
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> NDArray[np.int_]: ...
+@overload  # ?d, ?d, out=<given>
 def busday_count[OutT: np.ndarray](
-    begindates: ArrayLike | _ToDates,
-    enddates: ArrayLike | _ToDates,
-    weekmask: ArrayLike = "1111100",
+    begindates: _ToDatesND,
+    enddates: _ToDatesND,
+    weekmask: _ToWeekmask = "1111100",
     holidays: ArrayLike | _ToDates = (),
     busdaycal: busdaycalendar | None = None,
     *,
     out: OutT,
 ) -> OutT: ...
-@overload
-def busday_count[OutT: np.ndarray](
-    begindates: ArrayLike | _ToDates,
-    enddates: ArrayLike | _ToDates,
-    weekmask: ArrayLike,
-    holidays: ArrayLike | _ToDates,
-    busdaycal: busdaycalendar | None,
-    out: OutT,
-) -> OutT: ...
 
-#
+# keep in sync with `busday_count`
 @overload  # ?d, ?d  (workaround)
 def busday_offset(
     dates: _ArrayJustND[np.datetime64],
