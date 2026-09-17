@@ -676,6 +676,10 @@ type _ArrayLike1DNumber_co = _SupportsArray[np.dtype[_Number_co]] | Sequence[com
 type _ArrayLike1DTD64_co = _ArrayLike1D[_TD64_co]
 type _ArrayLike1DObject_co = _ArrayLike1D[np.object_]
 
+type _Func1D[ScalarT: np.generic, ReturnT] = Callable[[_Array1D[ScalarT]], ReturnT]
+type _Func2D[ScalarT: np.generic, ReturnT] = Callable[[_Array2D[ScalarT], _Array2D[ScalarT]], ReturnT]
+type _Func3D[ScalarT: np.generic, ReturnT] = Callable[[_Array3D[ScalarT], _Array3D[ScalarT], _Array3D[ScalarT]], ReturnT]
+
 type _DTypeLikeInt = type[int] | _IntPCodes
 type _DTypeLikeFloat64 = type[float] | _Float64Codes
 type _DTypeLikeComplex128 = type[complex] | _Complex128Codes
@@ -1619,9 +1623,118 @@ def indices(dimensions: Sequence[int], dtype: DTypeLike, sparse: L[False] = Fals
 def indices(dimensions: Sequence[int], dtype: DTypeLike, sparse: L[True]) -> tuple[ndarray, ...]: ...
 
 #
+@overload  # (1d T) -> ?, 1d, dtype=<known>
+def fromfunction[ScalarT: np.generic, ReturnT](
+    function: _Func1D[ScalarT, ReturnT],
+    shape: tuple[int],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (1d int_) -> ?, 1d, dtype=int
+def fromfunction[ReturnT](
+    function: _Func1D[np.int_, ReturnT],
+    shape: tuple[int],
+    *,
+    dtype: _DTypeLikeInt,
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (1d f64) -> ?, 1d, dtype=float (default)
+def fromfunction[ReturnT](
+    function: _Func1D[np.float64, ReturnT],
+    shape: tuple[int],
+    *,
+    dtype: _DTypeLikeFloat64 | None = float,
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (1d ?) -> ?, 1d, dtype=<unknown>
+def fromfunction[ReturnT](
+    function: _Func1D[Any, ReturnT],
+    shape: tuple[int],
+    *,
+    dtype: DTypeLike,
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (2d T, 2d T) -> ?, 2d, dtype=<known>
+def fromfunction[ScalarT: np.generic, ReturnT](
+    function: _Func2D[ScalarT, ReturnT],
+    shape: tuple[int, int],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (2d int_, 2d int_) -> ?, 2d, dtype=int
+def fromfunction[ReturnT](
+    function: _Func2D[np.int_, ReturnT],
+    shape: tuple[int, int],
+    *,
+    dtype: _DTypeLikeInt,
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (2d f64, 2d f64) -> ?, 2d, dtype=float (default)
+def fromfunction[ReturnT](
+    function: _Func2D[np.float64, ReturnT],
+    shape: tuple[int, int],
+    *,
+    dtype: _DTypeLikeFloat64 | None = float,
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (2d ?, 2d ?) -> ?, 2d, dtype=<unknown>
+def fromfunction[ReturnT](
+    function: _Func2D[Any, ReturnT],
+    shape: tuple[int, int],
+    *,
+    dtype: DTypeLike,
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (3d T, 3d T, 3d T) -> ?, 3d, dtype=<known>
+def fromfunction[ScalarT: np.generic, ReturnT](
+    function: _Func3D[ScalarT, ReturnT],
+    shape: tuple[int, int, int],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (3d int_, 3d int_, 3d int_) -> ?, 3d, dtype=int
+def fromfunction[ReturnT](
+    function: _Func3D[np.int_, ReturnT],
+    shape: tuple[int, int, int],
+    *,
+    dtype: _DTypeLikeInt,
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (3d f64, 3d f64, 3d f64) -> ?, 3d, dtype=float (default)
+def fromfunction[ReturnT](
+    function: _Func3D[np.float64, ReturnT],
+    shape: tuple[int, int, int],
+    *,
+    dtype: _DTypeLikeFloat64 | None = float,
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (3d ?, 3d ?, 3d ?) -> ?, 3d, dtype=<unknown>
+def fromfunction[ReturnT](
+    function: _Func3D[Any, ReturnT],
+    shape: tuple[int, int, int],
+    *,
+    dtype: DTypeLike,
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> ReturnT: ...
+@overload  # (*?d) -> ?, ?d  (fallback)
 def fromfunction[ReturnT](
     function: Callable[..., ReturnT],
-    shape: Sequence[int],
+    shape: tuple[int, int, int, *tuple[int, ...]] | list[int],
     *,
     dtype: DTypeLike | None = float,
     like: _SupportsArrayFunc | None = None,
