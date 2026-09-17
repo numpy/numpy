@@ -1,5 +1,6 @@
 import functools
 import math
+import operator
 import sys
 from itertools import product
 
@@ -787,17 +788,18 @@ s_ = IndexExpression(maketuple=False)
 # applicable to N-dimensions.
 
 
-def _fill_diagonal_dispatcher(a, val, wrap=None):
+def _fill_diagonal_dispatcher(a, val, wrap=None, *, offset=None):
     return (a,)
 
 
 @array_function_dispatch(_fill_diagonal_dispatcher)
-def fill_diagonal(a, val, wrap=False):
-    """Fill the main diagonal of the given array of any dimensionality.
+def fill_diagonal(a, val, wrap=False, *, offset=0):
+    """Fill a diagonal of the given array of any dimensionality.
 
     For an array `a` with ``a.ndim >= 2``, the diagonal is the list of
-    values ``a[i, ..., i]`` with indices ``i`` all identical.  This function
-    modifies the input array in-place without returning a value.
+    values ``a[i, ..., i]`` with indices ``i`` all identical when
+    ``offset=0``. This function modifies the input array in-place without
+    returning a value.
 
     Parameters
     ----------
@@ -813,6 +815,11 @@ def fill_diagonal(a, val, wrap=False):
       For tall matrices in NumPy version up to 1.6.2, the
       diagonal "wrapped" after N columns. You can have this behavior
       with this option. This affects only tall matrices.
+    offset : int, optional
+      Index of the diagonal to fill. 0 (the default) refers to the main
+      diagonal, a positive value refers to an upper diagonal, and a negative
+      value to a lower diagonal. For arrays with more than two dimensions,
+      the offset is applied between the first two axes.
 
     See also
     --------
@@ -833,6 +840,15 @@ def fill_diagonal(a, val, wrap=False):
     array([[5, 0, 0],
            [0, 5, 0],
            [0, 0, 5]])
+
+    Fill an offset diagonal:
+
+    >>> a = np.zeros((3, 3), int)
+    >>> np.fill_diagonal(a, 5, offset=1)
+    >>> a
+    array([[0, 5, 0],
+           [0, 0, 5],
+           [0, 0, 0]])
 
     The same function can operate on a 4-D array:
 
@@ -904,29 +920,48 @@ def fill_diagonal(a, val, wrap=False):
     """
     if a.ndim < 2:
         raise ValueError("array must be at least 2-d")
+    offset = operator.index(offset)
     end = None
     if a.ndim == 2:
         # Explicit, fast formula for the common case.  For 2-d arrays, we
         # accept rectangular ones.
-        step = a.shape[1] + 1
-        # This is needed to don't have tall matrix have the diagonal wrap.
-        if not wrap:
-            end = a.shape[1] * a.shape[1]
+        n, m = a.shape
+        if offset >= m or offset <= -n:
+            return
+        step = m + 1
+        if offset >= 0:
+            start = offset
+            count = min(n, m - offset)
+        else:
+            start = (-offset) * m
+            count = min(n + offset, m)
+        if not wrap or n <= m:
+            end = start + step * count
     else:
         # For more than d=2, the strided formula is only valid for arrays with
         # all dimensions equal, so we check first.
         if not np.all(diff(a.shape) == 0):
             raise ValueError("All dimensions of input must be of equal length")
+        n = a.shape[0]
+        if offset >= n or offset <= -n:
+            return
+        if offset >= 0:
+            start = offset * math.prod(a.shape[2:])
+            count = n - offset
+        else:
+            start = (-offset) * math.prod(a.shape[1:])
+            count = n + offset
         step = 1 + (np.cumprod(a.shape[:-1])).sum()
+        end = start + step * count
 
     # Write the value out into the diagonal.
-    a.flat[:end:step] = val
+    a.flat[start:end:step] = val
 
 
 @set_module('numpy')
-def diag_indices(n, ndim=2):
+def diag_indices(n, ndim=2, *, offset=0):
     """
-    Return the indices to access the main diagonal of an array.
+    Return the indices to access a diagonal of an array.
 
     This returns a tuple of indices that can be used to access the main
     diagonal of an array `a` with ``a.ndim >= 2`` dimensions and shape
@@ -942,6 +977,12 @@ def diag_indices(n, ndim=2):
 
     ndim : int, optional
       The number of dimensions.
+
+    offset : int, optional
+      Index of the diagonal. 0 (the default) refers to the main diagonal,
+      a positive value refers to an upper diagonal, and a negative value to a
+      lower diagonal. For arrays with more than two dimensions, the offset is
+      applied between the first two axes.
 
     See Also
     --------
@@ -969,6 +1010,11 @@ def diag_indices(n, ndim=2):
            [  8,   9, 100,  11],
            [ 12,  13,  14, 100]])
 
+    Create indices for an offset diagonal:
+
+    >>> np.diag_indices(4, offset=1)
+    (array([0, 1, 2]), array([1, 2, 3]))
+
     Now, we create indices to manipulate a 3-D array:
 
     >>> d3 = np.diag_indices(2, 3)
@@ -987,23 +1033,46 @@ def diag_indices(n, ndim=2):
 
     """
     idx = np.arange(n)
-    return (idx,) * ndim
+    ndim = operator.index(ndim)
+    offset = operator.index(offset)
+    if offset == 0:
+        return (idx,) * ndim
+
+    n = len(idx)
+    diag_len = max(n - abs(offset), 0)
+    base = idx[:diag_len]
+    if ndim < 2:
+        return (base,) * ndim
+
+    if offset > 0:
+        first = base
+        second = idx[offset:offset + diag_len]
+    else:
+        first = idx[-offset:-offset + diag_len]
+        second = base
+
+    return (first, second) + (base,) * (ndim - 2)
 
 
-def _diag_indices_from(arr):
+def _diag_indices_from(arr, *, offset=None):
     return (arr,)
 
 
 @array_function_dispatch(_diag_indices_from)
-def diag_indices_from(arr):
+def diag_indices_from(arr, *, offset=0):
     """
-    Return the indices to access the main diagonal of an n-dimensional array.
+    Return the indices to access a diagonal of an n-dimensional array.
 
     See `diag_indices` for full details.
 
     Parameters
     ----------
     arr : array, at least 2-D
+    offset : int, optional
+      Index of the diagonal. 0 (the default) refers to the main diagonal,
+      a positive value refers to an upper diagonal, and a negative value to a
+      lower diagonal. For arrays with more than two dimensions, the offset is
+      applied between the first two axes.
 
     See Also
     --------
@@ -1031,6 +1100,11 @@ def diag_indices_from(arr):
     >>> a[di]
     array([ 0,  5, 10, 15])
 
+    Get the indices for an offset diagonal:
+
+    >>> np.diag_indices_from(a, offset=1)
+    (array([0, 1, 2]), array([1, 2, 3]))
+
     This is simply syntactic sugar for diag_indices.
 
     >>> np.diag_indices(a.shape[0])
@@ -1045,4 +1119,4 @@ def diag_indices_from(arr):
     if not np.all(diff(arr.shape) == 0):
         raise ValueError("All dimensions of input must be of equal length")
 
-    return diag_indices(arr.shape[0], arr.ndim)
+    return diag_indices(arr.shape[0], arr.ndim, offset=offset)
