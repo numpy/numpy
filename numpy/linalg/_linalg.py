@@ -2572,7 +2572,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op, initial=None):
 @functools.cache
 def _smallest_normal(dtype):
     """Cache the normal/subnormal boundary without narrowing extended dtypes."""
-    return finfo(dtype).smallest_normal.item()
+    return finfo(dtype).smallest_normal
 
 
 def _rescale_flat_norm(x, ret):
