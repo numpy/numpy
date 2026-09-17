@@ -183,10 +183,23 @@ class poly1d:
 #
 def poly(seq_of_zeros: ArrayLike) -> NDArray[floating]: ...
 
-# Returns either a float or complex array depending on the input values.
-# See `np.linalg.eigvals`.
-def roots(p: ArrayLike) -> NDArray[complexfloating] | NDArray[floating]: ...
+# Returns either a float or complex array for real input depending on the input values.
+@overload  # 1d Any  (workaround)
+def roots(p: NDArray[np.inexact[Never]] | poly1d) -> _Array1D[Any]: ...
+@overload  # 1d T
+def roots[ScalarT: np.complexfloating](p: _Array1D[ScalarT] | Sequence[ScalarT]) -> _Array1D[ScalarT]: ...
+@overload  # 1d ~f32
+def roots(p: _Array1D[np.float32] | Sequence[np.float32]) -> _Array1D[np.float32 | np.complex64]: ...
+@overload  # 1d +f64
+def roots(
+    p: _Array1D[np.float64 | _Int_co | np.object_] | Sequence[float | _Int_co | np.object_],
+) -> _Array1D[np.float64 | np.complex128]: ...
+@overload  # 1d ~complex
+def roots(p: list[complex]) -> _Array1D[np.complex128]: ...
+@overload  # 1d  (fallback)
+def roots(p: _ArrayLikeComplex_co) -> _Array1D[Any]: ...
 
+#
 @overload
 def polyint(
     p: poly1d,

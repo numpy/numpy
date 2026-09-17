@@ -8,6 +8,7 @@ AR_U: npt.NDArray[np.str_]
 
 poly_obj: np.poly1d
 
+np.roots(AR_U)  # type: ignore[arg-type]
 np.polymul(AR_f8, AR_U)  # type: ignore[type-var]
 np.polydiv(AR_f8, AR_U)  # type: ignore[type-var]
 np.polydiv(AR_O, AR_O)  # type: ignore[type-var]
