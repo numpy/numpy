@@ -1112,6 +1112,18 @@ class TestUnique:
         assert_array_equal(v.data, v2.data, msg)
         assert_array_equal(v.mask, v2.mask, msg)
 
+    def test_unique_masked_nan(self):
+        # masked arrays always take the sort-based path and the data under
+        # the mask is nan
+        a = np.ma.masked_invalid([1.0, np.nan, 2.0])
+        v = np.unique(a)
+        assert_array_equal(v.compressed(), [1.0, 2.0])
+        assert_array_equal(v.mask, [False, False, True])
+        v, c = np.unique(a, return_counts=True)
+        assert_array_equal(v.compressed(), [1.0, 2.0])
+        assert_array_equal(v.mask, [False, False, True])
+        assert_array_equal(c, [1, 1, 1])
+
     def test_unique_sort_order_with_axis(self):
         # These tests fail if sorting along axis is done by treating subarrays
         # as unsigned byte strings.  See gh-10495.
