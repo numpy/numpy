@@ -506,8 +506,8 @@ string_comparison_strided_loop(PyArrayMethod_Context *context, char *const data[
         LOAD_TWO_INPUT_STRINGS(ufunc_name);
         if (NPY_UNLIKELY(s1_isnull || s2_isnull)) {
             if (has_nan_na) {
-                // s1 or s2 is NA
-                *out = NPY_FALSE;
+                // Like floating-point NaN, only not_equal is true for NA.
+                *out = eq_or_ne && res_for_ne;
                 goto next_step;
             }
             else if (has_null && !has_string_na) {
@@ -518,6 +518,7 @@ string_comparison_strided_loop(PyArrayMethod_Context *context, char *const data[
                     else {
                         *out = res_for_ne;
                     }
+                    goto next_step;
                 }
                 else {
                     npy_gil_error(PyExc_ValueError,
