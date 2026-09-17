@@ -1816,6 +1816,48 @@ class TestDateTime:
         exp = [0 if v == imin else int(v) // d for v in vals]
         assert_array_equal(got, np.array(exp, dtype=np.int64))
 
+    @pytest.mark.parametrize("d", [1, 2, 3, 7, -4, 999983])
+    def test_timedelta_floor_divide_by_int_scalar_simd(self, d):
+        # m8 // int -> floor division (TIMEDELTA_mq_m_floor_divide); gh-32522
+        imin = np.iinfo(np.int64).min
+        vals = self._simd_timedelta_operands()
+        got = (vals.view('m8[s]') // np.int64(d)).view(np.int64)
+        exp = [imin if v == imin else int(v) // d for v in vals]
+        assert_array_equal(got, np.array(exp, dtype=np.int64))
+
+    def test_timedelta_floor_divide_by_int_matches_int64(self):
+        # Negative timedelta // int must floor like int64 // int (gh-32522)
+        delta = np.timedelta64(-7, "us")
+        assert_equal(delta // 2, np.timedelta64(-4, "us"))
+        assert_equal(delta // np.int64(2), np.timedelta64(-4, "us"))
+        assert_equal(
+            int((delta // 2) / np.timedelta64(1, "us")),
+            int(np.int64(-7) // 2),
+        )
+        assert_equal(
+            int(delta // np.timedelta64(2, "us")),
+            int(np.int64(-7) // 2),
+        )
+
+    def test_timedelta_floor_divide_by_int_array(self):
+        # Non-scalar divisor path (steps[1] != 0) in TIMEDELTA_mq_m_floor_divide
+        vals = np.array([-7, -8, -1, 0, 1, 7, -7], dtype=np.int64)
+        divs = np.array([2, 3, 2, 2, 2, -2, 0], dtype=np.int64)
+        with np.errstate(divide='ignore'):
+            got = (vals.view('m8[us]') // divs).view(np.int64)
+        exp = np.array(
+            [v // d if d != 0 else np.iinfo(np.int64).min for v, d in zip(vals, divs)],
+            dtype=np.int64,
+        )
+        assert_array_equal(got, exp)
+
+        # NaT dividend stays NaT
+        nat = np.iinfo(np.int64).min
+        left = np.array([nat, -7], dtype=np.int64).view('m8[us]')
+        right = np.array([2, 2], dtype=np.int64)
+        got_nat = (left // right).view(np.int64)
+        assert_array_equal(got_nat, np.array([nat, -4], dtype=np.int64))
+
     def test_generic_timedelta_floor_divide(self):
         with pytest.warns(
             DeprecationWarning,
