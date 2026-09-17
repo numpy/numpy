@@ -343,9 +343,12 @@ assert_type(np.busday_offset([[[M]]], 1), npt.NDArray[np.datetime64[dt.date]])
 assert_type(np.busday_offset(M, [[[1]]]), npt.NDArray[np.datetime64[dt.date]])
 assert_type(np.busday_offset(AR_MD_1d, 1, out=AR_M_1d), _Array1D[np.datetime64])
 
+assert_type(np.is_busday(AR_MD), npt.NDArray[np.bool])
 assert_type(np.is_busday("2012"), np.bool)
-assert_type(np.is_busday(date_scalar), np.bool)
-assert_type(np.is_busday(["2012"]), npt.NDArray[np.bool])
+assert_type(np.is_busday(date_seq), _Array1D[np.bool])
+assert_type(np.is_busday(AR_MD_2d), _Array2D[np.bool])
+assert_type(np.is_busday([[[M]]]), npt.NDArray[np.bool])
+assert_type(np.is_busday(AR_MD_1d, out=AR_b_nd), npt.NDArray[np.bool])
 
 # NOTE: Mypy incorrectly infers `ndarray[Any, Any]` for the shaped cases, but pyright behaves correctly.
 assert_type(np.datetime_as_string(M), np.str_)

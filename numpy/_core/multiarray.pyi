@@ -3051,7 +3051,7 @@ class busdaycalendar:
     @property
     def holidays(self) -> _Array1D[np.datetime64[dt.date]]: ...
 
-# keep in sync with `busday_offset`
+#
 @overload  # ?d, ?d  (workaround)
 def busday_count(
     begindates: _ArrayJustND[np.datetime64],
@@ -3144,7 +3144,7 @@ def busday_count[OutT: np.ndarray](
     out: OutT,
 ) -> OutT: ...
 
-# keep in sync with `busday_count`
+#
 @overload  # ?d, ?d  (workaround)
 def busday_offset(
     dates: _ArrayJustND[np.datetime64],
@@ -3248,37 +3248,53 @@ def busday_offset[OutT: np.ndarray](
 ) -> OutT: ...
 
 #
-@overload
+@overload  # ?d  (workaround)
 def is_busday(
-    dates: _ScalarLike_co | dt.date,
-    weekmask: ArrayLike = "1111100",
-    holidays: ArrayLike | _ToDates | None = None,
-    busdaycal: busdaycalendar | None = None,
-    out: None = None,
-) -> np.bool: ...
-@overload
-def is_busday(
-    dates: ArrayLike | _NestedSequence[dt.date],
-    weekmask: ArrayLike = "1111100",
+    dates: _ArrayJustND[np.datetime64],
+    weekmask: _ToWeekmask = "1111100",
     holidays: ArrayLike | _ToDates | None = None,
     busdaycal: busdaycalendar | None = None,
     out: None = None,
 ) -> NDArray[np.bool]: ...
-@overload
+@overload  # 0d
+def is_busday(
+    dates: _ToDate,
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> np.bool: ...
+@overload  # 1d
+def is_busday(
+    dates: _ToDates1D,
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> _Array1D[np.bool]: ...
+@overload  # 2d
+def is_busday(
+    dates: _ToDates2D,
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> _Array2D[np.bool]: ...
+@overload  # >=3d  (fallback)
+def is_busday(
+    dates: np.ndarray[_AtLeast3D, np.dtype[np.datetime64]] | Sequence[_ToDates2D],
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> NDArray[np.bool]: ...
+@overload  # ?d, out=<given>
 def is_busday[OutT: np.ndarray](
-    dates: ArrayLike | _ToDates,
-    weekmask: ArrayLike = "1111100",
+    dates: _ToDatesND,
+    weekmask: _ToWeekmask = "1111100",
     holidays: ArrayLike | _ToDates | None = None,
     busdaycal: busdaycalendar | None = None,
     *,
-    out: OutT,
-) -> OutT: ...
-@overload
-def is_busday[OutT: np.ndarray](
-    dates: ArrayLike | _ToDates,
-    weekmask: ArrayLike,
-    holidays: ArrayLike | _ToDates | None,
-    busdaycal: busdaycalendar | None,
     out: OutT,
 ) -> OutT: ...
 
