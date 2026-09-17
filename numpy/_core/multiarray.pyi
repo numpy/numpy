@@ -83,6 +83,7 @@ from numpy._typing import (
     _SupportsDType,
     _TD64Like_co,
 )
+from numpy._typing._array_like import _DualArrayLike
 from numpy._typing._ufunc import (
     _2PTuple,
     _PyFunc_Nin1_Nout1,
@@ -209,6 +210,7 @@ type _Tuple2[T] = tuple[T, T]
 type _Tuple3[T] = tuple[T, T, T]
 type _Tuple4[T] = tuple[T, T, T, T]
 type _AtLeast1D = tuple[int, *tuple[int, ...]]
+type _AtLeast3D = tuple[int, int, int, *tuple[int, ...]]
 
 type _Keys1D = _Array1D[Any] | Sequence[complex | np.generic]
 type _Keys2D = _Array2D[Any] | Sequence[_Keys1D]
@@ -221,10 +223,11 @@ type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
 type _ToArray2D[ScalarT: np.generic] = _Array2D[ScalarT] | Sequence[Sequence[ScalarT]]
 type _ToArray3D[ScalarT: np.generic] = _Array3D[ScalarT] | Sequence[Sequence[Sequence[ScalarT]]]
 
-type _ToIntND = _ArrayLike[np.integer | np.bool] | _NestedSequence[int]
 type _ToIndex1D = _Array1D[np.integer | np.bool] | Sequence[_IntLike_co]
 type _ToIndex2D = _Array2D[np.integer | np.bool] | Sequence[_ToIndex1D]
 type _ToIndex3D = _Array3D[np.integer | np.bool] | Sequence[_ToIndex2D]
+
+type _ToIntND = _ArrayLike[np.integer | np.bool] | _NestedSequence[int]
 
 # Valid time units
 type _UnitKind = L[
@@ -241,7 +244,8 @@ type _UnitKind = L[
     "fs",
     "as",
 ]
-type _RollKind = L[  # `raise` is deliberately excluded
+type _RollKind = L[
+    "raise",
     "nat",
     "forward",
     "following",
@@ -261,8 +265,12 @@ type _ObjItemT = complex | str | bytes | dt.date | Decimal | dict[Any, Any] | No
 
 # The datetime functions perform unsafe casts to `datetime64[D]`,
 # so a lot of different argument types are allowed here
+type _ToDate = np.datetime64 | dt.date | str
 type _ToDates = dt.date | _NestedSequence[dt.date]
-type _ToDeltas = dt.timedelta | _NestedSequence[dt.timedelta]
+type _ToDates1D = _Array1D[np.datetime64] | Sequence[np.datetime64 | dt.date] | list[str] | tuple[str, ...]
+type _ToDates2D = _Array2D[np.datetime64] | Sequence[Sequence[np.datetime64 | dt.date] | list[str] | tuple[str, ...]]
+type _ToDatesND = _DualArrayLike[np.dtype[np.datetime64], dt.date | str]
+type _ToWeekmask = str | Sequence[_IntLike_co] | _SupportsArray[_Array1D[np.bool | np.integer]]
 
 type _BitOrder = L["big", "little"]
 type _MaxWork = L[-1, 0]
@@ -3083,90 +3091,110 @@ def busday_count[OutT: np.ndarray](
     out: OutT,
 ) -> OutT: ...
 
-# `roll="raise"` is (more or less?) equivalent to `casting="safe"`
-@overload
+#
+@overload  # ?d, ?d  (workaround)
 def busday_offset(
-    dates: datetime64 | dt.date,
-    offsets: _TD64Like_co | dt.timedelta,
-    roll: L["raise"] = "raise",
-    weekmask: ArrayLike = "1111100",
+    dates: _ArrayJustND[np.datetime64],
+    offsets: _ArrayLikeInt_co | _TD64Like_co,
+    roll: _RollKind = "raise",
+    weekmask: _ToWeekmask = "1111100",
     holidays: ArrayLike | _ToDates | None = None,
     busdaycal: busdaycalendar | None = None,
     out: None = None,
-) -> datetime64: ...
-@overload
+) -> NDArray[np.datetime64[dt.date]]: ...
+@overload  # ?d, ?d  (workaround)
 def busday_offset(
-    dates: _ArrayLike[datetime64] | _NestedSequence[dt.date],
-    offsets: _ArrayLikeTD64_co | _ToDeltas,
-    roll: L["raise"] = "raise",
-    weekmask: ArrayLike = "1111100",
+    dates: _ToDatesND,
+    offsets: _ArrayJustND[np.integer | np.bool],
+    roll: _RollKind = "raise",
+    weekmask: _ToWeekmask = "1111100",
     holidays: ArrayLike | _ToDates | None = None,
     busdaycal: busdaycalendar | None = None,
     out: None = None,
-) -> NDArray[datetime64]: ...
-@overload
+) -> NDArray[np.datetime64[dt.date]]: ...
+@overload  # 0d, 0d
+def busday_offset(
+    dates: _ToDate,
+    offsets: _TD64Like_co,
+    roll: _RollKind = "raise",
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> np.datetime64[dt.date]: ...
+@overload  # 0d, 1d
+def busday_offset(
+    dates: _ToDate,
+    offsets: _ToIndex1D,
+    roll: _RollKind = "raise",
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> _Array1D[np.datetime64[dt.date]]: ...
+@overload  # 1d, <=1d
+def busday_offset(
+    dates: _ToDates1D,
+    offsets: _TD64Like_co | _ToIndex1D,
+    roll: _RollKind = "raise",
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> _Array1D[np.datetime64[dt.date]]: ...
+@overload  # <=1d, 2d
+def busday_offset(
+    dates: _ToDate | _ToDates1D,
+    offsets: _ToIndex2D,
+    roll: _RollKind = "raise",
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> _Array2D[np.datetime64[dt.date]]: ...
+@overload  # 2d, <=2d
+def busday_offset(
+    dates: _ToDates2D,
+    offsets: _TD64Like_co | _ToIndex1D | _ToIndex2D,
+    roll: _RollKind = "raise",
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> _Array2D[np.datetime64[dt.date]]: ...
+@overload  # >=3d, ?d  (fallback)
+def busday_offset(
+    dates: np.ndarray[_AtLeast3D, np.dtype[np.datetime64]] | Sequence[_ToDates2D],
+    offsets: _ArrayLikeInt_co | _TD64Like_co,
+    roll: _RollKind = "raise",
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> NDArray[np.datetime64[dt.date]]: ...
+@overload  # ?d, >=3d  (fallback)
+def busday_offset(
+    dates: _ToDatesND,
+    offsets: np.ndarray[_AtLeast3D, np.dtype[np.integer | np.bool]] | Sequence[_ToIndex2D],
+    roll: _RollKind = "raise",
+    weekmask: _ToWeekmask = "1111100",
+    holidays: ArrayLike | _ToDates | None = None,
+    busdaycal: busdaycalendar | None = None,
+    out: None = None,
+) -> NDArray[np.datetime64[dt.date]]: ...
+@overload  # ?d, ?d, out=<given>
 def busday_offset[OutT: np.ndarray](
-    dates: _ArrayLike[datetime64] | _ToDates,
-    offsets: _ArrayLikeTD64_co | _ToDeltas,
-    roll: L["raise"] = "raise",
-    weekmask: ArrayLike = "1111100",
+    dates: _ToDatesND,
+    offsets: _ArrayLikeInt_co | _TD64Like_co,
+    roll: _RollKind = "raise",
+    weekmask: _ToWeekmask = "1111100",
     holidays: ArrayLike | _ToDates | None = None,
     busdaycal: busdaycalendar | None = None,
     *,
-    out: OutT,
-) -> OutT: ...
-@overload
-def busday_offset[OutT: np.ndarray](
-    dates: _ArrayLike[datetime64] | _ToDates,
-    offsets: _ArrayLikeTD64_co | _ToDeltas,
-    roll: L["raise"],
-    weekmask: ArrayLike,
-    holidays: ArrayLike | _ToDates | None,
-    busdaycal: busdaycalendar | None,
-    out: OutT,
-) -> OutT: ...
-@overload
-def busday_offset(
-    dates: _ScalarLike_co | dt.date,
-    offsets: _ScalarLike_co | dt.timedelta,
-    roll: _RollKind,
-    weekmask: ArrayLike = "1111100",
-    holidays: ArrayLike | _ToDates | None = None,
-    busdaycal: busdaycalendar | None = None,
-    out: None = None,
-) -> datetime64: ...
-@overload
-def busday_offset(
-    dates: ArrayLike | _NestedSequence[dt.date],
-    offsets: ArrayLike | _ToDeltas,
-    roll: _RollKind,
-    weekmask: ArrayLike = "1111100",
-    holidays: ArrayLike | _ToDates | None = None,
-    busdaycal: busdaycalendar | None = None,
-    out: None = None,
-) -> NDArray[datetime64]: ...
-@overload
-def busday_offset[OutT: np.ndarray](
-    dates: ArrayLike | _ToDates,
-    offsets: ArrayLike | _ToDeltas,
-    roll: _RollKind,
-    weekmask: ArrayLike = "1111100",
-    holidays: ArrayLike | _ToDates | None = None,
-    busdaycal: busdaycalendar | None = None,
-    *,
-    out: OutT,
-) -> OutT: ...
-@overload
-def busday_offset[OutT: np.ndarray](
-    dates: ArrayLike | _ToDates,
-    offsets: ArrayLike | _ToDeltas,
-    roll: _RollKind,
-    weekmask: ArrayLike,
-    holidays: ArrayLike | _ToDates | None,
-    busdaycal: busdaycalendar | None,
     out: OutT,
 ) -> OutT: ...
 
+#
 @overload
 def is_busday(
     dates: _ScalarLike_co | dt.date,
