@@ -745,6 +745,22 @@ class TestSVD(SVDCases, SVDBaseTests):
         s_from_svdvals = linalg.svdvals(x)
         assert_almost_equal(s_from_svd, s_from_svdvals)
 
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    @pytest.mark.parametrize('val', [np.inf, -np.inf, np.nan])
+    def test_nonfinite(self, dtype, val):
+        a = np.ones((3, 3), dtype=dtype)
+        a[0, 0] = val
+        with pytest.raises(LinAlgError):
+            linalg.svd(a)
+        with pytest.raises(LinAlgError):
+            linalg.svd(a, full_matrices=False)
+        with pytest.raises(LinAlgError):
+            linalg.svd(a, compute_uv=False)
+        with pytest.raises(LinAlgError):
+            linalg.svd(np.stack([np.eye(3, dtype=dtype), a]))
+        with pytest.raises(LinAlgError):
+            linalg.pinv(a)
+
 
 class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
@@ -852,7 +868,7 @@ class TestCond(CondCases):
         # positive norms, and negative norms shouldn't raise
         # exceptions
         As = [np.zeros((2, 2)), np.ones((2, 2))]
-        p_pos = [None, 1, 2, 'fro']
+        p_pos = [None, 1, 2, 'fro', 'nuc']
         p_neg = [-1, -2]
         for A, p in itertools.product(As, p_pos):
             # Inversion may not hit exact infinity, so just check the
@@ -861,13 +877,10 @@ class TestCond(CondCases):
         for A, p in itertools.product(As, p_neg):
             linalg.cond(A, p)
 
-    @pytest.mark.xfail(True, run=False,
-                       reason="Platform/LAPACK-dependent failure, "
-                              "see gh-18914")
     def test_nan(self):
         # nans should be passed through, not converted to infs
-        ps = [None, 1, -1, 2, -2, 'fro']
-        p_pos = [None, 1, 2, 'fro']
+        ps = [None, 1, -1, 2, -2, 'fro', 'nuc']
+        p_pos = [None, 1, 2, 'fro', 'nuc']
 
         A = np.ones((2, 2))
         A[0, 1] = np.nan
@@ -887,6 +900,18 @@ class TestCond(CondCases):
             else:
                 assert_(not np.isnan(c[0]))
                 assert_(not np.isnan(c[2]))
+
+    @pytest.mark.parametrize('p', [None, 1, -1, 2, -2, 'fro', 'nuc', np.inf, -np.inf])
+    def test_inf(self, p):
+        # gh-32591: inf entries give an infinite condition number
+        A = np.ones((3, 3))
+        A[0, 1] = np.inf
+        stacked = np.stack([np.eye(3), A, 2 * np.eye(3)])
+        c, cs = linalg.cond(A, p), linalg.cond(stacked, p)
+        assert_(np.isfinite(cs[0]) and np.isfinite(cs[2]))
+        if p in [None, 1, 2, 'fro', 'nuc', np.inf]:
+            assert_equal(c, np.inf)
+            assert_equal(cs[1], np.inf)
 
     def test_stacked_singular(self):
         # Check behavior when only some of the stacked matrices are
@@ -1059,6 +1084,14 @@ class TestLstsq(LstsqCases):
         assert_(rank == 3)
         x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
         assert_(rank == 3)
+
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    @pytest.mark.parametrize('val', [np.inf, -np.inf, np.nan])
+    def test_nonfinite(self, dtype, val):
+        a = np.ones((3, 3), dtype=dtype)
+        a[0, 0] = val
+        with pytest.raises(LinAlgError):
+            linalg.lstsq(a, np.ones(3, dtype=dtype))
 
     @pytest.mark.parametrize(["m", "n", "n_rhs"], [
         (4, 2, 2),
