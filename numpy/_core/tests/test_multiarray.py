@@ -1875,6 +1875,81 @@ class TestStructured:
         assert scalar.flags.owndata
         assert np.asarray(scalar).base is None
 
+class TestTransposedCopyChunking:
+    """gh-32453: copies whose source or destination strides across cache lines
+    along the inner dimension (F->C, C->F) visit that dimension in chunks so
+    the lines stay cached across the outer iterations. The chunk is 2048
+    elements; every case below must agree with the unchunked comparison."""
+
+    dtypes = ["i1", "f2", "f8", "c16", "M8[ns]", "V16", "O"]
+
+    def _source(self, n_inner, dtype, ndim=2):
+        # rows of at least 256 bytes so the transposed inner stride crosses lines
+        itemsize = np.dtype(dtype).itemsize
+        cols = max(1, 256 // itemsize)
+        shape = (2, n_inner, cols) if ndim == 3 else (n_inner, cols)
+        # small values: exact in float16 and int8, no cast warnings
+        a = (np.arange(np.prod(shape)) % 251).reshape(shape)
+        if dtype == "V16":
+            a = a.astype("i8").view("V8").astype("V16")
+        elif dtype == "O":
+            a = a.astype(object)
+        else:
+            a = a.astype(dtype)
+        return a
+
+    @pytest.mark.parametrize("n_inner", [1, 2047, 2048, 2049, 4097, 10007])
+    @pytest.mark.parametrize("dtype", dtypes)
+    def test_f_to_c(self, n_inner, dtype):
+        a = self._source(n_inner, dtype)
+        out = np.empty(a.T.shape, dtype=a.dtype)
+        out[...] = a.T
+        assert_array_equal(out, a.T)
+        assert_array_equal(np.ascontiguousarray(a.T), a.T)
+
+    @pytest.mark.parametrize("n_inner", [2047, 2048, 2049, 10007])
+    @pytest.mark.parametrize("dtype", dtypes)
+    def test_c_to_f(self, n_inner, dtype):
+        # the destination is the strided operand here
+        a = self._source(n_inner, dtype)
+        f = np.asfortranarray(a)
+        assert f.flags.f_contiguous
+        assert_array_equal(f, a)
+        out = np.empty(a.shape, dtype=a.dtype, order="F")
+        out[...] = a
+        assert_array_equal(out, a)
+
+    @pytest.mark.parametrize("n_inner", [2049, 10007])
+    def test_negative_strides_and_offsets(self, n_inner):
+        a = self._source(n_inner, "f8")
+        for view in (a[::-1].T, a.T[:, ::-1], a[1:, 1:].T, a[::-1, ::-1].T):
+            out = np.empty(view.shape)
+            out[...] = view
+            assert_array_equal(out, view)
+
+    @pytest.mark.parametrize("n_inner", [2049, 10007])
+    @pytest.mark.parametrize("dtype", ["f8", "O"])
+    def test_three_dims_not_coalescable(self, n_inner, dtype):
+        # (2, n_inner, cols) -> transpose(0, 2, 1): the raw iterator keeps two
+        # outer dimensions above the chunked inner one
+        a = self._source(n_inner, dtype, ndim=3)
+        view = a.transpose(0, 2, 1)
+        out = np.empty(view.shape, dtype=a.dtype)
+        out[...] = view
+        assert_array_equal(out, view)
+
+    def test_object_refcounts_balanced(self):
+        a = self._source(4097, "O")
+        obj = object()  # not an immortal small int
+        a[0, 0] = obj
+        before = sys.getrefcount(obj)
+        out = np.empty(a.T.shape, dtype=object)
+        out[...] = a.T
+        assert sys.getrefcount(obj) == before + 1
+        del out
+        assert sys.getrefcount(obj) == before
+
+
 class TestBool:
     def test_test_interning(self):
         a0 = np.bool(0)
