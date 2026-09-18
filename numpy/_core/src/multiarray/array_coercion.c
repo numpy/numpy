@@ -332,7 +332,9 @@ discover_dtype_from_pyobject(
     }
 
     if (legacy_descr != NULL) {
-        DType = NPY_DTYPE(legacy_descr);  /* legacy DTypes are never freed */
+        /* Borrowed: legacy DTypes are never freed, others are kept alive
+         * by the pytype-to-DType mapping. */
+        DType = NPY_DTYPE(legacy_descr);
         Py_DECREF(legacy_descr);
         /* TODO: Enable warning about subclass handling */
         if ((0) && !((*flags) & GAVE_SUBCLASS_WARNING)) {

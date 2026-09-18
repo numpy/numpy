@@ -44,7 +44,7 @@ get_array_function(PyObject *obj)
 }
 
 
-static int
+static inline int
 is_default_array_function(PyObject *obj)
 {
     return obj == _npy_module_state->static_pydata.ndarray_array_function;
@@ -144,8 +144,6 @@ fail:
     }
     return -1;
 }
-
-
 
 
 /*
@@ -305,9 +303,8 @@ array_implement_c_array_function_creation(
     if (is_default_array_function(method)) {
         /*
          * Return a borrowed reference of Py_NotImplemented to defer back to
-         * the original function.
+         * the original function.  (The default `method` is borrowed.)
          */
-        release_array_function(method);
         return Py_NotImplemented;
     }
 
