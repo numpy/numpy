@@ -108,7 +108,7 @@ def zipfile_factory(file, *args, **kwargs):
     if not hasattr(file, 'read'):
         file = os.fspath(file)
     import zipfile
-    kwargs['allowZip64'] = True
+
     return zipfile.ZipFile(file, *args, **kwargs)
 
 
@@ -673,13 +673,15 @@ def savez(file, *args, allow_pickle=True, **kwds):
     _savez(file, args, kwds, False, allow_pickle=allow_pickle)
 
 
-def _savez_compressed_dispatcher(file, *args, allow_pickle=True, **kwds):
+def _savez_compressed_dispatcher(file, *args, allow_pickle=True,
+                                 zipfile_kwargs=None, **kwds):
     yield from args
     yield from kwds.values()
 
 
 @array_function_dispatch(_savez_compressed_dispatcher)
-def savez_compressed(file, *args, allow_pickle=True, **kwds):
+def savez_compressed(file, *args, allow_pickle=True,
+                     zipfile_kwargs=None, **kwds):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
 
@@ -708,6 +710,11 @@ def savez_compressed(file, *args, allow_pickle=True, **kwds):
         require libraries that are not available, and not all pickled data is
         compatible between different versions of Python).
         Default: True
+    zipfile_kwargs : dict, optional
+        Dictionary of keyword arguments forwarded directly to
+        ``zipfile.ZipFile`` when creating the ``.npz`` archive (for example:
+        ``compression``, ``compresslevel``). By default, ``compression`` is set
+        to ``zipfile.ZIP_DEFLATED``.
     kwds : Keyword arguments, optional
         Arrays to save to the file. Each array will be saved to the
         output file with its corresponding keyword name.
@@ -726,11 +733,10 @@ def savez_compressed(file, *args, allow_pickle=True, **kwds):
     Notes
     -----
     The ``.npz`` file format is a zipped archive of files named after the
-    variables they contain.  The archive is compressed with
-    ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
-    in ``.npy`` format. For a description of the ``.npy`` format, see
-    :py:mod:`numpy.lib.format`.
-
+    variables they contain. The archive is compressed with ``zipfile.ZIP_DEFLATED``
+    by default; this can be changed by passing ``zipfile_kwargs``. Each file in
+    the archive contains one variable in ``.npy`` format. For a description of
+    the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
     When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
     object is returned. This is a dictionary-like object which can be queried
@@ -750,12 +756,12 @@ def savez_compressed(file, *args, allow_pickle=True, **kwds):
     True
 
     """
-    _savez(file, args, kwds, True, allow_pickle=allow_pickle)
+    _savez(file, args, kwds, True, allow_pickle=allow_pickle,
+           zipfile_kwargs=zipfile_kwargs)
 
 
-def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
-    # Import is postponed to here since zipfile depends on gzip, an optional
-    # component of the so-called standard library.
+def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
+           zipfile_kwargs=None):
     import zipfile
 
     if not hasattr(file, 'write'):
@@ -771,12 +777,26 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
                 f"Cannot use un-named variables and keyword {key}")
         namedict[key] = val
 
-    if compress:
-        compression = zipfile.ZIP_DEFLATED
+    # Prepare ZipFile keyword arguments
+    if zipfile_kwargs is None:
+        zipfile_kwargs = {}
     else:
-        compression = zipfile.ZIP_STORED
+        # Avoid mutating user-provided dict.
+        zipfile_kwargs = dict(zipfile_kwargs)
 
-    zipf = zipfile_factory(file, mode="w", compression=compression)
+    # Default behaviour: use DEFLATED for the compressed variant, STORED
+    # otherwise – unless the user explicitly asked for something else.
+    #
+    # We intentionally do not validate or normalise ``zipfile_kwargs`` here:
+    # all keyword arguments are forwarded to ``zipfile.ZipFile``.
+    if "compression" not in zipfile_kwargs:
+        zipfile_kwargs["compression"] = (
+            zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
+        )
+
+    # Create the ZipFile object
+    zipf = zipfile_factory(file, mode="w", **zipfile_kwargs)
+
     try:
         for key, val in namedict.items():
             fname = key + '.npy'
