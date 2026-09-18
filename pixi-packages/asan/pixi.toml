@@ -13,10 +13,11 @@ env.ASAN_OPTIONS = "detect_leaks=0:symbolize=1:strict_init_order=true:allocator_
 extra-args = ["-Csetup-args=-Db_sanitize=address", "-Csetup-args=-Dbuildtype=debug"] 
 
 [package.host-dependencies]
-python.flags = ["asan"]
-python.git = "https://github.com/python/cpython"
-python.subdirectory = "Tools/pixi-packages"
-python.rev = "847d099efa4785658ba9bd3163e35cb4ae742f6d"
-
+python = {
+  flags = ["asan"],
+  git = "https://github.com/lucascolley/cpython",
+  subdirectory = "Tools/pixi-packages",
+  rev = "736610c6952b37ac35a48260e5891f289fad1061",
+}
 meson-python = "*"
 cython = "*"
