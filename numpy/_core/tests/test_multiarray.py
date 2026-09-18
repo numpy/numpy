@@ -6864,6 +6864,62 @@ class TestIO:
             z = np.fromfile(f, dtype=x.dtype, offset=offset_bytes)
             assert_array_equal(z, x.flat[offset_items + count_items + 1:])
 
+    def test_fromfile_compression_wrappers(self, tmp_path):
+        # gh-10866: fileno() on a compressed stream refers to the compressed
+        # file; fromfile used to silently return garbage for such objects.
+        import bz2
+        import gzip
+        import lzma
+
+        x = np.arange(12, dtype=np.int64)
+        for opener, suffix in [(gzip.open, '.gz'),
+                               (bz2.open, '.bz2'),
+                               (lzma.open, '.xz')]:
+            compressed = tmp_path / f"data{suffix}"
+            with opener(compressed, 'wb') as f:
+                f.write(x.tobytes())
+            with opener(compressed, 'rb') as f:
+                y = np.fromfile(f, dtype=x.dtype)
+            assert_array_equal(y, x, err_msg=f"failed for {suffix}")
+
+    def test_fromfile_compression_count_offset(self, tmp_path):
+        # gh-10866: count and offset honoured on the buffered path
+        import gzip
+
+        x = np.arange(20, dtype=np.float64)
+        with gzip.open(tmp_path / "data.gz", 'wb') as f:
+            f.write(b'junkjunk')
+            f.write(x.tobytes())
+
+        with gzip.open(tmp_path / "data.gz", 'rb') as f:
+            y = np.fromfile(f, dtype=x.dtype, count=5, offset=8)
+        assert_array_equal(y, x[:5])
+
+        # count larger than the available data returns what is there
+        with gzip.open(tmp_path / "data.gz", 'rb') as f:
+            y = np.fromfile(f, dtype=x.dtype, count=1000, offset=8)
+        assert_array_equal(y, x)
+
+    def test_fromfile_compression_sep(self, tmp_path):
+        # gh-10866: text mode (sep) reads through the wrapper as well
+        import gzip
+
+        with gzip.open(tmp_path / "text.gz", 'wb') as f:
+            f.write(b"1 2 3 4 5")
+        with gzip.open(tmp_path / "text.gz", 'rb') as f:
+            y = np.fromfile(f, dtype=np.float64, sep=" ")
+        assert_array_equal(y, np.array([1., 2., 3., 4., 5.]))
+
+    def test_fromfile_compression_object_dtype(self, tmp_path):
+        # gh-10866: object dtypes are rejected like for regular files
+        import gzip
+
+        with gzip.open(tmp_path / "data.gz", 'wb') as f:
+            f.write(b"junk")
+        with gzip.open(tmp_path / "data.gz", 'rb') as f:
+            assert_raises_regex(ValueError, "Cannot read into object array",
+                                np.fromfile, f, dtype=object)
+
         with open(tmp_filename, 'wb') as f:
             x.tofile(f, sep=",")
 

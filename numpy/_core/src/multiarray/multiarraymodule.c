@@ -2373,6 +2373,235 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
 
 
 
+/*
+ * Detect file objects wrapping a compressed stream (gzip.GzipFile,
+ * bz2.BZ2File, lzma.LZMAFile).  Their ``fileno()`` refers to the underlying
+ * *compressed* file, so reading through the duplicated descriptor would
+ * silently return compressed bytes as array data (gh-10866).
+ */
+static int
+file_is_compression_wrapper(PyObject *file)
+{
+    static PyObject *gzip_type = NULL;
+    static PyObject *bz2_type = NULL;
+    static PyObject *lzma_type = NULL;
+    static int types_loaded = 0;
+    int inst;
+
+    if (!types_loaded) {
+        PyObject *mod;
+
+        mod = PyImport_ImportModule("gzip");
+        if (mod == NULL) {
+            PyErr_Clear();
+        }
+        else {
+            gzip_type = PyObject_GetAttrString(mod, "GzipFile");
+            Py_DECREF(mod);
+            if (gzip_type == NULL) {
+                PyErr_Clear();
+            }
+        }
+        mod = PyImport_ImportModule("bz2");
+        if (mod == NULL) {
+            PyErr_Clear();
+        }
+        else {
+            bz2_type = PyObject_GetAttrString(mod, "BZ2File");
+            Py_DECREF(mod);
+            if (bz2_type == NULL) {
+                PyErr_Clear();
+            }
+        }
+        mod = PyImport_ImportModule("lzma");
+        if (mod == NULL) {
+            PyErr_Clear();
+        }
+        else {
+            lzma_type = PyObject_GetAttrString(mod, "LZMAFile");
+            Py_DECREF(mod);
+            if (lzma_type == NULL) {
+                PyErr_Clear();
+            }
+        }
+        types_loaded = 1;
+    }
+
+    if (gzip_type != NULL) {
+        inst = PyObject_IsInstance(file, gzip_type);
+        if (inst < 0) {
+            PyErr_Clear();
+        }
+        else if (inst) {
+            return 1;
+        }
+    }
+    if (bz2_type != NULL) {
+        inst = PyObject_IsInstance(file, bz2_type);
+        if (inst < 0) {
+            PyErr_Clear();
+        }
+        else if (inst) {
+            return 1;
+        }
+    }
+    if (lzma_type != NULL) {
+        inst = PyObject_IsInstance(file, lzma_type);
+        if (inst < 0) {
+            PyErr_Clear();
+        }
+        else if (inst) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/*
+ * np.fromfile() for compressed-stream file objects: read through the Python
+ * file object instead of the duplicated (compressed) descriptor.
+ *
+ * ``type`` is borrowed.  Binary mode (empty ``sep``) reads up to ``count``
+ * items directly into a fresh array, honouring ``offset`` relative to the
+ * current position in the *decompressed* stream.  Text mode (non-empty
+ * ``sep``) stages the remaining decompressed bytes in a temporary file and
+ * reuses PyArray_FromFile's text parsing.  Both paths mirror the semantics
+ * of reading a regular file.
+ */
+static PyObject *
+array_fromfile_buffered(PyObject *file, PyArray_Descr *type,
+                        Py_ssize_t nin, char *sep, npy_off_t offset)
+{
+    PyArray_Descr *descr;
+    PyObject *ret = NULL, *bytes = NULL, *res = NULL;
+    FILE *tf = NULL;
+
+    if (type == NULL) {
+        descr = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+        if (descr == NULL) {
+            return NULL;
+        }
+    }
+    else {
+        Py_INCREF(type);
+        descr = type;
+    }
+
+    if (sep == NULL || sep[0] == '\0') {
+        PyArrayObject *arr;
+        npy_intp nitems;
+
+        if (PyDataType_REFCHK(descr)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot read into object array");
+            goto fail;
+        }
+        if (offset != 0) {
+            res = PyObject_CallMethod(file, "seek", "ni",
+                                      (Py_ssize_t)offset, 1 /* SEEK_CUR */);
+            if (res == NULL) {
+                goto fail;
+            }
+            Py_DECREF(res);
+        }
+        if (descr->elsize == 0) {
+            /* Nothing to read; mirror PyArray_FromFile's empty-dtype path */
+            nitems = nin < 0 ? 0 : nin;
+            Py_INCREF(descr);
+            arr = (PyArrayObject *)PyArray_NewFromDescr(
+                    &PyArray_Type, descr, 1, &nitems, NULL, NULL, 0, NULL);
+            if (arr == NULL) {
+                goto fail;
+            }
+            ret = (PyObject *)arr;
+            goto done;
+        }
+        if (nin >= 0) {
+            if (nin > 0 && (Py_ssize_t)descr->elsize >
+                    PY_SSIZE_T_MAX / nin) {
+                PyErr_SetString(PyExc_OverflowError,
+                        "count * dtype.itemsize too large");
+                goto fail;
+            }
+            bytes = PyObject_CallMethod(file, "read", "n",
+                                        nin * (Py_ssize_t)descr->elsize);
+        }
+        else {
+            bytes = PyObject_CallMethod(file, "read", NULL);
+        }
+        if (bytes == NULL) {
+            goto fail;
+        }
+        if (!PyBytes_Check(bytes)) {
+            PyErr_SetString(PyExc_TypeError,
+                    "file object's read() method did not return bytes");
+            goto fail;
+        }
+        nitems = PyBytes_GET_SIZE(bytes) / descr->elsize;
+        if (nin >= 0 && nitems > nin) {
+            nitems = nin;
+        }
+        Py_INCREF(descr);
+        arr = (PyArrayObject *)PyArray_NewFromDescr(
+                &PyArray_Type, descr, 1, &nitems, NULL, NULL, 0, NULL);
+        if (arr == NULL) {
+            goto fail;
+        }
+        if (nitems > 0) {
+            memcpy(PyArray_DATA(arr), PyBytes_AS_STRING(bytes),
+                   (size_t)nitems * (size_t)descr->elsize);
+        }
+        ret = (PyObject *)arr;
+    }
+    else {
+        size_t size;
+
+        tf = tmpfile();
+        if (tf == NULL) {
+            PyErr_SetFromErrno(PyExc_OSError);
+            goto fail;
+        }
+        bytes = PyObject_CallMethod(file, "read", NULL);
+        if (bytes == NULL) {
+            goto fail;
+        }
+        if (!PyBytes_Check(bytes)) {
+            PyErr_SetString(PyExc_TypeError,
+                    "file object's read() method did not return bytes");
+            goto fail;
+        }
+        size = (size_t)PyBytes_GET_SIZE(bytes);
+        if (size > 0 && fwrite(PyBytes_AS_STRING(bytes), 1, size, tf) != size) {
+            PyErr_SetFromErrno(PyExc_OSError);
+            goto fail;
+        }
+        Py_CLEAR(bytes);
+        rewind(tf);
+        Py_INCREF(descr);
+        ret = PyArray_FromFile(tf, descr, (npy_intp)nin, sep);
+        if (ret == NULL) {
+            goto fail;
+        }
+    }
+
+done:
+    if (tf != NULL) {
+        fclose(tf);
+    }
+    Py_XDECREF(bytes);
+    Py_DECREF(descr);
+    return ret;
+
+fail:
+    if (tf != NULL) {
+        fclose(tf);
+    }
+    Py_XDECREF(bytes);
+    Py_DECREF(descr);
+    return NULL;
+}
+
+
 static PyObject *
 array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
@@ -2425,6 +2654,16 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     else {
         own = 0;
+    }
+    if (own == 0 && file_is_compression_wrapper(file)) {
+        /*
+         * gh-10866: fileno() on a compression wrapper refers to the
+         * compressed stream; dup/read would silently return garbage.
+         */
+        ret = array_fromfile_buffered(file, type, nin, sep, offset);
+        Py_DECREF(file);
+        Py_XDECREF(type);
+        return ret;
     }
     fp = npy_PyFile_Dup2(file, "rb", &orig_pos);
     if (fp == NULL) {
