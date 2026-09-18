@@ -466,7 +466,7 @@ array_getfield(PyArrayObject *self,
 
     if (npy_parse_arguments("getfield", args, len_args, kwnames,
             {"dtype", &PyArray_DescrConverter, &dtype},
-            {"|offset", &PyArray_PythonPyIntFromInt, &offset}) < 0) {
+            {"|offset", &PyArray_IntpFromPyIntConverter, &offset}) < 0) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -526,7 +526,7 @@ array_setfield(PyArrayObject *self,
     if (npy_parse_arguments("setfield", args, len_args, kwnames,
             {"value", NULL, &value},
             {"dtype", &PyArray_DescrConverter, &dtype},
-            {"|offset", &PyArray_PythonPyIntFromInt, &offset}) < 0) {
+            {"|offset", &PyArray_IntpFromPyIntConverter, &offset}) < 0) {
         Py_XDECREF(dtype);
         return NULL;
     }

@@ -75,7 +75,7 @@ _default_nonzero(void *ip, void *arr)
 {
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     char *ptr = ip;
-    while (elsize-- > 0) {
+    while (elsize--) {
         if (*ptr++ != 0) {
             return NPY_TRUE;
         }

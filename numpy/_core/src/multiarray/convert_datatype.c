@@ -2332,7 +2332,7 @@ get_byteswap_loop(
     PyArray_Descr *const *descrs = context->descriptors;
     assert(descrs[0]->kind == descrs[1]->kind);
     assert(descrs[0]->elsize == descrs[1]->elsize);
-    int itemsize = (int)descrs[0]->elsize;
+    int itemsize = descrs[0]->elsize;
     *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
     *out_transferdata = NULL;
     if (descrs[0]->kind == 'c') {
