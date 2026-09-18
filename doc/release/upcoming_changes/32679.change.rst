@@ -1,11 +1,3 @@
-``linalg.pinv`` now uses the computation dtype for integer input
-----------------------------------------------------------------
-``pinv`` took the ``rtol=None`` tolerance and the empty-input result dtype from
-the input dtype, not from the dtype the SVD runs in.
-
-.. code-block:: python
-
-    np.linalg.pinv(np.array([[1, 2], [3, 4]]), rtol=None)  # before: ValueError
-    np.linalg.pinv(np.empty((0, 3), dtype=int)).dtype      # before: int64, now float64
-
-Only integer and boolean input changes.
+* ``pinv`` with ``rtol=None`` did not select the correct output dtype for
+  integer input. It now always returns float results for integer input and no
+  longer spuriously raises ValueError for some inputs.
