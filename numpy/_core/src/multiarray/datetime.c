@@ -1063,6 +1063,7 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
 {
     int src_base, dst_base, swapped;
     npy_uint64 num = 1, denom = 1, tmp, gcd;
+    npy_uint64 src_num, dst_num;
 
     /* Generic units change to the destination with no conversion factor */
     if (src_meta->base == NPY_FR_GENERIC) {
@@ -1152,13 +1153,41 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
         denom = tmp;
     }
 
-    num *= src_meta->num;
-    denom *= dst_meta->num;
+    src_num = (npy_uint64)src_meta->num;
+    dst_num = (npy_uint64)dst_meta->num;
 
-    /* Return as a fraction in reduced form */
+    /*
+     * Reduce all factors before multiplying.  Apart from keeping the returned
+     * fraction canonical, this avoids overflowing an intermediate product
+     * when the corresponding factors cancel.
+     */
     gcd = _uint64_euclidean_gcd(num, denom);
-    *out_num = (npy_int64)(num / gcd);
-    *out_denom = (npy_int64)(denom / gcd);
+    num /= gcd;
+    denom /= gcd;
+    gcd = _uint64_euclidean_gcd(src_num, dst_num);
+    src_num /= gcd;
+    dst_num /= gcd;
+    gcd = _uint64_euclidean_gcd(num, dst_num);
+    num /= gcd;
+    dst_num /= gcd;
+    gcd = _uint64_euclidean_gcd(src_num, denom);
+    src_num /= gcd;
+    denom /= gcd;
+
+    if (num > (npy_uint64)NPY_MAX_INT64 / src_num ||
+            denom > (npy_uint64)NPY_MAX_INT64 / dst_num) {
+        PyErr_Format(PyExc_OverflowError,
+                    "Integer overflow while computing the conversion "
+                    "factor between NumPy datetime units %s and %s",
+                    _datetime_strings[src_base],
+                    _datetime_strings[dst_base]);
+        *out_num = 0;
+        *out_denom = 0;
+        return;
+    }
+
+    *out_num = (npy_int64)(num * src_num);
+    *out_denom = (npy_int64)(denom * dst_num);
 }
 
 /*

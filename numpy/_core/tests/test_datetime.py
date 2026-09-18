@@ -1187,6 +1187,25 @@ class TestDateTime:
         with pytest.raises(OverflowError, match="Overflow"):
             arr_2s_big.astype("datetime64[ns]")
 
+    @pytest.mark.parametrize("dtype", ["datetime64", "timedelta64"])
+    def test_cast_overflow_in_unit_multiplier(self, dtype):
+        values = np.array([1], dtype=f"{dtype}[213504D]")
+
+        with pytest.raises(OverflowError, match="overflow"):
+            values.astype(f"{dtype}[ns]")
+
+    @pytest.mark.parametrize("dtype", ["datetime64", "timedelta64"])
+    def test_cast_large_unit_multiplier_cancellation(self, dtype):
+        # The matching large metadata multipliers cancel before the base unit
+        # conversion factor is applied.
+        values = np.array(
+            [86_400_000_000_000], dtype=f"{dtype}[2000000000ns]"
+        )
+
+        result = values.astype(f"{dtype}[2000000000D]")
+
+        assert_equal(result.view("i8"), [1])
+
     def test_arithmetic_overflow_raises_add_sub(self):
         # Add/sub on datetime64/timedelta64 must raise OverflowError instead
         # of silently wrapping past INT64 range.  Covers all six loops:
