@@ -162,6 +162,7 @@ evolved with time and this document is more current.
 
 """
 import io
+import operator
 import os
 import pickle
 import warnings
@@ -965,6 +966,8 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         if dtype.hasobject:
             msg = "Array can't be memory-mapped: Python objects in dtype."
             raise ValueError(msg)
+        # Normalize the shape to a tuple of plain integers (gh-28334).
+        shape = tuple(operator.index(dim) for dim in shape)
         d = {
             "descr": dtype_to_descr(dtype),
             "fortran_order": fortran_order,

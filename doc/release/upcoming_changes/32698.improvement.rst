@@ -1,0 +1,5 @@
+``open_memmap`` accepts NumPy integer scalars in ``shape``
+----------------------------------------------------------
+`numpy.lib.format.open_memmap` now writes the array ``shape`` as plain
+Python integers, so passing a shape containing NumPy integer scalars (such
+as ``np.int64``) produces a ``.npy`` file that can be loaded again.
