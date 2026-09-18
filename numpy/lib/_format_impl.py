@@ -162,6 +162,7 @@ evolved with time and this document is more current.
 
 """
 import io
+import operator
 import os
 import pickle
 import warnings
@@ -456,6 +457,12 @@ def _write_array_header(fp, d, version=None):
         raise a ValueError if the format does not allow saving this data.
         Default: None
     """
+    # The header is written as a Python literal and read back with
+    # ``ast.literal_eval``.  NumPy scalars such as ``np.int64`` have a
+    # ``repr`` that is not a valid literal (e.g. ``"np.int64(1)"``), so
+    # normalize the shape to a tuple of plain Python integers (gh-28334).
+    d = {**d, 'shape': tuple(operator.index(x) for x in d['shape'])}
+
     header = ["{"]
     for key, value in sorted(d.items()):
         # Need to use repr here, since we eval these when reading
