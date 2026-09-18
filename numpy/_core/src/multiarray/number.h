@@ -1,52 +1,19 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_NUMBER_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_NUMBER_H_
 
+#include "module_state_fields.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
-    PyObject *add;
-    PyObject *subtract;
-    PyObject *multiply;
-    PyObject *divide;
-    PyObject *remainder;
-    PyObject *divmod;
-    PyObject *power;
-    PyObject *square;
-    PyObject *reciprocal;
-    PyObject *_ones_like;
-    PyObject *sqrt;
-    PyObject *cbrt;
-    PyObject *negative;
-    PyObject *positive;
-    PyObject *absolute;
-    PyObject *invert;
-    PyObject *left_shift;
-    PyObject *right_shift;
-    PyObject *bitwise_and;
-    PyObject *bitwise_xor;
-    PyObject *bitwise_or;
-    PyObject *less;
-    PyObject *less_equal;
-    PyObject *equal;
-    PyObject *not_equal;
-    PyObject *greater;
-    PyObject *greater_equal;
-    PyObject *floor_divide;
-    PyObject *true_divide;
-    PyObject *logical_or;
-    PyObject *logical_and;
-    PyObject *floor;
-    PyObject *ceil;
-    PyObject *maximum;
-    PyObject *minimum;
-    PyObject *rint;
-    PyObject *conjugate;
-    PyObject *matmul;
-    PyObject *clip;
-    PyObject *real;
-    PyObject *imag;
+    NPY_DECLARE_PYOBJECT_FIELDS(NPY_N_OPS_FIELDS)
 } NumericOps;
 
-extern NPY_NO_EXPORT NumericOps n_ops;
+#ifndef Py_LIMITED_API  /* PyNumberMethods is not in the Limited API */
 extern NPY_NO_EXPORT PyNumberMethods array_as_number;
+#endif
 
 NPY_NO_EXPORT PyObject *
 array_int(PyArrayObject *v);
@@ -67,5 +34,9 @@ PyArray_GenericReduceFunction(PyArrayObject *m1, PyObject *op, int axis,
 NPY_NO_EXPORT PyObject *
 PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
                                   int rtype, PyArrayObject *out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_NUMBER_H_ */

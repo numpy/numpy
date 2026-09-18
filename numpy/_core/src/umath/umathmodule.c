@@ -31,9 +31,11 @@
 #include "string_ufuncs.h"
 #include "stringdtype_ufuncs.h"
 #include "special_integer_comparisons.h"
+#include "minmax.h"
 #include "real_imag_ufuncs.h"
 #include "unwrap.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
+#include "module_state.h"
 #include "ufunc_type_resolution.h"
 
 /* Automatically generated code to define all ufuncs: */
@@ -160,7 +162,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     self->ptr = ptr;
 
     self->type_resolver = &object_ufunc_type_resolver;
-    PyObject_GC_Track(self);
 
     return (PyObject *)self;
 }
@@ -245,8 +246,10 @@ int initumath(PyObject *m)
 #undef ADDSCONST
     PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)NPY_BUFSIZE);
 
-    Py_INCREF(npy_static_pydata.npy_extobj_contextvar);
-    PyModule_AddObject(m, "_extobj_contextvar", npy_static_pydata.npy_extobj_contextvar);
+    multiarray_umath_state *state = get_module_state(m);
+    Py_INCREF(state->static_pydata.npy_extobj_contextvar);
+    PyModule_AddObject(m, "_extobj_contextvar",
+                       state->static_pydata.npy_extobj_contextvar);
 
     if (add_float_constant(m, "PINF", NPY_INFINITY) < 0
             || add_float_constant(m, "NINF", -NPY_INFINITY) < 0
@@ -323,6 +326,10 @@ int initumath(PyObject *m)
     }
 
     if (init_special_int_comparisons(d) < 0) {
+        return -1;
+    }
+
+    if (init_minimummaximum(d) < 0) {
         return -1;
     }
 

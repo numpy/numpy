@@ -4049,6 +4049,13 @@ class TestPercentile:
         assert_equal(np.percentile(d, 25, axis=(1, 3))[2, 2],
                      np.percentile(d[2, :, 2, :].flatten(), 25))
 
+    def test_extended_axis_empty_kept_dim(self):
+        # gh-32535
+        d = np.zeros((0, 3, 4))
+        assert_equal(np.percentile(d, 25, axis=(1, 2)).shape, (0,))
+        assert_equal(np.quantile(d, 0.25, axis=(1, 2)).shape, (0,))
+        assert_equal(np.percentile(d, [25, 50], axis=(1, 2)).shape, (2, 0))
+
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
         assert_raises(AxisError, np.percentile, d, axis=-5, q=25)
@@ -4308,6 +4315,13 @@ class TestQuantile:
         assert_equal(np.quantile(x, 0), 0.)
         assert_equal(np.quantile(x, 1), 3.5)
         assert_equal(np.quantile(x, 0.5), 1.75)
+
+    @pytest.mark.parametrize("func", [np.quantile, np.percentile])
+    def test_invalid_method_error_message(self, func):
+        with pytest.raises(
+            ValueError, match=r"is not a valid method\. Use one of: 'inverted_cdf'"
+        ):
+            func(np.arange(4), 1, method="bogus")
 
     def test_correct_quantile_value(self):
         a = np.array([True])
@@ -5008,6 +5022,12 @@ class TestMedian:
                      np.median(d[2, :, :, 1].flatten()))
         assert_equal(np.median(d, axis=(1, 3))[2, 2],
                      np.median(d[2, :, 2, :].flatten()))
+
+    def test_extended_axis_empty_kept_dim(self):
+        # gh-32535
+        d = np.zeros((0, 3, 4))
+        assert_equal(np.median(d, axis=(1, 2)).shape, (0,))
+        assert_equal(np.median(d, axis=(1, 2), keepdims=True).shape, (0, 1, 1))
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))

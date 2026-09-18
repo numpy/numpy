@@ -1777,9 +1777,44 @@ class TestDateTime:
         (np.array([1, 2, 3], dtype='m8[s]'),
          np.array([2], dtype='m8[s]'),
          np.array([0, 1, 1], dtype=np.int64)),
+        # m8 // bool
+        (np.timedelta64(7, 's'), True, np.timedelta64(7, 's'))
         ])
     def test_timedelta_floor_divide(self, op1, op2, exp):
         assert_equal(op1 // op2, exp)
+
+    @staticmethod
+    def _simd_timedelta_operands():
+        # Array larger than any SIMD width and not a multiple of it, so the
+        # vectorized division kernels run both their vector body and scalar
+        # tail. NaT sits at a vector boundary and in the tail.
+        imin = np.iinfo(np.int64).min  # == NaT
+        vals = (np.arange(137, dtype=np.int64) - 68) * np.int64(0x200000001)
+        vals[::17] = -vals[::17]
+        vals[3] = vals[64] = vals[-1] = imin
+        return vals
+
+    @pytest.mark.parametrize("d", [1, 2, 3, 7, -4, 999983,
+                                   np.iinfo(np.int64).min])
+    def test_timedelta_divide_by_scalar_simd(self, d):
+        # m8 / int -> truncated division (TIMEDELTA_mq_m_divide)
+        imin = np.iinfo(np.int64).min
+        vals = self._simd_timedelta_operands()
+        got = (vals.view('m8[s]') / np.int64(d)).view(np.int64)
+        exp = [imin if v == imin else
+               abs(int(v)) // abs(d) * (1 if (v < 0) == (d < 0) else -1)
+               for v in vals]
+        assert_array_equal(got, np.array(exp, dtype=np.int64))
+
+    @pytest.mark.parametrize("d", [1, 2, 3, 7, -4, 999983])
+    def test_timedelta_floor_divide_by_scalar_simd(self, d):
+        # m8 // m8 -> floor division (TIMEDELTA_mm_q_floor_divide)
+        imin = np.iinfo(np.int64).min
+        vals = self._simd_timedelta_operands()
+        with np.errstate(invalid='ignore'):
+            got = vals.view('m8[s]') // np.timedelta64(d, 's')
+        exp = [0 if v == imin else int(v) // d for v in vals]
+        assert_array_equal(got, np.array(exp, dtype=np.int64))
 
     def test_generic_timedelta_floor_divide(self):
         with pytest.warns(
@@ -1926,6 +1961,15 @@ class TestDateTime:
             # m8 / float
             assert_equal(tda / 0.5, tdc)
             assert_equal((tda / 0.5).dtype, np.dtype('m8[h]'))
+            # m8 / bool
+            assert_equal(tdc / True, tdc)
+            assert_equal((tdc / True).dtype, np.dtype('m8[h]'))
+            # m8 / np.bool_
+            assert_equal(tdc / np.True_, tdc)
+            assert_equal((tdc / np.True_).dtype, np.dtype('m8[h]'))
+            # m8 / np.array(True)
+            assert_equal(tdc / np.array(True), tdc)
+            assert_equal((tdc / np.array(True)).dtype, np.dtype('m8[h]'))
             # m8 / m8
             assert_equal(tda / tdb, 6 / 9)
             assert_equal(np.divide(tda, tdb), 6 / 9)

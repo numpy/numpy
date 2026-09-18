@@ -8,8 +8,10 @@ AR_U: npt.NDArray[np.str_]
 
 poly_obj: np.poly1d
 
-np.polymul(AR_f8, AR_U)  # type: ignore[arg-type]
-np.polydiv(AR_f8, AR_U)  # type: ignore[arg-type]
+np.roots(AR_U)  # type: ignore[arg-type]
+np.polymul(AR_f8, AR_U)  # type: ignore[type-var]
+np.polydiv(AR_f8, AR_U)  # type: ignore[type-var]
+np.polydiv(AR_O, AR_O)  # type: ignore[type-var]
 
 5**poly_obj  # type: ignore[operator]
 
@@ -24,6 +26,6 @@ np.polyfit(AR_f8, AR_f8, 1, rcond=1j)  # type: ignore[call-overload]
 np.polyfit(AR_f8, AR_f8, 1, w=AR_c16)  # type: ignore[arg-type]
 np.polyfit(AR_f8, AR_f8, 1, cov="bob")  # type: ignore[call-overload]
 
-np.polyval(AR_f8, AR_U)  # type: ignore[arg-type]
+np.polyval(AR_f8, AR_U)  # type: ignore[type-var]
 np.polyadd(AR_f8, AR_U)  # type: ignore[arg-type]
 np.polysub(AR_f8, AR_U)  # type: ignore[arg-type]

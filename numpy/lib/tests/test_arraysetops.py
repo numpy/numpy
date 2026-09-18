@@ -5,6 +5,7 @@ import pytest
 
 import numpy as np
 from numpy import ediff1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
+from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import AxisError
 from numpy.testing import (
@@ -631,6 +632,13 @@ class TestSetOps:
 
 class TestUnique:
 
+    @pytest.fixture(
+        params=[np.nan, np.float32("nan"), pd_NA],
+        ids=["np.nan", "np.float32('nan')", "pandas.NA"],
+    )
+    def nan_string_dtype(self, request):
+        return StringDType(na_object=request.param)
+
     def check_all(self, a, b, i1, i2, c, dt):
         base_msg = 'check {0} failed for type {1}'
 
@@ -871,15 +879,18 @@ class TestUnique:
         # so we check them by sorting
         assert_array_equal(sorted(a1.tolist()), unq_sorted)
 
-    def test_unique_vstring_hash_based_equal_nan(self):
-        # test for unicode and nullable string arrays (equal_nan=True)
+    @pytest.mark.parametrize("equal_nan", [True, False])
+    @pytest.mark.parametrize("na_object", [None, object()], ids=["None", "object"])
+    def test_unique_vstring_hash_based(self, equal_nan, na_object):
+        # test for unicode and nullable string arrays
         a = np.array([
                 # short strings
+                '', '',
                 'straße',
-                None,
+                na_object,
                 'strasse',
                 'straße',
-                None,
+                na_object,
                 'niño',
                 'nino',
                 'élève',
@@ -889,31 +900,32 @@ class TestUnique:
                 # medium strings
                 'b' * 20,
                 'ß' * 30,
-                None,
+                na_object,
                 'é' * 30,
                 'e' * 20,
                 'ß' * 30,
                 'n' * 30,
                 'ñ' * 20,
-                None,
+                na_object,
                 'e' * 20,
                 'ñ' * 20,
                 # long strings
                 'b' * 300,
                 'ß' * 400,
-                None,
+                na_object,
                 'é' * 400,
                 'e' * 300,
                 'ß' * 400,
                 'n' * 400,
                 'ñ' * 300,
-                None,
+                na_object,
                 'e' * 300,
                 'ñ' * 300,
             ],
-            dtype=StringDType(na_object=None)
+            dtype=StringDType(na_object=na_object)
         )
-        unq_sorted_wo_none = [
+        unq_sorted_wo_na = [
+            '',
             'b' * 20,
             'b' * 300,
             'e' * 20,
@@ -934,90 +946,46 @@ class TestUnique:
             'ñ' * 300,
         ]
 
-        a1 = unique(a, sorted=False, equal_nan=True)
+        a1 = unique(a, sorted=False, equal_nan=equal_nan)
+        assert a1.dtype == a.dtype
         # the result varies depending on the impl of std::unordered_set,
         # so we check them by sorting
 
-        # a1 should have exactly one None
-        count_none = sum(x is None for x in a1)
-        assert_equal(count_none, 1)
+        # a1 should have exactly one na_object
+        count_na = sum(x is na_object for x in a1)
+        assert_equal(count_na, 1)
 
-        a1_wo_none = sorted(x for x in a1 if x is not None)
-        assert_array_equal(a1_wo_none, unq_sorted_wo_none)
+        a1_wo_na = sorted(x for x in a1 if x is not na_object)
+        assert_array_equal(a1_wo_na, unq_sorted_wo_na)
 
-    def test_unique_vstring_hash_based_not_equal_nan(self):
-        # test for unicode and nullable string arrays (equal_nan=False)
-        a = np.array([
-                # short strings
-                'straße',
-                None,
-                'strasse',
-                'straße',
-                None,
-                'niño',
-                'nino',
-                'élève',
-                'eleve',
-                'niño',
-                'élève',
-                # medium strings
-                'b' * 20,
-                'ß' * 30,
-                None,
-                'é' * 30,
-                'e' * 20,
-                'ß' * 30,
-                'n' * 30,
-                'ñ' * 20,
-                None,
-                'e' * 20,
-                'ñ' * 20,
-                # long strings
-                'b' * 300,
-                'ß' * 400,
-                None,
-                'é' * 400,
-                'e' * 300,
-                'ß' * 400,
-                'n' * 400,
-                'ñ' * 300,
-                None,
-                'e' * 300,
-                'ñ' * 300,
-            ],
-            dtype=StringDType(na_object=None)
-        )
-        unq_sorted_wo_none = [
-            'b' * 20,
-            'b' * 300,
-            'e' * 20,
-            'e' * 300,
-            'eleve',
-            'nino',
-            'niño',
-            'n' * 30,
-            'n' * 400,
-            'strasse',
-            'straße',
-            'ß' * 30,
-            'ß' * 400,
-            'élève',
-            'é' * 30,
-            'é' * 400,
-            'ñ' * 20,
-            'ñ' * 300,
-        ]
+    @pytest.mark.parametrize("equal_nan", [True, False])
+    @pytest.mark.parametrize("na_object", ["", "NA", "NAé" * 10])
+    def test_unique_vstring_string_nulls(self, na_object, equal_nan):
+        dtype = StringDType(na_object=na_object)
+        # The plain StringDType array stores an ordinary string; the nullable
+        # array stores the same value as a null.
+        a = np.concatenate((
+            np.array([na_object, "value"], dtype="T"),
+            np.array([na_object, na_object, "value"], dtype=dtype),
+        ))
+        expected = np.array([na_object, "value"], dtype=dtype)
+        assert_array_equal(unique(a, equal_nan=equal_nan), expected)
+        assert_array_equal(unique(a[::-1], equal_nan=equal_nan), expected)
 
-        a1 = unique(a, sorted=False, equal_nan=False)
-        # the result varies depending on the impl of std::unordered_set,
-        # so we check them by sorting
+    def test_unique_vstring_nan_metadata(self, nan_string_dtype):
+        a = np.array([np.nan, "b", "a", np.nan, "b", np.nan],
+                     dtype=nan_string_dtype)
+        self.check_all(a, a[[2, 1, 0]], [2, 1, 0], [2, 1, 0, 2, 1, 2],
+                       [1, 2, 3], nan_string_dtype)
 
-        # a1 should have exactly one None
-        count_none = sum(x is None for x in a1)
-        assert_equal(count_none, 6)
-
-        a1_wo_none = sorted(x for x in a1 if x is not None)
-        assert_array_equal(a1_wo_none, unq_sorted_wo_none)
+    def test_unique_vstring_nan_not_equal(self, nan_string_dtype):
+        a = np.array([np.nan, "b", "a", np.nan, "b", np.nan],
+                     dtype=nan_string_dtype)
+        v, indices, inverse, counts = unique(a, True, True, True, equal_nan=False)
+        assert_array_equal(v, a[[2, 1, 0, 3, 5]])
+        assert_array_equal(indices, [2, 1, 0, 3, 5])
+        assert_array_equal(inverse, [2, 1, 0, 3, 1, 4])
+        assert_array_equal(counts, [1, 2, 1, 1, 1])
 
     def test_unique_vstring_errors(self):
         a = np.array(
@@ -1143,6 +1111,18 @@ class TestUnique:
         msg = 'Unique returned different results when asked for index'
         assert_array_equal(v.data, v2.data, msg)
         assert_array_equal(v.mask, v2.mask, msg)
+
+    def test_unique_masked_nan(self):
+        # masked arrays always take the sort-based path and the data under
+        # the mask is nan
+        a = np.ma.masked_invalid([1.0, np.nan, 2.0])
+        v = np.unique(a)
+        assert_array_equal(v.compressed(), [1.0, 2.0])
+        assert_array_equal(v.mask, [False, False, True])
+        v, c = np.unique(a, return_counts=True)
+        assert_array_equal(v.compressed(), [1.0, 2.0])
+        assert_array_equal(v.mask, [False, False, True])
+        assert_array_equal(c, [1, 1, 1])
 
     def test_unique_sort_order_with_axis(self):
         # These tests fail if sorting along axis is done by treating subarrays
