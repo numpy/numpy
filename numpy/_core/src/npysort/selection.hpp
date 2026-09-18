@@ -27,8 +27,8 @@
 #include <utility>
 #include "x86_simd_qsort.hpp"
 
-template<typename Tag, typename T>
-inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth, bool reverse)
+template<typename Tag, bool reverse, typename T>
+inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
 {
 #ifndef __CYGWIN__
     /*
@@ -58,13 +58,12 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth, bool reverse)
         }
     }
 #endif
-    (void)v; (void)num; (void)kth; (void)reverse; // to avoid unused arg warn
+    (void)v; (void)num; (void)kth; // to avoid unused arg warn
     return false;
 }
 
-template<typename Tag, typename T>
-inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp kth,
-                                    bool reverse)
+template<typename Tag, bool reverse, typename T>
+inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp kth)
 {
 #ifndef __CYGWIN__
     /*
@@ -84,7 +83,7 @@ inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp 
         }
     }
 #endif
-    (void)v; (void)arg; (void)num; (void)kth; (void)reverse; // to avoid unused arg warn
+    (void)v; (void)arg; (void)num; (void)kth; // to avoid unused arg warn
     return false;
 }
 
@@ -459,7 +458,7 @@ introselect_noarg(void *v, npy_intp num, npy_intp kth, npy_intp *pivots,
                   npy_intp *npiv, npy_intp nkth, void *)
 {
     using T = typename std::conditional<std::is_same_v<Tag, npy::half_tag>, np::Half, typename Tag::type>::type;
-    if ((nkth == 1) && (quickselect_dispatch<Tag>((T *)v, num, kth, reverse))) {
+    if ((nkth == 1) && (quickselect_dispatch<Tag, reverse>((T *)v, num, kth))) {
         return 0;
     }
     return introselect_<Tag, false, reverse>((typename Tag::type *)v, nullptr, num, kth,
@@ -472,7 +471,7 @@ introselect_arg(void *v, npy_intp *tosort, npy_intp num, npy_intp kth,
                 npy_intp *pivots, npy_intp *npiv, npy_intp nkth, void *)
 {
     using T = typename Tag::type;
-    if ((nkth == 1) && (argquickselect_dispatch<Tag>((T *)v, tosort, num, kth, reverse))) {
+    if ((nkth == 1) && (argquickselect_dispatch<Tag, reverse>((T *)v, tosort, num, kth))) {
         return 0;
     }
     return introselect_<Tag, true, reverse>((typename Tag::type *)v, tosort, num, kth,
