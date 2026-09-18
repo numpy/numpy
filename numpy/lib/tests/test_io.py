@@ -2285,19 +2285,8 @@ M   33  21.99
         utf8 = '\u03d6'
         latin1 = '\xf6\xfc\xf6'
 
-        # skip test if cannot encode utf8 test string with preferred
-        # encoding. The preferred encoding is assumed to be the default
-        # encoding of open. Will need to change this for PyTest, maybe
-        # using pytest.mark.xfail(raises=***).
-        try:
-            encoding = locale.getpreferredencoding()
-            utf8.encode(encoding)
-        except (UnicodeError, ImportError):
-            pytest.skip('Skipping test_utf8_file_nodtype_unicode, '
-                        'unable to encode utf8 in preferred encoding')
-
         with temppath() as path:
-            with open(path, "wt") as f:
+            with open(path, "wt", encoding="utf-8") as f:
                 f.write("norm1,norm2,norm3\n")
                 f.write("norm1," + latin1 + ",norm3\n")
                 f.write("test1,testNonethe" + utf8 + ",test3\n")
