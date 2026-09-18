@@ -23,11 +23,7 @@ jobs:
         run: |
           cd /
           python -c "import numpy; print('built numpy', numpy.__version__)"
-      - name: Run fromfile tests
+      - name: Run fromfile + compression tests (installed wheel via pyargs)
         run: |
           cd /
-          python -m pytest "$GITHUB_WORKSPACE/numpy/_core/tests/test_multiarray.py" -k "fromfile" -v
-      - name: Run new compression tests explicitly
-        run: |
-          cd /
-          python -m pytest "$GITHUB_WORKSPACE/numpy/_core/tests/test_multiarray.py" -k "compression" -v
+          python -m pytest --pyargs numpy._core.tests.test_multiarray -k "fromfile or compression" -v
