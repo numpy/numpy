@@ -35,6 +35,7 @@ _f32_0d: np.float32
 _f32_1d: _Array1D[np.float32]
 _f32_2d: _Array2D[np.float32]
 _f32_3d: _Array3D[np.float32]
+_f32_4d_list: list[_Array4D[np.float32]]
 _f64_0d: _Array0D[np.float64]
 _obj_str_1d: _Array1D[np.object_[str]]
 
@@ -600,8 +601,28 @@ assert_type(np.stack([_f32_2d, _f32_2d], axis=-1), _Array3D[np.float32])
 assert_type(np.stack([_f32_2d, _f32_2d], dtype=np.int8), _Array3D[np.int8])
 assert_type(np.stack([_f32_2d, _f32_2d], dtype="i1"), _Array3D[Any])
 
-assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
-assert_type(np.block(C), npt.NDArray[Any])
+assert_type(np.block(_f32_2d), _Array2D[np.float32])
+assert_type(np.block([[A, A], [A, A]]), npt.NDArray[np.float64])
+assert_type(np.block([_f32_1d, _f32_1d]), _Array1D[np.float32])
+assert_type(np.block([True, False]), _Array1D[np.bool])
+assert_type(np.block([1, 2]), _Array1D[np.int_])
+assert_type(np.block([1.0, 2]), _Array1D[np.float64])
+assert_type(np.block([1j, 2]), _Array1D[np.complex128])
+assert_type(np.block([_f32_1d, 1]), _Array1D[Any])
+assert_type(np.block([[_f32_2d, _f32_2d], [_f32_2d, _f32_2d]]), _Array2D[np.float32])
+assert_type(np.block([[True]]), _Array2D[np.bool])
+assert_type(np.block([[1, 2], [3, 4]]), _Array2D[np.int_])
+assert_type(np.block([[1.0, 2], [3, 4]]), _Array2D[np.float64])
+assert_type(np.block([[1j, 2], [3, 4]]), _Array2D[np.complex128])
+assert_type(np.block([[_f32_2d, _f32_2d], [_f32_1d, 1]]), _Array2D[Any])
+assert_type(np.block([[[_f32_1d]], [[_f32_1d]]]), _Array3D[np.float32])
+assert_type(np.block([[[True]]]), _Array3D[np.bool])
+assert_type(np.block([[[1]]]), _Array3D[np.int_])
+assert_type(np.block([[[1.0]]]), _Array3D[np.float64])
+assert_type(np.block([[[1j]]]), _Array3D[np.complex128])
+assert_type(np.block([[[_f32_1d, 1]]]), _Array3D[Any])
+assert_type(np.block(_f32_4d_list), npt.NDArray[np.float32])
+assert_type(np.block(["a", "b"]), npt.NDArray[Any])
 
 from collections.abc import Buffer
 
