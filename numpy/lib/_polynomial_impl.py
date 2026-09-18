@@ -675,6 +675,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     scale = NX.sqrt((lhs * lhs).sum(axis=0))
     lhs /= scale
     c, resids, rank, s = lstsq(lhs, rhs, rcond)
+    c_lstsq = c
     c = (c.T / scale).T  # broadcast scale coefficients
 
     # warn on rank reduction, which indicates an ill conditioned matrix
@@ -697,6 +698,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
             # it was decided that the "- 2" (originally justified by "Bayesian
             # uncertainty analysis") is not what the user expects
             # (see gh-11196 and gh-11197)
+            if resids.size == 0:
+                if y.ndim == 1:
+                    resids = NX.sum((rhs - dot(lhs, c_lstsq))**2, keepdims=True)
+                else:
+                    resids = NX.sum((rhs - dot(lhs, c_lstsq))**2, axis=0)
             fac = resids / (len(x) - order)
         if y.ndim == 1:
             return c, Vbase * fac
