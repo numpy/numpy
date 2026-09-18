@@ -6864,6 +6864,16 @@ class TestIO:
             z = np.fromfile(f, dtype=x.dtype, offset=offset_bytes)
             assert_array_equal(z, x.flat[offset_items + count_items + 1:])
 
+        with open(tmp_filename, 'wb') as f:
+            x.tofile(f, sep=",")
+
+        with open(tmp_filename, 'rb') as f:
+            assert_raises_regex(
+                    TypeError,
+                    "'offset' argument only permitted for binary files",
+                    np.fromfile, tmp_filename, dtype=x.dtype,
+                    sep=",", offset=1)
+
     def test_fromfile_compression_wrappers(self, tmp_path):
         # gh-10866: fileno() on a compressed stream refers to the compressed
         # file; fromfile used to silently return garbage for such objects.
@@ -6919,16 +6929,6 @@ class TestIO:
         with gzip.open(tmp_path / "data.gz", 'rb') as f:
             assert_raises_regex(ValueError, "Cannot read into object array",
                                 np.fromfile, f, dtype=object)
-
-        with open(tmp_filename, 'wb') as f:
-            x.tofile(f, sep=",")
-
-        with open(tmp_filename, 'rb') as f:
-            assert_raises_regex(
-                    TypeError,
-                    "'offset' argument only permitted for binary files",
-                    np.fromfile, tmp_filename, dtype=x.dtype,
-                    sep=",", offset=1)
 
     def test_fromfile_bad_dup(self, tmp_path, param_filename, monkeypatch):
         def dup_str(fd):
