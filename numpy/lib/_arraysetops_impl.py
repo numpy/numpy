@@ -924,16 +924,33 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     contains_object = (ar1.dtype.hasobject or ar2.dtype.hasobject) and (
         string_dtype is None)
 
-    # This code is run when
-    # a) the first condition is true, making the code significantly faster
-    # b) the second condition is true (i.e. `ar1` or `ar2` may contain
-    #    arbitrary objects), since then sorting is not guaranteed to work
-    if len(ar2) < 10 * len(ar1) ** 0.145 or contains_object:
+    scalar_comparisons_are_faster = len(ar2) < 10 * len(ar1) ** 0.145
+    result = None
+    if (not scalar_comparisons_are_faster and string_dtype is not None and
+            string_dtype._has_na and not string_dtype._has_nan_na):
+        na = np.asarray(string_dtype.na_object, dtype=string_dtype)
+        missing1, missing2 = ar1 == na, ar2 == na
+        has_missing2 = missing2.any()
+        if missing1.any():
+            result = np.full(ar1.shape, bool(has_missing2) != invert)
+            valid1 = ~missing1
+            ar1 = ar1[valid1]
+        if has_missing2:
+            ar2 = ar2[~missing2]
+        # Filtering can make scalar comparisons cheaper than sorting.
+        scalar_comparisons_are_faster = len(ar2) < 10 * len(ar1) ** 0.145
+
+    # Use direct comparisons for few candidates or arbitrary objects, which
+    # cannot be sorted reliably.
+    if scalar_comparisons_are_faster or contains_object:
         if string_dtype is not None:
             # StringDType scalars are str or na_object, so ensure iteration
             # always produces arrays this could be deleted if StringDType ever
             # grew a NumPy scalar type
             ar2 = ar2.reshape(-1, 1)
+            if ar2.dtype.kind == "T" and ar2.dtype._has_nan_na:
+                na_object = ar2.dtype.na_object
+                ar2 = (a for a in ar2 if a[0] is not na_object)
         if invert:
             mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
@@ -942,19 +959,16 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             mask = np.zeros(len(ar1), dtype=bool)
             for a in ar2:
                 mask |= (ar1 == a)
-        return mask
+    else:
+        mask = _isin_sorting(ar1, ar2, assume_unique, invert)
 
-    if string_dtype is not None and hasattr(string_dtype, "na_object"):
-        # Remove None-like sentinels, which cannot be ordered with strings
-        na = np.asarray(string_dtype.na_object, dtype=string_dtype)
-        missing1, missing2 = ar1 == na, ar2 == na
-        if missing1.any() or missing2.any():
-            result = np.full(ar1.shape, bool(missing2.any()) != invert)
-            result[~missing1] = _isin(
-                ar1[~missing1], ar2[~missing2], assume_unique, invert, kind=kind)
-            return result
+    if result is not None:
+        result[valid1] = mask
+        return result
+    return mask
 
-    # Otherwise use sorting
+
+def _isin_sorting(ar1, ar2, assume_unique, invert):
     if not assume_unique:
         ar1, rev_idx = np.unique(ar1, return_inverse=True)
         ar2 = np.unique(ar2)
