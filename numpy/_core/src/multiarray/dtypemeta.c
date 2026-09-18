@@ -52,6 +52,7 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
     PyType_Type.tp_dealloc((PyObject *) self);
 }
 
+
 static PyArray_DTypeMeta *
 dtype_does_not_promote(
         PyArray_DTypeMeta *NPY_UNUSED(self), PyArray_DTypeMeta *NPY_UNUSED(other))
@@ -191,6 +192,13 @@ dtypemeta_initialize_struct_from_spec(
     }
 
     DType->flags = spec->flags;
+    if (PyType_IsSubtype((PyTypeObject *)DType,
+                         (PyTypeObject *)&PyArray_NumberAbstractDType)) {
+        DType->flags |= NPY_DT_NUMERIC;
+        // TODO(seberg): Eventually remove opposite, setting the flag but not
+        // subclassing explicitly. (Then maybe even remove __subclasscheck__)
+    }
+
     DType->dt_slots = PyMem_Calloc(1, sizeof(NPY_DType_Slots));
     if (DType->dt_slots == NULL) {
         PyErr_NoMemory();
@@ -510,9 +518,16 @@ dtypemeta_is_gc(PyObject *dtype_class)
 static int
 dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
 {
-    Py_VISIT(type->singleton);
-    Py_VISIT(type->scalar_type);
-    Py_VISIT(NPY_DT_SLOTS(type)->castingimpls);
+    /*
+     * ``dt_slots`` may still be NULL: a DType class created via
+     * ``PyType_FromMetaclass`` is tracked by the GC before we get a chance
+     * to fill it in.
+     */
+    if (type->dt_slots != NULL) {
+        Py_VISIT(NPY_DT_SLOTS(type)->castingimpls);
+    }
+    Py_VISIT((PyObject *)type->singleton);
+    Py_VISIT((PyObject *)type->scalar_type);
     return PyType_Type.tp_traverse((PyObject *)type, visit, arg);
 }
 
@@ -1308,6 +1323,12 @@ dtypemeta_wrap_legacy_descriptor(
         }
     }
 
+    /*
+     * NOTE: ``PyTypeNum_ISNUMBER`` includes bool, so ``NPY_DT_NUMERIC``
+     * disagrees with ``NumberAbstractDType`` for it.
+     * TODO(seberg): Consider aligning the flag to exclude bool. Having an `_`
+     * in Python hopefully means downstream doesn't really rely on it.
+     */
     if (PyTypeNum_ISNUMBER(descr->type_num)) {
         dtype_class->flags |= NPY_DT_NUMERIC;
     }
@@ -1349,6 +1370,60 @@ dtypemeta_wrap_legacy_descriptor(
 
 
 static PyObject *
+dtypemeta_subclasscheck(PyArray_DTypeMeta *self, PyObject *arg)
+{
+    if (!PyType_Check(arg)) {
+        PyErr_SetString(PyExc_TypeError, "issubclass() arg 1 must be a class");
+        return NULL;
+    }
+    /*
+     * Real C-level inheritance check first.  This handles all non-abstract
+     * DTypes and the common case for abstracts (``arg`` is a real subtype).
+     */
+    if (PyType_IsSubtype((PyTypeObject *)arg, (PyTypeObject *)self)) {
+        Py_RETURN_TRUE;
+    }
+    if (!NPY_DT_is_abstract(self)) {
+        Py_RETURN_FALSE;
+    }
+    /*
+     * For abstracts, ``arg`` must itself be a DType class to qualify as a
+     * (virtual) subclass.
+     */
+    if (!PyType_IsSubtype((PyTypeObject *)arg, &PyArrayDescr_Type)) {
+        Py_RETURN_FALSE;
+    }
+    /*
+     * NumberAbstractDType: a DType may opt in via the ``NPY_DT_NUMERIC`` flag
+     * rather than subclassing.  This is an escape hatch for DTypes written
+     * before the abstract hierarchy existed.  ``bool`` sets the flag but is
+     * not a "number" here (matching ``np.number`` and the array API
+     * "numeric" kind).
+     * TODO(seberg): Eventually force downstream to subclass.
+     */
+    if (self == &PyArray_NumberAbstractDType
+            && arg != (PyObject *)&PyArray_BoolDType
+            && NPY_DT_is_numeric((PyArray_DTypeMeta *)arg)) {
+        Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
+}
+
+
+static PyObject *
+dtypemeta_instancecheck(PyArray_DTypeMeta *self, PyObject *arg)
+{
+    /*
+     * Defer to ``__subclasscheck__`` so that ``isinstance()`` also honors the
+     * DTypes that are only virtual subclasses of an abstract DType.  The
+     * default ``type.__instancecheck__`` only consults the C-level
+     * ``tp_base`` chain.
+     */
+    return dtypemeta_subclasscheck(self, (PyObject *)Py_TYPE(arg));
+}
+
+
+static PyObject *
 dtypemeta_get_abstract(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_abstract(self));
 }
@@ -1384,6 +1459,18 @@ static PyMemberDef dtypemeta_members[] = {
         T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY,
         "scalar type corresponding to the DType."},
     {NULL, 0, 0, 0, NULL},
+};
+
+static PyMethodDef dtypemeta_methods[] = {
+    {"__subclasscheck__",
+            (PyCFunction)(void *)dtypemeta_subclasscheck,
+            METH_O,
+            "Return whether another dtype type is considered a subclass."},
+    {"__instancecheck__",
+            (PyCFunction)(void *)dtypemeta_instancecheck,
+            METH_O,
+            "Return whether the argument is an instance of this dtype type."},
+    {NULL, NULL, 0, NULL}
 };
 
 NPY_NO_EXPORT void
@@ -1443,6 +1530,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_traverse = (traverseproc)dtypemeta_traverse,
     .tp_members = dtypemeta_members,
     .tp_getset = dtypemeta_getset,
+    .tp_methods = dtypemeta_methods,
     .tp_base = NULL,  /* set to PyType_Type at import time */
     .tp_is_gc = dtypemeta_is_gc,
 };
