@@ -10,7 +10,13 @@ template<> void NPY_CPU_DISPATCH_CURFX(ArgQSelect)(TYPE* arr, npy_intp* arg, npy
 } \
 template<> void NPY_CPU_DISPATCH_CURFX(ArgQSort)(TYPE* arr, npy_intp *arg, npy_intp size, bool reverse) \
 { \
-    x86simdsortStatic::argsort(arr, reinterpret_cast<size_t*>(arg), size, true, reverse); \
+    /* constant `descending` lets the is_sorted early exit inline its comparator */ \
+    if (reverse) { \
+        x86simdsortStatic::argsort(arr, reinterpret_cast<size_t*>(arg), size, true, true); \
+    } \
+    else { \
+        x86simdsortStatic::argsort(arr, reinterpret_cast<size_t*>(arg), size, true, false); \
+    } \
 } \
 
 namespace np { namespace qsort_simd {
