@@ -199,7 +199,12 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
 
     npy_intp n_inner = shape_it[0];
     npy_intp chunk = n_inner;
-    if (ndim >= 2) {
+    if (ndim >= 2 && !same_value_cast
+            && !(method_flags & NPY_METH_REQUIRES_PYAPI)
+            && (PyTypeNum_ISNUMBER(src_dtype->type_num)
+                || PyTypeNum_ISBOOL(src_dtype->type_num))
+            && (PyTypeNum_ISNUMBER(dst_dtype->type_num)
+                || PyTypeNum_ISBOOL(dst_dtype->type_num))) {
         chunk = transposed_copy_chunk(n_inner, src_strides_it, dst_strides_it);
     }
 
