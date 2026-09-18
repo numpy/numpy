@@ -909,14 +909,31 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             "Please select 'sort' or None for kind."
         )
 
+    string_dtype = None
+    if (ar1.dtype.kind == "T" or ar2.dtype.kind == "T") and (
+            ar1.dtype.kind in "TU" and ar2.dtype.kind in "TU"):
+        try:
+            # promote to the result dtype so we can use the fast hashing path
+            string_dtype = np.result_type(ar1, ar2)
+        except TypeError:
+            # fall back to slow sorting path with e.g. ar1.na_object == None
+            # and ar2.na_object == np.nan
+            pass
+
     # Check if one of the arrays may contain arbitrary objects
-    contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
+    contains_object = (ar1.dtype.hasobject or ar2.dtype.hasobject) and (
+        string_dtype is None)
 
     # This code is run when
     # a) the first condition is true, making the code significantly faster
     # b) the second condition is true (i.e. `ar1` or `ar2` may contain
     #    arbitrary objects), since then sorting is not guaranteed to work
     if len(ar2) < 10 * len(ar1) ** 0.145 or contains_object:
+        if string_dtype is not None:
+            # StringDType scalars are str or na_object, so ensure iteration
+            # always produces arrays this could be deleted if StringDType ever
+            # grew a NumPy scalar type
+            ar2 = ar2.reshape(-1, 1)
         if invert:
             mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
@@ -926,6 +943,16 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             for a in ar2:
                 mask |= (ar1 == a)
         return mask
+
+    if string_dtype is not None and hasattr(string_dtype, "na_object"):
+        # Remove None-like sentinels, which cannot be ordered with strings
+        na = np.asarray(string_dtype.na_object, dtype=string_dtype)
+        missing1, missing2 = ar1 == na, ar2 == na
+        if missing1.any() or missing2.any():
+            result = np.full(ar1.shape, bool(missing2.any()) != invert)
+            result[~missing1] = _isin(
+                ar1[~missing1], ar2[~missing2], assume_unique, invert, kind=kind)
+            return result
 
     # Otherwise use sorting
     if not assume_unique:
