@@ -262,11 +262,7 @@ def roots(p):
     return roots
 
 
-def _polyint_dispatcher(p, m=None, k=None):
-    return (p,)
-
-
-@array_function_dispatch(_polyint_dispatcher)
+@array_function_dispatch(("p",))
 def polyint(p, m=1, k=None):
     """
     Return an antiderivative (indefinite integral) of a polynomial.
@@ -370,11 +366,7 @@ def polyint(p, m=1, k=None):
         return val
 
 
-def _polyder_dispatcher(p, m=None):
-    return (p,)
-
-
-@array_function_dispatch(_polyder_dispatcher)
+@array_function_dispatch(("p",))
 def polyder(p, m=1):
     """
     Return the derivative of the specified order of a polynomial.
@@ -453,11 +445,7 @@ def polyder(p, m=1):
     return val
 
 
-def _polyfit_dispatcher(x, y, deg, rcond=None, full=None, w=None, cov=None):
-    return (x, y, w)
-
-
-@array_function_dispatch(_polyfit_dispatcher)
+@array_function_dispatch(("x", "y", "w"))
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
     Least squares polynomial fit.
@@ -706,11 +694,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         return c
 
 
-def _polyval_dispatcher(p, x):
-    return (p, x)
-
-
-@array_function_dispatch(_polyval_dispatcher)
+@array_function_dispatch(("p", "x"))
 def polyval(p, x):
     """
     Evaluate a polynomial at specific values.
@@ -790,11 +774,7 @@ def polyval(p, x):
     return y
 
 
-def _binary_op_dispatcher(a1, a2):
-    return (a1, a2)
-
-
-@array_function_dispatch(_binary_op_dispatcher)
+@array_function_dispatch(("a1", "a2"))
 def polyadd(a1, a2):
     """
     Find the sum of two polynomials.
@@ -863,7 +843,7 @@ def polyadd(a1, a2):
     return val
 
 
-@array_function_dispatch(_binary_op_dispatcher)
+@array_function_dispatch(("a1", "a2"))
 def polysub(a1, a2):
     """
     Difference (subtraction) of two polynomials.
@@ -920,7 +900,7 @@ def polysub(a1, a2):
     return val
 
 
-@array_function_dispatch(_binary_op_dispatcher)
+@array_function_dispatch(("a1", "a2"))
 def polymul(a1, a2):
     """
     Find the product of two polynomials.
@@ -984,11 +964,7 @@ def polymul(a1, a2):
     return val
 
 
-def _polydiv_dispatcher(u, v):
-    return (u, v)
-
-
-@array_function_dispatch(_polydiv_dispatcher)
+@array_function_dispatch(("u", "v"))
 def polydiv(u, v):
     """
     Returns the quotient and remainder of polynomial division.
