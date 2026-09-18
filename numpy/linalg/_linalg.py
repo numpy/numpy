@@ -2229,7 +2229,7 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
         if rtol is _NoValue:
             rcond = 1e-15
         elif rtol is None:
-            _, result_t = _commonType(a)
+            result_t = _commonType(a)[1] if a.dtype.kind in "biu" else a.dtype
             rcond = max(a.shape[-2:]) * finfo(result_t).eps
         else:
             rcond = rtol
@@ -2242,7 +2242,7 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
     rcond = asarray(rcond)
     if _is_empty_2d(a):
         m, n = a.shape[-2:]
-        _, result_t = _commonType(a)
+        result_t = _commonType(a)[1] if a.dtype.kind in "biu" else a.dtype
         res = empty(a.shape[:-2] + (n, m), dtype=result_t)
         return wrap(res)
     a = a.conjugate()
