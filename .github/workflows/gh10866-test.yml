@@ -1,0 +1,32 @@
+name: gh-10866 fromfile compressed validation
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install build dependencies
+        run: python -m pip install meson-python ninja cython pybind11 pytest
+      - name: Build numpy wheel
+        run: python -m pip wheel . --no-build-isolation -w dist/
+      - name: Install built wheel
+        run: python -m pip install dist/*.whl
+      - name: Smoke test import (outside source dir)
+        run: |
+          cd /
+          python -c "import numpy; print('built numpy', numpy.__version__)"
+      - name: Run fromfile tests
+        run: |
+          cd /
+          python -m pytest "$GITHUB_WORKSPACE/numpy/_core/tests/test_multiarray.py" -k "fromfile" -v
+      - name: Run new compression tests explicitly
+        run: |
+          cd /
+          python -m pytest "$GITHUB_WORKSPACE/numpy/_core/tests/test_multiarray.py" -k "compression" -v
