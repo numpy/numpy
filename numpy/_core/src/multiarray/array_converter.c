@@ -414,10 +414,7 @@ static PyMethodDef array_converter_methods[] = {
 };
 
 
-/*
- * Only the first `narrs` items own their references; `array_converter_new`
- * increments the count as it fills them in.
- */
+/* `array_converter_new` fills the items in order, so only `narrs` are set. */
 static int
 array_converter_traverse(
         PyArrayArrayConverterObject *self, visitproc visit, void *arg)
