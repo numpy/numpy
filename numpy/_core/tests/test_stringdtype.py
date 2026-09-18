@@ -129,6 +129,26 @@ def test_dtype_creation():
     assert len(hashes) == 4
 
 
+@pytest.mark.parametrize("kwargs, expected", [
+    ({}, (False, False, False)),
+    ({"na_object": None}, (True, False, False)),
+    ({"na_object": object()}, (True, False, False)),
+    ({"na_object": np.nan}, (True, True, False)),
+    ({"na_object": pd_NA}, (True, True, False)),
+    ({"na_object": ""}, (True, False, True)),
+    ({"na_object": "NA"}, (True, False, True)),
+])
+def test_private_na_flags(kwargs, expected):
+    dtype = StringDType(**kwargs)
+    for name, value in zip(
+            ("_has_na", "_has_nan_na", "_has_string_na"), expected):
+        assert getattr(dtype, name) is value
+        with pytest.raises(AttributeError):
+            setattr(dtype, name, not value)
+        with pytest.raises(AttributeError):
+            delattr(dtype, name)
+
+
 @pytest.mark.parametrize("dtype_spec", [
     [("a", StringDType())],
     [("a", StringDType(), 10)],
