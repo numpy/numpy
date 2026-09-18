@@ -44,9 +44,6 @@ get_array_function(PyObject *obj)
 }
 
 
-/*
- * Is this object ndarray.__array_function__?
- */
 static int
 is_default_array_function(PyObject *obj)
 {
@@ -54,7 +51,6 @@ is_default_array_function(PyObject *obj)
 }
 
 
-/* Release a method returned by `get_array_function`. */
 static inline void
 release_array_function(PyObject *method)
 {
