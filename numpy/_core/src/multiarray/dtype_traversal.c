@@ -588,8 +588,8 @@ zerofill_fields_function(
  * So we add a memset before calling the actual traverse function for the
  * structured path.
  */
-NPY_NO_EXPORT int
-npy_get_zerofill_void_and_legacy_user_dtype_loop(
+static int
+npy_get_zerofill_void_and_legacy_user_dtype_loop_impl(
         void *traverse_context, const _PyArray_LegacyDescr *dtype, int aligned,
         npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
@@ -640,4 +640,23 @@ npy_get_zerofill_void_and_legacy_user_dtype_loop(
     *out_auxdata = NULL;
     *out_func = NULL;
     return 0;
+}
+
+
+NPY_NO_EXPORT int
+npy_get_zerofill_void_and_legacy_user_dtype_loop(
+        void *traverse_context, const _PyArray_LegacyDescr *dtype, int aligned,
+        npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
+        NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    if (Py_EnterRecursiveCall(
+            " while resolving the zerofill traversal function for a "
+            "deeply nested structured dtype")) {
+        return -1;
+    }
+    int res = npy_get_zerofill_void_and_legacy_user_dtype_loop_impl(
+            traverse_context, dtype, aligned, stride, out_func, out_auxdata,
+            flags);
+    Py_LeaveRecursiveCall();
+    return res;
 }
