@@ -15,10 +15,10 @@ np.polydiv(AR_O, AR_O)  # type: ignore[type-var]
 
 5**poly_obj  # type: ignore[operator]
 
-np.polyint(AR_U)  # type: ignore[arg-type]
+np.polyint(AR_U)  # type: ignore[type-var]
 np.polyint(AR_f8, m=1j)  # type: ignore[call-overload]
 
-np.polyder(AR_U)  # type: ignore[arg-type]
+np.polyder(AR_U)  # type: ignore[type-var]
 np.polyder(AR_f8, m=1j)  # type: ignore[call-overload]
 
 np.polyfit(AR_O, AR_f8, 1)  # type: ignore[arg-type]
