@@ -409,8 +409,11 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         return NULL;
     }
 
-    indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
-                                                         NPY_INTP, 0, 0);
+    indices = (PyArrayObject *)PyArray_FromAny(indices0,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 0,
+            NPY_ARRAY_SAME_KIND_CASTING | NPY_ARRAY_DEFAULT,
+            NULL);
     if (indices == NULL) {
         goto fail;
     }
