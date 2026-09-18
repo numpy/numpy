@@ -129,6 +129,26 @@ def test_dtype_creation():
     assert len(hashes) == 4
 
 
+@pytest.mark.parametrize("kwargs, expected", [
+    ({}, (False, False, False)),
+    ({"na_object": None}, (True, False, False)),
+    ({"na_object": object()}, (True, False, False)),
+    ({"na_object": np.nan}, (True, True, False)),
+    ({"na_object": pd_NA}, (True, True, False)),
+    ({"na_object": ""}, (True, False, True)),
+    ({"na_object": "NA"}, (True, False, True)),
+])
+def test_private_na_flags(kwargs, expected):
+    dtype = StringDType(**kwargs)
+    for name, value in zip(
+            ("_has_na", "_has_nan_na", "_has_string_na"), expected):
+        assert getattr(dtype, name) is value
+        with pytest.raises(AttributeError):
+            setattr(dtype, name, not value)
+        with pytest.raises(AttributeError):
+            delattr(dtype, name)
+
+
 @pytest.mark.parametrize("dtype_spec", [
     [("a", StringDType())],
     [("a", StringDType(), 10)],
@@ -1223,6 +1243,21 @@ def test_searchsorted_gh31533():
     assert_array_equal(
         np.searchsorted(haystack, needles, sorter=np.arange(n)), expected
     )
+
+
+@pytest.mark.parametrize("na_object, matches", [
+    (None, True), (np.nan, False), (pd_NA, False),
+])
+def test_isin_missing(na_object, matches):
+    dtype = StringDType(na_object=na_object)
+    a = np.array(["a", "b", na_object], dtype=dtype)
+    b = np.array(["b", na_object] * 20, dtype=dtype)
+    expected = np.array([False, True, matches])
+    assert_array_equal(np.isin(a, b), expected)
+    assert_array_equal(np.isin(a, b, invert=True), ~expected)
+    assert_array_equal(np.isin(a, b[:2]), expected)
+    missing = np.array([na_object] * 40, dtype=dtype)
+    assert_array_equal(np.isin(missing, missing), [matches] * 40)
 
 
 @pytest.mark.parametrize(
@@ -3397,8 +3432,6 @@ def test_setops_distinct_allocators():
     assert_array_equal(np.setdiff1d(a, b), np.setdiff1d(au, bu))
     assert_array_equal(np.setxor1d(a, b), np.setxor1d(au, bu))
 
-    # StringDType has hasobject set, so isin always takes the
-    # element-comparison loop and 'table' only supports integers
     assert_array_equal(
         np.isin(a, b, invert=True), np.isin(au, bu, invert=True)
     )
@@ -3421,6 +3454,13 @@ def test_setops_distinct_allocators():
     )
     for r, e in zip(res, expected):
         assert_array_equal(r, e)
+
+    # exercise the fallback to the slow object sorting path for dtype instances
+    # with incompatible na_object
+    a_none = a.astype(StringDType(na_object=None))
+    b_nan = b.astype(StringDType(na_object=np.nan))
+    assert_array_equal(np.isin(a_none, b_nan), np.isin(au, bu))
+    assert_array_equal(np.setdiff1d(a_none, b_nan), np.setdiff1d(au, bu))
 
 
 def test_unique_arena_strings():
