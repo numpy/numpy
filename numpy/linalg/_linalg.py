@@ -17,6 +17,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'matrix_norm', 'vector_norm', 'vecdot']
 
 import functools
+import math
 import operator
 from typing import Any, NamedTuple
 
@@ -44,6 +45,7 @@ from numpy._core import (
     empty_like,
     errstate,
     finfo,
+    half,
     inexact,
     inf,
     intc,
@@ -63,12 +65,15 @@ from numpy._core import (
     single,
     sort,
     sqrt,
+    squeeze,
     sum,
     swapaxes,
     tensordot as _core_tensordot,
     trace as _core_trace,
     transpose as _core_transpose,
+    vdot,
     vecdot as _core_vecdot,
+    where,
     zeros,
 )
 from numpy._globals import _NoValue
@@ -2581,6 +2586,70 @@ def _multi_svd_norm(x, row_axis, col_axis, op, initial=None):
     return result
 
 
+@functools.cache
+def _smallest_normal(dtype):
+    """Cache the normal/subnormal boundary without narrowing extended dtypes."""
+    return finfo(dtype).smallest_normal
+
+
+def _rescale_flat_norm(x, ret):
+    """Recompute a flat 2-norm with a non-finite or subnormal sum of squares."""
+    if not x.size:
+        return ret
+    max_abs = abs(x).max()
+    if not isfinite(max_abs) or max_abs == 0:
+        return ret
+    scaled = x / max_abs
+    # The scaled sum can still exceed float16's range for large arrays.
+    if x.dtype == half:
+        scaled = scaled.astype(single)
+        return half(max_abs * sqrt(vdot(scaled, scaled).real))
+    return max_abs * sqrt(vdot(scaled, scaled).real)
+
+
+def _rescale_axis_norm(x, ret, axis, ord, keepdims):
+    """Fix up the over/underflowed slices of an axis-reduced ord-norm.
+
+    ``ret`` is the naive vector ord-norm / Frobenius norm over ``axis``. If any
+    slice came out non-finite, subnormal or spuriously zero, the reduction is
+    redone for the whole array with a max-scaled sum (nrm2 scaling, valid for
+    ord >= 1) and only those slices take the rescaled value; inf/nan and genuine
+    zeros keep theirs. The common case of nothing needing a rescale returns
+    ``ret`` untouched. See gh-8775.
+    """
+    if not issubclass(x.dtype.type, inexact):
+        return ret
+    tiny_root = _smallest_normal(ret.dtype) ** (1.0 / ord)
+    if ret.ndim:
+        if not ret.size:
+            return ret
+        lo, hi = ret.min(), ret.max()
+    else:
+        lo = hi = ret
+    if tiny_root <= lo and hi < inf:
+        return ret
+    bad = ~isfinite(ret) | (ret < tiny_root)
+    ax = abs(x)
+    max_kd = ax.max(axis=axis, keepdims=True, initial=0)
+    ok_kd = isfinite(max_kd) & (max_kd != 0)
+    max_abs = max_kd if keepdims else squeeze(max_kd, axis=axis)
+    ok = ok_kd if keepdims else squeeze(ok_kd, axis=axis)
+    fix = bad & ok
+    if not fix.any():
+        return ret
+    scaled = ax / where(ok_kd, max_kd, 1)
+    if x.dtype == half:
+        scaled = scaled.astype(single)
+    scaled **= ord
+    r = add.reduce(scaled, axis=axis, keepdims=keepdims)
+    r **= reciprocal(ord, dtype=r.dtype)
+    rescaled = max_abs * r
+    if x.dtype == half:
+        rescaled = rescaled.astype(half)
+    # Preserve scalar results after `where`.
+    return where(fix, rescaled, ret)[()]
+
+
 def _norm_dispatcher(x, ord=None, axis=None, keepdims=None):
     return (x,)
 
@@ -2749,13 +2818,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
             (ord == 2 and ndim == 1)
         ):
             x = x.ravel(order='K')
-            if isComplexType(x.dtype.type):
-                x_real = x.real
-                x_imag = x.imag
-                sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
-            else:
-                sqnorm = x.dot(x)
+            sqnorm = vdot(x, x).real
             ret = sqrt(sqnorm)
+            if (issubclass(x.dtype.type, inexact)
+                    and not _smallest_normal(ret.dtype) <= sqnorm < math.inf):
+                ret = _rescale_flat_norm(x, ret)
             if keepdims:
                 ret = ret.reshape(ndim * [1])
             return ret
@@ -2791,7 +2858,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
         elif ord is None or ord == 2:
             # special case for speedup
             s = (x.conj() * x).real
-            return sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
+            ret = sqrt(add.reduce(s, axis=axis, keepdims=keepdims))
+            return _rescale_axis_norm(x, ret, axis, 2, keepdims)
         # None of the str-type keywords for ord ('fro', 'nuc')
         # are valid for vectors
         elif isinstance(ord, str):
@@ -2801,6 +2869,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
             absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
             ret **= reciprocal(ord, dtype=ret.dtype)
+            if ord > 1:
+                ret = _rescale_axis_norm(x, ret, axis, ord, keepdims)
             return ret
     elif len(axis) == 2:
         row_axis, col_axis = axis
@@ -2830,6 +2900,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
         elif ord in [None, 'fro', 'f']:
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
+            ret = _rescale_axis_norm(x, ret, axis, 2, keepdims=False)
         elif ord == 'nuc':
             ret = _multi_svd_norm(x, row_axis, col_axis, sum, 0)
         else:
