@@ -1,0 +1,25 @@
+Add ``float.from_number`` class method for NumPy floating-point scalar types
+============================================================================
+
+Added the ``from_number`` class method to all NumPy floating-point scalar types. This method enables creating a new floating scalar instance from an integer, float, or any object convertible to float, matching Python's built-in
+
+Examples
+--------
+
+.. code-block:: python
+
+    >>> np.float32.from_number(42)
+    np.float32(42.0)
+    >>> np.float16.from_number(np.pi)
+    np.float16(3.14)
+    >>> np.float64.from_number(np.int16(7))
+    np.float64(7.0)
+    >>> class CustomNum:
+    ...     def __float__(self): return 2.5
+    ...
+    >>> np.float16.from_number(CustomNum())
+    np.float16(2.5)
+
+If the argument does not support conversion to float via ``__float__`` or ``__index__``, a ``TypeError`` is raised.
+
+.. versionadded:: 2.4
