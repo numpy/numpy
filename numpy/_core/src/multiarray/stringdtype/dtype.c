@@ -1,6 +1,7 @@
 /* The implementation of the StringDType class */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdatomic.h>
 #include "structmember.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -544,7 +545,7 @@ _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
                 // nan-like nulls sort to the end even in a descending
                 // sort, matching how NaN sorts for floats
                 if (a_is_null) {
-                    return 1;
+                    return b_is_null ? 0 : 1;
                 }
                 else if (b_is_null) {
                     return -1;
@@ -1009,16 +1010,39 @@ static Py_hash_t
 PyArray_StringDType_hash(PyObject *self)
 {
     PyArray_StringDTypeObject *sself = (PyArray_StringDTypeObject *)self;
+    /* PyArrayDescr_Type.tp_new initializes base.hash to -1. */
+    Py_hash_t hash = atomic_load_explicit(
+            (_Atomic(npy_hash_t) *)&sself->base.hash, memory_order_relaxed);
+    if (hash != -1) {
+        return hash;
+    }
+
     PyObject *hash_tup = NULL;
     if (sself->na_object != NULL) {
-        hash_tup = Py_BuildValue("(iO)", sself->coerce, sself->na_object);
+        if (PyFloat_Check(sself->na_object) &&
+                npy_isnan(PyFloat_AS_DOUBLE(sself->na_object))) {
+            // na_eq_cmp treats distinct float NaNs as equal, so use a fixed
+            // value instead of their identity-dependent hashes.
+            hash_tup = Py_BuildValue("(ii)", sself->coerce, 0);
+        }
+        else {
+            hash_tup = Py_BuildValue("(iO)", sself->coerce, sself->na_object);
+        }
     }
     else {
         hash_tup = Py_BuildValue("(i)", sself->coerce);
     }
+    if (hash_tup == NULL) {
+        return -1;
+    }
 
     Py_hash_t ret = PyObject_Hash(hash_tup);
     Py_DECREF(hash_tup);
+    if (ret != -1) {
+        atomic_store_explicit(
+                (_Atomic(npy_hash_t) *)&sself->base.hash, ret,
+                memory_order_relaxed);
+    }
     return ret;
 }
 

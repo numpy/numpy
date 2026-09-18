@@ -31,6 +31,7 @@
 #include "string_ufuncs.h"
 #include "stringdtype_ufuncs.h"
 #include "special_integer_comparisons.h"
+#include "minmax.h"
 #include "real_imag_ufuncs.h"
 #include "unwrap.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
@@ -161,7 +162,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     self->ptr = ptr;
 
     self->type_resolver = &object_ufunc_type_resolver;
-    PyObject_GC_Track(self);
 
     return (PyObject *)self;
 }
@@ -292,6 +292,10 @@ int initumath(PyObject *m)
     }
 
     if (init_special_int_comparisons(d) < 0) {
+        return -1;
+    }
+
+    if (init_minimummaximum(d) < 0) {
         return -1;
     }
 

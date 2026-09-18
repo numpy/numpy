@@ -3,7 +3,7 @@
 	"image": "mcr.microsoft.com/devcontainers/universal:2",
 	"features": {},
 
-	"onCreateCommand": "bash .devcontainer/setup.sh",
+	"onCreateCommand": "",
 	"postCreateCommand": "",
 
 	"customizations": {

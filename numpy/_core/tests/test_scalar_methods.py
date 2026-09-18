@@ -219,6 +219,16 @@ class TestBitCount:
             assert np.uint64((a - 1) ^ 510).bit_count() == exp - 8
 
 
+class TestMethodForwarding:
+    def test_many_forwarded_arguments(self):
+        # more forwarded arguments than fit the on-stack buffer, so that the
+        # heap fallback is exercised
+        scalar = np.float64(1.5)
+        shape = (1,) * 13
+        assert scalar.reshape(*shape).shape == shape
+        assert scalar.reshape(*shape, order="C").shape == shape
+
+
 class TestDevice:
     """
     Test scalar.device attribute and scalar.to_device() method.

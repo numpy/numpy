@@ -640,6 +640,8 @@ class TestUfunc:
         with pytest.raises(TypeError):
             # We accept python float as float64 but not float32 for equiv.
             ufunc(3., 4., dtype="float32", casting="equiv")
+        with pytest.raises(TypeError):
+            ufunc(3., 4., dtype="float32", casting="no")
 
         # Special case for object and equal (note that equiv implies safe)
         ufunc(3, 4, dtype=object, casting="equiv")
@@ -2757,6 +2759,20 @@ class TestUfunc:
         with pytest.raises(ValueError, match="(shape|size)"):
             np.add.accumulate(arr, out=out)
 
+    @pytest.mark.parametrize("shape, out_shape", [
+        ((0,), (1,)),       # Empty input must not bypass shape validation.
+        ((1, 3), (2, 3)),   # The outer iterator must not broadcast the input.
+    ])
+    def test_accumulate_out_shape_mismatch(self, shape, out_shape):
+        arr = np.ones(shape, dtype=np.int64)
+        out = np.empty(out_shape, dtype=arr.dtype)
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.add.accumulate(arr, out=out)
+
+    def test_cumsum_scalar_out_shape_mismatch(self):
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.array(1).cumsum(out=np.empty((), dtype=np.intp))
+
     def test_reduceat_and_accumulate_out_dtype_resolution_failure(self):
         # gh-31691: the out= error path leaked a reference to out when the
         # ufunc dtype resolution failed (no matching loop for the out dtype).
@@ -2768,6 +2784,12 @@ class TestUfunc:
 
         with pytest.raises(np._core._exceptions._UFuncNoLoopError):
             np.add.accumulate(arr, out=out)
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError) as exc:
+            np.array(b"1").cumsum(
+                dtype="timedelta64[D]", out=np.empty(1)
+            )
+        assert exc.value.dtypes[2] is None
 
     @pytest.mark.parametrize('out_shape',
                              [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
@@ -3290,12 +3312,13 @@ class TestLowlevelAPIAccess:
         r = np.add.resolve_dtypes((f4, int, None))
         assert r == (f4, f4, f4)
 
-        msg = r"cannot cast Python.*under the casting rule 'equiv'"
+        msg = r"cannot cast Python.*under the casting rule '{}'"
         for pytype, dtype in [(int, "uint8"), (float, "float32"),
                               (complex, "complex64")]:
-            with pytest.raises(TypeError, match=msg):
-                np.add.resolve_dtypes((np.dtype(dtype), pytype, None),
-                                      casting="equiv")
+            for casting in ["equiv", "no"]:
+                with pytest.raises(TypeError, match=msg.format(casting)):
+                    np.add.resolve_dtypes((np.dtype(dtype), pytype, None),
+                                          casting=casting)
 
         with pytest.raises(TypeError):
             np.add.resolve_dtypes((i4, f4, None), casting="no")

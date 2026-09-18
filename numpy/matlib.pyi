@@ -306,6 +306,7 @@ from numpy import (  # noqa: F401
     min,
     min_scalar_type,
     minimum,
+    minmax,
     mintypecode,
     mod,
     modf,
