@@ -27,57 +27,6 @@ typedef enum {
     PACK_ORDER_BIG
 } PACK_ORDER;
 
-/*
- * Returns -1 if the array is monotonic decreasing,
- * +1 if the array is monotonic increasing,
- * and 0 if the array is not monotonic.
- */
-static int
-check_array_monotonic(const double *a, npy_intp lena)
-{
-    npy_intp i;
-    double next;
-    double last;
-
-    if (lena == 0) {
-        /* all bin edges hold the same value */
-        return 1;
-    }
-    last = a[0];
-
-    /* Skip repeated values at the beginning of the array */
-    for (i = 1; (i < lena) && (a[i] == last); i++);
-
-    if (i == lena) {
-        /* all bin edges hold the same value */
-        return 1;
-    }
-
-    next = a[i];
-    if (last < next) {
-        /* Possibly monotonic increasing */
-        for (i += 1; i < lena; i++) {
-            last = next;
-            next = a[i];
-            if (last > next) {
-                return 0;
-            }
-        }
-        return 1;
-    }
-    else {
-        /* last > next, possibly monotonic decreasing */
-        for (i += 1; i < lena; i++) {
-            last = next;
-            next = a[i];
-            if (last < next) {
-                return 0;
-            }
-        }
-        return -1;
-    }
-}
-
 /* Find the minimum and maximum of an integer array */
 static void
 minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
@@ -270,43 +219,6 @@ fail:
     Py_XDECREF(wts);
     Py_XDECREF(ans);
     return NULL;
-}
-
-/* Internal function to expose check_array_monotonic to python */
-NPY_NO_EXPORT PyObject *
-arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
-{
-    static char *kwlist[] = {"x", NULL};
-    PyObject *obj_x = NULL;
-    PyArrayObject *arr_x = NULL;
-    long monotonic;
-    npy_intp len_x;
-    NPY_BEGIN_THREADS_DEF;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:_monotonicity", kwlist,
-                                     &obj_x)) {
-        return NULL;
-    }
-
-    /*
-     * TODO:
-     *  `x` could be strided, needs change to check_array_monotonic
-     *  `x` is forced to double for this check
-     */
-    arr_x = (PyArrayObject *)PyArray_FROMANY(
-        obj_x, NPY_DOUBLE, 1, 1, NPY_ARRAY_CARRAY_RO);
-    if (arr_x == NULL) {
-        return NULL;
-    }
-
-    len_x = PyArray_SIZE(arr_x);
-    NPY_BEGIN_THREADS_THRESHOLDED(len_x)
-    monotonic = check_array_monotonic(
-        (const double *)PyArray_DATA(arr_x), len_x);
-    NPY_END_THREADS
-    Py_DECREF(arr_x);
-
-    return PyLong_FromLong(monotonic);
 }
 
 /*
