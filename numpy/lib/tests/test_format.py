@@ -518,6 +518,22 @@ def test_memmap_roundtrip(tmpdir):
         ma.flush()
 
 
+@pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
+def test_memmap_numpy_integer_shape(tmp_path):
+    fname = tmp_path / "numpy_ints.npy"
+    shape = tuple(np.int64(dim) for dim in (2, 3))
+    marray = format.open_memmap(fname, mode='w+', dtype=np.int64, shape=shape)
+    marray[...] = np.arange(6).reshape(2, 3)
+    marray.flush()
+    del marray
+
+    with open(fname, 'rb') as fp:
+        assert b'np.int64' not in fp.read(128)
+
+    loaded = np.load(fname)
+    assert_array_equal(loaded, np.arange(6).reshape(2, 3))
+
+
 def test_compressed_roundtrip(tmpdir):
     arr = np.random.rand(200, 200)
     npz_file = os.path.join(tmpdir, 'compressed.npz')
@@ -889,6 +905,22 @@ def test_read_array_header_2_0():
 
     assert_(s.tell() % format.ARRAY_ALIGN == 0)
     assert_((shape, fortran, dtype) == ((3, 6), False, float))
+
+
+def test_write_array_header_numpy_integer_shape():
+    s = BytesIO()
+    d = {
+        'shape': (np.int64(2), np.uint64(3)),
+        'fortran_order': False,
+        'descr': np.dtype(np.int64).str,
+    }
+    format.write_array_header_1_0(s, d)
+
+    assert b'np.int' not in s.getvalue()
+
+    s.seek(format.MAGIC_LEN)
+    shape, fortran, dtype = format.read_array_header_1_0(s)
+    assert (shape, fortran, dtype) == ((2, 3), False, np.dtype(np.int64))
 
 
 def test_bad_header():
