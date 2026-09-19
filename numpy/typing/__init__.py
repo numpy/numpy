@@ -23,13 +23,6 @@ helpful. For that reason, the typed NumPy API is often stricter than
 the runtime NumPy API. This section describes some notable
 differences.
 
-Deprecations
-~~~~~~~~~~~~
-
-Runtime deprecations can be reflected in static types using :pep:`702`,
-allowing supporting type checkers to report use of a deprecated API while it
-remains available at runtime.
-
 ArrayLike
 ~~~~~~~~~
 
@@ -148,6 +141,13 @@ These two approaches are currently typed as being mutually exclusive,
 While this mutual exclusivity is not (strictly) enforced during runtime,
 combining both dtype specifiers can lead to unexpected or even downright
 buggy behavior.
+
+Deprecations
+~~~~~~~~~~~~
+
+Runtime deprecations can be reflected in static types using :pep:`702`,
+allowing supporting type checkers to report use of a deprecated API while it
+remains available at runtime.
 
 API
 ---
