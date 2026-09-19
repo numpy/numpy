@@ -143,22 +143,15 @@ class TestClog:
 
     @pytest.mark.parametrize("dtype", [np.complex64, np.complex128,
                                        np.clongdouble])
-    @pytest.mark.parametrize("imag", [-1.0, 0.0, 1.0])
-    def test_nan_real_finite_imag(self, dtype, imag):
-        x = np.array([complex(np.nan, imag)], dtype=dtype)
+    @pytest.mark.parametrize("value", [complex(np.nan, 1),
+                                       complex(np.nan, np.nan),
+                                       complex(1, np.nan)])
+    def test_nan_components(self, dtype, value):
+        x = np.array(value, dtype=dtype)
         with np.errstate(invalid='raise'):
             y = np.log(x)
-        assert np.isnan(y.real).all()
-        assert np.isnan(y.imag).all()
-
-    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128,
-                                       np.clongdouble])
-    def test_nan_real_nan_imag(self, dtype):
-        x = np.array([complex(np.nan, np.nan)], dtype=dtype)
-        with np.errstate(invalid='raise'):
-            y = np.log(x)
-        assert np.isnan(y.real).all()
-        assert np.isnan(y.imag).all()
+        assert np.isnan(y.real)
+        assert np.isnan(y.imag)
 
     @platform_skip
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
