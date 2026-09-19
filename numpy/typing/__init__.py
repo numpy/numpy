@@ -23,6 +23,16 @@ helpful. For that reason, the typed NumPy API is often stricter than
 the runtime NumPy API. This section describes some notable
 differences.
 
+Deprecations
+~~~~~~~~~~~~
+
+Runtime deprecations can be reflected in static types in two ways. An API may
+be marked as deprecated using :pep:`702`, allowing supporting type checkers to
+report its use. Alternatively, deprecated behavior may be omitted from the
+type annotations even while it remains available at runtime. A type checker
+may therefore report or reject code that only emits a ``DeprecationWarning``
+when executed.
+
 ArrayLike
 ~~~~~~~~~
 
