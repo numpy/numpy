@@ -151,6 +151,18 @@ array_converter_get_scalar_input(PyArrayArrayConverterObject *self)
 }
 
 
+static PyObject *
+array_converter_get_has_pyscalars(PyArrayArrayConverterObject *self)
+{
+    for (int i = 0; i < self->narrs; i++) {
+        if (self->items[i].descr == NULL) {
+            Py_RETURN_TRUE;
+        }
+    }
+    Py_RETURN_FALSE;
+}
+
+
 static int
 find_wrap(PyArrayArrayConverterObject *self)
 {
@@ -392,6 +404,10 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
 
 
 static PyGetSetDef array_converter_getsets[] = {
+    {"has_pyscalars",
+        (getter)array_converter_get_has_pyscalars,
+        NULL,
+        NULL, NULL},
     {"scalar_input",
         (getter)array_converter_get_scalar_input,
         NULL,

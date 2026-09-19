@@ -5656,6 +5656,15 @@ def append(arr, values, axis=None):
     insert : Insert elements into an array.
     delete : Delete elements from an array.
 
+    Notes
+    -----
+    .. deprecated:: 2.6
+        When ``axis=None``, Python numeric scalars currently promote as if
+        converted to arrays. A future release will use the scalar promotion
+        rules of ``np.concatenate((arr, values), axis=None)``. Call
+        `concatenate` directly to use the future behavior, or pass its
+        ``dtype=`` argument to choose the result dtype explicitly.
+
     Examples
     --------
     >>> import numpy as np
@@ -5687,13 +5696,34 @@ def append(arr, values, axis=None):
     `float64` when appended with dtype `int64`
 
     """
-    arr = asanyarray(arr)
-    if axis is None:
-        if arr.ndim != 1:
-            arr = arr.ravel()
-        values = ravel(values)
-        axis = arr.ndim - 1
-    return concatenate((arr, values), axis=axis)
+    if axis is not None:
+        return concatenate((arr, values), axis=axis)
+    conv = _array_converter(arr, values)
+    arrays = conv.as_arrays(pyscalars="convert")
+    if conv.has_pyscalars:
+        # DEPRECATED 2026-09-15, NumPy 2.6
+        result = concatenate(arrays, axis=None)
+        try:
+            future_dtype = conv.result_type()
+        except np.exceptions.DTypePromotionError:
+            change = "these inputs have no common dtype and will raise an error"
+        else:
+            if future_dtype == result.dtype:
+                return result
+            change = (
+                f"these inputs will use dtype {future_dtype}, which may "
+                "round values differently or raise an error")
+        warnings.warn(
+            "np.append converted Python numeric scalars to arrays before "
+            f"choosing the result dtype, producing dtype {result.dtype}. "
+            "This behavior will change in a future release, "
+            f"{change}. Use np.concatenate((arr, values), axis=None) for the "
+            f"future behavior; add dtype={str(result.dtype)!r} to that call to "
+            "keep the current result.", FutureWarning, stacklevel=2)
+        return result
+    inputs = tuple(obj if scalar else a for obj, scalar, a in
+                   zip((arr, values), conv.scalar_input, arrays))
+    return concatenate(inputs, axis=None)
 
 
 def _digitize_dispatcher(x, bins, right=None):
