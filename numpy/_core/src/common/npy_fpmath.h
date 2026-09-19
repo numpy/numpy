@@ -19,6 +19,12 @@
     #error No long double representation defined
 #endif
 
+#if defined(HAVE_LDOUBLE_IEEE_QUAD_BE) || defined(HAVE_LDOUBLE_IEEE_QUAD_LE)
+    #define NPY_LDOUBLE_IS_IEEE_QUAD 1
+#else
+    #define NPY_LDOUBLE_IS_IEEE_QUAD 0
+#endif
+
 /* for back-compat, also keep old name for double-double */
 #ifdef HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE
     #define HAVE_LDOUBLE_DOUBLE_DOUBLE_LE
