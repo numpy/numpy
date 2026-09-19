@@ -310,6 +310,9 @@ npy_clog@c@(@ctype@ z)
     if (npy_isnan(ax) && npy_isfinite(ay)) {
         return npy_cpack@c@(ax, NPY_NAN@C@);
     }
+    if (npy_isnan(ax) && npy_isnan(ay)) {
+        return npy_cpack@c@(ax, ay);
+    }
 
     if (ax > @TMAX@/4 || ay > @TMAX@/4) {
         rr = npy_log@c@(npy_hypot@c@(ax/2, ay/2)) + NPY_LOGE2@c@;
