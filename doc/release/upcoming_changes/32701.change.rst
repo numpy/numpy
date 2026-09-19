@@ -1,0 +1,1 @@
+* `np.histogramdd` now converts and returns a plain ndarray as its docstring promises in all cases. Previously it only did that when it was handled a sequence of arrays.
