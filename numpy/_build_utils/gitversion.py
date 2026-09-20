@@ -5,7 +5,7 @@ import textwrap
 
 def init_version():
     init = os.path.join(os.path.dirname(__file__), '../../pyproject.toml')
-    with open(init) as fid:
+    with open(init, encoding="utf-8") as fid:
         data = fid.readlines()
 
     version_line = next(
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         if relpath.startswith('.'):
             relpath = outfile
 
-        with open(outfile, 'w') as f:
+        with open(outfile, 'w', encoding="utf-8") as f:
             print(f'Saving version to {relpath}')
             f.write(template)
     else:

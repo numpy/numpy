@@ -157,7 +157,7 @@ def load_f2cmap_file(f2cmap_file):
     # they use PARAMETERS in type specifications.
     try:
         outmess(f'Reading f2cmap from {f2cmap_file!r} ...\n')
-        with open(f2cmap_file) as f:
+        with open(f2cmap_file, encoding="utf-8") as f:
             d = eval(f.read().lower(), {}, {})
         f2cmap_all, f2cmap_mapped = process_f2cmap_dict(f2cmap_all, d, c2py_map, True)
         outmess('Successfully applied user defined f2cmap changes\n')

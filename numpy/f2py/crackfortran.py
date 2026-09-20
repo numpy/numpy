@@ -3702,7 +3702,7 @@ if __name__ == "__main__":
             f77modulename = l
         elif f:
             try:
-                open(l).close()
+                open(l, encoding="utf-8").close()
                 files.append(l)
             except OSError as detail:
                 errmess(f'OSError: {detail!s}\n')
@@ -3721,7 +3721,7 @@ if __name__ == "__main__":
     if pyffilename:
         outmess(f'Writing fortran code to file {repr(pyffilename)}\n', 0)
         pyf = crack2fortran(postlist)
-        with open(pyffilename, 'w') as f:
+        with open(pyffilename, 'w', encoding="utf-8") as f:
             f.write(pyf)
     if showblocklist:
         show(postlist)

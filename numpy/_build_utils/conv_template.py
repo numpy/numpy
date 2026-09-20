@@ -267,7 +267,7 @@ include_src_re = re.compile(r"(\n|\A)#include\s*['\"]"
 
 def resolve_includes(source):
     d = os.path.dirname(source)
-    with open(source) as fid:
+    with open(source, encoding="utf-8") as fid:
         lines = []
         for line in fid:
             m = include_src_re.match(line)
@@ -317,10 +317,10 @@ def main():
         fid = sys.stdin
         outfile = sys.stdout
     else:
-        fid = open(file, 'r')
+        fid = open(file, 'r', encoding="utf-8")
         (base, ext) = os.path.splitext(file)
         newname = base
-        outfile = open(newname, 'w')
+        outfile = open(newname, 'w', encoding="utf-8")
 
     allstr = fid.read()
     try:

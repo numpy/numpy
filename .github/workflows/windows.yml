@@ -18,6 +18,10 @@ concurrency:
 permissions:
   contents: read # to fetch code (actions/checkout)
 
+env:
+  # Surface EncodingWarning (PEP 597) as errors in the test suite; see gh-24115
+  PYTHONWARNDEFAULTENCODING: "1"
+
 jobs:
   clangcl_python64bit_openblas32:
     name: Clang-cl, x86-64, fast, openblas32

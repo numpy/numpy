@@ -92,7 +92,7 @@ def invalid_httpfile():
 class TestDataSourceOpen:
     def test_ValidHTTP(self, tmp_path):
         ds = datasource.DataSource(tmp_path)
-        fh = ds.open(valid_httpurl())
+        fh = ds.open(valid_httpurl(), encoding="utf-8")
         assert_(fh)
         fh.close()
 
@@ -113,14 +113,14 @@ class TestDataSourceOpen:
     def test_ValidFile(self, tmp_path):
         ds = datasource.DataSource(tmp_path)
         local_file = valid_textfile(tmp_path)
-        fh = ds.open(local_file)
+        fh = ds.open(local_file, encoding="utf-8")
         assert_(fh)
         fh.close()
 
     def test_PathFile(self, tmp_path):
         ds = datasource.DataSource(tmp_path)
         local_file = Path(valid_textfile(tmp_path))
-        with ds.open(local_file) as fh:
+        with ds.open(local_file, encoding="utf-8") as fh:
             assert_(fh)
 
     def test_InvalidFile(self, tmp_path):
@@ -140,7 +140,7 @@ class TestDataSourceOpen:
         fp = gzip.open(filepath, 'w')
         fp.write(magic_line)
         fp.close()
-        fp = ds.open(filepath)
+        fp = ds.open(filepath, encoding="utf-8")
         result = fp.readline()
         fp.close()
         assert_equal(magic_line, result)
@@ -157,7 +157,7 @@ class TestDataSourceOpen:
         fp = bz2.BZ2File(filepath, 'w')
         fp.write(magic_line)
         fp.close()
-        fp = ds.open(filepath)
+        fp = ds.open(filepath, encoding="utf-8")
         result = fp.readline()
         fp.close()
         assert_equal(magic_line, result)
@@ -337,7 +337,7 @@ class TestRepositoryOpen:
         repos = datasource.Repository(tmp_path, tmp_path)
         tmpfile = valid_textfile(tmp_path)
         tmpfilename = os.path.split(tmpfile)[-1]
-        with repos.open(Path(tmpfilename)) as fh:
+        with repos.open(Path(tmpfilename), encoding="utf-8") as fh:
             assert_(fh)
 
 
@@ -345,17 +345,17 @@ class TestOpenFunc:
     def test_DataSourceOpen(self, tmp_path):
         local_file = valid_textfile(tmp_path)
         # Test case where destpath is passed in
-        fp = datasource.open(local_file, destpath=tmp_path)
+        fp = datasource.open(local_file, destpath=tmp_path, encoding="utf-8")
         assert_(fp)
         fp.close()
         # Test case where default destpath is used
-        fp = datasource.open(local_file)
+        fp = datasource.open(local_file, encoding="utf-8")
         assert_(fp)
         fp.close()
 
     def test_PathFile(self, tmp_path):
         local_file = Path(valid_textfile(tmp_path))
-        fp = datasource.open(local_file, destpath=tmp_path)
+        fp = datasource.open(local_file, destpath=tmp_path, encoding="utf-8")
         assert_(fp)
         fp.close()
 

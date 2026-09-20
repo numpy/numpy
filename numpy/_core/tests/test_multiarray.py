@@ -6662,7 +6662,7 @@ class TestIO:
 
     def test_empty_files_text(self, tmp_path, param_filename):
         tmp_filename = normalize_filename(tmp_path, param_filename)
-        with open(tmp_filename, 'w') as f:
+        with open(tmp_filename, 'w', encoding="utf-8") as f:
             pass
         y = np.fromfile(tmp_filename)
         assert_(y.size == 0, "Array not empty")
@@ -6761,7 +6761,7 @@ class TestIO:
             d.tofile(f)
             assert_equal(os.path.getsize(tmp_filename), d.nbytes * 2)
         # check append mode (gh-8329)
-        open(tmp_filename, "w").close()  # delete file contents
+        open(tmp_filename, "w", encoding="utf-8").close()  # delete file contents
         with open(tmp_filename, "ab") as f:
             d.tofile(f)
         assert_array_equal(d, np.fromfile(tmp_filename))
@@ -6828,7 +6828,7 @@ class TestIO:
     def test_load_object_array_fromfile(self, tmp_path, param_filename):
         # gh-12300
         tmp_filename = normalize_filename(tmp_path, param_filename)
-        with open(tmp_filename, 'w') as f:
+        with open(tmp_filename, 'w', encoding="utf-8") as f:
             # Ensure we have a file with consistent contents
             pass
 
@@ -7041,9 +7041,9 @@ class TestIO:
     def test_tofile_sep(self, tmp_path, param_filename, decimal_sep_localization):
         tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
-        with open(tmp_filename, 'w') as f:
+        with open(tmp_filename, 'w', encoding="utf-8") as f:
             x.tofile(f, sep=',')
-        with open(tmp_filename, 'r') as f:
+        with open(tmp_filename, 'r', encoding="utf-8") as f:
             s = f.read()
         #assert_equal(s, '1.51,2.0,3.51,4.0')
         y = np.array([float(p) for p in s.split(',')])
@@ -7052,9 +7052,9 @@ class TestIO:
     def test_tofile_format(self, tmp_path, param_filename, decimal_sep_localization):
         tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
-        with open(tmp_filename, 'w') as f:
+        with open(tmp_filename, 'w', encoding="utf-8") as f:
             x.tofile(f, sep=',', format='%.2f')
-        with open(tmp_filename, 'r') as f:
+        with open(tmp_filename, 'r', encoding="utf-8") as f:
             s = f.read()
         assert_equal(s, '1.51,2.00,3.51,4.00')
 
@@ -7062,7 +7062,7 @@ class TestIO:
             self, tmp_path, param_filename):
         tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
-        with open(tmp_filename, 'w') as f:
+        with open(tmp_filename, 'w', encoding="ascii") as f:
             with pytest.raises(UnicodeEncodeError):
                 x.tofile(f, sep=',', format='\N{MICRO SIGN}%.2f')
 
@@ -7070,7 +7070,7 @@ class TestIO:
             self, tmp_path, param_filename):
         tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.array(['\N{MICRO SIGN}'])
-        with open(tmp_filename, 'w') as f:
+        with open(tmp_filename, 'w', encoding="ascii") as f:
             with pytest.raises(UnicodeEncodeError):
                 x.tofile(f, sep=',')
 
@@ -7078,7 +7078,7 @@ class TestIO:
             self, tmp_path, param_filename):
         tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.array(['\N{MICRO SIGN}123'])
-        with open(tmp_filename, 'w') as f:
+        with open(tmp_filename, 'w', encoding="ascii") as f:
             with pytest.raises(UnicodeEncodeError):
                 x.tofile(f, sep=',', format='%s')
 
@@ -7114,7 +7114,7 @@ class TestIO:
         with pytest.raises(ValueError):
             expected = np.fromstring(data, dtype="(3,)i", sep=",")
 
-        with open(tmp_filename, "w") as f:
+        with open(tmp_filename, "w", encoding="utf-8") as f:
             f.write(data)
 
         with pytest.raises(ValueError):
@@ -7307,7 +7307,8 @@ class TestResize:
         """)
         try:
             subprocess.check_output([sys.executable, "-c", code],
-                                    stderr=subprocess.STDOUT, text=True)
+                                    stderr=subprocess.STDOUT, text=True,
+                                    encoding="utf-8")
         except subprocess.CalledProcessError as e:
             assert sys.version_info >= (3, 14)
             assert "ValueError" in e.stdout

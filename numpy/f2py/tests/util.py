@@ -35,7 +35,7 @@ def check_language(lang, code_snippet=None):
     tmpdir = tempfile.mkdtemp()
     try:
         meson_file = os.path.join(tmpdir, "meson.build")
-        with open(meson_file, "w") as f:
+        with open(meson_file, "w", encoding="utf-8") as f:
             f.write("project('check_compilers')\n")
             f.write(f"add_languages('{lang}')\n")
             if code_snippet:
@@ -287,7 +287,7 @@ def build_code(source_code,
     if suffix is None:
         suffix = ".f"
     with temppath(suffix=suffix) as path:
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(source_code)
         return build_module([path],
                             options=options,

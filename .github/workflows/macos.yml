@@ -16,6 +16,8 @@ permissions:
 
 env:
   CCACHE_DIR: "${{ github.workspace }}/.ccache"
+  # Surface EncodingWarning (PEP 597) as errors in the test suite; see gh-24115
+  PYTHONWARNDEFAULTENCODING: "1"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}

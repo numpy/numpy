@@ -75,7 +75,7 @@ class MesonTemplate:
                 f" {self.build_template_path.absolute()}"
                 " does not exist.",
             )
-        return self.build_template_path.read_text()
+        return self.build_template_path.read_text(encoding="utf-8")
 
     def initialize_template(self) -> None:
         self.substitutions["modulename"] = self.modulename
@@ -190,7 +190,7 @@ class MesonBackend(Backend):
         src = meson_template.generate_meson_build()
         Path(build_dir).mkdir(parents=True, exist_ok=True)
         meson_build_file = Path(build_dir) / "meson.build"
-        meson_build_file.write_text(src)
+        meson_build_file.write_text(src, encoding="utf-8")
         return meson_build_file
 
     def _run_subprocess_command(self, command, cwd):

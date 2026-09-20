@@ -212,7 +212,7 @@ include_src_re = re.compile(r"(\n|\A)\s*include\s*['\"](?P<name>[\w\d./\\]+\.src
 
 def resolve_includes(source):
     d = os.path.dirname(source)
-    with open(source) as fid:
+    with open(source, encoding="utf-8") as fid:
         lines = []
         for line in fid:
             m = include_src_re.match(line)

@@ -17,7 +17,7 @@ def normalize_doc(docstring):
     return docstring
 
 def write_code(target):
-    with open(target, 'w') as fid:
+    with open(target, 'w', encoding="utf-8") as fid:
         fid.write(
             "#ifndef NUMPY_CORE_INCLUDE__UMATH_DOC_GENERATED_H_\n"
             "#define NUMPY_CORE_INCLUDE__UMATH_DOC_GENERATED_H_\n"

@@ -1707,7 +1707,7 @@ def main():
     else:
         outfile = os.path.join(os.getcwd(), args.outfile)
 
-    with open(outfile, 'w') as f:
+    with open(outfile, 'w', encoding="utf-8") as f:
         f.write(code)
 
 

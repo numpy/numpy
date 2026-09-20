@@ -29,7 +29,7 @@ def process_and_write_file(fromfile, outfile):
     """
     process_file = get_processor()
     content = process_file(fromfile)
-    with open(outfile, 'w') as f:
+    with open(outfile, 'w', encoding="utf-8") as f:
         f.write(content)
 
 

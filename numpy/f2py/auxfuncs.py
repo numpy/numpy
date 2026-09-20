@@ -939,7 +939,7 @@ _f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*
 
 def get_f2py_modulename(source):
     name = None
-    with open(source) as f:
+    with open(source, encoding="utf-8") as f:
         for line in f:
             m = _f2py_module_name_match(line)
             if m:

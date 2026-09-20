@@ -305,7 +305,7 @@ def scrubSource(source, nsteps=None, verbose=False):
 if __name__ == '__main__':
     filename = sys.argv[1]
     outfilename = os.path.join(sys.argv[2], os.path.basename(filename))
-    with open(filename) as fo:
+    with open(filename, encoding="utf-8") as fo:
         source = fo.read()
 
     if len(sys.argv) > 3:
@@ -315,5 +315,5 @@ if __name__ == '__main__':
 
     source = scrubSource(source, nsteps, verbose=True)
 
-    with open(outfilename, 'w') as writefo:
+    with open(outfilename, 'w', encoding="utf-8") as writefo:
         writefo.write(source)

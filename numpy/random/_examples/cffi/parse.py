@@ -9,7 +9,7 @@ def parse_distributions_h(ffi, inc_dir):
     be filled in when loading the library.
     """
 
-    with open(os.path.join(inc_dir, 'random', 'bitgen.h')) as fid:
+    with open(os.path.join(inc_dir, 'random', 'bitgen.h'), encoding="utf-8") as fid:
         s = []
         for line in fid:
             # massage the include file
@@ -18,7 +18,8 @@ def parse_distributions_h(ffi, inc_dir):
             s.append(line)
         ffi.cdef('\n'.join(s))
 
-    with open(os.path.join(inc_dir, 'random', 'distributions.h')) as fid:
+    with open(os.path.join(inc_dir, 'random', 'distributions.h'),
+              encoding="utf-8") as fid:
         s = []
         in_skip = 0
         ignoring = False

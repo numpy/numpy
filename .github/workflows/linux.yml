@@ -33,6 +33,8 @@ permissions:
 
 env:
   APT_TIMEOUT_MINUTES: 15
+  # Surface EncodingWarning (PEP 597) as errors in the test suite; see gh-24115
+  PYTHONWARNDEFAULTENCODING: "1"
 
 jobs:
   smoke_test:

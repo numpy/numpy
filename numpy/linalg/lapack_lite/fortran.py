@@ -113,7 +113,7 @@ def getDependencies(filename):
     """
     external_pat = re.compile(r'^\s*EXTERNAL\s', re.I)
     routines = []
-    with open(filename) as fo:
+    with open(filename, encoding="utf-8") as fo:
         for lineno, line in fortranSourceLines(fo):
             m = external_pat.match(line)
             if m:

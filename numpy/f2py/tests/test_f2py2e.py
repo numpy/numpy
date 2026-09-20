@@ -77,7 +77,8 @@ def get_io_paths(fname_inp, mname="untitled"):
 @pytest.fixture(scope="session")
 def hello_world_f90(tmpdir_factory):
     """Generates a single f90 file for testing"""
-    fdat = util.getpath("tests", "src", "cli", "hiworld.f90").read_text()
+    fdat = util.getpath(
+        "tests", "src", "cli", "hiworld.f90").read_text(encoding="utf-8")
     fn = tmpdir_factory.getbasetemp() / "hello.f90"
     fn.write_text(fdat, encoding="ascii")
     return fn
@@ -86,7 +87,8 @@ def hello_world_f90(tmpdir_factory):
 @pytest.fixture(scope="session")
 def gh23598_warn(tmpdir_factory):
     """F90 file for testing warnings in gh23598"""
-    fdat = util.getpath("tests", "src", "crackfortran", "gh23598Warn.f90").read_text()
+    fdat = util.getpath(
+        "tests", "src", "crackfortran", "gh23598Warn.f90").read_text(encoding="utf-8")
     fn = tmpdir_factory.getbasetemp() / "gh23598Warn.f90"
     fn.write_text(fdat, encoding="ascii")
     return fn
@@ -95,7 +97,8 @@ def gh23598_warn(tmpdir_factory):
 @pytest.fixture(scope="session")
 def gh22819_cli(tmpdir_factory):
     """F90 file for testing disallowed CLI arguments in ghff819"""
-    fdat = util.getpath("tests", "src", "cli", "gh_22819.pyf").read_text()
+    fdat = util.getpath(
+        "tests", "src", "cli", "gh_22819.pyf").read_text(encoding="utf-8")
     fn = tmpdir_factory.getbasetemp() / "gh_22819.pyf"
     fn.write_text(fdat, encoding="ascii")
     return fn
@@ -104,7 +107,7 @@ def gh22819_cli(tmpdir_factory):
 @pytest.fixture(scope="session")
 def hello_world_f77(tmpdir_factory):
     """Generates a single f77 file for testing"""
-    fdat = util.getpath("tests", "src", "cli", "hi77.f").read_text()
+    fdat = util.getpath("tests", "src", "cli", "hi77.f").read_text(encoding="utf-8")
     fn = tmpdir_factory.getbasetemp() / "hello.f"
     fn.write_text(fdat, encoding="ascii")
     return fn
@@ -113,7 +116,8 @@ def hello_world_f77(tmpdir_factory):
 @pytest.fixture(scope="session")
 def retreal_f77(tmpdir_factory):
     """Generates a single f77 file for testing"""
-    fdat = util.getpath("tests", "src", "return_real", "foo77.f").read_text()
+    fdat = util.getpath(
+        "tests", "src", "return_real", "foo77.f").read_text(encoding="utf-8")
     fn = tmpdir_factory.getbasetemp() / "foo.f"
     fn.write_text(fdat, encoding="ascii")
     return fn
@@ -121,8 +125,10 @@ def retreal_f77(tmpdir_factory):
 @pytest.fixture(scope="session")
 def f2cmap_f90(tmpdir_factory):
     """Generates a single f90 file for testing"""
-    fdat = util.getpath("tests", "src", "f2cmap", "isoFortranEnvMap.f90").read_text()
-    f2cmap = util.getpath("tests", "src", "f2cmap", ".f2py_f2cmap").read_text()
+    fdat = util.getpath(
+        "tests", "src", "f2cmap", "isoFortranEnvMap.f90").read_text(encoding="utf-8")
+    f2cmap = util.getpath(
+        "tests", "src", "f2cmap", ".f2py_f2cmap").read_text(encoding="utf-8")
     fn = tmpdir_factory.getbasetemp() / "f2cmap.f90"
     fmap = tmpdir_factory.getbasetemp() / "mapfile"
     fn.write_text(fdat, encoding="ascii")
@@ -173,7 +179,7 @@ def test_gh23598_warn(capfd, gh23598_warn, monkeypatch):
 
     with util.switchdir(ipath.parent):
         f2pycli()  # Generate files
-        wrapper = foutl.wrap90.read_text()
+        wrapper = foutl.wrap90.read_text(encoding="utf-8")
         assert "intproductf2pywrap, intpr" not in wrapper
 
 
@@ -372,7 +378,7 @@ def test_mod_gen_gh25263(capfd, hello_world_f77, monkeypatch):
     monkeypatch.setattr(sys, "argv", f'f2py {ipath} -m {MNAME} -h hi.pyf'.split())
     with util.switchdir(ipath.parent):
         f2pycli()
-        with Path('hi.pyf').open() as hipyf:
+        with Path('hi.pyf').open(encoding="utf-8") as hipyf:
             pyfdat = hipyf.read()
             assert "python module hi" in pyfdat
 
@@ -490,7 +496,7 @@ def test_latexdoc(capfd, hello_world_f90, monkeypatch):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Documentation is saved to file" in out
-        with Path(f"{mname}module.tex").open() as otex:
+        with Path(f"{mname}module.tex").open(encoding="utf-8") as otex:
             assert "\\documentclass" in otex.read()
 
 
@@ -521,7 +527,7 @@ def test_latex_doc_gh30268(tmp_path):
     """)
 
     fpath = tmp_path / "test_latex.f90"
-    with open(fpath, "w") as f:
+    with open(fpath, "w", encoding="utf-8") as f:
         f.write(fsource)
 
     cmd = [sys.executable, "-m", "numpy.f2py", "-c", str(fpath), "-m", "test_latex", "--latex-doc"]
@@ -546,7 +552,7 @@ def test_shortlatex(capfd, hello_world_f90, monkeypatch):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Documentation is saved to file" in out
-        with Path(f"./{mname}module.tex").open() as otex:
+        with Path(f"./{mname}module.tex").open(encoding="utf-8") as otex:
             assert "\\documentclass" not in otex.read()
 
 
@@ -564,7 +570,7 @@ def test_restdoc(capfd, hello_world_f90, monkeypatch):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "ReST Documentation is saved to file" in out
-        with Path(f"./{mname}module.rest").open() as orst:
+        with Path(f"./{mname}module.rest").open(encoding="utf-8") as orst:
             assert r".. -*- rest -*-" in orst.read()
 
 
@@ -596,7 +602,7 @@ def test_debugcapi(capfd, hello_world_f90, monkeypatch):
 
     with util.switchdir(ipath.parent):
         f2pycli()
-        with Path(f"./{mname}module.c").open() as ocmod:
+        with Path(f"./{mname}module.c").open(encoding="utf-8") as ocmod:
             assert r"#define DEBUGCFUNCS" in ocmod.read()
 
 
@@ -688,7 +694,7 @@ def test_inclheader(capfd, hello_world_f90, monkeypatch):
 
     with util.switchdir(ipath.parent):
         f2pycli()
-        with Path(f"./{mname}module.c").open() as ocmod:
+        with Path(f"./{mname}module.c").open(encoding="utf-8") as ocmod:
             ocmr = ocmod.read()
             assert "#include <stdbool.h>" in ocmr
             assert "#include <stdio.h>" in ocmr
@@ -708,7 +714,7 @@ def test_cli_obj(capfd, hello_world_f90, monkeypatch):
     with util.switchdir(ipath.parent):
         Path(obj).touch()
         compiler_check_f2pycli()
-        with Path(f"{odir}/meson.build").open() as mesonbuild:
+        with Path(f"{odir}/meson.build").open(encoding="utf-8") as mesonbuild:
             mbld = mesonbuild.read()
             assert "objects:" in mbld
             assert f"'''{obj}'''" in mbld

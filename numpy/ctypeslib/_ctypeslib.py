@@ -134,7 +134,7 @@ else:
             # iOS requires all dynamic libraries to be delivered as
             # frameworks; CPython uses .fwork files to provide tracing
             # from the CPython-expected location to the runtime location.
-            with open(loader_path) as f:
+            with open(loader_path, encoding="utf-8") as f:
                 loader_path = os.path.join(
                     os.path.dirname(sys.executable),
                     f.read().strip()

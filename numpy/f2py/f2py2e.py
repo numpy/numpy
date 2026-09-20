@@ -287,7 +287,7 @@ def scaninputline(inputline):
             options["f2cmap_file"] = l
         elif f == 1:
             try:
-                with open(l):
+                with open(l, encoding="utf-8"):
                     pass
                 files.append(l)
             except OSError as detail:
@@ -354,7 +354,7 @@ def callcrackfortran(files, options):
         if options['signsfile'][-6:] == 'stdout':
             sys.stdout.write(pyf)
         else:
-            with open(options['signsfile'], 'w') as f:
+            with open(options['signsfile'], 'w', encoding="utf-8") as f:
                 f.write(pyf)
     if options["coutput"] is None:
         for mod in postlist:

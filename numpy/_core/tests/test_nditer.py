@@ -2254,7 +2254,7 @@ def test_buffered_cast_error_paths_unraisable():
         del buf, it  # Flushing only happens during deallocate right now.
         """)
     res = subprocess.check_output([sys.executable, "-c", code],
-                                  stderr=subprocess.STDOUT, text=True)
+                                  stderr=subprocess.STDOUT, text=True, encoding="utf-8")
     assert "ValueError" in res
 
 

@@ -227,7 +227,7 @@ def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
 def getWrappedRoutineNames(wrapped_routines_file):
     routines = []
     ignores = []
-    with open(wrapped_routines_file) as fo:
+    with open(wrapped_routines_file, encoding="utf-8") as fo:
         for line in fo:
             line = line.strip()
             if not line or line.startswith('#'):
@@ -247,15 +247,15 @@ def dumpRoutineNames(library, output_dir):
     for typename in {'unknown'} | types:
         routines = library.allRoutinesByType(typename)
         filename = os.path.join(output_dir, typename + '_routines.lst')
-        with open(filename, 'w') as fo:
+        with open(filename, 'w', encoding="utf-8") as fo:
             for r in routines:
                 deps = r.dependencies()
                 fo.write(f"{r.name}: {' '.join(deps)}\n")
 
 def concatenateRoutines(routines, output_file):
-    with open(output_file, 'w') as output_fo:
+    with open(output_file, 'w', encoding="utf-8") as output_fo:
         for r in routines:
-            with open(r.filename) as fo:
+            with open(r.filename, encoding="utf-8") as fo:
                 source = fo.read()
             output_fo.write(source)
 
@@ -272,10 +272,10 @@ def runF2C(fortran_filename, output_dir):
         raise F2CError
 
 def scrubF2CSource(c_file):
-    with open(c_file) as fo:
+    with open(c_file, encoding="utf-8") as fo:
         source = fo.read()
     source = clapack_scrub.scrubSource(source, verbose=True)
-    with open(c_file, 'w') as fo:
+    with open(c_file, 'w', encoding="utf-8") as fo:
         fo.write(HEADER)
         fo.write(source)
 
@@ -298,7 +298,7 @@ def create_name_header(output_dir):
         if not fn.endswith('.f'):
             continue
 
-        with open(fn) as f:
+        with open(fn, encoding="utf-8") as f:
             for line in f:
                 m = routine_re.match(line)
                 if m:
@@ -306,13 +306,14 @@ def create_name_header(output_dir):
 
     # f2c symbols
     f2c_symbols = set()
-    with open('f2c.h') as f:
+    with open('f2c.h', encoding="utf-8") as f:
         for line in f:
             m = extern_re.match(line)
             if m:
                 f2c_symbols.add(m.group(1))
 
-    with open(os.path.join(output_dir, 'lapack_lite_names.h'), 'w') as f:
+    with open(os.path.join(output_dir, 'lapack_lite_names.h'), 'w',
+              encoding="utf-8") as f:
         f.write(HEADER_BLURB)
         f.write(
             "/*\n"

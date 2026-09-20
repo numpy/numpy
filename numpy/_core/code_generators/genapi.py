@@ -246,7 +246,7 @@ def find_functions(filename, tag='API'):
     if filename.endswith(('.c.src', '.h.src')):
         fo = io.StringIO(process_c_file(filename))
     else:
-        fo = open(filename, 'r')
+        fo = open(filename, 'r', encoding="utf-8")
     functions = []
     return_type = None
     function_name = None
@@ -318,11 +318,11 @@ def write_file(filename, data):
     Only write changed data to avoid updating timestamps unnecessarily
     """
     if os.path.exists(filename):
-        with open(filename) as f:
+        with open(filename, encoding="utf-8") as f:
             if data == f.read():
                 return
 
-    with open(filename, 'w') as fid:
+    with open(filename, 'w', encoding="utf-8") as fid:
         fid.write(data)
 
 
@@ -534,7 +534,7 @@ def get_versions_hash():
     d = []
 
     file = os.path.join(os.path.dirname(__file__), 'cversions.txt')
-    with open(file) as fid:
+    with open(file, encoding="utf-8") as fid:
         for line in fid:
             m = VERRE.match(line)
             if m:

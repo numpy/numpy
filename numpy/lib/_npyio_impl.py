@@ -1546,7 +1546,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         fname = os.fspath(fname)
     if _is_string_like(fname):
         # datasource doesn't support creating a new file ...
-        open(fname, 'wt').close()
+        open(fname, 'wt', encoding="utf-8").close()
         fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
         own_fh = True
     elif hasattr(fname, 'write'):
