@@ -2017,8 +2017,8 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
     if (src == NULL) {
         goto fail;
     }
+    /* borrowed, `src` keeps it alive */
     PyArray_DTypeMeta *DType = NPY_DTYPE(PyArray_DESCR(src));
-    Py_INCREF(DType);
     int is_pyscalar = npy_mark_tmp_array_if_pyscalar(src_obj, src, &DType);
     if (is_pyscalar || npy_mark_tmp_array_if_pystr(src_obj, src)) {
         PyArray_Descr *descr;
@@ -2034,7 +2034,6 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
             descr = npy_find_descr_for_scalar(src_obj, PyArray_DESCR(src), DType,
                                               dst_DType);
         }
-        Py_DECREF(DType);
         if (descr == NULL) {
             goto fail;
         }
@@ -2043,9 +2042,6 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         if (res < 0) {
             goto fail;
         }
-    }
-    else {
-        Py_DECREF(DType);
     }
 
     if (wheremask_in != NULL) {
@@ -4950,8 +4946,6 @@ static struct PyMethodDef array_module_methods[] = {
         "indicated by mask."},
     {"bincount", (PyCFunction)arr_bincount,
         METH_FASTCALL | METH_KEYWORDS, NULL},
-    {"_monotonicity", (PyCFunction)arr__monotonicity,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp", (PyCFunction)arr_interp,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"interp_complex", (PyCFunction)arr_interp_complex,

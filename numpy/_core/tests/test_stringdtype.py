@@ -158,6 +158,17 @@ def test_dtype_equality(dtype):
         assert dtype != np.dtype(f"{ch}8")
 
 
+def test_dtype_hash(dtype, dtype2):
+    assert len({dtype, dtype2}) == (1 if dtype == dtype2 else 2)
+
+
+def test_dtype_hash_float64_nan(coerce):
+    dtype = StringDType(na_object=np.float64("nan"), coerce=coerce)
+    other = StringDType(na_object=float("nan"), coerce=coerce)
+    assert dtype == other
+    assert hash(dtype) == hash(other)
+
+
 def test_dtype_repr(dtype):
     if not hasattr(dtype, "na_object") and dtype.coerce:
         assert repr(dtype) == "StringDType()"
@@ -974,6 +985,40 @@ def test_comparisons(string_list, dtype, op, o_dtype):
     assert_array_equal(res, orres)
 
 
+@pytest.mark.parametrize("op", comparison_operators)
+def test_nan_like_comparisons(nan_like_na_object, op):
+    na = nan_like_na_object
+    dtype = StringDType(na_object=na)
+    left = np.array([na, "a", na, "a", "b"], dtype=dtype)
+    right = np.array(["a", na, na, "a", "a"], dtype=dtype)
+    numeric_left = np.array([np.nan, 0, np.nan, 0, 1])
+    numeric_right = np.array([0, np.nan, np.nan, 0, 0])
+    assert_array_equal(op(left, right), op(numeric_left, numeric_right))
+    assert_array_equal(op(left, "a"), op(numeric_left, 0))
+
+
+@pytest.mark.parametrize("op", comparison_operators)
+@pytest.mark.parametrize("na_object", [None, object()], ids=["None", "object"])
+def test_non_string_na_comparisons(dtype, op):
+    na = dtype.na_object
+    left = np.array(["", na, "x", na, "", "x"], dtype=dtype)
+    right = np.array([na, "", na, na, "", "x"], dtype=dtype)
+    if op not in (np.equal, np.not_equal):
+        with pytest.raises(ValueError, match="not supported for null values"):
+            op(left, right)
+        with pytest.raises(ValueError, match="not supported for null values"):
+            op(left, "")
+        assert_array_equal(op(left[4:], right[4:]), op(["", "x"], ["", "x"]))
+        return
+    equal = np.array([False, False, False, True, True, True])
+    equal_empty = np.array([True, False, False, False, True, False])
+    if op is np.not_equal:
+        equal, equal_empty = ~equal, ~equal_empty
+    assert_array_equal(op(left, right), equal)
+    assert_array_equal(op(left, ""), equal_empty)
+    assert_array_equal(op("", left), equal_empty)
+
+
 def test_isnan(dtype, string_list):
     if not hasattr(dtype, "na_object"):
         pytest.skip("no na support")
@@ -1005,6 +1050,7 @@ def test_pickle(dtype, string_list):
 
     assert_array_equal(res[0], arr)
     assert res[1] == dtype
+    assert hash(res[1]) == hash(dtype)
 
     os.remove(f.name)
 
@@ -1086,6 +1132,13 @@ def test_sort(dtype, strings, stable):
         arr_sorted = np.array(sorted(strings), dtype=dtype)
 
     test_sort(strings, arr_sorted)
+
+
+@pytest.mark.parametrize("descending", [True, False])
+def test_sort_nan_like_stability(nan_like_na_object, descending):
+    dtype = StringDType(na_object=nan_like_na_object)
+    arr = np.array([nan_like_na_object] * 2, dtype=dtype)
+    assert_array_equal(np.argsort(arr, stable=True, descending=descending), [0, 1])
 
 
 @pytest.mark.parametrize("strings", SORT_STRINGS)

@@ -3,6 +3,7 @@ from typing import Any, Literal as L, Protocol, overload, type_check_only
 from typing_extensions import deprecated
 
 import numpy as np
+from numpy._core.multiarray import _SupportsArray as _SupportsNDArray
 from numpy._typing import (
     ArrayLike,
     NDArray,
@@ -38,6 +39,7 @@ type _ToReal = _Real | np.bool
 type _InexactMax32 = np.inexact[_32Bit] | np.float16
 type _NumberMax64 = np.number[_64Bit] | np.number[_32Bit] | np.number[_16Bit] | np.integer
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
@@ -315,35 +317,45 @@ def nan_to_num(
 ) -> NDArray[Any] | Any: ...
 
 #
-@overload
+@overload  # Nd T
 def real_if_close[ShapeT: _Shape, DTypeT: np.dtype[_ToReal]](
-    a: np.ndarray[ShapeT, DTypeT],
+    a: _SupportsNDArray[np.ndarray[ShapeT, DTypeT]],
     tol: float = 100,
 ) -> np.ndarray[ShapeT, DTypeT]: ...
-@overload
+@overload  # Nd c64
 def real_if_close[ShapeT: _Shape](
-    a: np.ndarray[ShapeT, np.dtype[np.complex64]],
+    a: _SupportsNDArray[np.ndarray[ShapeT, np.dtype[np.complex64]]],
     tol: float = 100,
 ) -> np.ndarray[ShapeT, np.dtype[np.float32 | np.complex64]]: ...
-@overload
+@overload  # Nd c128
 def real_if_close[ShapeT: _Shape](
-    a: np.ndarray[ShapeT, np.dtype[np.complex128]],
+    a: _SupportsNDArray[np.ndarray[ShapeT, np.dtype[np.complex128]]],
     tol: float = 100,
 ) -> np.ndarray[ShapeT, np.dtype[np.float64 | np.complex128]]: ...
-@overload
+@overload  # Nd c160
 def real_if_close[ShapeT: _Shape](
-    a: np.ndarray[ShapeT, np.dtype[np.clongdouble]],
+    a: _SupportsNDArray[np.ndarray[ShapeT, np.dtype[np.clongdouble]]],
     tol: float = 100,
 ) -> np.ndarray[ShapeT, np.dtype[np.longdouble | np.clongdouble]]: ...
-@overload
-def real_if_close[RealT: _ToReal](a: _ArrayLike[RealT], tol: float = 100) -> NDArray[RealT]: ...
-@overload
-def real_if_close(a: _ArrayLike[np.complex64], tol: float = 100) -> NDArray[np.float32 | np.complex64]: ...
-@overload
-def real_if_close(a: _ArrayLike[np.complex128], tol: float = 100) -> NDArray[np.float64 | np.complex128]: ...
-@overload
-def real_if_close(a: _ArrayLike[np.clongdouble], tol: float = 100) -> NDArray[np.longdouble | np.clongdouble]: ...
-@overload
+@overload  # 1d T
+def real_if_close[RealT: _ToReal](
+    a: Sequence[RealT | _Array0D[RealT]],
+    tol: float = 100,
+) -> _Array1D[RealT]: ...
+@overload  # 1d bool
+def real_if_close(a: list[bool], tol: float = 100) -> _Array1D[np.bool]: ...
+@overload  # 1d ~int
+def real_if_close(a: list[int], tol: float = 100) -> _Array1D[np.int_]: ...
+@overload  # 1d ~float
+def real_if_close(a: list[float], tol: float = 100) -> _Array1D[np.float64]: ...
+@overload  # 1d c128 | ~complex
+def real_if_close(
+    a: Sequence[np.complex128 | _Array0D[np.complex128]] | list[complex],
+    tol: float = 100,
+) -> _Array1D[np.float64 | np.complex128]: ...
+@overload  # 2d  (fallback)
+def real_if_close(a: Sequence[Sequence[complex | np.generic]], tol: float = 100) -> _Array2D[Any]: ...
+@overload  # ?d  (fallback)
 def real_if_close(a: ArrayLike, tol: float = 100) -> NDArray[Any]: ...
 
 #

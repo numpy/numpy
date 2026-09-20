@@ -31,6 +31,7 @@ import pytest
 import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
 from numpy._core._exceptions import _UFuncNoLoopError
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.numeric import _dot_fallback, _vdot_fallback
@@ -3523,6 +3524,18 @@ class TestMethods:
         assert_raises(ValueError, np.searchsorted, a, 4, sorter=[0, 1, 2, 3, 5])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1, 0, 1, 2, 3])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[4, 0, -1, 2, 3])
+
+    @pytest.mark.parametrize("array_type, sorter_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_searchsorted_sorter_integer_dtypes(self, array_type, sorter_type):
+        a = np.array([5, 2, 1, 3, 4], dtype=array_type)
+        sorter = np.array([2, 1, 3, 4, 0], dtype=sorter_type)
+        out = a.searchsorted([1, 3, 5], sorter=sorter)
+        assert_equal(out, [0, 2, 4])
 
     def test_searchsorted_with_sorter(self):
         a = np.random.rand(300)
@@ -9119,6 +9132,21 @@ class TestChoose:
         with pytest.raises(OverflowError):
             np.choose([1], (arr, scalar))
 
+    @pytest.mark.parametrize("array_type, indices_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_choose_integer_dtypes(self, array_type, indices_type):
+        choices = (np.array([1, 2, 3], dtype=array_type),
+                   np.array([4, 5, 6], dtype=array_type))
+        indices = np.array([0, 1, 0], dtype=indices_type)
+        tgt = np.array([1, 5, 3], dtype=array_type)
+        out = np.choose(indices, choices)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
+
     def test_dimension_and_args_limit(self):
         # Maxdims for the legacy iterator is 32, but the maximum number
         # of arguments is actually larger (a itself also counts here)
@@ -12292,3 +12320,26 @@ class TestSubinterpreterTeardown:
             assert "does not support loading in subinterpreters" in msg, msg
         finally:
             interp.close()
+
+
+class TestArrayConverter:
+    def test_pyscalars_self_referencing_array_raises(self):
+        # gh-32700
+        obj_array = np.empty(2, dtype=object)
+        obj_array[0] = obj_array
+        obj_array[1] = [obj_array, obj_array]
+
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(TypeError, match="must be a string"):
+            conv.as_arrays(pyscalars=obj_array)
+
+    @pytest.mark.parametrize("mode", [123, [], None])
+    def test_pyscalars_invalid_mode_type(self, mode):
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(TypeError, match="must be a string"):
+            conv.as_arrays(pyscalars=mode)
+
+    def test_pyscalars_invalid_mode_string(self):
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(ValueError, match="invalid pyscalar mode"):
+            conv.as_arrays(pyscalars="invalid")

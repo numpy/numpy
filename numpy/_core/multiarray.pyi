@@ -45,7 +45,6 @@ from numpy import (
     matmul,
     ndarray,
     signedinteger,
-    str_,
     timedelta64,
     ufunc,
     uint8,
@@ -115,7 +114,6 @@ __all__ = [
     "_place",
     "_reconstruct",
     "_vec_string",
-    "_monotonicity",
     "add_docstring",
     "arange",
     "array",
@@ -209,6 +207,7 @@ type _Array3D[ScalarT: np.generic] = ndarray[tuple[int, int, int], dtype[ScalarT
 type _Tuple2[T] = tuple[T, T]
 type _Tuple3[T] = tuple[T, T, T]
 type _Tuple4[T] = tuple[T, T, T, T]
+type _AtLeast1D = tuple[int, *tuple[int, ...]]
 
 type _Keys1D = _Array1D[Any] | Sequence[complex | np.generic]
 type _Keys2D = _Array2D[Any] | Sequence[_Keys1D]
@@ -266,10 +265,13 @@ type _ToDeltas = dt.timedelta | _NestedSequence[dt.timedelta]
 
 type _BitOrder = L["big", "little"]
 type _MaxWork = L[-1, 0]
+type _TimezoneContext = L["naive", "UTC", "local"] | dt.tzinfo
 
 @type_check_only
 class _SupportsArray[ArrayT_co: np.ndarray](Protocol):
     def __array__(self, /) -> ArrayT_co: ...
+
+###
 
 # using `Final` or `TypeAlias` will break stubtest
 error = Exception
@@ -286,7 +288,6 @@ DATETIMEUNITS: Final[CapsuleType] = ...
 _ARRAY_API: Final[CapsuleType] = ...
 
 _flagdict: Final[dict[str, int]] = ...
-_monotonicity: Final[Callable[..., object]] = ...
 _place: Final[Callable[..., object]] = ...
 _reconstruct: Final[Callable[..., object]] = ...
 _vec_string: Final[Callable[..., object]] = ...
@@ -2218,21 +2219,21 @@ def asanyarray(
 
 # keep in sync with `asfortranarray` and `asarray` (modulo the 3 0d overloads)
 @overload  # Nd
-def ascontiguousarray[ShapeT: tuple[int, *tuple[int, ...]], DTypeT: np.dtype](
+def ascontiguousarray[ShapeT: _AtLeast1D, DTypeT: np.dtype](
     a: ndarray[ShapeT, DTypeT],
     dtype: None = None,
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, DTypeT]: ...
 @overload  # Nd, dtype=<known>
-def ascontiguousarray[ShapeT: tuple[int, *tuple[int, ...]], ScalarT: np.generic](
+def ascontiguousarray[ShapeT: _AtLeast1D, ScalarT: np.generic](
     a: ndarray[ShapeT],
     dtype: _DTypeLike[ScalarT],
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, dtype[ScalarT]]: ...
 @overload  # Nd, dtype=<unknown>
-def ascontiguousarray[ShapeT: tuple[int, *tuple[int, ...]]](
+def ascontiguousarray[ShapeT: _AtLeast1D](
     a: ndarray[ShapeT],
     dtype: DTypeLike,
     *,
@@ -2458,21 +2459,21 @@ def ascontiguousarray(
 
 # keep in sync with `ascontiguousarray` and `asarray` (modulo the 3 0d overloads)
 @overload  # Nd
-def asfortranarray[ShapeT: tuple[int, *tuple[int, ...]], DTypeT: np.dtype](
+def asfortranarray[ShapeT: _AtLeast1D, DTypeT: np.dtype](
     a: ndarray[ShapeT, DTypeT],
     dtype: None = None,
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, DTypeT]: ...
 @overload  # Nd, dtype=<known>
-def asfortranarray[ShapeT: tuple[int, *tuple[int, ...]], ScalarT: np.generic](
+def asfortranarray[ShapeT: _AtLeast1D, ScalarT: np.generic](
     a: ndarray[ShapeT],
     dtype: _DTypeLike[ScalarT],
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, dtype[ScalarT]]: ...
 @overload  # Nd, dtype=<unknown>
-def asfortranarray[ShapeT: tuple[int, *tuple[int, ...]]](
+def asfortranarray[ShapeT: _AtLeast1D](
     a: ndarray[ShapeT],
     dtype: DTypeLike,
     *,
@@ -3198,30 +3199,44 @@ def is_busday[OutT: np.ndarray](
     out: OutT,
 ) -> OutT: ...
 
-type _TimezoneContext = L["naive", "UTC", "local"] | dt.tzinfo
-
-@overload
+#
+@overload  # 0d
 def datetime_as_string(
-    arr: datetime64 | dt.date,
+    arr: np.datetime64,
     unit: L["auto"] | _UnitKind | None = None,
     timezone: _TimezoneContext = "naive",
     casting: _CastingKind = "same_kind",
-) -> str_: ...
-@overload
-def datetime_as_string[ShapeT: tuple[int, *tuple[int, ...]]](
-    arr: ndarray[ShapeT, dtype[datetime64[Any]]],
+) -> np.str_: ...
+@overload  # Nd T
+def datetime_as_string[ShapeT: _Shape](
+    arr: ndarray[ShapeT, np.dtype[np.datetime64]],
     unit: L["auto"] | _UnitKind | None = None,
     timezone: _TimezoneContext = "naive",
     casting: _CastingKind = "same_kind",
-) -> ndarray[ShapeT, dtype[str_]]: ...
-@overload
+) -> np.ndarray[ShapeT, np.dtype[np.str_]]: ...
+@overload  # 1d
 def datetime_as_string(
-    arr: _ArrayLikeDT64_co | _NestedSequence[dt.date],
+    arr: Sequence[np.datetime64],
     unit: L["auto"] | _UnitKind | None = None,
     timezone: _TimezoneContext = "naive",
     casting: _CastingKind = "same_kind",
-) -> NDArray[str_]: ...
+) -> _Array1D[np.str_]: ...
+@overload  # 2d
+def datetime_as_string(
+    arr: Sequence[Sequence[np.datetime64]],
+    unit: L["auto"] | _UnitKind | None = None,
+    timezone: _TimezoneContext = "naive",
+    casting: _CastingKind = "same_kind",
+) -> _Array2D[np.str_]: ...
+@overload  # Nd (using `_ArrayLikeDT64_co` here will cause mypy to infer `Any` for many inputs)
+def datetime_as_string(
+    arr: _SupportsArray[np.ndarray[_AtLeast1D, np.dtype[np.datetime64]]] | _NestedSequence[_ArrayLikeDT64_co],
+    unit: L["auto"] | _UnitKind | None = None,
+    timezone: _TimezoneContext = "naive",
+    casting: _CastingKind = "same_kind",
+) -> NDArray[np.str_]: ...
 
+#
 @overload
 def compare_chararrays(
     a1: _ArrayLikeStr_co,
@@ -3467,3 +3482,8 @@ def nested_iters(
     casting: _CastingKind = ...,
     buffersize: SupportsIndex = ...,
 ) -> tuple[nditer, ...]: ...
+
+# semi-public
+def _get_madvise_hugepage() -> bool: ...
+def _set_madvise_hugepage(enabled: object, /) -> bool: ...
+def _get_ndarray_c_version() -> int: ...

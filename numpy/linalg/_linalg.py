@@ -1880,6 +1880,16 @@ def svdvals(x, /):
     return svd(x, compute_uv=False, hermitian=False)
 
 
+def _cond_svdvals(x):
+    # like svd(x, compute_uv=False), but nan instead of an error for
+    # non-finite input (gh-32591)
+    t, result_t = _commonType(x)
+    signature = 'D->d' if isComplexType(t) else 'd->d'
+    with errstate(all='ignore'):
+        s = _umath_linalg.svd(x, signature=signature)
+    return s.astype(_realType(result_t), copy=False)
+
+
 def _cond_dispatcher(x, p=None):
     return (x,)
 
@@ -1897,7 +1907,7 @@ def cond(x, p=None):
     ----------
     x : (..., M, N) array_like
         The matrix whose condition number is sought.
-    p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
+    p : {None, 1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
         Order of the norm used in the condition number computation:
 
         =====  ============================
@@ -1905,6 +1915,7 @@ def cond(x, p=None):
         =====  ============================
         None   2-norm, computed directly using the ``SVD``
         'fro'  Frobenius norm
+        'nuc'  nuclear norm
         inf    max(sum(abs(x), axis=1))
         -inf   min(sum(abs(x), axis=1))
         1      max(sum(abs(x), axis=0))
@@ -1970,7 +1981,8 @@ def cond(x, p=None):
     if _is_empty_2d(x):
         raise LinAlgError("cond is not defined on empty arrays")
     if p is None or p in {2, -2}:
-        s = svd(x, compute_uv=False)
+        _assert_stacked_2d(x)
+        s = _cond_svdvals(x)
         with errstate(all='ignore'):
             if p == -2:
                 r = s[..., -1] / s[..., 0]
@@ -1985,7 +1997,12 @@ def cond(x, p=None):
         signature = 'D->D' if isComplexType(t) else 'd->d'
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)
-            r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
+            if p == 'nuc':
+                # norm() would raise for the nans of a failed inversion
+                r = (sum(_cond_svdvals(x), axis=-1, initial=0)
+                     * sum(_cond_svdvals(invx), axis=-1, initial=0))
+            else:
+                r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
         r = r.astype(result_t, copy=False)
 
     # Convert nans to infs unless the original array had nan entries
