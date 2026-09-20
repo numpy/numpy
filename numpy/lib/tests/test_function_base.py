@@ -2213,12 +2213,24 @@ class TestDigitize:
         bins = [1, 1, 0, 1]
         assert_raises(ValueError, digitize, x, bins)
 
+    def test_non_monotonic_bins_error(self):
+        with pytest.raises(
+            ValueError, match="bins must be monotonically increasing or decreasing"
+        ):
+            digitize(1, [0, 2, 1])
+
     def test_casting_error(self):
         x = [1, 2, 3 + 1.j]
         bins = [1, 2, 3]
         assert_raises(TypeError, digitize, x, bins)
         x, bins = bins, x
-        assert_raises(TypeError, digitize, x, bins)
+        with pytest.raises(TypeError, match="bins may not be complex"):
+            digitize(x, bins)
+
+    @pytest.mark.parametrize("bins", [np.array(1), np.array([[1, 2]])])
+    def test_bins_must_be_one_dimensional(self, bins):
+        with pytest.raises(ValueError, match="bins must be one-dimensional"):
+            digitize([1], bins)
 
     def test_return_type(self):
         # Functions returning indices should always return base ndarrays
@@ -2229,17 +2241,17 @@ class TestDigitize:
         assert_(not isinstance(digitize(b, a, False), A))
         assert_(not isinstance(digitize(b, a, True), A))
 
-    def test_large_integers_increasing(self):
+    @pytest.mark.parametrize("dtype", [np.int64, np.uint64])
+    @pytest.mark.parametrize("right", [False, True])
+    @pytest.mark.parametrize(
+        "offsets", [(-1, 1), (1, -1)], ids=["increasing", "decreasing"]
+    )
+    def test_large_integers(self, dtype, right, offsets):
         # gh-11022
-        x = 2**54  # loses precision in a float
-        assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
-
-    @pytest.mark.xfail(
-        reason="gh-11022: np._core.multiarray._monoticity loses precision")
-    def test_large_integers_decreasing(self):
-        # gh-11022
-        x = 2**54  # loses precision in a float
-        assert_equal(np.digitize(x, [x + 1, x - 1]), 1)
+        x = 2**54  # float64 cannot distinguish adjacent integers near here
+        bins = np.array([x + offset for offset in offsets], dtype=dtype)
+        x_value = np.array(x, dtype=dtype)[()]
+        assert_equal(np.digitize(x_value, bins, right=right), 1)
 
 
 class TestUnwrap:
