@@ -379,7 +379,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
-        perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
+        perm = ar.argsort(kind='quicksort')
         aux = ar[perm]
     else:
         ar.sort()
@@ -403,13 +403,18 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         mask[1:] = aux[1:] != aux[:-1]
 
     ret = (aux[mask],)
-    if return_index:
-        ret += (perm[mask],)
-    if return_inverse:
-        imask = np.cumsum(mask) - 1
+    if optional_indices:
         inv_idx = np.empty(mask.shape, dtype=np.intp)
-        inv_idx[perm] = imask
-        ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
+        inv_idx[perm] = np.cumsum(mask)
+        inv_idx -= 1
+        if return_index:
+            length = len(mask)
+            unique_count = np.count_nonzero(mask)
+            first_idx = np.empty(unique_count, dtype=np.intp)
+            first_idx[inv_idx[::-1]] = np.arange(length - 1, -1, -1)
+            ret += (first_idx,)
+        if return_inverse:
+            ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
     if return_counts:
         idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(idx),)
