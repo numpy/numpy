@@ -261,6 +261,55 @@ register_minimummaximum_promoter(PyObject *minimummaximum)
 }
 
 
+/*
+ * Register the promoter above on NumPy's own `minimummaximum`, scoped to the
+ * scaled float test DType, which has no loop of its own.  Used to check that a
+ * DType can opt into the fused loop through a promoter.
+ */
+static int
+register_sfloat_promoter()
+{
+    PyObject *umath = PyImport_ImportModule("numpy._core.umath");
+    if (umath == NULL) {
+        return -1;
+    }
+    PyObject *ufunc = PyObject_GetAttrString(umath, "minimummaximum");
+    Py_DECREF(umath);
+    if (ufunc == NULL) {
+        return -1;
+    }
+    PyObject *mu = PyImport_ImportModule("numpy._core._multiarray_umath");
+    if (mu == NULL) {
+        Py_DECREF(ufunc);
+        return -1;
+    }
+    PyObject *sfloat = PyObject_CallMethod(mu, "_get_sfloat_dtype", NULL);
+    Py_DECREF(mu);
+    if (sfloat == NULL) {
+        Py_DECREF(ufunc);
+        return -1;
+    }
+    PyObject *dtypes = PyTuple_Pack(4, sfloat, sfloat, Py_None, Py_None);
+    Py_DECREF(sfloat);
+    if (dtypes == NULL) {
+        Py_DECREF(ufunc);
+        return -1;
+    }
+    PyObject *promoter = PyCapsule_New(
+            (void *)&minimummaximum_promoter, "numpy._ufunc_promoter", NULL);
+    if (promoter == NULL) {
+        Py_DECREF(dtypes);
+        Py_DECREF(ufunc);
+        return -1;
+    }
+    int res = PyUFunc_AddPromoter(ufunc, dtypes, promoter);
+    Py_DECREF(promoter);
+    Py_DECREF(dtypes);
+    Py_DECREF(ufunc);
+    return res;
+}
+
+
 static int
 add_minimummaximum(PyObject *module, const char *name, int with_identity)
 {
@@ -364,6 +413,9 @@ _reduction_loop_tests_exec(PyObject *m)
         return -1;
     }
     if (add_minimummaximum(m, "minimummaximum_with_identity", 1) < 0) {
+        return -1;
+    }
+    if (register_sfloat_promoter() < 0) {
         return -1;
     }
 

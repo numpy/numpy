@@ -6253,6 +6253,24 @@ class TestMinMax:
         with pytest.raises(TypeError):
             np.minmax(np.array(["banana", "apple"]))
 
+    def test_minmax_user_dtype_without_loop(self):
+        a = np.array([3, 1, 2], dtype=rational)
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np._core.umath.minimummaximum.reduce(a)
+        lo, hi = np.minmax(a)
+        assert type(lo) is type(hi) is rational
+        assert_equal((lo, hi), (np.min(a), np.max(a)))
+
+    def test_minmax_user_dtype_with_promoter(self):
+        # import _reduction_loop_tests to register the sfloat promoter
+        import numpy._core._reduction_loop_tests  # noqa: F401
+        from numpy._core._multiarray_umath import _get_sfloat_dtype
+
+        a = np.array([1., 5., 3.]).astype(_get_sfloat_dtype())
+        lo, hi = np._core.umath.minimummaximum.reduce(a)
+        assert lo.dtype == hi.dtype == np.dtype(np.float64)
+        assert_equal((lo, hi), (1., 5.))
+
     def test_minmax_array_ufunc_no_fallback(self):
         # a subclass whose __array_ufunc__ declines the private minimummaximum
         # ufunc takes total control (the __array_ufunc__ contract), so minmax
