@@ -649,7 +649,7 @@ def test_warn_on_no_data(data, ndmin, usecols):
         res = np.loadtxt(txt, ndmin=ndmin, usecols=usecols)
     assert res.shape == expected_shape
 
-    with NamedTemporaryFile(mode="w") as fh:
+    with NamedTemporaryFile(mode="w", encoding="utf-8") as fh:
         fh.write(data)
         fh.seek(0)
         with pytest.warns(UserWarning, match="input contained no data"):
@@ -1069,7 +1069,8 @@ def test_skiprow_exceeding_maxrows_exceeding_chunksize(tmpdir, nskip):
 
     # file-obj path
     tmp_file = tmpdir / "test_data.txt"
-    tmp_file.write(data)
+    with open(str(tmp_file), "w", encoding="utf-8") as f:
+        f.write(data)
     fname = str(tmp_file)
     res = np.loadtxt(fname, dtype='str', delimiter=" ", skiprows=nskip, max_rows=60000)
     assert len(res) == expected_length

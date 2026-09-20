@@ -1188,7 +1188,7 @@ class TestLoadTxt(LoadTxtBase):
         dt = np.dtype([('x', int), ('a', 'S10'), ('y', int)])
         np.loadtxt(c, delimiter=',', dtype=dt, comments=None)  # Should succeed
 
-    @pytest.mark.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968',
+    @pytest.mark.skipif(locale.getencoding() == 'ANSI_X3.4-1968',
                         reason="Wrong preferred encoding")
     def test_binary_load(self):
         butf8 = b"5,6,7,\xc3\x95scarscar\r\n15,2,3,hello\r\n"\
@@ -2290,7 +2290,7 @@ M   33  21.99
         # encoding of open. Will need to change this for PyTest, maybe
         # using pytest.mark.xfail(raises=***).
         try:
-            encoding = locale.getpreferredencoding()
+            encoding = locale.getencoding()
             utf8.encode(encoding)
         except (UnicodeError, ImportError):
             pytest.skip('Skipping test_utf8_file_nodtype_unicode, '

@@ -34,6 +34,7 @@ Example::
     >>> fp.close() # doctest: +SKIP
 
 """
+import locale
 import os
 
 from numpy._utils import set_module
@@ -530,6 +531,14 @@ class DataSource:
             _fname, ext = self._splitzipext(found)
             if ext == 'bz2':
                 mode.replace("+", "")
+            if encoding is None and "b" not in mode and (
+                    "t" in mode or ext not in ('.bz2', '.gz', '.xz', '.lzma')):
+                # Resolve the default encoding explicitly, matching what
+                # open() would use, so no EncodingWarning is emitted when
+                # PYTHONWARNDEFAULTENCODING is set (GH#24115). The
+                # compression openers treat mode 'r' (without 't') as
+                # binary and reject an encoding, so leave it unset there.
+                encoding = locale.getencoding()
             return _file_openers[ext](found, mode=mode,
                                       encoding=encoding, newline=newline)
         else:
