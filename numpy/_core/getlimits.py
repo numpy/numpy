@@ -409,7 +409,28 @@ class iinfo:
 
     @property
     def min(self):
-        """Minimum value of given dtype."""
+        """
+        Minimum value of given dtype.
+
+        Returns
+        -------
+        min : int
+            The smallest representable value for the integer dtype. For
+            unsigned integer dtypes this is ``0``; for signed integer dtypes
+            it is ``-2**(bits - 1)``.
+
+        See Also
+        --------
+        max : Maximum value of the dtype.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> np.iinfo(np.int16).min
+        -32768
+        >>> np.iinfo(np.uint16).min
+        0
+        """
         if self.kind == 'u':
             return 0
         else:
@@ -422,7 +443,28 @@ class iinfo:
 
     @property
     def max(self):
-        """Maximum value of given dtype."""
+        """
+        Maximum value of given dtype.
+
+        Returns
+        -------
+        max : int
+            The largest representable value for the integer dtype. For
+            unsigned integer dtypes this is ``2**bits - 1``; for signed
+            integer dtypes it is ``2**(bits - 1) - 1``.
+
+        See Also
+        --------
+        min : Minimum value of the dtype.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> np.iinfo(np.int16).max
+        32767
+        >>> np.iinfo(np.uint16).max
+        65535
+        """
         try:
             val = iinfo._max_vals[self.key]
         except KeyError:
