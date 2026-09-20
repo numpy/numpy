@@ -132,6 +132,132 @@ class TestDLPack:
         with pytest.raises(RuntimeError):
             self.dlpack_deleter_exception(max_version=max_version)
 
+    def test_from_dlpack_foreign_capsule_destructor_pending_exc(self):
+        """Regression test for gh-32697.
+
+        When from_dlpack rejects a capsule (e.g. unsupported dtype), it must
+        not run the capsule destructor while an exception is pending — doing
+        so is a CPython C-API violation that turns the intended BufferError
+        into a spurious SystemError and leaks the DLManagedTensor.
+
+        This test uses ctypes to construct a minimal foreign DLPack producer
+        whose capsule destructor is implemented in Python (the scenario that
+        triggers the bug).
+        """
+        import ctypes
+        import gc
+
+        class DLDevice(ctypes.Structure):
+            _fields_ = [("device_type", ctypes.c_int32),
+                        ("device_id", ctypes.c_int32)]
+
+        class DLDataType(ctypes.Structure):
+            _fields_ = [("code", ctypes.c_uint8),
+                        ("bits", ctypes.c_uint8),
+                        ("lanes", ctypes.c_uint16)]
+
+        class DLTensor(ctypes.Structure):
+            _fields_ = [
+                ("data", ctypes.c_void_p),
+                ("device", DLDevice),
+                ("ndim", ctypes.c_int32),
+                ("dtype", DLDataType),
+                ("shape", ctypes.POINTER(ctypes.c_int64)),
+                ("strides", ctypes.POINTER(ctypes.c_int64)),
+                ("byte_offset", ctypes.c_uint64),
+            ]
+
+        DELETER_FN = ctypes.CFUNCTYPE(None, ctypes.c_void_p)
+
+        class DLManagedTensor(ctypes.Structure):
+            pass
+
+        DLManagedTensor._fields_ = [
+            ("dl_tensor", DLTensor),
+            ("manager_ctx", ctypes.c_void_p),
+            ("deleter", DELETER_FN),
+        ]
+
+        _PyCapsule_New = ctypes.pythonapi.PyCapsule_New
+        _PyCapsule_New.restype = ctypes.py_object
+        _PyCapsule_New.argtypes = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p,
+        ]
+        _GetPointer = ctypes.pythonapi.PyCapsule_GetPointer
+        _GetPointer.restype = ctypes.c_void_p
+        _GetPointer.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+
+        deleter_calls = {"n": 0}
+
+        @DELETER_FN
+        def deleter(p):
+            deleter_calls["n"] += 1
+
+        @ctypes.CFUNCTYPE(None, ctypes.c_void_p)
+        def cap_destructor(p):
+            try:
+                d = ctypes.cast(
+                    _GetPointer(p, b"dltensor"),
+                    ctypes.POINTER(DLManagedTensor),
+                )
+                if d.contents.deleter:
+                    d.contents.deleter(
+                        _GetPointer(p, b"dltensor")
+                    )
+            except Exception:
+                pass
+
+        # prevent premature garbage collection of ctypes objects
+        _prevent_gc = []
+
+        class Producer:
+            def __init__(self, dtype_code):
+                self.arr = np.arange(4, dtype=np.int32)
+                self.dtype_code = dtype_code
+
+            def __dlpack__(self, *a, **k):
+                arr = self.arr
+                n = arr.ndim
+                shape = (ctypes.c_int64 * n)(*arr.shape)
+                strides = (ctypes.c_int64 * n)(
+                    *(arr.strides[i] // arr.itemsize for i in range(n))
+                )
+                dt = DLTensor()
+                dt.data = ctypes.c_void_p(arr.ctypes.data)
+                dt.device = DLDevice(1, 0)  # kDLCPU
+                dt.ndim = n
+                dt.dtype = DLDataType(self.dtype_code, 32, 1)
+                dt.shape = shape
+                dt.strides = strides
+                dt.byte_offset = 0
+                dlmt = DLManagedTensor()
+                dlmt.dl_tensor = dt
+                dlmt.manager_ctx = ctypes.c_void_p(0)
+                dlmt.deleter = deleter
+                ptr = ctypes.pointer(dlmt)
+                _prevent_gc.extend([arr, shape, strides, dlmt, ptr])
+                return _PyCapsule_New(
+                    ctypes.cast(ptr, ctypes.c_void_p),
+                    b"dltensor",
+                    ctypes.cast(cap_destructor, ctypes.c_void_p),
+                )
+
+            def __dlpack_device__(self):
+                return (1, 0)
+
+        # kDLOpaqueHandle (code=3) — not in NumPy's switch table
+        p = Producer(3)
+        with pytest.raises(BufferError, match="Unsupported dtype"):
+            np.from_dlpack(p)
+
+        del p
+        for _ in range(4):
+            gc.collect()
+
+        assert deleter_calls["n"] == 1, (
+            "producer deleter was not invoked — DLManagedTensor leaked"
+        )
+
     def test_readonly(self):
         x = np.arange(5)
         x.flags.writeable = False

@@ -703,6 +703,7 @@ from_dlpack(PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj, *copy = Py_None, *device = Py_None;
+    PyObject *ret = NULL;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("from_dlpack", args, len_args, kwnames,
             {"obj", NULL, &obj},
@@ -764,16 +765,14 @@ from_dlpack(PyObject *self,
         managed_ptr = PyCapsule_GetPointer(capsule, NPY_DLPACK_VERSIONED_CAPSULE_NAME);
         DLManagedTensorVersioned *managed = (DLManagedTensorVersioned *)managed_ptr;
         if (managed == NULL) {
-            Py_DECREF(capsule);
-            return NULL;
+            goto fail;
         }
 
         if (managed->version.major > 1) {
             PyErr_SetString(PyExc_BufferError,
                 "from_dlpack(): the exported DLPack major version is too "
                 "high to be imported by this version of NumPy.");
-            Py_DECREF(capsule);
-            return NULL;
+            goto fail;
         }
 
         dl_tensor = managed->dl_tensor;
@@ -783,8 +782,7 @@ from_dlpack(PyObject *self,
         managed_ptr = PyCapsule_GetPointer(capsule, NPY_DLPACK_CAPSULE_NAME);
         DLManagedTensor *managed = (DLManagedTensor *)managed_ptr;
         if (managed == NULL) {
-            Py_DECREF(capsule);
-            return NULL;
+            goto fail;
         }
         dl_tensor = managed->dl_tensor;
         readonly = 1;
@@ -795,8 +793,7 @@ from_dlpack(PyObject *self,
         PyErr_SetString(PyExc_BufferError,
                 "maxdims of DLPack tensor is higher than the supported "
                 "maxdims.");
-        Py_DECREF(capsule);
-        return NULL;
+        goto fail;
     }
 
     DLDeviceType device_type = dl_tensor.device.device_type;
@@ -806,15 +803,13 @@ from_dlpack(PyObject *self,
             device_type != kDLCUDAManaged) {
         PyErr_SetString(PyExc_BufferError,
                 "Unsupported device in DLTensor.");
-        Py_DECREF(capsule);
-        return NULL;
+        goto fail;
     }
 
     if (dl_tensor.dtype.lanes != 1) {
         PyErr_SetString(PyExc_BufferError,
                 "Unsupported lanes in DLTensor dtype.");
-        Py_DECREF(capsule);
-        return NULL;
+        goto fail;
     }
 
     int typenum = -1;
@@ -864,16 +859,14 @@ from_dlpack(PyObject *self,
     if (typenum != -1) {
         descr = PyArray_DescrFromType(typenum);
         if (descr == NULL) {
-            Py_DECREF(capsule);
-            return NULL;
+            goto fail;
         }
     }
     else {
         descr = dlpack_dtype_registry_lookup(
                 (uint8_t)dl_tensor.dtype.code, bits);
         if (descr == NULL) {
-            Py_DECREF(capsule);
-            return NULL;
+            goto fail;
         }
     }
 
@@ -892,13 +885,12 @@ from_dlpack(PyObject *self,
 
     char *data = (char *)dl_tensor.data + dl_tensor.byte_offset;
 
-    PyObject *ret = PyArray_NewFromDescr(&PyArray_Type, descr, ndim, shape,
+    ret = PyArray_NewFromDescr(&PyArray_Type, descr, ndim, shape,
             dl_tensor.strides != NULL ? strides : NULL, data, readonly ? 0 :
             NPY_ARRAY_WRITEABLE, NULL);
 
     if (ret == NULL) {
-        Py_DECREF(capsule);
-        return NULL;
+        goto fail;
     }
 
     PyObject *new_capsule;
@@ -914,28 +906,40 @@ from_dlpack(PyObject *self,
     }
 
     if (new_capsule == NULL) {
-        Py_DECREF(capsule);
-        Py_DECREF(ret);
-        return NULL;
+        goto fail;
     }
 
     if (PyArray_SetBaseObject((PyArrayObject *)ret, new_capsule) < 0) {
-        Py_DECREF(capsule);
-        Py_DECREF(ret);
-        return NULL;
+        goto fail;
     }
 
     const char *new_name = (
         versioned ? NPY_DLPACK_VERSIONED_USED_CAPSULE_NAME
                   : NPY_DLPACK_USED_CAPSULE_NAME);
     if (PyCapsule_SetName(capsule, new_name) < 0) {
-        Py_DECREF(capsule);
-        Py_DECREF(ret);
-        return NULL;
+        goto fail;
     }
 
     Py_DECREF(capsule);
     return ret;
+
+fail:
+    /*
+     * Py_DECREF(capsule) can invoke the producer's capsule destructor, which
+     * may execute arbitrary Python code (e.g. a ctypes callback or a custom
+     * __del__).  Running that code while an exception is already set violates
+     * the C-API contract and causes a spurious SystemError.  Save and restore
+     * the pending exception around the DECREF to prevent this.
+     * See gh-32697.
+     */
+    {
+        PyObject *exc_type, *exc_value, *exc_tb;
+        PyErr_Fetch(&exc_type, &exc_value, &exc_tb);
+        Py_DECREF(capsule);
+        Py_XDECREF(ret);
+        PyErr_Restore(exc_type, exc_value, exc_tb);
+    }
+    return NULL;
 }
 
 
