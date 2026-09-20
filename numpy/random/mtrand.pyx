@@ -4292,6 +4292,10 @@ cdef class RandomState:
             method of a `~numpy.random.Generator` instance instead;
             please see the :ref:`random-quick-start`.
 
+            NumPy 2.5.0 restored the legacy ``RandomState`` stream used by
+            this method before NumPy 1.17. Consequently, seeded results may
+            differ from those produced by NumPy 1.17 through 2.4.
+
         .. warning::
           This function defaults to the C-long dtype, which is 32bit on windows
           and otherwise 64bit on 64bit platforms (and 32bit on 32bit ones).
