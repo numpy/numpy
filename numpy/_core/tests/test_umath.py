@@ -37,6 +37,14 @@ from numpy.testing._private.utils import (
     longdouble_fpe_mark,
 )
 
+# The UCRT shipped with Windows 10.0.26100 (24H2 / Server 2025) returns zero
+# from exp2/exp2f on a total underflow without raising FE_UNDERFLOW, unlike
+# exp/expf on the same runtime and unlike the 10.0.20348 UCRT that the
+# windows-2022 CI image uses. See gh-32715.
+_WIN_UCRT_NO_EXP2_UNDERFLOW = (
+    sys.platform == "win32" and sys.getwindowsversion().build >= 26100
+)
+
 UFUNCS = [obj for obj in np._core.umath.__dict__.values()
          if isinstance(obj, np.ufunc)]
 
@@ -1882,6 +1890,10 @@ class TestSpecialFloats:
                 assert_equal(np.exp2(in_arr), out_arr)
 
         for value in [2000.0, -2000.0]:
+            if value < 0 and _WIN_UCRT_NO_EXP2_UNDERFLOW:
+                # gh-32715: this platform's exp2 flushes to zero without
+                # raising FE_UNDERFLOW, so only overflow can be checked here.
+                continue
             with np.errstate(over='raise', under='raise'):
                 for dt in ['e', 'f', 'd']:
                     assert_raises(FloatingPointError, np.exp2,
