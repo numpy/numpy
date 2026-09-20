@@ -94,6 +94,62 @@ def test_string_comparisons_empty(op, ufunc, sym, dtypes):
     )
 
 
+MINMAX = [
+    (min, np.minimum, "minimum"),
+    (max, np.maximum, "maximum"),
+]
+
+
+@pytest.mark.parametrize(["op", "ufunc", "name"], MINMAX)
+@pytest.mark.parametrize("dtypes", [
+        ("S2", "S2"), ("S2", "S10"),
+        ("<U1", "<U1"), ("<U1", ">U1"), (">U1", ">U1"),
+        ("<U1", "<U10"), ("<U1", ">U10")])
+def test_string_minmax_ufuncs(op, ufunc, name, dtypes):
+    # gh-1914
+    arr = np.array(["abc", "abd", "ab", "b", ""], dtype=dtypes[0])
+    arr2 = np.array(["abd", "abc", "abcd", "a", "a"], dtype=dtypes[1])
+
+    expected = [op(d1, d2) for d1, d2 in zip(arr.tolist(), arr2.tolist())]
+    assert_array_equal(ufunc(arr, arr2), expected)
+    assert_array_equal(ufunc(arr2, arr), expected)
+
+
+@pytest.mark.parametrize(["op", "ufunc", "name"], MINMAX)
+def test_mixed_string_minmax_ufuncs_fail(op, ufunc, name):
+    arr_string = np.array(["a", "b"], dtype="S")
+    arr_unicode = np.array(["a", "c"], dtype="U")
+
+    with pytest.raises(TypeError, match="did not contain a loop"):
+        ufunc(arr_string, arr_unicode)
+
+    with pytest.raises(TypeError, match="did not contain a loop"):
+        ufunc(arr_unicode, arr_string)
+
+
+@pytest.mark.parametrize(["op", "ufunc", "name"], MINMAX)
+def test_mixed_string_minmax_ufuncs_with_cast(op, ufunc, name):
+    arr_string = np.array(["a", "b"], dtype="S")
+    arr_unicode = np.array(["a", "c"], dtype="U")
+
+    # While there is no loop, manual casting is acceptable:
+    res1 = ufunc(arr_string, arr_unicode, signature="UU->U", casting="unsafe")
+    res2 = ufunc(arr_string, arr_unicode, signature="SS->S", casting="unsafe")
+
+    expected = [op(d1, d2) for d1, d2 in
+                zip(arr_string.astype("U").tolist(), arr_unicode.tolist())]
+    assert_array_equal(res1, expected)
+    assert_array_equal(res2, np.array(expected, dtype="S"))
+
+
+@pytest.mark.parametrize("dt", ["S", "U"])
+def test_string_array_max_min(dt):
+    # gh-1914: ndarray.max()/.min() reduce via np.maximum/np.minimum
+    arr = np.array(["ab", "cd", "ba"], dtype=dt)
+    assert arr.max() == arr.astype(object).max()
+    assert arr.min() == arr.astype(object).min()
+
+
 @pytest.mark.parametrize("str_dt", ["S", "U"])
 @pytest.mark.parametrize("float_dt", np.typecodes["AllFloat"])
 def test_float_to_string_cast(str_dt, float_dt):
