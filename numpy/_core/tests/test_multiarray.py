@@ -9012,6 +9012,70 @@ class TestDotFamilyFallback:
             assert_array_equal(got, ref, strict=True)
             assert got.flags["C_CONTIGUOUS"]
 
+        stacked = np.ones((2, 3, 4, 5)).swapaxes(0, 1)
+        got = _dot_fallback(stacked, np.ones((5, 6)))
+        assert_array_equal(got, np.dot(stacked, np.ones((5, 6))), strict=True)
+        assert got.flags["C_CONTIGUOUS"]
+
+    @pytest.mark.parametrize("sa,sb", [
+        ((5,), (5,)), ((3,), (3, 4)), ((4, 3), (3,)), ((4, 3), (3, 5)),
+        ((2, 3, 4), (4, 5)), ((4,), (2, 4, 5)),
+    ])
+    def test_dot_fallback_out_matches_dot(self, sa, sb):
+        # `matmul` accepts `out` shapes, dtypes and layouts that `dot`
+        # rejects, so the fallback validates `out` itself; `dot` is the oracle.
+        a, b = np.ones(sa), np.ones(sb)
+        shape = np.dot(a, b).shape
+        readonly = np.empty(shape)
+        readonly.flags.writeable = False
+        outs = [np.empty(shape), np.empty((2, *shape)),
+                np.empty(shape, np.float32),
+                np.empty(shape, np.dtype(np.float64).newbyteorder()),
+                readonly]
+        if shape:
+            outs += [np.empty(tuple(s + 1 for s in shape)),
+                     np.empty(shape[:-1])]
+        if len(shape) >= 2:
+            outs += [np.asfortranarray(np.empty(shape)),
+                     np.empty(shape[:-1] + (2 * shape[-1],))[..., ::2]]
+
+        for out in outs:
+            try:
+                ref, ref_exc = np.array(np.dot(a, b, out)), None
+            except ValueError as exc:
+                ref, ref_exc = None, exc
+            try:
+                got, got_exc = np.array(_dot_fallback(a, b, out=out)), None
+            except ValueError as exc:
+                got, got_exc = None, exc
+
+            assert (ref_exc is None) == (got_exc is None), (
+                f"out shape={out.shape} dtype={out.dtype}: "
+                f"dot={ref_exc!r} fallback={got_exc!r}")
+            if ref_exc is None:
+                assert_array_equal(got, ref, strict=True)
+
+        out = np.empty(shape)
+        assert _dot_fallback(a, b, out=out) is out
+        assert_array_equal(out, np.dot(a, b), strict=True)
+
+    def test_dot_does_not_repeat_array_conversion(self):
+        class Counter:
+            ndim = 2
+
+            def __init__(self):
+                self.data = np.array([["a", "b"], ["c", "d"]])
+                self.calls = 0
+
+            def __array__(self, dtype=None, copy=None):
+                self.calls += 1
+                return np.array(self.data, dtype=dtype, copy=copy)
+
+        a, b = Counter(), Counter()
+        assert_raises(ValueError, np.dot, a, b)
+        assert a.calls == 2
+        assert b.calls == 2
+
     def test_dot_fallback_does_not_conjugate(self):
         # dot (unlike vdot) must not conjugate, even for complex input
         a = np.array([1 + 2j, 3 + 4j])
