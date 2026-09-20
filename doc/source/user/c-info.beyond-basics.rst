@@ -64,8 +64,8 @@ usage, however, is given in the following example.
     iter = (PyArrayIterObject *)PyArray_IterNew(obj);
     if (iter == NULL) goto fail;   /* Assume fail has clean-up code */
     while (iter->index < iter->size) {
-        /* do something with the data at it->dataptr */
-        PyArray_ITER_NEXT(it);
+        /* do something with the data at iter->dataptr */
+        PyArray_ITER_NEXT(iter);
     }
     ...
 
