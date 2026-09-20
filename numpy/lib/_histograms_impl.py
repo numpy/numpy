@@ -985,6 +985,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         # Sample is a sequence of 1D arrays.
         sample = np.atleast_2d(sample).T
         N, D = sample.shape
+    # this intentionally drops ndarray subclasses
     sample = np.asarray(sample)
 
     nbin = np.empty(D, np.intp)
