@@ -454,16 +454,31 @@ Runtime Dispatch
 ----------------
 
 Importing NumPy triggers a scan of the available CPU features from the set
-of dispatchable features. You can restrict this scan by setting the
-environment variable ``NPY_DISABLE_CPU_FEATURES`` to a comma-, tab-, or
-space-separated list of features to disable. 
+of dispatchable features. Two environment variables allow controlling this
+scan at runtime. Both accept a comma-, tab-, or space-separated list of
+feature names, such as ``AVX``, ``AVX2``, ``FMA3`` or ``X86_V4`` on
+``x86_64``:
 
-For instance, on ``x86_64`` this will disable ``X86_V4``::
+- ``NPY_DISABLE_CPU_FEATURES`` disables the listed features. For instance,
+  this disables ``X86_V4``::
 
-    NPY_DISABLE_CPU_FEATURES="X86_V4"
+      NPY_DISABLE_CPU_FEATURES="X86_V4"
 
-This will raise an error if parsing fails or if the feature was not enabled through the ``cpu-dispatch`` build option.
-If the feature is supported by the build but not available on the current CPU, a warning will be emitted instead.
+- ``NPY_ENABLE_CPU_FEATURES`` acts as an allow-list: the listed features
+  stay enabled and every other dispatched feature is disabled. For instance,
+  this restricts NumPy to ``X86_V2`` kernels::
+
+      NPY_ENABLE_CPU_FEATURES="X86_V2"
+
+A few rules apply:
+
+- The two variables are mutually exclusive; setting both at once raises an
+  ``ImportError`` when NumPy is imported.
+- Baseline features (the minimum set NumPy was built with) cannot be
+  disabled; attempting to do so raises an error.
+- Enabling a feature that is not supported by the current CPU raises an error.
+  Listing a feature name that is not part of the dispatched optimizations only
+  emits an ``ImportWarning``.
 
 Tracking Dispatched Functions
 -----------------------------
