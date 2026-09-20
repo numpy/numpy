@@ -159,6 +159,10 @@ class finfo:
     dtype('float64')
     >>> np.finfo(np.complex64).dtype
     dtype('float32')
+    >>> np.finfo(np.float32).min
+    -3.4028235e+38
+    >>> np.finfo(np.float32).max
+    3.4028235e+38
 
     """
 
