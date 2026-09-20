@@ -45,6 +45,7 @@
 #include "common.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
+#include "dispatching.h"
 
 #include "mem_overlap.h"
 #if defined(HAVE_CBLAS)
@@ -2339,7 +2340,7 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
     }
     if (type_num1 == NPY_TIMEDELTA && type_num2 == NPY_TIMEDELTA) {
         out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                             PyArray_DESCR(operands[1]));                             
+                                             PyArray_DESCR(operands[1]));
         if (out_dtypes[0] == NULL) {
             return -1;
         }
@@ -2363,4 +2364,54 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
     }
 
     return 0;
+}
+
+/*
+ * A dtype only gets the fused loop if it registers one for `minimummaximum`.
+ * Otherwise the default resolution reaches a builtin loop through a safe cast
+ * and changes the result dtype, so report that no loop exists and let callers
+ * fall back to separate `minimum` and `maximum` reductions.
+ */
+NPY_NO_EXPORT int
+PyUFunc_MinimumMaximumTypeResolver(
+        PyUFuncObject *ufunc,
+        NPY_CASTING casting,
+        PyArrayObject **operands,
+        PyObject *type_tup,
+        PyArray_Descr **out_dtypes)
+{
+    /*
+     * Only the promotion path, which `legacy_promote_using_legacy_type_resolver`
+     * marks by passing unsafe casting; a loop reached through a registered
+     * promoter is resolved before that and keeps its promotion.  And only the
+     * uniform-input case, since mixed inputs promote as usual.
+     */
+    if (casting == NPY_UNSAFE_CASTING && type_tup == NULL
+            && operands[0] != NULL) {
+        PyArray_Descr *descr = PyArray_DESCR(operands[0]);
+        int uniform = 1;
+        for (int iop = 1; iop < ufunc->nin; iop++) {
+            if (operands[iop] == NULL
+                    || !PyArray_EquivTypes(descr, PyArray_DESCR(operands[iop]))) {
+                uniform = 0;
+                break;
+            }
+        }
+        if (uniform) {
+            PyObject *info = get_info_no_cast(
+                    ufunc, NPY_DTYPE(descr), ufunc->nin + ufunc->nout);
+            if (info == NULL) {
+                return -1;
+            }
+            if (info == Py_None) {
+                PyObject *dtypes[NPY_MAXARGS] = {NULL};
+                for (int iop = 0; iop < ufunc->nin; iop++) {
+                    dtypes[iop] = (PyObject *)PyArray_DESCR(operands[iop]);
+                }
+                return raise_no_loop_found_error(ufunc, dtypes);
+            }
+        }
+    }
+    return PyUFunc_SimpleUniformOperationTypeResolver(
+            ufunc, casting, operands, type_tup, out_dtypes);
 }
