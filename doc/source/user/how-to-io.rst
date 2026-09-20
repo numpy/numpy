@@ -258,7 +258,7 @@ The ``.wav`` file header as a NumPy structured dtype::
         # it does not have a fixed size
     ])
 
-    header = np.fromfile(f, dtype=wave_header_dtype, count=1)[0]
+    header = np.fromfile(f, dtype=wav_header_dtype, count=1)[0]
 
 This ``.wav`` example is for illustration; to read a ``.wav`` file in real
 life, use Python's built-in module :mod:`wave`.
