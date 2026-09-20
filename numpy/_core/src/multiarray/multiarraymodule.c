@@ -1057,17 +1057,21 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
          * skip that cast and so expose `multiply`'s heterogeneous loops
          * (e.g. string repetition) where `dot` never allowed them.
          */
-        Py_DECREF(ap1);
-        Py_DECREF(ap2);
         Py_DECREF(typec);
         if (npy_cache_import_runtime(
                 "numpy._core.numeric", "_dot_fallback",
                 &_npy_module_state->runtime_imports._dot_fallback) == -1) {
+            Py_DECREF(ap1);
+            Py_DECREF(ap2);
             return NULL;
         }
-        return PyObject_CallFunctionObjArgs(
-                _npy_module_state->runtime_imports._dot_fallback, op1, op2,
+        PyObject *fallback_res = PyObject_CallFunctionObjArgs(
+                _npy_module_state->runtime_imports._dot_fallback,
+                (PyObject *)ap1, (PyObject *)ap2,
                 out != NULL ? (PyObject *)out : Py_None, NULL);
+        Py_DECREF(ap1);
+        Py_DECREF(ap2);
+        return fallback_res;
     }
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
     if (PyArray_NDIM(ap2) > 1) {
