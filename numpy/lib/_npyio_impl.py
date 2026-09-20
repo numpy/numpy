@@ -389,6 +389,11 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     - If the file is a ``.npz`` file, then a dictionary-like object is
       returned, containing ``{filename: array}`` key-value pairs, one for
       each file in the archive.
+    - If the file is a ``.npz`` file, the arrays are loaded lazily: the
+      data for an array is only read from the archive when that array is
+      accessed. Do not overwrite or replace the file on disk while the
+      returned ``NpzFile`` object is in use; doing so can corrupt the
+      deferred reads and raise ``zipfile.BadZipFile``.
     - If the file is a ``.npz`` file, the returned value supports the
       context manager protocol in a similar fashion to the open function::
 
