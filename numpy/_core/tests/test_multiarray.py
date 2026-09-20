@@ -30,6 +30,7 @@ import pytest
 
 import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.tests._locales import CommaDecimalPointLocale
@@ -11585,3 +11586,50 @@ class TestPatternMatching:
                 assert_array_equal(row4, [7, 8])
             case _:
                 raise AssertionError("3D ndarray did not match sequence pattern")
+
+
+class TestSubinterpreterTeardown:
+    """
+    ``_multiarray_umath`` declares Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED,
+    so importing numpy in a subinterpreter must fail cleanly with an
+    ImportError rather than crashing. Closing the subinterpreter afterwards
+    exercises its teardown path even though the import failed.
+    """
+
+    @pytest.mark.skipif(IS_WASM, reason="no subinterpreter support in wasm")
+    def test_subinterpreter_import_fails_cleanly(self):
+        # concurrent.interpreters is Python 3.14+
+        interpreters = pytest.importorskip("concurrent.interpreters")
+        interp = interpreters.create()
+        try:
+            with pytest.raises(interpreters.ExecutionFailed) as exc:
+                interp.exec("import numpy")
+            # numpy rewraps every C-extension ImportError in a generic
+            # message, so the type alone would also pass for a broken build.
+            msg = exc.value.excinfo.msg
+            assert "does not support loading in subinterpreters" in msg, msg
+        finally:
+            interp.close()
+
+
+class TestArrayConverter:
+    def test_pyscalars_self_referencing_array_raises(self):
+        # gh-32700
+        obj_array = np.empty(2, dtype=object)
+        obj_array[0] = obj_array
+        obj_array[1] = [obj_array, obj_array]
+
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(TypeError, match="must be a string"):
+            conv.as_arrays(pyscalars=obj_array)
+
+    @pytest.mark.parametrize("mode", [123, [], None])
+    def test_pyscalars_invalid_mode_type(self, mode):
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(TypeError, match="must be a string"):
+            conv.as_arrays(pyscalars=mode)
+
+    def test_pyscalars_invalid_mode_string(self):
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(ValueError, match="invalid pyscalar mode"):
+            conv.as_arrays(pyscalars="invalid")
