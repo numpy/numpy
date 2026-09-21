@@ -21,10 +21,13 @@ shape_2d: tuple[int, int]
 shape_3d: tuple[int, int, int]
 interface_dict: dict[str, Any]
 
-assert_type(np.lib.stride_tricks.as_strided(AR_f8), npt.NDArray[np.float64])
-assert_type(np.lib.stride_tricks.as_strided(AR_LIKE_f), npt.NDArray[Any])
+assert_type(np.lib.stride_tricks.as_strided(AR_f8_2d), _Array2D[np.float64])
 assert_type(np.lib.stride_tricks.as_strided(AR_f8, strides=(1, 5)), npt.NDArray[np.float64])
+assert_type(np.lib.stride_tricks.as_strided(AR_f8, shape_2d, (8, 8)), _Array2D[np.float64])
+assert_type(np.lib.stride_tricks.as_strided(AR_f8, shape=shape_3d), _Array3D[np.float64])
 assert_type(np.lib.stride_tricks.as_strided(AR_f8, shape=[9, 20]), npt.NDArray[np.float64])
+assert_type(np.lib.stride_tricks.as_strided(AR_LIKE_f, shape=shape_1d), _Array1D[Any])
+assert_type(np.lib.stride_tricks.as_strided(AR_LIKE_f), npt.NDArray[Any])
 
 assert_type(np.lib.stride_tricks.sliding_window_view(AR_f8, 5), npt.NDArray[np.float64])
 assert_type(np.lib.stride_tricks.sliding_window_view(AR_LIKE_f, (1, 5)), npt.NDArray[Any])

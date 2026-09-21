@@ -26,7 +26,28 @@ class DummyArray:
         base: NDArray[Any] | None = None,
     ) -> None: ...
 
-@overload
+#
+@overload  # Nd T, None
+def as_strided[ShapeT: _Shape, DTypeT: np.dtype](
+    x: np.ndarray[ShapeT, DTypeT],
+    shape: None = None,
+    strides: Iterable[int] | None = None,
+    subok: bool = False,
+    writeable: bool = True,
+    *,
+    check_bounds: bool | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # ?d T, Nd
+def as_strided[ScalarT: np.generic, ShapeT: _Shape](
+    x: _ArrayLike[ScalarT],
+    shape: ShapeT,
+    strides: Iterable[int] | None = None,
+    subok: bool = False,
+    writeable: bool = True,
+    *,
+    check_bounds: bool | None = None,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # ?d T, ?d
 def as_strided[ScalarT: np.generic](
     x: _ArrayLike[ScalarT],
     shape: Iterable[int] | None = None,
@@ -34,9 +55,19 @@ def as_strided[ScalarT: np.generic](
     subok: bool = False,
     writeable: bool = True,
     *,
-    check_bounds: bool | None = None
+    check_bounds: bool | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, Nd
+def as_strided[ShapeT: _Shape](
+    x: ArrayLike,
+    shape: ShapeT,
+    strides: Iterable[int] | None = None,
+    subok: bool = False,
+    writeable: bool = True,
+    *,
+    check_bounds: bool | None = None,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # ?d, ?d  (fallback)
 def as_strided(
     x: ArrayLike,
     shape: Iterable[int] | None = None,
@@ -44,9 +75,10 @@ def as_strided(
     subok: bool = False,
     writeable: bool = True,
     *,
-    check_bounds: bool | None = None
+    check_bounds: bool | None = None,
 ) -> NDArray[Any]: ...
 
+#
 @overload
 def sliding_window_view[ScalarT: np.generic](
     x: _ArrayLike[ScalarT],
