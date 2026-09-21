@@ -4909,8 +4909,6 @@ static struct PyMethodDef array_module_methods[] = {
         "indicated by mask."},
     {"bincount", (PyCFunction)arr_bincount,
         METH_FASTCALL | METH_KEYWORDS, NULL},
-    {"_monotonicity", (PyCFunction)arr__monotonicity,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp", (PyCFunction)arr_interp,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"interp_complex", (PyCFunction)arr_interp_complex,
