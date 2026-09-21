@@ -377,24 +377,20 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             return (conv.wrap(hash_unique),)
 
+    # For the small integer kinds 'stable' is a radix sort, which leaves
+    # quicksort far behind whatever we are asked for.
+    # Here 'stable' is a timsort, and it is only worth the first
+    # occurrences it hands us for free: quicksort is the faster sort
+    # on complex and string data unless that data is rich in NaNs.
+    stable = ((ar.dtype.kind in "biu" and ar.dtype.itemsize <= 2)
+                or (return_index and ar.dtype.kind in "cT"))
+
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
-        # For the small integer kinds 'stable' is a radix sort, which leaves
-        # quicksort far behind whatever we are asked for.
-        if ar.dtype.kind in "biu" and ar.dtype.itemsize <= 2:
-            kind = 'stable'
-        elif return_index and ar.dtype.kind in "cT":
-            # Here 'stable' is a timsort, and it is only worth the first
-            # occurrences it hands us for free: quicksort is the faster sort
-            # on complex and string data unless that data is rich in NaNs.
-            kind = 'stable'
-        else:
-            # Quicksort, and recover the first occurrences by hand below.
-            kind = 'quicksort'
-        perm = ar.argsort(kind=kind)
+        perm = ar.argsort(kind='stable' if stable else 'quicksort')
         aux = ar[perm]
     else:
-        ar.sort()
+        ar.sort(kind='stable' if stable else 'quicksort')
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool)
     mask[:1] = True
@@ -419,7 +415,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         # Where each group of equal elements starts in the sorted array.
         unique_pos = np.flatnonzero(mask)
     if return_index:
-        if kind == 'stable':
+        if stable:
             # A stable sort leaves each group's first occurrence at its front.
             ret += (perm[unique_pos],)
         else:
