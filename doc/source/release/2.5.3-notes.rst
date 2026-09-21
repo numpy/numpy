@@ -4,6 +4,8 @@
 NumPy 2.5.3 Release Notes
 =========================
 
+*Released on 2026-09-06.*
+
 The NumPy 2.5.3 is a patch release that fixes bugs discovered after the 2.5.2
 release. Apart from the usual bug and maintenance work, there are a number of
 StringDType related fixes for problems discovered during the ongoing string

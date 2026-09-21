@@ -4,6 +4,8 @@
 NumPy 2.1.1 Release Notes
 ==========================
 
+*Released on 2024-09-03.*
+
 NumPy 2.1.1 is a maintenance release that fixes bugs and regressions
 discovered after the 2.1.0 release.
 

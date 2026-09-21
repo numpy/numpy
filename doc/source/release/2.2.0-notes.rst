@@ -4,6 +4,8 @@
 NumPy 2.2.0 Release Notes
 ==========================
 
+*Released on 2024-12-08.*
+
 The NumPy 2.2.0 release is quick release that brings us back into sync with the
 usual twice yearly release cycle. There have been an number of small cleanups,
 as well as work bringing the new StringDType to completion and improving support
