@@ -23,6 +23,7 @@ from numpy._typing import (
     NDArray,
     _ArrayLike,
     _ArrayLikeBool_co,
+    _ArrayLikeComplex128_co,
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
@@ -3044,125 +3045,132 @@ def quantile[ArrayT: np.ndarray](
 ) -> ArrayT: ...
 
 #
-@overload  # ?d, known inexact/timedelta64 scalar-type
+@overload  # ?d +f64  (workaround)
+def trapezoid(
+    y: _ArrayNoD[_float64_co],
+    x: _ArrayLikeFloat_co | None = None,
+    dx: float = 1.0,
+    axis: SupportsIndex = -1,
+) -> NDArray[np.float64] | np.float64: ...
+@overload  # ?d ~complex  (workaround)
+def trapezoid(
+    y: _ArrayNoD[np.complex128],
+    x: _ArrayLikeComplex128_co | None = None,
+    dx: complex = 1.0,
+    axis: SupportsIndex = -1,
+) -> NDArray[np.complex128] | np.complex128: ...
+@overload  # ?d T  (workaround)
 def trapezoid[ScalarT: np.inexact | np.timedelta64](
     y: _ArrayNoD[ScalarT],
-    x: _ArrayLike[ScalarT] | _ArrayLikeFloat_co | None = None,
+    x: _ArrayLike[ScalarT] | None = None,
     dx: float = 1.0,
     axis: SupportsIndex = -1,
 ) -> NDArray[ScalarT] | ScalarT: ...
-@overload  # ?d, casts to float64
-def trapezoid(
-    y: _ArrayNoD[_integer_co],
-    x: _ArrayLikeFloat_co | None = None,
-    dx: float = 1.0,
-    axis: SupportsIndex = -1,
-) -> NDArray[np.float64] | np.float64: ...
-@overload  # strict 1d, known inexact/timedelta64 scalar-type
-def trapezoid[ScalarT: np.inexact | np.timedelta64](
-    y: _Array1D[ScalarT],
-    x: _Array1D[ScalarT] | _Seq1D[float] | None = None,
-    dx: float = 1.0,
-    axis: SupportsIndex = -1,
-) -> ScalarT: ...
-@overload  # strict 1d, casts to float64
+@overload  # 1d +f64
 def trapezoid(
     y: _Array1D[_float64_co] | _Seq1D[float],
-    x: _Array1D[_float64_co] | _Seq1D[float] | None = None,
+    x: _ArrayLikeFloat_co | None = None,
     dx: float = 1.0,
     axis: SupportsIndex = -1,
 ) -> np.float64: ...
-@overload  # strict 1d, casts to complex128 (`list` prevents overlapping overloads)
+@overload  # 1d ~complex
 def trapezoid(
-    y: list[complex],
-    x: _Seq1D[complex] | None = None,
+    y: _Array1D[np.complex128] | list[complex],
+    x: _ArrayLikeComplex128_co | None = None,
     dx: complex = 1.0,
     axis: SupportsIndex = -1,
 ) -> np.complex128: ...
-@overload  # strict 1d, casts to complex128
-def trapezoid(
-    y: _Seq1D[complex],
-    x: list[complex],
-    dx: complex = 1.0,
-    axis: SupportsIndex = -1,
-) -> np.complex128: ...
-@overload  # strict 2d, known inexact/timedelta64 scalar-type
+@overload  # 1d T
 def trapezoid[ScalarT: np.inexact | np.timedelta64](
-    y: _Array2D[ScalarT],
-    x: _ArrayMax2D[ScalarT] | _Seq2D[float] | _Seq1D[float] | None = None,
+    y: _Array1D[ScalarT] | _Seq1D[ScalarT],
+    x: _ArrayLike[ScalarT] | None = None,
     dx: float = 1.0,
     axis: SupportsIndex = -1,
 ) -> ScalarT: ...
-@overload  # strict 2d, casts to float64
+@overload  # 2d +f64
 def trapezoid(
     y: _Array2D[_float64_co] | _Seq2D[float],
-    x: _ArrayMax2D[_float64_co] | _Seq2D[float] | _Seq1D[float] | None = None,
+    x: _ArrayLikeFloat_co | None = None,
     dx: float = 1.0,
     axis: SupportsIndex = -1,
-) -> np.float64: ...
-@overload  # strict 2d, casts to complex128 (`list` prevents overlapping overloads)
+) -> _Array1D[np.float64]: ...
+@overload  # 2d ~complex
 def trapezoid(
-    y: _Seq1D[list[complex]],
-    x: _Seq2D[complex] | _Seq1D[complex] | None = None,
+    y: _Array2D[np.complex128] | _Seq1D[list[complex]],
+    x: _ArrayLikeComplex128_co | None = None,
     dx: complex = 1.0,
     axis: SupportsIndex = -1,
-) -> np.complex128: ...
-@overload  # strict 2d, casts to complex128
-def trapezoid(
-    y: _Seq2D[complex] | _Seq1D[complex],
-    x: _Seq1D[list[complex]],
-    dx: complex = 1.0,
-    axis: SupportsIndex = -1,
-) -> np.complex128: ...
-@overload
+) -> _Array1D[np.complex128]: ...
+@overload  # 2d T
 def trapezoid[ScalarT: np.inexact | np.timedelta64](
-    y: _ArrayLike[ScalarT],
-    x: _ArrayLike[ScalarT] | _ArrayLikeInt_co | None = None,
+    y: _Array2D[ScalarT] | _Seq2D[ScalarT],
+    x: _ArrayLike[ScalarT] | None = None,
+    dx: float = 1.0,
+    axis: SupportsIndex = -1,
+) -> _Array1D[ScalarT]: ...
+@overload  # 3d +f64
+def trapezoid(
+    y: _Array3D[_float64_co] | _Seq3D[float],
+    x: _ArrayLikeFloat_co | None = None,
+    dx: float = 1.0,
+    axis: SupportsIndex = -1,
+) -> _Array2D[np.float64]: ...
+@overload  # 3d ~complex
+def trapezoid(
+    y: _Array3D[np.complex128] | _Seq2D[list[complex]],
+    x: _ArrayLikeComplex128_co | None = None,
     dx: complex = 1.0,
     axis: SupportsIndex = -1,
-) -> NDArray[ScalarT] | ScalarT: ...
-@overload
+) -> _Array2D[np.complex128]: ...
+@overload  # 3d T
+def trapezoid[ScalarT: np.inexact | np.timedelta64](
+    y: _Array3D[ScalarT] | _Seq3D[ScalarT],
+    x: _ArrayLike[ScalarT] | None = None,
+    dx: float = 1.0,
+    axis: SupportsIndex = -1,
+) -> _Array2D[ScalarT]: ...
+@overload  # Nd +f64  (fallback)
 def trapezoid(
-    y: _ArrayLike[_float64_co],
+    y: _DualArrayLike[np.dtype[_float64_co], float],
     x: _ArrayLikeFloat_co | None = None,
     dx: float = 1.0,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.float64] | np.float64: ...
-@overload
+@overload  # Nd ~complex  (fallback)
 def trapezoid(
-    y: _ArrayLike[np.complex128],
-    x: _ArrayLikeComplex_co | None = None,
-    dx: float = 1.0,
+    y: _ArrayLike[np.complex128] | _ListSeqND[complex],
+    x: _ArrayLikeComplex128_co | None = None,
+    dx: complex = 1.0,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.complex128] | np.complex128: ...
-@overload
-def trapezoid(
-    y: _ArrayLikeComplex_co,
-    x: _ArrayLike[np.complex128],
+@overload  # Nd T  (fallback)
+def trapezoid[ScalarT: np.inexact | np.timedelta64](
+    y: _ArrayLike[ScalarT],
+    x: _ArrayLike[ScalarT] | None = None,
     dx: float = 1.0,
     axis: SupportsIndex = -1,
-) -> NDArray[np.complex128] | np.complex128: ...
-@overload
+) -> NDArray[ScalarT] | ScalarT: ...
+@overload  # Nd ~object_
 def trapezoid(
     y: _ArrayLikeObject_co,
     x: _ArrayLikeObject_co | _ArrayLikeFloat_co | None = None,
     dx: float = 1.0,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.object_] | Any: ...
-@overload
+@overload  # 1d ~object_
 def trapezoid[T](
     y: _Seq1D[_SupportsRMulFloat[T]],
     x: _Seq1D[_SupportsRMulFloat[T] | T] | None = None,
     dx: complex = 1.0,
     axis: SupportsIndex = -1,
 ) -> T: ...
-@overload
+@overload  # fallback
 def trapezoid(
     y: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
     x: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_] | None = None,
     dx: complex = 1.0,
     axis: SupportsIndex = -1,
-) -> Incomplete: ...
+) -> NDArray[Any] | Any: ...
 
 #
 @overload  # 0d

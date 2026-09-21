@@ -26,6 +26,7 @@ AR_LIKE_c16_2d: list[list[complex]]
 AR_LIKE_u1_3d: list[list[list[np.uint8]]]
 AR_LIKE_f10_3d: list[list[list[np.longdouble]]]
 AR_LIKE_c16_3d: list[list[list[complex]]]
+AR_LIKE_c16_4d: list[list[list[list[complex]]]]
 
 AR_u1: npt.NDArray[np.uint8]
 AR_i8: npt.NDArray[np.int64]
@@ -462,21 +463,24 @@ assert_type(np.quantile(AR_O, [0.5], axis=0), npt.NDArray[np.object_])
 assert_type(np.quantile(AR_O, 0.5), Any)
 
 # trapezoid
-assert_type(np.trapezoid(AR_LIKE_f8), np.float64)
-assert_type(np.trapezoid(AR_LIKE_f8, AR_LIKE_f8), np.float64)
-assert_type(np.trapezoid(AR_LIKE_c16), np.complex128)
+assert_type(np.trapezoid(AR_i8), npt.NDArray[np.float64] | np.float64)
+assert_type(np.trapezoid(AR_i8_2d), _Array1D[np.float64])
+assert_type(np.trapezoid(AR_i8_3d), _Array2D[np.float64])
+assert_type(np.trapezoid(AR_i8_4d), npt.NDArray[np.float64] | np.float64)
+assert_type(np.trapezoid(AR_f8, AR_f8), npt.NDArray[np.float64] | np.float64)
+assert_type(np.trapezoid(AR_f8_1d), np.float64)
+assert_type(np.trapezoid(AR_f8_2d, axis=0), _Array1D[np.float64])
+assert_type(np.trapezoid(AR_f8_4d), npt.NDArray[np.float64] | np.float64)
+assert_type(np.trapezoid(AR_f8_1d, dx=1j), npt.NDArray[Any] | Any)
+assert_type(np.trapezoid([1, 2, 3], x=[8, 6, 4]), np.float64)
+assert_type(np.trapezoid(AR_LIKE_f10_3d), _Array2D[np.longdouble])
+assert_type(np.trapezoid(AR_c16, AR_LIKE_f8), npt.NDArray[np.complex128] | np.complex128)
 assert_type(np.trapezoid(AR_LIKE_c16, AR_LIKE_f8), np.complex128)
-assert_type(np.trapezoid(AR_LIKE_f8, AR_LIKE_c16), np.complex128)
-assert_type(np.trapezoid(AR_LIKE_O), float)
-assert_type(np.trapezoid(AR_LIKE_O, AR_LIKE_f8), float)
-assert_type(np.trapezoid(AR_f8), np.float64 | npt.NDArray[np.float64])
-assert_type(np.trapezoid(AR_f8, AR_f8), np.float64 | npt.NDArray[np.float64])
-assert_type(np.trapezoid(AR_c16), np.complex128 | npt.NDArray[np.complex128])
-assert_type(np.trapezoid(AR_c16, AR_c16), np.complex128 | npt.NDArray[np.complex128])
-# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
-assert_type(np.trapezoid(AR_m), np.timedelta64 | npt.NDArray[np.timedelta64])  # type: ignore[assert-type]
+assert_type(np.trapezoid(AR_LIKE_c16_2d), _Array1D[np.complex128])
+assert_type(np.trapezoid(AR_LIKE_c16_3d), _Array2D[np.complex128])
+assert_type(np.trapezoid(AR_LIKE_c16_4d), npt.NDArray[np.complex128] | np.complex128)
 assert_type(np.trapezoid(AR_O), npt.NDArray[np.object_] | Any)
-assert_type(np.trapezoid(AR_O, AR_LIKE_f8), npt.NDArray[np.object_] | Any)
+assert_type(np.trapezoid(AR_LIKE_O), float)
 
 # meshgrid
 assert_type(np.meshgrid(), tuple[()])
