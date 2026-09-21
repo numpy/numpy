@@ -2367,10 +2367,8 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
 }
 
 /*
- * A dtype only gets the fused loop if it registers one for `minimummaximum`.
- * Otherwise the default resolution reaches a builtin loop through a safe cast
- * and changes the result dtype, so report that no loop exists and let callers
- * fall back to separate `minimum` and `maximum` reductions.
+ * Reports no loop instead of reaching a builtin loop through a safe cast,
+ * which would silently change the result dtype.
  */
 NPY_NO_EXPORT int
 PyUFunc_MinimumMaximumTypeResolver(
@@ -2380,19 +2378,14 @@ PyUFunc_MinimumMaximumTypeResolver(
         PyObject *type_tup,
         PyArray_Descr **out_dtypes)
 {
-    /*
-     * Only the promotion path, which `legacy_promote_using_legacy_type_resolver`
-     * marks by passing unsafe casting; a loop reached through a registered
-     * promoter is resolved before that and keeps its promotion.  And only the
-     * uniform-input case, since mixed inputs promote as usual.
-     */
+    /* Unsafe casting marks the promotion path, which runs after promoters. */
     if (casting == NPY_UNSAFE_CASTING && type_tup == NULL
             && operands[0] != NULL) {
         PyArray_Descr *descr = PyArray_DESCR(operands[0]);
         int uniform = 1;
         for (int iop = 1; iop < ufunc->nin; iop++) {
-            if (operands[iop] == NULL
-                    || !PyArray_EquivTypes(descr, PyArray_DESCR(operands[iop]))) {
+            PyArrayObject *op = operands[iop];
+            if (op == NULL || NPY_DTYPE(descr) != NPY_DTYPE(PyArray_DESCR(op))) {
                 uniform = 0;
                 break;
             }
