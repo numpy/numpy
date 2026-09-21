@@ -25,6 +25,7 @@ _py_b_1d: list[bool]
 _py_i_1d: list[int]
 _py_f_1d: list[float]
 _py_c_1d: list[complex]
+_py_f_2d: list[list[float]]
 
 poly_obj: np.poly1d
 
@@ -64,9 +65,13 @@ assert_type(iter(poly_obj), Iterator[Any])
 assert_type(poly_obj.deriv(), np.poly1d)
 assert_type(poly_obj.integ(), np.poly1d)
 
-assert_type(np.poly(poly_obj), npt.NDArray[np.floating])
-assert_type(np.poly(AR_f8), npt.NDArray[np.floating])
-assert_type(np.poly(AR_c16), npt.NDArray[np.floating])
+assert_type(np.poly(poly_obj), _Array1D[Any])
+assert_type(np.poly(AR_f4), _Array1D[np.float32])
+assert_type(np.poly(AR_c8), _Array1D[np.float32 | np.complex64])
+assert_type(np.poly(AR_f8_2d), _Array1D[np.float64])
+assert_type(np.poly(AR_c16), _Array1D[np.float64 | np.complex128])
+assert_type(np.poly(AR_O), _Array1D[np.object_])
+assert_type(np.poly(_py_f_2d), _Array1D[Any])
 
 assert_type(np.roots(poly_obj), _Array1D[Any])
 assert_type(np.roots(AR_c8), _Array1D[np.complex64])
@@ -77,14 +82,17 @@ assert_type(np.roots([1j, 2]), _Array1D[np.complex128])
 assert_type(np.roots(AR_f8_2d), _Array1D[Any])
 
 assert_type(np.polyint(poly_obj), np.poly1d)
-assert_type(np.polyint(AR_f8), npt.NDArray[np.floating])
-assert_type(np.polyint(AR_f8, k=AR_c16), npt.NDArray[np.complexfloating])
-assert_type(np.polyint(AR_O, m=2), npt.NDArray[np.object_])
+assert_type(np.polyint(AR_i8), _Array1D[np.float64])
+assert_type(np.polyint(AR_f8, 3, k=_py_i_1d), _Array1D[np.float64])
+assert_type(np.polyint(AR_c8), _Array1D[np.complex128])
+assert_type(np.polyint(AR_f8, k=AR_c16), _Array1D[Any])
 
 assert_type(np.polyder(poly_obj), np.poly1d)
-assert_type(np.polyder(AR_f8), npt.NDArray[np.floating])
-assert_type(np.polyder(AR_c16), npt.NDArray[np.complexfloating])
-assert_type(np.polyder(AR_O, m=2), npt.NDArray[np.object_])
+assert_type(np.polyder(AR_i8), _Array1D[np.int_])
+assert_type(np.polyder(AR_f4), _Array1D[np.float64])
+assert_type(np.polyder(AR_f8, m=2), _Array1D[np.float64])
+assert_type(np.polyder(AR_c8), _Array1D[np.complex128])
+assert_type(np.polyder(AR_f8_2d), _Array1D[Any])
 
 assert_type(np.polyfit(AR_f8, AR_f8, 2), npt.NDArray[np.float64])
 assert_type(np.polyfit(AR_f8, AR_f8_1d, 2), _Array1D[np.float64])
@@ -155,24 +163,26 @@ assert_type(np.polyval(_py_f_1d, _py_i_1d), npt.NDArray[np.float64 | Any])
 
 assert_type(np.polyadd(poly_obj, AR_i8), np.poly1d)
 assert_type(np.polyadd(AR_f8, poly_obj), np.poly1d)
-assert_type(np.polyadd(AR_b, AR_b), npt.NDArray[np.bool])
-assert_type(np.polyadd(AR_u4, AR_b), npt.NDArray[np.unsignedinteger])
-assert_type(np.polyadd(AR_i8, AR_i8), npt.NDArray[np.signedinteger])
-assert_type(np.polyadd(AR_f8, AR_i8), npt.NDArray[np.floating])
-assert_type(np.polyadd(AR_i8, AR_c16), npt.NDArray[np.complexfloating])
-assert_type(np.polyadd(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(np.polyadd(AR_f8_1d, AR_f8_1d), _Array1D[np.float64])
+assert_type(np.polyadd(_py_b_1d, _py_b_1d), _Array1D[np.bool])
+assert_type(np.polyadd(_py_i_1d, _py_i_1d), _Array1D[np.int_ | Any])
+assert_type(np.polyadd(_py_f_1d, _py_f_1d), _Array1D[np.float64 | Any])
+assert_type(np.polyadd(_py_c_1d, _py_c_1d), _Array1D[np.complex128 | Any])
+assert_type(np.polyadd(AR_O, AR_f8), _Array1D[np.object_])
+assert_type(np.polyadd(AR_f8, AR_O), _Array1D[np.object_])
 
 assert_type(np.polysub(poly_obj, AR_i8), np.poly1d)
 assert_type(np.polysub(AR_f8, poly_obj), np.poly1d)
+assert_type(np.polysub(AR_f8_1d, AR_f8_1d), _Array1D[np.float64])
 
 def test_invalid_polysub() -> None:
-    assert_type(np.polysub(AR_b, AR_b), NoReturn)
+    assert_type(np.polysub(_py_b_1d, _py_b_1d), NoReturn)
 
-assert_type(np.polysub(AR_u4, AR_b), npt.NDArray[np.unsignedinteger])
-assert_type(np.polysub(AR_i8, AR_i8), npt.NDArray[np.signedinteger])
-assert_type(np.polysub(AR_f8, AR_i8), npt.NDArray[np.floating])
-assert_type(np.polysub(AR_i8, AR_c16), npt.NDArray[np.complexfloating])
-assert_type(np.polysub(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(np.polysub(_py_i_1d, _py_i_1d), _Array1D[np.int_ | Any])
+assert_type(np.polysub(_py_f_1d, _py_f_1d), _Array1D[np.float64 | Any])
+assert_type(np.polysub(_py_c_1d, _py_c_1d), _Array1D[np.complex128 | Any])
+assert_type(np.polysub(AR_O, AR_f8), _Array1D[np.object_])
+assert_type(np.polysub(AR_f8, AR_O), _Array1D[np.object_])
 
 assert_type(np.polymul(poly_obj, AR_i8), np.poly1d)
 assert_type(np.polymul(AR_f8, poly_obj), np.poly1d)

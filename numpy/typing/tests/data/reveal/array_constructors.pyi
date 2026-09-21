@@ -35,6 +35,7 @@ _f32_0d: np.float32
 _f32_1d: _Array1D[np.float32]
 _f32_2d: _Array2D[np.float32]
 _f32_3d: _Array3D[np.float32]
+_f32_4d_list: list[_Array4D[np.float32]]
 _f64_0d: _Array0D[np.float64]
 _obj_str_1d: _Array1D[np.object_[str]]
 
@@ -53,7 +54,21 @@ _py_c_3d: list[list[list[complex]]]
 
 mixed_shape: tuple[int, np.int64]
 
-def func(i: int, j: int, **kwargs: Any) -> SubClass[np.float64]: ...
+def _func_1d_i8(i: _Array1D[np.int8]) -> _Array1D[np.int8]: ...
+def _func_1d_i64(i: _Array1D[np.int_]) -> _Array1D[np.int_]: ...
+def _func_1d_f64(i: _Array1D[np.float64]) -> _Array1D[np.float64]: ...
+def _func_1d[ScalarT: np.generic](i: _Array1D[ScalarT]) -> _Array1D[ScalarT]: ...
+def _func_2d_i8(i: _Array2D[np.int8], j: _Array2D[np.int8]) -> _Array2D[np.int8]: ...
+def _func_2d_i64(i: _Array2D[np.int_], j: _Array2D[np.int_]) -> _Array2D[np.int_]: ...
+def _func_2d_f64(i: _Array2D[np.float64], j: _Array2D[np.float64]) -> _Array2D[np.float64]: ...
+def _func_2d[ScalarT: np.generic](i: _Array2D[ScalarT], j: _Array2D[ScalarT]) -> _Array2D[ScalarT]: ...
+def _func_3d_i8(i: _Array3D[np.int8], j: _Array3D[np.int8], k: _Array3D[np.int8]) -> _Array3D[np.int8]: ...
+def _func_3d_i64(i: _Array3D[np.int_], j: _Array3D[np.int_], k: _Array3D[np.int_]) -> _Array3D[np.int_]: ...
+def _func_3d_f64(i: _Array3D[np.float64], j: _Array3D[np.float64], k: _Array3D[np.float64]) -> _Array3D[np.float64]: ...
+def _func_3d[ScalarT: np.generic](i: _Array3D[ScalarT], j: _Array3D[ScalarT], k: _Array3D[ScalarT]) -> _Array3D[ScalarT]: ...
+def _func_nd(*args: npt.NDArray[np.float64]) -> SubClass[np.float64]: ...
+
+###
 
 assert_type(np.array(_py_b_1d), _Array1D[np.bool])
 assert_type(np.array(_py_b_2d), _Array2D[np.bool])
@@ -454,7 +469,19 @@ assert_type(np.full(_shape_0d, i8, dtype=object), np.ndarray[tuple[()], np.dtype
 assert_type(np.indices([1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.indices([1, 2, 3], sparse=True), tuple[npt.NDArray[np.int_], ...])
 
-assert_type(np.fromfunction(func, (3, 5)), SubClass[np.float64])
+assert_type(np.fromfunction(_func_1d_i8, (3,), dtype=np.int8), _Array1D[np.int8])
+assert_type(np.fromfunction(_func_1d_i64, (3,), dtype=int), _Array1D[np.int_])
+assert_type(np.fromfunction(_func_1d_f64, (3,)), _Array1D[np.float64])
+assert_type(np.fromfunction(_func_1d, (3,), dtype="i"), _Array1D[Any])
+assert_type(np.fromfunction(_func_2d_i8, (3, 3), dtype=np.int8), _Array2D[np.int8])
+assert_type(np.fromfunction(_func_2d_i64, (3, 3), dtype=int), _Array2D[np.int_])
+assert_type(np.fromfunction(_func_2d_f64, (3, 3)), _Array2D[np.float64])
+assert_type(np.fromfunction(_func_2d, (3, 3), dtype="i"), _Array2D[Any])
+assert_type(np.fromfunction(_func_3d_i8, (2, 3, 4), dtype=np.int8), _Array3D[np.int8])
+assert_type(np.fromfunction(_func_3d_i64, (2, 3, 4), dtype=int), _Array3D[np.int_])
+assert_type(np.fromfunction(_func_3d_f64, (2, 3, 4)), _Array3D[np.float64])
+assert_type(np.fromfunction(_func_3d, (2, 3, 4), dtype="i"), _Array3D[Any])
+assert_type(np.fromfunction(_func_nd, (2, 3, 4, 5)), SubClass[np.float64])
 
 assert_type(np.identity(3), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 assert_type(np.identity(3, dtype=np.int8), np.ndarray[tuple[int, int], np.dtype[np.int8]])
@@ -600,8 +627,28 @@ assert_type(np.stack([_f32_2d, _f32_2d], axis=-1), _Array3D[np.float32])
 assert_type(np.stack([_f32_2d, _f32_2d], dtype=np.int8), _Array3D[np.int8])
 assert_type(np.stack([_f32_2d, _f32_2d], dtype="i1"), _Array3D[Any])
 
-assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
-assert_type(np.block(C), npt.NDArray[Any])
+assert_type(np.block(_f32_2d), _Array2D[np.float32])
+assert_type(np.block([[A, A], [A, A]]), npt.NDArray[np.float64])
+assert_type(np.block([_f32_1d, _f32_1d]), _Array1D[np.float32])
+assert_type(np.block([True, False]), _Array1D[np.bool])
+assert_type(np.block([1, 2]), _Array1D[np.int_])
+assert_type(np.block([1.0, 2]), _Array1D[np.float64])
+assert_type(np.block([1j, 2]), _Array1D[np.complex128])
+assert_type(np.block([_f32_1d, 1]), _Array1D[Any])
+assert_type(np.block([[_f32_2d, _f32_2d], [_f32_2d, _f32_2d]]), _Array2D[np.float32])
+assert_type(np.block([[True]]), _Array2D[np.bool])
+assert_type(np.block([[1, 2], [3, 4]]), _Array2D[np.int_])
+assert_type(np.block([[1.0, 2], [3, 4]]), _Array2D[np.float64])
+assert_type(np.block([[1j, 2], [3, 4]]), _Array2D[np.complex128])
+assert_type(np.block([[_f32_2d, _f32_2d], [_f32_1d, 1]]), _Array2D[Any])
+assert_type(np.block([[[_f32_1d]], [[_f32_1d]]]), _Array3D[np.float32])
+assert_type(np.block([[[True]]]), _Array3D[np.bool])
+assert_type(np.block([[[1]]]), _Array3D[np.int_])
+assert_type(np.block([[[1.0]]]), _Array3D[np.float64])
+assert_type(np.block([[[1j]]]), _Array3D[np.complex128])
+assert_type(np.block([[[_f32_1d, 1]]]), _Array3D[Any])
+assert_type(np.block(_f32_4d_list), npt.NDArray[np.float32])
+assert_type(np.block(["a", "b"]), npt.NDArray[Any])
 
 from collections.abc import Buffer
 
