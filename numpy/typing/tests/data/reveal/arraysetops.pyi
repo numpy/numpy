@@ -2,7 +2,7 @@ from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-from numpy.lib._arraysetops_impl import UniqueAllResult, UniqueCountsResult
+from numpy.lib._arraysetops_impl import UniqueCountsResult
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Int1D = _Array1D[np.intp]
@@ -143,8 +143,14 @@ assert_type(np.unique(AR_LIKE_f8, True, True, True, axis=0), tuple[npt.NDArray[A
 
 ###
 
-assert_type(np.unique_all(AR_f8), UniqueAllResult[np.float64])
-assert_type(np.unique_all(AR_LIKE_f8), UniqueAllResult[Any])
+assert_type(np.unique_all(AR_f8_1d).values, _Array1D[np.float64])
+assert_type(np.unique_all(AR_f8_1d).indices, _Array1D[np.intp])
+assert_type(np.unique_all(AR_f8_1d).inverse_indices, _Array1D[np.intp])
+assert_type(np.unique_all(AR_f8_1d).counts, _Array1D[np.intp])
+assert_type(np.unique_all(_f8).values, _Array1D[np.float64])
+assert_type(np.unique_all(_f8).inverse_indices, npt.NDArray[np.intp])
+assert_type(np.unique_all(AR_LIKE_f8).values, _Array1D[Any])
+assert_type(np.unique_all(AR_LIKE_f8).inverse_indices, npt.NDArray[np.intp])
 
 assert_type(np.unique_counts(AR_f8), UniqueCountsResult[np.float64])
 assert_type(np.unique_counts(AR_LIKE_f8), UniqueCountsResult[Any])

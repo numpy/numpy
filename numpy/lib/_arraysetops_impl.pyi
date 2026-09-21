@@ -45,6 +45,7 @@ _AnyScalarT = TypeVar(
     np.integer, np.floating, np.complexfloating, np.character,
 )  # fmt: skip
 
+# legacy `TypeVar`s are needed because Pyright will otherwise incorrectly infer them as invariant
 _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, default=Any, covariant=True)
 _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 
@@ -62,17 +63,16 @@ type _IntersectResult[ScalarT: np.generic] = tuple[_Array1D[ScalarT], _Int1D, _I
 
 ###
 
-class UniqueAllResult[ScalarT: np.generic](NamedTuple):
-    values: _Array1D[ScalarT]
-    indices: _Int1D
-    inverse_indices: _IntND
-    counts: _Int1D
+class UniqueAllResult(NamedTuple, Generic[_ScalarT_co, _ShapeT_co]):
+    values: _Array1D[_ScalarT_co]
+    indices: _Array1D[np.intp]
+    inverse_indices: np.ndarray[_ShapeT_co, np.dtype[np.intp]]
+    counts: _Array1D[np.intp]
 
 class UniqueCountsResult[ScalarT: np.generic](NamedTuple):
     values: _Array1D[ScalarT]
     counts: _Int1D
 
-# legacy `TypeVar`s are needed because Pyright will otherwise incorrectly infer them as invariant
 class UniqueInverseResult(NamedTuple, Generic[_ScalarT_co, _ShapeT_co]):
     values: _Array1D[_ScalarT_co]
     inverse_indices: np.ndarray[_ShapeT_co, np.dtype[np.intp]]
@@ -831,11 +831,15 @@ def unique(
     sorted: bool = True,
 ) -> tuple[np.ndarray, _Int1D, _Int1D, _Int1D]: ...
 
-#
-@overload
-def unique_all[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> UniqueAllResult[ScalarT]: ...
-@overload
-def unique_all(x: ArrayLike) -> UniqueAllResult[Any]: ...
+# keep in sync with `unique_inverse`
+@overload  # known dtype, known shape
+def unique_all[ScalarT: np.generic, ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[ScalarT]],
+) -> UniqueAllResult[ScalarT, ShapeT]: ...
+@overload  # known dtype, unknown shape
+def unique_all[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> UniqueAllResult[ScalarT, _AnyShape]: ...
+@overload  # unknown dtype, unknown shape
+def unique_all(x: ArrayLike) -> UniqueAllResult[Any, _AnyShape]: ...
 
 #
 @overload
@@ -843,12 +847,12 @@ def unique_counts[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> UniqueCountsRe
 @overload
 def unique_counts(x: ArrayLike) -> UniqueCountsResult[Any]: ...
 
-#
+# keep in sync with `unique_all`
 @overload  # known dtype, known shape
 def unique_inverse[ScalarT: np.generic, ShapeT: _Shape](
     x: np.ndarray[ShapeT, np.dtype[ScalarT]],
 ) -> UniqueInverseResult[ScalarT, ShapeT]: ...
-@overload  # known dtype, unknow shape
+@overload  # known dtype, unknown shape
 def unique_inverse[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> UniqueInverseResult[ScalarT, _AnyShape]: ...
 @overload  # unknown dtype, unknown shape
 def unique_inverse(x: ArrayLike) -> UniqueInverseResult[Any, _AnyShape]: ...
