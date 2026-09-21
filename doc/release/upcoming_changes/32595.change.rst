@@ -1,3 +1,2 @@
-Reductions with a narrower ``out`` are more accurate
-----------------------------------------------------
-The result is rounded to ``out`` once at the end, not at every buffer refill.
+* Some reductions that use `out=` with a less precise dtype than the
+  inputs/`dtype=` may now return different, more precise, results.
