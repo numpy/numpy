@@ -4,6 +4,9 @@ from typing import Any, Literal, assert_type
 import numpy as np
 import numpy.typing as npt
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+
 class SubClass[ScalarT: np.generic](np.ndarray[tuple[Any, ...], np.dtype[ScalarT]]): ...
 
 subclass: SubClass[np.float64]
@@ -22,6 +25,9 @@ AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
 AR_M_1d: np.ndarray[tuple[int], np.dtype[np.datetime64]]
 AR_M_2d: np.ndarray[tuple[int, int], np.dtype[np.datetime64]]
+AR_MD: npt.NDArray[np.datetime64[dt.date]]
+AR_MD_1d: _Array1D[np.datetime64[dt.date]]
+AR_MD_2d: _Array2D[np.datetime64[dt.date]]
 AR_LIKE_M_1d: list[np.datetime64[dt.datetime]]
 AR_LIKE_M_2d: list[list[np.datetime64[dt.datetime]]]
 AR_O_nd: npt.NDArray[np.object_[int]]
@@ -315,22 +321,34 @@ assert_type(np.datetime_data("m8[D]"), tuple[str, int])
 assert_type(np.datetime_data(np.datetime64), tuple[str, int])
 assert_type(np.datetime_data(np.dtype(np.timedelta64)), tuple[str, int])
 
+assert_type(np.busday_count(AR_MD, date_scalar), npt.NDArray[np.int_])
+assert_type(np.busday_count(date_scalar, AR_MD), npt.NDArray[np.int_])
 assert_type(np.busday_count("2011-01", "2011-02"), np.int_)
-assert_type(np.busday_count(["2011-01"], "2011-02"), npt.NDArray[np.int_])
-assert_type(np.busday_count(["2011-01"], date_scalar), npt.NDArray[np.int_])
+assert_type(np.busday_count(date_scalar, date_seq), _Array1D[np.int_])
+assert_type(np.busday_count(AR_MD_1d, "2011-02"), _Array1D[np.int_])
+assert_type(np.busday_count(["2011-01"], AR_MD_2d), _Array2D[np.int_])
+assert_type(np.busday_count(AR_MD_2d, AR_MD_1d), _Array2D[np.int_])
+assert_type(np.busday_count([[[M]]], date_scalar), npt.NDArray[np.int_])
+assert_type(np.busday_count(date_scalar, [[[M]]]), npt.NDArray[np.int_])
+assert_type(np.busday_count(AR_MD_1d, date_scalar, out=AR_i8), npt.NDArray[np.int64])
 
-# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
-assert_type(np.busday_offset(M, m), np.datetime64)  # type: ignore[assert-type]
-assert_type(np.busday_offset(M, 5), np.datetime64)  # type: ignore[assert-type]
-assert_type(np.busday_offset(date_scalar, m), np.datetime64)
-assert_type(np.busday_offset(AR_M, m), npt.NDArray[np.datetime64])
-assert_type(np.busday_offset(M, timedelta_seq), npt.NDArray[np.datetime64])
-assert_type(np.busday_offset("2011-01", "2011-02", roll="forward"), np.datetime64)
-assert_type(np.busday_offset(["2011-01"], "2011-02", roll="forward"), npt.NDArray[np.datetime64])
+assert_type(np.busday_offset(AR_MD, 1), npt.NDArray[np.datetime64[dt.date]])
+assert_type(np.busday_offset(date_scalar, AR_i8), npt.NDArray[np.datetime64[dt.date]])
+assert_type(np.busday_offset(M, 5), np.datetime64[dt.date])
+assert_type(np.busday_offset(date_scalar, [1, 2]), _Array1D[np.datetime64[dt.date]])
+assert_type(np.busday_offset(AR_MD_1d, 1), _Array1D[np.datetime64[dt.date]])
+assert_type(np.busday_offset("2011-01", [[1], [2]], roll="forward"), _Array2D[np.datetime64[dt.date]])
+assert_type(np.busday_offset(AR_MD_2d, 1), _Array2D[np.datetime64[dt.date]])
+assert_type(np.busday_offset([[[M]]], 1), npt.NDArray[np.datetime64[dt.date]])
+assert_type(np.busday_offset(M, [[[1]]]), npt.NDArray[np.datetime64[dt.date]])
+assert_type(np.busday_offset(AR_MD_1d, 1, out=AR_M_1d), _Array1D[np.datetime64])
 
+assert_type(np.is_busday(AR_MD), npt.NDArray[np.bool])
 assert_type(np.is_busday("2012"), np.bool)
-assert_type(np.is_busday(date_scalar), np.bool)
-assert_type(np.is_busday(["2012"]), npt.NDArray[np.bool])
+assert_type(np.is_busday(date_seq), _Array1D[np.bool])
+assert_type(np.is_busday(AR_MD_2d), _Array2D[np.bool])
+assert_type(np.is_busday([[[M]]]), npt.NDArray[np.bool])
+assert_type(np.is_busday(AR_MD_1d, out=AR_b_nd), npt.NDArray[np.bool])
 
 # NOTE: Mypy incorrectly infers `ndarray[Any, Any]` for the shaped cases, but pyright behaves correctly.
 assert_type(np.datetime_as_string(M), np.str_)
