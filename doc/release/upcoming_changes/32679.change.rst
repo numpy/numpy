@@ -1,0 +1,3 @@
+* ``pinv`` with ``rtol=None`` did not select the correct output dtype for
+  integer input. It now always returns float results for integer input and no
+  longer spuriously raises ValueError for some inputs.
