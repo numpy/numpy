@@ -69,9 +69,9 @@ class UniqueAllResult(NamedTuple, Generic[_ScalarT_co, _ShapeT_co]):
     inverse_indices: np.ndarray[_ShapeT_co, np.dtype[np.intp]]
     counts: _Array1D[np.intp]
 
-class UniqueCountsResult[ScalarT: np.generic](NamedTuple):
-    values: _Array1D[ScalarT]
-    counts: _Int1D
+class UniqueCountsResult(NamedTuple, Generic[_ScalarT_co]):
+    values: _Array1D[_ScalarT_co]
+    counts: _Array1D[np.intp]
 
 class UniqueInverseResult(NamedTuple, Generic[_ScalarT_co, _ShapeT_co]):
     values: _Array1D[_ScalarT_co]
@@ -842,9 +842,9 @@ def unique_all[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> UniqueAllResult[S
 def unique_all(x: ArrayLike) -> UniqueAllResult[Any, _AnyShape]: ...
 
 #
-@overload
+@overload  # known dtype
 def unique_counts[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> UniqueCountsResult[ScalarT]: ...
-@overload
+@overload  # unknown dtype
 def unique_counts(x: ArrayLike) -> UniqueCountsResult[Any]: ...
 
 # keep in sync with `unique_all`
