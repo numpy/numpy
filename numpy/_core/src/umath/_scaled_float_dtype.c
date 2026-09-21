@@ -697,7 +697,7 @@ translate_loop_descrs(
 static PyObject *
 sfloat_get_ufunc(const char *ufunc_name)
 {
-    PyObject *mod = PyImport_ImportModule("numpy");
+    PyObject *mod = PyImport_ImportModule("numpy._core.umath");
     if (mod == NULL) {
         return NULL;
     }
@@ -714,14 +714,14 @@ sfloat_get_ufunc(const char *ufunc_name)
 
 
 static int
-sfloat_add_loop(const char *ufunc_name,
-        PyArray_DTypeMeta *dtypes[3], PyObject *meth_or_promoter)
+sfloat_add_loop(const char *ufunc_name, int nargs,
+        PyArray_DTypeMeta *dtypes[], PyObject *meth_or_promoter)
 {
     PyObject *ufunc = sfloat_get_ufunc(ufunc_name);
     if (ufunc == NULL) {
         return -1;
     }
-    PyObject *dtype_tup = PyArray_TupleFromItems(3, (PyObject **)dtypes, 1);
+    PyObject *dtype_tup = PyArray_TupleFromItems(nargs, (PyObject **)dtypes, 1);
     if (dtype_tup == NULL) {
         Py_DECREF(ufunc);
         return -1;
@@ -773,6 +773,24 @@ promote_to_sfloat(PyUFuncObject *NPY_UNUSED(ufunc),
         }
         Py_INCREF(new);
         new_dtypes[i] = new;
+    }
+    return 0;
+}
+
+
+static int
+promote_minimummaximum_to_double(PyObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *const NPY_UNUSED(op_dtypes[]),
+        PyArray_DTypeMeta *const signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    for (int i = 0; i < 4; i++) {
+        PyArray_DTypeMeta *new = &PyArray_DoubleDType;
+        if (signature[i] != NULL) {
+            new = signature[i];
+        }
+        Py_INCREF(new);
+        new_op_dtypes[i] = new;
     }
     return 0;
 }
@@ -1173,15 +1191,29 @@ sfloat_init_ufuncs(void) {
     if (promoter == NULL) {
         return -1;
     }
-    res = sfloat_add_loop("multiply", promoter_dtypes, promoter);
+    res = sfloat_add_loop("multiply", 3, promoter_dtypes, promoter);
     if (res < 0) {
         Py_DECREF(promoter);
         return -1;
     }
     promoter_dtypes[0] = double_DType;
     promoter_dtypes[1] = &PyArray_SFloatDType;
-    res = sfloat_add_loop("multiply", promoter_dtypes, promoter);
+    res = sfloat_add_loop("multiply", 3, promoter_dtypes, promoter);
     Py_DECREF(promoter);
+    if (res < 0) {
+        return -1;
+    }
+
+    PyArray_DTypeMeta *minmax_dtypes[4] = {
+            &PyArray_SFloatDType, &PyArray_SFloatDType, NULL, NULL};
+    PyObject *minmax_promoter = PyCapsule_New(
+            &promote_minimummaximum_to_double, "numpy._ufunc_promoter", NULL);
+    if (minmax_promoter == NULL) {
+        return -1;
+    }
+    res = sfloat_add_loop(
+            "minimummaximum", 4, minmax_dtypes, minmax_promoter);
+    Py_DECREF(minmax_promoter);
     if (res < 0) {
         return -1;
     }
