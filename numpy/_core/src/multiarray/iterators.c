@@ -357,7 +357,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                     NPY_cast_info *cast_info)
 {
     npy_intp counter, strides;
-    int itemsize;
+    npy_intp itemsize;
     npy_intp count = 0;
     char *dptr, *optr;
     PyArrayObject *ret;
@@ -432,7 +432,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind,
     npy_intp num;
     PyArrayObject *ret;
     PyArrayIterObject *ind_it;
-    int itemsize;
+    npy_intp itemsize;
     char *optr;
     npy_intp counter;
 

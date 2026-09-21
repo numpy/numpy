@@ -2374,7 +2374,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         PyArray_Descr *new;
         npy_intp num;
         npy_intp i;
-        int subitemsize;
+        npy_intp subitemsize;
         char *dstptr, *srcptr;
         /*
          * In certain cases subarray copy can be optimized. This is when
