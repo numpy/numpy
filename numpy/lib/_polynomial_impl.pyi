@@ -15,7 +15,7 @@ from typing import (
 )
 
 import numpy as np
-from numpy import complex128, complexfloating, float64, floating, int32, object_
+from numpy import complex128, float64, floating, int32
 from numpy._typing import (
     ArrayLike,
     NDArray,
