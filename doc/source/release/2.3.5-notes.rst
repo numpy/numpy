@@ -4,6 +4,8 @@
 NumPy 2.3.5 Release Notes
 =========================
 
+*Released on 2025-11-16.*
+
 The NumPy 2.3.5 release is a patch release split between a number of maintenance
 updates and bug fixes. This release supports Python versions 3.11-3.14.
 
