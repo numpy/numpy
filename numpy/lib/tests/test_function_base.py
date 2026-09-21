@@ -4800,7 +4800,9 @@ class TestLerp:
         # double subtraction is needed to remove the extra precision of t < 0.5
         left = nfb._lerp(a, b, 1 - (1 - t))
         right = nfb._lerp(b, a, 1 - t)
-        assert_allclose(left, right)
+        # Scale atol by input magnitude for catastrophic cancellation cases.
+        atol = max(abs(a), abs(b)) * np.finfo(np.float64).eps * 100
+        assert_allclose(left, right, atol=atol, rtol=0)
 
     def test_linear_interpolation_formula_0d_inputs(self):
         a = np.array(2)
