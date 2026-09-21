@@ -79,7 +79,52 @@ def as_strided(
 ) -> NDArray[Any]: ...
 
 #
-@overload
+@overload  # ?d T, ?d  (workaround)
+def sliding_window_view[DTypeT: np.dtype](
+    x: np.ndarray[_ShapeNoD, DTypeT],
+    window_shape: int | Iterable[int],
+    axis: int | tuple[int, ...] | None = None,
+    *,
+    subok: bool = False,
+    writeable: bool = False,
+) -> np.ndarray[_AnyShape, DTypeT]: ...
+@overload  # 1d T, 1d
+def sliding_window_view[DTypeT: np.dtype](
+    x: np.ndarray[tuple[int], DTypeT],
+    window_shape: int | tuple[int],
+    axis: int | tuple[int] | None = None,
+    *,
+    subok: bool = False,
+    writeable: bool = False,
+) -> np.ndarray[tuple[int, int], DTypeT]: ...
+@overload  # 2d T, 1d, axis=<given>
+def sliding_window_view[DTypeT: np.dtype](
+    x: np.ndarray[tuple[int, int], DTypeT],
+    window_shape: int | tuple[int],
+    axis: int | tuple[int],
+    *,
+    subok: bool = False,
+    writeable: bool = False,
+) -> np.ndarray[tuple[int, int, int], DTypeT]: ...
+@overload  # 2d T, 2d
+def sliding_window_view[DTypeT: np.dtype](
+    x: np.ndarray[tuple[int, int], DTypeT],
+    window_shape: tuple[int, int],
+    axis: tuple[int, int] | None = None,
+    *,
+    subok: bool = False,
+    writeable: bool = False,
+) -> np.ndarray[tuple[int, int, int, int], DTypeT]: ...
+@overload  # 3d T, 1d, axis=<given>
+def sliding_window_view[DTypeT: np.dtype](
+    x: np.ndarray[tuple[int, int, int], DTypeT],
+    window_shape: int | tuple[int],
+    axis: int | tuple[int],
+    *,
+    subok: bool = False,
+    writeable: bool = False,
+) -> np.ndarray[tuple[int, int, int, int], DTypeT]: ...
+@overload  # ?d T, ?d
 def sliding_window_view[ScalarT: np.generic](
     x: _ArrayLike[ScalarT],
     window_shape: int | Iterable[int],
@@ -88,7 +133,7 @@ def sliding_window_view[ScalarT: np.generic](
     subok: bool = False,
     writeable: bool = False,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, ?d  (fallback)
 def sliding_window_view(
     x: ArrayLike,
     window_shape: int | Iterable[int],
