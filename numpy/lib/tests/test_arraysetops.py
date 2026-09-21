@@ -5,6 +5,7 @@ import pytest
 
 import numpy as np
 from numpy import ediff1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
+from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import AxisError
 from numpy.testing import (
@@ -631,6 +632,13 @@ class TestSetOps:
 
 class TestUnique:
 
+    @pytest.fixture(
+        params=[np.nan, np.float32("nan"), pd_NA],
+        ids=["np.nan", "np.float32('nan')", "pandas.NA"],
+    )
+    def nan_string_dtype(self, request):
+        return StringDType(na_object=request.param)
+
     def check_all(self, a, b, i1, i2, c, dt):
         base_msg = 'check {0} failed for type {1}'
 
@@ -964,6 +972,21 @@ class TestUnique:
         assert_array_equal(unique(a, equal_nan=equal_nan), expected)
         assert_array_equal(unique(a[::-1], equal_nan=equal_nan), expected)
 
+    def test_unique_vstring_nan_metadata(self, nan_string_dtype):
+        a = np.array([np.nan, "b", "a", np.nan, "b", np.nan],
+                     dtype=nan_string_dtype)
+        self.check_all(a, a[[2, 1, 0]], [2, 1, 0], [2, 1, 0, 2, 1, 2],
+                       [1, 2, 3], nan_string_dtype)
+
+    def test_unique_vstring_nan_not_equal(self, nan_string_dtype):
+        a = np.array([np.nan, "b", "a", np.nan, "b", np.nan],
+                     dtype=nan_string_dtype)
+        v, indices, inverse, counts = unique(a, True, True, True, equal_nan=False)
+        assert_array_equal(v, a[[2, 1, 0, 3, 5]])
+        assert_array_equal(indices, [2, 1, 0, 3, 5])
+        assert_array_equal(inverse, [2, 1, 0, 3, 1, 4])
+        assert_array_equal(counts, [1, 2, 1, 1, 1])
+
     def test_unique_vstring_errors(self):
         a = np.array(
             [
@@ -1088,6 +1111,18 @@ class TestUnique:
         msg = 'Unique returned different results when asked for index'
         assert_array_equal(v.data, v2.data, msg)
         assert_array_equal(v.mask, v2.mask, msg)
+
+    def test_unique_masked_nan(self):
+        # masked arrays always take the sort-based path and the data under
+        # the mask is nan
+        a = np.ma.masked_invalid([1.0, np.nan, 2.0])
+        v = np.unique(a)
+        assert_array_equal(v.compressed(), [1.0, 2.0])
+        assert_array_equal(v.mask, [False, False, True])
+        v, c = np.unique(a, return_counts=True)
+        assert_array_equal(v.compressed(), [1.0, 2.0])
+        assert_array_equal(v.mask, [False, False, True])
+        assert_array_equal(c, [1, 1, 1])
 
     def test_unique_sort_order_with_axis(self):
         # These tests fail if sorting along axis is done by treating subarrays

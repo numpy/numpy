@@ -419,12 +419,11 @@ npy_update_operand_if_pyscalar(
     if (scalar == NULL) {
         return -1;
     }
+    /* Borrowed from the operand or replaced with a Python-scalar DType. */
     PyArray_DTypeMeta *DType = NPY_DTYPE(PyArray_DESCR(*operand));
-    Py_INCREF(DType);
     npy_mark_tmp_array_if_pyscalar(scalar, *operand, &DType);
     PyArray_Descr *descr = npy_find_descr_for_scalar(
             scalar, PyArray_DESCR(*operand), DType, NPY_DTYPE(target));
-    Py_DECREF(DType);
     if (descr == NULL) {
         Py_DECREF(scalar);
         return -1;
