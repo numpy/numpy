@@ -151,6 +151,7 @@ type _ArrayLikeMultiplicative_co = _DualArrayLike[np.dtype[np.number | np.bool |
 type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[np.number | np.bool | np.object_ | np.timedelta64], complex]
 
 type _ScalarOrderable = np.number | np.bool | np.timedelta64 | np.datetime64
+type _NumberLike2 = _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co]
 
 @type_check_only
 class _CanLE(Protocol):
@@ -3092,43 +3093,347 @@ def amin(
 
 min = amin
 
-@overload
-def minmax[ScalarT: np.generic](
+# keep in sync with `amax` above
+@overload  # bool
+def minmax(
+    a: _NestedList[bool],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[np.bool, np.bool]: ...
+@overload  # bool, 1d, axis=<single>
+def minmax(
+    a: list[bool],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[np.bool, np.bool]: ...
+@overload  # bool, 2d, axis=<single>
+def minmax(
+    a: Sequence[list[bool]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[_Array1D[np.bool], _Array1D[np.bool]]: ...
+@overload  # bool, 3d, axis=<single>
+def minmax(
+    a: Sequence[Sequence[list[bool]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[_Array2D[np.bool], _Array2D[np.bool]]: ...
+@overload  # bool, >=1d, axis=<given>
+def minmax(
+    a: _NestedList[bool],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[np.bool] | Any, NDArray[np.bool] | Any]: ...
+@overload  # bool, keepdims=True
+def minmax(
+    a: _NestedList[bool],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[np.bool], NDArray[np.bool]]: ...
+@overload  # ~int
+def minmax(
+    a: _NestedList[int],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[np.int_, np.int_]: ...
+@overload  # ~int, 1d, axis=<single>
+def minmax(
+    a: list[int],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[np.int_, np.int_]: ...
+@overload  # ~int, 2d, axis=<single>
+def minmax(
+    a: Sequence[list[int]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[_Array1D[np.int_], _Array1D[np.int_]]: ...
+@overload  # ~int, 3d, axis=<single>
+def minmax(
+    a: Sequence[Sequence[list[int]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[_Array2D[np.int_], _Array2D[np.int_]]: ...
+@overload  # ~int, >=1d, axis=<given>
+def minmax(
+    a: _NestedList[int],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[np.int_] | Any, NDArray[np.int_] | Any]: ...
+@overload  # ~int, keepdims=True
+def minmax(
+    a: _NestedList[int],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[np.int_], NDArray[np.int_]]: ...
+@overload  # ~float
+def minmax(
+    a: _NestedList[float],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[np.float64, np.float64]: ...
+@overload  # ~float, 1d, axis=<single>
+def minmax(
+    a: list[float],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[np.float64, np.float64]: ...
+@overload  # ~float, 2d, axis=<single>
+def minmax(
+    a: Sequence[list[float]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[_Array1D[np.float64], _Array1D[np.float64]]: ...
+@overload  # ~float, 3d, axis=<single>
+def minmax(
+    a: Sequence[Sequence[list[float]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[_Array2D[np.float64], _Array2D[np.float64]]: ...
+@overload  # ~float, >=1d, axis=<given>
+def minmax(
+    a: _NestedList[float],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[np.float64] | Any, NDArray[np.float64] | Any]: ...
+@overload  # ~float, keepdims=True
+def minmax(
+    a: _NestedList[float],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]: ...
+@overload  # ~complex
+def minmax(
+    a: _NestedList[complex],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[np.complex128, np.complex128]: ...
+@overload  # ~complex, 1d, axis=<single>
+def minmax(
+    a: list[complex],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[np.complex128, np.complex128]: ...
+@overload  # ~complex, 2d, axis=<single>
+def minmax(
+    a: Sequence[list[complex]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[_Array1D[np.complex128], _Array1D[np.complex128]]: ...
+@overload  # ~complex, 3d, axis=<single>
+def minmax(
+    a: Sequence[Sequence[list[complex]]],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[_Array2D[np.complex128], _Array2D[np.complex128]]: ...
+@overload  # ~complex, >=1d, axis=<given>
+def minmax(
+    a: _NestedList[complex],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[np.complex128] | Any, NDArray[np.complex128] | Any]: ...
+@overload  # ~complex, keepdims=True
+def minmax(
+    a: _NestedList[complex],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[np.complex128], NDArray[np.complex128]]: ...
+@overload  # +number | timedelta64 | datetime64
+def minmax[ScalarT: _ScalarOrderable](
     a: _ArrayLike[ScalarT],
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
-    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> tuple[ScalarT, ScalarT]: ...
-@overload
-def minmax(
-    a: ArrayLike,
+@overload  # known dtype, ?d, axis=<given>  (workaround)
+def minmax[ScalarT: _ScalarOrderable | np.object_](
+    a: _ArrayJustND[ScalarT],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[ScalarT] | Any, NDArray[ScalarT] | Any]: ...
+@overload  # known dtype, 1d, axis=<single>
+def minmax[ScalarT: _ScalarOrderable](
+    a: _ToArray1D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[ScalarT, ScalarT]: ...
+@overload  # known dtype, 2d, axis=<single>
+def minmax[ScalarT: _ScalarOrderable](
+    a: _ToArray2D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[_Array1D[ScalarT], _Array1D[ScalarT]]: ...
+@overload  # known dtype, 3d, axis=<single>
+def minmax[ScalarT: _ScalarOrderable | np.object_](
+    a: _ToArray3D[ScalarT],
+    axis: int | tuple[int],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[_Array2D[ScalarT], _Array2D[ScalarT]]: ...
+@overload  # known dtype, ?d, axis=<given>
+def minmax[ScalarT: _ScalarOrderable | np.object_](
+    a: _ArrayLike[ScalarT],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[ScalarT] | Any, NDArray[ScalarT] | Any]: ...
+@overload  # known array, keepdims=True
+def minmax[ArrayT: NDArray[_ScalarOrderable | np.object_]](
+    a: ArrayT,
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
-    keepdims: bool | _NoValueType = ...,
-    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike2 | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> tuple[Any, Any]: ...
-@overload
+) -> tuple[ArrayT, ArrayT]: ...
+@overload  # object_
+def minmax[ItemT](
+    a: _ArrayLike[np.object_[ItemT]],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[ItemT, ItemT]: ...
+@overload  # out=<given>  (positional)
 def minmax[ArrayT: np.ndarray](
-    a: ArrayLike,
+    a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
     axis: int | tuple[int, ...] | None,
     out: tuple[ArrayT, ArrayT],
     keepdims: bool | _NoValueType = ...,
-    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> tuple[ArrayT, ArrayT]: ...
-@overload
+@overload  # out=<given>  (keyword)
 def minmax[ArrayT: np.ndarray](
-    a: ArrayLike,
+    a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
     axis: int | tuple[int, ...] | None = None,
     *,
     out: tuple[ArrayT, ArrayT],
     keepdims: bool | _NoValueType = ...,
-    initial: _NumberLike_co | tuple[_NumberLike_co, _NumberLike_co] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> tuple[ArrayT, ArrayT]: ...
+@overload  # fallback
+def minmax(
+    a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[Any, Any]: ...
+@overload  # fallback, ?d, axis=<given>
+def minmax(
+    a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
+    axis: int | tuple[int, ...],
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[Any] | Any, NDArray[Any] | Any]: ...
+@overload  # fallback, keepdims=True
+def minmax(
+    a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
+    axis: int | tuple[int, ...] | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[True],
+    initial: _NumberLike2 | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> tuple[NDArray[Any], NDArray[Any]]: ...
 
 # keep in sync with `cumsum` above (minus `timedelta64` and `StringDType`)
 @overload
