@@ -4898,8 +4898,7 @@ try_trivial_scalar_call(
         if (error_converting(oop.real)) {
             return -1;  // should never happen; pass on it if does.
         }
-        *(double *)in = oop.real;
-        *(double *)(in+sizeof(double)) = oop.imag;
+        cin.cdouble_ = npy_cpack(oop.real, oop.imag);
         dt = PyArray_DescrFromType(NPY_COMPLEX128);
     }
     else if (is_anyscalar_exact(obj)) {
@@ -4951,18 +4950,12 @@ try_unary_trivial_call(
         return -2;
     }
     int ndim = PyArray_NDIM(in);
-    npy_intp in_stride = in_descr->elsize;
-    int out_fortran = 0;
-    if (ndim == 1) {
-        in_stride = PyArray_STRIDE(in, 0);
+    if (!PyArray_TRIVIALLY_ITERABLE(in)) {
+        /* Multiple memory segments need the full iterator. */
+        return -2;
     }
-    else if (ndim > 1 && !PyArray_IS_C_CONTIGUOUS(in)) {
-        if (!PyArray_IS_F_CONTIGUOUS(in)) {
-            /* Multiple memory segments need the full iterator. */
-            return -2;
-        }
-        out_fortran = 1;
-    }
+    npy_intp in_stride = ndim == 1 ? PyArray_STRIDE(in, 0) : in_descr->elsize;
+    int out_fortran = PyArray_ISFORTRAN(in);
 
     PyArrayMethodObject *method;
     PyArray_Descr *out_descr;
