@@ -42,6 +42,7 @@ extern "C" {
     F(pyvals_name)          \
     F(legacy)               \
     F(__doc__)              \
+    F(__module__)           \
     F(__signature__)        \
     F(copy)                 \
     F(dl_device)            \
@@ -276,9 +277,10 @@ extern "C" {
 /*
  * Heap types created with PyType_FromModuleAndSpec during module execution.
  * The names match the static types they replaced, except for the ones
- * exported through `PyArray_API`: `__multiarray_api.h` defines those names
- * as macros in every file that does not define `_MULTIARRAYMODULE`, so those
- * fields carry the Python name instead.
+ * exported through `PyArray_API` or `PyUFunc_API`: `__multiarray_api.h`
+ * defines those names as macros wherever `_MULTIARRAYMODULE` is not defined,
+ * and `__ufunc_api.h` does the same for `_UMATHMODULE`, so those fields carry
+ * the Python name instead.
  */
 #define NPY_MODULE_STATE_TYPE_FIELDS(F) \
     F(PyArrayFlags_Type)              \
@@ -287,7 +289,8 @@ extern "C" {
     F(NpyBusDayCalendar_Type)         \
     F(flatiter_type)                  \
     F(broadcast_type)                 \
-    F(nditer_type)
+    F(nditer_type)                    \
+    F(ufunc_type)
 
 /*
  * Expand a field list into the PyObject * members it names, so the structs

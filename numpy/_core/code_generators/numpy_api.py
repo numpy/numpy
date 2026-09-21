@@ -434,6 +434,10 @@ ufunc_types_api = {
     'PyUFunc_Type':                             (0,),
 }
 
+ufunc_heap_types = {
+    'PyUFunc_Type',
+}
+
 ufunc_funcs_api = {
     '__unused_indices__': [3, 25, 26, 29, 32],
     'PyUFunc_FromFuncAndData':                  (1,),

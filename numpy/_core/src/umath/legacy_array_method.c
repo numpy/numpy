@@ -210,7 +210,8 @@ get_initial_from_ufunc(
         void *initial)
 {
     if (context->caller == NULL
-            || !PyObject_TypeCheck(context->caller, &PyUFunc_Type)) {
+            || !PyObject_TypeCheck(
+                    context->caller, _npy_module_state->ufunc_type)) {
         /* Impossible in NumPy 1.24;  guard in case it becomes possible. */
         PyErr_SetString(PyExc_ValueError,
                 "getting initial failed because it can only done for legacy "

@@ -63,6 +63,7 @@ intern_strings(void)
     INTERN_STRING(pyvals_name, "UFUNC_PYVALS_NAME");
     INTERN_STRING(legacy, "legacy");
     INTERN_STRING(__doc__, "__doc__");
+    INTERN_STRING(__module__, "__module__");
     INTERN_STRING(__signature__, "__signature__");
     INTERN_STRING(copy, "copy");
     INTERN_STRING(dl_device, "dl_device");

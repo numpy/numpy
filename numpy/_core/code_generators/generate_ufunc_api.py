@@ -7,8 +7,6 @@ from .genapi import FunctionApi, TypeApi
 h_template = r"""
 #ifdef _UMATHMODULE
 
-extern NPY_NO_EXPORT PyTypeObject PyUFunc_Type;
-
 %s
 
 #else
@@ -170,7 +168,9 @@ def do_generate_api(targets, sources):
 
     for name, val in numpy_api.ufunc_types_api.items():
         index = val[0]
-        ufunc_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
+        ufunc_api_dict[name] = TypeApi(
+            name, index, 'PyTypeObject', api_name,
+            heap_type=name in numpy_api.ufunc_heap_types)
 
     # set up object API
     module_list = []

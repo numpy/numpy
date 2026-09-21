@@ -32,6 +32,7 @@
 #include "legacy_array_method.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
+#include "module_state.h"
 
 
 static NPY_CASTING
@@ -238,7 +239,7 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     PyArrayMethodObject *meth = NULL;
     PyObject *existing_info = NULL;
 
-    if (!PyObject_TypeCheck(ufunc_obj, &PyUFunc_Type)) {
+    if (!PyObject_TypeCheck(ufunc_obj, _npy_module_state->ufunc_type)) {
         PyErr_SetString(PyExc_TypeError,
                 "ufunc object passed is not a ufunc!");
         return -1;

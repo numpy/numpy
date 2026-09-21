@@ -18,6 +18,7 @@
 #include "ufunc_type_resolution.h"
 
 #include "legacy_array_method.h"  /* For `get_wrapped_legacy_ufunc_loop`. */
+#include "module_state.h"
 #include "special_integer_comparisons.h"
 
 
@@ -396,7 +397,7 @@ add_dtype_loops(PyObject *umath, PyArrayMethod_Spec *spec, PyObject *info)
     if (ufunc == nullptr) {
         return -1;
     }
-    if (Py_TYPE(ufunc) != &PyUFunc_Type) {
+    if (Py_TYPE(ufunc) != _npy_module_state->ufunc_type) {
         PyErr_SetString(PyExc_RuntimeError,
                 "internal NumPy error: comparison not a ufunc");
         goto fail;

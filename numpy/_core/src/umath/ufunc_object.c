@@ -5372,7 +5372,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
         return NULL;
     }
 
-    ufunc = PyObject_GC_New(PyUFuncObject, &PyUFunc_Type);
+    ufunc = PyObject_GC_New(PyUFuncObject, _npy_module_state->ufunc_type);
     /*
      * We use GC_New here for ufunc->obj, but do not use GC_Track since
      * ufunc->obj is still NULL at the end of this function.
@@ -5488,6 +5488,15 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     }
     ufunc->dict = PyDict_New();
     if (ufunc->dict == NULL) {
+        Py_DECREF(ufunc);
+        return NULL;
+    }
+    /*
+     * Every ufunc would otherwise inherit `__module__` from the heap type.
+     * `None` makes pickle search for the module the ufunc lives in.
+     */
+    if (PyDict_SetItem(ufunc->dict,
+            _npy_module_state->interned_str.__module__, Py_None) < 0) {
         Py_DECREF(ufunc);
         return NULL;
     }
@@ -5916,6 +5925,8 @@ _PyUFuncObject_GET_ITEM_DATA(const PyUFuncObject *obj)
 static void
 ufunc_dealloc(PyUFuncObject *ufunc)
 {
+    PyTypeObject *type = Py_TYPE(ufunc);
+
     PyObject_GC_UnTrack((PyObject *)ufunc);
     PyMem_RawFree(ufunc->core_num_dims);
     PyMem_RawFree(ufunc->core_dim_ixs);
@@ -5936,6 +5947,7 @@ ufunc_dealloc(PyUFuncObject *ufunc)
         PyArrayIdentityHash_Dealloc(ufunc->_dispatch_cache);
     }
     PyObject_GC_Del(ufunc);
+    Py_DECREF(type);
 }
 
 static PyObject *
@@ -5947,6 +5959,7 @@ ufunc_repr(PyUFuncObject *ufunc)
 static int
 ufunc_traverse(PyUFuncObject *self, visitproc visit, void *arg)
 {
+    Py_VISIT(Py_TYPE(self));
     Py_VISIT(self->obj);
     if (self->identity == PyUFunc_IdentityValue) {
         Py_VISIT(self->identity_value);
@@ -7217,7 +7230,7 @@ _typecharfromnum(int num) {
 
 
 static PyObject *
-ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
+ufunc_get_doc(PyUFuncObject *ufunc)
 {
     multiarray_umath_state *state = _npy_module_state;
     PyObject *doc;
@@ -7255,7 +7268,7 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 }
 
 static int
-ufunc_set_doc(PyUFuncObject *ufunc, PyObject *doc, void *NPY_UNUSED(ignored))
+ufunc_set_doc(PyUFuncObject *ufunc, PyObject *doc)
 {
     multiarray_umath_state *state = _npy_module_state;
     if (doc == NULL) {
@@ -7352,9 +7365,7 @@ ufunc_get_signature(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 #undef _typecharfromnum
 
 static PyGetSetDef ufunc_getset[] = {
-    {"__doc__",
-        (getter)ufunc_get_doc, (setter)ufunc_set_doc,
-        NULL, NULL},
+    // __doc__ stored in `__dict__`, see `ufunc_doc_descr_get`
     {"__name__",
         (getter)ufunc_get_name,
         NULL, NULL, NULL},
@@ -7388,10 +7399,17 @@ static PyGetSetDef ufunc_getset[] = {
  ***                          UFUNC MEMBERS                                 ***
  *****************************************************************************/
 
+/*
+ * A spec cannot set tp_vectorcall_offset or tp_dictoffset directly; they are
+ * given as the members CPython reserves for them.
+ */
 static PyMemberDef ufunc_members[] = {
-    {"__dict__", T_OBJECT, offsetof(PyUFuncObject, dict),
-     READONLY},
-    {NULL},
+    {"__dict__", Py_T_OBJECT_EX, offsetof(PyUFuncObject, dict), Py_READONLY},
+    {"__vectorcalloffset__", Py_T_PYSSIZET,
+        offsetof(PyUFuncObject, vectorcall), Py_READONLY},
+    {"__dictoffset__", Py_T_PYSSIZET,
+        offsetof(PyUFuncObject, dict), Py_READONLY},
+    {NULL, 0, 0, 0, NULL},
 };
 
 
@@ -7399,27 +7417,113 @@ static PyMemberDef ufunc_members[] = {
  ***                        UFUNC TYPE OBJECT                               ***
  *****************************************************************************/
 
-NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.ufunc",
-    .tp_basicsize = sizeof(PyUFuncObject),
-    .tp_dealloc = (destructor)ufunc_dealloc,
-    .tp_vectorcall_offset = offsetof(PyUFuncObject, vectorcall),
-    .tp_repr = (reprfunc)ufunc_repr,
-    .tp_call = &PyVectorcall_Call,
-    .tp_str = (reprfunc)ufunc_repr,
-    .tp_flags = Py_TPFLAGS_DEFAULT |
-        _Py_TPFLAGS_HAVE_VECTORCALL |
-        Py_TPFLAGS_HAVE_GC,
-    .tp_traverse = (traverseproc)ufunc_traverse,
-    .tp_methods = ufunc_methods,
-    .tp_getset = ufunc_getset,
-    .tp_getattro = PyObject_GenericGetAttr,
-    .tp_setattro = PyObject_GenericSetAttr,
-    // TODO when Python 3.12 is the minimum supported version,
-    // use Py_TPFLAGS_MANAGED_DICT
-    .tp_members = ufunc_members,
-    .tp_dictoffset = offsetof(PyUFuncObject, dict),
+/*
+ * `numpy.ufunc.__doc__` and each ufunc's `__doc__` are both looked up in the
+ * type's dict.  A getset there would return itself for the class, so this
+ * descriptor returns `tp_doc`, which `add_newdoc` sets, for the class and
+ * builds the docstring for a ufunc.
+ */
+static PyObject *
+ufunc_doc_descr_get(PyObject *NPY_UNUSED(self), PyObject *obj, PyObject *type)
+{
+    if (obj == NULL) {
+        const char *doc = PyType_GetSlot((PyTypeObject *)type, Py_tp_doc);
+        if (doc == NULL) {
+            Py_RETURN_NONE;
+        }
+        return PyUnicode_FromString(doc);
+    }
+    return ufunc_get_doc((PyUFuncObject *)obj);
+}
+
+static int
+ufunc_doc_descr_set(PyObject *NPY_UNUSED(self), PyObject *obj, PyObject *value)
+{
+    return ufunc_set_doc((PyUFuncObject *)obj, value);
+}
+
+static PyType_Slot ufunc_doc_descr_slots[] = {
+    {Py_tp_descr_get, ufunc_doc_descr_get},
+    {Py_tp_descr_set, ufunc_doc_descr_set},
+    {0, NULL},
 };
+
+static PyType_Spec ufunc_doc_descr_spec = {
+    .name = "numpy._ufunc_doc_descriptor",
+    .basicsize = sizeof(PyObject),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE
+              | Py_TPFLAGS_DISALLOW_INSTANTIATION),
+    .slots = ufunc_doc_descr_slots,
+};
+
+static PyType_Slot ufunc_slots[] = {
+    {Py_tp_dealloc, ufunc_dealloc},
+    {Py_tp_repr, ufunc_repr},
+    {Py_tp_str, ufunc_repr},
+    {Py_tp_call, PyVectorcall_Call},
+    {Py_tp_traverse, ufunc_traverse},
+    {Py_tp_methods, ufunc_methods},
+    {Py_tp_getset, ufunc_getset},
+    {Py_tp_members, ufunc_members},
+    {0, NULL},
+};
+
+static PyType_Spec ufunc_spec = {
+    .name = "numpy.ufunc",
+    .basicsize = sizeof(PyUFuncObject),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC
+              | Py_TPFLAGS_IMMUTABLETYPE | Py_TPFLAGS_HAVE_VECTORCALL
+              | Py_TPFLAGS_DISALLOW_INSTANTIATION),
+    .slots = ufunc_slots,
+};
+
+/*
+ * A spec cannot put arbitrary objects in the type's dict, so `__doc__` and
+ * `__signature__` are added once the type exists.
+ */
+static int
+ufunc_type_add_descriptors(PyObject *module, PyTypeObject *type)
+{
+    multiarray_umath_state *state = get_module_state(module);
+
+    PyObject *descr_type = PyType_FromSpec(&ufunc_doc_descr_spec);
+    if (descr_type == NULL) {
+        return -1;
+    }
+    PyObject *doc = PyType_GenericAlloc((PyTypeObject *)descr_type, 0);
+    Py_DECREF(descr_type);
+    if (doc == NULL) {
+        return -1;
+    }
+
+    PyObject *signature = npy_import("numpy._globals", "_signature_descriptor");
+    if (signature == NULL) {
+        Py_DECREF(doc);
+        return -1;
+    }
+
+    PyObject *dict = PyType_GetDict(type);
+    int ret = PyDict_SetItem(dict, state->interned_str.__doc__, doc);
+    if (ret == 0) {
+        ret = PyDict_SetItem(
+                dict, state->interned_str.__signature__, signature);
+    }
+    Py_DECREF(dict);
+    Py_DECREF(signature);
+    Py_DECREF(doc);
+    PyType_Modified(type);
+    return ret;
+}
+
+NPY_NO_EXPORT int
+init_ufunc_type(PyObject *module)
+{
+    PyObject *type = PyType_FromModuleAndSpec(module, &ufunc_spec, NULL);
+    if (type == NULL) {
+        return -1;
+    }
+    get_module_state(module)->ufunc_type = (PyTypeObject *)type;
+    return ufunc_type_add_descriptors(module, (PyTypeObject *)type);
+}
 
 /* End of code for ufunc objects */

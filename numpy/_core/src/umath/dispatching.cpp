@@ -144,7 +144,7 @@ PyUFunc_AddLoopFromSpec(PyObject *ufunc, PyArrayMethod_Spec *spec)
 NPY_NO_EXPORT int
 PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
 {
-    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+    if (!PyObject_TypeCheck(ufunc, _npy_module_state->ufunc_type)) {
         PyErr_SetString(PyExc_TypeError,
                 "ufunc object passed is not a ufunc!");
         return -1;
@@ -336,7 +336,7 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
             }
         }
         else {
-            if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+            if (!PyObject_TypeCheck(ufunc, _npy_module_state->ufunc_type)) {
                 PyErr_Format(PyExc_TypeError, "%s was not a ufunc!", slot->name);
                 goto finish;
             }
@@ -1411,7 +1411,7 @@ logical_ufunc_promoter(PyObject *NPY_UNUSED(ufunc),
 NPY_NO_EXPORT int
 install_logical_ufunc_promoter(PyObject *ufunc)
 {
-    if (PyObject_Type(ufunc) != (PyObject *)&PyUFunc_Type) {
+    if (Py_TYPE(ufunc) != _npy_module_state->ufunc_type) {
         PyErr_SetString(PyExc_RuntimeError,
                 "internal numpy array, logical ufunc was not a ufunc?!");
         return -1;
@@ -1486,7 +1486,7 @@ NPY_NO_EXPORT int
 PyUFunc_AddPromoter(
         PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
 {
-    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+    if (!PyObject_TypeCheck(ufunc, _npy_module_state->ufunc_type)) {
         PyErr_SetString(PyExc_TypeError,
                 "ufunc object passed is not a ufunc!");
         return -1;

@@ -85,6 +85,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "npy_dlpack.h"
 
 #include "umathmodule.h"
+#include "ufunc_object.h"
 
 #include "unique.h"
 
@@ -5278,16 +5279,18 @@ multiarray_umath_free(void *m)
 #endif
 
 /*
- * Heap types have no compile time address, so the generated `PyArray_API`
- * initializer leaves their slots NULL.  The public macros still read those
+ * Heap types have no compile time address, so the generated table
+ * initializers leave their slots NULL.  The public macros still read those
  * slots, so fill them once the types exist, as `_fill_dtype_api` does.
  */
 static void
-_fill_heap_type_api(void *api_table[], multiarray_umath_state *state)
+_fill_heap_type_api(void *array_api[], void *ufunc_api[],
+                    multiarray_umath_state *state)
 {
-    api_table[NPY_API_INDEX_PyArrayIter_Type] = state->flatiter_type;
-    api_table[NPY_API_INDEX_PyArrayMultiIter_Type] = state->broadcast_type;
-    api_table[NPY_API_INDEX_NpyIter_Type] = state->nditer_type;
+    array_api[NPY_API_INDEX_PyArrayIter_Type] = state->flatiter_type;
+    array_api[NPY_API_INDEX_PyArrayMultiIter_Type] = state->broadcast_type;
+    array_api[NPY_API_INDEX_NpyIter_Type] = state->nditer_type;
+    ufunc_api[NPY_API_INDEX_PyUFunc_Type] = state->ufunc_type;
 }
 
 static int
@@ -5345,18 +5348,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
         return -1;
     }
 
-    /* Set __signature__ to None on the type (the instance has a property) */
-    s = npy_import("numpy._globals", "_signature_descriptor");
-    if (s == NULL) {
-        return -1;
-    }
-    PyUFunc_Type.tp_dict = Py_BuildValue(
-        "{ON}", state->interned_str.__signature__, s);
-    if (PyUFunc_Type.tp_dict == NULL) {
-        return -1;
-    }
-    if (PyType_Ready(&PyUFunc_Type) < 0) {
-        Py_CLEAR(PyUFunc_Type.tp_dict);
+    if (init_ufunc_type(m) < 0) {
         return -1;
     }
 
@@ -5660,7 +5652,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     /* The dtype API is not auto-filled/generated via Python scripts: */
     _fill_dtype_api(PyArray_API);
     /* Nor are the slots of the types created at import time: */
-    _fill_heap_type_api(PyArray_API, state);
+    _fill_heap_type_api(PyArray_API, PyUFunc_API, state);
     if (c_api == NULL) {
         return -1;
     }
