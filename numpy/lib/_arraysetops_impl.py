@@ -379,7 +379,19 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
-        perm = ar.argsort(kind='quicksort')
+        # For the small integer kinds 'stable' is a radix sort, which leaves
+        # quicksort far behind whatever we are asked for.
+        if ar.dtype.kind in "biu" and ar.dtype.itemsize <= 2:
+            kind = 'stable'
+        elif return_index and ar.dtype.kind in "cT":
+            # Here 'stable' is a timsort, and it is only worth the first
+            # occurrences it hands us for free: quicksort is the faster sort
+            # on complex and string data unless that data is rich in NaNs.
+            kind = 'stable'
+        else:
+            # Quicksort, and recover the first occurrences by hand below.
+            kind = 'quicksort'
+        perm = ar.argsort(kind=kind)
         aux = ar[perm]
     else:
         ar.sort()
@@ -403,20 +415,23 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         mask[1:] = aux[1:] != aux[:-1]
 
     ret = (aux[mask],)
-    if optional_indices:
+    if return_index or return_counts:
+        # Where each group of equal elements starts in the sorted array.
+        unique_pos = np.flatnonzero(mask)
+    if return_index:
+        if kind == 'stable':
+            # A stable sort leaves each group's first occurrence at its front.
+            ret += (perm[unique_pos],)
+        else:
+            # Otherwise the group is in arbitrary order, so pick its smallest
+            # original position. This stays sequential over ``perm``.
+            ret += (np.minimum.reduceat(perm, unique_pos),)
+    if return_inverse:
         inv_idx = np.empty(mask.shape, dtype=np.intp)
-        inv_idx[perm] = np.cumsum(mask)
-        inv_idx -= 1
-        if return_index:
-            length = len(mask)
-            unique_count = np.count_nonzero(mask)
-            first_idx = np.empty(unique_count, dtype=np.intp)
-            first_idx[inv_idx[::-1]] = np.arange(length - 1, -1, -1)
-            ret += (first_idx,)
-        if return_inverse:
-            ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
+        inv_idx[perm] = np.cumsum(mask, dtype=np.intp) - 1
+        ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
     if return_counts:
-        idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
+        idx = np.concatenate((unique_pos, [mask.size]))
         ret += (np.diff(idx),)
     return ret
 
