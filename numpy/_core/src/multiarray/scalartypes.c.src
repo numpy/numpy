@@ -2348,6 +2348,15 @@ gentype_astype(PyObject *self,
         }  
     }
 
+    if (!PyArray_CanCastArrayTo(temp, to, casting)) {
+        PyErr_Clear();
+        npy_set_invalid_cast_error(
+                PyArray_DESCR(temp), to, casting, PyArray_NDIM(temp) == 0);
+        Py_DECREF(to);
+        Py_DECREF(temp);
+        return NULL;
+    }
+
     PyArrayObject *ret = temp;
     Py_INCREF(to);
     ret = (PyArrayObject *)PyArray_NewLikeArray(temp, order, to, subok);

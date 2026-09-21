@@ -166,6 +166,12 @@ class TestAsTypeStructuredCopy:
         c['name'] = 'ZZ'
         assert a[1]['name'] == 'CD'
 
+    def test_subarray_dtype(self):
+        x = np.array(([1, 2],), dtype=[("f", "i4", (2,))])[()]
+        assert_equal(x.astype(np.dtype(("i4", (2,)))), [1, 2])
+        with pytest.raises(TypeError):
+            np.int64(128).astype(("i1", (2,)), casting="same_value")
+
 class TestClassGetItem:
     @pytest.mark.parametrize("cls", [
         np.number,
