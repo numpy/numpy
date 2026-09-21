@@ -25,6 +25,7 @@ _py_b_1d: list[bool]
 _py_i_1d: list[int]
 _py_f_1d: list[float]
 _py_c_1d: list[complex]
+_py_f_2d: list[list[float]]
 
 poly_obj: np.poly1d
 
@@ -64,9 +65,13 @@ assert_type(iter(poly_obj), Iterator[Any])
 assert_type(poly_obj.deriv(), np.poly1d)
 assert_type(poly_obj.integ(), np.poly1d)
 
-assert_type(np.poly(poly_obj), npt.NDArray[np.floating])
-assert_type(np.poly(AR_f8), npt.NDArray[np.floating])
-assert_type(np.poly(AR_c16), npt.NDArray[np.floating])
+assert_type(np.poly(poly_obj), _Array1D[Any])
+assert_type(np.poly(AR_f4), _Array1D[np.float32])
+assert_type(np.poly(AR_c8), _Array1D[np.float32 | np.complex64])
+assert_type(np.poly(AR_f8_2d), _Array1D[np.float64])
+assert_type(np.poly(AR_c16), _Array1D[np.float64 | np.complex128])
+assert_type(np.poly(AR_O), _Array1D[np.object_])
+assert_type(np.poly(_py_f_2d), _Array1D[Any])
 
 assert_type(np.roots(poly_obj), _Array1D[Any])
 assert_type(np.roots(AR_c8), _Array1D[np.complex64])
