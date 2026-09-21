@@ -1,0 +1,2 @@
+* Some reductions that use `out=` with a less precise dtype than the
+  inputs/`dtype=` may now return different, more precise, results.
