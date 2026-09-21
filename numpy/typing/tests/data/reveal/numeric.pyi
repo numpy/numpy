@@ -58,8 +58,8 @@ assert_type(np.count_nonzero(_to_2d_float, axis=0), np.ndarray[tuple[int], np.dt
 assert_type(np.count_nonzero(_to_1d_int, keepdims=True), np.ndarray[tuple[int], np.dtype[np.intp]])
 assert_type(np.count_nonzero(_to_2d_float, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.intp]])
 
-assert_type(np.isfortran(i8), bool)
-assert_type(np.isfortran(AR_i8), bool)
+assert_type(np.isfortran(i8), bool)  # type: ignore[deprecated]
+assert_type(np.isfortran(AR_i8), bool)  # type: ignore[deprecated]
 
 assert_type(np.argwhere(i8), np.ndarray[tuple[int, int], np.dtype[np.intp]])
 assert_type(np.argwhere(AR_i8), np.ndarray[tuple[int, int], np.dtype[np.intp]])
