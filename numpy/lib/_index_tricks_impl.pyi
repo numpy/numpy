@@ -66,6 +66,7 @@ type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
 
 type _ItemOrTuple[T] = T | tuple[T, *tuple[T, ...]]
 type _To1D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]
+type _To2D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]]
 type _ToPy1D[T, StepT] = T | Sequence[T] | slice[T | None, T | None, StepT | None]
 
 type _JustAnyShape = tuple[Never, Never, Never, Never, Never]  # workaround for microsoft/pyright#10232
@@ -163,7 +164,6 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
         trans1d: _Trans1DT_co = -1,  # type: ignore[assignment]
     ) -> None: ...
 
-    # TODO(jorenham): annotate this
     def __getitem__(self, key: Incomplete, /) -> Incomplete: ...
     def __len__(self, /) -> L[0]: ...
 
@@ -230,7 +230,7 @@ class RClass(AxisConcatenator[L[0], L[False], L[1], L[-1]]):
 
     def __init__(self, /) -> None: ...
 
-    #
+    # keep in sync with `CClass.__getitem__` (-1 ndim)
     @overload  # >=2d
     def __getitem__[ShapeT: tuple[int, int, *tuple[Any, ...]], DTypeT: np.dtype](
         self,
@@ -281,6 +281,52 @@ class CClass(AxisConcatenator[L[-1], L[False], L[2], L[0]]):
     __slots__ = ()
 
     def __init__(self, /) -> None: ...
+
+    # keep in sync with `RClass.__getitem__` (+1 ndim)
+    @overload  # >=3d
+    def __getitem__[ShapeT: tuple[int, int, int, *tuple[Any, ...]], DTypeT: np.dtype](
+        self,
+        key: np.ndarray[ShapeT, DTypeT],
+        /,
+    ) -> np.ndarray[ShapeT, DTypeT]: ...
+    @overload  # >=3d
+    def __getitem__[ShapeT: tuple[int, int, int, *tuple[Any, ...]], DTypeT: np.dtype](
+        self,
+        key: tuple[np.ndarray[ShapeT, DTypeT], *tuple[np.ndarray[ShapeT, DTypeT], ...]],
+        /,
+    ) -> np.ndarray[ShapeT, DTypeT]: ...
+    @overload  # 2d T
+    def __getitem__[ScalarT: np.generic](
+        self,
+        key: _ItemOrTuple[_To2D[ScalarT]],
+        /,
+    ) -> _Array2D[ScalarT]: ...
+    @overload  # 2d +int
+    def __getitem__(
+        self,
+        key: _ItemOrTuple[_To2D[np.integer | np.bool] | _ToPy1D[int, int]],
+        /,
+    ) -> _Array2D[np.int_]: ...
+    @overload  # 2d +f64
+    def __getitem__(
+        self,
+        key: _ItemOrTuple[_To2D[np.float64 | np.float32 | np.float16 | np.integer | np.bool] | _ToPy1D[float, complex]],
+        /,
+    ) -> _Array2D[np.float64 | Any]: ...
+    @overload  # 2d +c128
+    def __getitem__(
+        self,
+        key: _ItemOrTuple[_To2D[np.complex128 | np.float64 | np.integer | np.bool] | _ToPy1D[complex, complex]],
+        /,
+    ) -> _Array2D[np.complex128 | Any]: ...
+    @overload  # ?d T
+    def __getitem__[ScalarT: np.generic](
+        self,
+        key: _ItemOrTuple[_ArrayLike[ScalarT]],
+        /,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d  (fallback)
+    def __getitem__(self, key: _ItemOrTuple[ArrayLike | slice], /) -> NDArray[Any]: ...
 
 class IndexExpression(Generic[_BoolT_co]):
     __slots__ = ("maketuple",)
