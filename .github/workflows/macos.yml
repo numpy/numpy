@@ -22,18 +22,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  x86_conda:
-    name: macOS x86-64 conda
+  aarch64_conda:
+    name: macOS aarch64 conda
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: macos-15-intel
+    runs-on: macos-26
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.12"]
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -50,7 +50,7 @@ jobs:
         echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
     - name: Setup compiler cache
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       id:    cache-ccache
       with:
         path: ${{ steps.prep-ccache.outputs.dir }}
@@ -74,7 +74,7 @@ jobs:
     # ensure we re-solve once a day (since we don't lock versions). Could be
     # replaced by a conda-lock based approach in the future.
     - name: Cache conda environment
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       env:
         # Increase this value to reset cache if environment.yml has not changed
         CACHE_NUMBER: 1
@@ -92,14 +92,14 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
-        CC="ccache $CC" spin build -j2 -- -Dallow-noblas=false
+        CC="ccache ${CC:-clang}" CXX="ccache ${CXX:-clang++}" spin build -j2 -- -Dallow-noblas=false
 
     - name: Run test suite (full)
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
         export OMP_NUM_THREADS=2
-        spin test -j2 -m full
+        spin test -j2 -m full -- --durations=10
 
     - name: Ccache statistics
       shell: bash -l {0}
@@ -119,22 +119,22 @@ jobs:
         build_runner:
           - [ macos-15-intel, "macos_x86_64" ]
           - [ macos-14, "macos_arm64" ]
-        version: ["3.12", "3.14t"]
+        version: ["3.12", "3.15t-dev"]
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
 
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: ${{ matrix.version }}
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt -r requirements/hypothesis_requirements.txt
 
     - name: Build against Accelerate (LP64)
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false

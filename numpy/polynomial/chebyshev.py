@@ -80,7 +80,7 @@ Misc Functions
    poly2cheb
    chebinterpolate
 
-See also
+See Also
 --------
 `numpy.polynomial`
 
@@ -2038,7 +2038,7 @@ class Chebyshev(ABCPolyBase):
 
         Notes
         -----
-        See `numpy.polynomial.chebinterpolate` for more details.
+        See `numpy.polynomial.chebyshev.chebinterpolate` for more details.
 
         """
         if domain is None:

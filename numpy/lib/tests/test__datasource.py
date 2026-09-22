@@ -1,5 +1,6 @@
 import os
 import urllib.request as urllib_request
+from pathlib import Path
 from shutil import rmtree
 from tempfile import NamedTemporaryFile, mkdtemp, mkstemp
 from urllib.error import URLError
@@ -116,6 +117,12 @@ class TestDataSourceOpen:
         assert_(fh)
         fh.close()
 
+    def test_PathFile(self, tmp_path):
+        ds = datasource.DataSource(tmp_path)
+        local_file = Path(valid_textfile(tmp_path))
+        with ds.open(local_file) as fh:
+            assert_(fh)
+
     def test_InvalidFile(self, tmp_path):
         ds = datasource.DataSource(tmp_path)
         invalid_file = invalid_textfile(tmp_path)
@@ -181,6 +188,13 @@ class TestDataSourceExists:
         tmpfile = invalid_textfile(tmp_path)
         assert_equal(ds.exists(tmpfile), False)
 
+    def test_PathFile(self, tmp_path):
+        ds = datasource.DataSource(tmp_path)
+        tmpfile = Path(valid_textfile(tmp_path))
+        assert_(ds.exists(tmpfile))
+        missing = tmp_path / "missing.txt"
+        assert_equal(ds.exists(missing), False)
+
 
 class TestDataSourceAbspath:
     def test_ValidHTTP(self, tmp_path):
@@ -198,6 +212,11 @@ class TestDataSourceAbspath:
         assert_equal(tmpfile, ds.abspath(tmpfilename))
         # Test filename with complete path
         assert_equal(tmpfile, ds.abspath(tmpfile))
+
+    def test_PathFile(self, tmp_path):
+        ds = datasource.DataSource(tmp_path)
+        tmpfile = valid_textfile(tmp_path)
+        assert_equal(tmpfile, ds.abspath(Path(tmpfile)))
 
     def test_InvalidHTTP(self, tmp_path):
         ds = datasource.DataSource(tmp_path)
@@ -261,6 +280,12 @@ class TestRepositoryAbspath:
             assert_(path(http_path + fn).startswith(str(tmp_path)))
             assert_(path(fn).startswith(str(tmp_path)))
 
+    def test_PathFile(self, tmp_path):
+        repos = datasource.Repository(tmp_path, tmp_path)
+        tmpfile = valid_textfile(tmp_path)
+        tmpfilename = os.path.split(tmpfile)[-1]
+        assert_equal(tmpfile, repos.abspath(Path(tmpfilename)))
+
     def test_windows_os_sep(self, tmp_path):
         orig_os_sep = os.sep
         try:
@@ -283,6 +308,13 @@ class TestRepositoryExists:
         tmpfile = invalid_textfile(tmp_path)
         assert_equal(repos.exists(tmpfile), False)
 
+    def test_PathFile(self, tmp_path):
+        repos = datasource.Repository(tmp_path, tmp_path)
+        tmpfile = valid_textfile(tmp_path)
+        tmpfilename = os.path.split(tmpfile)[-1]
+        assert_(repos.exists(Path(tmpfilename)))
+        assert_equal(repos.exists(Path("missing.txt")), False)
+
     def test_RemoveHTTPFile(self, tmp_path):
         repos = datasource.Repository(valid_baseurl(), tmp_path)
         assert_(repos.exists(valid_httpurl()))
@@ -300,6 +332,15 @@ class TestRepositoryExists:
         assert_(repos.exists(tmpfile))
 
 
+class TestRepositoryOpen:
+    def test_PathFile(self, tmp_path):
+        repos = datasource.Repository(tmp_path, tmp_path)
+        tmpfile = valid_textfile(tmp_path)
+        tmpfilename = os.path.split(tmpfile)[-1]
+        with repos.open(Path(tmpfilename)) as fh:
+            assert_(fh)
+
+
 class TestOpenFunc:
     def test_DataSourceOpen(self, tmp_path):
         local_file = valid_textfile(tmp_path)
@@ -309,6 +350,12 @@ class TestOpenFunc:
         fp.close()
         # Test case where default destpath is used
         fp = datasource.open(local_file)
+        assert_(fp)
+        fp.close()
+
+    def test_PathFile(self, tmp_path):
+        local_file = Path(valid_textfile(tmp_path))
+        fp = datasource.open(local_file, destpath=tmp_path)
         assert_(fp)
         fp.close()
 

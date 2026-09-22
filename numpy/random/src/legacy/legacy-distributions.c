@@ -10,6 +10,8 @@
  */
 #include "include/legacy-distributions.h"
 
+#include <stdlib.h>
+
 
 static inline double legacy_double(aug_bitgen_t *aug_state) {
   return aug_state->bit_generator->next_double(aug_state->bit_generator->state);

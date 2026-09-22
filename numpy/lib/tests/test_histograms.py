@@ -303,8 +303,8 @@ class TestHistogram:
 
     def test_datetime(self):
         begin = np.datetime64('2000-01-01', 'D')
-        offsets = np.array([0, 0, 1, 1, 2, 3, 5, 10, 20])
-        bins = np.array([0, 2, 7, 20])
+        offsets = np.array([0, 0, 1, 1, 2, 3, 5, 10, 20], dtype='m8[D]')
+        bins = np.array([0, 2, 7, 20], dtype='m8[D]')
         dates = begin + offsets
         date_bins = begin + bins
 

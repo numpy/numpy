@@ -276,7 +276,7 @@ class TestPolynomial:
         Regression test for gh-5096.
         """
         v = np.arange(1, 21)
-        assert_almost_equal(np.poly(v), np.poly(np.diag(v)))
+        assert_allclose(np.poly(v), np.poly(np.diag(v)))
 
     def test_zero_poly_dtype(self):
         """

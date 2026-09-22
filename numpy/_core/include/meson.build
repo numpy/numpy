@@ -33,12 +33,3 @@ py.install_sources(
   ],
   subdir: 'numpy/_core/include/numpy/random'
 )
-
-
-py.install_sources(
-  [
-    'numpy/libdivide/libdivide.h',
-    'numpy/libdivide/LICENSE.txt',
-  ],
-  subdir: 'numpy/_core/include/numpy/random'
-)

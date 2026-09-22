@@ -30,14 +30,14 @@ cdef uint64_t MAXSIZE = <uint64_t>sys.maxsize
 
 cdef object benchmark(bitgen_t *bitgen, object lock, Py_ssize_t cnt, object method):
     """Benchmark command used by BitGenerator"""
-    cdef Py_ssize_t i
+    cdef Py_ssize_t _i
     if method=='uint64':
         with lock, nogil:
-            for i in range(cnt):
+            for _i in range(cnt):
                 bitgen.next_uint64(bitgen.state)
     elif method=='double':
         with lock, nogil:
-            for i in range(cnt):
+            for _i in range(cnt):
                 bitgen.next_double(bitgen.state)
     else:
         raise ValueError('Unknown method')
@@ -87,7 +87,7 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
             return None
         n = np.asarray(size).sum()
         with lock, nogil:
-            for i in range(n):
+            for _i in range(n):
                 bitgen.next_raw(bitgen.state)
         return None
 
@@ -184,7 +184,7 @@ cdef double kahan_sum(double *darr, np.npy_intp n) noexcept:
         Address of values to sum
     n : intp
         Length of d
-    
+
     Returns
     -------
     float
@@ -253,7 +253,7 @@ cdef validate_output_shape(iter_shape, np.ndarray output):
 cdef check_output(object out, object dtype, object size, bint require_c_array):
     """
     Check user-supplied output array properties and shape
-    
+
     Parameters
     ----------
     out : {ndarray, None}
@@ -761,7 +761,7 @@ cdef object discrete_broadcast_di(void *func, void *state, object size, object l
     cdef np.ndarray randoms
     cdef np.broadcast it
     cdef random_uint_di f = (<random_uint_di>func)
-    cdef np.npy_intp i, n
+    cdef np.npy_intp _i, n
 
     if a_constraint != CONS_NONE:
         check_array_constraint(a_arr, a_name, a_constraint)
@@ -781,7 +781,7 @@ cdef object discrete_broadcast_di(void *func, void *state, object size, object l
     validate_output_shape(it.shape, randoms)
 
     with lock, nogil:
-        for i in range(n):
+        for _i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
             b_val = (<int64_t*>np.PyArray_MultiIter_DATA(it, 2))[0]
             (<int64_t*>np.PyArray_MultiIter_DATA(it, 0))[0] = f(state, a_val, b_val)

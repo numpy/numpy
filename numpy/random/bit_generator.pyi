@@ -12,7 +12,7 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import CapsuleType
+from typing_extensions import CapsuleType, disjoint_base
 
 import numpy as np
 from numpy._typing import (
@@ -68,6 +68,7 @@ class ISpawnableSeedSequence(ISeedSequence, abc.ABC):
 class SeedlessSeedSequence(_GenerateStateMixin, ISpawnableSeedSequence):
     def spawn(self, /, n_children: int) -> list[Self]: ...
 
+@disjoint_base
 class SeedSequence(_GenerateStateMixin, ISpawnableSeedSequence):
     __pyx_vtable__: ClassVar[CapsuleType] = ...
 
@@ -90,6 +91,7 @@ class SeedSequence(_GenerateStateMixin, ISpawnableSeedSequence):
     @property
     def state(self) -> _SeedSeqState: ...
 
+@disjoint_base
 class BitGenerator(_CythonMixin, abc.ABC):
     lock: Lock
     @property

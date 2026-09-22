@@ -16,7 +16,7 @@ NumPy as of version ``2.0`` requires C11 and C++17 compliant compilers.
 Having compiled code also means that importing NumPy from the development
 sources needs some additional steps, which are explained below.  For the rest
 of this chapter we assume that you have set up your git repo as described in
-:ref:`using-git`.
+:ref:`development-process-summary`.
 
 .. note::
 
@@ -177,9 +177,9 @@ That also takes extra arguments, like ``--pdb`` which drops you into the Python
 debugger when a test fails or an exception is raised.
 
 Running tests with `tox`_ is also supported.  For example, to build NumPy and
-run the test suite with Python 3.9, use::
+run the test suite with Python 3.12, use::
 
-    $ tox -e py39
+    $ tox -e py312
 
 For more extensive information, see :ref:`testing-guidelines`.
 

@@ -5,12 +5,28 @@ from typing import Any, LiteralString, assert_type, type_check_only
 import numpy as np
 import numpy.typing as npt
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
+
+u1: np.uint8
 f8: np.float64
+f10: np.longdouble
+c8: np.complex64
 AR_LIKE_b: list[bool]
 AR_LIKE_i8: list[int]
 AR_LIKE_f8: list[float]
 AR_LIKE_c16: list[complex]
 AR_LIKE_O: list[Fraction]
+AR_LIKE_b_2d: list[list[bool]]
+AR_LIKE_i8_2d: list[list[int]]
+AR_LIKE_f8_2d: list[list[float]]
+AR_LIKE_c16_2d: list[list[complex]]
+AR_LIKE_u1_3d: list[list[list[np.uint8]]]
+AR_LIKE_f10_3d: list[list[list[np.longdouble]]]
+AR_LIKE_c16_3d: list[list[list[complex]]]
+AR_LIKE_c16_4d: list[list[list[list[complex]]]]
 
 AR_u1: npt.NDArray[np.uint8]
 AR_i8: npt.NDArray[np.int64]
@@ -23,17 +39,30 @@ AR_c16: npt.NDArray[np.complex128]
 AR_c20: npt.NDArray[np.clongdouble]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
-AR_O: npt.NDArray[np.object_]
+AR_O: npt.NDArray[np.object_[int]]
+AR_O_1d: _Array1D[np.object_[int]]
 AR_b: npt.NDArray[np.bool]
 AR_U: npt.NDArray[np.str_]
-CHAR_AR_U: np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]  # type: ignore[deprecated]
+CHAR_AR_U: np.char.chararray[tuple[int], np.dtype[np.str_]]  # type: ignore[deprecated]
+MAR_f8_1d: np.ma.MaskedArray[tuple[int], np.dtype[np.float64]]
+MAR_c16_1d: np.ma.MaskedArray[tuple[int], np.dtype[np.complex128]]
 
-AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
-AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
-AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
-AR_c16_1d: np.ndarray[tuple[int], np.dtype[np.complex128]]
+AR_i8_2d: _Array2D[np.int64]
+AR_i8_3d: _Array3D[np.int64]
+AR_i8_4d: _Array4D[np.int64]
+AR_f8_0d: np.ndarray[tuple[()], np.dtype[np.float64]]
+AR_f8_1d: _Array1D[np.float64]
+AR_f8_2d: _Array2D[np.float64]
+AR_f8_3d: _Array3D[np.float64]
+AR_f8_4d: _Array4D[np.float64]
+AR_c16_1d: _Array1D[np.complex128]
 
+AR_f8_list: list[np.float64]
 AR_b_list: list[npt.NDArray[np.bool]]
+
+@type_check_only
+class _ArrayLikeComplex64:
+    def __array__(self) -> npt.NDArray[np.complex64]: ...
 
 @type_check_only
 def func(a: np.ndarray, posarg: bool = ..., /, arg: int = ..., *, kwarg: str = ...) -> np.ndarray: ...
@@ -63,46 +92,76 @@ assert_type(np.rot90(AR_f8, k=2), npt.NDArray[np.float64])
 assert_type(np.rot90(AR_LIKE_f8, axes=(0, 1)), np.ndarray)
 
 # flip
-assert_type(np.flip(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.flip(AR_f8, axis=(0, 1)), npt.NDArray[np.float64])
-assert_type(np.flip(AR_LIKE_f8, axis=0), np.ndarray)
+assert_type(np.flip(AR_f8_1d), _Array1D[np.float64])
+assert_type(np.flip(AR_LIKE_b), _Array1D[np.bool])
+assert_type(np.flip(AR_LIKE_b_2d), _Array2D[np.bool])
+assert_type(np.flip(AR_LIKE_i8), _Array1D[np.int_])
+assert_type(np.flip(AR_LIKE_i8_2d), _Array2D[np.int_])
+assert_type(np.flip(AR_f8_list), _Array1D[np.float64])
+assert_type(np.flip(AR_LIKE_f8, axis=0), _Array1D[np.float64])
+assert_type(np.flip(AR_LIKE_f8_2d, axis=(0, 1)), _Array2D[np.float64])
+assert_type(np.flip(AR_LIKE_c16), _Array1D[np.complex128])
+assert_type(np.flip(AR_LIKE_c16_2d), _Array2D[np.complex128])
+assert_type(np.flip(AR_b_list), npt.NDArray[np.bool])
 
 # iterable
 assert_type(np.iterable(1), bool)
 assert_type(np.iterable([1]), bool)
 
 # average
-assert_type(np.average(AR_f8_2d), np.float64)
-assert_type(np.average(AR_f8_2d, axis=1), npt.NDArray[np.float64])
-assert_type(np.average(AR_f8_2d, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.average(AR_i8), np.float64)
+assert_type(np.average(AR_i8, axis=0), npt.NDArray[np.float64] | Any)
+assert_type(np.average(AR_i8_2d, axis=0), _Array1D[np.float64])
+assert_type(np.average(AR_i8_3d, axis=0), _Array2D[np.float64])
+assert_type(np.average(AR_i8_2d, keepdims=True), _Array2D[np.float64])
+assert_type(np.average(AR_i8_2d, axis=(0, 1)), npt.NDArray[np.float64] | Any)
+assert_type(np.average(AR_i8, returned=True), tuple[np.float64, np.float64])
+assert_type(np.average(AR_i8_2d, axis=0, returned=True), tuple[npt.NDArray[np.float64] | Any, npt.NDArray[np.float64] | Any])
+assert_type(np.average(AR_LIKE_i8_2d, axis=0), _Array1D[np.float64])
 assert_type(np.average(AR_f8), np.float64)
-assert_type(np.average(AR_f8, axis=1), npt.NDArray[np.float64])
-assert_type(np.average(AR_f8, keepdims=True), npt.NDArray[np.float64])
+assert_type(np.average(AR_f8, axis=0), npt.NDArray[np.float64] | Any)
+assert_type(np.average(AR_f8_1d, axis=0), np.float64)
+assert_type(np.average(AR_f8_2d, axis=0), _Array1D[np.float64])
+assert_type(np.average(AR_f8_3d, axis=0), _Array2D[np.float64])
+assert_type(np.average(AR_f8_2d, keepdims=True), _Array2D[np.float64])
+assert_type(np.average(AR_f8_2d, axis=(0, 1)), npt.NDArray[np.float64] | Any)
 assert_type(np.average(AR_f8, returned=True), tuple[np.float64, np.float64])
-assert_type(np.average(AR_f8, axis=1, returned=True), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
-assert_type(np.average(AR_f8, keepdims=True, returned=True), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
+assert_type(np.average(AR_f8_2d, axis=0, returned=True), tuple[npt.NDArray[np.float64] | Any, npt.NDArray[np.float64] | Any])
 assert_type(np.average(AR_LIKE_f8), np.float64)
 assert_type(np.average(AR_LIKE_f8, weights=AR_f8), np.float64)
-assert_type(np.average(AR_LIKE_f8, axis=1), npt.NDArray[np.float64])
+assert_type(np.average(AR_LIKE_f8, axis=0), np.float64)
 assert_type(np.average(AR_LIKE_f8, keepdims=True), npt.NDArray[np.float64])
 assert_type(np.average(AR_LIKE_f8, returned=True), tuple[np.float64, np.float64])
-assert_type(np.average(AR_LIKE_f8, axis=1, returned=True), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(np.average(AR_LIKE_f8, keepdims=True, returned=True), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
+assert_type(np.average(AR_LIKE_c16), np.complex128)
+assert_type(np.average(AR_LIKE_c16, axis=0), np.complex128)
+assert_type(np.average(AR_LIKE_c16_2d, axis=0), _Array1D[np.complex128])
+assert_type(np.average(AR_LIKE_c16, keepdims=True), npt.NDArray[np.complex128])
 assert_type(np.average(AR_O), Any)
-assert_type(np.average(AR_O, axis=1), np.ndarray)
-assert_type(np.average(AR_O, keepdims=True), np.ndarray)
+assert_type(np.average(AR_O, axis=0), npt.NDArray[Any] | Any)
+assert_type(np.average(AR_O, keepdims=True), npt.NDArray[Any])
 assert_type(np.average(AR_O, returned=True), tuple[Any, Any])
-assert_type(np.average(AR_O, axis=1, returned=True), tuple[np.ndarray, np.ndarray])
-assert_type(np.average(AR_O, keepdims=True, returned=True), tuple[np.ndarray, np.ndarray])
+assert_type(np.average(AR_O, axis=0, returned=True), tuple[npt.NDArray[Any] | Any, npt.NDArray[Any] | Any])
+assert_type(np.average(AR_O, keepdims=True, returned=True), tuple[npt.NDArray[Any], npt.NDArray[Any]])
 
 # asarray_chkfinite
-assert_type(np.asarray_chkfinite(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.asarray_chkfinite(AR_f8), npt.NDArray[np.float64])
-assert_type(np.asarray_chkfinite(AR_LIKE_f8), np.ndarray)
-assert_type(np.asarray_chkfinite(AR_f8, dtype=np.float64), npt.NDArray[np.float64])
-assert_type(np.asarray_chkfinite(AR_f8, dtype=float), np.ndarray)
+assert_type(np.asarray_chkfinite(AR_f8_1d), _Array1D[np.float64])
+assert_type(np.asarray_chkfinite(AR_f8_2d, dtype=np.float32), _Array2D[np.float32])
+assert_type(np.asarray_chkfinite(AR_f8_2d, dtype=float), np.ndarray[tuple[int, int], np.dtype])
+assert_type(np.asarray_chkfinite(MAR_f8_1d), _Array1D[np.float64])
+assert_type(np.asarray_chkfinite(AR_f8_list), npt.NDArray[np.float64])
+assert_type(np.asarray_chkfinite(AR_LIKE_O), npt.NDArray[Any])
+assert_type(np.asarray_chkfinite(AR_LIKE_b), _Array1D[np.bool])
+assert_type(np.asarray_chkfinite(AR_LIKE_i8), _Array1D[np.int_])
+assert_type(np.asarray_chkfinite(AR_LIKE_f8), _Array1D[np.float64])
+assert_type(np.asarray_chkfinite(AR_LIKE_c16), _Array1D[np.complex128])
+assert_type(np.asarray_chkfinite(AR_LIKE_f8, dtype=np.float32), _Array1D[np.float32])
+assert_type(np.asarray_chkfinite(AR_LIKE_f8, dtype=float), _Array1D[Any])
+assert_type(np.asarray_chkfinite(AR_LIKE_f8_2d, dtype=np.float32), npt.NDArray[np.float32])
+assert_type(np.asarray_chkfinite(AR_LIKE_f8_2d, dtype=float), npt.NDArray[Any])
 
 # piecewise
+assert_type(np.piecewise(AR_f8_1d, AR_b, [-1.0, 1.0]), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.piecewise(AR_f8_1d, AR_b, [func]), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.piecewise(AR_f8, AR_b, [func]), npt.NDArray[np.float64])
 assert_type(np.piecewise(AR_f8, AR_b, [func_f8]), npt.NDArray[np.float64])
@@ -130,10 +189,9 @@ assert_type(np.place(AR_f8, mask=AR_i8, vals=5.0), None)
 # copy
 assert_type(np.copy(AR_LIKE_f8), np.ndarray)
 assert_type(np.copy(AR_U), npt.NDArray[np.str_])
-assert_type(np.copy(CHAR_AR_U, "K", subok=True), np.char.chararray[tuple[Any, ...], np.dtype[np.str_]])  # type: ignore[deprecated]
-assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[tuple[Any, ...], np.dtype[np.str_]])  # type: ignore[deprecated]
-# pyright correctly infers `NDArray[str_]` here
-assert_type(np.copy(CHAR_AR_U), np.ndarray[Any, Any])  # pyright: ignore[reportAssertTypeFailure]
+assert_type(np.copy(CHAR_AR_U, "K", subok=True), np.char.chararray[tuple[int], np.dtype[np.str_]])  # type: ignore[deprecated]
+assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[tuple[int], np.dtype[np.str_]])  # type: ignore[deprecated]
+assert_type(np.copy(CHAR_AR_U), np.ndarray[tuple[int], np.dtype[np.str_]])
 
 # gradient
 assert_type(np.gradient(AR_f8_1d, 1), np.ndarray[tuple[int], np.dtype[np.float64]])
@@ -202,23 +260,38 @@ assert_type(np.angle(AR_LIKE_c16), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_f2), npt.NDArray[np.float16])
 assert_type(np.unwrap(AR_f8), npt.NDArray[np.float64])
 assert_type(np.unwrap(AR_f10), npt.NDArray[np.longdouble])
-assert_type(np.unwrap(AR_O), npt.NDArray[np.object_])
+assert_type(np.unwrap(AR_O), npt.NDArray[np.object_[int]])
 assert_type(np.unwrap(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_f8_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_f8_3d), np.ndarray[tuple[int, int, int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_LIKE_b), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_LIKE_i8), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.unwrap(AR_LIKE_f8), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.unwrap(AR_i8, period=4), npt.NDArray[np.int64])
+assert_type(np.unwrap(AR_i8), npt.NDArray[np.float64])
 
 # sort_complex
 assert_type(np.sort_complex(AR_u1), npt.NDArray[np.complex64])
-assert_type(np.sort_complex(AR_f8), npt.NDArray[np.complex128])
+assert_type(np.sort_complex(AR_f8_1d), _Array1D[np.complex128])
 assert_type(np.sort_complex(AR_f10), npt.NDArray[np.clongdouble])
-assert_type(np.sort_complex(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
-assert_type(np.sort_complex(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(np.sort_complex(_ArrayLikeComplex64()), npt.NDArray[np.complex64])
+assert_type(np.sort_complex(MAR_c16_1d), _Array1D[np.complex128])
+assert_type(np.sort_complex([u1]), _Array1D[np.complex64])
+assert_type(np.sort_complex([[u1]]), _Array2D[np.complex64])
+assert_type(np.sort_complex(AR_LIKE_u1_3d), npt.NDArray[np.complex64])
+assert_type(np.sort_complex([1.0]), _Array1D[np.complex128])
+assert_type(np.sort_complex([f10]), _Array1D[np.clongdouble])
+assert_type(np.sort_complex([[f10]]), _Array2D[np.clongdouble])
+assert_type(np.sort_complex(AR_LIKE_f10_3d), npt.NDArray[np.clongdouble])
+assert_type(np.sort_complex([c8]), _Array1D[np.complex64])
+assert_type(np.sort_complex([[c8]]), _Array2D[np.complex64])
+assert_type(np.sort_complex([[1j]]), _Array2D[np.complex128])
+assert_type(np.sort_complex(AR_LIKE_c16_3d), npt.NDArray[np.complex128])
 
 # trim_zeros
 assert_type(np.trim_zeros(AR_f8), npt.NDArray[np.float64])
+assert_type(np.trim_zeros(AR_f8_1d), _Array1D[np.float64])
+assert_type(np.trim_zeros(AR_f8_2d), _Array2D[np.float64])
 assert_type(np.trim_zeros(AR_LIKE_f8), list[float])
 
 # cov
@@ -268,75 +341,146 @@ assert_type(np.sinc(AR_LIKE_f8), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.sinc(AR_LIKE_c16), np.ndarray[tuple[int], np.dtype[np.complex128]])
 
 # median
-assert_type(np.median(AR_f8, keepdims=False), np.float64)
-assert_type(np.median(AR_c16, overwrite_input=True), np.complex128)
-# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
-assert_type(np.median(AR_m), np.timedelta64)  # type: ignore[assert-type]
-assert_type(np.median(AR_O), Any)
-assert_type(np.median(AR_f8, keepdims=True), npt.NDArray[np.float64])
-assert_type(np.median(AR_f8, axis=0), npt.NDArray[np.float64])
-assert_type(np.median(AR_c16, keepdims=True), npt.NDArray[np.complex128])
-assert_type(np.median(AR_c16, axis=0), npt.NDArray[np.complex128])
+assert_type(np.median(AR_i8), np.float64)
+assert_type(np.median(AR_i8, axis=0), npt.NDArray[np.float64] | Any)
+assert_type(np.median(AR_i8_2d, axis=0), _Array1D[np.float64])
+assert_type(np.median(AR_i8_3d, axis=0), _Array2D[np.float64])
+assert_type(np.median(AR_i8_4d, axis=0), _Array3D[np.float64])
+assert_type(np.median(AR_i8_2d, keepdims=True), _Array2D[np.float64])
+assert_type(np.median(AR_LIKE_f8, axis=0), np.float64)
 assert_type(np.median(AR_LIKE_f8, keepdims=True), npt.NDArray[np.float64])
+assert_type(np.median(AR_LIKE_i8_2d, axis=(0, 1)), npt.NDArray[np.float64] | Any)
+assert_type(np.median(AR_f8, keepdims=False), np.float64)
+assert_type(np.median(AR_f8, axis=0), npt.NDArray[np.float64] | Any)
+assert_type(np.median(AR_f8_1d, axis=0), np.float64)
+assert_type(np.median(AR_f8_2d, axis=0), _Array1D[np.float64])
+assert_type(np.median(AR_f8_3d, axis=0), _Array2D[np.float64])
+assert_type(np.median(AR_f8_4d, axis=0), _Array3D[np.float64])
+assert_type(np.median(AR_f8_2d, keepdims=True), _Array2D[np.float64])
+assert_type(np.median(AR_f8_2d, axis=(0, 1)), npt.NDArray[np.float64] | Any)
+assert_type(np.median(AR_f8, out=AR_c16), npt.NDArray[np.complex128])
+assert_type(np.median(AR_LIKE_c16), np.complex128)
+assert_type(np.median(1j), np.complex128 | Any)
+assert_type(np.median(AR_LIKE_c16, axis=0), np.complex128)
+assert_type(np.median(AR_LIKE_c16_2d, axis=0), _Array1D[np.complex128])
 assert_type(np.median(AR_LIKE_c16, keepdims=True), npt.NDArray[np.complex128])
-assert_type(np.median(AR_LIKE_f8, out=AR_c16), npt.NDArray[np.complex128])
+assert_type(np.median(AR_LIKE_c16_2d, axis=(0, 1)), npt.NDArray[np.complex128] | Any)
+assert_type(np.median(AR_O), Any)
+assert_type(np.median(AR_O_1d, axis=0), Any)
 
 # percentile
+assert_type(np.percentile(AR_i8, 50), np.float64)
+assert_type(np.percentile(AR_i8_2d, AR_f8_2d), _Array2D[np.float64])
+assert_type(np.percentile(AR_i8, 50, axis=0), npt.NDArray[np.float64] | Any)
+assert_type(np.percentile(AR_i8_2d, 50, axis=0), _Array1D[np.float64])
+assert_type(np.percentile(AR_i8_2d, [50], axis=0), _Array2D[np.float64])
+assert_type(np.percentile(AR_i8_3d, 50, axis=0), _Array2D[np.float64])
+assert_type(np.percentile(AR_i8_3d, [50], axis=0), _Array3D[np.float64])
+assert_type(np.percentile(AR_i8_4d, 50, axis=0), _Array3D[np.float64])
+assert_type(np.percentile(AR_i8_4d, [50], axis=0), _Array4D[np.float64])
+assert_type(np.percentile(AR_i8_2d, 50, keepdims=True), _Array2D[np.float64])
+assert_type(np.percentile(AR_i8, [[50]]), npt.NDArray[np.float64])
+assert_type(np.percentile(AR_i8, [[50]], axis=0), npt.NDArray[np.float64])
+assert_type(np.percentile(AR_LIKE_f8, 50, axis=0), np.float64)
+assert_type(np.percentile(AR_LIKE_f8, [50], axis=0), _Array1D[np.float64])
+assert_type(np.percentile(AR_LIKE_f8, 50, keepdims=True), npt.NDArray[np.float64])
+assert_type(np.percentile(AR_LIKE_i8_2d, 50, axis=(0, 1)), npt.NDArray[np.float64] | Any)
+assert_type(np.percentile(AR_f4, AR_f8, axis=0), npt.NDArray[np.float64])
+assert_type(np.percentile(AR_f4, [50]), _Array1D[np.float64])
+assert_type(np.percentile(AR_f4, [50], axis=0), npt.NDArray[np.float64])
 assert_type(np.percentile(AR_f8, 50), np.float64)
-assert_type(np.percentile(AR_f8, 50, axis=1), npt.NDArray[np.float64])
-assert_type(np.percentile(AR_f8, 50, axis=(1, 0)), npt.NDArray[np.float64])
-assert_type(np.percentile(AR_f8, 50, keepdims=True), npt.NDArray[np.float64])
-assert_type(np.percentile(AR_f8, 50, axis=0, keepdims=True), npt.NDArray[np.float64])
-assert_type(np.percentile(AR_c16, 50), np.complex128)
-assert_type(np.percentile(AR_m, 50), np.timedelta64)
-assert_type(np.percentile(AR_M, 50, overwrite_input=True), np.datetime64)
-assert_type(np.percentile(AR_O, 50), Any)
-assert_type(np.percentile(AR_f8, [50]), npt.NDArray[np.float64])
-assert_type(np.percentile(AR_f8, [50], axis=1), npt.NDArray[np.float64])
+assert_type(np.percentile(AR_f8, AR_f8, axis=0), npt.NDArray[np.float64])
+assert_type(np.percentile(AR_f8, [50]), _Array1D[np.float64])
+assert_type(np.percentile(AR_f8, AR_f8_2d), _Array2D[np.float64])
+assert_type(np.percentile(AR_f8, 50, axis=0), npt.NDArray[np.float64] | Any)
+assert_type(np.percentile(AR_f8, [50], axis=0), npt.NDArray[np.float64])
+assert_type(np.percentile(AR_f8_1d, 50, axis=0), np.float64)
+assert_type(np.percentile(AR_f8_1d, [50], axis=0), _Array1D[np.float64])
+assert_type(np.percentile(AR_f8_2d, 50, axis=0), _Array1D[np.float64])
+assert_type(np.percentile(AR_f8_2d, [50], axis=0), _Array2D[np.float64])
+assert_type(np.percentile(AR_f8_3d, 50, axis=0), _Array2D[np.float64])
+assert_type(np.percentile(AR_f8_3d, [50], axis=0), _Array3D[np.float64])
+assert_type(np.percentile(AR_f8_4d, 50, axis=0), _Array3D[np.float64])
+assert_type(np.percentile(AR_f8_4d, [50], axis=0), _Array4D[np.float64])
+assert_type(np.percentile(AR_f8_2d, 50, keepdims=True), _Array2D[np.float64])
+assert_type(np.percentile(AR_f8_2d, 50, axis=(0, 1)), npt.NDArray[np.float64] | Any)
 assert_type(np.percentile(AR_f8, [50], keepdims=True), npt.NDArray[np.float64])
-assert_type(np.percentile(AR_c16, [50]), npt.NDArray[np.complex128])
-assert_type(np.percentile(AR_m, [50]), npt.NDArray[np.timedelta64])
-assert_type(np.percentile(AR_M, [50], method="nearest"), npt.NDArray[np.datetime64])
-assert_type(np.percentile(AR_O, [50]), npt.NDArray[np.object_])
-assert_type(np.percentile(AR_f8, [50], keepdims=True), npt.NDArray[np.float64])
+assert_type(np.percentile(AR_f8, [[50]], axis=0), npt.NDArray[np.float64])
 assert_type(np.percentile(AR_f8, [50], out=AR_c16), npt.NDArray[np.complex128])
+assert_type(np.percentile(AR_f8, 50, None, AR_c16), npt.NDArray[np.complex128])
+assert_type(np.percentile(AR_O, AR_f8_2d), _Array2D[np.object_])
+assert_type(np.percentile(AR_O, 50, keepdims=True), npt.NDArray[np.object_])
+assert_type(np.percentile(AR_O, 50, axis=0), npt.NDArray[np.object_] | Any)
+assert_type(np.percentile(AR_O, [50]), npt.NDArray[np.object_])
+assert_type(np.percentile(AR_O, [50], axis=0), npt.NDArray[np.object_])
+assert_type(np.percentile(AR_O, 50), Any)
 
 # quantile
-assert_type(np.quantile(AR_f8, 0.50), np.float64)
-assert_type(np.quantile(AR_f8, 0.50, axis=1), npt.NDArray[np.float64])
-assert_type(np.quantile(AR_f8, 0.50, axis=(1, 0)), npt.NDArray[np.float64])
-assert_type(np.quantile(AR_f8, 0.50, keepdims=True), npt.NDArray[np.float64])
-assert_type(np.quantile(AR_f8, 0.50, axis=0, keepdims=True), npt.NDArray[np.float64])
-assert_type(np.quantile(AR_c16, 0.50), np.complex128)
-assert_type(np.quantile(AR_m, 0.50), np.timedelta64)
-assert_type(np.quantile(AR_M, 0.50, overwrite_input=True), np.datetime64)
-assert_type(np.quantile(AR_O, 0.50), Any)
-assert_type(np.quantile(AR_f8, [0.50]), npt.NDArray[np.float64])
-assert_type(np.quantile(AR_f8, [0.50], axis=1), npt.NDArray[np.float64])
-assert_type(np.quantile(AR_f8, [0.50], keepdims=True), npt.NDArray[np.float64])
-assert_type(np.quantile(AR_c16, [0.50]), npt.NDArray[np.complex128])
-assert_type(np.quantile(AR_m, [0.50]), npt.NDArray[np.timedelta64])
-assert_type(np.quantile(AR_M, [0.50], method="nearest"), npt.NDArray[np.datetime64])
-assert_type(np.quantile(AR_O, [0.50]), npt.NDArray[np.object_])
-assert_type(np.quantile(AR_f8, [0.50], keepdims=True), npt.NDArray[np.float64])
-assert_type(np.quantile(AR_f8, [0.50], out=AR_c16), npt.NDArray[np.complex128])
+assert_type(np.quantile(AR_i8, 0.5), np.float64)
+assert_type(np.quantile(AR_i8_2d, AR_f8_2d), _Array2D[np.float64])
+assert_type(np.quantile(AR_i8, 0.5, axis=0), npt.NDArray[np.float64] | Any)
+assert_type(np.quantile(AR_i8_2d, 0.5, axis=0), _Array1D[np.float64])
+assert_type(np.quantile(AR_i8_2d, [0.5], axis=0), _Array2D[np.float64])
+assert_type(np.quantile(AR_i8_3d, 0.5, axis=0), _Array2D[np.float64])
+assert_type(np.quantile(AR_i8_3d, [0.5], axis=0), _Array3D[np.float64])
+assert_type(np.quantile(AR_i8_4d, 0.5, axis=0), _Array3D[np.float64])
+assert_type(np.quantile(AR_i8_4d, [0.5], axis=0), _Array4D[np.float64])
+assert_type(np.quantile(AR_i8_2d, 0.5, keepdims=True), _Array2D[np.float64])
+assert_type(np.quantile(AR_i8, [[0.5]]), npt.NDArray[np.float64])
+assert_type(np.quantile(AR_i8, [[0.5]], axis=0), npt.NDArray[np.float64])
+assert_type(np.quantile(AR_LIKE_f8, 0.5, axis=0), np.float64)
+assert_type(np.quantile(AR_LIKE_f8, [0.5], axis=0), _Array1D[np.float64])
+assert_type(np.quantile(AR_LIKE_f8, 0.5, keepdims=True), npt.NDArray[np.float64])
+assert_type(np.quantile(AR_LIKE_i8_2d, 0.5, axis=(0, 1)), npt.NDArray[np.float64] | Any)
+assert_type(np.quantile(AR_f4, AR_f8, axis=0), npt.NDArray[np.float64])
+assert_type(np.quantile(AR_f4, [0.5]), _Array1D[np.float64])
+assert_type(np.quantile(AR_f4, [0.5], axis=0), npt.NDArray[np.float64])
+assert_type(np.quantile(AR_f8, 0.5), np.float64)
+assert_type(np.quantile(AR_f8, AR_f8, axis=0), npt.NDArray[np.float64])
+assert_type(np.quantile(AR_f8, [0.5]), _Array1D[np.float64])
+assert_type(np.quantile(AR_f8, AR_f8_2d), _Array2D[np.float64])
+assert_type(np.quantile(AR_f8, 0.5, axis=0), npt.NDArray[np.float64] | Any)
+assert_type(np.quantile(AR_f8, [0.5], axis=0), npt.NDArray[np.float64])
+assert_type(np.quantile(AR_f8_1d, 0.5, axis=0), np.float64)
+assert_type(np.quantile(AR_f8_1d, [0.5], axis=0), _Array1D[np.float64])
+assert_type(np.quantile(AR_f8_2d, 0.5, axis=0), _Array1D[np.float64])
+assert_type(np.quantile(AR_f8_2d, [0.5], axis=0), _Array2D[np.float64])
+assert_type(np.quantile(AR_f8_3d, 0.5, axis=0), _Array2D[np.float64])
+assert_type(np.quantile(AR_f8_3d, [0.5], axis=0), _Array3D[np.float64])
+assert_type(np.quantile(AR_f8_4d, 0.5, axis=0), _Array3D[np.float64])
+assert_type(np.quantile(AR_f8_4d, [0.5], axis=0), _Array4D[np.float64])
+assert_type(np.quantile(AR_f8_2d, 0.5, keepdims=True), _Array2D[np.float64])
+assert_type(np.quantile(AR_f8_2d, 0.5, axis=(0, 1)), npt.NDArray[np.float64] | Any)
+assert_type(np.quantile(AR_f8, [0.5], keepdims=True), npt.NDArray[np.float64])
+assert_type(np.quantile(AR_f8, [[0.5]], axis=0), npt.NDArray[np.float64])
+assert_type(np.quantile(AR_f8, [0.5], out=AR_c16), npt.NDArray[np.complex128])
+assert_type(np.quantile(AR_f8, 0.5, None, AR_c16), npt.NDArray[np.complex128])
+assert_type(np.quantile(AR_O, AR_f8_2d), _Array2D[np.object_])
+assert_type(np.quantile(AR_O, 0.5, keepdims=True), npt.NDArray[np.object_])
+assert_type(np.quantile(AR_O, 0.5, axis=0), npt.NDArray[np.object_] | Any)
+assert_type(np.quantile(AR_O, [0.5]), npt.NDArray[np.object_])
+assert_type(np.quantile(AR_O, [0.5], axis=0), npt.NDArray[np.object_])
+assert_type(np.quantile(AR_O, 0.5), Any)
 
 # trapezoid
-assert_type(np.trapezoid(AR_LIKE_f8), np.float64)
-assert_type(np.trapezoid(AR_LIKE_f8, AR_LIKE_f8), np.float64)
-assert_type(np.trapezoid(AR_LIKE_c16), np.complex128)
+assert_type(np.trapezoid(AR_i8), npt.NDArray[np.float64] | np.float64)
+assert_type(np.trapezoid(AR_i8_2d), _Array1D[np.float64])
+assert_type(np.trapezoid(AR_i8_3d), _Array2D[np.float64])
+assert_type(np.trapezoid(AR_i8_4d), npt.NDArray[np.float64] | np.float64)
+assert_type(np.trapezoid(AR_f8, AR_f8), npt.NDArray[np.float64] | np.float64)
+assert_type(np.trapezoid(AR_f8_1d), np.float64)
+assert_type(np.trapezoid(AR_f8_2d, axis=0), _Array1D[np.float64])
+assert_type(np.trapezoid(AR_f8_4d), npt.NDArray[np.float64] | np.float64)
+assert_type(np.trapezoid(AR_f8_1d, dx=1j), npt.NDArray[Any] | Any)
+assert_type(np.trapezoid([1, 2, 3], x=[8, 6, 4]), np.float64)
+assert_type(np.trapezoid(AR_LIKE_f10_3d), _Array2D[np.longdouble])
+assert_type(np.trapezoid(AR_c16, AR_LIKE_f8), npt.NDArray[np.complex128] | np.complex128)
 assert_type(np.trapezoid(AR_LIKE_c16, AR_LIKE_f8), np.complex128)
-assert_type(np.trapezoid(AR_LIKE_f8, AR_LIKE_c16), np.complex128)
-assert_type(np.trapezoid(AR_LIKE_O), float)
-assert_type(np.trapezoid(AR_LIKE_O, AR_LIKE_f8), float)
-assert_type(np.trapezoid(AR_f8), np.float64 | npt.NDArray[np.float64])
-assert_type(np.trapezoid(AR_f8, AR_f8), np.float64 | npt.NDArray[np.float64])
-assert_type(np.trapezoid(AR_c16), np.complex128 | npt.NDArray[np.complex128])
-assert_type(np.trapezoid(AR_c16, AR_c16), np.complex128 | npt.NDArray[np.complex128])
-# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
-assert_type(np.trapezoid(AR_m), np.timedelta64 | npt.NDArray[np.timedelta64])  # type: ignore[assert-type]
+assert_type(np.trapezoid(AR_LIKE_c16_2d), _Array1D[np.complex128])
+assert_type(np.trapezoid(AR_LIKE_c16_3d), _Array2D[np.complex128])
+assert_type(np.trapezoid(AR_LIKE_c16_4d), npt.NDArray[np.complex128] | np.complex128)
 assert_type(np.trapezoid(AR_O), npt.NDArray[np.object_] | Any)
-assert_type(np.trapezoid(AR_O, AR_LIKE_f8), npt.NDArray[np.object_] | Any)
+assert_type(np.trapezoid(AR_LIKE_O), float)
 
 # meshgrid
 assert_type(np.meshgrid(), tuple[()])

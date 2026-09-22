@@ -108,6 +108,20 @@ class TestFromrecords:
         assert_equal(r1, r2)
         assert_equal(r2, r3)
 
+    def test_recarray_read_with_references_raises(self):
+        with temppath(suffix=".bin") as path:
+            with open(path, "wb") as fd:
+                fd.write(b"dummy data")
+            with pytest.raises(
+                ValueError, match="Arrays containing references are not supported"
+            ):
+                np.rec.fromfile(path, formats="O", shape=1)
+
+        with pytest.raises(
+            ValueError, match="Arrays containing references are not supported"
+        ):
+            np.rec.fromstring(b"dummy data", formats="O", shape=1)
+
     def test_recarray_from_obj(self):
         count = 10
         a = np.zeros(count, dtype='O')

@@ -49,7 +49,7 @@ except ImportError as exc:
             tag = sys.implementation.cache_tag or sys.implementation.name
             bad_c_module_info = (
                 f"The following compiled module files exist, but seem incompatible\n"
-                f"with with either python '{tag}' or the "
+                f"with either python '{tag}' or the "
                 f"platform '{sys.platform}':\n\n  * {candidate_str}\n"
             )
     else:

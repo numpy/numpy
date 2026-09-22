@@ -12,10 +12,13 @@
 
 #include "npy_import.h"
 
+#include "array_assign.h"
 #include "common.h"
 #include "conversion_utils.h"
 #include "ctors.h"
+#include "dtype_transfer.h"
 #include "dtypemeta.h"
+#include "lowlevel_strided_loops.h"
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "flagsobject.h"
@@ -27,6 +30,7 @@
 #include "npy_buffer.h"
 #include "shape.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 #include "array_api_standard.h"
 
 /*******************  array attribute get and set routines ******************/
@@ -405,7 +409,7 @@ array_struct_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
     PyArrayInterface *inter;
 
-    inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
+    inter = (PyArrayInterface *)PyMem_RawMalloc(sizeof(PyArrayInterface));
     if (inter==NULL) {
         return PyErr_NoMemory();
     }
@@ -427,9 +431,9 @@ array_struct_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
      *when the array is "reshaped".
      */
     if (PyArray_NDIM(self) > 0) {
-        inter->shape = (npy_intp *)PyArray_malloc(2*sizeof(npy_intp)*PyArray_NDIM(self));
+        inter->shape = (npy_intp *)PyMem_RawMalloc(2*sizeof(npy_intp)*PyArray_NDIM(self));
         if (inter->shape == NULL) {
-            PyArray_free(inter);
+            PyMem_RawFree(inter);
             return PyErr_NoMemory();
         }
         inter->strides = inter->shape + PyArray_NDIM(self);
@@ -534,7 +538,7 @@ array_real_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
         return Py_NewRef((PyObject *)self);
     }
 
-    return _get_part(self, n_ops.real, meth, /* need_view */ 0);
+    return _get_part(self, _npy_module_state->n_ops.real, meth, /* need_view */ 0);
 }
 
 static int
@@ -556,7 +560,7 @@ array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     }
     else {
         part = (PyArrayObject *)_get_part(
-            self, n_ops.real, meth, /* need_view */ 1);
+            self, _npy_module_state->n_ops.real, meth, /* need_view */ 1);
         if (part == NULL) {
             if (!PyErr_Occurred()) {
                 PyErr_SetString(PyExc_TypeError,
@@ -595,7 +599,7 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
         return ret;
     }
 
-    return _get_part(self, n_ops.imag, meth, /* need_view */ 0);
+    return _get_part(self, _npy_module_state->n_ops.imag, meth, /* need_view */ 0);
 }
 
 static int
@@ -616,7 +620,7 @@ array_imag_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     }
 
     part = (PyArrayObject *)_get_part(
-        self, n_ops.imag, meth, /* need_view */ 1);
+        self, _npy_module_state->n_ops.imag, meth, /* need_view */ 1);
     if (part == NULL) {
         if (!PyErr_Occurred()) {
             PyErr_SetString(PyExc_TypeError,
@@ -671,15 +675,30 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         retval = 0;
         goto exit;
     }
-    swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
     copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(self))->copyswap;
-    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
+    if (copyswap == NULL || PyDataType_REFCHK(PyArray_DESCR(self))) {
+        /* reference dtypes have copyswap, but the transfer path handles
+           refcounts and is better for structured dtypes */
+        NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+        npy_intp one = 1;
+        npy_intp itemsize = PyArray_ITEMSIZE(self);
+        npy_intp transfer_strides[2] = {itemsize, itemsize};
+
+        NPY_cast_info_init(&cast_info);
+        if (PyArray_GetDTypeTransferFunction(
+                IsUintAligned(self) && IsUintAligned(arr),
+                itemsize, itemsize,
+                PyArray_DESCR(arr), PyArray_DESCR(self), 0,
+                &cast_info, &transfer_flags) < 0) {
+            goto exit;
+        }
         while (selfit->index < selfit->size) {
-            PyArray_Item_XDECREF(selfit->dataptr, PyArray_DESCR(self));
-            PyArray_Item_INCREF(arrit->dataptr, PyArray_DESCR(arr));
-            memmove(selfit->dataptr, arrit->dataptr, sizeof(PyObject **));
-            if (swap) {
-                copyswap(selfit->dataptr, NULL, swap, self);
+            char *args[2] = {arrit->dataptr, selfit->dataptr};
+            if (cast_info.func(&cast_info.context, args, &one,
+                               transfer_strides, cast_info.auxdata) < 0) {
+                NPY_cast_info_xfree(&cast_info);
+                goto exit;
             }
             PyArray_ITER_NEXT(selfit);
             PyArray_ITER_NEXT(arrit);
@@ -687,12 +706,19 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
                 PyArray_ITER_RESET(arrit);
             }
         }
+        NPY_cast_info_xfree(&cast_info);
         retval = 0;
         goto exit;
     }
 
+    swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
     while(selfit->index < selfit->size) {
         copyswap(selfit->dataptr, arrit->dataptr, swap, self);
+        if (PyErr_Occurred()) {
+            /* e.g. a structured dtype field that does not support copyswap;
+               stop writing as soon as the error is visible */
+            goto exit;
+        }
         PyArray_ITER_NEXT(selfit);
         PyArray_ITER_NEXT(arrit);
         if (arrit->index == arrit->size) {

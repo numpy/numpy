@@ -20,6 +20,7 @@
 #include "scalartypes.h"
 
 #include "common.h"
+#include "module_state.h"
 
 static PyArray_Descr *
 _descr_from_subtype(PyObject *type)
@@ -344,7 +345,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
         PyObject *attr;
         _PyArray_LegacyDescr *conv = NULL;
-        int res = PyObject_GetOptionalAttr(type, npy_interned_str.dtype, &attr);
+        int res = PyObject_GetOptionalAttr(type, _npy_module_state->interned_str.dtype, &attr);
         if (res < 0) {
             return NULL;  // Should be a rather critical error, so just fail.
         }
@@ -499,25 +500,30 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         }
     }
     if (type_num == NPY_UNICODE) {
-        /* we need the full string length here, else copyswap will write too
-           many bytes */
-        void *buff = PyArray_malloc(descr->elsize);
-        if (buff == NULL) {
-            return PyErr_NoMemory();
-        }
-        memcpy(buff, data, itemsize);
-        if (swap) {
-            byte_swap_vector(buff, itemsize / 4, 4);
+        void *buff = NULL;
+        const void *ucs4 = data;
+
+        /* only copy when the data cannot be handed to CPython as it is */
+        if (swap || !npy_is_aligned(data, NPY_ALIGNOF(Py_UCS4))) {
+            buff = PyMem_RawMalloc(descr->elsize);
+            if (buff == NULL) {
+                return PyErr_NoMemory();
+            }
+            memcpy(buff, data, itemsize);
+            if (swap) {
+                byte_swap_vector(buff, itemsize / 4, 4);
+            }
+            ucs4 = buff;
         }
 
         /* truncation occurs here */
-        PyObject *u = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buff, itemsize / 4);
-        PyArray_free(buff);
+        PyObject *u = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ucs4, itemsize / 4);
+        PyMem_RawFree(buff);
         if (u == NULL) {
             return NULL;
         }
 
-        PyObject *args = Py_BuildValue("(O)", u);
+        PyObject *args = PyTuple_FromArray(&u, 1);
         if (args == NULL) {
             Py_DECREF(u);
             return NULL;

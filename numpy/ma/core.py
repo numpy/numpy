@@ -74,7 +74,8 @@ __all__ = [
     'masked_object', 'masked_outside', 'masked_print_option',
     'masked_singleton', 'masked_values', 'masked_where', 'max', 'maximum',
     'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
-    'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask', 'nonzero',
+    'minmax', 'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask',
+    'nonzero',
     'not_equal', 'ones', 'ones_like', 'outer', 'outerproduct', 'power', 'prod',
     'product', 'ptp', 'put', 'putmask', 'ravel', 'remainder',
     'repeat', 'reshape', 'resize', 'right_shift', 'round', 'round_',
@@ -312,6 +313,14 @@ def default_fill_value(obj):
 
     dtype = _get_dtype_of(obj)
     return _recursive_fill_value(dtype, _scalar_fill_value)
+
+
+def _check_fill_value_or_default(fill_value, ndtype):
+    try:
+        with np.errstate(invalid='raise'):
+            return _check_fill_value(fill_value, ndtype)
+    except (TypeError, ValueError, OverflowError, FloatingPointError):
+        return None
 
 
 def _extremum_fill_value(obj, extremum, extremum_name):
@@ -2320,7 +2329,7 @@ def masked_object(x, value, copy=True, shrink=True):
     else:
         condition = umath.equal(np.asarray(x), value)
         mask = nomask
-    mask = mask_or(mask, make_mask(condition, shrink=shrink))
+    mask = mask_or(mask, make_mask(condition, shrink=shrink), shrink=shrink)
     return masked_array(x, mask=mask, copy=copy, fill_value=value)
 
 
@@ -3009,11 +3018,19 @@ class MaskedArray(ndarray):
                 _data._sharedmask = False
 
         # Update fill_value.
-        if fill_value is None:
-            fill_value = getattr(data, '_fill_value', None)
-        # But don't run the check unless we have something to check.
         if fill_value is not None:
             _data._fill_value = _check_fill_value(fill_value, _data.dtype)
+        else:
+            fill_value = getattr(data, '_fill_value', None)
+            if fill_value is not None:
+                if getattr(data, 'dtype', None) != _data.dtype:
+                    fill_value = _check_fill_value_or_default(
+                        fill_value, _data.dtype)
+                    if fill_value is not None:
+                        _data._fill_value = fill_value
+                else:
+                    _data._fill_value = _check_fill_value(
+                        fill_value, _data.dtype)
         # Process extra options ..
         if hard_mask is None:
             _data._hardmask = getattr(data, '_hardmask', False)
@@ -3037,7 +3054,10 @@ class MaskedArray(ndarray):
         _optinfo.update(getattr(obj, '_basedict', {}))
         if not isinstance(obj, MaskedArray):
             _optinfo.update(getattr(obj, '__dict__', {}))
-        _dict = {'_fill_value': getattr(obj, '_fill_value', None),
+        _fill_value = getattr(obj, '_fill_value', None)
+        if _fill_value is not None and getattr(obj, 'dtype', None) != self.dtype:
+            _fill_value = _check_fill_value_or_default(_fill_value, self.dtype)
+        _dict = {'_fill_value': _fill_value,
                      '_hardmask': getattr(obj, '_hardmask', False),
                      '_sharedmask': getattr(obj, '_sharedmask', False),
                      '_isfield': getattr(obj, '_isfield', False),
@@ -3254,6 +3274,28 @@ class MaskedArray(ndarray):
         memory. Therefore if ``a`` is C-ordered versus fortran-ordered, versus
         defined as a slice or transpose, etc., the view may give different
         results.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> a = np.ma.array([1.0, 2.0, 3.0], mask=[0, 1, 0])
+        >>> a
+        masked_array(data=[1.0, --, 3.0],
+                     mask=[False,  True, False],
+               fill_value=1e+20)
+
+        Use ``fill_value`` to set a custom fill value on the view without
+        copying the data:
+
+        >>> a.view(fill_value=-999.0)
+        masked_array(data=[1.0, --, 3.0],
+                     mask=[False,  True, False],
+               fill_value=-999.0)
+
+        View as a plain :class:`numpy.ndarray` — the mask is not preserved:
+
+        >>> a.view(np.ndarray)
+        array([1., 2., 3.])
         """
 
         if type is None and (isinstance(dtype, builtins.type)
@@ -7031,6 +7073,84 @@ def max(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
 max.__doc__ = MaskedArray.max.__doc__
 
 
+def minmax(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
+    """
+    Return the minimum and maximum along a given axis.
+
+    This is equivalent to ``(ma.min(obj, ...), ma.max(obj, ...))`` but returns
+    both in a single call.
+
+    .. versionadded:: 2.6.0
+
+    Parameters
+    ----------
+    axis : None or int or tuple of ints, optional
+        Axis along which to operate.  By default, ``axis`` is None and the
+        flattened input is used.
+        If this is a tuple of ints, the reduction is performed over multiple
+        axes, instead of a single axis or all the axes as before.
+    out : tuple of array_like, optional
+        A tuple ``(min, max)`` of alternative output arrays in which to place
+        the result.  Must be of the same shape and buffer length as the
+        expected output.
+    fill_value : scalar or None, optional
+        Value used to fill in the masked values.
+        If None, use the output of `minimum_fill_value` for the minimum and of
+        `maximum_fill_value` for the maximum.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the array.
+
+    Returns
+    -------
+    result : tuple of array_like
+        A tuple ``(min, max)`` holding the minimum and maximum.
+        If ``out`` was specified, its arrays are returned.
+
+    See Also
+    --------
+    ma.min : Return the minimum along a given axis.
+    ma.max : Return the maximum along a given axis.
+    ma.minimum_fill_value
+        Returns the minimum filling value for a given datatype.
+    ma.maximum_fill_value
+        Returns the maximum filling value for a given datatype.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = [[1., -2., 3.], [0.2, -0.7, 0.1]]
+    >>> mask = [[1, 1, 0], [0, 0, 1]]
+    >>> masked_x = ma.masked_array(x, mask)
+    >>> masked_x
+    masked_array(
+      data=[[--, --, 3.0],
+            [0.2, -0.7, --]],
+      mask=[[ True,  True, False],
+            [False, False,  True]],
+      fill_value=1e+20)
+    >>> ma.minmax(masked_x)
+    (-0.7, 3.0)
+    >>> mn, mx = ma.minmax(masked_x, axis=-1)
+    >>> mn
+    masked_array(data=[3.0, -0.7],
+                 mask=[False, False],
+           fill_value=1e+20)
+    >>> mx
+    masked_array(data=[3.0, 0.2],
+                 mask=[False, False],
+           fill_value=1e+20)
+    """
+    if out is not None and (type(out) is not tuple or len(out) != 2):
+        raise TypeError("'out' must be a tuple of two arrays")
+    out_min, out_max = out if out is not None else (None, None)
+    return (min(obj, axis=axis, out=out_min, fill_value=fill_value,
+                keepdims=keepdims),
+            max(obj, axis=axis, out=out_max, fill_value=fill_value,
+                keepdims=keepdims))
+
+
 def ptp(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
     kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
     try:
@@ -8451,6 +8571,8 @@ def convolve(a, v, mode='full', propagate_mask=True):
     See Also
     --------
     numpy.convolve : Equivalent function in the top-level NumPy module.
+    numpy.ma.correlate : Cross-correlation of two 1-D sequences; see its
+        examples for ``propagate_mask`` behaviour.
     """
     return _convolve_or_correlate(np.convolve, a, v, mode, propagate_mask)
 
@@ -8471,9 +8593,8 @@ def allequal(a, b, fill_value=True):
     Returns
     -------
     y : bool
-        Returns True if the two arrays are equal within the given
-        tolerance, False otherwise. If either array contains NaN,
-        then False is returned.
+        Returns True if the arrays are equal. If either array contains
+        NaN, then False is returned.
 
     See Also
     --------

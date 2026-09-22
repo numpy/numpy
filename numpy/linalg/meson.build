@@ -25,6 +25,7 @@ py.extension_module('lapack_lite',
   dependencies: [np_core_dep, blas_dep, lapack_dep],
   install: true,
   subdir: 'numpy/linalg',
+  limited_api: py_limited_api,
 )
 
 py.extension_module('_umath_linalg',
@@ -37,6 +38,7 @@ py.extension_module('_umath_linalg',
   link_with: npymath_lib,
   install: true,
   subdir: 'numpy/linalg',
+  limited_api: py_limited_api,
 )
 
 py.install_sources(

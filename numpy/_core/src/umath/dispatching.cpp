@@ -47,6 +47,7 @@
 #include "npy_import.h"
 #include "common.h"
 #include "npy_pycompat.h"
+#include "module_state.h"
 
 #include "arrayobject.h"
 #include "dispatching.h"
@@ -209,22 +210,29 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
 {
     int ret = -1;
     PyObject *ufunc = NULL;
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
 
     PyUFunc_LoopSlot *slot;
     for (slot = slots; slot->name != NULL; slot++) {
         // Hardcode slot names for attributes and non-ufuncs stored on the DType
         // (Also avoids circular imports a bit.)
         if (strcmp(slot->name, "real") == 0) {
-            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.real));
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->real));
         }
         else if (strcmp(slot->name, "imag") == 0) {
-            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.imag));
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->imag));
         }
         else if (strcmp(slot->name, "sort") == 0) {
-            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.sort));
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->sort));
         }
         else if (strcmp(slot->name, "argsort") == 0) {
-            Py_XSETREF(ufunc, Py_NewRef(npy_interned_str.argsort));
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->argsort));
+        }
+        else if (strcmp(slot->name, "partition") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->partition));
+        }
+        else if (strcmp(slot->name, "argpartition") == 0) {
+            Py_XSETREF(ufunc, Py_NewRef(interned_str->argpartition));
         }
         else {
             Py_XSETREF(ufunc, npy_import_entry_point(slot->name));
@@ -233,23 +241,97 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
             }
         }
 
-        if (ufunc == npy_interned_str.real) {
+        if (ufunc == interned_str->real) {
             if (set_static_method<&NPY_DType_Slots::real_meth, true>(slot->spec) < 0) {
                 goto finish;
             }
         }
-        else if (ufunc == npy_interned_str.imag) {
+        else if (ufunc == interned_str->imag) {
             if (set_static_method<&NPY_DType_Slots::imag_meth, true>(slot->spec) < 0) {
                 goto finish;
             }
         }
-        else if (ufunc == npy_interned_str.sort) {
+        else if (ufunc == interned_str->sort) {
+            if (slot->spec->nin != 1 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Sort method spec must have nin=1 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[0] != slot->spec->dtypes[1]) {
+                PyErr_Format(PyExc_ValueError,
+                        "Sort method spec must have the same input and output dtypes, got %R and %R",
+                        slot->spec->dtypes[0], slot->spec->dtypes[1]);
+                goto finish;
+            }
+
             if (set_static_method<&NPY_DType_Slots::sort_meth, false>(slot->spec) < 0) {
                 goto finish;
             }
         }
-        else if (ufunc == npy_interned_str.argsort) {
+        else if (ufunc == interned_str->argsort) {
+            if (slot->spec->nin != 1 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argsort method spec must have nin=1 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[1] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argsort method spec must have output dtype intp, got %R",
+                        slot->spec->dtypes[1]);
+                goto finish;
+            }
+
             if (set_static_method<&NPY_DType_Slots::argsort_meth, false>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else if (ufunc == interned_str->partition) {
+            if (slot->spec->nin != 2 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Partition method spec must have nin=2 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[0] != slot->spec->dtypes[2]) {
+                PyErr_Format(PyExc_ValueError,
+                        "Partition method spec must have the same input array and output dtypes, got %R and %R",
+                        slot->spec->dtypes[0], slot->spec->dtypes[2]);
+                goto finish;
+            }
+            if (slot->spec->dtypes[1] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Partition method spec must have kth dtype intp, got %R",
+                        slot->spec->dtypes[1]);
+                goto finish;
+            }
+
+            if (set_static_method<&NPY_DType_Slots::part_meth, false>(slot->spec) < 0) {
+                goto finish;
+            }
+        }
+        else if (ufunc == interned_str->argpartition) {
+            if (slot->spec->nin != 2 || slot->spec->nout != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argpartition method spec must have nin=2 and nout=1, got %d and %d",
+                        slot->spec->nin, slot->spec->nout);
+                goto finish;
+            }
+            if (slot->spec->dtypes[2] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argpartition method spec must have output dtype intp, got %R",
+                        slot->spec->dtypes[2]);
+                goto finish;
+            }
+            if (slot->spec->dtypes[1] != &PyArray_IntpDType) {
+                PyErr_Format(PyExc_ValueError,
+                        "Argpartition method spec must have kth dtype intp, got %R",
+                        slot->spec->dtypes[1]);
+                goto finish;
+            }
+
+            if (set_static_method<&NPY_DType_Slots::argpart_meth, false>(slot->spec) < 0) {
                 goto finish;
             }
         }
@@ -735,9 +817,18 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
      * difference.  Whether the actual operands can be casts must be checked
      * during the type resolution step (which may _also_ calls this!).
      */
-    if (ufunc->type_resolver(ufunc,
+    PyObject *promotion_token = npy_begin_legacy_resolver_promotion();
+    if (promotion_token == NULL) {
+        Py_XDECREF(type_tuple);
+        return -1;
+    }
+    int resolver_result = ufunc->type_resolver(ufunc,
             NPY_UNSAFE_CASTING, (PyArrayObject **)ops, type_tuple,
-            out_descrs) < 0) {
+            out_descrs);
+    if (npy_end_legacy_resolver_promotion(promotion_token) < 0) {
+        resolver_result = -1;
+    }
+    if (resolver_result < 0) {
         Py_XDECREF(type_tuple);
         /* Not all legacy resolvers clean up on failures: */
         for (int i = 0; i < nargs; i++) {
@@ -795,8 +886,8 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
      */
     for (int i = 0; i < nargs; i++) {
         if (signature[i] != NULL && signature[i] != operation_DTypes[i]) {
-            Py_INCREF(operation_DTypes[i]);
-            Py_SETREF(signature[i], operation_DTypes[i]);
+            /* borrowed, legacy DTypes are effectively immortal */
+            signature[i] = operation_DTypes[i];
             *out_cacheable = 0;
         }
     }
@@ -1022,10 +1113,12 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
  * @param ops The array operands (used only for the fallback).
  * @param signature As input, the DType signature fixed explicitly by the user.
  *        The signature is *filled* in with the operation signature we end up
- *        using.
+ *        using.  Entries are borrowed (owned by the append-only
+ *        `ufunc->_loops`).
  * @param op_dtypes The operand DTypes (without casting) which are specified
  *        either by the `signature` or by an `operand`.
  *        (outputs and the second input can be NULL for reductions).
+ *        Entries are borrowed (kept alive by the operands).
  *        NOTE: In some cases, the promotion machinery may currently modify
  *        these including clearing the output.
  * @param force_legacy_promotion If set, we have to use the old type resolution
@@ -1067,8 +1160,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
              * ignore the operand input, we cannot overwrite signature yet
              * since it is fixed (cannot be promoted!)
              */
-            Py_INCREF(signature[i]);
-            Py_XSETREF(op_dtypes[i], signature[i]);
+            op_dtypes[i] = signature[i];
             assert(i >= ufunc->nin || !NPY_DT_is_abstract(signature[i]));
         }
         else if (i >= nin) {
@@ -1078,7 +1170,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
              * loops which include the cast).
              * (See also comment in resolve_implementation_info.)
              */
-            Py_CLEAR(op_dtypes[i]);
+            op_dtypes[i] = NULL;
         }
         /*
          * If the op_dtype ends up being a non-legacy one, then we cannot use
@@ -1114,7 +1206,6 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     if (ensure_reduce_compatible && signature[0] == NULL &&
             PyTuple_GET_ITEM(all_dtypes, 0) != PyTuple_GET_ITEM(all_dtypes, 2)) {
         signature[0] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(all_dtypes, 2);
-        Py_INCREF(signature[0]);
         return promote_and_get_ufuncimpl(ufunc,
                 ops, signature, op_dtypes,
                 force_legacy_promotion,
@@ -1124,7 +1215,6 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     for (int i = 0; i < nargs; i++) {
         if (signature[i] == NULL) {
             signature[i] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(all_dtypes, i);
-            Py_INCREF(signature[i]);
         }
         else if ((PyObject *)signature[i] != PyTuple_GET_ITEM(all_dtypes, i)) {
             /*
@@ -1147,7 +1237,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
      * then we chain it, because DTypePromotionError effectively means that there
      * is no loop available.  (We failed finding a loop by using promotion.)
      */
-    else if (PyErr_ExceptionMatches(npy_static_pydata.DTypePromotionError)) {
+    else if (PyErr_ExceptionMatches(_npy_module_state->static_pydata.DTypePromotionError)) {
         PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
         PyErr_Fetch(&err_type, &err_value, &err_traceback);
         raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
@@ -1350,7 +1440,8 @@ install_logical_ufunc_promoter(PyObject *ufunc)
 
 /*
  * Return the PyArrayMethodObject or PyCapsule that matches a registered
- * tuple of identical dtypes. Return a borrowed ref of the first match.
+ * tuple of identical dtypes, or Py_None if there is no match (NULL on error).
+ * The result is always a borrowed reference.
  */
 NPY_NO_EXPORT PyObject *
 get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
@@ -1375,7 +1466,7 @@ get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
         Py_DECREF(info);
         return result;
     }
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 /*UFUNC_API

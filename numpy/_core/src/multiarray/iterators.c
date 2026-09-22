@@ -128,12 +128,10 @@ PyArray_IterNew(PyObject *obj)
         return NULL;
     }
 
-    it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
+    it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);
     if (it == NULL) {
-        PyErr_NoMemory();
         return NULL;
     }
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
 
     Py_INCREF(ao);  /* PyArray_RawIterBaseInit steals a reference */
     PyArray_RawIterBaseInit(it, ao);
@@ -167,11 +165,10 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     if (!compat) {
         goto err;
     }
-    it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
+    it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);
     if (it == NULL) {
         return NULL;
     }
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
 
     PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
@@ -345,7 +342,7 @@ arrayiter_dealloc(PyArrayIterObject *it)
      * which does not call this function.
      */
     array_iter_base_dealloc(it);
-    PyArray_free(it);
+    PyObject_Free(it);
 }
 
 static Py_ssize_t
@@ -392,6 +389,18 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind,
         return NULL;
     }
     if (count > 0) {
+        /* set up a cast to handle item copying */
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+        /* We can assume the newly allocated output array is aligned */
+        int is_aligned = IsUintAligned(self->ao);
+        if (PyArray_GetDTypeTransferFunction(
+                    is_aligned, itemsize, itemsize,
+                    dtype, PyArray_DESCR(ret), 0,
+                    cast_info, &transfer_flags) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
         /* Set up loop */
         optr = PyArray_DATA(ret);
         counter = PyArray_DIMS(ind)[0];
@@ -403,6 +412,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                 npy_intp transfer_strides[2] = {itemsize, itemsize};
                 if (cast_info->func(&cast_info->context, args, &one,
                                     transfer_strides, cast_info->auxdata) < 0) {
+                    Py_DECREF(ret);
                     return NULL;
                 }
                 optr += itemsize;
@@ -452,6 +462,19 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind,
     if (ret == NULL) {
         return NULL;
     }
+
+    /* set up a cast to handle item copying */
+    NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+    /* We can assume the newly allocated output array is aligned */
+    int is_aligned = IsUintAligned(self->ao);
+    if (PyArray_GetDTypeTransferFunction(
+                is_aligned, dtype->elsize, dtype->elsize,
+                dtype, PyArray_DESCR(ret), 0,
+                cast_info, &transfer_flags) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
     optr = PyArray_DATA(ret);
     ind_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ind);
     if (ind_it == NULL) {
@@ -565,17 +588,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         goto finish;
     }
 
-    /* set up a cast to handle item copying */
-    NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
     npy_intp one = 1;
-
-    /* We can assume the newly allocated output array is aligned */
-    int is_aligned = IsUintAligned(self->ao);
-    if (PyArray_GetDTypeTransferFunction(
-                is_aligned, dtype_size, dtype_size, dtype, dtype, 0, &cast_info,
-                &transfer_flags) < 0) {
-        goto finish;
-    }
 
     if (index_type == HAS_SLICE) {
         if (PySlice_GetIndicesEx(indices[0].object,
@@ -595,12 +608,25 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
             goto finish;
         }
 
+        /* set up a cast to handle item copying */
+        NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
+        /* We can assume the newly allocated output array is aligned */
+        int is_aligned = IsUintAligned(self->ao);
+        if (PyArray_GetDTypeTransferFunction(
+                    is_aligned, dtype_size, dtype_size,
+                    dtype, PyArray_DESCR((PyArrayObject *)ret), 0,
+                    &cast_info, &transfer_flags) < 0) {
+            Py_CLEAR(ret);
+            goto finish;
+        }
+
         char *dptr = PyArray_DATA((PyArrayObject *) ret);
         while (n_steps--) {
             char *args[2] = {self->dataptr, dptr};
             npy_intp transfer_strides[2] = {dtype_size, dtype_size};
             if (cast_info.func(&cast_info.context, args, &one,
                                transfer_strides, cast_info.auxdata) < 0) {
+                Py_CLEAR(ret);
                 goto finish;
             }
             start += step;
@@ -849,8 +875,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     /* set up cast to handle single-element copies into arrval */
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
     npy_intp one = 1;
-    /* We can assume the newly allocated array is aligned */
-    int is_aligned = IsUintAligned(self->ao);
+    /* arrval can be the caller's array, so its alignment must be checked */
+    int is_aligned = IsUintAligned(self->ao) && IsUintAligned(arrval);
     if (PyArray_GetDTypeTransferFunction(
                 is_aligned, dtype_size, dtype_size, PyArray_DESCR(arrval), dtype, 0,
                 &cast_info, &transfer_flags) < 0) {
@@ -1072,6 +1098,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
     .tp_name = "numpy.flatiter",
     .tp_basicsize = sizeof(PyArrayIterObject),
     .tp_dealloc = (destructor)arrayiter_dealloc,
+    .tp_free = PyObject_Free,
     .tp_as_mapping = &iter_as_mapping,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_richcompare = (richcmpfunc)iter_richcompare,
@@ -1216,11 +1243,10 @@ multiiter_new_impl(int n_args, PyObject **args)
     PyArrayMultiIterObject *multi;
     int i;
 
-    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
+    multi = PyObject_New(PyArrayMultiIterObject, &PyArrayMultiIter_Type);
     if (multi == NULL) {
-        return PyErr_NoMemory();
+        return NULL;
     }
-    PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
     multi->numiter = 0;
 
     for (i = 0; i < n_args; ++i) {
@@ -1496,6 +1522,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
     .tp_name = "numpy.broadcast",
     .tp_basicsize = sizeof(PyArrayMultiIterObject),
     .tp_dealloc = (destructor)arraymultiter_dealloc,
+    .tp_free = PyObject_Free,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_iternext = (iternextfunc)arraymultiter_next,
     .tp_methods = arraymultiter_methods,
@@ -1667,11 +1694,10 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
     int i;
     PyArrayNeighborhoodIterObject *ret;
 
-    ret = PyArray_malloc(sizeof(*ret));
+    ret = PyObject_New(PyArrayNeighborhoodIterObject, &PyArrayNeighborhoodIter_Type);
     if (ret == NULL) {
         return NULL;
     }
-    PyObject_Init((PyObject *)ret, &PyArrayNeighborhoodIter_Type);
 
     Py_INCREF(x->ao);  /* PyArray_RawIterBaseInit steals a reference */
     PyArray_RawIterBaseInit((PyArrayIterObject*)ret, x->ao);
@@ -1756,7 +1782,7 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
 clean_x:
     Py_DECREF(ret->_internal_iter);
     array_iter_base_dealloc((PyArrayIterObject*)ret);
-    PyArray_free((PyArrayObject*)ret);
+    PyObject_Free(ret);
     return NULL;
 }
 
@@ -1771,7 +1797,7 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);
-    PyArray_free((PyArrayObject*)iter);
+    PyObject_Free(iter);
 }
 
 NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
@@ -1779,5 +1805,6 @@ NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
     .tp_name = "numpy.neigh_internal_iter",
     .tp_basicsize = sizeof(PyArrayNeighborhoodIterObject),
     .tp_dealloc = (destructor)neighiter_dealloc,
+    .tp_free = PyObject_Free,
     .tp_flags = Py_TPFLAGS_DEFAULT,
 };

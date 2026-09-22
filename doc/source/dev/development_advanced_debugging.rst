@@ -72,7 +72,7 @@ e.g. ``pythond -m sysconfig`` to get the build configuration for the Python
 executable. A debug build will be built with debug compiler options in
 ``CFLAGS`` (e.g. ``-g -Og``).
 
-Running the Numpy tests or an interactive terminal is usually as easy as::
+Running the NumPy tests or an interactive terminal is usually as easy as::
 
     python3.8d runtests.py
     # or
@@ -231,7 +231,7 @@ crash. The call stack often provides valuable context to understand the nature
 of a crash. C debuggers are also very useful during development, allowing
 interactive debugging in the C implementation of NumPy.
 
-The NumPy developers often use both ``gdb`` and ``lldb`` to debug Numpy. As a
+The NumPy developers often use both ``gdb`` and ``lldb`` to debug NumPy. As a
 rule of thumb, ``gdb`` is often easier to use on Linux while ``lldb`` is easier
 to use on a Mac environment. They have disjoint user interfaces, so you will need to
 learn how to use whichever one you land on. The ``gdb`` to ``lldb`` `command map

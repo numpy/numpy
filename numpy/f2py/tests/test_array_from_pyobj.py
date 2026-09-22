@@ -383,9 +383,10 @@ class TestIntent:
 class TestSharedMemory:
 
     @pytest.fixture(autouse=True, scope="class", params=_type_names)
-    def setup_type(self, request):
+    @classmethod
+    def setup_type(cls, request):
         request.cls.type = Type(request.param)
-        request.cls.array = lambda self, dims, intent, obj: Array(
+        request.cls.array = lambda cls, dims, intent, obj: Array(
             Type(request.param), dims, intent, obj)
 
     @property

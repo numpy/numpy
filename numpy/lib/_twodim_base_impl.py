@@ -462,7 +462,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     # Deprecation in NumPy 2.5, 2026-03
     if warning_for_type:
         warnings.warn(
-            (f"Cannot convert {(warning_for_type).__name__} safely to an integer."
+            (f"Cannot convert {(warning_for_type).__name__} safely to an integer. "
              "This will raise an error in future versions (Deprecated NumPy 2.5)"),
             DeprecationWarning,
             skip_file_prefixes=(os.path.dirname(__file__),),
@@ -881,7 +881,7 @@ def mask_indices(n, mask_func, k=0):
         A function whose call signature is similar to that of `triu`, `tril`.
         That is, ``mask_func(x, k)`` returns a boolean array, shaped like `x`.
         `k` is an optional argument to the function.
-    k : scalar
+    k : scalar, optional
         An optional argument which is passed through to `mask_func`. Functions
         like `triu`, `tril` take a second argument that is interpreted as an
         offset.
@@ -1167,7 +1167,7 @@ def triu_indices(n, k=0, m=None):
         if not isinstance(k, type(k - 1)):
             # Deprecated in NumPy 2.5, 2026-03
             warnings.warn(
-                (f"Cannot convert {type(k).__name__} safely to an integer."
+                (f"Cannot convert {type(k).__name__} safely to an integer. "
                  "This will raise an error in future versions (Deprecated NumPy 2.5)"),
                 DeprecationWarning,
                 skip_file_prefixes=(os.path.dirname(__file__),),

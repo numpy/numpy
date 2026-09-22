@@ -4,6 +4,8 @@
 NumPy 2.4.3 Release Notes
 =========================
 
+*Released on 2026-03-09.*
+
 The NumPy 2.4.3 is a patch release that fixes bugs discovered after the
 2.4.2 release. The most user visible fix may be a threading fix for 
 OpenBLAS on ARM, closing issue #30816.

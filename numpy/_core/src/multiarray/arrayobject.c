@@ -63,6 +63,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "binop_override.h"
 #include "array_coercion.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -367,7 +368,7 @@ static inline int
 write_and_clear_error_if_unraisable(int status, npy_bool unraisable)
 {
     if (status < 0 && unraisable) {
-        PyErr_WriteUnraisable(npy_interned_str.array_dealloc);
+        PyErr_WriteUnraisable(_npy_module_state->interned_str.array_dealloc);
         return 0;
     }
     return status;
@@ -431,7 +432,7 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
         }
         /* mem_handler can be absent if NPY_ARRAY_OWNDATA arbitrarily set */
         if (fa->mem_handler == NULL) {
-            if (npy_global_state.warn_if_no_mem_policy) {
+            if (_npy_module_state->global_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
@@ -653,7 +654,9 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             return NULL;
         }
 
-        PyObject *op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
+        multiarray_umath_state *state = _npy_module_state;
+        PyObject *op = (cmp_op == Py_EQ ?
+                state->n_ops.logical_and : state->n_ops.logical_or);
         PyObject *res = NULL;
         for (int i = 0; i < field_count; ++i) {
             PyObject *fieldname, *temp, *temp2;
@@ -759,7 +762,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                 res = temp;
             }
             else {
-                temp2 = PyObject_CallFunction(op, "OO", res, temp);
+                PyObject *call_args[2] = {res, temp};
+                temp2 = PyObject_Vectorcall(op, call_args, 2, NULL);
                 Py_DECREF(temp);
                 Py_DECREF(res);
                 if (temp2 == NULL) {
@@ -836,6 +840,7 @@ DEPRECATE_silence_error(const char *msg) {
 NPY_NO_EXPORT PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyArrayObject *array_other;
     PyObject *obj_self = (PyObject *)self;
     PyObject *result = NULL;
@@ -844,12 +849,12 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     case Py_LT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.less);
+                (PyObject *)self, other, state->n_ops.less);
         break;
     case Py_LE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.less_equal);
+                (PyObject *)self, other, state->n_ops.less_equal);
         break;
     case Py_EQ:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -881,7 +886,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, (PyObject *)other, n_ops.equal);
+                (PyObject *)self, (PyObject *)other, state->n_ops.equal);
         break;
     case Py_NE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -913,17 +918,17 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, (PyObject *)other, n_ops.not_equal);
+                (PyObject *)self, (PyObject *)other, state->n_ops.not_equal);
         break;
     case Py_GT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.greater);
+                (PyObject *)self, other, state->n_ops.greater);
         break;
     case Py_GE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.greater_equal);
+                (PyObject *)self, other, state->n_ops.greater_equal);
         break;
     default:
         Py_INCREF(Py_NotImplemented);
@@ -957,7 +962,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     if (result == NULL
             && (cmp_op == Py_EQ || cmp_op == Py_NE)
             && PyErr_ExceptionMatches(
-                    npy_static_pydata._UFuncNoLoopError)) {
+                    state->static_pydata._UFuncNoLoopError)) {
         PyErr_Clear();
 
         PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);
@@ -1203,6 +1208,12 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
     else {
         /* buffer given -- use it */
+        if (NPY_DT_has_finalize(NPY_DTYPE(descr))) {
+            PyErr_Format(PyExc_TypeError,
+                         "cannot create a %S array from a buffer",
+                         descr);
+            goto fail;
+        }
         if (dims.len == 1 && dims.ptr[0] == -1) {
             dims.ptr[0] = (buffer.len-(npy_intp)offset) / itemsize;
         }
@@ -1277,72 +1288,105 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
 };
 
 /*
-    The following *_GET_ITEM_DATA functions are used to get the pointer to the fields of the
-    corresponding struct from the given object. It is technically undefined behaviour
-    to access the fields of the struct through a pointer that is not of the same type,
-    but in our case it is not a problem in practice because this is used only in stable ABI
-    extensions where the original object layout is opaque.
-*/
+ * Python stable ABI compatible object field accessor functions.
+ *
+ * The following *_GET_ITEM_DATA functions are used to get the pointer to the fields of the
+ * corresponding struct from the given object. It is technically undefined behaviour
+ * to access the fields of the struct through a pointer that is not of the same type,
+ * but in our case it is not a problem in practice because this is used only in stable ABI
+ * extensions where the original object layout is opaque.
+ *
+ * To expose the struct this way alignment guarantees must be met, see `utils.h` and the
+ * definition of `_NPY_OPAQUE_FIRST_FIELD`.
+ */
+
+#if SIZEOF_VOID_P != 4  // not a 32bit build
+/*
+ * If this assert fails then Python changed the sizeof(PyObject). If we simply remove the
+ * assert we lose flexibility to add 16byte aligned fields to the stable ABI fields.
+ * We can choose that this is fine or increase the padding to 16/max_align_t when it happens.
+ * (See comments in `ndarraytypes.h` for more details.)
+ */
+static_assert(sizeof(PyObject) % 16 == 0,
+    "Expected sizeof(PyObject) to be multiple of 16 on 64bit builds.");
+#endif
+
+static_assert(NPY_ALIGNOF(PyArray_Descr_fields) <= 8,
+              "PyArray_Descr must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(_PyArray_LegacyDescr_fields) <= 8,
+              "_PyArray_LegacyDescr must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayObject_fields) <= 8,
+              "PyArrayObject must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayMultiIterObject_fields) <= 8,
+              "PyArrayMultiIterObject must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayIterObject_fields) <= 8,
+              "PyArrayIterObject must not require more than 8-byte alignment");
+static_assert(NPY_ALIGNOF(PyArrayNeighborhoodIterObject_fields) <= 8,
+              "PyArrayNeighborhoodIterObject must not require more than 8-byte alignment");
 #undef _PyDataType_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArray_Descr_fields *
 _PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
 {
-    return (PyArray_Descr_fields *)(((char *)dtype) + sizeof(PyObject));
+    return (PyArray_Descr_fields *)(((char *)dtype) + offsetof(PyArray_Descr, typeobj));
 }
 #undef _PyArray_LegacyDescr_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT _PyArray_LegacyDescr_fields *
 _PyArray_LegacyDescr_GET_ITEM_DATA(const _PyArray_LegacyDescr *dtype)
 {
-    return (_PyArray_LegacyDescr_fields *)(((char *)dtype) + sizeof(PyObject));
+    return (_PyArray_LegacyDescr_fields *)(((char *)dtype) + offsetof(_PyArray_LegacyDescr, typeobj));
 }
 #undef _PyArray_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayObject_fields *
 _PyArray_GET_ITEM_DATA(const PyArrayObject *arr)
 {
-    return (PyArrayObject_fields *)(((char *)arr) + sizeof(PyObject));
+    return (PyArrayObject_fields *)(((char *)arr) + offsetof(PyArrayObject_fields, data));
 }
 #undef _PyArrayMultiIter_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayMultiIterObject_fields *
 _PyArrayMultiIter_GET_ITEM_DATA(const PyArrayMultiIterObject *multi)
 {
-    return (PyArrayMultiIterObject_fields *)(((char *)multi) + sizeof(PyObject));
+    return (PyArrayMultiIterObject_fields *)(((char *)multi) + offsetof(PyArrayMultiIterObject_fields, numiter));
 }
 #undef _PyArrayIter_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayIterObject_fields *
 _PyArrayIter_GET_ITEM_DATA(const PyArrayIterObject *iter)
 {
-    return (PyArrayIterObject_fields *)(((char *)iter) + sizeof(PyObject));
+    return (PyArrayIterObject_fields *)(((char *)iter) + offsetof(PyArrayIterObject_fields, nd_m1));
 }
 #undef _PyArrayNeighborhoodIter_GET_ITEM_DATA
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayNeighborhoodIterObject_fields *
 _PyArrayNeighborhoodIter_GET_ITEM_DATA(const PyArrayNeighborhoodIterObject *iter)
 {
-    return (PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + sizeof(PyObject));
+    return (PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + offsetof(PyArrayNeighborhoodIterObject_fields, nd_m1));
 }
+#undef _PyDatetimeScalarObject_GetMetadata
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArray_DatetimeMetaData
 _PyDatetimeScalarObject_GetMetadata(PyObject *self)
 {
     return ((PyDatetimeScalarObject *)self)->obmeta;
 }
+#undef _PyTimedeltaScalarObject_GetMetadata
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArray_DatetimeMetaData
 _PyTimedeltaScalarObject_GetMetadata(PyObject *self)
 {
     return ((PyTimedeltaScalarObject *)self)->obmeta;
 }
+#undef _PyDatetimeScalarObject_GetValue
 /*NUMPY_API*/
 NPY_NO_EXPORT npy_datetime
 _PyDatetimeScalarObject_GetValue(PyObject *self)
 {
     return ((PyDatetimeScalarObject *)self)->obval;
 }
+#undef _PyTimedeltaScalarObject_GetValue
 /*NUMPY_API*/
 NPY_NO_EXPORT npy_timedelta
 _PyTimedeltaScalarObject_GetValue(PyObject *self)

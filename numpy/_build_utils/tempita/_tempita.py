@@ -815,7 +815,7 @@ def parse_cond(tokens, name, context):
     start = tokens[0][1]
     pieces = []
     context = context + ("if",)
-    while 1:
+    while True:
         if not tokens:
             raise TemplateError("Missing {{endif}}", position=start, name=name)
         if isinstance(tokens[0], tuple) and tokens[0][0] == "endif":
@@ -836,7 +836,7 @@ def parse_one_cond(tokens, name, context):
         part = ("else", pos, None, content)
     else:
         assert 0, f"Unexpected token {first!r} at {pos}"
-    while 1:
+    while True:
         if not tokens:
             raise TemplateError("No {{endif}}", position=pos, name=name)
         if isinstance(tokens[0], tuple) and (
@@ -869,7 +869,7 @@ def parse_for(tokens, name, context):
         )
     vars = tuple(v.strip() for v in first[: match.start()].split(",") if v.strip())
     expr = first[match.end():]
-    while 1:
+    while True:
         if not tokens:
             raise TemplateError("No {{endfor}}", position=pos, name=name)
         if isinstance(tokens[0], tuple) and tokens[0][0] == "endfor":
@@ -932,7 +932,7 @@ def parse_def(tokens, name, context):
         sig = parse_signature(sig_text, name, start)
     context = context + ("def",)
     content = []
-    while 1:
+    while True:
         if not tokens:
             raise TemplateError("Missing {{enddef}}", position=start, name=name)
         if isinstance(tokens[0], tuple) and tokens[0][0] == "enddef":
@@ -958,7 +958,7 @@ def parse_signature(sig_text, name, pos):
         else:
             return tok_type, tok_string
 
-    while 1:
+    while True:
         var_arg_type = None
         tok_type, tok_string = get_token()
         if tok_type == tokenize.ENDMARKER:
@@ -994,7 +994,7 @@ def parse_signature(sig_text, name, pos):
             nest_count = 0
             start_pos = end_pos = None
             parts = []
-            while 1:
+            while True:
                 tok_type, tok_string, s, e = get_token(True)
                 if start_pos is None:
                     start_pos = s

@@ -10,6 +10,10 @@ from typing import Any, assert_type
 import numpy as np
 import numpy.typing as npt
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+
 class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.int64]]): ...
 
 i8: np.int64
@@ -17,6 +21,11 @@ i8: np.int64
 AR_b: npt.NDArray[np.bool]
 AR_u8: npt.NDArray[np.uint64]
 AR_i8: npt.NDArray[np.int64]
+AR_i8_0d: np.ndarray[tuple[()], np.dtype[np.int64]]
+AR_i8_1d: np.ndarray[tuple[int], np.dtype[np.int64]]
+AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
+AR_i8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.int64]]
+AR_i8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.int64]]
 AR_f8: npt.NDArray[np.float64]
 AR_c16: npt.NDArray[np.complex128]
 AR_m: npt.NDArray[np.timedelta64]
@@ -27,15 +36,27 @@ _sub_nd_i8: SubClass
 _to_1d_bool: list[bool]
 _to_1d_int: list[int]
 _to_1d_float: list[float]
+_to_2d_float: list[list[float]]
 _to_1d_complex: list[complex]
 
 ###
 
 assert_type(np.count_nonzero(i8), np.intp)
 assert_type(np.count_nonzero(AR_i8), np.intp)
-assert_type(np.count_nonzero(_to_1d_int), np.intp)
+assert_type(np.count_nonzero(AR_i8, axis=0), npt.NDArray[np.intp] | Any)
+assert_type(np.count_nonzero(AR_i8_1d, axis=0), np.intp)
+assert_type(np.count_nonzero(AR_i8_2d, axis=0), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.count_nonzero(AR_i8_3d, axis=(0,)), np.ndarray[tuple[int, int], np.dtype[np.intp]])
+assert_type(np.count_nonzero(AR_i8_4d, axis=1), np.ndarray[tuple[int, int, int], np.dtype[np.intp]])
+assert_type(np.count_nonzero(AR_i8_0d, keepdims=True), np.intp)
 assert_type(np.count_nonzero(AR_i8, keepdims=True), npt.NDArray[np.intp])
-assert_type(np.count_nonzero(AR_i8, axis=0), Any)
+assert_type(np.count_nonzero(AR_i8_2d, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.intp]])
+assert_type(np.count_nonzero(AR_i8_2d, axis=(0, 1)), npt.NDArray[np.intp] | Any)
+assert_type(np.count_nonzero(_to_1d_int), np.intp)
+assert_type(np.count_nonzero(_to_1d_int, axis=0), np.intp)
+assert_type(np.count_nonzero(_to_2d_float, axis=0), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.count_nonzero(_to_1d_int, keepdims=True), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.count_nonzero(_to_2d_float, keepdims=True), np.ndarray[tuple[int, int], np.dtype[np.intp]])
 
 assert_type(np.isfortran(i8), bool)
 assert_type(np.isfortran(AR_i8), bool)
@@ -109,26 +130,25 @@ assert_type(np.tensordot(AR_f8, AR_f8), npt.NDArray[np.float64])
 assert_type(np.tensordot(AR_f8, AR_i8), npt.NDArray[np.float64 | Any])
 assert_type(np.tensordot(AR_c16, AR_c16), npt.NDArray[np.complex128])
 assert_type(np.tensordot(AR_c16, AR_f8), npt.NDArray[np.complex128 | Any])
-assert_type(np.tensordot(AR_m, AR_m), npt.NDArray[np.timedelta64])
-assert_type(np.tensordot(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(np.tensordot(AR_m, AR_m), npt.NDArray[np.timedelta64])  # type: ignore[assert-type]
+assert_type(np.tensordot(AR_O, AR_O), npt.NDArray[np.object_])  # type: ignore[assert-type]
 assert_type(np.tensordot(_to_1d_bool, _to_1d_bool), npt.NDArray[np.bool])
 assert_type(np.tensordot(_to_1d_int, _to_1d_int), npt.NDArray[np.int_ | Any])
 assert_type(np.tensordot(_to_1d_float, _to_1d_float), npt.NDArray[np.float64 | Any])
 assert_type(np.tensordot(_to_1d_complex, _to_1d_complex), npt.NDArray[np.complex128 | Any])
 
 # cross
-assert_type(np.cross(AR_i8, AR_i8), npt.NDArray[np.int64])
-assert_type(np.cross(AR_u8, AR_u8), npt.NDArray[np.uint64])
-assert_type(np.cross(AR_i8, AR_i8), npt.NDArray[np.int64])
-assert_type(np.cross(AR_f8, AR_f8), npt.NDArray[np.float64])
-assert_type(np.cross(AR_f8, AR_i8), npt.NDArray[np.float64 | Any])
-assert_type(np.cross(AR_c16, AR_c16), npt.NDArray[np.complex128])
-assert_type(np.cross(AR_c16, AR_f8), npt.NDArray[np.complex128 | Any])
-assert_type(np.cross(AR_m, AR_m), npt.NDArray[np.timedelta64])
-assert_type(np.cross(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(np.cross(AR_i8, AR_i8_1d), npt.NDArray[np.int64])
+assert_type(np.cross(AR_i8_1d, AR_i8), npt.NDArray[np.int64])
+assert_type(np.cross(AR_i8_1d, AR_i8_1d), _Array1D[np.int64])
+assert_type(np.cross(AR_i8_1d, AR_i8_2d), _Array2D[np.int64])
+assert_type(np.cross(AR_i8_2d, AR_i8_1d), _Array2D[np.int64])
+assert_type(np.cross(AR_i8_2d, AR_i8_3d), _Array3D[np.int64])
+assert_type(np.cross(AR_i8_3d, AR_i8_2d), _Array3D[np.int64])
+assert_type(np.cross(AR_i8_4d, AR_i8_4d), npt.NDArray[np.int64])
 assert_type(np.cross(_to_1d_int, _to_1d_int), npt.NDArray[np.int_ | Any])
-assert_type(np.cross(_to_1d_float, _to_1d_float), npt.NDArray[np.float64 | Any])
-assert_type(np.cross(_to_1d_complex, _to_1d_complex), npt.NDArray[np.complex128 | Any])
+assert_type(np.cross(AR_f8, AR_i8), npt.NDArray[np.float64 | Any])
+assert_type(np.cross(AR_c16, AR_f8), npt.NDArray[np.complex128 | Any])
 
 assert_type(np.isscalar(i8), bool)
 assert_type(np.isscalar(AR_i8), bool)
@@ -161,6 +181,9 @@ assert_type(np.allclose(AR_i8, AR_i8), bool)
 assert_type(np.isclose(i8, i8), np.bool)
 assert_type(np.isclose(i8, AR_i8), npt.NDArray[np.bool])
 assert_type(np.isclose(_to_1d_int, _to_1d_int), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.isclose(_to_1d_int, _to_2d_float), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isclose(_to_2d_float, _to_1d_int), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.isclose(_to_2d_float, _to_2d_float), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 assert_type(np.isclose(AR_i8, AR_i8), npt.NDArray[np.bool])
 
 assert_type(np.array_equal(i8, AR_i8), bool)

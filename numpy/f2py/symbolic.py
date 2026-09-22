@@ -1319,10 +1319,10 @@ class _FromStringWorker:
         """Parse string within the given context.
 
         The context may define the result in case of ambiguous
-        expressions. For instance, consider expressions `f(x, y)` and
-        `(x, y) + (a, b)` where `f` is a function and pair `(x, y)`
+        expressions. For instance, consider expressions ``f(x, y)`` and
+        ``(x, y) + (a, b)`` where ``f`` is a function and pair ``(x, y)``
         denotes complex number. Specifying context as "args" or
-        "expr", the subexpression `(x, y)` will be parse to an
+        "expr", the subexpression ``(x, y)`` will be parse to an
         argument list or to a complex number, respectively.
         """
         if isinstance(s, (list, tuple)):

@@ -686,10 +686,16 @@ string_slice_loop(PyArrayMethod_Context *context,
         npy_intp stop = *(npy_intp*)stop_ptr;
         npy_intp step = *(npy_intp*)step_ptr;
 
+        if (step == 0) {
+            npy_gil_error(PyExc_ValueError, "slice step cannot be zero");
+            return -1;
+        }
+
         // adjust slice to string length in codepoints
         // and handle negative indices
         size_t num_codepoints = inbuf.num_codepoints();
-        npy_intp slice_length = PySlice_AdjustIndices(num_codepoints, &start, &stop, step);
+        npy_intp slice_length = PySlice_AdjustIndices(num_codepoints, &start, &stop,
+                                                      step < -NPY_MAX_INTP ? -NPY_MAX_INTP : step);
 
         // iterate over slice and copy each character of the string
         inbuf.advance_chars_or_bytes(start);
@@ -697,11 +703,13 @@ string_slice_loop(PyArrayMethod_Context *context,
             // copy one codepoint
             inbuf.buffer_memcpy(outbuf, 1);
 
-            // Move in inbuf by step.
-            inbuf += step;
-
             // Move in outbuf by the number of chars or bytes written
             outbuf.advance_chars_or_bytes(1);
+
+            // an extreme step overflows the pointer on the final advance
+            if (i + 1 < slice_length) {
+                inbuf += step;
+            }
         }
 
         // fill remaining outbuf with zero bytes

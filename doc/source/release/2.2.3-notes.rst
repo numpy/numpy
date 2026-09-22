@@ -4,6 +4,8 @@
 NumPy 2.2.3 Release Notes
 ==========================
 
+*Released on 2025-02-13.*
+
 NumPy 2.2.3 is a patch release that fixes bugs found after the 2.2.2 release.
 The majority of the changes are typing improvements and fixes for free
 threaded Python. Both of those areas are still under development, so if you

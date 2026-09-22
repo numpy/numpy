@@ -94,16 +94,18 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
         return NULL;
     }
     ret = PyObject_CallMethod(os, "dup", "i", fd);
-    Py_DECREF(os);
     if (ret == NULL) {
+        Py_DECREF(os);
         return NULL;
     }
     fd2_tmp = PyNumber_AsSsize_t(ret, PyExc_IOError);
     Py_DECREF(ret);
     if (fd2_tmp == -1 && PyErr_Occurred()) {
+        Py_DECREF(os);
         return NULL;
     }
     if (fd2_tmp < INT_MIN || fd2_tmp > INT_MAX) {
+        Py_DECREF(os);
         PyErr_SetString(PyExc_IOError,
                         "Getting an 'int' from os.dup() failed");
         return NULL;
@@ -119,12 +121,19 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     handle = fdopen(fd2, mode);
 #endif
     if (handle == NULL) {
+        ret = PyObject_CallMethod(os, "close", "i", fd2);
+        Py_DECREF(os);
+        if (ret == NULL) {
+            PyErr_WriteUnraisable(NULL);
+        }
+        Py_XDECREF(ret);
         PyErr_SetString(PyExc_IOError,
                         "Getting a FILE* from a Python file object via "
                         "_fdopen failed. If you built NumPy, you probably "
                         "linked with the wrong debug/release runtime");
         return NULL;
     }
+    Py_DECREF(os);
 
     /* Record the original raw file handle position */
     *orig_pos = npy_ftell(handle);

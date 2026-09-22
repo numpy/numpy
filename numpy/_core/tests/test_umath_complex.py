@@ -141,6 +141,17 @@ class TestClog:
         y = np.log(x)
         assert_almost_equal(y, y_r)
 
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("value", [complex(np.nan, 1),
+                                       complex(np.nan, np.nan),
+                                       complex(1, np.nan)])
+    def test_nan_components(self, dtype, value):
+        x = np.array(value, dtype=dtype)
+        with np.errstate(invalid='raise'):
+            y = np.log(x)
+        assert np.isnan(y.real)
+        assert np.isnan(y.imag)
+
     @platform_skip
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
     def test_special_values(self):

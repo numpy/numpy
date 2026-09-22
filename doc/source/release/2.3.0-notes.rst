@@ -4,6 +4,8 @@
 NumPy 2.3.0 Release Notes
 ==========================
 
+*Released on 2025-06-07.*
+
 The NumPy 2.3.0 release continues the work to improve free threaded Python
 support and annotations together with the usual set of bug fixes. It is unusual
 in the number of expired deprecations, code modernizations, and style cleanups.

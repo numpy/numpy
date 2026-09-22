@@ -188,7 +188,7 @@ extract_cpuinfo_field(const char* buffer, int buflen, const char* field)
 
     /* Copy the line into a heap-allocated buffer */
     len = q - p;
-    result = malloc(len + 1);
+    result = PyMem_RawMalloc(len + 1);
     if (result == NULL) {
         goto EXIT;
     }
@@ -247,7 +247,7 @@ get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
     if (cpuinfo_len < 0) {
         return 0;
     }
-    char *cpuinfo = malloc(cpuinfo_len);
+    char *cpuinfo = PyMem_RawMalloc(cpuinfo_len);
     if (cpuinfo == NULL) {
         return 0;
     }
@@ -255,7 +255,7 @@ get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
     cpuinfo_len = read_file("/proc/cpuinfo", cpuinfo, cpuinfo_len);
     char *cpuFeatures = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "Features");
     if (cpuFeatures == NULL) {
-        free(cpuinfo);
+        PyMem_RawFree(cpuinfo);
         return 0;
     }
     *hwcap |= has_list_item(cpuFeatures, "fphp") ? NPY__HWCAP_FPHP : 0;
@@ -281,8 +281,8 @@ get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
     *hwcap |= has_list_item(cpuFeatures, "sha2") ? NPY__HWCAP_SHA2 : 0;
     *hwcap |= has_list_item(cpuFeatures, "crc32") ? NPY__HWCAP_CRC32 : 0;
 #endif
-    free(cpuinfo);
-    free(cpuFeatures);
+    PyMem_RawFree(cpuinfo);
+    PyMem_RawFree(cpuFeatures);
     return 1;
 }
 #endif  /* NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_ */

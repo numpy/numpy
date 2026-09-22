@@ -38,6 +38,8 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
+#include "npy_static_data.h"
+#include "module_state.h"
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"
 #include "common.h"
@@ -72,6 +74,51 @@ npy_casting_to_py_object(NPY_CASTING casting)
 }
 
 
+/*
+ * The dispatching code calls the legacy type resolvers a second time to
+ * promote (`legacy_promote_using_legacy_type_resolver`); that result is
+ * cached while the type-resolution call happens on every ufunc invocation.
+ * The promotion call is bracketed with this context variable so each
+ * invocation warns exactly once, no matter the promotion cache state.
+ * The warnings machinery cannot deduplicate the two emissions for us:
+ * under `simplefilter("always")` it delivers everything by design.
+ */
+NPY_NO_EXPORT PyObject *
+npy_begin_legacy_resolver_promotion(void)
+{
+    return PyContextVar_Set(
+            _npy_module_state->static_pydata.legacy_resolver_promoting, Py_True);
+}
+
+NPY_NO_EXPORT int
+npy_end_legacy_resolver_promotion(PyObject *token)
+{
+    int result = PyContextVar_Reset(
+            _npy_module_state->static_pydata.legacy_resolver_promoting, token);
+    Py_DECREF(token);
+    return result;
+}
+
+static int
+deprecate_integer_datetime_operation(void)
+{
+    PyObject *promoting;
+    if (PyContextVar_Get(_npy_module_state->static_pydata.legacy_resolver_promoting,
+                         Py_False, &promoting) < 0) {
+        return -1;
+    }
+    int skip = (promoting == Py_True);
+    Py_DECREF(promoting);
+    if (skip) {
+        return 0;
+    }
+    return DEPRECATE(
+            "The 'generic' unit for NumPy timedelta is deprecated, "
+            "and will raise an error in the future. "
+            "Please convert the integer with an explicit unit.");
+}
+
+
 /**
  * Always returns -1 to indicate the exception was raised, for convenience
  */
@@ -89,7 +136,7 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
         return -1;
     }
     PyErr_SetObject(
-            npy_static_pydata._UFuncBinaryResolutionError, exc_value);
+            _npy_module_state->static_pydata._UFuncBinaryResolutionError, exc_value);
     Py_DECREF(exc_value);
 
     return -1;
@@ -112,7 +159,7 @@ raise_no_loop_found_error(
     if (exc_value == NULL) {
         return -1;
     }
-    PyErr_SetObject(npy_static_pydata._UFuncNoLoopError, exc_value);
+    PyErr_SetObject(_npy_module_state->static_pydata._UFuncNoLoopError, exc_value);
     Py_DECREF(exc_value);
 
     return -1;
@@ -164,7 +211,7 @@ raise_input_casting_error(
         PyArray_Descr *to,
         npy_intp i)
 {
-    return raise_casting_error(npy_static_pydata._UFuncInputCastingError,
+    return raise_casting_error(_npy_module_state->static_pydata._UFuncInputCastingError,
                                ufunc, casting, from, to, i);
 }
 
@@ -180,7 +227,7 @@ raise_output_casting_error(
         PyArray_Descr *to,
         npy_intp i)
 {
-    return raise_casting_error(npy_static_pydata._UFuncOutputCastingError,
+    return raise_casting_error(_npy_module_state->static_pydata._UFuncOutputCastingError,
                                ufunc, casting, from, to, i);
 }
 
@@ -552,6 +599,9 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                     out_dtypes[iop] = PyArray_DESCR(operands[iop]);
                     Py_INCREF(out_dtypes[iop]);
                 }
+                for (; iop < nop; iop++) {
+                    out_dtypes[iop] = NULL;
+                }
                 raise_no_loop_found_error(ufunc, (PyObject **)out_dtypes);
                 for (iop = 0; iop < ufunc->nin; iop++) {
                     Py_DECREF(out_dtypes[iop]);
@@ -818,6 +868,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         /* m8[<A>] + int => m8[<A>] + m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                     PyTypeNum_ISBOOL(type_num2)) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -855,6 +908,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         /* M8[<A>] + int => M8[<A>] + m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -880,6 +936,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int + m8[<A>] => m8[<A>] + m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
@@ -893,6 +952,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
             type_num1 = NPY_TIMEDELTA;
         }
         else if (type_num2 == NPY_DATETIME) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             /* Make a new NPY_TIMEDELTA, and copy type2's metadata */
             out_dtypes[0] = timedelta_dtype_with_copied_meta(
                                             PyArray_DESCR(operands[1]));
@@ -991,6 +1053,9 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         /* m8[<A>] - int => m8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                         PyTypeNum_ISBOOL(type_num2)) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -1028,6 +1093,9 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         /* M8[<A>] - int => M8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -1069,6 +1137,9 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int - m8[<A>] => m8[<A>] - m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
+            if (deprecate_integer_datetime_operation() < 0) {
+                return -1;
+            }
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[1]));
             if (out_dtypes[0] == NULL) {
@@ -1327,7 +1398,7 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
             }
         }
         /* m8[<A>] / int## => m8[<A>] / int64 */
-        else if (PyTypeNum_ISINTEGER(type_num2)) {
+        else if (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)) {
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -1457,7 +1528,7 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
             (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
         return PyUFunc_DefaultTypeResolver(
                 ufunc, casting, operands,
-                npy_static_pydata.default_truediv_type_tup, out_dtypes);
+                _npy_module_state->static_pydata.default_truediv_type_tup, out_dtypes);
     }
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);

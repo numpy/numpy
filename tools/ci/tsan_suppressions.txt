@@ -9,3 +9,8 @@ race:count_nonzero_bool
 race:count_nonzero_float
 race:DOUBLE_nonzero
 
+# Lazy initialization of machine constants in the f2c-translated LAPACK
+# used by OpenBLAS C_LAPACK builds (lapack-netlib/INSTALL/{s,d}lamch.c).
+race:dlamch_
+race:slamch_
+

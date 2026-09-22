@@ -244,6 +244,7 @@ class Sort(Benchmark):
             'uint8',
             'int8',
             'bool',
+            'object',
         ],
         [
             ('random',),
@@ -274,14 +275,24 @@ class Sort(Benchmark):
         # This is important because the data is prepared once per benchmark, but
         # used across multiple runs.
         if descending:
-            np.sort(self.arr, stable=stable, descending=True)
+            try:
+                np.sort(self.arr, stable=stable, descending=True)
+            except TypeError:
+                raise SkipNotImplemented(
+                    f"Descending sort is not supported for {dtype}"
+                )
         else:
             # for backward compatibility to NumPy 2.0
             np.sort(self.arr, stable=stable)
 
     def time_argsort(self, stable, descending, dtype, array_type):
         if descending:
-            np.argsort(self.arr, stable=stable, descending=True)
+            try:
+                np.argsort(self.arr, stable=stable, descending=True)
+            except TypeError:
+                raise SkipNotImplemented(
+                    f"Descending argsort is not supported for {dtype}"
+                )
         else:
             # for backward compatibility to NumPy 2.0
             np.argsort(self.arr, stable=stable)

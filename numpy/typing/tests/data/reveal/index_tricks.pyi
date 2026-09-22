@@ -13,6 +13,7 @@ AR_LIKE_U: list[str]
 AR_LIKE_O: list[object]
 
 AR_i8: npt.NDArray[np.int64]
+AR_i8_1d: np.ndarray[tuple[int], np.dtype[np.int64]]
 AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
 AR_i8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.int64]]
 AR_i8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.int64]]
@@ -21,6 +22,8 @@ AR_f4: npt.NDArray[np.float32]
 AR_O: npt.NDArray[np.object_]
 
 type _Int1D = np.ndarray[tuple[int], np.dtype[np.intp]]
+type _Int2D = np.ndarray[tuple[int, int], np.dtype[np.intp]]
+type _IntND = npt.NDArray[np.intp]
 
 assert_type(np.ndenumerate(AR_i8), np.ndenumerate[np.int64])
 assert_type(np.ndenumerate(AR_LIKE_f), np.ndenumerate[np.float64])
@@ -42,16 +45,37 @@ assert_type(np.ndindex((1, 2, 3)), np.ndindex)
 assert_type(iter(np.ndindex(1, 2, 3)), np.ndindex)
 assert_type(next(np.ndindex(1, 2, 3)), tuple[Any, ...])
 
-assert_type(np.unravel_index([22, 41, 37], (7, 6)), tuple[npt.NDArray[np.intp], ...])
-assert_type(np.unravel_index([31, 41, 13], (7, 6), order="F"), tuple[npt.NDArray[np.intp], ...])
-assert_type(np.unravel_index(1621, (6, 7, 8, 9)), tuple[np.intp, ...])
+assert_type(np.unravel_index(AR_i8, AR_i8.shape), tuple[_IntND, ...])
+assert_type(np.unravel_index(AR_i8, 42), tuple[_IntND])
+assert_type(np.unravel_index(AR_i8_2d, (7, 6)), tuple[_Int2D, _Int2D])
+assert_type(np.unravel_index(AR_i8, (6, 7, 8)), tuple[_IntND, _IntND, _IntND])
+assert_type(np.unravel_index(AR_i8_2d, AR_i8_4d.shape), tuple[_Int2D, _Int2D, _Int2D, _Int2D])
+assert_type(np.unravel_index(AR_i8, AR_i8_5d.shape), tuple[_IntND, ...])
+assert_type(np.unravel_index(1621, AR_i8.shape), tuple[np.intp, ...])
+assert_type(np.unravel_index(1621, (42,)), tuple[np.intp])
+assert_type(np.unravel_index(1621, (7, 6)), tuple[np.intp, np.intp])
+assert_type(np.unravel_index(1621, (6, 7, 8)), tuple[np.intp, np.intp, np.intp])
+assert_type(np.unravel_index(1621, (6, 7, 8, 9)), tuple[np.intp, np.intp, np.intp, np.intp])
+assert_type(np.unravel_index(1621, [6, 7, 8]), tuple[np.intp, ...])
+assert_type(np.unravel_index(AR_LIKE_i, AR_i8.shape), tuple[_Int1D, ...])
+assert_type(np.unravel_index(AR_LIKE_i, 42), tuple[_Int1D])
+assert_type(np.unravel_index(1621, AR_i8), tuple[np.intp, ...])
+assert_type(np.unravel_index([AR_LIKE_i], (6, 7, 8, 9)), tuple[_IntND, _IntND, _IntND, _IntND])
+assert_type(np.unravel_index([31, 41, 13], (7, 6), order="F"), tuple[_Int1D, _Int1D])
+assert_type(np.unravel_index(AR_LIKE_i, (6, 7, 8)), tuple[_Int1D, _Int1D, _Int1D])
+assert_type(np.unravel_index(AR_LIKE_i, (6, 7, 8, 9)), tuple[_Int1D, _Int1D, _Int1D, _Int1D])
+assert_type(np.unravel_index(AR_LIKE_i, [6, 7, 8]), tuple[_Int1D, ...])
+assert_type(np.unravel_index([AR_LIKE_i], AR_i8.shape), tuple[_IntND, ...])
+assert_type(np.unravel_index([AR_LIKE_i], 42), tuple[_IntND])
+assert_type(np.unravel_index([AR_LIKE_i], (7, 6)), tuple[_IntND, _IntND])
+assert_type(np.unravel_index([AR_LIKE_i], (6, 7, 8)), tuple[_IntND, _IntND, _IntND])
+assert_type(np.unravel_index([AR_LIKE_i], [6, 7, 8]), tuple[_IntND, ...])
 
-assert_type(np.ravel_multi_index([[1]], (7, 6)), npt.NDArray[np.intp])
-assert_type(np.ravel_multi_index(AR_LIKE_i, (7, 6)), np.intp)
-assert_type(np.ravel_multi_index(AR_LIKE_i, (7, 6), order="F"), np.intp)
-assert_type(np.ravel_multi_index(AR_LIKE_i, (4, 6), mode="clip"), np.intp)
-assert_type(np.ravel_multi_index(AR_LIKE_i, (4, 4), mode=("clip", "wrap")), np.intp)
-assert_type(np.ravel_multi_index((3, 1, 4, 1), (6, 7, 8, 9)), np.intp)
+assert_type(np.ravel_multi_index((AR_i8, AR_i8), (7, 6)), _IntND | Any)
+assert_type(np.ravel_multi_index((AR_i8_1d, AR_i8_1d), (7, 6)), _Int1D)
+assert_type(np.ravel_multi_index((AR_i8_1d, 1), (7, 6)), _IntND | Any)
+assert_type(np.ravel_multi_index((AR_i8_2d, AR_i8_2d), (7, 6)), _Int2D)
+assert_type(np.ravel_multi_index(AR_LIKE_i, (7, 6), mode=("clip", "wrap"), order="F"), np.intp)
 
 assert_type(np.mgrid[1:1:2], npt.NDArray[Any])
 assert_type(np.mgrid[1:1:2, None:10], npt.NDArray[Any])

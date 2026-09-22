@@ -30,6 +30,7 @@ import pytest
 
 import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.tests._locales import CommaDecimalPointLocale
@@ -39,7 +40,9 @@ from numpy.lib.recfunctions import repack_fields
 from numpy.testing import (
     BLAS_SUPPORTS_FPE,
     HAS_REFCOUNT,
+    HAS_SUBPROCESSES,
     IS_64BIT,
+    IS_MUSL,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -58,6 +61,7 @@ from numpy.testing import (
 )
 from numpy.testing._private.utils import (
     _no_tracing,
+    longdouble_fpe_mark,
     requires_deep_recursion,
     requires_memory,
 )
@@ -274,6 +278,23 @@ class TestFlags:
         arr = np.arange(10)
         with pytest.raises(KeyError, match="Unknown flag"):
             arr.flags["\N{MICRO SIGN}"] = True
+
+    @pytest.mark.parametrize("key", ["\N{MICRO SIGN}", "\N{SNOWMAN}",
+                                     "\ud800", "WRITEABLE" * 3, ""])
+    def test_bad_flag_key_raises_keyerror(self, key):
+        arr = np.arange(10)
+        with pytest.raises(KeyError, match="Unknown flag"):
+            arr.flags[key]
+        with pytest.raises(KeyError, match="Unknown flag"):
+            arr.flags[key] = True
+
+    def test_bytes_flag_key(self):
+        # bytes keys are accepted for backwards compatibility
+        arr = np.arange(10)
+        assert_equal(arr.flags[b'WRITEABLE'], True)
+        assert_equal(arr.flags[b'W'], True)
+        arr.flags[b'WRITEABLE'] = False
+        assert_equal(arr.flags['WRITEABLE'], False)
 
     def test_string_align(self):
         a = np.zeros(4, dtype=np.dtype('|S4'))
@@ -2790,25 +2811,23 @@ class TestMethods:
         a_sorted = np.sort(a_randomized, stable=stable, descending=descending, axis=-1)
         assert_equal(a_sorted, b, msg)
 
-    def _test_sort_descending_nan(self, a, stable, descending):
+    def _test_sort_descending_nan(self, a, nan, stable, descending):
         if not descending:
             a = a[::-1]
         # add nans to check that they are sorted to the end
-        if np.issubdtype(a.dtype, np.complexfloating):
-            nan = np.nan + 1j * np.nan
-        elif np.issubdtype(a.dtype, np.floating):
-            nan = np.nan
-        elif np.issubdtype(a.dtype, np.datetime64):
-            nan = np.datetime64('NaT', 'D')
-        elif np.issubdtype(a.dtype, np.timedelta64):
-            nan = np.timedelta64('NaT', 'D')
         a[::10] = nan
 
-        b = a[::-1].copy()
-        b = np.concatenate((b[~np.isnan(b)], b[np.isnan(b)]))
+        nanmask = np.arange(a.size) % 10 == 0
+        a[nanmask] = nan
+
+        b = np.concatenate((a[~nanmask][::-1], a[nanmask]))
 
         msg = f"sort, descending={descending}, stable={stable}"
         a_sorted = np.sort(a, stable=stable, descending=descending, axis=-1)
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object np.nan != np.nan
+            a_sorted = a_sorted.astype(float)
+            b = b.astype(float)
         assert_equal(a_sorted, b, msg)
 
         # randomized input
@@ -2818,6 +2837,9 @@ class TestMethods:
 
         msg = f"sort, randomized, descending={descending}, stable={stable}"
         a_sorted = np.sort(a_randomized, stable=stable, descending=descending, axis=-1)
+        if np.issubdtype(a.dtype, np.object_):
+            a_sorted = a_sorted.astype(float)
+
         assert_equal(a_sorted, b, msg)
 
     @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64])
@@ -2842,7 +2864,7 @@ class TestMethods:
     def test_sort_descending_floats(self, dtype, stable, descending):
         a = np.linspace(-50, 50, 101, dtype=dtype)
         self._test_sort_descending_nonan(a, stable, descending)
-        self._test_sort_descending_nan(a, stable, descending)
+        self._test_sort_descending_nan(a, np.nan, stable, descending)
 
     @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("stable", [True, False])
@@ -2850,7 +2872,7 @@ class TestMethods:
     def test_sort_descending_complex(self, dtype, stable, descending):
         a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
         self._test_sort_descending_nonan(a, stable, descending)
-        self._test_sort_descending_nan(a, stable, descending)
+        self._test_sort_descending_nan(a, complex(np.nan, np.nan), stable, descending)
 
     @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("stable", [True, False])
@@ -2859,12 +2881,11 @@ class TestMethods:
     def test_sort_descending_complex_lexorder(self, dtype,
                                               stable, descending, random_seed):
         arange = np.tile(np.arange(25, dtype=dtype), 4)
-        nans = np.full(100, np.nan + 1j * np.nan, dtype=dtype)
 
         no_nans = arange + 1j * arange
-        im_nans = arange + 1j * nans
-        re_nans = nans + 1j * arange
-        all_nans = nans + 1j * nans
+        im_nans = arange + complex(0, np.nan)
+        re_nans = complex(np.nan, 0) + 1j * arange
+        all_nans = np.full(100, complex(np.nan, np.nan), dtype=dtype)
 
         a = np.concatenate((no_nans, im_nans, re_nans, all_nans))
         immask = np.isnan(a.imag)
@@ -2908,20 +2929,36 @@ class TestMethods:
             f"descending={descending}",
         )
 
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_sort_descending_object(self, stable, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_sort_descending_nonan(a, stable, descending)
+        self._test_sort_descending_nan(a, np.nan, stable, descending)
+
     @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
-    def test_sort_descending_datetime(self, dtype, stable, descending):
+    def test_sort_descending_dates(self, dtype, stable, descending):
         a = np.arange(0, 101, dtype=dtype)
+        if dtype == 'datetime64[D]':
+            nan = np.datetime64('NaT', 'D')
+        else:
+            nan = np.timedelta64('NaT', 'D')
         self._test_sort_descending_nonan(a, stable, descending)
-        self._test_sort_descending_nan(a, stable, descending)
+        self._test_sort_descending_nan(a, nan, stable, descending)
 
-    @pytest.mark.parametrize('dtype', [np.str_, np.bytes_])
+    @pytest.mark.parametrize('dtype', [
+        np.str_, np.bytes_, np.dtypes.StringDType(),
+        np.dtypes.StringDType(na_object=np.nan),
+    ])
     @pytest.mark.parametrize('stable', [True, False])
     @pytest.mark.parametrize('descending', [True, False])
     def test_sort_descending_string(self, dtype, stable, descending):
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         self._test_sort_descending_nonan(a, stable, descending)
+        if hasattr(dtype, "na_object"):
+            self._test_sort_descending_nan(a, np.nan, stable, descending)
 
     def _test_argsort_descending_nonan(self, a, stable, descending):
         expected = np.arange(len(a))[::-1]
@@ -2946,15 +2983,7 @@ class TestMethods:
         idx = np.argsort(a_randomized, stable=stable, descending=descending, axis=-1)
         assert_equal(idx, expected, msg)
 
-    def _test_argsort_descending_nan(self, a, stable, descending):
-        if np.issubdtype(a.dtype, np.complexfloating):
-            nan = np.nan + 1j * np.nan
-        elif np.issubdtype(a.dtype, np.floating):
-            nan = np.nan
-        elif np.issubdtype(a.dtype, np.datetime64):
-            nan = np.datetime64("NaT", "D")
-        elif np.issubdtype(a.dtype, np.timedelta64):
-            nan = np.timedelta64("NaT", "D")
+    def _test_argsort_descending_nan(self, a, nan, stable, descending):
         a[::10] = nan
 
         # comparing datetime types directly to numerical zero fails
@@ -2967,6 +2996,10 @@ class TestMethods:
 
         idx = np.argsort(a, stable=stable, descending=descending, axis=-1)
         sorted_a = a[idx]
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object does not support isnan
+            sorted_a = sorted_a.astype(float)
+
         diff_sorted_a = np.diff(sorted_a[:-11])
         if descending:
             diff_sorted_a = -diff_sorted_a
@@ -2985,6 +3018,10 @@ class TestMethods:
 
         idx = np.argsort(a_randomized, stable=stable, descending=descending, axis=-1)
         sorted_a = a_randomized[idx]
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object does not support isnan
+            sorted_a = sorted_a.astype(float)
+
         diff_sorted_a = np.diff(sorted_a[:-11])
         if descending:
             diff_sorted_a = -diff_sorted_a
@@ -3011,6 +3048,28 @@ class TestMethods:
         self._test_argsort_descending_nonan(a, stable, descending)
 
     @pytest.mark.parametrize(
+        "dtype", [
+            np.bool, np.int8, np.uint8, np.int16, np.uint16,
+            np.int32, np.uint32, np.int64, np.uint64]
+    )
+    @pytest.mark.parametrize("descending", [False, True])
+    def test_argsort_stable_bool_int_duplicates(self, dtype, descending):
+        if dtype is np.bool:
+            values = [False, True]
+        else:
+            info = np.iinfo(dtype)
+            values = [info.min, 1, info.max]
+
+        a = np.array(values * 2, dtype=dtype)
+        expected = np.array(
+            sorted(range(a.size), key=lambda i: a[i], reverse=descending)
+        )
+
+        idx = np.argsort(a, stable=True, descending=descending)
+        assert_equal(idx, expected)
+        assert_equal(np.sort(a, stable=True, descending=descending), a[expected])
+
+    @pytest.mark.parametrize(
         "dtype", [np.float16, np.float32, np.float64, np.longdouble]
     )
     @pytest.mark.parametrize("stable", [True, False])
@@ -3018,7 +3077,7 @@ class TestMethods:
     def test_argsort_descending_floats(self, dtype, stable, descending):
         a = np.linspace(-50, 50, 101, dtype=dtype)
         self._test_argsort_descending_nonan(a, stable, descending)
-        self._test_argsort_descending_nan(a, stable, descending)
+        self._test_argsort_descending_nan(a, np.nan, stable, descending)
 
     @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("stable", [True, False])
@@ -3026,22 +3085,284 @@ class TestMethods:
     def test_argsort_descending_complex(self, dtype, stable, descending):
         a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
         self._test_argsort_descending_nonan(a, stable, descending)
-        self._test_argsort_descending_nan(a, stable, descending)
+        self._test_argsort_descending_nan(a, np.nan + 1j * np.nan, stable, descending)
 
     @pytest.mark.parametrize("dtype", ["datetime64[D]", "timedelta64[D]"])
     @pytest.mark.parametrize("stable", [True, False])
     @pytest.mark.parametrize("descending", [True, False])
     def test_argsort_descending_datetime(self, dtype, stable, descending):
         a = np.arange(0, 101, dtype=dtype)
+        if dtype == "datetime64[D]":
+            nan = np.datetime64('NaT', 'D')
+        else:
+            nan = np.timedelta64('NaT', 'D')
         self._test_argsort_descending_nonan(a, stable, descending)
-        self._test_argsort_descending_nan(a, stable, descending)
+        self._test_argsort_descending_nan(a, nan, stable, descending)
 
-    @pytest.mark.parametrize("dtype", [np.str_, np.bytes_])
+    @pytest.mark.parametrize("dtype", [
+        np.str_, np.bytes_, np.dtypes.StringDType(),
+        np.dtypes.StringDType(na_object=np.nan),
+    ])
     @pytest.mark.parametrize("stable", [True, False])
     @pytest.mark.parametrize("descending", [True, False])
     def test_argsort_descending_string(self, dtype, stable, descending):
         a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
         self._test_argsort_descending_nonan(a, stable, descending)
+
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argsort_descending_object(self, stable, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_argsort_descending_nonan(a, stable, descending)
+        self._test_argsort_descending_nan(a, np.nan, stable, descending)
+
+    def _test_partition_descending(self, a, k, nan, descending):
+        if nan is not None:
+            a[::10] = nan
+        if not descending:
+            a = a[::-1]
+
+        expected = a.copy()[::-1]
+        if np.issubdtype(a.dtype, np.object_):
+            # cast to float for comparison, as object does not support isnan
+            expected = expected.astype(float)
+        if nan is not None:
+            # nans sort to the end regardless of sort order
+            expected = np.concatenate((expected[~np.isnan(expected)],
+                                       expected[np.isnan(expected)]))
+
+        part = np.partition(a, k, descending=descending)
+        before, after = np.split(part, [k])
+        before.sort(descending=descending)
+        after.sort(descending=descending)
+        if np.issubdtype(a.dtype, np.object_):
+            before = before.astype(float)
+            after = after.astype(float)
+
+        msg = f"partition, dtype={a.dtype}, k={k}, descending={descending}"
+        assert_equal(before, expected[:k], msg)
+        assert_equal(after, expected[k:], msg)
+
+        # randomized input
+        rng = np.random.default_rng(0)
+        a_randomized = a.copy()
+        rng.shuffle(a_randomized)
+
+        part = np.partition(a_randomized, k, descending=descending)
+        before, after = np.split(part, [k])
+        before.sort(descending=descending)
+        after.sort(descending=descending)
+        if np.issubdtype(a.dtype, np.object_):
+            before = before.astype(float)
+            after = after.astype(float)
+
+        msg = f"partition, randomized, dtype={a.dtype}, k={k}, descending={descending}"
+        assert_equal(before, expected[:k], msg)
+        assert_equal(after, expected[k:], msg)
+
+    @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_partition_descending_signed(self, dtype, k, descending):
+        a = np.arange(-51, 50, dtype=dtype)
+        self._test_partition_descending(a, k, None, descending)
+
+    @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_partition_descending_unsigned(self, dtype, k, descending):
+        a = np.arange(0, 101, dtype=dtype)
+        self._test_partition_descending(a, k, None, descending)
+
+    @pytest.mark.parametrize(
+        'dtype', [np.float16, np.float32, np.float64, np.longdouble]
+    )
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('nan', [np.nan, None])
+    def test_partition_descending_floats(self, dtype, k, descending, nan):
+        a = np.linspace(-50, 50, 101, dtype=dtype)
+        self._test_partition_descending(a, k, nan, descending)
+
+    @pytest.mark.parametrize('dtype', [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('nan', [np.nan + 1j * np.nan, None])
+    def test_partition_descending_complex(self, dtype, k, descending, nan):
+        a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
+        self._test_partition_descending(a, k, nan, descending)
+
+    @pytest.mark.parametrize('dtype', [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('random_seed', [0, 1])
+    def test_partition_descending_complex_lexorder(
+        self, dtype, k, descending, random_seed
+    ):
+        arange = np.tile(np.arange(25, dtype=dtype), 4)
+
+        no_nans = arange + 1j * arange
+        im_nans = arange + complex(0, np.nan)
+        re_nans = complex(np.nan, 0) + 1j * arange
+        all_nans = np.full(100, complex(np.nan, np.nan), dtype=dtype)
+
+        a = np.concatenate((no_nans, im_nans, re_nans, all_nans))
+        rng = np.random.default_rng(random_seed)
+        rng.shuffle(a)
+
+        # use sorts as a proxy for checking partitions
+        a_sort = np.sort(a, descending=descending, stable=True)
+        a_part = np.partition(a, k, descending=descending)
+
+        before_sort, after_sort = np.split(a_sort, [k])
+        before_part, after_part = np.split(a_part, [k])
+        before_part.sort(descending=descending, stable=True)
+        after_part.sort(descending=descending, stable=True)
+
+        msg = (f"complex partition lexorder, dtype={dtype}, k={k}, "
+               f"descending={descending}")
+        assert_equal(before_part, before_sort, msg)
+        assert_equal(after_part, after_sort, msg)
+
+    @pytest.mark.parametrize('dtype', [
+        np.str_, np.bytes_, np.dtypes.StringDType(),
+        np.dtypes.StringDType(na_object=np.nan),
+    ])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_partition_descending_strings(self, dtype, k, descending):
+        a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
+        self._test_partition_descending(a, k, None, descending)
+        if hasattr(dtype, "na_object"):
+            self._test_partition_descending(a, k, np.nan, descending)
+
+    @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
+    @pytest.mark.parametrize('k', [2, 15, 50, 95])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_partition_descending_datetime(self, dtype, k, descending):
+        a = np.arange(0, 101, dtype=dtype)
+        if dtype == 'datetime64[D]':
+            nan = np.datetime64('NaT', 'D')
+        else:
+            nan = np.timedelta64('NaT', 'D')
+        self._test_partition_descending(a, k, None, descending)
+        self._test_partition_descending(a, k, nan, descending)
+
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_partition_descending_object(self, k, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_partition_descending(a, k, None, descending)
+        self._test_partition_descending(a, k, np.nan, descending)
+
+    def _test_argpartition_descending(self, a, k, nan, descending):
+        if nan is not None:
+            # because of this decimation, we only test with k values < 90
+            # so that all nans are in the "after" partition
+            a[::10] = nan
+        if not descending:
+            a = a[::-1]
+
+        expected = np.arange(len(a))[::-1]
+        if nan is not None:
+            # cast to float for comparison, as object does not support isnan
+            a_cast = a.astype(float) if np.issubdtype(a.dtype, np.object_) else a
+            expected = np.concatenate((expected[~np.isnan(a_cast)],
+                                       expected[np.isnan(a_cast)]))
+
+        # nan indices are not ordered, so sort for set-like comparison
+        expected_before = np.sort(expected[:k])
+        expected_after = np.sort(expected[k:])
+
+        idx = np.argpartition(a, k, descending=descending)
+        before, after = np.split(idx, [k])
+        before.sort()
+        after.sort()
+
+        msg = f"argpartition, dtype={a.dtype}, k={k}, descending={descending}"
+        assert_equal(before, expected_before, msg)
+        assert_equal(after, expected_after, msg)
+
+        # randomized input
+        rng = np.random.default_rng(0)
+        perm = rng.permutation(len(a))
+        a = a[perm]
+        perm_inv = np.argsort(perm)
+        expected_before = np.sort(perm_inv[expected[:k]])
+        expected_after = np.sort(perm_inv[expected[k:]])
+
+        idx = np.argpartition(a, k, descending=descending)
+        before, after = np.split(idx, [k])
+        before.sort()
+        after.sort()
+
+        msg = (f"argpartition, randomized, dtype={a.dtype}, k={k}, "
+               f"descending={descending}")
+        assert_equal(before, expected_before, msg)
+        assert_equal(after, expected_after, msg)
+
+    @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64])
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_argpartition_descending_signed(self, dtype, k, descending):
+        a = np.arange(-51, 50, dtype=dtype)
+        self._test_argpartition_descending(a, k, None, descending)
+
+    @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64])
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_argpartition_descending_unsigned(self, dtype, k, descending):
+        a = np.arange(0, 101, dtype=dtype)
+        self._test_argpartition_descending(a, k, None, descending)
+
+    @pytest.mark.parametrize(
+        'dtype', [np.float16, np.float32, np.float64, np.longdouble]
+    )
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('nan', [np.nan, None])
+    def test_argpartition_descending_floats(self, dtype, k, descending, nan):
+        a = np.linspace(-50, 50, 101, dtype=dtype)
+        self._test_argpartition_descending(a, k, nan, descending)
+
+    @pytest.mark.parametrize('dtype', [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    @pytest.mark.parametrize('nan', [np.nan + 1j * np.nan, None])
+    def test_argpartition_descending_complex(self, dtype, k, descending, nan):
+        a = np.arange(-50, 51, dtype=dtype) + 1j * np.arange(-50, 51, dtype=dtype)
+        self._test_argpartition_descending(a, k, nan, descending)
+
+    @pytest.mark.parametrize('dtype', [
+        np.str_, np.bytes_, np.dtypes.StringDType(),
+        np.dtypes.StringDType(na_object=np.nan),
+    ])
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_argpartition_descending_strings(self, dtype, k, descending):
+        a = np.array([f"{i:03d}" for i in range(101)], dtype=dtype)
+        self._test_argpartition_descending(a, k, None, descending)
+        if hasattr(dtype, "na_object"):
+            self._test_argpartition_descending(a, k, np.nan, descending)
+
+    @pytest.mark.parametrize('dtype', ['datetime64[D]', 'timedelta64[D]'])
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize('descending', [True, False])
+    def test_argpartition_descending_datetime(self, dtype, k, descending):
+        a = np.arange(0, 101, dtype=dtype)
+        if dtype == 'datetime64[D]':
+            nan = np.datetime64('NaT', 'D')
+        else:
+            nan = np.timedelta64('NaT', 'D')
+        self._test_argpartition_descending(a, k, None, descending)
+        self._test_argpartition_descending(a, k, nan, descending)
+
+    @pytest.mark.parametrize('k', [2, 15, 50, 80])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_argpartition_descending_object(self, k, descending):
+        a = np.arange(101, dtype=float).astype(object)
+        self._test_argpartition_descending(a, k, None, descending)
+        self._test_argpartition_descending(a, k, np.nan, descending)
 
     @pytest.mark.parametrize('a', [
         np.array([0, 1, np.nan], dtype=np.float16),
@@ -3200,6 +3521,18 @@ class TestMethods:
         assert_raises(ValueError, np.searchsorted, a, 4, sorter=[0, 1, 2, 3, 5])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1, 0, 1, 2, 3])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[4, 0, -1, 2, 3])
+
+    @pytest.mark.parametrize("array_type, sorter_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_searchsorted_sorter_integer_dtypes(self, array_type, sorter_type):
+        a = np.array([5, 2, 1, 3, 4], dtype=array_type)
+        sorter = np.array([2, 1, 3, 4, 0], dtype=sorter_type)
+        out = a.searchsorted([1, 3, 5], sorter=sorter)
+        assert_equal(out, [0, 2, 4])
 
     def test_searchsorted_with_sorter(self):
         a = np.random.rand(300)
@@ -3693,6 +4026,82 @@ class TestMethods:
         p = np.argpartition(d, kth)
         self.assert_partitioned(np.array(d)[p], [1])
 
+    def assert_top_k(self, a, k, axis, y, mode="largest", sorted=True):
+        x_value, x_ind = np.top_k(a, k, axis=axis, mode=mode, sorted=sorted)
+        assert_equal(np.take_along_axis(a, x_ind, axis=axis), x_value)
+
+        descending = mode == "largest"
+        if not sorted:
+            x_value = np.sort(x_value, axis=axis, descending=descending)
+        x_ind = np.sort(x_ind, axis=axis)
+
+        y_value, y_ind = y
+        y_value = np.sort(y_value, axis=axis, descending=descending)
+        y_ind = np.sort(y_ind, axis=axis)
+
+        assert_equal(x_value, y_value)
+        assert_equal(x_ind, y_ind)
+
+    @pytest.mark.parametrize("sorted", [True, False])
+    def test_top_k(self, sorted):
+        a = np.array([
+            [1, 2, 3, 4, 5],
+            [5, 4, 2, 3, 1],
+            [3, 5, 4, 1, 2]
+        ], dtype=np.int8)
+
+        with pytest.raises(
+            ValueError,
+            match=r"k\(=-2\) provided must be a non-negative integer."
+        ):
+            np.top_k(a, -2)
+
+        with pytest.raises(
+            ValueError,
+            match=r'mode\(="invalid"\) must be either "largest" or "smallest".'
+        ):
+            np.top_k(a, 2, mode="invalid")
+
+        with pytest.raises(
+            ValueError,
+            match=r"axis=None is not supported. Please provide a valid axis."
+        ):
+            np.top_k(a, 2, axis=None)
+
+        y = (
+            np.array([[], [], []], dtype=np.int8),
+            np.array([[], [], []], dtype=np.intp)
+        )
+        self.assert_top_k(a, 0, -1, y, sorted=sorted)
+
+        y = (
+            np.array([[4, 5], [4, 5], [4, 5]], dtype=np.int8),
+            np.array([[3, 4], [0, 1], [1, 2]], dtype=np.intp)
+        )
+        self.assert_top_k(a, 2, -1, y, sorted=sorted)
+        self.assert_top_k(a, 2, 1, y, sorted=sorted)
+
+        y = (
+            np.array([[5, 4, 3, 4, 5],
+                      [3, 5, 4, 3, 2]], dtype=np.int8),
+            np.array([[1, 1, 0, 0, 0],
+                      [2, 2, 2, 1, 2]], dtype=np.int8)
+        )
+        self.assert_top_k(a, 2, 0, y, sorted=sorted)
+
+        y = (
+            np.array([[1, 2], [1, 2], [1, 2]], dtype=np.int8),
+            np.array([[0, 1], [2, 4], [3, 4]], dtype=np.intp)
+        )
+        self.assert_top_k(a, 2, -1, y, mode="smallest", sorted=sorted)
+        self.assert_top_k(a, 2, 1, y, mode="smallest", sorted=sorted)
+
+    @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+    def test_top_k_floating_nan(self, dtype):
+        a = np.array([np.nan, 1, 2, 3, np.nan], dtype=dtype)
+        val, ind = np.top_k(a, 3)
+        assert not np.isnan(val).any()
+
     def test_flatten(self):
         x0 = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
         x1 = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], np.int32)
@@ -3832,7 +4241,10 @@ class TestMethods:
         a.dot(b=b, out=c)
         assert_equal(c, np.dot(a, b))
 
-    @pytest.mark.parametrize("dtype", [np.half, np.double, np.longdouble])
+    @pytest.mark.parametrize(
+        "dtype",
+        [np.half, np.double, pytest.param(np.longdouble, marks=longdouble_fpe_mark)],
+    )
     @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_dot_errstate(self, dtype):
         # Some dtypes use BLAS for 'dot' operation and
@@ -3867,6 +4279,14 @@ class TestMethods:
 
         assert_raises(TypeError, np.dot, c, A)
         assert_raises(TypeError, np.dot, A, c)
+
+    def test_dot_object_unsupported_multiply(self):
+        # gh-29688: an unsupported object multiply must raise the real error
+        # (TypeError), not a SystemError.
+        a = np.zeros((2, 2), dtype=complex)
+        b = np.array([[np.timedelta64(123, "s")],
+                      [np.timedelta64(321, "s")]], dtype=object)
+        assert_raises(TypeError, np.dot, a, b)
 
     def test_dot_out_mem_overlap(self):
         np.random.seed(1)
@@ -4261,6 +4681,14 @@ class TestMethods:
         with pytest.raises(TypeError, match="cannot conjugate non-numeric dtype"):
             a.conj()
 
+    def test_conjugate_legacy_user_dtype(self):
+        # gh-31754 : legacy user-defined dtypes are not flagged numeric and have
+        # no `.imag`, but `conjugate` must still dispatch to the ufunc (which
+        # falls back to a cast for `rational`) rather than raising.
+        a = np.array([1, 2, 3], dtype=rational)
+        assert_array_equal(a.conjugate(), np.conjugate(a))
+        assert_array_equal(a.conjugate(), [1, 2, 3])
+
     def test_conjugate_out(self):
         # Minimal test for the out argument being passed on correctly
         # NOTE: The ability to pass `out` is currently undocumented!
@@ -4315,6 +4743,10 @@ class TestMethods:
 
         e = np.array(['1+1j'], 'U')
         assert_raises(TypeError, complex, e)
+
+    def test_item_multi_index_tuple(self):
+        a = np.arange(6).reshape(2, 3)
+        assert a.item((1, 2)) == a.item(1, 2) == 5
 
 class TestCequenceMethods:
     def test_array_contains(self):
@@ -5242,9 +5674,11 @@ class TestArgmaxArgminCommon:
              (3, 4, 1, 2), (4, 1, 2, 3),
              (64,), (128,), (256,)]
 
-    @pytest.mark.parametrize("size, axis", itertools.chain(*[[(size, axis)
-        for axis in list(range(-len(size), len(size))) + [None]]
-        for size in sizes]))
+    @pytest.mark.parametrize("size, axis", [
+        (size, axis)
+        for size in sizes
+        for axis in [*range(-len(size), len(size)), None]
+    ])
     @pytest.mark.parametrize('method', [np.argmax, np.argmin])
     def test_np_argmin_argmax_keepdims(self, size, axis, method):
 
@@ -5718,6 +6152,122 @@ class TestMinMax:
             a[3] = 'NaT'
             assert_equal(np.amin(a), a[3])
             assert_equal(np.amax(a), a[3])
+
+    # `np.minmax` returns both extrema in a single pass; it must always agree
+    # with the `min`/`max` pair it fuses.
+    def check_minmax(self, a, **kwargs):
+        lo, hi = np.minmax(a, **kwargs)
+        assert_equal(lo, np.min(a, **kwargs))
+        assert_equal(hi, np.max(a, **kwargs))
+
+    def test_minmax_scalar(self):
+        with pytest.raises(AxisError):
+            np.minmax(1, 1)
+
+        assert_equal(np.minmax(1, axis=0), (1, 1))
+        assert_equal(np.minmax(1, axis=None), (1, 1))
+
+    def test_minmax_axis(self):
+        with pytest.raises(AxisError):
+            np.minmax([1, 2, 3], 1000)
+        assert_equal(np.minmax([[1, 2, 3]], axis=1), (1, 3))
+
+        a = np.arange(2 * 3 * 4).reshape(2, 3, 4)
+        for axis in [None, 0, 1, 2, (0, 1), (1, 2), (0, 2), (0, 1, 2)]:
+            self.check_minmax(a, axis=axis)
+        self.check_minmax(a, axis=1, keepdims=True)
+
+    def test_minmax_dtypes(self):
+        # a large array so the SIMD reduction kernels (not just the scalar
+        # tail) are exercised for every lane width
+        for dtype in (np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+                      + np.typecodes['Complex'] + '?'):
+            self.check_minmax(np.arange(1000).astype(dtype))
+        self.check_minmax(np.arange(1000, dtype=object))
+
+    def test_minmax_nan(self):
+        # NaN is propagated, like min/max
+        a = np.arange(10.0)
+        a[3] = np.nan
+        self.check_minmax(a)
+
+    def test_minmax_datetime(self):
+        # Do not ignore NaT
+        for dtype in ('m8[s]', 'm8[Y]'):
+            a = np.arange(10).astype(dtype)
+            self.check_minmax(a)
+            a[3] = 'NaT'
+            self.check_minmax(a)
+
+    def test_minmax_out(self):
+        a = np.arange(12.0).reshape(3, 4)
+        out1 = np.empty(4)
+        out2 = np.empty(4)
+        res = np.minmax(a, axis=0, out=(out1, out2))
+        assert_(res[0] is out1 and res[1] is out2)
+        assert_equal(out1, np.min(a, axis=0))
+        assert_equal(out2, np.max(a, axis=0))
+
+    def test_minmax_out_array_function(self):
+        # the arrays inside the `out` tuple must take part in dispatching
+        class MyArray:
+            def __array_function__(self, *args, **kwargs):
+                return "handled"
+
+        a = np.array([1, 2, 3])
+        assert_equal(np.minmax(a, out=(MyArray(), MyArray())), "handled")
+        assert_equal(np.minmax(a, out=MyArray()), "handled")
+
+    def test_minmax_out_invalid(self):
+        # a bad `out` is rejected rather than silently dropped, like np.min
+        a = np.arange(4)
+        single = np.empty((), dtype=a.dtype)
+        for x in (a, list(a)):
+            with pytest.raises(TypeError):
+                np.minmax(x, out="foo")
+            with pytest.raises(TypeError):
+                np.minmax(x, out=single)
+
+    def test_minmax_initial_and_where(self):
+        a = np.array([[-50], [10]])
+        assert_equal(np.minmax(a, axis=-1, initial=0), ([-50, 0], [0, 10]))
+        with pytest.raises(ValueError):
+            np.minmax(np.array([], dtype=np.float64))
+        assert_equal(np.minmax(np.array([], dtype=np.float64),
+                               initial=(np.inf, -np.inf)), (np.inf, -np.inf))
+
+    def test_minmax_no_loop_fallback(self):
+        # dtypes with no fused `minimummaximum` loop but that support min/max
+        # (the variable-width string DType, other user DTypes) fall back to two
+        # separate reductions.
+        a = np.array(["banana", "apple", "cherry"],
+                     dtype=np.dtypes.StringDType())
+        assert_equal(np.minmax(a), (np.min(a), np.max(a)))
+        a2 = a.reshape(3, 1)
+        lo, hi = np.minmax(a2, axis=0)
+        assert_equal(lo, np.min(a2, axis=0))
+        assert_equal(hi, np.max(a2, axis=0))
+
+    def test_minmax_no_loop_raises(self):
+        # a dtype that supports neither `minmax` nor `min`/`max` still raises
+        with pytest.raises(TypeError):
+            np.minmax(np.array(["banana", "apple"]))
+
+    def test_minmax_array_ufunc_no_fallback(self):
+        # a subclass whose __array_ufunc__ declines the private minimummaximum
+        # ufunc takes total control (the __array_ufunc__ contract), so minmax
+        # does not fall back to min/max and the TypeError propagates
+        class Sub(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
+                if ufunc in (np.minimum, np.maximum):
+                    inputs = [np.asarray(i) if isinstance(i, Sub) else i
+                              for i in inputs]
+                    return getattr(ufunc, method)(*inputs, **kw)
+                return NotImplemented
+
+        a = np.array([3, 1, 2]).view(Sub)
+        with pytest.raises(TypeError):
+            np.minmax(a)
 
 
 class TestNewaxis:
@@ -6341,6 +6891,23 @@ class TestIO:
                 monkeypatch.setattr(os, "dup", dup)
                 assert_raises(exc, np.fromfile, f)
 
+    @pytest.mark.skipif(
+        IS_WASM or IS_MUSL,
+        reason="musl and emscripten libc fdopen do not validate the fd",
+    )
+    def test_fromfile_failed_fdopen_closes_dup(
+            self, tmp_path, param_filename, monkeypatch):
+        closed_fds = []
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+
+        monkeypatch.setattr(os, "dup", lambda fd: -2)
+        monkeypatch.setattr(os, "close", closed_fds.append)
+
+        with open(tmp_filename, "wb") as f:
+            assert_raises(OSError, np.fromfile, f)
+
+        assert closed_fds == [-2]
+
     def _check_from(self, s, value, filename, **kw):
         if 'sep' not in kw:
             y = np.frombuffer(s, **kw)
@@ -6630,6 +7197,29 @@ class TestFlat:
         assert_(testpassed)
         assert_(b.flat[4] == 12.0)
 
+    def test_unaligned_values(self):
+        # the value array is used as-is, so its (mis)alignment must be
+        # honored when assigning through the flat iterator
+        n = 8
+        buf = np.zeros(n * 8 + 1, dtype=np.uint8)
+        unaligned = buf[1:].view(np.float64)
+        assert not unaligned.flags.aligned
+        unaligned[:] = np.arange(n)
+
+        b = np.zeros(n)
+        b.flat = unaligned
+        assert_array_equal(b, unaligned)
+        b.flat[::2] = unaligned[:n // 2]
+        assert_array_equal(b[::2], unaligned[:n // 2])
+
+    def test_assignment_structured_with_objects(self):
+        # whole elements must be copied, not just the leading object field
+        dt = np.dtype([('x', 'O'), ('y', 'i8')])
+        a = np.array([('A', 1), ('B', 2)], dtype=dt)
+        b = np.zeros(2, dtype=dt)
+        b.flat = a
+        assert_array_equal(b, a)
+
     def test___array__(self):
         a0 = np.arange(20.0)
         a = a0.reshape(4, 5)
@@ -6704,7 +7294,9 @@ class TestResize:
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
 
-    @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+    @pytest.mark.skipif(
+        not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
+    )
     def test_check_reference_module_scope(self):
         code = textwrap.dedent("""
             import numpy as np
@@ -8352,13 +8944,36 @@ class TestChoose:
         assert_equal(A, [[2, 2, 3], [2, 2, 3]])
 
     @pytest.mark.parametrize("ops",
-        [(1000, np.array([1], dtype=np.uint8)),
-         (-1, np.array([1], dtype=np.uint8)),
+        [(100, np.array([1], dtype=np.uint8)),
+         (-1, np.array([1], dtype=np.int8)),
          (1., np.float32(3)),
          (1., np.array([3], dtype=np.float32))],)
     def test_output_dtype(self, ops):
         expected_dt = np.result_type(*ops)
         assert np.choose([0], ops).dtype == expected_dt
+
+    @pytest.mark.parametrize("scalar", [1000, -1])
+    def test_pyscalar_out_of_bounds(self, scalar):
+        arr = np.array([1], dtype=np.uint8)
+        with pytest.raises(OverflowError):
+            np.choose([0], (scalar, arr))
+        with pytest.raises(OverflowError):
+            np.choose([1], (arr, scalar))
+
+    @pytest.mark.parametrize("array_type, indices_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_choose_integer_dtypes(self, array_type, indices_type):
+        choices = (np.array([1, 2, 3], dtype=array_type),
+                   np.array([4, 5, 6], dtype=array_type))
+        indices = np.array([0, 1, 0], dtype=indices_type)
+        tgt = np.array([1, 5, 3], dtype=array_type)
+        out = np.choose(indices, choices)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
 
     def test_dimension_and_args_limit(self):
         # Maxdims for the legacy iterator is 32, but the maximum number
@@ -8919,7 +9534,7 @@ class TestNewBufferProtocol:
         self._check_roundtrip(x)
 
     def test_roundtrip_single_types(self):
-        for typ in np._core.sctypeDict.values():
+        for typ in np.typecodes["All"]:
             dtype = np.dtype(typ)
 
             if dtype.char in 'Mm':
@@ -9228,10 +9843,7 @@ class TestNewBufferProtocol:
         _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
 
     def test_no_suboffsets(self):
-        try:
-            import _testbuffer
-        except ImportError:
-            raise pytest.skip("_testbuffer is not available")
+        _testbuffer = pytest.importorskip("_testbuffer")
 
         for shape in [(2, 3), (2, 3, 4)]:
             data = list(range(np.prod(shape)))
@@ -9901,7 +10513,6 @@ class TestWhere:
             assert_equal(np.where(c[::-3], d[::-3], e[::-3]), r[::-3])
             assert_equal(np.where(c[1::-3], d[1::-3], e[1::-3]), r[1::-3])
 
-    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_exotic(self):
         # object
         assert_array_equal(np.where(True, None, None), np.array(None))
@@ -11513,3 +12124,50 @@ class TestPatternMatching:
                 assert_array_equal(row4, [7, 8])
             case _:
                 raise AssertionError("3D ndarray did not match sequence pattern")
+
+
+class TestSubinterpreterTeardown:
+    """
+    ``_multiarray_umath`` declares Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED,
+    so importing numpy in a subinterpreter must fail cleanly with an
+    ImportError rather than crashing. Closing the subinterpreter afterwards
+    exercises its teardown path even though the import failed.
+    """
+
+    @pytest.mark.skipif(IS_WASM, reason="no subinterpreter support in wasm")
+    def test_subinterpreter_import_fails_cleanly(self):
+        # concurrent.interpreters is Python 3.14+
+        interpreters = pytest.importorskip("concurrent.interpreters")
+        interp = interpreters.create()
+        try:
+            with pytest.raises(interpreters.ExecutionFailed) as exc:
+                interp.exec("import numpy")
+            # numpy rewraps every C-extension ImportError in a generic
+            # message, so the type alone would also pass for a broken build.
+            msg = exc.value.excinfo.msg
+            assert "does not support loading in subinterpreters" in msg, msg
+        finally:
+            interp.close()
+
+
+class TestArrayConverter:
+    def test_pyscalars_self_referencing_array_raises(self):
+        # gh-32700
+        obj_array = np.empty(2, dtype=object)
+        obj_array[0] = obj_array
+        obj_array[1] = [obj_array, obj_array]
+
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(TypeError, match="must be a string"):
+            conv.as_arrays(pyscalars=obj_array)
+
+    @pytest.mark.parametrize("mode", [123, [], None])
+    def test_pyscalars_invalid_mode_type(self, mode):
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(TypeError, match="must be a string"):
+            conv.as_arrays(pyscalars=mode)
+
+    def test_pyscalars_invalid_mode_string(self):
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(ValueError, match="invalid pyscalar mode"):
+            conv.as_arrays(pyscalars="invalid")

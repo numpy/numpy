@@ -417,6 +417,15 @@ The advantages over random generation include tools to replay and share
 failures without requiring a fixed seed, reporting *minimal* examples for
 each failure, and better-than-naive-random techniques for triggering bugs.
 
+Note that ``hypothesis`` is an *optional* test dependency: it is not required to
+run the test suite, and Hypothesis-based tests are skipped when it is not
+installed. When adding a new Hypothesis-based test, import the ``given``,
+``settings`` and strategy helpers from
+``numpy.testing._private.hypothesis_helpers`` instead of ``hypothesis``
+directly, and mark the test with
+``@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")``
+so it is skipped rather than failing to collect when Hypothesis is absent.
+
 Writing thread-safe tests
 -------------------------
 

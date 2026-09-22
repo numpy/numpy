@@ -46,7 +46,7 @@ class TestModuleDocString(util.F2PyTest):
                      i : 'i'-scalar
                      x : 'i'-array(4)
                      a : 'f'-array(2,3)
-                     b : 'f'-array(-1,-1), not allocated\x00
+                     b : 'f'-array(-1,-1), not allocated
                      foo()\n
                      Wrapper for ``foo``.\n\n"""
         )
@@ -70,6 +70,22 @@ class TestModuleAndSubroutine(util.F2PyTest):
         names = dir(self.module.datonly)
         assert "data_array" in names
         assert "max_value" in names
+
+
+@pytest.mark.slow
+class TestAllocatableCharacterArray(util.F2PyTest):
+    sources = [
+        util.getpath("tests", "src", "modules", "gh21674_alloc_char.f90")
+    ]
+
+    def test_allocatable_char_roundtrip(self):
+        # gh-21674: allocatable character arrays should work after allocation
+        mod = self.module.alloc_char_mod
+        mod.setup_data(3)
+        assert mod.charge.shape == (3, 3)
+        names = mod.names
+        assert names.shape == (3,)
+        assert names.dtype.kind == 'U' or names.dtype.kind == 'S'
 
 
 @pytest.mark.slow

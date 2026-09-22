@@ -5,6 +5,17 @@
 extern "C" {
 #endif
 
+/*
+ * Bracket legacy type resolver calls made (only) for promotion, so they
+ * do not emit deprecation warnings.  `begin` returns a context variable
+ * token (or NULL with an error set); `end` consumes the token.
+ */
+NPY_NO_EXPORT PyObject *
+npy_begin_legacy_resolver_promotion(void);
+
+NPY_NO_EXPORT int
+npy_end_legacy_resolver_promotion(PyObject *token);
+
 NPY_NO_EXPORT int
 PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                                            NPY_CASTING casting,

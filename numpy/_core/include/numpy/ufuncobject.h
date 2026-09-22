@@ -3,6 +3,7 @@
 
 #include <numpy/npy_math.h>
 #include <numpy/npy_common.h>
+#include <numpy/utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -108,7 +109,8 @@ typedef struct _tagPyUFuncObject {
          * nout: Number of outputs
          * nargs: Always nin + nout (Why is it stored?)
          */
-        int nin, nout, nargs;
+        _NPY_OPAQUE_FIRST_FIELD int nin;
+        int nout, nargs;
 
         /*
          * Identity for reduction, any of PyUFunc_One, PyUFunc_Zero
@@ -181,7 +183,7 @@ typedef struct _tagPyUFuncObject {
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
          */
-        #if !defined(Py_LIMITED_API) || Py_LIMITED_API >= 0x030C0000
+        #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x030C0000
             vectorcallfunc vectorcall;
         #else
             void *vectorcall;

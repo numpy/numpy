@@ -31,8 +31,11 @@
 #include "string_ufuncs.h"
 #include "stringdtype_ufuncs.h"
 #include "special_integer_comparisons.h"
+#include "minmax.h"
 #include "real_imag_ufuncs.h"
+#include "unwrap.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
+#include "module_state.h"
 #include "ufunc_type_resolution.h"
 
 /* Automatically generated code to define all ufuncs: */
@@ -120,7 +123,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     if (i) {
         offset[1] += (sizeof(void *)-i);
     }
-    ptr = PyArray_malloc(offset[0] + offset[1] + sizeof(void *) +
+    ptr = PyMem_RawMalloc(offset[0] + offset[1] + sizeof(void *) +
                             (fname_len + 14));
     if (ptr == NULL) {
         Py_XDECREF(pyname);
@@ -151,7 +154,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
             str, doc, /* unused */ 0, NULL, identity);
 
     if (self == NULL) {
-        PyArray_free(ptr);
+        PyMem_RawFree(ptr);
         return NULL;
     }
     Py_INCREF(function);
@@ -159,7 +162,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     self->ptr = ptr;
 
     self->type_resolver = &object_ufunc_type_resolver;
-    PyObject_GC_Track(self);
 
     return (PyObject *)self;
 }
@@ -173,6 +175,22 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
 
 /* Setup the umath part of the module */
 
+/* Add a float constant; immortal on free-threaded builds */
+static int
+add_float_constant(PyObject *m, const char *name, double value)
+{
+    PyObject *obj = PyFloat_FromDouble(value);
+    if (obj == NULL) {
+        return -1;
+    }
+#if defined(Py_GIL_DISABLED) && PY_VERSION_HEX >= 0x030e0000
+    PyUnstable_SetImmortal(obj);
+#endif
+    int res = PyModule_AddObjectRef(m, name, obj);
+    Py_DECREF(obj);
+    return res;
+}
+
 int initumath(PyObject *m)
 {
     PyObject *d, *s, *s2;
@@ -182,19 +200,18 @@ int initumath(PyObject *m)
     UFUNC_FLOATING_POINT_SUPPORT = 0;
 #endif
 
-    /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 
     if (InitOperators(d) < 0) {
         return -1;
     }
 
-    PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
-    Py_DECREF(s);
-    PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(NPY_E));
-    Py_DECREF(s);
-    PyDict_SetItemString(d, "euler_gamma", s = PyFloat_FromDouble(NPY_EULER));
-    Py_DECREF(s);
+    /* Add some symbolic constants to the module */
+    if (add_float_constant(m, "pi", NPY_PI) < 0
+            || add_float_constant(m, "e", NPY_E) < 0
+            || add_float_constant(m, "euler_gamma", NPY_EULER) < 0) {
+        return -1;
+    }
 
 #define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
 #define ADDSCONST(str) PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
@@ -212,14 +229,18 @@ int initumath(PyObject *m)
 #undef ADDSCONST
     PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)NPY_BUFSIZE);
 
-    Py_INCREF(npy_static_pydata.npy_extobj_contextvar);
-    PyModule_AddObject(m, "_extobj_contextvar", npy_static_pydata.npy_extobj_contextvar);
+    multiarray_umath_state *state = get_module_state(m);
+    Py_INCREF(state->static_pydata.npy_extobj_contextvar);
+    PyModule_AddObject(m, "_extobj_contextvar",
+                       state->static_pydata.npy_extobj_contextvar);
 
-    PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
-    PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));
-    PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(NPY_PZERO));
-    PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
-    PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
+    if (add_float_constant(m, "PINF", NPY_INFINITY) < 0
+            || add_float_constant(m, "NINF", -NPY_INFINITY) < 0
+            || add_float_constant(m, "PZERO", NPY_PZERO) < 0
+            || add_float_constant(m, "NZERO", NPY_NZERO) < 0
+            || add_float_constant(m, "NAN", NPY_NAN) < 0) {
+        return -1;
+    }
 
     s = PyDict_GetItemString(d, "divide"); // noqa: borrowed-ref OK
     PyDict_SetItemString(d, "true_divide", s);
@@ -271,6 +292,10 @@ int initumath(PyObject *m)
     }
     Py_DECREF(s);
 
+    if (init_unwrap_ufunc(d) < 0 ) {
+        return -1;
+    }
+
     if (init_string_ufuncs(d) < 0) {
         return -1;
     }
@@ -284,6 +309,10 @@ int initumath(PyObject *m)
     }
 
     if (init_special_int_comparisons(d) < 0) {
+        return -1;
+    }
+
+    if (init_minimummaximum(d) < 0) {
         return -1;
     }
 

@@ -59,7 +59,7 @@ extern "C" {
 
 
 #define PyArray_GETCONTIGUOUS(m) (PyArray_ISCONTIGUOUS(m) ?                   \
-                                  Py_INCREF(m), (m) :                         \
+                                  Py_INCREF((PyObject*)m), (m) :                         \
                                   (PyArrayObject *)(PyArray_Copy(m)))
 
 #define PyArray_SAMESHAPE(a1,a2) ((PyArray_NDIM(a1) == PyArray_NDIM(a2)) &&   \
@@ -161,7 +161,7 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 #define PyArray_DESCR_REPLACE(descr) do { \
                 PyArray_Descr *_new_; \
                 _new_ = PyArray_DescrNew(descr); \
-                Py_XDECREF(descr); \
+                Py_XDECREF((PyObject*)descr); \
                 descr = _new_; \
         } while(0)
 

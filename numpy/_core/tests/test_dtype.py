@@ -10,9 +10,7 @@ import warnings
 from itertools import permutations
 from typing import Any
 
-import hypothesis
 import pytest
-from hypothesis.extra import numpy as hynp
 
 import numpy as np
 import numpy.dtypes
@@ -21,11 +19,13 @@ from numpy._core._rational_tests import rational, rational2
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
+    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
     assert_raises,
 )
+from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, hynp, hypothesis
 from numpy.testing._private.utils import requires_deep_recursion
 
 
@@ -258,6 +258,29 @@ class TestBuiltin:
         assert dt1 == dt2
         assert repr(dt1) == "dtype('S10')"
         assert dt1.itemsize == 10
+
+
+class TestByteOrderStr:
+    """Regression coverage for numpy._core._dtype._byte_order_str.
+
+    Documents the premise the dead-branch removal relies on:
+    dtype.byteorder only ever returns one of '<', '>', '=', or '|'.
+    """
+
+    def test_dtype_byteorder_never_returns_S(self):
+        # No reasonable way to construct a dtype produces
+        # .byteorder == 'S'. Even newbyteorder('S') resolves to
+        # '<' or '>' on the resulting dtype.
+        for spec in ['int8', 'int32', 'float64', 'complex128', 'U4', 'S4']:
+            for arg in ('<', '>', '=', '|', 'S', 'native', 'swap'):
+                try:
+                    dt = np.dtype(spec).newbyteorder(arg)
+                except (ValueError, TypeError):
+                    continue
+                assert dt.byteorder in ('<', '>', '=', '|'), (
+                    f"dtype({spec!r}).newbyteorder({arg!r}).byteorder "
+                    f"= {dt.byteorder!r}, expected one of '<>=|'"
+                )
 
 
 class TestRecord:
@@ -897,6 +920,32 @@ class TestMonsterType:
         with contextlib.suppress(RecursionError):
             np.dtype(d)
 
+    @pytest.mark.thread_unsafe(reason="Sets global threading stack size")
+    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+    def test_deep_subarray_dtype_dealloc(self):
+        import threading
+
+        import numpy as np
+
+        def build_and_drop():
+            d = np.dtype(np.int32)
+            for _ in range(200000):
+                d = np.dtype((d, (1,)))
+            # hold a second reference so teardown exercises stopping
+            # and resuming
+            held = d.base
+            del d
+            del held
+
+        # small stack size to fail reliably if deallocation is recusive
+        old_stack_size = threading.stack_size(1024 * 1024)
+        try:
+            t = threading.Thread(target=build_and_drop)
+            t.start()
+            t.join()
+        finally:
+            threading.stack_size(old_stack_size)
+
     @requires_deep_recursion
     def test_dict_recursion(self):
         d = {"names": ['self'], "formats": [None], "offsets": [0]}
@@ -1221,6 +1270,7 @@ class TestDTypeMakeCanonical:
         canonical_dt = np.result_type(arr.dtype)
         assert not canonical_dt.hasobject
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @pytest.mark.slow
     @hypothesis.given(dtype=hynp.nested_dtypes())
     def test_make_canonical_hypothesis(self, dtype):
@@ -1230,6 +1280,7 @@ class TestDTypeMakeCanonical:
         two_arg_result = np.result_type(dtype, dtype)
         assert np.can_cast(two_arg_result, canonical, casting="no")
 
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @pytest.mark.slow
     @hypothesis.given(
             dtype=hypothesis.extra.numpy.array_dtypes(
@@ -1379,6 +1430,38 @@ class TestPickling:
                 ValueError, match="Invalid state while unpickling"
             ):
                 dt.__setstate__(extended)
+
+    @pytest.mark.parametrize('spec, align', [
+        ([('a', 'i4'), ('b', 'f8')], False),
+        ('i4, i1', True),
+    ])
+    def test_setstate_endian(self, spec, align):
+        dt = np.dtype(spec, align=align)
+        valid_state = list(dt.__reduce__()[2])
+
+        def state_with_endian(endian):
+            state = list(valid_state)
+            state[1] = endian
+            return tuple(state)
+
+        # a non-native byte order is stored as given, a native one as '='
+        swapped = '>' if sys.byteorder == 'little' else '<'
+
+        # bytes are accepted for backwards compatibility with old pickles
+        dt.__setstate__(state_with_endian(swapped.encode()))
+        assert dt.byteorder == swapped
+        dt.__setstate__(state_with_endian(swapped))
+        assert dt.byteorder == swapped
+
+        for endian in ['\N{MICRO SIGN}', '\N{SNOWMAN}', '\ud800', '', '>>',
+                       b'', b'>>']:
+            with pytest.raises(
+                ValueError, match="endian is not 1-char string"
+            ):
+                dt.__setstate__(state_with_endian(endian))
+
+        with pytest.raises(ValueError, match="endian is not a string"):
+            dt.__setstate__(state_with_endian(42))
 
 
 class TestPromotion:
@@ -1911,7 +1994,7 @@ class TestFromCTypes:
         self.check(ctypes.c_uint8.__ctype_be__, np.dtype('u1'))
 
     all_types = set(np.typecodes['All'])
-    all_pairs = permutations(all_types, 2)
+    all_pairs = list(permutations(all_types, 2))
 
     @pytest.mark.parametrize("pair", all_pairs)
     def test_pairs(self, pair):

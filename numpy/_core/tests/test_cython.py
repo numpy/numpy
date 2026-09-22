@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import sys
 import sysconfig
@@ -7,7 +8,8 @@ from datetime import datetime
 import pytest
 
 import numpy as np
-from numpy.testing import IS_EDITABLE, IS_WASM, assert_array_equal
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, assert_array_equal
+from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
 try:
@@ -19,7 +21,7 @@ else:
     from numpy._utils import _pep440
 
     # Note: keep in sync with the one in pyproject.toml
-    required_version = "3.0.6"
+    required_version = "3.1.0"
     if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
@@ -33,15 +35,23 @@ if IS_EDITABLE:
         allow_module_level=True
     )
 
-
 @pytest.fixture(scope='module')
 def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
-    if IS_WASM:
-        pytest.skip("No subprocess")
+    if not HAS_SUBPROCESSES:
+        pytest.skip("platform cannot start subprocesses")
 
-    srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
-    build_dir = tmpdir_factory.mktemp("cython_test") / "build"
+    # Build against a copy of the sources placed next to the build dir:
+    # meson refers to sources via paths relative to the build dir, and on
+    # Windows the unnormalized cwd + `..` chain joining the deeply nested
+    # pytest tmp dir and site-packages can exceed MAX_PATH, failing the
+    # compile with "Cannot open source file".
+    tmp_root = tmpdir_factory.mktemp("cython_test")
+    srcdir = str(tmp_root / "src")
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'examples', 'cython'),
+        srcdir)
+    build_dir = tmp_root / "build"
     os.makedirs(build_dir, exist_ok=True)
     # Ensure we use the correct Python interpreter even when `meson` is
     # installed in a different Python environment (see gh-24956)
@@ -58,27 +68,16 @@ def install_temp(tmpdir_factory):
     if sysconfig.get_platform() == "win-arm64":
         pytest.skip("Meson unable to find MSVC linker on win-arm64")
     if sys.platform == "win32":
-        subprocess.check_call(["meson", "setup",
-                               "--buildtype=release",
-                               "--vsenv", "--native-file", native_file,
-                               str(srcdir)],
-                              cwd=build_dir,
-                              )
+        run_subprocess(["meson", "setup",
+                        "--buildtype=release",
+                        "--vsenv", "--native-file", native_file,
+                        str(srcdir)],
+                       build_dir)
     else:
-        subprocess.check_call(["meson", "setup",
-                               "--native-file", native_file, str(srcdir)],
-                              cwd=build_dir
-                              )
-    try:
-        subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
-    except subprocess.CalledProcessError:
-        print("----------------")
-        print("meson build failed when doing")
-        print(f"'meson setup --native-file {native_file} {srcdir}'")
-        print("'meson compile -vv'")
-        print(f"in {build_dir}")
-        print("----------------")
-        raise
+        run_subprocess(["meson", "setup",
+                        "--native-file", native_file, str(srcdir)],
+                       build_dir)
+    run_subprocess(["meson", "compile", "-vv"], build_dir)
 
     sys.path.append(str(build_dir))
 
@@ -331,6 +330,20 @@ def test_npystring_load(install_temp):
     assert result == 'abcd'
 
 
+def test_npystring_pack_invalid_utf8_width_inference(install_temp):
+    # NpyString_pack does not validate, so width inference can see bytes
+    # that do not decode
+    import checks
+
+    arr = np.array(["abc"], dtype="T")
+    assert checks.npystring_pack_invalid_utf8(arr, b"\xffbc") == 0
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        arr.astype("U")
+    exc = excinfo.value
+    assert (exc.encoding, exc.object, exc.start, exc.end) == (
+        "utf-8", b"\xffbc", 0, 1)
+
+
 def test_npystring_multiple_allocators(install_temp):
     """Check that the cython API can acquire/release multiple vstring allocators."""
     import checks
@@ -353,6 +366,35 @@ def test_npystring_allocators_other_dtype(install_temp):
     arr2 = np.array([4, 5, 6], dtype='i')
 
     assert checks.npystring_allocators_other_types(arr1, arr2) == 0
+
+
+def test_npystring_pack_invalid_utf8(install_temp):
+    """Check StringDType stays safe on stored bytes that aren't valid UTF-8."""
+    import checks
+
+    from numpy._core.umath import _center, _ljust, _rjust
+
+    sdt = np.dtypes.StringDType()
+
+    # the raw ufuncs skip the wrapper's one-character fill check
+    fill = np.array(["x"], dtype=sdt)
+    assert checks.npystring_pack_invalid_utf8(fill, b"\x80") == 0
+    src = np.array(["hello"], dtype=sdt)
+    for pad in (_center, _ljust, _rjust):
+        pad(src, 100_000, fill)
+
+    bad = np.array(["placeholder"], dtype=sdt)
+    assert checks.npystring_pack_invalid_utf8(bad, b"\x80" * 12) == 0
+    assert np.strings.find(bad, "z")[0] == -1
+    assert np.strings.count(bad, "z")[0] == 0
+
+    # casts that hit the stored bytes report where they stop being UTF-8
+    assert checks.npystring_pack_invalid_utf8(bad, b"\xffbc") == 0
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        bad.astype("S3")
+    exc = excinfo.value
+    assert (exc.encoding, exc.object, exc.start, exc.end) == (
+        "utf-8", b"\xffbc", 0, 1)
 
 
 @pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',

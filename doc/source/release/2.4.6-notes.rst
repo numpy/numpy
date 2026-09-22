@@ -4,6 +4,8 @@
 NumPy 2.4.6 Release Notes
 =========================
 
+*Released on 2026-05-18.*
+
 NumPy 2.4.6 is a quick release that fixes a regression discovered in the 2.4.5
 release.
 

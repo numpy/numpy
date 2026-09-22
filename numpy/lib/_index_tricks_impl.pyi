@@ -69,6 +69,8 @@ type _JustAnyShape = tuple[Never, Never, Never, Never, Never]  # workaround for 
 ###
 
 class ndenumerate(Generic[_ScalarT_co]):
+    iter: np.flatiter[NDArray[_ScalarT_co]]
+
     @overload
     def __init__[ScalarT: np.generic](
         self: ndenumerate[ScalarT],

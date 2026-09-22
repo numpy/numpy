@@ -1,4 +1,0 @@
-``typename`` is deprecated
---------------------------
-``numpy.typename`` is deprecated because the names returned by it were outdated and inconsistent.
-``numpy.dtype.name`` can be used as a replacement.

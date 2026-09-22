@@ -3,7 +3,6 @@
 """
 import itertools
 import os
-import subprocess
 import sys
 import textwrap
 import threading
@@ -34,7 +33,7 @@ from numpy.linalg import LinAlgError, matrix_power, matrix_rank, multi_dot, norm
 from numpy.linalg._linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     HAS_LAPACK64,
-    IS_WASM,
+    HAS_SUBPROCESSES,
     NOGIL_BUILD,
     assert_,
     assert_allclose,
@@ -44,9 +43,16 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+from numpy.testing._private.utils import run_subprocess
 
 try:
-    import numpy.linalg.lapack_lite
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The numpy.linalg.lapack_lite module is deprecated",
+            category=DeprecationWarning,
+        )
+        import numpy.linalg.lapack_lite
 except ImportError:
     # May be broken when numpy was built without BLAS/LAPACK present
     # If so, ensure we don't break the whole test suite - the `lapack_lite`
@@ -739,6 +745,22 @@ class TestSVD(SVDCases, SVDBaseTests):
         s_from_svdvals = linalg.svdvals(x)
         assert_almost_equal(s_from_svd, s_from_svdvals)
 
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    @pytest.mark.parametrize('val', [np.inf, -np.inf, np.nan])
+    def test_nonfinite(self, dtype, val):
+        a = np.ones((3, 3), dtype=dtype)
+        a[0, 0] = val
+        with pytest.raises(LinAlgError):
+            linalg.svd(a)
+        with pytest.raises(LinAlgError):
+            linalg.svd(a, full_matrices=False)
+        with pytest.raises(LinAlgError):
+            linalg.svd(a, compute_uv=False)
+        with pytest.raises(LinAlgError):
+            linalg.svd(np.stack([np.eye(3, dtype=dtype), a]))
+        with pytest.raises(LinAlgError):
+            linalg.pinv(a)
+
 
 class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
@@ -846,7 +868,7 @@ class TestCond(CondCases):
         # positive norms, and negative norms shouldn't raise
         # exceptions
         As = [np.zeros((2, 2)), np.ones((2, 2))]
-        p_pos = [None, 1, 2, 'fro']
+        p_pos = [None, 1, 2, 'fro', 'nuc']
         p_neg = [-1, -2]
         for A, p in itertools.product(As, p_pos):
             # Inversion may not hit exact infinity, so just check the
@@ -855,13 +877,10 @@ class TestCond(CondCases):
         for A, p in itertools.product(As, p_neg):
             linalg.cond(A, p)
 
-    @pytest.mark.xfail(True, run=False,
-                       reason="Platform/LAPACK-dependent failure, "
-                              "see gh-18914")
     def test_nan(self):
         # nans should be passed through, not converted to infs
-        ps = [None, 1, -1, 2, -2, 'fro']
-        p_pos = [None, 1, 2, 'fro']
+        ps = [None, 1, -1, 2, -2, 'fro', 'nuc']
+        p_pos = [None, 1, 2, 'fro', 'nuc']
 
         A = np.ones((2, 2))
         A[0, 1] = np.nan
@@ -881,6 +900,18 @@ class TestCond(CondCases):
             else:
                 assert_(not np.isnan(c[0]))
                 assert_(not np.isnan(c[2]))
+
+    @pytest.mark.parametrize('p', [None, 1, -1, 2, -2, 'fro', 'nuc', np.inf, -np.inf])
+    def test_inf(self, p):
+        # gh-32591: inf entries give an infinite condition number
+        A = np.ones((3, 3))
+        A[0, 1] = np.inf
+        stacked = np.stack([np.eye(3), A, 2 * np.eye(3)])
+        c, cs = linalg.cond(A, p), linalg.cond(stacked, p)
+        assert_(np.isfinite(cs[0]) and np.isfinite(cs[2]))
+        if p in [None, 1, 2, 'fro', 'nuc', np.inf]:
+            assert_equal(c, np.inf)
+            assert_equal(cs[1], np.inf)
 
     def test_stacked_singular(self):
         # Check behavior when only some of the stacked matrices are
@@ -943,6 +974,29 @@ def test_pinv_rtol_arg():
         ValueError, match=r"`rtol` and `rcond` can't be both set."
     ):
         np.linalg.pinv(a, rcond=0.5, rtol=0.5)
+
+
+@pytest.mark.parametrize("dtype", [np.int16, np.int64, np.uint8, np.bool_])
+def test_pinv_rtol_none_non_inexact(dtype):
+    # gh-30917: the default tolerance must come from the dtype pinv
+    # computes in, not from the input dtype (finfo rejects integers).
+    a = np.array([[1, 2, 3], [4, 1, 1], [2, 3, 1]]).astype(dtype)
+    expected = np.linalg.pinv(a.astype(np.float64), rtol=None)
+    res = np.linalg.pinv(a, rtol=None)
+    assert res.dtype == expected.dtype
+    assert_almost_equal(res, expected)
+
+
+@pytest.mark.parametrize("shape", [(0, 3), (3, 0), (0, 0), (2, 0, 3)])
+@pytest.mark.parametrize("dtype", [np.int64, np.float32, np.complex64])
+def test_pinv_empty_dtype(shape, dtype):
+    # gh-18527: the empty shortcut must return the same dtype as the
+    # svd path does for a non-empty input.
+    res = np.linalg.pinv(np.empty(shape, dtype=dtype))
+    ref = np.linalg.pinv(np.ones((1, 1), dtype=dtype))
+    assert res.shape == shape[:-2] + shape[-2:][::-1]
+    assert res.dtype == ref.dtype
+    assert np.linalg.pinv(np.empty(shape, dtype=dtype), rtol=None).dtype == ref.dtype
 
 
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -1053,6 +1107,14 @@ class TestLstsq(LstsqCases):
         assert_(rank == 3)
         x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
         assert_(rank == 3)
+
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    @pytest.mark.parametrize('val', [np.inf, -np.inf, np.nan])
+    def test_nonfinite(self, dtype, val):
+        a = np.ones((3, 3), dtype=dtype)
+        a[0, 0] = val
+        with pytest.raises(LinAlgError):
+            linalg.lstsq(a, np.ones(3, dtype=dtype))
 
     @pytest.mark.parametrize(["m", "n", "n_rhs"], [
         (4, 2, 2),
@@ -1166,7 +1228,6 @@ class TestMatrixPower:
         assert_raises(LinAlgError, matrix_power, np.array([[1], [2]], dt), 1)
         assert_raises(LinAlgError, matrix_power, np.ones((4, 3, 2), dt), 1)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_exceptions_not_invertible(self, dt):
         if dt in self.dtnoinv:
             return
@@ -1995,7 +2056,6 @@ def test_byteorder_check():
             assert_array_equal(res, routine(sw_arr))
 
 
-@pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
 def test_generalized_raise_multiloop():
     # It should raise an error even if the error doesn't occur in the
     # last iteration of the ufunc inner loop
@@ -2068,7 +2128,7 @@ def test_xerbla_override():
             pytest.skip('Numpy xerbla not linked in.')
 
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.slow
 def test_sdot_bug_8577():
     # Regression test that loading certain other libraries does not
@@ -2096,12 +2156,12 @@ def test_sdot_bug_8577():
     for bad_lib in bad_libs:
         code = template.format(before="import numpy as np", after="",
                                bad_lib=bad_lib)
-        subprocess.check_call([sys.executable, "-c", code])
+        run_subprocess([sys.executable, "-c", code])
 
         # Swapped import order
         code = template.format(after="import numpy as np", before="",
                                bad_lib=bad_lib)
-        subprocess.check_call([sys.executable, "-c", code])
+        run_subprocess([sys.executable, "-c", code])
 
 
 class TestMultiDot:

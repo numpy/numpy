@@ -12,6 +12,9 @@ _defaults: &defaults
     - image: cimg/python:3.12.12
   working_directory: ~/repo
 
+# PRs changing only paths matching this regex skip the build job
+_paths_ignore_re: &paths_ignore_re '\.pyi$|^tools/stubtest/'
+
 
 jobs:
   build:
@@ -33,6 +36,24 @@ jobs:
               echo "Skip detected, exiting job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}."
               circleci-agent step halt;
             fi
+
+      - run:
+          name: check ignored paths
+          # CircleCI has no `paths-ignore` equivalent
+          environment:
+            PATHS_IGNORE_RE: *paths_ignore_re
+          command: |
+            [[ -v CIRCLE_PULL_REQUEST ]] || exit 0
+            # parent 1 of the merge ref is the tip of the target branch
+            git fetch --quiet origin "refs/pull/${CIRCLE_PULL_REQUEST##*/}/merge" || exit 0
+            # --no-renames so that a `foo.py` -> `foo.pyi` rename reports both paths
+            changed=$(git diff --name-only --no-renames "FETCH_HEAD^1...HEAD") || exit 0
+            if ! grep -qvE "${PATHS_IGNORE_RE}" \<<< "${changed}"; then
+              echo "Only ignored paths changed, exiting job ${CIRCLE_JOB}:"
+              echo "${changed}"
+              circleci-agent step halt
+            fi
+
       - run:
           name: pull changes from merge
           command: |

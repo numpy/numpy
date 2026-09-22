@@ -73,6 +73,9 @@ class __array_namespace_info__:
           library supports data-dependent output shapes. Always ``True`` for
           NumPy.
 
+        - **"max dimensions"**: integer indicating maximum number of supported
+          dimensions. Always ``64`` for NumPy.
+
         See
         https://data-apis.org/array-api/latest/API_specification/generated/array_api.info.capabilities.html
         for more details.

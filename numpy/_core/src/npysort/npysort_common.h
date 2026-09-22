@@ -10,7 +10,7 @@ extern "C" {
 
 /*
  * Shared helpers used by the per-dtype sort implementations.  Per-dtype
- * less-than comparisons live on the tags in ``numpy_tag.h``; this header
+ * less-than comparisons live on the tags in ``numpy_tag.hpp``; this header
  * only carries the small handful of helpers used by the generic (cmp-
  * function-driven) sort code and by the argsort variants.
  */
