@@ -752,7 +752,7 @@ def replace(
     count: i_co = -1,
 ) -> _StringDTypeOrUnicodeArray: ...
 
-#
+# keep in sync with `rpartition`
 @overload  # Nd str
 def partition[ShapeT: _Shape](
     a: np.ndarray[ShapeT, np.dtype[np.str_]],
@@ -789,15 +789,44 @@ def partition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> _
 @overload  # ?d vstr | str  (fallback)
 def partition(a: T_co, sep: T_co) -> _tuple3[_StringDTypeOrUnicodeArray]: ...
 
-@overload
-def rpartition(a: U_co, sep: U_co) -> _tuple3[NDArray[np.str_]]: ...
-@overload
-def rpartition(a: S_co, sep: S_co) -> _tuple3[NDArray[np.bytes_]]: ...
-@overload
+# keep in sync with `partition`
+@overload  # Nd str
+def rpartition[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.str_]],
+    sep: _CharLike_co,
+) -> _tuple3[np.ndarray[ShapeT, np.dtype[np.str_]]]: ...
+@overload  # Nd bytes
+def rpartition[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bytes_]],
+    sep: _CharLike_co,
+) -> _tuple3[np.ndarray[ShapeT, np.dtype[np.bytes_]]]: ...
+@overload  # Nd vstr
+def rpartition[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtypes.StringDType],
+    sep: str,
+) -> _tuple3[np.ndarray[ShapeT, np.dtypes.StringDType]]: ...
+@overload  # 0d str
+def rpartition(a: str, sep: _CharLike_co) -> _tuple3[_Array0D[np.str_]]: ...
+@overload  # 0d bytes
+def rpartition(a: bytes, sep: _CharLike_co) -> _tuple3[_Array0D[np.bytes_]]: ...
+@overload  # 1d str
+def rpartition(a: list[str], sep: _CharLike_co) -> _tuple3[_Array1D[np.str_]]: ...
+@overload  # 1d bytes
+def rpartition(a: list[bytes], sep: _CharLike_co) -> _tuple3[_Array1D[np.bytes_]]: ...
+@overload  # 2d str
+def rpartition(a: Sequence[list[str]], sep: _CharLike_co) -> _tuple3[_Array2D[np.str_]]: ...
+@overload  # 2d bytes
+def rpartition(a: Sequence[list[bytes]], sep: _CharLike_co) -> _tuple3[_Array2D[np.bytes_]]: ...
+@overload  # ?d str  (fallback)
+def rpartition(a: U_co, sep: U_co | S_co) -> _tuple3[NDArray[np.str_]]: ...
+@overload  # ?d bytes  (fallback)
+def rpartition(a: S_co, sep: S_co | U_co) -> _tuple3[NDArray[np.bytes_]]: ...
+@overload  # ?d vstr
 def rpartition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> _tuple3[_StringDTypeArray]: ...
-@overload
+@overload  # ?d vstr | str  (fallback)
 def rpartition(a: T_co, sep: T_co) -> _tuple3[_StringDTypeOrUnicodeArray]: ...
 
+#
 @overload
 def translate(
     a: U_co,
