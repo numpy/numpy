@@ -5,7 +5,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <stdatomic.h>
-#include <stdbool.h>
 #include <string.h>
 
 #include "numpy/ndarraytypes.h"
