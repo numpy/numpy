@@ -2787,21 +2787,21 @@ def frompyfunc[ReturnT, IdentityT](
     identity: IdentityT,
 ) -> _PyFunc_Nin3P_Nout1[ReturnT, IdentityT]: ...
 @overload
-def frompyfunc[ReturnT, NInT: int, NOutT: int](
+def frompyfunc[ReturnT](
     func: Callable[..., _2PTuple[ReturnT]], /,
-    nin: NInT,
-    nout: NOutT,
+    nin: int,
+    nout: int,
     *,
     identity: None = None,
-) -> _PyFunc_Nin1P_Nout2P[ReturnT, None, NInT, NOutT]: ...
+) -> _PyFunc_Nin1P_Nout2P[ReturnT, None]: ...
 @overload
-def frompyfunc[ReturnT, NInT: int, NOutT: int, IdentityT](
+def frompyfunc[ReturnT, IdentityT](
     func: Callable[..., _2PTuple[ReturnT]], /,
-    nin: NInT,
-    nout: NOutT,
+    nin: int,
+    nout: int,
     *,
     identity: IdentityT,
-) -> _PyFunc_Nin1P_Nout2P[ReturnT, IdentityT, NInT, NOutT]: ...
+) -> _PyFunc_Nin1P_Nout2P[ReturnT, IdentityT]: ...
 @overload
 def frompyfunc(
     func: Callable[..., Any], /,

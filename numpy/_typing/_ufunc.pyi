@@ -268,7 +268,7 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     def __call__[ScalarT: _ScalarLike_co](
         self,
         x1: list[ScalarT],
-        x2: _ScalarLike_co | list[ScalarT],
+        x2: _ScalarLike_co | Sequence[_ScalarLike_co],
         /,
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
@@ -286,7 +286,7 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     def __call__[ScalarT: _ScalarLike_co](
         self,
         x1: Sequence[list[ScalarT]],
-        x2: _ScalarLike_co | list[ScalarT] | Sequence[list[ScalarT]],
+        x2: _ScalarLike_co | Sequence[_ScalarLike_co] | Sequence[Sequence[_ScalarLike_co]],
         /,
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
@@ -294,7 +294,7 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     @overload  # <=1d, 2d
     def __call__[ScalarT: _ScalarLike_co](
         self,
-        x1: _ScalarLike_co | list[ScalarT],
+        x1: _ScalarLike_co | Sequence[_ScalarLike_co],
         x2: Sequence[list[ScalarT]],
         /,
         out: EllipsisType | None = None,
@@ -625,7 +625,7 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     def outer[ScalarT: _ScalarLike_co](
         self,
         A: list[ScalarT],
-        B: list[ScalarT],
+        B: Sequence[_ScalarLike_co],
         /,
         *,
         out: EllipsisType | None = None,
@@ -778,10 +778,10 @@ class _PyFunc_Nin3P_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     def __call__[ScalarT: _ScalarLike_co](
         self,
         x1: list[ScalarT],
-        x2: _ScalarLike_co | list[ScalarT],
-        x3: _ScalarLike_co | list[ScalarT],
+        x2: _ScalarLike_co | Sequence[_ScalarLike_co],
+        x3: _ScalarLike_co | Sequence[_ScalarLike_co],
         /,
-        *xs: _ScalarLike_co | list[ScalarT],
+        *xs: _ScalarLike_co | Sequence[_ScalarLike_co],
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs4P],
     ) -> _ObjectArray[tuple[int], ReturnT]: ...
@@ -790,9 +790,9 @@ class _PyFunc_Nin3P_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
         self,
         x1: _ScalarLike_co,
         x2: list[ScalarT],
-        x3: _ScalarLike_co | list[ScalarT],
+        x3: _ScalarLike_co | Sequence[_ScalarLike_co],
         /,
-        *xs: _ScalarLike_co | list[ScalarT],
+        *xs: _ScalarLike_co | Sequence[_ScalarLike_co],
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs4P],
     ) -> _ObjectArray[tuple[int], ReturnT]: ...
@@ -803,7 +803,7 @@ class _PyFunc_Nin3P_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
         x2: _ScalarLike_co,
         x3: list[ScalarT],
         /,
-        *xs: _ScalarLike_co | list[ScalarT],
+        *xs: _ScalarLike_co | Sequence[_ScalarLike_co],
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs4P],
     ) -> _ObjectArray[tuple[int], ReturnT]: ...
@@ -811,32 +811,32 @@ class _PyFunc_Nin3P_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     def __call__[ScalarT: _ScalarLike_co](
         self,
         x1: Sequence[list[ScalarT]],
-        x2: _ScalarLike_co | list[ScalarT] | Sequence[list[ScalarT]],
-        x3: _ScalarLike_co | list[ScalarT] | Sequence[list[ScalarT]],
+        x2: _ScalarLike_co | Sequence[_ScalarLike_co] | Sequence[Sequence[_ScalarLike_co]],
+        x3: _ScalarLike_co | Sequence[_ScalarLike_co] | Sequence[Sequence[_ScalarLike_co]],
         /,
-        *xs: _ScalarLike_co | list[ScalarT] | Sequence[list[ScalarT]],
+        *xs: _ScalarLike_co | Sequence[_ScalarLike_co] | Sequence[Sequence[_ScalarLike_co]],
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs4P],
     ) -> _ObjectArray[tuple[int, int], ReturnT]: ...
     @overload  # <=1d, 2d, <=2d, ...
     def __call__[ScalarT: _ScalarLike_co](
         self,
-        x1: _ScalarLike_co | list[ScalarT],
+        x1: _ScalarLike_co | Sequence[_ScalarLike_co],
         x2: Sequence[list[ScalarT]],
-        x3: _ScalarLike_co | list[ScalarT] | Sequence[list[ScalarT]],
+        x3: _ScalarLike_co | Sequence[_ScalarLike_co] | Sequence[Sequence[_ScalarLike_co]],
         /,
-        *xs: _ScalarLike_co | list[ScalarT] | Sequence[list[ScalarT]],
+        *xs: _ScalarLike_co | Sequence[_ScalarLike_co] | Sequence[Sequence[_ScalarLike_co]],
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs4P],
     ) -> _ObjectArray[tuple[int, int], ReturnT]: ...
     @overload  # <=1d, <=1d, 2d, <=2d, ...
     def __call__[ScalarT: _ScalarLike_co](
         self,
-        x1: _ScalarLike_co | list[ScalarT],
-        x2: _ScalarLike_co | list[ScalarT],
+        x1: _ScalarLike_co | Sequence[_ScalarLike_co],
+        x2: _ScalarLike_co | Sequence[_ScalarLike_co],
         x3: Sequence[list[ScalarT]],
         /,
-        *xs: _ScalarLike_co | list[ScalarT] | Sequence[list[ScalarT]],
+        *xs: _ScalarLike_co | Sequence[_ScalarLike_co] | Sequence[Sequence[_ScalarLike_co]],
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs4P],
     ) -> _ObjectArray[tuple[int, int], ReturnT]: ...
@@ -887,37 +887,74 @@ class _PyFunc_Nin3P_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     def at(self, a: Never, indices: Never, /, *args: Never) -> NoReturn: ...  # type: ignore[override]
 
 @type_check_only
-class _PyFunc_Nin1P_Nout2P[ReturnT, IdentT, NInT: int, NOutT: int](ufunc):  # type: ignore[misc]
+class _PyFunc_Nin1P_Nout2P[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     @property
+    @override
     def identity(self) -> IdentT: ...
     @property
-    def nin(self) -> NInT: ...
-    @property
-    def nout(self) -> NOutT: ...
-    @property
+    @override
     def ntypes(self) -> Literal[1]: ...
     @property
+    @override
     def signature(self) -> None: ...
 
-    @overload
+    #
+    @override
+    @overload  # Nd, Nd | 0d, ...
+    def __call__[ShapeT: _Shape](
+        self,
+        x1: np.ndarray[ShapeT, Any],
+        /,
+        *xs: np.ndarray[ShapeT, Any] | _ScalarLike_co,
+        out: EllipsisType | None = None,
+        **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
+    ) -> _2PTuple[_ObjectArray[ShapeT, ReturnT]]: ...
+    @overload  # 0d, ...
     def __call__(
         self,
         x1: _ScalarLike_co,
         /,
         *xs: _ScalarLike_co,
-        out: EllipsisType | None = ...,
+        out: None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
     ) -> _2PTuple[ReturnT]: ...
-    @overload
+    @overload  # 0d, ..., out=...
+    def __call__(
+        self,
+        x1: _ScalarLike_co,
+        /,
+        *xs: _ScalarLike_co,
+        out: EllipsisType,
+        **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
+    ) -> _2PTuple[_ObjectArray[tuple[()], ReturnT]]: ...
+    @overload  # 1d, <=1d, ...
+    def __call__[ScalarT: _ScalarLike_co](
+        self,
+        x1: list[ScalarT],
+        /,
+        *xs: _ScalarLike_co | Sequence[_ScalarLike_co],
+        out: EllipsisType | None = None,
+        **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
+    ) -> _2PTuple[_ObjectArray[tuple[int], ReturnT]]: ...
+    @overload  # 2d, <=2d, ...
+    def __call__[ScalarT: _ScalarLike_co](
+        self,
+        x1: Sequence[list[ScalarT]],
+        /,
+        *xs: _ScalarLike_co | Sequence[_ScalarLike_co] | Sequence[Sequence[_ScalarLike_co]],
+        out: EllipsisType | None = None,
+        **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
+    ) -> _2PTuple[_ObjectArray[tuple[int, int], ReturnT]]: ...
+    @overload  # ?d  (fallback)
     def __call__(
         self,
         x1: ArrayLike,
         /,
         *xs: ArrayLike,
-        out: EllipsisType | None = ...,
+        out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
-    ) -> _2PTuple[ReturnT | NDArray[np.object_]]: ...
-    @overload
+    ) -> _2PTuple[NDArray[np.object_[ReturnT]] | Any]: ...
+    @overload  # ?d, out=T
     def __call__[OutT: np.ndarray](
         self,
         x1: ArrayLike,
@@ -926,18 +963,24 @@ class _PyFunc_Nin1P_Nout2P[ReturnT, IdentT, NInT: int, NOutT: int](ufunc):  # ty
         out: _2PTuple[OutT],
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
     ) -> _2PTuple[OutT]: ...
-    @overload
+    @overload  # __array_ufunc__
     def __call__(
         self,
         x1: _SupportsArrayUFunc | ArrayLike,
         /,
         *xs: _SupportsArrayUFunc | ArrayLike,
-        out: _2PTuple[np.ndarray] | EllipsisType | None = ...,
+        out: _2PTuple[np.ndarray] | EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
-    ) -> Incomplete: ...
+    ) -> Any: ...
 
+    #
+    @override
     def accumulate(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
+    @override
     def reduce(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
+    @override
     def reduceat(self, array: Never, /, indices: Never) -> NoReturn: ...  # type: ignore[override]
+    @override
     def outer(self, A: Never, B: Never, /) -> NoReturn: ...  # type: ignore[override]
+    @override
     def at(self, a: Never, indices: Never, /, *args: Never) -> NoReturn: ...  # type: ignore[override]

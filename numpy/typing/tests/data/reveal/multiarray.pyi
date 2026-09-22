@@ -358,24 +358,16 @@ assert_type(np.frompyfunc(func31, n3, n1)(f8, [f8], [[f8]]), _Array2D[np.object_
 assert_type(np.frompyfunc(func31, n3, n1)(f8, f8, f8, AR_f4_2d), npt.NDArray[np.object_[str]] | Any)
 assert_type(np.frompyfunc(func31, n3, n1)(f8, f8, f8, out=AR_f8), npt.NDArray[np.float64])
 
-assert_type(np.frompyfunc(func12, n1, n2).nin, Literal[1])
-assert_type(np.frompyfunc(func12, n1, n2).nout, Literal[2])
-assert_type(np.frompyfunc(func12, n1, n2).nargs, int)
 assert_type(np.frompyfunc(func12, n1, n2).ntypes, Literal[1])
 assert_type(np.frompyfunc(func12, n1, n2).identity, None)
 assert_type(np.frompyfunc(func12, n1, n2).signature, None)
-assert_type(
-    np.frompyfunc(func12, n2, n2)(f8, f8),
-    tuple[complex, complex, *tuple[complex, ...]],
-)
-assert_type(
-    np.frompyfunc(func12, n2, n2)(AR_f8, f8),
-    tuple[
-        complex | npt.NDArray[np.object_],
-        complex | npt.NDArray[np.object_],
-        *tuple[complex | npt.NDArray[np.object_], ...],
-    ],
-)
+assert_type(np.frompyfunc(func12, n1, n2)(AR_f4_2d), tuple[np.ndarray[tuple[int, int], np.dtype[np.object_[complex]]], np.ndarray[tuple[int, int], np.dtype[np.object_[complex]]], *tuple[np.ndarray[tuple[int, int], np.dtype[np.object_[complex]]], ...]])
+assert_type(np.frompyfunc(func12, n1, n2)(f8), tuple[complex, complex, *tuple[complex, ...]])
+assert_type(np.frompyfunc(func12, n1, n2)(f8, out=...), tuple[np.ndarray[tuple[()], np.dtype[np.object_[complex]]], np.ndarray[tuple[()], np.dtype[np.object_[complex]]], *tuple[np.ndarray[tuple[()], np.dtype[np.object_[complex]]], ...]])
+assert_type(np.frompyfunc(func12, n1, n2)([f8]), tuple[np.ndarray[tuple[int], np.dtype[np.object_[complex]]], np.ndarray[tuple[int], np.dtype[np.object_[complex]]], *tuple[np.ndarray[tuple[int], np.dtype[np.object_[complex]]], ...]])
+assert_type(np.frompyfunc(func12, n1, n2)([[f8]]), tuple[np.ndarray[tuple[int, int], np.dtype[np.object_[complex]]], np.ndarray[tuple[int, int], np.dtype[np.object_[complex]]], *tuple[np.ndarray[tuple[int, int], np.dtype[np.object_[complex]]], ...]])
+assert_type(np.frompyfunc(func12, n1, n2)([AR_f8]), tuple[npt.NDArray[np.object_[complex]] | Any, npt.NDArray[np.object_[complex]] | Any, *tuple[npt.NDArray[np.object_[complex]] | Any, ...]])
+assert_type(np.frompyfunc(func12, n1, n2)(f8, out=(AR_f8, AR_f8)), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], *tuple[npt.NDArray[np.float64], ...]])
 
 ###
 
