@@ -7,6 +7,7 @@ four private subclasses, one for each combination of
 """
 
 from _typeshed import Incomplete
+from collections.abc import Sequence
 from types import EllipsisType
 from typing import (
     Any,
@@ -28,11 +29,13 @@ from numpy import _CastingKind, _OrderKACF, ufunc
 from ._array_like import ArrayLike, NDArray, _ArrayLikeBool_co, _ArrayLikeInt_co
 from ._dtype_like import DTypeLike
 from ._scalars import _ScalarLike_co
-from ._shape import _ShapeLike
+from ._shape import _AnyShape, _Shape, _ShapeLike
 
 type _2PTuple[T] = tuple[T, T, *tuple[T, ...]]
 type _3PTuple[T] = tuple[T, T, T, *tuple[T, ...]]
 type _4PTuple[T] = tuple[T, T, T, T, *tuple[T, ...]]
+
+type _ObjectArray[ShapeT: _Shape, ItemT] = np.ndarray[ShapeT, np.dtype[np.object_[ItemT]]]
 
 @type_check_only
 class _SupportsArrayUFunc(Protocol):
@@ -100,35 +103,75 @@ class _PyFunc_Kwargs_Nargs4P(TypedDict, total=False):
 @type_check_only
 class _PyFunc_Nin1_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     @property
+    @override
     def identity(self) -> IdentT: ...
     @property
+    @override
     def nin(self) -> Literal[1]: ...
     @property
+    @override
     def nout(self) -> Literal[1]: ...
     @property
+    @override
     def nargs(self) -> Literal[2]: ...
     @property
+    @override
     def ntypes(self) -> Literal[1]: ...
     @property
+    @override
     def signature(self) -> None: ...
 
-    @overload
+    #
+    @override
+    @overload  # Nd
+    def __call__[ShapeT: _Shape](
+        self,
+        x1: np.ndarray[ShapeT, Any],
+        /,
+        out: EllipsisType | None = None,
+        **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
+    ) -> _ObjectArray[ShapeT, ReturnT]: ...
+    @overload  # 0d
     def __call__(
         self,
         x1: _ScalarLike_co,
         /,
-        out: EllipsisType | None = None,
+        out: None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
     ) -> ReturnT: ...
-    @overload
+    @overload  # 0d, out=...
+    def __call__(
+        self,
+        x1: _ScalarLike_co,
+        /,
+        out: EllipsisType,
+        **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
+    ) -> _ObjectArray[tuple[()], ReturnT]: ...
+    @overload  # 1d
+    def __call__[ScalarT: _ScalarLike_co](
+        self,
+        x1: list[ScalarT],
+        /,
+        out: EllipsisType | None = None,
+        **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
+    ) -> _ObjectArray[tuple[int], ReturnT]: ...
+    @overload  # 2d
+    def __call__[ScalarT: _ScalarLike_co](
+        self,
+        x1: Sequence[list[ScalarT]],
+        /,
+        out: EllipsisType | None = None,
+        **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
+    ) -> _ObjectArray[tuple[int, int], ReturnT]: ...
+    @overload  # ?d  (fallback)
     def __call__(
         self,
         x1: ArrayLike,
         /,
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
-    ) -> ReturnT | NDArray[np.object_]: ...
-    @overload
+    ) -> ReturnT | _ObjectArray[_AnyShape, ReturnT]: ...
+    @overload  # ?d, out=T
     def __call__[OutT: np.ndarray](
         self,
         x1: ArrayLike,
@@ -136,21 +179,28 @@ class _PyFunc_Nin1_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
         out: OutT | tuple[OutT],
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
     ) -> OutT: ...
-    @overload
+    @overload  # ?d  (workaround)
     def __call__(
         self,
         x1: _SupportsArrayUFunc,
         /,
         out: np.ndarray | tuple[np.ndarray] | EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
-    ) -> Incomplete: ...
+    ) -> Any: ...
 
-    def accumulate(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
-    def reduce(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
-    def reduceat(self, array: Never, /, indices: Never) -> NoReturn: ...  # type: ignore[override]
-    def outer(self, A: Never, B: Never, /) -> NoReturn: ...  # type: ignore[override]
-
+    #
+    @override
     def at(self, a: np.ndarray | _SupportsArrayUFunc, indices: _ArrayLikeInt_co, /) -> None: ...  # type: ignore[override]
+
+    #
+    @override
+    def accumulate(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
+    @override
+    def reduce(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
+    @override
+    def reduceat(self, array: Never, /, indices: Never) -> NoReturn: ...  # type: ignore[override]
+    @override
+    def outer(self, A: Never, B: Never, /) -> NoReturn: ...  # type: ignore[override]
 
 @type_check_only
 class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
