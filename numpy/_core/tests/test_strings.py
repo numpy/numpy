@@ -990,7 +990,8 @@ class TestMethods:
 
     def test_partition_sep_not_truncated(self, dt):
         buf = np.array(["a"], dtype=dt)
-        act1, act2, act3 = np.strings.partition(buf, "ab")
+        sep = b"ab" if dt == "S" else "ab"
+        act1, act2, act3 = np.strings.partition(buf, sep)
         assert_array_equal(act1, np.array(["a"], dtype=dt))
         assert_array_equal(act2, np.array([""], dtype=dt))
         assert_array_equal(act3, np.array([""], dtype=dt))
@@ -1024,7 +1025,8 @@ class TestMethods:
 
     def test_rpartition_sep_not_truncated(self, dt):
         buf = np.array(["a"], dtype=dt)
-        act1, act2, act3 = np.strings.rpartition(buf, "ab")
+        sep = b"ab" if dt == "S" else "ab"
+        act1, act2, act3 = np.strings.rpartition(buf, sep)
         assert_array_equal(act1, np.array([""], dtype=dt))
         assert_array_equal(act2, np.array([""], dtype=dt))
         assert_array_equal(act3, np.array(["a"], dtype=dt))
@@ -1390,6 +1392,9 @@ class TestMethodsWithUnicode:
         assert_array_equal(act, res)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Implicit conversion of fillchar:DeprecationWarning"
+)
 class TestMixedTypeMethods:
     def test_center(self):
         buf = np.array("😊", dtype="U")
@@ -1465,21 +1470,22 @@ class TestReplaceOnArrays:
 
     def test_replace_count_and_size(self, dt):
         a = np.array(["0123456789" * i for i in range(4)], dtype=dt)
-        r1 = np.strings.replace(a, "5", "ABCDE")
+        old, new = (b"5", b"ABCDE") if dt == "S" else ("5", "ABCDE")
+        r1 = np.strings.replace(a, old, new)
         assert r1.dtype.itemsize == check_itemsize(3 * 10 + 3 * 4, dt)
         r1_res = np.array(["01234ABCDE6789" * i for i in range(4)], dtype=dt)
         assert_array_equal(r1, r1_res)
-        r2 = np.strings.replace(a, "5", "ABCDE", 1)
+        r2 = np.strings.replace(a, old, new, 1)
         assert r2.dtype.itemsize == check_itemsize(3 * 10 + 4, dt)
-        r3 = np.strings.replace(a, "5", "ABCDE", 0)
+        r3 = np.strings.replace(a, old, new, 0)
         assert r3.dtype.itemsize == a.dtype.itemsize
         assert_array_equal(r3, a)
         # Negative values mean to replace all.
-        r4 = np.strings.replace(a, "5", "ABCDE", -1)
+        r4 = np.strings.replace(a, old, new, -1)
         assert r4.dtype.itemsize == check_itemsize(3 * 10 + 3 * 4, dt)
         assert_array_equal(r4, r1)
         # We can do count on an element-by-element basis.
-        r5 = np.strings.replace(a, "5", "ABCDE", [-1, -1, -1, 1])
+        r5 = np.strings.replace(a, old, new, [-1, -1, -1, 1])
         assert r5.dtype.itemsize == check_itemsize(3 * 10 + 4, dt)
         assert_array_equal(r5, np.array(
             ["01234ABCDE6789" * i for i in range(3)]
@@ -1487,21 +1493,27 @@ class TestReplaceOnArrays:
 
     def test_replace_old_new_not_truncated(self, dt):
         a = np.array(["a"], dtype=dt)
-        r1 = np.strings.replace(a, "ab", "X")
+        old, new = (b"ab", b"X") if dt == "S" else ("ab", "X")
+        r1 = np.strings.replace(a, old, new)
         assert_array_equal(r1, np.array(["a"], dtype=dt))
-        r2 = np.strings.replace(a, "a", "XY")
+        old, new = (b"a", b"XY") if dt == "S" else ("a", "XY")
+        r2 = np.strings.replace(a, old, new)
         assert_array_equal(r2, np.array(["XY"], dtype=dt))
 
     def test_replace_broadcasting(self, dt):
         a = np.array("0,0,0", dtype=dt)
-        r1 = np.strings.replace(a, "0", "1", np.arange(3))
+        old, new = (b"0", b"1") if dt == "S" else ("0", "1")
+        r1 = np.strings.replace(a, old, new, np.arange(3))
         assert r1.dtype == a.dtype
         assert_array_equal(r1, np.array(["0,0,0", "1,0,0", "1,1,0"], dtype=dt))
-        r2 = np.strings.replace(a, "0", [["1"], ["2"]], np.arange(1, 4))
+        new = np.array([["1"], ["2"]], dtype=dt)
+        r2 = np.strings.replace(a, old, new, np.arange(1, 4))
         assert_array_equal(r2, np.array([["1,0,0", "1,1,0", "1,1,1"],
                                          ["2,0,0", "2,2,0", "2,2,2"]],
                                         dtype=dt))
-        r3 = np.strings.replace(a, ["0", "0,0", "0,0,0"], "X")
+        old = np.array(["0", "0,0", "0,0,0"], dtype=dt)
+        new = b"X" if dt == "S" else "X"
+        r3 = np.strings.replace(a, old, new)
         assert_array_equal(r3, np.array(["X,X,X", "X,0", "X"], dtype=dt))
 
 

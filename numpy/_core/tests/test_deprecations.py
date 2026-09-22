@@ -14,7 +14,7 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import HAS_SUBPROCESSES, assert_raises
+from numpy.testing import HAS_SUBPROCESSES, assert_array_equal, assert_raises
 from numpy.testing._private.utils import run_subprocess
 
 
@@ -219,6 +219,73 @@ class TestRemovedGlobals:
 class TestCharArray(_DeprecationTestCase):
     def test_deprecated_chararray(self):
         self.assert_deprecated(lambda: np.char.chararray)
+
+
+class TestStringArgumentCoercion(_DeprecationTestCase):
+    # DEPRECATED 2026-09-22, NumPy 2.6. Eventually reject these arguments.
+    message = "Implicit conversion"
+
+    @pytest.mark.parametrize("method", ["center", "ljust", "rjust"])
+    @pytest.mark.parametrize("buf,fill", [("😊", b"*"), (b"s", "*")])
+    @pytest.mark.parametrize("width", [0, 3])
+    def test_justify(self, method, buf, fill, width):
+        expected_fill = fill.encode() if isinstance(buf, bytes) else fill.decode()
+        expected = getattr(buf, method)(width, expected_fill)
+        func = getattr(np.strings, method)
+        self.assert_not_deprecated(func, args=(buf, width))
+        self.assert_deprecated(lambda: assert_array_equal(
+            func(buf, width, fill), expected))
+        fill = np.asarray(fill).astype(np.asarray(buf).dtype)
+        self.assert_not_deprecated(lambda: assert_array_equal(
+            func(buf, width, fill), expected))
+
+    @pytest.mark.parametrize("dt", ["S", "U"])
+    @pytest.mark.parametrize("old,new", [("a", b"x"), (b"a", "x")])
+    @pytest.mark.parametrize("count", [0, 1])
+    def test_replace(self, dt, old, new, count):
+        buf = np.array("abc", dtype=dt)
+        expected = np.array("abc" if count == 0 else "xbc", dtype=dt)
+        self.assert_deprecated(lambda: assert_array_equal(
+            np.strings.replace(buf, old, new, count), expected))
+        old, new = (np.asarray(arg).astype(buf.dtype.char) for arg in (old, new))
+        self.assert_not_deprecated(lambda: assert_array_equal(
+            np.strings.replace(buf, old, new, count), expected))
+
+    @pytest.mark.parametrize("dt", ["S", "U"])
+    @pytest.mark.parametrize("method", ["partition", "rpartition"])
+    def test_partition(self, dt, method):
+        value = b"abc" if dt == "S" else "abc"
+        sep = "a" if dt == "S" else b"a"
+        expected = getattr(value, method)(b"a" if dt == "S" else "a")
+        buf = np.array(value, dtype=dt)
+        func = getattr(np.strings, method)
+        self.assert_deprecated(lambda: assert_array_equal(
+            func(buf, sep), expected))
+        sep = np.asarray(sep).astype(buf.dtype.char)
+        self.assert_not_deprecated(lambda: assert_array_equal(
+            func(buf, sep), expected))
+
+    @pytest.mark.parametrize("method,args,expected,num", [
+        ("replace", ("123", 2, 4), "143", 2),
+        ("replace", ("None", None, "x"), "x", 1),
+        ("partition", ("123", 2), ("1", "2", "3"), 1),
+        ("rpartition", ("123", 2), ("1", "2", "3"), 1),
+    ])
+    def test_non_string_argument(self, method, args, expected, num):
+        self.assert_deprecated(lambda: assert_array_equal(
+            getattr(np.strings, method)(*args), expected), num=num)
+
+    @pytest.mark.parametrize("method,args,name,suffix", [
+        ("ljust", ("a", 3, b"*"), "fillchar", "dtype"),
+        ("replace", ("abc", b"a", "x"), "old", "dtype.char"),
+    ])
+    def test_warning_message(self, method, args, name, suffix):
+        with self.filter_warnings() as record:
+            getattr(np.strings, method)(*args)
+        message = str(record[0].message)
+        assert f"{name} in np.strings.{method}()" in message
+        assert f"from dtype |S1 to {np.dtype('U1')}" in message
+        assert f"{name}=np.asarray({name}).astype(np.asarray(a).{suffix})" in message
 
 
 class TestDeprecatedDTypeAliases(_DeprecationTestCase):
