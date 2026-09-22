@@ -93,13 +93,35 @@ type _tuple3[T] = tuple[T, T, T]
 
 ###
 
-@overload
+@overload  # Nd str | bytes
+def multiply[ShapeT: _Shape, CharT: np.character](
+    a: np.ndarray[ShapeT, np.dtype[CharT]],
+    i: _IntLike_co,
+) -> np.ndarray[ShapeT, np.dtype[CharT]]: ...
+@overload  # Nd vstr
+def multiply[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtypes.StringDType],
+    i: _IntLike_co,
+) -> np.ndarray[ShapeT, np.dtypes.StringDType]: ...
+@overload  # 0d str
+def multiply(a: str, i: _IntLike_co) -> _Array0D[np.str_]: ...
+@overload  # 0d bytes
+def multiply(a: bytes, i: _IntLike_co) -> _Array0D[np.bytes_]: ...
+@overload  # 1d str
+def multiply(a: list[str], i: _IntLike_co) -> _Array1D[np.str_]: ...
+@overload  # 1d bytes
+def multiply(a: list[bytes], i: _IntLike_co) -> _Array1D[np.bytes_]: ...
+@overload  # 2d str
+def multiply(a: Sequence[list[str]], i: _IntLike_co) -> _Array2D[np.str_]: ...
+@overload  # 2d bytes
+def multiply(a: Sequence[list[bytes]], i: _IntLike_co) -> _Array2D[np.bytes_]: ...
+@overload  # ?d str  (fallback)
 def multiply(a: U_co, i: i_co) -> NDArray[np.str_]: ...
-@overload
+@overload  # ?d bytes  (fallback)
 def multiply(a: S_co, i: i_co) -> NDArray[np.bytes_]: ...
-@overload
+@overload  # ?d vstr
 def multiply(a: _StringDTypeSupportsArray, i: i_co) -> _StringDTypeArray: ...
-@overload
+@overload  # ?d vstr | str  (fallback)
 def multiply(a: T_co, i: i_co) -> _StringDTypeOrUnicodeArray: ...
 
 #
