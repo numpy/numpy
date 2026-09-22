@@ -178,12 +178,8 @@ def _fix_real_abs_gt_1(x):
     return x
 
 
-def _unary_dispatcher(x):
-    return (x,)
-
-
 @set_module('numpy.lib.scimath')
-@array_function_dispatch(_unary_dispatcher)
+@array_function_dispatch(("x",))
 def sqrt(x):
     """
     Compute the square root of x.
@@ -239,7 +235,7 @@ def sqrt(x):
 
 
 @set_module('numpy.lib.scimath')
-@array_function_dispatch(_unary_dispatcher)
+@array_function_dispatch(("x",))
 def log(x):
     """
     Compute the natural logarithm of `x`.
@@ -289,7 +285,7 @@ def log(x):
 
 
 @set_module('numpy.lib.scimath')
-@array_function_dispatch(_unary_dispatcher)
+@array_function_dispatch(("x",))
 def log10(x):
     """
     Compute the logarithm base 10 of `x`.
@@ -340,12 +336,8 @@ def log10(x):
     return nx.log10(x)
 
 
-def _logn_dispatcher(n, x):
-    return (n, x,)
-
-
 @set_module('numpy.lib.scimath')
-@array_function_dispatch(_logn_dispatcher)
+@array_function_dispatch(("n", "x"))
 def logn(n, x):
     """
     Take log base n of x.
@@ -383,7 +375,7 @@ def logn(n, x):
 
 
 @set_module('numpy.lib.scimath')
-@array_function_dispatch(_unary_dispatcher)
+@array_function_dispatch(("x",))
 def log2(x):
     """
     Compute the logarithm base 2 of `x`.
@@ -432,12 +424,8 @@ def log2(x):
     return nx.log2(x)
 
 
-def _power_dispatcher(x, p):
-    return (x, p)
-
-
 @set_module('numpy.lib.scimath')
-@array_function_dispatch(_power_dispatcher)
+@array_function_dispatch(("x", "p"))
 def power(x, p):
     """
     Return x to the power p, (x**p).
@@ -492,7 +480,7 @@ def power(x, p):
 
 
 @set_module('numpy.lib.scimath')
-@array_function_dispatch(_unary_dispatcher)
+@array_function_dispatch(("x",))
 def arccos(x):
     """
     Compute the inverse cosine of x.
@@ -539,7 +527,7 @@ def arccos(x):
 
 
 @set_module('numpy.lib.scimath')
-@array_function_dispatch(_unary_dispatcher)
+@array_function_dispatch(("x",))
 def arcsin(x):
     """
     Compute the inverse sine of x.
@@ -587,7 +575,7 @@ def arcsin(x):
 
 
 @set_module('numpy.lib.scimath')
-@array_function_dispatch(_unary_dispatcher)
+@array_function_dispatch(("x",))
 def arctanh(x):
     """
     Compute the inverse hyperbolic tangent of `x`.

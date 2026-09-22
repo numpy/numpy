@@ -57,11 +57,7 @@ def _min_int(low, high):
     return int64
 
 
-def _flip_dispatcher(m):
-    return (m,)
-
-
-@array_function_dispatch(_flip_dispatcher)
+@array_function_dispatch(("m",))
 def fliplr(m):
     """
     Reverse the order of elements along axis 1 (left/right).
@@ -117,7 +113,7 @@ def fliplr(m):
     return m[:, ::-1]
 
 
-@array_function_dispatch(_flip_dispatcher)
+@array_function_dispatch(("m",))
 def flipud(m):
     """
     Reverse the order of elements along axis 0 (up/down).
@@ -253,11 +249,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
 _eye_with_like = array_function_dispatch()(eye)
 
 
-def _diag_dispatcher(v, k=None):
-    return (v,)
-
-
-@array_function_dispatch(_diag_dispatcher)
+@array_function_dispatch(("v",))
 def diag(v, k=0):
     """
     Extract a diagonal or construct a diagonal array.
@@ -330,7 +322,7 @@ def diag(v, k=0):
         raise ValueError("Input must be 1- or 2-d.")
 
 
-@array_function_dispatch(_diag_dispatcher)
+@array_function_dispatch(("v",))
 def diagflat(v, k=0):
     """
     Create a two-dimensional array with the flattened input as a diagonal.
@@ -474,11 +466,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
 _tri_with_like = array_function_dispatch()(tri)
 
 
-def _trilu_dispatcher(m, k=None):
-    return (m,)
-
-
-@array_function_dispatch(_trilu_dispatcher)
+@array_function_dispatch(("m",))
 def tril(m, k=0):
     """
     Lower triangle of an array.
@@ -534,7 +522,7 @@ def tril(m, k=0):
     return where(mask, m, zeros(1, m.dtype))
 
 
-@array_function_dispatch(_trilu_dispatcher)
+@array_function_dispatch(("m",))
 def triu(m, k=0):
     """
     Upper triangle of an array.
@@ -579,12 +567,8 @@ def triu(m, k=0):
     return where(mask, zeros(1, m.dtype), m)
 
 
-def _vander_dispatcher(x, N=None, increasing=None):
-    return (x,)
-
-
 # Originally borrowed from John Hunter and matplotlib
-@array_function_dispatch(_vander_dispatcher)
+@array_function_dispatch(("x",))
 def vander(x, N=None, increasing=False):
     """
     Generate a Vandermonde matrix.
@@ -1016,11 +1000,7 @@ def tril_indices(n, k=0, m=None):
                  for inds in indices(tri_.shape, sparse=True))
 
 
-def _trilu_indices_form_dispatcher(arr, k=None):
-    return (arr,)
-
-
-@array_function_dispatch(_trilu_indices_form_dispatcher)
+@array_function_dispatch(("arr",))
 def tril_indices_from(arr, k=0):
     """
     Return the indices for the lower-triangle of arr.
@@ -1179,7 +1159,7 @@ def triu_indices(n, k=0, m=None):
                  for inds in indices(tri_.shape, sparse=True))
 
 
-@array_function_dispatch(_trilu_indices_form_dispatcher)
+@array_function_dispatch(("arr",))
 def triu_indices_from(arr, k=0):
     """
     Return the indices for the upper-triangle of arr.
