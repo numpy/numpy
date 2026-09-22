@@ -65,7 +65,11 @@ assert_type(np.strings.capitalize(AR_T), AR_T_alias)
 
 assert_type(np.strings.encode(AR_U), npt.NDArray[np.bytes_])
 assert_type(np.strings.encode(AR_T), npt.NDArray[np.bytes_])
-assert_type(np.strings.decode(AR_S), npt.NDArray[np.str_])
+assert_type(np.strings.decode(_S_2d), _Array2D[np.str_])
+assert_type(np.strings.decode(b"_", "utf-8"), _Array0D[np.str_])
+assert_type(np.strings.decode([b"_"]), _Array1D[np.str_])
+assert_type(np.strings.decode([[b"_"]], "ascii", "ignore"), _Array2D[np.str_])
+assert_type(np.strings.decode([AR_S]), npt.NDArray[np.str_])
 
 assert_type(np.strings.expandtabs(AR_U), npt.NDArray[np.str_])
 assert_type(np.strings.expandtabs(AR_S, tabsize=4), npt.NDArray[np.bytes_])
