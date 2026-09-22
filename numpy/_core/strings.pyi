@@ -154,29 +154,58 @@ def find(
     end: i_co | None = None,
 ) -> NDArray[np.int_] | Any: ...
 
-#
-@overload
+# keep in sync with `find`
+@overload  # Nd str | vstr
+def rfind[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.str_] | np.dtypes.StringDType],
+    sub: str,
+    start: _IntLike_co = 0,
+    end: _IntLike_co | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
+@overload  # Nd bytes
+def rfind[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bytes_]],
+    sub: bytes,
+    start: _IntLike_co = 0,
+    end: _IntLike_co | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.int_]]: ...
+@overload  # 0d
+def rfind[T: (bytes, str)](
+    a: T,
+    sub: T,
+    start: _IntLike_co = 0,
+    end: _IntLike_co | None = None,
+) -> np.int_: ...
+@overload  # 1d
+def rfind[T: (bytes, str)](
+    a: list[T],
+    sub: T,
+    start: _IntLike_co = 0,
+    end: _IntLike_co | None = None,
+) -> _Array1D[np.int_]: ...
+@overload  # 2d
+def rfind[T: (bytes, str)](
+    a: Sequence[list[T]],
+    sub: T,
+    start: _IntLike_co = 0,
+    end: _IntLike_co | None = None,
+) -> _Array2D[np.int_]: ...
+@overload  # ?d str | vstr  (fallback)
 def rfind(
-    a: U_co,
-    sub: U_co,
+    a: U_co | T_co,
+    sub: U_co | T_co,
     start: i_co = 0,
     end: i_co | None = None,
-) -> NDArray[np.int_]: ...
-@overload
+) -> NDArray[np.int_] | Any: ...
+@overload  # ?d bytes  (fallback)
 def rfind(
     a: S_co,
     sub: S_co,
     start: i_co = 0,
     end: i_co | None = None,
-) -> NDArray[np.int_]: ...
-@overload
-def rfind(
-    a: T_co,
-    sub: T_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.int_]: ...
+) -> NDArray[np.int_] | Any: ...
 
+#
 @overload
 def index(
     a: U_co,
