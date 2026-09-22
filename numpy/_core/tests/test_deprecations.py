@@ -188,28 +188,6 @@ class TestPyIntConversion(_DeprecationTestCase):
                 pass  # OverflowErrors always happened also before and are OK.
 
 
-class TestPythonPyIntFromInt(_DeprecationTestCase):
-    message = (
-        "Conversion of a Python object that does not implement __index__ "
-        "to an integer is being deprecated"
-    )
-
-    class LegacyInteger:
-        def __int__(self):
-            return 0
-
-    @pytest.mark.parametrize(
-        "function",
-        [
-            lambda value: np.array([1], ndmin=value),
-            lambda value: np.arange(3).round(decimals=value),
-            lambda value: np.lexsort(([1, 0],), axis=value),
-        ],
-    )
-    def test_legacy_integer_conversion(self, function):
-        self.assert_deprecated(function, args=(self.LegacyInteger(),))
-
-
 @pytest.mark.parametrize("name", ["str", "bytes", "object"])
 def test_future_scalar_attributes(name):
     # FutureWarning added 2022-11-17, NumPy 1.24,

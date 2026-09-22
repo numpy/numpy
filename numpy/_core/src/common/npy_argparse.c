@@ -55,61 +55,19 @@ init_argparse_mutex(void) {
 NPY_NO_EXPORT int
 PyArray_PythonPyIntFromInt(PyObject *obj, int *value)
 {
-
-    PyObject *index;
-    long result;
-    bool used_legacy = false;
-
-    index = PyNumber_Index(obj);
-
-    if (index != NULL) {
-        result = PyLong_AsLong(index);
-        Py_DECREF(index);
-
-        if (NPY_UNLIKELY(result == -1 && PyErr_Occurred())) {
-            return NPY_FAIL;
-        }
+    long result = PyLong_AsLong(obj);
+    if (NPY_UNLIKELY((result == -1) && PyErr_Occurred())) {
+        return NPY_FAIL;
     }
-    else {
-        /*
-        * PyNumber_Index failed. Clear the exception raised by the modern
-        * __index__ conversion before trying the legacy converstion.
-        */
-        PyErr_Clear();
-
-        /* The legacy behavior explicitly rejects floats. */
-        if (NPY_UNLIKELY(PyFloat_Check(obj))) {
-            PyErr_SetString(PyExc_TypeError,
-                            "integer argument expected, got float");
-            return NPY_FAIL;
-        }
-
-        result = PyLong_AsLong(obj);
-        if (NPY_UNLIKELY((result == -1) && PyErr_Occurred())) {
-            return NPY_FAIL;
-        }
-
-        used_legacy = true;
-    }
-
     if (NPY_UNLIKELY((result > INT_MAX) || (result < INT_MIN))) {
         PyErr_SetString(PyExc_OverflowError,
                         "Python int too large to convert to C int");
         return NPY_FAIL;
     }
-
-    if (used_legacy) {
-        if (PyErr_WarnEx(
-                PyExc_DeprecationWarning,
-                "Conversion of a Python object that does not implement __index__ to "
-                "an integer is being deprecated and will raise an error in future.",
-                1) < 0) {
-            return NPY_FAIL;
-        }
+    else {
+        *value = (int)result;
+        return NPY_SUCCEED;
     }
-        
-    *value = (int)result;
-    return NPY_SUCCEED;
 }
 
 
