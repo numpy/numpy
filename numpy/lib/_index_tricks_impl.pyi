@@ -11,6 +11,7 @@ from typing import (
     SupportsIndex,
     final,
     overload,
+    override,
 )
 from typing_extensions import TypeVar
 
@@ -59,15 +60,22 @@ _Trans1DT_co = TypeVar("_Trans1DT_co", bound=int, default=L[-1], covariant=True)
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 
 type _Int1D = _Array1D[np.intp]
 
 type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
 
+type _SliceInt = slice[int | None, int | None, int | None]
+type _SliceFloat = slice[float | None, float | None, complex | None]
+
 type _ItemOrTuple[T] = T | tuple[T, *tuple[T, ...]]
 type _To1D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]
 type _To2D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]]
 type _ToPy1D[T, StepT] = T | Sequence[T] | slice[T | None, T | None, StepT | None]
+
+type _Tuple2[T] = tuple[T, T]
+type _Tuple3[T] = tuple[T, T, T]
 
 type _JustAnyShape = tuple[Never, Never, Never, Never, Never]  # workaround for microsoft/pyright#10232
 
@@ -120,27 +128,71 @@ class ndindex:
     def __iter__(self) -> Self: ...
     def __next__(self) -> _AnyShape: ...
 
-class nd_grid(Generic[_BoolT_co]):
+class nd_grid:  # undocumented
     __slots__ = ("sparse",)
 
-    sparse: _BoolT_co
-    def __init__(self, sparse: _BoolT_co = ...) -> None: ...  # stubdefaulter: ignore[missing-default]
-    @overload
-    def __getitem__(self: nd_grid[L[False]], key: slice | Sequence[slice]) -> NDArray[Incomplete]: ...
-    @overload
-    def __getitem__(self: nd_grid[L[True]], key: slice | Sequence[slice]) -> tuple[NDArray[Incomplete], ...]: ...
+    sparse: Final[bool]
+
+    def __init__(self, sparse: bool = False) -> None: ...
+    def __getitem__(self, key: slice, /) -> NDArray[Any]: ...
 
 @final
-class MGridClass(nd_grid[L[False]]):
+class MGridClass(nd_grid):
     __slots__ = ()
 
     def __init__(self) -> None: ...
 
+    #
+    @override
+    @overload  # +int
+    def __getitem__(self, key: _SliceInt, /) -> _Array1D[np.int_]: ...
+    @overload  # +float
+    def __getitem__(self, key: _SliceFloat, /) -> _Array1D[np.float64 | Any]: ...
+    @overload  # ?
+    def __getitem__(self, key: slice, /) -> _Array1D[Any]: ...
+    @overload  # (+int, +int)
+    def __getitem__(self, key: _Tuple2[_SliceInt], /) -> _Array3D[np.int_]: ...
+    @overload  # (+float, +float)
+    def __getitem__(self, key: _Tuple2[_SliceFloat], /) -> _Array3D[np.float64 | Any]: ...
+    @overload  # (?, ?)
+    def __getitem__(self, key: _Tuple2[slice], /) -> _Array3D[Any]: ...
+    @overload  # (+int, +int, +int)
+    def __getitem__(self, key: _Tuple3[_SliceInt], /) -> _Array4D[np.int_]: ...
+    @overload  # (+float, +float, +float)
+    def __getitem__(self, key: _Tuple3[_SliceFloat], /) -> _Array4D[np.float64 | Any]: ...
+    @overload  # (?, ?, ?)
+    def __getitem__(self, key: _Tuple3[slice], /) -> _Array4D[Any]: ...
+    @overload  # fallback
+    def __getitem__(self, key: slice | Sequence[slice], /) -> NDArray[Any]: ...
+
 @final
-class OGridClass(nd_grid[L[True]]):
+class OGridClass(nd_grid):
     __slots__ = ()
 
     def __init__(self) -> None: ...
+
+    #
+    @override
+    @overload  # +int
+    def __getitem__(self, key: _SliceInt, /) -> _Array1D[np.int_]: ...
+    @overload  # +float
+    def __getitem__(self, key: _SliceFloat, /) -> _Array1D[np.float64 | Any]: ...
+    @overload  # ?
+    def __getitem__(self, key: slice, /) -> _Array1D[Any]: ...
+    @overload  # (+int, +int)
+    def __getitem__(self, key: _Tuple2[_SliceInt], /) -> _Tuple2[_Array2D[np.int_]]: ...
+    @overload  # (+float, +float)
+    def __getitem__(self, key: _Tuple2[_SliceFloat], /) -> _Tuple2[_Array2D[np.float64 | Any]]: ...
+    @overload  # (?, ?)
+    def __getitem__(self, key: _Tuple2[slice], /) -> _Tuple2[_Array2D[Any]]: ...
+    @overload  # (+int, +int, +int)
+    def __getitem__(self, key: _Tuple3[_SliceInt], /) -> _Tuple3[_Array3D[np.int_]]: ...
+    @overload  # (+float, +float, +float)
+    def __getitem__(self, key: _Tuple3[_SliceFloat], /) -> _Tuple3[_Array3D[np.float64 | Any]]: ...
+    @overload  # (?, ?, ?)
+    def __getitem__(self, key: _Tuple3[slice], /) -> _Tuple3[_Array3D[Any]]: ...
+    @overload  # fallback
+    def __getitem__(self, key: Sequence[slice], /) -> tuple[NDArray[Any], ...]: ...
 
 class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]):
     __slots__ = "axis", "matrix", "ndmin", "trans1d"
