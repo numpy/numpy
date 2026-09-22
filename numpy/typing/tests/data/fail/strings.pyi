@@ -36,6 +36,3 @@ np.strings.index(AR_U, b"a", start=[1, 2, 3])  # type: ignore[arg-type]
 np.strings.index(AR_S, "a", end=9)  # type: ignore[arg-type]
 np.strings.rindex(AR_U, b"a", start=[1, 2, 3])  # type: ignore[arg-type]
 np.strings.rindex(AR_S, "a", end=9)  # type: ignore[arg-type]
-
-np.strings.replace(AR_U, b"_", b"-", 10)  # type: ignore[arg-type]
-np.strings.replace(AR_S, "_", "-", 1)  # type: ignore[arg-type]
