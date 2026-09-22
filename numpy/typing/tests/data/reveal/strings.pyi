@@ -1,4 +1,4 @@
-from typing import Literal, assert_type
+from typing import Any, Literal, assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -95,10 +95,19 @@ assert_type(np.strings.rstrip(AR_S, b"_"), npt.NDArray[np.bytes_])
 assert_type(np.strings.rstrip(AR_T), AR_T_alias)
 assert_type(np.strings.rstrip(AR_T, "_"), AR_T_alias)
 
-assert_type(np.strings.strip(AR_U), npt.NDArray[np.str_])
-assert_type(np.strings.strip(AR_S, b"_"), npt.NDArray[np.bytes_])
-assert_type(np.strings.strip(AR_T), AR_T_alias)
-assert_type(np.strings.strip(AR_T, "_"), AR_T_alias)
+assert_type(np.strings.strip(_U_2d), _Array2D[np.str_])
+assert_type(np.strings.strip(_T_2d, "_"), np.ndarray[tuple[int, int], np.dtypes.StringDType])
+assert_type(np.strings.strip(_S_2d, b"_"), _Array2D[np.bytes_])
+assert_type(np.strings.strip("_"), np.str_)
+assert_type(np.strings.strip(b"_", b"_"), np.bytes_)
+assert_type(np.strings.strip(["_"]), _Array1D[np.str_])
+assert_type(np.strings.strip([b"_"], b"_"), _Array1D[np.bytes_])
+assert_type(np.strings.strip([["_"]]), _Array2D[np.str_])
+assert_type(np.strings.strip([[b"_"]], b"_"), _Array2D[np.bytes_])
+assert_type(np.strings.strip(AR_U, AR_U), npt.NDArray[np.str_] | Any)
+assert_type(np.strings.strip(AR_S, [b"_"]), npt.NDArray[np.bytes_] | Any)
+assert_type(np.strings.strip(AR_T, AR_T), AR_T_alias)
+assert_type(np.strings.strip("_", AR_T), AR_TU_alias | Any)
 
 assert_type(np.strings.count(AR_U, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.strings.count(AR_S, [b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
