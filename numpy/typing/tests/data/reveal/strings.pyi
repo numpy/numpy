@@ -419,9 +419,19 @@ assert_type(np.strings.translate(AR_U, ""), npt.NDArray[np.str_])
 assert_type(np.strings.translate(AR_S, ""), npt.NDArray[np.bytes_])
 assert_type(np.strings.translate(AR_T, ""), AR_T_alias)
 
-assert_type(np.strings.slice(AR_U, 1, 5, 2), npt.NDArray[np.str_])
-assert_type(np.strings.slice(AR_S, 1, 5, 2), npt.NDArray[np.bytes_])
-assert_type(np.strings.slice(AR_T, 1, 5, 2), AR_T_alias)
+assert_type(np.strings.slice(_U_2d, 1), _Array2D[np.str_])
+assert_type(np.strings.slice(_S_2d, 1, 3), _Array2D[np.bytes_])
+assert_type(np.strings.slice(_T_2d, 1, 3, 2), np.ndarray[tuple[int, int], np.dtypes.StringDType])
+assert_type(np.strings.slice("_", 1), np.str_)
+assert_type(np.strings.slice(b"_", 1, 3), np.bytes_)
+assert_type(np.strings.slice(["_"], 1), _Array1D[np.str_])
+assert_type(np.strings.slice([b"_"], 1, 3), _Array1D[np.bytes_])
+assert_type(np.strings.slice([["_"]], 1), _Array2D[np.str_])
+assert_type(np.strings.slice([[b"_"]], 1, 3), _Array2D[np.bytes_])
+assert_type(np.strings.slice(AR_U, [1, 2]), npt.NDArray[np.str_] | Any)
+assert_type(np.strings.slice(AR_S, [1, 2]), npt.NDArray[np.bytes_] | Any)
+assert_type(np.strings.slice(AR_T, [1, 2]), AR_T_alias)
+assert_type(np.strings.slice([AR_T], 1), AR_TU_alias | Any)
 
 ###
 

@@ -1099,23 +1099,79 @@ def translate(
 ) -> _StringDTypeOrUnicodeArray: ...
 
 #
-@overload
+@overload  # Nd
+def slice[ShapeT: _Shape, DTypeT: np.dtype[np.character] | np.dtypes.StringDType](
+    a: np.ndarray[ShapeT, DTypeT],
+    start: _IntLike_co | None = None,
+    stop: _IntLike_co | _NoValueType | None = ...,  # = np._NoValue
+    step: _IntLike_co | None = None,
+    /,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # 0d str
+def slice(
+    a: str,
+    start: _IntLike_co | None = None,
+    stop: _IntLike_co | _NoValueType | None = ...,  # = np._NoValue
+    step: _IntLike_co | None = None,
+    /,
+) -> np.str_: ...
+@overload  # 0d bytes
+def slice(
+    a: bytes,
+    start: _IntLike_co | None = None,
+    stop: _IntLike_co | _NoValueType | None = ...,  # = np._NoValue
+    step: _IntLike_co | None = None,
+    /,
+) -> np.bytes_: ...
+@overload  # 1d str
+def slice(
+    a: list[str],
+    start: _IntLike_co | None = None,
+    stop: _IntLike_co | _NoValueType | None = ...,  # = np._NoValue
+    step: _IntLike_co | None = None,
+    /,
+) -> _Array1D[np.str_]: ...
+@overload  # 1d bytes
+def slice(
+    a: list[bytes],
+    start: _IntLike_co | None = None,
+    stop: _IntLike_co | _NoValueType | None = ...,  # = np._NoValue
+    step: _IntLike_co | None = None,
+    /,
+) -> _Array1D[np.bytes_]: ...
+@overload  # 2d str
+def slice(
+    a: Sequence[list[str]],
+    start: _IntLike_co | None = None,
+    stop: _IntLike_co | _NoValueType | None = ...,  # = np._NoValue
+    step: _IntLike_co | None = None,
+    /,
+) -> _Array2D[np.str_]: ...
+@overload  # 2d bytes
+def slice(
+    a: Sequence[list[bytes]],
+    start: _IntLike_co | None = None,
+    stop: _IntLike_co | _NoValueType | None = ...,  # = np._NoValue
+    step: _IntLike_co | None = None,
+    /,
+) -> _Array2D[np.bytes_]: ...
+@overload  # ?d str  (fallback)
 def slice(
     a: U_co,
     start: i_co | None = None,
     stop: i_co | _NoValueType | None = ...,  # = np._NoValue
     step: i_co | None = None,
     /,
-) -> NDArray[np.str_]: ...
-@overload
+) -> NDArray[np.str_] | Any: ...
+@overload  # ?d bytes  (fallback)
 def slice(
     a: S_co,
     start: i_co | None = None,
     stop: i_co | _NoValueType | None = ...,  # = np._NoValue
     step: i_co | None = None,
     /,
-) -> NDArray[np.bytes_]: ...
-@overload
+) -> NDArray[np.bytes_] | Any: ...
+@overload  # ?d vstr
 def slice(
     a: _StringDTypeSupportsArray,
     start: i_co | None = None,
@@ -1123,11 +1179,11 @@ def slice(
     step: i_co | None = None,
     /,
 ) -> _StringDTypeArray: ...
-@overload
+@overload  # ?d vstr | str  (fallback)
 def slice(
     a: T_co,
     start: i_co | None = None,
     stop: i_co | _NoValueType | None = ...,  # = np._NoValue
     step: i_co | None = None,
     /,
-) -> _StringDTypeOrUnicodeArray: ...
+) -> _StringDTypeOrUnicodeArray | Any: ...
