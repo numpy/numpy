@@ -174,6 +174,8 @@ type _ToInt0D = _IntLike_co | np.ndarray[_0D, np.dtype[np.integer | np.bool]]
 type _ToInt1D = _ToArray1D2[np.integer | np.bool, _IntLike_co]
 type _ToInt2D = _ToArray2D2[np.integer | np.bool, _IntLike_co]
 
+type _TopKMode = Literal["largest", "smallest"]
+
 ###
 
 @overload  # Nd, ?d  (workaround)
@@ -387,15 +389,116 @@ def take[ArrayT: np.ndarray](
 ) -> ArrayT: ...
 
 #
-def top_k(
-    a: ArrayLike,
-    k: int,
+@overload  # Nd T
+def top_k[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    k: int | np.integer,
     /,
     *,
-    axis: int = -1,
-    mode: Literal["largest", "smallest"] = "largest",
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
     sorted: bool = True,
-) -> tuple[NDArray[Any], NDArray[intp]]: ...
+) -> tuple[np.ndarray[ShapeT, DTypeT], np.ndarray[ShapeT, np.dtype[np.intp]]]: ...
+@overload  # 1d bool
+def top_k(
+    a: list[bool],
+    k: int | np.integer,
+    /,
+    *,
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[_Array1D[np.bool], _Array1D[np.intp]]: ...
+@overload  # 1d ~int
+def top_k(
+    a: list[int],
+    k: int | np.integer,
+    /,
+    *,
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[_Array1D[np.int_], _Array1D[np.intp]]: ...
+@overload  # 1d ~float
+def top_k(
+    a: list[float],
+    k: int | np.integer,
+    /,
+    *,
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[_Array1D[np.float64], _Array1D[np.intp]]: ...
+@overload  # 1d ~complex
+def top_k(
+    a: list[complex],
+    k: int | np.integer,
+    /,
+    *,
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[_Array1D[np.complex128], _Array1D[np.intp]]: ...
+@overload  # 2d bool
+def top_k(
+    a: Sequence[list[bool]],
+    k: int | np.integer,
+    /,
+    *,
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[_Array2D[np.bool], _Array2D[np.intp]]: ...
+@overload  # 2d ~int
+def top_k(
+    a: Sequence[list[int]],
+    k: int | np.integer,
+    /,
+    *,
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[_Array2D[np.int_], _Array2D[np.intp]]: ...
+@overload  # 2d ~float
+def top_k(
+    a: Sequence[list[float]],
+    k: int | np.integer,
+    /,
+    *,
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[_Array2D[np.float64], _Array2D[np.intp]]: ...
+@overload  # 2d ~complex
+def top_k(
+    a: Sequence[list[complex]],
+    k: int | np.integer,
+    /,
+    *,
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[_Array2D[np.complex128], _Array2D[np.intp]]: ...
+@overload  # ?d T
+def top_k[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    k: int | np.integer,
+    /,
+    *,
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[NDArray[ScalarT], NDArray[np.intp]]: ...
+@overload  # ?d  (fallback)
+def top_k(
+    a: ArrayLike,
+    k: int | np.integer,
+    /,
+    *,
+    axis: SupportsIndex = -1,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[NDArray[Any], NDArray[np.intp]]: ...
 
 # keep in sync with `ma.core.reshape`
 @overload  # shape: index
