@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import overload
 
 import numpy as np
@@ -11,6 +12,10 @@ from numpy._typing import (
     _ArrayLikeInt_co as i_co,
     _ArrayLikeStr_co as U_co,
     _ArrayLikeString_co as T_co,
+    _CharLike_co,
+    _IntLike_co,
+    _NestedSequence,
+    _Shape,
     _SupportsArray,
 )
 
@@ -77,9 +82,17 @@ __all__ = [
     "slice",
 ]
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+
 type _StringDTypeArray = np.ndarray[_AnyShape, np.dtypes.StringDType]
 type _StringDTypeSupportsArray = _SupportsArray[np.dtypes.StringDType]
 type _StringDTypeOrUnicodeArray = NDArray[np.str_] | _StringDTypeArray
+
+type _tuple3[T] = tuple[T, T, T]
+
+###
 
 @overload
 def multiply(a: U_co, i: i_co) -> NDArray[np.str_]: ...
@@ -372,28 +385,92 @@ def title(a: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
 @overload
 def title(a: T_co) -> _StringDTypeOrUnicodeArray: ...
 
-@overload
+#
+@overload  # Nd str
+def replace[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.str_]],
+    old: _CharLike_co,
+    new: _CharLike_co,
+    count: _IntLike_co = -1,
+) -> np.ndarray[ShapeT, np.dtype[np.str_]]: ...
+@overload  # Nd bytes
+def replace[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bytes_]],
+    old: _CharLike_co,
+    new: _CharLike_co,
+    count: _IntLike_co = -1,
+) -> np.ndarray[ShapeT, np.dtype[np.bytes_]]: ...
+@overload  # Nd vstr
+def replace[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtypes.StringDType],
+    old: str,
+    new: str,
+    count: _IntLike_co = -1,
+) -> np.ndarray[ShapeT, np.dtypes.StringDType]: ...
+@overload  # 0d str
+def replace(
+    a: str,
+    old: _CharLike_co,
+    new: _CharLike_co,
+    count: _IntLike_co = -1,
+) -> _Array0D[np.str_]: ...
+@overload  # 0d bytes
+def replace(
+    a: bytes,
+    old: _CharLike_co,
+    new: _CharLike_co,
+    count: _IntLike_co = -1,
+) -> _Array0D[np.bytes_]: ...
+@overload  # 1d str
+def replace(
+    a: list[str],
+    old: _CharLike_co,
+    new: _CharLike_co,
+    count: _IntLike_co = -1,
+) -> _Array1D[np.str_]: ...
+@overload  # 1d bytes
+def replace(
+    a: list[bytes],
+    old: _CharLike_co,
+    new: _CharLike_co,
+    count: _IntLike_co = -1,
+) -> _Array1D[np.bytes_]: ...
+@overload  # 2d str
+def replace(
+    a: Sequence[list[str]],
+    old: _CharLike_co,
+    new: _CharLike_co,
+    count: _IntLike_co = -1,
+) -> _Array2D[np.str_]: ...
+@overload  # 2d bytes
+def replace(
+    a: Sequence[list[bytes]],
+    old: _CharLike_co,
+    new: _CharLike_co,
+    count: _IntLike_co = -1,
+) -> _Array2D[np.bytes_]: ...
+@overload  # ?d str  (fallback)
 def replace(
     a: U_co,
-    old: U_co,
-    new: U_co,
+    old: U_co | bytes | _NestedSequence[bytes],
+    new: U_co | bytes | _NestedSequence[bytes],
     count: i_co = -1,
 ) -> NDArray[np.str_]: ...
-@overload
+@overload  # ?d bytes  (fallback)
 def replace(
     a: S_co,
-    old: S_co,
-    new: S_co,
+    old: S_co | str | _NestedSequence[str],
+    new: S_co | str | _NestedSequence[str],
     count: i_co = -1,
 ) -> NDArray[np.bytes_]: ...
-@overload
+@overload  # ?d vstr
 def replace(
     a: _StringDTypeSupportsArray,
     old: _StringDTypeSupportsArray,
     new: _StringDTypeSupportsArray,
     count: i_co = -1,
 ) -> _StringDTypeArray: ...
-@overload
+@overload  # ?d vstr | str  (fallback)
 def replace(
     a: T_co,
     old: T_co,
@@ -401,8 +478,7 @@ def replace(
     count: i_co = -1,
 ) -> _StringDTypeOrUnicodeArray: ...
 
-type _tuple3[T] = tuple[T, T, T]
-
+#
 @overload
 def partition(a: U_co, sep: U_co) -> _tuple3[NDArray[np.str_]]: ...
 @overload
