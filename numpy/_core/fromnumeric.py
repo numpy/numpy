@@ -3541,11 +3541,18 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                               keepdims, initial, where)
     except np._core._exceptions._UFuncNoLoopError:
         out_min, out_max = out if out is not None else (None, None)
-        # the minimum is written before the maximum is read
-        if out_min is not None and np.may_share_memory(a, out_min):
-            a = np.asanyarray(a, copy=True)
-        initial_min, initial_max = (initial if type(initial) is tuple
+        initial_min, initial_max = (initial if isinstance(initial, tuple)
                                     else (initial, initial))
+        if out_min is not None:
+            # the minimum is written before the maximum's operands are read
+            # check for aliasing and copy if needed
+            if np.may_share_memory(a, out_min):
+                a = np.asanyarray(a, copy=True)
+            if where is not np._NoValue and np.may_share_memory(where, out_min):
+                where = np.asanyarray(where, copy=True)
+            if (initial_max is not np._NoValue
+                    and np.may_share_memory(initial_max, out_min)):
+                initial_max = np.asanyarray(initial_max, copy=True)
         return (min(a, axis=axis, out=out_min, keepdims=keepdims,
                     initial=initial_min, where=where),
                 max(a, axis=axis, out=out_max, keepdims=keepdims,
