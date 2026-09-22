@@ -8,7 +8,7 @@ np.strings.encode(AR_S)  # type: ignore[arg-type]
 np.strings.decode(AR_U)  # type: ignore[arg-type]
 
 np.strings.lstrip(AR_U, b"a")  # type: ignore[arg-type]
-np.strings.lstrip(AR_S, "a")  # type: ignore[arg-type]
+np.strings.lstrip(AR_S, "a")  # type: ignore[type-var]
 np.strings.strip(AR_U, b"a")  # type: ignore[arg-type]
 np.strings.strip(AR_S, "a")  # type: ignore[type-var]
 np.strings.rstrip(AR_U, b"a")  # type: ignore[arg-type]
