@@ -12,7 +12,7 @@ np.strings.lstrip(AR_S, "a")  # type: ignore[arg-type]
 np.strings.strip(AR_U, b"a")  # type: ignore[arg-type]
 np.strings.strip(AR_S, "a")  # type: ignore[type-var]
 np.strings.rstrip(AR_U, b"a")  # type: ignore[arg-type]
-np.strings.rstrip(AR_S, "a")  # type: ignore[arg-type]
+np.strings.rstrip(AR_S, "a")  # type: ignore[type-var]
 
 np.strings.partition(AR_U, b"a")  # type: ignore[arg-type]
 np.strings.partition(AR_S, "a")  # type: ignore[arg-type]
