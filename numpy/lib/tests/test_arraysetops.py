@@ -1271,7 +1271,7 @@ class TestUnique:
 
     def test_unique_axis_float_raises_typeerror(self):
         arr1d = np.array([np.nan, 0, 0, np.nan])
-        with pytest.raises(TypeError, match="integer argument expected"):
+        with pytest.raises(TypeError, match="cannot be interpreted as an integer"):
             np.unique(arr1d, axis=0.0, equal_nan=False)
 
     @pytest.mark.parametrize('dt', [np.dtype('F'), np.dtype('D')])
