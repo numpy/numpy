@@ -7,9 +7,21 @@ from numpy._typing import _AnyShape
 type AR_T_alias = np.ndarray[_AnyShape, np.dtypes.StringDType]
 type AR_TU_alias = AR_T_alias | npt.NDArray[np.str_]
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+
+type _tuple3[T] = tuple[T, T, T]
+
 AR_U: npt.NDArray[np.str_]
 AR_S: npt.NDArray[np.bytes_]
 AR_T: AR_T_alias
+
+_U_2d: _Array2D[np.str_]
+_S_2d: _Array2D[np.bytes_]
+_T_2d: np.ndarray[tuple[int, int], np.dtypes.StringDType]
+
+###
 
 assert_type(np.strings.equal(AR_U, AR_U), npt.NDArray[np.bool])
 assert_type(np.strings.equal(AR_S, AR_S), npt.NDArray[np.bool])
@@ -93,8 +105,6 @@ assert_type(np.strings.count(AR_S, [b"a", b"b", b"c"], end=9), npt.NDArray[np.in
 assert_type(np.strings.count(AR_T, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.strings.count(AR_T, ["a", "b", "c"], end=9), npt.NDArray[np.int_])
 
-type _tuple3[T] = tuple[T, T, T]
-
 assert_type(np.strings.partition(AR_U, "\n"), _tuple3[npt.NDArray[np.str_]])
 assert_type(np.strings.partition(AR_S, [b"a", b"b", b"c"]), _tuple3[npt.NDArray[np.bytes_]])
 assert_type(np.strings.partition(AR_T, "\n"), _tuple3[AR_TU_alias])
@@ -103,9 +113,22 @@ assert_type(np.strings.rpartition(AR_U, "\n"), _tuple3[npt.NDArray[np.str_]])
 assert_type(np.strings.rpartition(AR_S, [b"a", b"b", b"c"]), _tuple3[npt.NDArray[np.bytes_]])
 assert_type(np.strings.rpartition(AR_T, "\n"), _tuple3[AR_TU_alias])
 
-assert_type(np.strings.replace(AR_U, "_", "-"), npt.NDArray[np.str_])
+assert_type(np.strings.replace(_U_2d, "_", "-"), _Array2D[np.str_])
+assert_type(np.strings.replace(_S_2d, b"_", b"-"), _Array2D[np.bytes_])
+assert_type(np.strings.replace(AR_S, "_", "-", 1), npt.NDArray[np.bytes_])
+assert_type(np.strings.replace(_T_2d, "_", "_"), np.ndarray[tuple[int, int], np.dtypes.StringDType])
+assert_type(np.strings.replace("_", "_", "-"), _Array0D[np.str_])
+assert_type(np.strings.replace("_", b"_", b"-"), _Array0D[np.str_])
+assert_type(np.strings.replace(b"_", b"_", b"-"), _Array0D[np.bytes_])
+assert_type(np.strings.replace(["_"], "_", "-"), _Array1D[np.str_])
+assert_type(np.strings.replace([b"_"], b"_", b"-"), _Array1D[np.bytes_])
+assert_type(np.strings.replace([["_"]], "_", "-"), _Array2D[np.str_])
+assert_type(np.strings.replace([[b"_"]], b"_", b"-"), _Array2D[np.bytes_])
+assert_type(np.strings.replace(AR_U, AR_U, "-"), npt.NDArray[np.str_])
+assert_type(np.strings.replace(AR_U, [b"_"], "-"), npt.NDArray[np.str_])
 assert_type(np.strings.replace(AR_S, [b"_", b""], [b"a", b"b"]), npt.NDArray[np.bytes_])
-assert_type(np.strings.replace(AR_T, "_", "_"), AR_TU_alias)
+assert_type(np.strings.replace(AR_T, AR_T, AR_T), AR_T_alias)
+assert_type(np.strings.replace(AR_T, "_", AR_T), AR_TU_alias)
 
 assert_type(np.strings.lower(AR_U), npt.NDArray[np.str_])
 assert_type(np.strings.lower(AR_S), npt.NDArray[np.bytes_])
