@@ -459,7 +459,7 @@ def endswith(
     end: i_co | None = None,
 ) -> NDArray[np.bool] | Any: ...
 
-#
+# keep in sync with `encode`
 @overload  # Nd
 def decode[ShapeT: _Shape](
     a: np.ndarray[ShapeT, np.dtype[np.bytes_]],
@@ -475,12 +475,21 @@ def decode(a: Sequence[list[bytes]], encoding: str | None = None, errors: str | 
 @overload  # ?d  (fallback)
 def decode(a: S_co, encoding: str | None = None, errors: str | None = None) -> NDArray[np.str_]: ...
 
-#
-def encode(
-    a: U_co | T_co,
+# keep in sync with `decode`
+@overload  # Nd
+def encode[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.str_] | np.dtypes.StringDType],
     encoding: str | None = None,
     errors: str | None = None,
-) -> NDArray[np.bytes_]: ...
+) -> np.ndarray[ShapeT, np.dtype[np.bytes_]]: ...
+@overload  # 0d
+def encode(a: str, encoding: str | None = None, errors: str | None = None) -> _Array0D[np.bytes_]: ...
+@overload  # 1d
+def encode(a: list[str], encoding: str | None = None, errors: str | None = None) -> _Array1D[np.bytes_]: ...
+@overload  # 2d
+def encode(a: Sequence[list[str]], encoding: str | None = None, errors: str | None = None) -> _Array2D[np.bytes_]: ...
+@overload  # ?d  (fallback)
+def encode(a: U_co | T_co, encoding: str | None = None, errors: str | None = None) -> NDArray[np.bytes_]: ...
 
 @overload
 def expandtabs(a: U_co, tabsize: i_co = 8) -> NDArray[np.str_]: ...
