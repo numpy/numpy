@@ -460,11 +460,22 @@ def endswith(
 ) -> NDArray[np.bool] | Any: ...
 
 #
-def decode(
-    a: S_co,
+@overload  # Nd
+def decode[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bytes_]],
     encoding: str | None = None,
     errors: str | None = None,
-) -> NDArray[np.str_]: ...
+) -> np.ndarray[ShapeT, np.dtype[np.str_]]: ...
+@overload  # 0d
+def decode(a: bytes, encoding: str | None = None, errors: str | None = None) -> _Array0D[np.str_]: ...
+@overload  # 1d
+def decode(a: list[bytes], encoding: str | None = None, errors: str | None = None) -> _Array1D[np.str_]: ...
+@overload  # 2d
+def decode(a: Sequence[list[bytes]], encoding: str | None = None, errors: str | None = None) -> _Array2D[np.str_]: ...
+@overload  # ?d  (fallback)
+def decode(a: S_co, encoding: str | None = None, errors: str | None = None) -> NDArray[np.str_]: ...
+
+#
 def encode(
     a: U_co | T_co,
     encoding: str | None = None,
