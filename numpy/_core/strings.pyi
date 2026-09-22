@@ -358,28 +358,56 @@ def count(
     end: i_co | None = None,
 ) -> NDArray[np.int_] | Any: ...
 
-#
-@overload
+# keep in sync with `endswith`
+@overload  # Nd str | vstr
+def startswith[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.str_] | np.dtypes.StringDType],
+    prefix: str,
+    start: _IntLike_co = 0,
+    end: _IntLike_co | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+@overload  # Nd bytes
+def startswith[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.bytes_]],
+    prefix: bytes,
+    start: _IntLike_co = 0,
+    end: _IntLike_co | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
+@overload  # 0d
+def startswith[T: (bytes, str)](
+    a: T,
+    prefix: T,
+    start: _IntLike_co = 0,
+    end: _IntLike_co | None = None,
+) -> np.bool: ...
+@overload  # 1d
+def startswith[T: (bytes, str)](
+    a: list[T],
+    prefix: T,
+    start: _IntLike_co = 0,
+    end: _IntLike_co | None = None,
+) -> _Array1D[np.bool]: ...
+@overload  # 2d
+def startswith[T: (bytes, str)](
+    a: Sequence[list[T]],
+    prefix: T,
+    start: _IntLike_co = 0,
+    end: _IntLike_co | None = None,
+) -> _Array2D[np.bool]: ...
+@overload  # ?d str | vstr  (fallback)
 def startswith(
-    a: U_co,
-    prefix: U_co,
+    a: U_co | T_co,
+    prefix: U_co | T_co,
     start: i_co = 0,
     end: i_co | None = None,
-) -> NDArray[np.bool]: ...
-@overload
+) -> NDArray[np.bool] | Any: ...
+@overload  # ?d bytes  (fallback)
 def startswith(
     a: S_co,
     prefix: S_co,
     start: i_co = 0,
     end: i_co | None = None,
-) -> NDArray[np.bool]: ...
-@overload
-def startswith(
-    a: T_co,
-    prefix: T_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.bool]: ...
+) -> NDArray[np.bool] | Any: ...
 
 @overload
 def endswith(
