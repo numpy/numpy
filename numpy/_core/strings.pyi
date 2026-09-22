@@ -1073,30 +1073,32 @@ def rpartition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> 
 def rpartition(a: T_co, sep: T_co) -> _tuple3[_StringDTypeOrUnicodeArray]: ...
 
 #
-@overload
-def translate(
-    a: U_co,
+@overload  # Nd
+def translate[ShapeT: _Shape, DTypeT: np.dtype[np.character] | np.dtypes.StringDType](
+    a: np.ndarray[ShapeT, DTypeT],
     table: str,
     deletechars: str | None = None,
-) -> NDArray[np.str_]: ...
-@overload
-def translate(
-    a: S_co,
-    table: str,
-    deletechars: str | None = None,
-) -> NDArray[np.bytes_]: ...
-@overload
-def translate(
-    a: _StringDTypeSupportsArray,
-    table: str,
-    deletechars: str | None = None,
-) -> _StringDTypeArray: ...
-@overload
-def translate(
-    a: T_co,
-    table: str,
-    deletechars: str | None = None,
-) -> _StringDTypeOrUnicodeArray: ...
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # 0d str
+def translate(a: str, table: str, deletechars: str | None = None) -> _Array0D[np.str_]: ...
+@overload  # 0d bytes
+def translate(a: bytes, table: str, deletechars: str | None = None) -> _Array0D[np.bytes_]: ...
+@overload  # 1d str
+def translate(a: list[str], table: str, deletechars: str | None = None) -> _Array1D[np.str_]: ...
+@overload  # 1d bytes
+def translate(a: list[bytes], table: str, deletechars: str | None = None) -> _Array1D[np.bytes_]: ...
+@overload  # 2d str
+def translate(a: Sequence[list[str]], table: str, deletechars: str | None = None) -> _Array2D[np.str_]: ...
+@overload  # 2d bytes
+def translate(a: Sequence[list[bytes]], table: str, deletechars: str | None = None) -> _Array2D[np.bytes_]: ...
+@overload  # ?d str  (fallback)
+def translate(a: U_co, table: str, deletechars: str | None = None) -> NDArray[np.str_]: ...
+@overload  # ?d bytes  (fallback)
+def translate(a: S_co, table: str, deletechars: str | None = None) -> NDArray[np.bytes_]: ...
+@overload  # ?d vstr
+def translate(a: _StringDTypeSupportsArray, table: str, deletechars: str | None = None) -> _StringDTypeArray: ...
+@overload  # ?d vstr | str  (fallback)
+def translate(a: T_co, table: str, deletechars: str | None = None) -> _StringDTypeOrUnicodeArray: ...
 
 #
 @overload  # Nd
