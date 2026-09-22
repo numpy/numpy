@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import Any, Never, SupportsIndex, overload
 
 import numpy as np
-from numpy import _CastingKind
+from numpy import _CastingKind, _ScalarNotObject
 from numpy._typing import ArrayLike, DTypeLike, NDArray, _ArrayLike, _DTypeLike
 
 __all__ = [
@@ -527,20 +527,70 @@ def stack[OutT: np.ndarray](
     casting: _CastingKind = "same_kind",
 ) -> OutT: ...
 
-@overload
-def unstack[ScalarT: np.generic](
-    array: _ArrayLike[ScalarT],
+#
+@overload  # ?d  (workaround)
+def unstack[DTypeT: np.dtype](
+    array: np.ndarray[tuple[Never, Never, Never, Never], DTypeT],
     /,
     *,
     axis: int = 0,
-) -> tuple[NDArray[ScalarT], ...]: ...
-@overload
+) -> tuple[np.ndarray[tuple[Any, ...], DTypeT], ...]: ...
+@overload  # 1d T \ object_
+def unstack[ScalarT: _ScalarNotObject](
+    array: _Array1D[ScalarT],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[ScalarT, ...]: ...
+@overload  # 1d object_[T]
+def unstack[ItemT](
+    array: _Array1D[np.object_[ItemT]],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[ItemT, ...]: ...
+@overload  # 1d StringDType
 def unstack(
-    array: ArrayLike,
+    array: np.ndarray[tuple[int], np.dtypes.StringDType],
     /,
     *,
     axis: int = 0,
-) -> tuple[NDArray[Any], ...]: ...
+) -> tuple[str, ...]: ...
+@overload  # 2d
+def unstack[DTypeT: np.dtype](
+    array: np.ndarray[tuple[int, int], DTypeT],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[np.ndarray[tuple[int], DTypeT], ...]: ...
+@overload  # 3d
+def unstack[DTypeT: np.dtype](
+    array: np.ndarray[tuple[int, int, int], DTypeT],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[np.ndarray[tuple[int, int], DTypeT], ...]: ...
+@overload  # 4d
+def unstack[DTypeT: np.dtype](
+    array: np.ndarray[tuple[int, int, int, int], DTypeT],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[np.ndarray[tuple[int, int, int], DTypeT], ...]: ...
+@overload  # >=5d
+def unstack[DTypeT: np.dtype](
+    array: np.ndarray[tuple[int, int, int, int, int, *tuple[int, ...]], DTypeT],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[np.ndarray[tuple[Any, ...], DTypeT], ...]: ...
+@overload  # ?d  (fallback)
+def unstack(
+    array: np.ndarray[_AtLeast1D, Any],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[Any, ...]: ...
 
 #
 @overload  # known array
