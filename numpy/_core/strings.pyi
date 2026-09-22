@@ -14,11 +14,11 @@ from numpy._typing import (
     _CharLike_co,
     _IntLike_co,
     _NestedSequence,
+    _ScalarLike_co,
     _Shape,
     _SupportsArray,
 )
 
-from .defchararray import mod
 from .umath import (
     isalnum,
     isalpha,
@@ -123,6 +123,48 @@ def multiply(a: S_co, i: i_co) -> NDArray[np.bytes_]: ...
 def multiply(a: _StringDTypeSupportsArray, i: i_co) -> _StringDTypeArray: ...
 @overload  # ?d vstr | str  (fallback)
 def multiply(a: T_co, i: i_co) -> _StringDTypeOrUnicodeArray: ...
+
+#
+@overload  # Nd str | bytes
+def mod[ShapeT: _Shape, CharT: np.character](
+    a: np.ndarray[ShapeT, np.dtype[CharT]],
+    values: _ScalarLike_co,
+) -> np.ndarray[ShapeT, np.dtype[CharT]]: ...
+@overload  # Nd vstr
+def mod[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtypes.StringDType],
+    values: _ScalarLike_co,
+) -> np.ndarray[ShapeT, np.dtypes.StringDType]: ...
+@overload  # 0d str, Nd
+def mod[ShapeT: _Shape](
+    a: str,
+    values: np.ndarray[ShapeT, Any],
+) -> np.ndarray[ShapeT, np.dtype[np.str_]]: ...
+@overload  # 0d bytes, Nd
+def mod[ShapeT: _Shape](
+    a: bytes,
+    values: np.ndarray[ShapeT, Any],
+) -> np.ndarray[ShapeT, np.dtype[np.bytes_]]: ...
+@overload  # 0d str
+def mod(a: str, values: _ScalarLike_co) -> _Array0D[np.str_]: ...
+@overload  # 0d bytes
+def mod(a: bytes, values: _ScalarLike_co) -> _Array0D[np.bytes_]: ...
+@overload  # 1d str
+def mod(a: list[str], values: _ScalarLike_co) -> _Array1D[np.str_]: ...
+@overload  # 1d bytes
+def mod(a: list[bytes], values: _ScalarLike_co) -> _Array1D[np.bytes_]: ...
+@overload  # 2d str
+def mod(a: Sequence[list[str]], values: _ScalarLike_co) -> _Array2D[np.str_]: ...
+@overload  # 2d bytes
+def mod(a: Sequence[list[bytes]], values: _ScalarLike_co) -> _Array2D[np.bytes_]: ...
+@overload  # ?d str  (fallback)
+def mod(a: U_co, values: Any) -> NDArray[np.str_]: ...
+@overload  # ?d bytes  (fallback)
+def mod(a: S_co, values: Any) -> NDArray[np.bytes_]: ...
+@overload  # ?d vstr
+def mod(a: _StringDTypeSupportsArray, values: Any) -> _StringDTypeArray: ...
+@overload  # ?d vstr | str  (fallback)
+def mod(a: T_co, values: Any) -> _StringDTypeOrUnicodeArray: ...
 
 #
 @overload  # Nd str | vstr
