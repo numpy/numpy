@@ -20,7 +20,7 @@ np.unwrap(AR_m)  # type: ignore[type-var]
 np.unwrap(AR_c16)  # type: ignore[type-var]
 np.trim_zeros(1)  # type: ignore[call-overload]
 np.place(1, [True], 1.5)  # type: ignore[arg-type]
-np.vectorize(1)  # type: ignore[arg-type]
+np.vectorize(1)  # type: ignore[call-overload]
 np.place(AR_f8, slice(None), 5)  # type: ignore[arg-type]
 
 np.piecewise(AR_f8, True, [fn_ar_i], "wrong")  # type: ignore[call-overload]
