@@ -5,3 +5,8 @@ truncated toward zero because ``floor_divide`` reused the true-division
 loop. It now floors, matching ``int64 // int``, ``timedelta64 // timedelta64``,
 and Python's ``datetime.timedelta // int``. True division
 (``timedelta64 / int``) is unchanged.
+
+As part of using a dedicated floor loop, dividing a ``timedelta64`` by an
+integer ``0`` (including a non-scalar / array divisor containing zeros) now
+sets the floating-point divide-by-zero status and returns ``NaT``, consistent
+with scalar ``timedelta64 // 0``.
