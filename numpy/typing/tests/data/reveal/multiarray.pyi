@@ -60,6 +60,7 @@ f8: np.float64
 
 def func11(a: int) -> bool: ...
 def func21(a: int, b: int) -> int: ...
+def func31(a: int, b: int, c: int) -> str: ...
 def func12(a: int) -> tuple[complex, bool]: ...
 
 assert_type(next(b_f8), tuple[Any, ...])
@@ -342,6 +343,20 @@ assert_type(np.frompyfunc(func21, n2, n1, identity=0).nargs, Literal[3])
 assert_type(np.frompyfunc(func21, n2, n1, identity=0).ntypes, Literal[1])
 assert_type(np.frompyfunc(func21, n2, n1, identity=0).identity, int)
 assert_type(np.frompyfunc(func21, n2, n1, identity=0).signature, None)
+
+assert_type(np.frompyfunc(func31, n3, n1)(AR_f4_2d, AR_f4_2d, f8), _Array2D[np.object_[str]])
+assert_type(np.frompyfunc(func31, n3, n1)(f8, AR_f4_2d, f8), _Array2D[np.object_[str]])
+assert_type(np.frompyfunc(func31, n3, n1)(f8, f8, AR_f4_2d), _Array2D[np.object_[str]])
+assert_type(np.frompyfunc(func31, n3, n1)(f8, f8, f8), str)
+assert_type(np.frompyfunc(func31, n3, n1)(f8, f8, f8, out=...), np.ndarray[tuple[()], np.dtype[np.object_[str]]])
+assert_type(np.frompyfunc(func31, n3, n1)([f8], [f8], f8), _Array1D[np.object_[str]])
+assert_type(np.frompyfunc(func31, n3, n1)(f8, [f8], f8), _Array1D[np.object_[str]])
+assert_type(np.frompyfunc(func31, n3, n1)(f8, f8, [f8]), _Array1D[np.object_[str]])
+assert_type(np.frompyfunc(func31, n3, n1)([[f8]], [f8], f8), _Array2D[np.object_[str]])
+assert_type(np.frompyfunc(func31, n3, n1)([f8], [[f8]], f8), _Array2D[np.object_[str]])
+assert_type(np.frompyfunc(func31, n3, n1)(f8, [f8], [[f8]]), _Array2D[np.object_[str]])
+assert_type(np.frompyfunc(func31, n3, n1)(f8, f8, f8, AR_f4_2d), npt.NDArray[np.object_[str]] | Any)
+assert_type(np.frompyfunc(func31, n3, n1)(f8, f8, f8, out=AR_f8), npt.NDArray[np.float64])
 
 assert_type(np.frompyfunc(func12, n1, n2).nin, Literal[1])
 assert_type(np.frompyfunc(func12, n1, n2).nout, Literal[2])

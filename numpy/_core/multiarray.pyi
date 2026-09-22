@@ -6,6 +6,7 @@ from types import EllipsisType, TracebackType
 from typing import (
     Any,
     ClassVar,
+    Concatenate,
     Final,
     Generic,
     Literal as L,
@@ -2770,21 +2771,21 @@ def frompyfunc[ReturnT, IdentityT](
     identity: IdentityT,
 ) -> _PyFunc_Nin2_Nout1[ReturnT, IdentityT]: ...
 @overload
-def frompyfunc[ReturnT, NInT: int](
-    func: Callable[..., ReturnT], /,
-    nin: NInT,
+def frompyfunc[ReturnT](
+    func: Callable[Concatenate[Any, Any, Any, ...], ReturnT] | Callable[[Any, Any, Any], ReturnT], /,
+    nin: int,
     nout: L[1],
     *,
     identity: None = None,
-) -> _PyFunc_Nin3P_Nout1[ReturnT, None, NInT]: ...
+) -> _PyFunc_Nin3P_Nout1[ReturnT, None]: ...
 @overload
-def frompyfunc[ReturnT, NInT: int, IdentityT](
-    func: Callable[..., ReturnT], /,
-    nin: NInT,
+def frompyfunc[ReturnT, IdentityT](
+    func: Callable[Concatenate[Any, Any, Any, ...], ReturnT] | Callable[[Any, Any, Any], ReturnT], /,
+    nin: int,
     nout: L[1],
     *,
     identity: IdentityT,
-) -> _PyFunc_Nin3P_Nout1[ReturnT, IdentityT, NInT]: ...
+) -> _PyFunc_Nin3P_Nout1[ReturnT, IdentityT]: ...
 @overload
 def frompyfunc[ReturnT, NInT: int, NOutT: int](
     func: Callable[..., _2PTuple[ReturnT]], /,
