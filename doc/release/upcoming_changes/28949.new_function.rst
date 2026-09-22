@@ -18,5 +18,3 @@ Examples
     42
 
 Attempting to truncate infinite or NaN values for floating point types will now raise the same errors as Python floats.
-
-.. versionadded:: 2.6
