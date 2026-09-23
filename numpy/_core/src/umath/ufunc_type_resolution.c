@@ -45,7 +45,6 @@
 #include "common.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
-#include "dispatching.h"
 
 #include "mem_overlap.h"
 #if defined(HAVE_CBLAS)
@@ -2364,47 +2363,4 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
     }
 
     return 0;
-}
-
-/*
- * Reports no loop instead of reaching a builtin loop through a safe cast,
- * which would silently change the result dtype.
- */
-NPY_NO_EXPORT int
-PyUFunc_MinimumMaximumTypeResolver(
-        PyUFuncObject *ufunc,
-        NPY_CASTING casting,
-        PyArrayObject **operands,
-        PyObject *type_tup,
-        PyArray_Descr **out_dtypes)
-{
-    /* Unsafe casting marks the promotion path, which runs after promoters. */
-    if (casting == NPY_UNSAFE_CASTING && type_tup == NULL
-            && operands[0] != NULL) {
-        PyArray_Descr *descr = PyArray_DESCR(operands[0]);
-        int uniform = 1;
-        for (int iop = 1; iop < ufunc->nin; iop++) {
-            PyArrayObject *op = operands[iop];
-            if (op == NULL || NPY_DTYPE(descr) != NPY_DTYPE(PyArray_DESCR(op))) {
-                uniform = 0;
-                break;
-            }
-        }
-        if (uniform) {
-            PyObject *info = get_info_no_cast(
-                    ufunc, NPY_DTYPE(descr), ufunc->nin + ufunc->nout);
-            if (info == NULL) {
-                return -1;
-            }
-            if (info == Py_None) {
-                PyObject *dtypes[NPY_MAXARGS] = {NULL};
-                for (int iop = 0; iop < ufunc->nin; iop++) {
-                    dtypes[iop] = (PyObject *)PyArray_DESCR(operands[iop]);
-                }
-                return raise_no_loop_found_error(ufunc, dtypes);
-            }
-        }
-    }
-    return PyUFunc_SimpleUniformOperationTypeResolver(
-            ufunc, casting, operands, type_tup, out_dtypes);
 }
