@@ -51,6 +51,7 @@ __all__ = [
     "DateTime64DType",
     "TimeDelta64DType",
     "StringDType",
+    "ByteStringDType",
 ]
 
 # Type parameters
@@ -621,6 +622,52 @@ class StringDType(  # type: ignore[misc]
     def type(self) -> py_type[py_str]: ...
     @property
     def str(self) -> L["|T8", "|T16"]: ...
+
+    #
+    @property
+    def hasobject(self) -> L[True]: ...
+    @property
+    def isalignedstruct(self) -> L[False]: ...
+    @property
+    def isnative(self) -> L[True]: ...
+
+@final
+class ByteStringDType(  # type: ignore[misc]
+    _TypeCodes[L["R"], L["R"], L[2057]],
+    _NativeOrder,
+    _NBit[L[8], L[16]],
+    np.dtype[np.vbytes],  # pyrefly: ignore[invalid-inheritance]
+    Generic[_NaObjectT_co],
+):
+    @property
+    def na_object(self) -> _NaObjectT_co: ...
+
+    #
+    @overload
+    def __new__(cls, /) -> Self: ...
+    @overload
+    def __new__(cls, /, *, na_object: _NaObjectT_co) -> Self: ...
+
+    #
+    def __getitem__(self, key: Never, /) -> NoReturn: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @property
+    def fields(self) -> None: ...
+    @property
+    def base(self) -> Self: ...
+    @property
+    def ndim(self) -> L[0]: ...
+    @property
+    def shape(self) -> tuple[()]: ...
+
+    #
+    @property
+    def name(self) -> L["ByteStringDType64", "ByteStringDType128"]: ...
+    @property
+    def subdtype(self) -> None: ...
+    @property
+    def type(self) -> py_type[np.vbytes]: ...
+    @property
+    def str(self) -> L["|R8", "|R16"]: ...
 
     #
     @property

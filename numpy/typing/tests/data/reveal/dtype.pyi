@@ -5,7 +5,7 @@ from fractions import Fraction
 from typing import Any, Literal, LiteralString, assert_type
 
 import numpy as np
-from numpy.dtypes import StringDType
+from numpy.dtypes import ByteStringDType, StringDType
 
 # a combination of likely `object` dtype-like candidates (no `_co`)
 type _PyObjectLike = Decimal | Fraction | dt.datetime | dt.timedelta
@@ -28,6 +28,7 @@ cs_generic: Literal["H", "U", "h", "|M8[Y]", "?"]
 
 dt_inexact: np.dtype[np.inexact]
 dt_string: StringDType
+dt_bytestring: ByteStringDType
 
 assert_type(np.dtype(np.float64), np.dtype[np.float64])
 assert_type(np.dtype(np.float64, metadata={"test": "test"}), np.dtype[np.float64])
@@ -130,6 +131,15 @@ assert_type(np.dtype(dt_string), StringDType)
 assert_type(np.dtype("T"), StringDType)
 assert_type(np.dtype("=T"), StringDType)
 assert_type(np.dtype("|T"), StringDType)
+
+# ByteStringDType
+assert_type(np.dtype(dt_bytestring), np.dtype[np.vbytes])
+assert_type(np.dtype("R"), ByteStringDType)
+assert_type(np.dtype("=R"), ByteStringDType)
+assert_type(np.dtype("|R"), ByteStringDType)
+assert_type(np.dtype("vbytes"), ByteStringDType)
+assert_type(np.dtype(np.vbytes), np.dtype[np.vbytes])
+assert_type(dt_bytestring.type, type[np.vbytes])
 
 # Methods and attributes
 assert_type(dtype_U.base, np.dtype)
