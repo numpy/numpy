@@ -926,13 +926,18 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
     scalar_comparisons_are_faster = len(ar2) < 10 * len(ar1) ** 0.145
     result = None
+    # Remove non-NaN missing values before sorting. Non-string sentinels
+    # cannot be ordered with strings. String sentinels are sortable, but
+    # filtering is faster when missing values are common and adds only a
+    # small overhead otherwise.
     if (not scalar_comparisons_are_faster and string_dtype is not None and
             string_dtype._has_na and not string_dtype._has_nan_na):
         na = np.asarray(string_dtype.na_object, dtype=string_dtype)
         missing1, missing2 = ar1 == na, ar2 == na
         has_missing2 = missing2.any()
         if missing1.any():
-            result = np.full(ar1.shape, bool(has_missing2) != invert)
+            result = np.full(
+                ar1.shape, has_missing2 != invert, dtype=bool)
             valid1 = ~missing1
             ar1 = ar1[valid1]
         if has_missing2:

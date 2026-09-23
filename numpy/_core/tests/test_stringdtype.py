@@ -1246,7 +1246,7 @@ def test_searchsorted_gh31533():
 
 
 @pytest.mark.parametrize("na_object, matches", [
-    (None, True), (np.nan, False), (pd_NA, False),
+    (None, True), (np.nan, False), (pd_NA, False), ("NA", True),
 ])
 def test_isin_missing(na_object, matches):
     dtype = StringDType(na_object=na_object)
@@ -1258,6 +1258,15 @@ def test_isin_missing(na_object, matches):
     assert_array_equal(np.isin(a, b[:2]), expected)
     missing = np.array([na_object] * 40, dtype=dtype)
     assert_array_equal(np.isin(missing, missing), [matches] * 40)
+
+    no_missing = np.array(["b", "c"] * 20, dtype=dtype)
+    expected = np.array([False, True, False])
+    assert_array_equal(np.isin(a, no_missing), expected)
+    assert_array_equal(np.isin(a, no_missing, invert=True), ~expected)
+
+    no_missing = np.array(["a", "b", "c"], dtype=dtype)
+    assert_array_equal(np.isin(no_missing, b), expected)
+    assert_array_equal(np.isin(no_missing, b, invert=True), ~expected)
 
 
 @pytest.mark.parametrize(
