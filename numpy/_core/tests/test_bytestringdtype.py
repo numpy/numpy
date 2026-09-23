@@ -12,6 +12,7 @@ import pytest
 import numpy as np
 from numpy._core.tests.test_stringdtype import INVALID_UTF8
 from numpy.dtypes import ByteStringDType, StringDType
+from numpy.testing import assert_array_equal
 
 
 def R(*values):
@@ -236,10 +237,6 @@ class TestCasts:
         assert fixed.tolist() == [b"ab", b"\xff\xfe", b""]
         assert fixed.astype(dtype).tolist() == [b"ab", b"\xff\xfe", b""]
 
-    def test_fixed_width_truncates(self, dtype):
-        arr = np.array([b"abcdef"], dtype=dtype)
-        assert arr.astype("S3").tolist() == [b"abc"]
-
     @pytest.mark.parametrize("bad", INVALID_UTF8)
     def test_fixed_width_source_skips_utf8_validation(self, dtype, bad):
         # the same input is rejected by the S -> StringDType cast
@@ -310,6 +307,71 @@ class TestCasts:
             np.dtype((dtype, 2))
         # (dtype, ()) is equivalent to the dtype itself and remains allowed
         assert np.dtype((dtype, ())) == dtype
+
+
+class TestUnsizedFixedWidthCasts:
+    """Converting to an unsized "S" or "V" dtype infers the width, counted
+    in bytes, from the values in the array being converted."""
+
+    @pytest.mark.parametrize(
+        "convert",
+        [pytest.param(lambda arr, req: arr.astype(req), id="astype"),
+         pytest.param(lambda arr, req: np.array(arr, dtype=req),
+                      id="np.array")])
+    @pytest.mark.parametrize("kind", ["S", "V"])
+    @pytest.mark.parametrize(
+        "values,width",
+        [
+            ([b"this", b"is", b"an", b"array"], 5),
+            ([b"a" * 100, b"", b"b"], 100),
+            # embedded and trailing NULs count as data
+            ([b"x\0", b"y\0\0z", b""], 4),
+            ([b"\xff\xfe", b"\x00" * 3], 3),
+            # empty arrays and all-empty entries produce width 1
+            ([], 1),
+            ([b"", b"", b""], 1),
+        ],
+    )
+    def test_infer_width(self, convert, kind, values, width, dtype):
+        arr = np.array(values, dtype=dtype)
+        res = convert(arr, kind)
+        assert res.dtype == np.dtype(f"{kind}{width}")
+        assert_array_equal(res, np.array(values, dtype=f"{kind}{width}"))
+
+    @pytest.mark.parametrize(
+        "na,width",
+        [
+            (None, 4),           # missing entries count as the repr "None"
+            (np.nan, 3),
+            (b"", 1),
+            (b"miss\0", 5),
+        ],
+    )
+    def test_missing_values(self, na, width):
+        dt = ByteStringDType(na_object=na)
+        arr = np.array([b"ab", na], dtype=dt)
+        assert arr.astype("S").dtype == np.dtype(f"S{max(width, 2)}")
+        all_null = np.array([na, na], dtype=dt)
+        assert all_null.astype("S").dtype == np.dtype(f"S{width}")
+
+    def test_explicit_width_still_truncates(self, dtype):
+        arr = np.array([b"abcdef"], dtype=dtype)
+        assert_array_equal(arr.astype("S3"), np.array([b"abc"], dtype="S3"))
+        assert_array_equal(arr.astype("V3"), np.array([b"abc"], dtype="V3"))
+
+    def test_descriptor_only_resolution_still_fails(self, dtype):
+        # functions that adapt descriptors without inspecting array values
+        # cannot infer a width
+        arr = np.array([b"abc"], dtype=dtype)
+        with pytest.raises(TypeError, match="cast"):
+            np.concatenate([arr, arr], dtype="S")
+
+    @pytest.mark.parametrize("unicode_dtype", ["U", "U3"])
+    def test_unicode_target_fails(self, unicode_dtype, dtype):
+        # no R to U cast, sized or not; the width discovery must not run
+        arr = np.array([b"\xff\xfe"], dtype=dtype)
+        with pytest.raises(TypeError, match="cast"):
+            arr.astype(unicode_dtype)
 
 
 class TestNAObject:

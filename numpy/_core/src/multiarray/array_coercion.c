@@ -850,8 +850,12 @@ find_descriptor_from_array(
         }
         Py_DECREF(iter);
     }
-    else if (NPY_UNLIKELY(PyArray_TYPE(arr) == NPY_VSTRING &&
-                          PyTypeNum_ISFLEXIBLE(DType->type_num))) {
+    else if (NPY_UNLIKELY(
+                     (PyArray_TYPE(arr) == NPY_VSTRING &&
+                      PyTypeNum_ISFLEXIBLE(DType->type_num)) ||
+                     (PyArray_TYPE(arr) == NPY_VBYTES &&
+                      (DType->type_num == NPY_STRING ||
+                       DType->type_num == NPY_VOID)))) {
         /*
          * Casting a StringDType array to a fixed-width string DType with no
          * size means finding the width of the widest entry first, so that
