@@ -270,22 +270,25 @@ class TestStringArgumentCoercion(_DeprecationTestCase):
         ("replace", ("None", None, "x"), "x", 1),
         ("partition", ("123", 2), ("1", "2", "3"), 1),
         ("rpartition", ("123", 2), ("1", "2", "3"), 1),
+        ("replace", (b"123", 2, 4), b"143", 2),
     ])
     def test_non_string_argument(self, method, args, expected, num):
         self.assert_deprecated(lambda: assert_array_equal(
             getattr(np.strings, method)(*args), expected), num=num)
 
-    @pytest.mark.parametrize("method,args,name,suffix", [
-        ("ljust", ("a", 3, b"*"), "fillchar", "dtype"),
-        ("replace", ("abc", b"a", "x"), "old", "dtype.char"),
+    @pytest.mark.parametrize("func,args", [
+        (np.strings.ljust, ("a", 3, b"*")),
+        (np.strings.replace, ("abc", b"a", "x")),
+        (np.char.partition, ("abc", b"b")),
     ])
-    def test_warning_message(self, method, args, name, suffix):
+    def test_warning_message(self, func, args):
         with self.filter_warnings() as record:
-            getattr(np.strings, method)(*args)
+            func(*args)
+        assert len(record) == 1
+        assert record[0].filename == __file__
         message = str(record[0].message)
-        assert f"{name} in np.strings.{method}()" in message
-        assert f"from dtype |S1 to {np.dtype('U1')}" in message
-        assert f"{name}=np.asarray({name}).astype(np.asarray(a).{suffix})" in message
+        assert f"to dtype {np.dtype('U1')} is deprecated" in message
+        assert "Convert the inputs explicitly." in message
 
 
 class TestDeprecatedDTypeAliases(_DeprecationTestCase):

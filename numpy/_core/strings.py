@@ -5,6 +5,7 @@ operations.
 
 import functools
 import os
+import reprlib
 import sys
 import warnings
 
@@ -19,6 +20,7 @@ from numpy import (
     multiply as _multiply_ufunc,
     not_equal,
 )
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core.multiarray import _vec_string
 from numpy._core.overrides import array_function_dispatch, set_module
 from numpy._core.umath import (
@@ -58,6 +60,7 @@ from numpy._core.umath import (
     startswith as _startswith_ufunc,
     str_len,
 )
+from numpy._utils import _get_warn_skip_file_prefixes
 
 
 def _override___module__():
@@ -94,7 +97,7 @@ __all__ = [
 
 MAX = np.iinfo(np.int64).max
 
-_STRING_WARNING_SKIP_FILES = (
+_STRING_WARNING_SKIP_PREFIXES = _get_warn_skip_file_prefixes(
     __file__, os.path.join(os.path.dirname(__file__), "defchararray.py"),
 )
 
@@ -690,23 +693,22 @@ def expandtabs(a, tabsize=8):
     return _expandtabs(a, tabsize, out=out)
 
 
-def _cast_string_arg(arg, dtype, name, method):
+def _cast_string_arg(arg, dtype):
     """Preserve implicit string conversions during their deprecation period."""
     result = arg.astype(dtype, copy=False)
-    compatible = "S" if result.dtype.char == "S" else "UT"
     # DEPRECATED 2026-09-22, NumPy 2.6
-    # After the deprecation, reject cross-kind arguments before casting.
-    if result.dtype.char in "SUT" and arg.dtype.char not in compatible:
-        cast_dtype = "np.asarray(a).dtype"
-        if np.dtype(dtype).itemsize == 0:
-            cast_dtype += ".char"
+    # After the deprecation, resolve strictly before casting and stop warning.
+    try:
+        _array_converter(arg).result_type(
+            extra_dtype=result.dtype, strict_strings=True)
+    except np.exceptions.DTypePromotionError as exc:
+        arg_repr = reprlib.Repr(maxstring=50, maxother=50).repr(
+            arg.item() if arg.ndim == 0 else arg)
         warnings.warn(
-            f"Implicit conversion of {name} in np.strings.{method}() from "
-            f"dtype {arg.dtype} to {result.dtype} is "
-            "deprecated and will raise TypeError in a future release. "
-            "To preserve the current behavior, pass "
-            f"{name}=np.asarray({name}).astype({cast_dtype}) instead.",
-            DeprecationWarning, skip_file_prefixes=_STRING_WARNING_SKIP_FILES,
+            f"Implicit conversion of {arg_repr} to dtype {result.dtype} is "
+            f"deprecated and will raise TypeError in a future release. {exc}",
+            DeprecationWarning,
+            skip_file_prefixes=_STRING_WARNING_SKIP_PREFIXES,
         )
     return result
 
@@ -781,7 +783,7 @@ def center(a, width, fillchar=np._NoValue):
     if np.result_type(a, fillchar).char == "T":
         return _center(a, width, fillchar)
 
-    fillchar = _cast_string_arg(fillchar, a.dtype, "fillchar", "center")
+    fillchar = _cast_string_arg(fillchar, a.dtype)
     width = np.maximum(str_len(a), width)
     out_dtype = f"{a.dtype.char}{width.max()}"
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
@@ -842,7 +844,7 @@ def ljust(a, width, fillchar=np._NoValue):
     if np.result_type(a, fillchar).char == "T":
         return _ljust(a, width, fillchar)
 
-    fillchar = _cast_string_arg(fillchar, a.dtype, "fillchar", "ljust")
+    fillchar = _cast_string_arg(fillchar, a.dtype)
     width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
@@ -903,7 +905,7 @@ def rjust(a, width, fillchar=np._NoValue):
     if np.result_type(a, fillchar).char == "T":
         return _rjust(a, width, fillchar)
 
-    fillchar = _cast_string_arg(fillchar, a.dtype, "fillchar", "rjust")
+    fillchar = _cast_string_arg(fillchar, a.dtype)
     width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
@@ -1367,10 +1369,8 @@ def replace(a, old, new, count=-1):
         new = new if type(new) is str else new_arr
         return _replace(a, old, new, count)
 
-    old = _cast_string_arg(
-        old_arr, old_dtype or arr.dtype.char, "old", "replace")
-    new = _cast_string_arg(
-        new_arr, new_dtype or arr.dtype.char, "new", "replace")
+    old = _cast_string_arg(old_arr, old_dtype or arr.dtype.char)
+    new = _cast_string_arg(new_arr, new_dtype or arr.dtype.char)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
@@ -1617,8 +1617,7 @@ def partition(a, sep):
         return _partition(a, sep)
 
     a = a_arr
-    sep = _cast_string_arg(
-        sep_arr, a_arr.dtype.char, "sep", "partition")
+    sep = _cast_string_arg(sep_arr, a_arr.dtype.char)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1691,8 +1690,7 @@ def rpartition(a, sep):
         return _rpartition(a, sep)
 
     a = a_arr
-    sep = _cast_string_arg(
-        sep_arr, a_arr.dtype.char, "sep", "rpartition")
+    sep = _cast_string_arg(sep_arr, a_arr.dtype.char)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)

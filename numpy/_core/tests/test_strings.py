@@ -1393,7 +1393,7 @@ class TestMethodsWithUnicode:
 
 
 @pytest.mark.filterwarnings(
-    "ignore:Implicit conversion of fillchar:DeprecationWarning"
+    "ignore:Implicit conversion:DeprecationWarning"
 )
 class TestMixedTypeMethods:
     def test_center(self):

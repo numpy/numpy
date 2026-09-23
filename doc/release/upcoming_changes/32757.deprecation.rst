@@ -1,6 +1,6 @@
 Implicit argument conversion in `numpy.strings`
 -----------------------------------------------
-Implicit coercion of bytes to strings or strings to bytes in `numpy.strings`
-padding, replacement, and partitioning functions is now deprecated. Use text
-arguments with text input and bytes arguments with bytes input or explicitly
-choose an encoding for the conversion.
+Implicit coercion of bytes to strings, strings to bytes, or non-string arguments
+to strings or bytes in `numpy.strings` and `numpy.char` padding, replacement,
+and partitioning functions is now deprecated. Use text arguments with text
+input and bytes arguments with bytes input, or convert the arguments explicitly.
