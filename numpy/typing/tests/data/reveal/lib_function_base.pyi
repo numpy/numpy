@@ -1,10 +1,12 @@
 from collections.abc import Callable
 from fractions import Fraction
-from typing import Any, LiteralString, assert_type, type_check_only
+from typing import Any, Never, assert_type, type_check_only
 
 import numpy as np
 import numpy.typing as npt
+from numpy._globals import _NoValueType
 
+type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
@@ -72,19 +74,61 @@ def func_f8(a: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]: ...
 ###
 
 # vectorize
-vectorized_func: np.vectorize
-assert_type(vectorized_func.pyfunc, Callable[..., Any])
-assert_type(vectorized_func.cache, bool)
-assert_type(vectorized_func.signature, LiteralString | None)
-assert_type(vectorized_func.otypes, LiteralString | None)
-assert_type(vectorized_func.excluded, set[int | str])
-assert_type(vectorized_func.__doc__, str | None)
-assert_type(vectorized_func([1]), Any)
-assert_type(np.vectorize(int), np.vectorize)
+
+_fn1_f4: Callable[[float], np.float32]
+_fn1_b: Callable[[float], bool]
+_fn1_i: Callable[[float], int]
+_fn1_f: Callable[[float], float]
+_fn1_c: Callable[[float], complex]
+_fn1_U: Callable[[float], str]
+_fn1_O: Callable[[float], Fraction]
+_fn2_f: Callable[[float, float], float]
+_fn3_f: Callable[[float, float, float], float]
+
+_vf1 = np.vectorize(_fn1_f)
+_vf2 = np.vectorize(_fn2_f)
+_vf3 = np.vectorize(_fn3_f)
+
+_vf: np.vectorize
+assert_type(_vf.pyfunc, Callable[..., Any])
+assert_type(_vf.cache, bool)
+assert_type(_vf.signature, str | None)
+assert_type(_vf.otypes, str | None)
+assert_type(_vf.excluded, set[int | str])
+assert_type(_vf.__doc__, str | None)
+assert_type(np.vectorize(otypes="d"), np.vectorize[Never, _NoValueType])
+assert_type(np.vectorize(_fn1_f, signature="(n)->()"), np.vectorize[Any, Callable[[], object]])
+assert_type(np.vectorize(_fn1_f, "d"), np.vectorize[Any, Callable[[float], float]])
+assert_type(np.vectorize(_fn1_f4), np.vectorize[np.float32, Callable[..., np.float32]])
+assert_type(np.vectorize(_fn1_b), np.vectorize[np.bool, Callable[[float], bool]])
+assert_type(np.vectorize(_fn1_i), np.vectorize[np.int_, Callable[[float], int]])
+assert_type(_vf1, np.vectorize[np.float64, Callable[[float], float]])
 assert_type(
-    np.vectorize(int, otypes="i", doc="doc", excluded=(), cache=True, signature=None),
-    np.vectorize,
+    np.vectorize(_fn1_f, doc="doc", excluded=(), cache=True, signature=None),
+    np.vectorize[np.float64, Callable[[float], float]],
 )
+assert_type(np.vectorize(_fn1_c), np.vectorize[np.complex128, Callable[[float], complex]])
+assert_type(np.vectorize(_fn1_U), np.vectorize[np.str_, Callable[[float], str]])
+assert_type(np.vectorize(_fn1_O), np.vectorize[Any, Callable[[float], Fraction]])
+
+assert_type(np.vectorize(otypes="d")(_fn1_f), np.vectorize[Any, Callable[[float], float]])
+assert_type(_vf1(1.0), _Array0D[np.float64])
+assert_type(_vf1(AR_f8_1d), _Array1D[np.float64])
+assert_type(_vf2(1.0, 2.0), _Array0D[np.float64])
+assert_type(_vf2(AR_f8_2d, 1.0), _Array2D[np.float64])
+assert_type(_vf2(1.0, AR_f8_2d), _Array2D[np.float64])
+assert_type(_vf2(AR_f8, AR_f8_1d), npt.NDArray[np.float64])
+assert_type(_vf2(AR_f8_1d, AR_f8), npt.NDArray[np.float64])
+assert_type(_vf2(AR_f8_1d, AR_f8_1d), _Array1D[np.float64])
+assert_type(_vf2(AR_f8_1d, AR_f8_2d), _Array2D[np.float64])
+assert_type(_vf2(AR_f8_2d, AR_f8_1d), _Array2D[np.float64])
+assert_type(_vf2(AR_f8_2d, AR_f8_3d), _Array3D[np.float64])
+assert_type(_vf2(AR_f8_3d, AR_f8_1d), _Array3D[np.float64])
+assert_type(_vf3(1.0, 2.0, 3.0), _Array0D[np.float64])
+assert_type(_vf3(AR_f8_2d, 2.0, AR_f8_2d), _Array2D[np.float64])
+assert_type(_vf1(AR_LIKE_f8), npt.NDArray[Any])
+assert_type(_vf1(AR_f8_1d, AR_f8_1d), npt.NDArray[Any])
+assert_type(np.vectorize(_fn1_f, signature="(n)->()")(AR_f8_2d), npt.NDArray[Any])
 
 # rot90
 assert_type(np.rot90(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
