@@ -277,7 +277,7 @@ complex addition functions we previously implemented using f2py:
         cdef double complex[:] a = in1.ravel()
         cdef double complex[:] b = in2.ravel()
 
-        out = np.empty(a.shape[0], np.complex64)
+        out = np.empty(a.shape[0], np.complex128)
         cdef double complex[:] c = out.ravel()
 
         for i in range(c.shape[0]):
