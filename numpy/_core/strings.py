@@ -1603,19 +1603,19 @@ def partition(a, sep):
 
     Parameters
     ----------
-    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    a : array-like, with a string or bytes dtype
         Input array
-    sep : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    sep : array-like, with a string or bytes dtype
         Separator to split each string element in ``a``.
 
     Returns
     -------
     out : 3-tuple:
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+        - array with a string or bytes dtype with the
           part before the separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+        - array with a string or bytes dtype with the
           separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+        - array with a string or bytes dtype with the
           part after the separator
 
     See Also
@@ -1635,10 +1635,10 @@ def partition(a, sep):
     a_arr = np.asanyarray(a)
     sep_arr = np.asanyarray(sep)
 
-    if np.result_type(a_arr, sep_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else a_arr
-        sep = sep if type(sep) is str else sep_arr
+    if _is_variable_width(np.result_type(a_arr, sep_arr)):
+        # pass exact str/bytes objects so the ufunc converts them directly
+        a = a if type(a) in (str, bytes) else a_arr
+        sep = sep if type(sep) in (str, bytes) else sep_arr
         return _partition(a, sep)
 
     a = a_arr
@@ -1676,19 +1676,19 @@ def rpartition(a, sep):
 
     Parameters
     ----------
-    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    a : array-like, with a string or bytes dtype
         Input array
-    sep : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    sep : array-like, with a string or bytes dtype
         Separator to split each string element in ``a``.
 
     Returns
     -------
     out : 3-tuple:
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+        - array with a string or bytes dtype with the
           part before the separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+        - array with a string or bytes dtype with the
           separator
-        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+        - array with a string or bytes dtype with the
           part after the separator
 
     See Also
@@ -1708,10 +1708,10 @@ def rpartition(a, sep):
     a_arr = np.asanyarray(a)
     sep_arr = np.asanyarray(sep)
 
-    if np.result_type(a_arr, sep_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else a_arr
-        sep = sep if type(sep) is str else sep_arr
+    if _is_variable_width(np.result_type(a_arr, sep_arr)):
+        # pass exact str/bytes objects so the ufunc converts them directly
+        a = a if type(a) in (str, bytes) else a_arr
+        sep = sep if type(sep) in (str, bytes) else sep_arr
         return _rpartition(a, sep)
 
     a = a_arr

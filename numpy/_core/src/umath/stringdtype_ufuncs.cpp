@@ -3154,11 +3154,11 @@ init_stringlike_ufuncs(PyObject *umath)
     }
 
     PyArray_DTypeMeta *partition_dtypes[] = {
-        &PyArray_StringDType,
-        &PyArray_StringDType,
-        &PyArray_StringDType,
-        &PyArray_StringDType,
-        &PyArray_StringDType
+        string_dtype,
+        string_dtype,
+        string_dtype,
+        string_dtype,
+        string_dtype
     };
 
     const char *const partition_names[] = {"_partition", "_rpartition"};
@@ -3167,8 +3167,8 @@ init_stringlike_ufuncs(PyObject *umath)
         STARTPOSITION::FRONT, STARTPOSITION::BACK
     };
 
-    for (int i=0; i<2 && !is_bytes; i++) {
-        if (!is_bytes && init_ufunc(umath, partition_names[i], partition_dtypes,
+    for (int i=0; i<2; i++) {
+        if (init_ufunc(umath, partition_names[i], partition_dtypes,
                        string_partition_resolve_descriptors,
                        string_partition_strided_loop, 2, 3, NPY_NO_CASTING,
                        (NPY_ARRAYMETHOD_FLAGS) 0, &partition_startpositions[i]) < 0) {
@@ -3177,12 +3177,12 @@ init_stringlike_ufuncs(PyObject *umath)
     }
 
     PyArray_DTypeMeta *partition_tail[] = {
-        &PyArray_StringDType, &PyArray_StringDType, &PyArray_StringDType,
+        string_dtype, string_dtype, string_dtype,
     };
 
-    for (int i=0; i<2 && !is_bytes; i++) {
+    for (int i=0; i<2; i++) {
         if (add_promoter_pair(umath, partition_names[i],
-                              &PyArray_StringDType, &PyArray_UnicodeDType,
+                              string_dtype, fixed_dtype,
                               partition_tail, 3,
                               string_partition_promoter) < 0) {
             return -1;

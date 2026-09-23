@@ -811,6 +811,32 @@ class TestStringUfuncs:
         assert np.minimum(x, fixed).tolist() == [b"b", b"c"]
         assert np.maximum(fixed, x).dtype == ByteStringDType()
 
+    @pytest.mark.parametrize("name", ["partition", "rpartition"])
+    @pytest.mark.parametrize("val, sep", [
+        (b"a\x00b\x00c", b"\x00"),
+        (b"\xff\x00hi\xff tail\x00", b"\xff "),
+    ])
+    def test_partition_rpartition(self, name, val, sep):
+        parts = getattr(np.strings, name)(R(val), R(sep))
+        for part, expected in zip(parts, getattr(val, name)(sep), strict=True):
+            assert_array_equal(part, R(expected), strict=True)
+
+    def test_partition_bytes_scalar_sep(self):
+        # a plain bytes separator converts directly to ByteStringDType;
+        # through a fixed-width 'S' intermediate a b"\x00" separator
+        # would collapse to the empty string
+        vals = [b"a b\x00c", b"d e"]
+        a = R(*vals)
+        for sep in (b" ", b"\x00"):
+            for fn, oracle in [(np.strings.partition, bytes.partition),
+                               (np.strings.rpartition, bytes.rpartition)]:
+                parts = fn(a, sep)
+                assert parts[0].dtype == a.dtype
+                for i, val in enumerate(vals):
+                    assert tuple(p[i] for p in parts) == oracle(val, sep)
+        with pytest.raises(ValueError, match="empty separator"):
+            np.strings.partition(a, b"")
+
     def test_pybytes_scalar_ufunc_operand_preserves_nulls(self):
         # an exact bytes operand converts directly to ByteStringDType, so
         # trailing nulls survive; a fixed-width 'S' intermediate would
