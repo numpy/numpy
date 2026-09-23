@@ -243,6 +243,63 @@ class TestSortingAndSelection:
             assert_array_equal(arr, arr[::-1])
 
 
+class TestMembership:
+    @pytest.mark.parametrize("size", [2, 40])
+    @pytest.mark.parametrize("invert", [False, True])
+    @pytest.mark.parametrize("na,matches", [
+        (None, True), (np.nan, False), (pd_NA, False), (b"\x00", True),
+    ])
+    def test_missing(self, size, invert, na, matches):
+        dtype = ByteStringDType(na_object=na)
+        arr = np.array([b"a\x00", b"b\xff", na], dtype=dtype)
+        candidates = np.array([b"b\xff", na] * (size // 2), dtype=dtype)
+        expected = np.array([False, True, matches]) ^ invert
+        assert_array_equal(np.isin(arr, candidates, invert=invert), expected)
+        missing = np.array([na] * size, dtype=dtype)
+        assert_array_equal(np.isin(missing, missing, invert=invert),
+                           [matches != invert] * size)
+
+    @pytest.mark.parametrize("left,right", [("R", "R"), ("R", "S32"),
+                                            ("S32", "R")])
+    @pytest.mark.parametrize("invert", [False, True])
+    @pytest.mark.parametrize("assume_unique", [False, True])
+    def test_sort_path(self, monkeypatch, left, right, invert, assume_unique):
+        from numpy.lib import _arraysetops_impl
+
+        values = [b"\xff\x00" + f"{i:020d}".encode() for i in range(80)]
+        arr = np.array(values[::2], dtype=left)
+        candidates = np.array(values[20:], dtype=right)
+        expected = np.array([v in values[20:] for v in values[::2]]) ^ invert
+        calls = []
+        original = _arraysetops_impl._isin_sorting
+
+        def sorting(*args):
+            calls.append(True)
+            return original(*args)
+
+        monkeypatch.setattr(_arraysetops_impl, "_isin_sorting", sorting)
+        assert_array_equal(np.isin(arr, candidates, invert=invert,
+                                   assume_unique=assume_unique), expected)
+        assert calls == [True]
+
+    @pytest.mark.parametrize("other", [StringDType(), "U1", object])
+    def test_mixed_family_fallback(self, other):
+        arr = R(b"a", b"b")
+        candidates = np.array(["a", "b"] * 20, dtype=other)
+        assert_array_equal(np.isin(arr, candidates), [False, False])
+
+    def test_incompatible_na_fallback(self):
+        arr = np.array([b"a\x00", b"b"],
+                       dtype=ByteStringDType(na_object=None))
+        candidates = np.array([b"a\x00"] * 40,
+                              dtype=ByteStringDType(na_object=np.nan))
+        assert_array_equal(np.isin(arr, candidates), [True, False])
+
+    def test_trailing_nuls_are_data(self):
+        assert_array_equal(np.isin(R(b"x", b"x\x00"), R(b"x\x00")),
+                           [False, True])
+
+
 class TestCasts:
     def test_self_cast(self, dtype):
         arr = np.array([b"x" * 30, b"a\x00b"], dtype=dtype)
