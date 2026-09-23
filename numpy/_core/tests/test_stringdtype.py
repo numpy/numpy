@@ -1031,15 +1031,15 @@ def test_comparisons(string_list, dtype, op, o_dtype):
 
 
 @pytest.mark.parametrize("op", comparison_operators)
-def test_nan_like_comparisons(nan_like_na_object, op):
+def test_nan_like_comparisons(nan_like_na_object, op, any_vstring_class, native):
     na = nan_like_na_object
-    dtype = StringDType(na_object=na)
-    left = np.array([na, "a", na, "a", "b"], dtype=dtype)
-    right = np.array(["a", na, na, "a", "a"], dtype=dtype)
+    dtype = any_vstring_class(na_object=na)
+    left = np.array([na, native("a"), na, native("a"), native("b")], dtype=dtype)
+    right = np.array([native("a"), na, na, native("a"), native("a")], dtype=dtype)
     numeric_left = np.array([np.nan, 0, np.nan, 0, 1])
     numeric_right = np.array([0, np.nan, np.nan, 0, 0])
     assert_array_equal(op(left, right), op(numeric_left, numeric_right))
-    assert_array_equal(op(left, "a"), op(numeric_left, 0))
+    assert_array_equal(op(left, native("a")), op(numeric_left, 0))
 
 
 @pytest.mark.parametrize("op", comparison_operators)

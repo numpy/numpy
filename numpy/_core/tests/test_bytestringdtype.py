@@ -375,6 +375,13 @@ class TestUnsizedFixedWidthCasts:
 
 
 class TestNAObject:
+    def test_nan_na(self):
+        import math
+        dt = ByteStringDType(na_object=np.nan)
+        arr = np.array([b"x", np.nan], dtype=dt)
+        assert math.isnan(arr[1])
+        assert np.isnan(arr).tolist() == [False, True]
+
     def test_scalar_unpickle_guard(self, dtype):
         arr = np.array([b"x"], dtype=dtype)
         # the list-pickle path stores full arrays
@@ -565,3 +572,93 @@ class TestScalarCAPI:
         result = cast_scalar_to_ctype(scalar, np.dtype(bool), direct)
         assert result.item() is bool(scalar)
         scalar_as_ctype(scalar)
+
+
+class TestComparisonUfuncs:
+    def test_eq_ne_ordering(self):
+        a = R(b"a\x00b", b"", b"\xff")
+        b = R(b"a\x00b", b"x", b"\xff")
+        assert (a == b).tolist() == [True, False, True]
+        assert (a != b).tolist() == [False, True, False]
+        assert (a < b).tolist() == [False, True, False]
+        assert (a >= b).tolist() == [True, False, True]
+
+    def test_trailing_nul_distinct(self):
+        # the 'S' defect motivating the dtype
+        x = R(b"x", b"x\x00")
+        y = R(b"x\x00", b"x\x00")
+        assert (x == y).tolist() == [False, True]
+        assert (x < y).tolist() == [True, False]
+
+    def test_vs_fixed_width(self):
+        a = R(b"abc", b"\xff")
+        s = np.array([b"abc", b"z"], dtype="S3")
+        assert (a == s).tolist() == [True, False]
+        assert (s == a).tolist() == [True, False]
+        assert (a > s).tolist() == [False, True]
+        # the fixed elements are NUL-padded to the itemsize; the padding is
+        # not part of the value on the ByteStringDType side either
+        padded = np.array([b"abc", b"\xff"], dtype="S6")
+        assert (a == padded).tolist() == [True, True]
+
+    def test_vs_text_follows_python(self):
+        # "a" != b"a": equality is elementwise False, ordering raises
+        a = R(b"a", b"b")
+        for text in [np.array(["a", "b"]),
+                     np.array(["a", "b"], dtype=StringDType())]:
+            assert (a == text).tolist() == [False, False]
+            assert (text == a).tolist() == [False, False]
+            assert (a != text).tolist() == [True, True]
+            with pytest.raises(TypeError):
+                a < text
+            with pytest.raises(TypeError):
+                text < a
+
+    def test_vs_numeric(self):
+        a = R(b"1", b"2")
+        assert (a == np.array([1, 2])).tolist() == [False, False]
+        with pytest.raises(TypeError):
+            a < np.array([1, 2])
+
+    def test_vs_object(self):
+        # object operands promote to the object loop, so each element
+        # compares with Python semantics, like StringDType and 'S'
+        a = R(b"a\x00", b"b")
+        obj = np.array([b"a\x00", b"z"], dtype=object)
+        assert (a == obj).tolist() == [True, False]
+        assert (obj == a).tolist() == [True, False]
+        assert (a != obj).tolist() == [False, True]
+        assert (a < obj).tolist() == [False, True]
+        assert (obj > a).tolist() == [False, True]
+        mixed = np.array(["a\x00", None], dtype=object)
+        assert (a == mixed).tolist() == [False, False]
+        assert (mixed != a).tolist() == [True, True]
+        with pytest.raises(TypeError):
+            a < np.array(["a", "b"], dtype=object)
+
+    def test_no_promotion_with_text(self):
+        with pytest.raises(TypeError):
+            np.result_type(ByteStringDType(), StringDType())
+        with pytest.raises(TypeError):
+            np.result_type(ByteStringDType(), np.dtype("U4"))
+        assert np.result_type(ByteStringDType(), np.dtype("S4")) == \
+            ByteStringDType()
+
+
+class TestStringUfuncs:
+    """Oracle: the matching Python bytes method, elementwise."""
+
+    @pytest.mark.parametrize("ufunc, oracle", [(np.minimum, min), (np.maximum, max)])
+    def test_minimum_maximum(self, ufunc, oracle):
+        x = R(b"a", b"z", b"\xff", b"x\x00", b"a\x00b")
+        y = R(b"b", b"b", b"a", b"x", b"a\x00a")
+        assert_array_equal(ufunc(x, y), R(*(oracle(a, b) for a, b in zip(x, y))),
+                           strict=True)
+
+    def test_minimum_maximum_mixed_operands(self):
+        x = R(b"b", b"y")
+        assert np.minimum(x, b"c\x00").tolist() == [b"b", b"c\x00"]
+        assert np.maximum(x, b"c\x00").tolist() == [b"c\x00", b"y"]
+        fixed = np.array([b"c", b"c"], dtype="S1")
+        assert np.minimum(x, fixed).tolist() == [b"b", b"c"]
+        assert np.maximum(fixed, x).dtype == ByteStringDType()

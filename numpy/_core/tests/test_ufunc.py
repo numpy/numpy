@@ -3319,6 +3319,22 @@ def test_pystr_scalar_converted_with_resolved_descriptor():
     assert identity("y\0") == "y\0"
 
 
+def test_pybytes_scalar_converted_with_resolved_descriptor():
+    # an object loop receives the original bytes object
+    arr = np.array([b"x"], dtype=object)
+    res = (arr + b"y\0")[0]
+    assert type(res) is bytes
+    assert res == b"xy\0"
+    # for fixed-width bytes trailing nulls are padding
+    assert (np.array([b"x"], dtype="S1") + b"y\0")[0] == b"xy"
+    # np.bytes_ operands keep fixed-width semantics
+    assert (arr + np.bytes_(b"y\0"))[0] == b"xy"
+
+    # unary object loops also receive the original bytes object
+    identity = np.frompyfunc(lambda value: value, 1, 1)
+    assert identity(b"y\0") == b"y\0"
+
+
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
 def test_find_non_long_args(dtype):
     element = 'abcd'

@@ -43,6 +43,24 @@
         }                                                                          \
 
 
+static PyArray_Descr *
+new_stringlike_instance_like(PyArray_Descr *like, PyObject *na_object, int coerce)
+{
+    return (PyArray_Descr *)new_stringlike_instance_of(NPY_DTYPE(like), na_object, coerce);
+}
+
+// every promoter registration row pins exactly one string-like family
+static PyArray_DTypeMeta *
+stringlike_in(PyArray_DTypeMeta *const op_dtypes[], int n)
+{
+    for (int i = 0; i < n; i++) {
+        if (op_dtypes[i] != NULL && NPY_DT_is_stringlike(op_dtypes[i])) {
+            return op_dtypes[i];
+        }
+    }
+    return NULL;
+}
+
 static NPY_CASTING
 multiply_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
@@ -54,7 +72,7 @@ multiply_resolve_descriptors(
     PyArray_StringDTypeObject *odescr = NULL;
     PyArray_Descr *out_descr = NULL;
 
-    if (dtypes[0] == &PyArray_StringDType) {
+    if (NPY_DT_is_stringlike(dtypes[0])) {
         odescr = (PyArray_StringDTypeObject *)ldescr;
     }
     else {
@@ -62,8 +80,7 @@ multiply_resolve_descriptors(
     }
 
     if (given_descrs[2] == NULL) {
-        out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                odescr->na_object, odescr->coerce);
+        out_descr = new_stringlike_instance_like((PyArray_Descr *)odescr, odescr->na_object, odescr->coerce);
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
         }
@@ -275,8 +292,7 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *method,
     PyArray_Descr *out_descr = NULL;
 
     if (given_descrs[2] == NULL) {
-        out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                out_na_object, out_coerce);
+        out_descr = new_stringlike_instance_like(given_descrs[0], out_na_object, out_coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -789,8 +805,9 @@ string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
-    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_StringDType);
+    PyArray_DTypeMeta *string_dtype = stringlike_in(op_dtypes, 2);
+    new_op_dtypes[0] = NPY_DT_NewRef(string_dtype);
+    new_op_dtypes[1] = NPY_DT_NewRef(string_dtype);
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[4] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
@@ -1050,28 +1067,28 @@ all_strings_promoter(PyObject *NPY_UNUSED(ufunc),
                      PyArray_DTypeMeta *const signature[],
                      PyArray_DTypeMeta *new_op_dtypes[])
 {
-    if ((op_dtypes[0] != &PyArray_StringDType &&
-         op_dtypes[1] != &PyArray_StringDType &&
-         op_dtypes[2] != &PyArray_StringDType)) {
+    PyArray_DTypeMeta *vstring_dtype = stringlike_in(op_dtypes, 3);
+    if (vstring_dtype == NULL) {
         /*
-         * This promoter was triggered with only unicode arguments, so use
-         * unicode.  This can happen due to `dtype=` support which sets the
-         * output DType/signature.
+         * This promoter was triggered with only fixed-width arguments, so
+         * use the fixed-width partner. This can happen due to `dtype=`
+         * support which sets the output DType/signature.
          */
-        new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_UnicodeDType);
-        new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_UnicodeDType);
-        new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_UnicodeDType);
+        new_op_dtypes[0] = NPY_DT_NewRef(op_dtypes[0]);
+        new_op_dtypes[1] = NPY_DT_NewRef(op_dtypes[0]);
+        new_op_dtypes[2] = NPY_DT_NewRef(op_dtypes[0]);
         return 0;
     }
-    if ((signature[0] == &PyArray_UnicodeDType &&
-         signature[1] == &PyArray_UnicodeDType &&
-         signature[2] == &PyArray_UnicodeDType)) {
-        /* Unicode forced, but didn't override a string input: invalid */
+    PyArray_DTypeMeta *fixed_dtype = vstring_dtype == &PyArray_StringDType
+            ? &PyArray_UnicodeDType : &PyArray_BytesDType;
+    if ((signature[0] == fixed_dtype && signature[1] == fixed_dtype && signature[2] == fixed_dtype)) {
+        /* Fixed width forced, but didn't override a variable-width input:
+         * invalid */
         return -1;
     }
-    new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
-    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_StringDType);
-    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_StringDType);
+    new_op_dtypes[0] = NPY_DT_NewRef(vstring_dtype);
+    new_op_dtypes[1] = NPY_DT_NewRef(vstring_dtype);
+    new_op_dtypes[2] = NPY_DT_NewRef(vstring_dtype);
     return 0;
 }
 
@@ -1190,7 +1207,7 @@ strip_whitespace_resolve_descriptors(
     PyArray_Descr *out_descr = NULL;
 
     if (given_descrs[1] == NULL) {
-        out_descr = (PyArray_Descr *)new_stringdtype_instance(
+        out_descr = new_stringlike_instance_like(given_descrs[0],
                 ((PyArray_StringDTypeObject *)given_descrs[0])->na_object,
                 ((PyArray_StringDTypeObject *)given_descrs[0])->coerce);
 
@@ -1275,7 +1292,7 @@ string_lrstrip_whitespace_strided_loop(
             }
             Buffer<enc> buf((char *)s.buf, s.size);
             Buffer<enc> outbuf(new_buf, s.size);
-            size_t new_buf_size = string_lrstrip_whitespace(
+            size_t new_buf_size = string_lrstrip_whitespace<enc>(
                     buf, outbuf, striptype);
 
             if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
@@ -1311,11 +1328,12 @@ string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
                         PyArray_DTypeMeta *const signature[],
                         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
-    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_StringDType);
-    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_StringDType);
+    PyArray_DTypeMeta *string_dtype = stringlike_in(op_dtypes, 3);
+    new_op_dtypes[0] = NPY_DT_NewRef(string_dtype);
+    new_op_dtypes[1] = NPY_DT_NewRef(string_dtype);
+    new_op_dtypes[2] = NPY_DT_NewRef(string_dtype);
     new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
-    new_op_dtypes[4] = NPY_DT_NewRef(&PyArray_StringDType);
+    new_op_dtypes[4] = NPY_DT_NewRef(string_dtype);
     return 0;
 }
 
@@ -1346,8 +1364,7 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *method,
     PyArray_Descr *out_descr = NULL;
 
     if (given_descrs[4] == NULL) {
-        out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                out_na_object, out_coerce);
+        out_descr = new_stringlike_instance_like(given_descrs[0], out_na_object, out_coerce);
 
         if (out_descr == NULL) {
             return (NPY_CASTING)-1;
@@ -2000,8 +2017,9 @@ string_partition_resolve_descriptors(
         npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[2] || given_descrs[3] || given_descrs[4]) {
-        PyErr_Format(PyExc_TypeError, "The StringDType '%s' ufunc does not "
-                     "currently support the 'out' keyword", self->name);
+        PyErr_Format(PyExc_TypeError, "The %s '%s' ufunc does not currently support the 'out' keyword",
+                     ((PyTypeObject *)NPY_DTYPE(given_descrs[0]))->tp_name,
+                     self->name);
         return (NPY_CASTING)-1;
     }
 
@@ -2019,8 +2037,7 @@ string_partition_resolve_descriptors(
     loop_descrs[1] = given_descrs[1];
 
     for (int i=2; i<5; i++) {
-        loop_descrs[i] = (PyArray_Descr *)new_stringdtype_instance(
-                out_na_object, out_coerce);
+        loop_descrs[i] = new_stringlike_instance_like(given_descrs[0], out_na_object, out_coerce);
         if (loop_descrs[i] == NULL) {
             return (NPY_CASTING)-1;
         }
@@ -2232,8 +2249,9 @@ slice_resolve_descriptors(PyArrayMethodObject *self,
 {
     if (given_descrs[4]) {
         PyErr_Format(PyExc_TypeError,
-                     "The StringDType '%s' ufunc does not "
+                     "The %s '%s' ufunc does not "
                      "currently support the 'out' keyword",
+                     ((PyTypeObject *)NPY_DTYPE(given_descrs[0]))->tp_name,
                      self->name);
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
@@ -2247,8 +2265,7 @@ slice_resolve_descriptors(PyArrayMethodObject *self,
             (PyArray_StringDTypeObject *)loop_descrs[0];
     int out_coerce = in_descr->coerce;
     PyObject *out_na_object = in_descr->na_object;
-    loop_descrs[4] = (PyArray_Descr *)new_stringdtype_instance(out_na_object,
-                                                               out_coerce);
+    loop_descrs[4] = new_stringlike_instance_like(loop_descrs[0], out_na_object, out_coerce);
     if (loop_descrs[4] == NULL) {
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
@@ -2416,14 +2433,14 @@ string_object_bool_output_promoter(
 }
 
 static int
-string_unicode_bool_output_promoter(
+stringlike_bool_output_promoter(
         PyObject *ufunc, PyArray_DTypeMeta *const op_dtypes[],
         PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
     return string_inputs_promoter(
             ufunc, op_dtypes, signature,
-            new_op_dtypes, &PyArray_StringDType, &PyArray_BoolDType);
+            new_op_dtypes, stringlike_in(op_dtypes, 2), &PyArray_BoolDType);
 }
 
 static int
@@ -2432,9 +2449,10 @@ string_partition_promoter(
         PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
+    PyArray_DTypeMeta *string_dtype = stringlike_in(op_dtypes, 2);
     return string_inputs_promoter(
             ufunc, op_dtypes, signature,
-            new_op_dtypes, &PyArray_StringDType, &PyArray_StringDType);
+            new_op_dtypes, string_dtype, string_dtype);
 }
 
 static int
@@ -2516,6 +2534,7 @@ string_multiply_promoter(PyObject *ufunc_obj,
                          PyArray_DTypeMeta *new_op_dtypes[])
 {
     PyUFuncObject *ufunc = (PyUFuncObject *)ufunc_obj;
+    PyArray_DTypeMeta *string_dtype = stringlike_in(op_dtypes, ufunc->nargs);
     for (int i = 0; i < ufunc->nin; i++) {
         PyArray_DTypeMeta *tmp = NULL;
         if (signature[i]) {
@@ -2528,7 +2547,7 @@ string_multiply_promoter(PyObject *ufunc_obj,
             tmp = op_dtypes[i];
         }
         else {
-            tmp = &PyArray_StringDType;
+            tmp = string_dtype;
         }
         Py_INCREF(tmp);
         new_op_dtypes[i] = tmp;
@@ -2540,8 +2559,8 @@ string_multiply_promoter(PyObject *ufunc_obj,
             new_op_dtypes[i] = op_dtypes[i];
         }
         else {
-            Py_INCREF(&PyArray_StringDType);
-            new_op_dtypes[i] = &PyArray_StringDType;
+            Py_INCREF(string_dtype);
+            new_op_dtypes[i] = string_dtype;
         }
     }
     return 0;
@@ -2708,18 +2727,19 @@ add_mixed_promoters(
     return 0;
 }
 
-NPY_NO_EXPORT int
-add_object_and_unicode_promoters(PyObject *umath, const char* ufunc_name,
-                                 PyArrayMethod_PromoterFunction *unicode_promoter_wrapper,
+static int
+add_object_and_string_promoters(PyObject *umath, const char* ufunc_name,
+                                 PyArray_DTypeMeta *string_dtype, PyArray_DTypeMeta *fixed_dtype,
+                                 PyArrayMethod_PromoterFunction *string_promoter_wrapper,
                                  PyArrayMethod_PromoterFunction *object_promoter_wrapper)
 {
     PyArray_DTypeMeta *bool_tail[] = {&PyArray_BoolDType};
-    if (add_promoter_pair(umath, ufunc_name, &PyArray_StringDType,
-                          &PyArray_UnicodeDType, bool_tail, 1,
-                          unicode_promoter_wrapper) < 0) {
+    if (add_promoter_pair(umath, ufunc_name, string_dtype,
+                          fixed_dtype, bool_tail, 1,
+                          string_promoter_wrapper) < 0) {
         return -1;
     }
-    return add_promoter_pair(umath, ufunc_name, &PyArray_StringDType,
+    return add_promoter_pair(umath, ufunc_name, string_dtype,
                              &PyArray_ObjectDType, bool_tail, 1,
                              object_promoter_wrapper);
 }
@@ -2739,12 +2759,19 @@ static npy_bool comparison_ufunc_eq_lt_gt_results[6*3] = {
     NPY_FALSE, NPY_FALSE, NPY_TRUE, // ge
 };
 
-NPY_NO_EXPORT int
-init_stringdtype_ufuncs(PyObject *umath)
+template <ENCODING enc>
+static int
+init_stringlike_ufuncs(PyObject *umath)
 {
+    constexpr bool is_bytes = enc != ENCODING::UTF8;
+    PyArray_DTypeMeta *string_dtype = is_bytes
+            ? &PyArray_ByteStringDType : &PyArray_StringDType;
+    PyArray_DTypeMeta *fixed_dtype = is_bytes
+            ? &PyArray_BytesDType : &PyArray_UnicodeDType;
+
     PyArray_DTypeMeta *comparison_dtypes[] = {
-            &PyArray_StringDType,
-            &PyArray_StringDType, &PyArray_BoolDType};
+            string_dtype,
+            string_dtype, &PyArray_BoolDType};
 
     for (int i = 0; i < 6; i++) {
         if (init_ufunc(umath, comparison_ufunc_names[i], comparison_dtypes,
@@ -2755,16 +2782,16 @@ init_stringdtype_ufuncs(PyObject *umath)
             return -1;
         }
 
-        if (add_object_and_unicode_promoters(
-                    umath, comparison_ufunc_names[i],
-                    &string_unicode_bool_output_promoter,
+        if (add_object_and_string_promoters(
+                    umath, comparison_ufunc_names[i], string_dtype, fixed_dtype,
+                    &stringlike_bool_output_promoter,
                     &string_object_bool_output_promoter) < 0) {
             return -1;
         }
     }
 
     PyArray_DTypeMeta *bool_output_dtypes[] = {
-        &PyArray_StringDType,
+        string_dtype,
         &PyArray_BoolDType
     };
 
@@ -2792,8 +2819,8 @@ init_stringdtype_ufuncs(PyObject *umath)
         &Buffer<ENCODING::UTF8>::isupper,
         &Buffer<ENCODING::UTF8>::islower,
     };
-    for (int i=0; i<9; i++) {
-        if (init_ufunc(umath, unary_loop_names[i], bool_output_dtypes,
+    for (int i=0; i<9 && !is_bytes; i++) {
+        if (!is_bytes && init_ufunc(umath, unary_loop_names[i], bool_output_dtypes,
                        &string_bool_output_resolve_descriptors,
                        &string_bool_output_unary_strided_loop<ENCODING::UTF8>,
                        1, 1, NPY_NO_CASTING,
@@ -2808,7 +2835,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_IntpDType
     };
 
-    if (init_ufunc(umath, "str_len", intp_output_dtypes,
+    if (!is_bytes && init_ufunc(umath, "str_len", intp_output_dtypes,
                    &string_intp_output_resolve_descriptors,
                    &string_strlen_strided_loop<ENCODING::UTF8>, 1, 1, NPY_NO_CASTING,
                    (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
@@ -2816,9 +2843,9 @@ init_stringdtype_ufuncs(PyObject *umath)
     }
 
     PyArray_DTypeMeta *binary_dtypes[] = {
-            &PyArray_StringDType,
-            &PyArray_StringDType,
-            &PyArray_StringDType,
+            string_dtype,
+            string_dtype,
+            string_dtype,
     };
 
     const char* minimum_maximum_names[] = {"minimum", "maximum"};
@@ -2835,34 +2862,36 @@ init_stringdtype_ufuncs(PyObject *umath)
         }
     }
 
-    if (init_ufunc(umath, "add", binary_dtypes, binary_resolve_descriptors,
+    if (!is_bytes && init_ufunc(umath, "add", binary_dtypes, binary_resolve_descriptors,
                    &add_strided_loop, 2, 1, NPY_NO_CASTING,
                    (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
-    PyArray_DTypeMeta *string_tail[] = {&PyArray_StringDType};
+    PyArray_DTypeMeta *string_tail[] = {string_dtype};
 
-    if (add_mixed_promoters(umath, "add", 2, &PyArray_StringDType,
-                            &PyArray_UnicodeDType, string_tail, 1, 1,
+    if (!is_bytes && add_mixed_promoters(umath, "add", 2, string_dtype,
+                            fixed_dtype, string_tail, 1, 1,
                             all_strings_promoter) < 0) {
         return -1;
     }
 
     for (int i = 0; i < 2; i++) {
         if (add_mixed_promoters(umath, minimum_maximum_names[i], 2,
-                                &PyArray_StringDType, &PyArray_UnicodeDType,
+                                string_dtype, fixed_dtype,
                                 string_tail, 1, 1, all_strings_promoter) < 0) {
             return -1;
         }
     }
 
-    INIT_MULTIPLY(PyArray_StringDType, Int64, int64);
-    INIT_MULTIPLY(PyArray_StringDType, UInt64, uint64);
+    if (!is_bytes) {
+        INIT_MULTIPLY(*string_dtype, Int64, int64);
+        INIT_MULTIPLY(*string_dtype, UInt64, uint64);
+    }
 
     // all other integer dtypes are handled with a generic promoter
 
-    if (add_promoter_pair(umath, "multiply", &PyArray_StringDType,
+    if (!is_bytes && add_promoter_pair(umath, "multiply", string_dtype,
                           &PyArray_IntAbstractDType, string_tail, 1,
                           string_multiply_promoter) < 0) {
         return -1;
@@ -2891,8 +2920,8 @@ init_stringdtype_ufuncs(PyObject *umath)
         string_count<ENCODING::UTF8>,
     };
 
-    for (int i=0; i<5; i++) {
-        if (init_ufunc(umath, findlike_names[i], findlike_dtypes,
+    for (int i=0; i<5 && !is_bytes; i++) {
+        if (!is_bytes && init_ufunc(umath, findlike_names[i], findlike_dtypes,
                        &string_findlike_resolve_descriptors,
                        &string_findlike_strided_loop<ENCODING::UTF8>,
                        4, 1, NPY_NO_CASTING,
@@ -2929,7 +2958,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         STARTPOSITION::BACK,
     };
 
-    for (int i=0; i<2; i++) {
+    for (int i=0; i<2 && !is_bytes; i++) {
         if (init_ufunc(umath, startswith_endswith_names[i], startswith_endswith_dtypes,
                        &string_startswith_endswith_resolve_descriptors,
                        &string_startswith_endswith_strided_loop,
@@ -2960,8 +2989,8 @@ init_stringdtype_ufuncs(PyObject *umath)
         STRIPTYPE::BOTHSTRIP,
     };
 
-    for (int i=0; i<3; i++) {
-        if (init_ufunc(umath, strip_whitespace_names[i], strip_whitespace_dtypes,
+    for (int i=0; i<3 && !is_bytes; i++) {
+        if (!is_bytes && init_ufunc(umath, strip_whitespace_names[i], strip_whitespace_dtypes,
                        &strip_whitespace_resolve_descriptors,
                        &string_lrstrip_whitespace_strided_loop<ENCODING::UTF8>,
                        1, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0,
@@ -2978,7 +3007,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         "_lstrip_chars", "_rstrip_chars", "_strip_chars",
     };
 
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<3 && !is_bytes; i++) {
         if (init_ufunc(umath, strip_chars_names[i], strip_chars_dtypes,
                        &binary_resolve_descriptors,
                        &string_lrstrip_chars_strided_loop,
@@ -3000,7 +3029,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_Int64DType, &PyArray_StringDType,
     };
 
-    if (init_ufunc(umath, "_replace", replace_dtypes,
+    if (!is_bytes && init_ufunc(umath, "_replace", replace_dtypes,
                    &replace_resolve_descriptors,
                    &string_replace_strided_loop<ENCODING::UTF8>, 4, 1,
                    NPY_NO_CASTING,
@@ -3012,7 +3041,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_IntAbstractDType, &PyArray_StringDType,
     };
 
-    if (add_mixed_promoters(umath, "_replace", 3, &PyArray_StringDType,
+    if (!is_bytes && add_mixed_promoters(umath, "_replace", 3, &PyArray_StringDType,
                             &PyArray_UnicodeDType, replace_tail, 2, 0,
                             string_replace_promoter) < 0) {
         return -1;
@@ -3024,7 +3053,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_StringDType,
     };
 
-    if (init_ufunc(umath, "_expandtabs", expandtabs_dtypes,
+    if (!is_bytes && init_ufunc(umath, "_expandtabs", expandtabs_dtypes,
                    &expandtabs_resolve_descriptors,
                    &string_expandtabs_strided_loop, 2, 1,
                    NPY_NO_CASTING,
@@ -3038,7 +3067,7 @@ init_stringdtype_ufuncs(PyObject *umath)
             &PyArray_StringDType
     };
 
-    if (add_promoter(umath, "_expandtabs", expandtabs_promoter_dtypes,
+    if (!is_bytes && add_promoter(umath, "_expandtabs", expandtabs_promoter_dtypes,
                      3, string_multiply_promoter) < 0) {
         return -1;
     }
@@ -3058,7 +3087,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         JUSTPOSITION::CENTER, JUSTPOSITION::LEFT, JUSTPOSITION::RIGHT
     };
 
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<3 && !is_bytes; i++) {
         if (init_ufunc(umath, center_ljust_rjust_names[i],
                        center_ljust_rjust_dtypes,
                        &center_ljust_rjust_resolve_descriptors,
@@ -3103,7 +3132,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_StringDType,
     };
 
-    if (init_ufunc(umath, "_zfill", zfill_dtypes, multiply_resolve_descriptors,
+    if (!is_bytes && init_ufunc(umath, "_zfill", zfill_dtypes, multiply_resolve_descriptors,
                    zfill_strided_loop, 2, 1, NPY_NO_CASTING,
                    (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
@@ -3115,7 +3144,7 @@ init_stringdtype_ufuncs(PyObject *umath)
             &PyArray_StringDType,
     };
 
-    if (add_promoter(umath, "_zfill", zfill_promoter_dtypes, 3,
+    if (!is_bytes && add_promoter(umath, "_zfill", zfill_promoter_dtypes, 3,
                      string_multiply_promoter) < 0) {
         return -1;
     }
@@ -3134,8 +3163,8 @@ init_stringdtype_ufuncs(PyObject *umath)
         STARTPOSITION::FRONT, STARTPOSITION::BACK
     };
 
-    for (int i=0; i<2; i++) {
-        if (init_ufunc(umath, partition_names[i], partition_dtypes,
+    for (int i=0; i<2 && !is_bytes; i++) {
+        if (!is_bytes && init_ufunc(umath, partition_names[i], partition_dtypes,
                        string_partition_resolve_descriptors,
                        string_partition_strided_loop, 2, 3, NPY_NO_CASTING,
                        (NPY_ARRAYMETHOD_FLAGS) 0, &partition_startpositions[i]) < 0) {
@@ -3147,7 +3176,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_StringDType, &PyArray_StringDType, &PyArray_StringDType,
     };
 
-    for (int i=0; i<2; i++) {
+    for (int i=0; i<2 && !is_bytes; i++) {
         if (add_promoter_pair(umath, partition_names[i],
                               &PyArray_StringDType, &PyArray_UnicodeDType,
                               partition_tail, 3,
@@ -3164,7 +3193,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_StringDType,
     };
 
-    if (init_ufunc(umath, "_slice", slice_dtypes, slice_resolve_descriptors,
+    if (!is_bytes && init_ufunc(umath, "_slice", slice_dtypes, slice_resolve_descriptors,
                    slice_strided_loop, 4, 1, NPY_NO_CASTING,
                    (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
@@ -3178,8 +3207,20 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_StringDType,
     };
 
-    if (add_promoter(umath, "_slice", slice_promoter_dtypes, 5,
+    if (!is_bytes && add_promoter(umath, "_slice", slice_promoter_dtypes, 5,
                      slice_promoter) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+NPY_NO_EXPORT int
+init_stringdtype_ufuncs(PyObject *umath)
+{
+    // Each family promotes only with its matching fixed-width dtype, or object.
+    if (init_stringlike_ufuncs<ENCODING::UTF8>(umath) < 0 ||
+            init_stringlike_ufuncs<ENCODING::ASCII>(umath) < 0) {
         return -1;
     }
 
