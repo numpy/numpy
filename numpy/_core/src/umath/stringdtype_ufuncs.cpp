@@ -13,6 +13,7 @@
 
 #include "numpyos.h"
 #include "gil_utils.h"
+#include "raii_utils.hpp"
 #include "dtypemeta.h"
 #include "abstractdtypes.h"
 #include "dispatching.h"
@@ -3252,12 +3253,153 @@ init_stringlike_ufuncs(PyObject *umath)
     return 0;
 }
 
+static NPY_CASTING
+encode_decode_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(method),
+        PyArray_DTypeMeta *const dtypes[], PyArray_Descr *const given_descrs[],
+        PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
+{
+    PyArray_StringDTypeObject *idescr = (PyArray_StringDTypeObject *)given_descrs[0];
+
+    if (given_descrs[1] == NULL) {
+        // a string-like na sentinel is itself encoded or decoded (strict) so it stays string-like on the other side
+        PyObject *out_na_object = idescr->na_object;
+        PyObject *translated_na = NULL;
+        if (idescr->has_string_na) {
+            if (dtypes[1] == &PyArray_ByteStringDType) {
+                translated_na = PyUnicode_AsUTF8String(out_na_object);
+            }
+            else {
+                char *buf = NULL;
+                Py_ssize_t size = 0;
+                if (PyBytes_AsStringAndSize(out_na_object, &buf, &size) < 0) {
+                    return (NPY_CASTING)-1;
+                }
+                translated_na = PyUnicode_DecodeUTF8(buf, size, NULL);
+            }
+            if (translated_na == NULL) {
+                return (NPY_CASTING)-1;
+            }
+            out_na_object = translated_na;
+        }
+        loop_descrs[1] = (PyArray_Descr *)new_stringlike_instance_of(dtypes[1], out_na_object, 1);
+        Py_XDECREF(translated_na);
+        if (loop_descrs[1] == NULL) {
+            return (NPY_CASTING)-1;
+        }
+    }
+    else {
+        Py_INCREF(given_descrs[1]);
+        loop_descrs[1] = given_descrs[1];
+    }
+
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+
+    return NPY_NO_CASTING;
+}
+
+// StringDType already stores UTF-8, so encode is a verbatim copy and
+// decode is the same copy after validating the bytes
+template <bool validate_utf8>
+static int
+encode_decode_strided_loop(PyArrayMethod_Context *context, char *const data[], npy_intp const dimensions[],
+                           npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
+
+    npy_string_allocator *allocators[2] = {};
+    NpyString_acquire_allocators(2, context->descriptors, allocators);
+    npy_string_allocator *iallocator = allocators[0];
+    npy_string_allocator *oallocator = allocators[1];
+
+    char *in = data[0];
+    char *out = data[1];
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        const npy_packed_static_string *ips = (npy_packed_static_string *)in;
+        npy_static_string is = {0, NULL};
+        npy_packed_static_string *ops = (npy_packed_static_string *)out;
+
+        int is_isnull = NpyString_load(iallocator, ips, &is);
+        if (is_isnull == -1) {
+            npy_gil_error(PyExc_MemoryError, "Failed to load string in %s", ufunc_name);
+            goto fail;
+        }
+        else if (is_isnull) {
+            if (NpyString_pack_null(oallocator, ops) < 0) {
+                npy_gil_error(PyExc_MemoryError, "Failed to pack null string in %s", ufunc_name);
+                goto fail;
+            }
+        }
+        else {
+            if constexpr (validate_utf8) {
+                size_t num_codepoints;
+                if (num_codepoints_for_utf8_bytes(
+                            (const unsigned char *)is.buf, &num_codepoints, is.size) != 0) {
+                    // the allocators must not be held while Python builds the exception
+                    char *bad = (char *)PyMem_RawMalloc(is.size);
+                    if (bad == NULL) {
+                        npy_gil_error(PyExc_MemoryError, "Failed to allocate memory for decode error");
+                        goto fail;
+                    }
+                    memcpy(bad, is.buf, is.size);
+                    size_t bad_size = is.size;
+                    NpyString_release_allocators(2, allocators);
+                    np::raii::EnsureGIL ensure_gil{};
+                    PyObject *decoded = PyUnicode_DecodeUTF8(bad, bad_size, NULL);
+                    PyMem_RawFree(bad);
+                    if (decoded != NULL) {
+                        Py_DECREF(decoded);
+                        PyErr_SetString(PyExc_ValueError, "invalid UTF-8 bytes found during decode");
+                    }
+                    return -1;
+                }
+            }
+            if (NpyString_pack(oallocator, ops, is.buf, is.size) < 0) {
+                npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s", ufunc_name);
+                goto fail;
+            }
+        }
+
+        in += strides[0];
+        out += strides[1];
+    }
+
+    NpyString_release_allocators(2, allocators);
+    return 0;
+
+fail:
+    NpyString_release_allocators(2, allocators);
+    return -1;
+}
+
 NPY_NO_EXPORT int
 init_stringdtype_ufuncs(PyObject *umath)
 {
     // Each family promotes only with its matching fixed-width dtype, or object.
     if (init_stringlike_ufuncs<ENCODING::UTF8>(umath) < 0 ||
             init_stringlike_ufuncs<ENCODING::BYTES>(umath) < 0) {
+        return -1;
+    }
+
+    PyArray_DTypeMeta *encode_dtypes[] = {
+        &PyArray_StringDType, &PyArray_ByteStringDType,
+    };
+
+    if (init_ufunc(umath, "_encode", encode_dtypes,
+                   &encode_decode_resolve_descriptors, &encode_decode_strided_loop<false>, 1, 1, NPY_NO_CASTING,
+                   NPY_METH_NO_FLOATINGPOINT_ERRORS, NULL) < 0) {
+        return -1;
+    }
+
+    PyArray_DTypeMeta *decode_dtypes[] = {
+        &PyArray_ByteStringDType, &PyArray_StringDType,
+    };
+
+    if (init_ufunc(umath, "_decode", decode_dtypes,
+                   &encode_decode_resolve_descriptors, &encode_decode_strided_loop<true>, 1, 1, NPY_NO_CASTING,
+                   NPY_METH_NO_FLOATINGPOINT_ERRORS, NULL) < 0) {
         return -1;
     }
 

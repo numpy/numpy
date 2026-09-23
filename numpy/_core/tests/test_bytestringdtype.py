@@ -9,6 +9,7 @@ import pickle
 import subprocess
 import sys
 import textwrap
+import warnings
 
 import pytest
 
@@ -958,3 +959,154 @@ class TestUnsupportedOps:
                 fn(a, 10)
         with pytest.raises(NotImplementedError, match="ByteStringDType"):
             np.strings.zfill(a, 10)
+
+
+class TestEncodeDecodeBridge:
+    """Oracle: str.encode / bytes.decode."""
+
+    def test_roundtrip(self):
+        # the long values force the arena path when packing the outputs
+        vals = ["héllo", "", "a\x00b", "x\x00", "\N{SNOWMAN}",
+                "ünïcödé\x00" * 5, "y" * 30 + "\x00",
+                "long variable width " * 4]
+        s = np.array(vals, dtype=StringDType())
+        b = np.strings.encode(s, "utf-8", dtype=ByteStringDType())
+        assert isinstance(b.dtype, ByteStringDType)
+        assert b.tolist() == [v.encode("utf-8") for v in vals]
+        back = np.strings.decode(b, "utf-8")
+        assert isinstance(back.dtype, StringDType)
+        assert back.tolist() == vals
+
+    def test_default_encoding_is_utf8(self):
+        s = np.array(["héllo"], dtype=StringDType())
+        assert np.strings.encode(
+            s, dtype=ByteStringDType())[0] == "héllo".encode()
+
+    @pytest.mark.parametrize("bad", [
+        b"\xff\xfe",     # invalid lead bytes
+        b"caf\xc3",      # truncated multibyte sequence
+        b"\x80abc",      # bare continuation byte
+        b"x" * 20 + b"\xff",  # arena-length value
+    ])
+    def test_strict_decode_raises(self, bad):
+        arr = np.array([bad], dtype=ByteStringDType())
+        with pytest.raises(UnicodeDecodeError) as exc:
+            np.strings.decode(arr)
+        with pytest.raises(UnicodeDecodeError) as expected:
+            bad.decode()
+        assert (exc.value.start, exc.value.reason) == \
+            (expected.value.start, expected.value.reason)
+
+    def test_unsupported_encodings_and_errors(self):
+        r = np.array([b"x"], dtype=ByteStringDType())
+        s = np.array(["x"], dtype=StringDType())
+        with pytest.raises(NotImplementedError):
+            np.strings.decode(r, "latin-1")
+        with pytest.raises(NotImplementedError):
+            np.strings.encode(s, "cp037", dtype=ByteStringDType())
+        with pytest.raises(NotImplementedError):
+            np.strings.decode(r, "utf-8", "replace")
+        with pytest.raises(NotImplementedError):
+            np.strings.encode(s, "utf-8", "ignore", dtype=ByteStringDType())
+        # utf-8 aliases resolve through codecs
+        assert np.strings.decode(r, "UTF8")[0] == "x"
+        assert np.strings.encode(s, "utf_8", dtype=ByteStringDType())[0] == b"x"
+
+    def test_directional_type_errors(self):
+        r = np.array([b"x"], dtype=ByteStringDType())
+        s = np.array(["x"], dtype=StringDType())
+        with pytest.raises(TypeError, match="np.strings.decode"):
+            np.strings.encode(r)
+        with pytest.raises(TypeError, match="np.strings.encode"):
+            np.strings.decode(s)
+
+    def test_null_propagation(self):
+        for na in [None, np.nan]:
+            s = np.array(["a"], dtype=StringDType(na_object=na))
+            sn = np.insert(s, 0, na)
+            b = np.strings.encode(sn, dtype=ByteStringDType())
+            back = np.strings.decode(b)
+            if na is None:
+                assert b[0] is None and back[0] is None
+            else:
+                import math
+                assert math.isnan(b[0]) and math.isnan(back[0])
+            assert b[1] == b"a" and back[1] == "a"
+
+    def test_string_na_translates_across_bridge(self):
+        # a string-like sentinel is itself encoded/decoded
+        s = np.array(["a"], dtype=StringDType(na_object="MISSING"))
+        sn = np.insert(s, 0, "MISSING")
+        b = np.strings.encode(sn, dtype=ByteStringDType())
+        assert b.dtype.na_object == b"MISSING"
+        assert b[0] == b"MISSING"
+        assert np.sort(b).tolist() == [b"MISSING", b"a"]
+        assert np.strings.str_len(b).tolist() == [7, 1]
+        back = np.strings.decode(b)
+        assert back.dtype.na_object == "MISSING"
+        assert back[0] == "MISSING"
+
+    def test_non_utf8_bytes_na_fails_decode(self):
+        # the sentinel crosses the bridge through the same strict codec as
+        # the data, so a non-UTF-8 bytes sentinel fails decode up front
+        r = np.array([b"ok"], dtype=ByteStringDType(na_object=b"\xff"))
+        with pytest.raises(UnicodeDecodeError):
+            np.strings.decode(r)
+
+    def test_fixed_width_paths_unchanged(self):
+        c = np.array([b"\x81\xc1"], dtype="S2")
+        assert np.strings.decode(c, "cp037").tolist() == ["aA"]
+        u = np.array(["aA"])
+        assert np.strings.encode(u, "cp037").tolist() == [b"\x81\xc1"]
+
+    def test_default_encode_warns_and_keeps_fixed_width(self):
+        # without dtype=, StringDType input keeps its pre-ByteStringDType
+        # behavior behind a FutureWarning
+        s = np.array(["x\x00", "héllo"], dtype=StringDType())
+        with pytest.warns(FutureWarning, match="ByteStringDType"):
+            res = np.strings.encode(s, "utf-8")
+        assert res.dtype.kind == "S"
+        assert res[0] == b"x"
+        with pytest.warns(FutureWarning):
+            full = np.strings.encode(s, "utf-16", "replace")
+        # the fixed-width result strips trailing NULs of the encoded
+        # bytes (UTF-16-LE of ASCII ends in one), the pre-existing
+        # behavior this path preserves
+        assert full.tolist() == \
+            [v.encode("utf-16", "replace").rstrip(b"\x00")
+             for v in s.tolist()]
+        with pytest.warns(FutureWarning):
+            zd = np.strings.encode(np.array("x", dtype=StringDType()))
+        assert isinstance(zd, np.ndarray)
+        assert zd.shape == () and zd.dtype.kind == "S"
+
+    def test_encode_dtype_selects_and_silences(self):
+        s = np.array(["x\x00"], dtype=StringDType())
+        u = np.array(["x"])
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            fixed = np.strings.encode(s, "utf-8", dtype=np.bytes_)
+            assert fixed.dtype.kind == "S" and fixed[0] == b"x"
+            var = np.strings.encode(s, "utf-8", dtype=ByteStringDType())
+            assert isinstance(var.dtype, ByteStringDType)
+            assert var[0] == b"x\x00"
+            assert np.strings.encode(
+                s, dtype=np.dtypes.ByteStringDType)[0] == b"x\x00"
+            assert np.strings.encode(
+                s, dtype=np.dtypes.BytesDType)[0] == b"x"
+            assert np.strings.encode(s, dtype="R")[0] == b"x\x00"
+            # str input never warns, with or without the fixed-width dtype
+            assert np.strings.encode(u, "utf-8").dtype.kind == "S"
+            assert np.strings.encode(
+                u, "utf-8", dtype=np.bytes_).dtype.kind == "S"
+
+    def test_encode_dtype_validation(self):
+        s = np.array(["x"], dtype=StringDType())
+        with pytest.raises(TypeError, match="StringDType input"):
+            np.strings.encode(np.array(["x"]), dtype=ByteStringDType())
+        with pytest.raises(ValueError, match="ByteStringDType or"):
+            np.strings.encode(s, dtype=np.int64)
+        with pytest.raises(ValueError, match="np.bytes_"):
+            np.strings.encode(s, dtype="S5")
+        with pytest.raises(ValueError, match="parametrized"):
+            np.strings.encode(s, dtype=ByteStringDType(na_object=b""))

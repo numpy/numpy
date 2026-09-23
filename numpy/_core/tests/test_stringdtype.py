@@ -7,6 +7,7 @@ import pickle
 import string
 import sys
 import tempfile
+import warnings
 
 import pytest
 
@@ -2760,6 +2761,11 @@ def call_func(func, args, array, sanitize=True):
 
 @pytest.mark.parametrize("function_name, args", BINARY_FUNCTIONS)
 def test_binary(string_array, unicode_array, function_name, args):
+    if function_name == "encode":
+        # the StringDType default result dtype is transitioning to
+        # ByteStringDType behind a FutureWarning; this test covers the
+        # unchanged fixed-width path
+        warnings.simplefilter("ignore", FutureWarning)
     if function_name in ONLY_IN_NP_CHAR:
         func = getattr(np.char, function_name)
     else:

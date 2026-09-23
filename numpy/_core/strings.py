@@ -25,6 +25,8 @@ from numpy._core.multiarray import _vec_string
 from numpy._core.overrides import array_function_dispatch, set_module
 from numpy._core.umath import (
     _center,
+    _decode,
+    _encode,
     _expandtabs,
     _expandtabs_length,
     _ljust,
@@ -142,6 +144,22 @@ def _check_not_bytestring(func_name, a):
         raise NotImplementedError(
             f"np.strings.{func_name} is not implemented for ByteStringDType "
             "arrays")
+
+
+def _check_utf8_strict(func_name, encoding, errors):
+    if encoding is not None:
+        import codecs
+        # str() mirrors the fixed-width path, which passes the value into
+        # str.encode/bytes.decode and so accepts str-coercible objects
+        if codecs.lookup(str(encoding)).name != "utf-8":
+            raise NotImplementedError(
+                f"np.strings.{func_name} only supports the 'utf-8' encoding "
+                "for StringDType and ByteStringDType arrays, got "
+                f"{encoding!r}")
+    if errors is not None and str(errors) != "strict":
+        raise NotImplementedError(
+            f"np.strings.{func_name} only supports errors='strict' for "
+            f"StringDType and ByteStringDType arrays, got {errors!r}")
 
 
 def _clean_args(*args):
@@ -558,13 +576,13 @@ def decode(a, encoding=None, errors=None):
     r"""
     Calls :meth:`bytes.decode` element-wise.
 
-    The set of available codecs comes from the Python standard library,
-    and may be extended at runtime.  For more information, see the
-    :mod:`codecs` module.
+    For fixed-width bytes input, the set of available codecs comes from the
+    Python standard library, and may be extended at runtime. For more
+    information, see the :mod:`codecs` module.
 
     Parameters
     ----------
-    a : array_like, with ``bytes_`` dtype
+    a : array_like, with ``ByteStringDType`` or ``bytes_`` dtype
 
     encoding : str, optional
        The name of an encoding
@@ -595,21 +613,41 @@ def decode(a, encoding=None, errors=None):
     >>> np.strings.decode(c, encoding='cp037')
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
 
+    For ByteStringDType input the result is a StringDType array and only
+    the utf-8 encoding with errors='strict' is supported; embedded and
+    trailing NUL bytes are preserved:
+
+    >>> r = np.array([b"x\x00"], dtype=np.dtypes.ByteStringDType())
+    >>> np.strings.decode(r, "utf-8")
+    array(['x\x00'], dtype=StringDType())
+
     """
+    a = np.asanyarray(a)
+    if isinstance(a.dtype, np.dtypes.ByteStringDType):
+        _check_utf8_strict("decode", encoding, errors)
+        return _decode(a)
+    if a.dtype.char == "T":
+        raise TypeError(
+            "decode() requires bytes input (a ByteStringDType or bytes "
+            "array); to turn text into bytes use np.strings.encode()")
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, 'decode', _clean_args(encoding, errors)),
         np.str_(''))
 
 
+def _encode_dispatcher(a, encoding=None, errors=None, *, dtype=None):
+    return (a,)
+
+
 @set_module("numpy.strings")
-@array_function_dispatch(_code_dispatcher)
-def encode(a, encoding=None, errors=None):
+@array_function_dispatch(_encode_dispatcher)
+def encode(a, encoding=None, errors=None, *, dtype=None):
     r"""
     Calls :meth:`str.encode` element-wise.
 
-    The set of available codecs comes from the Python standard library,
-    and may be extended at runtime. For more information, see the
-    :mod:`codecs` module.
+    For fixed-width bytes output, the set of available codecs comes from the
+    Python standard library, and may be extended at runtime. For more
+    information, see the :mod:`codecs` module.
 
     Parameters
     ----------
@@ -620,6 +658,17 @@ def encode(a, encoding=None, errors=None):
 
     errors : str, optional
        Specifies how to handle encoding errors
+
+    dtype : dtype, optional
+       The result dtype for ``StringDType`` input. Pass
+       ``np.dtypes.ByteStringDType()`` for a variable-width bytes result
+       that preserves trailing NUL bytes; only the utf-8 encoding with
+       errors='strict' is supported on that path. Pass ``np.bytes_`` for
+       the fixed-width ``S`` result. If unspecified, ``StringDType``
+       input returns the fixed-width result and a ``FutureWarning``
+       announces that the default will change to ``ByteStringDType`` in
+       a future release. For ``str_`` input only ``np.bytes_`` is
+       accepted and the result is unchanged.
 
     Returns
     -------
@@ -641,7 +690,48 @@ def encode(a, encoding=None, errors=None):
     array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
        b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
 
+    >>> s = np.array(["x\x00"], dtype=np.dtypes.StringDType())
+    >>> np.strings.encode(s, "utf-8", dtype=np.dtypes.ByteStringDType())
+    array([b'x\x00'], dtype=ByteStringDType())
+
     """
+    a = np.asanyarray(a)
+    if isinstance(a.dtype, np.dtypes.ByteStringDType):
+        raise TypeError(
+            "encode() requires text input (a StringDType or str array); "
+            "to turn bytes into text use np.strings.decode()")
+    if dtype is not None:
+        if dtype is np.dtypes.ByteStringDType:
+            dtype = np.dtypes.ByteStringDType()
+        elif dtype is np.dtypes.BytesDType:
+            dtype = np.dtype(np.bytes_)
+        else:
+            dtype = np.dtype(dtype)
+        if isinstance(dtype, np.dtypes.ByteStringDType):
+            if a.dtype.char != "T":
+                raise TypeError(
+                    "encode() only supports dtype=ByteStringDType() for "
+                    "StringDType input")
+            if dtype != np.dtypes.ByteStringDType():
+                raise ValueError(
+                    "encode() does not support a parametrized "
+                    "ByteStringDType; the result's na_object follows the "
+                    "input array")
+            _check_utf8_strict("encode", encoding, errors)
+            return _encode(a)
+        if dtype.kind != "S" or dtype.itemsize != 0:
+            raise ValueError(
+                "encode() dtype must be ByteStringDType or the fixed-width "
+                f"bytes dtype np.bytes_, got {dtype!r}")
+    elif a.dtype.char == "T":
+        warnings.warn(
+            "np.strings.encode returns a fixed-width bytes ('S') result "
+            "for StringDType input, which cannot represent trailing NUL "
+            "bytes; the default result dtype will change to "
+            "ByteStringDType in a future release. Pass "
+            "dtype=np.dtypes.ByteStringDType() to opt in now, or "
+            "dtype=np.bytes_ to keep the fixed-width result and silence "
+            "this warning.", FutureWarning, stacklevel=2)
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, 'encode', _clean_args(encoding, errors)),
         np.bytes_(b''))
