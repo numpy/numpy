@@ -170,6 +170,33 @@ class TestSetGet:
     def test_zeros_is_empty_bytes(self, dtype):
         assert np.zeros(3, dtype=dtype).tolist() == [b""] * 3
 
+    @pytest.mark.parametrize("value", [b"x\x00", b"\x00", b"x" * 30 + b"\x00"])
+    @pytest.mark.parametrize("scalar_type", [bytes, np.vbytes])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.filterwarnings("error")
+    def test_append_preserves_scalar_bytes(self, value, scalar_type, reverse):
+        # numpy/numpy#32642 must retain the original scalar until the
+        # ByteStringDType descriptor is resolved, without an S intermediate.
+        dtype = ByteStringDType(na_object=None)
+        arr = np.array([[b"a", value]], dtype=dtype)
+        scalar = scalar_type(value)
+        args = (scalar, arr) if reverse else (arr, scalar)
+        expected = [value, b"a", value] if reverse else [b"a", value, value]
+        result = np.append(*args)
+        assert result.dtype == dtype
+        assert result.shape == (3,)
+        assert result.tolist() == expected
+
+    @pytest.mark.parametrize("other_dtype", ["R", "S2"])
+    def test_append_explicit_axis(self, dtype, other_dtype):
+        arr = np.array([[b"x\x00"]], dtype=dtype)
+        other = np.array([[b"\xff\x00"]], dtype=other_dtype)
+        result = np.append(arr, other, axis=0)
+        assert result.dtype == dtype
+        # Fixed-width padding is not data, even when appending to R.
+        expected = b"\xff\x00" if other_dtype == "R" else b"\xff"
+        assert result.tolist() == [[b"x\x00"], [expected]]
+
 
 class TestSortingAndSelection:
     def test_sort_high_bytes(self, dtype):
