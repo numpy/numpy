@@ -338,7 +338,8 @@ check_string_promotion(int ndtypes, PyArray_DTypeMeta *const dtypes[])
 {
     int has_bytes = 0, has_text = 0, has_other = 0;
     for (int i = 0; i < ndtypes; i++) {
-        if (dtypes[i] == &PyArray_BytesDType) {
+        if (dtypes[i] == &PyArray_BytesDType ||
+                dtypes[i] == &PyArray_ByteStringDType) {
             has_bytes = 1;
         }
         else if (dtypes[i] == &PyArray_UnicodeDType ||

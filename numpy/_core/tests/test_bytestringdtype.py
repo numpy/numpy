@@ -101,6 +101,41 @@ class TestConstruction:
 
 
 class TestStrictBytesInput:
+    @pytest.mark.parametrize("other", ["S4", "R", "U4", "T", "O", "i8"])
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_strict_string_promotion(self, dtype, other, reverse):
+        from numpy._core._multiarray_umath import _array_converter
+
+        arr = np.array([b"x\x00"], dtype=dtype)
+        other_arr = np.array([1], dtype=other) if other == "i8" else np.array(
+            ["x" if other in ("U4", "T") else b"x"], dtype=other)
+        inputs = (other_arr, arr) if reverse else (arr, other_arr)
+        converter = _array_converter(*inputs)
+        if other in ("S4", "R"):
+            assert converter.result_type(strict_strings=True) == dtype
+        else:
+            with pytest.raises(np.exceptions.DTypePromotionError,
+                               match="Strict string promotion"):
+                converter.result_type(strict_strings=True)
+
+    @pytest.mark.parametrize("source,target", [("S4", "R"), ("R", "S4")])
+    def test_strict_string_extra_dtype(self, source, target):
+        from numpy._core._multiarray_umath import _array_converter
+
+        converter = _array_converter(np.array([b"x"], dtype=source))
+        assert converter.result_type(extra_dtype=np.dtype(target),
+                                     strict_strings=True) == ByteStringDType()
+
+    def test_strict_string_scalar_conversion(self, dtype):
+        from numpy._core._multiarray_umath import _array_converter
+
+        arr = np.array([b"y"], dtype=dtype)
+        converter = _array_converter(arr, b"x\x00")
+        resolved = converter.result_type(strict_strings=True)
+        assert resolved == dtype
+        result = np.concatenate((arr, b"x\x00"), axis=None, dtype=resolved)
+        assert result.tolist() == [b"y", b"x\x00"]
+
     @pytest.mark.parametrize("value", [
         "text",
         1,
@@ -922,6 +957,14 @@ class TestMixedFixedWidth:
             assert res.tolist() == [b"1abc", b"2x"]
         res = s + a
         assert res.tolist() == [b"abc1", b"x2"]
+
+
+class TestWrapperDispatch:
+    def test_default_fillchar_is_bytes(self, dtype):
+        from numpy._core.strings import _get_fillchar
+
+        arr = np.array([b"x"], dtype=dtype)
+        assert _get_fillchar(arr, None).item() == b" "
 
 
 class TestUnsupportedOps:

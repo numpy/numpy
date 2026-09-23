@@ -820,7 +820,7 @@ def _just_dispatcher(a, width, fillchar=None):
 
 def _get_fillchar(a, fillchar):
     if fillchar is None:
-        fillchar = b" " if a.dtype.kind == "S" else " "
+        fillchar = b" " if a.dtype.kind in "SR" else " "
     fillchar = np.asanyarray(fillchar)
     if np.any(str_len(fillchar) != 1):
         raise TypeError(
