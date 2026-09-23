@@ -30,6 +30,7 @@ import pytest
 
 import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.tests._locales import CommaDecimalPointLocale
@@ -41,6 +42,7 @@ from numpy.testing import (
     HAS_REFCOUNT,
     HAS_SUBPROCESSES,
     IS_64BIT,
+    IS_MUSL,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -3520,6 +3522,18 @@ class TestMethods:
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1, 0, 1, 2, 3])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[4, 0, -1, 2, 3])
 
+    @pytest.mark.parametrize("array_type, sorter_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_searchsorted_sorter_integer_dtypes(self, array_type, sorter_type):
+        a = np.array([5, 2, 1, 3, 4], dtype=array_type)
+        sorter = np.array([2, 1, 3, 4, 0], dtype=sorter_type)
+        out = a.searchsorted([1, 3, 5], sorter=sorter)
+        assert_equal(out, [0, 2, 4])
+
     def test_searchsorted_with_sorter(self):
         a = np.random.rand(300)
         s = a.argsort()
@@ -4729,6 +4743,10 @@ class TestMethods:
 
         e = np.array(['1+1j'], 'U')
         assert_raises(TypeError, complex, e)
+
+    def test_item_multi_index_tuple(self):
+        a = np.arange(6).reshape(2, 3)
+        assert a.item((1, 2)) == a.item(1, 2) == 5
 
 class TestCequenceMethods:
     def test_array_contains(self):
@@ -6135,6 +6153,122 @@ class TestMinMax:
             assert_equal(np.amin(a), a[3])
             assert_equal(np.amax(a), a[3])
 
+    # `np.minmax` returns both extrema in a single pass; it must always agree
+    # with the `min`/`max` pair it fuses.
+    def check_minmax(self, a, **kwargs):
+        lo, hi = np.minmax(a, **kwargs)
+        assert_equal(lo, np.min(a, **kwargs))
+        assert_equal(hi, np.max(a, **kwargs))
+
+    def test_minmax_scalar(self):
+        with pytest.raises(AxisError):
+            np.minmax(1, 1)
+
+        assert_equal(np.minmax(1, axis=0), (1, 1))
+        assert_equal(np.minmax(1, axis=None), (1, 1))
+
+    def test_minmax_axis(self):
+        with pytest.raises(AxisError):
+            np.minmax([1, 2, 3], 1000)
+        assert_equal(np.minmax([[1, 2, 3]], axis=1), (1, 3))
+
+        a = np.arange(2 * 3 * 4).reshape(2, 3, 4)
+        for axis in [None, 0, 1, 2, (0, 1), (1, 2), (0, 2), (0, 1, 2)]:
+            self.check_minmax(a, axis=axis)
+        self.check_minmax(a, axis=1, keepdims=True)
+
+    def test_minmax_dtypes(self):
+        # a large array so the SIMD reduction kernels (not just the scalar
+        # tail) are exercised for every lane width
+        for dtype in (np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+                      + np.typecodes['Complex'] + '?'):
+            self.check_minmax(np.arange(1000).astype(dtype))
+        self.check_minmax(np.arange(1000, dtype=object))
+
+    def test_minmax_nan(self):
+        # NaN is propagated, like min/max
+        a = np.arange(10.0)
+        a[3] = np.nan
+        self.check_minmax(a)
+
+    def test_minmax_datetime(self):
+        # Do not ignore NaT
+        for dtype in ('m8[s]', 'm8[Y]'):
+            a = np.arange(10).astype(dtype)
+            self.check_minmax(a)
+            a[3] = 'NaT'
+            self.check_minmax(a)
+
+    def test_minmax_out(self):
+        a = np.arange(12.0).reshape(3, 4)
+        out1 = np.empty(4)
+        out2 = np.empty(4)
+        res = np.minmax(a, axis=0, out=(out1, out2))
+        assert_(res[0] is out1 and res[1] is out2)
+        assert_equal(out1, np.min(a, axis=0))
+        assert_equal(out2, np.max(a, axis=0))
+
+    def test_minmax_out_array_function(self):
+        # the arrays inside the `out` tuple must take part in dispatching
+        class MyArray:
+            def __array_function__(self, *args, **kwargs):
+                return "handled"
+
+        a = np.array([1, 2, 3])
+        assert_equal(np.minmax(a, out=(MyArray(), MyArray())), "handled")
+        assert_equal(np.minmax(a, out=MyArray()), "handled")
+
+    def test_minmax_out_invalid(self):
+        # a bad `out` is rejected rather than silently dropped, like np.min
+        a = np.arange(4)
+        single = np.empty((), dtype=a.dtype)
+        for x in (a, list(a)):
+            with pytest.raises(TypeError):
+                np.minmax(x, out="foo")
+            with pytest.raises(TypeError):
+                np.minmax(x, out=single)
+
+    def test_minmax_initial_and_where(self):
+        a = np.array([[-50], [10]])
+        assert_equal(np.minmax(a, axis=-1, initial=0), ([-50, 0], [0, 10]))
+        with pytest.raises(ValueError):
+            np.minmax(np.array([], dtype=np.float64))
+        assert_equal(np.minmax(np.array([], dtype=np.float64),
+                               initial=(np.inf, -np.inf)), (np.inf, -np.inf))
+
+    def test_minmax_no_loop_fallback(self):
+        # dtypes with no fused `minimummaximum` loop but that support min/max
+        # (the variable-width string DType, other user DTypes) fall back to two
+        # separate reductions.
+        a = np.array(["banana", "apple", "cherry"],
+                     dtype=np.dtypes.StringDType())
+        assert_equal(np.minmax(a), (np.min(a), np.max(a)))
+        a2 = a.reshape(3, 1)
+        lo, hi = np.minmax(a2, axis=0)
+        assert_equal(lo, np.min(a2, axis=0))
+        assert_equal(hi, np.max(a2, axis=0))
+
+    def test_minmax_no_loop_raises(self):
+        # a dtype that supports neither `minmax` nor `min`/`max` still raises
+        with pytest.raises(TypeError):
+            np.minmax(np.array(["banana", "apple"]))
+
+    def test_minmax_array_ufunc_no_fallback(self):
+        # a subclass whose __array_ufunc__ declines the private minimummaximum
+        # ufunc takes total control (the __array_ufunc__ contract), so minmax
+        # does not fall back to min/max and the TypeError propagates
+        class Sub(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
+                if ufunc in (np.minimum, np.maximum):
+                    inputs = [np.asarray(i) if isinstance(i, Sub) else i
+                              for i in inputs]
+                    return getattr(ufunc, method)(*inputs, **kw)
+                return NotImplemented
+
+        a = np.array([3, 1, 2]).view(Sub)
+        with pytest.raises(TypeError):
+            np.minmax(a)
+
 
 class TestNewaxis:
     def test_basic(self):
@@ -6756,6 +6890,23 @@ class TestIO:
             for dup, exc in ((dup_str, TypeError), (dup_bigint, OSError)):
                 monkeypatch.setattr(os, "dup", dup)
                 assert_raises(exc, np.fromfile, f)
+
+    @pytest.mark.skipif(
+        IS_WASM or IS_MUSL,
+        reason="musl and emscripten libc fdopen do not validate the fd",
+    )
+    def test_fromfile_failed_fdopen_closes_dup(
+            self, tmp_path, param_filename, monkeypatch):
+        closed_fds = []
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+
+        monkeypatch.setattr(os, "dup", lambda fd: -2)
+        monkeypatch.setattr(os, "close", closed_fds.append)
+
+        with open(tmp_filename, "wb") as f:
+            assert_raises(OSError, np.fromfile, f)
+
+        assert closed_fds == [-2]
 
     def _check_from(self, s, value, filename, **kw):
         if 'sep' not in kw:
@@ -8793,13 +8944,36 @@ class TestChoose:
         assert_equal(A, [[2, 2, 3], [2, 2, 3]])
 
     @pytest.mark.parametrize("ops",
-        [(1000, np.array([1], dtype=np.uint8)),
-         (-1, np.array([1], dtype=np.uint8)),
+        [(100, np.array([1], dtype=np.uint8)),
+         (-1, np.array([1], dtype=np.int8)),
          (1., np.float32(3)),
          (1., np.array([3], dtype=np.float32))],)
     def test_output_dtype(self, ops):
         expected_dt = np.result_type(*ops)
         assert np.choose([0], ops).dtype == expected_dt
+
+    @pytest.mark.parametrize("scalar", [1000, -1])
+    def test_pyscalar_out_of_bounds(self, scalar):
+        arr = np.array([1], dtype=np.uint8)
+        with pytest.raises(OverflowError):
+            np.choose([0], (scalar, arr))
+        with pytest.raises(OverflowError):
+            np.choose([1], (arr, scalar))
+
+    @pytest.mark.parametrize("array_type, indices_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_choose_integer_dtypes(self, array_type, indices_type):
+        choices = (np.array([1, 2, 3], dtype=array_type),
+                   np.array([4, 5, 6], dtype=array_type))
+        indices = np.array([0, 1, 0], dtype=indices_type)
+        tgt = np.array([1, 5, 3], dtype=array_type)
+        out = np.choose(indices, choices)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
 
     def test_dimension_and_args_limit(self):
         # Maxdims for the legacy iterator is 32, but the maximum number
@@ -8858,6 +9032,20 @@ class TestRepeat:
         A = np.repeat(m_rect, 2, axis=1)
         assert_equal(A, [[1, 1, 2, 2, 3, 3],
                          [4, 4, 5, 5, 6, 6]])
+
+    @pytest.mark.parametrize("array_type, repeats_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_repeat_integer_dtypes(self, array_type, repeats_type):
+        x = np.array([1, 2, 3, 4, 5], dtype=array_type)
+        repeats = np.array([1, 0, 2, 2, 3], dtype=repeats_type)
+        tgt = np.array([1, 3, 3, 4, 4, 5, 5, 5], dtype=array_type)
+        out = np.repeat(x, repeats)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
 
 
 # TODO: test for multidimensional
@@ -11950,3 +12138,50 @@ class TestPatternMatching:
                 assert_array_equal(row4, [7, 8])
             case _:
                 raise AssertionError("3D ndarray did not match sequence pattern")
+
+
+class TestSubinterpreterTeardown:
+    """
+    ``_multiarray_umath`` declares Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED,
+    so importing numpy in a subinterpreter must fail cleanly with an
+    ImportError rather than crashing. Closing the subinterpreter afterwards
+    exercises its teardown path even though the import failed.
+    """
+
+    @pytest.mark.skipif(IS_WASM, reason="no subinterpreter support in wasm")
+    def test_subinterpreter_import_fails_cleanly(self):
+        # concurrent.interpreters is Python 3.14+
+        interpreters = pytest.importorskip("concurrent.interpreters")
+        interp = interpreters.create()
+        try:
+            with pytest.raises(interpreters.ExecutionFailed) as exc:
+                interp.exec("import numpy")
+            # numpy rewraps every C-extension ImportError in a generic
+            # message, so the type alone would also pass for a broken build.
+            msg = exc.value.excinfo.msg
+            assert "does not support loading in subinterpreters" in msg, msg
+        finally:
+            interp.close()
+
+
+class TestArrayConverter:
+    def test_pyscalars_self_referencing_array_raises(self):
+        # gh-32700
+        obj_array = np.empty(2, dtype=object)
+        obj_array[0] = obj_array
+        obj_array[1] = [obj_array, obj_array]
+
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(TypeError, match="must be a string"):
+            conv.as_arrays(pyscalars=obj_array)
+
+    @pytest.mark.parametrize("mode", [123, [], None])
+    def test_pyscalars_invalid_mode_type(self, mode):
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(TypeError, match="must be a string"):
+            conv.as_arrays(pyscalars=mode)
+
+    def test_pyscalars_invalid_mode_string(self):
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(ValueError, match="invalid pyscalar mode"):
+            conv.as_arrays(pyscalars="invalid")

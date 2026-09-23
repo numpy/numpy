@@ -14,6 +14,7 @@
 
 #include "arraywrap.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 
 /*
  * Find the array wrap or array prepare method that applies to the inputs.
@@ -57,7 +58,7 @@ npy_find_array_wrap(
         else {
             PyObject *new_wrap;
             if (PyArray_LookupSpecial_OnInstance(
-                    obj, npy_interned_str.array_wrap, &new_wrap) < 0) {
+                    obj, _npy_module_state->interned_str.array_wrap, &new_wrap) < 0) {
                 goto fail;
             }
             else if (new_wrap == NULL) {
@@ -102,13 +103,23 @@ npy_find_array_wrap(
  */
 static PyObject *
 _get_wrap_prepare_args(NpyUFuncContext *context) {
-    if (context->out == NULL) {
-        Py_INCREF(context->in);
-        return context->in;
+    int total = context->nin;
+    if (context->out != NULL) {
+        total += context->nout;
     }
-    else {
-        return PySequence_Concat(context->in, context->out);
+    PyObject *args_tup = PyTuple_New(total);
+    if (args_tup == NULL) {
+        return NULL;
     }
+    for (int i = 0; i < context->nin; i++) {
+        PyTuple_SET_ITEM(args_tup, i, Py_NewRef(context->in[i]));
+    }
+    if (context->out != NULL) {
+        for (int i = 0; i < context->nout; i++) {
+            PyTuple_SET_ITEM(args_tup, context->nin + i, Py_NewRef(context->out[i]));
+        }
+    }
+    return args_tup;
 }
 
 
@@ -156,7 +167,7 @@ npy_apply_wrap(
         else {
             /* Replace passed wrap/wrap_type (borrowed refs) with new_wrap/type. */
             if (PyArray_LookupSpecial_OnInstance(
-                    original_out, npy_interned_str.array_wrap, &new_wrap) < 0) {
+                    original_out, _npy_module_state->interned_str.array_wrap, &new_wrap) < 0) {
                 return NULL;
             }
             else if (new_wrap != NULL) {

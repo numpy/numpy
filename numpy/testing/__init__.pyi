@@ -1,4 +1,7 @@
+from typing import Final
 from unittest import TestCase
+
+from numpy._pytesttester import PytestTester
 
 from . import _private as _private, overrides
 from ._private import extbuild as extbuild
@@ -109,3 +112,5 @@ __all__ = [
     "temppath",
     "verbose",
 ]
+
+test: Final[PytestTester] = ...

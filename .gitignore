@@ -66,6 +66,7 @@ doc/cdoc/build
 pip-wheel-metadata
 .python-version
 # virtual envs
+.venv/
 numpy-dev/
 venv/
 # cibuildwheel output directory
@@ -113,6 +114,7 @@ doc/source/savefig/
 doc/source/**/generated/
 doc/source/release/notes-towncrier.rst
 doc/source/.jupyterlite.doit.db
+doc/source/_contents
 
 # AI coding agent configuration files #
 #######################################

@@ -49,34 +49,20 @@ static const char types[2] = {NPY_INTP, NPY_INTP};
 
 static void *const data[1] = {NULL};
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_operand_flag_tests",
-    NULL,
-    -1,
-    TestMethods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
-PyMODINIT_FUNC PyInit__operand_flag_tests(void)
+/* Module execution function, run on every import of the module */
+static int
+_operand_flag_tests_exec(PyObject *m)
 {
-    PyObject *m = NULL;
-    PyObject *ufunc;
-
-    import_array();
-    import_umath();
-
-    m = PyModule_Create(&moduledef);
-    if (m == NULL) {
+    if (PyArray_ImportNumPyAPI() < 0) {
+        goto fail;
+    }
+    if (PyUFunc_ImportUFuncAPI() < 0) {
         goto fail;
     }
 
-    ufunc = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 0,
-                                    PyUFunc_None, "inplace_add",
-                                    "inplace_add_docstring", 0);
+    PyObject *ufunc = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 0,
+                                              PyUFunc_None, "inplace_add",
+                                              "inplace_add_docstring", 0);
     if (ufunc == NULL) {
         goto fail;
     }
@@ -94,26 +80,41 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
         goto fail;
     }
 
-    /*
-     * TODO: 3.15 adds a free-threaded stable ABI (abi3t); supporting it needs
-     * more than this guard, e.g. module setup via the new PyModExport API,
-     * since a static `PyModuleDef` cannot be used there.
-     */
-#if defined(Py_GIL_DISABLED) && !defined(Py_LIMITED_API)
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
-
-    return m;
+    return 0;
 
 fail:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _operand_flag_tests module.");
     }
-    if (m) {
-        Py_DECREF(m);
-        m = NULL;
-    }
-    return m;
+    return -1;
+}
+
+static struct PyModuleDef_Slot _operand_flag_tests_slots[] = {
+    {Py_mod_exec, _operand_flag_tests_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    /*
+     * NumPy relies on process-global state and so does not support
+     * subinterpreters; `_multiarray_umath` sets this same flag.
+     */
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    /* No GIL is needed: the inner loops never touch Python objects. */
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_operand_flag_tests",
+    .m_size = 0,
+    .m_methods = TestMethods,
+    .m_slots = _operand_flag_tests_slots,
+};
+
+PyMODINIT_FUNC PyInit__operand_flag_tests(void)
+{
+    return PyModuleDef_Init(&moduledef);
 }

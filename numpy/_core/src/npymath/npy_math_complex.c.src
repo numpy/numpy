@@ -307,11 +307,11 @@ npy_clog@c@(@ctype@ z)
     @type@ ay = npy_fabs@c@(npy_cimag@c@(z));
     @type@ rr, ri;
 
-    if (ax > @TMAX@/4 || ay > @TMAX@/4) {
+    if (isgreater(ax, @TMAX@/4) || isgreater(ay, @TMAX@/4)) {
         rr = npy_log@c@(npy_hypot@c@(ax/2, ay/2)) + NPY_LOGE2@c@;
     }
-    else if (ax < @TMIN@ && ay < @TMIN@) {
-        if (ax > 0  || ay > 0) {
+    else if (isless(ax, @TMIN@) && isless(ay, @TMIN@)) {
+        if (isgreater(ax, 0) || isgreater(ay, 0)) {
             /* catch cases where hypot(ax, ay) is subnormal */
             rr = npy_log@c@(npy_hypot@c@(npy_ldexp@c@(ax, @TMANT_DIG@),
                  npy_ldexp@c@(ay, @TMANT_DIG@))) - @TMANT_DIG@*NPY_LOGE2@c@;
@@ -327,9 +327,9 @@ npy_clog@c@(@ctype@ z)
     }
     else {
         @type@ h = npy_hypot@c@(ax, ay);
-        if (0.71 <= h && h <= 1.73) {
-            @type@ am = ax > ay ? ax : ay; /* max(ax, ay) */
-            @type@ an = ax > ay ? ay : ax; /* min(ax, ay) */
+        if (isgreaterequal(h, 0.71) && islessequal(h, 1.73)) {
+            @type@ am = isgreater(ax, ay) ? ax : ay; /* max(ax, ay) */
+            @type@ an = isgreater(ax, ay) ? ay : ax; /* min(ax, ay) */
             rr = npy_log1p@c@((am-1)*(am+1)+an*an)/2;
         }
         else {

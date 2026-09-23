@@ -25,26 +25,6 @@ AR_LIKE_c: list[complex]
 AR_LIKE_m: list[np.timedelta64]
 AR_LIKE_M: list[np.datetime64]
 
-# Array subtraction
-
-# NOTE: mypys `NoReturn` errors are, unfortunately, not that great
-_1 = AR_b - AR_LIKE_b  # type: ignore[var-annotated]
-_2 = AR_LIKE_b - AR_b  # type: ignore[var-annotated]
-AR_i - b""  # type: ignore[operator]
-
-AR_f - AR_LIKE_m  # type: ignore[operator]
-AR_f - AR_LIKE_M  # type: ignore[operator]
-AR_c - AR_LIKE_m  # type: ignore[operator]
-AR_c - AR_LIKE_M  # type: ignore[operator]
-
-AR_m - AR_LIKE_f  # type: ignore[operator]
-AR_M - AR_LIKE_f  # type: ignore[operator]
-AR_m - AR_LIKE_c  # type: ignore[operator]
-AR_M - AR_LIKE_c  # type: ignore[operator]
-
-AR_m - AR_LIKE_M  # type: ignore[operator]
-AR_LIKE_m - AR_M  # type: ignore[operator]
-
 # array floor division
 
 AR_M // AR_LIKE_b  # type: ignore[operator]
@@ -55,7 +35,7 @@ AR_M // AR_LIKE_c  # type: ignore[operator]
 AR_M // AR_LIKE_m  # type: ignore[operator]
 AR_M // AR_LIKE_M  # type: ignore[operator]
 
-AR_b // AR_LIKE_M  # type: ignore[operator]
+AR_b // AR_LIKE_M  # type: ignore[type-var]
 AR_u // AR_LIKE_M  # type: ignore[operator]
 AR_i // AR_LIKE_M  # type: ignore[operator]
 AR_f // AR_LIKE_M  # type: ignore[operator]
@@ -63,10 +43,9 @@ AR_c // AR_LIKE_M  # type: ignore[operator]
 AR_m // AR_LIKE_M  # type: ignore[operator]
 AR_M // AR_LIKE_M  # type: ignore[operator]
 
-_3 = AR_m // AR_LIKE_b  # type: ignore[var-annotated]
 AR_m // AR_LIKE_c  # type: ignore[operator]
 
-AR_b // AR_LIKE_m  # type: ignore[operator]
+AR_b // AR_LIKE_m  # type: ignore[type-var]
 AR_u // AR_LIKE_m  # type: ignore[operator]
 AR_i // AR_LIKE_m  # type: ignore[operator]
 AR_f // AR_LIKE_m  # type: ignore[operator]

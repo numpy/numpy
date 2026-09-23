@@ -236,6 +236,7 @@ __all__ = [
     "min",
     "minimum",
     "minimum_fill_value",
+    "minmax",
     "mod",
     "multiply",
     "mvoid",
@@ -1177,8 +1178,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         fill_value: _ScalarLike_co | None = None,
     ) -> MaskedArray[_ShapeT_co, np.dtype]: ...
 
-    # Keep in sync with `ndarray.__getitem__`
-    @overload
+    #
+    @overload  # type: ignore[override]
     def __getitem__(self, key: _ArrayInt_co | tuple[_ArrayInt_co, ...], /) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
     @overload
     def __getitem__(self, key: SupportsIndex | tuple[SupportsIndex, ...], /) -> Any: ...
@@ -2904,7 +2905,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def squeeze(
         self,
         /,
-        axis: SupportsIndex | tuple[SupportsIndex] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
 
     #
@@ -2999,7 +3000,7 @@ class MaskedConstant(MaskedArray[tuple[()], dtype[float64]]):
     @override
     def __imul__(self, other: _Ignored, /) -> Self: ...  # type: ignore[override]
     @override
-    def __ifloordiv__(self, other: _Ignored, /) -> Self: ...
+    def __ifloordiv__(self, other: _Ignored, /) -> Self: ...  # type: ignore[override]
     @override
     def __itruediv__(self, other: _Ignored, /) -> Self: ...  # type: ignore[override]
     @override
@@ -3171,6 +3172,40 @@ def max[ArrayT: np.ndarray](
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
 ) -> ArrayT: ...
+
+@overload
+def minmax[ScalarT: np.generic](
+    obj: _ArrayLike[ScalarT],
+    axis: None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> tuple[ScalarT, ScalarT]: ...
+@overload
+def minmax(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...
+) -> tuple[Any, Any]: ...
+@overload
+def minmax[ArrayT: np.ndarray](
+    obj: ArrayLike,
+    axis: _ShapeLike | None,
+    out: tuple[ArrayT, ArrayT],
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> tuple[ArrayT, ArrayT]: ...
+@overload
+def minmax[ArrayT: np.ndarray](
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    out: tuple[ArrayT, ArrayT],
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> tuple[ArrayT, ArrayT]: ...
 
 @overload
 def ptp[ScalarT: np.generic](

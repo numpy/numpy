@@ -48,10 +48,9 @@ classifiers = [
 #         - libquadmath : LGPL-2.1-or-later                         (all except arm64 macOS>=14 and Windows)
 #         The licenses for these vendored components are dynamically included
 #         in the build process for PyPI wheels.
-license = 'BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0'
+license = 'BSD-3-Clause AND 0BSD AND MIT AND CC0-1.0'
 license-files = [
     'LICENSE.txt',                                       # BSD-3-Clause
-    'numpy/_core/include/numpy/libdivide/LICENSE.txt',   # Zlib
     'numpy/_core/src/common/pythoncapi-compat/COPYING',  # 0BSD
     'numpy/_core/src/highway/LICENSE',                   # Dual-licensed: Apache 2.0 or BSD 3-Clause
     'numpy/_core/src/multiarray/dragon4_LICENSE.txt',    # MIT

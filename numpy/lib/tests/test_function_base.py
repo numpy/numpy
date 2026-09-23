@@ -2213,12 +2213,24 @@ class TestDigitize:
         bins = [1, 1, 0, 1]
         assert_raises(ValueError, digitize, x, bins)
 
+    def test_non_monotonic_bins_error(self):
+        with pytest.raises(
+            ValueError, match="bins must be monotonically increasing or decreasing"
+        ):
+            digitize(1, [0, 2, 1])
+
     def test_casting_error(self):
         x = [1, 2, 3 + 1.j]
         bins = [1, 2, 3]
         assert_raises(TypeError, digitize, x, bins)
         x, bins = bins, x
-        assert_raises(TypeError, digitize, x, bins)
+        with pytest.raises(TypeError, match="bins may not be complex"):
+            digitize(x, bins)
+
+    @pytest.mark.parametrize("bins", [np.array(1), np.array([[1, 2]])])
+    def test_bins_must_be_one_dimensional(self, bins):
+        with pytest.raises(ValueError, match="bins must be one-dimensional"):
+            digitize([1], bins)
 
     def test_return_type(self):
         # Functions returning indices should always return base ndarrays
@@ -2229,17 +2241,17 @@ class TestDigitize:
         assert_(not isinstance(digitize(b, a, False), A))
         assert_(not isinstance(digitize(b, a, True), A))
 
-    def test_large_integers_increasing(self):
+    @pytest.mark.parametrize("dtype", [np.int64, np.uint64])
+    @pytest.mark.parametrize("right", [False, True])
+    @pytest.mark.parametrize(
+        "offsets", [(-1, 1), (1, -1)], ids=["increasing", "decreasing"]
+    )
+    def test_large_integers(self, dtype, right, offsets):
         # gh-11022
-        x = 2**54  # loses precision in a float
-        assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
-
-    @pytest.mark.xfail(
-        reason="gh-11022: np._core.multiarray._monoticity loses precision")
-    def test_large_integers_decreasing(self):
-        # gh-11022
-        x = 2**54  # loses precision in a float
-        assert_equal(np.digitize(x, [x + 1, x - 1]), 1)
+        x = 2**54  # float64 cannot distinguish adjacent integers near here
+        bins = np.array([x + offset for offset in offsets], dtype=dtype)
+        x_value = np.array(x, dtype=dtype)[()]
+        assert_equal(np.digitize(x_value, bins, right=right), 1)
 
 
 class TestUnwrap:
@@ -4049,6 +4061,13 @@ class TestPercentile:
         assert_equal(np.percentile(d, 25, axis=(1, 3))[2, 2],
                      np.percentile(d[2, :, 2, :].flatten(), 25))
 
+    def test_extended_axis_empty_kept_dim(self):
+        # gh-32535
+        d = np.zeros((0, 3, 4))
+        assert_equal(np.percentile(d, 25, axis=(1, 2)).shape, (0,))
+        assert_equal(np.quantile(d, 0.25, axis=(1, 2)).shape, (0,))
+        assert_equal(np.percentile(d, [25, 50], axis=(1, 2)).shape, (2, 0))
+
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))
         assert_raises(AxisError, np.percentile, d, axis=-5, q=25)
@@ -4308,6 +4327,13 @@ class TestQuantile:
         assert_equal(np.quantile(x, 0), 0.)
         assert_equal(np.quantile(x, 1), 3.5)
         assert_equal(np.quantile(x, 0.5), 1.75)
+
+    @pytest.mark.parametrize("func", [np.quantile, np.percentile])
+    def test_invalid_method_error_message(self, func):
+        with pytest.raises(
+            ValueError, match=r"is not a valid method\. Use one of: 'inverted_cdf'"
+        ):
+            func(np.arange(4), 1, method="bogus")
 
     def test_correct_quantile_value(self):
         a = np.array([True])
@@ -4774,7 +4800,9 @@ class TestLerp:
         # double subtraction is needed to remove the extra precision of t < 0.5
         left = nfb._lerp(a, b, 1 - (1 - t))
         right = nfb._lerp(b, a, 1 - t)
-        assert_allclose(left, right)
+        # Scale atol by input magnitude for catastrophic cancellation cases.
+        atol = max(abs(a), abs(b)) * np.finfo(np.float64).eps * 100
+        assert_allclose(left, right, atol=atol, rtol=0)
 
     def test_linear_interpolation_formula_0d_inputs(self):
         a = np.array(2)
@@ -5008,6 +5036,12 @@ class TestMedian:
                      np.median(d[2, :, :, 1].flatten()))
         assert_equal(np.median(d, axis=(1, 3))[2, 2],
                      np.median(d[2, :, 2, :].flatten()))
+
+    def test_extended_axis_empty_kept_dim(self):
+        # gh-32535
+        d = np.zeros((0, 3, 4))
+        assert_equal(np.median(d, axis=(1, 2)).shape, (0,))
+        assert_equal(np.median(d, axis=(1, 2), keepdims=True).shape, (0, 1, 1))
 
     def test_extended_axis_invalid(self):
         d = np.ones((3, 5, 7, 11))

@@ -28,6 +28,8 @@ i = 0
 AR = np.array([0], dtype=np.int64)
 AR.setflags(write=False)
 
+AR_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
+
 SEQ = (0, 1, 2, 3, 4)
 
 # object-like comparisons
@@ -262,3 +264,21 @@ assert_type(b > u4, np.bool)
 assert_type(i > u4, np.bool)
 assert_type(AR > u4, np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(SEQ > u4, npt.NDArray[np.bool])
+
+#
+
+assert_type(AR == i, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR == f8, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR == b_, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR == "x", np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR == AR, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR == AR_2d, npt.NDArray[np.bool])
+assert_type(AR == SEQ, npt.NDArray[np.bool])
+
+assert_type(AR != i, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR != f8, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR != b_, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR != "x", np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR != AR, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR != AR_2d, npt.NDArray[np.bool])
+assert_type(AR != SEQ, npt.NDArray[np.bool])

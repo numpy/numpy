@@ -146,6 +146,21 @@ class TestUfuncGenericLoops:
         x = np.full(10, foo(), dtype=object)
         assert_(np.all(np.conjugate(x) == True))
 
+    def test_unary_PyUFunc_O_O_method_reentrant_mutation(self):
+        # gh-31988: the error path read the type of the input operand after
+        # the attribute lookup ran code that cleared the operand's array
+        # slot (use-after-free, detectable with PYTHONMALLOC=debug).
+        class Evil:
+            @property
+            def conjugate(self):
+                arr[0] = None  # drops the slot's reference
+                return 42  # not callable
+
+        arr = np.empty(1, dtype=object)
+        arr[0] = Evil()
+        with pytest.raises(TypeError, match="no callable conjugate method"):
+            np.conjugate(arr)
+
     def test_binary_PyUFunc_OO_O(self):
         x = np.ones(10, dtype=object)
         assert_(np.all(np.add(x, x) == 2))
@@ -625,6 +640,8 @@ class TestUfunc:
         with pytest.raises(TypeError):
             # We accept python float as float64 but not float32 for equiv.
             ufunc(3., 4., dtype="float32", casting="equiv")
+        with pytest.raises(TypeError):
+            ufunc(3., 4., dtype="float32", casting="no")
 
         # Special case for object and equal (note that equiv implies safe)
         ufunc(3, 4, dtype=object, casting="equiv")
@@ -2675,6 +2692,54 @@ class TestUfunc:
         np.multiply.reduce(arr, out=single_res, dtype=np.float32)
         assert single_res != res
 
+    @pytest.mark.parametrize("bufsize", [32, 1024])
+    @pytest.mark.parametrize("variant",
+                             ["plain", "initial", "keepdims", "where"])
+    def test_reduce_out_cast_keeps_computation_precision(self, variant,
+                                                         bufsize):
+        # With a `dtype=` wider than `out`, the running result used to be
+        # written to `out` and read back at every buffer refill, accumulating
+        # float32 rounding.  It is now kept in float64 and cast once, which is
+        # exactly what reducing without `out=` and casting at the end does.
+        x = np.full(100_000, 1e-3)
+        kwargs = {}
+        if variant == "initial":
+            kwargs["initial"] = 5.0
+        elif variant == "keepdims":
+            kwargs["keepdims"] = True
+        elif variant == "where":
+            kwargs["where"] = np.arange(x.size) % 2 == 0
+        out = np.zeros((1,) if variant == "keepdims" else (),
+                       dtype=np.float32)
+
+        with np.errstate():
+            np.setbufsize(bufsize)
+            expected = np.add.reduce(x, dtype=np.float64, **kwargs)
+            np.add.reduce(x, dtype=np.float64, out=out, **kwargs)
+
+        assert out == expected.astype(np.float32)
+
+    @pytest.mark.parametrize("bufsize", [32, 128, 8192])
+    @pytest.mark.parametrize("trailing", [1, 3, 7])
+    def test_broadcast_where_buffer_reuse(self, trailing, bufsize):
+        # `where=` makes the output writemasked while the broadcast operand's
+        # buffer is re-used; masked-out elements must keep their values.
+        rows = 1001
+        a = np.arange(rows * trailing, dtype="f8").reshape(rows, trailing)
+        v = np.arange(1, trailing + 1, dtype="f8")
+        mask = (np.arange(rows * trailing).reshape(rows, trailing) % 3) == 0
+        v_full = np.broadcast_to(v, a.shape).copy()
+
+        expected = a.copy()
+        np.add(expected, v_full, out=expected, where=mask)
+
+        got = a.copy()
+        with np.errstate():
+            np.setbufsize(bufsize)
+            np.add(got, v, out=got, where=mask)
+
+        assert_array_equal(got, expected)
+
     def test_reducelike_output_needs_identical_cast(self):
         # Checks the case where a simple byte-swap works, mainly tests that
         # this is not rejected directly.
@@ -2742,6 +2807,20 @@ class TestUfunc:
         with pytest.raises(ValueError, match="(shape|size)"):
             np.add.accumulate(arr, out=out)
 
+    @pytest.mark.parametrize("shape, out_shape", [
+        ((0,), (1,)),       # Empty input must not bypass shape validation.
+        ((1, 3), (2, 3)),   # The outer iterator must not broadcast the input.
+    ])
+    def test_accumulate_out_shape_mismatch(self, shape, out_shape):
+        arr = np.ones(shape, dtype=np.int64)
+        out = np.empty(out_shape, dtype=arr.dtype)
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.add.accumulate(arr, out=out)
+
+    def test_cumsum_scalar_out_shape_mismatch(self):
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.array(1).cumsum(out=np.empty((), dtype=np.intp))
+
     def test_reduceat_and_accumulate_out_dtype_resolution_failure(self):
         # gh-31691: the out= error path leaked a reference to out when the
         # ufunc dtype resolution failed (no matching loop for the out dtype).
@@ -2753,6 +2832,12 @@ class TestUfunc:
 
         with pytest.raises(np._core._exceptions._UFuncNoLoopError):
             np.add.accumulate(arr, out=out)
+
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError) as exc:
+            np.array(b"1").cumsum(
+                dtype="timedelta64[D]", out=np.empty(1)
+            )
+        assert exc.value.dtypes[2] is None
 
     @pytest.mark.parametrize('out_shape',
                              [(), (1,), (3,), (1, 1), (1, 3), (4, 3)])
@@ -3274,6 +3359,14 @@ class TestLowlevelAPIAccess:
         # Check NEP 50 "weak" promotion also:
         r = np.add.resolve_dtypes((f4, int, None))
         assert r == (f4, f4, f4)
+
+        msg = r"cannot cast Python.*under the casting rule '{}'"
+        for pytype, dtype in [(int, "uint8"), (float, "float32"),
+                              (complex, "complex64")]:
+            for casting in ["equiv", "no"]:
+                with pytest.raises(TypeError, match=msg.format(casting)):
+                    np.add.resolve_dtypes((np.dtype(dtype), pytype, None),
+                                          casting=casting)
 
         with pytest.raises(TypeError):
             np.add.resolve_dtypes((i4, f4, None), casting="no")

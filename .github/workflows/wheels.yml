@@ -51,20 +51,12 @@ jobs:
           - [macos-26, ios_arm64_iphonesimulator, accelerate]
         python: ["cp313"]
 
-    env:
-      IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
     steps:
       - name: Checkout numpy
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
           persist-credentials: false
-
-      - name: Setup MSVC (32-bit)
-        if: ${{ matrix.buildplat[1] == 'win32' }}
-        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
-        with:
-          architecture: 'x86'
 
       - name: win_arm64 - set environment variables
         if: ${{ matrix.buildplat[1] == 'win_arm64' }}
@@ -120,7 +112,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae  # v4.2.1
         with:
           only: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 

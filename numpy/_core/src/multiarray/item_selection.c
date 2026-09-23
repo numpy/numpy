@@ -17,6 +17,7 @@
 
 
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "common.h"
 #include "dtype_transfer.h"
 #include "dtypemeta.h"
@@ -408,8 +409,11 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         return NULL;
     }
 
-    indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
-                                                         NPY_INTP, 0, 0);
+    indices = (PyArrayObject *)PyArray_FromAny(indices0,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 0,
+            NPY_ARRAY_SAME_KIND_CASTING | NPY_ARRAY_DEFAULT,
+            NULL);
     if (indices == NULL) {
         goto fail;
     }
@@ -905,7 +909,12 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     NPY_cast_info cast_info;
     NPY_ARRAYMETHOD_FLAGS flags;
 
-    repeats = (PyArrayObject *)PyArray_ContiguousFromAny(op, NPY_INTP, 0, 1);
+    repeats = (PyArrayObject *)PyArray_FromAny(op,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 1,
+            NPY_ARRAY_SAME_KIND_CASTING | NPY_ARRAY_DEFAULT,
+            NULL);
+
     if (repeats == NULL) {
         return NULL;
     }
@@ -1046,7 +1055,11 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
             goto fail;
         }
     }
-    ap = (PyArrayObject *)PyArray_FROM_OT((PyObject *)ip, NPY_INTP);
+    ap = (PyArrayObject *)PyArray_FromAny((PyObject *)ip,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 0,
+            NPY_ARRAY_SAME_KIND_CASTING,
+            NULL);
     if (ap == NULL) {
         goto fail;
     }
@@ -2293,7 +2306,8 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         /* convert to known integer size */
         sorter = (PyArrayObject *)PyArray_FromArray(ap3,
                                     PyArray_DescrFromType(NPY_INTP),
-                                    NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED);
+                                    NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED |
+                                    NPY_ARRAY_SAME_KIND_CASTING);
         if (sorter == NULL) {
             PyErr_SetString(PyExc_ValueError,
                         "could not parse sorter argument");
@@ -2413,10 +2427,11 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     }
 
     /* Handle negative axes with standard Python indexing rules */
-    if (check_and_adjust_axis_msg(&axis1, ndim, npy_interned_str.axis1) < 0) {
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
+    if (check_and_adjust_axis_msg(&axis1, ndim, interned_str->axis1) < 0) {
         return NULL;
     }
-    if (check_and_adjust_axis_msg(&axis2, ndim, npy_interned_str.axis2) < 0) {
+    if (check_and_adjust_axis_msg(&axis2, ndim, interned_str->axis2) < 0) {
         return NULL;
     }
     if (axis1 == axis2) {

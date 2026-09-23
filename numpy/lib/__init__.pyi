@@ -1,5 +1,8 @@
+from typing import Final
+
 from numpy._core.function_base import add_newdoc
 from numpy._core.multiarray import add_docstring, tracemalloc_domain
+from numpy._pytesttester import PytestTester
 
 # all submodules of `lib` are accessible at runtime through `__getattr__`,
 # so we implicitly re-export them here
@@ -50,3 +53,5 @@ __all__ = [
     "stride_tricks",
     "tracemalloc_domain",
 ]
+
+test: Final[PytestTester] = ...

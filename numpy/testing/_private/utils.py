@@ -891,17 +891,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         elif isvstring(x) and isvstring(y):
             dt = x.dtype
             if equal_nan and dt == y.dtype and hasattr(dt, 'na_object'):
-                is_nan = (isinstance(dt.na_object, float) and
-                          np.isnan(dt.na_object))
-                bool_errors = 0
-                try:
-                    bool(dt.na_object)
-                except TypeError:
-                    bool_errors = 1
-                if is_nan or bool_errors:
-                    # nan-like NA object
-                    flagged = func_assert_same_pos(
-                        x, y, func=isnan, hasval=x.dtype.na_object)
+                # Let the dtype determine which values are NaN-like.
+                flagged = func_assert_same_pos(
+                    x, y, func=isnan, hasval=dt.na_object)
 
         if flagged.ndim > 0:
             x, y = x[~flagged], y[~flagged]
@@ -2907,8 +2899,12 @@ def run_subprocess(cmd, cwd=None, **kwargs):
 
     import pytest
 
+    env = kwargs.pop("env", None)
+    env = dict(env) if env is not None else dict(os.environ)
+    env["PYTHONIOENCODING"] = "utf-8"
     res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
-                         errors="replace", **kwargs)
+                         encoding="utf-8", errors="replace", env=env,
+                         **kwargs)
     if res.returncode != 0:
         cmd_str = cmd if isinstance(cmd, str) else " ".join(map(str, cmd))
         in_dir = f" in {cwd}" if cwd is not None else ""

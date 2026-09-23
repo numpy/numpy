@@ -330,6 +330,20 @@ def test_npystring_load(install_temp):
     assert result == 'abcd'
 
 
+def test_npystring_pack_invalid_utf8_width_inference(install_temp):
+    # NpyString_pack does not validate, so width inference can see bytes
+    # that do not decode
+    import checks
+
+    arr = np.array(["abc"], dtype="T")
+    assert checks.npystring_pack_invalid_utf8(arr, b"\xffbc") == 0
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        arr.astype("U")
+    exc = excinfo.value
+    assert (exc.encoding, exc.object, exc.start, exc.end) == (
+        "utf-8", b"\xffbc", 0, 1)
+
+
 def test_npystring_multiple_allocators(install_temp):
     """Check that the cython API can acquire/release multiple vstring allocators."""
     import checks
@@ -373,6 +387,14 @@ def test_npystring_pack_invalid_utf8(install_temp):
     assert checks.npystring_pack_invalid_utf8(bad, b"\x80" * 12) == 0
     assert np.strings.find(bad, "z")[0] == -1
     assert np.strings.count(bad, "z")[0] == 0
+
+    # casts that hit the stored bytes report where they stop being UTF-8
+    assert checks.npystring_pack_invalid_utf8(bad, b"\xffbc") == 0
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        bad.astype("S3")
+    exc = excinfo.value
+    assert (exc.encoding, exc.object, exc.start, exc.end) == (
+        "utf-8", b"\xffbc", 0, 1)
 
 
 @pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',

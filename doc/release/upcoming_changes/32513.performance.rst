@@ -1,0 +1,5 @@
+Better multithreaded scaling when using float constants on free-threaded Python
+--------------------------------------------------------------------------------
+On free-threaded builds, float constants such as ``np.pi`` and ``np.nan``
+are now immortal, which removes reference count contention between threads
+using them concurrently.

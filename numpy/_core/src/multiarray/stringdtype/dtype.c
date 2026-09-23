@@ -1,6 +1,7 @@
 /* The implementation of the StringDType class */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdatomic.h>
 #include "structmember.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -18,6 +19,7 @@
 #include "conversion_utils.h"
 #include "npy_import.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 #include "npy_sort.h"
 
 /*
@@ -33,8 +35,8 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
         return NULL;
     }
 
-    char *default_string_buf = NULL;
-    char *na_name_buf = NULL;
+    npy_static_string default_string = {0, NULL};
+    npy_static_string na_name = {0, NULL};
 
     npy_string_allocator *allocator = NpyString_new_allocator(PyMem_RawMalloc, PyMem_RawFree,
                                                               PyMem_RawRealloc);
@@ -43,9 +45,6 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
                         "Failed to create string allocator");
         goto fail;
     }
-
-    npy_static_string default_string = {0, NULL};
-    npy_static_string na_name = {0, NULL};
 
     Py_XINCREF(na_object);
     ((PyArray_StringDTypeObject *)new)->na_object = na_object;
@@ -132,14 +131,11 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
     return new;
 
 fail:
-    // this only makes sense if the allocator isn't attached to new yet
+    // the buffers and the allocator are only attached to new on success, so
+    // dealloc does not double-free them
     Py_DECREF(new);
-    if (default_string_buf != NULL) {
-        PyMem_RawFree(default_string_buf);
-    }
-    if (na_name_buf != NULL) {
-        PyMem_RawFree(na_name_buf);
-    }
+    PyMem_RawFree((char *)default_string.buf);
+    PyMem_RawFree((char *)na_name.buf);
     if (allocator != NULL) {
         NpyString_free_allocator(allocator);
     }
@@ -389,6 +385,13 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
         return -1;
     }
 
+    if (!na_cmp && descr->has_nan_na) {
+        na_cmp = pyobj_is_nan_na(obj);
+        if (na_cmp < 0) {
+            return -1;
+        }
+    }
+
     if (na_object != NULL && na_cmp) {
         npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
         int pack_status = NpyString_pack_null(allocator, sdata);
@@ -474,25 +477,26 @@ fail:
     return NULL;
 }
 
+NPY_NO_EXPORT npy_bool
+stringdtype_null_is_truthy(const PyArray_StringDTypeObject *descr)
+{
+    // nulls cannot be stored in an array without an na object
+    assert(descr->na_object != NULL);
+    if (descr->has_string_na) {
+        return (npy_bool)(descr->default_string.size != 0);
+    }
+    // numpy treats NaN as truthy, following python
+    return (npy_bool)descr->has_nan_na;
+}
+
 // PyArray_NonzeroFunc
 // Unicode strings are nonzero if their length is nonzero.
 static npy_bool
 nonzero(void *data, void *arr)
 {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
-    int has_null = descr->na_object != NULL;
-    int has_nan_na = descr->has_nan_na;
-    int has_string_na = descr->has_string_na;
-    if (has_null && NpyString_isnull((npy_packed_static_string *)data)) {
-        if (!has_string_na) {
-            if (has_nan_na) {
-                // numpy treats NaN as truthy, following python
-                return 1;
-            }
-            else {
-                return 0;
-            }
-        }
+    if (NpyString_isnull((npy_packed_static_string *)data)) {
+        return stringdtype_null_is_truthy(descr);
     }
     return NpyString_size((npy_packed_static_string *)data) != 0;
 }
@@ -541,7 +545,7 @@ _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
                 // nan-like nulls sort to the end even in a descending
                 // sort, matching how NaN sorts for floats
                 if (a_is_null) {
-                    return 1;
+                    return b_is_null ? 0 : 1;
                 }
                 else if (b_is_null) {
                     return -1;
@@ -939,20 +943,21 @@ stringdtype_repr(PyArray_StringDTypeObject *self)
 static PyObject *
 stringdtype__reduce__(PyArray_StringDTypeObject *self, PyObject *NPY_UNUSED(args))
 {
+    multiarray_umath_state *state = _npy_module_state;
     if (npy_cache_import_runtime(
                 "numpy._core._internal", "_convert_to_stringdtype_kwargs",
-                &npy_runtime_imports._convert_to_stringdtype_kwargs) == -1) {
+                &state->runtime_imports._convert_to_stringdtype_kwargs) == -1) {
         return NULL;
     }
 
     if (self->na_object != NULL) {
         return Py_BuildValue(
-                "O(iO)", npy_runtime_imports._convert_to_stringdtype_kwargs,
+                "O(iO)", state->runtime_imports._convert_to_stringdtype_kwargs,
                 self->coerce, self->na_object);
     }
 
     return Py_BuildValue(
-            "O(i)", npy_runtime_imports._convert_to_stringdtype_kwargs,
+            "O(i)", state->runtime_imports._convert_to_stringdtype_kwargs,
             self->coerce);
 }
 
@@ -1005,16 +1010,39 @@ static Py_hash_t
 PyArray_StringDType_hash(PyObject *self)
 {
     PyArray_StringDTypeObject *sself = (PyArray_StringDTypeObject *)self;
+    /* PyArrayDescr_Type.tp_new initializes base.hash to -1. */
+    Py_hash_t hash = atomic_load_explicit(
+            (_Atomic(npy_hash_t) *)&sself->base.hash, memory_order_relaxed);
+    if (hash != -1) {
+        return hash;
+    }
+
     PyObject *hash_tup = NULL;
     if (sself->na_object != NULL) {
-        hash_tup = Py_BuildValue("(iO)", sself->coerce, sself->na_object);
+        if (PyFloat_Check(sself->na_object) &&
+                npy_isnan(PyFloat_AS_DOUBLE(sself->na_object))) {
+            // na_eq_cmp treats distinct float NaNs as equal, so use a fixed
+            // value instead of their identity-dependent hashes.
+            hash_tup = Py_BuildValue("(ii)", sself->coerce, 0);
+        }
+        else {
+            hash_tup = Py_BuildValue("(iO)", sself->coerce, sself->na_object);
+        }
     }
     else {
         hash_tup = Py_BuildValue("(i)", sself->coerce);
     }
+    if (hash_tup == NULL) {
+        return -1;
+    }
 
     Py_hash_t ret = PyObject_Hash(hash_tup);
     Py_DECREF(hash_tup);
+    if (ret != -1) {
+        atomic_store_explicit(
+                (_Atomic(npy_hash_t) *)&sself->base.hash, ret,
+                memory_order_relaxed);
+    }
     return ret;
 }
 

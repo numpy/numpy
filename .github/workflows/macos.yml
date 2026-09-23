@@ -22,11 +22,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  x86_conda:
-    name: macOS x86-64 conda
+  aarch64_conda:
+    name: macOS aarch64 conda
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: macos-15-intel
+    runs-on: macos-26
     strategy:
       fail-fast: false
       matrix:
@@ -99,7 +99,7 @@ jobs:
       run: |
         conda activate numpy-dev
         export OMP_NUM_THREADS=2
-        spin test -j2 -m full
+        spin test -j2 -m full -- --durations=10
 
     - name: Ccache statistics
       shell: bash -l {0}

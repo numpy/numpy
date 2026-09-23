@@ -466,6 +466,34 @@ class TestAdd:
         a['a'] = -1
         assert_equal(a['b'].sum(), 0)
 
+    def test_add_object_reentrant_mutation(self):
+        # gh-31988: the generic object loop must hold its operands; here
+        # __add__ clears the second operand's array slot before returning
+        # NotImplemented, so __radd__ runs on an object whose only other
+        # reference was that slot (use-after-free, detectable with
+        # PYTHONMALLOC=debug).
+        victim_deleted = []
+
+        class Victim:
+            def __del__(self):
+                victim_deleted.append(True)
+
+            def __radd__(self, other):
+                return 42
+
+        class Killer:
+            def __add__(self, other):
+                victim_array[0] = None  # drops the slot's reference
+                return NotImplemented
+
+        left = np.empty(1, dtype=object)
+        left[0] = Killer()
+        victim_array = np.empty(1, dtype=object)
+        victim_array[0] = Victim()
+
+        assert_equal(np.add(left, victim_array)[0], 42)
+        assert victim_deleted  # the slot really was cleared re-entrantly
+
 
 class TestDivision:
     def test_division_int(self):
@@ -1371,7 +1399,7 @@ class TestExp2:
             assert_almost_equal(np.exp2(yf), xf)
 
 
-class TestLogAddExp2(_FilterInvalids):
+class TestLogAddExp2:
     # Need test for intermediate precisions
     def test_logaddexp2_values(self):
         x = [1, 2, 3, 4, 5]
@@ -1405,12 +1433,18 @@ class TestLogAddExp2(_FilterInvalids):
                 logzf = np.array(z, dtype=dt)
                 assert_equal(np.logaddexp2(logxf, logyf), logzf)
 
-    def test_nan(self):
-        assert_(np.isnan(np.logaddexp2(np.nan, np.inf)))
-        assert_(np.isnan(np.logaddexp2(np.inf, np.nan)))
-        assert_(np.isnan(np.logaddexp2(np.nan, 0)))
-        assert_(np.isnan(np.logaddexp2(0, np.nan)))
-        assert_(np.isnan(np.logaddexp2(np.nan, np.nan)))
+    @pytest.mark.parametrize("dtype", ['f', 'd', 'g'])
+    @pytest.mark.parametrize("x, y", [
+        (np.nan, np.inf),
+        (np.inf, np.nan),
+        (np.nan, 0),
+        (0, np.nan),
+        (np.nan, np.nan),
+    ])
+    def test_nan(self, dtype, x, y):
+        x, y = np.array([x, y], dtype=dtype)
+        with np.errstate(invalid='raise'):
+            assert np.isnan(np.logaddexp2(x, y))
 
     def test_reduce(self):
         assert_equal(np.logaddexp2.identity, -np.inf)
@@ -1938,16 +1972,10 @@ class TestSpecialFloats:
             return
         # FIXME: NAN raises FP invalid exception:
         #  - ceil/float16 on MSVC:32-bit
-        #  - spacing/float16 on almost all platforms
-        #  - spacing/float32,float64 on Windows MSVC with VS2022
         #  - arccos/float16,float32 on Android
-        if ufunc in (np.spacing, np.ceil) and dtype == 'e':
+        if ufunc is np.ceil and dtype == 'e':
             return
-        # Skip spacing tests with NaN on Windows MSVC (all dtypes)
-        import platform
-        if ((ufunc, platform.system()) in [
-                (np.spacing, 'Windows'), (np.arccos, 'Android')
-            ] and
+        if (ufunc is np.arccos and platform.system() == 'Android' and
             any(np.isnan(d) if isinstance(d, (int, float)) else False for d in data)):
             pytest.skip(f"{ufunc} with NaN generates warnings on this platform")
         array = np.array(data, dtype=dtype)
@@ -2244,7 +2272,7 @@ class TestAVXFloat32Transcendental:
                 assert_array_almost_equal_nulp(np.sin(x_large), sin_true[::jj], nulp=2)
                 assert_array_almost_equal_nulp(np.cos(x_large), cos_true[::jj], nulp=2)
 
-class TestLogAddExp(_FilterInvalids):
+class TestLogAddExp:
     def test_logaddexp_values(self):
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
@@ -2277,12 +2305,18 @@ class TestLogAddExp(_FilterInvalids):
                 logzf = np.array(z, dtype=dt)
                 assert_equal(np.logaddexp(logxf, logyf), logzf)
 
-    def test_nan(self):
-        assert_(np.isnan(np.logaddexp(np.nan, np.inf)))
-        assert_(np.isnan(np.logaddexp(np.inf, np.nan)))
-        assert_(np.isnan(np.logaddexp(np.nan, 0)))
-        assert_(np.isnan(np.logaddexp(0, np.nan)))
-        assert_(np.isnan(np.logaddexp(np.nan, np.nan)))
+    @pytest.mark.parametrize("dtype", ['f', 'd', 'g'])
+    @pytest.mark.parametrize("x, y", [
+        (np.nan, np.inf),
+        (np.inf, np.nan),
+        (np.nan, 0),
+        (0, np.nan),
+        (np.nan, np.nan),
+    ])
+    def test_nan(self, dtype, x, y):
+        x, y = np.array([x, y], dtype=dtype)
+        with np.errstate(invalid='raise'):
+            assert np.isnan(np.logaddexp(x, y))
 
     def test_reduce(self):
         assert_equal(np.logaddexp.identity, -np.inf)
@@ -2690,6 +2724,123 @@ class TestMinimum(_FilterInvalids):
                 assert_equal(np.minimum.reduce([v1, v2]), expected)
 
 
+class TestMinimumMaximum(_FilterInvalids):
+    # `minimummaximum` computes both extrema in a single pass; it must always
+    # agree with the `minimum`/`maximum` pair it fuses.
+    def check(self, *args, **kwargs):
+        lo, hi = ncu.minimummaximum(*args, **kwargs)
+        assert_equal(lo, np.minimum(*args, **kwargs))
+        assert_equal(hi, np.maximum(*args, **kwargs))
+
+    def check_reduce(self, a, **kwargs):
+        lo, hi = ncu.minimummaximum.reduce(a, **kwargs)
+        assert_equal(lo, np.minimum.reduce(a, **kwargs))
+        assert_equal(hi, np.maximum.reduce(a, **kwargs))
+
+    def test_dtypes(self):
+        dtypes = (np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+                  + np.typecodes['Complex'] + '?')
+        seq1 = np.arange(11)
+        seq2 = seq1[::-1]
+        for dt in dtypes:
+            tmp1 = seq1.astype(dt)
+            tmp2 = seq2.astype(dt)
+            self.check(tmp1, tmp2)
+            self.check_reduce(tmp1)
+            self.check_reduce(tmp2)
+
+    def test_lengths(self):
+        # cover the SIMD main loops, their unrolled tails and the scalar tail
+        # across the lane widths (8/16/32/64-bit), for integer and float
+        dtypes = ['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
+                  'int64', 'uint64', 'float32', 'float64']
+        for n in [0, 1, 2, 3, 7, 8, 15, 16, 17, 63, 64, 65, 127, 1000, 4099]:
+            for dt in dtypes:
+                a = np.arange(n).astype(dt)
+                b = a[::-1].copy()
+                self.check(a, b)
+                if n > 0:
+                    self.check_reduce(a)
+
+    def test_float_nans(self):
+        nan = np.nan
+        arg1 = np.array([0,   nan, nan])
+        arg2 = np.array([nan, 0,   nan])
+        self.check(arg1, arg2)
+        for dt in np.typecodes['AllFloat']:
+            tmp = np.arange(11).astype(dt)
+            tmp[::2] = np.nan
+            self.check_reduce(tmp)
+
+    def test_complex_nans(self):
+        nan = np.nan
+        for cnan in [complex(nan, 0), complex(0, nan), complex(nan, nan)]:
+            arg1 = np.array([0, cnan, cnan], dtype=complex)
+            arg2 = np.array([cnan, 0, cnan], dtype=complex)
+            self.check(arg1, arg2)
+
+    def test_object_array(self):
+        arg1 = np.arange(5, dtype=object)
+        arg2 = arg1 + 1
+        self.check(arg1, arg2)
+        self.check_reduce(arg1)
+
+    def test_datetime(self):
+        # Do not ignore NaT
+        for dtype in ('m8[s]', 'M8[s]'):
+            a = np.arange(10).astype(dtype)
+            b = a[::-1].copy()
+            self.check(a, b)
+            self.check_reduce(a)
+            a[3] = 'NaT'
+            self.check(a, b)
+            self.check_reduce(a)
+
+    def test_strided_array(self):
+        arr1 = np.array([-4.0, 1.0, 10.0, 0.0, np.nan, -np.nan, np.inf, -np.inf])
+        arr2 = np.array([-2.0, -1.0, np.nan, 1.0, 0.0, np.nan, 1.0, -3.0])
+        self.check(arr1, arr2)
+        self.check(arr1[::2], arr2[::2])
+        self.check(arr1[:4:], arr2[::2])
+        self.check(arr1[::3], arr2[:3:])
+
+    def test_out(self):
+        arr1 = np.array([-4.0, 1.0, 10.0, 0.0])
+        arr2 = np.array([-2.0, -1.0, np.nan, 1.0])
+        out1 = np.empty(4)
+        out2 = np.empty(4)
+        res = ncu.minimummaximum(arr1, arr2, out=(out1, out2))
+        assert_(res[0] is out1 and res[1] is out2)
+        assert_equal(out1, np.minimum(arr1, arr2))
+        assert_equal(out2, np.maximum(arr1, arr2))
+
+    def test_reduce_axes(self):
+        a = np.arange(2 * 3 * 4, dtype=np.float64).reshape(2, 3, 4)
+        a[1, 2, 3] = np.nan
+        # `minimummaximum` is reorderable, so multiple axes are allowed
+        for axis in [0, 1, 2, (0, 1), (1, 2), (0, 2), (0, 1, 2), None]:
+            self.check_reduce(a, axis=axis)
+        self.check_reduce(a, axis=1, keepdims=True)
+        for view in (a[::2], a[:, ::2], a.T, np.asfortranarray(a)):
+            self.check_reduce(view, axis=1)
+
+    def test_reduce_out(self):
+        a = np.arange(12.0).reshape(3, 4)
+        out1 = np.empty(4)
+        out2 = np.empty(4)
+        ncu.minimummaximum.reduce(a, axis=0, out=(out1, out2))
+        assert_equal(out1, np.minimum.reduce(a, axis=0))
+        assert_equal(out2, np.maximum.reduce(a, axis=0))
+
+    def test_reduce_identity(self):
+        # no identity, so an empty reduction needs an explicit initial value
+        with pytest.raises(ValueError):
+            ncu.minimummaximum.reduce(np.array([], dtype=np.float64))
+        lo, hi = ncu.minimummaximum.reduce(
+            np.array([], dtype=np.float64), initial=(np.inf, -np.inf))
+        assert_equal((lo, hi), (np.inf, -np.inf))
+
+
 class TestFmax(_FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
@@ -2820,7 +2971,6 @@ class TestBool:
     def test_exceptions(self):
         a = np.ones(1, dtype=np.bool)
         assert_raises(TypeError, np.negative, a)
-        assert_raises(TypeError, np.positive, a)
         assert_raises(TypeError, np.subtract, a, a)
 
     def test_truth_table_logical(self):
@@ -3212,21 +3362,28 @@ class TestAbsoluteNegative:
 
 class TestPositive:
     def test_valid(self):
-        valid_dtypes = [int, float, complex, object]
+        valid_dtypes = [int, bool, float, complex, object]
         for dtype in valid_dtypes:
-            x = np.arange(5, dtype=dtype)
+            x = np.arange(5).astype(dtype)
             result = np.positive(x)
-            assert_equal(x, result, err_msg=str(dtype))
+            assert_array_equal(x, result, strict=True, err_msg=str(dtype))
 
     def test_invalid(self):
-        with assert_raises(TypeError):
-            np.positive(True)
         with assert_raises(TypeError):
             np.positive(np.datetime64('2000-01-01'))
         with assert_raises(TypeError):
             np.positive(np.array(['foo'], dtype=str))
         with assert_raises(TypeError):
             np.positive(np.array(['bar'], dtype=object))
+
+    def test_bool(self):
+        x = np.array([True, False])
+        assert_array_equal(+x, x, strict=True)
+        assert np.positive(x, out=x) is x
+        for scalar in (np.True_, True):
+            result = np.positive(scalar)
+            assert type(result) is np.bool
+            assert result == scalar
 
 
 class TestSpecialMethods:
@@ -4332,6 +4489,63 @@ class TestRationalFunctions:
             assert_equal(np.gcd(q * 3,  a), q)
             assert_equal(np.gcd(-q * 3, a), q)
 
+    def test_gcd_object_reentrant_mutation(self):
+        # gh-31988: a re-entrant __index__ clearing the second operand's
+        # array slot must not leave math.gcd with a dangling pointer
+        # (use-after-free, detectable with PYTHONMALLOC=debug).
+        victim_deleted = []
+
+        class Victim:
+            def __index__(self):
+                return 8
+
+            def __del__(self):
+                victim_deleted.append(True)
+
+        class Killer:
+            def __index__(self):
+                victim_array[0] = None  # drops the slot's reference
+                return 12
+
+        left = np.empty(1, dtype=object)
+        left[0] = Killer()
+        victim_array = np.empty(1, dtype=object)
+        victim_array[0] = Victim()
+
+        assert_equal(np.gcd(left, victim_array)[0], 4)
+        assert victim_deleted  # the slot really was cleared re-entrantly
+
+    def test_lcm_object_reentrant_mutation(self):
+        # gh-31988: np.lcm also uses both operands *after* the inner gcd
+        # call, so it must keep them alive for the whole loop body.
+        victim_deleted = []
+
+        class Victim:
+            def __index__(self):
+                return 8
+
+            def __del__(self):
+                victim_deleted.append(True)
+
+            def __rmul__(self, other):
+                return 8 * other
+
+        class Killer:
+            def __index__(self):
+                victim_array[0] = None  # drops the slot's reference
+                return 12
+
+            def __floordiv__(self, other):
+                return 12 // other
+
+        left = np.empty(1, dtype=object)
+        left[0] = Killer()
+        victim_array = np.empty(1, dtype=object)
+        victim_array[0] = Victim()
+
+        assert_equal(np.lcm(left, victim_array)[0], 24)
+        assert victim_deleted
+
     def test_decimal(self):
         from decimal import Decimal
         a = np.array([1,  1, -1, -1]) * Decimal('0.20')
@@ -4700,6 +4914,16 @@ class TestSubclass:
 
 class TestFrompyfunc:
 
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test_identity_refcount(self):
+        identity = object()
+        count = sys.getrefcount(identity)
+
+        ufunc = np.frompyfunc(np.add, 2, 1, identity=identity)
+        assert sys.getrefcount(identity) == count + 1
+        del ufunc
+        assert sys.getrefcount(identity) == count
+
     def test_identity(self):
         def mul(a, b):
             return a * b
@@ -4894,6 +5118,24 @@ def test_spacingf():
                     reason="IBM double double")
 def test_spacingl():
     return _test_spacing(np.longdouble)
+
+@pytest.mark.parametrize(
+    "dtype", [np.float16, np.float32, np.float64, np.longdouble]
+)
+@pytest.mark.parametrize("value", [np.nan, -np.nan, np.inf, -np.inf])
+def test_spacing_special_values(dtype, value):
+    input_value = np.array(value, dtype=dtype)
+    with np.errstate(all="raise"):
+        result = np.spacing(input_value)
+
+    assert np.isnan(result)
+
+    if np.isnan(input_value):
+        assert_equal(np.signbit(result), np.signbit(input_value))
+        # Long doubles may have padding bytes which need not be preserved.
+        if dtype != np.longdouble:
+            assert result.tobytes() == input_value.tobytes()
+
 
 def test_spacing_gfortran():
     # Reference from this fortran file, built with gfortran 4.3.3 on linux

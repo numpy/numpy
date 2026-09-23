@@ -470,14 +470,29 @@ def test_copyto_cast_safety():
     np.copyto(np.arange(3., dtype="float32"), 3., casting="safe")
 
     # But not equiv:
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="under the casting rule 'equiv'"):
         np.copyto(np.arange(3, dtype="uint8"), 3, casting="equiv")
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="under the casting rule 'equiv'"):
         np.copyto(np.arange(3., dtype="float32"), 3., casting="equiv")
+
+    # and neither "no", which is stricter:
+    np.copyto(np.arange(3), 3, casting="no")
+    with pytest.raises(TypeError, match="under the casting rule 'no'"):
+        np.copyto(np.arange(3, dtype="uint8"), 3, casting="no")
+    with pytest.raises(TypeError, match="under the casting rule 'no'"):
+        np.copyto(np.arange(3., dtype="float32"), 3., casting="no")
 
     # As a special thing, object is equiv currently:
     np.copyto(np.arange(3, dtype=object), 3, casting="equiv")
+
+    # A Python str adopts a StringDType's semantics in the same way
+    np.copyto(np.empty(3, dtype=np.dtypes.StringDType()), "x", casting="safe")
+    with pytest.raises(TypeError):
+        np.copyto(np.empty(3, dtype=np.dtypes.StringDType()), "x",
+                  casting="equiv")
+    # and object is equiv for a str, too:
+    np.copyto(np.empty(3, dtype=object), "x", casting="equiv")
 
     # The following raises an overflow error/gives a warning but not
     # type error (due to casting), though:

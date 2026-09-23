@@ -432,7 +432,7 @@ def _wrap_header_guess_version(header):
     except UnicodeEncodeError:
         pass
     else:
-        warnings.warn("Stored array in format 2.0. It can only be"
+        warnings.warn("Stored array in format 2.0. It can only be "
                       "read by NumPy >= 1.9", UserWarning, stacklevel=2)
         return ret
 
