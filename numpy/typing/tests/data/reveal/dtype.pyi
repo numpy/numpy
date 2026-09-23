@@ -133,6 +133,9 @@ assert_type(np.dtype("=T"), StringDType)
 assert_type(np.dtype("|T"), StringDType)
 
 # ByteStringDType
+assert_type(dt_bytestring._has_na, bool)
+assert_type(dt_bytestring._has_nan_na, bool)
+assert_type(dt_bytestring._has_string_na, bool)
 assert_type(np.dtype(dt_bytestring), np.dtype[np.vbytes])
 assert_type(np.dtype("R"), ByteStringDType)
 assert_type(np.dtype("=R"), ByteStringDType)
