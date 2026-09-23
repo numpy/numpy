@@ -105,6 +105,10 @@ array_function_dispatch = functools.partial(
     array_function_dispatch, module='numpy.strings')
 
 
+def _is_variable_width(dtype):
+    return isinstance(dtype, (np.dtypes.StringDType, np.dtypes.ByteStringDType))
+
+
 def _get_num_chars(a):
     """
     Helper function that returns the number of characters per field in
@@ -166,14 +170,14 @@ def multiply(a, i):
 
     Parameters
     ----------
-    a : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
+    a : array_like, with a string or bytes dtype
 
     i : array_like, with any integer dtype
 
     Returns
     -------
     out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        Output array of a string or bytes dtype,
         depending on input types
 
     Examples
@@ -204,7 +208,7 @@ def multiply(a, i):
     i = np.maximum(i, 0)
 
     # delegate to stringdtype loops that also do overflow checking
-    if a.dtype.char == "T":
+    if _is_variable_width(a.dtype):
         return a * i
 
     a_len = str_len(a)

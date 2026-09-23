@@ -738,6 +738,15 @@ class TestComparisonUfuncs:
 class TestStringUfuncs:
     """Oracle: the matching Python bytes method, elementwise."""
 
+    def test_add_multiply(self):
+        vals = NUL_AND_HIGH_BYTE_VALUES
+        a = R(*vals)
+        assert_array_equal(np.strings.add(a, a), R(*(v + v for v in vals)), strict=True)
+        assert_array_equal(np.strings.multiply(a, 3), R(*(v * 3 for v in vals)),
+                           strict=True)
+        assert_array_equal(a * np.array([2] * len(vals)), R(*(v * 2 for v in vals)),
+                           strict=True)
+
     @pytest.mark.parametrize("ufunc, oracle", [(np.minimum, min), (np.maximum, max)])
     def test_minimum_maximum(self, ufunc, oracle):
         x = R(b"a", b"z", b"\xff", b"x\x00", b"a\x00b")
@@ -752,3 +761,24 @@ class TestStringUfuncs:
         fixed = np.array([b"c", b"c"], dtype="S1")
         assert np.minimum(x, fixed).tolist() == [b"b", b"c"]
         assert np.maximum(fixed, x).dtype == ByteStringDType()
+
+    def test_pybytes_scalar_ufunc_outer_preserves_nulls(self):
+        arr = R(b"x")
+        assert np.add.outer(arr, b"y\x00").item() == b"xy\x00"
+        assert np.add.outer(b"y\x00", arr).item() == b"y\x00x"
+
+    def test_pybytes_scalar_ufunc_at_preserves_nulls(self):
+        arr = R(b"x")
+        np.add.at(arr, 0, b"y\x00")
+        assert arr[0] == b"xy\x00"
+
+
+class TestMixedFixedWidth:
+    def test_add(self):
+        a = R(b"1", b"2")
+        s = np.array([b"abc", b"x"], dtype="S3")
+        for res in [np.strings.add(a, s), a + s]:
+            assert isinstance(res.dtype, ByteStringDType)
+            assert res.tolist() == [b"1abc", b"2x"]
+        res = s + a
+        assert res.tolist() == [b"abc1", b"x2"]

@@ -2862,7 +2862,7 @@ init_stringlike_ufuncs(PyObject *umath)
         }
     }
 
-    if (!is_bytes && init_ufunc(umath, "add", binary_dtypes, binary_resolve_descriptors,
+    if (init_ufunc(umath, "add", binary_dtypes, binary_resolve_descriptors,
                    &add_strided_loop, 2, 1, NPY_NO_CASTING,
                    (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
@@ -2870,7 +2870,7 @@ init_stringlike_ufuncs(PyObject *umath)
 
     PyArray_DTypeMeta *string_tail[] = {string_dtype};
 
-    if (!is_bytes && add_mixed_promoters(umath, "add", 2, string_dtype,
+    if (add_mixed_promoters(umath, "add", 2, string_dtype,
                             fixed_dtype, string_tail, 1, 1,
                             all_strings_promoter) < 0) {
         return -1;
@@ -2884,14 +2884,12 @@ init_stringlike_ufuncs(PyObject *umath)
         }
     }
 
-    if (!is_bytes) {
-        INIT_MULTIPLY(*string_dtype, Int64, int64);
-        INIT_MULTIPLY(*string_dtype, UInt64, uint64);
-    }
+    INIT_MULTIPLY(*string_dtype, Int64, int64);
+    INIT_MULTIPLY(*string_dtype, UInt64, uint64);
 
     // all other integer dtypes are handled with a generic promoter
 
-    if (!is_bytes && add_promoter_pair(umath, "multiply", string_dtype,
+    if (add_promoter_pair(umath, "multiply", string_dtype,
                           &PyArray_IntAbstractDType, string_tail, 1,
                           string_multiply_promoter) < 0) {
         return -1;
