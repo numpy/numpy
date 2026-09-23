@@ -10,6 +10,7 @@ import subprocess
 import sys
 import textwrap
 import warnings
+from io import StringIO
 
 import pytest
 
@@ -957,6 +958,74 @@ class TestMixedFixedWidth:
             assert res.tolist() == [b"1abc", b"2x"]
         res = s + a
         assert res.tolist() == [b"abc1", b"x2"]
+
+
+class TestMaskedArray:
+    def test_default_fill_value(self, dtype):
+        # without a default_filler entry the fill value falls back to the
+        # str '?' and filled() degrades to an object array mixing str/bytes
+        masked = np.ma.array(np.array([b"x", b"y"], dtype=dtype),
+                             mask=[True, False])
+        assert masked.fill_value == b"N/A"
+        filled = masked.filled()
+        assert filled.dtype == dtype
+        assert filled.tolist() == [b"N/A", b"y"]
+
+
+class TestTextIO:
+    def test_loadtxt_requires_converters(self, dtype):
+        with pytest.raises(TypeError, match="never assumes an encoding"):
+            np.loadtxt(StringIO("ab\ncd\n"), dtype=dtype)
+        arr = np.loadtxt(StringIO("ab\ncd\n"), dtype=dtype,
+                         converters=str.encode)
+        assert arr.dtype == dtype
+        assert arr.tolist() == [b"ab", b"cd"]
+
+    @pytest.mark.parametrize("usecols,converters", [
+        (None, None),
+        (None, {1: str.encode}),
+        ((0,), {1: str.encode}),
+        ((2, 0), {2: str.encode}),
+    ])
+    def test_genfromtxt_requires_converters(self, dtype, usecols, converters):
+        # previously the legacy StringConverter bytes entry silently
+        # latin-1-encoded the text
+        with pytest.raises(TypeError, match="never assumes an encoding"):
+            np.genfromtxt(StringIO("héllo,y,z\n"), delimiter=",",
+                          dtype=dtype, usecols=usecols, converters=converters)
+
+    def test_genfromtxt_empty_input_requires_converters(self, dtype):
+        with pytest.warns(UserWarning, match="Empty input file"):
+            with pytest.raises(TypeError, match="never assumes an encoding"):
+                np.genfromtxt(StringIO(""), dtype=dtype)
+
+    @pytest.mark.parametrize("dtype,usecols", [
+        (ByteStringDType(), None),
+        (ByteStringDType(), (1,)),
+        (ByteStringDType(na_object=None), (2, 0)),
+        (ByteStringDType(na_object=b"x\x00"), (0,)),
+    ])
+    def test_genfromtxt_preserves_dtype_and_shape(self, dtype, usecols):
+        values = [["x\x00", "héllo\x00", "☃"], ["y\x00", "z", "long_variable_width"]]
+        text = "\n".join(",".join(row) for row in values)
+        columns = range(3) if usecols is None else usecols
+        arr = np.genfromtxt(StringIO(text), delimiter=",", dtype=dtype,
+                            usecols=usecols,
+                            converters=dict.fromkeys(columns, str.encode))
+        expected = np.array([[v.encode() for v in row] for row in values],
+                            dtype=dtype)[:, columns].squeeze()
+        assert_array_equal(arr, expected, strict=True)
+
+    def test_genfromtxt_converter_returns_missing(self):
+        dtype = ByteStringDType(na_object=None)
+
+        def convert(value):
+            return None if value == "missing" else value.encode()
+
+        arr = np.genfromtxt(StringIO("missing\nx\x00\n"), dtype=dtype,
+                            converters={0: convert})
+        assert_array_equal(arr, np.array([None, b"x\x00"], dtype=dtype),
+                           strict=True)
 
 
 class TestWrapperDispatch:
