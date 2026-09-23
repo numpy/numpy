@@ -58,6 +58,12 @@ AR_f8_2d: _Array2D[np.float64]
 AR_f8_3d: _Array3D[np.float64]
 AR_f8_4d: _Array4D[np.float64]
 AR_c16_1d: _Array1D[np.complex128]
+AR_c16_2d: _Array2D[np.complex128]
+AR_c16_3d: _Array3D[np.complex128]
+AR_m_2d: _Array2D[np.timedelta64[int]]
+AR_m_3d: _Array3D[np.timedelta64[int]]
+AR_M_3d: _Array3D[np.datetime64[int]]
+AR_M_4d: _Array4D[np.datetime64[int]]
 
 AR_f8_list: list[np.float64]
 AR_b_list: list[npt.NDArray[np.bool]]
@@ -238,6 +244,73 @@ assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[tuple[int], np.dty
 assert_type(np.copy(CHAR_AR_U), np.ndarray[tuple[int], np.dtype[np.str_]])
 
 # gradient
+# A single selected axis returns one array, including for multidimensional input.
+assert_type(np.gradient(AR_f8_2d, 1.0, axis=0), _Array2D[np.float64])
+assert_type(np.gradient(AR_f8_2d, 1., axis=0) / 2.0, _Array2D[np.float64])
+assert_type(np.gradient(AR_f8_2d, axis=(0,)), _Array2D[np.float64])
+assert_type(np.gradient(AR_f8_3d, axis=-1), _Array3D[np.float64])
+assert_type(np.gradient(AR_f8_3d, axis=(1,)), _Array3D[np.float64])
+assert_type(np.gradient(AR_f8_4d, axis=np.int64(0)), _Array4D[np.float64])
+assert_type(np.gradient(AR_f4, axis=0), npt.NDArray[np.float32])
+assert_type(np.gradient(AR_c16_2d, axis=0), _Array2D[np.complex128])
+assert_type(np.gradient(AR_m_2d, axis=(0,)), _Array2D[np.timedelta64[int]])
+assert_type(np.gradient(AR_M_3d, axis=0), _Array3D[np.timedelta64])
+assert_type(np.gradient(AR_M_3d, axis=(0,)), _Array3D[np.timedelta64])
+assert_type(np.gradient(AR_f8_2d, axis=(0, 1)), tuple[_Array2D[np.float64], _Array2D[np.float64]])
+# Explicit axis tuples preserve input shape and determine the result count.
+assert_type(np.gradient(AR_f8_3d, axis=(0, 1)), tuple[_Array3D[np.float64], _Array3D[np.float64]])
+assert_type(np.gradient(AR_f8_4d, axis=(np.int64(0), -1)), tuple[_Array4D[np.float64], _Array4D[np.float64]])
+assert_type(
+    np.gradient(AR_f8_4d, axis=(0, 2, 3)),
+    tuple[_Array4D[np.float64], _Array4D[np.float64], _Array4D[np.float64]],
+)
+assert_type(np.gradient(AR_c16_3d, axis=(0, 2)), tuple[_Array3D[np.complex128], _Array3D[np.complex128]])
+assert_type(
+    np.gradient(AR_m_3d, axis=(0, 1)),
+    tuple[_Array3D[np.timedelta64[int]], _Array3D[np.timedelta64[int]]],
+)
+assert_type(
+    np.gradient(AR_M_4d, axis=(0, 1)),
+    tuple[_Array4D[np.timedelta64], _Array4D[np.timedelta64]],
+)
+assert_type(
+    np.gradient(AR_M_4d, axis=(0, 1, 3)),
+    tuple[_Array4D[np.timedelta64], _Array4D[np.timedelta64], _Array4D[np.timedelta64]],
+)
+# Axis sequences with unknown length retain shape and dtype.
+gradient_axes: tuple[int, ...]
+assert_type(
+    np.gradient(AR_f8_1d, axis=[0]),
+    _Array1D[np.float64] | tuple[_Array1D[np.float64], ...],
+)
+assert_type(
+    np.gradient(AR_f8_2d, axis=[0, 1]),
+    _Array2D[np.float64] | tuple[_Array2D[np.float64], ...],
+)
+assert_type(
+    np.gradient(AR_f8_3d, axis=gradient_axes),
+    _Array3D[np.float64] | tuple[_Array3D[np.float64], ...],
+)
+assert_type(
+    np.gradient(AR_f8_4d, axis=(0, 1, 2, 3)),
+    _Array4D[np.float64] | tuple[_Array4D[np.float64], ...],
+)
+assert_type(
+    np.gradient(AR_c16_2d, axis=[0]),
+    _Array2D[np.complex128] | tuple[_Array2D[np.complex128], ...],
+)
+assert_type(
+    np.gradient(AR_m_2d, axis=[0, 1]),
+    _Array2D[np.timedelta64[int]] | tuple[_Array2D[np.timedelta64[int]], ...],
+)
+assert_type(
+    np.gradient(AR_M_3d, axis=[0]),
+    _Array3D[np.timedelta64] | tuple[_Array3D[np.timedelta64], ...],
+)
+assert_type(
+    np.gradient(AR_M_4d, axis=gradient_axes),
+    _Array4D[np.timedelta64] | tuple[_Array4D[np.timedelta64], ...],
+)
 assert_type(np.gradient(AR_f8_1d, 1), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(
     np.gradient(AR_f8_2d, [1, 2], [2, 3.5, 4]),
