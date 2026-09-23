@@ -583,3 +583,19 @@ class TestTakeOutDtype(_DeprecationTestCase):
         different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
 
         self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
+
+
+class TestDotSecondArg3D(_DeprecationTestCase):
+    # Deprecated NumPy 2.6, 2026-09
+    # See https://github.com/numpy/numpy/issues/31725
+    message = "numpy.dot received a second argument with more than 2 dimensions"
+
+    def test_dot_3d_second_arg(self):
+        a = np.ones((2, 3))
+        b = np.ones((4, 3, 3))  # 3D array
+        self.assert_deprecated(lambda: np.dot(a, b))
+
+    def test_ndarray_dot_3d_second_arg(self):
+        a = np.ones((2, 3))
+        b = np.ones((4, 3, 3))
+        self.assert_deprecated(lambda: a.dot(b))

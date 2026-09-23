@@ -1045,6 +1045,19 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         return mul_res;
     }
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
+    
+    /* Deprecated NumPy 2.6, 2026-09 */
+    if (PyArray_NDIM(ap2) > 2) {
+        if (DEPRECATE(
+                "numpy.dot received a second argument with more than 2 "
+                "dimensions. The current dimension-interleaving behavior "
+                "is deprecated and will eventually raise an error. "
+                "Use numpy.tensordot(a, b, axes=[-1, -2]) instead. "
+                "(Deprecated NumPy 2.6)") < 0) {
+            goto fail;
+        }
+    }
+    
     if (PyArray_NDIM(ap2) > 1) {
         matchDim = PyArray_NDIM(ap2) - 2;
     }
