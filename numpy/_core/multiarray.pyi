@@ -668,6 +668,8 @@ def empty_like(
 
 # NOTE: The strange overload order (2d, 3d, then 1d) is a necessary workaround for
 # pyright and mypy, which are sensitive to the order of these _disjoint_ overloads.
+# NOTE: We need to special-case `bytes` because it's a subtype of `Sequence[int]`,
+# resulting in overlap that makes shape-typing (nested) `bytes` sequences unsound.
 @overload  # ?d Any  (workaround)
 def array(
     object: Sequence[Never],
@@ -1006,7 +1008,7 @@ def array[ItemT: _ObjItemT](
 ) -> NDArray[np.object_[ItemT | Any]]: ...  # `| Any` because it might be ragged
 @overload  # 0d, dtype=<known>
 def array[ScalarT: _ScalarNotObject](
-    object: complex | np.generic,
+    object: complex | str | np.generic,
     dtype: _DTypeLike[ScalarT],
     *,
     copy: bool | _CopyMode | None = True,
@@ -1016,9 +1018,21 @@ def array[ScalarT: _ScalarNotObject](
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array0D[ScalarT]: ...
+@overload  # 0d ~bytes, dtype=<known>
+def array[ScalarT: _ScalarNotObject](
+    object: bytes,
+    dtype: _DTypeLike[ScalarT],
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: int = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[ScalarT]: ...
 @overload  # 1d, dtype=<known>
 def array[ScalarT: _ScalarNotObject](
-    object: Sequence[complex | np.generic],
+    object: Sequence[complex | str | np.generic],
     dtype: _DTypeLike[ScalarT],
     *,
     copy: bool | _CopyMode | None = True,
@@ -1028,9 +1042,21 @@ def array[ScalarT: _ScalarNotObject](
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[ScalarT]: ...
+@overload  # ?d ~bytes, dtype=<known>
+def array[ScalarT: _ScalarNotObject](
+    object: Sequence[bytes | Sequence[bytes]],
+    dtype: _DTypeLike[ScalarT],
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: int = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[ScalarT]: ...
 @overload  # 2d, dtype=<known>
 def array[ScalarT: _ScalarNotObject](
-    object: Sequence[Sequence[complex | np.generic]],
+    object: Sequence[Sequence[complex | str | np.generic]],
     dtype: _DTypeLike[ScalarT],
     *,
     copy: bool | _CopyMode | None = True,
@@ -1042,7 +1068,7 @@ def array[ScalarT: _ScalarNotObject](
 ) -> _Array2D[ScalarT]: ...
 @overload  # 3d, dtype=<known>
 def array[ScalarT: _ScalarNotObject](
-    object: Sequence[Sequence[Sequence[complex | np.generic]]],
+    object: Sequence[Sequence[Sequence[complex | str | np.generic]]],
     dtype: _DTypeLike[ScalarT],
     *,
     copy: bool | _CopyMode | None = True,
@@ -1066,7 +1092,7 @@ def array[ScalarT: np.generic](
 ) -> NDArray[ScalarT]: ...
 @overload  # 0d, dtype=<unknown>
 def array(
-    object: complex | np.generic,
+    object: complex | str | np.generic,
     dtype: DTypeLike | None = None,
     *,
     copy: bool | _CopyMode | None = True,
@@ -1076,9 +1102,21 @@ def array(
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array0D[Any]: ...
+@overload  # 0d ~bytes, dtype=<unknown>
+def array(
+    object: bytes,
+    dtype: DTypeLike | None = None,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: int = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[Any]: ...
 @overload  # 1d, dtype=<unknown>
 def array(
-    object: Sequence[complex | np.generic],
+    object: Sequence[complex | str | np.generic],
     dtype: DTypeLike | None = None,
     *,
     copy: bool | _CopyMode | None = True,
@@ -1088,9 +1126,21 @@ def array(
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[Any]: ...
+@overload  # ?d ~bytes, dtype=<unknown>
+def array(
+    object: Sequence[bytes | Sequence[bytes]],
+    dtype: DTypeLike | None = None,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: int = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[Any]: ...
 @overload  # 2d, dtype=<unknown>
 def array(
-    object: Sequence[Sequence[complex | np.generic]],
+    object: Sequence[Sequence[complex | str | np.generic]],
     dtype: DTypeLike | None = None,
     *,
     copy: bool | _CopyMode | None = True,
@@ -1102,7 +1152,7 @@ def array(
 ) -> _Array2D[Any]: ...
 @overload  # 3d, dtype=<unknown>
 def array(
-    object: Sequence[Sequence[Sequence[complex | np.generic]]],
+    object: Sequence[Sequence[Sequence[complex | str | np.generic]]],
     dtype: DTypeLike | None = None,
     *,
     copy: bool | _CopyMode | None = True,
