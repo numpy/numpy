@@ -2825,11 +2825,11 @@ def test_replace_non_default_repeat(count):
 
 
 @pytest.mark.parametrize("count", [-1, -2, -2**63])
-def test_replace_negative_count_replaces_all(count):
-    # any negative count means "replace all", matching str.replace
-    arr = np.array(["aaa"], dtype="T")
-    assert_array_equal(np.strings.replace(arr, "a", "X", count),
-                       np.array(["XXX"], dtype="T"))
+def test_replace_negative_count_replaces_all(count, any_vstring_class, native):
+    # any negative count means "replace all", matching str.replace/bytes.replace
+    arr = np.array([native("aaa")], dtype=any_vstring_class())
+    assert_array_equal(np.strings.replace(arr, native("a"), native("X"), count),
+                       np.array([native("XXX")], dtype=arr.dtype), strict=True)
 
 
 def test_trailing_null_is_not_padding():

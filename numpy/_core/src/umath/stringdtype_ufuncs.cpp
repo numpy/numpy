@@ -2980,7 +2980,7 @@ init_stringlike_ufuncs(PyObject *umath)
     }
 
     PyArray_DTypeMeta *strip_whitespace_dtypes[] = {
-        &PyArray_StringDType, &PyArray_StringDType
+        string_dtype, string_dtype
     };
 
     const char *const strip_whitespace_names[] = {
@@ -2993,10 +2993,10 @@ init_stringlike_ufuncs(PyObject *umath)
         STRIPTYPE::BOTHSTRIP,
     };
 
-    for (int i=0; i<3 && !is_bytes; i++) {
-        if (!is_bytes && init_ufunc(umath, strip_whitespace_names[i], strip_whitespace_dtypes,
+    for (int i=0; i<3; i++) {
+        if (init_ufunc(umath, strip_whitespace_names[i], strip_whitespace_dtypes,
                        &strip_whitespace_resolve_descriptors,
-                       &string_lrstrip_whitespace_strided_loop<ENCODING::UTF8>,
+                       &string_lrstrip_whitespace_strided_loop<enc>,
                        1, 1, NPY_NO_CASTING, (NPY_ARRAYMETHOD_FLAGS) 0,
                        &strip_types[i]) < 0) {
             return -1;
@@ -3029,24 +3029,24 @@ init_stringlike_ufuncs(PyObject *umath)
 
 
     PyArray_DTypeMeta *replace_dtypes[] = {
-        &PyArray_StringDType, &PyArray_StringDType, &PyArray_StringDType,
-        &PyArray_Int64DType, &PyArray_StringDType,
+        string_dtype, string_dtype, string_dtype,
+        &PyArray_Int64DType, string_dtype,
     };
 
-    if (!is_bytes && init_ufunc(umath, "_replace", replace_dtypes,
+    if (init_ufunc(umath, "_replace", replace_dtypes,
                    &replace_resolve_descriptors,
-                   &string_replace_strided_loop<ENCODING::UTF8>, 4, 1,
+                   &string_replace_strided_loop<enc>, 4, 1,
                    NPY_NO_CASTING,
                    (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
     PyArray_DTypeMeta *replace_tail[] = {
-        &PyArray_IntAbstractDType, &PyArray_StringDType,
+        &PyArray_IntAbstractDType, string_dtype,
     };
 
-    if (!is_bytes && add_mixed_promoters(umath, "_replace", 3, &PyArray_StringDType,
-                            &PyArray_UnicodeDType, replace_tail, 2, 0,
+    if (add_mixed_promoters(umath, "_replace", 3, string_dtype,
+                            fixed_dtype, replace_tail, 2, 0,
                             string_replace_promoter) < 0) {
         return -1;
     }

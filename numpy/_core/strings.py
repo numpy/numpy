@@ -996,18 +996,19 @@ def lstrip(a, chars=None):
 
     Parameters
     ----------
-    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    a : array-like, with a string or bytes dtype
     chars : scalar with the same dtype as ``a``, optional
        The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
        argument defaults to removing whitespace. The ``chars`` argument
        is not a prefix or suffix; rather, all combinations of its
-       values are stripped.
+       values are stripped. For ``ByteStringDType`` input, only ``None``
+       is supported.
 
     Returns
     -------
     out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        Output array of a string or bytes dtype,
         depending on input types
 
     See Also
@@ -1044,18 +1045,19 @@ def rstrip(a, chars=None):
 
     Parameters
     ----------
-    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    a : array-like, with a string or bytes dtype
     chars : scalar with the same dtype as ``a``, optional
        The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
        argument defaults to removing whitespace. The ``chars`` argument
        is not a prefix or suffix; rather, all combinations of its
-       values are stripped.
+       values are stripped. For ``ByteStringDType`` input, only ``None``
+       is supported.
 
     Returns
     -------
     out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        Output array of a string or bytes dtype,
         depending on input types
 
     See Also
@@ -1087,18 +1089,19 @@ def strip(a, chars=None):
 
     Parameters
     ----------
-    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    a : array-like, with a string or bytes dtype
     chars : scalar with the same dtype as ``a``, optional
        The ``chars`` argument is a string specifying the set of
        characters to be removed. If ``None``, the ``chars``
        argument defaults to removing whitespace. The ``chars`` argument
        is not a prefix or suffix; rather, all combinations of its
-       values are stripped.
+       values are stripped. For ``ByteStringDType`` input, only ``None``
+       is supported.
 
     Returns
     -------
     out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        Output array of a string or bytes dtype,
         depending on input types
 
     See Also
@@ -1355,7 +1358,7 @@ def replace(a, old, new, count=-1):
     Returns
     -------
     out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        Output array of a string or bytes dtype,
         depending on input types
 
     See Also
@@ -1384,11 +1387,11 @@ def replace(a, old, new, count=-1):
     new_dtype = getattr(new, 'dtype', None)
     new_arr = np.asanyarray(new)
 
-    if np.result_type(arr, old_arr, new_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else arr
-        old = old if type(old) is str else old_arr
-        new = new if type(new) is str else new_arr
+    if _is_variable_width(np.result_type(arr, old_arr, new_arr)):
+        # pass exact str/bytes objects so the ufunc converts them directly
+        a = a if type(a) in (str, bytes) else arr
+        old = old if type(old) in (str, bytes) else old_arr
+        new = new if type(new) in (str, bytes) else new_arr
         return _replace(a, old, new, count)
 
     old = _cast_string_arg(old_arr, old_dtype or arr.dtype.char)

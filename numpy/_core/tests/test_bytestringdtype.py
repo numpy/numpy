@@ -772,6 +772,21 @@ class TestStringUfuncs:
         assert np.strings.find(a, n, 1)[0] == b"ababab".find(b"ab", 1)
         assert np.strings.find(a, n, 1, 3)[0] == b"ababab".find(b"ab", 1, 3)
 
+    @pytest.mark.parametrize("old,new", [
+        (b"\x00", b"-"), (b"\xff", b"ZZ"), (b"l", b""), (b"", b"@"),
+    ])
+    def test_replace(self, old, new):
+        vals = NUL_AND_HIGH_BYTE_VALUES
+        assert_array_equal(np.strings.replace(R(*vals), R(old), R(new)),
+                           R(*(v.replace(old, new) for v in vals)), strict=True)
+
+    @pytest.mark.parametrize("name", ["strip", "lstrip", "rstrip"])
+    def test_strip_whitespace_preserves_nuls(self, name):
+        vals = [b"  hi  ", b"x\x00 ", b" \x00x", b"\x00", b"",
+                b" \xff" * 10 + b"\x00 "]
+        assert_array_equal(getattr(np.strings, name)(R(*vals)),
+                           R(*(getattr(v, name)() for v in vals)), strict=True)
+
     def test_add_multiply(self):
         vals = NUL_AND_HIGH_BYTE_VALUES
         a = R(*vals)
@@ -795,6 +810,36 @@ class TestStringUfuncs:
         fixed = np.array([b"c", b"c"], dtype="S1")
         assert np.minimum(x, fixed).tolist() == [b"b", b"c"]
         assert np.maximum(fixed, x).dtype == ByteStringDType()
+
+    def test_pybytes_scalar_ufunc_operand_preserves_nulls(self):
+        # an exact bytes operand converts directly to ByteStringDType, so
+        # trailing nulls survive; a fixed-width 'S' intermediate would
+        # strip them as padding
+        arr = R(b"abc\x00", b"abc")
+
+        assert (arr == b"abc\x00").tolist() == [True, False]
+        assert (arr != b"abc\x00").tolist() == [False, True]
+        assert (arr + b"x\x00").tolist() == [b"abc\x00x\x00", b"abcx\x00"]
+        assert (b"x\x00" + arr).tolist() == [b"x\x00abc\x00", b"x\x00abc"]
+        assert np.strings.str_len(arr + b"x\x00").tolist() == [6, 5]
+
+        arr2 = arr.copy()
+        arr2 += b"\x00"
+        assert arr2.tolist() == [b"abc\x00\x00", b"abc\x00"]
+
+        assert np.strings.count(arr, b"\x00").tolist() == [1, 0]
+        assert np.strings.find(arr, b"c\x00").tolist() == [2, -1]
+        assert np.strings.replace(arr, b"\x00", b"!").tolist() == \
+            [b"abc!", b"abc"]
+
+        # subclass operands, np.bytes_ included, keep fixed-width semantics
+        assert (arr + np.bytes_(b"x\x00")).tolist() == [b"abc\x00x", b"abcx"]
+        assert np.strings.find(arr, np.bytes_(b"c\x00")).tolist() == [2, 2]
+        assert (arr == np.bytes_(b"abc\x00")).tolist() == [False, True]
+
+        # ops that resolve to fixed-width dtypes keep fixed-width semantics
+        s = np.array([b"abc"], dtype="S4")
+        assert np.strings.find(s, np.bytes_(b"abc\x00")).tolist() == [0]
 
     def test_pybytes_scalar_ufunc_outer_preserves_nulls(self):
         arr = R(b"x")
