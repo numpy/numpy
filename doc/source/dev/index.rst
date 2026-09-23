@@ -157,7 +157,7 @@ Here's the short summary, complete TOC links are below:
    modifications they may need to be mentioned in the release notes.
    To add your change to the release notes, you need to create a short file
    with a summary and place it in ``doc/release/upcoming_changes``.
-   The file ``doc/release/upcoming_changes/README.rst`` details the format and
+   The file ``doc/release/upcoming_changes/README.md`` details the format and
    filename conventions.
 
    If your change introduces a deprecation, make sure to discuss this first on

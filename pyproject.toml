@@ -104,11 +104,10 @@ tracker = "https://github.com/numpy/numpy/issues"
 
 [tool.towncrier]
     single_file = false
-    filename = "doc/source/release/notes-towncrier.rst"
+    filename = "doc/source/release/notes-towncrier.md"
     directory = "doc/release/upcoming_changes/"
-    issue_format = "`gh-{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"
-    template = "doc/release/upcoming_changes/template.rst"
-    underlines = "~="
+    issue_format = "[gh-{issue}](https://github.com/numpy/numpy/pull/{issue})"
+    template = "doc/release/upcoming_changes/template.md"
     all_bullets = false
 
 

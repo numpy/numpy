@@ -10,8 +10,8 @@ def main():
     path = toml.load("pyproject.toml")["tool"]["towncrier"]["directory"]
 
     fragments = os.listdir(path)
-    fragments.remove("README.rst")
-    fragments.remove("template.rst")
+    fragments.remove("README.md")
+    fragments.remove("template.md")
 
     if fragments:
         print("The following files were not found by towncrier:")

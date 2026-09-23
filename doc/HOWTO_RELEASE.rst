@@ -176,7 +176,7 @@ Check the release notes
 -----------------------
 Use `towncrier`_ to build the release note and
 commit the changes. This will remove all the fragments from
-``doc/release/upcoming_changes`` and add ``doc/release/<version>-note.rst``.::
+``doc/release/upcoming_changes`` and add ``doc/release/<version>-note.md``.::
 
     towncrier build --version "<version>"
     git commit -m"Create release note"

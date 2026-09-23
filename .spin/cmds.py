@@ -123,7 +123,7 @@ def docs(*, parent_callback, **kwargs):
     env["PYTHONIOENCODING"] = "utf-8"
     p = subprocess.run(cmd, check=True, capture_output=True, text=True,
                        encoding="utf-8", env=env)
-    outfile = curdir.parent / 'doc' / 'source' / 'release' / 'notes-towncrier.rst'
+    outfile = curdir.parent / 'doc' / 'source' / 'release' / 'notes-towncrier.md'
     with open(outfile, 'w') as f:
         f.write(p.stdout)
 
