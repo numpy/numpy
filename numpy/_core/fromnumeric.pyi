@@ -511,7 +511,7 @@ def reshape[ScalarT: np.generic](
     copy: bool | None = None,
 ) -> _Array1D[ScalarT]: ...
 @overload  # shape: ~ShapeT
-def reshape[ScalarT: np.generic, ShapeT: _Shape](
+def reshape[ScalarT: np.generic, ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     a: _ArrayLike[ScalarT],
     /,
     shape: ShapeT,
@@ -538,7 +538,7 @@ def reshape(
     copy: bool | None = None,
 ) -> np.ndarray[_1D]: ...
 @overload  # shape: ~ShapeT
-def reshape[ShapeT: _Shape](
+def reshape[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     a: ArrayLike,
     /,
     shape: ShapeT,

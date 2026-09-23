@@ -184,10 +184,7 @@ __all__ = [
 ]
 
 _ArrayT_co = TypeVar("_ArrayT_co", bound=np.ndarray, default=np.ndarray, covariant=True)
-_AnyRankT = TypeVar(
-    "_AnyRankT",
-    tuple[()], tuple[int], tuple[int, int], tuple[int, int, int], tuple[int, int, int, int],
-)  # fmt: skip
+_AnyRankT = TypeVar("_AnyRankT", _0D, _1D, _2D, _3D, _4D)
 _AnyScalarT = TypeVar(
     "_AnyScalarT",
     np.bool,
@@ -199,11 +196,17 @@ _AnyScalarT = TypeVar(
     np.bytes_, np.str_, np.void, np.object_,
 )  # fmt: skip
 
+type _0D = tuple[()]
+type _1D = tuple[int]
+type _2D = tuple[int, int]
+type _3D = tuple[int, int, int]
+type _4D = tuple[int, int, int, int]
+
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = ndarray[ShapeT, dtype[ScalarT]]
-type _Array0D[ScalarT: np.generic] = ndarray[tuple[()], dtype[ScalarT]]
-type _Array1D[ScalarT: np.generic] = ndarray[tuple[int], dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = ndarray[tuple[int, int], dtype[ScalarT]]
-type _Array3D[ScalarT: np.generic] = ndarray[tuple[int, int, int], dtype[ScalarT]]
+type _Array0D[ScalarT: np.generic] = ndarray[_0D, dtype[ScalarT]]
+type _Array1D[ScalarT: np.generic] = ndarray[_1D, dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = ndarray[_2D, dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = ndarray[_3D, dtype[ScalarT]]
 
 type _Tuple2[T] = tuple[T, T]
 type _Tuple3[T] = tuple[T, T, T]
@@ -361,7 +364,7 @@ def empty(
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[Incomplete]: ...
 @overload  # known shape, float64 default
-def empty[ShapeT: _Shape](
+def empty[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     shape: ShapeT,
     dtype: None = None,
     order: _OrderCF = "C",
@@ -370,7 +373,7 @@ def empty[ShapeT: _Shape](
     like: _SupportsArrayFunc | None = None,
 ) -> _Array[ShapeT, float64]: ...
 @overload  # known shape, specific dtype
-def empty[ShapeT: _Shape, DTypeT: np.dtype](
+def empty[ShapeT: (_0D, _1D, _2D, _3D, _4D), DTypeT: np.dtype](
     shape: ShapeT,
     dtype: DTypeT | _SupportsDType[DTypeT],
     order: _OrderCF = "C",
@@ -379,7 +382,7 @@ def empty[ShapeT: _Shape, DTypeT: np.dtype](
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, DTypeT]: ...
 @overload  # known shape, specific scalar type
-def empty[ShapeT: _Shape, ScalarT: np.generic](
+def empty[ShapeT: (_0D, _1D, _2D, _3D, _4D), ScalarT: np.generic](
     shape: ShapeT,
     dtype: type[ScalarT],
     order: _OrderCF = "C",
@@ -388,7 +391,7 @@ def empty[ShapeT: _Shape, ScalarT: np.generic](
     like: _SupportsArrayFunc | None = None,
 ) -> _Array[ShapeT, ScalarT]: ...
 @overload  # known shape, unknown dtype
-def empty[ShapeT: _Shape](
+def empty[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     shape: ShapeT,
     dtype: DTypeLike | None = None,
     order: _OrderCF = "C",
@@ -471,7 +474,7 @@ def zeros(
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[Incomplete]: ...
 @overload  # known shape, float64 default
-def zeros[ShapeT: _Shape](
+def zeros[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     shape: ShapeT,
     dtype: None = None,
     order: _OrderCF = "C",
@@ -480,7 +483,7 @@ def zeros[ShapeT: _Shape](
     like: _SupportsArrayFunc | None = None,
 ) -> _Array[ShapeT, float64]: ...
 @overload  # known shape, specific dtype
-def zeros[ShapeT: _Shape, DTypeT: np.dtype](
+def zeros[ShapeT: (_0D, _1D, _2D, _3D, _4D), DTypeT: np.dtype](
     shape: ShapeT,
     dtype: DTypeT | _SupportsDType[DTypeT],
     order: _OrderCF = "C",
@@ -489,7 +492,7 @@ def zeros[ShapeT: _Shape, DTypeT: np.dtype](
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, DTypeT]: ...
 @overload  # known shape, specific scalar type
-def zeros[ShapeT: _Shape, ScalarT: np.generic](
+def zeros[ShapeT: (_0D, _1D, _2D, _3D, _4D), ScalarT: np.generic](
     shape: ShapeT,
     dtype: type[ScalarT],
     order: _OrderCF = "C",
@@ -498,7 +501,7 @@ def zeros[ShapeT: _Shape, ScalarT: np.generic](
     like: _SupportsArrayFunc | None = None,
 ) -> _Array[ShapeT, ScalarT]: ...
 @overload  # known shape, unknown dtype
-def zeros[ShapeT: _Shape](
+def zeros[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     shape: ShapeT,
     dtype: DTypeLike | None = None,
     order: _OrderCF = "C",
