@@ -2,15 +2,7 @@ from collections.abc import Sequence
 from typing import Any, overload
 
 import numpy as np
-from numpy import complexfloating
-from numpy._typing import (
-    NDArray,
-    _ArrayLikeComplex_co,
-    _ArrayLikeFloat_co,
-    _ComplexLike_co,
-    _FloatLike_co,
-    _Shape,
-)
+from numpy._typing import NDArray, _ArrayLikeComplex_co, _ComplexLike_co, _Shape
 
 __all__ = ["sqrt", "log", "log2", "logn", "log10", "power", "arccos", "arcsin", "arctanh"]
 
@@ -18,7 +10,9 @@ __all__ = ["sqrt", "log", "log2", "logn", "log10", "power", "arccos", "arcsin", 
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+
 type _Sequence2D[T] = Sequence[Sequence[T]]
+type _SequenceMax2D[T] = T | Sequence[T] | Sequence[Sequence[T]]
 
 type _inexact32 = np.complex64 | np.float32
 type _inexact64 = np.complex128 | np.float64
@@ -237,14 +231,59 @@ def logn(n: complex, x: _Sequence2D[_ComplexLike_co]) -> _Array2D[np.complex128 
 @overload  # ?d  (fallback)
 def logn(n: _ArrayLikeComplex_co, x: _ArrayLikeComplex_co) -> NDArray[Any] | Any: ...
 
-@overload
-def power(x: _FloatLike_co, p: _FloatLike_co) -> Any: ...
-@overload
-def power(x: _ComplexLike_co, p: _ComplexLike_co) -> complexfloating: ...
-@overload
-def power(x: _ArrayLikeFloat_co, p: _ArrayLikeFloat_co) -> NDArray[Any]: ...
-@overload
-def power(x: _ArrayLikeComplex_co, p: _ArrayLikeComplex_co) -> NDArray[complexfloating]: ...
+#
+@overload  # Nd ~c128
+def power[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.complex128]],
+    p: _ToComplex128,
+) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...
+@overload  # Nd +f64
+def power[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.float64 | np.float32]],
+    p: _ToFloat64,
+) -> np.ndarray[ShapeT, np.dtype[_inexact64 | Any]]: ...
+@overload  # Nd ~f32
+def power[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.float32]],
+    p: np.float32,
+) -> np.ndarray[ShapeT, np.dtype[_inexact32]]: ...
+@overload  # Nd +i64
+def power[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.signedinteger | np.bool]],
+    p: _ToFloat64,
+) -> np.ndarray[ShapeT, np.dtype[_inexact64 | np.int64]]: ...
+@overload  # 0d ~c128
+def power(x: np.complex128, p: _ToComplex128) -> np.complex128: ...
+@overload  # 0d +f64
+def power(x: float | np.float32, p: _ToFloat64) -> _inexact64 | Any: ...
+@overload  # 0d ~f32
+def power(x: np.float32, p: np.float32) -> _inexact32: ...
+@overload  # 0d +i64
+def power(x: np.signedinteger | np.bool, p: _ToFloat64) -> _inexact64 | np.int64: ...
+@overload  # 0d +complex  (fallback)
+def power(x: _ComplexLike_co, p: _ComplexLike_co) -> np.complex128 | Any: ...
+@overload  # 1d ~c128
+def power(x: Sequence[np.complex128], p: _ToComplex128 | Sequence[_ToComplex128]) -> _Array1D[np.complex128]: ...
+@overload  # 1d +f64
+def power(x: Sequence[float | np.float32], p: _ToFloat64 | Sequence[_ToFloat64]) -> _Array1D[_inexact64 | Any]: ...
+@overload  # 1d ~f32
+def power(x: Sequence[np.float32], p: np.float32 | Sequence[np.float32]) -> _Array1D[_inexact32]: ...
+@overload  # 1d +i64
+def power(x: Sequence[np.signedinteger | np.bool], p: _ToFloat64 | Sequence[_ToFloat64]) -> _Array1D[_inexact64 | np.int64]: ...
+@overload  # 1d +complex  (fallback)
+def power(x: Sequence[_ComplexLike_co], p: _ComplexLike_co | Sequence[_ComplexLike_co]) -> _Array1D[np.complex128 | Any]: ...
+@overload  # 2d ~c128
+def power(x: _Sequence2D[np.complex128], p: _SequenceMax2D[_ToComplex128]) -> _Array2D[np.complex128]: ...
+@overload  # 2d +f64
+def power(x: _Sequence2D[float | np.float32], p: _SequenceMax2D[_ToFloat64]) -> _Array2D[_inexact64 | Any]: ...
+@overload  # 2d ~f32
+def power(x: _Sequence2D[np.float32], p: _SequenceMax2D[np.float32]) -> _Array2D[_inexact32]: ...
+@overload  # 2d +i64
+def power(x: _Sequence2D[np.signedinteger | np.bool], p: _SequenceMax2D[_ToFloat64]) -> _Array2D[_inexact64 | np.int64]: ...
+@overload  # 2d +complex  (fallback)
+def power(x: _Sequence2D[_ComplexLike_co], p: _SequenceMax2D[_ComplexLike_co]) -> _Array2D[np.complex128 | Any]: ...
+@overload  # ?d  (fallback)
+def power(x: _ArrayLikeComplex_co, p: _ArrayLikeComplex_co) -> NDArray[Any] | Any: ...
 
 # keep in sync with `sqrt`, `log`, `log10`, `log2`, `arcsin`, `arctanh`
 @overload  # Nd T@complexfloating
