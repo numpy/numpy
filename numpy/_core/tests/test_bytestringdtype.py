@@ -10,6 +10,7 @@ import pickle
 import pytest
 
 import numpy as np
+from numpy._core.tests._natype import pd_NA
 from numpy._core.tests.test_stringdtype import INVALID_UTF8
 from numpy.dtypes import ByteStringDType, StringDType
 from numpy.testing import assert_array_equal
@@ -214,6 +215,33 @@ class TestSortingAndSelection:
         assert arr.nonzero()[0].tolist() == ([0, 1] if na else [1])
         assert np.sort(arr[::-1]).tolist() == sorted([na, b"y"])
 
+    @pytest.mark.parametrize("na", [np.nan, np.float32("nan"), pd_NA])
+    @pytest.mark.parametrize("equal_nan", [True, False])
+    def test_unique_nan_metadata(self, na, equal_nan):
+        dt = ByteStringDType(na_object=na)
+        arr = np.array([na, b"x\x00", na, b"x\x00"], dtype=dt)
+        values, indices, inverse, counts = np.unique(
+            arr, return_index=True, return_inverse=True, return_counts=True,
+            equal_nan=equal_nan)
+        assert values.dtype == dt
+        assert values[0] == b"x\x00"
+        assert np.isnan(values).tolist() == (
+            [False, True] if equal_nan else [False, True, True])
+        assert indices.tolist() == ([1, 0] if equal_nan else [1, 0, 2])
+        assert inverse.tolist() == ([1, 0, 1, 0] if equal_nan else [1, 0, 2, 0])
+        assert counts.tolist() == ([2, 2] if equal_nan else [2, 1, 1])
+        hashed = np.unique(arr, equal_nan=equal_nan)
+        assert hashed.size == values.size
+        assert np.isnan(hashed).sum() == np.isnan(values).sum()
+
+    @pytest.mark.parametrize("na", [np.nan, np.float32("nan"), pd_NA])
+    def test_assert_array_equal_nan(self, na):
+        dt = ByteStringDType(na_object=na)
+        arr = np.array([b"x\x00", na], dtype=dt)
+        assert_array_equal(arr, arr.copy())
+        with pytest.raises(AssertionError, match="location mismatch"):
+            assert_array_equal(arr, arr[::-1])
+
 
 class TestCasts:
     def test_self_cast(self, dtype):
@@ -253,6 +281,11 @@ class TestCasts:
         assert np.can_cast("S4", dtype, casting="safe")
         assert not np.can_cast(dtype, "S4", casting="safe")
         assert not np.can_cast("V4", dtype, casting="safe")
+
+    def test_searchsorted_fixed_width_needle(self, dtype):
+        # searchsorted needs a safe cast of the needle
+        arr = np.array([b"a", b"c"], dtype=dtype)
+        assert arr.searchsorted(np.array([b"b"], dtype="S1")).tolist() == [1]
 
     def test_void_roundtrip_preserves_nuls(self, dtype):
         # void -> ByteStringDType is length-explicit, with no UTF-8 validation

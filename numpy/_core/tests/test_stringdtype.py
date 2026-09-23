@@ -3826,6 +3826,18 @@ class TestVariableWidthShared:
         # nan-like nulls sort to the end in descending sorts too
         assert np.argsort(arr, descending=True).tolist() == [2, 0, 1]
 
+    def test_unique(self, any_vstring_class, vstring_list):
+        arr = np.array(vstring_list * 2, dtype=any_vstring_class())
+        assert np.unique(arr).tolist() == sorted(set(vstring_list))
+
+    def test_searchsorted_arena_values(self, any_vstring_class, native):
+        # >15-byte values force the arena/allocator path
+        values = sorted(native(c) * 30 for c in string.ascii_lowercase)
+        arr = np.array(values, dtype=any_vstring_class())
+        for i in [0, 7, 25]:
+            needle = np.array([values[i]], dtype=any_vstring_class())
+            assert np.searchsorted(arr, needle)[0] == i
+
     def test_nonzero_argmax_argmin(self, any_vstring_class, native):
         arr = np.array([native(s) for s in ["b", "", "a", "c"]],
                        dtype=any_vstring_class())
