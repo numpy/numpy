@@ -1270,6 +1270,21 @@ class TestDTypeMakeCanonical:
         canonical_dt = np.result_type(arr.dtype)
         assert not canonical_dt.hasobject
 
+    def test_subarray_base_size_change(self):
+        # The canonical form of a structured base with overlapping fields is
+        # larger than the original; the subarray dtype wrapping it must be
+        # resized accordingly.
+        union = np.dtype({"names": ["a", "b"], "formats": ["i8", "i8"],
+                          "offsets": [0, 0], "itemsize": 8})
+        dt = np.dtype([("f", (union, (4,))), ("g", "i1")])
+        canonical = np.result_type(dt)
+        assert np.result_type(canonical) == canonical
+        f = canonical["f"]
+        assert f.base == np.dtype([("a", "i8"), ("b", "i8")])
+        assert f.itemsize == 4 * f.base.itemsize
+        assert f.alignment == f.base.alignment
+        assert canonical.itemsize == f.itemsize + 1
+
     @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
     @pytest.mark.slow
     @hypothesis.given(dtype=hynp.nested_dtypes())
@@ -1544,6 +1559,32 @@ class TestPromotion:
         # inconsistent here).  The new promotion fixed this (partially?)
         assert np.result_type(other, rational) == expected
         assert np.result_type(other, rational(1, 2)) == expected
+
+    @pytest.mark.parametrize("shape",
+            # The empty case makes basically no sense, but it creates a ()
+            # shaped subarray dtype when `[]` can trigger a different path.
+            [(2, 3), np.empty(0, dtype=int)])
+    @pytest.mark.parametrize(["dt1", "dt2", "expected"], [
+            ("S3", "S5", "S5"),
+            ("i4", "f8", "f8"),
+            ("i4", "O", "O"),
+            # field-wise promotion can grow the structured base:
+            ("i4,i8", "i8,i4", "i8,i8"),
+            # overlapping fields are unpacked (and thus grow) by promotion:
+            (np.dtype({"names": ["a", "b"], "formats": ["i8", "i8"],
+                       "offsets": [0, 0], "itemsize": 8}),
+             np.dtype({"names": ["a", "b"], "formats": ["i8", "i8"],
+                       "offsets": [0, 0], "itemsize": 8}),
+             np.dtype([("a", "i8"), ("b", "i8")])),
+            ])
+    def test_subarray_promotion_base_size(self, dt1, dt2, expected, shape):
+        # The promoted subarray dtype must be sized for the promoted base
+        res = np.promote_types(np.dtype((dt1, shape)), np.dtype((dt2, shape)))
+        assert res == np.dtype((expected, shape))
+        assert res.base == np.dtype(expected)
+        assert res.itemsize == np.dtype(expected).itemsize * np.prod(shape)
+        assert res.alignment == np.dtype(expected).alignment
+        assert res.hasobject == np.dtype(expected).hasobject
 
     @pytest.mark.parametrize(["dtypes", "expected"], [
              # These promotions are not associative/commutative:

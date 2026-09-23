@@ -229,6 +229,106 @@ is_datetime_typestr(char const *type, Py_ssize_t len)
     return 0;
 }
 
+NPY_NO_EXPORT PyArray_Descr *
+arraydescr_new_from_subarray(PyArray_Descr *base, PyObject *shape_obj)
+{
+    PyArray_Dims shape = {NULL, -1};
+    if (!(PyArray_IntpConverter(shape_obj, &shape)) || (shape.len > NPY_MAXDIMS)) {
+        PyErr_SetString(PyExc_ValueError,
+                "invalid shape in fixed-type tuple.");
+        goto fail;
+    }
+
+    /*
+     * A subarray dtype is never attached to an array, so a base with
+     * per-instance state (a finalize slot, e.g. StringDType) could
+     * never be finalized and anything using the dtype would misbehave.
+     */
+    if (NPY_DT_has_finalize(NPY_DTYPE(base))) {
+        PyErr_Format(PyExc_TypeError,
+                "%s is not currently supported within subarray dtypes.",
+                ((PyTypeObject *)NPY_DTYPE(base))->tp_name);
+        goto fail;
+    }
+
+    /* validate and set shape */
+    for (int i=0; i < shape.len; i++) {
+        if (shape.ptr[i] < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                            "invalid shape in fixed-type tuple: "
+                            "dimension smaller then zero.");
+            goto fail;
+        }
+        if (shape.ptr[i] > NPY_MAX_INT) {
+            PyErr_SetString(PyExc_ValueError,
+                            "invalid shape in fixed-type tuple: "
+                            "dimension does not fit into a C int.");
+            goto fail;
+        }
+    }
+    npy_intp items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
+    int overflowed;
+    int nbytes;
+    if (items < 0 || items > NPY_MAX_INT) {
+        overflowed = 1;
+    }
+    else {
+        overflowed = npy_mul_with_overflow_int(
+            &nbytes, base->elsize, (int) items);
+    }
+    if (overflowed) {
+        PyErr_SetString(PyExc_ValueError,
+                        "invalid shape in fixed-type tuple: dtype size in "
+                        "bytes must fit into a C int.");
+        goto fail;
+    }
+    _PyArray_LegacyDescr *newdescr = (_PyArray_LegacyDescr *)PyArray_DescrNewFromType(NPY_VOID);
+    if (newdescr == NULL) {
+        goto fail;
+    }
+    newdescr->elsize = nbytes;
+    newdescr->subarray = PyMem_RawMalloc(sizeof(PyArray_ArrayDescr));
+    if (newdescr->subarray == NULL) {
+        Py_DECREF(newdescr);
+        PyErr_NoMemory();
+        goto fail;
+    }
+    newdescr->flags = base->flags;
+    newdescr->alignment = base->alignment;
+    Py_INCREF(base);
+    newdescr->subarray->base = base;
+    Py_XDECREF(newdescr->fields);
+    Py_XDECREF(newdescr->names);
+    newdescr->fields = NULL;
+    newdescr->names = NULL;
+
+    /*
+     * Create a new subarray->shape tuple (it can be an arbitrary
+     * sequence of integer like objects, neither of which is safe.
+     */
+    newdescr->subarray->shape = PyTuple_New(shape.len);
+    if (newdescr->subarray->shape == NULL) {
+        Py_DECREF(newdescr);
+        goto fail;
+    }
+    for (int i=0; i < shape.len; i++) {
+        PyTuple_SET_ITEM(newdescr->subarray->shape, i,
+                         PyLong_FromLong((long)shape.ptr[i]));
+
+        if (PyTuple_GET_ITEM(newdescr->subarray->shape, i) == NULL) {
+            Py_DECREF(newdescr);
+            goto fail;
+        }
+    }
+
+    npy_free_cache_dim_obj(shape);
+    return (PyArray_Descr *)newdescr;
+
+fail:
+    npy_free_cache_dim_obj(shape);
+    return NULL;
+}
+
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
@@ -289,111 +389,16 @@ _convert_from_tuple(PyObject *obj, int align)
     }
     else {
         /*
-         * interpret next item as shape (if it's a tuple)
-         * and reset the type to NPY_VOID with
-         * a new fields attribute.
+         * interpret next item as shape (if it's a tuple) and reset the type
+         * to NPY_VOID with a new fields attribute.
+         * On this path, empty tuple shapes are ignored and decay to the base.
          */
-        PyArray_Dims shape = {NULL, -1};
-        if (!(PyArray_IntpConverter(val, &shape)) || (shape.len > NPY_MAXDIMS)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "invalid shape in fixed-type tuple.");
-            goto fail;
-        }
-        /* if (type, ()) was given it is equivalent to type... */
-        if (shape.len == 0 && PyTuple_Check(val)) {
-            npy_free_cache_dim_obj(shape);
+        if (PyTuple_Check(val) && PyTuple_GET_SIZE(val) == 0) {
             return type;
         }
-
-        /*
-         * A subarray dtype is never attached to an array, so a base with
-         * per-instance state (a finalize slot, e.g. StringDType) could
-         * never be finalized and anything using the dtype would misbehave.
-         */
-        if (NPY_DT_has_finalize(NPY_DTYPE(type))) {
-            PyErr_Format(PyExc_TypeError,
-                    "%s is not currently supported within subarray dtypes.",
-                    ((PyTypeObject *)NPY_DTYPE(type))->tp_name);
-            goto fail;
-        }
-
-        /* validate and set shape */
-        for (int i=0; i < shape.len; i++) {
-            if (shape.ptr[i] < 0) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid shape in fixed-type tuple: "
-                                "dimension smaller then zero.");
-                goto fail;
-            }
-            if (shape.ptr[i] > NPY_MAX_INT) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid shape in fixed-type tuple: "
-                                "dimension does not fit into a C int.");
-                goto fail;
-            }
-        }
-        npy_intp items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
-        int overflowed;
-        int nbytes;
-        if (items < 0 || items > NPY_MAX_INT) {
-            overflowed = 1;
-        }
-        else {
-            overflowed = npy_mul_with_overflow_int(
-                &nbytes, type->elsize, (int) items);
-        }
-        if (overflowed) {
-            PyErr_SetString(PyExc_ValueError,
-                            "invalid shape in fixed-type tuple: dtype size in "
-                            "bytes must fit into a C int.");
-            goto fail;
-        }
-        _PyArray_LegacyDescr *newdescr = (_PyArray_LegacyDescr *)PyArray_DescrNewFromType(NPY_VOID);
-        if (newdescr == NULL) {
-            goto fail;
-        }
-        newdescr->elsize = nbytes;
-        newdescr->subarray = PyMem_RawMalloc(sizeof(PyArray_ArrayDescr));
-        if (newdescr->subarray == NULL) {
-            Py_DECREF(newdescr);
-            PyErr_NoMemory();
-            goto fail;
-        }
-        newdescr->flags = type->flags;
-        newdescr->alignment = type->alignment;
-        newdescr->subarray->base = type;
-        type = NULL;
-        Py_XDECREF(newdescr->fields);
-        Py_XDECREF(newdescr->names);
-        newdescr->fields = NULL;
-        newdescr->names = NULL;
-
-        /*
-         * Create a new subarray->shape tuple (it can be an arbitrary
-         * sequence of integer like objects, neither of which is safe.
-         */
-        newdescr->subarray->shape = PyTuple_New(shape.len);
-        if (newdescr->subarray->shape == NULL) {
-            Py_DECREF(newdescr);
-            goto fail;
-        }
-        for (int i=0; i < shape.len; i++) {
-            PyTuple_SET_ITEM(newdescr->subarray->shape, i,
-                             PyLong_FromLong((long)shape.ptr[i]));
-
-            if (PyTuple_GET_ITEM(newdescr->subarray->shape, i) == NULL) {
-                Py_DECREF(newdescr);
-                goto fail;
-            }
-        }
-
-        npy_free_cache_dim_obj(shape);
-        return (PyArray_Descr *)newdescr;
-
-    fail:
-        Py_XDECREF(type);
-        npy_free_cache_dim_obj(shape);
-        return NULL;
+        PyArray_Descr *ret = arraydescr_new_from_subarray(type, val);
+        Py_DECREF(type);
+        return ret;
     }
 }
 
