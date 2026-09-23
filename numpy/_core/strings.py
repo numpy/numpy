@@ -137,6 +137,13 @@ def _to_bytes_or_str_array(result, output_dtype_like):
     return ret.astype(type(output_dtype_like.dtype)(_get_num_chars(ret)))
 
 
+def _check_not_bytestring(func_name, a):
+    if isinstance(a.dtype, np.dtypes.ByteStringDType):
+        raise NotImplementedError(
+            f"np.strings.{func_name} is not implemented for ByteStringDType "
+            "arrays")
+
+
 def _clean_args(*args):
     """
     Helper function for delegating arguments to Python string
@@ -274,7 +281,7 @@ def find(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
+    a : array_like, with a string or bytes dtype
 
     sub : array_like, with ``bytes_`` or ``str_`` dtype
         The substring to search for.
@@ -422,9 +429,9 @@ def count(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    a : array-like, with a string or bytes dtype
 
-    sub : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    sub : array-like, with a string or bytes dtype
        The substring to search for.
 
     start, end : array_like, with any integer dtype
@@ -785,6 +792,8 @@ def center(a, width, fillchar=None):
     a = np.asanyarray(a)
     fillchar = _get_fillchar(a, fillchar)
 
+    _check_not_bytestring("center", a)
+
     if np.result_type(a, fillchar).char == "T":
         return _center(a, width, fillchar)
 
@@ -846,6 +855,8 @@ def ljust(a, width, fillchar=None):
 
     a = np.asanyarray(a)
     fillchar = _get_fillchar(a, fillchar)
+
+    _check_not_bytestring("ljust", a)
 
     if np.result_type(a, fillchar).char == "T":
         return _ljust(a, width, fillchar)
@@ -909,6 +920,8 @@ def rjust(a, width, fillchar=None):
     a = np.asanyarray(a)
     fillchar = _get_fillchar(a, fillchar)
 
+    _check_not_bytestring("rjust", a)
+
     if np.result_type(a, fillchar).char == "T":
         return _rjust(a, width, fillchar)
 
@@ -962,6 +975,8 @@ def zfill(a, width):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
     a = np.asanyarray(a)
+
+    _check_not_bytestring("zfill", a)
 
     if a.dtype.char == "T":
         return _zfill(a, width)

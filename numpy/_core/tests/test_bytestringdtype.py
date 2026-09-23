@@ -554,6 +554,14 @@ class TestScalar:
         arr.fill(np.vbytes(b"z\x00"))
         assert arr.tolist() == [b"z\x00"] * 2
 
+    def test_ufunc_operand(self, dtype):
+        arr = np.array([b"x\x00", b"a\x00b"], dtype=dtype)
+        assert np.strings.find(arr, np.vbytes(b"\x00")).tolist() == [1, 1]
+        assert (arr + np.vbytes(b"y\x00")).tolist() == [b"x\x00y\x00", b"a\x00by\x00"]
+        assert (arr == np.vbytes(b"x\x00")).tolist() == [True, False]
+        assert type(arr.max()) is np.vbytes
+        assert arr.max() == b"x\x00"
+
     def test_scalar_expressions_keep_bytes_semantics(self):
         x = np.vbytes(b"a")
         assert x + b"b" == b"ab"
@@ -738,6 +746,32 @@ class TestComparisonUfuncs:
 class TestStringUfuncs:
     """Oracle: the matching Python bytes method, elementwise."""
 
+    def test_str_len_is_byte_length(self):
+        vals = NUL_AND_HIGH_BYTE_VALUES
+        assert_array_equal(np.strings.str_len(R(*vals)),
+                           np.array([len(v) for v in vals], dtype=np.intp),
+                           strict=True)
+
+    def test_isalpha(self):
+        vals = [b"abc", b"ABC", b"aBc", b"a" * 16, b"", b"a1", b"a b",
+                b"a\x00", b"\x00a", b"a\xff", b"caf\xc3\xa9"]
+        assert_array_equal(np.strings.isalpha(R(*vals)),
+                           np.array([v.isalpha() for v in vals]), strict=True)
+
+    @pytest.mark.parametrize("name", ["find", "count"])
+    @pytest.mark.parametrize("needle", [b"l", b"\x00", b"\xff", b"a\x00"])
+    def test_find_count(self, name, needle):
+        vals = NUL_AND_HIGH_BYTE_VALUES
+        expected = [getattr(v, name)(needle) for v in vals]
+        assert_array_equal(getattr(np.strings, name)(R(*vals), R(needle)),
+                           np.array(expected, dtype=np.int_), strict=True)
+
+    def test_find_with_offsets(self):
+        a = R(b"ababab")
+        n = R(b"ab")
+        assert np.strings.find(a, n, 1)[0] == b"ababab".find(b"ab", 1)
+        assert np.strings.find(a, n, 1, 3)[0] == b"ababab".find(b"ab", 1, 3)
+
     def test_add_multiply(self):
         vals = NUL_AND_HIGH_BYTE_VALUES
         a = R(*vals)
@@ -782,3 +816,40 @@ class TestMixedFixedWidth:
             assert res.tolist() == [b"1abc", b"2x"]
         res = s + a
         assert res.tolist() == [b"abc1", b"x2"]
+
+
+class TestUnsupportedOps:
+    def test_unregistered_ops_raise_cleanly(self):
+        a = R(b"abc")
+        b = R(b"b")
+        for fn, args in [
+            (np.strings.rfind, (a, b)),
+            (np.strings.index, (a, b)),
+            (np.strings.startswith, (a, b)),
+            (np.strings.endswith, (a, b)),
+            (np.strings.isdigit, (a,)),
+            (np.strings.isdecimal, (a,)),
+            (np.strings.isnumeric, (a,)),
+            (np.strings.strip, (a, b"a")),
+            (np.strings.expandtabs, (a,)),
+        ]:
+            with pytest.raises(TypeError):
+                fn(*args)
+        for fn, args in [
+            (np.strings.capitalize, (a,)),
+            (np.strings.upper, (a,)),
+            (np.strings.mod, (a, b"x")),
+            (np.strings.translate, (a, None)),
+        ]:
+            with pytest.raises((TypeError, ValueError)):
+                fn(*args)
+        # the pad family rejects up front: the fixed-width path it would
+        # fall into half-executes before failing on a width-parametrized
+        # 'R<width>' dtype string
+        for fn in [np.strings.center, np.strings.ljust, np.strings.rjust]:
+            with pytest.raises(NotImplementedError, match="ByteStringDType"):
+                fn(a, 10, b" ")
+            with pytest.raises(NotImplementedError, match="ByteStringDType"):
+                fn(a, 10)
+        with pytest.raises(NotImplementedError, match="ByteStringDType"):
+            np.strings.zfill(a, 10)

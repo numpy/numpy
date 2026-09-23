@@ -2819,25 +2819,28 @@ init_stringlike_ufuncs(PyObject *umath)
         &Buffer<ENCODING::UTF8>::isupper,
         &Buffer<ENCODING::UTF8>::islower,
     };
-    for (int i=0; i<9 && !is_bytes; i++) {
-        if (!is_bytes && init_ufunc(umath, unary_loop_names[i], bool_output_dtypes,
+    static buffer_method<enc> isalpha_method = &Buffer<enc>::isalpha;
+    // ByteStringDType currently supports only isalpha.
+    for (int i=0; i<(is_bytes ? 1 : 9); i++) {
+        if (init_ufunc(umath, unary_loop_names[i], bool_output_dtypes,
                        &string_bool_output_resolve_descriptors,
-                       &string_bool_output_unary_strided_loop<ENCODING::UTF8>,
+                       &string_bool_output_unary_strided_loop<enc>,
                        1, 1, NPY_NO_CASTING,
                        (NPY_ARRAYMETHOD_FLAGS) 0,
-                       &unary_loop_buffer_methods[i]) < 0) {
+                       is_bytes ? (void *)&isalpha_method
+                                : (void *)&unary_loop_buffer_methods[i]) < 0) {
             return -1;
         }
     }
 
     PyArray_DTypeMeta *intp_output_dtypes[] = {
-        &PyArray_StringDType,
+        string_dtype,
         &PyArray_IntpDType
     };
 
-    if (!is_bytes && init_ufunc(umath, "str_len", intp_output_dtypes,
+    if (init_ufunc(umath, "str_len", intp_output_dtypes,
                    &string_intp_output_resolve_descriptors,
-                   &string_strlen_strided_loop<ENCODING::UTF8>, 1, 1, NPY_NO_CASTING,
+                   &string_strlen_strided_loop<enc>, 1, 1, NPY_NO_CASTING,
                    (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
@@ -2896,7 +2899,7 @@ init_stringlike_ufuncs(PyObject *umath)
     }
 
     PyArray_DTypeMeta *findlike_dtypes[] = {
-        &PyArray_StringDType, &PyArray_StringDType,
+        string_dtype, string_dtype,
         &PyArray_Int64DType, &PyArray_Int64DType,
         &PyArray_DefaultIntDType,
     };
@@ -2910,18 +2913,21 @@ init_stringlike_ufuncs(PyObject *umath)
         &PyArray_IntAbstractDType,
     };
 
-    find_like_function<ENCODING::UTF8> *findlike_functions[] = {
-        string_find<ENCODING::UTF8>,
-        string_rfind<ENCODING::UTF8>,
-        string_index<ENCODING::UTF8>,
-        string_rindex<ENCODING::UTF8>,
-        string_count<ENCODING::UTF8>,
+    find_like_function<enc> *findlike_functions[] = {
+        string_find<enc>,
+        string_rfind<enc>,
+        string_index<enc>,
+        string_rindex<enc>,
+        string_count<enc>,
     };
 
-    for (int i=0; i<5 && !is_bytes; i++) {
-        if (!is_bytes && init_ufunc(umath, findlike_names[i], findlike_dtypes,
+    for (int i=0; i<5; i++) {
+        if (is_bytes && i != 0 && i != 4) {
+            continue;  // ByteStringDType currently supports find and count
+        }
+        if (init_ufunc(umath, findlike_names[i], findlike_dtypes,
                        &string_findlike_resolve_descriptors,
-                       &string_findlike_strided_loop<ENCODING::UTF8>,
+                       &string_findlike_strided_loop<enc>,
                        4, 1, NPY_NO_CASTING,
                        (NPY_ARRAYMETHOD_FLAGS) 0,
                        (void *)findlike_functions[i]) < 0) {
@@ -2929,7 +2935,7 @@ init_stringlike_ufuncs(PyObject *umath)
         }
 
         if (add_promoter_pair(umath, findlike_names[i],
-                              &PyArray_StringDType, &PyArray_UnicodeDType,
+                              string_dtype, fixed_dtype,
                               findlike_tail, 3,
                               string_findlike_promoter) < 0) {
             return -1;
@@ -3218,7 +3224,7 @@ init_stringdtype_ufuncs(PyObject *umath)
 {
     // Each family promotes only with its matching fixed-width dtype, or object.
     if (init_stringlike_ufuncs<ENCODING::UTF8>(umath) < 0 ||
-            init_stringlike_ufuncs<ENCODING::ASCII>(umath) < 0) {
+            init_stringlike_ufuncs<ENCODING::BYTES>(umath) < 0) {
         return -1;
     }
 
