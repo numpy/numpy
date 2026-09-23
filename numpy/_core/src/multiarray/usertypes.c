@@ -73,7 +73,7 @@ _append_new(int **p_types, int insert)
 static npy_bool
 _default_nonzero(void *ip, void *arr)
 {
-    int elsize = PyArray_ITEMSIZE(arr);
+    npy_intp elsize = PyArray_ITEMSIZE(arr);
     char *ptr = ip;
     while (elsize--) {
         if (*ptr++ != 0) {
