@@ -38,7 +38,7 @@ def test_thread_safe_argparse_cache():
 
 def test_invalid_integers():
     with pytest.raises(TypeError,
-            match="integer argument expected, got float"):
+            match="cannot be interpreted as an integer"):
         func(1.)
     with pytest.raises(OverflowError):
         func(2**100)
