@@ -1798,7 +1798,7 @@ def slice(a, start=None, stop=np._NoValue, step=None, /):
 
     Parameters
     ----------
-    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    a : array-like, with a string or bytes dtype
         Input array
 
     start : None, an integer or an array of integers
@@ -1813,7 +1813,7 @@ def slice(a, start=None, stop=np._NoValue, step=None, /):
     Returns
     -------
     out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        Output array of a string or bytes dtype,
         depending on input type
 
     Examples

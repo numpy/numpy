@@ -2273,6 +2273,7 @@ slice_resolve_descriptors(PyArrayMethodObject *self,
     return NPY_NO_CASTING;
 }
 
+template <ENCODING enc>
 static int
 slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
                    npy_intp const dimensions[], npy_intp const strides[],
@@ -2322,10 +2323,14 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
 
         // number of codepoints in string
         size_t num_codepoints = 0;
-        // leaves capacity the same as in previous loop iterations to avoid
-        // heap thrashing
-        codepoint_offsets.clear();
-        {
+        if constexpr (enc == ENCODING::BYTES) {
+            // stepping with num_bytes_for_utf8_character would loop forever
+            // on 0x80-0xBF/0xF8-0xFF lead bytes, whose UTF-8 length is 0
+            num_codepoints = is.size;
+        }
+        else {
+            // leaves capacity the same as in previous loop iterations to avoid heap thrashing
+            codepoint_offsets.clear();
             const char *inbuf_ptr = is.buf;
             const char *inbuf_ptr_end = is.buf + is.size;
 
@@ -2357,8 +2362,17 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
 
         if (step == 1) {
             // step == 1 is the easy case, we can just use memcpy
-            unsigned char *start_bounded = codepoint_offsets[start];
-            unsigned char *stop_bounded = codepoint_offsets[stop];
+            unsigned char *start_bounded;
+            unsigned char *stop_bounded;
+            if constexpr (enc == ENCODING::BYTES) {
+                // start/stop are already clamped to [0, num_codepoints]
+                start_bounded = (unsigned char *)is.buf + start;
+                stop_bounded = (unsigned char *)is.buf + stop;
+            }
+            else {
+                start_bounded = codepoint_offsets[start];
+                stop_bounded = codepoint_offsets[stop];
+            }
             npy_intp outsize = stop_bounded - start_bounded;
             outsize = outsize < 0 ? 0 : outsize;
 
@@ -2370,6 +2384,25 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
             char *buf = (char *)os.buf;
 
             memcpy(buf, start_bounded, outsize);
+        }
+        else if constexpr (enc == ENCODING::BYTES) {
+            npy_intp outsize = slice_length;
+
+            if (outsize > 0) {
+                if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
+                    goto fail;
+                }
+
+                char *buf = (char *)os.buf;
+
+                npy_intp i_idx = start;
+                for (npy_intp o_idx = 0; o_idx < slice_length; o_idx++) {
+                    buf[o_idx] = is.buf[i_idx];
+                    if (o_idx + 1 < slice_length) {
+                        i_idx += step;
+                    }
+                }
+            }
         }
         else {
             // step != 1. Only add step when another iteration remains: for an
@@ -3190,28 +3223,28 @@ init_stringlike_ufuncs(PyObject *umath)
     }
 
     PyArray_DTypeMeta *slice_dtypes[] = {
-        &PyArray_StringDType,
+        string_dtype,
         &PyArray_IntpDType,
         &PyArray_IntpDType,
         &PyArray_IntpDType,
-        &PyArray_StringDType,
+        string_dtype,
     };
 
-    if (!is_bytes && init_ufunc(umath, "_slice", slice_dtypes, slice_resolve_descriptors,
-                   slice_strided_loop, 4, 1, NPY_NO_CASTING,
+    if (init_ufunc(umath, "_slice", slice_dtypes, slice_resolve_descriptors,
+                   slice_strided_loop<enc>, 4, 1, NPY_NO_CASTING,
                    (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
         return -1;
     }
 
     PyArray_DTypeMeta *slice_promoter_dtypes[] = {
-        &PyArray_StringDType,
+        string_dtype,
         &PyArray_IntAbstractDType,
         &PyArray_IntAbstractDType,
         &PyArray_IntAbstractDType,
-        &PyArray_StringDType,
+        string_dtype,
     };
 
-    if (!is_bytes && add_promoter(umath, "_slice", slice_promoter_dtypes, 5,
+    if (add_promoter(umath, "_slice", slice_promoter_dtypes, 5,
                      slice_promoter) < 0) {
         return -1;
     }

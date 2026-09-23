@@ -6,6 +6,9 @@ Coverage shared with StringDType lives in test_stringdtype.py
 
 import copy
 import pickle
+import subprocess
+import sys
+import textwrap
 
 import pytest
 
@@ -14,6 +17,7 @@ from numpy._core.tests._natype import pd_NA
 from numpy._core.tests.test_stringdtype import INVALID_UTF8
 from numpy.dtypes import ByteStringDType, StringDType
 from numpy.testing import assert_array_equal
+from numpy.testing._private.utils import HAS_SUBPROCESSES
 
 
 def R(*values):
@@ -876,6 +880,36 @@ class TestStringUfuncs:
         arr = R(b"x")
         np.add.at(arr, 0, b"y\x00")
         assert arr[0] == b"xy\x00"
+
+
+class TestSlice:
+    @pytest.mark.skipif(not HAS_SUBPROCESSES,
+                        reason="platform cannot start subprocesses")
+    def test_high_bytes_no_hang(self):
+        # the utf8 slice loop would spin forever on 0x80-0xBF/0xF8-0xFF
+        # lead bytes (their utf8 character length is 0), so a regression
+        # is a hang; run in a subprocess to fail fast instead
+        code = textwrap.dedent("""
+            import numpy as np
+            from numpy.dtypes import ByteStringDType
+            a = np.array([b"\\xff\\xfe", b"\\x80\\x81\\x82", b"ab"],
+                         dtype=ByteStringDType())
+            sliced = np.strings.slice(a, 0, 1)
+            assert sliced.tolist() == [b"\\xff", b"\\x80", b"a"], sliced
+        """)
+        result = subprocess.run([sys.executable, "-c", code], timeout=120,
+                                capture_output=True, text=True)
+        assert result.returncode == 0, result.stderr
+
+    @pytest.mark.parametrize("start,stop,step", [
+        (0, None, 1), (1, 3, 1), (-2, None, 1), (None, None, 2),
+        (None, None, -1), (3, 0, -2), (0, 100, 1),
+    ])
+    def test_matches_python_slicing(self, start, stop, step):
+        vals = NUL_AND_HIGH_BYTE_VALUES
+        a = np.array(vals, dtype=ByteStringDType())
+        result = np.strings.slice(a, start, stop, step)
+        assert result.tolist() == [v[start:stop:step] for v in vals]
 
 
 class TestMixedFixedWidth:

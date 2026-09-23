@@ -696,19 +696,17 @@ def test_bytes_cast_roundtrips_valid_utf8():
     assert list(sarr.astype("U16")) == strings
 
 
-def test_slice_extreme_step_no_overflow():
-    # an extreme step must not overflow the slice index and read out of bounds
-    arr = np.array(["abcd"], dtype=StringDType())
-    imax = np.iinfo(np.intp).max
-    assert np.strings.slice(arr, 1, None, imax).tolist() == ["b"]
-    assert np.strings.slice(arr, None, None, imax).tolist() == ["a"]
-    assert np.strings.slice(arr, None, None, -imax).tolist() == ["d"]
-    assert np.strings.slice(arr, 2, None, -imax).tolist() == ["c"]
-    mb = np.array(["a😀cd"], dtype=StringDType())
-    assert np.strings.slice(mb, 1, None, imax).tolist() == ["😀"]
-    imin = np.iinfo(np.intp).min
-    assert np.strings.slice(arr, None, None, imin).tolist() == ["d"]
-    assert np.strings.slice(mb, None, None, imin).tolist() == ["d"]
+@pytest.mark.parametrize("value", ["abcd", "a😀cd"])
+def test_slice_extreme_step_no_overflow(value, any_vstring_class, native):
+    # Extreme steps must not overflow indices, including with multibyte text.
+    value = native(value)
+    arr = np.array([value], dtype=any_vstring_class())
+    imax, imin = np.iinfo(np.intp).max, np.iinfo(np.intp).min
+    for start, step in [(None, imax), (1, imax), (None, -imax),
+                        (2, -imax), (None, imin)]:
+        expected = np.array([value[slice(start, None, step)]], dtype=arr.dtype)
+        assert_array_equal(np.strings.slice(arr, start, None, step), expected,
+                           strict=True)
 
 
 def test_pad_extreme_width_overflow():
@@ -3870,6 +3868,12 @@ class TestVariableWidthShared:
         out = np.empty(3, dtype=any_vstring_class())
         out[...] = arr
         assert out.tolist() == values
+
+    def test_slice_zero_step_raises(self, any_vstring_class, native):
+        from numpy._core.umath import _slice
+        arr = np.array([native("abcd")], dtype=any_vstring_class())
+        with pytest.raises(ValueError, match="slice step cannot be zero"):
+            _slice(arr, 0, 4, 0)
 
 def test_variable_width_classes_are_distinct():
     assert np.dtypes.StringDType() != np.dtypes.ByteStringDType()
