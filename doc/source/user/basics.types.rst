@@ -72,13 +72,10 @@ become 44 ``(300 - 256)``. If you wish to avoid such overflows, you can specify 
 overflow action fail by using ``same_value`` for the ``casting`` argument (see also
 :ref:`overflow-errors`)::
 
-    >>> w = np.array([300], dtype=np.int64)    #doctest: +NORMALIZE_WHITESPACE
+    >>> w = np.array([300], dtype=np.int64)
     >>> w.astype(np.int8)
     array([44], dtype=int8)
-
-::
-
-    >>> w.astype(np.int8, casting="same_value")    #doctest: +NORMALIZE_WHITESPACE
+    >>> w.astype(np.int8, casting="same_value")
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     ValueError: could not cast 'same_value' long to byte
