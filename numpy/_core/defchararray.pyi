@@ -20,6 +20,7 @@ from numpy._typing import (
 )
 
 from .strings import (
+    encode,
     isalnum,
     isalpha,
     isdecimal,
@@ -426,7 +427,6 @@ def center(a: _StringDTypeSupportsArray, width: i_co, fillchar: str | _StringDTy
 def center(a: T_co, width: i_co, fillchar: T_co | None = None) -> _StringDTypeOrUnicodeArray: ...
 
 def decode(a: S_co, encoding: str | None = None, errors: str | None = None) -> NDArray[str_]: ...
-def encode(a: U_co | T_co, encoding: str | None = None, errors: str | None = None) -> NDArray[bytes_]: ...
 
 @overload
 def expandtabs(a: U_co, tabsize: i_co = 8) -> NDArray[str_]: ...

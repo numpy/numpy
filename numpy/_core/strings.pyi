@@ -80,6 +80,8 @@ __all__ = [
 type _StringDTypeArray = np.ndarray[_AnyShape, np.dtypes.StringDType]
 type _StringDTypeSupportsArray = _SupportsArray[np.dtypes.StringDType]
 type _StringDTypeOrUnicodeArray = NDArray[np.str_] | _StringDTypeArray
+type _ByteStringDTypeArray = np.ndarray[_AnyShape, np.dtypes.ByteStringDType]
+type _ByteStringDTypeSupportsArray = _SupportsArray[np.dtypes.ByteStringDType]
 
 @overload
 def multiply(a: U_co, i: i_co) -> NDArray[np.str_]: ...
@@ -89,6 +91,8 @@ def multiply(a: S_co, i: i_co) -> NDArray[np.bytes_]: ...
 def multiply(a: _StringDTypeSupportsArray, i: i_co) -> _StringDTypeArray: ...
 @overload
 def multiply(a: T_co, i: i_co) -> _StringDTypeOrUnicodeArray: ...
+@overload
+def multiply(a: _ByteStringDTypeSupportsArray, i: i_co) -> _ByteStringDTypeArray: ...
 
 @overload
 def find(
@@ -108,6 +112,13 @@ def find(
 def find(
     a: T_co,
     sub: T_co,
+    start: i_co = 0,
+    end: i_co | None = None,
+) -> NDArray[np.int_]: ...
+@overload
+def find(
+    a: _ByteStringDTypeSupportsArray,
+    sub: _ByteStringDTypeSupportsArray | S_co,
     start: i_co = 0,
     end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
@@ -196,6 +207,13 @@ def count(
 def count(
     a: T_co,
     sub: T_co,
+    start: i_co = 0,
+    end: i_co | None = None,
+) -> NDArray[np.int_]: ...
+@overload
+def count(
+    a: _ByteStringDTypeSupportsArray,
+    sub: _ByteStringDTypeSupportsArray | S_co,
     start: i_co = 0,
     end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
@@ -244,15 +262,33 @@ def endswith(
     end: i_co | None = None,
 ) -> NDArray[np.bool]: ...
 
+@overload
+def decode(
+    a: _ByteStringDTypeSupportsArray,
+    encoding: str | None = None,
+    errors: str | None = None,
+) -> _StringDTypeArray: ...
+@overload
 def decode(
     a: S_co,
     encoding: str | None = None,
     errors: str | None = None,
 ) -> NDArray[np.str_]: ...
+@overload
+def encode(
+    a: _StringDTypeSupportsArray | T_co,
+    encoding: str | None = None,
+    errors: str | None = None,
+    *,
+    dtype: np.dtypes.ByteStringDType | type[np.dtypes.ByteStringDType],
+) -> _ByteStringDTypeArray: ...
+@overload
 def encode(
     a: U_co | T_co,
     encoding: str | None = None,
     errors: str | None = None,
+    *,
+    dtype: type[np.bytes_] | type[np.dtypes.BytesDType] | None = None,
 ) -> NDArray[np.bytes_]: ...
 
 @overload
@@ -299,6 +335,8 @@ def lstrip(a: S_co, chars: S_co | None = None) -> NDArray[np.bytes_]: ...
 def lstrip(a: _StringDTypeSupportsArray, chars: T_co | None = None) -> _StringDTypeArray: ...
 @overload
 def lstrip(a: T_co, chars: T_co | None = None) -> _StringDTypeOrUnicodeArray: ...
+@overload
+def lstrip(a: _ByteStringDTypeSupportsArray, chars: None = None) -> _ByteStringDTypeArray: ...
 
 @overload
 def rstrip(a: U_co, chars: U_co | None = None) -> NDArray[np.str_]: ...
@@ -308,6 +346,8 @@ def rstrip(a: S_co, chars: S_co | None = None) -> NDArray[np.bytes_]: ...
 def rstrip(a: _StringDTypeSupportsArray, chars: T_co | None = None) -> _StringDTypeArray: ...
 @overload
 def rstrip(a: T_co, chars: T_co | None = None) -> _StringDTypeOrUnicodeArray: ...
+@overload
+def rstrip(a: _ByteStringDTypeSupportsArray, chars: None = None) -> _ByteStringDTypeArray: ...
 
 @overload
 def strip(a: U_co, chars: U_co | None = None) -> NDArray[np.str_]: ...
@@ -317,6 +357,8 @@ def strip(a: S_co, chars: S_co | None = None) -> NDArray[np.bytes_]: ...
 def strip(a: _StringDTypeSupportsArray, chars: T_co | None = None) -> _StringDTypeArray: ...
 @overload
 def strip(a: T_co, chars: T_co | None = None) -> _StringDTypeOrUnicodeArray: ...
+@overload
+def strip(a: _ByteStringDTypeSupportsArray, chars: None = None) -> _ByteStringDTypeArray: ...
 
 @overload
 def zfill(a: U_co, width: i_co) -> NDArray[np.str_]: ...
@@ -400,6 +442,13 @@ def replace(
     new: T_co,
     count: i_co = -1,
 ) -> _StringDTypeOrUnicodeArray: ...
+@overload
+def replace(
+    a: _ByteStringDTypeSupportsArray,
+    old: _ByteStringDTypeSupportsArray | S_co,
+    new: _ByteStringDTypeSupportsArray | S_co,
+    count: i_co = -1,
+) -> _ByteStringDTypeArray: ...
 
 type _tuple3[T] = tuple[T, T, T]
 
@@ -411,6 +460,8 @@ def partition(a: S_co, sep: S_co) -> _tuple3[NDArray[np.bytes_]]: ...
 def partition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> _tuple3[_StringDTypeArray]: ...
 @overload
 def partition(a: T_co, sep: T_co) -> _tuple3[_StringDTypeOrUnicodeArray]: ...
+@overload
+def partition(a: _ByteStringDTypeSupportsArray, sep: _ByteStringDTypeSupportsArray | S_co) -> _tuple3[_ByteStringDTypeArray]: ...
 
 @overload
 def rpartition(a: U_co, sep: U_co) -> _tuple3[NDArray[np.str_]]: ...
@@ -420,6 +471,8 @@ def rpartition(a: S_co, sep: S_co) -> _tuple3[NDArray[np.bytes_]]: ...
 def rpartition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> _tuple3[_StringDTypeArray]: ...
 @overload
 def rpartition(a: T_co, sep: T_co) -> _tuple3[_StringDTypeOrUnicodeArray]: ...
+@overload
+def rpartition(a: _ByteStringDTypeSupportsArray, sep: _ByteStringDTypeSupportsArray | S_co) -> _tuple3[_ByteStringDTypeArray]: ...
 
 @overload
 def translate(
@@ -479,3 +532,11 @@ def slice(
     step: i_co | None = None,
     /,
 ) -> _StringDTypeOrUnicodeArray: ...
+@overload
+def slice(
+    a: _ByteStringDTypeSupportsArray,
+    start: i_co | None = None,
+    stop: i_co | _NoValueType | None = ...,  # = np._NoValue
+    step: i_co | None = None,
+    /,
+) -> _ByteStringDTypeArray: ...
