@@ -64,8 +64,6 @@ arraydescr_field_subset_view(_PyArray_LegacyDescr *self, PyObject *ind);
 
 /*
  * Create a new subarray dtype from `base` and `shape`.
- * An empty tuple shape returns a new reference to `base` (matching
- * `dtype((dt, ())) is dt` construction).
  */
 NPY_NO_EXPORT PyArray_Descr *
 arraydescr_new_from_subarray(PyArray_Descr *base, PyObject *shape);

@@ -1560,6 +1560,10 @@ class TestPromotion:
         assert np.result_type(other, rational) == expected
         assert np.result_type(other, rational(1, 2)) == expected
 
+    @pytest.mark.parametrize("shape",
+            # The empty case makes basically no sense, but it creates a ()
+            # shaped subarray dtype when `[]` can trigger a different path.
+            [(2, 3), np.empty(0, dtype=int)])
     @pytest.mark.parametrize(["dt1", "dt2", "expected"], [
             ("S3", "S5", "S5"),
             ("i4", "f8", "f8"),
@@ -1573,12 +1577,12 @@ class TestPromotion:
                        "offsets": [0, 0], "itemsize": 8}),
              np.dtype([("a", "i8"), ("b", "i8")])),
             ])
-    def test_subarray_promotion_base_size(self, dt1, dt2, expected):
+    def test_subarray_promotion_base_size(self, dt1, dt2, expected, shape):
         # The promoted subarray dtype must be sized for the promoted base
-        res = np.promote_types(np.dtype((dt1, (2, 3))), np.dtype((dt2, (2, 3))))
-        assert res == np.dtype((expected, (2, 3)))
+        res = np.promote_types(np.dtype((dt1, shape)), np.dtype((dt2, shape)))
+        assert res == np.dtype((expected, shape))
         assert res.base == np.dtype(expected)
-        assert res.itemsize == np.dtype(expected).itemsize * 6
+        assert res.itemsize == np.dtype(expected).itemsize * np.prod(shape)
         assert res.alignment == np.dtype(expected).alignment
         assert res.hasobject == np.dtype(expected).hasobject
 

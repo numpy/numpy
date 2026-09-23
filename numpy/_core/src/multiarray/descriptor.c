@@ -238,12 +238,6 @@ arraydescr_new_from_subarray(PyArray_Descr *base, PyObject *shape_obj)
                 "invalid shape in fixed-type tuple.");
         goto fail;
     }
-    /* if (type, ()) was given it is equivalent to type... */
-    if (shape.len == 0 && PyTuple_Check(shape_obj)) {
-        npy_free_cache_dim_obj(shape);
-        Py_INCREF(base);
-        return base;
-    }
 
     /*
      * A subarray dtype is never attached to an array, so a base with
@@ -395,10 +389,13 @@ _convert_from_tuple(PyObject *obj, int align)
     }
     else {
         /*
-         * interpret next item as shape (if it's a tuple)
-         * and reset the type to NPY_VOID with
-         * a new fields attribute.
+         * interpret next item as shape (if it's a tuple) and reset the type
+         * to NPY_VOID with a new fields attribute.
+         * On this path, empty tuple shapes are ignored and decay to the base.
          */
+        if (PyTuple_Check(val) && PyTuple_GET_SIZE(val) == 0) {
+            return type;
+        }
         PyArray_Descr *ret = arraydescr_new_from_subarray(type, val);
         Py_DECREF(type);
         return ret;
