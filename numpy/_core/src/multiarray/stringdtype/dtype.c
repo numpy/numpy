@@ -1097,6 +1097,12 @@ static PyMemberDef PyArray_ByteStringDType_members[] = {
         {"na_object", T_OBJECT_EX, offsetof(PyArray_StringDTypeObject, na_object),
          READONLY,
          "The missing value object associated with the dtype instance"},
+        {"_has_nan_na", T_BOOL,
+         offsetof(PyArray_StringDTypeObject, has_nan_na), READONLY,
+         "Whether the missing value object has NaN-like semantics"},
+        {"_has_string_na", T_BOOL,
+         offsetof(PyArray_StringDTypeObject, has_string_na), READONLY,
+         "Whether the missing value object is a bytestring"},
         {NULL, 0, 0, 0, NULL},
 };
 
@@ -1201,6 +1207,7 @@ PyArray_DTypeMeta PyArray_ByteStringDType = {
                 .tp_str = (reprfunc)bytestringdtype_repr,
                 .tp_methods = stringlike_methods,
                 .tp_members = PyArray_ByteStringDType_members,
+                .tp_getset = PyArray_StringDType_getset,
                 .tp_richcompare = stringlike_richcompare,
                 .tp_hash = stringlike_hash,
         }},

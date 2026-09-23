@@ -48,6 +48,22 @@ class TestConstruction:
         with pytest.raises(TypeError):
             ByteStringDType(coerce=True)
 
+    @pytest.mark.parametrize("kwargs,flags", [
+        ({}, (False, False, False)),
+        ({"na_object": None}, (True, False, False)),
+        ({"na_object": np.nan}, (True, True, False)),
+        ({"na_object": np.float32("nan")}, (True, True, False)),
+        ({"na_object": b"\x00"}, (True, False, True)),
+    ])
+    def test_cached_na_flags(self, kwargs, flags):
+        # numpy/numpy#32693 consumers use these cached classifications.
+        dtype = ByteStringDType(**kwargs)
+        names = ("_has_na", "_has_nan_na", "_has_string_na")
+        assert tuple(getattr(dtype, name) for name in names) == flags
+        for name in names:
+            with pytest.raises(AttributeError):
+                setattr(dtype, name, False)
+
     @pytest.mark.parametrize("na", [b"", b"\x00", b"NA", np.nan, None])
     def test_na_object(self, na):
         dt = ByteStringDType(na_object=na)
