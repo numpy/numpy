@@ -4337,6 +4337,7 @@ PyArray_DescrFromType(int type)
 {
     PyArray_Descr *ret = NULL;
     npy_bool is_stringdtype = (type == NPY_VSTRING || type == NPY_VSTRINGLTR);
+    npy_bool is_bytestringdtype = (type == NPY_VBYTES || type == NPY_VBYTELTR);
 
     if (type < 0) {
         /*
@@ -4347,6 +4348,9 @@ PyArray_DescrFromType(int type)
          * the default error is raised.
          */
         ret = NULL;
+    }
+    else if (is_bytestringdtype) {
+        ret = (PyArray_Descr *)new_stringlike_instance_of(&PyArray_ByteStringDType, NULL, 1);
     }
     else if  (is_stringdtype) {
         ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1);
@@ -4395,7 +4399,7 @@ PyArray_DescrFromType(int type)
         PyErr_SetString(PyExc_ValueError,
                 "Invalid data-type for array");
     }
-    else if (!is_stringdtype) {
+    else if (!is_stringdtype && !is_bytestringdtype) {
         Py_INCREF(ret);
     }
 
@@ -4793,6 +4797,7 @@ set_typeinfo(PyObject *dict)
 #endif
 
     LETTER_TO_NUM('T') = NPY_VSTRING;
+    LETTER_TO_NUM('R') = NPY_VBYTES;
 
     /**begin repeat
       * #name = BOOL,

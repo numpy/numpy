@@ -1815,9 +1815,13 @@ gentype_shape_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 static PyObject *
 gentype_dataptr_get(PyObject *self)
 {
+    void *data = scalar_value(self, NULL);
+    if (data == NULL && PyErr_Occurred()) {
+        return NULL;
+    }
     return Py_BuildValue(
         "NO",
-        PyLong_FromVoidPtr(scalar_value(self, NULL)),
+        PyLong_FromVoidPtr(data),
         Py_True
     );
 }
@@ -4398,6 +4402,58 @@ NPY_NO_EXPORT PyTypeObject Py@Name@ArrType_Type = {
 /**end repeat**/
 
 
+NPY_NO_EXPORT PyTypeObject PyVBytesArrType_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "numpy.vbytes",
+    .tp_basicsize = sizeof(PyBytesObject),
+};
+
+NPY_NO_EXPORT PyObject *
+new_vbytes(const char *buf, Py_ssize_t size)
+{
+    PyObject *value = PyBytes_FromStringAndSize(buf, size);
+    if (value == NULL) {
+        return NULL;
+    }
+    PyObject *ret = PyObject_CallOneArg((PyObject *)&PyVBytesArrType_Type, value);
+    Py_DECREF(value);
+    return ret;
+}
+
+static PyObject *
+vbytes_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
+{
+    PyObject *value = PyBytes_FromStringAndSize(PyBytes_AS_STRING(self), PyBytes_GET_SIZE(self));
+    if (value == NULL) {
+        return NULL;
+    }
+    return Py_BuildValue("O(N)", Py_TYPE(self), value);
+}
+
+static PyMethodDef vbytes_methods[] = {
+    {"__reduce__", vbytes_reduce, METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyObject *
+vbytestype_repr(PyObject *self)
+{
+    PyObject *ret = PyBytes_Type.tp_repr(self);
+    if (ret == NULL) {
+        return NULL;
+    }
+    int legacy_print_mode = get_legacy_print_mode();
+    if (legacy_print_mode == -1) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    if (legacy_print_mode > 125) {
+        Py_SETREF(ret, PyUnicode_FromFormat("np.vbytes(%S)", ret));
+    }
+    return ret;
+}
+
+
 static PyMappingMethods gentype_as_mapping = {
     .mp_subscript = (binaryfunc)gen_arrtype_subscript,
 };
@@ -4628,6 +4684,12 @@ initialize_numeric_types(void)
     PyUnicodeArrType_Type.tp_repr = unicodetype_repr;
     PyUnicodeArrType_Type.tp_str = unicodetype_str;
 
+    PyVBytesArrType_Type.tp_flags = BASEFLAGS;
+    PyVBytesArrType_Type.tp_new = PyBytes_Type.tp_new;
+    PyVBytesArrType_Type.tp_repr = vbytestype_repr;
+    PyVBytesArrType_Type.tp_str = PyBytes_Type.tp_str;
+    PyVBytesArrType_Type.tp_methods = vbytes_methods;
+
     PyVoidArrType_Type.tp_methods = voidtype_methods;
     PyVoidArrType_Type.tp_getset = voidtype_getsets;
     PyVoidArrType_Type.tp_as_mapping = &voidtype_as_mapping;
@@ -4825,7 +4887,8 @@ static scalar_type typeobjects[] = {
     {&PyVoidArrType_Type, NPY_VOID},
     {&PyDatetimeArrType_Type, NPY_DATETIME},
     {&PyTimedeltaArrType_Type, NPY_TIMEDELTA},
-    {&PyHalfArrType_Type, NPY_HALF}
+    {&PyHalfArrType_Type, NPY_HALF},
+    {&PyVBytesArrType_Type, NPY_VBYTES}
 };
 
 static int compare_types(const void * a_, const void * b_)

@@ -189,7 +189,8 @@ string_to_string(PyArrayMethod_Context *context, char *const data[],
     PyArray_StringDTypeObject *odescr = (PyArray_StringDTypeObject *)context->descriptors[1];
     int in_has_null = idescr->na_object != NULL;
     int out_has_null = odescr->na_object != NULL;
-    const npy_static_string *in_na_name = &idescr->na_name;
+    // the na_name of a bytes na_object is its repr, quoting included
+    const npy_static_string *in_na_string = idescr->has_string_na ? &idescr->default_string : &idescr->na_name;
     npy_intp N = dimensions[0];
     char *in = data[0];
     char *out = data[1];
@@ -208,8 +209,7 @@ string_to_string(PyArrayMethod_Context *context, char *const data[],
         if (!NpyString_share_memory(s, iallocator, os, oallocator)) {
             if (in_has_null && !out_has_null && NpyString_isnull(s)) {
                 // lossy but this is an unsafe cast so this is OK
-                if (NpyString_pack(oallocator, os, in_na_name->buf,
-                                   in_na_name->size) < 0) {
+                if (NpyString_pack(oallocator, os, in_na_string->buf, in_na_string->size) < 0) {
                     npy_gil_error(PyExc_MemoryError,
                               "Failed to pack string in string to string "
                               "cast.");
@@ -2184,7 +2184,7 @@ to_float(double x) {
 }
 
 NPY_NO_EXPORT PyArrayMethod_Spec **
-get_casts() {
+get_stringdtype_casts() {
     PyArray_DTypeMeta **t2t_dtypes = get_dtypes(
         &PyArray_StringDType,
         &PyArray_StringDType
@@ -2447,6 +2447,41 @@ get_casts() {
     }
 
     assert(casts[num_casts] == NULL);
+    assert(cast_i == num_casts + 1);
+
+    return casts;
+}
+
+// deliberately no casts to or from unicode, StringDType, numeric, or
+// datetime dtypes: text <-> bytes conversion goes through encode/decode
+NPY_NO_EXPORT PyArrayMethod_Spec **
+get_bytestringdtype_casts(void)
+{
+    const int num_casts = 1;
+    const char *name = "ByteStringDType";
+
+    PyArrayMethod_Spec **casts = (PyArrayMethod_Spec **)PyMem_Malloc(
+        (num_casts + 1) * sizeof(PyArrayMethod_Spec *)
+    );
+    if (casts == NULL) {
+        return reinterpret_cast<PyArrayMethod_Spec **>(PyErr_NoMemory());
+    }
+
+    int cast_i = 0;
+
+    casts[cast_i++] = get_cast_spec(
+            make_cast_name(name, name), NPY_UNSAFE_CASTING, NPY_METH_SUPPORTS_UNALIGNED,
+            get_dtypes(&PyArray_ByteStringDType, &PyArray_ByteStringDType), s2s_slots);
+
+    casts[cast_i++] = NULL;
+
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+    for (int i = 0; i < num_casts; i++) {
+        assert(casts[i] != NULL);
+    }
+
     assert(cast_i == num_casts + 1);
 
     return casts;

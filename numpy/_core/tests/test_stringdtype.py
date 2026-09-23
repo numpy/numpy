@@ -25,13 +25,15 @@ def random_unicode_string_list():
     return ret.view("U100")
 
 
-def get_dtype(na_object, coerce=True):
+def get_dtype(na_object, coerce=True, dtype_class=StringDType):
     """Helper to work around pd_NA boolean behavior"""
+    kwargs = {"coerce": coerce} if dtype_class is StringDType else {}
     # explicit is check for pd_NA because != with pd_NA returns pd_NA
     if na_object is pd_NA or na_object != "unset":
-        return np.dtypes.StringDType(na_object=na_object, coerce=coerce)
-    else:
-        return np.dtypes.StringDType(coerce=coerce)
+        if dtype_class is np.dtypes.ByteStringDType and isinstance(na_object, str):
+            na_object = na_object.encode()
+        kwargs["na_object"] = na_object
+    return dtype_class(**kwargs)
 
 
 @pytest.fixture(params=[True, False])
@@ -171,35 +173,48 @@ def test_subarray_dtype_rejected():
     assert np.dtype((StringDType(), ())) == StringDType()
 
 
-def test_dtype_equality(dtype):
+def test_dtype_equality(vstring_dtype):
+    dtype = vstring_dtype
     assert dtype == dtype
+    assert dtype != type(dtype)(na_object=b"different")
     for ch in "SU":
         assert dtype != np.dtype(ch)
         assert dtype != np.dtype(f"{ch}8")
 
 
-def test_dtype_hash(dtype, dtype2):
+def test_dtype_hash(vstring_dtype, vstring_dtype2):
+    dtype = vstring_dtype
+    dtype2 = vstring_dtype2
     assert len({dtype, dtype2}) == (1 if dtype == dtype2 else 2)
 
+    if dtype == dtype2:
+        assert hash(dtype) == hash(dtype2)
+        assert {dtype: 1}[dtype2] == 1
 
-def test_dtype_hash_float64_nan(coerce):
-    dtype = StringDType(na_object=np.float64("nan"), coerce=coerce)
-    other = StringDType(na_object=float("nan"), coerce=coerce)
+
+def test_dtype_hash_float64_nan(coerce, any_vstring_class):
+    dtype = get_dtype(np.float64("nan"), coerce, any_vstring_class)
+    other = get_dtype(float("nan"), coerce, any_vstring_class)
     assert dtype == other
     assert hash(dtype) == hash(other)
+    assert {dtype: 1}[other] == 1
 
 
-def test_dtype_repr(dtype):
-    if not dtype._has_na and dtype.coerce:
-        assert repr(dtype) == "StringDType()"
-    elif dtype.coerce:
-        assert repr(dtype) == f"StringDType(na_object={dtype.na_object!r})"
-    elif not dtype._has_na:
-        assert repr(dtype) == "StringDType(coerce=False)"
+def test_dtype_repr(vstring_dtype):
+    dtype = vstring_dtype
+    name = type(dtype).__name__
+    coerce = getattr(dtype, "coerce", True)
+    has_na = hasattr(dtype, "na_object")
+    if not has_na and coerce:
+        assert repr(dtype) == f"{name}()"
+    elif coerce:
+        assert repr(dtype) == f"{name}(na_object={dtype.na_object!r})"
+    elif not has_na:
+        assert repr(dtype) == f"{name}(coerce=False)"
     else:
         assert (
             repr(dtype)
-            == f"StringDType(na_object={dtype.na_object!r}, coerce=False)"
+            == f"{name}(na_object={dtype.na_object!r}, coerce=False)"
         )
 
 
@@ -1069,8 +1084,9 @@ def test_isnan(dtype, string_list):
         assert not np.any(np.isnan(sarr))
 
 
-def test_pickle(dtype, string_list):
-    arr = np.array(string_list, dtype=dtype)
+def test_pickle(vstring_dtype, vstring_list):
+    dtype = vstring_dtype
+    arr = np.array(vstring_list, dtype=dtype)
 
     with tempfile.NamedTemporaryFile("wb", delete=False) as f:
         pickle.dump([arr, dtype], f)
@@ -1078,7 +1094,8 @@ def test_pickle(dtype, string_list):
     with open(f.name, "rb") as f:
         res = pickle.load(f)
 
-    assert_array_equal(res[0], arr)
+    assert res[0].dtype == arr.dtype
+    assert res[0].tolist() == arr.tolist()
     assert res[1] == dtype
     assert hash(res[1]) == hash(dtype)
 
@@ -1165,8 +1182,9 @@ def test_sort(dtype, strings, stable):
 
 
 @pytest.mark.parametrize("descending", [True, False])
-def test_sort_nan_like_stability(nan_like_na_object, descending):
-    dtype = StringDType(na_object=nan_like_na_object)
+def test_sort_nan_like_stability(nan_like_na_object, descending,
+                                any_vstring_class):
+    dtype = any_vstring_class(na_object=nan_like_na_object)
     arr = np.array([nan_like_na_object] * 2, dtype=dtype)
     assert_array_equal(np.argsort(arr, stable=True, descending=descending), [0, 1])
 
@@ -1474,21 +1492,23 @@ def test_resize_method(string_list):
     assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
 
 
-def test_byteswap(dtype):
+def test_byteswap(vstring_dtype, native):
+    dtype = vstring_dtype
     # byteswap previously crashed since StringDType did not fill the
     # legacy copyswapn slot; byte order does not apply to stringdtype
     # so byteswapping is a no-op, as for "S" and object dtypes
-    arr = np.array(["hello", "world"], dtype=dtype)
+    arr = np.array([native("hello"), native("world")], dtype=dtype)
     swapped = arr.byteswap()
     assert swapped is not arr
-    assert_array_equal(swapped, arr)
+    assert swapped.dtype == arr.dtype
+    assert swapped.tolist() == arr.tolist()
     # the result is an independent copy
-    swapped[0] = "goodbye"
-    assert arr[0] == "hello"
+    swapped[0] = native("goodbye")
+    assert arr[0] == native("hello")
 
     res = arr.byteswap(inplace=True)
     assert res is arr
-    assert_array_equal(res, ["hello", "world"])
+    assert res.tolist() == [native("hello"), native("world")]
 
     arr.flags.writeable = False
     with pytest.raises(ValueError, match="array to be byte-swapped"):
@@ -3715,3 +3735,110 @@ def test_nditer_distinct_allocators():
     it = np.nditer([a], flags=["refs_ok", "buffered"], op_dtypes=[b.dtype],
                    casting="unsafe")
     assert_array_equal([str(x) for x in it.copy()], a_obj.tolist())
+
+
+# ---------------------------------------------------------------------------
+# Shared coverage for the two variable-width string-like DTypes.
+#
+# The npy_static_string storage, allocator, and dtype machinery are
+# encoding-agnostic, so everything below must behave identically for
+# StringDType and ByteStringDType. Encoding-specific behavior is covered
+# by the StringDType tests above and by test_bytestringdtype.py.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(params=[np.dtypes.StringDType, np.dtypes.ByteStringDType],
+                ids=["StringDType", "ByteStringDType"])
+def any_vstring_class(request):
+    """Either variable-width string-like DType class"""
+    return request.param
+
+
+@pytest.fixture
+def native(any_vstring_class):
+    """Convert a str test value to the DType's native scalar type"""
+    if any_vstring_class is np.dtypes.ByteStringDType:
+        return lambda s: s.encode()
+    return lambda s: s
+
+
+@pytest.fixture
+def vstring_list(string_list, native):
+    """string_list in the DType's native scalar type, plus NUL-bearing and
+    arena-length values both DTypes store losslessly"""
+    extra = ["a\x00b", "a\x00c", "x\x00", "y" * 30 + "\x00"]
+    return [native(s) for s in string_list + extra]
+
+
+@pytest.fixture
+def vstring_dtype(na_object, coerce, any_vstring_class):
+    return get_dtype(na_object, coerce, any_vstring_class)
+
+
+@pytest.fixture
+def vstring_dtype2(na_object2, coerce2, any_vstring_class):
+    return get_dtype(na_object2, coerce2, any_vstring_class)
+
+
+class TestVariableWidthShared:
+
+    def test_creation_and_roundtrip(self, any_vstring_class, vstring_list,
+                                    native):
+        dt = any_vstring_class()
+        arr = np.array(vstring_list, dtype=dt)
+        assert arr.tolist() == vstring_list
+        arr2 = np.empty(len(vstring_list), dtype=dt)
+        arr2[:] = vstring_list
+        assert arr2.tolist() == vstring_list
+        assert np.empty(3, dtype=dt).tolist() == [native("")] * 3
+
+    @pytest.mark.parametrize("descending", [False, True])
+    def test_sort_and_argsort(self, any_vstring_class, vstring_list, stable,
+                             descending):
+        arr = np.array(vstring_list, dtype=any_vstring_class())
+        expected = sorted(vstring_list, reverse=descending)
+        assert np.sort(arr, stable=stable, descending=descending).tolist() == expected
+        indices = np.argsort(arr, stable=stable, descending=descending)
+        assert arr[indices].tolist() == expected
+
+    def test_nan_na_sorts_last(self, any_vstring_class, vstring_list):
+        dt = any_vstring_class(na_object=np.nan)
+        arr = np.array([vstring_list[0], np.nan, vstring_list[1]], dtype=dt)
+        assert np.argsort(arr).tolist() == [0, 2, 1]
+        # nan-like nulls sort to the end in descending sorts too
+        assert np.argsort(arr, descending=True).tolist() == [2, 0, 1]
+
+    def test_nonzero_argmax_argmin(self, any_vstring_class, native):
+        arr = np.array([native(s) for s in ["b", "", "a", "c"]],
+                       dtype=any_vstring_class())
+        assert np.nonzero(arr)[0].tolist() == [0, 2, 3]
+        assert np.argmax(arr) == 3
+        assert np.argmin(arr) == 1
+
+    def test_self_cast_and_common_instance(self, any_vstring_class,
+                                           vstring_list, native):
+        dt = any_vstring_class()
+        dt_na = any_vstring_class(na_object=native("N"))
+        arr = np.array(vstring_list, dtype=dt)
+        assert arr.astype(dt_na).tolist() == vstring_list
+        a = np.array(vstring_list, dtype=dt_na)
+        cat = np.concatenate([a, a])
+        assert cat.dtype == dt_na
+        assert cat.tolist() == vstring_list * 2
+        with pytest.raises(TypeError):
+            np.concatenate(
+                [a, np.array(vstring_list,
+                             dtype=any_vstring_class(na_object=native("M")))])
+
+    def test_copy_take_and_assignment(self, any_vstring_class, native):
+        values = [native("x") * 40, native("y"), native("z") * 25]
+        arr = np.array(values, dtype=any_vstring_class())
+        assert arr.copy().tolist() == values
+        assert arr.take([2, 0]).tolist() == [values[2], values[0]]
+        # assignment into a distinct instance crosses allocators
+        out = np.empty(3, dtype=any_vstring_class())
+        out[...] = arr
+        assert out.tolist() == values
+
+def test_variable_width_classes_are_distinct():
+    assert np.dtypes.StringDType() != np.dtypes.ByteStringDType()

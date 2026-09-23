@@ -3495,10 +3495,10 @@ object_to_any_resolve_descriptors(
          * here is that e.g. "M8" input is considered to be the DType class,
          * and by allowing it here, we go back to the "M8" instance.
          *
-         * StringDType is excluded since using the parameters of that dtype
-         * requires creating an instance explicitly
+         * The string-like DTypes are excluded since using the parameters of
+         * those dtypes requires creating an instance explicitly
          */
-        if (NPY_DT_is_parametric(dtypes[1]) && dtypes[1] != &PyArray_StringDType) {
+        if (NPY_DT_is_parametric(dtypes[1]) && !NPY_DT_is_stringlike(dtypes[1])) {
             PyErr_Format(PyExc_TypeError,
                     "casting from object to the parametric DType %S requires "
                     "the specified output dtype instance. "

@@ -14,7 +14,7 @@ from numpy import _NoValue
 from numpy.exceptions import DTypePromotionError
 
 from ._multiarray_umath import _is_view_safe_cast
-from .multiarray import StringDType, array, dtype, promote_types
+from .multiarray import ByteStringDType, StringDType, array, dtype, promote_types
 
 try:
     import ctypes
@@ -962,3 +962,9 @@ def _convert_to_stringdtype_kwargs(coerce, na_object=_NoValue):
     if na_object is _NoValue:
         return StringDType(coerce=coerce)
     return StringDType(coerce=coerce, na_object=na_object)
+
+
+def _convert_to_bytestringdtype_kwargs(na_object=_NoValue):
+    if na_object is _NoValue:
+        return ByteStringDType()
+    return ByteStringDType(na_object=na_object)

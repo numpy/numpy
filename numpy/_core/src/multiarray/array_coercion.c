@@ -197,10 +197,8 @@ _PyArray_MapPyTypeToDType(
     if (res < 0) {
         return -1;
     }
-    else if (DType == &PyArray_StringDType) {
-        // PyArray_StringDType's scalar is str which we allow because it doesn't
-        // participate in DType inference, so don't add it to the
-        // pytype to type mapping
+    else if (NPY_DT_is_stringlike(DType) && !PyType_IsSubtype(pytype, &PyGenericArrType_Type)) {
+        // StringDType's scalar is str, which doesn't participate in DType inference
         return 0;
     }
     else if (res) {

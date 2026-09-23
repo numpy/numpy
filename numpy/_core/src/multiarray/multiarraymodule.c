@@ -2169,10 +2169,10 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                     "Cannot unpickle a scalar with object dtype.");
             return NULL;
         }
-        if (typecode->type_num == NPY_VSTRING) {
-            // TODO: if we ever add a StringDType scalar, this might need to change
-            PyErr_SetString(PyExc_TypeError,
-                            "Cannot unpickle a StringDType scalar");
+        if (PyTypeNum_ISVSTRINGLIKE(typecode->type_num)) {
+            // TODO: if we ever add scalars for these DTypes, this might need to change
+            PyErr_Format(PyExc_TypeError, "Cannot unpickle a %s scalar",
+                         ((PyTypeObject *)NPY_DTYPE(typecode))->tp_name);
             return NULL;
         }
         /* We store the full array to unpack it here: */
@@ -5096,6 +5096,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
 
     DUAL_INHERIT2(String, Bytes, Character);
     DUAL_INHERIT2(Unicode, Unicode, Character);
+    DUAL_INHERIT2(VBytes, Bytes, Generic);
 
     SINGLE_INHERIT(Void, Flexible);
 
@@ -5541,6 +5542,10 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
         return -1;
     }
 
+    if (init_bytestring_dtype() < 0) {
+        return -1;
+    }
+
     /*
      * Initialize the default PyDataMem_Handler capsule singleton.
      */
@@ -5623,6 +5628,13 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
         return -1;
     }
     PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
+
+    if (PyObject_CallFunction(state->runtime_imports._add_dtype_helper,
+            "Os", (PyObject *)&PyArray_ByteStringDType, NULL) == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(d, "ByteStringDType", (PyObject *)&PyArray_ByteStringDType);
+    PyDict_SetItemString(d, "vbytes", (PyObject *)&PyVBytesArrType_Type);
 
     // initialize static reference to a zero-like array
     state->static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
