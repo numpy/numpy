@@ -9033,6 +9033,20 @@ class TestRepeat:
         assert_equal(A, [[1, 1, 2, 2, 3, 3],
                          [4, 4, 5, 5, 6, 6]])
 
+    @pytest.mark.parametrize("array_type, repeats_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_repeat_integer_dtypes(self, array_type, repeats_type):
+        x = np.array([1, 2, 3, 4, 5], dtype=array_type)
+        repeats = np.array([1, 0, 2, 2, 3], dtype=repeats_type)
+        tgt = np.array([1, 3, 3, 4, 4, 5, 5, 5], dtype=array_type)
+        out = np.repeat(x, repeats)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
+
 
 # TODO: test for multidimensional
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}

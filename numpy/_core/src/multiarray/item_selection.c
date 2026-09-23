@@ -906,7 +906,12 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     NPY_cast_info cast_info;
     NPY_ARRAYMETHOD_FLAGS flags;
 
-    repeats = (PyArrayObject *)PyArray_ContiguousFromAny(op, NPY_INTP, 0, 1);
+    repeats = (PyArrayObject *)PyArray_FromAny(op,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 1,
+            NPY_ARRAY_SAME_KIND_CASTING | NPY_ARRAY_DEFAULT,
+            NULL);
+
     if (repeats == NULL) {
         return NULL;
     }
