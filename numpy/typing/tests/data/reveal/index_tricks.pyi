@@ -20,10 +20,22 @@ AR_i8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.int64]]
 AR_i8_5d: np.ndarray[tuple[int, int, int, int, int], np.dtype[np.int64]]
 AR_f4: npt.NDArray[np.float32]
 AR_O: npt.NDArray[np.object_]
+AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+
+_i64: np.int64
 
 type _Int1D = np.ndarray[tuple[int], np.dtype[np.intp]]
 type _Int2D = np.ndarray[tuple[int, int], np.dtype[np.intp]]
 type _IntND = npt.NDArray[np.intp]
+type _Int3D = np.ndarray[tuple[int, int, int], np.dtype[np.intp]]
+type _Float2D = np.ndarray[tuple[int, int], np.dtype[np.float64 | Any]]
+type _Float3D = np.ndarray[tuple[int, int, int], np.dtype[np.float64 | Any]]
+type _Any2D = np.ndarray[tuple[int, int], np.dtype[Any]]
+type _Any3D = np.ndarray[tuple[int, int, int], np.dtype[Any]]
 
 assert_type(np.ndenumerate(AR_i8), np.ndenumerate[np.int64])
 assert_type(np.ndenumerate(AR_LIKE_f), np.ndenumerate[np.float64])
@@ -77,11 +89,57 @@ assert_type(np.ravel_multi_index((AR_i8_1d, 1), (7, 6)), _IntND | Any)
 assert_type(np.ravel_multi_index((AR_i8_2d, AR_i8_2d), (7, 6)), _Int2D)
 assert_type(np.ravel_multi_index(AR_LIKE_i, (7, 6), mode=("clip", "wrap"), order="F"), np.intp)
 
-assert_type(np.mgrid[1:1:2], npt.NDArray[Any])
-assert_type(np.mgrid[1:1:2, None:10], npt.NDArray[Any])
+assert_type(np.mgrid[0:5], np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(np.mgrid[0:1:5j], np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
+assert_type(np.mgrid[_i64:_i64], np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(np.mgrid[0:5, 0:3], np.ndarray[tuple[int, int, int], np.dtype[np.int_]])
+assert_type(np.mgrid[0:5, 0:3:0.5], np.ndarray[tuple[int, int, int], np.dtype[np.float64 | Any]])
+assert_type(np.mgrid[_i64:_i64, 0:3], np.ndarray[tuple[int, int, int], np.dtype[Any]])
+assert_type(np.mgrid[0:5, 0:3, 0:2], np.ndarray[tuple[int, int, int, int], np.dtype[np.int_]])
+assert_type(np.mgrid[-1:1:10j, -1:1:10j, -1:1:3j], np.ndarray[tuple[int, int, int, int], np.dtype[np.float64 | Any]])
+assert_type(np.mgrid[_i64:_i64, 0:3, 0:2], np.ndarray[tuple[int, int, int, int], np.dtype[Any]])
+assert_type(np.mgrid[0:5, 0:3, 0:2, 0:2], npt.NDArray[Any])
 
-assert_type(np.ogrid[1:1:2], tuple[npt.NDArray[Any], ...])
-assert_type(np.ogrid[1:1:2, None:10], tuple[npt.NDArray[Any], ...])
+assert_type(np.ogrid[0:5], np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(np.ogrid[0:1:5j], np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
+assert_type(np.ogrid[_i64:_i64], np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(np.ogrid[0:5, 0:3], tuple[_Int2D, _Int2D])
+assert_type(np.ogrid[0:5, 0:3:0.5], tuple[_Float2D, _Float2D])
+assert_type(np.ogrid[_i64:_i64, 0:3], tuple[_Any2D, _Any2D])
+assert_type(np.ogrid[0:5, 0:3, 0:2], tuple[_Int3D, _Int3D, _Int3D])
+assert_type(np.ogrid[-1:1:10j, -1:1:10j, -1:1:3j], tuple[_Float3D, _Float3D, _Float3D])
+assert_type(np.ogrid[_i64:_i64, 0:3, 0:2], tuple[_Any3D, _Any3D, _Any3D])
+assert_type(np.ogrid[0:5, 0:3, 0:2, 0:2], tuple[npt.NDArray[Any], ...])
+
+assert_type(np.r_[AR_i8_3d], _Array3D[np.int64])
+assert_type(np.r_[AR_i8_2d, AR_i8_2d], _Array2D[np.int64])
+assert_type(np.r_[AR_i8, AR_i8], npt.NDArray[np.int64])
+assert_type(np.r_[AR_i8_1d], _Array1D[np.int64])
+assert_type(np.r_[AR_i8_1d, AR_i8_1d], _Array1D[np.int64])
+assert_type(np.r_[0, AR_i8_1d, 1], _Array1D[np.int_])
+assert_type(np.r_[AR_i8_1d, [1, 2]], _Array1D[np.int_])
+assert_type(np.r_[0:1], _Array1D[np.int_])
+assert_type(np.r_[[1, 2], 3], _Array1D[np.int_])
+assert_type(np.r_[AR_i8_1d, 1.5], _Array1D[np.float64 | Any])
+assert_type(np.r_[AR_f4_1d, 0:1], _Array1D[np.float64 | Any])
+assert_type(np.r_[0:1:5j], _Array1D[np.float64 | Any])
+assert_type(np.r_[[1.0], 0.5:2, 1], _Array1D[np.float64 | Any])
+assert_type(np.r_[AR_i8_1d, 1j], _Array1D[np.complex128 | Any])
+assert_type(np.r_[1j, 0.5], _Array1D[np.complex128 | Any])
+assert_type(np.r_["-1", AR_i8_2d, AR_i8_2d], npt.NDArray[Any])
+
+assert_type(np.c_[AR_i8_3d], _Array3D[np.int64])
+assert_type(np.c_[AR_i8_3d, AR_i8_3d], _Array3D[np.int64])
+assert_type(np.c_[AR_i8, AR_i8], npt.NDArray[np.int64])
+assert_type(np.c_[AR_i8_1d], _Array2D[np.int64])
+assert_type(np.c_[AR_i8_2d, AR_i8_1d], _Array2D[np.int64])
+assert_type(np.c_[AR_i8_1d, [1, 2]], _Array2D[np.int_])
+assert_type(np.c_[0:1], _Array2D[np.int_])
+assert_type(np.c_[1, 2], _Array2D[np.int_])
+assert_type(np.c_[AR_f4_1d, 0:1], _Array2D[np.float64 | Any])
+assert_type(np.c_[0:1:5j], _Array2D[np.float64 | Any])
+assert_type(np.c_[1j, 0.5], _Array2D[np.complex128 | Any])
+assert_type(np.c_["-1", AR_i8_1d, AR_i8_1d], npt.NDArray[Any])
 
 assert_type(np.index_exp[0:1], tuple[slice[int, int, None]])
 assert_type(np.index_exp[0:1, None:3], tuple[slice[int, int, None], slice[None, int, None]])

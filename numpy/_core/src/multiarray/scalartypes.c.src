@@ -3149,19 +3149,24 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
     }
 
     res = PyArray_FromScalar((PyObject*)self, NULL);
-
-    /* ellipsis should return 0d array */
-    if(ind == Py_Ellipsis){
-        return res;
+    if (res == NULL) {
+        return NULL;
     }
 
-    /*
-     * other cases (field names, empty tuple) will return either
-     * scalar or non-0d array. Compute this using ndarray subscript.
-     */
+    /* selecting fields off a scalar yields a scalar */
+    if (PyDataType_HASFIELDS(self->descr)) {
+        PyArrayObject *view;
+
+        if (_get_field_view((PyArrayObject *)res, ind, &view) == 0) {
+            Py_DECREF(res);
+            return PyArray_Return(view);
+        }
+    }
+
+    /* every other index behaves as it does on the equivalent 0d array */
     ret = array_subscript((PyArrayObject *)res, ind);
     Py_DECREF(res);
-    return PyArray_Return((PyArrayObject*)ret);
+    return ret;
 }
 
 static int

@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import Any, Never, SupportsIndex, overload
 
 import numpy as np
-from numpy import _CastingKind
+from numpy import _CastingKind, _ScalarNotObject
 from numpy._typing import ArrayLike, DTypeLike, NDArray, _ArrayLike, _DTypeLike
 
 __all__ = [
@@ -26,10 +26,15 @@ type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dt
 type _AtLeast1D = tuple[int, *tuple[Any, ...]]
 type _AtLeast2D = tuple[int, int, *tuple[Any, ...]]
 type _AtLeast3D = tuple[int, int, int, *tuple[Any, ...]]
+type _Sequence2[T] = Sequence[Sequence[T]]
+type _Sequence3[T] = Sequence[Sequence[Sequence[T]]]
 type _ToJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
 type _To0D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _To1D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]
 type _To2D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]]
+type _To3D[ScalarT: np.generic] = ScalarT | np.ndarray[
+    tuple[()] | tuple[int] | tuple[int, int] | tuple[int, int, int], np.dtype[ScalarT]
+]
 
 ###
 
@@ -522,22 +527,117 @@ def stack[OutT: np.ndarray](
     casting: _CastingKind = "same_kind",
 ) -> OutT: ...
 
-@overload
-def unstack[ScalarT: np.generic](
-    array: _ArrayLike[ScalarT],
+#
+@overload  # ?d  (workaround)
+def unstack[DTypeT: np.dtype](
+    array: np.ndarray[tuple[Never, Never, Never, Never], DTypeT],
     /,
     *,
     axis: int = 0,
-) -> tuple[NDArray[ScalarT], ...]: ...
-@overload
+) -> tuple[np.ndarray[tuple[Any, ...], DTypeT], ...]: ...
+@overload  # 1d T \ object_
+def unstack[ScalarT: _ScalarNotObject](
+    array: _Array1D[ScalarT],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[ScalarT, ...]: ...
+@overload  # 1d object_[T]
+def unstack[ItemT](
+    array: _Array1D[np.object_[ItemT]],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[ItemT, ...]: ...
+@overload  # 1d StringDType
 def unstack(
-    array: ArrayLike,
+    array: np.ndarray[tuple[int], np.dtypes.StringDType],
     /,
     *,
     axis: int = 0,
-) -> tuple[NDArray[Any], ...]: ...
+) -> tuple[str, ...]: ...
+@overload  # 2d
+def unstack[DTypeT: np.dtype](
+    array: np.ndarray[tuple[int, int], DTypeT],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[np.ndarray[tuple[int], DTypeT], ...]: ...
+@overload  # 3d
+def unstack[DTypeT: np.dtype](
+    array: np.ndarray[tuple[int, int, int], DTypeT],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[np.ndarray[tuple[int, int], DTypeT], ...]: ...
+@overload  # 4d
+def unstack[DTypeT: np.dtype](
+    array: np.ndarray[tuple[int, int, int, int], DTypeT],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[np.ndarray[tuple[int, int, int], DTypeT], ...]: ...
+@overload  # >=5d
+def unstack[DTypeT: np.dtype](
+    array: np.ndarray[tuple[int, int, int, int, int, *tuple[int, ...]], DTypeT],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[np.ndarray[tuple[Any, ...], DTypeT], ...]: ...
+@overload  # ?d  (fallback)
+def unstack(
+    array: np.ndarray[_AtLeast1D, Any],
+    /,
+    *,
+    axis: int = 0,
+) -> tuple[Any, ...]: ...
 
-@overload
+#
+@overload  # known array
+def block[ArrayT: np.ndarray](arrays: ArrayT) -> ArrayT: ...
+@overload  # [?d T]  (workaround)
+def block[ScalarT: np.generic](
+    arrays: Sequence[_ToJustND[ScalarT]] | _Sequence2[_ToJustND[ScalarT]] | _Sequence3[_ToJustND[ScalarT]],
+) -> NDArray[ScalarT]: ...
+@overload  # [<=1d T]
+def block[ScalarT: np.generic](arrays: Sequence[_To1D[ScalarT]]) -> _Array1D[ScalarT]: ...
+@overload  # [<=1d bool]
+def block(arrays: Sequence[bool | _To1D[np.bool]]) -> _Array1D[np.bool]: ...
+@overload  # [~int]
+def block(arrays: list[int]) -> _Array1D[np.int_]: ...
+@overload  # [~float]
+def block(arrays: list[float]) -> _Array1D[np.float64]: ...
+@overload  # [~complex]
+def block(arrays: list[complex]) -> _Array1D[np.complex128]: ...
+@overload  # [<=1d]
+def block(arrays: Sequence[complex | _To1D[np.number | np.bool]]) -> _Array1D[Any]: ...
+@overload  # [2d T] | [[<=2d T]]
+def block[ScalarT: np.generic](arrays: Sequence[_Array2D[ScalarT]] | _Sequence2[_To2D[ScalarT]]) -> _Array2D[ScalarT]: ...
+@overload  # [[<=2d bool]]
+def block(arrays: _Sequence2[bool | _To2D[np.bool]]) -> _Array2D[np.bool]: ...
+@overload  # [[~int]]
+def block(arrays: Sequence[list[int]]) -> _Array2D[np.int_]: ...
+@overload  # [[~float]]
+def block(arrays: Sequence[list[float]]) -> _Array2D[np.float64]: ...
+@overload  # [[~complex]]
+def block(arrays: Sequence[list[complex]]) -> _Array2D[np.complex128]: ...
+@overload  # [[<=2d]]
+def block(arrays: _Sequence2[complex | _To2D[np.number | np.bool]]) -> _Array2D[Any]: ...
+@overload  # [3d T] | [[3d T]] | [[[<=3d T]]]
+def block[ScalarT: np.generic](
+    arrays: Sequence[_Array3D[ScalarT]] | _Sequence2[_Array3D[ScalarT]] | _Sequence3[_To3D[ScalarT]],
+) -> _Array3D[ScalarT]: ...
+@overload  # [[[<=3d bool]]]
+def block(arrays: _Sequence3[bool | _To3D[np.bool]]) -> _Array3D[np.bool]: ...
+@overload  # [[[~int]]]
+def block(arrays: _Sequence2[list[int]]) -> _Array3D[np.int_]: ...
+@overload  # [[[~float]]]
+def block(arrays: _Sequence2[list[float]]) -> _Array3D[np.float64]: ...
+@overload  # [[[~complex]]]
+def block(arrays: _Sequence2[list[complex]]) -> _Array3D[np.complex128]: ...
+@overload  # [[[<=3d]]]
+def block(arrays: _Sequence3[complex | _To3D[np.number | np.bool]]) -> _Array3D[Any]: ...
+@overload  # ?d T
 def block[ScalarT: np.generic](arrays: _ArrayLike[ScalarT]) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d  (fallback)
 def block(arrays: ArrayLike) -> NDArray[Any]: ...
