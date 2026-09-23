@@ -1,5 +1,7 @@
+from collections.abc import Sequence
 from typing import Any, overload
 
+import numpy as np
 from numpy import complexfloating
 from numpy._typing import (
     NDArray,
@@ -7,18 +9,60 @@ from numpy._typing import (
     _ArrayLikeFloat_co,
     _ComplexLike_co,
     _FloatLike_co,
+    _Shape,
 )
 
 __all__ = ["sqrt", "log", "log2", "logn", "log10", "power", "arccos", "arcsin", "arctanh"]
 
-@overload
-def sqrt(x: _FloatLike_co) -> Any: ...
-@overload
-def sqrt(x: _ComplexLike_co) -> complexfloating: ...
-@overload
-def sqrt(x: _ArrayLikeFloat_co) -> NDArray[Any]: ...
-@overload
-def sqrt(x: _ArrayLikeComplex_co) -> NDArray[complexfloating]: ...
+###
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Sequence2D[T] = Sequence[Sequence[T]]
+
+type _inexact32 = np.complex64 | np.float32
+type _inexact64 = np.complex128 | np.float64
+
+###
+
+@overload  # Nd T@complexfloating
+def sqrt[ShapeT: _Shape, ComplexT: np.complex128 | np.complex64](
+    x: np.ndarray[ShapeT, np.dtype[ComplexT]],
+) -> np.ndarray[ShapeT, np.dtype[ComplexT]]: ...
+@overload  # Nd ~f64
+def sqrt[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.float64 | np.integer | np.bool]],
+) -> np.ndarray[ShapeT, np.dtype[_inexact64]]: ...
+@overload  # Nd ~f32
+def sqrt[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.float32]],
+) -> np.ndarray[ShapeT, np.dtype[_inexact32]]: ...
+@overload  # 0d T@complexfloating
+def sqrt[ComplexT: np.complex128 | np.complex64](x: ComplexT) -> ComplexT: ...
+@overload  # 0d ~f64
+def sqrt(x: float | np.integer | np.bool) -> _inexact64: ...
+@overload  # 0d ~f32
+def sqrt(x: np.float32) -> _inexact32: ...
+@overload  # 0d ~complex
+def sqrt(x: complex) -> np.complex128 | Any: ...
+@overload  # 1d T@complexfloating
+def sqrt[ComplexT: np.complex128 | np.complex64](x: Sequence[ComplexT]) -> _Array1D[ComplexT]: ...
+@overload  # 1d ~f64
+def sqrt(x: Sequence[float | np.integer | np.bool]) -> _Array1D[_inexact64]: ...
+@overload  # 1d ~f32
+def sqrt(x: Sequence[np.float32]) -> _Array1D[_inexact32]: ...
+@overload  # 1d ~complex
+def sqrt(x: list[complex]) -> _Array1D[np.complex128]: ...
+@overload  # 2d T@complexfloating
+def sqrt[ComplexT: np.complex128 | np.complex64](x: _Sequence2D[ComplexT]) -> _Array2D[ComplexT]: ...
+@overload  # 2d ~f64
+def sqrt(x: _Sequence2D[float | np.integer | np.bool]) -> _Array2D[_inexact64]: ...
+@overload  # 2d ~f32
+def sqrt(x: _Sequence2D[np.float32]) -> _Array2D[_inexact32]: ...
+@overload  # 2d ~complex
+def sqrt(x: Sequence[list[complex]]) -> _Array2D[np.complex128]: ...
+@overload  # ?d  (fallback)
+def sqrt(x: _ArrayLikeComplex_co) -> NDArray[Any] | Any: ...
 
 @overload
 def log(x: _FloatLike_co) -> Any: ...
