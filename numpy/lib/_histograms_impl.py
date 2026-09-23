@@ -275,9 +275,23 @@ _hist_bin_selectors = {'stone': _hist_bin_stone,
                        'sturges': _hist_bin_sturges}
 
 
-def _ravel_and_check_weights(a, weights):
-    """ Check a and weights have matching shapes, and ravel both """
+def _asarray_and_check_weights(a, weights, weights_shape=None):
+    """ Convert a and weights to base ndarrays and check weights shape """
     a = np.asarray(a)
+    if weights is not None:
+        weights = np.asarray(weights)
+        if weights_shape is None:
+            weights_shape = a.shape
+        if weights.shape != weights_shape:
+            raise ValueError(
+                'weights should have the same shape as the sample points, '
+                f'expected {weights_shape} but got {weights.shape}.')
+    return a, weights
+
+
+def _asarray_and_ravel(a, weights):
+    """ Convert and check a and weights, and ravel both """
+    a, weights = _asarray_and_check_weights(a, weights)
 
     # Ensure that the array is a "subtractable" dtype
     if a.dtype == np.bool:
@@ -286,10 +300,6 @@ def _ravel_and_check_weights(a, weights):
         a = a.astype(np.uint8)
 
     if weights is not None:
-        weights = np.asarray(weights)
-        if weights.shape != a.shape:
-            raise ValueError(
-                'weights should have the same shape as a.')
         weights = weights.ravel()
     a = a.ravel()
     return a, weights
@@ -672,7 +682,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     array([0.  , 1.25, 2.5 , 3.75, 5.  ])
 
     """
-    a, weights = _ravel_and_check_weights(a, weights)
+    a, weights = _asarray_and_ravel(a, weights)
     bin_edges, _ = _get_bin_edges(a, bins, range, weights)
     return bin_edges
 
@@ -787,7 +797,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         plt.show()
 
     """
-    a, weights = _ravel_and_check_weights(a, weights)
+    a, weights = _asarray_and_ravel(a, weights)
 
     bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights)
 
@@ -985,14 +995,11 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         # Sample is a sequence of 1D arrays.
         sample = np.atleast_2d(sample).T
         N, D = sample.shape
-    # this intentionally drops ndarray subclasses
-    sample = np.asarray(sample)
+    sample, weights = _asarray_and_check_weights(sample, weights, (N,))
 
     nbin = np.empty(D, np.intp)
     edges = D * [None]
     dedges = D * [None]
-    if weights is not None:
-        weights = np.asarray(weights)
 
     try:
         M = len(bins)

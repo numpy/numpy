@@ -108,6 +108,19 @@ class TestHistogram:
         with assert_raises_regex(ValueError, "same shape as"):
             h, b = histogram(a, range=[1, 9], weights=w, density=True)
 
+    @pytest.mark.parametrize("bins", [3, "auto", [0., 2., 5.]])
+    def test_subclass_dropped(self, bins):
+        class Sub(np.ndarray):
+            pass
+
+        a = np.arange(6.).view(Sub)
+        weights = None if bins == "auto" else np.ones(6).view(Sub)
+        if isinstance(bins, list):
+            bins = np.array(bins).view(Sub)
+        h, b = histogram(a, bins=bins, weights=weights)
+        assert type(h) is np.ndarray
+        assert type(b) is np.ndarray
+
     def test_type(self):
         # Check the type of the returned histogram
         a = np.arange(10) + .5
@@ -853,3 +866,25 @@ class TestHistogramdd:
         hist_dd, edges_dd = histogramdd((v,), (bins,), density=True)
         assert_equal(hist, hist_dd)
         assert_equal(edges, edges_dd[0])
+
+    @pytest.mark.parametrize("sample_nd", [True, False])
+    def test_subclass_dropped(self, sample_nd):
+        class Sub(np.ndarray):
+            pass
+
+        x = np.arange(6.).view(Sub)
+        sample = np.stack([x, x[::-1]], axis=-1).view(Sub) if sample_nd else x
+        hist, edges = histogramdd(sample, weights=np.ones(6).view(Sub))
+        assert type(hist) is np.ndarray
+        assert all(type(e) is np.ndarray for e in edges)
+
+    def test_masked_mask_ignored(self):
+        # the mask is ignored consistently for the edges and the counts
+        x = np.ma.array([0., 0.5, 1., 100.], mask=[0, 1, 0, 1])
+        hist, edges = histogramdd(x, bins=2)
+        assert_equal(hist, [3, 1])
+        assert_equal(edges[0], [0, 50, 100])
+
+    def test_arr_weights_mismatch(self):
+        with assert_raises_regex(ValueError, "same shape as"):
+            histogramdd(np.arange(3), weights=np.ones(2))

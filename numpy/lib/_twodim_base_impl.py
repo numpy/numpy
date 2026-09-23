@@ -856,8 +856,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
         N = 1
 
     if N not in {1, 2}:
-        xedges = yedges = asarray(bins)
-        bins = [xedges, yedges]
+        bins = [bins, bins]
     hist, edges = histogramdd([x, y], bins, range, density, weights)
     return hist, edges[0], edges[1]
 

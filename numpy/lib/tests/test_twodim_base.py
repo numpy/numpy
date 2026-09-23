@@ -322,6 +322,25 @@ class TestHistogram2d:
                            match='x and y must have the same length.'):
             histogram2d(x, y)
 
+    @pytest.mark.parametrize("bins", [3, [2, 3], [0., 2., 5.],
+                                      [[0., 2., 5.], [0., 5.]]])
+    def test_subclass_dropped(self, bins):
+        class Sub(np.ndarray):
+            pass
+
+        def sub(b):
+            return np.array(b).view(Sub) if isinstance(b, list) else b
+
+        x = np.arange(6.).view(Sub)
+        y = x[::-1]
+        if isinstance(bins, list):
+            bins = sub(bins) if len(bins) != 2 else [sub(b) for b in bins]
+        H, xedges, yedges = histogram2d(x, y, bins=bins,
+                                        weights=np.ones(6).view(Sub))
+        assert type(H) is np.ndarray
+        assert type(xedges) is np.ndarray
+        assert type(yedges) is np.ndarray
+
 
 class TestTri:
     def test_dtype(self):
