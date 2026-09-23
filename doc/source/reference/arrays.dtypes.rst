@@ -149,7 +149,7 @@ None
    triple: dtype; construction; from type
 
 Array-scalar types
-    The 24 built-in :ref:`array scalar type objects
+    The 25 built-in :ref:`array scalar type objects
     <arrays.scalars.built-in>` all convert to an associated data-type object.
     This is true for their sub-classes as well.
 
