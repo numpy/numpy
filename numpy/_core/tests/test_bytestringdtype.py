@@ -10,6 +10,7 @@ import pickle
 import pytest
 
 import numpy as np
+from numpy._core.tests.test_stringdtype import INVALID_UTF8
 from numpy.dtypes import ByteStringDType, StringDType
 
 
@@ -176,6 +177,15 @@ class TestSortingAndSelection:
         arr = np.array([b"\xff", b"a", b"\x80"], dtype=dtype)
         assert np.sort(arr).tolist() == [b"a", b"\x80", b"\xff"]
 
+    @pytest.mark.parametrize("na", [b"", b"x", b"\x00"])
+    def test_null_behaves_like_bytes_sentinel(self, na):
+        # a bytes na_object takes the string-NA path: a null is truthy
+        # exactly when the sentinel is a nonempty bytes
+        arr = np.array([na, b"y"], dtype=ByteStringDType(na_object=na))
+        assert arr.astype(bool).tolist() == [bool(na), True]
+        assert arr.nonzero()[0].tolist() == ([0, 1] if na else [1])
+        assert np.sort(arr[::-1]).tolist() == sorted([na, b"y"])
+
 
 class TestCasts:
     def test_self_cast(self, dtype):
@@ -191,6 +201,47 @@ class TestCasts:
         sarr = np.array(["yo", "NAA"], dtype=StringDType(na_object="NAA"))
         assert sarr.astype(StringDType(), casting="unsafe").tolist() == \
             ["yo", "NAA"]
+
+    def test_fixed_width_roundtrip_high_bytes(self, dtype):
+        # no ASCII gate in either direction, unlike StringDType
+        arr = np.array([b"ab", b"\xff\xfe", b""], dtype=dtype)
+        fixed = arr.astype("S4")
+        assert fixed.tolist() == [b"ab", b"\xff\xfe", b""]
+        assert fixed.astype(dtype).tolist() == [b"ab", b"\xff\xfe", b""]
+
+    def test_fixed_width_truncates(self, dtype):
+        arr = np.array([b"abcdef"], dtype=dtype)
+        assert arr.astype("S3").tolist() == [b"abc"]
+
+    @pytest.mark.parametrize("bad", INVALID_UTF8)
+    def test_fixed_width_source_skips_utf8_validation(self, dtype, bad):
+        # the same input is rejected by the S -> StringDType cast
+        arr = np.array([bad], dtype=f"S{len(bad)}")
+        assert arr.astype(dtype).tolist() == [bad]
+
+    def test_fixed_width_source_strips_trailing_nuls(self, dtype):
+        # 'S' cannot represent trailing NULs, so they are already gone in
+        # the source of the S -> ByteStringDType cast
+        fixed = np.array([b"x\x00"], dtype="S4")
+        assert fixed.astype(dtype).tolist() == [b"x"]
+
+    def test_fixed_width_source_is_safe_cast(self, dtype):
+        assert np.can_cast("S4", dtype, casting="safe")
+        assert not np.can_cast(dtype, "S4", casting="safe")
+        assert not np.can_cast("V4", dtype, casting="safe")
+
+    def test_void_roundtrip_preserves_nuls(self, dtype):
+        # void -> ByteStringDType is length-explicit, with no UTF-8 validation
+        arr = np.array([b"ab", b"\xff", b""], dtype=dtype)
+        v = arr.astype("V4")
+        assert v.astype(dtype).tolist() == [
+            b"ab\x00\x00", b"\xff\x00\x00\x00", b"\x00\x00\x00\x00"]
+
+    def test_bool_casts(self, dtype):
+        arr = np.array([b"x", b"", b"\x00"], dtype=dtype)
+        assert arr.astype(bool).tolist() == [True, False, True]
+        assert np.array([True, False]).astype(dtype).tolist() == \
+            [b"True", b"False"]
 
     def test_object_roundtrip(self, dtype):
         values = [b"ab", b"\xff", b"a\x00b"]
@@ -304,6 +355,11 @@ class TestScalar:
         assert np.array([b"x"]).dtype == np.dtype("S1")
         assert np.full(2, np.vbytes(b"x\x00")).tolist() == [b"x\x00"] * 2
 
+    def test_mixed_inference(self, dtype):
+        mixed = np.array([np.vbytes(b"x"), b"y"])
+        assert mixed.dtype == dtype
+        assert mixed.tolist() == [b"x", b"y"]
+
     def test_setitem(self, dtype):
         arr = np.empty(2, dtype=dtype)
         arr[0] = np.vbytes(b"q\x00")
@@ -369,6 +425,27 @@ class TestScalarCAPI:
         assert result.dtype is not dtype
         assert result.item() == value
         assert result.copy().item() == value
+
+    @pytest.mark.parametrize("value", NUL_AND_HIGH_BYTE_VALUES)
+    @pytest.mark.parametrize("hashed", [False, True])
+    @pytest.mark.parametrize("direct", [False, True])
+    def test_cast_to_bool(self, value, hashed, direct):
+        from numpy._core._multiarray_tests import cast_scalar_to_ctype
+
+        scalar = np.vbytes(value)
+        if hashed:
+            hash(scalar)
+        result = cast_scalar_to_ctype(scalar, np.dtype(bool), direct)
+        assert result.item() is bool(value)
+
+    @pytest.mark.parametrize("value", NUL_AND_HIGH_BYTE_VALUES)
+    def test_cast_to_fixed_bytes(self, value):
+        from numpy._core._multiarray_tests import cast_scalar_to_ctype
+
+        # The sized descriptor is only accepted by CastScalarToCtype.
+        dtype = np.dtype(f"S{max(len(value), 1)}")
+        result = cast_scalar_to_ctype(np.vbytes(value), dtype, False)
+        assert result.tobytes() == value.ljust(dtype.itemsize, b"\0")
 
     @pytest.mark.parametrize("direct", [False, True])
     def test_unsupported_cast(self, direct):

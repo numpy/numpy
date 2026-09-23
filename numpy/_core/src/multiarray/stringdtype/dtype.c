@@ -331,7 +331,8 @@ common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dt
 static PyArray_DTypeMeta *
 common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    if (cls == &PyArray_StringDType && other->type_num == NPY_UNICODE) {
+    int partner = cls == &PyArray_ByteStringDType ? NPY_STRING : NPY_UNICODE;
+    if (other->type_num == partner) {
         Py_INCREF(cls);
         return cls;
     }

@@ -1746,13 +1746,14 @@ def test_float_nan_cast_na_object():
     assert arr[0] == '1.2'
 
 
-def test_string_to_bytes_invalid_ascii_error():
+@pytest.mark.parametrize("width", [1, 10])
+def test_string_to_bytes_invalid_ascii_error(width):
     # The cast builds this UnicodeEncodeError only after releasing the allocator
     # lock and copying the offending bytes out of the arena; check the reported
-    # character and position survive that.
+    # character and position survive that, even beyond the truncation point.
     arr = np.array(["abc", "café", "xy"], dtype="T")
     with pytest.raises(UnicodeEncodeError) as excinfo:
-        arr.astype("S10")
+        arr.astype(f"S{width}")
     exc = excinfo.value
     assert exc.encoding == "ascii"
     assert exc.object == "café"
@@ -3781,6 +3782,23 @@ def vstring_dtype2(na_object2, coerce2, any_vstring_class):
 
 
 class TestVariableWidthShared:
+    def test_scalar_value_paths_preserve_nulls(self, any_vstring_class, native):
+        dt = any_vstring_class()
+        scalar = native("x\0")
+        arr = np.array([native("y")], dtype=dt)
+        assert np.full(2, scalar, dtype=dt).tolist() == [scalar, scalar]
+        dst = np.empty(2, dtype=dt)
+        np.copyto(dst, scalar)
+        assert dst.tolist() == [scalar, scalar]
+        assert np.where([True], scalar, arr).tolist() == [scalar]
+        assert np.where([False], arr, scalar).tolist() == [scalar]
+        assert np.concatenate((arr, scalar), axis=None).tolist() == [
+            native("y"), scalar]
+        np.concatenate((scalar, arr), axis=None, out=dst)
+        assert dst.tolist() == [scalar, native("y")]
+        assert np.concatenate((scalar,), axis=None, dtype=dt).tolist() == [scalar]
+        assert np.choose([1], (arr, scalar)).tolist() == [scalar]
+        assert np.choose([0], (scalar, arr)).tolist() == [scalar]
 
     def test_creation_and_roundtrip(self, any_vstring_class, vstring_list,
                                     native):
