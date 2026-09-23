@@ -103,4 +103,82 @@ extern inline uint32_t mt19937_next32(mt19937_state *state);
 
 extern inline double mt19937_next_double(mt19937_state *state);
 
+static inline uint32_t mt19937_temper(uint32_t y) {
+  y ^= (y >> 11);
+  y ^= (y << 7) & 0x9d2c5680UL;
+  y ^= (y << 15) & 0xefc60000UL;
+  y ^= (y >> 18);
+  return y;
+}
+
+void mt19937_fill_uint32(mt19937_state *state, size_t count, uint32_t *out) {
+  size_t available, i, take;
+
+  while (count != 0) {
+    if (state->pos == RK_STATE_LEN) {
+      mt19937_gen(state);
+    }
+    available = (size_t)(RK_STATE_LEN - state->pos);
+    take = count < available ? count : available;
+    for (i = 0; i < take; i++) {
+      out[i] = mt19937_temper(state->key[state->pos + (int)i]);
+    }
+    state->pos += (int)take;
+    out += take;
+    count -= take;
+  }
+}
+
+void mt19937_fill_uint64(mt19937_state *state, size_t count, uint64_t *out) {
+  size_t available, i, take;
+
+  while (count != 0) {
+    if (state->pos == RK_STATE_LEN) {
+      mt19937_gen(state);
+    }
+    available = (size_t)(RK_STATE_LEN - state->pos);
+    take = count < available ? count : available;
+    for (i = 0; i < take; i++) {
+      out[i] = (uint64_t)mt19937_temper(state->key[state->pos + (int)i]);
+    }
+    state->pos += (int)take;
+    out += take;
+    count -= take;
+  }
+}
+
+void mt19937_fill_next_uint64(mt19937_state *state, size_t count,
+                              uint64_t *out) {
+  size_t available, i, take;
+  uint32_t upper;
+
+  while (count != 0) {
+    if (state->pos == RK_STATE_LEN) {
+      mt19937_gen(state);
+    }
+
+    available = (size_t)(RK_STATE_LEN - state->pos);
+    if (available == 1) {
+      /* Complete the pair with the first value from the next state. */
+      upper = mt19937_temper(state->key[state->pos]);
+      mt19937_gen(state);
+      out[0] = (uint64_t)upper << 32 | mt19937_temper(state->key[0]);
+      state->pos = 1;
+      out++;
+      count--;
+      continue;
+    }
+
+    take = count < available / 2 ? count : available / 2;
+    for (i = 0; i < take; i++) {
+      upper = mt19937_temper(state->key[state->pos + (int)(2 * i)]);
+      out[i] = (uint64_t)upper << 32 |
+               mt19937_temper(state->key[state->pos + (int)(2 * i + 1)]);
+    }
+    state->pos += (int)(2 * take);
+    out += take;
+    count -= take;
+  }
+}
+
 void mt19937_jump(mt19937_state *state) { mt19937_jump_state(state); }

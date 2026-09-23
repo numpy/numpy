@@ -14,6 +14,9 @@ typedef struct bitgen {
   uint32_t (*next_uint32)(void *st);
   double (*next_double)(void *st);
   uint64_t (*next_raw)(void *st);
+  void (*fill_uint32)(void *st, size_t count, uint32_t *out);
+  void (*fill_uint64)(void *st, size_t count, uint64_t *out);
+  void (*fill_next_uint64)(void *st, size_t count, uint64_t *out);
 } bitgen_t;
 
 
