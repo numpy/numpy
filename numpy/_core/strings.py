@@ -718,7 +718,7 @@ def _just_dispatcher(a, width, fillchar=None):
 
 
 def _get_fillchar(a, fillchar):
-    if fillchar is np._NoValue:
+    if fillchar is None:
         fillchar = b" " if a.dtype.kind == "S" else " "
     fillchar = np.asanyarray(fillchar)
     if np.any(str_len(fillchar) != 1):
@@ -729,7 +729,7 @@ def _get_fillchar(a, fillchar):
 
 @set_module("numpy.strings")
 @array_function_dispatch(_just_dispatcher)
-def center(a, width, fillchar=np._NoValue):
+def center(a, width, fillchar=None):
     """
     Return a copy of `a` with its elements centered in a string of
     length `width`.
@@ -740,8 +740,9 @@ def center(a, width, fillchar=np._NoValue):
 
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
-        Optional padding character to use (default is space).
+    fillchar : array-like or None, optional
+        Padding character with ``StringDType``, ``bytes_``, or ``str_`` dtype.
+        If ``None`` (the default), use a space of the same string kind as `a`.
 
     Returns
     -------
@@ -794,7 +795,7 @@ def center(a, width, fillchar=np._NoValue):
 
 @set_module("numpy.strings")
 @array_function_dispatch(_just_dispatcher)
-def ljust(a, width, fillchar=np._NoValue):
+def ljust(a, width, fillchar=None):
     """
     Return an array with the elements of `a` left-justified in a
     string of length `width`.
@@ -805,8 +806,9 @@ def ljust(a, width, fillchar=np._NoValue):
 
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
-        Optional character to use for padding (default is space).
+    fillchar : array-like or None, optional
+        Padding character with ``StringDType``, ``bytes_``, or ``str_`` dtype.
+        If ``None`` (the default), use a space of the same string kind as `a`.
 
     Returns
     -------
@@ -855,7 +857,7 @@ def ljust(a, width, fillchar=np._NoValue):
 
 @set_module("numpy.strings")
 @array_function_dispatch(_just_dispatcher)
-def rjust(a, width, fillchar=np._NoValue):
+def rjust(a, width, fillchar=None):
     """
     Return an array with the elements of `a` right-justified in a
     string of length `width`.
@@ -866,8 +868,9 @@ def rjust(a, width, fillchar=np._NoValue):
 
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
-        Optional padding character to use (default is space).
+    fillchar : array-like or None, optional
+        Padding character with ``StringDType``, ``bytes_``, or ``str_`` dtype.
+        If ``None`` (the default), use a space of the same string kind as `a`.
 
     Returns
     -------

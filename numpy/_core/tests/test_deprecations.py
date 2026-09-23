@@ -233,6 +233,8 @@ class TestStringArgumentCoercion(_DeprecationTestCase):
         expected = getattr(buf, method)(width, expected_fill)
         func = getattr(np.strings, method)
         self.assert_not_deprecated(func, args=(buf, width))
+        self.assert_not_deprecated(lambda: assert_array_equal(
+            func(buf, width, None), getattr(buf, method)(width)))
         self.assert_deprecated(lambda: assert_array_equal(
             func(buf, width, fill), expected))
         fill = np.asarray(fill).astype(np.asarray(buf).dtype)

@@ -758,7 +758,7 @@ class chararray(ndarray):
         """
         return asarray(capitalize(self))
 
-    def center(self, width, fillchar=np._NoValue):
+    def center(self, width, fillchar=None):
         """
         Return a copy of `self` with its elements centered in a
         string of length `width`.
@@ -767,8 +767,6 @@ class chararray(ndarray):
         --------
         center
         """
-        if fillchar is np._NoValue:
-            return asarray(center(self, width))
         return asarray(center(self, width, fillchar))
 
     def count(self, sub, start=0, end=None):
@@ -954,7 +952,7 @@ class chararray(ndarray):
         """
         return join(self, seq)
 
-    def ljust(self, width, fillchar=np._NoValue):
+    def ljust(self, width, fillchar=None):
         """
         Return an array with the elements of `self` left-justified in a
         string of length `width`.
@@ -964,8 +962,6 @@ class chararray(ndarray):
         char.ljust
 
         """
-        if fillchar is np._NoValue:
-            return asarray(ljust(self, width))
         return asarray(ljust(self, width, fillchar))
 
     def lower(self):
@@ -1039,7 +1035,7 @@ class chararray(ndarray):
         """
         return rindex(self, sub, start, end)
 
-    def rjust(self, width, fillchar=np._NoValue):
+    def rjust(self, width, fillchar=None):
         """
         Return an array with the elements of `self`
         right-justified in a string of length `width`.
@@ -1049,8 +1045,6 @@ class chararray(ndarray):
         char.rjust
 
         """
-        if fillchar is np._NoValue:
-            return asarray(rjust(self, width))
         return asarray(rjust(self, width, fillchar))
 
     def rpartition(self, sep):
