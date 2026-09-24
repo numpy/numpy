@@ -76,9 +76,10 @@ typedef struct PyArrayMethodObject_tag {
     void *cached_loop_data;
     /*
      * Optional dedicated reduction loop (NPY_METH_get_reduction_loop), used
-     * by `ufunc.reduce` instead of `get_strided_loop` when set.  Required
-     * for `nout > 1` since the forward loop's arity cannot be used as the
-     * reduction's loop which requires an (nout+1)->nout signature.
+     * by `ufunc.reduce` and `ufunc.reduceat` instead of `get_strided_loop`
+     * when set.  Required for `nout > 1` since the forward loop's arity
+     * cannot be used as the reduction's loop which requires an
+     * (nout+1)->nout signature.
      */
     PyArrayMethod_GetLoop *get_reduction_loop;
     /*

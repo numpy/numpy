@@ -432,4 +432,5 @@ real-world implementation, like the built-in :func:`numpy.add` or a fuller
    * :doc:`ArrayMethod API reference </reference/c-api/array>` for the full
      :c:macro:`NPY_METH_get_reduction_loop` reference documentation.
    * :ref:`ufuncs-basics` for the Python-level behavior of
-     :meth:`~numpy.ufunc.reduce` on multi-output ufuncs.
+     :meth:`~numpy.ufunc.reduce` and :meth:`~numpy.ufunc.reduceat` on
+     multi-output ufuncs.
