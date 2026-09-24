@@ -2003,9 +2003,10 @@ def trim_zeros(filt, trim='fb', axis=None):
     -------
     trimmed : ndarray or sequence
         The result of trimming the input. The number of dimensions is
-        preserved, and so is the input type where possible: arrays and
-        1-D sequences keep their type, while nested sequences (such as a
-        list of lists) are returned as an ``ndarray``.
+        preserved. Arrays (including subclasses) and 1-D sequences keep
+        their type. Other inputs are converted to an array first, so a
+        nested sequence (such as a list of lists) is returned as an
+        ``ndarray``.
 
     Notes
     -----
@@ -2041,7 +2042,8 @@ def trim_zeros(filt, trim='fb', axis=None):
     [1, 2]
 
     """
-    filt_ = np.asarray(filt)
+    conv = _array_converter(filt)
+    filt_, = conv.as_arrays(subok=False)
 
     trim = trim.lower()
     if trim not in {"fb", "bf", "f", "b"}:
@@ -2074,12 +2076,9 @@ def trim_zeros(filt, trim='fb', axis=None):
         # filt is 1D -> avoid multi-dimensional slicing to preserve
         # non-array input types
         return filt[sl[0]]
-    try:
-        # Index the input directly to preserve its type (ndarray subclasses
-        # and duck arrays that support multi-dimensional indexing).
-        return filt[sl]
-    except TypeError:
-        return filt_[sl]
+    # Slice the converted array (ndarray subclasses are preserved) and let
+    # ``__array_wrap__`` restore the type of other array-likes.
+    return conv.wrap(conv[0][sl])
 
 
 def _extract_dispatcher(condition, arr):
