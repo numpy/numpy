@@ -2545,7 +2545,12 @@ array_dot(PyArrayObject *self,
             return NULL;
         }
     }
-    ret = (PyArrayObject *)PyArray_MatrixProduct2(a, b, (PyArrayObject *)o);
+    
+    /* Call internal impl with warn_on_interleave=1 for ndarray.dot */
+    ret = (PyArrayObject *)matrixproduct2_impl(a, b, (PyArrayObject *)o, 1);
+    if (ret == NULL) {
+        return NULL;
+    }
     return PyArray_Return(ret);
 }
 

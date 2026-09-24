@@ -982,12 +982,10 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
     return PyArray_MatrixProduct2(op1, op2, NULL);
 }
 
-/*NUMPY_API
- * Numeric.matrixproduct2(a,v,out)
- * just like inner product but does the swapaxes stuff on the fly
- */
+/* Internal matrix product; warns on dimension interleaving if warn_on_interleave. */
 NPY_NO_EXPORT PyObject *
-PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
+matrixproduct2_impl(PyObject *op1, PyObject *op2, PyArrayObject* out,
+                    int warn_on_interleave)
 {
     PyArrayObject *ap1, *ap2, *out_buf = NULL, *result = NULL;
     PyArrayIterObject *it1, *it2;
@@ -1045,19 +1043,6 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         return mul_res;
     }
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
-    
-    /* Deprecated NumPy 2.6, 2026-09 */
-    if (PyArray_NDIM(ap2) > 2) {
-        if (DEPRECATE(
-                "numpy.dot received a second argument with more than 2 "
-                "dimensions. The current dimension-interleaving behavior "
-                "is deprecated and will eventually raise an error. "
-                "Use numpy.tensordot(a, b, axes=[-1, -2]) instead. "
-                "(Deprecated NumPy 2.6)") < 0) {
-            goto fail;
-        }
-    }
-    
     if (PyArray_NDIM(ap2) > 1) {
         matchDim = PyArray_NDIM(ap2) - 2;
     }
@@ -1072,6 +1057,18 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (nd > NPY_MAXDIMS) {
         PyErr_SetString(PyExc_ValueError, "dot: too many dimensions in result");
         goto fail;
+    }
+
+    /* Deprecated NumPy 2.6: warn when a.ndim >= 2 and b.ndim > 2 */
+    if (warn_on_interleave && PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
+        if (DEPRECATE(
+                "numpy.dot received arrays with a.ndim >= 2 and b.ndim > 2. "
+                "The current dimension-interleaving behavior is deprecated "
+                "and will eventually raise an error. "
+                "Use numpy.tensordot(a, b, axes=[-1, -2]) instead. "
+                "(Deprecated NumPy 2.6)") < 0) {
+            goto fail;
+        }
     }
     j = 0;
     for (i = 0; i < PyArray_NDIM(ap1) - 1; i++) {
@@ -1160,6 +1157,18 @@ fail:
     Py_XDECREF(result);
     Py_XDECREF(typec);
     return NULL;
+}
+
+
+/*NUMPY_API
+ * Numeric.matrixproduct2(a,v,out)
+ * just like inner product but does the swapaxes stuff on the fly
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
+{
+    /* Public API: no deprecation warning (used by np.inner and C extensions) */
+    return matrixproduct2_impl(op1, op2, out, 0);
 }
 
 
@@ -2611,7 +2620,12 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy),
             return NULL;
         }
     }
-    ret = (PyArrayObject *)PyArray_MatrixProduct2(a, v, (PyArrayObject *)o);
+    
+    /* Call internal impl with warn_on_interleave=1 for np.dot */
+    ret = (PyArrayObject *)matrixproduct2_impl(a, v, (PyArrayObject *)o, 1);
+    if (ret == NULL) {
+        return NULL;
+    }
     return PyArray_Return(ret);
 }
 

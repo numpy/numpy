@@ -2875,7 +2875,11 @@ add_newdoc('numpy._core.umath', 'matmul',
 
       >>> a = np.ones([9, 5, 7, 4])
       >>> c = np.ones([9, 5, 4, 3])
-      >>> np.dot(a, c).shape
+      >>> import warnings
+      >>> with warnings.catch_warnings():
+      ...     warnings.simplefilter('ignore', DeprecationWarning)
+      ...     dot_shape = np.dot(a, c).shape
+      >>> dot_shape
       (9, 5, 7, 9, 5, 3)
       >>> np.matmul(a, c).shape
       (9, 5, 7, 3)
