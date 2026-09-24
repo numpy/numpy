@@ -249,8 +249,10 @@ assert_type(np.gradient(AR_f8_2d, axis=(0, 1)), _Tuple2[_Array2D[np.float64]])
 assert_type(np.gradient(AR_f8_4d, axis=(0, 2, 3)), _Tuple3[_Array4D[np.float64]])
 assert_type(np.gradient(AR_M_4d, axis=(0, 1)), _Tuple2[_Array4D[np.timedelta64]])
 assert_type(np.gradient(AR_M_4d, axis=(0, 1, 3)), _Tuple3[_Array4D[np.timedelta64]])
-assert_type(np.gradient(AR_f8_1d, axis=[0]), _Array1D[np.float64] | tuple[_Array1D[np.float64], ...])
-assert_type(np.gradient(AR_M_4d, axis=[0, 1]), _Array4D[np.timedelta64] | tuple[_Array4D[np.timedelta64], ...])
+assert_type(np.gradient(AR_f8_1d, axis=[0]), _Array1D[np.float64] | Any)
+assert_type(np.gradient(AR_M_4d, axis=[0, 1]), _Array4D[np.timedelta64] | Any)
+assert_type(np.gradient(AR_LIKE_f8_2d, axis=(0, 1)), _Tuple2[_Array2D[np.float64]])
+assert_type(np.gradient(AR_LIKE_f8_2d, axis=0), Any)
 assert_type(np.gradient(AR_f8_1d, 1), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(
     np.gradient(AR_f8_2d, [1, 2], [2, 3.5, 4]),
