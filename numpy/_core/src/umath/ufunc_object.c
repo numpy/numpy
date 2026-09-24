@@ -3328,6 +3328,71 @@ fail:
 }
 
 /*
+ * Run the reduceat segments once for the operands at `dataptr`, laid out as
+ * [out_0 .. out_{nout-1}, arr].  Each segment is seeded with its first
+ * element and the rest are folded in with the reduction loop.
+ */
+static int
+reduceat_segments(PyArrayMethod_Context *context,
+        PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
+        NPY_cast_info *copy_info, char *const *dataptr,
+        const npy_intp *out_strides, const npy_intp *fixed_strides,
+        const npy_intp *reduceat_ind, npy_intp ind_size,
+        npy_intp red_axis_size)
+{
+    int nout = context->method->nout;
+    npy_intp stride = fixed_strides[nout];
+    char *dataptr_copy[NPY_MAXARGS];
+
+    for (npy_intp i = 0; i < ind_size; i++) {
+        npy_intp start = reduceat_ind[i];
+        npy_intp end = (i == ind_size - 1) ? red_axis_size : reduceat_ind[i + 1];
+        npy_intp count = end - start;
+        char *x0 = dataptr[nout] + stride * start;
+
+        /*
+         * Copy the first element to start each reduction segment.
+         *
+         * Output (dataptr[j]) and input (dataptr[nout]) may point to
+         * the same memory, e.g.
+         * np.add.reduceat(a, np.arange(len(a)), out=a).
+         */
+        for (int j = 0; j < nout; j++) {
+            char *out_j = dataptr[j] + out_strides[j] * i;
+            dataptr_copy[j] = out_j;
+            dataptr_copy[nout + 1 + j] = out_j;
+            if (copy_info[j].func) {
+                char *args[2] = {x0, out_j};
+                const npy_intp one = 1;
+                npy_intp strides[2] = {stride, 0};
+                if (copy_info[j].func(&copy_info[j].context, args,
+                        &one, strides, copy_info[j].auxdata) < 0) {
+                    return -1;
+                }
+            }
+            else {
+                memmove(out_j, x0,
+                        context->descriptors[nout + 1 + j]->elsize);
+            }
+        }
+        dataptr_copy[nout] = x0;
+
+        if (count > 1) {
+            /* Inner loop like REDUCE */
+            --count;
+            dataptr_copy[nout] += stride;
+            NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)count);
+            int res = strided_loop(context,
+                    dataptr_copy, &count, fixed_strides, auxdata);
+            if (res != 0) {
+                return res;
+            }
+        }
+    }
+    return 0;
+}
+
+/*
  * Reduceat performs a reduce over an axis using the indices as a guide
  *
  * op.reduceat(array,indices)  computes
@@ -3657,28 +3722,17 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         goto finish;
     }
 
+    npy_intp out_strides[NPY_MAXARGS];
+    for (int j = 0; j < nout; j++) {
+        out_strides[j] = PyArray_STRIDE(op[j], axis);
+    }
+
     if (iter && NpyIter_GetIterSize(iter) != 0) {
-        char *dataptr_copy[NPY_MAXARGS];
-
-        NpyIter_IterNextFunc *iternext;
-        char **dataptr;
-        npy_intp count_m1;
-        npy_intp stride1;
-        npy_intp stride0_ind[NPY_MAXARGS];
-        for (int j = 0; j < nout; j++) {
-            stride0_ind[j] = PyArray_STRIDE(op[j], axis);
-        }
-
-        /* Get the variables needed for the loop */
-        iternext = NpyIter_GetIterNext(iter, NULL);
+        NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
             goto fail;
         }
-        dataptr = NpyIter_GetDataPtrArray(iter);
-
-        /* Execute the loop with just the outer iterator */
-        count_m1 = PyArray_DIM(op[nout], axis)-1;
-        stride1 = PyArray_STRIDE(op[nout], axis);
+        char **dataptr = NpyIter_GetDataPtrArray(iter);
 
         NPY_UF_DBG_PRINT("UFunc: Reduce loop with just outer iterator\n");
 
@@ -3687,65 +3741,18 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         }
 
         do {
-            for (i = 0; i < ind_size; ++i) {
-                npy_intp start = reduceat_ind[i],
-                        end = (i == ind_size-1) ? count_m1+1 :
-                                                  reduceat_ind[i+1];
-                npy_intp count = end - start;
-                char *x0 = dataptr[nout] + stride1*start;
-
-                /*
-                 * Copy the first element to start each reduction segment.
-                 *
-                 * Output (dataptr[j]) and input (dataptr[nout]) may point
-                 * to the same memory, e.g.
-                 * np.add.reduceat(a, np.arange(len(a)), out=a).
-                 */
-                for (int j = 0; j < nout; j++) {
-                    char *out_j = dataptr[j] + stride0_ind[j]*i;
-                    dataptr_copy[j] = out_j;
-                    dataptr_copy[nout + 1 + j] = out_j;
-                    if (copy_info[j].func) {
-                        char *cargs[2] = {x0, out_j};
-                        const npy_intp one = 1;
-                        npy_intp cstrides[2] = {stride1, 0};
-                        if (copy_info[j].func(&copy_info[j].context, cargs,
-                                &one, cstrides, copy_info[j].auxdata) < 0) {
-                            NPY_END_THREADS;
-                            goto fail;
-                        }
-                    }
-                    else {
-                        memmove(out_j, x0, loop_descrs[nout + 1 + j]->elsize);
-                    }
-                }
-                dataptr_copy[nout] = x0;
-
-                if (count > 1) {
-                    /* Inner loop like REDUCE */
-                    --count;
-                    dataptr_copy[nout] += stride1;
-                    NPY_UF_DBG_PRINT1("iterator loop count %d\n",
-                                                    (int)count);
-                    res = strided_loop(&context,
-                            dataptr_copy, &count, fixed_strides, auxdata);
-                    if (res != 0) {
-                        break;
-                    }
-                }
-            }
+            res = reduceat_segments(&context, strided_loop, auxdata,
+                    copy_info, dataptr, out_strides, fixed_strides,
+                    reduceat_ind, ind_size, red_axis_size);
         } while (res == 0 && iternext(iter));
 
         NPY_END_THREADS;
     }
     else if (iter == NULL) {
-        char *dataptr_copy[NPY_MAXARGS];
-
-        npy_intp stride0_ind[NPY_MAXARGS];
-        for (int j = 0; j < nout; j++) {
-            stride0_ind[j] = PyArray_STRIDE(op[j], axis);
+        char *dataptr[NPY_MAXARGS];
+        for (int j = 0; j <= nout; j++) {
+            dataptr[j] = PyArray_BYTES(op[j]);
         }
-        npy_intp stride1 = PyArray_STRIDE(op[nout], axis);
 
         NPY_UF_DBG_PRINT("UFunc: Reduce loop with no iterators\n");
 
@@ -3753,53 +3760,9 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             NPY_BEGIN_THREADS;
         }
 
-        for (i = 0; i < ind_size; ++i) {
-            npy_intp start = reduceat_ind[i],
-                    end = (i == ind_size-1) ? PyArray_DIM(arr,axis) :
-                                              reduceat_ind[i+1];
-            npy_intp count = end - start;
-            char *x0 = PyArray_BYTES(op[nout]) + stride1*start;
-
-            /*
-             * Copy the first element to start each reduction segment.
-             *
-             * Output (dataptr[j]) and input (dataptr[nout]) may point to
-             * the same memory, e.g.
-             * np.add.reduceat(a, np.arange(len(a)), out=a).
-             */
-            for (int j = 0; j < nout; j++) {
-                char *out_j = PyArray_BYTES(op[j]) + stride0_ind[j]*i;
-                dataptr_copy[j] = out_j;
-                dataptr_copy[nout + 1 + j] = out_j;
-                if (copy_info[j].func) {
-                    char *cargs[2] = {x0, out_j};
-                    const npy_intp one = 1;
-                    npy_intp cstrides[2] = {stride1, 0};
-                    if (copy_info[j].func(&copy_info[j].context, cargs,
-                            &one, cstrides, copy_info[j].auxdata) < 0) {
-                        NPY_END_THREADS;
-                        goto fail;
-                    }
-                }
-                else {
-                    memmove(out_j, x0, loop_descrs[nout + 1 + j]->elsize);
-                }
-            }
-            dataptr_copy[nout] = x0;
-
-            if (count > 1) {
-                /* Inner loop like REDUCE */
-                --count;
-                dataptr_copy[nout] += stride1;
-                NPY_UF_DBG_PRINT1("iterator loop count %d\n",
-                                                (int)count);
-                res = strided_loop(&context,
-                        dataptr_copy, &count, fixed_strides, auxdata);
-                if (res != 0) {
-                    break;
-                }
-            }
-        }
+        res = reduceat_segments(&context, strided_loop, auxdata,
+                copy_info, dataptr, out_strides, fixed_strides,
+                reduceat_ind, ind_size, red_axis_size);
 
         NPY_END_THREADS;
     }
