@@ -1156,8 +1156,8 @@ class _HasRealAndImag[RealT, ImagT](Protocol):
 
 @type_check_only
 class _HasTypeWithRealAndImag[RealT, ImagT](Protocol):
-    @property
-    def type(self, /) -> py_type[_HasRealAndImag[RealT, ImagT]]: ...
+    @property  # the `Callable` is a workaround for Pyright that'll otherwise reject `dtype[Any]`
+    def type(self, /) -> py_type[_HasRealAndImag[RealT, ImagT]] | Callable[[], _HasRealAndImag[RealT, ImagT]]: ...
 
 @type_check_only
 class _HasDTypeWithRealAndImag[RealT, ImagT](Protocol):

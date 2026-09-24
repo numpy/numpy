@@ -395,6 +395,8 @@ assert_type(MAR_2d_f4.mT, np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32
 
 assert_type(MAR_c16.real, MaskedArray[np.float64])
 assert_type(MAR_c16.imag, MaskedArray[np.float64])
+assert_type(MAR_1d.real, np.ma.MaskedArray[tuple[int], np.dtype[Any]])
+assert_type(MAR_1d.imag, np.ma.MaskedArray[tuple[int], np.dtype[Any]])
 
 assert_type(MAR_2d_f4.baseclass, type[NDArray[Any]])
 
