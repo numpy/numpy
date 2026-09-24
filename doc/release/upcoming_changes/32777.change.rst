@@ -1,0 +1,7 @@
+``NaT`` now casts to ``NaN`` for floating-point and complex dtypes
+------------------------------------------------------------------
+Casting ``NaT`` from `numpy.datetime64` or `numpy.timedelta64` to a
+floating-point or complex dtype now yields ``NaN``. Previously the cast
+used the underlying ``int64`` sentinel, giving ``-9.2e18``, or ``-inf``
+with an overflow warning for ``float16``. Casts to integer and boolean
+dtypes are unchanged.
