@@ -26,7 +26,8 @@ def _ptp(x):
     peak-to-peak value that cannot be represented with the array's data type.
     This function returns an unsigned value for signed integer arrays.
     """
-    return _unsigned_subtract(x.max(), x.min())
+    x_min, x_max = np.minmax(x)
+    return _unsigned_subtract(x_max, x_min)
 
 
 def _hist_bin_sqrt(x, range):
@@ -312,7 +313,7 @@ def _get_outer_edges(a, range):
         # handle empty arrays. Can't determine range, so use 0-1.
         first_edge, last_edge = 0, 1
     else:
-        first_edge, last_edge = a.min(), a.max()
+        first_edge, last_edge = np.minmax(a)
         if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
             raise ValueError(
                 f"autodetected range of [{first_edge}, {last_edge}] is not finite")
