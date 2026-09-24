@@ -33,6 +33,7 @@ type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, N
 
 type _ArrayLike1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
 type _HistogramResult[HistT: np.generic, EdgeT: np.generic] = tuple[_Array1D[HistT], _Array1D[EdgeT]]
+type _ToBins = SupportsIndex | Sequence[SupportsIndex] | _Array1D[np.integer]
 
 ###
 
@@ -398,10 +399,34 @@ def histogram(
 ) -> _HistogramResult[Any, Any]: ...
 
 # unlike `histogram`, `weights` must be safe-castable to f64
+@overload  # Nd, 2d T
+def histogramdd[ScalarT: np.number | np.object_](
+    sample: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: Sequence[_ArrayLike1D[ScalarT]],
+    range: Sequence[_Range] | None = None,
+    density: bool | None = None,
+    weights: _ArrayLikeFloat64_co | None = None,
+) -> tuple[NDArray[np.float64], list[_Array1D[ScalarT]]]: ...
+@overload  # Nd, 2d ~int
+def histogramdd(
+    sample: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: Sequence[Sequence[int]],
+    range: Sequence[_Range] | None = None,
+    density: bool | None = None,
+    weights: _ArrayLikeFloat64_co | None = None,
+) -> tuple[NDArray[np.float64], list[_Array1D[np.int_]]]: ...
+@overload  # Nd, 2d ~float
+def histogramdd(
+    sample: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: Sequence[list[float]],
+    range: Sequence[_Range] | None = None,
+    density: bool | None = None,
+    weights: _ArrayLikeFloat64_co | None = None,
+) -> tuple[NDArray[np.float64], list[_Array1D[np.float64]]]: ...
 @overload  # ?d T  (workaround)
 def histogramdd[ScalarT: np.inexact](
     sample: _ArrayJustND[ScalarT],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -409,7 +434,7 @@ def histogramdd[ScalarT: np.inexact](
 @overload  # ?d +f64  (workaround)
 def histogramdd(
     sample: _ArrayJustND[np.integer | np.bool | np.object_],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -417,7 +442,7 @@ def histogramdd(
 @overload  # 1d T
 def histogramdd[ScalarT: np.inexact](
     sample: _ArrayLike1D[ScalarT],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -425,7 +450,7 @@ def histogramdd[ScalarT: np.inexact](
 @overload  # 1d +f64
 def histogramdd(
     sample: _Array1D[np.integer | np.bool] | Sequence[float | np.integer | np.bool],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -433,7 +458,7 @@ def histogramdd(
 @overload  # 1d ~c128
 def histogramdd(
     sample: list[complex],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -441,7 +466,7 @@ def histogramdd(
 @overload  # 1d ?
 def histogramdd(
     sample: _ArrayLike1D[np.number | np.bool] | Sequence[complex],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -449,7 +474,7 @@ def histogramdd(
 @overload  # (1d, 1d) T
 def histogramdd[ScalarT: np.inexact](
     sample: _2Tuple[_ArrayLike1D[ScalarT]],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -457,7 +482,7 @@ def histogramdd[ScalarT: np.inexact](
 @overload  # (1d, 1d) +f64
 def histogramdd(
     sample: _2Tuple[_Array1D[np.integer | np.bool] | Sequence[float | np.integer | np.bool]],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -465,7 +490,7 @@ def histogramdd(
 @overload  # (1d, 1d) ~c128
 def histogramdd(
     sample: _2Tuple[list[complex]],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -473,7 +498,7 @@ def histogramdd(
 @overload  # (1d, 1d) ?
 def histogramdd(
     sample: _2Tuple[_ArrayLike1D[np.number | np.bool] | Sequence[complex]],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -481,7 +506,7 @@ def histogramdd(
 @overload  # (1d, 1d, 1d) T
 def histogramdd[ScalarT: np.inexact](
     sample: _3Tuple[_ArrayLike1D[ScalarT]],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -489,7 +514,7 @@ def histogramdd[ScalarT: np.inexact](
 @overload  # (1d, 1d, 1d) +f64
 def histogramdd(
     sample: _3Tuple[_Array1D[np.integer | np.bool] | Sequence[float | np.integer | np.bool]],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -497,7 +522,7 @@ def histogramdd(
 @overload  # (1d, 1d, 1d) ~c128
 def histogramdd(
     sample: _3Tuple[list[complex]],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -505,7 +530,7 @@ def histogramdd(
 @overload  # (1d, 1d, 1d) ?
 def histogramdd(
     sample: _3Tuple[_ArrayLike1D[np.number | np.bool] | Sequence[complex]],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -513,7 +538,7 @@ def histogramdd(
 @overload  # ?d +f64
 def histogramdd(
     sample: _ArrayLikeInt_co | _NestedSequence[float] | _ArrayLikeObject_co,
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -521,7 +546,7 @@ def histogramdd(
 @overload  # ?d ~c128
 def histogramdd(
     sample: _NestedList[complex],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
@@ -529,14 +554,14 @@ def histogramdd(
 @overload  # ?d T
 def histogramdd[ScalarT: np.inexact](
     sample: _ArrayLike[ScalarT],
-    bins: SupportsIndex | ArrayLike = 10,
+    bins: _ToBins = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
     weights: _ArrayLikeFloat64_co | None = None,
 ) -> tuple[NDArray[np.float64], list[_Array1D[ScalarT]]]: ...
 @overload  # ?d ?  (fallback)
 def histogramdd(
-    sample: _ArrayLikeComplex_co,
+    sample: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     bins: SupportsIndex | ArrayLike = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
