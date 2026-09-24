@@ -11,7 +11,7 @@ import datetime as dt
 import operator
 from collections.abc import Iterator
 from types import ModuleType
-from typing import Any, Literal, assert_type
+from typing import Any, Literal, TypeVar, assert_type
 from typing_extensions import CapsuleType
 
 import numpy as np
@@ -56,7 +56,10 @@ AR_i8_1d: np.ndarray[tuple[int], np.dtype[np.int64]]
 AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
 AR_O_2d: np.ndarray[tuple[int, int], np.dtype[np.object_]]
 
-class _Sub2D[ScalarT: np.generic](np.ndarray[tuple[int, int], np.dtype[ScalarT]]): ...
+_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
+
+# old-style `TypeVar` works around a pyright bug where PEP 695 dtype-generic subclasses break `.real`/`.imag`
+class _Sub2D(np.ndarray[tuple[int, int], np.dtype[_ScalarT_co]]): ...
 
 AR_sub_2d: _Sub2D[np.float64]
 
@@ -715,3 +718,6 @@ assert_type(iter(AR_f8_1d), Iterator[np.float64])
 assert_type(iter(AR_f8_2d), Iterator[_Array1D[np.float64]])
 assert_type(iter(AR_f8_3d), Iterator[_Array2D[np.float64]])
 assert_type(iter(AR_f8_4d), Iterator[_Array3D[np.float64]])
+
+assert_type(AR_any.real, npt.NDArray[Any])
+assert_type(AR_any.imag, npt.NDArray[Any])
