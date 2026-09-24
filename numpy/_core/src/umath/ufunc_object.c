@@ -3608,8 +3608,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                           NPY_ITER_ALIGNED;
         }
         op_flags[nout] = NPY_ITER_READONLY|
-                      NPY_ITER_COPY|
-                      NPY_ITER_ALIGNED;
+                         NPY_ITER_COPY|
+                         NPY_ITER_ALIGNED;
         op_flags[nout + 1] = NPY_ITER_READONLY;
 
         NPY_UF_DBG_PRINT("Allocating outer iterator\n");

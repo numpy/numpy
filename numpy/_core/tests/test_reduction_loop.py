@@ -496,6 +496,15 @@ class TestReduceat:
         check_minmax("reduceat", make_array((6,), seed=44), idx, ufunc=ufunc,
                      max_dtype=max_dtype)
 
+    def test_reduceat_error_stops_later_segments(self):
+        # The loop error in the first segment must stop the reduction, so
+        # the second segment of `out` is never written.
+        a = np.array([1, "x", 2, 3], dtype=object)
+        out = (np.full(2, None, object), np.full(2, None, object))
+        with pytest.raises(TypeError):
+            mm.reduceat(a, [0, 2], out=out)
+        assert out[0][1] is None and out[1][1] is None
+
     def test_reduceat_out_of_bounds_index_raises(self):
         a = make_array((4,), seed=21)
         with pytest.raises(IndexError, match="out-of-bounds"):

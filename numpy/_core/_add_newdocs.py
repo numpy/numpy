@@ -5628,7 +5628,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
         argument, can be Ellipses (``out=...``, which has the same effect
         as None as an array is always returned), or a tuple with one entry
         per output. For a ufunc with a single output, a 1-element tuple is
-        also accepted, as before.
+        also accepted.
 
     Returns
     -------
