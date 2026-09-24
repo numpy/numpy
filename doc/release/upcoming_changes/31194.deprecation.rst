@@ -1,0 +1,2 @@
+* ``numpy.ndarray.__array_wrap__`` now raises ``VisibleDeprecationWarning``
+  if ``return_scalar`` and ``context`` is not passed.
