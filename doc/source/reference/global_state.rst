@@ -51,8 +51,24 @@ This flag is checked at import time.
 SIMD feature selection
 ----------------------
 
-Setting ``NPY_DISABLE_CPU_FEATURES`` will exclude simd features at runtime.
-See :ref:`runtime-simd-dispatch`.
+NumPy chooses the SIMD implementation to use at import time based on the CPU
+features that were enabled when NumPy was built. The selection can be tuned at
+runtime by setting the following environment variables before importing NumPy:
+
+``NPY_DISABLE_CPU_FEATURES``
+    Accepts a comma-, tab-, or space-separated list of SIMD feature names (see
+    :ref:`opt-supported-features`). Any listed feature that belongs to the
+    ``cpu-dispatch`` set will be skipped even if the CPU reports supporting it.
+    Baseline features cannot be disabled.
+
+``NPY_ENABLE_CPU_FEATURES``
+    Allows enabling only a subset of the dispatchable features. All features
+    that are not listed are implicitly disabled, while the CPU baseline remains
+    active. Attempting to enable a feature that was not built, or that the CPU
+    does not provide, raises an ``ImportError``.
+
+Only one of these variables may be set at a time. See
+:ref:`runtime-simd-dispatch` for more details and usage examples.
 
 
 Debugging-related options
