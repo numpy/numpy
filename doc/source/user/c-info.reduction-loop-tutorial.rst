@@ -136,9 +136,9 @@ with ``/* BEGIN main computation */`` and ``/* END main computation */``.
         }
 
         /*
-         * The reduce machinery points each out_i at the same memory as the
-         * matching acc_i (with stride 0), so this both reads the running
-         * accumulators and writes the new ones.
+         * Reads the running accumulators acc_i and writes the new ones to
+         * out_i. For reduce these are the same memory, for accumulate out_i
+         * is the next element of the output.
          */
         static int
         double_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
