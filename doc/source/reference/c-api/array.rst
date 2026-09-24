@@ -1894,20 +1894,23 @@ the functions that must be implemented for each slot.
 
        [acc_0, ..., acc_{nout-1}, x, out_0, ..., out_{nout-1}]
 
-   where ``x`` is the streamed element being reduced in, and each ``out_i``
-   points at the same memory as the matching ``acc_i`` (and typically has a
-   stride of 0 relative to it).
+   where ``x`` is the streamed element being reduced in. For
+   :meth:`~numpy.ufunc.reduce` and :meth:`~numpy.ufunc.reduceat`, each
+   ``out_i`` points at the same memory as the matching ``acc_i`` (and
+   typically has a stride of 0 relative to it). For
+   :meth:`~numpy.ufunc.accumulate` it does not, see below.
 
    The *strides* argument passed to ``NPY_METH_get_reduction_loop`` itself at
    setup time uses this same layout, so that ``strides[i]`` describes the
    ``i``-th operand of the loop being requested. ``strides[nout]`` is the
    stride of the streamed input, and each ``strides[nout + 1 + i]`` repeats
-   ``strides[i]``, because ``out_i`` and ``acc_i`` are the same buffer. The
-   accumulator strides are normally 0, since the reduction accumulates in
-   place. For :meth:`~numpy.ufunc.accumulate`, ``out_i`` instead points at the
-   next element of the same output, and ``acc_i`` and ``out_i`` both use the
-   output's stride. When a ``where=`` mask is used, one further entry at
-   ``strides[2 * nout + 1]`` holds the mask stride.
+   ``strides[i]``. The accumulator strides are normally 0, since the
+   reduction accumulates in place. For :meth:`~numpy.ufunc.accumulate`,
+   ``out_i`` instead points at the next element of the same output, and
+   ``acc_i`` and ``out_i`` both use the output's stride, so a loop may only
+   accumulate in place when ``data[i] == data[nout + 1 + i]``. When a
+   ``where=`` mask is used, one further entry at ``strides[2 * nout + 1]``
+   holds the mask stride.
 
    If ``NPY_METH_get_reduction_loop`` is not set, these methods fall back
    to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only works for
