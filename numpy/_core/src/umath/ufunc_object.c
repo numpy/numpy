@@ -2689,6 +2689,29 @@ finish_loop:
 }
 
 /*
+ * Steals the references in `out`. Returns `out[0]` for a single output,
+ * otherwise a tuple of all outputs.
+ */
+static PyObject *
+reducelike_result(PyArrayObject **out, int nout)
+{
+    if (nout == 1) {
+        return (PyObject *)out[0];
+    }
+    PyObject *tup = PyTuple_New(nout);
+    if (tup == NULL) {
+        for (int i = 0; i < nout; i++) {
+            Py_DECREF(out[i]);
+        }
+        return NULL;
+    }
+    for (int i = 0; i < nout; i++) {
+        PyTuple_SET_ITEM(tup, i, (PyObject *)out[i]);
+    }
+    return tup;
+}
+
+/*
  * Try a fast path that bypasses NpyIter / PyUFunc_ReduceWrapper for full
  * reductions (axis=None) over a trivially iterable, aligned input where no
  * casting is required.  The strided reduce loop is called directly on the
@@ -2841,22 +2864,11 @@ try_reduce_contiguous(
         }
         return -1;
     }
-    if (nout == 1) {
-        *out_result = (PyObject *)result[0];
+    PyObject *ret = reducelike_result(result, nout);
+    if (ret == NULL) {
+        return -1;
     }
-    else {
-        PyObject *tup = PyTuple_New(nout);
-        if (tup == NULL) {
-            for (int i = 0; i < nout; i++) {
-                Py_DECREF(result[i]);
-            }
-            return -1;
-        }
-        for (int i = 0; i < nout; i++) {
-            PyTuple_SET_ITEM(tup, i, (PyObject *)result[i]);
-        }
-        *out_result = tup;
-    }
+    *out_result = ret;
     return 1;
 }
 
@@ -2985,8 +2997,8 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
     PyArrayMethod_Context context;
     NPY_context_init(&context, descrs);
-    context.caller = (PyObject *)ufunc,
-    context.method = ufuncimpl,
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
     ndim = PyArray_NDIM(arr);
 
 #if NPY_UF_DBG_TRACING
@@ -3351,6 +3363,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     int need_outer_iterator = 0;
 
     int res = 0;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
 
     NpyIter *iter = NULL;
 
@@ -3381,7 +3394,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     npy_intp i, ind_size, red_axis_size;
 
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
-    char *opname = "reduceat";
+    const char *opname = "reduceat";
 
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -3455,8 +3468,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     PyArrayMethod_Context context;
     NPY_context_init(&context, descrs);
-    context.caller = (PyObject *)ufunc,
-    context.method = ufuncimpl,
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
     ndim = PyArray_NDIM(arr);
 
 #if NPY_UF_DBG_TRACING
@@ -3588,33 +3601,25 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
      * only the streamed input walks the reduce axis.
      */
     npy_intp fixed_strides[NPY_MAXARGS];
-    if (need_outer_iterator) {
-        npy_intp iter_strides[NPY_MAXARGS];
-        NpyIter_GetInnerFixedStrideArray(iter, iter_strides);
-        fixed_strides[nout] = iter_strides[nout];
-    }
-    else {
-        fixed_strides[nout] = PyArray_STRIDES(op[nout])[axis];
-    }
+    fixed_strides[nout] = PyArray_STRIDES(op[nout])[axis];
     for (int i = 0; i < nout; i++) {
         fixed_strides[i] = 0;
         fixed_strides[nout + 1 + i] = 0;
     }
 
-    NPY_ARRAYMETHOD_FLAGS flags = 0;
     if (reduction_get_loop_func(ufuncimpl)(&context,
             1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
         goto fail;
     }
     /*
      * When the stream and an output dtype differ (only possible for
-     * multi-output loops) and the output is not an object array, set up a
-     * transfer to cast the first element of each segment.  Object outputs use
-     * the manual reference copy below. Equal dtypes use a plain memmove.
+     * multi-output loops) or the output holds references, set up a transfer
+     * to copy the first element of each segment.  Otherwise, a plain memmove
+     * is used.
      */
     for (int i = 0; i < nout; i++) {
-        if (descrs[nout + 1 + i]->type_num != NPY_OBJECT
-                && !PyArray_EquivTypes(descrs[nout], descrs[nout + 1 + i])) {
+        if (PyDataType_REFCHK(descrs[nout + 1 + i])
+                || !PyArray_EquivTypes(descrs[nout], descrs[nout + 1 + i])) {
             NPY_ARRAYMETHOD_FLAGS copy_flags;
             if (PyArray_GetDTypeTransferFunction(
                     1, 0, 0, descrs[nout], descrs[nout + 1 + i], 0,
@@ -3643,7 +3648,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     if (iter && NpyIter_GetIterSize(iter) != 0) {
         char *dataptr_copy[NPY_MAXARGS];
-        npy_intp stride_copy[NPY_MAXARGS];
 
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
@@ -3666,13 +3670,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         stride1 = PyArray_STRIDE(op[nout], axis);
 
         NPY_UF_DBG_PRINT("UFunc: Reduce loop with just outer iterator\n");
-
-        /* Reduction-loop stride layout: [acc_j=0, x=stride1, out_j=0] */
-        for (int j = 0; j < nout; j++) {
-            stride_copy[j] = 0;
-            stride_copy[nout + 1 + j] = 0;
-        }
-        stride_copy[nout] = stride1;
 
         if (!needs_api) {
             NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
@@ -3697,16 +3694,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                     char *out_j = dataptr[j] + stride0_ind[j]*i;
                     dataptr_copy[j] = out_j;
                     dataptr_copy[nout + 1 + j] = out_j;
-                    if (descrs[nout + 1 + j]->type_num == NPY_OBJECT) {
-                        /*
-                         * Incref before decref to avoid the possibility of
-                         * the reference count being zero temporarily.
-                         */
-                        Py_XINCREF(*(PyObject **)x0);
-                        Py_XDECREF(*(PyObject **)out_j);
-                        *(PyObject **)out_j = *(PyObject **)x0;
-                    }
-                    else if (copy_info[j].func) {
+                    if (copy_info[j].func) {
                         char *cargs[2] = {x0, out_j};
                         const npy_intp one = 1;
                         npy_intp cstrides[2] = {stride1, 0};
@@ -3729,7 +3717,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                     NPY_UF_DBG_PRINT1("iterator loop count %d\n",
                                                     (int)count);
                     res = strided_loop(&context,
-                            dataptr_copy, &count, stride_copy, auxdata);
+                            dataptr_copy, &count, fixed_strides, auxdata);
+                    if (res != 0) {
+                        break;
+                    }
                 }
             }
         } while (res == 0 && iternext(iter));
@@ -3769,16 +3760,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                 char *out_j = PyArray_BYTES(op[j]) + stride0_ind[j]*i;
                 dataptr_copy[j] = out_j;
                 dataptr_copy[nout + 1 + j] = out_j;
-                if (descrs[nout + 1 + j]->type_num == NPY_OBJECT) {
-                    /*
-                     * Incref before decref to avoid the possibility of the
-                     * reference count being zero temporarily.
-                     */
-                    Py_XINCREF(*(PyObject **)x0);
-                    Py_XDECREF(*(PyObject **)out_j);
-                    *(PyObject **)out_j = *(PyObject **)x0;
-                }
-                else if (copy_info[j].func) {
+                if (copy_info[j].func) {
                     char *cargs[2] = {x0, out_j};
                     const npy_intp one = 1;
                     npy_intp cstrides[2] = {stride1, 0};
@@ -3817,7 +3799,7 @@ finish:
         NPY_cast_info_xfree(&copy_info[i]);
     }
     for (int i = 0; i < 2 * nout + 1; i++) {
-        Py_DECREF(descrs[i]);
+        Py_XDECREF(descrs[i]);
     }
 
     if (!NpyIter_Deallocate(iter)) {
@@ -3831,42 +3813,16 @@ finish:
 
     if (res < 0) {
         for (int i = 0; i < nout; i++) {
-            Py_DECREF(out[i]);
+            Py_XDECREF(out[i]);
         }
         return NULL;
     }
 
-    if (nout == 1) {
-        return (PyObject *)out[0];
-    }
-    PyObject *result = PyTuple_New(nout);
-    if (result == NULL) {
-        for (int i = 0; i < nout; i++) {
-            Py_DECREF(out[i]);
-        }
-        return NULL;
-    }
-    for (int i = 0; i < nout; i++) {
-        PyTuple_SET_ITEM(result, i, (PyObject *)out[i]);
-    }
-    return result;
+    return reducelike_result(out, nout);
 
 fail:
-    for (int i = 0; i < nout; i++) {
-        Py_XDECREF(out[i]);
-    }
-
-    NPY_AUXDATA_FREE(auxdata);
-    for (int i = 0; i < nout; i++) {
-        NPY_cast_info_xfree(&copy_info[i]);
-    }
-    for (int i = 0; i < 2 * nout + 1; i++) {
-        Py_XDECREF(descrs[i]);
-    }
-
-    NpyIter_Deallocate(iter);
-
-    return NULL;
+    res = -1;
+    goto finish;
 }
 
 

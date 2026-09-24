@@ -4,6 +4,8 @@ import pytest
 
 import numpy as np
 from numpy._core._reduction_loop_tests import (
+    minimum_intp_maximum,
+    minimum_object_maximum,
     minimummaximum as mm,
     minimummaximum_with_identity as mmi,
 )
@@ -20,6 +22,13 @@ SPECIALS = {
 def make_array(shape, seed):
     rng = np.random.default_rng(seed)
     return (rng.standard_normal(shape) * 10).astype(np.float64)
+
+
+def check_mixed(got, ref_min, ref_max, max_dtype):
+    got_min, got_max = got
+    assert got_min.dtype == np.float64 and got_max.dtype == max_dtype
+    np.testing.assert_array_equal(got_min, ref_min)
+    np.testing.assert_array_equal(got_max, ref_max.astype(max_dtype))
 
 
 def reduce_axes(ndim):
@@ -587,3 +596,58 @@ class TestReductionLoop:
     def test_object_reduce_incomparable_raises(self):
         with pytest.raises(TypeError):
             mm.reduce(np.array([1, "x", 2], dtype=object))
+
+    # The second output of the mixed ufuncs is the maximum as intp/object, so
+    # the first element of each reduction is cast from float64 into it.
+    @pytest.mark.parametrize("ufunc, max_dtype", [
+        (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
+        ids=["intp", "object"])
+    def test_mixed_forward(self, ufunc, max_dtype):
+        a, b = make_array((12,), seed=40), make_array((12,), seed=41)
+        check_mixed(ufunc(a, b), np.minimum(a, b), np.maximum(a, b), max_dtype)
+
+    @pytest.mark.parametrize("ufunc, max_dtype", [
+        (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
+        ids=["intp", "object"])
+    @pytest.mark.parametrize("shape", SHAPES, ids=str)
+    def test_mixed_reduce(self, ufunc, max_dtype, shape):
+        a = make_array(shape, seed=42)
+        for axis in reduce_axes(a.ndim):
+            kw = {"axis": axis, "keepdims": True}
+            check_mixed(ufunc.reduce(a, **kw), np.minimum.reduce(a, **kw),
+                        np.maximum.reduce(a, **kw), max_dtype)
+
+    @pytest.mark.parametrize("ufunc, max_dtype", [
+        (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
+        ids=["intp", "object"])
+    @pytest.mark.parametrize("shape", SHAPES, ids=str)
+    def test_mixed_reduceat(self, ufunc, max_dtype, shape):
+        a = make_array(shape, seed=43)
+        for axis in range(a.ndim):
+            idx = [0] if shape[axis] == 1 else [0, shape[axis] // 2]
+            check_mixed(ufunc.reduceat(a, idx, axis=axis),
+                        np.minimum.reduceat(a, idx, axis=axis),
+                        np.maximum.reduceat(a, idx, axis=axis), max_dtype)
+
+    @pytest.mark.parametrize("ufunc, max_dtype", [
+        (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
+        ids=["intp", "object"])
+    @pytest.mark.parametrize("idx", [[0, 0, 3], [3, 1], [5], [4, 0]])
+    def test_mixed_reduceat_repeated_and_unordered_indices(
+            self, ufunc, max_dtype, idx):
+        # These segments are only the cast first element.
+        a = make_array((6,), seed=44)
+        check_mixed(ufunc.reduceat(a, idx), np.minimum.reduceat(a, idx),
+                    np.maximum.reduceat(a, idx), max_dtype)
+
+    @pytest.mark.parametrize("ufunc, max_dtype", [
+        (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
+        ids=["intp", "object"])
+    def test_mixed_reduceat_out_strided(self, ufunc, max_dtype):
+        a = make_array((12,), seed=45)[::-1]
+        idx = [0, 4, 9]
+        out = (np.empty(3, np.float64), np.empty(3, max_dtype))
+        got = ufunc.reduceat(a, idx, out=out)
+        assert got[0] is out[0] and got[1] is out[1]
+        check_mixed(got, np.minimum.reduceat(a, idx),
+                    np.maximum.reduceat(a, idx), max_dtype)
