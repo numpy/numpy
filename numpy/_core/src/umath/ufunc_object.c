@@ -2936,6 +2936,57 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
 }
 
 
+/*
+ * Accumulate once along the axis for the operands at `dataptr`, laid out as
+ * [out_0 .. out_{nout-1}, arr].  The first element is copied into each
+ * output and the rest are folded in with the reduction loop.
+ */
+static int
+accumulate_along_axis(PyArrayMethod_Context *context,
+        PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
+        NPY_cast_info *copy_info, char *const *dataptr,
+        const npy_intp *fixed_strides, npy_intp count)
+{
+    int nout = context->method->nout;
+    char *dataptr_copy[NPY_MAXARGS];
+
+    /*
+     * Copy the first element to start each accumulation.
+     *
+     * Output (dataptr[i]) and input (dataptr[nout]) may point to the
+     * same memory, e.g. np.add.accumulate(a, out=a).
+     */
+    for (int i = 0; i < nout; i++) {
+        if (copy_info[i].func) {
+            char *args[2] = {dataptr[nout], dataptr[i]};
+            const npy_intp one = 1;
+            npy_intp strides[2] = {fixed_strides[nout], fixed_strides[i]};
+            if (copy_info[i].func(&copy_info[i].context, args,
+                    &one, strides, copy_info[i].auxdata) < 0) {
+                return -1;
+            }
+        }
+        else {
+            memmove(dataptr[i], dataptr[nout],
+                    context->descriptors[nout + 1 + i]->elsize);
+        }
+    }
+
+    if (count <= 1) {
+        return 0;
+    }
+    --count;
+    /* Expand the nout+1 pointers into the (nout+1)->nout args */
+    for (int i = 0; i < nout; i++) {
+        dataptr_copy[i] = dataptr[i];
+        dataptr_copy[nout + 1 + i] = dataptr[i] + fixed_strides[i];
+    }
+    dataptr_copy[nout] = dataptr[nout] + fixed_strides[nout];
+    NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)count);
+    return strided_loop(context, dataptr_copy, &count, fixed_strides, auxdata);
+}
+
+
 static PyObject *
 PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
                    PyArrayObject *out_arrays[],
@@ -2949,6 +3000,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
     int idim, ndim;
     int need_outer_iterator;
     int res = 0;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
 
     /*
      * Local, owned view of the outputs: `out_arrays` aliases the caller's
@@ -3012,9 +3064,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
             arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
             "accumulate");
     if (ufuncimpl == NULL) {
-        for (int i = 0; i < nout; i++) {
-            Py_XDECREF(out[i]);
-        }
+        multi_XDECREF((PyObject *const *)out, nout);
         return NULL;
     }
 
@@ -3076,16 +3126,16 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
 
     if (need_outer_iterator) {
         int ndim_iter = 0;
-        npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
-                           NPY_ITER_REFS_OK|
-                           NPY_ITER_COPY_IF_OVERLAP;
+        npy_uint32 iter_flags = NPY_ITER_ZEROSIZE_OK|
+                                NPY_ITER_REFS_OK|
+                                NPY_ITER_COPY_IF_OVERLAP;
 
         /*
          * The way accumulate is set up, we can't do buffering,
          * so make a copy instead when necessary.
          */
         ndim_iter = ndim;
-        flags |= NPY_ITER_MULTI_INDEX;
+        iter_flags |= NPY_ITER_MULTI_INDEX;
         /*
          * Add some more flags.
          *
@@ -3099,7 +3149,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
         op_flags[nout] |= NPY_ITER_COPY|NPY_ITER_ALIGNED|NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
 
         NPY_UF_DBG_PRINT("Allocating outer iterator\n");
-        iter = NpyIter_AdvancedNew(nout + 1, op, flags,
+        iter = NpyIter_AdvancedNew(nout + 1, op, iter_flags,
                                    NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                                    op_flags, descrs,
                                    ndim_iter, op_axes, NULL, 0);
@@ -3154,12 +3204,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
         }
     }
 
-    /*
-     * The loop descriptors borrow from the final iterator/array operands,
-     * which may differ from the resolved ones (e.g. `PyArray_NewFromDescr`
-     * can replace a descriptor via `finalize_descr`).  They use the same
-     * layout as `descrs`, with acc_i and out_i both borrowing from op[i].
-     */
+    /* The loop descriptors borrow from the final iterator/array operands. */
     PyArray_Descr *loop_descrs[NPY_MAXARGS];
     for (int i = 0; i < nout; i++) {
         loop_descrs[i] = PyArray_DESCR(op[i]);
@@ -3170,42 +3215,30 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
 
     /*
      * Build the (2*nout+1) reduction-loop stride array in the layout
-     *     [acc_0 .. acc_{nout-1}, x, out_0 .. out_{nout-1}]
-     * where acc_i and out_i both walk the axis with output i's stride and x
+     *     [acc_0 .. acc_{nout-1}, x, out_0 .. out_{nout-1}].
+     * acc_i and out_i both walk the axis with output i's stride and x
      * walks it with the input's stride.
      */
     npy_intp fixed_strides[NPY_MAXARGS];
-    if (need_outer_iterator) {
-        npy_intp iter_strides[NPY_MAXARGS];
-        NpyIter_GetInnerFixedStrideArray(iter, iter_strides);
-        for (int i = 0; i < nout; i++) {
-            fixed_strides[i] = iter_strides[i];
-            fixed_strides[nout + 1 + i] = iter_strides[i];
-        }
-        fixed_strides[nout] = iter_strides[nout];
+    for (int i = 0; i < nout; i++) {
+        fixed_strides[i] = PyArray_STRIDES(op[i])[axis];
+        fixed_strides[nout + 1 + i] = PyArray_STRIDES(op[i])[axis];
     }
-    else {
-        for (int i = 0; i < nout; i++) {
-            fixed_strides[i] = PyArray_STRIDES(op[i])[axis];
-            fixed_strides[nout + 1 + i] = PyArray_STRIDES(op[i])[axis];
-        }
-        fixed_strides[nout] = PyArray_STRIDES(op[nout])[axis];
-    }
+    fixed_strides[nout] = PyArray_STRIDES(op[nout])[axis];
 
-    NPY_ARRAYMETHOD_FLAGS flags = 0;
     if (reduction_get_loop_func(ufuncimpl)(&context,
             1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
         goto fail;
     }
     /*
-     * Set up a per-output function to copy (and cast) the first element from
-     * the stream dtype into each output.  Needed when the stream and output
-     * dtypes differ or when the output holds references.
+     * When the stream and an output dtype differ (only possible for
+     * multi-output loops) or the output holds references, set up a transfer
+     * to copy the first element.  Otherwise, a plain memmove is used.
      */
     for (int i = 0; i < nout; i++) {
         if (PyDataType_REFCHK(loop_descrs[nout + 1 + i])
-                || !PyArray_EquivTypes(
-                        loop_descrs[nout], loop_descrs[nout + 1 + i])) {
+                || !PyArray_EquivTypes(loop_descrs[nout],
+                                       loop_descrs[nout + 1 + i])) {
             NPY_ARRAYMETHOD_FLAGS copy_flags;
             /* Setup guarantees aligned here. */
             if (PyArray_GetDTypeTransferFunction(
@@ -3239,144 +3272,44 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
         goto finish;
     }
 
+    npy_intp count = PyArray_DIM(op[nout], axis);
+
     if (iter && NpyIter_GetIterSize(iter) != 0) {
-        char *dataptr_copy[NPY_MAXARGS];
-        npy_intp stride_copy[NPY_MAXARGS];
-        npy_intp count_m1, stride0[NPY_MAXARGS], stride1;
-
-        NpyIter_IterNextFunc *iternext;
-        char **dataptr;
-
-        /* Get the variables needed for the loop */
-        iternext = NpyIter_GetIterNext(iter, NULL);
+        NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
             goto fail;
         }
-        dataptr = NpyIter_GetDataPtrArray(iter);
-
-        /* Execute the loop with just the outer iterator */
-        count_m1 = PyArray_DIM(op[nout], axis)-1;
-        stride1 = PyArray_STRIDE(op[nout], axis);
+        char **dataptr = NpyIter_GetDataPtrArray(iter);
 
         NPY_UF_DBG_PRINT("UFunc: Reduce loop with just outer iterator\n");
-
-        /* Reduction-loop stride layout: [acc_i, x, out_i] */
-        for (int i = 0; i < nout; i++) {
-            stride0[i] = PyArray_STRIDE(op[i], axis);
-            stride_copy[i] = stride0[i];
-            stride_copy[nout + 1 + i] = stride0[i];
-        }
-        stride_copy[nout] = stride1;
 
         if (!needs_api) {
             NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
         }
 
         do {
-            /*
-             * Copy the first element to start each accumulation.
-             *
-             * Output (dataptr[i]) and input (dataptr[nout]) may point to
-             * the same memory, e.g. np.add.accumulate(a, out=a).
-             */
-            for (int i = 0; i < nout; i++) {
-                if (copy_info[i].func) {
-                    char *cargs[2] = {dataptr[nout], dataptr[i]};
-                    npy_intp cstrides[2] = {stride1, stride0[i]};
-                    const npy_intp one = 1;
-                    if (copy_info[i].func(
-                            &copy_info[i].context, cargs, &one,
-                            cstrides, copy_info[i].auxdata) < 0) {
-                        NPY_END_THREADS;
-                        goto fail;
-                    }
-                }
-                else {
-                    memmove(dataptr[i], dataptr[nout],
-                            loop_descrs[nout + 1 + i]->elsize);
-                }
-            }
-
-            if (count_m1 > 0) {
-                /* Expand the nout+1 pointers into the (nout+1)->nout args */
-                for (int i = 0; i < nout; i++) {
-                    dataptr_copy[i] = dataptr[i];
-                    dataptr_copy[nout + 1 + i] = dataptr[i] + stride0[i];
-                }
-                dataptr_copy[nout] = dataptr[nout] + stride1;
-                NPY_UF_DBG_PRINT1("iterator loop count %d\n",
-                                                (int)count_m1);
-                res = strided_loop(&context,
-                        dataptr_copy, &count_m1, stride_copy, auxdata);
-            }
+            res = accumulate_along_axis(&context, strided_loop, auxdata,
+                    copy_info, dataptr, fixed_strides, count);
         } while (res == 0 && iternext(iter));
 
         NPY_END_THREADS;
     }
     else if (iter == NULL) {
-        char *dataptr_copy[NPY_MAXARGS];
-        npy_intp stride0[NPY_MAXARGS];
-
-        /* Execute the loop with no iterators */
-        npy_intp count = PyArray_DIM(op[nout], axis);
-        npy_intp stride1 = PyArray_STRIDE(op[nout], axis);
+        char *dataptr[NPY_MAXARGS];
+        for (int i = 0; i <= nout; i++) {
+            dataptr[i] = PyArray_BYTES(op[i]);
+        }
 
         NPY_UF_DBG_PRINT("UFunc: Reduce loop with no iterators\n");
 
-        for (int i = 0; i < nout; i++) {
-            stride0[i] = PyArray_STRIDE(op[i], axis);
+        if (!needs_api) {
+            NPY_BEGIN_THREADS_THRESHOLDED(count);
         }
 
-        /* Expand the nout+1 operands into the (nout+1)->nout loop args */
-        for (int i = 0; i < nout; i++) {
-            dataptr_copy[i] = PyArray_BYTES(op[i]);
-            dataptr_copy[nout + 1 + i] = PyArray_BYTES(op[i]);
-        }
-        dataptr_copy[nout] = PyArray_BYTES(op[nout]);
+        res = accumulate_along_axis(&context, strided_loop, auxdata,
+                copy_info, dataptr, fixed_strides, count);
 
-        /*
-         * Copy the first element to start each accumulation.
-         *
-         * Output (dataptr[i]) and input (dataptr[nout]) may point to the
-         * same memory, e.g. np.add.accumulate(a, out=a).
-         */
-        for (int i = 0; i < nout; i++) {
-            if (copy_info[i].func) {
-                char *cargs[2] = {dataptr_copy[nout], dataptr_copy[i]};
-                const npy_intp one = 1;
-                const npy_intp strides[2] = {
-                        loop_descrs[nout]->elsize,
-                        loop_descrs[nout + 1 + i]->elsize};
-                if (copy_info[i].func(
-                        &copy_info[i].context, cargs, &one,
-                        strides, copy_info[i].auxdata) < 0) {
-                    goto fail;
-                }
-            }
-            else {
-                memmove(dataptr_copy[i], dataptr_copy[nout],
-                        loop_descrs[nout + 1 + i]->elsize);
-            }
-        }
-
-        if (count > 1) {
-            --count;
-            dataptr_copy[nout] += stride1;
-            for (int i = 0; i < nout; i++) {
-                dataptr_copy[nout + 1 + i] += stride0[i];
-            }
-
-            NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)count);
-
-            if (!needs_api) {
-                NPY_BEGIN_THREADS_THRESHOLDED(count);
-            }
-
-            res = strided_loop(&context,
-                    dataptr_copy, &count, fixed_strides, auxdata);
-
-            NPY_END_THREADS;
-        }
+        NPY_END_THREADS;
     }
 
 finish:
@@ -3384,9 +3317,7 @@ finish:
     for (int i = 0; i < nout; i++) {
         NPY_cast_info_xfree(&copy_info[i]);
     }
-    for (int i = 0; i < 2 * nout + 1; i++) {
-        Py_DECREF(descrs[i]);
-    }
+    multi_DECREF((PyObject *const *)descrs, 2 * nout + 1);
 
     if (!NpyIter_Deallocate(iter)) {
         res = -1;
@@ -3398,43 +3329,15 @@ finish:
     }
 
     if (res < 0) {
-        for (int i = 0; i < nout; i++) {
-            Py_DECREF(out[i]);
-        }
+        multi_XDECREF((PyObject *const *)out, nout);
         return NULL;
     }
 
-    if (nout == 1) {
-        return (PyObject *)out[0];
-    }
-    PyObject *result = PyTuple_New(nout);
-    if (result == NULL) {
-        for (int i = 0; i < nout; i++) {
-            Py_DECREF(out[i]);
-        }
-        return NULL;
-    }
-    for (int i = 0; i < nout; i++) {
-        PyTuple_SET_ITEM(result, i, (PyObject *)out[i]);
-    }
-    return result;
+    return reducelike_result(out, nout);
 
 fail:
-    for (int i = 0; i < nout; i++) {
-        Py_XDECREF(out[i]);
-    }
-
-    NPY_AUXDATA_FREE(auxdata);
-    for (int i = 0; i < nout; i++) {
-        NPY_cast_info_xfree(&copy_info[i]);
-    }
-    for (int i = 0; i < 2 * nout + 1; i++) {
-        Py_XDECREF(descrs[i]);
-    }
-
-    NpyIter_Deallocate(iter);
-
-    return NULL;
+    res = -1;
+    goto finish;
 }
 
 /*

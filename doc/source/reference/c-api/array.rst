@@ -1904,7 +1904,9 @@ the functions that must be implemented for each slot.
    stride of the streamed input, and each ``strides[nout + 1 + i]`` repeats
    ``strides[i]``, because ``out_i`` and ``acc_i`` are the same buffer. The
    accumulator strides are normally 0, since the reduction accumulates in
-   place. When a ``where=`` mask is used, one further entry at
+   place. For :meth:`~numpy.ufunc.accumulate`, ``out_i`` instead points at the
+   next element of the same output, and ``acc_i`` and ``out_i`` both use the
+   output's stride. When a ``where=`` mask is used, one further entry at
    ``strides[2 * nout + 1]`` holds the mask stride.
 
    If ``NPY_METH_get_reduction_loop`` is not set, these methods fall back
@@ -1934,8 +1936,8 @@ the functions that must be implemented for each slot.
    reduction is empty or when a ``where=`` mask is given, for a ufunc whose
    loop also registers a :c:macro:`NPY_METH_get_reduction_loop`. See
    :c:type:`PyArrayMethod_GetMultiReductionInitials` for the signature.
-   :meth:`~numpy.ufunc.reduceat` does not use them and seeds each segment
-   with its first element instead.
+   :meth:`~numpy.ufunc.reduceat` and :meth:`~numpy.ufunc.accumulate` do not
+   use them and seed with the first element instead.
 
    A method may register at most one of
    :c:macro:`NPY_METH_get_reduction_initial` and
