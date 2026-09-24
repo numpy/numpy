@@ -133,6 +133,9 @@ For example::
 Header only functionality (such as a new macro) typically does not need to be
 guarded.
 
+For a step-by-step guide covering the full workflow for adding a new C-API
+entry point, see :ref:`adding-c-api`.
+
 GitHub workflow
 ---------------
 
