@@ -1967,6 +1967,136 @@ def asarray(
 ) -> NDArray[Any]: ...
 
 # keep in sync with `asarray` (modulo the 2 `ArrayT` overloads)
+@overload  # ?d Any  (workaround)
+def asanyarray(
+    a: Sequence[Never],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[Any]: ...
+@overload  # 2d bool
+def asanyarray(
+    a: Sequence[list[bool]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.bool]: ...
+@overload  # 2d ~int
+def asanyarray(
+    a: Sequence[list[int]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.int_]: ...
+@overload  # 2d ~float
+def asanyarray(
+    a: Sequence[list[float]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.float64]: ...
+@overload  # 2d ~complex
+def asanyarray(
+    a: Sequence[list[complex]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.complex128]: ...
+@overload  # 3d bool
+def asanyarray(
+    a: Sequence[Sequence[list[bool]]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array3D[np.bool]: ...
+@overload  # 3d ~int
+def asanyarray(
+    a: Sequence[Sequence[list[int]]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array3D[np.int_]: ...
+@overload  # 3d ~float
+def asanyarray(
+    a: Sequence[Sequence[list[float]]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array3D[np.float64]: ...
+@overload  # 3d ~complex
+def asanyarray(
+    a: Sequence[Sequence[list[complex]]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array3D[np.complex128]: ...
+@overload  # 1d bool
+def asanyarray(
+    a: list[bool],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.bool]: ...
+@overload  # 1d ~int
+def asanyarray(
+    a: list[int],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.int_]: ...
+@overload  # 1d ~float
+def asanyarray(
+    a: list[float],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d ~complex
+def asanyarray(
+    a: list[complex],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.complex128]: ...
 @overload  # ndarray
 def asanyarray[ArrayT: np.ndarray](
     a: ArrayT,
@@ -1977,7 +2107,7 @@ def asanyarray[ArrayT: np.ndarray](
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> ArrayT: ...
-@overload  # ndarray, dtype: <known>
+@overload  # ndarray, dtype=<known>
 def asanyarray[ShapeT: _Shape, ScalarT: np.generic](
     a: np.ndarray[ShapeT],
     dtype: _DTypeLike[ScalarT],
@@ -1987,7 +2117,7 @@ def asanyarray[ShapeT: _Shape, ScalarT: np.generic](
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
-@overload  # ndarray, dtype: <unknown>
+@overload  # ndarray, dtype=<unknown>
 def asanyarray[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
     dtype: DTypeLike,
@@ -2057,7 +2187,7 @@ def asanyarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array0D[np.complex128 | Any]: ...
-@overload  # 0d _, dtype: <known>
+@overload  # 0d, dtype=<known>
 def asanyarray[ScalarT: np.generic](
     a: complex | str | np.generic,
     dtype: _DTypeLike[ScalarT],
@@ -2067,7 +2197,7 @@ def asanyarray[ScalarT: np.generic](
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array0D[ScalarT]: ...
-@overload  # 0d _, dtype: <unknown>
+@overload  # 0d, dtype=<unknown>
 def asanyarray(
     a: complex | str | np.generic,
     dtype: DTypeLike,
@@ -2077,47 +2207,27 @@ def asanyarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array0D[Any]: ...
-@overload  # 1d bool
-def asanyarray(
-    a: Sequence[bool],
-    dtype: None = None,
+@overload  # 0d ~bytes, dtype=<known>
+def asanyarray[ScalarT: np.generic](
+    a: bytes,
+    dtype: _DTypeLike[ScalarT],
     order: _OrderKACF = None,
     *,
     device: L["cpu"] | None = None,
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
-) -> _Array1D[np.bool]: ...
-@overload  # 1d ~int
+) -> NDArray[ScalarT]: ...
+@overload  # 0d ~bytes, dtype=<unknown>
 def asanyarray(
-    a: list[int],
-    dtype: None = None,
+    a: bytes,
+    dtype: DTypeLike,
     order: _OrderKACF = None,
     *,
     device: L["cpu"] | None = None,
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
-) -> _Array1D[np.int_]: ...
-@overload  # 1d ~float
-def asanyarray(
-    a: list[float],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array1D[np.float64]: ...
-@overload  # 1d ~complex
-def asanyarray(
-    a: list[complex],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array1D[np.complex128]: ...
-@overload  # 1d _, dtype: <known>
+) -> NDArray[Any]: ...
+@overload  # 1d, dtype=<known>
 def asanyarray[ScalarT: np.generic](
     a: Sequence[complex | np.generic],
     dtype: _DTypeLike[ScalarT],
@@ -2127,7 +2237,7 @@ def asanyarray[ScalarT: np.generic](
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[ScalarT]: ...
-@overload  # 1d _, dtype: <unknown>
+@overload  # 1d, dtype=<unknown>
 def asanyarray(
     a: Sequence[complex | np.generic],
     dtype: DTypeLike,
@@ -2137,47 +2247,27 @@ def asanyarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[Any]: ...
-@overload  # 2d bool
-def asanyarray(
-    a: Sequence[Sequence[bool]],
-    dtype: None = None,
+@overload  # ?d ~bytes, dtype=<known>
+def asanyarray[ScalarT: np.generic](
+    a: Sequence[bytes | Sequence[bytes]],
+    dtype: _DTypeLike[ScalarT],
     order: _OrderKACF = None,
     *,
     device: L["cpu"] | None = None,
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.bool]: ...
-@overload  # 2d ~int
+) -> NDArray[ScalarT]: ...
+@overload  # ?d ~bytes, dtype=<unknown>
 def asanyarray(
-    a: Sequence[list[int]],
-    dtype: None = None,
+    a: Sequence[bytes | Sequence[bytes]],
+    dtype: DTypeLike,
     order: _OrderKACF = None,
     *,
     device: L["cpu"] | None = None,
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.int_]: ...
-@overload  # 2d ~float
-def asanyarray(
-    a: Sequence[list[float]],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.float64]: ...
-@overload  # 2d ~complex
-def asanyarray(
-    a: Sequence[list[complex]],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.complex128]: ...
-@overload  # 2d _, dtype: <known>
+) -> NDArray[Any]: ...
+@overload  # 2d, dtype=<known>
 def asanyarray[ScalarT: np.generic](
     a: Sequence[Sequence[complex | np.generic]],
     dtype: _DTypeLike[ScalarT],
@@ -2187,7 +2277,7 @@ def asanyarray[ScalarT: np.generic](
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array2D[ScalarT]: ...
-@overload  # 2d _, dtype: <unknown>
+@overload  # 2d, dtype=<unknown>
 def asanyarray(
     a: Sequence[Sequence[complex | np.generic]],
     dtype: DTypeLike,
@@ -2197,49 +2287,9 @@ def asanyarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array2D[Any]: ...
-@overload  # 3d bool
-def asanyarray(
-    a: Sequence[Sequence[Sequence[bool]]],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array3D[np.bool]: ...
-@overload  # 3d ~int
-def asanyarray(
-    a: Sequence[Sequence[list[int]]],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array3D[np.int_]: ...
-@overload  # 3d ~float
-def asanyarray(
-    a: Sequence[Sequence[list[float]]],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array3D[np.float64]: ...
-@overload  # 3d ~complex
-def asanyarray(
-    a: Sequence[Sequence[list[complex]]],
-    dtype: None = None,
-    order: _OrderKACF = None,
-    *,
-    device: L["cpu"] | None = None,
-    copy: bool | None = None,
-    like: _SupportsArrayFunc | None = None,
-) -> _Array3D[np.complex128]: ...
-@overload  # 3d _, dtype: <known>
+@overload  # 3d, dtype=<known>
 def asanyarray[ScalarT: np.generic](
-    a: Sequence[Sequence[Sequence[_ScalarLike_co]]],
+    a: Sequence[Sequence[Sequence[complex | np.generic]]],
     dtype: _DTypeLike[ScalarT],
     order: _OrderKACF = None,
     *,
@@ -2247,9 +2297,9 @@ def asanyarray[ScalarT: np.generic](
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array3D[ScalarT]: ...
-@overload  # 3d _, dtype: <unknown>
+@overload  # 3d, dtype=<unknown>
 def asanyarray(
-    a: Sequence[Sequence[Sequence[_ScalarLike_co]]],
+    a: Sequence[Sequence[Sequence[complex | np.generic]]],
     dtype: DTypeLike,
     order: _OrderKACF = None,
     *,
@@ -2257,7 +2307,7 @@ def asanyarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array3D[Any]: ...
-@overload  # array-like, dtype: <known>
+@overload  # array-like, dtype=<known>
 def asanyarray[ScalarT: np.generic](
     a: object,
     dtype: _DTypeLike[ScalarT],
