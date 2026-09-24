@@ -168,7 +168,7 @@ class ABCPolyBase(Generic[_NameT_co], abc.ABC):  # noqa: UP046
         /,
         n: SupportsIndex = 100,
         domain: _SeriesLikeCoef_co | None = None,
-    ) -> _Tuple2[_Series[np.float64 | np.complex128]]: ...
+    ) -> _Tuple2[_Series[np.float64 | Any]]: ...
 
     #
     @overload

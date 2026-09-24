@@ -142,12 +142,12 @@ assert_type(PS_poly.roots(), _Ar_x_n)
 
 assert_type(
     PS_poly.linspace(),
-    tuple[_Ar_1d[np.float64 | np.complex128], _Ar_1d[np.float64 | np.complex128]],
+    tuple[_Ar_1d[np.float64 | Any], _Ar_1d[np.float64 | Any]],
 )
 
 assert_type(
     PS_poly.linspace(9),
-    tuple[_Ar_1d[np.float64 | np.complex128], _Ar_1d[np.float64 | np.complex128]],
+    tuple[_Ar_1d[np.float64 | Any], _Ar_1d[np.float64 | Any]],
 )
 
 assert_type(PS_cheb.fit(AR_c_co, AR_c_co, SC_i_co), npp.Chebyshev)
