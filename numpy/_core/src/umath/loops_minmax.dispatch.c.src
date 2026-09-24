@@ -995,16 +995,17 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_minimummaximum_reduce)
     #undef STYPE
     #define STYPE TO_SIMD_SFX(npyv_lanetype)
     // the SIMD kernels need out to alias acc, which accumulate does not do
-    const int in_place = data[0] == data[3] && data[1] == data[4];
+    const int is_reduce = data[0] == data[3] && data[1] == data[4]
+            && strides[0] == strides[3] && strides[1] == strides[4];
     // reduce over the contiguous axis
-    if (in_place && strides[0] == 0 && strides[1] == 0 && strides[3] == 0
+    if (is_reduce && strides[0] == 0 && strides[1] == 0 && strides[3] == 0
             && strides[4] == 0 && strides[2] == elsize) {
         TO_SIMD_SFX(simd_reduce_c_minmax)(
             (const STYPE*)data[2], (STYPE*)data[3], (STYPE*)data[4], n);
         goto done;
     }
     // reduce over an outer axis with a contiguous inner axis
-    if (in_place && strides[0] == elsize && strides[1] == elsize
+    if (is_reduce && strides[0] == elsize && strides[1] == elsize
             && strides[2] == elsize && strides[3] == elsize
             && strides[4] == elsize) {
         TO_SIMD_SFX(simd_reduce_outer_minmax)(
@@ -1014,7 +1015,7 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_minimummaximum_reduce)
     // reduce over an outer axis with a strided inner axis (e.g. `a[:, ::2]`
     // reduced over axis 0); 32/64-bit types, see simd_reduce_outern
 #if (NPY_BITSOF_@BTYPE@ == 32 || NPY_BITSOF_@BTYPE@ == 64)
-    if (in_place && strides[0] == elsize && strides[1] == elsize
+    if (is_reduce && strides[0] == elsize && strides[1] == elsize
             && strides[3] == elsize && strides[4] == elsize
             && TO_SIMD_SFX(npyv_loadable_stride)(strides[2])) {
         TO_SIMD_SFX(simd_reduce_outern_minmax)(
