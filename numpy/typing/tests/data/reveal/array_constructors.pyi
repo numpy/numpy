@@ -447,7 +447,7 @@ _shape_like: list[int]
 assert_type(np.ones(_shape_0d), np.ndarray[tuple[()], np.dtype[np.float64]])
 assert_type(np.ones(_size), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.ones(_shape_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
-assert_type(np.ones(_shape_nd), np.ndarray[tuple[int, ...], np.dtype[np.float64]])
+assert_type(np.ones(_shape_nd), np.ndarray[tuple[Any, ...], np.dtype[np.float64]])
 assert_type(np.ones(_shape_1d, dtype=np.int64), np.ndarray[tuple[int], np.dtype[np.int64]])
 assert_type(np.ones(_shape_like), npt.NDArray[np.float64])
 assert_type(

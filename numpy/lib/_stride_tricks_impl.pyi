@@ -6,13 +6,19 @@ from numpy._typing import ArrayLike, NDArray, _AnyShape, _ArrayLike, _Shape, _Sh
 
 __all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes"]
 
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
-type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
-type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
+type _0D = tuple[()]
+type _1D = tuple[int]
+type _2D = tuple[int, int]
+type _3D = tuple[int, int, int]
+type _4D = tuple[int, int, int, int]
 
-type _ToShape1D = int | np.integer | tuple[int]
-type _ToShape2D = _ToShape1D | tuple[int, int]
+type _Array1D[ScalarT: np.generic] = np.ndarray[_1D, np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[_2D, np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[_3D, np.dtype[ScalarT]]
+type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[_1D | _2D, np.dtype[ScalarT]]
+
+type _ToShape1D = int | np.integer | _1D
+type _ToShape2D = _ToShape1D | _2D
 
 # workaround for mypy and pyright not following the typing spec for overloads
 type _ShapeNoD = tuple[Never, Never, Never, Never]
@@ -151,7 +157,7 @@ def broadcast_to[ScalarT: np.generic](
     subok: bool = False,
 ) -> np.ndarray[tuple[int], np.dtype[ScalarT]]: ...
 @overload  # known dtype, known shape
-def broadcast_to[ScalarT: np.generic, ShapeT: tuple[int, ...]](
+def broadcast_to[ScalarT: np.generic, ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     array: _ArrayLike[ScalarT],
     shape: ShapeT,
     subok: bool = False,
@@ -169,7 +175,7 @@ def broadcast_to(
     subok: bool = False,
 ) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
 @overload  # unknown dtype, known shape
-def broadcast_to[ShapeT: tuple[int, ...]](
+def broadcast_to[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     array: ArrayLike,
     shape: ShapeT,
     subok: bool = False,

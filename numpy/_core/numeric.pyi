@@ -644,12 +644,18 @@ _AnyNumberT = TypeVar(
 
 type _CorrelateMode = L["valid", "same", "full"]
 
-type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
-type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
-type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
-type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
+type _0D = tuple[()]
+type _1D = tuple[int]
+type _2D = tuple[int, int]
+type _3D = tuple[int, int, int]
+type _4D = tuple[int, int, int, int]
+
+type _Array0D[ScalarT: np.generic] = np.ndarray[_0D, np.dtype[ScalarT]]
+type _Array1D[ScalarT: np.generic] = np.ndarray[_1D, np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[_2D, np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[_3D, np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[_4D, np.dtype[ScalarT]]
+type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[_1D | _2D, np.dtype[ScalarT]]
 
 # workaround for mypy and pyright not following the typing spec for overloads
 type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
@@ -836,7 +842,7 @@ def ones(
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[Incomplete]: ...
 @overload  # known shape, float64 default
-def ones[ShapeT: _Shape](
+def ones[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     shape: ShapeT,
     dtype: None = None,
     order: _OrderCF = "C",
@@ -845,7 +851,7 @@ def ones[ShapeT: _Shape](
     like: _SupportsArrayFunc | None = None,
 ) -> _Array[ShapeT, float64]: ...
 @overload  # known shape, specific dtype
-def ones[ShapeT: _Shape, DTypeT: np.dtype](
+def ones[ShapeT: (_0D, _1D, _2D, _3D, _4D), DTypeT: np.dtype](
     shape: ShapeT,
     dtype: DTypeT | _SupportsDType[DTypeT],
     order: _OrderCF = "C",
@@ -854,7 +860,7 @@ def ones[ShapeT: _Shape, DTypeT: np.dtype](
     like: _SupportsArrayFunc | None = None,
 ) -> ndarray[ShapeT, DTypeT]: ...
 @overload  # known shape, specific scalar type
-def ones[ShapeT: _Shape, ScalarT: np.generic](
+def ones[ShapeT: (_0D, _1D, _2D, _3D, _4D), ScalarT: np.generic](
     shape: ShapeT,
     dtype: type[ScalarT],
     order: _OrderCF = "C",
@@ -863,7 +869,7 @@ def ones[ShapeT: _Shape, ScalarT: np.generic](
     like: _SupportsArrayFunc | None = None,
 ) -> _Array[ShapeT, ScalarT]: ...
 @overload  # known shape, unknown dtype
-def ones[ShapeT: _Shape](
+def ones[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     shape: ShapeT,
     dtype: DTypeLike | None = None,
     order: _OrderCF = "C",
