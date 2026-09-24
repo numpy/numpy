@@ -76,7 +76,6 @@ from numpy._typing import (
     _IntLike_co,
     _NestedSequence,
     _ObjectCodes,
-    _ScalarLike_co,
     _Shape,
     _ShapeLike,
     _SupportsArrayFunc,
