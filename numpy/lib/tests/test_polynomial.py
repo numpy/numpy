@@ -237,6 +237,30 @@ class TestPolynomial:
         assert_allclose(mean.std(), 0.5, atol=0.01)
         assert_almost_equal(np.sqrt(cov.mean()), 0.25)
 
+    def test_polyfit_cov_rank_deficient(self):
+        # gh-22380: lstsq returns empty residuals when rank < order,
+        # which previously caused a broadcasting error with cov=True.
+        from numpy.exceptions import RankWarning
+        x = np.array([-4.2073038, -3.01299361, 0.17435259, -0.45885279,
+                      -2.18740973, -1.65722718])
+        y = np.array([21.47761358, -3.06717015, -12.85000342, -10.2560546,
+                      0.03992826, 3.36907162])
+        w = np.array([4.73816559, 0.79306992, 4.84662284, 2.68313602,
+                      1.2997438, 1.09350907])
+        with pytest.warns(RankWarning, match="Polyfit may be poorly conditioned"):
+            p, cov = np.polyfit(x, y, deg=3, rcond=0.01, full=False, w=w, cov=True)
+        assert_equal(p.shape, (4,))
+        assert_equal(cov.shape, (4, 4))
+        assert_(not np.any(np.isnan(cov)))
+
+        # Also test 2D y case
+        y2 = np.column_stack([y, y])
+        with pytest.warns(RankWarning, match="Polyfit may be poorly conditioned"):
+            p2, cov2 = np.polyfit(x, y2, deg=3, rcond=0.01, full=False, w=w, cov=True)
+        assert_equal(p2.shape, (4, 2))
+        assert_equal(cov2.shape, (4, 4, 2))
+        assert_(not np.any(np.isnan(cov2)))
+
     def test_objects(self):
         from decimal import Decimal
         p = np.poly1d([Decimal('4.0'), Decimal('3.0'), Decimal('2.0')])
