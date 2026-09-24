@@ -92,9 +92,9 @@ typedef struct PyArrayMethodObject_tag {
 } PyArrayMethodObject;
 
 
-/* Returns the loop `ufunc.reduce` should use: the dedicated reduction loop
- * if the method registered one, otherwise the forward `get_strided_loop`
- * (only valid when nout == 1). */
+/* Returns the loop `ufunc.reduce` and `ufunc.reduceat` should use: the
+ * dedicated reduction loop if the method registered one, otherwise the
+ * forward `get_strided_loop` (only valid when nout == 1). */
 static inline PyArrayMethod_GetLoop *
 reduction_get_loop_func(PyArrayMethodObject *meth)
 {

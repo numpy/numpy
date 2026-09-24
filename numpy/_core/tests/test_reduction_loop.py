@@ -492,7 +492,8 @@ class TestReduceat:
     @pytest.mark.parametrize("idx", [[0, 0, 3], [3, 1], [5], [4, 0]])
     def test_mixed_reduceat_repeated_and_unordered_indices(
             self, ufunc, max_dtype, idx):
-        # These segments are only the cast first element.
+        # Empty and backwards segments are only their first element, cast to
+        # the second output's dtype.
         check_minmax("reduceat", make_array((6,), seed=44), idx, ufunc=ufunc,
                      max_dtype=max_dtype)
 
