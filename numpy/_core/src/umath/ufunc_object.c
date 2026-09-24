@@ -2455,6 +2455,7 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
  *        (Contains borrowed references and may be modified.)
  * @param enforce_uniform_args If `NPY_TRUE` fully uniform dtypes/descriptors
  *        are enforced as required for accumulate and (currently) reduceat.
+ *        Ignored for multi-output ufuncs.
  * @param out_descrs New references to the resolved descriptors (on success).
  * @param method The ufunc method, "reduce", "reduceat", or "accumulate".
 
@@ -3350,13 +3351,7 @@ reduceat_segments(PyArrayMethod_Context *context,
         npy_intp count = end - start;
         char *x0 = dataptr[nout] + stride * start;
 
-        /*
-         * Copy the first element to start each reduction segment.
-         *
-         * Output (dataptr[j]) and input (dataptr[nout]) may point to
-         * the same memory, e.g.
-         * np.add.reduceat(a, np.arange(len(a)), out=a).
-         */
+        /* Copy the first element to start each reduction segment. */
         for (int j = 0; j < nout; j++) {
             char *out_j = dataptr[j] + out_strides[j] * i;
             dataptr_copy[j] = out_j;
@@ -3509,9 +3504,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
             "reduceat");
     if (ufuncimpl == NULL) {
-        for (int i = 0; i < nout; i++) {
-            Py_XDECREF(out[i]);
-        }
+        multi_XDECREF((PyObject *const *)out, nout);
         return NULL;
     }
 
@@ -3572,6 +3565,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     for (int i = 0; i < nout; i++) {
         if (out[i] != NULL) {
             any_out = NPY_TRUE;
+            break;
         }
     }
     if (any_out || ndim > 1 || !PyArray_ISALIGNED(arr) ||
@@ -3587,10 +3581,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         op_dtypes[nout] = descrs[nout];      /* stream (the copied input) */
         op_dtypes[nout + 1] = NULL;          /* ind keeps its own dtype */
 
-        npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
-                           NPY_ITER_REFS_OK|
-                           NPY_ITER_MULTI_INDEX|
-                           NPY_ITER_COPY_IF_OVERLAP;
+        npy_uint32 iter_flags = NPY_ITER_ZEROSIZE_OK|
+                                NPY_ITER_REFS_OK|
+                                NPY_ITER_MULTI_INDEX|
+                                NPY_ITER_COPY_IF_OVERLAP;
 
         /*
          * The way reduceat is set up, we can't do buffering,
@@ -3613,7 +3607,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         op_flags[nout + 1] = NPY_ITER_READONLY;
 
         NPY_UF_DBG_PRINT("Allocating outer iterator\n");
-        iter = NpyIter_AdvancedNew(nout + 2, op, flags,
+        iter = NpyIter_AdvancedNew(nout + 2, op, iter_flags,
                                    NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                                    op_flags, op_dtypes,
                                    ndim, op_axes, NULL, 0);
@@ -3772,9 +3766,7 @@ finish:
     for (int i = 0; i < nout; i++) {
         NPY_cast_info_xfree(&copy_info[i]);
     }
-    for (int i = 0; i < 2 * nout + 1; i++) {
-        Py_XDECREF(descrs[i]);
-    }
+    multi_DECREF((PyObject *const *)descrs, 2 * nout + 1);
 
     if (!NpyIter_Deallocate(iter)) {
         res = -1;
@@ -3786,9 +3778,7 @@ finish:
     }
 
     if (res < 0) {
-        for (int i = 0; i < nout; i++) {
-            Py_XDECREF(out[i]);
-        }
+        multi_XDECREF((PyObject *const *)out, nout);
         return NULL;
     }
 

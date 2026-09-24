@@ -1933,6 +1933,8 @@ the functions that must be implemented for each slot.
    reduction is empty or when a ``where=`` mask is given, for a ufunc whose
    loop also registers a :c:macro:`NPY_METH_get_reduction_loop`. See
    :c:type:`PyArrayMethod_GetMultiReductionInitials` for the signature.
+   :meth:`~numpy.ufunc.reduceat` does not use them and seeds each segment
+   with its first element instead.
 
    A method may register at most one of
    :c:macro:`NPY_METH_get_reduction_initial` and
