@@ -404,7 +404,7 @@ class chararray(ndarray):
     chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,
               strides=None, order=None)
 
-    Provides a convenient view on arrays of `str_` or `bytes_` values.
+    Provides a convenient view on arrays of `~numpy.str_` or `~numpy.bytes_` values.
 
     .. deprecated:: 2.5
        ``chararray`` is deprecated. Use an ``ndarray`` with a string or
@@ -510,7 +510,7 @@ class chararray(ndarray):
     itemsize : int, optional
         Length of each array element, in number of characters. Default is 1.
     unicode : bool, optional
-        Are the array elements of type `str_` (True) or `bytes_` (False).
+        Are the array elements of type `~numpy.str_` (True) or `~numpy.bytes_` (False).
         Default is False.
     buffer : object exposing the buffer interface or str, optional
         Memory address of the start of the array data.  Default is None,
@@ -707,8 +707,7 @@ class chararray(ndarray):
     def __mod__(self, i):
         """
         Return (self % i), that is pre-Python 2.6 string formatting
-        (interpolation), element-wise for a pair of array_likes of `bytes_`
-        or `str_`.
+        (interpolation), element-wise for a pair of array_likes of `str_` or `bytes_`.
 
         See Also
         --------
