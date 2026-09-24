@@ -99,7 +99,7 @@ Data Types for Strings and Bytes
 --------------------------------
 
 In addition to numerical types, NumPy also supports storing unicode strings, via
-the `numpy.str_` dtype (``U`` character code), null-terminated byte sequences via
+the `numpy.str_` dtype (``U`` character code), null-padded byte sequences via
 `numpy.bytes_` (``S`` character code), and arbitrary byte sequences, via
 `numpy.void` (``V`` character code).
 
@@ -138,7 +138,7 @@ nulls::
   >>> x = [b"hello\0\0", b"world"]
   >>> a = np.array(x, dtype="S7")
   >>> print(a[0])
-  b"hello"
+  b'hello'
   >>> a[0] == x[0]
   False
 
