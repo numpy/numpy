@@ -69,183 +69,315 @@ def histogram_bin_edges(
     weights: _WeightsLike | None = None,
 ) -> _Array1D[Incomplete]: ...
 
-# There are 4 groups of 2 + 3 overloads (2 for density=True, 3 for density=False) = 20 in total
-@overload  # a: +float64, density: True (keyword), weights: +float | None (default)
-def histogram(
-    a: _ArrayLikeInt_co | _NestedSequence[float],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    *,
-    density: L[True],
-    weights: _ArrayLikeFloat_co | None = None,
-) -> _HistogramResult[np.float64, np.float64]: ...
-@overload  # a: +float64, density: True (keyword), weights: +complex
-def histogram(
-    a: _ArrayLikeInt_co | _NestedSequence[float],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    *,
-    density: L[True],
-    weights: _ArrayLike[np.complexfloating] | _NestedList[complex],
-) -> _HistogramResult[np.complex128, np.float64]: ...
-@overload  # a: +float64, density: False (default), weights: ~int | None (default)
-def histogram(
-    a: _ArrayLikeInt_co | _NestedSequence[float],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    density: L[False] | None = None,
-    weights: _NestedSequence[int] | None = None,
-) -> _HistogramResult[np.intp, np.float64]: ...
-@overload  # a: +float64, density: False (default), weights: known (keyword)
-def histogram[WeightsT: np.bool | np.number | np.timedelta64](
-    a: _ArrayLikeInt_co | _NestedSequence[float],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    density: L[False] | None = None,
-    *,
-    weights: _ArrayLike[WeightsT],
-) -> _HistogramResult[WeightsT, np.float64]: ...
-@overload  # a: +float64, density: False (default), weights: unknown (keyword)
-def histogram(
-    a: _ArrayLikeInt_co | _NestedSequence[float],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    density: L[False] | None = None,
-    *,
-    weights: _WeightsLike,
-) -> _HistogramResult[Incomplete, np.float64]: ...
-@overload  # a: ~complex, density: True (keyword), weights: +float | None (default)
-def histogram(
-    a: _NestedList[complex],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    *,
-    density: L[True],
-    weights: _ArrayLikeFloat_co | None = None,
-) -> _HistogramResult[np.float64, np.complex128]: ...
-@overload  # a: ~complex, density: True (keyword), weights: +complex
-def histogram(
-    a: _NestedList[complex],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    *,
-    density: L[True],
-    weights: _ArrayLike[np.complexfloating] | _NestedList[complex],
-) -> _HistogramResult[np.complex128, np.complex128]: ...
-@overload  # a: ~complex, density: False (default), weights: ~int | None (default)
-def histogram(
-    a: _NestedList[complex],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    density: L[False] | None = None,
-    weights: _NestedSequence[int] | None = None,
-) -> _HistogramResult[np.intp, np.complex128]: ...
-@overload  # a: ~complex, density: False (default), weights: known (keyword)
-def histogram[WeightsT: np.bool | np.number | np.timedelta64](
-    a: _NestedList[complex],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    density: L[False] | None = None,
-    *,
-    weights: _ArrayLike[WeightsT],
-) -> _HistogramResult[WeightsT, np.complex128]: ...
-@overload  # a: ~complex, density: False (default), weights: unknown (keyword)
-def histogram(
-    a: _NestedList[complex],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    density: L[False] | None = None,
-    *,
-    weights: _WeightsLike,
-) -> _HistogramResult[Incomplete, np.complex128]: ...
-@overload  # a: known, density: True (keyword), weights: +float | None (default)
-def histogram[ScalarT: np.inexact | np.object_](
-    a: _ArrayLike[ScalarT],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+# There are 7 groups of 2 + 3 overloads (2 for density=True, 3 for density=False) = 35 in total
+@overload  # Nd, 1d T, density=True
+def histogram[ScalarT: np.number | np.object_](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: _ArrayLike1D[ScalarT],
     range: _Range | None = None,
     *,
     density: L[True],
     weights: _ArrayLikeFloat_co | None = None,
 ) -> _HistogramResult[np.float64, ScalarT]: ...
-@overload  # a: known, density: True (keyword), weights: +complex
-def histogram[ScalarT: np.inexact | np.object_](
-    a: _ArrayLike[ScalarT],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+@overload  # Nd, 1d T, density=True, weights=+c128
+def histogram[ScalarT: np.number | np.object_](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: _ArrayLike1D[ScalarT],
     range: _Range | None = None,
     *,
     density: L[True],
     weights: _ArrayLike[np.complexfloating] | _NestedList[complex],
 ) -> _HistogramResult[np.complex128, ScalarT]: ...
-@overload  # a: known, density: False (default), weights: ~int | None (default)
-def histogram[ScalarT: np.inexact | np.object_](
-    a: _ArrayLike[ScalarT],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+@overload  # Nd, 1d T
+def histogram[ScalarT: np.number | np.object_](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: _ArrayLike1D[ScalarT],
     range: _Range | None = None,
     density: L[False] | None = None,
     weights: _NestedSequence[int] | None = None,
 ) -> _HistogramResult[np.intp, ScalarT]: ...
-@overload  # a: known, density: False (default), weights: known (keyword)
-def histogram[ScalarT: np.inexact | np.object_, WeightsT: np.bool | np.number | np.timedelta64](
-    a: _ArrayLike[ScalarT],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+@overload  # Nd, 1d T, weights=<known>
+def histogram[ScalarT: np.number | np.object_, WeightsT: np.bool | np.number | np.timedelta64](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: _ArrayLike1D[ScalarT],
     range: _Range | None = None,
     density: L[False] | None = None,
     *,
     weights: _ArrayLike[WeightsT],
 ) -> _HistogramResult[WeightsT, ScalarT]: ...
-@overload  # a: known, density: False (default), weights: unknown (keyword)
-def histogram[ScalarT: np.inexact | np.object_](
-    a: _ArrayLike[ScalarT],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+@overload  # Nd, 1d T, weights=<unknown>
+def histogram[ScalarT: np.number | np.object_](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: _ArrayLike1D[ScalarT],
     range: _Range | None = None,
     density: L[False] | None = None,
     *,
     weights: _WeightsLike,
-) -> _HistogramResult[Incomplete, ScalarT]: ...
-@overload  # a: unknown, density: True (keyword), weights: +float | None (default)
+) -> _HistogramResult[Any, ScalarT]: ...
+@overload  # Nd, 1d ~int, density=True
 def histogram(
-    a: _ArrayLikeComplex_co,
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: Sequence[int],
     range: _Range | None = None,
     *,
     density: L[True],
     weights: _ArrayLikeFloat_co | None = None,
-) -> _HistogramResult[np.float64, Incomplete]: ...
-@overload  # a: unknown, density: True (keyword), weights: +complex
+) -> _HistogramResult[np.float64, np.int_]: ...
+@overload  # Nd, 1d ~int, density=True, weights=+c128
 def histogram(
-    a: _ArrayLikeComplex_co,
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: Sequence[int],
     range: _Range | None = None,
     *,
     density: L[True],
     weights: _ArrayLike[np.complexfloating] | _NestedList[complex],
-) -> _HistogramResult[np.complex128, Incomplete]: ...
-@overload  # a: unknown, density: False (default), weights: int | None (default)
+) -> _HistogramResult[np.complex128, np.int_]: ...
+@overload  # Nd, 1d ~int
 def histogram(
-    a: _ArrayLikeComplex_co,
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: Sequence[int],
     range: _Range | None = None,
     density: L[False] | None = None,
     weights: _NestedSequence[int] | None = None,
-) -> _HistogramResult[np.intp, Incomplete]: ...
-@overload  # a: unknown, density: False (default), weights: known (keyword)
+) -> _HistogramResult[np.intp, np.int_]: ...
+@overload  # Nd, 1d ~int, weights=<known>
 def histogram[WeightsT: np.bool | np.number | np.timedelta64](
-    a: _ArrayLikeComplex_co,
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: Sequence[int],
     range: _Range | None = None,
     density: L[False] | None = None,
     *,
     weights: _ArrayLike[WeightsT],
-) -> _HistogramResult[WeightsT, Incomplete]: ...
-@overload  # a: unknown, density: False (default), weights: unknown (keyword)
+) -> _HistogramResult[WeightsT, np.int_]: ...
+@overload  # Nd, 1d ~int, weights=<unknown>
 def histogram(
-    a: _ArrayLikeComplex_co,
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: Sequence[int],
     range: _Range | None = None,
     density: L[False] | None = None,
     *,
     weights: _WeightsLike,
-) -> _HistogramResult[Incomplete, Incomplete]: ...
+) -> _HistogramResult[Any, np.int_]: ...
+@overload  # Nd, 1d ~float, density=True
+def histogram(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: list[float],
+    range: _Range | None = None,
+    *,
+    density: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _HistogramResult[np.float64, np.float64]: ...
+@overload  # Nd, 1d ~float, density=True, weights=+c128
+def histogram(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: list[float],
+    range: _Range | None = None,
+    *,
+    density: L[True],
+    weights: _ArrayLike[np.complexfloating] | _NestedList[complex],
+) -> _HistogramResult[np.complex128, np.float64]: ...
+@overload  # Nd, 1d ~float
+def histogram(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: list[float],
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    weights: _NestedSequence[int] | None = None,
+) -> _HistogramResult[np.intp, np.float64]: ...
+@overload  # Nd, 1d ~float, weights=<known>
+def histogram[WeightsT: np.bool | np.number | np.timedelta64](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: list[float],
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    *,
+    weights: _ArrayLike[WeightsT],
+) -> _HistogramResult[WeightsT, np.float64]: ...
+@overload  # Nd, 1d ~float, weights=<unknown>
+def histogram(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: list[float],
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    *,
+    weights: _WeightsLike,
+) -> _HistogramResult[Any, np.float64]: ...
+@overload  # Nd +f64, density=True
+def histogram(
+    a: _ArrayLikeInt_co | _NestedSequence[float],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    *,
+    density: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _HistogramResult[np.float64, np.float64]: ...
+@overload  # Nd +f64, density=True, weights=+c128
+def histogram(
+    a: _ArrayLikeInt_co | _NestedSequence[float],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    *,
+    density: L[True],
+    weights: _ArrayLike[np.complexfloating] | _NestedList[complex],
+) -> _HistogramResult[np.complex128, np.float64]: ...
+@overload  # Nd +f64
+def histogram(
+    a: _ArrayLikeInt_co | _NestedSequence[float],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    weights: _NestedSequence[int] | None = None,
+) -> _HistogramResult[np.intp, np.float64]: ...
+@overload  # Nd +f64, weights=<known>
+def histogram[WeightsT: np.bool | np.number | np.timedelta64](
+    a: _ArrayLikeInt_co | _NestedSequence[float],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    *,
+    weights: _ArrayLike[WeightsT],
+) -> _HistogramResult[WeightsT, np.float64]: ...
+@overload  # Nd +f64, weights=<unknown>
+def histogram(
+    a: _ArrayLikeInt_co | _NestedSequence[float],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    *,
+    weights: _WeightsLike,
+) -> _HistogramResult[Any, np.float64]: ...
+@overload  # Nd ~complex, density=True
+def histogram(
+    a: _NestedList[complex],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    *,
+    density: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _HistogramResult[np.float64, np.complex128]: ...
+@overload  # Nd ~complex, density=True, weights=+c128
+def histogram(
+    a: _NestedList[complex],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    *,
+    density: L[True],
+    weights: _ArrayLike[np.complexfloating] | _NestedList[complex],
+) -> _HistogramResult[np.complex128, np.complex128]: ...
+@overload  # Nd ~complex
+def histogram(
+    a: _NestedList[complex],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    weights: _NestedSequence[int] | None = None,
+) -> _HistogramResult[np.intp, np.complex128]: ...
+@overload  # Nd ~complex, weights=<known>
+def histogram[WeightsT: np.bool | np.number | np.timedelta64](
+    a: _NestedList[complex],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    *,
+    weights: _ArrayLike[WeightsT],
+) -> _HistogramResult[WeightsT, np.complex128]: ...
+@overload  # Nd ~complex, weights=<unknown>
+def histogram(
+    a: _NestedList[complex],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    *,
+    weights: _WeightsLike,
+) -> _HistogramResult[Any, np.complex128]: ...
+@overload  # Nd T, density=True
+def histogram[ScalarT: np.inexact | np.object_](
+    a: _ArrayLike[ScalarT],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    *,
+    density: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _HistogramResult[np.float64, ScalarT]: ...
+@overload  # Nd T, density=True, weights=+c128
+def histogram[ScalarT: np.inexact | np.object_](
+    a: _ArrayLike[ScalarT],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    *,
+    density: L[True],
+    weights: _ArrayLike[np.complexfloating] | _NestedList[complex],
+) -> _HistogramResult[np.complex128, ScalarT]: ...
+@overload  # Nd T
+def histogram[ScalarT: np.inexact | np.object_](
+    a: _ArrayLike[ScalarT],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    weights: _NestedSequence[int] | None = None,
+) -> _HistogramResult[np.intp, ScalarT]: ...
+@overload  # Nd T, weights=<known>
+def histogram[ScalarT: np.inexact | np.object_, WeightsT: np.bool | np.number | np.timedelta64](
+    a: _ArrayLike[ScalarT],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    *,
+    weights: _ArrayLike[WeightsT],
+) -> _HistogramResult[WeightsT, ScalarT]: ...
+@overload  # Nd T, weights=<unknown>
+def histogram[ScalarT: np.inexact | np.object_](
+    a: _ArrayLike[ScalarT],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    *,
+    weights: _WeightsLike,
+) -> _HistogramResult[Any, ScalarT]: ...
+@overload  # Nd, density=True
+def histogram(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: SupportsIndex | ArrayLike = 10,
+    range: _Range | None = None,
+    *,
+    density: L[True],
+    weights: _ArrayLikeFloat_co | None = None,
+) -> _HistogramResult[np.float64, Any]: ...
+@overload  # Nd, density=True, weights=+c128
+def histogram(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: SupportsIndex | ArrayLike = 10,
+    range: _Range | None = None,
+    *,
+    density: L[True],
+    weights: _ArrayLike[np.complexfloating] | _NestedList[complex],
+) -> _HistogramResult[np.complex128, Any]: ...
+@overload  # Nd
+def histogram(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: SupportsIndex | ArrayLike = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    weights: _NestedSequence[int] | None = None,
+) -> _HistogramResult[np.intp, Any]: ...
+@overload  # Nd, weights=<known>
+def histogram[WeightsT: np.bool | np.number | np.timedelta64](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: SupportsIndex | ArrayLike = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    *,
+    weights: _ArrayLike[WeightsT],
+) -> _HistogramResult[WeightsT, Any]: ...
+@overload  # Nd, weights=<unknown>  (fallback)
+def histogram(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: SupportsIndex | ArrayLike = 10,
+    range: _Range | None = None,
+    density: L[False] | None = None,
+    *,
+    weights: _WeightsLike,
+) -> _HistogramResult[Any, Any]: ...
 
 # unlike `histogram`, `weights` must be safe-castable to f64
 @overload  # ?d T  (workaround)
