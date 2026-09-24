@@ -2197,6 +2197,9 @@ class TestDTypeSignatures:
                 # `np._NoValue` default, which isn't supported by `inspect.signature`,
                 # so `**kwargs` is used instead.
                 params_expect = {"coerce", "kwargs"}
+            case "bytestring":
+                # same `na_object`/`np._NoValue` limitation as StringDType
+                params_expect = {"kwargs"}
             case _:
                 params_expect = set()
 

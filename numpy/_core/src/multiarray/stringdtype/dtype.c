@@ -1,4 +1,6 @@
-/* The implementation of the StringDType class */
+/*
+ * The implementation of the StringDType and ByteStringDType classes.
+ */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <stdatomic.h>
@@ -21,15 +23,42 @@
 #include "multiarraymodule.h"
 #include "module_state.h"
 #include "npy_sort.h"
+#include "scalartypes.h"
+
+// the returned buffer is borrowed from `obj`
+static int
+stored_bytes_view(PyObject *obj, int is_bytes, const char **buf, Py_ssize_t *size)
+{
+    if (is_bytes) {
+        char *buffer = NULL;
+        if (PyBytes_AsStringAndSize(obj, &buffer, size) < 0) {
+            return -1;
+        }
+        *buf = buffer;
+    }
+    else {
+        *buf = PyUnicode_AsUTF8AndSize(obj, size);
+        if (*buf == NULL) {
+            return -1;
+        }
+    }
+    return 0;
+}
 
 /*
  * Internal helper to create new instances
  */
 NPY_NO_EXPORT PyObject *
-new_stringdtype_instance(PyObject *na_object, int coerce)
+new_stringlike_instance_of(PyArray_DTypeMeta *cls, PyObject *na_object, int coerce)
 {
+    int is_bytes = (cls == &PyArray_ByteStringDType);
+    if (is_bytes) {
+        // pin so instances compare and hash consistently
+        coerce = 1;
+    }
+
     PyObject *new =
-            PyArrayDescr_Type.tp_new((PyTypeObject *)&PyArray_StringDType, NULL, NULL);
+            PyArrayDescr_Type.tp_new((PyTypeObject *)cls, NULL, NULL);
 
     if (new == NULL) {
         return NULL;
@@ -53,11 +82,11 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
     int has_string_na = 0;
     if (has_null) {
         // first check for a string
-        if (PyUnicode_Check(na_object)) {
+        if (is_bytes ? PyBytes_Check(na_object) : PyUnicode_Check(na_object)) {
             has_string_na = 1;
             Py_ssize_t size = 0;
-            const char *buf = PyUnicode_AsUTF8AndSize(na_object, &size);
-            if (buf == NULL) {
+            const char *buf = NULL;
+            if (stored_bytes_view(na_object, is_bytes, &buf, &size) < 0) {
                 goto fail;
             }
             default_string.buf = PyMem_RawMalloc(size);
@@ -86,7 +115,7 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
             }
             Py_DECREF(ne_result);
         }
-        PyObject *na_pystr = PyObject_Str(na_object);
+        PyObject *na_pystr = is_bytes ? PyObject_Repr(na_object) : PyObject_Str(na_object);
         if (na_pystr == NULL) {
             goto fail;
         }
@@ -124,9 +153,9 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
     base->flags |= NPY_NEEDS_INIT;
     base->flags |= NPY_LIST_PICKLE;
     base->flags |= NPY_ITEM_REFCOUNT;
-    base->type_num = NPY_VSTRING;
-    base->kind = NPY_VSTRINGLTR;
-    base->type = NPY_VSTRINGLTR;
+    base->type_num = is_bytes ? NPY_VBYTES : NPY_VSTRING;
+    base->kind = is_bytes ? NPY_VBYTELTR : NPY_VSTRINGLTR;
+    base->type = is_bytes ? NPY_VBYTELTR : NPY_VSTRINGLTR;
 
     return new;
 
@@ -140,6 +169,12 @@ fail:
         NpyString_free_allocator(allocator);
     }
     return NULL;
+}
+
+NPY_NO_EXPORT PyObject *
+new_stringdtype_instance(PyObject *na_object, int coerce)
+{
+    return new_stringlike_instance_of(&PyArray_StringDType, na_object, coerce);
 }
 
 NPY_NO_EXPORT int
@@ -220,7 +255,7 @@ stringdtype_common_na_coerce(int ndescrs, PyArray_Descr *const descrs[],
     PyObject *na_object = NULL;
     int coerce = 1;
     for (int i = 0; i < ndescrs; i++) {
-        if (NPY_DTYPE(descrs[i]) != &PyArray_StringDType) {
+        if (!NPY_DT_is_stringlike(NPY_DTYPE(descrs[i]))) {
             continue;
         }
         PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[i];
@@ -249,7 +284,7 @@ stringdtype_effective_na_descr(int ndescrs, PyArray_Descr *const descrs[])
 {
     PyArray_StringDTypeObject *first = NULL;
     for (int i = 0; i < ndescrs; i++) {
-        if (NPY_DTYPE(descrs[i]) != &PyArray_StringDType) {
+        if (!NPY_DT_is_stringlike(NPY_DTYPE(descrs[i]))) {
             continue;
         }
         PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[i];
@@ -266,7 +301,8 @@ stringdtype_effective_na_descr(int ndescrs, PyArray_Descr *const descrs[])
 /*
  * This is used to determine the correct dtype to return when dealing
  * with a mix of different dtypes (for example when creating an array
- * from a list of scalars).
+ * from a list of scalars). Only ever called with two descriptors of the
+ * same DType.
  */
 static PyArray_StringDTypeObject *
 common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dtype2)
@@ -282,24 +318,23 @@ common_instance(PyArray_StringDTypeObject *dtype1, PyArray_StringDTypeObject *dt
         return NULL;
     }
 
-    return (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            out_na_object, out_coerce);
+    return (PyArray_StringDTypeObject *)new_stringlike_instance_of(
+            NPY_DTYPE((PyArray_Descr *)dtype1), out_na_object, out_coerce);
 }
 
 /*
  *  Used to determine the correct "common" dtype for promotion.
- *  cls is always PyArray_StringDType, other is an arbitrary other DType
+ *  cls is the string-like DType being promoted, other is an arbitrary
+ *  other DType. StringDType and ByteStringDType deliberately do not
+ *  promote with each other.
  */
 static PyArray_DTypeMeta *
 common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
-    if (other->type_num == NPY_UNICODE) {
-        /*
-         *  We have a cast from unicode, so allow unicode to promote
-         *  to PyArray_StringDType
-         */
+    int partner = cls == &PyArray_ByteStringDType ? NPY_STRING : NPY_UNICODE;
+    if (other->type_num == partner) {
         Py_INCREF(cls);
-	return cls;
+        return cls;
     }
     Py_INCREF(Py_NotImplemented);
     return (PyArray_DTypeMeta *)Py_NotImplemented;
@@ -352,28 +387,45 @@ as_pystring(PyObject *scalar, int coerce)
     return scalar;
 }
 
-static PyArray_Descr *
-string_discover_descriptor_from_pyobject(PyTypeObject *NPY_UNUSED(cls),
-                                         PyObject *obj)
+// bytes subclasses (e.g. np.bytes_) are stored as their raw bytes, matching the fixed-width 'S' dtype
+static PyObject *
+as_pybytes(PyObject *scalar)
 {
-    PyObject *val = as_pystring(obj, 1);
+    if (PyBytes_Check(scalar)) {
+        Py_INCREF(scalar);
+        return scalar;
+    }
+    PyErr_Format(PyExc_TypeError, "ByteStringDType only allows bytes data, got an "
+                 "instance of '%.200s'%s", Py_TYPE(scalar)->tp_name,
+                 PyUnicode_Check(scalar)
+                 ? "; convert text to bytes explicitly with str.encode(encoding)" : "");
+    return NULL;
+}
+
+static PyArray_Descr *
+stringlike_discover_descriptor_from_pyobject(PyTypeObject *cls, PyObject *obj)
+{
+    int is_bytes = ((PyArray_DTypeMeta *)cls == &PyArray_ByteStringDType);
+    PyObject *val = is_bytes ? as_pybytes(obj) : as_pystring(obj, 1);
     if (val == NULL) {
         return NULL;
     }
 
     Py_DECREF(val);
 
-    PyArray_Descr *ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1);
+    PyArray_Descr *ret = (PyArray_Descr *)new_stringlike_instance_of((PyArray_DTypeMeta *)cls, NULL, 1);
 
     return ret;
 }
 
 // Take a python object `obj` and insert it into the array of dtype `descr` at
 // the position given by dataptr.
-NPY_NO_EXPORT int
-stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **dataptr)
+static int
+stringlike_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **dataptr)
 {
     npy_packed_static_string *sdata = (npy_packed_static_string *)dataptr;
+
+    int is_bytes = descr->base.type_num == NPY_VBYTES;
 
     // borrowed reference
     PyObject *na_object = descr->na_object;
@@ -397,23 +449,22 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
         int pack_status = NpyString_pack_null(allocator, sdata);
         NpyString_release_allocator(allocator);
         if (pack_status < 0) {
-            PyErr_SetString(PyExc_MemoryError,
-                            "Failed to pack null string during StringDType "
-                            "setitem");
+            PyErr_Format(PyExc_MemoryError, "Failed to pack null string during %s setitem",
+                         is_bytes ? "ByteStringDType" : "StringDType");
             return -1;
         }
         return 0;
     }
 
-    PyObject *val_obj = as_pystring(obj, descr->coerce);
+    PyObject *val_obj = is_bytes ? as_pybytes(obj) : as_pystring(obj, descr->coerce);
 
     if (val_obj == NULL) {
         return -1;
     }
 
     Py_ssize_t length = 0;
-    const char *val = PyUnicode_AsUTF8AndSize(val_obj, &length);
-    if (val == NULL) {
+    const char *val = NULL;
+    if (stored_bytes_view(val_obj, is_bytes, &val, &length) < 0) {
         Py_DECREF(val_obj);
         return -1;
     }
@@ -424,9 +475,8 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
     Py_DECREF(val_obj);
 
     if (pack_status < 0) {
-        PyErr_SetString(PyExc_MemoryError,
-                        "Failed to pack string during StringDType "
-                        "setitem");
+        PyErr_Format(PyExc_MemoryError, "Failed to pack string during %s setitem",
+                     is_bytes ? "ByteStringDType" : "StringDType");
         return -1;
     }
 
@@ -434,18 +484,21 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
 }
 
 static PyObject *
-stringdtype_getitem(PyArray_StringDTypeObject *descr, char **dataptr)
+stringlike_getitem_impl(PyArray_StringDTypeObject *descr, char **dataptr, int scalar)
 {
     PyObject *val_obj = NULL;
     npy_packed_static_string *psdata = (npy_packed_static_string *)dataptr;
     npy_static_string sdata = {0, NULL};
+    int is_bytes = descr->base.type_num == NPY_VBYTES;
     int has_null = descr->na_object != NULL;
+    PyObject *(*from_buffer)(const char *, Py_ssize_t) =
+            !is_bytes ? PyUnicode_FromStringAndSize : scalar ? new_vbytes : PyBytes_FromStringAndSize;
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
     int is_null = NpyString_load(allocator, psdata, &sdata);
 
     if (is_null < 0) {
-        PyErr_SetString(PyExc_MemoryError,
-                        "Failed to load string in StringDType getitem");
+        PyErr_Format(PyExc_MemoryError, "Failed to load string in %s getitem",
+                     is_bytes ? "ByteStringDType" : "StringDType");
         goto fail;
     }
     else if (is_null == 1) {
@@ -455,12 +508,14 @@ stringdtype_getitem(PyArray_StringDTypeObject *descr, char **dataptr)
             val_obj = na_object;
         }
         else {
-            // cannot fail
-            val_obj = PyUnicode_FromStringAndSize("", 0);
+            val_obj = from_buffer("", 0);
+            if (val_obj == NULL) {
+                goto fail;
+            }
         }
     }
     else {
-        val_obj = PyUnicode_FromStringAndSize(sdata.buf, sdata.size);
+        val_obj = from_buffer(sdata.buf, sdata.size);
         if (val_obj == NULL) {
             goto fail;
         }
@@ -489,8 +544,19 @@ stringdtype_null_is_truthy(const PyArray_StringDTypeObject *descr)
     return (npy_bool)descr->has_nan_na;
 }
 
+static PyObject *
+stringlike_getitem(PyArray_StringDTypeObject *descr, char **dataptr)
+{
+    return stringlike_getitem_impl(descr, dataptr, 0);
+}
+
+NPY_NO_EXPORT PyObject *
+bytestring_getitem_scalar(PyArray_StringDTypeObject *descr, char **dataptr)
+{
+    return stringlike_getitem_impl(descr, dataptr, 1);
+}
+
 // PyArray_NonzeroFunc
-// Unicode strings are nonzero if their length is nonzero.
 static npy_bool
 nonzero(void *data, void *arr)
 {
@@ -502,7 +568,7 @@ nonzero(void *data, void *arr)
 }
 
 // Implementation of PyArray_CompareFunc.
-// Compares unicode strings by their code points.
+// NpyString_cmp is length-explicit, so embedded NULs compare correctly.
 static int
 compare(void *a, void *b, void *arr)
 {
@@ -618,7 +684,7 @@ static PyArray_CompareFunc *stringdtype_sort_compares[2] = {
         &_sort_compare, &_sort_compare_descending};
 
 // PyArray_ArgFunc
-// The max element is the one with the highest unicode code point.
+// The max element is the one that compares greatest.
 static int
 argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 {
@@ -634,7 +700,7 @@ argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 }
 
 // PyArray_ArgFunc
-// The min element is the one with the lowest unicode code point.
+// The min element is the one that compares smallest.
 static int
 argmin(char *data, npy_intp n, npy_intp *min_ind, void *arr)
 {
@@ -729,7 +795,11 @@ stringdtype_is_known_scalar_type(PyArray_DTypeMeta *cls,
     }
     // otherwise np.str_ discovers its fixed-width 'U' descriptor, whose
     // cast into StringDType strips trailing NULs setitem would preserve
-    else if (pytype == &PyUnicodeArrType_Type) {
+    else if (cls == &PyArray_StringDType && pytype == &PyUnicodeArrType_Type) {
+        return 1;
+    }
+    // same for bytes subclasses and the fixed-width 'S' descriptor
+    else if (cls == &PyArray_ByteStringDType && PyType_IsSubtype(pytype, &PyBytes_Type)) {
         return 1;
     }
     return 0;
@@ -749,8 +819,8 @@ stringdtype_finalize_descr(PyArray_Descr *dtype)
         return dtype;
     }
     NpyString_release_allocator(allocator);
-    PyArray_StringDTypeObject *ret = (PyArray_StringDTypeObject *)new_stringdtype_instance(
-            sdtype->na_object, sdtype->coerce);
+    PyArray_StringDTypeObject *ret = (PyArray_StringDTypeObject *)new_stringlike_instance_of(
+                    NPY_DTYPE(dtype), sdtype->na_object, sdtype->coerce);
     if (ret == NULL) {
         return NULL;
     }
@@ -758,13 +828,13 @@ stringdtype_finalize_descr(PyArray_Descr *dtype)
     return (PyArray_Descr *)ret;
 }
 
-static PyType_Slot PyArray_StringDType_Slots[] = {
+static PyType_Slot stringlike_slots[] = {
         {NPY_DT_common_instance, &common_instance},
         {NPY_DT_common_dtype, &common_dtype},
         {NPY_DT_discover_descr_from_pyobject,
-         &string_discover_descriptor_from_pyobject},
-        {NPY_DT_setitem, &stringdtype_setitem},
-        {NPY_DT_getitem, &stringdtype_getitem},
+         &stringlike_discover_descriptor_from_pyobject},
+        {NPY_DT_setitem, &stringlike_setitem},
+        {NPY_DT_getitem, &stringlike_getitem},
         {NPY_DT_ensure_canonical, &stringdtype_ensure_canonical},
         {NPY_DT_PyArray_ArrFuncs_nonzero, &nonzero},
         {NPY_DT_PyArray_ArrFuncs_compare, &compare},
@@ -898,6 +968,20 @@ stringdtype_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwds)
     return new_stringdtype_instance(na_object, coerce);
 }
 
+static PyObject *
+bytestringdtype_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwds)
+{
+    static char *kwargs_strs[] = {"na_object", NULL};
+
+    PyObject *na_object = NULL;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|$O&:ByteStringDType", kwargs_strs, _not_NoValue, &na_object)) {
+        return NULL;
+    }
+
+    return new_stringlike_instance_of(&PyArray_ByteStringDType, na_object, 1);
+}
+
 static void
 stringdtype_dealloc(PyArray_StringDTypeObject *self)
 {
@@ -936,37 +1020,49 @@ stringdtype_repr(PyArray_StringDTypeObject *self)
     return ret;
 }
 
+static PyObject *
+bytestringdtype_repr(PyArray_StringDTypeObject *self)
+{
+    if (self->na_object != NULL) {
+        return PyUnicode_FromFormat("ByteStringDType(na_object=%R)", self->na_object);
+    }
+    return PyUnicode_FromString("ByteStringDType()");
+}
+
 // implementation of __reduce__ magic method to reconstruct a StringDType
 // object from the serialized data in the pickle. Uses the python
 // _convert_to_stringdtype_kwargs for convenience because this isn't
 // performance-critical
 static PyObject *
-stringdtype__reduce__(PyArray_StringDTypeObject *self, PyObject *NPY_UNUSED(args))
+stringlike__reduce__(PyArray_StringDTypeObject *self, PyObject *NPY_UNUSED(args))
 {
     multiarray_umath_state *state = _npy_module_state;
-    if (npy_cache_import_runtime(
-                "numpy._core._internal", "_convert_to_stringdtype_kwargs",
-                &state->runtime_imports._convert_to_stringdtype_kwargs) == -1) {
+    int is_bytes = self->base.type_num == NPY_VBYTES;
+    PyObject **helper = is_bytes
+            ? &state->runtime_imports._convert_to_bytestringdtype_kwargs
+            : &state->runtime_imports._convert_to_stringdtype_kwargs;
+    if (npy_cache_import_runtime("numpy._core._internal",
+                is_bytes ? "_convert_to_bytestringdtype_kwargs"
+                         : "_convert_to_stringdtype_kwargs", helper) == -1) {
         return NULL;
     }
 
     if (self->na_object != NULL) {
-        return Py_BuildValue(
-                "O(iO)", state->runtime_imports._convert_to_stringdtype_kwargs,
-                self->coerce, self->na_object);
+        return is_bytes
+                ? Py_BuildValue("O(O)", *helper, self->na_object)
+                : Py_BuildValue("O(iO)", *helper, self->coerce, self->na_object);
     }
 
-    return Py_BuildValue(
-            "O(i)", state->runtime_imports._convert_to_stringdtype_kwargs,
-            self->coerce);
+    return is_bytes ? Py_BuildValue("O()", *helper)
+                    : Py_BuildValue("O(i)", *helper, self->coerce);
 }
 
-static PyMethodDef PyArray_StringDType_methods[] = {
+static PyMethodDef stringlike_methods[] = {
         {
                 "__reduce__",
-                (PyCFunction)stringdtype__reduce__,
+                (PyCFunction)stringlike__reduce__,
                 METH_NOARGS,
-                "Reduction method for a StringDType object",
+                "Reduction method for a string-like dtype object",
         },
         {NULL, NULL, 0, NULL},
 };
@@ -998,8 +1094,21 @@ static PyMemberDef PyArray_StringDType_members[] = {
         {NULL, 0, 0, 0, NULL},
 };
 
+static PyMemberDef PyArray_ByteStringDType_members[] = {
+        {"na_object", T_OBJECT_EX, offsetof(PyArray_StringDTypeObject, na_object),
+         READONLY,
+         "The missing value object associated with the dtype instance"},
+        {"_has_nan_na", T_BOOL,
+         offsetof(PyArray_StringDTypeObject, has_nan_na), READONLY,
+         "Whether the missing value object has NaN-like semantics"},
+        {"_has_string_na", T_BOOL,
+         offsetof(PyArray_StringDTypeObject, has_string_na), READONLY,
+         "Whether the missing value object is a bytestring"},
+        {NULL, 0, 0, 0, NULL},
+};
+
 static PyObject *
-PyArray_StringDType_richcompare(PyObject *self, PyObject *other, int op)
+stringlike_richcompare(PyObject *self, PyObject *other, int op)
 {
     if (((op != Py_EQ) && (op != Py_NE)) ||
         (Py_TYPE(other) != Py_TYPE(self))) {
@@ -1007,7 +1116,7 @@ PyArray_StringDType_richcompare(PyObject *self, PyObject *other, int op)
         return Py_NotImplemented;
     }
 
-    // we know both are instances of PyArray_StringDType so this is safe
+    // both are instances of the same string-like DType so this is safe
     PyArray_StringDTypeObject *sself = (PyArray_StringDTypeObject *)self;
     PyArray_StringDTypeObject *sother = (PyArray_StringDTypeObject *)other;
 
@@ -1025,7 +1134,7 @@ PyArray_StringDType_richcompare(PyObject *self, PyObject *other, int op)
 }
 
 static Py_hash_t
-PyArray_StringDType_hash(PyObject *self)
+stringlike_hash(PyObject *self)
 {
     PyArray_StringDTypeObject *sself = (PyArray_StringDTypeObject *)self;
     /* PyArrayDescr_Type.tp_new initializes base.hash to -1. */
@@ -1079,21 +1188,37 @@ PyArray_DTypeMeta PyArray_StringDType = {
                 .tp_dealloc = (destructor)stringdtype_dealloc,
                 .tp_repr = (reprfunc)stringdtype_repr,
                 .tp_str = (reprfunc)stringdtype_repr,
-                .tp_methods = PyArray_StringDType_methods,
+                .tp_methods = stringlike_methods,
                 .tp_members = PyArray_StringDType_members,
                 .tp_getset = PyArray_StringDType_getset,
-                .tp_richcompare = PyArray_StringDType_richcompare,
-                .tp_hash = PyArray_StringDType_hash,
+                .tp_richcompare = stringlike_richcompare,
+                .tp_hash = stringlike_hash,
         }},
         /* rest, filled in during DTypeMeta initialization */
 };
 
-NPY_NO_EXPORT int
-init_stringdtype_sorts(void)
-{
-    PyArray_DTypeMeta *stringdtype = &PyArray_StringDType;
+PyArray_DTypeMeta PyArray_ByteStringDType = {
+        {{
+                PyVarObject_HEAD_INIT(NULL, 0).tp_name =
+                        "numpy.dtypes.ByteStringDType",
+                .tp_basicsize = sizeof(PyArray_StringDTypeObject),
+                .tp_new = bytestringdtype_new,
+                .tp_dealloc = (destructor)stringdtype_dealloc,
+                .tp_repr = (reprfunc)bytestringdtype_repr,
+                .tp_str = (reprfunc)bytestringdtype_repr,
+                .tp_methods = stringlike_methods,
+                .tp_members = PyArray_ByteStringDType_members,
+                .tp_getset = PyArray_StringDType_getset,
+                .tp_richcompare = stringlike_richcompare,
+                .tp_hash = stringlike_hash,
+        }},
+        /* rest, filled in during DTypeMeta initialization */
+};
 
-    PyArray_DTypeMeta *sort_dtypes[2] = {stringdtype, stringdtype};
+static int
+init_stringlike_sorts(PyArray_DTypeMeta *meta, const char *sort_name, const char *argsort_name)
+{
+    PyArray_DTypeMeta *sort_dtypes[2] = {meta, meta};
     PyType_Slot sort_slots[4] = {
             {NPY_METH_resolve_descriptors, &stringdtype_sort_resolve_descriptors},
             {NPY_METH_get_loop, &stringdtype_get_sort_loop},
@@ -1101,7 +1226,7 @@ init_stringdtype_sorts(void)
             {0, NULL}
     };
     PyArrayMethod_Spec sort_spec = {
-            .name = "stringdtype_sort",
+            .name = sort_name,
             .nin = 1,
             .nout = 1,
             .dtypes = sort_dtypes,
@@ -1114,18 +1239,18 @@ init_stringdtype_sorts(void)
     if (sort_method == NULL) {
         return -1;
     }
-    NPY_DT_SLOTS(stringdtype)->sort_meth = sort_method->method;
+    NPY_DT_SLOTS(meta)->sort_meth = sort_method->method;
     Py_INCREF(sort_method->method);
     Py_DECREF(sort_method);
 
-    PyArray_DTypeMeta *argsort_dtypes[2] = {stringdtype, &PyArray_IntpDType};
+    PyArray_DTypeMeta *argsort_dtypes[2] = {meta, &PyArray_IntpDType};
     PyType_Slot argsort_slots[3] = {
             {NPY_METH_get_loop, &stringdtype_get_argsort_loop},
             {_NPY_METH_static_data, stringdtype_sort_compares},
             {0, NULL}
     };
     PyArrayMethod_Spec argsort_spec = {
-            .name = "stringdtype_argsort",
+            .name = argsort_name,
             .nin = 1,
             .nout = 1,
             .dtypes = argsort_dtypes,
@@ -1138,38 +1263,36 @@ init_stringdtype_sorts(void)
     if (argsort_method == NULL) {
         return -1;
     }
-    NPY_DT_SLOTS(stringdtype)->argsort_meth = argsort_method->method;
+    NPY_DT_SLOTS(meta)->argsort_meth = argsort_method->method;
     Py_INCREF(argsort_method->method);
     Py_DECREF(argsort_method);
     return 0;
 }
 
-NPY_NO_EXPORT int
-init_string_dtype(void)
+static int
+init_stringlike_dtype(PyArray_DTypeMeta *meta, PyTypeObject *scalar_type,
+                      PyArrayMethod_Spec **casts, int type_num, const char *sort_name, const char *argsort_name)
 {
-    PyArrayMethod_Spec **PyArray_StringDType_casts = get_casts();
-
-    PyArrayDTypeMeta_Spec PyArray_StringDType_DTypeSpec = {
+    PyArrayDTypeMeta_Spec spec = {
             .flags = NPY_DT_PARAMETRIC,
-            .typeobj = &PyUnicode_Type,
-            .slots = PyArray_StringDType_Slots,
-            .casts = PyArray_StringDType_casts,
+            .typeobj = scalar_type,
+            .slots = stringlike_slots,
+            .casts = casts,
     };
 
     /* Loaded dynamically, so needs to be set here: */
-    ((PyObject *)&PyArray_StringDType)->ob_type = &PyArrayDTypeMeta_Type;
-    ((PyTypeObject *)&PyArray_StringDType)->tp_base = &PyArrayDescr_Type;
-    if (PyType_Ready((PyTypeObject *)&PyArray_StringDType) < 0) {
+    ((PyObject *)meta)->ob_type = &PyArrayDTypeMeta_Type;
+    ((PyTypeObject *)meta)->tp_base = &PyArrayDescr_Type;
+    if (PyType_Ready((PyTypeObject *)meta) < 0) {
         return -1;
     }
 
-    if (dtypemeta_initialize_struct_from_spec(
-                &PyArray_StringDType, &PyArray_StringDType_DTypeSpec, 1) < 0) {
+    if (dtypemeta_initialize_struct_from_spec(meta, &spec, 1) < 0) {
         return -1;
     }
 
     PyArray_StringDTypeObject *singleton =
-            (PyArray_StringDTypeObject *)NPY_DT_CALL_default_descr(&PyArray_StringDType);
+            (PyArray_StringDTypeObject *)NPY_DT_CALL_default_descr(meta);
 
     if (singleton == NULL) {
         return -1;
@@ -1178,22 +1301,46 @@ init_string_dtype(void)
     // never associate the singleton with an array
     singleton->array_owned = 1;
 
-    PyArray_StringDType.singleton = (PyArray_Descr *)singleton;
-    PyArray_StringDType.type_num = NPY_VSTRING;
+    meta->singleton = (PyArray_Descr *)singleton;
+    meta->type_num = type_num;
 
-    for (int i = 0; PyArray_StringDType_casts[i] != NULL; i++) {
-        PyMem_Free(PyArray_StringDType_casts[i]->dtypes);
-        PyMem_RawFree((void *)PyArray_StringDType_casts[i]->name);
-        PyMem_Free(PyArray_StringDType_casts[i]);
+    for (int i = 0; casts[i] != NULL; i++) {
+        PyMem_Free(casts[i]->dtypes);
+        PyMem_RawFree((void *)casts[i]->name);
+        PyMem_Free(casts[i]);
     }
 
-    PyMem_Free(PyArray_StringDType_casts);
+    PyMem_Free(casts);
 
-    if (init_stringdtype_sorts() < 0) {
+    if (init_stringlike_sorts(meta, sort_name, argsort_name) < 0) {
         return -1;
     }
 
     return 0;
+}
+
+NPY_NO_EXPORT int
+init_string_dtype(void)
+{
+    PyArrayMethod_Spec **casts = get_stringdtype_casts();
+    if (casts == NULL) {
+        return -1;
+    }
+
+    return init_stringlike_dtype(&PyArray_StringDType, &PyUnicode_Type,
+                                 casts, NPY_VSTRING, "stringdtype_sort", "stringdtype_argsort");
+}
+
+NPY_NO_EXPORT int
+init_bytestring_dtype(void)
+{
+    PyArrayMethod_Spec **casts = get_bytestringdtype_casts();
+    if (casts == NULL) {
+        return -1;
+    }
+
+    return init_stringlike_dtype(&PyArray_ByteStringDType, &PyVBytesArrType_Type,
+                                 casts, NPY_VBYTES, "bytestringdtype_sort", "bytestringdtype_argsort");
 }
 
 NPY_NO_EXPORT int

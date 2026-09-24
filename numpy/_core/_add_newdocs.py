@@ -5041,7 +5041,7 @@ add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('as_arrays',
     """))
 
 add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('result_type',
-    """result_type(/, extra_dtype=None, ensure_inexact=False)
+    """result_type(/, extra_dtype=None, ensure_inexact=False, *, strict_strings=False)
 
     Find the ``result_type`` just as ``np.result_type`` would, but taking
     into account that the original inputs (before converting to an array) may
@@ -5055,6 +5055,12 @@ add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('result_type',
     ensure_inexact : True or False
         When ``True``, ensures a floating point (or complex) result replacing
         the ``arr * 1.`` or ``result_type(..., 0.0)`` pattern.
+    strict_strings : True or False
+        When ``True``, bytes can only promote with bytes, and text (fixed-width
+        Unicode or StringDType) can only promote with text. Mixing these with
+        other DTypes raises DTypePromotionError. Promotion without string
+        inputs is unchanged. This checks the DTypes discovered for each input;
+        it does not change discovery within nested sequences.
     """))
 
 add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('wrap',
@@ -6334,7 +6340,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('itemsize',
 
 add_newdoc('numpy._core.multiarray', 'dtype', ('kind',
     """
-    A character code (one of 'biufcmMOSTUV') identifying the general kind of data.
+    A character code (one of 'biufcmMORSTUV') identifying the general kind of data.
 
     =  ======================
     b  boolean
@@ -6345,6 +6351,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('kind',
     m  timedelta
     M  datetime
     O  object
+    R  bytes (ByteStringDType)
     S  (byte-)string
     T  string (StringDType)
     U  Unicode
@@ -7173,4 +7180,44 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
 
     >>> np.array(["hello", "world"], dtype=StringDType(coerce=True))
     array(["hello", "world"], dtype=StringDType(coerce=True))
+    """)
+
+add_newdoc('numpy._core.multiarray', 'ByteStringDType',
+    """
+    ByteStringDType(**kwargs)
+    --
+
+    ByteStringDType(*, na_object=np._NoValue)
+
+    Create a ByteStringDType instance.
+
+    ByteStringDType can be used to store variable-width byte strings in a
+    NumPy array. Unlike the fixed-width ``S`` dtype, trailing
+    NUL bytes are preserved. Any :class:`bytes` value, including subclasses
+    like ``np.bytes_``, can be stored. Indexing nonmissing array elements
+    returns :class:`numpy.vbytes` scalars, a ``bytes`` subclass. Missing
+    elements return the configured ``na_object`` directly.
+
+    Parameters
+    ----------
+    na_object : object, optional
+        Object used to represent missing data. If unset, the array will not
+        use a missing data sentinel.
+
+    Examples
+    --------
+
+    >>> import numpy as np
+
+    >>> from numpy.dtypes import ByteStringDType
+    >>> arr = np.array([b"hello", b"wor\\x00ld"], dtype=ByteStringDType())
+    >>> arr
+    array([b'hello', b'wor\\x00ld'], dtype=ByteStringDType())
+    >>> arr[1]
+    np.vbytes(b'wor\\x00ld')
+
+    >>> np.array(["hello"], dtype=ByteStringDType())
+    Traceback (most recent call last):
+        ...
+    TypeError: ByteStringDType only allows bytes data, got an instance of 'str'; convert text to bytes explicitly with str.encode(encoding)
     """)

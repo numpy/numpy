@@ -5505,6 +5505,18 @@ add_newdoc('numpy._core.umath', '_rpartition_index',
 
     """)
 
+add_newdoc('numpy._core.umath', '_encode',
+    """
+    UFunc implementation of ``encode``: StringDType input to
+    ByteStringDType output, utf-8/strict only.
+    """)
+
+add_newdoc('numpy._core.umath', '_decode',
+    """
+    UFunc implementation of ``decode``: ByteStringDType input to
+    StringDType output, utf-8/strict only; trailing NULs are data.
+    """)
+
 add_newdoc('numpy._core.umath', '_partition',
     """
     Partition each element in ``x1`` around ``x2``.

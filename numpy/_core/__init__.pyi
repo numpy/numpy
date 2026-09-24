@@ -220,6 +220,7 @@ from .numerictypes import (
     ulonglong,
     unsignedinteger,
     ushort,
+    vbytes,
     void,
 )
 from .records import recarray, record
@@ -664,6 +665,7 @@ __all__ = [
     "unstack",
     "ushort",
     "var",
+    "vbytes",
     "vdot",
     "vecdot",
     "vecmat",

@@ -29,6 +29,7 @@ from ._array_like import (
 from ._char_codes import (
     _BoolCodes as _BoolCodes,
     _BytesCodes as _BytesCodes,
+    _ByteStringCodes as _ByteStringCodes,
     _CharacterCodes as _CharacterCodes,
     _CLongDoubleCodes as _CLongDoubleCodes,
     _Complex64Codes as _Complex64Codes,

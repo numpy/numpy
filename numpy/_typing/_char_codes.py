@@ -100,6 +100,8 @@ type _TD64Codes = Literal[_TD64Codes_any, _TD64Codes_int, _TD64Codes_timedelta]
 # be passed to the `dtype` constructor
 type _StringCodes = Literal["T", "|T", "=T", "<T", ">T"]
 
+type _ByteStringCodes = Literal["vbytes", "R", "|R", "=R", "<R", ">R"]
+
 # NOTE: Nested literals get flattened and de-duplicated at runtime, which isn't
 # the case for a `Union` of `Literal`s.
 # So even though they're equivalent when type-checking, they differ at runtime.

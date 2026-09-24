@@ -114,13 +114,13 @@ template<NPY_CASTING safety>
 static NPY_CASTING
 any_to_string_resolve_descriptors(
         PyObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
+        PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2], PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[1] == NULL) {
         PyArray_Descr *new_instance =
-                (PyArray_Descr *)new_stringdtype_instance(NULL, 1);
+                (PyArray_Descr *)new_stringlike_instance_of(dtypes[1], NULL, 1);
         if (new_instance == NULL) {
             return (NPY_CASTING)-1;
         }
@@ -189,7 +189,8 @@ string_to_string(PyArrayMethod_Context *context, char *const data[],
     PyArray_StringDTypeObject *odescr = (PyArray_StringDTypeObject *)context->descriptors[1];
     int in_has_null = idescr->na_object != NULL;
     int out_has_null = odescr->na_object != NULL;
-    const npy_static_string *in_na_name = &idescr->na_name;
+    // the na_name of a bytes na_object is its repr, quoting included
+    const npy_static_string *in_na_string = idescr->has_string_na ? &idescr->default_string : &idescr->na_name;
     npy_intp N = dimensions[0];
     char *in = data[0];
     char *out = data[1];
@@ -208,8 +209,7 @@ string_to_string(PyArrayMethod_Context *context, char *const data[],
         if (!NpyString_share_memory(s, iallocator, os, oallocator)) {
             if (in_has_null && !out_has_null && NpyString_isnull(s)) {
                 // lossy but this is an unsafe cast so this is OK
-                if (NpyString_pack(oallocator, os, in_na_name->buf,
-                                   in_na_name->size) < 0) {
+                if (NpyString_pack(oallocator, os, in_na_string->buf, in_na_string->size) < 0) {
                     npy_gil_error(PyExc_MemoryError,
                               "Failed to pack string in string to string "
                               "cast.");
@@ -335,12 +335,13 @@ string_to_fixed_width_resolve_descriptors(
         // the correct output size can only be discovered by inspecting the
         // values of an array being cast, which happens in
         // stringdtype_find_fixed_width_descr before descriptor resolution
-        PyErr_SetString(
+        PyErr_Format(
                 PyExc_TypeError,
-                "Casting from StringDType to a fixed-width dtype with an "
+                "Casting from %s to a fixed-width dtype with an "
                 "unspecified size is only supported when the widths can be "
                 "inferred from the values of an array being cast, specify "
-                "an explicit size for the output dtype instead.");
+                "an explicit size for the output dtype instead.",
+                ((PyTypeObject *)NPY_DTYPE(given_descrs[0]))->tp_name);
         return (NPY_CASTING)-1;
     }
     else {
@@ -383,7 +384,7 @@ load_nullable_string(const PyArray_StringDTypeObject *descr,
 }
 
 // Find a fixed-width string or unicode descriptor wide enough to store every
-// entry of *arr*, a StringDType array, without truncation.  Entries convert
+// entry of *arr*, a StringDType or ByteStringDType array, without truncation.  Entries convert
 // exactly as in the corresponding cast loops: missing entries count with the
 // width of the string load_nullable_string substitutes for them and embedded
 // and trailing NULs count as data.  The result is at least "S1" or "U1",
@@ -400,7 +401,7 @@ NPY_NO_EXPORT PyArray_Descr *
 stringdtype_find_fixed_width_descr(PyArrayObject *arr, int type_num)
 {
     assert(PyTypeNum_ISFLEXIBLE(type_num));
-    assert(PyArray_TYPE(arr) == NPY_VSTRING);
+    assert(PyTypeNum_ISVSTRINGLIKE(PyArray_TYPE(arr)));
 
     PyArray_StringDTypeObject *descr =
             (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
@@ -1906,21 +1907,22 @@ string_to_void_resolve_descriptors(PyObject *NPY_UNUSED(self),
                                    npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[1] == NULL) {
-        PyErr_SetString(
+        PyErr_Format(
                 PyExc_TypeError,
-                "Casting from StringDType to a fixed-width dtype with an "
-                "unspecified size is only supported with the widths can be "
+                "Casting from %s to a fixed-width dtype with an "
+                "unspecified size is only supported when the widths can be "
                 "inferred from the values of an array being cast, specify "
-                "an explicit size for the output dtype instead.");
+                "an explicit size for the output dtype instead.",
+                ((PyTypeObject *)NPY_DTYPE(given_descrs[0]))->tp_name);
         return (NPY_CASTING)-1;
     }
     else {
         // reject structured voids
         if (PyDataType_NAMES(given_descrs[1]) != NULL || PyDataType_SUBARRAY(given_descrs[1]) != NULL) {
-            PyErr_SetString(
+            PyErr_Format(
                     PyExc_TypeError,
-                    "Casting from StringDType to a structured dtype is not "
-                    "supported.");
+                    "Casting from %s to a structured dtype is not supported.",
+                    ((PyTypeObject *)NPY_DTYPE(given_descrs[0]))->tp_name);
             return (NPY_CASTING)-1;
         }
         Py_INCREF(given_descrs[1]);
@@ -1934,6 +1936,8 @@ string_to_void_resolve_descriptors(PyObject *NPY_UNUSED(self),
 }
 
 // void to string and bytes to string
+
+template <bool validate_utf8, bool strip_trailing_nuls>
 static int
 fixed_width_bytes_to_string(PyArrayMethod_Context *context, char *const data[],
                             npy_intp const dimensions[], npy_intp const strides[],
@@ -1942,7 +1946,8 @@ fixed_width_bytes_to_string(PyArrayMethod_Context *context, char *const data[],
     PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
     const char *context_name = descrs[0]->type_num == NPY_VOID ?
-            "void to string cast" : "bytes to string cast";
+            (validate_utf8 ? "void to string cast" : "void to bytestring cast") :
+            (validate_utf8 ? "bytes to string cast" : "bytes to bytestring cast");
 
     size_t max_in_size = descrs[0]->elsize;
 
@@ -1958,43 +1963,47 @@ fixed_width_bytes_to_string(PyArrayMethod_Context *context, char *const data[],
     while (N--) {
         size_t out_num_bytes = max_in_size;
 
-        // ignore trailing nulls
-        while (out_num_bytes > 0 && in[out_num_bytes - 1] == 0) {
-            out_num_bytes--;
+        if constexpr (strip_trailing_nuls) {
+            // ignore trailing nulls
+            while (out_num_bytes > 0 && in[out_num_bytes - 1] == 0) {
+                out_num_bytes--;
+            }
         }
 
-        size_t num_codepoints = 0;
-        if (num_codepoints_for_utf8_bytes(in, &num_codepoints,
-                                          out_num_bytes) != 0) {
-            // Building the UnicodeDecodeError needs the GIL but we have to copy
-            // the bytes before releasing the allocator and acquiring the GIL
-            char *bad = (char *)PyMem_RawMalloc(out_num_bytes);
-            if (bad == NULL) {
+        if constexpr (validate_utf8) {
+            size_t num_codepoints = 0;
+            if (num_codepoints_for_utf8_bytes(in, &num_codepoints,
+                                              out_num_bytes) != 0) {
+                // Building the UnicodeDecodeError needs the GIL but we have to copy
+                // the bytes before releasing the allocator and acquiring the GIL
+                char *bad = (char *)PyMem_RawMalloc(out_num_bytes);
+                if (bad == NULL) {
+                    alloc.release();
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to allocate memory for unicode "
+                                  "decoding error");
+                    return -1;
+                }
+                memcpy(bad, in, out_num_bytes);
+                size_t bad_size = out_num_bytes;
                 alloc.release();
-                npy_gil_error(PyExc_MemoryError,
-                              "Failed to allocate memory for unicode "
-                              "decoding error");
+
+                np::raii::EnsureGIL ensure_gil{};
+
+                // decode only to construct a UnicodeDecodeError with positional information
+                PyObject *decoded = PyUnicode_Decode(bad, bad_size, "utf-8",
+                                                     "strict");
+                PyMem_RawFree(bad);
+                if (decoded != NULL) {
+                    Py_DECREF(decoded);
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "Invalid UTF-8 bytes found in %s that the Python "
+                                 "UTF-8 decoder accepted. If you did not set a "
+                                 "custom 'strict' codec, this could indicate memory "
+                                 "corruption or a race.", context_name);
+                }
                 return -1;
             }
-            memcpy(bad, in, out_num_bytes);
-            size_t bad_size = out_num_bytes;
-            alloc.release();
-
-            np::raii::EnsureGIL ensure_gil{};
-
-            // decode only to construct a UnicodeDecodeError with positional information
-            PyObject *decoded = PyUnicode_Decode(bad, bad_size, "utf-8",
-                                                 "strict");
-            PyMem_RawFree(bad);
-            if (decoded != NULL) {
-                Py_DECREF(decoded);
-                PyErr_Format(PyExc_RuntimeError,
-                             "Invalid UTF-8 bytes found in %s that the Python "
-                             "UTF-8 decoder accepted. If you did not set a "
-                             "custom 'strict' codec, this could indicate memory "
-                             "corruption or a race.", context_name);
-            }
-            return -1;
         }
 
         npy_static_string out_ss = {0, NULL};
@@ -2015,7 +2024,13 @@ fixed_width_bytes_to_string(PyArrayMethod_Context *context, char *const data[],
 
 static PyType_Slot v2s_slots[] = {
     {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>},
-    {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string},
+    {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string<true, true>},
+    {0, NULL}
+};
+
+static PyType_Slot v2r_slots[] = {
+    {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>},
+    {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string<false, false>},
     {0, NULL}
 };
 
@@ -2123,11 +2138,23 @@ static PyType_Slot s2bytes_slots[] = {
     {0, NULL}
 };
 
+static PyType_Slot r2bytes_slots[] = {
+    {NPY_METH_resolve_descriptors, (void *)&string_to_fixed_width_resolve_descriptors},
+    {NPY_METH_strided_loop, (void *)&string_to_fixed_width_bytes<false>},
+    {0, NULL}
+};
+
 // bytes to string
 
 static PyType_Slot bytes2s_slots[] = {
     {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAFE_CASTING>},
-    {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string},
+    {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string<true, true>},
+    {0, NULL}
+};
+
+static PyType_Slot bytes2r_slots[] = {
+    {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAFE_CASTING>},
+    {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string<false, true>},
     {0, NULL}
 };
 
@@ -2184,7 +2211,7 @@ to_float(double x) {
 }
 
 NPY_NO_EXPORT PyArrayMethod_Spec **
-get_casts() {
+get_stringdtype_casts() {
     PyArray_DTypeMeta **t2t_dtypes = get_dtypes(
         &PyArray_StringDType,
         &PyArray_StringDType
@@ -2447,6 +2474,67 @@ get_casts() {
     }
 
     assert(casts[num_casts] == NULL);
+    assert(cast_i == num_casts + 1);
+
+    return casts;
+}
+
+static PyArrayMethod_Spec *
+bytestring_cast_spec(const char *from, const char *to, NPY_CASTING casting,
+                     PyArray_DTypeMeta *dt1, PyArray_DTypeMeta *dt2, PyType_Slot *slots)
+{
+    return get_cast_spec(make_cast_name(from, to), casting, NPY_METH_NO_FLOATINGPOINT_ERRORS,
+                         get_dtypes(dt1, dt2), slots);
+}
+
+// deliberately no casts to or from unicode, StringDType, numeric, or
+// datetime dtypes: text <-> bytes conversion goes through encode/decode
+NPY_NO_EXPORT PyArrayMethod_Spec **
+get_bytestringdtype_casts(void)
+{
+    const int num_casts = 7;
+    const char *name = "ByteStringDType";
+
+    PyArrayMethod_Spec **casts = (PyArrayMethod_Spec **)PyMem_Malloc(
+        (num_casts + 1) * sizeof(PyArrayMethod_Spec *)
+    );
+    if (casts == NULL) {
+        return reinterpret_cast<PyArrayMethod_Spec **>(PyErr_NoMemory());
+    }
+
+    int cast_i = 0;
+
+    casts[cast_i++] = get_cast_spec(
+            make_cast_name(name, name), NPY_UNSAFE_CASTING, NPY_METH_SUPPORTS_UNALIGNED,
+            get_dtypes(&PyArray_ByteStringDType, &PyArray_ByteStringDType), s2s_slots);
+
+    casts[cast_i++] = bytestring_cast_spec("string", name, NPY_SAFE_CASTING,
+            &PyArray_BytesDType, &PyArray_ByteStringDType, bytes2r_slots);
+
+    casts[cast_i++] = bytestring_cast_spec(name, "string", NPY_SAME_KIND_CASTING,
+            &PyArray_ByteStringDType, &PyArray_BytesDType, r2bytes_slots);
+
+    casts[cast_i++] = bytestring_cast_spec(name, "void", NPY_SAME_KIND_CASTING,
+            &PyArray_ByteStringDType, &PyArray_VoidDType, s2v_slots);
+
+    casts[cast_i++] = bytestring_cast_spec("void", name, NPY_SAME_KIND_CASTING,
+            &PyArray_VoidDType, &PyArray_ByteStringDType, v2r_slots);
+
+    casts[cast_i++] = bytestring_cast_spec(name, "bool", NPY_SAME_KIND_CASTING,
+            &PyArray_ByteStringDType, &PyArray_BoolDType, s2b_slots);
+
+    casts[cast_i++] = bytestring_cast_spec("bool", name, NPY_SAME_KIND_CASTING,
+            &PyArray_BoolDType, &PyArray_ByteStringDType, b2s_slots);
+
+    casts[cast_i++] = NULL;
+
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
+    for (int i = 0; i < num_casts; i++) {
+        assert(casts[i] != NULL);
+    }
+
     assert(cast_i == num_casts + 1);
 
     return casts;

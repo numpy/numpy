@@ -233,6 +233,7 @@ from .numerictypes import (
     ulonglong,
     unsignedinteger,
     ushort,
+    vbytes,
     void,
 )
 from .umath import (
@@ -623,6 +624,7 @@ __all__ = [
     "unsignedinteger",
     "ushort",
     "var",
+    "vbytes",
     "vdot",
     "vecdot",
     "vecmat",

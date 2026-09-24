@@ -936,6 +936,13 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         raise TypeError("a dtype must be provided.")
     dtype = np.dtype(dtype)
 
+    if dtype.kind == "R" and converters is None:
+        raise TypeError(
+            "loadtxt reads text and ByteStringDType never assumes an "
+            "encoding; pass explicit converters (e.g. "
+            "converters=str.encode) or read text as StringDType and use "
+            "np.strings.encode")
+
     read_dtype_via_object_chunks = None
     if dtype.kind in 'SUM' and dtype in {
             np.dtype("S0"), np.dtype("U0"), np.dtype("M8"), np.dtype("m8")}:
@@ -2238,6 +2245,17 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                                  default=filling_values[i],
                                  missing_values=missing_values[i],)
             uc_update.append((i, user_conv))
+        if isinstance(dtype, np.dtypes.ByteStringDType):
+            # Unconverted columns would use StringConverter's Latin-1 fallback.
+            # Check the retained columns after applying usecols to converter keys.
+            converted_columns = [False] * nbcols
+            for i, _ in uc_update:
+                converted_columns[i] = True
+            if not uc_update or not all(converted_columns):
+                raise TypeError(
+                    "genfromtxt reads text and ByteStringDType never assumes "
+                    "an encoding; provide explicit converters for every "
+                    "selected column")
         # Make sure we have the corrected keys in user_converters...
         user_converters.update(uc_update)
 
@@ -2432,7 +2450,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # Case #2. We have a basic dtype
         else:
             # We used some user-defined converters
-            if user_converters:
+            # ByteStringDType converters provide bytes for the requested dtype,
+            # not fixed-width column types that could discard data or metadata.
+            if user_converters and not isinstance(dtype, np.dtypes.ByteStringDType):
                 ishomogeneous = True
                 descr = []
                 for i, ttype in enumerate([conv.type for conv in converters]):

@@ -12165,6 +12165,29 @@ class TestSubinterpreterTeardown:
 
 
 class TestArrayConverter:
+    @pytest.mark.parametrize("left,right,expected", [
+        ("U1", "T", "T"),
+        ("S1", "U1", None),
+        ("T", object, None),
+    ])
+    def test_strict_string_promotion(self, left, right, expected):
+        a = np.array(["1"], dtype=left)
+        b = np.array(["2"], dtype=right)
+        conv = _array_converter(a, b)
+        assert conv.result_type() == np.result_type(a, b)
+        if expected is None:
+            with pytest.raises(np.exceptions.DTypePromotionError,
+                               match="Strict string promotion"):
+                conv.result_type(strict_strings=True)
+        else:
+            assert conv.result_type(strict_strings=True) == np.dtype(expected)
+
+    def test_strict_strings_preserves_numeric_promotion(self):
+        conv = _array_converter(np.array(1, dtype=np.int8), 2)
+        assert conv.result_type(strict_strings=True) == np.dtype("int8")
+        assert conv.result_type(ensure_inexact=True, strict_strings=True) == (
+            conv.result_type(ensure_inexact=True))
+
     def test_pyscalars_self_referencing_array_raises(self):
         # gh-32700
         obj_array = np.empty(2, dtype=object)

@@ -221,6 +221,16 @@ A byte string.
 When used in arrays, this type strips trailing null bytes.
 """)
 
+add_newdoc_for_scalar_type('vbytes', '(value=b"", /, *args, **kwargs)', r"""
+A variable-width byte string, the scalar type of `numpy.dtypes.ByteStringDType`.
+
+Unlike `numpy.bytes_`, trailing NUL bytes are preserved when
+stored in an array.
+
+>>> np.array([np.vbytes(b"abc\x00")])[0]
+np.vbytes(b'abc\x00')
+""")
+
 add_newdoc_for_scalar_type('void', '(length_or_data, /, dtype=None)', r"""
 np.void(length_or_data, /, dtype=None)
 

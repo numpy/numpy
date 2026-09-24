@@ -1422,7 +1422,6 @@ _rational_tests_exec(PyObject *m)
     }
 
     npyrational_descr_proto.typeobj = (PyTypeObject *)PyRational2_Type;
-    npyrational_descr_proto.type = 'R';
     npyrational_descr_proto.type_num = 0;
 
     {

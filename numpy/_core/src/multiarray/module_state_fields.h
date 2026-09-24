@@ -203,6 +203,7 @@ extern "C" {
     F(array_ufunc_errmsg_formatter)     \
     F(_clip)                            \
     F(_commastring)                     \
+    F(_convert_to_bytestringdtype_kwargs) \
     F(_convert_to_stringdtype_kwargs)   \
     F(_default_array_repr)              \
     F(_default_array_str)               \
