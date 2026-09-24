@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from collections.abc import Sequence
 from typing import Any, Literal as L, Never, SupportsIndex, overload
 
@@ -19,8 +18,6 @@ __all__ = ["histogram", "histogramdd", "histogram_bin_edges"]
 
 ###
 
-type _BinKind = L["auto", "fd", "doane", "scott", "stone", "rice", "sturges", "sqrt"]
-
 type _2Tuple[T] = tuple[T, T]
 type _3Tuple[T] = tuple[T, T, T]
 
@@ -40,34 +37,55 @@ type _HistogramResult[HistT: np.generic, EdgeT: np.generic] = tuple[_Array1D[His
 ###
 
 # NOTE: The return type can also be complex or `object_`, not only floating like the docstring suggests.
-@overload  # dtype +float64
-def histogram_bin_edges(
-    a: _ArrayLikeInt_co | _NestedSequence[float],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    weights: _WeightsLike | None = None,
-) -> _Array1D[np.float64]: ...
-@overload  # dtype ~complex
-def histogram_bin_edges(
-    a: _NestedList[complex],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
-    range: _Range | None = None,
-    weights: _WeightsLike | None = None,
-) -> _Array1D[np.complex128]: ...
-@overload  # dtype known
-def histogram_bin_edges[ScalarT: np.inexact | np.object_](
-    a: _ArrayLike[ScalarT],
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+@overload  # Nd, 1d T
+def histogram_bin_edges[ScalarT: np.number | np.object_](
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: _ArrayLike1D[ScalarT],
     range: _Range | None = None,
     weights: _WeightsLike | None = None,
 ) -> _Array1D[ScalarT]: ...
-@overload  # dtype unknown
+@overload  # Nd, 1d ~int
 def histogram_bin_edges(
-    a: _ArrayLikeComplex_co,
-    bins: _BinKind | SupportsIndex | ArrayLike = 10,
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: Sequence[int],
     range: _Range | None = None,
     weights: _WeightsLike | None = None,
-) -> _Array1D[Incomplete]: ...
+) -> _Array1D[np.int_]: ...
+@overload  # Nd, 1d ~float
+def histogram_bin_edges(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: list[float],
+    range: _Range | None = None,
+    weights: _WeightsLike | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # Nd +f64
+def histogram_bin_edges(
+    a: _ArrayLikeInt_co | _NestedSequence[float],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    weights: _WeightsLike | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # Nd ~complex
+def histogram_bin_edges(
+    a: _NestedList[complex],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    weights: _WeightsLike | None = None,
+) -> _Array1D[np.complex128]: ...
+@overload  # Nd T
+def histogram_bin_edges[ScalarT: np.inexact | np.object_](
+    a: _ArrayLike[ScalarT],
+    bins: str | SupportsIndex = 10,
+    range: _Range | None = None,
+    weights: _WeightsLike | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # Nd  (fallback)
+def histogram_bin_edges(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    bins: SupportsIndex | ArrayLike = 10,
+    range: _Range | None = None,
+    weights: _WeightsLike | None = None,
+) -> _Array1D[Any]: ...
 
 # There are 7 groups of 2 + 3 overloads (2 for density=True, 3 for density=False) = 35 in total
 @overload  # Nd, 1d T, density=True
