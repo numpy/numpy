@@ -303,7 +303,9 @@ double_minimum_object_maximum_loop(PyArrayMethod_Context *NPY_UNUSED(context),
             return -1;
         }
         *(double *)out1 = nan_min(a, b);
-        Py_XSETREF(*(PyObject **)out2, hi);
+        PyObject *old = *(PyObject **)out2;
+        *(PyObject **)out2 = hi;
+        Py_XDECREF(old);
         in1 += strides[0]; in2 += strides[1];
         out1 += strides[2]; out2 += strides[3];
     }
@@ -332,7 +334,9 @@ double_minimum_object_maximum_reduce_loop(
             return -1;
         }
         *(double *)out_min = nan_min(*(double *)acc_min, val);
-        Py_XSETREF(*(PyObject **)out_max, hi);
+        PyObject *old = *(PyObject **)out_max;
+        *(PyObject **)out_max = hi;
+        Py_XDECREF(old);
         acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
         out_min += strides[3]; out_max += strides[4];
     }
@@ -497,8 +501,8 @@ add_mixed_minimummaximum(PyObject *module, const char *name,
     PyArray_Descr *double_descr = PyArray_DescrFromType(NPY_DOUBLE);
     PyArray_Descr *max_descr = PyArray_DescrFromType(max_typenum);
     if (double_descr == NULL || max_descr == NULL) {
-        Py_XDECREF(double_descr);
-        Py_XDECREF(max_descr);
+        Py_XDECREF((PyObject *)double_descr);
+        Py_XDECREF((PyObject *)max_descr);
         Py_DECREF(ufunc);
         return -1;
     }
