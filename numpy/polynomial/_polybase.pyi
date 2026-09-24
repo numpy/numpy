@@ -56,7 +56,7 @@ class ABCPolyBase(Generic[_NameT_co], abc.ABC):  # noqa: UP046
     @abc.abstractmethod
     def basis_name(self) -> _NameT_co: ...
 
-    coef: _CoefSeries
+    coef: _Series[np.float64 | Any]
 
     def __init__(
         self,

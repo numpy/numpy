@@ -98,7 +98,7 @@ assert_type(type(PS_herme).cast(PS_leg), npp.HermiteE)
 
 # attributes / properties
 
-assert_type(PS_all.coef, _Ar_x_n)
+assert_type(PS_all.coef, np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
 assert_type(PS_all.domain, _Ar_x_2)
 assert_type(PS_all.window, _Ar_x_2)
 assert_type(PS_all.symbol, str)
