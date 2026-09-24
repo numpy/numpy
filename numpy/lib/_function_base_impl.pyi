@@ -907,58 +907,56 @@ def copy[ScalarT: np.generic](
 def copy(a: ArrayLike, order: _OrderKACF = "K", subok: L[False] = False) -> NDArray[Incomplete]: ...
 
 #
-# A single selected axis returns one array, regardless of the input rank.
-@overload
+@overload  # Nd, known inexact scalar-type, scalar-like axes
 def gradient[ShapeT: _Shape, ScalarT: np.inexact | np.timedelta64](
     f: _Array[ShapeT, ScalarT],
     *varargs: _ArrayLikeNumber_co,
     axis: SupportsIndex | tuple[SupportsIndex],
     edge_order: L[1, 2] = 1,
 ) -> _Array[ShapeT, ScalarT]: ...
-@overload
+@overload  # Nd, datetime64 scalar-type, scalar-like axes
 def gradient[ShapeT: _Shape](
     f: _Array[ShapeT, np.datetime64],
     *varargs: _ArrayLikeNumber_co,
     axis: SupportsIndex | tuple[SupportsIndex],
     edge_order: L[1, 2] = 1,
 ) -> _Array[ShapeT, np.timedelta64]: ...
-# If axes are specified, that determines the output tuple length, not the input rank.
-@overload
+@overload  # Nd, known inexact scalar-type, 2-tuple axes
 def gradient[ShapeT: _Shape, ScalarT: np.inexact | np.timedelta64](
     f: _Array[ShapeT, ScalarT],
     *varargs: _ArrayLikeNumber_co,
     axis: _Tuple2[SupportsIndex],
     edge_order: L[1, 2] = 1,
 ) -> _Tuple2[_Array[ShapeT, ScalarT]]: ...
-@overload
+@overload  # Nd, known inexact scalar-type, 3-tuple axes
 def gradient[ShapeT: _Shape, ScalarT: np.inexact | np.timedelta64](
     f: _Array[ShapeT, ScalarT],
     *varargs: _ArrayLikeNumber_co,
     axis: _Tuple3[SupportsIndex],
     edge_order: L[1, 2] = 1,
 ) -> _Tuple3[_Array[ShapeT, ScalarT]]: ...
-@overload
+@overload  # Nd, datetime64 scalar-type, 2-tuple axes
 def gradient[ShapeT: _Shape](
     f: _Array[ShapeT, np.datetime64],
     *varargs: _ArrayLikeNumber_co,
     axis: _Tuple2[SupportsIndex],
     edge_order: L[1, 2] = 1,
 ) -> _Tuple2[_Array[ShapeT, np.timedelta64]]: ...
-@overload
+@overload  # Nd, datetime64 scalar-type, 3-tuple axes
 def gradient[ShapeT: _Shape](
     f: _Array[ShapeT, np.datetime64],
     *varargs: _ArrayLikeNumber_co,
     axis: _Tuple3[SupportsIndex],
     edge_order: L[1, 2] = 1,
 ) -> _Tuple3[_Array[ShapeT, np.timedelta64]]: ...
-@overload  # explicit axes with unknown length
+@overload  # Nd, known inexact scalar-type, ? axes (fallback)
 def gradient[ShapeT: _Shape, ScalarT: np.inexact | np.timedelta64](
     f: _Array[ShapeT, ScalarT],
     *varargs: _ArrayLikeNumber_co,
     axis: _ShapeLike,
     edge_order: L[1, 2] = 1,
 ) -> _Array[ShapeT, ScalarT] | tuple[_Array[ShapeT, ScalarT], ...]: ...
-@overload  # explicit axes with unknown length, datetime64
+@overload  # Nd, datetime64 scalar-type, ? axes (fallback)
 def gradient[ShapeT: _Shape](
     f: _Array[ShapeT, np.datetime64],
     *varargs: _ArrayLikeNumber_co,
