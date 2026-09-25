@@ -1,0 +1,6 @@
+Invalid index error message now shows the type of the indexing object
+---------------------------------------------------------------------
+The error raised when an array is indexed with an invalid object is now
+the short ``cannot index with <type>`` form (showing the type of the
+object used for indexing) instead of enumerating the accepted index
+types (gh-26115).

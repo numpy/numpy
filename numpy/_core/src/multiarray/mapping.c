@@ -437,11 +437,8 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                 if (arr == NULL) {
                     // Raise a helpful error if this was a ValueError (i.e. could not cast)
                     if (PyErr_ExceptionMatches(PyExc_ValueError)) {
-                        PyErr_Format(PyExc_IndexError,
-                            "only integers, slices (`:`), ellipsis (`...`)%s and integer or boolean "
-                            "arrays are valid indices",
-                            is_flatiter_object ? "" : ", numpy.newaxis (`None`)"
-                        );
+                        PyErr_Format(PyExc_IndexError, "cannot index with %R",
+                                     Py_TYPE(index));
                     }
                     goto failed_building_indices;
                 }
@@ -618,11 +615,8 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
         }
         else {
             /* The input was not an array, so give a general error message */
-            PyErr_Format(PyExc_IndexError,
-                    "only integers, slices (`:`), ellipsis (`...`)%s and integer or boolean "
-                    "arrays are valid indices",
-                    is_flatiter_object ? "" : ", numpy.newaxis (`None`)"
-                );
+            PyErr_Format(PyExc_IndexError, "cannot index with %R",
+                         Py_TYPE(index));
         }
         goto failed_building_indices;
     }
