@@ -60,7 +60,7 @@ def trimseq(seq):
         return seq[:i + 1]
 
 
-def as_series(alist, trim=True):
+def as_series(alist, trim=True, copy=True):
     """
     Return argument as a list of 1-d arrays.
 
@@ -78,6 +78,13 @@ def as_series(alist, trim=True):
     trim : boolean, optional
         When True, trailing zeros are removed from the inputs.
         When False, the inputs are passed through intact.
+    copy : bool or None, optional
+        The `copy` argument passed on to `numpy.array` when constructing
+        the returned arrays.  With the default True the returned arrays
+        are always copies; with None inputs that already have the common
+        dtype may be returned uncopied.
+
+        .. versionadded:: 2.6.0
 
     Returns
     -------
@@ -137,7 +144,7 @@ def as_series(alist, trim=True):
         if not has_one_object_type:
             raise ValueError("Coefficient arrays have no common type") from e
     else:
-        ret = [np.array(a, copy=True, dtype=dtype) for a in arrays]
+        ret = [np.array(a, copy=copy, dtype=dtype) for a in arrays]
     return ret
 
 

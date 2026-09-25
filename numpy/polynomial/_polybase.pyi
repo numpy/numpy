@@ -67,6 +67,15 @@ class ABCPolyBase(Generic[_NameT_co], abc.ABC):  # noqa: UP046
         symbol: str = "x",
     ) -> None: ...
 
+    @classmethod
+    def _fromdata(
+        cls,
+        coef: _CoefSeries,
+        domain: _CoefSeries,
+        window: _CoefSeries,
+        symbol: str,
+    ) -> Self: ...
+
     #
     @overload
     def __call__[PolyT: ABCPolyBase](self, /, arg: PolyT) -> PolyT: ...
