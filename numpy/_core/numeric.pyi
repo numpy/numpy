@@ -11,6 +11,7 @@ from typing import (
     TypeVar,
     overload,
 )
+from typing_extensions import deprecated
 
 import numpy as np
 from numpy import (
@@ -1312,6 +1313,7 @@ def count_nonzero(a: ArrayLike, axis: _ShapeLike, *, keepdims: L[False] = False)
 def count_nonzero(a: ArrayLike, axis: _ShapeLike | None = None, *, keepdims: py_bool = False) -> Any: ...
 
 #
+@deprecated("numpy.isfortran is deprecated as of version 2.6. Use a.flags.fnc instead.")
 def isfortran(a: ndarray | generic) -> py_bool: ...
 
 #

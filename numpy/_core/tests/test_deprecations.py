@@ -583,3 +583,12 @@ class TestTakeOutDtype(_DeprecationTestCase):
         different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
 
         self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
+
+
+class TestIsfortran(_DeprecationTestCase):
+    # Deprecation in NumPy 2.6, 2026-09
+    message = "numpy.isfortran is deprecated."
+
+    def test_array_isfortran_deprecated(self):
+        a = np.array([1])
+        self.assert_deprecated(lambda: np.isfortran(a))

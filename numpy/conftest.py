@@ -195,6 +195,7 @@ if HAVE_SCPDT:
                 "The chararray class is deprecated",  # char.chararray
                 "numpy.typename is deprecated",  # typename -> dtype.name
                 "numpy.ma.round_ is deprecated",  # ma.round_ -> ma.round
+                "numpy.isfortran is deprecated",  # numpy.isfortran -> a.flags.fnc
         ]
         msg = "|".join(msgs)
 

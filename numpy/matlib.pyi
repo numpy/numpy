@@ -248,7 +248,7 @@ from numpy import (  # noqa: F401
     iscomplexobj,
     isdtype,
     isfinite,
-    isfortran,
+    isfortran,  # type: ignore[deprecated]
     isin,
     isinf,
     isnan,

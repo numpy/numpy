@@ -122,7 +122,7 @@ from .numeric import (
     inf,
     inner,
     isclose,
-    isfortran,
+    isfortran,  # type: ignore[deprecated]
     isscalar,
     lexsort,
     little_endian,

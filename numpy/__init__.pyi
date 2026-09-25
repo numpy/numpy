@@ -337,7 +337,7 @@ from numpy._core.numeric import (
     full,
     full_like,
     count_nonzero,
-    isfortran,
+    isfortran,  # type: ignore[deprecated]
     argwhere,
     flatnonzero,
     correlate,
