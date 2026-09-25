@@ -1,0 +1,12 @@
+``flatiter``, ``broadcast`` and ``nditer`` are now heap types
+-------------------------------------------------------------
+`numpy.flatiter`, `numpy.broadcast` and `numpy.nditer` are now created as heap
+types at import time instead of being statically allocated. The C API names
+``PyArrayIter_Type``, ``PyArrayMultiIter_Type`` and ``NpyIter_Type`` are
+unchanged and are still reached through ``PyArray_API``, so C code that creates
+these objects or checks their type needs no change.
+
+C extensions can no longer use any of the three as the base of a statically
+allocated type, because ``PyType_Ready`` raises a ``TypeError`` for a static
+type that has a heap type in its MRO. None of them set ``Py_TPFLAGS_BASETYPE``,
+so subclassing them from Python was already an error and remains one.

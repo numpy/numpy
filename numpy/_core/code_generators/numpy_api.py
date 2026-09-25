@@ -98,6 +98,15 @@ multiarray_types_api = {
     # End 2.0 API
 }
 
+# Types from `multiarray_types_api` that are created as heap types at import
+# time.  Their address is not a compile time constant, so the generated table
+# leaves their slot NULL and `_fill_heap_type_api` fills it in.
+multiarray_heap_types = {
+    'PyArrayIter_Type',
+    'PyArrayMultiIter_Type',
+    'NpyIter_Type',
+}
+
 # define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
 # define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[7])
 # define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
