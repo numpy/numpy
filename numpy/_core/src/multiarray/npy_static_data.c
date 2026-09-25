@@ -15,6 +15,8 @@
 #include "extobj.h"
 #include "module_state.h"
 
+#include "array_method_masked.h"
+
 #define INTERN_STRING(struct_member, string)                              \
     assert(interned_str->struct_member == NULL);                         \
     interned_str->struct_member = PyUnicode_InternFromString(string);    \
@@ -328,6 +330,9 @@ initialize_static_globals(void)
         }
     }
 
+#include "array_method_masked.dispatch.h"
+    NPY_CPU_DISPATCH_CALL(cdata->get_masked_strided_loop =
+                          &npy_get_masked_strided_loop);
     return 0;
 }
 
