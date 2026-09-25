@@ -81,6 +81,9 @@ __all__ = [
     'polyvalnd', 'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d',
     'polycompanion']
 
+import cmath
+import math
+
 import numpy as np
 from numpy._core.overrides import array_function_dispatch as _array_function_dispatch
 
@@ -88,6 +91,42 @@ from . import polyutils as pu
 from ._polybase import ABCPolyBase
 
 polytrim = pu.trimcoef
+
+
+class _QuadraticOverflow(Exception):
+    """Internal control-flow signal for polyroots' quadratic branch: a
+    non-finite intermediate result, translated into the same
+    LinAlgError the general eigenvalue path raises for coefficients
+    too extreme for float64. Never raised to callers."""
+
+
+# dtypes polyroots' quadratic fast path accepts directly; anything
+# else (object, integer, float16, longdouble, ...) falls back to the
+# general as_series()-based path.
+_QUADRATIC_FAST_PATH_DTYPES = frozenset([
+    np.dtype(np.float32), np.dtype(np.float64),
+    np.dtype(np.complex64), np.dtype(np.complex128)])
+
+# Computed once rather than on every float32/complex64 polyroots()
+# call for a quadratic.
+_FLOAT32_MAX = np.finfo(np.float32).max
+
+
+def _two_product(a, b):
+    """(p, e) with p+e == a*b exactly, via Dekker's error-free
+    split (no FMA needed). Used to recompute the quadratic's
+    discriminant near the real/complex-root boundary, where the
+    ordinary b**2 - 4*a*c can lose its sign to cancellation."""
+    p = a * b
+    split = a * 134217729.0  # 2**27 + 1: Veltkamp splitter
+    a_hi = split - (split - a)
+    a_lo = a - a_hi
+    split = b * 134217729.0
+    b_hi = split - (split - b)
+    b_lo = b - b_hi
+    e = ((a_hi * b_hi - p) + a_hi * b_lo + a_lo * b_hi) + a_lo * b_lo
+    return p, e
+
 
 #
 # These are constant arrays are of integer type so as to be compatible
@@ -1572,12 +1611,15 @@ def polyroots(c):
     Notes
     -----
     The root estimates are obtained as the eigenvalues of the companion
-    matrix, Roots far from the origin of the complex plane may have large
+    matrix. Roots far from the origin of the complex plane may have large
     errors due to the numerical instability of the power series for such
     values. Roots with multiplicity greater than 1 will also show larger
     errors as the value of the series near such points is relatively
     insensitive to errors in the roots. Isolated roots near the origin can
     be improved by a few iterations of Newton's method.
+
+    Degree one and two polynomials use explicit formulas instead of the
+    eigenvalue method above.
 
     Examples
     --------
@@ -1592,11 +1634,137 @@ def polyroots(c):
 
     """  # noqa: E501
     # c is a trimmed copy
-    [c] = pu.as_series([c])
-    if len(c) < 2:
+    #
+    # as_series() always makes a defensive copy and promotes dtype via
+    # common_type, neither of which this function needs when c is
+    # already a clean 1-d array with an accepted dtype and nothing to
+    # trim - it only ever reads c. Falls back to as_series() for
+    # anything else (object/integer dtype, a plain list, 2-d input, a
+    # trailing zero), unchanged.
+    if not (type(c) is np.ndarray and c.ndim == 1 and c.size > 0
+            and c.dtype in _QUADRATIC_FAST_PATH_DTYPES and c[-1] != 0):
+        [c] = pu.as_series([c])
+    n = len(c)
+    if n < 2:
         return np.array([], dtype=c.dtype)
-    if len(c) == 2:
+    if n == 2:
         return np.array([-c[0] / c[1]])
+    if n == 3:
+        # Explicit quadratic formula: pick the sign of the square root
+        # that avoids cancellation in one root, get the other from the
+        # product-of-roots relation c0/c2 = r0*r1. Normalizing by the
+        # largest coefficient keeps c1**2 and c2*c0 away from
+        # overflow/underflow.
+        is_complex_in = c.dtype.kind == 'c'
+        try:
+            c0, c1, c2 = c.tolist()
+            s = max(abs(c0), abs(c1), abs(c2))
+            raw0, raw1, raw2 = c0, c1, c2
+            c0, c1, c2 = c0 / s, c1 / s, c2 / s
+            if raw0 == 0:
+                # A literal zero constant term factors exactly as
+                # x*(c2*x + c1): roots 0 and -c1/c2, no sqrt needed.
+                # This must check the unnormalized raw0, not the
+                # normalized c0 above - c0 can also round to 0 when
+                # raw0 is merely tiny relative to c1/c2 (coefficients
+                # spanning hundreds of orders of magnitude), where
+                # neither root need actually be near zero, and forcing
+                # one to exactly 0 would be wrong in that case.
+                r0, r1 = (0j if is_complex_in else 0.0), -raw1 / raw2
+                is_complex_out = is_complex_in
+                if is_complex_out:
+                    if (r0.real, r0.imag) > (r1.real, r1.imag):
+                        r0, r1 = r1, r0
+                elif r0 > r1:
+                    r0, r1 = r1, r0
+            else:
+                disc = c1 * c1 - 4 * c2 * c0
+                if not is_complex_in:
+                    # b**2 and 4ac can be much larger than their
+                    # difference near the real/complex boundary, so disc
+                    # can round to the wrong sign, even exactly 0.
+                    # Recompute with error-compensated products when
+                    # that's a risk; the power-of-2 rescale keeps it exact
+                    # and overflow-safe.
+                    bound = max(abs(c1 * c1), abs(4 * c2 * c0))
+                    if bound > 0 and abs(disc) < 1e-9 * bound:
+                        # min(..., 1023): the nearest power of 2 to s can
+                        # itself round up past float64's own max (2**1024
+                        # isn't representable), so cap it - the rescale
+                        # only needs to land raw0/raw1/raw2 in a safe
+                        # range, not hit s exactly.
+                        exp = min(math.frexp(s)[1], 1023)
+                        s2 = math.ldexp(1.0, exp)
+                        c0s, c1s, c2s = raw0 / s2, raw1 / s2, raw2 / s2
+                        p1, e1 = _two_product(c1s, c1s)
+                        p2, e2 = _two_product(4 * c2s, c0s)
+                        disc = ((p1 - p2) + (e1 - e2)) * (s2 / s) ** 2
+                if not is_complex_in and disc < 0:
+                    # Real coefficients with disc < 0 give an exact
+                    # conjugate pair (Vieta's sum/product are both real).
+                    # Deriving the second root via the product-of-roots
+                    # relation below only reproduces that up to rounding;
+                    # building both from the same real/imaginary parts
+                    # keeps it exact.
+                    re = -0.5 * c1 / c2
+                    im = abs(math.sqrt(-disc) / (2 * c2))
+                    r0, r1 = re - 1j * im, re + 1j * im
+                    is_complex_out = True
+                else:
+                    d = cmath.sqrt(disc) if is_complex_in else math.sqrt(disc)
+                    cond = ((c1.conjugate() * d).real < 0 if is_complex_in
+                            else c1 * d < 0)
+                    if cond:
+                        d = -d
+                    q = -0.5 * (c1 + d)
+                    if q == 0:
+                        r0, r1 = (0j if is_complex_in else 0.0), -c1 / c2
+                    else:
+                        r0, r1 = q / c2, c0 / q
+                    is_complex_out = (is_complex_in or isinstance(r0, complex)
+                                      or isinstance(r1, complex))
+                    # Order directly rather than via array .sort(); the
+                    # disc < 0 branch above is already ordered.
+                    if is_complex_out:
+                        if (r0.real, r0.imag) > (r1.real, r1.imag):
+                            r0, r1 = r1, r0
+                    elif r0 > r1:
+                        r0, r1 = r1, r0
+            ok = ((cmath.isfinite(r0) and cmath.isfinite(r1)) if is_complex_out
+                  else (math.isfinite(r0) and math.isfinite(r1)))
+            if not ok:
+                raise _QuadraticOverflow
+        except (ZeroDivisionError, _QuadraticOverflow):
+            # 0/0 (Python raises; numpy would give nan) or a
+            # non-finite result both mean a root doesn't fit - the
+            # same case the eigenvalue path below raises for.
+            from numpy.linalg import LinAlgError
+            raise LinAlgError(
+                "Array must not contain infs or NaNs") from None
+
+        if is_complex_out:
+            dtype = c.dtype if is_complex_in else (
+                np.complex64 if c.dtype == np.float32 else np.complex128)
+        else:
+            dtype = c.dtype
+
+        if dtype != np.float64 and dtype != np.complex128:
+            # Root magnitudes are unbounded even though normalization
+            # keeps intermediates in range, so check against the
+            # target dtype's own max before downcasting (float16
+            # needs this too, not just float32/complex64).
+            cap = float(_FLOAT32_MAX if dtype == np.float32 or dtype == np.complex64
+                        else np.finfo(dtype).max)
+            for v in (r0, r1):
+                parts = (v.real, v.imag) if is_complex_out else (v,)
+                if any(abs(p) > cap for p in parts):
+                    from numpy.linalg import LinAlgError
+                    raise LinAlgError(
+                        "Array must not contain infs or NaNs")
+        # Already ordered (see above) and dtype is already known for
+        # certain, so skip the array .sort() and the generic
+        # real-vs-complex re-check the eigenvalue path below needs.
+        return np.array((r0, r1), dtype=dtype)
 
     m = polycompanion(c)
     r = np.linalg.eigvals(m)
@@ -1604,7 +1772,7 @@ def polyroots(c):
 
     # backwards compat: return real values if possible
     from numpy.linalg._linalg import _to_real_if_imag_zero
-    r = _to_real_if_imag_zero(r, m)
+    r = _to_real_if_imag_zero(r, c)
     return r
 
 
