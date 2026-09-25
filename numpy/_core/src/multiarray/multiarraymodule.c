@@ -979,12 +979,12 @@ fail:
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 {
-    return PyArray_MatrixProduct2(op1, op2, NULL);
+    return PyArray_MatrixProduct_int(op1, op2, NULL, 0);
 }
 
 /* Internal matrix product; warns on dimension interleaving if warn_on_interleave. */
 NPY_NO_EXPORT PyObject *
-matrixproduct2_impl(PyObject *op1, PyObject *op2, PyArrayObject* out,
+PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
                     int warn_on_interleave)
 {
     PyArrayObject *ap1, *ap2, *out_buf = NULL, *result = NULL;
@@ -1168,7 +1168,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 {
     /* Public API: no deprecation warning (used by np.inner and C extensions) */
-    return matrixproduct2_impl(op1, op2, out, 0);
+    return PyArray_MatrixProduct_int(op1, op2, out, 0);
 }
 
 
@@ -2622,7 +2622,7 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy),
     }
     
     /* Call internal impl with warn_on_interleave=1 for np.dot */
-    ret = (PyArrayObject *)matrixproduct2_impl(a, v, (PyArrayObject *)o, 1);
+    ret = (PyArrayObject *)PyArray_MatrixProduct_int(a, v, (PyArrayObject *)o, 1);
     if (ret == NULL) {
         return NULL;
     }

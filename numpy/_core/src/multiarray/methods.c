@@ -2547,7 +2547,7 @@ array_dot(PyArrayObject *self,
     }
     
     /* Call internal impl with warn_on_interleave=1 for ndarray.dot */
-    ret = (PyArrayObject *)matrixproduct2_impl(a, b, (PyArrayObject *)o, 1);
+    ret = (PyArrayObject *)PyArray_MatrixProduct_int(a, b, (PyArrayObject *)o, 1);
     if (ret == NULL) {
         return NULL;
     }
