@@ -27,15 +27,27 @@ template<typename T>
 size_t
 compress_kernel(T *dst, const T *src, const unsigned char *mask, size_t n)
 {
+    size_t i = 0, j = 0;
+
 #if NPY_HWY
     const hn::ScalableTag<T> d;
     const hn::Rebind<uint8_t, decltype(d)> d8;
     const size_t N = hn::Lanes(d);
-#endif
 
-    size_t i = 0, j = 0;
-
-#if NPY_HWY
+    for (; i + 4 * N <= n; i += 4 * N) {
+        const auto m1 = hn::PromoteMaskTo(d, d8,
+                                         hn::Ne(hn::LoadU(d8, mask + i),         hn::Zero(d8)));
+        const auto m2 = hn::PromoteMaskTo(d, d8,
+                                         hn::Ne(hn::LoadU(d8, mask + i + N),     hn::Zero(d8)));
+        const auto m3 = hn::PromoteMaskTo(d, d8,
+                                         hn::Ne(hn::LoadU(d8, mask + i + 2 * N), hn::Zero(d8)));
+        const auto m4 = hn::PromoteMaskTo(d, d8,
+                                         hn::Ne(hn::LoadU(d8, mask + i + 3 * N), hn::Zero(d8)));
+        j += hn::CompressStore(hn::LoadU(d, src + i),         m1, d, dst + j);
+        j += hn::CompressStore(hn::LoadU(d, src + i + N),     m2, d, dst + j);
+        j += hn::CompressStore(hn::LoadU(d, src + i + 2 * N), m3, d, dst + j);
+        j += hn::CompressStore(hn::LoadU(d, src + i + 3 * N), m4, d, dst + j);
+    }
     for (; i + N <= n; i += N) {
         const auto m = hn::PromoteMaskTo(d, d8,
                                          hn::Ne(hn::LoadU(d8, mask + i), hn::Zero(d8)));
@@ -54,15 +66,31 @@ template <typename T>
 size_t
 expand_kernel(T *dst, const T *src, const unsigned char *mask, size_t n)
 {
+    size_t i = 0, j = 0;
+
 #if NPY_MASKED_EXPAND_HWY
     const hn::ScalableTag<T> d;
     const hn::Rebind<uint8_t, decltype(d)> d8;
     const size_t N = hn::Lanes(d);
-#endif
 
-    size_t i = 0, j = 0;
-
-#if NPY_MASKED_EXPAND_HWY
+    for (; i + 4 * N <= n; i += 4 * N) {
+        const auto m1 = hn::PromoteMaskTo(d, d8,
+                                         hn::Ne(hn::LoadU(d8, mask + i),         hn::Zero(d8)));
+        const auto m2 = hn::PromoteMaskTo(d, d8,
+                                         hn::Ne(hn::LoadU(d8, mask + i + N),     hn::Zero(d8)));
+        const auto m3 = hn::PromoteMaskTo(d, d8,
+                                         hn::Ne(hn::LoadU(d8, mask + i + 2 * N), hn::Zero(d8)));
+        const auto m4 = hn::PromoteMaskTo(d, d8,
+                                         hn::Ne(hn::LoadU(d8, mask + i + 3 * N), hn::Zero(d8)));
+        hn::BlendedStore(hn::LoadExpand(m1, d, src + j), m1, d, dst + i);
+        j += hn::CountTrue(d, m1);
+        hn::BlendedStore(hn::LoadExpand(m2, d, src + j), m2, d, dst + i + N);
+        j += hn::CountTrue(d, m2);
+        hn::BlendedStore(hn::LoadExpand(m3, d, src + j), m3, d, dst + i + 2 * N);
+        j += hn::CountTrue(d, m3);
+        hn::BlendedStore(hn::LoadExpand(m4, d, src + j), m4, d, dst + i + 3 * N);
+        j += hn::CountTrue(d, m4);
+    }
     for (; i + N <= n; i += N) {
         const auto m = hn::PromoteMaskTo(d, d8,
                                          hn::Ne(hn::LoadU(d8, mask + i), hn::Zero(d8)));
@@ -81,18 +109,26 @@ expand_kernel(T *dst, const T *src, const unsigned char *mask, size_t n)
 size_t
 count_nonzero(const unsigned char *mask, size_t n)
 {
+    size_t i = 0, cnt = 0;
+
 #if NPY_HWY
     assert(n <= 255);
     const hn::CappedTag<uint8_t, 128> d8;
     const size_t N = hn::Lanes(d8);
 
     auto zero = hn::Zero(d8);
-    auto acc = zero;
-#endif
+    auto acc1 = zero;
+    auto acc2 = zero;
+    auto acc3 = zero;
+    auto acc4 = zero;
 
-    size_t i = 0, cnt = 0;
-
-#if NPY_HWY
+    for (; i + 4 * N <= n; i += 4 * N) {
+        acc1 = hn::Sub(acc1, hn::VecFromMask(d8, hn::Ne(hn::LoadU(d8, mask + i),         zero)));
+        acc2 = hn::Sub(acc2, hn::VecFromMask(d8, hn::Ne(hn::LoadU(d8, mask + i + N),     zero)));
+        acc3 = hn::Sub(acc3, hn::VecFromMask(d8, hn::Ne(hn::LoadU(d8, mask + i + 2 * N), zero)));
+        acc4 = hn::Sub(acc4, hn::VecFromMask(d8, hn::Ne(hn::LoadU(d8, mask + i + 3 * N), zero)));
+    }
+    auto acc = hn::Add(hn::Add(acc1, acc2), hn::Add(acc3, acc4));
     for (; i + N <= n; i += N) {
         acc = hn::Sub(acc, hn::VecFromMask(d8, hn::Ne(hn::LoadU(d8, mask + i), zero)));
     }
