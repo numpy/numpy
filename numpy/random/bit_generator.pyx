@@ -534,18 +534,19 @@ cdef class BitGenerator:
     """
 
     def __init__(self, seed=None):
-        self.lock = RLock()
-        self._bitgen.state = <void *>0
         if type(self) is BitGenerator:
             raise NotImplementedError('BitGenerator is a base class and cannot be instantized')
 
+        if not isinstance(seed, ISeedSequence):
+            seed = SeedSequence(seed)
+
+        self.lock = RLock()
+        self._bitgen.state = <void *>0
         self._ctypes = None
         self._cffi = None
 
         cdef const char *name = "BitGenerator"
         self.capsule = PyCapsule_New(<void *>&self._bitgen, name, NULL)
-        if not isinstance(seed, ISeedSequence):
-            seed = SeedSequence(seed)
         self._seed_seq = seed
 
     # Pickling support:

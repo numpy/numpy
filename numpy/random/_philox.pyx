@@ -166,11 +166,16 @@ cdef class Philox(BitGenerator):
     def __init__(self, seed=None, counter=None, key=None):
         if seed is not None and key is not None:
             raise ValueError('seed and key cannot be both used')
+
+        counter = 0 if counter is None else counter
+        counter = int_to_array(counter, 'counter', 256, 64)
+        if key is not None:
+            key = int_to_array(key, 'key', 128, 64)
+
         BitGenerator.__init__(self, seed)
         self.rng_state.ctr = &self.philox_ctr
         self.rng_state.key = &self.philox_key
         if key is not None:
-            key = int_to_array(key, 'key', 128, 64)
             for i in range(2):
                 self.rng_state.key.v[i] = key[i]
             # The seed sequence is invalid.
@@ -179,8 +184,6 @@ cdef class Philox(BitGenerator):
             key = self._seed_seq.generate_state(2, np.uint64)
             for i in range(2):
                 self.rng_state.key.v[i] = key[i]
-        counter = 0 if counter is None else counter
-        counter = int_to_array(counter, 'counter', 256, 64)
         for i in range(4):
             self.rng_state.ctr.v[i] = counter[i]
 
