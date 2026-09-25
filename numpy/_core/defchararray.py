@@ -6,11 +6,8 @@ operations and methods.
    The `chararray` class exists for backwards compatibility with
    Numarray, it is not recommended for new development. Starting from numpy
    1.4, if one needs arrays of strings, it is recommended to use arrays of
-   `dtype` `object_`, `bytes_` or `str_`, and use the free functions
+   `dtype` `object_`, `str_` or `bytes_`, and use the free functions
    in the `numpy.char` module for fast vectorized string operations.
-
-Some methods will only be available if the corresponding string method is
-available in your version of Python.
 
 The preferred alias for `defchararray` is `numpy.char`.
 
@@ -69,7 +66,7 @@ def equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of str or unicode
+    x1, x2 : array_like of `str_` or `bytes_`
         Input arrays of the same shape.
 
     Returns
@@ -103,7 +100,7 @@ def not_equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of str or unicode
+    x1, x2 : array_like of `str_` or `bytes_`
         Input arrays of the same shape.
 
     Returns
@@ -138,7 +135,7 @@ def greater_equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of str or unicode
+    x1, x2 : array_like of `str_` or `bytes_`
         Input arrays of the same shape.
 
     Returns
@@ -172,7 +169,7 @@ def less_equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of str or unicode
+    x1, x2 : array_like of `str_` or `bytes_`
         Input arrays of the same shape.
 
     Returns
@@ -206,7 +203,7 @@ def greater(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of str or unicode
+    x1, x2 : array_like of `str_` or `bytes_`
         Input arrays of the same shape.
 
     Returns
@@ -240,7 +237,7 @@ def less(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of str or unicode
+    x1, x2 : array_like of `str_` or `bytes_`
         Input arrays of the same shape.
 
     Returns
@@ -274,14 +271,14 @@ def multiply(a, i):
 
     Parameters
     ----------
-    a : array_like, with ``bytes_`` or ``str_`` dtype
+    a : array_like, with ``str_`` or ``bytes_`` dtype
 
     i : array_like, with any integer dtype
 
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input types
+        Output array of `str_` or `bytes_`, depending on input types
 
     Notes
     -----
@@ -330,15 +327,15 @@ def partition(a, sep):
 
     Parameters
     ----------
-    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    a : array-like, with ``StringDType``, ``str_``, or ``bytes_`` dtype
         Input array
-    sep : {str, unicode}
+    sep : ``StringDType``, ``str_``, or ``bytes_``
         Separator to split each string element in `a`.
 
     Returns
     -------
     out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        Output array of ``StringDType``, ``str_`` or ``bytes_`` dtype,
         depending on input types. The output array will have an extra
         dimension with 3 elements per input element.
 
@@ -372,15 +369,15 @@ def rpartition(a, sep):
 
     Parameters
     ----------
-    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+    a : array-like, with ``StringDType``, ``str_``, or ``bytes_`` dtype
         Input array
-    sep : str or unicode
+    sep : ``StringDType``, ``str_``, or ``bytes_``
         Right-most separator to split each element in array.
 
     Returns
     -------
     out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        Output array of ``StringDType``, ``str_`` or ``bytes_`` dtype,
         depending on input types. The output array will have an extra
         dimension with 3 elements per input element.
 
@@ -407,7 +404,7 @@ class chararray(ndarray):
     chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,
               strides=None, order=None)
 
-    Provides a convenient view on arrays of string and unicode values.
+    Provides a convenient view on arrays of `~numpy.str_` or `~numpy.bytes_` values.
 
     .. deprecated:: 2.5
        ``chararray`` is deprecated. Use an ``ndarray`` with a string or
@@ -417,11 +414,11 @@ class chararray(ndarray):
        The `chararray` class exists for backwards compatibility with
        Numarray, it is not recommended for new development. Starting from numpy
        1.4, if one needs arrays of strings, it is recommended to use arrays of
-       `dtype` `~numpy.object_`, `~numpy.bytes_` or `~numpy.str_`, and use
+       `dtype` `~numpy.object_`, `~numpy.str_` or `~numpy.bytes_`, and use
        the free functions in the `numpy.char` module for fast vectorized
        string operations.
 
-    Versus a NumPy array of dtype `~numpy.bytes_` or `~numpy.str_`, this
+    Versus a NumPy array of dtype `~numpy.str_` or `~numpy.bytes_`, this
     class adds the following functionality:
 
     1) values automatically have whitespace removed from the end
@@ -513,7 +510,7 @@ class chararray(ndarray):
     itemsize : int, optional
         Length of each array element, in number of characters. Default is 1.
     unicode : bool, optional
-        Are the array elements of type unicode (True) or string (False).
+        Are the array elements of type `~numpy.str_` (True) or `~numpy.bytes_` (False).
         Default is False.
     buffer : object exposing the buffer interface or str, optional
         Memory address of the start of the array data.  Default is None,
@@ -666,7 +663,7 @@ class chararray(ndarray):
     def __add__(self, other):
         """
         Return (self + other), that is string concatenation,
-        element-wise for a pair of array_likes of str or unicode.
+        element-wise for a pair of array_likes of `str_` or `bytes_`.
 
         See Also
         --------
@@ -677,7 +674,7 @@ class chararray(ndarray):
     def __radd__(self, other):
         """
         Return (other + self), that is string concatenation,
-        element-wise for a pair of array_likes of `bytes_` or `str_`.
+        element-wise for a pair of array_likes of `str_` or `bytes_`.
 
         See Also
         --------
@@ -710,8 +707,7 @@ class chararray(ndarray):
     def __mod__(self, i):
         """
         Return (self % i), that is pre-Python 2.6 string formatting
-        (interpolation), element-wise for a pair of array_likes of `bytes_`
-        or `str_`.
+        (interpolation), element-wise for a pair of array_likes of `str_` or `bytes_`.
 
         See Also
         --------
@@ -1229,10 +1225,10 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     .. note::
        This class is provided for numarray backward-compatibility.
        New code (not concerned with numarray compatibility) should use
-       arrays of type `bytes_` or `str_` and use the free functions
+       arrays of type `str_` or `bytes_` and use the free functions
        in :mod:`numpy.char` for fast vectorized string operations instead.
 
-    Versus a NumPy array of dtype `bytes_` or `str_`, this
+    Versus a NumPy array of dtype `str_` or `bytes_`, this
     class adds the following functionality:
 
     1) values automatically have whitespace removed from the end
@@ -1247,14 +1243,14 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
 
     Parameters
     ----------
-    obj : array of str or unicode-like
+    obj : array_like, with ``str_`` or ``bytes_`` dtype
 
     itemsize : int, optional
         `itemsize` is the number of characters per scalar in the
         resulting array.  If `itemsize` is None, and `obj` is an
         object array or a Python list, the `itemsize` will be
         automatically determined.  If `itemsize` is provided and `obj`
-        is of type str or unicode, then the `obj` string will be
+        is of type `str` or `bytes`, then the `obj` string will be
         chunked into `itemsize` pieces.
 
     copy : bool, optional
@@ -1374,7 +1370,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
        ``chararray`` is deprecated. Use an ``ndarray`` with a string or
        bytes dtype instead.
 
-    Versus a NumPy array of dtype `bytes_` or `str_`, this
+    Versus a NumPy array of dtype `str_` or `bytes_`, this
     class adds the following functionality:
 
     1) values automatically have whitespace removed from the end
@@ -1389,14 +1385,14 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
 
     Parameters
     ----------
-    obj : array of str or unicode-like
+    obj : array_like, with ``str_`` or ``bytes_`` dtype
 
     itemsize : int, optional
         `itemsize` is the number of characters per scalar in the
         resulting array.  If `itemsize` is None, and `obj` is an
         object array or a Python list, the `itemsize` will be
         automatically determined.  If `itemsize` is provided and `obj`
-        is of type str or unicode, then the `obj` string will be
+        is of type `str` or `bytes`, then the `obj` string will be
         chunked into `itemsize` pieces.
 
     unicode : bool, optional
@@ -1405,8 +1401,8 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
         None and `obj` is one of the following:
 
         - a `~numpy.char.chararray`,
-        - an ndarray of type `str_` or `unicode_`
-        - a Python str or unicode object,
+        - an ndarray of type `str_` or `bytes_`
+        - a Python `str` or `bytes` object,
 
         then the unicode setting of the output array will be
         automatically determined.
