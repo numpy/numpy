@@ -32,6 +32,11 @@ typedef struct npy_global_state_struct {
 NPY_NO_EXPORT int
 get_legacy_print_mode(void);
 
+/* Internal matrix product; warns on dimension interleaving if warn_on_interleave. */
+NPY_NO_EXPORT PyObject *
+PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject *out,
+                    int warn_on_interleave);
+
 #ifdef __cplusplus
 }
 #endif

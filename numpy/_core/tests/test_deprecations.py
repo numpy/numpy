@@ -583,3 +583,45 @@ class TestTakeOutDtype(_DeprecationTestCase):
         different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
 
         self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
+
+
+class TestDotDimensionInterleaving(_DeprecationTestCase):
+    # Deprecated NumPy 2.6, 2026-09
+    # See https://github.com/numpy/numpy/issues/31725
+    message = "numpy.dot received arrays with a.ndim >= 2 and b.ndim > 2"
+
+    def test_dot_2d_3d_warns(self):
+        a = np.ones((2, 3))
+        b = np.ones((4, 3, 3))
+        self.assert_deprecated(lambda: np.dot(a, b))
+
+    def test_ndarray_dot_2d_3d_warns(self):
+        a = np.ones((2, 3))
+        b = np.ones((4, 3, 3))
+        self.assert_deprecated(lambda: a.dot(b))
+
+    def test_dot_3d_3d_warns(self):
+        a = np.ones((2, 2, 3))
+        b = np.ones((4, 3, 3))
+        self.assert_deprecated(lambda: np.dot(a, b))
+
+    def test_dot_scalar_3d_no_warning(self):
+        a = 2.0
+        b = np.ones((2, 2, 2))
+        self.assert_not_deprecated(lambda: np.dot(a, b))
+
+    def test_dot_1d_3d_no_warning(self):
+        a = np.ones(3)
+        b = np.ones((4, 3, 5))
+        self.assert_not_deprecated(lambda: np.dot(a, b))
+
+    def test_dot_2d_2d_no_warning(self):
+        a = np.ones((2, 3))
+        b = np.ones((3, 4))
+        self.assert_not_deprecated(lambda: np.dot(a, b))
+
+    def test_shape_mismatch_raises_valueerror_not_deprecation(self):
+        a = np.ones((2, 3))
+        b = np.ones((4, 5, 6))
+        with pytest.raises(ValueError, match="shapes.*not aligned"):
+            np.dot(a, b)

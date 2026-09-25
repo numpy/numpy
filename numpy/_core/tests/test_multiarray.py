@@ -4265,13 +4265,16 @@ class TestMethods:
             # test that fp exceptions are properly cleared
             np.dot(a, a)
 
-            with pytest.raises(FloatingPointError,
-                    match="invalid value encountered in dot"):
-                np.dot(a[np.newaxis, np.newaxis, ...],
-                       b[np.newaxis, ..., np.newaxis])
+            # 3D case triggers deprecation warning (gh-31725)
+            with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+                with pytest.raises(FloatingPointError,
+                        match="invalid value encountered in dot"):
+                    np.dot(a[np.newaxis, np.newaxis, ...],
+                           b[np.newaxis, ..., np.newaxis])
 
-            np.dot(a[np.newaxis, np.newaxis, ...],
-                   a[np.newaxis, ..., np.newaxis])
+            with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+                np.dot(a[np.newaxis, np.newaxis, ...],
+                       a[np.newaxis, ..., np.newaxis])
 
     def test_dot_type_mismatch(self):
         c = 1.
