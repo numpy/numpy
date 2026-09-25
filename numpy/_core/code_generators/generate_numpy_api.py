@@ -50,11 +50,8 @@ static int PyArray_RUNTIME_VERSION = 0;
 
 %s
 
-/*
- * The DType classes are inconvenient for the Python generation so exposed
- * manually in the header below  (may be moved).
- */
-#include "numpy/_public_dtype_api_table.h"
+/* DType classes, generated from numpy_api.multiarray_dtype_api. */
+#include "_public_dtype_api_table.h"
 
 #if !defined(NO_IMPORT_ARRAY) && !defined(NO_IMPORT)
 static inline int
@@ -206,6 +203,25 @@ c_template = r"""
 void *PyArray_API[] = {
 %s
 };
+
+/* DType addresses are only available after DType initialization. */
+NPY_NO_EXPORT void
+_fill_dtype_api(void *api_table[])
+{
+%s
+}
+"""
+
+dtype_h_template = """\
+/* Generated from numpy_api.multiarray_dtype_api. */
+#ifndef NUMPY_CORE_INCLUDE_NUMPY__PUBLIC_DTYPE_API_TABLE_H_
+#define NUMPY_CORE_INCLUDE_NUMPY__PUBLIC_DTYPE_API_TABLE_H_
+
+#if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+%s
+#endif
+
+#endif
 """
 
 def generate_api(output_dir, force=False):
@@ -213,7 +229,8 @@ def generate_api(output_dir, force=False):
 
     h_file = os.path.join(output_dir, f'__{basename}.h')
     c_file = os.path.join(output_dir, f'__{basename}.c')
-    targets = (h_file, c_file)
+    dtype_h_file = os.path.join(output_dir, '_public_dtype_api_table.h')
+    targets = (h_file, c_file, dtype_h_file)
 
     sources = numpy_api.multiarray_api
     do_generate_api(targets, sources)
@@ -227,12 +244,15 @@ def do_generate_api(targets, sources):
     scalar_bool_values = sources[1]
     types_api = sources[2]
     multiarray_funcs = sources[3]
+    dtype_api = sources[4]
 
     multiarray_api = sources[:]
 
     module_list = []
     extension_list = []
     init_list = []
+    dtype_list = []
+    dtype_init_list = []
 
     # Check multiarray api indexes
     multiarray_api_index = genapi.merge_api_dicts(multiarray_api)
@@ -267,6 +287,13 @@ def do_generate_api(targets, sources):
         multiarray_api_dict[name] = TypeApi(
             name, index, 'PyTypeObject', api_name, internal_type)
 
+    for name, (index, c_type, min_version) in genapi.order_dict(dtype_api):
+        item = TypeApi(name, index, c_type, api_name)
+        multiarray_api_dict[name] = item
+        dtype_list.append(min_version.add_guard(
+            name, item.define_from_array_api_string()))
+        dtype_init_list.append(f"    api_table[{index}] = &{name};")
+
     if len(multiarray_api_dict) != len(multiarray_api_index):
         keys_dict = set(multiarray_api_dict.keys())
         keys_index = set(multiarray_api_index.keys())
@@ -285,6 +312,10 @@ def do_generate_api(targets, sources):
         while len(init_list) < api_item.index:
             init_list.append("        NULL")
 
+        if name in dtype_api:
+            init_list.append("        NULL")
+            continue
+
         extension_list.append(api_item.define_from_array_api_string())
         init_list.append(api_item.array_api_define())
         module_list.append(api_item.internal_define())
@@ -298,8 +329,11 @@ def do_generate_api(targets, sources):
     genapi.write_file(header_file, s)
 
     # Write to c-code
-    s = c_template % ',\n'.join(init_list)
+    s = c_template % (',\n'.join(init_list), '\n'.join(dtype_init_list))
     genapi.write_file(c_file, s)
+
+    s = dtype_h_template % '\n'.join(dtype_list)
+    genapi.write_file(targets[2], s)
 
     return targets
 
