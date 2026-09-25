@@ -2072,7 +2072,18 @@ def trim_zeros(filt, trim='fb', axis=None):
         # filt is 1D -> avoid multi-dimensional slicing to preserve
         # non-array input types
         return filt[sl[0]]
-    return filt[sl]
+    trimmed = filt_[sl]
+    if isinstance(filt, list):
+        return trimmed.tolist()
+    elif isinstance(filt, tuple):
+        def _to_tuple(arr):
+            if arr.ndim == 0:
+                return arr.item()
+            return tuple(_to_tuple(a) for a in arr)
+        if trimmed.ndim == 0:
+            return trimmed.item()
+        return _to_tuple(trimmed)
+    return trimmed
 
 
 def _extract_dispatcher(condition, arr):
