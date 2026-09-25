@@ -8,6 +8,9 @@ cdef extern from "numpy/random/bitgen.h":
         uint32_t (*next_uint32)(void *st) nogil
         double (*next_double)(void *st) nogil
         uint64_t (*next_raw)(void *st) nogil
+        void (*fill_uint32)(void *st, size_t count, uint32_t *out) nogil
+        void (*fill_uint64)(void *st, size_t count, uint64_t *out) nogil
+        void (*fill_next_uint64)(void *st, size_t count, uint64_t *out) nogil
 
     ctypedef bitgen bitgen_t
 

@@ -100,8 +100,11 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
     n = np.PyArray_SIZE(randoms)
 
     with lock, nogil:
-        for i in range(n):
-            randoms_data[i] = bitgen.next_raw(bitgen.state)
+        if bitgen.fill_uint64 != NULL:
+            bitgen.fill_uint64(bitgen.state, n, randoms_data)
+        else:
+            for i in range(n):
+                randoms_data[i] = bitgen.next_raw(bitgen.state)
     return randoms
 
 cdef object prepare_cffi(bitgen_t *bitgen):
