@@ -33,6 +33,17 @@ def _assert_equal_hash(v1, v2):
     assert v2 in {v1}
 
 
+# Operands for the timedelta64/float64 overflow tests in TestDateTime.  2**62
+# seconds is large enough that a small float factor overflows int64.
+_TD_0 = np.timedelta64(0, "s")
+_TD_5 = np.timedelta64(5, "s")
+_TD_NAT = np.timedelta64("NaT", "s")
+_TD_2_61 = np.timedelta64(1 << 61, "s")
+_TD_2_62 = np.timedelta64(1 << 62, "s")
+_TD_MAX = np.timedelta64(np.iinfo(np.int64).max, "s")
+_TD_ARR = np.array([1, 1 << 62], dtype="timedelta64[s]")
+
+
 class TestDateTime:
     generic_unit_deprecation_message: Final[str] = (
         "The 'generic' unit for NumPy timedelta is deprecated"
@@ -1359,6 +1370,69 @@ class TestDateTime:
         assert small * np.int64(7) == np.timedelta64(21, "s")
         assert np.int64(7) * small == np.timedelta64(21, "s")
 
+    # timedelta64 */ float64 overflowing int64 must raise instead of silently
+    # saturating on the float->int64 cast.
+    @pytest.mark.parametrize("expr", [
+        pytest.param(lambda: _TD_2_62 * 2.5, id="td*float"),
+        pytest.param(lambda: 2.5 * _TD_2_62, id="float*td"),
+        pytest.param(lambda: _TD_2_62 * 2.0, id="td*float-on-2**63"),
+        pytest.param(lambda: 2.0 * _TD_2_62, id="float*td-on-2**63"),
+        pytest.param(lambda: _TD_5 * np.float64(np.inf), id="td*inf"),
+        pytest.param(lambda: np.float64(np.inf) * _TD_5, id="inf*td"),
+        pytest.param(lambda: _TD_2_62 / 0.4, id="td/float"),
+        pytest.param(lambda: _TD_2_62 // 0.4, id="td//float"),
+        pytest.param(lambda: _TD_2_62 / 0.5, id="td/float-on-2**63"),
+        pytest.param(lambda: _TD_MAX / np.float64(1e-300), id="td/tiny"),
+        pytest.param(lambda: _TD_ARR * 2.5, id="arr*float"),
+        pytest.param(lambda: 2.5 * _TD_ARR, id="float*arr"),
+        pytest.param(lambda: _TD_ARR / 0.4, id="arr/float"),
+    ])
+    def test_float_arithmetic_overflow_raises(self, expr):
+        with pytest.raises(OverflowError, match="Overflow"):
+            expr()
+
+    # NaT propagates even when the other operand would overflow (the NaT check
+    # runs first), and a NaN operand gives NaT rather than overflow.
+    @pytest.mark.parametrize("expr", [
+        pytest.param(lambda: _TD_NAT * 2.5, id="nat*float"),
+        pytest.param(lambda: 2.5 * _TD_NAT, id="float*nat"),
+        pytest.param(lambda: _TD_NAT / 0.4, id="nat/float"),
+        pytest.param(lambda: _TD_NAT * np.float64(np.inf), id="nat*inf"),
+        pytest.param(lambda: _TD_5 * np.float64(np.nan), id="td*nan"),
+        pytest.param(lambda: np.float64(np.nan) * _TD_5, id="nan*td"),
+        pytest.param(lambda: _TD_5 / np.float64(np.nan), id="td/nan"),
+    ])
+    def test_float_arithmetic_nat_result(self, expr):
+        assert np.isnat(expr()).all()
+
+    # 0 * inf and division by exactly zero stay NaT, not overflow.  These set
+    # the FP invalid/divide flags as they always have, so silence them.
+    @pytest.mark.parametrize("expr", [
+        pytest.param(lambda: _TD_0 * np.float64(np.inf), id="0*inf"),
+        pytest.param(lambda: _TD_5 / 0.0, id="td/0"),
+        pytest.param(lambda: _TD_MAX / 0.0, id="big/0"),
+        pytest.param(lambda: _TD_0 / 0.0, id="0/0"),
+        pytest.param(lambda: _TD_5 // 0.0, id="td//0"),
+        pytest.param(lambda: _TD_ARR / 0.0, id="arr/0"),
+    ])
+    def test_float_arithmetic_divzero_is_nat(self, expr):
+        with np.errstate(invalid="ignore", divide="ignore"):
+            assert np.isnat(expr()).all()
+
+    # Regression guard: in-range float multiply/divide still gives the right
+    # value; `expected` is in seconds.
+    @pytest.mark.parametrize("expr, expected", [
+        pytest.param(lambda: np.timedelta64(10, "s") * 0.5, 5, id="td*0.5"),
+        pytest.param(lambda: 0.5 * np.timedelta64(10, "s"), 5, id="0.5*td"),
+        pytest.param(lambda: np.timedelta64(6, "s") / 2.0, 3, id="td/2"),
+        pytest.param(lambda: np.timedelta64(7, "s") // 2.0, 3, id="td//2"),
+        pytest.param(lambda: _TD_2_61 * 2.0, 1 << 62, id="td*2-large"),
+        pytest.param(lambda: _TD_2_62 / 2.0, 1 << 61, id="td/2-large"),
+        pytest.param(lambda: _TD_5 / np.float64(np.inf), 0, id="td/inf"),
+    ])
+    def test_float_arithmetic_valid_boundary(self, expr, expected):
+        assert expr() == np.timedelta64(expected, "s")
+
     def test_datetime64_item_int64_min_edge_case(self):
         info = np.iinfo(np.int64)
 
@@ -1735,22 +1809,19 @@ class TestDateTime:
             # float * M8
             assert_raises(TypeError, np.multiply, 1.5, dta)
 
-        # NaTs
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', "invalid value encountered in multiply", RuntimeWarning)
-            nat = np.timedelta64('NaT', 's')
+        # NaTs: NaT propagates through any scalar operand, including nan/inf.
+        # The non-NaT float special cases (nan/inf operands and float overflow)
+        # are covered by test_float_arithmetic_* above.
+        nat = np.timedelta64('NaT', 's')
 
-            def check(a, b, res):
-                assert_equal(a * b, res)
-                assert_equal(b * a, res)
-            for tp in (int, float):
-                check(nat, tp(2), nat)
-                check(nat, tp(0), nat)
-            for f in (float('inf'), float('nan')):
-                check(np.timedelta64(1, "s"), f, nat)
-                check(np.timedelta64(0, "s"), f, nat)
-                check(nat, f, nat)
+        def check(a, b, res):
+            assert_equal(a * b, res)
+            assert_equal(b * a, res)
+        for tp in (int, float):
+            check(nat, tp(2), nat)
+            check(nat, tp(0), nat)
+        for f in (float('nan'), float('inf')):
+            check(nat, f, nat)
 
     @pytest.mark.parametrize("op1, op2, exp", [
         # m8 same units round down
