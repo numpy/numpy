@@ -1,3 +1,4 @@
+import inspect
 from _typeshed import ConvertibleToInt, Incomplete
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
@@ -193,6 +194,8 @@ class _SizedIterable[T](Protocol):
 class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
     __doc__: str | None
     __module__: L["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
+    __signature__: inspect.Signature
+    __wrapped__: Callable[..., Incomplete]
     pyfunc: Callable[..., Any]
     cache: bool
     signature: str | None
