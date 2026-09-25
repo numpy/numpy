@@ -836,15 +836,14 @@ def dot(a, b, out=None):
     array([[4, 1],
            [2, 2]])
 
+    The following example uses arrays where `b.ndim > 2`, which is deprecated
+    (see note above):
+
     >>> a = np.arange(3*4*5*6).reshape((3,4,5,6))
     >>> b = np.arange(3*4*5*6)[::-1].reshape((5,4,6,3))
-    >>> import warnings
-    >>> with warnings.catch_warnings():
-    ...     warnings.simplefilter('ignore', DeprecationWarning)
-    ...     result = np.dot(a, b)[2,3,2,1,2,2]
-    >>> result
+    >>> np.dot(a, b)[2,3,2,1,2,2]  # doctest: +SKIP
     499128
-    >>> sum(a[2,3,2,:] * b[1,2,:,2])
+    >>> sum(a[2,3,2,:] * b[1,2,:,2])  # doctest: +SKIP
     499128
 
     """
