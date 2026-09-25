@@ -1,7 +1,6 @@
 /**
  * This module provides the inner loops for the clip ufunc
  */
-#include <type_traits>
 
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
@@ -10,6 +9,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <type_traits>
 #include "numpy/halffloat.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_common.h"
@@ -18,7 +18,7 @@
 
 #include "fast_loop_macros.h"
 
-#include "../common/numpy_tag.h"
+#include "../common/numpy_tag.hpp"
 
 template <class T>
 T

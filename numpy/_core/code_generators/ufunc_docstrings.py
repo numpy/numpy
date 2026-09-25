@@ -44,17 +44,17 @@ def add_newdoc(place, name, doc):
 
     skip = (
         # gufuncs do not use the OUT_SCALAR replacement strings
-        'matmul', 'vecdot',
+        'matmul', 'vecdot', 'matvec', 'vecmat',
         # clip has 3 inputs, which is not handled by this
         'clip',
     )
     if name[0] != '_' and name not in skip:
         if '\nx :' in doc:
-            assert '$OUT_SCALAR_1' in doc, "in {}".format(name)
+            assert '$OUT_SCALAR_1' in doc, f"in {name}"
         elif '\nx2 :' in doc or '\nx1, x2 :' in doc:
-            assert '$OUT_SCALAR_2' in doc, "in {}".format(name)
+            assert '$OUT_SCALAR_2' in doc, f"in {name}"
         else:
-            assert False, "Could not detect number of inputs in {}".format(name)
+            assert False, f"Could not detect number of inputs in {name}"
 
     for k, v in subst.items():
         doc = doc.replace('$' + k, v)
@@ -332,7 +332,7 @@ add_newdoc('numpy._core.umath', 'arcsin',
 
 add_newdoc('numpy._core.umath', 'arcsinh',
     """
-    Inverse hyperbolic sine element-wise.
+    Inverse hyperbolic sine, element-wise.
 
     Parameters
     ----------
@@ -426,10 +426,10 @@ add_newdoc('numpy._core.umath', 'arctan',
 
     Examples
     --------
+
     We expect the arctan of 0 to be 0, and of 1 to be pi/4:
 
     >>> import numpy as np
-
     >>> np.arctan([0, 1])
     array([ 0.        ,  0.78539816])
 
@@ -507,10 +507,10 @@ add_newdoc('numpy._core.umath', 'arctan2',
 
     Examples
     --------
+
     Consider four points in different quadrants:
 
     >>> import numpy as np
-
     >>> x = np.array([-1, +1, +1, -1])
     >>> y = np.array([-1, -1, +1, +1])
     >>> np.arctan2(y, x) * 180 / np.pi
@@ -534,7 +534,7 @@ add_newdoc('numpy._core.umath', '_arg',
 
 add_newdoc('numpy._core.umath', 'arctanh',
     """
-    Inverse hyperbolic tangent element-wise.
+    Inverse hyperbolic tangent, element-wise.
 
     Parameters
     ----------
@@ -917,7 +917,7 @@ add_newdoc('numpy._core.umath', 'cos',
     array([  1.00000000e+00,   6.12303177e-17,  -1.00000000e+00])
     >>>
     >>> # Example of providing the optional output parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -989,7 +989,6 @@ add_newdoc('numpy._core.umath', 'degrees',
     Convert a radian array to degrees
 
     >>> import numpy as np
-
     >>> rad = np.arange(12.)*np.pi/6
     >>> np.degrees(rad)
     array([   0.,   30.,   60.,   90.,  120.,  150.,  180.,  210.,  240.,
@@ -1146,7 +1145,7 @@ add_newdoc('numpy._core.umath', 'equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1224,6 +1223,7 @@ add_newdoc('numpy._core.umath', 'exp',
     >>> import numpy as np
 
     >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
 
     >>> x = np.linspace(-2*np.pi, 2*np.pi, 100)
     >>> xx = x + 1j * x[:, np.newaxis] # a + ib over complex plane
@@ -1298,12 +1298,12 @@ add_newdoc('numpy._core.umath', 'expm1',
 
     Examples
     --------
+
     The true value of ``exp(1e-10) - 1`` is ``1.00000000005e-10`` to
     about 32 significant digits. This example shows the superiority of
     expm1 in this case.
 
     >>> import numpy as np
-
     >>> np.expm1(1e-10)
     1.00000000005e-10
     >>> np.exp(1e-10) - 1
@@ -1506,7 +1506,7 @@ add_newdoc('numpy._core.umath', 'greater',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
 
@@ -1545,7 +1545,7 @@ add_newdoc('numpy._core.umath', 'greater_equal',
     -------
     out : bool or ndarray of bool
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1619,7 +1619,7 @@ add_newdoc('numpy._core.umath', 'invert',
     returned. In a two's-complement system, this operation effectively flips
     all the bits, resulting in a representation that corresponds to the
     negative of the input plus one. This is the most common method of
-    representing signed integers on computers [1]_. A N-bit two's-complement
+    representing signed integers on computers [1]_. An N-bit two's-complement
     system can represent every integer in the range :math:`-2^{N-1}` to
     :math:`+2^{N-1}-1`.
 
@@ -1870,7 +1870,7 @@ add_newdoc('numpy._core.umath', 'isnat',
     Examples
     --------
     >>> import numpy as np
-    >>> np.isnat(np.datetime64("NaT"))
+    >>> np.isnat(np.datetime64("NaT", "D"))
     True
     >>> np.isnat(np.datetime64("2016-01-01"))
     False
@@ -1957,7 +1957,7 @@ add_newdoc('numpy._core.umath', 'less',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1994,7 +1994,7 @@ add_newdoc('numpy._core.umath', 'less_equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -2607,6 +2607,58 @@ add_newdoc('numpy._core.umath', 'minimum',
 
     """)
 
+add_newdoc('numpy._core.umath', 'minimummaximum',
+    """
+    Element-wise minimum and maximum of array elements.
+
+    Compare two arrays and return a new pair of arrays containing the
+    element-wise minima and maxima. If one of the elements being compared is a
+    NaN, then that element is returned for both outputs. If both elements are
+    NaNs then the first is returned. The latter distinction is important for
+    complex NaNs, which are defined as at least one of the real or imaginary
+    parts being a NaN. The net effect is that NaNs are propagated.
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        The arrays holding the elements to be compared.
+        $BROADCASTABLE_2
+    $PARAMS
+
+    Returns
+    -------
+    ymin : ndarray or scalar
+        The minimum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
+    ymax : ndarray or scalar
+        The maximum of `x1` and `x2`, element-wise.
+
+    See Also
+    --------
+    minimum :
+        Element-wise minimum of two arrays, propagates NaNs.
+    maximum :
+        Element-wise maximum of two arrays, propagates NaNs.
+    minmax :
+        The minimum and maximum of an array along a given axis, propagates NaNs.
+
+    Notes
+    -----
+    ``minimummaximum(x1, x2)`` is equivalent to
+    ``(minimum(x1, x2), maximum(x1, x2))`` but computes both in a single pass
+    over the inputs.
+
+    This ufunc is not part of the public API; it is the engine behind
+    `minmax`.
+
+    Examples
+    --------
+    >>> from numpy._core.umath import minimummaximum
+    >>> minimummaximum([2, 3, 4], [1, 5, 2])
+    (array([1, 3, 2]), array([2, 5, 4]))
+
+    """)
+
 add_newdoc('numpy._core.umath', 'fmax',
     """
     Element-wise maximum of array elements.
@@ -2793,7 +2845,9 @@ add_newdoc('numpy._core.umath', 'matmul',
 
     See Also
     --------
-    vdot : Complex-conjugating dot product.
+    vecdot : Complex-conjugating dot product for stacks of vectors.
+    matvec : Matrix-vector product for stacks of matrices and vectors.
+    vecmat : Vector-matrix product for stacks of vectors and matrices.
     tensordot : Sum products over arbitrary axes.
     einsum : Einstein summation convention.
     dot : alternative matrix product with different broadcasting rules.
@@ -2808,10 +2862,10 @@ add_newdoc('numpy._core.umath', 'matmul',
       matrices residing in the last two indexes and broadcast accordingly.
     - If the first argument is 1-D, it is promoted to a matrix by
       prepending a 1 to its dimensions. After matrix multiplication
-      the prepended 1 is removed.
+      the prepended 1 is removed. (For stacks of vectors, use ``vecmat``.)
     - If the second argument is 1-D, it is promoted to a matrix by
       appending a 1 to its dimensions. After matrix multiplication
-      the appended 1 is removed.
+      the appended 1 is removed. (For stacks of vectors, use ``matvec``.)
 
     ``matmul`` differs from ``dot`` in two important ways:
 
@@ -2828,7 +2882,7 @@ add_newdoc('numpy._core.umath', 'matmul',
       >>> # n is 7, k is 4, m is 3
 
     The matmul function implements the semantics of the ``@`` operator
-    introduced in Python 3.5 following :pep:`465`.
+    defined in :pep:`465`.
 
     It uses an optimized BLAS library when possible (see `numpy.linalg`).
 
@@ -2837,7 +2891,6 @@ add_newdoc('numpy._core.umath', 'matmul',
     For 2-D arrays it is the matrix product:
 
     >>> import numpy as np
-
     >>> a = np.array([[1, 0],
     ...               [0, 1]])
     >>> b = np.array([[4, 1],
@@ -2904,14 +2957,16 @@ add_newdoc('numpy._core.umath', 'vecdot',
     where :math:`\\overline{a_i}` denotes the complex conjugate if :math:`a_i`
     is complex and the identity otherwise.
 
+    .. versionadded:: 2.0.0
+
     Parameters
     ----------
     x1, x2 : array_like
         Input arrays, scalars not allowed.
     out : ndarray, optional
         A location into which the result is stored. If provided, it must have
-        a shape that the broadcasted shape of `x1` and `x2` with the last axis
-        removed. If not provided or None, a freshly-allocated array is used.
+        the broadcasted shape of `x1` and `x2` with the last axis removed.
+        If not provided or None, a freshly-allocated array is used.
     **kwargs
         For other keyword-only arguments, see the
         :ref:`ufunc docs <ufuncs.kwargs>`.
@@ -2933,6 +2988,9 @@ add_newdoc('numpy._core.umath', 'vecdot',
     See Also
     --------
     vdot : same but flattens arguments first
+    matmul : Matrix-matrix product.
+    vecmat : Vector-matrix product.
+    matvec : Matrix-vector product.
     einsum : Einstein summation convention.
 
     Examples
@@ -2946,7 +3004,137 @@ add_newdoc('numpy._core.umath', 'vecdot',
     >>> np.vecdot(v, n)
     array([ 3.,  8., 10.])
 
-    .. versionadded:: 2.0.0
+    """)
+
+add_newdoc('numpy._core.umath', 'matvec',
+    """
+    Matrix-vector dot product of two arrays.
+
+    Given a matrix (or stack of matrices) :math:`\\mathbf{A}` in ``x1`` and
+    a vector (or stack of vectors) :math:`\\mathbf{v}` in ``x2``, the
+    matrix-vector product is defined as:
+
+    .. math::
+       \\mathbf{A} \\cdot \\mathbf{v} = \\sum_{j=0}^{n-1} A_{ij} v_j
+
+    where the sum is over the last dimensions in ``x1`` and ``x2``
+    (unless ``axes`` is specified).  (For a matrix-vector product with the
+    vector conjugated, use ``np.vecmat(x2, x1.mT)``.)
+
+    .. versionadded:: 2.2.0
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        Input arrays, scalars not allowed.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        the broadcasted shape of ``x1`` and ``x2`` with the summation axis
+        removed. If not provided or None, a freshly-allocated array is used.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+    Returns
+    -------
+    y : ndarray
+        The matrix-vector product of the inputs.
+
+    Raises
+    ------
+    ValueError
+        If the last dimensions of ``x1`` and ``x2`` are not the same size.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    vecdot : Vector-vector product.
+    vecmat : Vector-matrix product.
+    matmul : Matrix-matrix product.
+    einsum : Einstein summation convention.
+
+    Examples
+    --------
+    Rotate a set of vectors from Y to X along Z.
+
+    >>> a = np.array([[0., 1., 0.],
+    ...               [-1., 0., 0.],
+    ...               [0., 0., 1.]])
+    >>> v = np.array([[1., 0., 0.],
+    ...               [0., 1., 0.],
+    ...               [0., 0., 1.],
+    ...               [0., 6., 8.]])
+    >>> np.matvec(a, v)
+    array([[ 0., -1.,  0.],
+           [ 1.,  0.,  0.],
+           [ 0.,  0.,  1.],
+           [ 6.,  0.,  8.]])
+
+    """)
+
+add_newdoc('numpy._core.umath', 'vecmat',
+    """
+    Vector-matrix dot product of two arrays.
+
+    Given a vector (or stack of vector) :math:`\\mathbf{v}` in ``x1`` and
+    a matrix (or stack of matrices) :math:`\\mathbf{A}` in ``x2``, the
+    vector-matrix product is defined as:
+
+    .. math::
+       \\mathbf{v} \\cdot \\mathbf{A} = \\sum_{i=0}^{n-1} \\overline{v_i}A_{ij}
+
+    where the sum is over the last dimension of ``x1`` and the one-but-last
+    dimensions in ``x2`` (unless `axes` is specified) and where
+    :math:`\\overline{v_i}` denotes the complex conjugate if :math:`v`
+    is complex and the identity otherwise. (For a non-conjugated vector-matrix
+    product, use ``np.matvec(x2.mT, x1)``.)
+
+    .. versionadded:: 2.2.0
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        Input arrays, scalars not allowed.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        the broadcasted shape of ``x1`` and ``x2`` with the summation axis
+        removed. If not provided or None, a freshly-allocated array is used.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+    Returns
+    -------
+    y : ndarray
+        The vector-matrix product of the inputs.
+
+    Raises
+    ------
+    ValueError
+        If the last dimensions of ``x1`` and the one-but-last dimension of
+        ``x2`` are not the same size.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    vecdot : Vector-vector product.
+    matvec : Matrix-vector product.
+    matmul : Matrix-matrix product.
+    einsum : Einstein summation convention.
+
+    Examples
+    --------
+    Project a vector along X and Y.
+
+    >>> v = np.array([0., 4., 2.])
+    >>> a = np.array([[1., 0., 0.],
+    ...               [0., 1., 0.],
+    ...               [0., 0., 0.]])
+    >>> np.vecmat(v, a)
+    array([ 0.,  4., 0.])
+
     """)
 
 add_newdoc('numpy._core.umath', 'modf',
@@ -3038,7 +3226,7 @@ add_newdoc('numpy._core.umath', 'multiply',
 
 add_newdoc('numpy._core.umath', 'negative',
     """
-    Numerical negative, element-wise.
+    Numerical negation, element-wise.
 
     Parameters
     ----------
@@ -3119,7 +3307,7 @@ add_newdoc('numpy._core.umath', 'not_equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -3155,6 +3343,26 @@ add_newdoc('numpy._core.umath', '_ones_like',
     See Also
     --------
     ones_like
+
+    """)
+
+add_newdoc('numpy._core.umath', '_unwrap',
+    """
+    _unwrap(p, discont, period)
+
+    Generalized ufunc backing `numpy.unwrap`, with signature
+    ``(n),(),()->(n)``.
+
+    For each 1-D slice ``p`` along the core dimension, unwrap the values by
+    changing elements whose absolute difference from their predecessor exceeds
+    ``max(discont, period/2)`` to their `period`-complementary values.
+    `period` is expected to already share `p`'s dtype, and `discont` its own
+    matching dtype. The public `numpy.unwrap` wrapper fills their defaults
+    and resolves and casts both before calling this.
+
+    See Also
+    --------
+    unwrap
 
     """)
 
@@ -3237,9 +3445,9 @@ add_newdoc('numpy._core.umath', 'power',
     >>> p
     array([nan, nan])
 
-    To get complex results, give the argument ``dtype=complex``.
+    To get complex results, give the argument ``dtype=np.complex128``.
 
-    >>> np.power(x3, 1.5, dtype=complex)
+    >>> np.power(x3, 1.5, dtype=np.complex128)
     array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
@@ -3316,9 +3524,9 @@ add_newdoc('numpy._core.umath', 'float_power',
     >>> p
     array([nan, nan])
 
-    To get complex results, give the argument ``dtype=complex``.
+    To get complex results, give the argument ``dtype=np.complex128``.
 
-    >>> np.float_power(x3, 1.5, dtype=complex)
+    >>> np.float_power(x3, 1.5, dtype=np.complex128)
     array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
@@ -3445,8 +3653,8 @@ add_newdoc('numpy._core.umath', 'remainder',
 
         This should not be confused with:
 
-        * Python 3.7's `math.remainder` and C's ``remainder``, which
-          computes the IEEE remainder, which are the complement to
+        * Python's `math.remainder` and C's ``remainder``, which
+          compute the IEEE remainder, which are the complement to
           ``round(x1 / x2)``.
         * The MATLAB ``rem`` function and or the C ``%`` operator which is the
           complement to ``int(x1 / x2)``.
@@ -3656,6 +3864,11 @@ add_newdoc('numpy._core.umath', 'sign',
         The sign of `x`.
         $OUT_SCALAR_1
 
+    See Also
+    --------
+    signbit
+    copysign
+
     Notes
     -----
     There is more than one definition of sign in common use for complex
@@ -3692,6 +3905,11 @@ add_newdoc('numpy._core.umath', 'signbit',
         Output array, or reference to `out` if that was supplied.
         $OUT_SCALAR_1
 
+    See Also
+    --------
+    sign
+    copysign
+
     Examples
     --------
     >>> import numpy as np
@@ -3722,6 +3940,11 @@ add_newdoc('numpy._core.umath', 'copysign',
     out : ndarray or scalar
         The values of `x1` with the sign of `x2`.
         $OUT_SCALAR_2
+
+    See Also
+    --------
+    sign
+    signbit
 
     Examples
     --------
@@ -3904,7 +4127,7 @@ add_newdoc('numpy._core.umath', 'sinh',
     >>> # Discrepancy due to vagaries of floating point arithmetic.
 
     >>> # Example of providing the optional output parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.sinh([0.1], out1)
     >>> out2 is out1
     True
@@ -4105,7 +4328,7 @@ add_newdoc('numpy._core.umath', 'tan',
     >>>
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -4120,7 +4343,7 @@ add_newdoc('numpy._core.umath', 'tan',
 
 add_newdoc('numpy._core.umath', 'tanh',
     """
-    Compute hyperbolic tangent element-wise.
+    Hyperbolic tangent, element-wise.
 
     Equivalent to ``np.sinh(x)/np.cosh(x)`` or ``-1j * np.tan(1j*x)``.
 
@@ -4158,7 +4381,7 @@ add_newdoc('numpy._core.umath', 'tanh',
 
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.tanh([0.1], out1)
     >>> out2 is out1
     True
@@ -4368,6 +4591,62 @@ add_newdoc('numpy._core.umath', 'bitwise_count',
     >>> np.bitwise_count(a)
     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
           dtype=uint8)
+
+    """)
+
+add_newdoc('numpy._core.umath', 'real',
+    """
+    Returns the real part of the elements in the array.
+
+    Parameters
+    ----------
+    x : array_like
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Real part of input array.
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    ndarray.real
+    ndarray.imag
+
+    Notes
+    -----
+    This ufunc is used internally to implement the `ndarray.real`
+    attribute and the `np.real` function. It should not be used directly.
+
+    """)
+
+add_newdoc('numpy._core.umath', 'imag',
+    """
+    Returns the imaginary part of the elements in the array.
+
+    Unlike typical ufuncs, the return is typically a view into the original array.
+
+    Parameters
+    ----------
+    x : array_like
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Complex part of input array or zeros.
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    ndarray.imag
+    ndarray.real
+
+    Notes
+    -----
+    This ufunc is used internally to implement the `ndarray.imag`
+    attribute and the `np.imag` function. It should not be used directly.
 
     """)
 
@@ -5312,5 +5591,44 @@ add_newdoc('numpy._core.umath', '_rpartition',
     (array(['aAaAa', '  a', 'abB'], dtype=StringDType()),
      array(['A', 'A', 'A'], dtype=StringDType()),
      array(['', '  ', 'Bba'], dtype=StringDType()))
+
+    """)
+
+add_newdoc('numpy._core.umath', '_slice',
+    """
+    Slice the strings in `a` by slices specified by `start`, `stop`, `step`.
+    Like in the regular Python `slice` object, if only `start` is
+    specified then it is interpreted as the `stop`.
+
+    Parameters
+    ----------
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+
+    start : array-like, with integer dtype
+        The start of the slice, broadcasted to `a`'s shape
+
+    stop : array-like, with integer dtype
+        The end of the slice, broadcasted to `a`'s shape
+
+    step : array-like, with integer dtype
+        The step for the slice, broadcasted to `a`'s shape
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    The ufunc is used most easily via ``np.strings.slice``,
+    which calls it under the hood::
+
+    >>> a = np.array(['hello', 'world'])
+    >>> np.strings.slice(a, 2)
+    array(['he', 'wo'], dtype='<U5')
 
     """)

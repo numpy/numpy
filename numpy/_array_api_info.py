@@ -8,24 +8,26 @@ more details.
 
 """
 from numpy._core import (
-    dtype,
     bool,
-    intp,
+    complex64,
+    complex128,
+    dtype,
+    float32,
+    float64,
     int8,
     int16,
     int32,
     int64,
+    intp,
     uint8,
     uint16,
     uint32,
     uint64,
-    float32,
-    float64,
-    complex64,
-    complex128,
 )
+from numpy._utils import set_module
 
 
+@set_module('numpy')
 class __array_namespace_info__:
     """
     Get the array API inspection namespace for NumPy.
@@ -58,8 +60,6 @@ class __array_namespace_info__:
 
     """
 
-    __module__ = 'numpy'
-
     def capabilities(self):
         """
         Return a dictionary of array API library capabilities.
@@ -72,6 +72,9 @@ class __array_namespace_info__:
         - **"data-dependent shapes"**: boolean indicating whether an array
           library supports data-dependent output shapes. Always ``True`` for
           NumPy.
+
+        - **"max dimensions"**: integer indicating maximum number of supported
+          dimensions. Always ``64`` for NumPy.
 
         See
         https://data-apis.org/array-api/latest/API_specification/generated/array_api.info.capabilities.html
@@ -94,14 +97,14 @@ class __array_namespace_info__:
         >>> info = np.__array_namespace_info__()
         >>> info.capabilities()
         {'boolean indexing': True,
-         'data-dependent shapes': True}
+         'data-dependent shapes': True,
+         'max dimensions': 64}
 
         """
         return {
             "boolean indexing": True,
             "data-dependent shapes": True,
-            # 'max rank' will be part of the 2024.12 standard
-            # "max rank": 64,
+            "max dimensions": 64,
         }
 
     def default_device(self):
@@ -322,7 +325,7 @@ class __array_namespace_info__:
         """
         The devices supported by NumPy.
 
-        For NumPy, this always returns ``['cpu']``.
+        For NumPy, this always returns ``('cpu',)``.
 
         Returns
         -------
@@ -340,7 +343,7 @@ class __array_namespace_info__:
         --------
         >>> info = np.__array_namespace_info__()
         >>> info.devices()
-        ['cpu']
+        ('cpu',)
 
         """
-        return ["cpu"]
+        return ("cpu",)

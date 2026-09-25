@@ -7,21 +7,21 @@ AR_c: npt.NDArray[np.complex128]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
 
-AR_f > AR_m  # E: Unsupported operand types
-AR_c > AR_m  # E: Unsupported operand types
+AR_f > AR_m  # type: ignore[operator]
+AR_c > AR_m  # type: ignore[operator]
 
-AR_m > AR_f  # E: Unsupported operand types
-AR_m > AR_c  # E: Unsupported operand types
+AR_m > AR_f  # type: ignore[operator]
+AR_m > AR_c  # type: ignore[operator]
 
-AR_i > AR_M  # E: Unsupported operand types
-AR_f > AR_M  # E: Unsupported operand types
-AR_m > AR_M  # E: Unsupported operand types
+AR_i > AR_M  # type: ignore[operator]
+AR_f > AR_M  # type: ignore[operator]
+AR_m > AR_M  # type: ignore[operator]
 
-AR_M > AR_i  # E: Unsupported operand types
-AR_M > AR_f  # E: Unsupported operand types
-AR_M > AR_m  # E: Unsupported operand types
+AR_M > AR_i  # type: ignore[operator]
+AR_M > AR_f  # type: ignore[operator]
+AR_M > AR_m  # type: ignore[operator]
 
-AR_i > str()  # E: No overload variant
-AR_i > bytes()  # E: No overload variant
-str() > AR_M  # E: Unsupported operand types
-bytes() > AR_M  # E: Unsupported operand types
+AR_i > ""  # type: ignore[operator]
+AR_i > b""  # type: ignore[operator]
+"" > AR_M  # type: ignore[operator]
+b"" > AR_M  # type: ignore[operator]

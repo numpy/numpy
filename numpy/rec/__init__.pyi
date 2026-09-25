@@ -1,14 +1,15 @@
 from numpy._core.records import (
-    record,
-    recarray,
+    array,
     find_duplicate,
     format_parser,
     fromarrays,
+    fromfile,
     fromrecords,
     fromstring,
-    fromfile,
-    array,
+    recarray,
+    record,
 )
+
 __all__ = [
     "record",
     "recarray",

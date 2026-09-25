@@ -1,7 +1,9 @@
-from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
+from collections import deque
 
 import numpy as np
-from collections import deque
+
+from .common import TYPES1, Benchmark
+
 
 class BroadcastArrays(Benchmark):
     params = [[(16, 32), (128, 256), (512, 1024)],
@@ -10,10 +12,10 @@ class BroadcastArrays(Benchmark):
     timeout = 10
 
     def setup(self, shape, ndtype):
-        self.xarg = np.random.ranf(shape[0]*shape[1]).reshape(shape)
+        self.xarg = np.random.ranf(shape[0] * shape[1]).reshape(shape)
         self.xarg = self.xarg.astype(ndtype)
         if ndtype.startswith('complex'):
-            self.xarg += np.random.ranf(1)*1j
+            self.xarg += np.random.ranf(1) * 1j
 
     def time_broadcast_arrays(self, shape, ndtype):
         np.broadcast_arrays(self.xarg, np.ones(1))
@@ -30,7 +32,7 @@ class BroadcastArraysTo(Benchmark):
         self.xarg = self.rng.random(size)
         self.xarg = self.xarg.astype(ndtype)
         if ndtype.startswith('complex'):
-            self.xarg += self.rng.random(1)*1j
+            self.xarg += self.rng.random(1) * 1j
 
     def time_broadcast_to(self, size, ndtype):
         np.broadcast_to(self.xarg, (size, size))
@@ -44,11 +46,11 @@ class ConcatenateStackArrays(Benchmark):
     timeout = 10
 
     def setup(self, shape, narrays, ndtype):
-        self.xarg = [np.random.ranf(shape[0]*shape[1]).reshape(shape)
+        self.xarg = [np.random.ranf(shape[0] * shape[1]).reshape(shape)
                      for x in range(narrays)]
         self.xarg = [x.astype(ndtype) for x in self.xarg]
         if ndtype.startswith('complex'):
-            [x + np.random.ranf(1)*1j for x in self.xarg]
+            [x + np.random.ranf(1) * 1j for x in self.xarg]
 
     def time_concatenate_ax0(self, size, narrays, ndtype):
         np.concatenate(self.xarg, axis=0)

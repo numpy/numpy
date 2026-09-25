@@ -5,39 +5,73 @@ More extensive tests are performed for the methods'
 function-based counterpart in `../from_numeric.py`.
 
 """
+from typing import Any, Never
 
 import numpy as np
 import numpy.typing as npt
 
 f8: np.float64
-AR_f8: npt.NDArray[np.float64]
-AR_M: npt.NDArray[np.datetime64]
-AR_b: npt.NDArray[np.bool]
 
-ctypes_obj = AR_f8.ctypes
+_b_nd: npt.NDArray[np.bool]
+_i8_nd: npt.NDArray[np.int64]
+_i8_1d: np.ndarray[tuple[int], np.dtype[np.int64]]
+_f8_nd: npt.NDArray[np.float64]
+_c16_nd: npt.NDArray[np.complex128]
+_M_nd: npt.NDArray[np.datetime64]
+_m_nd: npt.NDArray[np.timedelta64]
+_U_nd: npt.NDArray[np.str_]
+_T_nd: np.ndarray[tuple[Any, ...], np.dtypes.StringDType]
 
-reveal_type(ctypes_obj.get_data())  # E: has no attribute
-reveal_type(ctypes_obj.get_shape())  # E: has no attribute
-reveal_type(ctypes_obj.get_strides())  # E: has no attribute
-reveal_type(ctypes_obj.get_as_parameter())  # E: has no attribute
+###
 
-f8.argpartition(0)  # E: has no attribute
-f8.diagonal()  # E: has no attribute
-f8.dot(1)  # E: has no attribute
-f8.nonzero()  # E: has no attribute
-f8.partition(0)  # E: has no attribute
-f8.put(0, 2)  # E: has no attribute
-f8.setfield(2, np.float64)  # E: has no attribute
-f8.sort()  # E: has no attribute
-f8.trace()  # E: has no attribute
+ctypes_obj = _f8_nd.ctypes
 
-AR_M.__int__()  # E: Invalid self argument
-AR_M.__float__()  # E: Invalid self argument
-AR_M.__complex__()  # E: Invalid self argument
-AR_b.__index__()  # E: Invalid self argument
+f8.argpartition(0)  # type: ignore[attr-defined]
+f8.partition(0)  # type: ignore[attr-defined]
+f8.dot(1)  # type: ignore[attr-defined]
 
-AR_f8[1.5]  # E: No overload variant
-AR_f8["field_a"]  # E: No overload variant
-AR_f8[["field_a", "field_b"]]  # E: Invalid index type
+# NOTE: The following functions return `Never`, causing mypy to stop analysis at that
+# point, which we circumvent by wrapping them in a function.
 
-AR_f8.__array_finalize__(object())  # E: incompatible type
+def f8_diagonal(x: np.float64) -> Never:
+    return x.diagonal()  # type: ignore[misc]
+
+def f8_nonzero(x: np.float64) -> Never:
+    return x.nonzero()  # type: ignore[misc]
+
+def f8_setfield(x: np.float64) -> Never:
+    return x.setfield(2, np.float64)  # type: ignore[misc]
+
+def f8_sort(x: np.float64) -> Never:
+    return x.sort()  # type: ignore[misc]
+
+def f8_trace(x: np.float64) -> Never:
+    return x.trace()  # type: ignore[misc]
+
+_f8_nd.__array_finalize__(object())  # type: ignore[arg-type]
+
+_i8_1d.__bool__()  # type: ignore[misc]
+
+_i8_1d.__int__()  # type: ignore[misc]
+_c16_nd.__int__()  # type: ignore[misc]
+_M_nd.__int__()  # type: ignore[misc]
+_m_nd.__int__()  # type: ignore[misc]
+
+_i8_1d.__float__()  # type: ignore[misc]
+_c16_nd.__float__()  # type: ignore[misc]
+_M_nd.__float__()  # type: ignore[misc]
+_m_nd.__float__()  # type: ignore[misc]
+
+_i8_1d.__complex__()  # type: ignore[misc]
+_M_nd.__complex__()  # type: ignore[misc]
+_m_nd.__complex__()  # type: ignore[misc]
+_U_nd.__complex__()  # type: ignore[misc]
+_T_nd.__complex__()  # type: ignore[misc]
+
+_i8_1d.__index__()  # type: ignore[misc]
+_b_nd.__index__()  # type: ignore[misc]
+_f8_nd.__index__()  # type: ignore[misc]
+
+_f8_nd[1.5]  # type: ignore[call-overload]
+_f8_nd["field_a"]  # type: ignore[call-overload]
+_f8_nd[["field_a", "field_b"]]  # type: ignore[index]

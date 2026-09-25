@@ -3,7 +3,6 @@ Mixin classes for custom array types that don't inherit from ndarray.
 """
 from numpy._core import umath as um
 
-
 __all__ = ['NDArrayOperatorsMixin']
 
 
@@ -21,7 +20,7 @@ def _binary_method(ufunc, name):
         if _disables_array_ufunc(other):
             return NotImplemented
         return ufunc(self, other)
-    func.__name__ = '__{}__'.format(name)
+    func.__name__ = f'__{name}__'
     return func
 
 
@@ -31,7 +30,7 @@ def _reflected_binary_method(ufunc, name):
         if _disables_array_ufunc(other):
             return NotImplemented
         return ufunc(other, self)
-    func.__name__ = '__r{}__'.format(name)
+    func.__name__ = f'__r{name}__'
     return func
 
 
@@ -39,7 +38,7 @@ def _inplace_binary_method(ufunc, name):
     """Implement an in-place binary method with a ufunc, e.g., __iadd__."""
     def func(self, other):
         return ufunc(self, other, out=(self,))
-    func.__name__ = '__i{}__'.format(name)
+    func.__name__ = f'__i{name}__'
     return func
 
 
@@ -54,7 +53,7 @@ def _unary_method(ufunc, name):
     """Implement a unary special method with a ufunc."""
     def func(self):
         return ufunc(self)
-    func.__name__ = '__{}__'.format(name)
+    func.__name__ = f'__{name}__'
     return func
 
 
@@ -69,10 +68,9 @@ class NDArrayOperatorsMixin:
 
     It is useful for writing classes that do not inherit from `numpy.ndarray`,
     but that should support arithmetic and numpy universal functions like
-    arrays as described in `A Mechanism for Overriding Ufuncs
-    <https://numpy.org/neps/nep-0013-ufunc-overrides.html>`_.
+    arrays as described in :external+neps:doc:`nep-0013-ufunc-overrides`.
 
-    As an trivial example, consider this implementation of an ``ArrayLike``
+    As a trivial example, consider this implementation of an ``ArrayLike``
     class that simply wraps a NumPy array and ensures that the result of any
     arithmetic operation is also an ``ArrayLike`` object:
 
@@ -138,6 +136,7 @@ class NDArrayOperatorsMixin:
     ArrayLike preserve a well-defined casting hierarchy.
 
     """
+
     __slots__ = ()
     # Like np.ndarray, this mixin class implements "Option 1" from the ufunc
     # overrides NEP.
@@ -156,7 +155,6 @@ class NDArrayOperatorsMixin:
     __mul__, __rmul__, __imul__ = _numeric_methods(um.multiply, 'mul')
     __matmul__, __rmatmul__, __imatmul__ = _numeric_methods(
         um.matmul, 'matmul')
-    # Python 3 does not use __div__, __rdiv__, or __idiv__
     __truediv__, __rtruediv__, __itruediv__ = _numeric_methods(
         um.true_divide, 'truediv')
     __floordiv__, __rfloordiv__, __ifloordiv__ = _numeric_methods(

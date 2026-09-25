@@ -70,7 +70,8 @@ np.packbits(AR_u1)
 np.unpackbits(AR_u1)
 
 np.shares_memory(1, 2)
-np.shares_memory(AR_f8, AR_f8, max_work=1)
+np.shares_memory(AR_f8, AR_f8, max_work=-1)
 
 np.may_share_memory(1, 2)
-np.may_share_memory(AR_f8, AR_f8, max_work=1)
+np.may_share_memory(AR_f8, AR_f8, max_work=0)
+np.may_share_memory(AR_f8, AR_f8, max_work=-1)

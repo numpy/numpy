@@ -1,8 +1,10 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdatomic.h>
 
 #include <numpy/arrayobject.h>
 
@@ -78,7 +80,7 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
      * For builtin type, hash relies on : kind + byteorder + flags +
      * type_num + elsize + alignment
      */
-    t = Py_BuildValue("(cccii)", descr->kind, nbyteorder,
+    t = Py_BuildValue("(ccKnn)", descr->kind, nbyteorder,
             descr->flags, descr->elsize, descr->alignment);
 
     for(i = 0; i < PyTuple_Size(t); ++i) {
@@ -127,7 +129,7 @@ static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject*
          * For each field, add the key + descr + offset to l
          */
         key = PyTuple_GET_ITEM(names, pos);
-        value = PyDict_GetItem(fields, key);
+        value = PyDict_GetItem(fields, key); // noqa: borrowed-ref OK
         /* XXX: are those checks necessary ? */
         if (value == NULL) {
             PyErr_SetString(PyExc_SystemError,
@@ -256,12 +258,13 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
 }
 
 /*
- * Return 0 if successful
+ * Return hash on success, -1 on failure
  */
-static int _PyArray_DescrHashImp(PyArray_Descr *descr, npy_hash_t *hash)
+static npy_hash_t _PyArray_DescrHashImp(PyArray_Descr *descr)
 {
     PyObject *l, *tl;
     int st;
+    npy_hash_t hash;
 
     l = PyList_New(0);
     if (l == NULL) {
@@ -283,25 +286,16 @@ static int _PyArray_DescrHashImp(PyArray_Descr *descr, npy_hash_t *hash)
     if (tl == NULL)
         return -1;
 
-    *hash = PyObject_Hash(tl);
+    hash = PyObject_Hash(tl);
     Py_DECREF(tl);
-    if (*hash == -1) {
-        /* XXX: does PyObject_Hash set an exception on failure ? */
-#if 0
-        PyErr_SetString(PyExc_SystemError,
-                "(Hash) Error while hashing final tuple");
-#endif
-        return -1;
-    }
-
-    return 0;
+    return hash;
 }
 
 NPY_NO_EXPORT npy_hash_t
 PyArray_DescrHash(PyObject* odescr)
 {
     PyArray_Descr *descr;
-    int st;
+    npy_hash_t hash;
 
     if (!PyArray_DescrCheck(odescr)) {
         PyErr_SetString(PyExc_ValueError,
@@ -310,12 +304,15 @@ PyArray_DescrHash(PyObject* odescr)
     }
     descr = (PyArray_Descr*)odescr;
 
-    if (descr->hash == -1) {
-        st = _PyArray_DescrHashImp(descr, &descr->hash);
-        if (st) {
+    hash = atomic_load_explicit((_Atomic(npy_hash_t) *)&descr->hash, memory_order_relaxed);
+
+    if (hash == -1) {
+        hash = _PyArray_DescrHashImp(descr);
+        if (hash == -1) {
             return -1;
         }
+        atomic_store_explicit((_Atomic(npy_hash_t) *)&descr->hash, hash, memory_order_relaxed);
     }
 
-    return descr->hash;
+    return hash;
 }

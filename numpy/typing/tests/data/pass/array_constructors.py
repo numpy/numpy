@@ -3,16 +3,17 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
+
 class Index:
     def __index__(self) -> int:
         return 0
 
 
-class SubClass(npt.NDArray[np.float64]):
+class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.float64]]):
     pass
 
 
-def func(i: int, j: int, **kwargs: Any) -> SubClass:
+def func(i: npt.NDArray[np.float64], j: npt.NDArray[np.float64], **kwargs: Any) -> SubClass:
     return B
 
 

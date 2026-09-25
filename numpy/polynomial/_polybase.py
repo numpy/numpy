@@ -6,12 +6,13 @@ for the various polynomial classes. It operates as a mixin, but uses the
 abc module from the stdlib, hence it is only available for Python >= 2.6.
 
 """
-import os
 import abc
 import numbers
-from typing import Callable
+import os
+from collections.abc import Callable
 
 import numpy as np
+
 from . import polyutils as pu
 
 __all__ = ['ABCPolyBase']
@@ -199,12 +200,10 @@ class ABCPolyBase(abc.ABC):
             True if the coefficients are the same, False otherwise.
 
         """
-        if len(self.coef) != len(other.coef):
-            return False
-        elif not np.all(self.coef == other.coef):
-            return False
-        else:
-            return True
+        return (
+            len(self.coef) == len(other.coef)
+            and np.all(self.coef == other.coef)
+        )
 
     def has_samedomain(self, other):
         """Check if domains match.
@@ -433,7 +432,7 @@ class ABCPolyBase(abc.ABC):
     def _repr_latex_scalar(x, parens=False):
         # TODO: we're stuck with disabling math formatting until we handle
         # exponents in this function
-        return r'\text{{{}}}'.format(pu.format_float(x, parens=parens))
+        return fr'\text{{{pu.format_float(x, parens=parens)}}}'
 
     def _format_term(self, scalar_format: Callable, multiplication_symbol: str,
                      off: float, scale: float):
@@ -495,8 +494,6 @@ class ABCPolyBase(abc.ABC):
             body = '0'
 
         return rf"${self.symbol} \mapsto {body}$"
-
-
 
     # Pickle and copy
 
@@ -618,10 +615,6 @@ class ABCPolyBase(abc.ABC):
             return NotImplemented
         return self.__class__(coef, self.domain, self.window, self.symbol)
 
-    def __rdiv__(self, other):
-        # set to __floordiv__ /.
-        return self.__rfloordiv__(other)
-
     def __rtruediv__(self, other):
         # An instance of ABCPolyBase is not considered a
         # Number.
@@ -690,6 +683,7 @@ class ABCPolyBase(abc.ABC):
 
         Create a polynomial object for ``1 + 7*x + 4*x**2``:
 
+        >>> np.polynomial.set_default_printstyle("unicode")
         >>> poly = np.polynomial.Polynomial([1, 7, 4])
         >>> print(poly)
         1.0 + 7.0·x + 4.0·x²
@@ -880,8 +874,8 @@ class ABCPolyBase(abc.ABC):
         if lbnd is None:
             lbnd = 0
         else:
-            lbnd = off + scl*lbnd
-        coef = self._int(self.coef, m, k, lbnd, 1./scl)
+            lbnd = off + scl * lbnd
+        coef = self._int(self.coef, m, k, lbnd, 1. / scl)
         return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def deriv(self, m=1):
@@ -1025,7 +1019,7 @@ class ABCPolyBase(abc.ABC):
             if domain[0] == domain[1]:
                 domain[0] -= 1
                 domain[1] += 1
-        elif type(domain) is list and len(domain) == 0:
+        elif isinstance(domain, list) and len(domain) == 0:
             domain = cls.domain
 
         if window is None:
@@ -1073,7 +1067,7 @@ class ABCPolyBase(abc.ABC):
         [roots] = pu.as_series([roots], trim=False)
         if domain is None:
             domain = pu.getdomain(roots)
-        elif type(domain) is list and len(domain) == 0:
+        elif isinstance(domain, list) and len(domain) == 0:
             domain = cls.domain
 
         if window is None:
@@ -1081,7 +1075,7 @@ class ABCPolyBase(abc.ABC):
 
         deg = len(roots)
         off, scl = pu.mapparms(domain, window)
-        rnew = off + scl*roots
+        rnew = off + scl * roots
         coef = cls._fromroots(rnew) / scl**deg
         return cls(coef, domain=domain, window=window, symbol=symbol)
 
@@ -1157,7 +1151,7 @@ class ABCPolyBase(abc.ABC):
 
         if ideg != deg or ideg < 0:
             raise ValueError("deg must be non-negative integer")
-        return cls([0]*ideg + [1], domain, window, symbol)
+        return cls([0] * ideg + [1], domain, window, symbol)
 
     @classmethod
     def cast(cls, series, domain=None, window=None):

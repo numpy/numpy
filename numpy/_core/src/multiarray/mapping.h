@@ -3,6 +3,23 @@
 
 extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 
+/* Indexing types */
+#define HAS_INTEGER 1
+#define HAS_NEWAXIS 2
+#define HAS_SLICE 4
+#define HAS_ELLIPSIS 8
+/* HAS_FANCY can be mixed with HAS_0D_BOOL, be careful when to use & or == */
+#define HAS_FANCY 16
+#define HAS_BOOL 32
+/* NOTE: Only set if it is neither fancy nor purely integer index! */
+#define HAS_SCALAR_ARRAY 64
+/*
+ * Indicate that this is a fancy index that comes from a 0d boolean.
+ * This means that the index does not operate along a real axis. The
+ * corresponding index type is just HAS_FANCY.
+ */
+#define HAS_0D_BOOL (HAS_FANCY | 128)
+
 
 /*
  * Object to store information needed for advanced (also fancy) indexing.
@@ -113,6 +130,11 @@ typedef struct {
 } npy_index_info;
 
 
+NPY_NO_EXPORT int
+prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
+                      npy_index_info *indices, int *num, int *ndim, int *out_fancy_ndim,
+                      int allow_boolean, int is_flatiter_object);
+
 NPY_NO_EXPORT Py_ssize_t
 array_length(PyArrayObject *self);
 
@@ -127,6 +149,9 @@ array_item(PyArrayObject *self, Py_ssize_t i);
 
 NPY_NO_EXPORT PyObject *
 array_subscript_asarray(PyArrayObject *self, PyObject *op);
+
+NPY_NO_EXPORT int
+_get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view);
 
 NPY_NO_EXPORT PyObject *
 array_subscript(PyArrayObject *self, PyObject *op);

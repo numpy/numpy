@@ -29,4 +29,4 @@ default_format_options_dict = {
 }
 
 format_options = ContextVar(
-    "format_options", default=default_format_options_dict.copy())
+    "format_options", default=default_format_options_dict)

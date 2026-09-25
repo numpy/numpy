@@ -1,6 +1,6 @@
-from .common import Benchmark, TYPES1
-
 import numpy as np
+
+from .common import TYPES1, Benchmark
 
 
 class Take(Benchmark):

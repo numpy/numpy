@@ -52,6 +52,6 @@ Powershell usage is a little less pleasant, and this configuration now works wit
 Note that the actual path to your local installation of `ifort` may vary, and the command above will need to be updated accordingly.
 
 .. _have been relaxed: https://www.intel.com/content/www/us/en/developer/articles/release-notes/oneapi-fortran-compiler-release-notes.html
-.. _disassembly of components and liability: https://software.sintel.com/content/www/us/en/develop/articles/end-user-license-agreement.html
+.. _disassembly of components and liability: https://www.intel.com/content/www/us/en/developer/articles/license/end-user-license-agreement.html
 .. _Intel Fortran Compilers: https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html#inpage-nav-6-1
 .. _Classic Intel C/C++ Compiler: https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html#inpage-nav-6-undefined

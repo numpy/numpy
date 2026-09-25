@@ -3,19 +3,96 @@
 
 #include "numpy/ndarraytypes.h"
 #include "npy_import.h"
-#include "npy_atomic.h"
+#include <stdatomic.h>
+#include <string.h>
 
 
-NPY_VISIBILITY_HIDDEN npy_runtime_imports_struct npy_runtime_imports;
+/* Process global mutex to serialize first time imports. */
+#ifdef NPY_USE_LEGACY_LOCK
+static PyThread_type_lock npy_import_mutex = NULL;
+#else
+static PyMutex npy_import_mutex;
+#endif
 
 NPY_NO_EXPORT int
 init_import_mutex(void) {
-#if PY_VERSION_HEX < 0x30d00b3
-    npy_runtime_imports.import_mutex = PyThread_allocate_lock();
-    if (npy_runtime_imports.import_mutex == NULL) {
+#ifdef NPY_USE_LEGACY_LOCK
+    npy_import_mutex = PyThread_allocate_lock();
+    if (npy_import_mutex == NULL) {
         PyErr_NoMemory();
         return -1;
     }
 #endif
+    return 0;
+}
+
+
+/*! \brief Import a Python object from an entry point string.
+
+ * The name should be of the form "(module ':')? (object '.')* attr".
+ * If no module is present, it is assumed to be "numpy".
+ * On error, returns NULL.
+ */
+NPY_NO_EXPORT PyObject*
+npy_import_entry_point(const char *entry_point) {
+    PyObject *result;
+    const char *item;
+
+    const char *colon = strchr(entry_point, ':');
+    if (colon) { // there is a module.
+        result = PyUnicode_FromStringAndSize(entry_point, colon - entry_point);
+        if (result != NULL) {
+            PyObject *module = PyImport_Import(result);
+            Py_DECREF(result);
+            result = module;
+        }
+        item = colon + 1;
+    }
+    else {
+        result = PyImport_ImportModule("numpy");
+        item = entry_point;
+    }
+
+    const char *dot = item - 1;
+    while (result != NULL && dot != NULL) {
+        item = dot + 1;
+        dot = strchr(item, '.');
+        PyObject *string = PyUnicode_FromStringAndSize(
+            item, dot ? dot - item : strlen(item));
+        if (string == NULL) {
+            Py_DECREF(result);
+            return NULL;
+        }
+        PyObject *attr = PyObject_GetAttr(result, string);
+        Py_DECREF(result);
+        result = attr;
+        Py_DECREF(string);
+    }
+    return result;
+}
+
+
+NPY_NO_EXPORT int
+npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {
+    if (!atomic_load_explicit((_Atomic(PyObject *) *)obj, memory_order_acquire)) {
+        PyObject* value = npy_import(module, attr);
+        if (value == NULL) {
+            return -1;
+        }
+#ifdef NPY_USE_LEGACY_LOCK
+        PyThread_acquire_lock(npy_import_mutex, WAIT_LOCK);
+#else
+        PyMutex_Lock(&npy_import_mutex);
+#endif
+        if (!atomic_load_explicit((_Atomic(PyObject *) *)obj, memory_order_acquire)) {
+            atomic_store_explicit((_Atomic(PyObject *) *)obj, Py_NewRef(value), memory_order_release);
+        }
+#ifdef NPY_USE_LEGACY_LOCK
+        PyThread_release_lock(npy_import_mutex);
+#else
+        PyMutex_Unlock(&npy_import_mutex);
+#endif
+        Py_DECREF(value);
+    }
     return 0;
 }

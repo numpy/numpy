@@ -13,6 +13,8 @@
  *          npy_longlong, npy_ulonglong#
  *  #MAX = NPY_MAX_INT, NPY_MAX_UINT, NPY_MAX_LONG, NPY_MAX_ULONG,
  *         NPY_MAX_LONGLONG, NPY_MAX_ULONGLONG#
+ *  #utype = npy_uint, npy_uint, npy_ulong, npy_ulong,
+ *           npy_ulonglong, npy_ulonglong#
  *
  *  #neg = (1,0)*3#
  *  #abs_func = abs*2, labs*2, llabs*2#
@@ -33,7 +35,7 @@ npy_mul_with_overflow_@name@(@type@ * r, @type@ a, @type@ b)
 #else
     const @type@ half_sz = ((@type@)1 << ((sizeof(a) * 8 - 1 ) / 2));
 
-    *r = a * b;
+    *r = (@type@)((@utype@)a * (@utype@)b);
     /*
      * avoid expensive division on common no overflow case
      */
@@ -62,7 +64,7 @@ npy_mul_sizes_with_overflow (npy_intp * r, npy_intp a, npy_intp b)
     assert(a >= 0 && b >= 0);
     const npy_intp half_sz = ((npy_intp)1 << ((sizeof(a) * 8 - 1 ) / 2));
 
-    *r = a * b;
+    *r = (npy_intp)((npy_uintp)a * (npy_uintp)b);
     /*
      * avoid expensive division on common no overflow case
      */

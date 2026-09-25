@@ -1,0 +1,30 @@
+[package.build]
+source.path = "../.."
+flags = ["default"]
+
+[package.build.backend]
+name = "pixi-build-python"
+version = "*"
+
+[package.build.config]
+extra-input-globs = ["**/*.c.src"]
+compilers = ["c", "cxx"]
+extra-args = ["-Csetup-args=-Dbuildtype=debug"]
+
+[package.host-dependencies]
+# FIXME https://github.com/numpy/numpy/issues/30478
+# python = "*" prevents downstream from building cpython from sources.
+# Workaround: fork numpy, then uncomment one of the following and
+# comment out the other.
+
+# Use latest cpython release from conda-forge
+python = "*"
+
+# Use cpython git tip
+# python.flags = ["default"]
+# python.git = "https://github.com/python/cpython"
+# python.subdirectory = "Tools/pixi-packages"
+# python.rev = "847d099efa4785658ba9bd3163e35cb4ae742f6d"
+
+meson-python = "*"
+cython = "*"

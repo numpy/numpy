@@ -37,6 +37,7 @@ details are found in :ref:`reference`.
    ../f2py/index
    ../dev/underthehood
    basics.interoperability
+   basics.performant_code
 
 .. Links to these files are placed directly in the top-level html
    (doc/source/_templates/indexcontent.html, which appears for the URLs

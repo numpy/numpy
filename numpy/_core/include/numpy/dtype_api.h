@@ -80,6 +80,7 @@ typedef enum {
      * assume that if set, it also applies to normal operations though!
      */
     NPY_METH_IS_REORDERABLE = 1 << 3,
+    _NPY_METH_IS_CAST = 1 << 4,  /* automatically set for casts */
     /*
      * Private flag for now for *logic* functions.  The logical functions
      * `logical_or` and `logical_and` can always cast the inputs to booleans
@@ -99,6 +100,11 @@ typedef enum {
 } NPY_ARRAYMETHOD_FLAGS;
 
 
+typedef enum {
+    /* Casting via same_value logic */
+    NPY_SAME_VALUE_CONTEXT_FLAG=1,
+} NPY_ARRAYMETHOD_CONTEXT_FLAGS;
+
 typedef struct PyArrayMethod_Context_tag {
     /* The caller, which is typically the original ufunc.  May be NULL */
     PyObject *caller;
@@ -107,7 +113,22 @@ typedef struct PyArrayMethod_Context_tag {
 
     /* Operand descriptors, filled in by resolve_descriptors */
     PyArray_Descr *const *descriptors;
+ #if NPY_FEATURE_VERSION > NPY_2_3_API_VERSION
+    void * _reserved;
+    /*
+     * Optional flag to pass information into the inner loop
+     * NPY_ARRAYMETHOD_CONTEXT_FLAGS
+     */
+    uint64_t flags;
+
+    /*
+     * Optional run-time parameters to pass to the loop (currently used in sorting).
+     * Fixed parameters are expected to be passed via auxdata.
+     */
+    void *parameters;
+
     /* Structure may grow (this is harmless for DType authors) */
+ #endif
 } PyArrayMethod_Context;
 
 
@@ -123,6 +144,13 @@ typedef struct {
     PyArray_DTypeMeta **dtypes;
     PyType_Slot *slots;
 } PyArrayMethod_Spec;
+
+
+// This is used for the convenience function `PyUFunc_AddLoopsFromSpecs`
+typedef struct {
+    const char *name;
+    PyArrayMethod_Spec *spec;
+} PyUFunc_LoopSlot;
 
 
 /*
@@ -143,7 +171,19 @@ typedef struct {
 #define NPY_METH_unaligned_contiguous_loop 8
 #define NPY_METH_contiguous_indexed_loop 9
 #define _NPY_METH_static_data 10
-
+/*
+ * A `PyArrayMethod_GetLoop` that returns the dedicated (nout+1)->nout
+ * reduction loop for `ufunc.reduce`, needed for ufuncs with more than one
+ * output whose forward loop cannot double as a reduction loop.
+ */
+#define NPY_METH_get_reduction_loop 11
+/*
+ * A `PyArrayMethod_GetMultiReductionInitials` that fills the per-output
+ * reduction identity/initial values.  It is the multi-output generalization of
+ * NPY_METH_get_reduction_initial (and also handles the single-output case).
+ * A method may register at most one of the two initial-value slots.
+ */
+#define NPY_METH_get_multi_reduction_initials 12
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
@@ -228,6 +268,29 @@ typedef int (PyArrayMethod_GetLoop)(
 typedef int (PyArrayMethod_GetReductionInitial)(
         PyArrayMethod_Context *context, npy_bool reduction_is_empty,
         void *initial);
+
+
+/**
+ * Multi-output counterpart of `PyArrayMethod_GetReductionInitial`: query an
+ * ArrayMethod for the per-output initial values used in a reduction.  This is
+ * the identity slot for multi-output reductions (registered via
+ * NPY_METH_get_multi_reduction_initials), but it also supports single-output
+ * reductions.  It behaves exactly like `PyArrayMethod_GetReductionInitial`,
+ * except that `initials` is an array of `nout` pointers, one per reduction
+ * output, each pointing to the buffer to fill.
+ *
+ * @param context The arraymethod context, mainly to access the descriptors.
+ * @param reduction_is_empty Whether the reduction is empty, see
+ *     `PyArrayMethod_GetReductionInitial` for the (per-output) semantics.
+ * @param initials Array of `nout` pointers to the initial buffers to fill.
+ *
+ * @returns -1, 0, or 1 indicating error, no initial value, and the initials
+ *     being successfully filled.  A return of 1 must fill every output.  As
+ *     with the single-output slot, errors must not be given where 0 is correct.
+ */
+typedef int (PyArrayMethod_GetMultiReductionInitials)(
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty,
+        void **initials);
 
 /*
  * The following functions are only used by the wrapping array method defined
@@ -367,6 +430,7 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
 #define NPY_DT_finalize_descr 11
+#define NPY_DT_get_constant 12
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
@@ -377,7 +441,17 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 
 // used to separate dtype slots from arrfuncs slots
 // intended only for internal use but defined here for clarity
-#define _NPY_DT_ARRFUNCS_OFFSET (1 << 10)
+#define _NPY_DT_ARRFUNCS_OFFSET (1 << 11)
+
+/*
+ * Special slot (must be the first slot if used) to indicate that this DType
+ * is a "simple legacy" dtype backed by a PyArray_DescrProto.  When present,
+ * pfunc must point to a PyArray_DescrProto.  NumPy will create a
+ * _PyArray_LegacyDescr singleton, assign a type number, and set the
+ * NPY_DT_LEGACY flag.  Legacy-appropriate defaults are used for slots that
+ * the user does not override.
+ */
+#define NPY_DT_legacy_descriptor_proto (_NPY_DT_ARRFUNCS_OFFSET - 1)
 
 // Cast is disabled
 // #define NPY_DT_PyArray_ArrFuncs_cast 0 + _NPY_DT_ARRFUNCS_OFFSET
@@ -412,7 +486,6 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 // #define NPY_DT_PyArray_ArrFuncs_fasttake 21 + _NPY_DT_ARRFUNCS_OFFSET
 #define NPY_DT_PyArray_ArrFuncs_argmin 22 + _NPY_DT_ARRFUNCS_OFFSET
 
-
 // TODO: These slots probably still need some thought, and/or a way to "grow"?
 typedef struct {
     PyTypeObject *typeobj;    /* type of python scalar or NULL */
@@ -446,7 +519,7 @@ typedef PyArray_DTypeMeta *(PyArrayDTypeMeta_CommonDType)(
  * Convenience utility for getting a reference to the DType metaclass associated
  * with a dtype instance.
  */
-#define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
+#define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE((PyObject *)(descr)))
 
 static inline PyArray_DTypeMeta *
 NPY_DT_NewRef(PyArray_DTypeMeta *o) {
@@ -468,6 +541,42 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_EnsureCanonical)(PyArray_Descr *dtype);
 typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtype);
 
 /*
+ * Constants that can be queried and used e.g. by reducing identities defaults.
+ * These are also used to expose .finfo and .iinfo for example.
+ */
+/* Numerical constants */
+#define NPY_CONSTANT_zero 1
+#define NPY_CONSTANT_one 2
+#define NPY_CONSTANT_all_bits_set 3
+#define NPY_CONSTANT_maximum_finite 4
+#define NPY_CONSTANT_minimum_finite 5
+#define NPY_CONSTANT_inf 6
+#define NPY_CONSTANT_ninf 7
+#define NPY_CONSTANT_nan 8
+#define NPY_CONSTANT_finfo_radix 9
+#define NPY_CONSTANT_finfo_eps 10
+#define NPY_CONSTANT_finfo_smallest_normal 11
+#define NPY_CONSTANT_finfo_smallest_subnormal 12
+/* Constants that are always of integer type, value is `npy_intp/Py_ssize_t` */
+#define NPY_CONSTANT_finfo_nmant (1 << 16) + 0
+#define NPY_CONSTANT_finfo_min_exp (1 << 16) + 1
+#define NPY_CONSTANT_finfo_max_exp (1 << 16) + 2
+#define NPY_CONSTANT_finfo_decimal_digits (1 << 16) + 3
+
+/* It may make sense to continue with other constants here, e.g. pi, etc? */
+
+/*
+ * Function to get a constant value for the dtype.  Data may be unaligned, the
+ * function is always called with the GIL held.
+ *
+ * @param descr The dtype instance (i.e. self)
+ * @param ID The ID of the constant to get.
+ * @param data Pointer to the data to be written too, may be unaligned.
+ * @returns 1 on success, 0 if the constant is not available, or -1 with an error set.
+ */
+typedef int (PyArrayDTypeMeta_GetConstant)(PyArray_Descr *descr, int ID, void *data);
+
+/*
  * TODO: These two functions are currently only used for experimental DType
  *       API support.  Their relation should be "reversed": NumPy should
  *       always use them internally.
@@ -476,5 +585,13 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtyp
  */
 typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
+
+typedef struct {
+    NPY_SORTKIND flags;
+} PyArrayMethod_SortParameters;
+
+typedef struct {
+    NPY_SELECTKIND flags;
+} PyArrayMethod_PartitionParameters;
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

@@ -133,7 +133,14 @@ Apr 05, 2024 3.10+  1.23+
 Jun 22, 2024 3.10+  1.24+
 Dec 18, 2024 3.10+  1.25+
 Apr 04, 2025 3.11+  1.25+
-Apr 24, 2026 3.12+  1.25+
+Jun 17, 2025 3.11+  1.26+
+Sep 16, 2025 3.11+  2.0+
+Apr 24, 2026 3.12+  2.0+
+Jun 16, 2026 3.12+  2.1+
+Aug 19, 2026 3.12+  2.2+
+Dec 09, 2026 3.12+  2.3+
+Apr 02, 2027 3.13+  2.3+
+Apr 07, 2028 3.14+  2.3+
 ============ ====== =====
 
 
@@ -151,7 +158,7 @@ Drop Schedule
   On Dec 22, 2021 drop support for NumPy 1.18 (initially released on Dec 22, 2019)
   On Dec 26, 2021 drop support for Python 3.7 (initially released on Jun 27, 2018)
   On Jun 21, 2022 drop support for NumPy 1.19 (initially released on Jun 20, 2020)
-  On Jan 31, 2023 drop support for NumPy 1.20 (initially released on Jan 31, 2021)
+  On Jan 31, 2023 drop support for NumPy 1.20 (initially released on Jan 30, 2021)
   On Apr 14, 2023 drop support for Python 3.8 (initially released on Oct 14, 2019)
   On Jun 23, 2023 drop support for NumPy 1.21 (initially released on Jun 22, 2021)
   On Jan 01, 2024 drop support for NumPy 1.22 (initially released on Dec 31, 2021)
@@ -159,7 +166,14 @@ Drop Schedule
   On Jun 22, 2024 drop support for NumPy 1.23 (initially released on Jun 22, 2022)
   On Dec 18, 2024 drop support for NumPy 1.24 (initially released on Dec 18, 2022)
   On Apr 04, 2025 drop support for Python 3.10 (initially released on Oct 04, 2021)
+  On Jun 17, 2025 drop support for NumPy 1.25 (initially released on Jun 17, 2023)
+  On Sep 16, 2025 drop support for NumPy 1.26 (initially released on Sep 16, 2023)
   On Apr 24, 2026 drop support for Python 3.11 (initially released on Oct 24, 2022)
+  On Jun 16, 2026 drop support for NumPy 2.0 (initially released on Jun 15, 2024)
+  On Aug 19, 2026 drop support for NumPy 2.1 (initially released on Aug 18, 2024)
+  On Dec 09, 2026 drop support for NumPy 2.2 (initially released on Dec 08, 2024)
+  On Apr 02, 2027 drop support for Python 3.12 (initially released on Oct 02, 2023)
+  On Apr 07, 2028 drop support for Python 3.13 (initially released on Oct 07, 2024)
 
 
 Implementation
@@ -296,6 +310,13 @@ Code to generate support and drop schedule tables ::
   Jun 22, 2022: NumPy 1.23
   Oct 24, 2022: Python 3.11
   Dec 18, 2022: NumPy 1.24
+  Jun 17, 2023: NumPy 1.25
+  Sep 16, 2023: NumPy 1.26
+  Oct 2, 2023: Python 3.12
+  Jun 15, 2024: NumPy 2.0
+  Aug 18, 2024: NumPy 2.1
+  Oct 7, 2024: Python 3.13
+  Dec 8, 2024: NumPy 2.2
   """
 
   releases = []

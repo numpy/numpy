@@ -3,12 +3,14 @@
 """
 import types
 import warnings
-import numpy as np
+
 import pytest
+
+import numpy as np
+from numpy import double, half, longdouble, single
 from numpy._core import finfo, iinfo
-from numpy import half, single, double, longdouble
-from numpy.testing import assert_equal, assert_, assert_raises
-from numpy._core.getlimits import _discovered_machar, _float_ma
+from numpy._core._rational_tests import rational
+from numpy.testing import assert_, assert_equal, assert_raises
 
 ##################################################
 
@@ -47,7 +49,7 @@ def assert_finfo_equal(f1, f2):
     for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machep',
                  'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
                  'nmant', 'precision', 'resolution', 'tiny',
-                 'smallest_normal', 'smallest_subnormal'):
+                 'smallest_normal', 'smallest_subnormal', 'dtype'):
         assert_equal(getattr(f1, attr), getattr(f2, attr),
                      f'finfo instances {f1} and {f2} differ on {attr}')
 
@@ -65,7 +67,20 @@ class TestFinfo:
         for dt1, dt2 in dts:
             assert_finfo_equal(finfo(dt1), finfo(dt2))
 
-        assert_raises(ValueError, finfo, 'i4')
+    @pytest.mark.parametrize('dt1, dt2',
+        [('>f2', '<f2'), ('>f4', '<f4'), ('>f8', '<f8'), ('>c8', '<c8'),
+         ('>c16', '<c16')])
+    def test_byteorder(self, dt1, dt2):
+        # finfo should normalize to native byte-order.
+        assert_finfo_equal(finfo(dt1), finfo(dt2))
+
+    @pytest.mark.parametrize('dt', [
+            np.int8, "V3", "S3", "f,f", rational, "O", "T"])
+    def test_rejects_others(self, dt):
+        dtype = np.dtype(dt)
+        with pytest.raises(ValueError,
+                match=r"data type .* not compatible with finfo"):
+            finfo(dtype)
 
     def test_regression_gh23108(self):
         # np.float32(1.0) and np.float64(1.0) have the same hash and are
@@ -81,6 +96,9 @@ class TestFinfo:
 
         x = NonHashableWithDtype()
         assert np.finfo(x) == np.finfo(x.dtype)
+
+    def test_no_none_sense(self):
+        assert_raises(TypeError, finfo, None)
 
 
 class TestIinfo:
@@ -107,7 +125,7 @@ class TestRepr:
         assert_equal(repr(np.iinfo(np.int16)), expected)
 
     def test_finfo_repr(self):
-        expected = "finfo(resolution=1e-06, min=-3.4028235e+38," + \
+        expected = "finfo(resolution=1e-06, min=-3.4028235e+38,"\
                    " max=3.4028235e+38, dtype=float32)"
         assert_equal(repr(np.finfo(np.float32)), expected)
 
@@ -137,53 +155,20 @@ def test_instances():
         finfo(np.int64(1))
 
 
-def assert_ma_equal(discovered, ma_like):
-    # Check MachAr-like objects same as calculated MachAr instances
-    for key, value in discovered.__dict__.items():
-        assert_equal(value, getattr(ma_like, key))
-        if hasattr(value, 'shape'):
-            assert_equal(value.shape, getattr(ma_like, key).shape)
-            assert_equal(value.dtype, getattr(ma_like, key).dtype)
-
-
-def test_known_types():
-    # Test we are correctly compiling parameters for known types
-    for ftype, ma_like in ((np.float16, _float_ma[16]),
-                           (np.float32, _float_ma[32]),
-                           (np.float64, _float_ma[64])):
-        assert_ma_equal(_discovered_machar(ftype), ma_like)
-    # Suppress warning for broken discovery of double double on PPC
-    with np.errstate(all='ignore'):
-        ld_ma = _discovered_machar(np.longdouble)
-    bytes = np.dtype(np.longdouble).itemsize
-    if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
-        # 80-bit extended precision
-        assert_ma_equal(ld_ma, _float_ma[80])
-    elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
-        # IEE 754 128-bit
-        assert_ma_equal(ld_ma, _float_ma[128])
-
-
 def test_subnormal_warning():
     """Test that the subnormal is zero warning is not being raised."""
-    with np.errstate(all='ignore'):
-        ld_ma = _discovered_machar(np.longdouble)
-    bytes = np.dtype(np.longdouble).itemsize
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
-        if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
-            # 80-bit extended precision
-            ld_ma.smallest_subnormal
-            assert len(w) == 0
-        elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
-            # IEE 754 128-bit
-            ld_ma.smallest_subnormal
-            assert len(w) == 0
-        else:
-            # Double double
-            ld_ma.smallest_subnormal
-            # This test may fail on some platforms
-            assert len(w) == 0
+        # Test for common float types
+        for dtype in [np.float16, np.float32, np.float64]:
+            f = finfo(dtype)
+            _ = f.smallest_subnormal
+        # Also test longdouble
+        with np.errstate(all='ignore'):
+            fld = finfo(np.longdouble)
+            _ = fld.smallest_subnormal
+        # Check no warnings were raised
+        assert len(w) == 0
 
 
 def test_plausible_finfo():

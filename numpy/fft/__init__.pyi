@@ -1,24 +1,23 @@
+from typing import Final
+
+from numpy._pytesttester import PytestTester
+
+from ._helper import fftfreq, fftshift, ifftshift, rfftfreq
 from ._pocketfft import (
     fft,
-    ifft,
-    rfft,
-    irfft,
-    hfft,
-    ihfft,
-    rfftn,
-    irfftn,
-    rfft2,
-    irfft2,
     fft2,
-    ifft2,
     fftn,
+    hfft,
+    ifft,
+    ifft2,
     ifftn,
-)
-from ._helper import (
-    fftshift,
-    ifftshift,
-    fftfreq,
-    rfftfreq,
+    ihfft,
+    irfft,
+    irfft2,
+    irfftn,
+    rfft,
+    rfft2,
+    rfftn,
 )
 
 __all__ = [
@@ -41,3 +40,5 @@ __all__ = [
     "fftfreq",
     "rfftfreq",
 ]
+
+test: Final[PytestTester] = ...

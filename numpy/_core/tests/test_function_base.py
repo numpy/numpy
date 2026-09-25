@@ -1,19 +1,40 @@
+import platform
 import sys
+import warnings
 
 import pytest
 
 import numpy as np
 from numpy import (
-    logspace, linspace, geomspace, dtype, array, arange, isnan,
-    ndarray, sqrt, nextafter, stack, errstate
-    )
+    arange,
+    array,
+    dtype,
+    errstate,
+    geomspace,
+    isnan,
+    linspace,
+    logspace,
+    ndarray,
+    nextafter,
+    sqrt,
+    stack,
+)
 from numpy._core import sctypes
 from numpy._core.function_base import add_newdoc
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
-    IS_PYPY
-    )
+    IS_WASM,
+    assert_,
+    assert_allclose,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
+
+def _is_armhf():
+    # Check if the current platform is ARMHF (32-bit ARM architecture)
+    architecture = platform.architecture()
+    return platform.machine().startswith('arm') and architecture[0] == '32bit'
 
 class PhysicalQuantity(float):
     def __new__(cls, value):
@@ -36,15 +57,54 @@ class PhysicalQuantity(float):
         return PhysicalQuantity(float(x) * float(self))
     __rmul__ = __mul__
 
-    def __div__(self, x):
+    def __truediv__(self, x):
         return PhysicalQuantity(float(self) / float(x))
 
-    def __rdiv__(self, x):
+    def __rtruediv__(self, x):
         return PhysicalQuantity(float(x) / float(self))
 
 
 class PhysicalQuantity2(ndarray):
     __array_priority__ = 10
+
+    def __array_ufunc__(self, ufunc, method, *args, **kwargs):
+        out = kwargs.get("out")
+        if out is not None:
+            new_out = []
+            for o in out:
+                if o is None:
+                    new_out.append(None)
+                elif isinstance(o, PhysicalQuantity2):
+                    new_out.append(o.view(np.ndarray))
+                else:
+                    return NotImplemented
+            kwargs["out"] = tuple(new_out)
+        args = [np.asarray(a) for a in args]
+
+        res = super().__array_ufunc__(ufunc, method, *args, **kwargs)
+        if ((dtype := getattr(res, "dtype", None)) is not None
+            and dtype.kind != "b"):
+            res = res[...].view(PhysicalQuantity2)
+        return res
+
+    def __getitem__(self, item):
+        res = super().__getitem__(item)
+        if not isinstance(res, PhysicalQuantity2):
+            res = res[...].view(PhysicalQuantity2)
+        return res
+
+    def __str__(self):
+        return super().__str__(self.view(np.ndarray))
+
+    def __repr__(self):
+        prefixstr = self.__class__.__name__ + "("
+        arrstr = np.array2string(
+            self.view(np.ndarray), separator=", ", prefix=prefixstr
+        )
+        return f"{prefixstr}{arrstr})"
+
+    def __array_wrap__(self, arr, *args, **kwargs):
+        return arr.view(PhysicalQuantity2)
 
 
 class TestLogspace:
@@ -192,29 +252,29 @@ class TestGeomspace:
         assert_allclose(y, [-4j, -12j, -36j, -108j, -324j])
         assert_array_equal(y.real, 0)
 
-        y = geomspace(1+1j, 1000+1000j, num=4)
-        assert_allclose(y, [1+1j, 10+10j, 100+100j, 1000+1000j])
+        y = geomspace(1 + 1j, 1000 + 1000j, num=4)
+        assert_allclose(y, [1 + 1j, 10 + 10j, 100 + 100j, 1000 + 1000j])
 
-        y = geomspace(-1+1j, -1000+1000j, num=4)
-        assert_allclose(y, [-1+1j, -10+10j, -100+100j, -1000+1000j])
+        y = geomspace(-1 + 1j, -1000 + 1000j, num=4)
+        assert_allclose(y, [-1 + 1j, -10 + 10j, -100 + 100j, -1000 + 1000j])
 
         # Logarithmic spirals
         y = geomspace(-1, 1, num=3, dtype=complex)
         assert_allclose(y, [-1, 1j, +1])
 
-        y = geomspace(0+3j, -3+0j, 3)
-        assert_allclose(y, [0+3j, -3/sqrt(2)+3j/sqrt(2), -3+0j])
-        y = geomspace(0+3j, 3+0j, 3)
-        assert_allclose(y, [0+3j, 3/sqrt(2)+3j/sqrt(2), 3+0j])
-        y = geomspace(-3+0j, 0-3j, 3)
-        assert_allclose(y, [-3+0j, -3/sqrt(2)-3j/sqrt(2), 0-3j])
-        y = geomspace(0+3j, -3+0j, 3)
-        assert_allclose(y, [0+3j, -3/sqrt(2)+3j/sqrt(2), -3+0j])
-        y = geomspace(-2-3j, 5+7j, 7)
-        assert_allclose(y, [-2-3j, -0.29058977-4.15771027j,
-                            2.08885354-4.34146838j, 4.58345529-3.16355218j,
-                            6.41401745-0.55233457j, 6.75707386+3.11795092j,
-                            5+7j])
+        y = geomspace(0 + 3j, -3 + 0j, 3)
+        assert_allclose(y, [0 + 3j, -3 / sqrt(2) + 3j / sqrt(2), -3 + 0j])
+        y = geomspace(0 + 3j, 3 + 0j, 3)
+        assert_allclose(y, [0 + 3j, 3 / sqrt(2) + 3j / sqrt(2), 3 + 0j])
+        y = geomspace(-3 + 0j, 0 - 3j, 3)
+        assert_allclose(y, [-3 + 0j, -3 / sqrt(2) - 3j / sqrt(2), 0 - 3j])
+        y = geomspace(0 + 3j, -3 + 0j, 3)
+        assert_allclose(y, [0 + 3j, -3 / sqrt(2) + 3j / sqrt(2), -3 + 0j])
+        y = geomspace(-2 - 3j, 5 + 7j, 7)
+        assert_allclose(y, [-2 - 3j, -0.29058977 - 4.15771027j,
+                            2.08885354 - 4.34146838j, 4.58345529 - 3.16355218j,
+                            6.41401745 - 0.55233457j, 6.75707386 + 3.11795092j,
+                            5 + 7j])
 
         # Type promotion should prevent the -5 from becoming a NaN
         y = geomspace(3j, -5, 2)
@@ -225,13 +285,12 @@ class TestGeomspace:
     def test_complex_shortest_path(self):
         # test the shortest logarithmic spiral is used, see gh-25644
         x = 1.2 + 3.4j
-        y = np.exp(1j*(np.pi-.1)) * x
+        y = np.exp(1j * (np.pi - .1)) * x
         z = np.geomspace(x, y, 5)
         expected = np.array([1.2 + 3.4j, -1.47384 + 3.2905616j,
                         -3.33577588 + 1.36842949j, -3.36011056 - 1.30753855j,
                         -1.53343861 - 3.26321406j])
         np.testing.assert_array_almost_equal(z, expected)
-
 
     def test_dtype(self):
         y = geomspace(1, 1e6, dtype='float32')
@@ -265,8 +324,8 @@ class TestGeomspace:
 
     def test_start_stop_array(self):
         # Try to use all special cases.
-        start = array([1.e0, 32., 1j, -4j, 1+1j, -1])
-        stop = array([1.e4, 2., 16j, -324j, 10000+10000j, 1])
+        start = array([1.e0, 32., 1j, -4j, 1 + 1j, -1])
+        stop = array([1.e4, 2., 16j, -324j, 10000 + 10000j, 1])
         t1 = geomspace(start, stop, 5)
         t2 = stack([geomspace(_start, _stop, 5)
                     for _start, _stop in zip(start, stop)], axis=1)
@@ -360,9 +419,9 @@ class TestLinspace:
 
     def test_complex(self):
         lim1 = linspace(1 + 2j, 3 + 4j, 5)
-        t1 = array([1.0+2.j, 1.5+2.5j,  2.0+3j, 2.5+3.5j, 3.0+4j])
+        t1 = array([1.0 + 2.j, 1.5 + 2.5j,  2.0 + 3j, 2.5 + 3.5j, 3.0 + 4j])
         lim2 = linspace(1j, 10, 5)
-        t2 = array([0.0+1.j, 2.5+0.75j, 5.0+0.5j, 7.5+0.25j, 10.0+0j])
+        t2 = array([0.0 + 1.j, 2.5 + 0.75j, 5.0 + 0.5j, 7.5 + 0.25j, 10.0 + 0j])
         assert_equal(lim1, t1)
         assert_equal(lim2, t2)
 
@@ -373,13 +432,17 @@ class TestLinspace:
 
     def test_subclass(self):
         a = array(0).view(PhysicalQuantity2)
-        b = array(1).view(PhysicalQuantity2)
+        b = array(np.arange(3)).view(PhysicalQuantity2)
         ls = linspace(a, b)
         assert type(ls) is PhysicalQuantity2
-        assert_equal(ls, linspace(0.0, 1.0))
-        ls = linspace(a, b, 1)
+        assert_equal(ls, linspace(0.0, np.arange(3.0)))
+        # Also test mixes of subclass and something else.
+        ls = linspace(a, 1.0)
         assert type(ls) is PhysicalQuantity2
-        assert_equal(ls, linspace(0.0, 1.0, 1))
+        assert_equal(ls, linspace(0.0, 1.0))
+        ls = linspace(np.array(0.0), b, 1)
+        assert type(ls) is PhysicalQuantity2
+        assert_equal(ls, linspace(0.0, np.arange(3.0), 1))
 
     def test_array_interface(self):
         # Regression test for https://github.com/numpy/numpy/pull/6659
@@ -415,6 +478,9 @@ class TestLinspace:
 
         assert_equal(linspace(one, five), linspace(1, 5))
 
+    # even when not explicitly enabled via FPSCR register
+    @pytest.mark.xfail(_is_armhf(),
+                       reason="ARMHF/AArch32 platforms seem to FTZ subnormals")
     def test_denormal_numbers(self):
         # Regression test for gh-5437. Will probably fail when compiled
         # with ICC, which flushes denormals to zero
@@ -424,8 +490,8 @@ class TestLinspace:
 
     def test_equivalent_to_arange(self):
         for j in range(1000):
-            assert_equal(linspace(0, j, j+1, dtype=int),
-                         arange(j+1, dtype=int))
+            assert_equal(linspace(0, j, j + 1, dtype=int),
+                         arange(j + 1, dtype=int))
 
     def test_retstep(self):
         for num in [0, 1, 2]:
@@ -461,16 +527,67 @@ class TestLinspace:
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([[0.0, 1.0], [1.0, 1.0], [2.0, 1.0]]))
 
+    def test_inf_equal_endpoints(self):
+        # Regression test for gh-26699, equal infinite endpoint were returning NaN.
+        # Equal endpoints skip the `inf - inf` subtraction entirely, so no
+        # spurious "invalid value" RuntimeWarning must be emitted (the fix does
+        # not rely on suppressing warnings via errstate).
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            for inf in [np.inf, -np.inf]:
+                assert_array_equal(linspace(inf, inf, 0), array([]))
+                assert_array_equal(linspace(inf, inf, 1), array([inf]))
+                for num in [2, 5, 50]:
+                    assert_array_equal(linspace(inf, inf, num), np.full(num, inf))
+
+            assert_array_equal(linspace(np.inf, np.inf, 5, endpoint=False),
+                               np.full(5, np.inf))
+
+            y, step = linspace(np.inf, np.inf, 2, retstep=True)
+            assert_array_equal(y, array([np.inf, np.inf]))
+            assert_equal(step, 0.0)
+
+            start = array([np.inf, 1.0])
+            stop = array([np.inf, 3.0])
+            result = linspace(start, stop, 3)
+            assert_array_equal(result,
+                               array([[np.inf, 1.0], [np.inf, 2.0],
+                                      [np.inf, 3.0]]))
+
+            # Complex infinities
+            for cinf in [complex(np.inf, 0), complex(0, np.inf),
+                         complex(np.inf, np.inf), complex(-np.inf, -np.inf)]:
+                assert_array_equal(linspace(cinf, cinf, 3), np.full(3, cinf))
+
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    def test_inf_mixed_endpoints_warns(self):
+        # Mixed infinite endpoints produce NaN interior points and should warn.
+        cases = [(np.inf, -np.inf, -np.inf), (-np.inf, np.inf, np.inf)]
+        for num in [3, 5]:
+            for start, stop, expected_stop in cases:
+                with pytest.warns(RuntimeWarning, match="invalid value"):
+                    mixed = linspace(start, stop, num)
+                assert_(isnan(mixed[:-1]).all())
+                assert_equal(mixed[-1], expected_stop)
+
+    def test_nan_endpoints(self):
+        # NaN inputs: behavior unchanged by gh-26699 fix (nan != nan so no
+        # replacement occurs; delta stays nan and propagates normally).
+        assert_(isnan(linspace(np.nan, np.nan, 5)).all())
+        assert_(isnan(linspace(np.nan, np.nan, 1)).all())
+        result = linspace(np.nan, 1.0, 5)
+        assert_(isnan(result[:-1]).all())
+        assert_equal(result[-1], 1.0)
+
 
 class TestAdd_newdoc:
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_doc(self):
         # test that np.add_newdoc did attach a docstring successfully:
         tgt = "Current flat index into the array."
         assert_equal(np._core.flatiter.index.__doc__[:len(tgt)], tgt)
-        assert_(len(np._core.ufunc.identity.__doc__) > 300)
+        assert_(len(np._core.ufunc.identity.__doc__) > 250)
         assert_(len(np.lib._index_tricks_impl.mgrid.__doc__) > 300)
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")

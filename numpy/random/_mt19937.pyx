@@ -43,8 +43,8 @@ cdef uint64_t mt19937_raw(void *st) noexcept nogil:
     return <uint64_t>mt19937_next32(<mt19937_state *> st)
 
 cdef class MT19937(BitGenerator):
-    """
-    MT19937(seed=None)
+    # the first line is used to populate `__text_signature__`
+    """MT19937(seed=None)\n--
 
     Container for the Mersenne Twister pseudo-random number generator.
 
@@ -155,7 +155,7 @@ cdef class MT19937(BitGenerator):
         seed : {None, int, array_like}
             Random seed initializing the pseudo-random number generator.
             Can be an integer in [0, 2**32-1], array of integers in
-            [0, 2**32-1], a `SeedSequence, or ``None``. If `seed`
+            [0, 2**32-1], a `SeedSequence`, or ``None``. If `seed`
             is ``None``, then fresh, unpredictable entropy will be pulled from
             the OS.
 
@@ -192,7 +192,7 @@ cdef class MT19937(BitGenerator):
                     raise ValueError("Seed must be between 0 and 2**32 - 1")
                 obj = obj.astype(np.uint32, casting='unsafe', order='C')
                 mt19937_init_by_array(&self.rng_state, <uint32_t*> obj.data, np.PyArray_DIM(obj, 0))
-        self._seed_seq = None
+            self._seed_seq = None
 
     cdef jump_inplace(self, iter):
         """
@@ -205,8 +205,8 @@ cdef class MT19937(BitGenerator):
         iter : integer, positive
             Number of times to jump the state of the rng.
         """
-        cdef np.npy_intp i
-        for i in range(iter):
+        cdef np.npy_intp _i
+        for _i in range(iter):
             mt19937_jump(&self.rng_state)
 
 
@@ -266,11 +266,12 @@ cdef class MT19937(BitGenerator):
             state of the PRNG
         """
         key = np.zeros(624, dtype=np.uint32)
-        for i in range(624):
-            key[i] = self.rng_state.key[i]
+        with self.lock:
+            for i in range(624):
+                key[i] = self.rng_state.key[i]
 
-        return {'bit_generator': self.__class__.__name__,
-                'state': {'key': key, 'pos': self.rng_state.pos}}
+            return {'bit_generator': self.__class__.__name__,
+                    'state': {'key': key, 'pos': self.rng_state.pos}}
 
     @state.setter
     def state(self, value):
@@ -284,9 +285,9 @@ cdef class MT19937(BitGenerator):
             raise TypeError('state must be a dict')
         bitgen = value.get('bit_generator', '')
         if bitgen != self.__class__.__name__:
-            raise ValueError('state must be for a {0} '
-                             'PRNG'.format(self.__class__.__name__))
+            raise ValueError(f'state must be for a {self.__class__.__name__} PRNG')
         key = value['state']['key']
-        for i in range(624):
-            self.rng_state.key[i] = key[i]
-        self.rng_state.pos = value['state']['pos']
+        with self.lock:
+            for i in range(624):
+                self.rng_state.key[i] = key[i]
+            self.rng_state.pos = value['state']['pos']

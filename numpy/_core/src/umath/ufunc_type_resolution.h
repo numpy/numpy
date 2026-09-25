@@ -1,6 +1,21 @@
 #ifndef _NPY_PRIVATE__UFUNC_TYPE_RESOLUTION_H_
 #define _NPY_PRIVATE__UFUNC_TYPE_RESOLUTION_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*
+ * Bracket legacy type resolver calls made (only) for promotion, so they
+ * do not emit deprecation warnings.  `begin` returns a context variable
+ * token (or NULL with an error set); `end` consumes the token.
+ */
+NPY_NO_EXPORT PyObject *
+npy_begin_legacy_resolver_promotion(void);
+
+NPY_NO_EXPORT int
+npy_end_legacy_resolver_promotion(PyObject *token);
+
 NPY_NO_EXPORT int
 PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                                            NPY_CASTING casting,
@@ -14,6 +29,13 @@ PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
                              PyArrayObject **operands,
                              PyObject *type_tup,
                              PyArray_Descr **out_dtypes);
+
+NPY_NO_EXPORT int
+PyUFunc_SignTypeResolver(PyUFuncObject *ufunc,
+                         NPY_CASTING casting,
+                         PyArrayObject **operands,
+                         PyObject *type_tup,
+                         PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
 PyUFunc_OnesLikeTypeResolver(PyUFuncObject *ufunc,
@@ -141,5 +163,9 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
 
 NPY_NO_EXPORT int
 raise_no_loop_found_error(PyUFuncObject *ufunc, PyObject **dtypes);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -42,6 +42,7 @@ Arithmetic
    legval
    legval2d
    legval3d
+   legvalnd
    leggrid2d
    leggrid3d
 
@@ -74,14 +75,12 @@ Misc Functions
    leg2poly
    poly2leg
 
-See also
+See Also
 --------
 numpy.polynomial
 
 """
 import numpy as np
-import numpy.linalg as la
-from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -90,7 +89,7 @@ __all__ = [
     'legzero', 'legone', 'legx', 'legdomain', 'legline', 'legadd',
     'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval', 'legder',
     'legint', 'leg2poly', 'poly2leg', 'legfromroots', 'legvander',
-    'legfit', 'legtrim', 'legroots', 'Legendre', 'legval2d', 'legval3d',
+    'legfit', 'legtrim', 'legroots', 'Legendre', 'legval2d', 'legval3d', 'legvalnd',
     'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d', 'legcompanion',
     'leggauss', 'legweight']
 
@@ -191,7 +190,7 @@ def leg2poly(c):
 
 
     """
-    from .polynomial import polyadd, polysub, polymulx
+    from .polynomial import polyadd, polymulx, polysub
 
     [c] = pu.as_series([c])
     n = len(c)
@@ -203,8 +202,8 @@ def leg2poly(c):
         # i is the current degree of c1
         for i in range(n - 1, 1, -1):
             tmp = c0
-            c0 = polysub(c[i - 2], (c1*(i - 1))/i)
-            c1 = polyadd(tmp, (polymulx(c1)*(2*i - 1))/i)
+            c0 = polysub(c[i - 2], (c1 * (i - 1)) / i)
+            c1 = polyadd(tmp, (polymulx(c1) * (2 * i - 1)) / i)
         return polyadd(c0, polymulx(c1))
 
 
@@ -452,14 +451,14 @@ def legmulx(c):
         return c
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
-    prd[0] = c[0]*0
+    prd[0] = c[0] * 0
     prd[1] = c[0]
     for i in range(1, len(c)):
         j = i + 1
         k = i - 1
         s = i + j
-        prd[j] = (c[i]*j)/s
-        prd[k] += (c[i]*i)/s
+        prd[j] = (c[i] * j) / s
+        prd[k] += (c[i] * i) / s
     return prd
 
 
@@ -514,20 +513,20 @@ def legmul(c1, c2):
         xs = c2
 
     if len(c) == 1:
-        c0 = c[0]*xs
+        c0 = c[0] * xs
         c1 = 0
     elif len(c) == 2:
-        c0 = c[0]*xs
-        c1 = c[1]*xs
+        c0 = c[0] * xs
+        c1 = c[1] * xs
     else:
         nd = len(c)
-        c0 = c[-2]*xs
-        c1 = c[-1]*xs
+        c0 = c[-2] * xs
+        c1 = c[-1] * xs
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = legsub(c[-i]*xs, (c1*(nd - 1))/nd)
-            c1 = legadd(tmp, (legmulx(c1)*(2*nd - 1))/nd)
+            c0 = legsub(c[-i] * xs, (c1 * (nd - 1)) / nd)
+            c1 = legadd(tmp, (legmulx(c1) * (2 * nd - 1)) / nd)
     return legadd(c0, legmulx(c1))
 
 
@@ -676,7 +675,7 @@ def legder(c, m=1, scl=1, axis=0):
     iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -684,17 +683,17 @@ def legder(c, m=1, scl=1, axis=0):
     c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        c = c[:1] * 0
     else:
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
             for j in range(n, 2, -1):
-                der[j - 1] = (2*j - 1)*c[j]
+                der[j - 1] = (2 * j - 1) * c[j]
                 c[j - 2] += c[j]
             if n > 1:
-                der[1] = 3*c[2]
+                der[1] = 3 * c[2]
             der[0] = c[1]
             c = der
     c = np.moveaxis(c, 0, iaxis)
@@ -799,13 +798,13 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
     c = np.moveaxis(c, iaxis, 0)
-    k = list(k) + [0]*(cnt - len(k))
+    k = list(k) + [0] * (cnt - len(k))
     for i in range(cnt):
         n = len(c)
         c *= scl
@@ -813,12 +812,12 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             c[0] += k[i]
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
-            tmp[0] = c[0]*0
+            tmp[0] = c[0] * 0
             tmp[1] = c[0]
             if n > 1:
-                tmp[2] = c[1]/3
+                tmp[2] = c[1] / 3
             for j in range(2, n):
-                t = c[j]/(2*j + 1)
+                t = c[j] / (2 * j + 1)
                 tmp[j + 1] = t
                 tmp[j - 1] -= t
             tmp[0] += k[i] - legval(lbnd, tmp)
@@ -890,7 +889,7 @@ def legval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,) * x.ndim)
 
     if len(c) == 1:
         c0 = c[0]
@@ -905,9 +904,9 @@ def legval(x, c, tensor=True):
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = c[-i] - c1*((nd - 1)/nd)
-            c1 = tmp + c1*x*((2*nd - 1)/nd)
-    return c0 + c1*x
+            c0 = c[-i] - c1 * ((nd - 1) / nd)
+            c1 = tmp + c1 * x * ((2 * nd - 1) / nd)
+    return c0 + c1 * x
 
 
 def legval2d(x, y, c):
@@ -1045,6 +1044,57 @@ def legval3d(x, y, z, c):
     return pu._valnd(legval, c, x, y, z)
 
 
+def legvalnd(pts, c):
+    r"""
+    Evaluate an N-D Legendre series at points.
+
+    This function returns the values:
+
+    .. math::
+        p(pts, c) = \sum_{i_1, i_2, \dots, i_n}
+        c_{i_1, i_2, \dots, i_n} * P_{i_1}(x_1) * P_{i_2}(x_2) \dots P_{i_n}(x_n)
+
+    where :math:`x_1, x_2, \dots, x_n = pts`.
+    Note that `pts` may also be an `(n, m)` array.
+
+    The parameters in `pts` are converted to arrays only if they are
+    tuples or lists, otherwise they are treated as scalars and
+    they must have the same shape after conversion. In either case, either
+    the elements of `pts` or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to its
+    shape to make it N-D. The shape of the result will be c.shape[N:] +
+    pts[0].shape.
+
+    Parameters
+    ----------
+    pts : tuple or list of array_like, compatible objects
+        The N-dimensional series is evaluated at the points
+        ``(x_1, x_2, ..., x_n)`` provided in the `pts` iterable, where
+        all elements must have the same shape. If any element is a list
+        or tuple, it is first converted to an ndarray, otherwise it is
+        left unchanged and if it isn't an ndarray it is treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has
+        dimension greater than N, the remaining indices enumerate multiple
+        sets of coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional Legendre series on points formed
+        with N-tuples of corresponding values from `pts`.
+
+    See Also
+    --------
+    legval, legval2d, legval3d
+
+    """
+    return pu._valnd(legval, c, *pts)
+
+
 def leggrid3d(x, y, z, c):
     """
     Evaluate a 3-D Legendre series on the Cartesian product of x, y, and z.
@@ -1140,11 +1190,11 @@ def legvander(x, deg):
     v = np.empty(dims, dtype=dtyp)
     # Use forward recursion to generate the entries. This is not as accurate
     # as reverse recursion in this application but it is more efficient.
-    v[0] = x*0 + 1
+    v[0] = x * 0 + 1
     if ideg > 0:
         v[1] = x
         for i in range(2, ideg + 1):
-            v[i] = (v[i-1]*x*(2*i - 1) - v[i-2]*(i - 1))/i
+            v[i] = (v[i - 1] * x * (2 * i - 1) - v[i - 2] * (i - 1)) / i
     return np.moveaxis(v, 0, -1)
 
 
@@ -1164,7 +1214,7 @@ def legvander2d(x, y, deg):
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
-    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+    .. math:: c_{00}, c_{01}, c_{02}, ... , c_{10}, c_{11}, c_{12}, ...
 
     and ``np.dot(V, c.flat)`` and ``legval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
@@ -1374,7 +1424,7 @@ def legcompanion(c):
     """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` is an Legendre basis polynomial. This provides
+    symmetric when `c` is a Legendre basis polynomial. This provides
     better eigenvalue estimates than the unscaled case and for basis
     polynomials the eigenvalues are guaranteed to be real if
     `numpy.linalg.eigvalsh` is used to obtain them.
@@ -1395,16 +1445,16 @@ def legcompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[-c[0]/c[1]]])
+        return np.array([[-c[0] / c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = 1./np.sqrt(2*np.arange(n) + 1)
-    top = mat.reshape(-1)[1::n+1]
-    bot = mat.reshape(-1)[n::n+1]
-    top[...] = np.arange(1, n)*scl[:n-1]*scl[1:n]
+    scl = 1. / np.sqrt(2 * np.arange(n) + 1)
+    top = mat.reshape(-1)[1::n + 1]
+    bot = mat.reshape(-1)[n::n + 1]
+    top[...] = np.arange(1, n) * scl[:n - 1] * scl[1:n]
     bot[...] = top
-    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*(n/(2*n - 1))
+    mat[:, -1] -= (c[:-1] / c[-1]) * (scl / scl[-1]) * (n / (2 * n - 1))
     return mat
 
 
@@ -1460,11 +1510,11 @@ def legroots(c):
     if len(c) < 2:
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
-        return np.array([-c[0]/c[1]])
+        return np.array([-c[0] / c[1]])
 
     # rotated companion matrix reduces error
-    m = legcompanion(c)[::-1,::-1]
-    r = la.eigvals(m)
+    m = legcompanion(c)[::-1, ::-1]
+    r = np.linalg.eigvals(m)
     r.sort()
     return r
 
@@ -1508,25 +1558,25 @@ def leggauss(deg):
 
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.
-    c = np.array([0]*deg + [1])
+    c = np.array([0] * deg + [1])
     m = legcompanion(c)
-    x = la.eigvalsh(m)
+    x = np.linalg.eigvalsh(m)
 
     # improve roots by one application of Newton
     dy = legval(x, c)
     df = legval(x, legder(c))
-    x -= dy/df
+    x -= dy / df
 
     # compute the weights. We scale the factor to avoid possible numerical
     # overflow.
     fm = legval(x, c[1:])
     fm /= np.abs(fm).max()
     df /= np.abs(df).max()
-    w = 1/(fm * df)
+    w = 1 / (fm * df)
 
     # for Legendre we can also symmetrize
-    w = (w + w[::-1])/2
-    x = (x - x[::-1])/2
+    w = (w + w[::-1]) / 2
+    x = (x - x[::-1]) / 2
 
     # scale w to get the right value
     w *= 2. / w.sum()
@@ -1552,7 +1602,7 @@ def legweight(x):
     w : ndarray
        The weight function at `x`.
     """
-    w = x*0.0 + 1.0
+    w = x * 0.0 + 1.0
     return w
 
 #

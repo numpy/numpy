@@ -79,10 +79,10 @@ their precision when determining the result dtype. This is often convenient.
 For instance, when working with arrays of a low precision dtype, it is usually
 desirable for simple operations with Python scalars to preserve the dtype.
 
-  >>> arr_float32 = np.array([1, 2.5, 2.1], dtype="float32")
+  >>> arr_float32 = np.array([1, 2.5, 2.1], dtype=np.float32)
   >>> arr_float32 + 10.0  # undesirable to promote to float64
   array([11. , 12.5, 12.1], dtype=float32)
-  >>> arr_int16 = np.array([3, 5, 7], dtype="int16")
+  >>> arr_int16 = np.array([3, 5, 7], dtype=np.int16)
   >>> arr_int16 + 10  # undesirable to promote to int64
   array([13, 15, 17], dtype=int16)
 
@@ -130,7 +130,45 @@ overflows:
   ... RuntimeWarning: overflow encountered in scalar add
 
 Note that NumPy warns when overflows occur for scalars, but not for arrays;
-e.g., ``np.array(100, dtype="uint8") + 100`` will *not* warn.
+e.g., ``np.array(100, dtype=np.uint8) + 100`` will *not* warn.
+
+.. _arrays.promotion.python-scalar-casting:
+
+Cast safety of Python scalars
+-----------------------------
+The ``casting`` argument of ufuncs, `numpy.copyto` and `numpy.concatenate`
+treats a Python ``int``, ``float`` or ``complex`` by its kind, since the
+scalar has no precision of its own. Converting a Python ``int`` to any NumPy
+integer dtype or a Python ``float`` to any NumPy floating point dtype counts
+as "safe", even though the value may not fit or may lose precision. An
+integer that does not fit raises ``OverflowError`` on conversion, as shown
+above, while a ``float`` is rounded to the lower precision, or overflows to
+``inf`` with a ``RuntimeWarning``. Lowering the kind, such as a Python
+``float`` into an integer dtype, requires ``casting="unsafe"``.
+
+  >>> arr_int8 = np.array([1, 2], dtype=np.int8)
+  >>> np.concatenate((arr_int8, 3), axis=None, casting="safe")
+  array([1, 2, 3], dtype=int8)
+  >>> np.copyto(arr_int8, 300, casting="safe")
+  Traceback (most recent call last):
+    ...
+  OverflowError: Python integer 300 out of bounds for int8
+  >>> np.copyto(arr_int8, 3.0, casting="same_kind")
+  Traceback (most recent call last):
+    ...
+  TypeError: Cannot cast scalar from dtype('float64') to dtype('int8') according to the rule 'same_kind'
+
+Under ``casting="equiv"`` and ``casting="no"`` a Python scalar must convert
+to its default dtype (``int64``, ``float64`` or ``complex128``) or to
+``object``; any other conversion raises ``TypeError``:
+
+  >>> np.copyto(np.array([1, 2]), 3, casting="no")
+  >>> np.copyto(arr_int8, 3, casting="no")
+  Traceback (most recent call last):
+    ...
+  TypeError: cannot cast Python int to int8 under the casting rule 'no'
+
+`numpy.can_cast` does not accept Python scalars.
 
 Numerical promotion
 -------------------
@@ -201,6 +239,27 @@ This leads to what may appear as "exceptions" to the rules:
 In principle, some of these exceptions may make sense for other functions.
 Please raise an issue if you feel this is the case.
 
+Notable behavior with Python builtin type classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When combining Python's builtin scalar *types* (i.e., ``float``, ``int``,
+or ``complex``, not scalar *values*), the promotion rules can appear
+surprising:
+
+  >>> np.result_type(7, np.array([1], np.float32))
+  dtype('float32')  # The scalar value '7' does not impact type promotion
+  >>> np.result_type(type(7), np.array([1], np.float32))
+  dtype('float64')  # The *type* of the scalar value '7' does impact promotion
+  # Similar situations happen with Python's float and complex types
+
+The reason for this behavior is that NumPy converts ``int`` to its default
+integer type, and uses that type for promotion:
+
+  >>> np.result_type(int)
+  dtype('int64')
+
+See also :ref:`dtype-constructing-from-python-types` for more details.
+
 Promotion of non-numerical datatypes
 ------------------------------------
 
@@ -236,7 +295,9 @@ such as byte-order, metadata, string length, or exact structured dtype layout.
 While the string length or field names of a structured dtype are important,
 NumPy considers byte-order, metadata, and the exact layout of a structured
 dtype as storage details.
+
 During promotion NumPy does *not* take these storage details into account:
+
 * Byte-order is converted to native byte-order.
 * Metadata attached to the dtype may or may not be preserved.
 * Resulting structured dtypes will be packed (but aligned if inputs were).
@@ -256,4 +317,4 @@ could drastically slow down evaluation.
    precision of NumPy scalars or 0-D arrays for promotion purposes.
 
 .. [#default-int] The default integer is marked as ``int64`` in the schema
-   but is ``int32`` on 32bit platforms.  However, normal PCs are 64bit.
+   but is ``int32`` on 32bit platforms.  However, most modern systems are 64bit.

@@ -51,6 +51,7 @@
             || defined(NPY_CPU_RISCV64)       \
             || defined(NPY_CPU_RISCV32)       \
             || defined(NPY_CPU_LOONGARCH)     \
+            || defined(NPY_CPU_SW_64)     \
             || defined(NPY_CPU_WASM)
         #define NPY_BYTE_ORDER NPY_LITTLE_ENDIAN
 

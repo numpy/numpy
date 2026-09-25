@@ -320,8 +320,8 @@ can_cast_fields(PyObject *field1, PyObject *field2, NPY_CASTING casting)
 
     /* Iterate over all the fields and compare for castability */
     ppos = 0;
-    while (PyDict_Next(field1, &ppos, &key, &tuple1)) {
-        if ((tuple2 = PyDict_GetItem(field2, key)) == NULL) {
+    while (PyDict_Next(field1, &ppos, &key, &tuple1)) { // noqa: borrowed-ref OK
+        if ((tuple2 = PyDict_GetItem(field2, key)) == NULL) { // noqa: borrowed-ref OK
             return 0;
         }
         /* Compare the dtype of the field for castability */
@@ -367,12 +367,12 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
          * field; recurse just in case the single field is itself structured.
          */
         if (!PyDataType_HASFIELDS(to) && !PyDataType_ISOBJECT(to)) {
-            if (casting == NPY_UNSAFE_CASTING &&
+            if ((casting == NPY_UNSAFE_CASTING || ((casting & NPY_SAME_VALUE_CASTING_FLAG)  > 0)) &&
                     PyDict_Size(lfrom->fields) == 1) {
                 Py_ssize_t ppos = 0;
                 PyObject *tuple;
                 PyArray_Descr *field;
-                PyDict_Next(lfrom->fields, &ppos, NULL, &tuple);
+                PyDict_Next(lfrom->fields, &ppos, NULL, &tuple); // noqa: borrowed-ref OK
                 field = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
                 /*
                  * For a subarray, we need to get the underlying type;
@@ -399,7 +399,7 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
          * casting; this is not correct, but needed since the treatment in can_cast
          * below got out of sync with astype; see gh-13667.
          */
-        if (casting == NPY_UNSAFE_CASTING) {
+        if (casting == NPY_UNSAFE_CASTING || (casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
             return 1;
         }
     }
@@ -408,14 +408,14 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
          * If "from" is a simple data type and "to" has fields, then only
          * unsafe casting works (and that works always, even to multiple fields).
          */
-        return casting == NPY_UNSAFE_CASTING;
+        return (casting == NPY_UNSAFE_CASTING || (casting & NPY_SAME_VALUE_CASTING_FLAG) > 0);
     }
     /*
      * Everything else we consider castable for unsafe for now.
      * FIXME: ensure what we do here is consistent with "astype",
      * i.e., deal more correctly with subarrays and user-defined dtype.
      */
-    else if (casting == NPY_UNSAFE_CASTING) {
+    else if (casting == NPY_UNSAFE_CASTING || (casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
         return 1;
     }
     /*

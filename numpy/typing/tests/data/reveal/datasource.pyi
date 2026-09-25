@@ -1,9 +1,7 @@
 from pathlib import Path
-from typing import IO, Any
+from typing import IO, Any, assert_type
 
 import numpy as np
-
-from typing_extensions import assert_type
 
 path1: Path
 path2: str
@@ -15,11 +13,14 @@ d3 = np.lib.npyio.DataSource(None)
 assert_type(d1.abspath("..."), str)
 assert_type(d2.abspath("..."), str)
 assert_type(d3.abspath("..."), str)
+assert_type(d1.abspath(path1), str)
 
 assert_type(d1.exists("..."), bool)
 assert_type(d2.exists("..."), bool)
 assert_type(d3.exists("..."), bool)
+assert_type(d1.exists(path1), bool)
 
 assert_type(d1.open("...", "r"), IO[Any])
 assert_type(d2.open("...", encoding="utf8"), IO[Any])
 assert_type(d3.open("...", newline="/n"), IO[Any])
+assert_type(d1.open(path1, "r"), IO[Any])

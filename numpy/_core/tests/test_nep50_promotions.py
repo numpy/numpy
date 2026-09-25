@@ -5,19 +5,18 @@ is adopted in the main test suite.  A few may be moved elsewhere.
 """
 
 import operator
-import threading
-import warnings
-
-import numpy as np
 
 import pytest
-import hypothesis
-from hypothesis import strategies
 
-from numpy.testing import assert_array_equal, IS_WASM
+import numpy as np
+from numpy.testing import assert_array_equal
+from numpy.testing._private.hypothesis_helpers import (
+    HAS_HYPOTHESIS,
+    hypothesis,
+    strategies,
+)
 
 
-@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for fp errors")
 def test_nep50_examples():
     res = np.uint8(1) + 2
     assert res.dtype == np.uint8
@@ -130,7 +129,7 @@ def test_nep50_complex_promotion():
     with pytest.warns(RuntimeWarning, match=".*overflow"):
         res = np.complex64(3) + complex(2**300)
 
-    assert type(res) == np.complex64
+    assert type(res) is np.complex64
 
 
 def test_nep50_integer_conversion_errors():
@@ -189,6 +188,75 @@ def test_nep50_in_concat_and_choose():
     assert res.dtype == "float32"
 
 
+def test_nep50_in_ufunc_at():
+    # Python scalars passed to ufunc.at are weak, like for ufunc.__call__.
+    arr = np.array([2**63], dtype=np.uint64)
+    np.add.at(arr, [0], 1)  # uint64 loop; float64 would round the result
+    assert arr[0] == np.uint64(2**63 + 1)
+
+    arr = np.zeros(3, dtype=np.float32)
+    np.add.at(arr, [0, 0, 1], 0.25)
+    assert_array_equal(arr, np.array([0.5, 0.25, 0], dtype=np.float32),
+                       strict=True)
+
+    arr = np.zeros(2, dtype=np.complex64)
+    np.add.at(arr, [1], 1j)
+    assert_array_equal(arr, np.array([0, 1j], dtype=np.complex64),
+                       strict=True)
+
+    # Huge Python integers work when the resolved dtype can hold the value:
+    arr = np.zeros(1)
+    np.add.at(arr, [0], 2**100)
+    assert arr[0] == 2.0**100
+
+    # NumPy scalars and 0-d arrays remain strongly typed:
+    arr = np.zeros(2, dtype=np.uint8)
+    np.add.at(arr, [0], np.int64(-1))
+    assert arr[0] == 255
+    np.add.at(arr, [1], np.array(-1))
+    assert arr[1] == 255
+
+
+@pytest.mark.parametrize("scalar", [-1, 300, 2**100])
+def test_nep50_in_ufunc_at_overflow(scalar):
+    arr = np.zeros(2, dtype=np.uint8)
+    with pytest.raises(OverflowError):
+        np.add.at(arr, [0], scalar)
+    # the error is raised before any element is modified
+    assert arr[0] == 0
+
+
+@pytest.mark.parametrize("scalar,expected", [
+    (1, "float32"), (1., "float32"), (1j, "complex64")])
+def test_nep50_in_ufunc_outer(scalar, expected):
+    # gh-32076: outer used to convert Python scalars to arrays, making them
+    # strongly typed.
+    arr = np.arange(6, dtype="float32").reshape(3, 2)
+
+    res = np.add.outer(scalar, arr)
+    assert res.dtype == expected
+    assert_array_equal(res, np.add(scalar, arr))
+
+    res = np.add.outer(arr, scalar)
+    assert res.dtype == expected
+    assert_array_equal(res, np.add(arr, scalar))
+
+
+def test_nep50_in_ufunc_outer_strong_operands():
+    # gh-32076: NumPy scalars and 0-d arrays remain strongly typed.
+    arr = np.arange(6, dtype="float32").reshape(3, 2)
+    assert np.add.outer(np.float64(1), arr).dtype == "float64"
+    assert np.add.outer(np.array(1.), arr).dtype == "float64"
+
+
+def test_nep50_in_ufunc_outer_huge_integer():
+    # gh-32076: a weak Python int stays weak, so a huge one overflows here
+    # rather than silently going to object dtype (matching ufunc.__call__).
+    with pytest.raises(OverflowError):
+        np.add.outer(2**100, 1)
+
+
+@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
 @pytest.mark.parametrize("expected,dtypes,optional_dtypes", [
         (np.float32, [np.float32],
             [np.float16, 0.0, np.uint16, np.int16, np.int8, 0]),
@@ -215,7 +283,7 @@ def test_expected_promotion(expected, dtypes, optional_dtypes, data):
         [np.int8, np.int16, np.int32, np.int64,
          np.uint8, np.uint16, np.uint32, np.uint64])
 @pytest.mark.parametrize("other_val",
-        [-2*100, -1, 0, 9, 10, 11, 2**63, 2*100])
+        [-2 * 100, -1, 0, 9, 10, 11, 2**63, 2 * 100])
 @pytest.mark.parametrize("comp",
         [operator.eq, operator.ne, operator.le, operator.lt,
          operator.ge, operator.gt])
@@ -235,6 +303,20 @@ def test_integer_comparison(sctype, other_val, comp):
     val = val_obj.astype(sctype)
     assert_array_equal(comp(val_obj, other_val), comp(val, other_val))
     assert_array_equal(comp(other_val, val_obj), comp(other_val, val))
+
+
+@pytest.mark.parametrize("arr", [
+    np.ones((100, 100), dtype=np.uint8)[::2],  # not trivially iterable
+    np.ones(20000, dtype=">u4"),  # cast and >buffersize
+    np.ones(100, dtype=">u4"),  # fast path compatible with cast
+])
+def test_integer_comparison_with_cast(arr):
+    # Similar to above, but mainly test a few cases that cover the slow path
+    # the test is limited to unsigned ints and -1 for simplicity.
+    res = arr >= -1
+    assert_array_equal(res, np.ones_like(arr, dtype=bool))
+    res = arr < -1
+    assert_array_equal(res, np.zeros_like(arr, dtype=bool))
 
 
 @pytest.mark.parametrize("comp",

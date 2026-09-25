@@ -1,17 +1,21 @@
-from __future__ import annotations
-
-import os
 import errno
+import os
+import re
 import shutil
 import subprocess
 import sys
-import re
+from itertools import chain
 from pathlib import Path
+from string import Template
 
 from ._backend import Backend
-from string import Template
-from itertools import chain
 
+
+def _meson_identifier(prefix: str, value: str, index: int) -> str:
+    safe_value = re.sub(r"[^a-zA-Z0-9_]", "_", value)
+    if not safe_value or safe_value[0].isdigit():
+        safe_value = f"_{safe_value}"
+    return f"{prefix}_{index}_{safe_value}"
 
 
 class MesonTemplate:
@@ -53,6 +57,7 @@ class MesonTemplate:
         self.pipeline = [
             self.initialize_template,
             self.sources_substitution,
+            self.objects_substitution,
             self.deps_substitution,
             self.include_substitution,
             self.libraries_substitution,
@@ -82,12 +87,22 @@ class MesonTemplate:
             [f"{self.indent}'''{source}'''," for source in self.sources]
         )
 
+    def objects_substitution(self) -> None:
+        self.substitutions["obj_list"] = ",\n".join(
+            [f"{self.indent}'''{obj}'''," for obj in self.objects]
+        )
+
     def deps_substitution(self) -> None:
         self.substitutions["dep_list"] = f",\n{self.indent}".join(
             [f"{self.indent}dependency('{dep}')," for dep in self.deps]
         )
 
     def libraries_substitution(self) -> None:
+        lib_names = [
+            (_meson_identifier("lib", lib, i), lib)
+            for i, lib in enumerate(self.libraries)
+        ]
+
         self.substitutions["lib_dir_declarations"] = "\n".join(
             [
                 f"lib_dir_{i} = declare_dependency(link_args : ['''-L{lib_dir}'''])"
@@ -97,13 +112,13 @@ class MesonTemplate:
 
         self.substitutions["lib_declarations"] = "\n".join(
             [
-                f"{lib.replace('.','_')} = declare_dependency(link_args : ['-l{lib}'])"
-                for lib in self.libraries
+                f"{name} = declare_dependency(link_args : ['-l{lib}'])"
+                for name, lib in lib_names
             ]
         )
 
         self.substitutions["lib_list"] = f"\n{self.indent}".join(
-            [f"{self.indent}{lib.replace('.','_')}," for lib in self.libraries]
+            [f"{self.indent}{name}," for name, _ in lib_names]
         )
         self.substitutions["lib_dir_list"] = f"\n{self.indent}".join(
             [f"{self.indent}lib_dir_{i}," for i in range(len(self.library_dirs))]
@@ -127,7 +142,7 @@ class MesonTemplate:
             node()
         template = Template(self.meson_build_template())
         meson_build = template.substitute(self.substitutions)
-        meson_build = re.sub(r",,", ",", meson_build)
+        meson_build = meson_build.replace(",,", ",")
         return meson_build
 
 
@@ -146,6 +161,7 @@ class MesonBackend(Backend):
         path_objects = chain(
             walk_dir.glob(f"{self.modulename}*.so"),
             walk_dir.glob(f"{self.modulename}*.pyd"),
+            walk_dir.glob(f"{self.modulename}*.dll"),
         )
         # Same behavior as distutils
         # https://github.com/numpy/numpy/issues/24874#issuecomment-1835632293
@@ -188,6 +204,7 @@ class MesonBackend(Backend):
 
     def compile(self) -> None:
         self.sources = _prepare_sources(self.modulename, self.sources, self.build_dir)
+        _prepare_objects(self.modulename, self.extra_objects, self.build_dir)
         self.write_meson_build(self.build_dir)
         self.run_meson(self.build_dir)
         self._move_exec_to_root(self.build_dir)
@@ -218,6 +235,12 @@ def _prepare_sources(mname, sources, bdir):
     ]
     return extended_sources
 
+def _prepare_objects(mname, objects, bdir):
+    Path(bdir).mkdir(parents=True, exist_ok=True)
+    # Copy objects
+    for obj in objects:
+        if Path(obj).exists() and Path(obj).is_file():
+            shutil.copy(obj, bdir)
 
 def _get_flags(fc_flags):
     flag_values = []

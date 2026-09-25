@@ -8,7 +8,7 @@ NumPy includes several constants:
 
 .. data:: e
 
-    Euler's constant, base of natural logarithms, Napier's constant.
+    Euler's number, base of natural logarithms, Napier's constant.
 
     ``e = 2.71828182845904523536028747135266249775724709369995...``
 
@@ -62,6 +62,8 @@ NumPy includes several constants:
 
     .. rubric:: Examples
 
+.. try_examples::
+
     >>> import numpy as np
     >>> np.inf
     inf
@@ -91,6 +93,8 @@ NumPy includes several constants:
 
     .. rubric:: Examples
 
+.. try_examples::
+
     >>> import numpy as np
     >>> np.nan
     nan
@@ -105,6 +109,8 @@ NumPy includes several constants:
     A convenient alias for None, useful for indexing arrays.
 
     .. rubric:: Examples
+
+.. try_examples::
 
     >>> import numpy as np
     >>> np.newaxis is None

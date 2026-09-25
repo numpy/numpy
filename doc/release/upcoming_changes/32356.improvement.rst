@@ -1,0 +1,6 @@
+* `np.copyto`, `np.full`, `np.where`, `np.concatenate` with ``axis=None``, and
+  `np.choose` now convert an exact Python ``str`` scalar directly with the
+  resolved dtype instead of through a fixed-width unicode intermediate, so a
+  trailing null is no longer lost for ``StringDType`` or ``object``. For example,
+  ``np.full(2, "x\0", dtype=np.dtypes.StringDType())[0]`` now gives ``"x\0"``
+  rather than ``"x"``.

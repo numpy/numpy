@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Polynomial(Benchmark):
@@ -25,5 +25,3 @@ class Polynomial(Benchmark):
 
     def time_polynomial_addition(self):
         _ = self.polynomial_degree2 + self.polynomial_degree2
-
-

@@ -16,6 +16,7 @@
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "stringdtype/dtype.h"
+#include "stringdtype/casts.h"
 
 #include "npy_argparse.h"
 #include "abstractdtypes.h"
@@ -24,6 +25,8 @@
 #include "common.h"
 #include "_datetime.h"
 #include "npy_import.h"
+#include "npy_static_data.h"
+#include "module_state.h"
 #include "refcount.h"
 
 #include "umathmodule.h"
@@ -88,7 +91,6 @@
  *       It should be possible to retrofit this without too much trouble
  *       (all type objects support weak references).
  */
-PyObject *_global_pytype_to_type_dict = NULL;
 
 
 /* Enum to track or signal some things during dtype and shape discovery */
@@ -111,24 +113,21 @@ enum _dtype_discovery_flags {
  * @return -1 on error 0 on success
  */
 static int
-_prime_global_pytype_to_type_dict(void)
+_prime_global_pytype_to_type_dict(PyObject *dict)
 {
     int res;
 
     /* Add the basic Python sequence types */
-    res = PyDict_SetItem(_global_pytype_to_type_dict,
-                         (PyObject *)&PyList_Type, Py_None);
+    res = PyDict_SetItem(dict, (PyObject *)&PyList_Type, Py_None);
     if (res < 0) {
         return -1;
     }
-    res = PyDict_SetItem(_global_pytype_to_type_dict,
-                         (PyObject *)&PyTuple_Type, Py_None);
+    res = PyDict_SetItem(dict, (PyObject *)&PyTuple_Type, Py_None);
     if (res < 0) {
         return -1;
     }
     /* NumPy Arrays are not handled as scalars */
-    res = PyDict_SetItem(_global_pytype_to_type_dict,
-                         (PyObject *)&PyArray_Type, Py_None);
+    res = PyDict_SetItem(dict, (PyObject *)&PyArray_Type, Py_None);
     if (res < 0) {
         return -1;
     }
@@ -181,18 +180,20 @@ _PyArray_MapPyTypeToDType(
         return -1;
     }
 
+    multiarray_umath_state *state = _npy_module_state;
+
     /* Create the global dictionary if it does not exist */
-    if (NPY_UNLIKELY(_global_pytype_to_type_dict == NULL)) {
-        _global_pytype_to_type_dict = PyDict_New();
-        if (_global_pytype_to_type_dict == NULL) {
+    if (NPY_UNLIKELY(state->global_pytype_to_type_dict == NULL)) {
+        state->global_pytype_to_type_dict = PyDict_New();
+        if (state->global_pytype_to_type_dict == NULL) {
             return -1;
         }
-        if (_prime_global_pytype_to_type_dict() < 0) {
+        if (_prime_global_pytype_to_type_dict(state->global_pytype_to_type_dict) < 0) {
             return -1;
         }
     }
 
-    int res = PyDict_Contains(_global_pytype_to_type_dict, (PyObject *)pytype);
+    int res = PyDict_Contains(state->global_pytype_to_type_dict, (PyObject *)pytype);
     if (res < 0) {
         return -1;
     }
@@ -208,7 +209,7 @@ _PyArray_MapPyTypeToDType(
         return -1;
     }
 
-    return PyDict_SetItem(_global_pytype_to_type_dict,
+    return PyDict_SetItem(state->global_pytype_to_type_dict,
             (PyObject *)pytype, Dtype_obj);
 }
 
@@ -234,7 +235,7 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
         DType = Py_NewRef((PyObject *)&PyArray_PyLongDType);
     }
     else {
-        int res = PyDict_GetItemRef(_global_pytype_to_type_dict,
+        int res = PyDict_GetItemRef(_npy_module_state->global_pytype_to_type_dict,
                                     (PyObject *)pytype, (PyObject **)&DType);
 
         if (res <= 0) {
@@ -479,20 +480,13 @@ npy_cast_raw_scalar_item(
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
 {
-    PyArrayObject_fields arr_fields = {
-            .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
-        };
-    Py_SET_TYPE(&arr_fields, &PyArray_Type);
-    Py_SET_REFCNT(&arr_fields, 1);
-
     if (NPY_UNLIKELY(descr->type_num == NPY_OBJECT)) {
         /*
          * We always have store objects directly, casting will lose some
          * type information. Any other dtype discards the type information.
          * TODO: For a Categorical[object] this path may be necessary?
          */
-        arr_fields.descr = descr;
-        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
+        return NPY_DT_CALL_setitem(descr, value, item);
     }
 
     /* discover_dtype_from_pyobject includes a check for is_known_scalar_type */
@@ -527,8 +521,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
     if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
         /* We can set the element directly (or at least will try to) */
         Py_XDECREF(DType);
-        arr_fields.descr = descr;
-        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
+        return NPY_DT_CALL_setitem(descr, value, item);
     }
     PyArray_Descr *tmp_descr;
     tmp_descr = NPY_DT_CALL_discover_descr_from_pyobject(DType, value);
@@ -537,7 +530,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
         return -1;
     }
 
-    char *data = PyObject_Malloc(tmp_descr->elsize);
+    char *data = PyMem_Malloc(tmp_descr->elsize);
     if (data == NULL) {
         PyErr_NoMemory();
         Py_DECREF(tmp_descr);
@@ -546,9 +539,8 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
     if (PyDataType_FLAGCHK(tmp_descr, NPY_NEEDS_INIT)) {
         memset(data, 0, tmp_descr->elsize);
     }
-    arr_fields.descr = tmp_descr;
-    if (PyDataType_GetArrFuncs(tmp_descr)->setitem(value, data, &arr_fields) < 0) {
-        PyObject_Free(data);
+    if (NPY_DT_CALL_setitem(tmp_descr, value, data) < 0) {
+        PyMem_Free(data);
         Py_DECREF(tmp_descr);
         return -1;
     }
@@ -560,7 +552,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
         }
     }
 
-    PyObject_Free(data);
+    PyMem_Free(data);
     Py_DECREF(tmp_descr);
     return res;
 }
@@ -809,13 +801,14 @@ find_descriptor_from_array(
         return 0;
     }
 
+    /* Special cases that inspect values to determine the output dtype */
     if (NPY_UNLIKELY(NPY_DT_is_parametric(DType) && PyArray_ISOBJECT(arr))) {
         /*
-         * We have one special case, if (and only if) the input array is of
-         * object DType and the dtype is not fixed already but parametric.
-         * Then, we allow inspection of all elements, treating them as
-         * elements. We do this recursively, so nested 0-D arrays can work,
-         * but nested higher dimensional arrays will lead to an error.
+         * If the input array is of object DType and the dtype is
+         * not fixed already but parametric, we allow inspection of all
+         * elements, treating them as elements. We do this recursively, so
+         * nested 0-D arrays can work, but nested higher dimensional arrays
+         * will lead to an error.
          */
         assert(DType->type_num != NPY_OBJECT);  /* not parametric */
 
@@ -858,6 +851,19 @@ find_descriptor_from_array(
             PyArray_ITER_NEXT(iter);
         }
         Py_DECREF(iter);
+    }
+    else if (NPY_UNLIKELY(PyArray_TYPE(arr) == NPY_VSTRING &&
+                          PyTypeNum_ISFLEXIBLE(DType->type_num))) {
+        /*
+         * Casting a StringDType array to a fixed-width string DType with no
+         * size means finding the width of the widest entry first, so that
+         * the cast does not truncate.
+         */
+        *out_descr = stringdtype_find_fixed_width_descr(
+                arr, DType->type_num);
+        if (*out_descr == NULL) {
+            return -1;
+        }
     }
     else if (NPY_UNLIKELY(DType->type_num == NPY_DATETIME) &&
                 PyArray_ISSTRING(arr)) {
@@ -929,10 +935,7 @@ PyArray_AdaptDescriptorToArray(
         return descr;
     }
     if (dtype == NULL) {
-        res = PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
-        if (res < 0) {
-            return NULL;
-        }
+        PyArray_ExtractDTypeAndDescriptor(descr, &new_descr, &dtype);
         if (new_descr != NULL) {
             Py_DECREF(dtype);
             return new_descr;
@@ -1043,7 +1046,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         }
         int was_copied_by__array__ = 0;
         arr = (PyArrayObject *)_array_from_array_like(obj,
-                requested_descr, 0, NULL, copy, &was_copied_by__array__);
+                requested_descr, 0, copy, &was_copied_by__array__);
         if (arr == NULL) {
             return -1;
         }
@@ -1147,8 +1150,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
 
   force_sequence_due_to_char_dtype:
 
-    /* Ensure we have a sequence (required for PyPy) */
-    seq = PySequence_Fast(obj, "Could not convert object to sequence");
+    /* Ensure we have a sequence */
+    seq = PySequence_Fast(obj, "Could not convert object to sequence"); // noqa: borrowed-ref - manual fix needed
     if (seq == NULL) {
         /*
          * Specifically do not fail on things that look like a dictionary,
@@ -1168,6 +1171,10 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         return -1;
     }
 
+    int ret = -1;
+
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
+
     npy_intp size = PySequence_Fast_GET_SIZE(seq);
     PyObject **objects = PySequence_Fast_ITEMS(seq);
 
@@ -1175,17 +1182,19 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                      out_shape, 1, &size, NPY_TRUE, flags) < 0) {
         /* But do update, if there this is a ragged case */
         *flags |= FOUND_RAGGED_ARRAY;
-        return max_dims;
+        ret = max_dims;
+        goto finish;
     }
     if (size == 0) {
         /* If the sequence is empty, this must be the last dimension */
         *flags |= MAX_DIMS_WAS_REACHED;
-        return curr_dims + 1;
+        ret = curr_dims + 1;
+        goto finish;
     }
 
     /* Allow keyboard interrupts. See gh issue 18117. */
     if (PyErr_CheckSignals() < 0) {
-        return -1;
+        goto finish;
     }
 
     /*
@@ -1205,10 +1214,16 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                 flags, copy);
 
         if (max_dims < 0) {
-            return -1;
+            goto finish;
         }
     }
-    return max_dims;
+    ret = max_dims;
+
+  finish:;
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
+
+    return ret;
 }
 
 
@@ -1417,9 +1432,8 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments(
             "_discover_array_parameters", args, len_args, kwnames,
-            "", NULL, &obj,
-            "|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &obj},
+            {"|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info}) < 0) {
         /* fixed is last to parse, so never necessary to clean up */
         return NULL;
     }

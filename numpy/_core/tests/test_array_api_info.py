@@ -1,5 +1,6 @@
-import numpy as np
 import pytest
+
+import numpy as np
 
 info = np.__array_namespace_info__()
 
@@ -109,4 +110,4 @@ def test_dtypes_invalid_device():
 
 
 def test_devices():
-    assert info.devices() == ["cpu"]
+    assert info.devices() == ("cpu",)

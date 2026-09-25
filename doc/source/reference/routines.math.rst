@@ -169,7 +169,9 @@ Extrema finding
    amin
    fmin
    nanmin
-   
+
+   minmax
+
 
 Miscellaneous
 -------------
@@ -193,4 +195,3 @@ Miscellaneous
 
    interp
 
-   bitwise_count

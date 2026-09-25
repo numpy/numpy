@@ -14,9 +14,6 @@ have rough edges, please open an issue if you run into a problem._
   *Note: also make sure you have `pkg-config` and the usual system dependencies
   for NumPy*
 
-Then install spin:
-- `python -m pip install spin`
-
 **Compile and install:** `spin build`
 
 This builds in the `build/` directory, and installs into the `build-install` directory.

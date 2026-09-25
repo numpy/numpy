@@ -1,20 +1,16 @@
+# Any packages which appear both here and in the pyproject.toml test-requires should be
+# kept in sync.
+# Note: hypothesis is an optional test dependency, see hypothesis_requirements.txt
+
 Cython
-wheel==0.38.1
-setuptools==65.5.1 ; python_version < '3.12'
-setuptools         ; python_version >= '3.12'
-hypothesis==6.104.1
-pytest==7.4.0
-pytz==2023.3.post1
-pytest-cov==4.1.0
+pytest==9.1.1
+pytest-cov==7.1.0
 meson
 ninja; sys_platform != "emscripten"
 pytest-xdist
-# for numpy.random.test.test_extending
-cffi; python_version < '3.10'
-# For testing types. Notes on the restrictions:
-# - Mypy relies on C API features not present in PyPy
-# NOTE: Keep mypy in sync with environment.yml
-mypy==1.13.0; platform_python_implementation != "PyPy"
-typing_extensions>=4.2.0
+pytest-timeout
 # for optional f2py encoding detection
 charset-normalizer
+tzdata
+# Ensure we install quaddtype in CI for some wheel setups (mac):
+numpy_quaddtype ; python_version<"3.15" and sys_platform=="darwin"

@@ -1,35 +1,156 @@
+import random
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
+
 import pytest
 
-import random
-from numpy._core._multiarray_tests import identityhash_tester
+from numpy._core._multiarray_tests import (
+    create_identity_hash,
+    identity_hash_get_item,
+    identity_hash_set_item_default,
+)
+from numpy.testing import IS_WASM
 
 
 @pytest.mark.parametrize("key_length", [1, 3, 6])
 @pytest.mark.parametrize("length", [1, 16, 2000])
-def test_identity_hashtable(key_length, length):
-    # use a 30 object pool for everything (duplicates will happen)
-    pool = [object() for i in range(20)]
+def test_identity_hashtable_get_set(key_length, length):
+    # no collisions expected
     keys_vals = []
     for i in range(length):
-        keys = tuple(random.choices(pool, k=key_length))
-        keys_vals.append((keys, random.choice(pool)))
+        keys = tuple(object() for _ in range(key_length))
+        keys_vals.append((keys, object()))
 
-    dictionary = dict(keys_vals)
+    ht = create_identity_hash(key_length)
 
-    # add a random item at the end:
-    keys_vals.append(random.choice(keys_vals))
-    # the expected one could be different with duplicates:
-    expected = dictionary[keys_vals[-1][0]]
+    for i in range(length):
+        key, value = keys_vals[i]
+        assert identity_hash_set_item_default(ht, key, value) is value
 
-    res = identityhash_tester(key_length, keys_vals, replace=True)
-    assert res is expected
+    for key, value in keys_vals:
+        got = identity_hash_get_item(ht, key)
+        assert got is value
 
-    if length == 1:
-        return
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+@pytest.mark.parametrize("key_length", [1, 3, 6])
+def test_identity_hashtable_default_thread_safety(key_length):
+    ht = create_identity_hash(key_length)
 
-    # add a new item with a key that is already used and a new value, this
-    # should error if replace is False, see gh-26690
-    new_key = (keys_vals[1][0], object())
-    keys_vals[0] = new_key
-    with pytest.raises(RuntimeError):
-        identityhash_tester(key_length, keys_vals)
+    key = tuple(object() for _ in range(key_length))
+    val1 = object()
+    val2 = object()
+
+    got1 = identity_hash_set_item_default(ht, key, val1)
+    assert got1 is val1
+
+    def thread_func(val):
+        return identity_hash_set_item_default(ht, key, val)
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(thread_func, val2) for _ in range(8)]
+        results = [f.result() for f in futures]
+
+    assert all(r is val1 for r in results)
+
+
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+@pytest.mark.parametrize("key_length", [1, 3, 6])
+def test_identity_hashtable_set_thread_safety(key_length):
+    ht = create_identity_hash(key_length)
+
+    key = tuple(object() for _ in range(key_length))
+    val1 = object()
+
+    def thread_func(val):
+        return identity_hash_set_item_default(ht, key, val)
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(thread_func, val1) for _ in range(100)]
+        results = [f.result() for f in futures]
+
+    assert all(r is val1 for r in results)
+
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+@pytest.mark.parametrize("key_length", [1, 3, 6])
+def test_identity_hashtable_get_thread_safety(key_length):
+    ht = create_identity_hash(key_length)
+    key = tuple(object() for _ in range(key_length))
+    value = object()
+    identity_hash_set_item_default(ht, key, value)
+
+    def thread_func():
+        return identity_hash_get_item(ht, key)
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(thread_func) for _ in range(100)]
+        results = [f.result() for f in futures]
+
+    assert all(r is value for r in results)
+
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+@pytest.mark.parametrize("key_length", [1, 3, 6])
+@pytest.mark.parametrize("length", [1 << 4, 1 << 8, 1 << 12])
+def test_identity_hashtable_get_set_concurrent(key_length, length):
+    ht = create_identity_hash(key_length)
+    keys_vals = []
+    for i in range(length):
+        keys = tuple(object() for _ in range(key_length))
+        keys_vals.append((keys, object()))
+
+    def set_item(kv):
+        key, value = kv
+        got = identity_hash_set_item_default(ht, key, value)
+        assert got is value
+
+    def get_item(kv):
+        key, value = kv
+        got = identity_hash_get_item(ht, key)
+        assert got is None or got is value
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = []
+        for kv in keys_vals:
+            futures.append(executor.submit(set_item, kv))
+            futures.append(executor.submit(get_item, kv))
+        for future in futures:
+            future.result()
+
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for threads")
+@pytest.mark.parametrize("key_length", [3, 6, 10])
+@pytest.mark.parametrize("length", [1 << 4, 1 << 8, 1 << 12])
+def test_identity_hashtable_get_set_concurrent_collisions(key_length, length):
+    ht = create_identity_hash(key_length)
+    base_key = tuple(object() for _ in range(key_length - 1))
+    keys_vals = defaultdict(list)
+    for i in range(length):
+        keys = base_key + (random.choice(base_key), )
+        keys_vals[keys].append(object())
+
+    set_item_results = defaultdict(set)
+
+    def set_item(kv):
+        key, values = kv
+        value = random.choice(values)
+        got = identity_hash_set_item_default(ht, key, value)
+        set_item_results[key].add(got)
+
+    get_item_results = defaultdict(set)
+
+    def get_item(kv):
+        key, values = kv
+        got = identity_hash_get_item(ht, key)
+        get_item_results[key].add(got)
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = []
+        for keys, values in keys_vals.items():
+            futures.append(executor.submit(set_item, (keys, values)))
+            futures.append(executor.submit(get_item, (keys, values)))
+        for future in futures:
+            future.result()
+
+    for key in keys_vals.keys():
+        assert len(set_item_results[key]) == 1
+        set_item_value = set_item_results[key].pop()
+        for r in get_item_results[key]:
+            assert r is None or r is set_item_value

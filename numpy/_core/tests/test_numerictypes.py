@@ -1,15 +1,12 @@
-import sys
 import itertools
+import sys
 
 import pytest
+
 import numpy as np
 import numpy._core.numerictypes as nt
-from numpy._core.numerictypes import (
-    issctype, sctype2char, maximum_sctype, sctypes
-)
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex, IS_PYPY
-)
+from numpy._core.numerictypes import issctype, sctype2char, sctypes
+from numpy.testing import assert_, assert_equal, assert_raises, assert_raises_regex
 
 # This is the structure of the table used for plain objects:
 #
@@ -63,9 +60,9 @@ Ndescr = [
     ('z', 'u1')]
 
 NbufferT = [
-    # x     Info                                                color info        y                  z
-    #       value y2 Info2                            name z2         Name Value
-    #                name   value    y3       z3
+    # depth1: x Info color info y z
+    # depth2: value y2 Info2 name z2 Name Value
+    # depth3: name value y3 z3
     ([3, 2], (6j, 6., (b'nn', [6j, 4j], [6., 4.], [1, 2]), b'NN', True),
      b'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
     ([4, 3], (7j, 7., (b'oo', [7j, 5j], [7., 5.], [2, 1]), b'OO', False),
@@ -73,7 +70,7 @@ NbufferT = [
     ]
 
 
-byteorder = {'little':'<', 'big':'>'}[sys.byteorder]
+byteorder = {'little': '<', 'big': '>'}[sys.byteorder]
 
 def normalize_descr(descr):
     "Normalize a description adding the platform byteorder."
@@ -97,8 +94,7 @@ def normalize_descr(descr):
             l = normalize_descr(dtype)
             out.append((item[0], l))
         else:
-            raise ValueError("Expected a str or list and got %s" %
-                             (type(item)))
+            raise ValueError(f"Expected a str or list and got {type(item)}")
     return out
 
 
@@ -261,7 +257,7 @@ class ReadValuesNested:
             assert_equal(h['z'], np.array([self._buffer[0][5],
                                            self._buffer[1][5]], dtype='u1'))
 
-    def test_nested1_acessors(self):
+    def test_nested1_accessors(self):
         """Check reading the nested fields of a nested array (1st level)"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
@@ -291,7 +287,7 @@ class ReadValuesNested:
                                 self._buffer[1][3][1]],
                                dtype='c16'))
 
-    def test_nested2_acessors(self):
+    def test_nested2_accessors(self):
         """Check reading the nested fields of a nested array (2nd level)"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
@@ -339,23 +335,22 @@ class TestReadValuesNestedMultiple(ReadValuesNested):
 class TestEmptyField:
     def test_assign(self):
         a = np.arange(10, dtype=np.float32)
-        a.dtype = [("int",   "<0i4"), ("float", "<2f4")]
+        a = a.view(dtype=[("int", "<0i4"), ("float", "<2f4")])
         assert_(a['int'].shape == (5, 0))
         assert_(a['float'].shape == (5, 2))
 
 
 class TestMultipleFields:
-    def setup_method(self):
-        self.ary = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype='i4,f4,i2,c8')
-
     def _bad_call(self):
-        return self.ary['f0', 'f1']
+        ary = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype='i4,f4,i2,c8')
+        return ary['f0', 'f1']
 
     def test_no_tuple(self):
         assert_raises(IndexError, self._bad_call)
 
     def test_return(self):
-        res = self.ary[['f0', 'f2']].tolist()
+        ary = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype='i4,f4,i2,c8')
+        res = ary[['f0', 'f2']].tolist()
         assert_(res == [(1, 3), (5, 7)])
 
 
@@ -475,6 +470,32 @@ class TestIsDType:
         with assert_raises_regex(ValueError, r".*not a known kind name.*"):
             np.isdtype(np.int64, "int64")
 
+    def test_isdtype_string_dtype(self):
+        # gh-27545: StringDType has no NumPy scalar type, but it is a
+        # built-in dtype, so `isdtype` must accept it rather than raise
+        dt = np.dtypes.StringDType()
+        assert not np.isdtype(dt, "bool")
+        for kind in self.dtype_group_dict:
+            assert not np.isdtype(dt, kind)
+
+        # matches itself and the StringDType class, which stands in for
+        # the scalar type that identifies the other dtypes
+        assert np.isdtype(dt, dt)
+        assert np.isdtype(dt, np.dtypes.StringDType)
+        assert np.isdtype(np.dtypes.StringDType, dt)
+        assert np.isdtype(dt, ("numeric", np.dtypes.StringDType))
+        assert not np.isdtype(np.int64, dt)
+        assert not np.isdtype(dt, ("integral", np.int64))
+
+        # dtype parameters are ignored, like datetime64 units
+        assert np.isdtype(np.dtypes.StringDType(na_object=None), dt)
+        assert np.isdtype(dt, np.dtypes.StringDType(na_object=np.nan,
+                                                    coerce=False))
+
+        # fixed-width unicode strings are a different kind
+        assert not np.isdtype(dt, np.str_)
+        assert not np.isdtype(np.dtype("U8"), dt)
+
     def test_sctypes_complete(self):
         # issue 26439: int32/intc were masking each other on 32-bit builds
         assert np.int32 in sctypes['int']
@@ -495,38 +516,6 @@ class TestSctypeDict:
         assert np.dtype(np.ulong).itemsize == np.dtype(np.long).itemsize
 
 
-@pytest.mark.filterwarnings("ignore:.*maximum_sctype.*:DeprecationWarning")
-class TestMaximumSctype:
-
-    # note that parametrizing with sctype['int'] and similar would skip types
-    # with the same size (gh-11923)
-
-    @pytest.mark.parametrize(
-        't', [np.byte, np.short, np.intc, np.long, np.longlong]
-    )
-    def test_int(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['int'][-1])
-
-    @pytest.mark.parametrize(
-        't', [np.ubyte, np.ushort, np.uintc, np.ulong, np.ulonglong]
-    )
-    def test_uint(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['uint'][-1])
-
-    @pytest.mark.parametrize('t', [np.half, np.single, np.double, np.longdouble])
-    def test_float(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['float'][-1])
-
-    @pytest.mark.parametrize('t', [np.csingle, np.cdouble, np.clongdouble])
-    def test_complex(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['complex'][-1])
-
-    @pytest.mark.parametrize('t', [np.bool, np.object_, np.str_, np.bytes_,
-                                   np.void])
-    def test_other(self, t):
-        assert_equal(maximum_sctype(t), t)
-
-
 class Test_sctype2char:
     # This function is old enough that we're really just documenting the quirks
     # at this point.
@@ -544,9 +533,11 @@ class Test_sctype2char:
         assert_equal(sctype2char(np.ndarray), 'O')
 
     def test_third_party_scalar_type(self):
-        from numpy._core._rational_tests import rational
+        from numpy._core._rational_tests import rational, rational2
         assert_raises(KeyError, sctype2char, rational)
         assert_raises(KeyError, sctype2char, rational(1))
+        assert_raises(KeyError, sctype2char, rational2)
+        assert_raises(KeyError, sctype2char, rational2(1))
 
     def test_array_instance(self):
         assert_equal(sctype2char(np.array([1.0, 2.0])), 'd')
@@ -574,10 +565,10 @@ def test_issctype(rep, expected):
     assert_equal(actual, expected)
 
 
-@pytest.mark.skipif(sys.flags.optimize > 1,
-                    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
-@pytest.mark.xfail(IS_PYPY,
-                   reason="PyPy cannot modify tp_doc after PyType_Ready")
+@pytest.mark.skipif(
+    sys.flags.optimize > 1,
+    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1",
+)
 class TestDocStrings:
     def test_platform_dependent_aliases(self):
         if np.int64 is np.int_:
@@ -610,9 +601,38 @@ class TestScalarTypeNames:
         assert getattr(np, t.__name__) is t
 
     @pytest.mark.parametrize('t', numeric_types)
-    def test_names_are_undersood_by_dtype(self, t):
+    def test_names_are_understood_by_dtype(self, t):
         """ Test the dtype constructor maps names back to the type """
         assert np.dtype(t.__name__).type is t
+
+
+class TestScalarTypeOrder:
+    @pytest.mark.parametrize(('a', 'b'), [
+        # signedinteger
+        (np.byte, np.short),
+        (np.short, np.intc),
+        (np.intc, np.long),
+        (np.long, np.longlong),
+        # unsignedinteger
+        (np.ubyte, np.ushort),
+        (np.ushort, np.uintc),
+        (np.uintc, np.ulong),
+        (np.ulong, np.ulonglong),
+        # floating
+        (np.half, np.single),
+        (np.single, np.double),
+        (np.double, np.longdouble),
+        # complexfloating
+        (np.csingle, np.cdouble),
+        (np.cdouble, np.clongdouble),
+        # flexible
+        (np.bytes_, np.str_),
+        (np.str_, np.void),
+        # bouncy castles
+        (np.datetime64, np.timedelta64),
+    ])
+    def test_stable_ordering(self, a: type[np.generic], b: type[np.generic]):
+        assert np.ScalarType.index(a) <= np.ScalarType.index(b)
 
 
 class TestBoolDefinition:

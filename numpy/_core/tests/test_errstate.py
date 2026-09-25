@@ -1,8 +1,9 @@
-import pytest
 import sysconfig
 
+import pytest
+
 import numpy as np
-from numpy.testing import assert_, assert_raises, IS_WASM
+from numpy.testing import IS_WASM, assert_raises
 
 # The floating point emulation on ARM EABI systems lacking a hardware FPU is
 # known to be buggy. This is an attempt to identify these hosts. It may not
@@ -12,6 +13,23 @@ hosttype = sysconfig.get_config_var('HOST_GNU_TYPE')
 arm_softfloat = False if hosttype is None else hosttype.endswith('gnueabi')
 
 class TestErrstate:
+    def test_seterr_self_referencing_array_raises(self):
+        # gh-32609
+        obj_array = np.empty(2, dtype=object)
+        obj_array[0] = obj_array
+        obj_array[1] = [obj_array, obj_array]
+
+        with assert_raises(TypeError):
+            np.seterr(obj_array)
+        with assert_raises(TypeError):
+            np.seterr(divide=obj_array)
+
+    def test_seterr_invalid_mode_type(self):
+        with assert_raises(TypeError):
+            np.seterr(all=123)
+        with assert_raises(TypeError):
+            np.seterr(all=[])
+
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.skipif(arm_softfloat,
                         reason='platform/cpu issue with FPU (gh-413,-15562)')
@@ -25,7 +43,6 @@ class TestErrstate:
             with assert_raises(FloatingPointError):
                 np.sqrt(a)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.skipif(arm_softfloat,
                         reason='platform/cpu issue with FPU (gh-15562)')
     def test_divide(self):
@@ -46,6 +63,7 @@ class TestErrstate:
                         reason='platform/cpu issue with FPU (gh-15562)')
     def test_errcall(self):
         count = 0
+
         def foo(*args):
             nonlocal count
             count += 1
@@ -85,7 +103,7 @@ class TestErrstate:
 
     @pytest.mark.skipif(IS_WASM, reason="wasm doesn't support asyncio")
     def test_asyncio_safe(self):
-        # asyncio may not always work, lets assume its fine if missing
+        # asyncio may not always work, let's assume its fine if missing
         # Pyodide/wasm doesn't support it.  If this test makes problems,
         # it should just be skipped liberally (or run differently).
         asyncio = pytest.importorskip("asyncio")

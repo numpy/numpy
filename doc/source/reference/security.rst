@@ -3,8 +3,6 @@ NumPy security
 
 Security issues can be reported privately as described in the project README
 and when opening a `new issue on the issue tracker <https://github.com/numpy/numpy/issues/new/choose>`_.
-The `Python security reporting guidelines <https://www.python.org/dev/security/>`_
-are a good resource and its notes apply also to NumPy.
 
 NumPy's maintainers are not security experts.  However, we are conscientious
 about security and experts of both the NumPy codebase and how it's used.
@@ -14,17 +12,31 @@ A security advisory we are not aware of beforehand can lead to a lot of work
 for all involved parties.
 
 
+Important
+---------
+
+NumPy is not designed to be exposed directly to untrusted users.
+A user who can freely execute NumPy (or Python) functions must be considered
+to have the same privileges as the process/Python interpreter.
+
+If one can already execute Python code, there are far worse things one can do
+than use all available CPU cycles, or provoke a symptom of a bug in Code like
+use-after-free or a segfault. Therefore, while such issues may be bugs, they
+are not security issues.
+
+Before reporting a security issue, please consider and describe the attack
+vector in detail - and in particular whether that attack vector assumes being
+able to freely execute NumPy functions.
+
+
 Advice for using NumPy on untrusted data
 ----------------------------------------
 
-A user who can freely execute NumPy (or Python) functions must be considered
-to have the same privilege as the process/Python interpreter.
-
-That said, NumPy should be generally safe to use on *data* provided by
+NumPy should be generally safe to use on *data* provided by
 unprivileged users and read through safe API functions (e.g. loaded from a
 text file or ``.npy`` file without pickle support).
 Malicious *values* or *data sizes* should never lead to privilege escalation.
-Note that the above refers to array data.  We do not currently consider for
+Note that the above refers to *array data*.  We do not currently consider for
 example ``f2py`` to be safe:
 it is typically used to compile a program that is then run.
 Any ``f2py`` invocation must thus use the same privilege as the later execution.

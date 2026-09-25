@@ -40,6 +40,7 @@ Arithmetic
    polyval
    polyval2d
    polyval3d
+   polyvalnd
    polygrid2d
    polygrid3d
 
@@ -77,12 +78,11 @@ __all__ = [
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
     'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
     'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
-    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d',
+    'polyvalnd', 'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d',
     'polycompanion']
 
 import numpy as np
-import numpy.linalg as la
-from numpy.lib.array_utils import normalize_axis_index
+from numpy._core.overrides import array_function_dispatch as _array_function_dispatch
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -323,7 +323,7 @@ def polymulx(c):
         return c
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
-    prd[0] = c[0]*0
+    prd[0] = c[0] * 0
     prd[1:] = c
     return prd
 
@@ -408,20 +408,20 @@ def polydiv(c1, c2):
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
-        return c1[:1]*0, c1
+        return c1[:1] * 0, c1
     elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
+        return c1 / c2[-1], c1[:1] * 0
     else:
         dlen = lc1 - lc2
         scl = c2[-1]
-        c2 = c2[:-1]/scl
+        c2 = c2[:-1] / scl
         i = dlen
         j = lc1 - 1
         while i >= 0:
-            c1[i:j] -= c2*c1[j]
+            c1[i:j] -= c2 * c1[j]
             i -= 1
             j -= 1
-        return c1[j+1:]/scl, pu.trimseq(c1[:j+1])
+        return c1[j + 1:] / scl, pu.trimseq(c1[:j + 1])
 
 
 def polypow(c, pow, maxpower=None):
@@ -522,7 +522,7 @@ def polyder(c, m=1, scl=1, axis=0):
     iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -530,14 +530,14 @@ def polyder(c, m=1, scl=1, axis=0):
     c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        c = c[:1] * 0
     else:
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=cdt)
             for j in range(n, 0, -1):
-                der[j - 1] = j*c[j]
+                der[j - 1] = j * c[j]
             c = der
     c = np.moveaxis(c, 0, iaxis)
     return c
@@ -636,12 +636,12 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    k = list(k) + [0]*(cnt - len(k))
+    k = list(k) + [0] * (cnt - len(k))
     c = np.moveaxis(c, iaxis, 0)
     for i in range(cnt):
         n = len(c)
@@ -650,10 +650,10 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             c[0] += k[i]
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=cdt)
-            tmp[0] = c[0]*0
+            tmp[0] = c[0] * 0
             tmp[1] = c[0]
             for j in range(1, n):
-                tmp[j + 1] = c[j]/(j + 1)
+                tmp[j + 1] = c[j] / (j + 1)
             tmp[0] += k[i] - polyval(lbnd, tmp)
             c = tmp
     c = np.moveaxis(c, 0, iaxis)
@@ -716,6 +716,10 @@ def polyval(x, c, tensor=True):
     -----
     The evaluation uses Horner's method.
 
+    When using coefficients from polynomials created with ``Polynomial.fit()``,
+    use ``p(x)`` or ``polyval(x, p.convert().coef)`` to handle domain/window
+    scaling correctly, not ``polyval(x, p.coef)``.
+
     Examples
     --------
     >>> import numpy as np
@@ -747,11 +751,11 @@ def polyval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,) * x.ndim)
 
-    c0 = c[-1] + x*0
+    c0 = c[-1] + x * 0
     for i in range(2, len(c) + 1):
-        c0 = c[-i] + c0*x
+        c0 = c[-i] + c0 * x
     return c0
 
 
@@ -836,12 +840,18 @@ def polyvalfromroots(x, r, tensor=True):
         x = np.asarray(x)
     if isinstance(x, np.ndarray):
         if tensor:
-            r = r.reshape(r.shape + (1,)*x.ndim)
+            r = r.reshape(r.shape + (1,) * x.ndim)
         elif x.ndim >= r.ndim:
             raise ValueError("x.ndim must be < r.ndim when tensor == False")
     return np.prod(x - r, axis=0)
 
+def _polyval2d_dispatcher(x, y, c):
+    return (x, y, c)
 
+def _polygrid2d_dispatcher(x, y, c):
+    return (x, y, c)
+
+@_array_function_dispatch(_polyval2d_dispatcher)
 def polyval2d(x, y, c):
     """
     Evaluate a 2-D polynomial at points (x, y).
@@ -893,7 +903,7 @@ def polyval2d(x, y, c):
     """
     return pu._valnd(polyval, c, x, y)
 
-
+@_array_function_dispatch(_polygrid2d_dispatcher)
 def polygrid2d(x, y, c):
     """
     Evaluate a 2-D polynomial on the Cartesian product of x and y.
@@ -1002,6 +1012,59 @@ def polyval3d(x, y, z, c):
     """
     return pu._valnd(polyval, c, x, y, z)
 
+def _polyvalnd_dispatcher(pts, c):
+    return (*pts, c)
+
+@_array_function_dispatch(_polyvalnd_dispatcher)
+def polyvalnd(pts, c):
+    r"""
+    Evaluate an N-D polynomial at points.
+
+    This function returns the values:
+
+    .. math::
+        p(pts, c) = \sum_{i_1, i_2, \dots, i_n}
+        c_{i_1, i_2, \dots, i_n} * x_1^{i_1} * x_2^{i_2} \dots x_n^{i_n}
+
+    where :math:`x_1, x_2, \dots, x_n = pts`.
+    Note that `pts` may also be an `(n, m)` array.
+
+    The parameters in `pts` are converted to arrays only if they are
+    tuples or lists, otherwise they are treated as scalars and
+    they must have the same shape after conversion. In either case, either
+    the elements of `pts` or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than N dimensions, ones are implicitly appended to its
+    shape to make it N-D. The shape of the result will be c.shape[N:] +
+    pts[0].shape.
+
+    Parameters
+    ----------
+    pts : tuple or list of array_like, compatible objects
+        The N-dimensional series is evaluated at the points
+        ``(x_1, x_2, ..., x_n)`` provided in the `pts` iterable, where
+        all elements must have the same shape. If any element is a list
+        or tuple, it is first converted to an ndarray, otherwise it is
+        left unchanged and if it isn't an ndarray it is treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k,... is contained in ``c[i,j,k,...]``. If `c` has
+        dimension greater than N, the remaining indices enumerate multiple
+        sets of coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional polynomial on points formed with
+        N-tuples of corresponding values from `pts`.
+
+    See Also
+    --------
+    polyval, polyval2d, polyval3d
+
+    """
+    return pu._valnd(polyval, c, *pts)
 
 def polygrid3d(x, y, z, c):
     """
@@ -1121,11 +1184,11 @@ def polyvander(x, deg):
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
-    v[0] = x*0 + 1
+    v[0] = x * 0 + 1
     if ideg > 0:
         v[1] = x
         for i in range(2, ideg + 1):
-            v[i] = v[i-1]*x
+            v[i] = v[i - 1] * x
     return np.moveaxis(v, 0, -1)
 
 
@@ -1145,7 +1208,7 @@ def polyvander2d(x, y, deg):
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
-    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+    .. math:: c_{00}, c_{01}, c_{02}, ... , c_{10}, c_{11}, c_{12}, ...
 
     and ``np.dot(V, c.flat)`` and ``polyval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
@@ -1166,7 +1229,7 @@ def polyvander2d(x, y, deg):
     -------
     vander2d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)`.  The dtype will be the same
+        :math:`order = (deg[0]+1)*(deg[1]+1)`.  The dtype will be the same
         as the converted `x` and `y`.
 
     See Also
@@ -1246,7 +1309,7 @@ def polyvander3d(x, y, z, deg):
     -------
     vander3d : ndarray
         The shape of the returned matrix is ``x.shape + (order,)``, where
-        :math:`order = (deg[0]+1)*(deg([1]+1)*(deg[2]+1)`.  The dtype will
+        :math:`order = (deg[0]+1)*(deg[1]+1)*(deg[2]+1)`.  The dtype will
         be the same as the converted `x`, `y`, and `z`.
 
     See Also
@@ -1469,13 +1532,13 @@ def polycompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[-c[0]/c[1]]])
+        return np.array([[-c[0] / c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    bot = mat.reshape(-1)[n::n+1]
+    bot = mat.reshape(-1)[n::n + 1]
     bot[...] = 1
-    mat[:, -1] -= c[:-1]/c[-1]
+    mat[:, -1] -= c[:-1] / c[-1]
     return mat
 
 
@@ -1533,12 +1596,15 @@ def polyroots(c):
     if len(c) < 2:
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
-        return np.array([-c[0]/c[1]])
+        return np.array([-c[0] / c[1]])
 
-    # rotated companion matrix reduces error
-    m = polycompanion(c)[::-1,::-1]
-    r = la.eigvals(m)
+    m = polycompanion(c)
+    r = np.linalg.eigvals(m)
     r.sort()
+
+    # backwards compat: return real values if possible
+    from numpy.linalg._linalg import _to_real_if_imag_zero
+    r = _to_real_if_imag_zero(r, m)
     return r
 
 

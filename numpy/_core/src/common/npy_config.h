@@ -1,6 +1,11 @@
 #ifndef NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
 #define NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
 
+#if defined(_MSC_VER)
+// Suppress warn C4146: -x is valid for unsigned (wraps around)
+#pragma warning(disable:4146)
+#endif
+
 #include "config.h"
 #include "npy_cpu_dispatch.h" // brings NPY_HAVE_[CPU features]
 #include "numpy/numpyconfig.h"
@@ -57,6 +62,15 @@
 #undef HAVE_CACOSH
 #undef HAVE_CACOSHF
 #undef HAVE_CACOSHL
+
+#endif
+
+/* Work around MSVC compiler bug, see gh-32229 */
+#if defined(_MSC_VER) && !defined(__clang__) && _MSC_VER == 1951
+
+#undef HAVE___BUILTIN_ISNAN
+#undef HAVE___BUILTIN_ISINF
+#undef HAVE___BUILTIN_ISFINITE
 
 #endif
 

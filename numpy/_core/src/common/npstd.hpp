@@ -1,6 +1,8 @@
 #ifndef NUMPY_CORE_SRC_COMMON_NPSTD_HPP
 #define NUMPY_CORE_SRC_COMMON_NPSTD_HPP
 
+#include <numpy/npy_common.h>
+
 #include <cstddef>
 #include <cstring>
 #include <cctype>
@@ -13,8 +15,6 @@
 #include <cmath>
 #include <complex>
 #include <type_traits>
-
-#include <numpy/npy_common.h>
 
 #include "npy_config.h"
 

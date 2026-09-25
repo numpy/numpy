@@ -21,6 +21,7 @@ NumPy documentation
 `Historical versions of documentation <https://numpy.org/doc/>`_
    
 **Useful links**:
+`Home <https://numpy.org>`_ |
 `Installation <https://numpy.org/install/>`_ |
 `Source Repository <https://github.com/numpy/numpy>`_ |
 `Issue Tracker <https://github.com/numpy/numpy/issues>`_ |

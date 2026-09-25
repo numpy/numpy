@@ -64,8 +64,8 @@ usage, however, is given in the following example.
     iter = (PyArrayIterObject *)PyArray_IterNew(obj);
     if (iter == NULL) goto fail;   /* Assume fail has clean-up code */
     while (iter->index < iter->size) {
-        /* do something with the data at it->dataptr */
-        PyArray_ITER_NEXT(it);
+        /* do something with the data at iter->dataptr */
+        PyArray_ITER_NEXT(iter);
     }
     ...
 
@@ -268,7 +268,7 @@ specifies your data-type. This type number should be stored and made
 available by your module so that other modules can use it to recognize
 your data-type.
 
-Note that this API is inherently thread-unsafe. See `thread_safety` for more
+Note that this API is inherently thread-unsafe. See :ref:`thread_safety` for more
 details about thread safety in NumPy.
 
 

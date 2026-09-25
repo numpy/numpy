@@ -144,8 +144,8 @@ npy_longdouble_from_PyLong(PyObject *long_obj) {
     result = NumPyOS_ascii_strtold(cstr, &end);
     if (errno == ERANGE) {
         /* strtold returns INFINITY of the correct sign. */
-        if (PyErr_Warn(PyExc_RuntimeWarning,
-                "overflow encountered in conversion from python long") < 0) {
+        if (PyErr_WarnEx(PyExc_RuntimeWarning,
+                "overflow encountered in conversion from python long", 1) < 0) {
             goto fail;
         }
     }

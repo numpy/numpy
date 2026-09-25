@@ -10,13 +10,13 @@
 #ifndef _NPY_UMATH_FAST_LOOP_MACROS_H_
 #define _NPY_UMATH_FAST_LOOP_MACROS_H_
 
-#include <assert.h>
-
 #include "simd/simd.h"
+
+#include <assert.h>
 
 /*
  * largest simd vector size in bytes numpy supports
- * it is currently a extremely large value as it is only used for memory
+ * it is currently an extremely large value as it is only used for memory
  * overlap checks
  */
 #if NPY_SIMD > 0

@@ -1,30 +1,53 @@
-#include "highway_qsort.hpp"
 #define VQSORT_ONLY_STATIC 1
+#include "hwy/highway.h"
 #include "hwy/contrib/sort/vqsort-inl.h"
 
-#include "quicksort.hpp"
+#include "highway_qsort.hpp"
+#include "quicksort_generic.hpp"
 
-#if VQSORT_ENABLED
-
-namespace np { namespace highway { namespace qsort_simd {
-
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, intptr_t size)
+namespace np::highway::qsort_simd {
+template <typename T>
+void NPY_CPU_DISPATCH_CURFX(QSort)(T *arr, npy_intp size, bool reverse)
 {
-#if HWY_HAVE_FLOAT16
-    hwy::HWY_NAMESPACE::VQSortStatic(reinterpret_cast<hwy::float16_t*>(arr), size, hwy::SortAscending());
+#if VQSORT_ENABLED
+    using THwy = std::conditional_t<std::is_same_v<T, Half>, hwy::float16_t, T>;
+    if (reverse) {
+        hwy::HWY_NAMESPACE::VQSortStatic(reinterpret_cast<THwy*>(arr), size, hwy::SortDescending());
+    }
+    else {
+        hwy::HWY_NAMESPACE::VQSortStatic(reinterpret_cast<THwy*>(arr), size, hwy::SortAscending());
+    }
 #else
-    sort::Quick(arr, size);
+    if (reverse) {
+        sort::Quick<true>(arr, size);
+    }
+    else {
+        sort::Quick<false>(arr, size);
+    }
 #endif
 }
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint16_t *arr, intptr_t size)
-{
-    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
-}
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, intptr_t size)
-{
-    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
-}
 
-} } } // np::highway::qsort_simd
+#if !HWY_HAVE_FLOAT16
+// Highway's float16 vector sort isn't compiled in; provide a scalar
+// specialization so ``Half`` still has a working symbol at link time and
+// the primary template body above doesn't try to instantiate
+// ``VQSortStatic<hwy::float16_t>``.
+template <>
+void NPY_CPU_DISPATCH_CURFX(QSort)<Half>(Half *arr, npy_intp size, bool reverse)
+{
+    if (reverse) {
+        sort::Quick<true>(arr, size);
+    }
+    else {
+        sort::Quick<false>(arr, size);
+    }
+}
+#endif // !HWY_HAVE_FLOAT16
 
-#endif // VQSORT_ENABLED
+template void NPY_CPU_DISPATCH_CURFX(QSort)<int16_t>(int16_t*, npy_intp, bool);
+template void NPY_CPU_DISPATCH_CURFX(QSort)<uint16_t>(uint16_t*, npy_intp, bool);
+#if HWY_HAVE_FLOAT16
+template void NPY_CPU_DISPATCH_CURFX(QSort)<Half>(Half*, npy_intp, bool);
+#endif
+
+} // np::highway::qsort_simd

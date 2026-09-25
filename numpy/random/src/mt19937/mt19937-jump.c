@@ -1,3 +1,4 @@
+#include <Python.h>
 #include "mt19937-jump.h"
 #include "mt19937.h"
 
@@ -13,7 +14,7 @@ unsigned long get_coef(unsigned long *pf, unsigned int deg) {
 void copy_state(mt19937_state *target_state, mt19937_state *state) {
   int i;
 
-  for (i = 0; i < N; i++)
+  for (i = 0; i < _MT19937_N; i++)
     target_state->key[i] = state->key[i];
 
   target_state->pos = state->pos;
@@ -26,17 +27,17 @@ void gen_next(mt19937_state *state) {
   static unsigned long mag02[2] = {0x0ul, MATRIX_A};
 
   num = state->pos;
-  if (num < N - M) {
+  if (num < _MT19937_N - _MT19937_M) {
     y = (state->key[num] & UPPER_MASK) | (state->key[num + 1] & LOWER_MASK);
-    state->key[num] = state->key[num + M] ^ (y >> 1) ^ mag02[y % 2];
+    state->key[num] = state->key[num + _MT19937_M] ^ (y >> 1) ^ mag02[y % 2];
     state->pos++;
-  } else if (num < N - 1) {
+  } else if (num < _MT19937_N - 1) {
     y = (state->key[num] & UPPER_MASK) | (state->key[num + 1] & LOWER_MASK);
-    state->key[num] = state->key[num + (M - N)] ^ (y >> 1) ^ mag02[y % 2];
+    state->key[num] = state->key[num + (_MT19937_M - _MT19937_N)] ^ (y >> 1) ^ mag02[y % 2];
     state->pos++;
-  } else if (num == N - 1) {
-    y = (state->key[N - 1] & UPPER_MASK) | (state->key[0] & LOWER_MASK);
-    state->key[N - 1] = state->key[M - 1] ^ (y >> 1) ^ mag02[y % 2];
+  } else if (num == _MT19937_N - 1) {
+    y = (state->key[_MT19937_N - 1] & UPPER_MASK) | (state->key[0] & LOWER_MASK);
+    state->key[_MT19937_N - 1] = state->key[_MT19937_M - 1] ^ (y >> 1) ^ mag02[y % 2];
     state->pos = 0;
   }
 }
@@ -45,19 +46,19 @@ void add_state(mt19937_state *state1, mt19937_state *state2) {
   int i, pt1 = state1->pos, pt2 = state2->pos;
 
   if (pt2 - pt1 >= 0) {
-    for (i = 0; i < N - pt2; i++)
+    for (i = 0; i < _MT19937_N - pt2; i++)
       state1->key[i + pt1] ^= state2->key[i + pt2];
-    for (; i < N - pt1; i++)
-      state1->key[i + pt1] ^= state2->key[i + (pt2 - N)];
-    for (; i < N; i++)
-      state1->key[i + (pt1 - N)] ^= state2->key[i + (pt2 - N)];
+    for (; i < _MT19937_N - pt1; i++)
+      state1->key[i + pt1] ^= state2->key[i + (pt2 - _MT19937_N)];
+    for (; i < _MT19937_N; i++)
+      state1->key[i + (pt1 - _MT19937_N)] ^= state2->key[i + (pt2 - _MT19937_N)];
   } else {
-    for (i = 0; i < N - pt1; i++)
+    for (i = 0; i < _MT19937_N - pt1; i++)
       state1->key[i + pt1] ^= state2->key[i + pt2];
-    for (; i < N - pt2; i++)
-      state1->key[i + (pt1 - N)] ^= state2->key[i + pt2];
-    for (; i < N; i++)
-      state1->key[i + (pt1 - N)] ^= state2->key[i + (pt2 - N)];
+    for (; i < _MT19937_N - pt2; i++)
+      state1->key[i + (pt1 - _MT19937_N)] ^= state2->key[i + pt2];
+    for (; i < _MT19937_N; i++)
+      state1->key[i + (pt1 - _MT19937_N)] ^= state2->key[i + (pt2 - _MT19937_N)];
   }
 }
 
@@ -66,7 +67,7 @@ void horner1(unsigned long *pf, mt19937_state *state) {
   int i = MEXP - 1;
   mt19937_state *temp;
 
-  temp = (mt19937_state *)calloc(1, sizeof(mt19937_state));
+  temp = (mt19937_state *)PyMem_RawCalloc(1, sizeof(mt19937_state));
 
   while (get_coef(pf, i) == 0)
     i--;
@@ -92,23 +93,23 @@ void horner1(unsigned long *pf, mt19937_state *state) {
     ;
 
   copy_state(state, temp);
-  free(temp);
+  PyMem_RawFree(temp);
 }
 
 void mt19937_jump_state(mt19937_state *state) {
   unsigned long *pf;
   int i;
 
-  pf = (unsigned long *)calloc(P_SIZE, sizeof(unsigned long));
+  pf = (unsigned long *)PyMem_RawCalloc(P_SIZE, sizeof(unsigned long));
   for (i = 0; i<P_SIZE; i++) {
     pf[i] = poly_coef[i];
   }
 
-  if (state->pos >= N) {
+  if (state->pos >= _MT19937_N) {
     state->pos = 0;
   }
 
   horner1(pf, state);
 
-  free(pf);
+  PyMem_RawFree(pf);
 }

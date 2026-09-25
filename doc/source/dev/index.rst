@@ -45,6 +45,8 @@ by nature!), however if you prefer to discuss in a more private space first,
 you can do so on Slack (see `numpy.org/contribute
 <https://numpy.org/contribute/>`__ for details).
 
+.. _development-process-summary:
+
 Development process - summary
 =============================
 
@@ -106,6 +108,10 @@ Here's the short summary, complete TOC links are below:
    * Go to GitHub. The new branch will show up with a green Pull Request
      button. Make sure the title and message are clear, concise, and self-
      explanatory. Then click the button to submit it.
+
+   * Note that non-maintainers may only have one non-draft pull request
+     open for review at a time. See :ref:`pull-request-limit` for details
+     and how to be allowed more open pull requests.
 
    * If your commit introduces a new feature or changes functionality, post on
      the `mailing list`_ to explain your changes. For bug fixes, documentation
@@ -183,6 +189,8 @@ Guidelines
 * No changes are ever committed without review and approval by a core
   team member. Please ask politely on the PR or on the `mailing list`_ if you
   get no response to your pull request within a week.
+* Do not include copyright notices in source code without explicitly discussing the need first. 
+  In general, any code you contribute to the project is under the project `license <https://numpy.org/devdocs/license.html>`_.
 
 .. _stylistic-guidelines:
 
@@ -190,8 +198,8 @@ Stylistic guidelines
 --------------------
 
 * Set up your editor to follow `PEP 8 <https://www.python.org/dev/peps/
-  pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code with
-  pyflakes / flake8.
+  pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code
+  with ruff.
 
 * Use NumPy data types instead of strings (``np.uint8`` instead of
   ``"uint8"``).
@@ -220,7 +228,25 @@ conveniently be installed with::
 Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.
 
-To measure the test coverage, run::
+Coverage for the Python and the compiled C sources is collected by separate
+tools, but both can be measured in a single ``spin test`` invocation.
+First install the coverage tools along with NumPy's test requirements::
+
+    $ python -m pip install coverage gcovr -r requirements/test_requirements.txt
+
+Then rebuild with C coverage instrumentation and run the tests, generating both
+reports at once::
+
+    $ spin build --clean --gcov
+    $ spin test --coverage --gcov
+
+The Python report is written to ``build/coverage`` and the C report to
+``build/meson-logs/coveragereport``.
+
+Python coverage
+~~~~~~~~~~~~~~~
+
+To measure the coverage of NumPy's Python sources, run::
 
   $ spin test --coverage
 
@@ -228,6 +254,41 @@ This will create a report in ``html`` format at ``build/coverage``, which can be
 viewed with your browser, e.g.::
 
   $ firefox build/coverage/index.html
+
+The report format is selected with ``pytest-cov``'s ``--cov-report`` option,
+passed through after ``--``, which defaults to ``html``. It can be given more
+than once, e.g. to additionally print a terminal summary and write an XML
+report to a custom location::
+
+  $ spin test --coverage -- --cov-report=term --cov-report=xml:$PWD/coverage.xml
+
+See the `pytest-cov <https://pytest-cov.readthedocs.io/>`__ and `coverage.py
+<https://coverage.readthedocs.io/>`__ documentation for the available report
+formats and options.
+
+C coverage
+~~~~~~~~~~
+
+Measuring the coverage of NumPy's compiled C sources with ``gcov`` requires a
+build with coverage instrumentation, so rebuild first with::
+
+  $ spin build --clean --gcov
+
+Then run the tests with ``--gcov``::
+
+  $ spin test --gcov
+
+This runs the tests and writes the HTML report to
+``build/meson-logs/coveragereport``.
+
+The report format is selected with ``--gcov-format``, which defaults to
+``html``::
+
+  $ spin test --gcov --gcov-format=text
+
+See the `gcovr <https://gcovr.com/>`__ documentation for the available formats.
+Generating a C coverage report requires ``gcovr`` to be installed; ``spin``
+reports if it is missing.
 
 .. _building-docs:
 
@@ -252,10 +313,13 @@ The rest of the story
 .. toctree::
    :maxdepth: 2
 
+   ai_policy
    development_environment
+   spin
    howto_build_docs
    development_workflow
    development_advanced_debugging
+   development_ghcodespaces
    reviewer_guidelines
    ../benchmarking
    NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>

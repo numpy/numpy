@@ -35,18 +35,6 @@ See :ref:`arrays.dtypes.constructing` for more information about specifying and
 constructing data type objects, including how to specify parameters like the
 byte order.
 
-To convert the type of an array, use the .astype() method. For example: ::
-
-    >>> z.astype(np.float64)                 #doctest: +NORMALIZE_WHITESPACE
-    array([0.,  1.,  2.])
-
-Note that, above, we could have used the *Python* float object as a dtype
-instead of `numpy.float64`.  NumPy knows that
-:class:`int` refers to `numpy.int_`, :class:`bool` means
-`numpy.bool`, that :class:`float` is `numpy.float64` and
-:class:`complex` is `numpy.complex128`.  The other data-types do not have
-Python equivalents.
-
 To determine the type of an array, look at the dtype attribute::
 
     >>> z.dtype
@@ -66,6 +54,33 @@ properties of the type, such as whether it is an integer::
     >>> np.issubdtype(d, np.floating)
     False
 
+To convert the type of an array, use the .astype() method. For example::
+
+    >>> z.astype(np.float64)                 #doctest: +NORMALIZE_WHITESPACE
+    array([0.,  1.,  2.])
+
+Note that, above, we could have used the *Python* float object as a dtype
+instead of `numpy.float64`.  NumPy knows that
+:class:`int` refers to `numpy.int_`, :class:`bool` means
+`numpy.bool`, that :class:`float` is `numpy.float64` and
+:class:`complex` is `numpy.complex128`.  The other data-types do not have
+Python equivalents.
+
+Sometimes the conversion can overflow, for instance when converting a `numpy.int64` value
+300 to `numpy.int8`. NumPy follows C casting rules, so that value would overflow and
+become 44 ``(300 - 256)``. If you wish to avoid such overflows, you can specify that the
+overflow action fail by using ``same_value`` for the ``casting`` argument (see also
+:ref:`overflow-errors`)::
+
+    >>> w = np.array([300], dtype=np.int64)
+    >>> w.astype(np.int8)
+    array([44], dtype=int8)
+    >>> w.astype(np.int8, casting="same_value")
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ValueError: could not cast 'same_value' long to byte
+
+
 Numerical Data Types
 --------------------
 
@@ -84,7 +99,7 @@ Data Types for Strings and Bytes
 --------------------------------
 
 In addition to numerical types, NumPy also supports storing unicode strings, via
-the `numpy.str_` dtype (``U`` character code), null-terminated byte sequences via
+the `numpy.str_` dtype (``U`` character code), null-padded byte sequences via
 `numpy.bytes_` (``S`` character code), and arbitrary byte sequences, via
 `numpy.void` (``V`` character code).
 
@@ -123,7 +138,7 @@ nulls::
   >>> x = [b"hello\0\0", b"world"]
   >>> a = np.array(x, dtype="S7")
   >>> print(a[0])
-  b"hello"
+  b'hello'
   >>> a[0] == x[0]
   False
 
@@ -217,7 +232,7 @@ confusion with builtin python type names, such as `numpy.bool_`.
     * - N/A
       - ``'P'``
       - ``uintptr_t``
-      - Guaranteed to hold pointers. Character code only (Python and C).
+      - Guaranteed to hold pointers without sign. Character code only (Python and C).
 
     * - `numpy.int32` or `numpy.int64`
       - `numpy.long`

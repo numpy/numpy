@@ -1,20 +1,24 @@
 import inspect
-import sys
 import os
+import pickle
+import sys
 import tempfile
 from io import StringIO
 from unittest import mock
-import pickle
 
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex)
-from numpy.testing.overrides import get_overridable_numpy_array_functions
+from numpy._core._multiarray_umath import _ArrayFunctionDispatcher
 from numpy._core.overrides import (
-    _get_implementing_args, array_function_dispatch,
-    verify_matching_signatures)
+    _get_implementing_args,
+    _ReductionKind,
+    array_function_dispatch,
+    verify_matching_signatures,
+)
+from numpy.testing import assert_, assert_equal, assert_raises, assert_raises_regex
+from numpy.testing.overrides import get_overridable_numpy_array_functions
+
 
 def _return_not_implemented(self, *args, **kwargs):
     return NotImplemented
@@ -133,7 +137,7 @@ class TestGetImplementingArgs:
         assert_equal(_get_implementing_args([a, c, b]), [c, b, a])
 
     def test_too_many_duck_arrays(self):
-        namespace = dict(__array_function__=_return_not_implemented)
+        namespace = {'__array_function__': _return_not_implemented}
         types = [type('A' + str(i), (object,), namespace) for i in range(65)]
         relevant_args = [t() for t in types]
 
@@ -202,14 +206,6 @@ class TestNDArrayArrayFunction:
         result = array.__array_function__(func=func, types=(np.ndarray,),
                                           args=(array,), kwargs={})
         assert_equal(result, array * 2)
-
-    def test_wrong_arguments(self):
-        # Check our implementation guards against wrong arguments.
-        a = np.array([1, 2])
-        with pytest.raises(TypeError, match="args must be a tuple"):
-            a.__array_function__(np.reshape, (np.ndarray,), a, (2, 1))
-        with pytest.raises(TypeError, match="kwargs must be a dict"):
-            a.__array_function__(np.reshape, (np.ndarray,), (a,), (2, 1))
 
     def test_wrong_arguments(self):
         # Check our implementation guards against wrong arguments.
@@ -300,6 +296,48 @@ class TestVerifyMatchingSignatures:
         @array_function_dispatch(lambda x: (x,), verify=False)
         def f(y):
             pass
+
+    def test_reduction_configuration_errors(self):
+        implementation = lambda *args, **kwargs: None
+        dispatcher = lambda x: (x,)
+
+        with pytest.raises(TypeError, match="like= dispatchers"):
+            _ArrayFunctionDispatcher(
+                    None, implementation, (np.add.reduce, 1))
+
+        invalid_reductions = [
+            object(),
+            (object(), _ReductionKind.SUM_PROD),
+            (np.add.reduce, object()),
+        ]
+        for reduction in invalid_reductions:
+            with pytest.raises(TypeError, match=r"callable, kind\) tuple"):
+                _ArrayFunctionDispatcher(
+                        dispatcher, implementation, reduction)
+
+        with pytest.raises(ValueError, match="invalid reduction kind"):
+            _ArrayFunctionDispatcher(
+                    dispatcher, implementation, (np.add.reduce, 99))
+
+    def test_dispatcher_constructor_argument_error(self):
+        dispatcher = lambda x: (x,)
+
+        with pytest.raises(TypeError, match=r"_ArrayFunctionDispatcher\(\)"):
+            _ArrayFunctionDispatcher(dispatcher)
+
+    def test_reduction_kinds_match_c_enum(self):
+        implementation = lambda *args, **kwargs: None
+        dispatcher = lambda x: (x,)
+
+        for kind in _ReductionKind:
+            _ArrayFunctionDispatcher(
+                    dispatcher, implementation, (np.add.reduce, kind))
+
+        # A new C reduction kind must also be added to the Python enum.
+        next_kind = max(kind.value for kind in _ReductionKind) + 1
+        with pytest.raises(ValueError, match="invalid reduction kind"):
+            _ArrayFunctionDispatcher(
+                    dispatcher, implementation, (np.add.reduce, next_kind))
 
 
 def _new_duck_type_and_implements():
@@ -414,6 +452,52 @@ class TestArrayFunctionImplementation:
 
             assert exc.args == expected_exception.args
 
+    @pytest.mark.parametrize(
+        "func, args, kwargs",
+        [
+            (np.sum, (), {}),
+            (np.sum, (np.ones(1),), {"out": object()}),
+            (np.max, (np.ones(1),), {"dtype": np.float64}),
+            (np.any, (np.ones(1),), {"dtype": np.bool_, "initial": False}),
+            (np.sum, (np.ones(1), 0), {"axis": 0}),  # name and position
+            (np.any, (np.ones(1), 0, None, False, True), {}),  # too many pos.
+        ],
+    )
+    def test_reduction_error_message(self, func, args, kwargs):
+        with pytest.raises(TypeError) as expected:
+            func._implementation(*args, **kwargs)
+
+        with pytest.raises(TypeError) as actual:
+            func(*args, **kwargs)
+
+        assert actual.value.args == expected.value.args
+
+    @pytest.mark.parametrize(
+        "args, name",
+        [
+            ((np.ones(1),), "bad"),  # unknown keyword
+            ((np.ones(1), 0), "axis"),  # name and position
+        ],
+    )
+    def test_reduction_signature_format_error(self, args, name):
+        # Formatting the signature mismatch message calls `str()` on the
+        # keyword, which can run arbitrary Python code.  If that raises, the
+        # error must propagate instead of being cleared as a mismatch.
+        class K(str):
+            calls = 0
+
+            def __str__(self):
+                K.calls += 1
+                if K.calls == 1:
+                    raise RuntimeError
+                return super().__str__()
+
+        with pytest.raises(RuntimeError):
+            np.sum(*args, **{K(name): 1})
+
+        # The failure must happen while formatting, not somewhere later.
+        assert K.calls == 1
+
     @pytest.mark.parametrize("value", [234, "this func is not replaced"])
     def test_dispatcher_error(self, value):
         # If the dispatcher raises an error, we must not attempt to mutate it
@@ -482,7 +566,6 @@ class TestArrayFunctionImplementation:
             func(*objs)
 
 
-
 class TestNDArrayMethods:
 
     def test_repr(self):
@@ -526,8 +609,10 @@ class TestNumPyFunctions:
         class ArrayProxy:
             def __init__(self, value):
                 self.value = value
+
             def __array_function__(self, *args, **kwargs):
                 return self.value.__array_function__(*args, **kwargs)
+
             def __array__(self, *args, **kwargs):
                 return self.value.__array__(*args, **kwargs)
 
@@ -555,7 +640,7 @@ class TestNumPyFunctions:
 
 
 class TestArrayLike:
-    def setup_method(self):
+    def _create_MyArray(self):
         class MyArray:
             def __init__(self, function=None):
                 self.function = function
@@ -568,20 +653,22 @@ class TestArrayLike:
                     return NotImplemented
                 return my_func(*args, **kwargs)
 
-        self.MyArray = MyArray
+        return MyArray
 
+    def _create_MyNoArrayFunctionArray(self):
         class MyNoArrayFunctionArray:
             def __init__(self, function=None):
                 self.function = function
 
-        self.MyNoArrayFunctionArray = MyNoArrayFunctionArray
+        return MyNoArrayFunctionArray
 
+    def _create_MySubclass(self):
         class MySubclass(np.ndarray):
             def __array_function__(self, func, types, args, kwargs):
                 result = super().__array_function__(func, types, args, kwargs)
                 return result.view(self.__class__)
 
-        self.MySubclass = MySubclass
+        return MySubclass
 
     def add_method(self, name, arr_class, enable_value_error=False):
         def _definition(*args, **kwargs):
@@ -598,9 +685,10 @@ class TestArrayLike:
         return args, kwargs
 
     def test_array_like_not_implemented(self):
-        self.add_method('array', self.MyArray)
+        MyArray = self._create_MyArray()
+        self.add_method('array', MyArray)
 
-        ref = self.MyArray.array()
+        ref = MyArray.array()
 
         with assert_raises_regex(TypeError, 'no implementation found'):
             array_like = np.asarray(1, like=ref)
@@ -627,7 +715,6 @@ class TestArrayLike:
                                   delimiter=',')),
     ]
 
-
     def test_nep35_functions_as_array_functions(self,):
         all_array_functions = get_overridable_numpy_array_functions()
         like_array_functions_subset = {
@@ -652,15 +739,16 @@ class TestArrayLike:
     @pytest.mark.parametrize('function, args, kwargs', _array_tests)
     @pytest.mark.parametrize('numpy_ref', [True, False])
     def test_array_like(self, function, args, kwargs, numpy_ref):
-        self.add_method('array', self.MyArray)
-        self.add_method(function, self.MyArray)
+        MyArray = self._create_MyArray()
+        self.add_method('array', MyArray)
+        self.add_method(function, MyArray)
         np_func = getattr(np, function)
-        my_func = getattr(self.MyArray, function)
+        my_func = getattr(MyArray, function)
 
         if numpy_ref is True:
             ref = np.array(1)
         else:
-            ref = self.MyArray.array()
+            ref = MyArray.array()
 
         like_args = tuple(a() if callable(a) else a for a in args)
         array_like = np_func(*like_args, **kwargs, like=ref)
@@ -678,19 +766,20 @@ class TestArrayLike:
 
             assert_equal(array_like, np_arr)
         else:
-            assert type(array_like) is self.MyArray
+            assert type(array_like) is MyArray
             assert array_like.function is my_func
 
     @pytest.mark.parametrize('function, args, kwargs', _array_tests)
     @pytest.mark.parametrize('ref', [1, [1], "MyNoArrayFunctionArray"])
     def test_no_array_function_like(self, function, args, kwargs, ref):
-        self.add_method('array', self.MyNoArrayFunctionArray)
-        self.add_method(function, self.MyNoArrayFunctionArray)
+        MyNoArrayFunctionArray = self._create_MyNoArrayFunctionArray()
+        self.add_method('array', MyNoArrayFunctionArray)
+        self.add_method(function, MyNoArrayFunctionArray)
         np_func = getattr(np, function)
 
         # Instantiate ref if it's the MyNoArrayFunctionArray class
         if ref == "MyNoArrayFunctionArray":
-            ref = self.MyNoArrayFunctionArray.array()
+            ref = MyNoArrayFunctionArray.array()
 
         like_args = tuple(a() if callable(a) else a for a in args)
 
@@ -700,11 +789,12 @@ class TestArrayLike:
 
     @pytest.mark.parametrize('function, args, kwargs', _array_tests)
     def test_subclass(self, function, args, kwargs):
-        ref = np.array(1).view(self.MySubclass)
+        MySubclass = self._create_MySubclass()
+        ref = np.array(1).view(MySubclass)
         np_func = getattr(np, function)
         like_args = tuple(a() if callable(a) else a for a in args)
         array_like = np_func(*like_args, **kwargs, like=ref)
-        assert type(array_like) is self.MySubclass
+        assert type(array_like) is MySubclass
         if np_func is np.empty:
             return
         np_args = tuple(a() if callable(a) else a for a in args)
@@ -713,13 +803,14 @@ class TestArrayLike:
 
     @pytest.mark.parametrize('numpy_ref', [True, False])
     def test_array_like_fromfile(self, numpy_ref):
-        self.add_method('array', self.MyArray)
-        self.add_method("fromfile", self.MyArray)
+        MyArray = self._create_MyArray()
+        self.add_method('array', MyArray)
+        self.add_method("fromfile", MyArray)
 
         if numpy_ref is True:
             ref = np.array(1)
         else:
-            ref = self.MyArray.array()
+            ref = MyArray.array()
 
         data = np.random.random(5)
 
@@ -734,13 +825,14 @@ class TestArrayLike:
                 assert_equal(np_res, data)
                 assert_equal(array_like, np_res)
             else:
-                assert type(array_like) is self.MyArray
-                assert array_like.function is self.MyArray.fromfile
+                assert type(array_like) is MyArray
+                assert array_like.function is MyArray.fromfile
 
     def test_exception_handling(self):
-        self.add_method('array', self.MyArray, enable_value_error=True)
+        MyArray = self._create_MyArray()
+        self.add_method('array', MyArray, enable_value_error=True)
 
-        ref = self.MyArray.array()
+        ref = MyArray.array()
 
         with assert_raises(TypeError):
             # Raises the error about `value_error` being invalid first
@@ -748,8 +840,9 @@ class TestArrayLike:
 
     @pytest.mark.parametrize('function, args, kwargs', _array_tests)
     def test_like_as_none(self, function, args, kwargs):
-        self.add_method('array', self.MyArray)
-        self.add_method(function, self.MyArray)
+        MyArray = self._create_MyArray()
+        self.add_method('array', MyArray)
+        self.add_method(function, MyArray)
         np_func = getattr(np, function)
 
         like_args = tuple(a() if callable(a) else a for a in args)

@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 _FLOAT = np.dtype('float64')
 _COMPLEX = np.dtype('complex128')

@@ -1,17 +1,21 @@
 import collections.abc
+import pickle
 import textwrap
 from io import BytesIO
 from os import path
 from pathlib import Path
-import pickle
 
 import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, temppath,
-    )
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    temppath,
+)
 
 
 class TestFromrecords:
@@ -104,6 +108,20 @@ class TestFromrecords:
         assert_equal(r1, r2)
         assert_equal(r2, r3)
 
+    def test_recarray_read_with_references_raises(self):
+        with temppath(suffix=".bin") as path:
+            with open(path, "wb") as fd:
+                fd.write(b"dummy data")
+            with pytest.raises(
+                ValueError, match="Arrays containing references are not supported"
+            ):
+                np.rec.fromfile(path, formats="O", shape=1)
+
+        with pytest.raises(
+            ValueError, match="Arrays containing references are not supported"
+        ):
+            np.rec.fromstring(b"dummy data", formats="O", shape=1)
+
     def test_recarray_from_obj(self):
         count = 10
         a = np.zeros(count, dtype='O')
@@ -157,7 +175,7 @@ class TestFromrecords:
             np.set_printoptions(legacy=False)
 
     def test_recarray_from_repr(self):
-        a = np.array([(1,'ABC'), (2, "DEF")],
+        a = np.array([(1, 'ABC'), (2, "DEF")],
                      dtype=[('foo', int), ('bar', 'S4')])
         recordarr = np.rec.array(a)
         recarr = a.view(np.recarray)
@@ -181,35 +199,35 @@ class TestFromrecords:
         assert_equal(recordview, recordview_r)
 
     def test_recarray_views(self):
-        a = np.array([(1,'ABC'), (2, "DEF")],
+        a = np.array([(1, 'ABC'), (2, "DEF")],
                      dtype=[('foo', int), ('bar', 'S4')])
-        b = np.array([1,2,3,4,5], dtype=np.int64)
+        b = np.array([1, 2, 3, 4, 5], dtype=np.int64)
 
-        #check that np.rec.array gives right dtypes
+        # check that np.rec.array gives right dtypes
         assert_equal(np.rec.array(a).dtype.type, np.record)
         assert_equal(type(np.rec.array(a)), np.recarray)
         assert_equal(np.rec.array(b).dtype.type, np.int64)
         assert_equal(type(np.rec.array(b)), np.recarray)
 
-        #check that viewing as recarray does the same
+        # check that viewing as recarray does the same
         assert_equal(a.view(np.recarray).dtype.type, np.record)
         assert_equal(type(a.view(np.recarray)), np.recarray)
         assert_equal(b.view(np.recarray).dtype.type, np.int64)
         assert_equal(type(b.view(np.recarray)), np.recarray)
 
-        #check that view to non-structured dtype preserves type=np.recarray
+        # check that view to non-structured dtype preserves type=np.recarray
         r = np.rec.array(np.ones(4, dtype="f4,i4"))
         rv = r.view('f8').view('f4,i4')
         assert_equal(type(rv), np.recarray)
         assert_equal(rv.dtype.type, np.record)
 
-        #check that getitem also preserves np.recarray and np.record
+        # check that getitem also preserves np.recarray and np.record
         r = np.rec.array(np.ones(4, dtype=[('a', 'i4'), ('b', 'i4'),
                                            ('c', 'i4,i4')]))
         assert_equal(r['c'].dtype.type, np.record)
         assert_equal(type(r['c']), np.recarray)
 
-        #and that it preserves subclasses (gh-6949)
+        # and that it preserves subclasses (gh-6949)
         class C(np.recarray):
             pass
 
@@ -218,10 +236,10 @@ class TestFromrecords:
 
         # check that accessing nested structures keep record type, but
         # not for subarrays, non-void structures, non-structured voids
-        test_dtype = [('a', 'f4,f4'), ('b', 'V8'), ('c', ('f4',2)),
+        test_dtype = [('a', 'f4,f4'), ('b', 'V8'), ('c', ('f4', 2)),
                       ('d', ('i8', 'i4,i4'))]
-        r = np.rec.array([((1,1), b'11111111', [1,1], 1),
-                          ((1,1), b'11111111', [1,1], 1)], dtype=test_dtype)
+        r = np.rec.array([((1, 1), b'11111111', [1, 1], 1),
+                          ((1, 1), b'11111111', [1, 1], 1)], dtype=test_dtype)
         assert_equal(r.a.dtype.type, np.record)
         assert_equal(r.b.dtype.type, np.void)
         assert_equal(r.c.dtype.type, np.float32)
@@ -229,11 +247,11 @@ class TestFromrecords:
         # check the same, but for views
         r = np.rec.array(np.ones(4, dtype='i4,i4'))
         assert_equal(r.view('f4,f4').dtype.type, np.record)
-        assert_equal(r.view(('i4',2)).dtype.type, np.int32)
+        assert_equal(r.view(('i4', 2)).dtype.type, np.int32)
         assert_equal(r.view('V8').dtype.type, np.void)
         assert_equal(r.view(('i8', 'i4,i4')).dtype.type, np.int64)
 
-        #check that we can undo the view
+        # check that we can undo the view
         arrs = [np.ones(4, dtype='f4,i4'), np.ones(4, dtype='f8')]
         for arr in arrs:
             rec = np.rec.array(arr)
@@ -265,9 +283,11 @@ class TestFromrecords:
         ra.mean = [1.1, 2.2, 3.3]
         assert_array_almost_equal(ra['mean'], [1.1, 2.2, 3.3])
         assert_(type(ra.mean) is type(ra.var))
-        ra.shape = (1, 3)
+        ra = ra.reshape((1, 3))
         assert_(ra.shape == (1, 3))
-        ra.shape = ['A', 'B', 'C']
+        # gh-29536: setting .shape on an ndarray is deprecated
+        with pytest.warns(DeprecationWarning, match="Setting the shape"):
+            ra.shape = ['A', 'B', 'C']
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
@@ -297,8 +317,8 @@ class TestFromrecords:
 
     def test_recarray_returntypes(self):
         qux_fields = {'C': (np.dtype('S5'), 0), 'D': (np.dtype('S5'), 6)}
-        a = np.rec.array([('abc ', (1,1), 1, ('abcde', 'fgehi')),
-                          ('abc', (2,3), 1, ('abcde', 'jklmn'))],
+        a = np.rec.array([('abc ', (1, 1), 1, ('abcde', 'fgehi')),
+                          ('abc', (2, 3), 1, ('abcde', 'jklmn'))],
                          dtype=[('foo', 'S4'),
                                 ('bar', [('A', int), ('B', int)]),
                                 ('baz', int), ('qux', qux_fields)])
@@ -345,7 +365,7 @@ class TestPathUsage:
             path = Path(path)
             np.random.seed(123)
             a = np.random.rand(10).astype('f8,i4,S5')
-            a[5] = (0.5,10,'abcde')
+            a[5] = (0.5, 10, 'abcde')
             with path.open("wb") as fd:
                 a.tofile(fd)
             x = np._core.records.fromfile(
@@ -355,26 +375,26 @@ class TestPathUsage:
 
 
 class TestRecord:
-    def setup_method(self):
-        self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
+    def _create_data(self):
+        return np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
                             dtype=[("col1", "<i4"),
                                    ("col2", "<i4"),
                                    ("col3", "<i4")])
 
     def test_assignment1(self):
-        a = self.data
+        a = self._create_data()
         assert_equal(a.col1[0], 1)
         a[0].col1 = 0
         assert_equal(a.col1[0], 0)
 
     def test_assignment2(self):
-        a = self.data
+        a = self._create_data()
         assert_equal(a.col1[0], 1)
         a.col1[0] = 0
         assert_equal(a.col1[0], 0)
 
     def test_invalid_assignment(self):
-        a = self.data
+        a = self._create_data()
 
         def assign_invalid_column(x):
             x[0].col5 = 1
@@ -388,18 +408,18 @@ class TestRecord:
         with assert_raises(ValueError):
             r.f = [2, 3]
         with assert_raises(ValueError):
-            r.setfield([2,3], *r.dtype.fields['f'])
+            r.setfield([2, 3], *r.dtype.fields['f'])
 
     def test_out_of_order_fields(self):
         # names in the same order, padding added to descr
-        x = self.data[['col1', 'col2']]
+        x = self._create_data()[['col1', 'col2']]
         assert_equal(x.dtype.names, ('col1', 'col2'))
         assert_equal(x.dtype.descr,
                      [('col1', '<i4'), ('col2', '<i4'), ('', '|V4')])
 
         # names change order to match indexing, as of 1.14 - descr can't
         # represent that
-        y = self.data[['col2', 'col1']]
+        y = self._create_data()[['col2', 'col1']]
         assert_equal(y.dtype.names, ('col2', 'col1'))
         assert_raises(ValueError, lambda: y.dtype.descr)
 
@@ -412,7 +432,7 @@ class TestRecord:
                                                          protocol=proto)))
 
     def test_pickle_2(self):
-        a = self.data
+        a = self._create_data()
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             assert_equal(a, pickle.loads(pickle.dumps(a, protocol=proto)))
             assert_equal(a[0], pickle.loads(pickle.dumps(a[0],
@@ -420,7 +440,7 @@ class TestRecord:
 
     def test_pickle_3(self):
         # Issue #7140
-        a = self.data
+        a = self._create_data()
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             pa = pickle.loads(pickle.dumps(a[0], protocol=proto))
             assert_(pa.flags.c_contiguous)
@@ -450,8 +470,8 @@ class TestRecord:
         assert a[0] == unpickled
 
         # Also check the similar (impossible) "object scalar" path:
-        with pytest.warns(DeprecationWarning):
-            assert ctor(np.dtype("O"), data) is data
+        with assert_raises(TypeError):
+            ctor(np.dtype("O"), data)
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
@@ -463,7 +483,7 @@ class TestRecord:
         ra = np.recarray(
             (2,), dtype=[('x', object), ('y', float), ('z', int)]
         )
-        ra[['x','y']]  # TypeError?
+        ra[['x', 'y']]  # TypeError?
 
     def test_record_scalar_setitem(self):
         # https://github.com/numpy/numpy/issues/3561
@@ -493,7 +513,8 @@ class TestRecord:
         assert dt.type != np.record
 
         # ensure that the dtype remains a record even when assigned
-        data.dtype = dt
+        with pytest.warns(DeprecationWarning, match="Setting the dtype"):
+            data.dtype = dt
         assert data.dtype.type == np.record
 
     @pytest.mark.parametrize('nfields', [0, 1, 2])
@@ -538,3 +559,51 @@ def test_find_duplicate():
 
     l3 = [2, 2, 1, 4, 1, 6, 2, 3]
     assert_(np.rec.find_duplicate(l3) == [2, 1])
+
+
+class TestPatternMatching:
+    """Tests for structural pattern matching support (PEP 634)."""
+
+    def test_match_sequence_pattern_1d(self):
+        dt = np.dtype([('x', 'i4'), ('y', 'f8')])
+        arr = np.array([(1, 1.5), (2, 2.5), (3, 3.5)], dtype=dt).view(np.recarray)
+        match arr:
+            case [a, b, c]:
+                assert a.x == 1 and a.y == 1.5
+                assert b.x == 2 and b.y == 2.5
+                assert c.x == 3 and c.y == 3.5
+            case _:
+                raise AssertionError("1D recarray did not match sequence pattern")
+
+    def test_match_sequence_pattern_2d(self):
+        dt = np.dtype([('x', 'i4'), ('y', 'f8')])
+        arr = np.array([[(1, 1.5), (2, 2.5)], [(3, 3.5), (4, 4.5)]],
+                       dtype=dt).view(np.recarray)
+        match arr:
+            case [row1, row2]:
+                assert_array_equal(row1.x, [1, 2])
+                assert_array_equal(row2.x, [3, 4])
+            case _:
+                raise AssertionError("2D recarray did not match sequence pattern")
+
+    def test_match_sequence_pattern_3d(self):
+        dt = np.dtype([('x', 'i4'), ('y', 'f8')])
+        arr = np.array([[[(1, 1.5), (2, 2.5)], [(3, 3.5), (4, 4.5)]],
+                        [[(5, 5.5), (6, 6.5)], [(7, 7.5), (8, 8.5)]]],
+                       dtype=dt).view(np.recarray)
+        # outer matching
+        match arr:
+            case [plane1, plane2]:
+                assert_array_equal(plane1.x, [[1, 2], [3, 4]])
+                assert_array_equal(plane2.x, [[5, 6], [7, 8]])
+            case _:
+                raise AssertionError("3D recarray did not match sequence pattern")
+        # inner matching
+        match arr:
+            case [[row1, row2], [row3, row4]]:
+                assert_array_equal(row1.x, [1, 2])
+                assert_array_equal(row2.x, [3, 4])
+                assert_array_equal(row3.x, [5, 6])
+                assert_array_equal(row4.x, [7, 8])
+            case _:
+                raise AssertionError("3D recarray did not match sequence pattern")

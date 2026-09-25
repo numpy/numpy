@@ -3,6 +3,7 @@
  * inner product and dot for numpy arrays
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
@@ -10,6 +11,8 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
+#include "numpy/ufuncobject.h"
+#include "blas_utils.h"
 #include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
@@ -222,10 +225,11 @@ _bad_strides(PyArrayObject *ap)
  * __array_ufunc__ nonsense is also assumed to have been taken care of.
  */
 NPY_NO_EXPORT PyObject *
-cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
+cblas_matrixproduct(PyArray_Descr *typec, PyArrayObject *ap1, PyArrayObject *ap2,
                     PyArrayObject *out)
 {
     PyArrayObject *result = NULL, *out_buf = NULL;
+    int typenum = typec->type_num;
     npy_intp j, lda, ldb;
     npy_intp l;
     int nd;
@@ -361,7 +365,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         }
     }
 
-    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum, &result);
+    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typec, &result);
     if (out_buf == NULL) {
         goto fail;
     }
@@ -374,6 +378,8 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
             Py_DECREF(out_buf);
             return PyArray_Return(result);
     }
+
+    npy_clear_floatstatus_barrier((char *) out_buf);
 
     if (ap2shape == _scalar) {
         /*
@@ -689,6 +695,10 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         NPY_END_ALLOW_THREADS;
     }
 
+    int fpes = npy_get_floatstatus_after_blas();
+    if (fpes && PyUFunc_GiveFloatingpointErrors("dot", fpes) < 0) {
+        goto fail;
+    }
 
     Py_DECREF(ap1);
     Py_DECREF(ap2);
