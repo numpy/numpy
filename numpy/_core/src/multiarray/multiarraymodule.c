@@ -1026,6 +1026,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
+        Py_DECREF(typec);
         return NULL;
     }
 
@@ -1042,7 +1043,35 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
                 _npy_module_state->n_ops.multiply, ap1, ap2, out, NULL);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
+        Py_DECREF(typec);
         return mul_res;
+    }
+
+    if (PyDataType_GetArrFuncs(typec)->dotfunc == NULL) {
+        /*
+         * DTypes without a legacy dotfunc (i.e. all new-style user DTypes)
+         * are served by the matmul gufunc instead.  This is deliberately
+         * checked *after* the 0-D case above: `dot` has always handled 0-D
+         * operands with `multiply` for every dtype, and it casts both to
+         * their common dtype first.  Diverting them into the fallback would
+         * skip that cast and so expose `multiply`'s heterogeneous loops
+         * (e.g. string repetition) where `dot` never allowed them.
+         */
+        Py_DECREF(typec);
+        if (npy_cache_import_runtime(
+                "numpy._core.numeric", "_dot_fallback",
+                &_npy_module_state->runtime_imports._dot_fallback) == -1) {
+            Py_DECREF(ap1);
+            Py_DECREF(ap2);
+            return NULL;
+        }
+        PyObject *fallback_res = PyObject_CallFunctionObjArgs(
+                _npy_module_state->runtime_imports._dot_fallback,
+                (PyObject *)ap1, (PyObject *)ap2,
+                out != NULL ? (PyObject *)out : Py_None, NULL);
+        Py_DECREF(ap1);
+        Py_DECREF(ap2);
+        return fallback_res;
     }
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
     if (PyArray_NDIM(ap2) > 1) {
@@ -2639,6 +2668,18 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
    Py_SETREF(type, NPY_DT_CALL_ensure_canonical(type));
+
+    if (PyDataType_GetArrFuncs(type)->dotfunc == NULL) {
+        Py_DECREF(type);
+        if (npy_cache_import_runtime(
+                "numpy._core.numeric", "_vdot_fallback",
+                &_npy_module_state->runtime_imports._vdot_fallback) == -1) {
+            return NULL;
+        }
+        return PyObject_CallFunctionObjArgs(
+                _npy_module_state->runtime_imports._vdot_fallback,
+                op1, op2, NULL);
+    }
 
     Py_INCREF(type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
