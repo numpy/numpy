@@ -1,5 +1,8 @@
 #include <Python.h>
 
+#include <float.h>
+#include <limits.h>
+
 #include "npy_pycompat.h"  /* for PyDict_GetItemRef on Python < 3.13 */
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -326,6 +329,160 @@ pyint_comparison_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
 
 
 /*
+ * Promote mixed 64-bit integer/floating-point comparisons to one of the
+ * exact qd/Qd/qg/Qg loops instead of a homogeneous floating-point loop.
+ */
+static int
+integer_float_comparison_promoter(PyObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    int integer_idx = PyTypeNum_ISINTEGER(op_dtypes[0]->type_num) ? 0 : 1;
+    int floating_idx = 1 - integer_idx;
+
+    int integer_type = PyTypeNum_ISSIGNED(
+            op_dtypes[integer_idx]->type_num)
+            ? NPY_LONGLONG : NPY_ULONGLONG;
+    int floating_type = op_dtypes[floating_idx]->type_num == NPY_LONGDOUBLE
+            ? NPY_LONGDOUBLE : NPY_DOUBLE;
+
+    PyArray_DTypeMeta *promoted_dtypes[] = {
+        op_dtypes[0], op_dtypes[1], &PyArray_BoolDType,
+    };
+    promoted_dtypes[integer_idx] = PyArray_DTypeFromTypeNum(integer_type);
+    promoted_dtypes[floating_idx] = PyArray_DTypeFromTypeNum(floating_type);
+
+    for (int i = 0; i < 3; i++) {
+        PyArray_DTypeMeta *dtype = signature[i] == nullptr
+                ? promoted_dtypes[i] : signature[i];
+        Py_INCREF(dtype);
+        new_op_dtypes[i] = dtype;
+    }
+    Py_DECREF(promoted_dtypes[integer_idx]);
+    Py_DECREF(promoted_dtypes[floating_idx]);
+    return 0;
+}
+
+
+static int
+add_integer_float_promoters(PyObject *umath, PyObject *promoter)
+{
+    static char const *const ufunc_names[] = {
+        "equal", "not_equal", "less", "less_equal", "greater", "greater_equal",
+    };
+    static int const floating_types[] = {
+        NPY_HALF, NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE,
+    };
+
+    for (char const *ufunc_name : ufunc_names) {
+        PyObject *ufunc = nullptr;
+        int found = PyDict_GetItemStringRef(umath, ufunc_name, &ufunc);
+        if (found <= 0) {
+            return -1;
+        }
+
+        for (int integer_type = NPY_BYTE;
+                integer_type <= NPY_ULONGLONG; integer_type++) {
+            PyArray_DTypeMeta *Int =
+                    PyArray_DTypeFromTypeNum(integer_type);
+            if (Int == nullptr) {
+                Py_DECREF(ufunc);
+                return -1;
+            }
+            if (PyDataType_ELSIZE(Int->singleton)
+                    != sizeof(npy_longlong)) {
+                Py_DECREF(Int);
+                continue;
+            }
+
+            int integer_precision = sizeof(npy_longlong) * CHAR_BIT;
+            if (PyTypeNum_ISSIGNED(integer_type)) {
+                integer_precision--;
+            }
+            int canonical_integer_type =
+                    PyTypeNum_ISSIGNED(integer_type)
+                    ? NPY_LONGLONG : NPY_ULONGLONG;
+            PyArray_DTypeMeta *CanonicalInt =
+                    PyArray_DTypeFromTypeNum(canonical_integer_type);
+            if (CanonicalInt == nullptr) {
+                Py_DECREF(Int);
+                Py_DECREF(ufunc);
+                return -1;
+            }
+
+            for (int floating_type : floating_types) {
+                int promoted_floating_type =
+                        floating_type == NPY_LONGDOUBLE
+                        ? NPY_LONGDOUBLE : NPY_DOUBLE;
+                int floating_precision =
+                        promoted_floating_type == NPY_LONGDOUBLE
+                        ? LDBL_MANT_DIG : DBL_MANT_DIG;
+                if (integer_precision <= floating_precision) {
+                    continue;
+                }
+
+                PyArray_DTypeMeta *Float =
+                        PyArray_DTypeFromTypeNum(floating_type);
+                PyArray_DTypeMeta *PromotedFloat =
+                        PyArray_DTypeFromTypeNum(promoted_floating_type);
+                if (Float == nullptr || PromotedFloat == nullptr) {
+                    Py_XDECREF(Float);
+                    Py_XDECREF(PromotedFloat);
+                    Py_DECREF(CanonicalInt);
+                    Py_DECREF(Int);
+                    Py_DECREF(ufunc);
+                    return -1;
+                }
+
+                /*
+                 * The canonical mixed loop itself is already registered.
+                 * Other concrete 64-bit integer types and narrower float
+                 * inputs need a promoter to reach it.
+                 */
+                if (!(Int == CanonicalInt && Float == PromotedFloat)) {
+                    PyObject *dtypes = PyTuple_Pack(
+                            3, Int, Float, &PyArray_BoolDType);
+                    if (dtypes == nullptr
+                            || PyUFunc_AddPromoter(
+                                    ufunc, dtypes, promoter) < 0) {
+                        Py_XDECREF(dtypes);
+                        Py_DECREF(PromotedFloat);
+                        Py_DECREF(Float);
+                        Py_DECREF(CanonicalInt);
+                        Py_DECREF(Int);
+                        Py_DECREF(ufunc);
+                        return -1;
+                    }
+                    Py_DECREF(dtypes);
+
+                    dtypes = PyTuple_Pack(
+                            3, Float, Int, &PyArray_BoolDType);
+                    if (dtypes == nullptr
+                            || PyUFunc_AddPromoter(
+                                    ufunc, dtypes, promoter) < 0) {
+                        Py_XDECREF(dtypes);
+                        Py_DECREF(PromotedFloat);
+                        Py_DECREF(Float);
+                        Py_DECREF(CanonicalInt);
+                        Py_DECREF(Int);
+                        Py_DECREF(ufunc);
+                        return -1;
+                    }
+                    Py_DECREF(dtypes);
+                }
+                Py_DECREF(PromotedFloat);
+                Py_DECREF(Float);
+            }
+            Py_DECREF(CanonicalInt);
+            Py_DECREF(Int);
+        }
+        Py_DECREF(ufunc);
+    }
+    return 0;
+}
+
+
+/*
  * Pre-populate ``cached_loop`` on the just-registered
  * (Int, PyInt, Bool) (or reversed) ArrayMethod with the same-type
  * ``(Int, Int, Bool)`` comparison loop, so that the same-type forward
@@ -482,6 +639,7 @@ init_special_int_comparisons(PyObject *umath)
 {
     int res = -1;
     PyObject *info = NULL, *promoter = NULL;
+    PyObject *integer_float_promoter = NULL;
     PyArray_DTypeMeta *Bool = &PyArray_BoolDType;
 
     /* All loops have a boolean out DType (others filled in later) */
@@ -533,9 +691,19 @@ init_special_int_comparisons(PyObject *umath)
         goto finish;
     }
 
+    integer_float_promoter = PyCapsule_New(
+            (void *)&integer_float_comparison_promoter,
+            "numpy._ufunc_promoter", NULL);
+    if (integer_float_promoter == NULL
+            || add_integer_float_promoters(
+                    umath, integer_float_promoter) < 0) {
+        goto finish;
+    }
+
     res = 0;
   finish:
 
+    Py_XDECREF(integer_float_promoter);
     Py_XDECREF(info);
     return res;
 }
