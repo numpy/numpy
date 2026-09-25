@@ -12,6 +12,8 @@ class _HasModule(Protocol):
 
 ###
 
+def _get_warn_skip_file_prefixes(*filenames: str) -> tuple[str, ...]: ...
+
 @overload
 def set_module(module: None) -> IdentityFunction: ...
 @overload

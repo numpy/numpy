@@ -52,6 +52,7 @@ assert_type(np.strings.capitalize(AR_S), npt.NDArray[np.bytes_])
 assert_type(np.strings.capitalize(AR_T), AR_T_alias)
 
 assert_type(np.strings.center(AR_U, 5), npt.NDArray[np.str_])
+assert_type(np.strings.center(AR_U, 5, fillchar=None), npt.NDArray[np.str_])
 assert_type(np.strings.center(AR_S, [2, 3, 4], b"a"), npt.NDArray[np.bytes_])
 assert_type(np.strings.center(AR_T, 5), AR_T_alias)
 
@@ -64,11 +65,13 @@ assert_type(np.strings.expandtabs(AR_S, tabsize=4), npt.NDArray[np.bytes_])
 assert_type(np.strings.expandtabs(AR_T), AR_T_alias)
 
 assert_type(np.strings.ljust(AR_U, 5), npt.NDArray[np.str_])
+assert_type(np.strings.ljust(AR_S, 5, fillchar=None), npt.NDArray[np.bytes_])
 assert_type(np.strings.ljust(AR_S, [4, 3, 1], fillchar=[b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
 assert_type(np.strings.ljust(AR_T, 5), AR_T_alias)
 assert_type(np.strings.ljust(AR_T, [4, 2, 1], fillchar=["a", "b", "c"]), AR_T_alias)
 
 assert_type(np.strings.rjust(AR_U, 5), npt.NDArray[np.str_])
+assert_type(np.strings.rjust(AR_T, 5, fillchar=None), AR_T_alias)
 assert_type(np.strings.rjust(AR_S, [4, 3, 1], fillchar=[b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
 assert_type(np.strings.rjust(AR_T, 5), AR_T_alias)
 assert_type(np.strings.rjust(AR_T, [4, 2, 1], fillchar=["a", "b", "c"]), AR_T_alias)
