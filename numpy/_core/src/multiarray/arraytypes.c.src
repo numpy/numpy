@@ -1373,7 +1373,17 @@ static void
     while (n--) {
         @type1@ t = (@type1@)*ip++;
 
+#if @floatingpoint@
+        /* NaT -> NaN, the reverse of NaN -> NaT above */
+        if (t == NPY_DATETIME_NAT) {
+            *op++ = (@type2@)NPY_NAN;
+        }
+        else {
+            *op++ = (@type2@)t;
+        }
+#else
         *op++ = (@type2@)t;
+#endif
 #if @steps@ == 2  /* complex type */
         *op++ = 0;
 #endif
@@ -1419,7 +1429,15 @@ static void
     npy_half *op = output;
 
     while (n--) {
-        *op++ = npy_float_to_half((float)(*ip++));
+        @type@ t = *ip++;
+
+        /* NaT -> NaN, the reverse of NaN -> NaT in HALF_to_@TYPE@ below */
+        if (t == NPY_DATETIME_NAT) {
+            *op++ = NPY_HALF_NAN;
+        }
+        else {
+            *op++ = npy_float_to_half((float)t);
+        }
     }
 }
 

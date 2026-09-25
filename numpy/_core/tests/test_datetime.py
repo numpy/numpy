@@ -670,6 +670,53 @@ class TestDateTime:
         assert_equal(clnan.astype('timedelta64[ns]'), nat)
         assert_equal(hnan.astype('timedelta64[ns]'), nat)
 
+    def test_datetime_nat_to_nan_casting(self):
+        # gh-26177: NaT -> NaN, the reverse of NaN -> NaT above.
+        # Only casts to floating-point and complex types map NaT to NaN.
+        nan = np.array([np.nan] * 8 + [0])
+        fnan = nan.astype('f')
+        lnan = nan.astype('g')
+        cnan = nan.astype('D')
+        cfnan = nan.astype('F')
+        clnan = nan.astype('G')
+        hnan = nan.astype(np.half)
+
+        nat = np.array([np.datetime64('NaT', 's')] * 8 + [np.datetime64(0, 'D')])
+        assert_equal(nat.astype('d'), nan)
+        assert_equal(nat.astype('f'), fnan)
+        assert_equal(nat.astype('g'), lnan)
+        assert_equal(nat.astype('D'), cnan)
+        assert_equal(nat.astype('F'), cfnan)
+        assert_equal(nat.astype('G'), clnan)
+        assert_equal(nat.astype(np.half), hnan)
+        assert_equal(np.array(list(nat), dtype=object).astype('d'), nan)
+        assert_equal(np.float64(nat[0]), np.nan)
+
+        nat = np.array([np.timedelta64('NaT', 'D')] * 8 + [np.timedelta64(0, 's')])
+        assert_equal(nat.astype('d'), nan)
+        assert_equal(nat.astype('f'), fnan)
+        assert_equal(nat.astype('g'), lnan)
+        assert_equal(nat.astype('D'), cnan)
+        assert_equal(nat.astype('F'), cfnan)
+        assert_equal(nat.astype('G'), clnan)
+        assert_equal(nat.astype(np.half), hnan)
+        assert_equal(np.array(list(nat), dtype=object).astype('d'), nan)
+        assert_equal(np.float64(nat[0]), np.nan)
+
+        # NaT stays the int64 minimum, which casts back to NaT, and is
+        # truthy like NaN
+        imin = np.array([np.iinfo(np.int64).min] * 8 + [0])
+
+        nat = np.array([np.datetime64('NaT', 's')] * 8 + [np.datetime64(0, 'D')])
+        assert_equal(nat.astype('i8'), imin)
+        assert_equal(nat.astype('i8').astype('M8[s]'), nat)
+        assert_equal(nat.astype('?'), nan.astype('?'))
+
+        nat = np.array([np.timedelta64('NaT', 'D')] * 8 + [np.timedelta64(0, 's')])
+        assert_equal(nat.astype('i8'), imin)
+        assert_equal(nat.astype('i8').astype('m8[s]'), nat)
+        assert_equal(nat.astype('?'), nan.astype('?'))
+
     def test_datetime_nat_like_object_conversion(self):
         # gh-31608: objects that duck-type as datetimes but whose
         # year/month/day attributes are NaN (e.g. pandas NaT) should
