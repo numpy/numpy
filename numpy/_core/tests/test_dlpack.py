@@ -45,6 +45,19 @@ class TestDLPack:
             # NOTE: The copy converter should be stricter, but not just here.
             x.__dlpack__(copy=np.array([1, 2, 3]))
 
+    def test_longdouble_export(self):
+        dtype = np.dtype(np.longdouble)
+        x = np.arange(5, dtype=dtype)
+
+        is_ieee_quad = dtype.itemsize == 16 and np.finfo(dtype).nmant == 112
+
+        # Only export if longdouble is double or IEEE binary128
+        if dtype.itemsize <= 8 or is_ieee_quad:
+            x.__dlpack__()
+        else:
+            with pytest.raises(BufferError):
+                x.__dlpack__()
+
     def test_strides_not_multiple_of_itemsize(self):
         dt = np.dtype([('int', np.int32), ('char', np.int8)])
         y = np.zeros((5,), dtype=dt)
