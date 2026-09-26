@@ -1399,6 +1399,31 @@ class TestCov:
                             (np.cov(xf, rowvar=False, bias=True) *
                              x.shape[0] / frac))
 
+    @pytest.mark.parametrize("rowvar", [True, False])
+    @pytest.mark.parametrize("kwargs", [{}, {"bias": True}, {"ddof": 0}])
+    def test_pairwise_cov(self, rowvar, kwargs):
+        # gh-15601: each entry must equal np.cov computed on the
+        # observations where both variables are unmasked.
+        rng = np.random.default_rng(15601)
+        data = rng.random((4, 30))
+        m = rng.random((4, 30)) < 0.3
+        x = array(data, mask=m) if rowvar else array(data.T, mask=m.T)
+        test = cov(x, rowvar=rowvar, **kwargs)
+        for i in range(4):
+            for j in range(i + 1):
+                shared = ~m[i] & ~m[j]
+                control = np.cov(data[i][shared], data[j][shared],
+                                 **kwargs)[0, 1]
+                assert_almost_equal(test[i, j], control)
+
+    def test_one_shared_observation(self):
+        # gh-15601: a pair sharing one observation has no covariance, since
+        # both deviations from that pair's mean are zero.
+        x = array([[1., 5., 9.], [3., 7., 2.]],
+                  mask=[[0, 0, 1], [0, 1, 0]])
+        assert_(cov(x)[0, 1] is masked)
+        assert_almost_equal(cov(x, ddof=0)[0, 1], 0.0)
+
 
 class TestCorrcoef:
 
@@ -1448,6 +1473,93 @@ class TestCorrcoef:
         test = corrcoef(x)
         control = np.corrcoef(x)
         assert_almost_equal(test[:-1, :-1], control[:-1, :-1])
+
+    def test_gh_15601(self):
+        d = np.array([[6., 8.], [6., 4.], [3., 9.], [1., 7.], [9., 5.]])
+        m = np.array([[0, 1], [0, 1], [0, 0], [1, 0], [0, 0]], dtype=bool)
+        # rows 2 and 4 are the only ones the two variables share
+        test = corrcoef(array(d, mask=m), rowvar=False)
+        assert_almost_equal(test[0, 1], -1.0)
+        assert_almost_equal(test[1, 0], -1.0)
+
+    @pytest.mark.parametrize("rowvar", [True, False])
+    @pytest.mark.parametrize("frac", [0.0, 0.3, 0.5])
+    def test_pairwise_complete(self, rowvar, frac):
+        # gh-15601: each entry must equal np.corrcoef computed on the
+        # observations where both variables are unmasked.  Comparing against
+        # that reference rather than against the [-1, 1] bound, which the
+        # final clip would satisfy on its own.
+        rng = np.random.default_rng(15601)
+        data = rng.random((4, 30))
+        m = rng.random((4, 30)) < frac
+        x = array(data, mask=m) if rowvar else array(data.T, mask=m.T)
+        test = corrcoef(x, rowvar=rowvar)
+        for i in range(4):
+            for j in range(i):
+                shared = ~m[i] & ~m[j]
+                control = np.corrcoef(data[i][shared], data[j][shared])[0, 1]
+                assert_almost_equal(test[i, j], control)
+                assert_almost_equal(test[j, i], control)
+
+    def test_two_shared_observations(self):
+        # gh-15601: two shared observations determine a line, so the
+        # coefficient is exactly +-1 there.  This pair reaches 1 + 1e-14
+        # before the clip, so it covers the clip as well.
+        x = array([[7., -6., 1., 6., 0.], [8., 5., 7., 7., -1.]],
+                  mask=[[0, 0, 1, 0, 1], [0, 1, 1, 0, 0]])
+        assert_almost_equal(corrcoef(x)[0, 1], 1.0)
+        assert_(corrcoef(x)[0, 1] <= 1.0)
+
+    @pytest.mark.parametrize("rowvar", [True, False])
+    def test_matches_pairwise_call(self, rowvar):
+        # gh-15601, gh-20586: an entry of the matrix must equal the
+        # coefficient of that pair on its own.
+        rng = np.random.default_rng(15601)
+        data = rng.random((4, 25))
+        m = rng.random((4, 25)) < 0.35
+        x = array(data, mask=m) if rowvar else array(data.T, mask=m.T)
+        test = corrcoef(x, rowvar=rowvar)
+        for i in range(4):
+            for j in range(i):
+                control = corrcoef(array(data[i], mask=m[i]),
+                                   array(data[j], mask=m[j]))[0, 1]
+                assert_almost_equal(test[i, j], control)
+
+    @pytest.mark.parametrize("shape, rowvar", [((5,), True),
+                                               ((1, 5), True),
+                                               ((5, 1), False)])
+    def test_single_variable(self, shape, rowvar):
+        x = array(np.arange(5.).reshape(shape))
+        result = corrcoef(x, rowvar=rowvar)
+        # ``assert_almost_equal`` holds against a masked value, so the mask
+        # has to be checked on its own.
+        assert_(result is not masked)
+        assert_almost_equal(result, 1.)
+
+    @pytest.mark.parametrize("mask", [[1, 1, 1, 1, 1],   # nothing observed
+                                      [0, 1, 1, 1, 1]])  # one observation
+    def test_single_variable_without_observations(self, mask):
+        # Two observations are needed before a variance exists.
+        assert_(corrcoef(array(np.arange(5.), mask=mask)) is masked)
+
+    def test_single_variable_without_variance(self):
+        assert_(corrcoef(array(np.ones(5))) is masked)
+
+    def test_no_variance_left_as_rounding_noise(self):
+        # The variance over the shared observations is a difference of two
+        # sums of the same size, so a constant variable leaves rounding noise
+        # rather than an exact zero and the division stays finite.
+        x = array([[2., 0., 0., 1., 0.], [3., 0., 0., 3., 3.]],
+                  mask=[[0, 1, 1, 0, 0], [0, 0, 0, 0, 0]])
+        assert_(corrcoef(x)[0, 1] is masked)
+
+    def test_no_variance_on_shared(self):
+        # gh-15601: a pair whose shared observations leave one variable
+        # constant has no coefficient, so it must be masked rather than
+        # clipped to +-1.
+        x = array([[2., 2., 2., 2., 7., 11.], [1., 4., 9., 0., 0., 0.]],
+                  mask=[[0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 1, 1]])
+        assert_(corrcoef(x)[0, 1] is masked)
 
 
 class TestPolynomial:
