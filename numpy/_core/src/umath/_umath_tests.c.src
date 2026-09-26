@@ -969,6 +969,62 @@ UMath_Tests_create_unary_ufunc(PyObject *NPY_UNUSED(dummy),
             "fresh unary float64 test ufunc (negation)", 0);
 }
 
+static NPY_CASTING
+unary_error_resolve_descriptors(
+        struct PyArrayMethodObject_tag *NPY_UNUSED(method),
+        PyArray_DTypeMeta *const *NPY_UNUSED(dtypes),
+        PyArray_Descr *const *NPY_UNUSED(given_descrs),
+        PyArray_Descr **NPY_UNUSED(loop_descrs),
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    PyErr_SetString(PyExc_TypeError, "unary descriptor resolution failed");
+    return (NPY_CASTING)-1;
+}
+
+static int
+unary_unexpected_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *NPY_UNUSED(data),
+        const npy_intp *NPY_UNUSED(dimensions),
+        const npy_intp *NPY_UNUSED(strides), NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyErr_SetString(PyExc_AssertionError,
+            "unary loop executed without descriptor resolution");
+    return -1;
+}
+
+static PyObject *
+UMath_Tests_create_unary_ufunc_with_resolver_error(
+        PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+{
+    PyObject *ufunc = PyUFunc_FromFuncAndData(
+            NULL, NULL, NULL, 0, 1, 1, PyUFunc_None,
+            "unary_resolver_error", NULL, 0);
+    if (ufunc == NULL) {
+        return NULL;
+    }
+    PyArray_DTypeMeta *dtypes[2] = {
+            &PyArray_DoubleDType, &PyArray_DoubleDType};
+    PyType_Slot slots[] = {
+        {NPY_METH_resolve_descriptors, &unary_error_resolve_descriptors},
+        {NPY_METH_strided_loop, &unary_unexpected_loop},
+        {0, NULL},
+    };
+    PyArrayMethod_Spec spec = {
+        .name = "unary_resolver_error",
+        .nin = 1,
+        .nout = 1,
+        .casting = NPY_NO_CASTING,
+        .flags = NPY_METH_REQUIRES_PYAPI,
+        .dtypes = dtypes,
+        .slots = slots,
+    };
+    if (PyUFunc_AddLoopFromSpec(ufunc, &spec) < 0) {
+        Py_DECREF(ufunc);
+        return NULL;
+    }
+    return ufunc;
+}
+
 static PyMethodDef UMath_TestsMethods[] = {
     {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
      "Test signature parsing of ufunc. \n"
@@ -986,6 +1042,9 @@ static PyMethodDef UMath_TestsMethods[] = {
     {"create_unary_ufunc", UMath_Tests_create_unary_ufunc, METH_NOARGS,
      "Create a fresh unary float64 ufunc (negation) with untouched "
      "dispatch state.\n"},
+    {"create_unary_ufunc_with_resolver_error",
+     UMath_Tests_create_unary_ufunc_with_resolver_error, METH_NOARGS,
+     "Create a fresh unary float64 ufunc whose descriptor resolver raises.\n"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
