@@ -1,0 +1,8 @@
+``np.take`` may modify ``out`` when an index is out of bounds
+-------------------------------------------------------------
+With the default ``mode="raise"``, `numpy.take` now writes its result
+directly into the ``out`` array instead of into a temporary copy. As a
+consequence, ``out`` may be partially modified when an out-of-bounds index
+raises an ``IndexError``; previously ``out`` was guaranteed to be left
+unchanged in that case. Code that relies on ``out`` keeping its previous
+contents after such an error should pass a fresh array as ``out``.
