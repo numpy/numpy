@@ -1,24 +1,30 @@
 """
-Create the numpy._core.multiarray namespace for backward compatibility. 
-In v1.16 the multiarray and umath c-extension modules were merged into 
-a single _multiarray_umath extension module. So we replicate the old 
+Create the numpy._core.multiarray namespace for backward compatibility.
+In v1.16 the multiarray and umath c-extension modules were merged into
+a single _multiarray_umath extension module. So we replicate the old
 namespace by importing from the extension module.
 
 """
 
 import functools
-from . import overrides
-from . import _multiarray_umath
-from ._multiarray_umath import *  # noqa: F403
+
+from . import _multiarray_umath, overrides
+from ._multiarray_umath import *
+
 # These imports are needed for backward compatibility,
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
-from ._multiarray_umath import (
-    _flagdict, from_dlpack, _place, _reconstruct,
-    _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _get_madvise_hugepage, _set_madvise_hugepage,
-    _get_promotion_state, _set_promotion_state
-    )
+from ._multiarray_umath import (  # noqa: F401
+    _ARRAY_API,
+    _flagdict,
+    _get_madvise_hugepage,
+    _get_ndarray_c_version,
+    _place,
+    _reconstruct,
+    _set_madvise_hugepage,
+    _vec_string,
+    from_dlpack,
+)
 
 __all__ = [
     '_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
@@ -26,7 +32,7 @@ __all__ = [
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
     'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP',
     '_flagdict', 'from_dlpack', '_place', '_reconstruct', '_vec_string',
-    '_monotonicity', 'add_docstring', 'arange', 'array', 'asarray',
+    'add_docstring', 'arange', 'array', 'asarray',
     'asanyarray', 'ascontiguousarray', 'asfortranarray', 'bincount',
     'broadcast', 'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
     'compare_chararrays', 'concatenate', 'copyto', 'correlate', 'correlate2',
@@ -35,16 +41,14 @@ __all__ = [
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
     'frombuffer', 'fromfile', 'fromiter', 'fromstring',
     'get_handler_name', 'get_handler_version', 'inner', 'interp',
-    'interp_complex', 'is_busday', 'lexsort', 'matmul', 'may_share_memory',
-    'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
+    'interp_complex', 'is_busday', 'lexsort', 'matmul', 'vecdot',
+    'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
     'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
-    'set_legacy_print_mode',
     'set_typeDict', 'shares_memory', 'typeinfo',
-    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
-    '_get_promotion_state', '_set_promotion_state']
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros']
 
-# For backward compatibility, make sure pickle imports 
+# For backward compatibility, make sure pickle imports
 # these functions from here
 _reconstruct.__module__ = 'numpy._core.multiarray'
 scalar.__module__ = 'numpy._core.multiarray'
@@ -68,9 +72,36 @@ may_share_memory.__module__ = 'numpy'
 nested_iters.__module__ = 'numpy'
 promote_types.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
-_get_promotion_state.__module__ = 'numpy'
-_set_promotion_state.__module__ = 'numpy'
 normalize_axis_index.__module__ = 'numpy.lib.array_utils'
+add_docstring.__module__ = 'numpy.lib'
+compare_chararrays.__module__ = 'numpy.char'
+
+
+def _override___module__():
+    namespace_names = globals()
+    for ufunc_name in [
+        'absolute', 'arccos', 'arccosh', 'add', 'arcsin', 'arcsinh', 'arctan',
+        'arctan2', 'arctanh', 'bitwise_and', 'bitwise_count', 'invert',
+        'left_shift', 'bitwise_or', 'right_shift', 'bitwise_xor', 'cbrt',
+        'ceil', 'conjugate', 'copysign', 'cos', 'cosh', 'deg2rad', 'degrees',
+        'divide', 'divmod', 'equal', 'exp', 'exp2', 'expm1', 'fabs',
+        'float_power', 'floor', 'floor_divide', 'fmax', 'fmin', 'fmod',
+        'frexp', 'gcd', 'greater', 'greater_equal', 'heaviside', 'hypot',
+        'isfinite', 'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'less',
+        'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
+        'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
+        'logical_xor', 'matmul', 'matvec', 'maximum', 'minimum', 'remainder',
+        'modf', 'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
+        'power', 'rad2deg', 'radians', 'reciprocal', 'rint', 'sign', 'signbit',
+        'sin', 'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
+        'trunc', 'vecdot', 'vecmat',
+    ]:
+        ufunc = namespace_names[ufunc_name]
+        ufunc.__module__ = "numpy"
+        ufunc.__qualname__ = ufunc_name
+
+
+_override___module__()
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't
@@ -82,11 +113,20 @@ array_function_from_c_func_and_dispatcher = functools.partial(
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.empty_like)
 def empty_like(
-    prototype, dtype=None, order=None, subok=None, shape=None, *, device=None
+    prototype, dtype=None, order="K", subok=True, shape=None, *, device=None
 ):
     """
-    empty_like(prototype, dtype=None, order='K', subok=True, shape=None, *,
-               device=None)
+    empty_like(
+        prototype,
+        /,
+        dtype=None,
+        order='K',
+        subok=True,
+        shape=None,
+        *,
+        device=None,
+    )
+    --
 
     Return a new array with the same shape and type as a given array.
 
@@ -97,15 +137,11 @@ def empty_like(
         of the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
-
-        .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `prototype` is Fortran
         contiguous, 'C' otherwise. 'K' means match the layout of `prototype`
         as closely as possible.
-
-        .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
         type of `prototype`, otherwise it will be a base-class array. Defaults
@@ -114,8 +150,6 @@ def empty_like(
         Overrides the shape of the result. If order='K' and the number of
         dimensions is unchanged, will try to keep order, otherwise,
         order='C' is implied.
-
-        .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -145,13 +179,14 @@ def empty_like(
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = ([1,2,3], [4,5,6])                         # a is array-like
     >>> np.empty_like(a)
     array([[-1073741821, -1073741821,           3],    # uninitialized
            [          0,           0, -1073741821]])
     >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
     >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninit
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninitialized
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """
@@ -159,17 +194,23 @@ def empty_like(
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.concatenate)
-def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
+def concatenate(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
     """
     concatenate(
-        (a1, a2, ...), 
-        axis=0, 
-        out=None, 
-        dtype=None, 
-        casting="same_kind"
+        arrays,
+        /,
+        axis=0,
+        out=None,
+        *,
+        dtype=None,
+        casting="same_kind",
     )
+    --
 
     Join a sequence of arrays along an existing axis.
+
+    .. versionadded:: 2.0
+        ``numpy.concat`` added as a shorthand for ``numpy.concatenate``.
 
     Parameters
     ----------
@@ -192,7 +233,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
         For a description of the options, please see :term:`casting`.
-        
+
         .. versionadded:: 1.20.0
 
     Returns
@@ -226,6 +267,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> b = np.array([[5, 6]])
     >>> np.concatenate((a, b), axis=0)
@@ -267,7 +309,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)
-def inner(a, b):
+def inner(a, b, /):
     """
     inner(a, b, /)
 
@@ -299,6 +341,7 @@ def inner(a, b):
     --------
     tensordot : Sum products over arbitrary axes.
     dot : Generalised matrix product, using second last dimension of `b`.
+    vecdot : Vector dot product of two arrays.
     einsum : Einstein summation convention.
 
     Notes
@@ -324,6 +367,7 @@ def inner(a, b):
     --------
     Ordinary inner product for vectors:
 
+    >>> import numpy as np
     >>> a = np.array([1,2,3])
     >>> b = np.array([0,1,0])
     >>> np.inner(a, b)
@@ -359,7 +403,7 @@ def inner(a, b):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.where)
-def where(condition, x=None, y=None):
+def where(condition, x=None, y=None, /):
     """
     where(condition, [x, y], /)
 
@@ -400,6 +444,7 @@ def where(condition, x=None, y=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(10)
     >>> a
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -434,7 +479,7 @@ def where(condition, x=None, y=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.lexsort)
-def lexsort(keys, axis=None):
+def lexsort(keys, axis=-1):
     """
     lexsort(keys, axis=-1)
 
@@ -472,6 +517,7 @@ def lexsort(keys, axis=None):
     --------
     Sort names: first by surname, then by name.
 
+    >>> import numpy as np
     >>> surnames =    ('Hertz',    'Galilei', 'Hertz')
     >>> first_names = ('Heinrich', 'Galileo', 'Gustav')
     >>> ind = np.lexsort((first_names, surnames))
@@ -554,7 +600,7 @@ def lexsort(keys, axis=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.can_cast)
-def can_cast(from_, to, casting=None):
+def can_cast(from_, to, casting="safe"):
     """
     can_cast(from_, to, casting='safe')
 
@@ -584,16 +630,6 @@ def can_cast(from_, to, casting=None):
 
     Notes
     -----
-    .. versionchanged:: 1.17.0
-       Casting between a simple data type and a structured one is possible only
-       for "unsafe" casting.  Casting to multiple fields is allowed, but
-       casting from multiple fields is not.
-
-    .. versionchanged:: 1.9.0
-       Casting from numeric to string types in 'safe' casting mode requires
-       that the string dtype length is long enough to store the maximum
-       integer/float value converted.
-
     .. versionchanged:: 2.0
        This function does not support Python scalars anymore and does not
        apply any value-based logic for 0-D arrays and NumPy scalars.
@@ -606,6 +642,7 @@ def can_cast(from_, to, casting=None):
     --------
     Basic examples
 
+    >>> import numpy as np
     >>> np.can_cast(np.int32, np.int64)
     True
     >>> np.can_cast(np.float64, complex)
@@ -625,7 +662,7 @@ def can_cast(from_, to, casting=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.min_scalar_type)
-def min_scalar_type(a):
+def min_scalar_type(a, /):
     """
     min_scalar_type(a, /)
 
@@ -646,16 +683,13 @@ def min_scalar_type(a):
     out : dtype
         The minimal data type.
 
-    Notes
-    -----
-    .. versionadded:: 1.6.0
-
     See Also
     --------
     result_type, promote_types, dtype, can_cast
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.min_scalar_type(10)
     dtype('uint8')
 
@@ -668,7 +702,7 @@ def min_scalar_type(a):
     >>> np.min_scalar_type(1e50)
     dtype('float64')
 
-    >>> np.min_scalar_type(np.arange(4,dtype='f8'))
+    >>> np.min_scalar_type(np.arange(4, dtype=np.float64))
     dtype('float64')
 
     """
@@ -681,19 +715,7 @@ def result_type(*arrays_and_dtypes):
     result_type(*arrays_and_dtypes)
 
     Returns the type that results from applying the NumPy
-    type promotion rules to the arguments.
-
-    Type promotion in NumPy works similarly to the rules in languages
-    like C++, with some slight differences.  When both scalars and
-    arrays are used, the array's type takes precedence and the actual value
-    of the scalar is taken into account.
-
-    For example, calculating 3*a, where a is an array of 32-bit floats,
-    intuitively should result in a 32-bit float output.  If the 3 is a
-    32-bit integer, the NumPy rules indicate it can't convert losslessly
-    into a 32-bit float, so a 64-bit float should be the result type.
-    By examining the value of the constant, '3', we see that it fits in
-    an 8-bit integer, which can be cast losslessly into the 32-bit float.
+    :ref:`type promotion <arrays.promotion>` rules to the arguments.
 
     Parameters
     ----------
@@ -709,35 +731,13 @@ def result_type(*arrays_and_dtypes):
     --------
     dtype, promote_types, min_scalar_type, can_cast
 
-    Notes
-    -----
-    .. versionadded:: 1.6.0
-
-    The specific algorithm used is as follows.
-
-    Categories are determined by first checking which of boolean,
-    integer (int/uint), or floating point (float/complex) the maximum
-    kind of all the arrays and the scalars are.
-
-    If there are only scalars or the maximum category of the scalars
-    is higher than the maximum category of the arrays,
-    the data types are combined with :func:`promote_types`
-    to produce the return value.
-
-    Otherwise, `min_scalar_type` is called on each scalar, and
-    the resulting data types are all combined with :func:`promote_types`
-    to produce the return value.
-
-    The set of int values is not a subset of the uint values for types
-    with the same number of bits, something not reflected in
-    :func:`min_scalar_type`, but handled as a special case in `result_type`.
-
     Examples
     --------
-    >>> np.result_type(3, np.arange(7, dtype='i1'))
+    >>> import numpy as np
+    >>> np.result_type(3, np.arange(7, dtype=np.int8))
     dtype('int8')
 
-    >>> np.result_type('i4', 'c8')
+    >>> np.result_type(np.int32, np.complex64)
     dtype('complex128')
 
     >>> np.result_type(3.0, -2)
@@ -806,6 +806,7 @@ def dot(a, b, out=None):
     See Also
     --------
     vdot : Complex-conjugating dot product.
+    vecdot : Vector dot product of two arrays.
     tensordot : Sum products over arbitrary axes.
     einsum : Einstein summation convention.
     matmul : '@' operator as method with out parameter.
@@ -813,6 +814,7 @@ def dot(a, b, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.dot(3, 4)
     12
 
@@ -841,19 +843,23 @@ def dot(a, b, out=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.vdot)
-def vdot(a, b):
-    """
+def vdot(a, b, /):
+    r"""
     vdot(a, b, /)
 
     Return the dot product of two vectors.
 
-    The vdot(`a`, `b`) function handles complex numbers differently than
-    dot(`a`, `b`).  If the first argument is complex the complex conjugate
-    of the first argument is used for the calculation of the dot product.
+    The `vdot` function handles complex numbers differently than `dot`:
+    if the first argument is complex, it is replaced by its complex conjugate
+    in the dot product calculation. `vdot` also handles multidimensional
+    arrays differently than `dot`: it does not perform a matrix product, but
+    flattens the arguments to 1-D arrays before taking a vector dot product.
 
-    Note that `vdot` handles multidimensional arrays differently than `dot`:
-    it does *not* perform a matrix product, but flattens input arguments
-    to 1-D vectors first. Consequently, it should only be used for vectors.
+    Consequently, when the arguments are 2-D arrays of the same shape, this
+    function effectively returns their
+    `Frobenius inner product <https://en.wikipedia.org/wiki/Frobenius_inner_product>`_
+    (also known as the *trace inner product* or the *standard inner product*
+    on a vector space of matrices).
 
     Parameters
     ----------
@@ -876,6 +882,7 @@ def vdot(a, b):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1+2j,3+4j])
     >>> b = np.array([5+6j,7+8j])
     >>> np.vdot(a, b)
@@ -899,7 +906,7 @@ def vdot(a, b):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.bincount)
-def bincount(x, weights=None, minlength=None):
+def bincount(x, /, weights=None, minlength=0):
     """
     bincount(x, /, weights=None, minlength=0)
 
@@ -923,8 +930,6 @@ def bincount(x, weights=None, minlength=None):
     minlength : int, optional
         A minimum number of bins for the output array.
 
-        .. versionadded:: 1.6.0
-
     Returns
     -------
     out : ndarray of ints
@@ -945,6 +950,7 @@ def bincount(x, weights=None, minlength=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.bincount(np.arange(5))
     array([1, 1, 1, 1, 1])
     >>> np.bincount(np.array([0, 1, 1, 3, 2, 1, 7]))
@@ -957,7 +963,7 @@ def bincount(x, weights=None, minlength=None):
     The input array needs to be of integer dtype, otherwise a
     TypeError is raised:
 
-    >>> np.bincount(np.arange(5, dtype=float))
+    >>> np.bincount(np.arange(5, dtype=np.float64))
     Traceback (most recent call last):
       ...
     TypeError: Cannot cast array data from dtype('float64') to dtype('int64')
@@ -976,7 +982,7 @@ def bincount(x, weights=None, minlength=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.ravel_multi_index)
-def ravel_multi_index(multi_index, dims, mode=None, order=None):
+def ravel_multi_index(multi_index, dims, mode="raise", order="C"):
     """
     ravel_multi_index(multi_index, dims, mode='raise', order='C')
 
@@ -1014,12 +1020,9 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
     --------
     unravel_index
 
-    Notes
-    -----
-    .. versionadded:: 1.6.0
-
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.array([[3,6,6],[4,5,1]])
     >>> np.ravel_multi_index(arr, (7,6))
     array([22, 41, 37])
@@ -1037,7 +1040,7 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unravel_index)
-def unravel_index(indices, shape=None, order=None):
+def unravel_index(indices, shape, order="C"):
     """
     unravel_index(indices, shape, order='C')
 
@@ -1052,15 +1055,9 @@ def unravel_index(indices, shape=None, order=None):
         this function accepted just one index value.
     shape : tuple of ints
         The shape of the array to use for unraveling ``indices``.
-
-        .. versionchanged:: 1.16.0
-            Renamed from ``dims`` to ``shape``.
-
     order : {'C', 'F'}, optional
         Determines whether the indices should be viewed as indexing in
         row-major (C-style) or column-major (Fortran-style) order.
-
-        .. versionadded:: 1.6.0
 
     Returns
     -------
@@ -1074,6 +1071,7 @@ def unravel_index(indices, shape=None, order=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.unravel_index([22, 41, 37], (7,6))
     (array([3, 6, 6]), array([4, 5, 1]))
     >>> np.unravel_index([31, 41, 13], (7,6), order='F')
@@ -1087,7 +1085,7 @@ def unravel_index(indices, shape=None, order=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.copyto)
-def copyto(dst, src, casting=None, where=None):
+def copyto(dst, src, casting="same_kind", where=True):
     """
     copyto(dst, src, casting='same_kind', where=True)
 
@@ -1095,8 +1093,6 @@ def copyto(dst, src, casting=None, where=None):
 
     Raises a TypeError if the `casting` rule is violated, and if
     `where` is provided, it selects which elements to copy.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1120,6 +1116,7 @@ def copyto(dst, src, casting=None, where=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.array([4, 5, 6])
     >>> B = [1, 2, 3]
     >>> np.copyto(A, B)
@@ -1140,7 +1137,7 @@ def copyto(dst, src, casting=None, where=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.putmask)
 def putmask(a, /, mask, values):
     """
-    putmask(a, mask, values)
+    putmask(a, /, mask, values)
 
     Changes elements of an array based on conditional and input values.
 
@@ -1165,6 +1162,7 @@ def putmask(a, /, mask, values):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(6).reshape(2, 3)
     >>> np.putmask(x, x>2, x**2)
     >>> x
@@ -1183,7 +1181,7 @@ def putmask(a, /, mask, values):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
-def packbits(a, axis=None, bitorder='big'):
+def packbits(a, /, axis=None, bitorder="big"):
     """
     packbits(a, /, axis=None, bitorder='big')
 
@@ -1205,8 +1203,6 @@ def packbits(a, axis=None, bitorder='big'):
         reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
         Defaults to 'big'.
 
-        .. versionadded:: 1.17.0
-
     Returns
     -------
     packed : ndarray
@@ -1222,6 +1218,7 @@ def packbits(a, axis=None, bitorder='big'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[[1,0,1],
     ...                [0,1,0]],
     ...               [[1,1,0],
@@ -1241,7 +1238,7 @@ def packbits(a, axis=None, bitorder='big'):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
-def unpackbits(a, axis=None, count=None, bitorder='big'):
+def unpackbits(a, /, axis=None, count=None, bitorder="big"):
     """
     unpackbits(a, /, axis=None, count=None, bitorder='big')
 
@@ -1268,16 +1265,11 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
         default). Counts larger than the available number of bits will
         add zero padding to the output. Negative counts must not
         exceed the available number of bits.
-
-        .. versionadded:: 1.17.0
-
     bitorder : {'big', 'little'}, optional
         The order of the returned bits. 'big' will mimic bin(val),
         ``3 = 0b00000011 => [0, 0, 0, 0, 0, 0, 1, 1]``, 'little' will reverse
         the order to ``[1, 1, 0, 0, 0, 0, 0, 0]``.
         Defaults to 'big'.
-
-        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1291,6 +1283,7 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[2], [7], [23]], dtype=np.uint8)
     >>> a
     array([[ 2],
@@ -1325,16 +1318,16 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.shares_memory)
-def shares_memory(a, b, max_work=None):
+def shares_memory(a, b, /, max_work=-1):
     """
-    shares_memory(a, b, /, max_work=None)
+    shares_memory(a, b, /, max_work=-1)
 
     Determine if two arrays share memory.
 
     .. warning::
 
        This function can be exponentially slow for some inputs, unless
-       `max_work` is set to a finite number or ``MAY_SHARE_BOUNDS``.
+       `max_work` is set to zero or a positive integer.
        If in doubt, use `numpy.may_share_memory` instead.
 
     Parameters
@@ -1346,12 +1339,13 @@ def shares_memory(a, b, max_work=None):
         of candidate solutions to consider). The following special
         values are recognized:
 
-        max_work=MAY_SHARE_EXACT  (default)
+        max_work=-1 (default)
             The problem is solved exactly. In this case, the function returns
             True only if there is an element shared between the arrays. Finding
             the exact solution may take extremely long in some cases.
-        max_work=MAY_SHARE_BOUNDS
+        max_work=0
             Only the memory bounds of a and b are checked.
+            This is equivalent to using ``may_share_memory()``.
 
     Raises
     ------
@@ -1368,6 +1362,7 @@ def shares_memory(a, b, max_work=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3, 4])
     >>> np.shares_memory(x, np.array([5, 6, 7]))
     False
@@ -1402,9 +1397,9 @@ def shares_memory(a, b, max_work=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.may_share_memory)
-def may_share_memory(a, b, max_work=None):
+def may_share_memory(a, b, /, max_work=0):
     """
-    may_share_memory(a, b, /, max_work=None)
+    may_share_memory(a, b, /, max_work=0)
 
     Determine if two arrays might share memory
 
@@ -1432,6 +1427,7 @@ def may_share_memory(a, b, max_work=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
     False
     >>> x = np.zeros([3, 4])
@@ -1443,19 +1439,17 @@ def may_share_memory(a, b, max_work=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.is_busday)
-def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
+def is_busday(dates, weekmask="1111100", holidays=None, busdaycal=None, out=None):
     """
     is_busday(
-        dates, 
-        weekmask='1111100', 
-        holidays=None, 
-        busdaycal=None, 
-        out=None
+        dates,
+        weekmask='1111100',
+        holidays=None,
+        busdaycal=None,
+        out=None,
     )
 
     Calculates which of the given dates are valid days, and which are not.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1494,6 +1488,7 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> # The weekdays are Friday, Saturday, and Monday
     ... np.is_busday(['2011-07-01', '2011-07-02', '2011-07-18'],
     ...                 holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
@@ -1503,24 +1498,22 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.busday_offset)
-def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
+def busday_offset(dates, offsets, roll="raise", weekmask="1111100", holidays=None,
                   busdaycal=None, out=None):
     """
     busday_offset(
-        dates, 
-        offsets, 
-        roll='raise', 
-        weekmask='1111100', 
-        holidays=None, 
-        busdaycal=None, 
-        out=None
+        dates,
+        offsets,
+        roll='raise',
+        weekmask='1111100',
+        holidays=None,
+        busdaycal=None,
+        out=None,
     )
 
     First adjusts the date to fall on a valid day according to
     the ``roll`` rule, then applies offsets to the given dates
     counted in valid days.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1578,43 +1571,44 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> # First business day in October 2011 (not accounting for holidays)
     ... np.busday_offset('2011-10', 0, roll='forward')
-    numpy.datetime64('2011-10-03')
+    np.datetime64('2011-10-03')
     >>> # Last business day in February 2012 (not accounting for holidays)
     ... np.busday_offset('2012-03', -1, roll='forward')
-    numpy.datetime64('2012-02-29')
+    np.datetime64('2012-02-29')
     >>> # Third Wednesday in January 2011
     ... np.busday_offset('2011-01', 2, roll='forward', weekmask='Wed')
-    numpy.datetime64('2011-01-19')
+    np.datetime64('2011-01-19')
     >>> # 2012 Mother's Day in Canada and the U.S.
     ... np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
-    numpy.datetime64('2012-05-13')
+    np.datetime64('2012-05-13')
 
     >>> # First business day on or after a date
     ... np.busday_offset('2011-03-20', 0, roll='forward')
-    numpy.datetime64('2011-03-21')
+    np.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 0, roll='forward')
-    numpy.datetime64('2011-03-22')
+    np.datetime64('2011-03-22')
     >>> # First business day after a date
     ... np.busday_offset('2011-03-20', 1, roll='backward')
-    numpy.datetime64('2011-03-21')
+    np.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 1, roll='backward')
-    numpy.datetime64('2011-03-23')
+    np.datetime64('2011-03-23')
     """
     return (dates, offsets, weekmask, holidays, out)
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.busday_count)
-def busday_count(begindates, enddates, weekmask=None, holidays=None,
+def busday_count(begindates, enddates, weekmask="1111100", holidays=(),
                  busdaycal=None, out=None):
     """
     busday_count(
-        begindates, 
-        enddates, 
-        weekmask='1111100', 
-        holidays=[], 
-        busdaycal=None, 
+        begindates,
+        enddates,
+        weekmask='1111100',
+        holidays=[],
+        busdaycal=None,
         out=None
     )
 
@@ -1623,8 +1617,6 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
 
     If ``enddates`` specifies a date value that is earlier than the
     corresponding ``begindates`` date value, the count will be negative.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1667,6 +1659,7 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> # Number of weekdays in January 2011
     ... np.busday_count('2011-01', '2011-02')
     21
@@ -1680,9 +1673,8 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
     return (begindates, enddates, weekmask, holidays, out)
 
 
-@array_function_from_c_func_and_dispatcher(
-    _multiarray_umath.datetime_as_string)
-def datetime_as_string(arr, unit=None, timezone=None, casting=None):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.datetime_as_string)
+def datetime_as_string(arr, unit=None, timezone="naive", casting="same_kind"):
     """
     datetime_as_string(arr, unit=None, timezone='naive', casting='same_kind')
 
@@ -1693,7 +1685,7 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
     arr : array_like of datetime64
         The array of UTC timestamps to format.
     unit : str
-        One of None, 'auto', or 
+        One of None, 'auto', or
         a :ref:`datetime unit <arrays.dtypes.dateunits>`.
     timezone : {'naive', 'UTC', 'local'} or tzinfo
         Timezone information to use when displaying the datetime. If 'UTC',
@@ -1710,7 +1702,8 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
 
     Examples
     --------
-    >>> import pytz
+    >>> import numpy as np
+    >>> from zoneinfo import ZoneInfo
     >>> d = np.arange('2002-10-27T04:30', 4*60, 60, dtype='M8[m]')
     >>> d
     array(['2002-10-27T04:30', '2002-10-27T05:30', '2002-10-27T06:30',
@@ -1723,9 +1716,9 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
            '2002-10-27T07:30Z'], dtype='<U35')
 
     Note that we picked datetimes that cross a DST boundary. Passing in a
-    ``pytz`` timezone object will print the appropriate offset
+    ``ZoneInfo`` object will print the appropriate offset
 
-    >>> np.datetime_as_string(d, timezone=pytz.timezone('US/Eastern'))
+    >>> np.datetime_as_string(d, timezone=ZoneInfo('US/Eastern'))
     array(['2002-10-27T00:30-0400', '2002-10-27T01:30-0400',
            '2002-10-27T01:30-0500', '2002-10-27T02:30-0500'], dtype='<U39')
 

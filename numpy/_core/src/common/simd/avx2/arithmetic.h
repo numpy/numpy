@@ -215,9 +215,9 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
     // q               = (a + mulhi) >> sh
     __m256i q          = _mm256_add_epi64(a, mulhi);
     // emulate arithmetic right shift
-    const __m256i sigb = npyv_setall_s64(1LL << 63);
-            q          = _mm256_srl_epi64(_mm256_add_epi64(q, sigb), shf1);
-            q          = _mm256_sub_epi64(q, _mm256_srl_epi64(sigb, shf1));
+    const __m256i sbit = npyv_setall_s64(0x8000000000000000);
+            q          = _mm256_srl_epi64(_mm256_add_epi64(q, sbit), shf1);
+            q          = _mm256_sub_epi64(q, _mm256_srl_epi64(sbit, shf1));
     // q               = q - XSIGN(a)
     // trunc(a/d)      = (q ^ dsign) - dsign
             q          = _mm256_sub_epi64(q, asign);

@@ -3,13 +3,8 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 
 `require` fits this category despite its name not matching this pattern.
 """
-from .overrides import (
-    array_function_dispatch,
-    set_array_function_like_doc,
-    set_module,
-)
 from .multiarray import array, asanyarray
-
+from .overrides import array_function_dispatch, finalize_array_function_like, set_module
 
 __all__ = ["require"]
 
@@ -24,7 +19,7 @@ POSSIBLE_FLAGS = {
 }
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def require(a, dtype=None, requirements=None, *, like=None):
     """
@@ -75,6 +70,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(6).reshape(2,3)
     >>> x.flags
       C_CONTIGUOUS : True

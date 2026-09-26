@@ -63,6 +63,8 @@ Sums, products, differences
    sum
    nanprod
    nansum
+   cumulative_sum
+   cumulative_prod
    cumprod
    cumsum
    nancumprod
@@ -71,6 +73,7 @@ Sums, products, differences
    ediff1d
    gradient
    cross
+   trapezoid
 
 Exponents and logarithms
 ------------------------
@@ -166,7 +169,9 @@ Extrema finding
    amin
    fmin
    nanmin
-   
+
+   minmax
+
 
 Miscellaneous
 -------------
@@ -190,4 +195,3 @@ Miscellaneous
 
    interp
 
-   bitwise_count

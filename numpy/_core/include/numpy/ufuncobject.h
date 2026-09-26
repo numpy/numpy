@@ -3,6 +3,7 @@
 
 #include <numpy/npy_math.h>
 #include <numpy/npy_common.h>
+#include <numpy/utils.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,15 +66,51 @@ typedef int (PyUFunc_TypeResolutionFunc)(
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
+/*
+ * This is the signature for the functions that may be assigned to the
+ * `process_core_dims_func` field of the PyUFuncObject structure.
+ * Implementation of this function is optional.  This function is only used
+ * by generalized ufuncs (i.e. those with the field `core_enabled` set to 1).
+ * The function is called by the ufunc during the processing of the arguments
+ * of a call of the ufunc. The function can check the core dimensions of the
+ * input and output arrays and return -1 with an exception set if any
+ * requirements are not satisfied. If the caller of the ufunc didn't provide
+ * output arrays, the core dimensions associated with the output arrays (i.e.
+ * those that are not also used in input arrays) will have the value -1 in
+ * `core_dim_sizes`.  This function can replace any output core dimensions
+ * that are -1 with a value that is appropriate for the ufunc.
+ *
+ * Parameter       Description
+ * --------------- ------------------------------------------------------
+ * ufunc           The ufunc object
+ * core_dim_sizes  An array with length `ufunc->core_num_dim_ix`.
+ *                 The core dimensions of the arrays passed to the ufunc
+ *                 will have been set.  If the caller of the ufunc didn't
+ *                 provide the output array(s), the output-only core
+ *                 dimensions will have the value -1.
+ *
+ * The function must not change any element in `core_dim_sizes` that is
+ * not -1 on input. Doing so will result in incorrect output from the
+ * ufunc, and could result in a crash of the Python interpreter.
+ *
+ * The function must return 0 on success, -1 on failure (with an exception
+ * set).
+ */
+typedef int (PyUFunc_ProcessCoreDimsFunc)(
+                                struct _tagPyUFuncObject *ufunc,
+                                npy_intp *core_dim_sizes);
 
 typedef struct _tagPyUFuncObject {
+#ifndef Py_TARGET_ABI3T
         PyObject_HEAD
+#endif
         /*
          * nin: Number of inputs
          * nout: Number of outputs
          * nargs: Always nin + nout (Why is it stored?)
          */
-        int nin, nout, nargs;
+        _NPY_OPAQUE_FIRST_FIELD int nin;
+        int nout, nargs;
 
         /*
          * Identity for reduction, any of PyUFunc_One, PyUFunc_Zero
@@ -89,8 +126,8 @@ typedef struct _tagPyUFuncObject {
         /* The number of elements in 'functions' and 'data' */
         int ntypes;
 
-        /* Used to be unused field 'check_return' */
-        int reserved1;
+        /* Flags for the ufunc (e.g. UFUNC_NO_FLOATINGPOINT_ERRORS) */
+        int _ufunc_flags;
 
         /* The name of the ufunc */
         const char *name;
@@ -137,14 +174,16 @@ typedef struct _tagPyUFuncObject {
          * with the dtypes for the inputs and outputs.
          */
         PyUFunc_TypeResolutionFunc *type_resolver;
-        /* Was the legacy loop resolver */
-        void *reserved2;
+
+        /* A dictionary to monkeypatch ufuncs */
+        PyObject *dict;
+
         /*
          * This was blocked off to be the "new" inner loop selector in 1.7,
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
          */
-        #ifndef Py_LIMITED_API
+        #if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x030C0000
             vectorcallfunc vectorcall;
         #else
             void *vectorcall;
@@ -188,10 +227,17 @@ typedef struct _tagPyUFuncObject {
     #if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
         /* New private fields related to dispatching */
         void *_dispatch_cache;
-        /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
+        /* Ordered dict `tuple of DTypes -> (tuple of DTypes, ArrayMethod/Promoter)` */
         PyObject *_loops;
     #endif
-} PyUFuncObject;
+    #if NPY_FEATURE_VERSION >= NPY_2_1_API_VERSION
+        /*
+         * Optional function to process core dimensions of a gufunc.
+         */
+        PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
+    #endif
+} PyUFuncObject_fields;
+
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
@@ -205,6 +251,15 @@ typedef struct _tagPyUFuncObject {
 
 #define UFUNC_OBJ_ISOBJECT      1
 #define UFUNC_OBJ_NEEDS_API     2
+
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+/*
+ * Flag stored in PyUFuncObject._ufunc_flags to indicate that non-object loops
+ * of this ufunc never raise floating point errors.  Used to skip the
+ * expensive npy_clear_floatstatus/npy_get_floatstatus calls.
+ */
+#define UFUNC_NO_FLOATINGPOINT_ERRORS  0x1
+#endif  /* NPY_INTERNAL_BUILD */
 
 
 #if NPY_ALLOW_THREADS
@@ -275,8 +330,7 @@ typedef struct _loop1d_info {
 
 #define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
 
-/*
- * THESE MACROS ARE DEPRECATED.
+/* THESE MACROS ARE DEPRECATED.
  * Use npy_set_floatstatus_* in the npymath library.
  */
 #define UFUNC_FPE_DIVIDEBYZERO  NPY_FPE_DIVIDEBYZERO
@@ -284,10 +338,7 @@ typedef struct _loop1d_info {
 #define UFUNC_FPE_UNDERFLOW     NPY_FPE_UNDERFLOW
 #define UFUNC_FPE_INVALID       NPY_FPE_INVALID
 
-#define generate_divbyzero_error() npy_set_floatstatus_divbyzero()
-#define generate_overflow_error() npy_set_floatstatus_overflow()
-
-  /* Make sure it gets defined if it isn't already */
+/* Make sure it gets defined if it isn't already */
 #ifndef UFUNC_NOFPE
 /* Clear the floating point exception default of Borland C++ */
 #if defined(__BORLANDC__)
@@ -297,7 +348,18 @@ typedef struct _loop1d_info {
 #endif
 #endif
 
+#ifndef Py_TARGET_ABI3T
+typedef struct _tagPyUFuncObject PyUFuncObject;
+#else
+typedef struct tagPyUFuncObject PyUFuncObject;
+#endif
+
 #include "__ufunc_api.h"
+
+#ifndef Py_TARGET_ABI3T
+#undef _PyUFuncObject_GET_ITEM_DATA
+#define _PyUFuncObject_GET_ITEM_DATA(ufunc) ((PyUFuncObject_fields *)(ufunc))
+#endif
 
 #ifdef __cplusplus
 }

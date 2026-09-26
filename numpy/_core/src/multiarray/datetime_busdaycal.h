@@ -6,7 +6,7 @@
  * duplicates or NaTs, and not include any days already excluded
  * by the associated weekmask.
  *
- * The data is manually managed with PyArray_malloc/PyArray_free.
+ * The data is manually managed with PyMem_RawMalloc/PyMem_RawFree.
  */
 typedef struct {
     npy_datetime *begin, *end;
@@ -26,7 +26,8 @@ typedef struct {
     npy_bool weekmask[7];
 } NpyBusDayCalendar;
 
-extern NPY_NO_EXPORT PyTypeObject NpyBusDayCalendar_Type;
+NPY_NO_EXPORT int
+init_busdaycalendar_type(PyObject *module);
 
 
 /*

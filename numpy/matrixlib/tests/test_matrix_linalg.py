@@ -1,12 +1,26 @@
 """ Test functions for linalg module using the matrix class."""
+import pytest
+
 import numpy as np
-
 from numpy.linalg.tests.test_linalg import (
-    LinalgCase, apply_tag, TestQR as _TestQR, LinalgTestCase,
-    _TestNorm2D, _TestNormDoubleBase, _TestNormSingleBase, _TestNormInt64Base,
-    SolveCases, InvCases, EigvalsCases, EigCases, SVDCases, CondCases,
-    PinvCases, DetCases, LstsqCases)
-
+    CondCases,
+    DetCases,
+    EigCases,
+    EigvalsCases,
+    InvCases,
+    LinalgCase,
+    LinalgTestCase,
+    LstsqCases,
+    PinvCases,
+    SolveCases,
+    SVDCases,
+    TestQR as _TestQR,
+    _TestNorm2D,
+    _TestNormDoubleBase,
+    _TestNormInt64Base,
+    _TestNormSingleBase,
+    apply_tag,
+)
 
 CASES = []
 
@@ -69,6 +83,9 @@ class TestDetMatrix(DetCases, MatrixTestCase):
     pass
 
 
+@pytest.mark.thread_unsafe(
+    reason="residuals not calculated properly for square tests (gh-29851)"
+)
 class TestLstsqMatrix(LstsqCases, MatrixTestCase):
     pass
 

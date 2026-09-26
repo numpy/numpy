@@ -31,5 +31,5 @@ cdef class SeedSequence():
                      np.ndarray[np.npy_uint32, ndim=1] entropy_array)
     cdef get_assembled_entropy(self)
 
-cdef class SeedlessSequence():
+cdef class SeedlessSeedSequence:
     pass

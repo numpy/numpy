@@ -6,8 +6,6 @@
 Datetimes and timedeltas
 ************************
 
-.. versionadded:: 1.7.0
-
 Starting in NumPy 1.7, there are core array data types which natively
 support datetime functionality. The data type is called :class:`datetime64`,
 so named because :class:`~datetime.datetime` is already taken by the Python standard library.
@@ -55,11 +53,22 @@ months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
 some additional SI-prefix seconds-based units. The `datetime64` data type
 also accepts the string "NAT", in any combination of lowercase/uppercase
-letters, for a "Not A Time" value.
+letters, for a "Not A Time" value. The string "now" is also supported and
+returns the current UTC time. By default, it uses second ('s') precision, but
+you can specify a different unit (e.g., 'M', 'D', 'h') to truncate the result
+to that precision. Units finer than seconds (such as 'ms' or 'ns') are
+supported but will show fractional parts as zeros, effectively truncating to
+whole seconds. The string "today" is also supported and returns the current UTC
+date with day precision. It also supports the same precision specifiers
+as ``now``.
 
 .. admonition:: Example
 
+  .. try_examples::
+
     A simple ISO date:
+
+    >>> import numpy as np
 
     >>> np.datetime64('2005-02-25')
     np.datetime64('2005-02-25')
@@ -86,19 +95,45 @@ letters, for a "Not A Time" value.
 
     NAT (not a time):
 
-    >>> np.datetime64('nat')
-    np.datetime64('NaT')
+    >>> np.datetime64('nat', 'D')
+    np.datetime64('NaT', 'D')
+
+    The current time (UTC, default second precision):
+
+    >>> np.datetime64('now')
+    np.datetime64('2025-08-05T02:22:14')  # result will depend on the current time
+
+    >>> np.datetime64('now', 'D')
+    np.datetime64('2025-08-05')
+    
+    >>> np.datetime64('now', 'ms')
+    np.datetime64('2025-08-05T02:22:14.000')
+
+    The current date:
+
+    >>> np.datetime64('today')
+    np.datetime64('2025-08-05')  # result will depend on the current date
 
 When creating an array of datetimes from a string, it is still possible
 to automatically select the unit from the inputs, by using the
 datetime type with generic units.
 
+.. deprecated:: 2.5
+  The generic units of `timedelta64` were deprecated in NumPy 2.5 and
+  will raise an error in the future. With this change,
+  ``NaT`` in `datetime64` is now required to have an explicit time unit.
+
+
 .. admonition:: Example
 
-    >>> np.array(['2007-07-13', '2006-01-13', '2010-08-13'], dtype='datetime64')
+  .. try_examples::
+
+    >>> import numpy as np
+
+    >>> np.array(['2007-07-13', '2006-01-13', '2010-08-13'], dtype=np.datetime64)
     array(['2007-07-13', '2006-01-13', '2010-08-13'], dtype='datetime64[D]')
 
-    >>> np.array(['2001-01-01T12:00', '2002-02-03T13:56:03.172'], dtype='datetime64')
+    >>> np.array(['2001-01-01T12:00', '2002-02-03T13:56:03.172'], dtype=np.datetime64)
     array(['2001-01-01T12:00:00.000', '2002-02-03T13:56:03.172'],
           dtype='datetime64[ms]')
 
@@ -106,6 +141,10 @@ An array of datetimes can be constructed from integers representing
 POSIX timestamps with the given unit.
 
 .. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
 
     >>> np.array([0, 1577836800], dtype='datetime64[s]')
     array(['1970-01-01T00:00:00', '2020-01-01T00:00:00'],
@@ -120,7 +159,11 @@ example :func:`arange` can be used to generate ranges of dates.
 
 .. admonition:: Example
 
+  .. try_examples::
+
     All the dates for one month:
+
+    >>> import numpy as np
 
     >>> np.arange('2005-02', '2005-03', dtype='datetime64[D]')
     array(['2005-02-01', '2005-02-02', '2005-02-03', '2005-02-04',
@@ -139,6 +182,10 @@ months to a smaller unit like days is considered a 'safe' cast
 because the moment of time is still being represented exactly.
 
 .. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
 
     >>> np.datetime64('2005') == np.datetime64('2005-01-01')
     True
@@ -167,19 +214,27 @@ data type also accepts the string "NAT" in place of the number for a "Not A Time
 
 .. admonition:: Example
 
+  .. try_examples::
+
+    >>> import numpy as np
+
     >>> np.timedelta64(1, 'D')
     np.timedelta64(1,'D')
 
     >>> np.timedelta64(4, 'h')
     np.timedelta64(4,'h')
 
-    >>> np.timedelta64('nAt')
-    np.timedelta64('NaT')
+    >>> np.timedelta64('nAt', 'D')
+    np.timedelta64('NaT', 'D')
 
 Datetimes and Timedeltas work together to provide ways for
 simple datetime calculations.
 
 .. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
 
     >>> np.datetime64('2009-01-01') - np.datetime64('2008-01-01')
     np.timedelta64(366,'D')
@@ -196,19 +251,27 @@ simple datetime calculations.
     >>> np.timedelta64(1,'W') % np.timedelta64(10,'D')
     np.timedelta64(7,'D')
 
-    >>> np.datetime64('nat') - np.datetime64('2009-01-01')
+    >>> np.datetime64('nat', 'D') - np.datetime64('2009-01-01')
     np.timedelta64('NaT','D')
 
-    >>> np.datetime64('2009-01-01') + np.timedelta64('nat')
-    np.datetime64('NaT')
+    >>> np.datetime64('2009-01-01') + np.timedelta64('nat', 'D')
+    np.datetime64('NaT', 'D')
 
 There are two Timedelta units ('Y', years and 'M', months) which are treated
 specially, because how much time they represent changes depending
 on when they are used. While a timedelta day unit is equivalent to
-24 hours, there is no way to convert a month unit into days, because
-different months have different numbers of days.
+24 hours, month and year units cannot be converted directly into days
+without using 'unsafe' casting.
+
+The `numpy.ndarray.astype` method can be used for unsafe
+conversion of months/years to days. The conversion follows
+calculating the averaged values from the 400 year leap-year cycle.
 
 .. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
 
     >>> a = np.timedelta64(1, 'Y')
 
@@ -220,12 +283,16 @@ different months have different numbers of days.
       File "<stdin>", line 1, in <module>
     TypeError: Cannot cast NumPy timedelta64 scalar from metadata [Y] to [D] according to the rule 'same_kind'
 
+
 Datetime units
 ==============
 
 The Datetime and Timedelta data types support a large number of time
 units, as well as generic units which can be coerced into any of the
 other units based on input data.
+The generic units are deprecated since NumPy 2.5
+and will raise an error in the future. Migration guidance is provided
+in the `migration guide for deprecation of generic units`_ section below.
 
 Datetimes are always stored with
 an epoch of 1970-01-01T00:00. This means the supported dates are
@@ -268,6 +335,74 @@ us / μs    microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
    as      attosecond       +/- 9.2 seconds         [  1969 AD,   1970 AD]
 ======== ================ ======================= ==========================
 
+
+Converting datetime and timedelta to Python Object
+==================================================
+
+NumPy follows a strict protocol when converting `datetime64` and/or `timedelta64` to Python Objects (e.g., ``tuple``, ``list``, `datetime.datetime`). 
+
+The protocol is described in the following table:
+
+================================ ================================= ==================================
+         Input Type                         for `datetime64`               for `timedelta64`
+================================ ================================= ==================================
+          ``NaT``                             ``None``                           ``None``
+        ns/ps/fs/as                           ``int``                            ``int``
+        μs/ms/s/m/h                      `datetime.datetime`               `datetime.timedelta`
+      D/W (Linear units)                   `datetime.date`                 `datetime.timedelta` 
+    Y/M (Non-linear units)                 `datetime.date`                       ``int``
+        Generic units                      `datetime.date`                       ``int``
+================================ ================================= ==================================
+
+
+.. deprecated:: 2.5
+  The generic units of `timedelta64` are deprecated in NumPy 2.5 and
+  will raise an error in the future.
+
+
+.. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
+
+    >>> type(np.datetime64('NaT', 'D').item())
+    <class 'NoneType'>
+
+    >>> type(np.timedelta64('NaT', 'D').item())
+    <class 'NoneType'>
+
+    >>> type(np.timedelta64(123, 'ns').item())
+    <class 'int'>
+
+    >>> type(np.datetime64('2025-01-01T12:00:00.123456').item())
+    <class 'datetime.datetime'>
+
+    >>> type(np.timedelta64(10, 'D').item())
+    <class 'datetime.timedelta'>
+
+
+In the case where conversion of `datetime64` and/or `timedelta64` is done
+against Python types like ``int``, ``float``, and ``str`` the corresponding return types
+will be ``np.str_``, ``np.int64`` and ``np.float64``.
+
+
+.. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
+    
+    >>> type(np.timedelta64(1, 'D').astype(int))
+    <class 'numpy.int64'>
+
+    >>> type(np.datetime64('2025-01-01T12:00:00.123456').astype(float))
+    <class 'numpy.float64'>
+
+    >>> type(np.timedelta64(123, 'ns').astype(str))
+    <class 'numpy.str_'>
+
+
 Business day functionality
 ==========================
 
@@ -288,6 +423,10 @@ specified in business days to datetimes with a unit of 'D' (day).
 
 .. admonition:: Example
 
+  .. try_examples::
+
+    >>> import numpy as np
+
     >>> np.busday_offset('2011-06-23', 1)
     np.datetime64('2011-06-24')
 
@@ -301,6 +440,10 @@ default rule is 'raise', which simply raises an exception.
 The rules most typically used are 'forward' and 'backward'.
 
 .. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
 
     >>> np.busday_offset('2011-06-25', 2)
     Traceback (most recent call last):
@@ -324,7 +467,11 @@ is necessary to get a desired answer.
 
 .. admonition:: Example
 
+  .. try_examples::
+
     The first business day on or after a date:
+
+    >>> import numpy as np
 
     >>> np.busday_offset('2011-03-20', 0, roll='forward')
     np.datetime64('2011-03-21')
@@ -345,6 +492,10 @@ weekmask.
 
 .. admonition:: Example
 
+  .. try_examples::
+
+    >>> import numpy as np
+
     >>> np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
     np.datetime64('2012-05-13')
 
@@ -358,6 +509,10 @@ np.is_busday():
 To test a `datetime64` value to see if it is a valid day, use :func:`is_busday`.
 
 .. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
 
     >>> np.is_busday(np.datetime64('2011-07-15'))  # a Friday
     True
@@ -376,6 +531,10 @@ dates, use :func:`busday_count`:
 
 .. admonition:: Example
 
+  .. try_examples::
+
+    >>> import numpy as np
+
     >>> np.busday_count(np.datetime64('2011-07-11'), np.datetime64('2011-07-18'))
     5
     >>> np.busday_count(np.datetime64('2011-07-18'), np.datetime64('2011-07-11'))
@@ -385,6 +544,10 @@ If you have an array of datetime64 day values, and you want a count of
 how many of them are valid dates, you can do this:
 
 .. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
 
     >>> a = np.arange(np.datetime64('2011-07-11'), np.datetime64('2011-07-18'))
     >>> np.count_nonzero(np.is_busday(a))
@@ -433,6 +596,10 @@ given below.
     23:59:60.450 UTC" is a valid timestamp which is not parseable by
     `datetime64`:
 
+    .. try_examples::
+
+      >>> import numpy as np
+
       >>> np.datetime64("2016-12-31 23:59:60.450")
       Traceback (most recent call last):
         File "<stdin>", line 1, in <module>
@@ -446,14 +613,18 @@ given below.
     Compute the number of SI seconds between "2021-01-01 12:56:23.423 UTC" and
     "2001-01-01 00:00:00.000 UTC":
 
+    .. try_examples::
+
+      >>> import numpy as np
+
       >>> (
       ...   np.datetime64("2021-01-01 12:56:23.423")
       ...   - np.datetime64("2001-01-01")
       ... ) / np.timedelta64(1, "s")
       631198583.423
 
-    however correct answer is `631198588.423` SI seconds because there were 5
-    leap seconds between 2001 and 2021.
+      However, the correct answer is `631198588.423` SI seconds, because there were
+      5 leap seconds between 2001 and 2021.
 
 - Timedelta64 computations for dates in the past do not return SI seconds, as
   one would expect.
@@ -464,16 +635,76 @@ given below.
      where UT is `universal time
      <https://en.wikipedia.org/wiki/Universal_Time>`_:
 
+    .. try_examples::
+
+      >>> import numpy as np
+
       >>> a = np.datetime64("0000-01-01", "us")
       >>> b = np.datetime64("1600-01-01", "us")
       >>> b - a
       numpy.timedelta64(50491123200000000,'us')
 
-     The computed results, `50491123200` seconds, is obtained as the elapsed
-     number of days (`584388`) times `86400` seconds; this is the number of
-     seconds of a clock in sync with earth rotation. The exact value in SI
-     seconds can only be estimated, e.g using data published in `Measurement of
-     the Earth's rotation: 720 BC to AD 2015, 2016, Royal Society's Proceedings
-     A 472, by Stephenson et.al. <https://doi.org/10.1098/rspa.2016.0404>`_. A
-     sensible estimate is `50491112870 ± 90` seconds, with a difference of 10330
-     seconds.
+      The computed results, `50491123200` seconds, are obtained as the elapsed
+      number of days (`584388`) times `86400` seconds; this is the number of
+      seconds of a clock in sync with the Earth's rotation. The exact value in SI
+      seconds can only be estimated, e.g., using data published in `Measurement of
+      the Earth's rotation: 720 BC to AD 2015, 2016, Royal Society's Proceedings
+      A 472, by Stephenson et.al. <https://doi.org/10.1098/rspa.2016.0404>`_. A
+      sensible estimate is `50491112870 ± 90` seconds, with a difference of 10330
+      seconds.
+
+
+.. _migration_guide_generic_units:
+
+Migration guide for deprecation of generic units
+================================================
+
+The generic units of `timedelta64` are deprecated since NumPy 2.5 
+and will raise an error in the future.
+This section provides guidance on how to update code
+that uses generic units of `timedelta64` and `datetime64` to avoid future errors.
+
+The straight forward way is to replace the generic unit with a specific time unit
+such as 'D' (day), 'h' (hour), 'm' (minute), 's' (second), etc.
+The choice of the specific time unit will depend on the context of your code and
+the level of precision you require.
+
+
+.. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
+
+    >>> # Old code using generic units of timedelta64
+    >>> np.timedelta64(5, "s") + 1
+    DeprecationWarning: The 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. This includes implicit conversion of bare integers (e.g. `+ 1`).Please use a specific unit instead.
+
+    >>> # Updated code using a specific time unit
+    >>> np.timedelta64(5, "s") + np.timedelta64(1, "s")
+    np.timedelta64(6,'s')
+
+
+    When comparing `timedelta64` objects, make sure to use the same specific time unit for both operands even if they are representing ``0``.
+
+    >>> np.timedelta64(0, "s") == 0
+    DeprecationWarning: The 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. This includes implicit conversion of bare integers (e.g. `== 0`).Please use a specific unit instead.
+    np.True_
+
+    >>> np.timedelta64(0, "s") == np.timedelta64(0, "s")
+    np.True_
+
+    When using ``numpy.testing.assert_allclose`` to compare `timedelta64` objects, ensure to set a specific time unit to ``atol`` parameter as well.
+
+    >>> arr = np.ones(5, dtype='m8[s]')
+    >>> np.testing.assert_allclose(arr, np.timedelta64(1, "s"), atol=np.timedelta64(0, "s"))
+
+    Previously, `datetime64` allowed `NaT` without specifying a time unit. 
+    With the deprecation of generic units, `NaT` is now required to have an explicit time unit
+    for consistency with other datetime and timedelta operations.
+
+    >>> np.datetime64("NAT")
+    DeprecationWarning: The 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. This includes implicit conversion of bare integers (e.g. `+ 1`).Please use a specific unit instead.
+
+    >>> np.datetime64("NAT", "D")
+    np.datetime64('NaT', 'D')

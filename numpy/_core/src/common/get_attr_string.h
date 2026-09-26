@@ -2,7 +2,8 @@
 #define NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_
 
 #include <Python.h>
-#include "ufunc_object.h"
+#include "npy_pycompat.h"
+
 
 static inline npy_bool
 _is_basic_python_type(PyTypeObject *tp)
@@ -44,24 +45,21 @@ _is_basic_python_type(PyTypeObject *tp)
  * Assumes that the special method is a numpy-specific one, so does not look
  * at builtin types. It does check base ndarray and numpy scalar types.
  *
- * In future, could be made more like _Py_LookupSpecial
+ * It may make sense to just replace this with `PyObject_GetOptionalAttr`.
  */
-static inline PyObject *
-PyArray_LookupSpecial(PyObject *obj, PyObject *name_unicode)
+static inline int
+PyArray_LookupSpecial(
+        PyObject *obj, PyObject *name_unicode, PyObject **res)
 {
     PyTypeObject *tp = Py_TYPE(obj);
 
     /* We do not need to check for special attributes on trivial types */
     if (_is_basic_python_type(tp)) {
-        return NULL;
-    }
-    PyObject *res = PyObject_GetAttr((PyObject *)tp, name_unicode);
-
-    if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
-        PyErr_Clear();
+        *res = NULL;
+        return 0;
     }
 
-    return res;
+    return PyObject_GetOptionalAttr((PyObject *)tp, name_unicode, res);
 }
 
 
@@ -73,23 +71,20 @@ PyArray_LookupSpecial(PyObject *obj, PyObject *name_unicode)
  *
  * Kept for backwards compatibility. In future, we should deprecate this.
  */
-static inline PyObject *
-PyArray_LookupSpecial_OnInstance(PyObject *obj, PyObject *name_unicode)
+static inline int
+PyArray_LookupSpecial_OnInstance(
+        PyObject *obj, PyObject *name_unicode, PyObject **res)
 {
     PyTypeObject *tp = Py_TYPE(obj);
 
     /* We do not need to check for special attributes on trivial types */
+    /* Note: This check should likely be reduced on Python 3.13+ */
     if (_is_basic_python_type(tp)) {
-        return NULL;
+        *res = NULL;
+        return 0;
     }
 
-    PyObject *res = PyObject_GetAttr(obj, name_unicode);
-
-    if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
-        PyErr_Clear();
-    }
-
-    return res;
+    return PyObject_GetOptionalAttr(obj, name_unicode, res);
 }
 
 #endif  /* NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_ */

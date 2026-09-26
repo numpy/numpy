@@ -3,18 +3,13 @@ Utilities that manipulate strides to achieve desirable effects.
 
 An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
-Functions
----------
-
-.. autosummary::
-   :toctree: generated/
-
 """
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._core.overrides import array_function_dispatch, set_module
+from numpy.lib._array_utils_impl import byte_bounds
 
-__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes']
+__all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes"]
 
 
 class DummyArray:
@@ -41,7 +36,9 @@ def _maybe_view_as_subclass(original_array, new_array):
 
 
 @set_module("numpy.lib.stride_tricks")
-def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
+def as_strided(
+    x, shape=None, strides=None, subok=False, writeable=True, *, check_bounds=None
+):
     """
     Create a view into the array with the given shape and strides.
 
@@ -56,19 +53,24 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     strides : sequence of int, optional
         The strides of the new array. Defaults to ``x.strides``.
     subok : bool, optional
-        .. versionadded:: 1.10
-
         If True, subclasses are preserved.
     writeable : bool, optional
-        .. versionadded:: 1.12
-
         If set to False, the returned array will always be readonly.
         Otherwise it will be writable if the original array was. It
         is advisable to set this to False if possible (see Notes).
+    check_bounds : bool or None
+        Check new stride and shape for potential out of bound memory
+        access.
 
     Returns
     -------
     view : ndarray
+
+    Raises
+    ------
+    ValueError
+        If `check_bounds` is True the given shape and strides could result in
+        out-of-bounds memory access.
 
     See also
     --------
@@ -79,7 +81,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     Notes
     -----
-    ``as_strided`` creates a view into the array given the exact strides
+    `as_strided` creates a view into the array given the exact strides
     and shape. This means it manipulates the internal data structure of
     ndarray and, if done incorrectly, the array elements can point to
     invalid memory and can corrupt results or crash your program.
@@ -97,26 +99,72 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     care, you may want to use ``writeable=False`` to avoid accidental write
     operations.
 
-    For these reasons it is advisable to avoid ``as_strided`` when
+    For these reasons it is advisable to avoid `as_strided` when
     possible.
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    ... from numpy.lib.stride_tricks import as_strided
+    ... x = np.arange(10)
+    ... y = as_strided(x, shape=(5,), strides=(8,), check_bounds=True)
+    ... y
+    array([0, 1, 2, 3, 4])
+
+    Attempting to create an out-of-bounds view and use ``check_bounds=True``
+    as_strided will raises an error:
+
+    >>> as_strided(x, shape=(20,), strides=(8,), check_bounds=True)
+    Traceback (most recent call last):
+    ...
+    ValueError: Given shape and strides would access memory out of bounds...
+
+    When working with views, bounds are checked against the base array:
+
+    >>> a = np.arange(1000)
+    ... b = a[:2]
+    ... c = as_strided(b, shape=(2,), strides=(400,), check_bounds=True)
+    ... c[0], c[1]
+    (0, 50)
     """
+
     # first convert input to array, possibly keeping subclass
-    x = np.array(x, copy=None, subok=subok)
-    interface = dict(x.__array_interface__)
+    base = np.array(x, copy=None, subok=subok)
+    interface = dict(base.__array_interface__)
     if shape is not None:
         interface['shape'] = tuple(shape)
     if strides is not None:
         interface['strides'] = tuple(strides)
 
-    array = np.asarray(DummyArray(interface, base=x))
+    array = np.asarray(DummyArray(interface, base=base))
     # The route via `__interface__` does not preserve structured
     # dtypes. Since dtype should remain unchanged, we set it explicitly.
-    array.dtype = x.dtype
+    array._set_dtype(base.dtype)
 
-    view = _maybe_view_as_subclass(x, array)
+    view = _maybe_view_as_subclass(base, array)
 
     if view.flags.writeable and not writeable:
         view.flags.writeable = False
+
+    if check_bounds:
+        while isinstance(base.base, np.ndarray):
+            base = base.base
+
+        base_low, base_high = byte_bounds(base)
+        view_low, view_high = byte_bounds(view)
+
+        if view_low < base_low:
+            raise ValueError(
+                f"Given shape and strides would access memory out of bounds. "
+                f"View starts {base_low - view_low} bytes before lowest address"
+            )
+
+        if view_high > base_high:
+            raise ValueError(
+                f"Given shape and strides would access memory out of bounds. "
+                f"View ends {view_high - base_high} bytes after highest address"
+            )
 
     return view
 
@@ -137,7 +185,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
     Also known as rolling or moving window, the window slides across all
     dimensions of the array and extracts subsets of the array at all window
     positions.
-    
+
     .. versionadded:: 1.20.0
 
     Parameters
@@ -178,11 +226,20 @@ def sliding_window_view(x, window_shape, axis=None, *,
     See Also
     --------
     lib.stride_tricks.as_strided: A lower-level and less safe routine for
-        creating arbitrary views from custom shape and strides.
+        creating arbitrary views from custom shape and strides. Use the
+        ``check_bounds`` parameter for bounds validation.
     broadcast_to: broadcast an array to a given shape.
 
     Notes
     -----
+    .. warning::
+
+       This function creates views with overlapping memory. When
+       ``writeable=True``, writing to the view will modify the original array
+       and may affect multiple view positions. See the examples below and
+       :doc:`this guide </user/basics.copies>`
+       about the difference between copies and views.
+
     For many applications using a sliding window view can be convenient, but
     potentially very slow. Often specialized solutions exist, for example:
 
@@ -204,6 +261,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib.stride_tricks import sliding_window_view
     >>> x = np.arange(6)
     >>> x.shape
@@ -306,6 +364,46 @@ def sliding_window_view(x, window_shape, axis=None, *,
     >>> moving_average
     array([1., 2., 3., 4.])
 
+    To adjust the step size of the sliding window, index the output view along
+    the desired dimension(s). Using the array shown above:
+
+    >>> v[::2]
+    array([[0, 1, 2],
+           [2, 3, 4]])
+
+    You can slide in the reverse direction using the same technique:
+
+    >>> v[::-1]
+    array([[3, 4, 5],
+           [2, 3, 4],
+           [1, 2, 3],
+           [0, 1, 2]])
+
+    The two examples below demonstrate the effect of ``writeable=True``.
+
+    Creating a view with the default ``writeable=False`` and then writing to
+    it raises an error.
+
+    >>> v = sliding_window_view(x, 3)
+    >>> v[0,1] = 10
+    Traceback (most recent call last):
+    ...
+    ValueError: assignment destination is read-only
+
+    Creating a view with ``writeable=True`` and then writing to it changes
+    the original array and multiple view positions.
+
+    >>> x = np.arange(6)  # reset x for the second example
+    >>> v = sliding_window_view(x, 3, writeable=True)
+    >>> v[0,1] = 10
+    >>> x
+    array([ 0, 10,  2,  3,  4,  5])
+    >>> v
+    array([[ 0, 10,  2],
+           [10,  2,  3],
+           [ 2,  3,  4],
+           [ 3,  4,  5]])
+
     Note that a sliding window approach is often **not** optimal (see Notes).
     """
     window_shape = (tuple(window_shape)
@@ -403,12 +501,9 @@ def broadcast_to(array, shape, subok=False):
     broadcast_arrays
     broadcast_shapes
 
-    Notes
-    -----
-    .. versionadded:: 1.10.0
-
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> np.broadcast_to(x, (3, 3))
     array([[1, 2, 3],
@@ -424,15 +519,18 @@ def _broadcast_shape(*args):
     """
     # use the old-iterator because np.nditer does not handle size 0 arrays
     # consistently
-    b = np.broadcast(*args[:32])
-    # unfortunately, it cannot handle 32 or more arguments directly
-    for pos in range(32, len(args), 31):
+    b = np.broadcast(*args[:64])
+    # unfortunately, it cannot handle 64 or more arguments directly
+    for pos in range(64, len(args), 63):
         # ironically, np.broadcast does not properly handle np.broadcast
         # objects (it treats them as scalars)
         # use broadcasting to avoid allocating the full array
         b = broadcast_to(0, b.shape)
-        b = np.broadcast(b, *args[pos:(pos + 31)])
+        b = np.broadcast(b, *args[pos:(pos + 63)])
     return b.shape
+
+
+_size0_dtype = np.dtype([])
 
 
 @set_module('numpy')
@@ -468,13 +566,14 @@ def broadcast_shapes(*args):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.broadcast_shapes((1, 2), (3, 1), (3, 2))
     (3, 2)
 
     >>> np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
     (5, 6, 7)
     """
-    arrays = [np.empty(x, dtype=[]) for x in args]
+    arrays = [np.empty(x, dtype=_size0_dtype) for x in args]
     return _broadcast_shape(*arrays)
 
 
@@ -513,6 +612,7 @@ def broadcast_arrays(*args, subok=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[1,2,3]])
     >>> y = np.array([[4],[5]])
     >>> np.broadcast_arrays(x, y)

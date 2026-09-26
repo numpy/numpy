@@ -1,48 +1,45 @@
+# pyright: reportIncompatibleMethodOverride=false
+
 from collections.abc import Generator
-from typing import (
-    Any,
-    TypeVar,
-    overload,
-)
+from types import EllipsisType
+from typing import Any, Final, overload
+from typing_extensions import TypeVar
 
-from numpy import ndarray, dtype, generic
-from numpy._typing import DTypeLike, NDArray
+import numpy as np
+from numpy._typing import _AnyShape, _Shape
 
-# TODO: Set a shape bound once we've got proper shape support
-_Shape = TypeVar("_Shape", bound=Any)
-_DType = TypeVar("_DType", bound=dtype[Any])
-_ScalarType = TypeVar("_ScalarType", bound=generic)
+__all__ = ["Arrayterator"]
 
-_Index = (
-    ellipsis
-    | int
-    | slice
-    | tuple[ellipsis | int | slice, ...]
-)
+# Type parameter default syntax (PEP 696) requires Python 3.13+
+_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
 
-__all__: list[str]
+type _AnyIndex = EllipsisType | int | slice | tuple[EllipsisType | int | slice, ...]
 
 # NOTE: In reality `Arrayterator` does not actually inherit from `ndarray`,
 # but its ``__getattr__` method does wrap around the former and thus has
 # access to all its methods
 
-class Arrayterator(ndarray[_Shape, _DType]):
-    var: ndarray[_Shape, _DType]  # type: ignore[assignment]
-    buf_size: None | int
-    start: list[int]
-    stop: list[int]
-    step: list[int]
+class Arrayterator(np.ndarray[_ShapeT_co, _DTypeT_co]):
+    var: np.ndarray[_ShapeT_co, _DTypeT_co]  # type: ignore[assignment]
+    buf_size: Final[int | None]
+    start: Final[list[int]]
+    stop: Final[list[int]]
+    step: Final[list[int]]
 
     @property  # type: ignore[misc]
-    def shape(self) -> tuple[int, ...]: ...
+    def shape(self) -> _ShapeT_co: ...  # pyrefly: ignore[bad-override]
     @property
-    def flat(self: NDArray[_ScalarType]) -> Generator[_ScalarType, None, None]: ...
-    def __init__(
-        self, var: ndarray[_Shape, _DType], buf_size: None | int = ...
-    ) -> None: ...
+    def flat[ScalarT: np.generic](self: Arrayterator[Any, np.dtype[ScalarT]]) -> Generator[ScalarT]: ...  # type: ignore[override]
+
+    #
+    def __init__(self, /, var: np.ndarray[_ShapeT_co, _DTypeT_co], buf_size: int | None = None) -> None: ...
+    def __getattr__(self, attr: str, /) -> Any: ...
+    def __getitem__(self, index: _AnyIndex, /) -> Arrayterator[_AnyShape, _DTypeT_co]: ...  # type: ignore[override]
+    def __iter__(self) -> Generator[np.ndarray[_AnyShape, _DTypeT_co]]: ...
+
+    #
     @overload
-    def __array__(self, dtype: None = ..., copy: None | bool = ...) -> ndarray[Any, _DType]: ...
+    def __array__(self, /, dtype: None = None, copy: bool | None = None) -> np.ndarray[_ShapeT_co, _DTypeT_co]: ...
     @overload
-    def __array__(self, dtype: DTypeLike, copy: None | bool = ...) -> NDArray[Any]: ...
-    def __getitem__(self, index: _Index) -> Arrayterator[Any, _DType]: ...
-    def __iter__(self) -> Generator[ndarray[Any, _DType], None, None]: ...
+    def __array__[DTypeT: np.dtype](self, /, dtype: DTypeT, copy: bool | None = None) -> np.ndarray[_ShapeT_co, DTypeT]: ...

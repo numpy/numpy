@@ -163,7 +163,7 @@ The type of the array can also be explicitly specified at creation time:
 
 ::
 
-    >>> c = np.array([[1, 2], [3, 4]], dtype=complex)
+    >>> c = np.array([[1, 2], [3, 4]], dtype=np.complex128)
     >>> c
     array([[1.+0.j, 2.+0.j],
            [3.+0.j, 4.+0.j]])
@@ -346,7 +346,7 @@ existing array rather than create a new one.
 ::
 
     >>> rg = np.random.default_rng(1)  # create instance of default random number generator
-    >>> a = np.ones((2, 3), dtype=int)
+    >>> a = np.ones((2, 3), dtype=np.int_)
     >>> b = rg.random((2, 3))
     >>> a *= 3
     >>> a
@@ -535,7 +535,7 @@ are given in a tuple separated by commas::
     >>> def f(x, y):
     ...     return 10 * x + y
     ...
-    >>> b = np.fromfunction(f, (5, 4), dtype=int)
+    >>> b = np.fromfunction(f, (5, 4), dtype=np.int_)
     >>> b
     array([[ 0,  1,  2,  3],
            [10, 11, 12, 13],
@@ -881,7 +881,7 @@ creates a new array object that looks at the same data.
     >>> c.flags.owndata
     False
     >>>
-    >>> c = c.reshape((2, 6))  # a's shape doesn't change
+    >>> c = c.reshape((2, 6))  # a's shape doesn't change, reassigned c is still a view of a
     >>> a.shape
     (3, 4)
     >>> c[0, 4] = 1234         # a's data changes
@@ -928,6 +928,8 @@ a small fraction of ``a``, a deep copy should be made when constructing ``b`` wi
 
 If ``b = a[:100]`` is used instead, ``a`` is referenced by ``b`` and will persist in memory
 even if ``del a`` is executed.
+
+See also :ref:`basics.copies-and-views`.
 
 Functions and methods overview
 ------------------------------
@@ -1254,7 +1256,7 @@ set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
     ...     A, B = np.meshgrid(x, y)
     ...     C = A + B*1j
     ...     z = np.zeros_like(C)
-    ...     divtime = maxit + np.zeros(z.shape, dtype=int)
+    ...     divtime = maxit + np.zeros(z.shape, dtype=np.int_)
     ...
     ...     for i in range(maxit):
     ...         z = z**2 + C
@@ -1378,8 +1380,8 @@ and then use it as::
 The advantage of this version of reduce compared to the normal
 ufunc.reduce is that it makes use of the
 :ref:`broadcasting rules <broadcasting-rules>`
-in order to avoid creating an argument array the size of the output
-times the number of vectors.
+in order to avoid creating a temporary array that needs as much memory
+as the output array multiplied by the number of vectors.
 
 Indexing with strings
 ---------------------
@@ -1477,4 +1479,4 @@ Further reading
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/tutorial/index.html>`__
 -  `SciPy Lecture Notes <https://scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <https://mathesaurus.sourceforge.net/>`__
--  :doc:`tutorial-svd <numpy-tutorials:content/tutorial-svd>`
+-  :doc:`tutorial-svd <numpy-tutorials:tutorial-svd>`

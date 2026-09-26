@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
-import sys
-import os
 import argparse
+import importlib.util
+import os
+import sys
 
-from Cython import Tempita as tempita
 
-# XXX: If this import ever fails (does it really?), vendor cython.tempita
+def import_tempita():
+    init_py = os.path.join(os.path.dirname(__file__), 'tempita/__init__.py')
+    spec = importlib.util.spec_from_file_location('tempita', init_py)
+    tempita = importlib.util.module_from_spec(spec)
+    sys.modules['tempita'] = tempita
+    spec.loader.exec_module(tempita)
+    return tempita
 
 
 def process_tempita(fromfile, outfile=None):
@@ -19,6 +25,7 @@ def process_tempita(fromfile, outfile=None):
         # We're dealing with a distutils build here, write in-place
         outfile = os.path.splitext(fromfile)[0]
 
+    tempita = import_tempita()
     from_filename = tempita.Template.from_filename
     template = from_filename(fromfile, encoding=sys.getdefaultencoding())
 

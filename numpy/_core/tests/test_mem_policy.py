@@ -2,19 +2,14 @@ import asyncio
 import gc
 import os
 import sys
+import sysconfig
 import threading
-import warnings
 
 import pytest
 
 import numpy as np
-from numpy.testing import extbuild, assert_warns, IS_WASM
 from numpy._core.multiarray import get_handler_name
-
-
-# FIXME: numpy.testing.extbuild uses `numpy.distutils`, so this won't work on
-# Python 3.12 and up. It's an internal test utility, so for now we just skip
-# these tests.
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, extbuild
 
 
 @pytest.fixture
@@ -26,8 +21,11 @@ def get_module(tmp_path):
     """
     if sys.platform.startswith('cygwin'):
         pytest.skip('link fails on cygwin')
-    if IS_WASM:
-        pytest.skip("Can't build module inside Wasm")
+    if not HAS_SUBPROCESSES:
+        pytest.skip("Can't build module on platform without subprocesses")
+    if IS_EDITABLE:
+        pytest.skip("Can't build module for editable install")
+
     functions = [
         ("get_default_policy", "METH_NOARGS", """
              Py_INCREF(PyDataMem_DefaultHandler);
@@ -41,6 +39,16 @@ def get_module(tmp_path):
              }
              PyObject *old = PyDataMem_SetHandler(secret_data);
              Py_DECREF(secret_data);
+             return old;
+         """),
+        ("set_wrong_capsule_name_data_policy", "METH_NOARGS", """
+             PyObject *wrong_name_capsule =
+                 PyCapsule_New(&secret_data_handler, "not_mem_handler", NULL);
+             if (wrong_name_capsule == NULL) {
+                 return NULL;
+             }
+             PyObject *old = PyDataMem_SetHandler(wrong_name_capsule);
+             Py_DECREF(wrong_name_capsule);
              return old;
          """),
         ("set_old_policy", "METH_O", """
@@ -213,6 +221,8 @@ def get_module(tmp_path):
     except ImportError:
         pass
     # if it does not exist, build and load it
+    if sysconfig.get_platform() == "win-arm64":
+        pytest.skip("Meson unable to find MSVC linker on win-arm64")
     return extbuild.build_and_import_extension('mem_policy',
                                                functions,
                                                prologue=prologue,
@@ -221,7 +231,7 @@ def get_module(tmp_path):
                                                more_init=more_init)
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
+@pytest.mark.slow
 def test_set_policy(get_module):
 
     get_handler_name = np._core.multiarray.get_handler_name
@@ -249,8 +259,11 @@ def test_set_policy(get_module):
         get_module.set_old_policy(orig_policy)
         assert get_handler_name() == orig_policy_name
 
+    with pytest.raises(ValueError,
+                       match="Capsule must be named 'mem_handler'"):
+        get_module.set_wrong_capsule_name_data_policy()
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
+
 def test_default_policy_singleton(get_module):
     get_handler_name = np._core.multiarray.get_handler_name
 
@@ -272,7 +285,6 @@ def test_default_policy_singleton(get_module):
     assert def_policy_1 is def_policy_2 is get_module.get_default_policy()
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_policy_propagation(get_module):
     # The memory policy goes hand-in-hand with flags.owndata
 
@@ -331,11 +343,7 @@ async def async_test_context_locality(get_module):
     assert np._core.multiarray.get_handler_name() == orig_policy_name
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_context_locality(get_module):
-    if (sys.implementation.name == 'pypy'
-            and sys.pypy_version_info[:3] < (7, 3, 6)):
-        pytest.skip('no context-locality support in PyPy < 7.3.6')
     asyncio.run(async_test_context_locality(get_module))
 
 
@@ -353,7 +361,6 @@ def concurrent_thread2(get_module, event):
     get_module.set_secret_data_policy()
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_thread_locality(get_module):
     orig_policy_name = np._core.multiarray.get_handler_name()
 
@@ -372,7 +379,6 @@ def test_thread_locality(get_module):
     assert np._core.multiarray.get_handler_name() == orig_policy_name
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 @pytest.mark.skip(reason="too slow, see gh-23975")
 def test_new_policy(get_module):
     a = np.arange(10)
@@ -403,11 +409,8 @@ def test_new_policy(get_module):
     assert np._core.multiarray.get_handler_name(c) == orig_policy_name
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
-@pytest.mark.xfail(sys.implementation.name == "pypy",
-                   reason=("bad interaction between getenv and "
-                           "os.environ inside pytest"))
 @pytest.mark.parametrize("policy", ["0", "1", None])
+@pytest.mark.thread_unsafe(reason="modifies environment variables")
 def test_switch_owner(get_module, policy):
     a = get_module.get_array()
     assert np._core.multiarray.get_handler_name(a) is None
@@ -425,7 +428,7 @@ def test_switch_owner(get_module, policy):
         # The policy should be NULL, so we have to assume we can call
         # "free".  A warning is given if the policy == "1"
         if policy:
-            with assert_warns(RuntimeWarning) as w:
+            with pytest.warns(RuntimeWarning) as w:
                 del a
                 gc.collect()
         else:
@@ -437,7 +440,6 @@ def test_switch_owner(get_module, policy):
             np._core._multiarray_umath._set_numpy_warn_if_no_mem_policy(oldval)
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="no numpy.distutils")
 def test_owner_is_base(get_module):
     a = get_module.get_array_with_base()
     with pytest.warns(UserWarning, match='warn_on_free'):

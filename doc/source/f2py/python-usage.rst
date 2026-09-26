@@ -115,8 +115,9 @@ two notable exceptions:
 * ``intent(inout)`` array arguments must always be
   :term:`proper-contiguous <contiguous>` and have a compatible ``dtype``,
   otherwise an exception is raised.
-* ``intent(inplace)`` array arguments  will be changed *in situ* if the argument
-  has a different type than expected (see the ``intent(inplace)``
+* ``intent(inplace)`` array arguments must be arrays. If these have
+  incompatible order or size, a converted copy is passed in, which is
+  copied back into the original array on exit (see the ``intent(inplace)``
   :ref:`attribute <f2py-attributes>` for more information).
 
 In general, if a NumPy array is :term:`proper-contiguous <contiguous>` and has
@@ -242,6 +243,13 @@ In Python:
 
 .. literalinclude:: ./code/results/extcallback_session.dat
   :language: python
+
+.. note::
+
+   When using modified Fortran code via ``callstatement`` or other directives,
+   the wrapped Python function must be called as a callback, otherwise only the
+   bare Fortran routine will be used. For more details, see
+   https://github.com/numpy/numpy/issues/26681#issuecomment-2466460943
 
 Resolving arguments to call-back functions
 ------------------------------------------

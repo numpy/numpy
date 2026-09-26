@@ -42,8 +42,8 @@ Similarly for bytestrings:
    >>> np.array([b"hello", b"world"])
    array([b'hello', b'world'], dtype='|S5')
 
-Since this is a one-byte encoding, the byteorder is `'|'` (not
-applicable), and the data type detected is a maximum 5 character
+Since this stores individual bytes, the byteorder is `'|'` (not
+applicable), and the data type detected is a maximum 5-byte
 bytestring.
 
 You can also use `numpy.void` to represent bytestrings:
@@ -91,9 +91,9 @@ live in the same array without needing to reserve storage for padding bytes in
 the short strings.
 
 Also note that unlike fixed-width strings and most other NumPy data
-types, ``StringDType`` does not store the string data in the "main"
-``ndarray`` data buffer. Instead, the array buffer is used to store
-metadata about where the string data are stored in memory. This
+types, ``StringDType`` does not always store the string data in the "main"
+``ndarray`` data buffer. Instead, the array buffer can store short strings or
+metadata about where longer string data are stored in memory. This
 difference means that code expecting the array buffer to contain
 string data will not function correctly, and will need to be updated
 to support ``StringDType``.
@@ -109,7 +109,7 @@ that empty strings are used to populate empty arrays:
   >>> np.empty(3, dtype=StringDType())
   array(['', '', ''], dtype=StringDType())
 
-Optionally, you can pass create an instance of ``StringDType`` with
+Optionally, you can create an instance of ``StringDType`` with
 support for missing values by passing ``na_object`` as a keyword
 argument for the initializer:
 
@@ -149,6 +149,13 @@ sort to the end of the array:
   >>> np.sort(arr)
   array(['hello', 'world', nan], dtype=StringDType(na_object=nan))
 
+Comparisons also follow floating-point NaN semantics: equality and ordered
+comparisons involving a NaN-like sentinel return ``False``, while inequality
+returns ``True``.
+
+  >>> arr != "hello"
+  array([False,  True,  True])
+
 String Missing Data Sentinels
 +++++++++++++++++++++++++++++
 
@@ -162,14 +169,14 @@ Other Sentinels
 
 Other objects, such as ``None`` are also supported as missing data
 sentinels. If any missing data are present in an array using such a
-sentinel, then string operations will raise an error:
+sentinel, then operations such as sorting will raise an error:
 
   >>> dt = StringDType(na_object=None)
-  >>> arr = np.array(["this array has", None, "as an entry"])
+  >>> arr = np.array(["this array has", None, "as an entry"], dtype=dt)
   >>> np.sort(arr)
   Traceback (most recent call last):
   ...
-  TypeError: '<' not supported between instances of 'NoneType' and 'str'
+  ValueError: Cannot compare null that is not a nan-like value
 
 Coercing Non-strings
 --------------------
@@ -198,30 +205,27 @@ Casting To and From Fixed-Width Strings
 `numpy.bytes_`, and `numpy.void`. Casting to a fixed-width string is
 most useful when strings need to be memory-mapped in an ndarray or
 when a fixed-width string is needed for reading and writing to a
-columnar data format with a known maximum string length.
+columnar data format with a known maximum string length. The
+`numpy.bytes_` cast is most useful for string data that is known to
+contain only ASCII characters, as characters outside this range cannot
+be represented in a single byte in the UTF-8 encoding and are rejected.
 
-In all cases, casting to a fixed-width string requires specifying the
-maximum allowed string length::
+When converting an array to a fixed-width string dtype with an
+unspecified size using `numpy.ndarray.astype`, NumPy infers the size by
+inspecting the array values, producing a dtype wide enough to store the
+widest entry without truncation::
 
-   >>> arr = np.array(["hello", "world"], dtype=StringDType())
-   >>> arr.astype(np.str_)  # doctest: +IGNORE_EXCEPTION_DETAIL
-   Traceback (most recent call last):
-   ...
-   TypeError: Casting from StringDType to a fixed-width dtype with an
-   unspecified size is not currently supported, specify an explicit
-   size for the output dtype instead.
+   >>> arr = np.array(["hello", "world!!"], dtype=StringDType())
+   >>> arr.astype(np.str_)
+   array(['hello', 'world!!'], dtype='<U7')
+   >>> arr.astype("S")
+   array([b'hello', b'world!!'], dtype='|S7')
 
-   The above exception was the direct cause of the following
-   exception:
+An explicit size can still be passed, truncating entries that do not
+fit::
 
-   TypeError: cannot cast dtype StringDType() to <class 'numpy.dtypes.StrDType'>.
-   >>> arr.astype("U5")
-   array(['hello', 'world'], dtype='<U5')
-   
-The `numpy.bytes_` cast is most useful for string data that is known
-to contain only ASCII characters, as characters outside this range
-cannot be represented in a single byte in the UTF-8 encoding and are
-rejected.
+   >>> arr.astype("U4")
+   array(['hell', 'worl'], dtype='<U4')
 
 Any valid unicode string can be cast to `numpy.str_`, although
 since `numpy.str_` uses a 32-bit UCS4 encoding for all characters,
@@ -239,3 +243,8 @@ Care must be taken to ensure that the output array has enough space
 for the UTF-8 bytes in the string, since the size of a UTF-8
 bytestream in bytes is not necessarily the same as the number of
 characters in the string.
+
+Conversions in the other direction, from a fixed-width string array to
+``StringDType`` are ``"safe"`` casts. The bytes stored in a
+`numpy.bytes_` array must be valid UTF-8, and a ``UnicodeDecodeError``
+is raised during the cast if they are not.

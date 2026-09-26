@@ -195,8 +195,8 @@ Use
 or :func:`numpy.savez_compressed`.
 
 For :ref:`security and portability <how-to-io-pickle-file>`, set
-``allow_pickle=False`` unless the dtype contains Python objects, which
-requires pickling.
+``allow_pickle=False`` unless the dtype contains Python objects or is
+`numpy.dtypes.StringDType`, which requires pickling.
 
 Masked arrays :any:`can't currently be saved <MaskedArray.tofile>`,
 nor can other arbitrary array subclasses.
@@ -206,7 +206,7 @@ Human-readable
 
 :func:`numpy.save` and :func:`numpy.savez` create binary files. To **write a
 human-readable file**, use :func:`numpy.savetxt`. The array can only be 1- or
-2-dimensional, and there's no ` savetxtz` for multiple files.
+2-dimensional, and there's no ``savetxtz`` for multiple files.
 
 Large arrays
 ------------
@@ -258,7 +258,7 @@ The ``.wav`` file header as a NumPy structured dtype::
         # it does not have a fixed size
     ])
 
-    header = np.fromfile(f, dtype=wave_header_dtype, count=1)[0]
+    header = np.fromfile(f, dtype=wav_header_dtype, count=1)[0]
 
 This ``.wav`` example is for illustration; to read a ``.wav`` file in real
 life, use Python's built-in module :mod:`wave`.
@@ -318,8 +318,8 @@ Avoid when possible; :doc:`pickles <python:library/pickle>` are not secure
 against erroneous or maliciously constructed data.
 
 Use :func:`numpy.save` and :func:`numpy.load`.  Set ``allow_pickle=False``,
-unless the array dtype includes Python objects, in which case pickling is
-required.
+unless the array dtype includes Python objects or is
+`numpy.dtypes.StringDType`, in which case pickling is required.
 
 :func:`numpy.load` and `pickle` submodule also support unpickling files
 created with NumPy 1.26.
@@ -343,6 +343,6 @@ storage.
 
    >>> import os
    >>> # list all files created in testsetup. If needed there are
-   >>> # convenienes in e.g. astroquery to do this more automatically
+   >>> # conveniences in e.g. astroquery to do this more automatically
    >>> for filename in ['csv.txt', 'fixedwidth.txt', 'nan.txt', 'skip.txt', 'tabs.txt']:
    ...     os.remove(filename)

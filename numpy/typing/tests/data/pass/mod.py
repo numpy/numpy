@@ -13,7 +13,7 @@ b_ = np.bool(1)
 
 b = bool(1)
 f = float(1)
-i = int(1)
+i = 1
 
 AR = np.array([1], dtype=np.bool)
 AR.setflags(write=False)

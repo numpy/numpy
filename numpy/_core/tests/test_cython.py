@@ -1,13 +1,15 @@
-from datetime import datetime
 import os
 import shutil
 import subprocess
 import sys
-import time
+import sysconfig
+from datetime import datetime
+
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal, IS_WASM
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, assert_array_equal
+from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
 try:
@@ -19,7 +21,7 @@ else:
     from numpy._utils import _pep440
 
     # Note: keep in sync with the one in pyproject.toml
-    required_version = "3.0.6"
+    required_version = "3.1.0"
     if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
@@ -27,48 +29,55 @@ else:
 pytestmark = pytest.mark.skipif(cython is None, reason="requires cython")
 
 
+if IS_EDITABLE:
+    pytest.skip(
+        "Editable install doesn't support tests with a compile step",
+        allow_module_level=True
+    )
+
 @pytest.fixture(scope='module')
 def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
-    if IS_WASM:
-        pytest.skip("No subprocess")
+    if not HAS_SUBPROCESSES:
+        pytest.skip("platform cannot start subprocesses")
 
-    srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'cython')
-    build_dir = tmpdir_factory.mktemp("cython_test") / "build"
+    # Build against a copy of the sources placed next to the build dir:
+    # meson refers to sources via paths relative to the build dir, and on
+    # Windows the unnormalized cwd + `..` chain joining the deeply nested
+    # pytest tmp dir and site-packages can exceed MAX_PATH, failing the
+    # compile with "Cannot open source file".
+    tmp_root = tmpdir_factory.mktemp("cython_test")
+    srcdir = str(tmp_root / "src")
+    shutil.copytree(
+        os.path.join(os.path.dirname(__file__), 'examples', 'cython'),
+        srcdir)
+    build_dir = tmp_root / "build"
     os.makedirs(build_dir, exist_ok=True)
     # Ensure we use the correct Python interpreter even when `meson` is
     # installed in a different Python environment (see gh-24956)
     native_file = str(build_dir / 'interpreter-native-file.ini')
     with open(native_file, 'w') as f:
         f.write("[binaries]\n")
-        f.write(f"python = '{sys.executable}'")
+        f.write(f"python = '{sys.executable}'\n")
+        f.write(f"python3 = '{sys.executable}'")
 
     try:
         subprocess.check_call(["meson", "--version"])
     except FileNotFoundError:
         pytest.skip("No usable 'meson' found")
+    if sysconfig.get_platform() == "win-arm64":
+        pytest.skip("Meson unable to find MSVC linker on win-arm64")
     if sys.platform == "win32":
-        subprocess.check_call(["meson", "setup",
-                               "--buildtype=release",
-                               "--vsenv", "--native-file", native_file,
-                               str(srcdir)],
-                              cwd=build_dir,
-                              )
+        run_subprocess(["meson", "setup",
+                        "--buildtype=release",
+                        "--vsenv", "--native-file", native_file,
+                        str(srcdir)],
+                       build_dir)
     else:
-        subprocess.check_call(["meson", "setup",
-                               "--native-file", native_file, str(srcdir)],
-                              cwd=build_dir
-                              )
-    try:
-        subprocess.check_call(["meson", "compile", "-vv"], cwd=build_dir)
-    except subprocess.CalledProcessError:
-        print("----------------")
-        print("meson build failed when doing")
-        print(f"'meson setup --native-file {native_file} {srcdir}'")
-        print(f"'meson compile -vv'")
-        print(f"in {build_dir}")
-        print("----------------")
-        raise
+        run_subprocess(["meson", "setup",
+                        "--native-file", native_file, str(srcdir)],
+                       build_dir)
+    run_subprocess(["meson", "compile", "-vv"], build_dir)
 
     sys.path.append(str(build_dir))
 
@@ -76,7 +85,12 @@ def install_temp(tmpdir_factory):
 def test_is_timedelta64_object(install_temp):
     import checks
 
-    assert checks.is_td64(np.timedelta64(1234))
+    with pytest.warns(
+        DeprecationWarning,
+        match="The 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        assert checks.is_td64(np.timedelta64(1234))
+
     assert checks.is_td64(np.timedelta64(1234, "ns"))
     assert checks.is_td64(np.timedelta64("NaT", "ns"))
 
@@ -95,7 +109,12 @@ def test_is_datetime64_object(install_temp):
     assert not checks.is_dt64(1)
     assert not checks.is_dt64(None)
     assert not checks.is_dt64("foo")
-    assert not checks.is_dt64(np.timedelta64(1234))
+
+    with pytest.warns(
+        DeprecationWarning,
+        match="The 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        assert not checks.is_dt64(np.timedelta64(1234))
 
 
 def test_get_datetime64_value(install_temp):
@@ -145,6 +164,13 @@ def test_default_int(install_temp):
     import checks
 
     assert checks.get_default_integer() is np.dtype(int)
+
+
+def test_ravel_axis(install_temp):
+    import checks
+
+    assert checks.get_ravel_axis() == np.iinfo("intc").min
+
 
 def test_convert_datetime64_to_datetimestruct(install_temp):
     # GH#21199
@@ -203,10 +229,8 @@ def test_multiiter_fields(install_temp, arrays):
     assert bcast.shape == checks.get_multiiter_shape(bcast)
     assert bcast.index == checks.get_multiiter_current_index(bcast)
     assert all(
-        [
-            x.base is y.base
-            for x, y in zip(bcast.iters, checks.get_multiiter_iters(bcast))
-        ]
+        x.base is y.base
+        for x, y in zip(bcast.iters, checks.get_multiiter_iters(bcast))
     )
 
 
@@ -256,6 +280,7 @@ def test_npyiter_api(install_temp):
     assert checks.get_npyiter_size(it) == it.itersize == np.prod(arr.shape)
     assert checks.npyiter_has_multi_index(it) == it.has_multi_index == True
     assert checks.get_npyiter_ndim(it) == it.ndim == 2
+    assert checks.test_get_multi_index_iter_next(it, arr)
 
     arr2 = np.random.rand(2, 1, 2)
     it = np.nditer([arr, arr2])
@@ -266,10 +291,8 @@ def test_npyiter_api(install_temp):
         x is y for x, y in zip(checks.get_npyiter_operands(it), it.operands)
     )
     assert all(
-        [
-            np.allclose(x, y)
-            for x, y in zip(checks.get_npyiter_itviews(it), it.itviews)
-        ]
+        np.allclose(x, y)
+        for x, y in zip(checks.get_npyiter_itviews(it), it.itviews)
     )
 
 
@@ -282,7 +305,115 @@ def test_fillwithbytes(install_temp):
 
 def test_complex(install_temp):
     from checks import inc2_cfloat_struct
-    
-    arr = np.array([0, 10+10j], dtype="F")
+
+    arr = np.array([0, 10 + 10j], dtype="F")
     inc2_cfloat_struct(arr)
     assert arr[1] == (12 + 12j)
+
+
+def test_npystring_pack(install_temp):
+    """Check that the cython API can write to a vstring array."""
+    import checks
+
+    arr = np.array(['a', 'b', 'c'], dtype='T')
+    assert checks.npystring_pack(arr) == 0
+
+    # checks.npystring_pack writes to the beginning of the array
+    assert arr[0] == "Hello world"
+
+def test_npystring_load(install_temp):
+    """Check that the cython API can load strings from a vstring array."""
+    import checks
+
+    arr = np.array(['abcd', 'b', 'c'], dtype='T')
+    result = checks.npystring_load(arr)
+    assert result == 'abcd'
+
+
+def test_npystring_pack_invalid_utf8_width_inference(install_temp):
+    # NpyString_pack does not validate, so width inference can see bytes
+    # that do not decode
+    import checks
+
+    arr = np.array(["abc"], dtype="T")
+    assert checks.npystring_pack_invalid_utf8(arr, b"\xffbc") == 0
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        arr.astype("U")
+    exc = excinfo.value
+    assert (exc.encoding, exc.object, exc.start, exc.end) == (
+        "utf-8", b"\xffbc", 0, 1)
+
+
+def test_npystring_multiple_allocators(install_temp):
+    """Check that the cython API can acquire/release multiple vstring allocators."""
+    import checks
+
+    dt = np.dtypes.StringDType(na_object=None)
+    arr1 = np.array(['abcd', 'b', 'c'], dtype=dt)
+    arr2 = np.array(['a', 'b', 'c'], dtype=dt)
+
+    assert checks.npystring_pack_multiple(arr1, arr2) == 0
+    assert arr1[0] == "Hello world"
+    assert arr1[-1] is None
+    assert arr2[0] == "test this"
+
+
+def test_npystring_allocators_other_dtype(install_temp):
+    """Check that allocators for non-StringDType arrays is NULL."""
+    import checks
+
+    arr1 = np.array([1, 2, 3], dtype='i')
+    arr2 = np.array([4, 5, 6], dtype='i')
+
+    assert checks.npystring_allocators_other_types(arr1, arr2) == 0
+
+
+def test_npystring_pack_invalid_utf8(install_temp):
+    """Check StringDType stays safe on stored bytes that aren't valid UTF-8."""
+    import checks
+
+    from numpy._core.umath import _center, _ljust, _rjust
+
+    sdt = np.dtypes.StringDType()
+
+    # the raw ufuncs skip the wrapper's one-character fill check
+    fill = np.array(["x"], dtype=sdt)
+    assert checks.npystring_pack_invalid_utf8(fill, b"\x80") == 0
+    src = np.array(["hello"], dtype=sdt)
+    for pad in (_center, _ljust, _rjust):
+        pad(src, 100_000, fill)
+
+    bad = np.array(["placeholder"], dtype=sdt)
+    assert checks.npystring_pack_invalid_utf8(bad, b"\x80" * 12) == 0
+    assert np.strings.find(bad, "z")[0] == -1
+    assert np.strings.count(bad, "z")[0] == 0
+
+    # casts that hit the stored bytes report where they stop being UTF-8
+    assert checks.npystring_pack_invalid_utf8(bad, b"\xffbc") == 0
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        bad.astype("S3")
+    exc = excinfo.value
+    assert (exc.encoding, exc.object, exc.start, exc.end) == (
+        "utf-8", b"\xffbc", 0, 1)
+
+
+@pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',
+                    reason='no checks module on win-arm64')
+def test_npy_uintp_type_enum(install_temp):
+    import checks
+    assert checks.check_npy_uintp_type_enum()
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 14),
+    reason="Tests behavior that happens on Python 3.14 and newer"
+)
+@pytest.mark.skipif(
+    sysconfig.get_platform() == 'win-arm64',
+    reason='no checks module on win-arm64'
+)
+def test_resize_refcheck(install_temp):
+    import checks
+    msg = "It is possible that this is a false positive."
+    with pytest.raises(ValueError, match=msg):
+        checks.resize_refcheck_test()

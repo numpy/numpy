@@ -40,9 +40,9 @@ there are two integers, and that they are 16 bit and big-endian:
 >>> import numpy as np
 >>> big_end_arr = np.ndarray(shape=(2,),dtype='>i2', buffer=big_end_buffer)
 >>> big_end_arr[0]
-1
+np.int16(1)
 >>> big_end_arr[1]
-770
+np.int16(770)
 
 Note the array ``dtype`` above of ``>i2``.  The ``>`` means 'big-endian'
 (``<`` is little-endian) and ``i2`` means 'signed 2-byte integer'.  For
@@ -99,14 +99,14 @@ We make something where they don't match:
 
 >>> wrong_end_dtype_arr = np.ndarray(shape=(2,),dtype='<i2', buffer=big_end_buffer)
 >>> wrong_end_dtype_arr[0]
-256
+np.int16(256)
 
 The obvious fix for this situation is to change the dtype so it gives
 the correct endianness:
 
 >>> fixed_end_dtype_arr = wrong_end_dtype_arr.view(np.dtype('<i2').newbyteorder())
 >>> fixed_end_dtype_arr[0]
-1
+np.int16(1)
 
 Note the array has not changed in memory:
 
@@ -122,7 +122,7 @@ that needs a certain byte ordering.
 
 >>> fixed_end_mem_arr = wrong_end_dtype_arr.byteswap()
 >>> fixed_end_mem_arr[0]
-1
+np.int16(1)
 
 Now the array *has* changed in memory:
 
@@ -140,7 +140,7 @@ the previous operations:
 >>> swapped_end_arr = big_end_arr.byteswap()
 >>> swapped_end_arr = swapped_end_arr.view(swapped_end_arr.dtype.newbyteorder())
 >>> swapped_end_arr[0]
-1
+np.int16(1)
 >>> swapped_end_arr.tobytes() == big_end_buffer
 False
 
@@ -149,7 +149,7 @@ can be achieved with the ndarray astype method:
 
 >>> swapped_end_arr = big_end_arr.astype('<i2')
 >>> swapped_end_arr[0]
-1
+np.int16(1)
 >>> swapped_end_arr.tobytes() == big_end_buffer
 False
 

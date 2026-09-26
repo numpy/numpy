@@ -14,16 +14,9 @@
 #include "extobj.h"
 #include "numpy/ufuncobject.h"
 
-#include "ufunc_object.h"  /* for npy_um_str_pyvals_name */
 #include "common.h"
-
-
-/*
- * The global ContextVar to store the extobject. It is exposed to Python
- * as `_extobj_contextvar`.
- */
-static PyObject *default_extobj_capsule = NULL;
-NPY_NO_EXPORT PyObject *npy_extobj_contextvar = NULL;
+#include "npy_pycompat.h"
+#include "module_state.h"
 
 
 #define UFUNC_ERR_IGNORE 0
@@ -43,11 +36,6 @@ NPY_NO_EXPORT PyObject *npy_extobj_contextvar = NULL;
 #define UFUNC_SHIFT_OVERFLOW     3
 #define UFUNC_SHIFT_UNDERFLOW    6
 #define UFUNC_SHIFT_INVALID      9
-
-/* The python strings for the above error modes defined in extobj.h */
-const char *errmode_cstrings[] = {
-        "ignore", "warn", "raise", "call", "print", "log"};
-static PyObject *errmode_strings[6] = {NULL};
 
 /* Default user error mode (underflows are ignored, others warn) */
 #define UFUNC_ERR_DEFAULT                               \
@@ -129,9 +117,11 @@ make_extobj_capsule(npy_intp bufsize, int errmask, PyObject *pyfunc)
 static int
 fetch_curr_extobj_state(npy_extobj *extobj)
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *capsule;
     if (PyContextVar_Get(
-            npy_extobj_contextvar, default_extobj_capsule, &capsule) < 0) {
+            state->static_pydata.npy_extobj_contextvar,
+            state->static_pydata.default_extobj_capsule, &capsule) < 0) {
         return -1;
     }
     npy_extobj *obj = PyCapsule_GetPointer(capsule, "numpy.ufunc.extobj");
@@ -153,26 +143,23 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 NPY_NO_EXPORT int
 init_extobj(void)
 {
-    /*
-     * First initialize the string constants we need to parse `errstate()`
-     * inputs.
-     */
-    for (int i = 0; i <= UFUNC_ERR_LOG; i++) {
-        errmode_strings[i] = PyUnicode_InternFromString(errmode_cstrings[i]);
-        if (errmode_strings[i] == NULL) {
-            return -1;
-        }
-    }
-
-    default_extobj_capsule = make_extobj_capsule(
+    multiarray_umath_state *state = _npy_module_state;
+    state->static_pydata.default_extobj_capsule = make_extobj_capsule(
             NPY_BUFSIZE, UFUNC_ERR_DEFAULT, Py_None);
-    if (default_extobj_capsule == NULL) {
+    if (state->static_pydata.default_extobj_capsule == NULL) {
         return -1;
     }
-    npy_extobj_contextvar = PyContextVar_New(
-            "numpy.ufunc.extobj", default_extobj_capsule);
-    if (npy_extobj_contextvar == NULL) {
-        Py_CLEAR(default_extobj_capsule);
+#ifdef Py_GIL_DISABLED
+    if (PyUnstable_SetImmortal(state->static_pydata.default_extobj_capsule) == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Could not mark extobj capsule as immortal");
+        Py_CLEAR(state->static_pydata.default_extobj_capsule);
+        return -1;
+    }
+#endif
+    state->static_pydata.npy_extobj_contextvar = PyContextVar_New(
+            "numpy.ufunc.extobj", state->static_pydata.default_extobj_capsule);
+    if (state->static_pydata.npy_extobj_contextvar == NULL) {
+        Py_CLEAR(state->static_pydata.default_extobj_capsule);
         return -1;
     }
     return 0;
@@ -189,9 +176,16 @@ errmodeconverter(PyObject *obj, int *mode)
     if (obj == Py_None) {
         return 1;
     }
+    if (!PyUnicode_Check(obj)) {
+        PyErr_Format(PyExc_TypeError,
+                "invalid error mode %.100R, must be a string or None", obj);
+        return 0;
+    }
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     int i = 0;
     for (; i <= UFUNC_ERR_LOG; i++) {
-        int eq = PyObject_RichCompareBool(obj, errmode_strings[i], Py_EQ);
+        int eq = PyObject_RichCompareBool(
+                obj, interned_str->errmode_strings[i], Py_EQ);
         if (eq == -1) {
             return 0;
         }
@@ -212,7 +206,7 @@ errmodeconverter(PyObject *obj, int *mode)
 /*
  * This function is currently exposed as `umath._seterrobj()`, it is private
  * and returns a capsule representing the errstate.  This capsule is then
- * assigned to the `npy_extobj_contextvar` in Python.
+ * assigned to the `_extobj_contextvar` in Python.
  */
 NPY_NO_EXPORT PyObject *
 extobj_make_extobj(PyObject *NPY_UNUSED(mod),
@@ -228,14 +222,13 @@ extobj_make_extobj(PyObject *NPY_UNUSED(mod),
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("_seterrobj", args, len_args, kwnames,
-            "$all", &errmodeconverter, &all_mode,
-            "$divide", &errmodeconverter, &divide_mode,
-            "$over", &errmodeconverter, &over_mode,
-            "$under", &errmodeconverter, &under_mode,
-            "$invalid", &errmodeconverter, &invalid_mode,
-            "$bufsize", &PyArray_IntpFromPyIntConverter, &bufsize,
-            "$call", NULL, &pyfunc,
-            NULL, NULL, NULL) < 0) {
+            {"$all", &errmodeconverter, &all_mode},
+            {"$divide", &errmodeconverter, &divide_mode},
+            {"$over", &errmodeconverter, &over_mode},
+            {"$under", &errmodeconverter, &under_mode},
+            {"$invalid", &errmodeconverter, &invalid_mode},
+            {"$bufsize", &PyArray_IntpFromPyIntConverter, &bufsize},
+            {"$call", NULL, &pyfunc}) < 0) {
         return NULL;
     }
 
@@ -323,7 +316,7 @@ extobj_make_extobj(PyObject *NPY_UNUSED(mod),
  * current extobj/errobj.
  */
 NPY_NO_EXPORT PyObject *
-extobj_get_extobj_dict(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg))
+extobj_get_extobj_dict(PyObject *mod, PyObject *NPY_UNUSED(noarg))
 {
     PyObject *result = NULL, *bufsize_obj = NULL;
     npy_extobj extobj;
@@ -336,21 +329,26 @@ extobj_get_extobj_dict(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg))
     if (result == NULL) {
         goto fail;
     }
+    npy_interned_str_struct *interned_str = &get_module_state(mod)->interned_str;
     /* Set all error modes: */
     mode = (extobj.errmask & UFUNC_MASK_DIVIDEBYZERO) >> UFUNC_SHIFT_DIVIDEBYZERO;
-    if (PyDict_SetItemString(result, "divide", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "divide",
+                             interned_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_OVERFLOW) >> UFUNC_SHIFT_OVERFLOW;
-    if (PyDict_SetItemString(result, "over", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "over",
+                             interned_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_UNDERFLOW) >> UFUNC_SHIFT_UNDERFLOW;
-    if (PyDict_SetItemString(result, "under", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "under",
+                             interned_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_INVALID) >> UFUNC_SHIFT_INVALID;
-    if (PyDict_SetItemString(result, "invalid", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "invalid",
+                             interned_str->errmode_strings[mode]) < 0) {
         goto fail;
     }
 
@@ -417,7 +415,7 @@ _error_handler(const char *name, int method, PyObject *pyfunc, char *errtype,
     switch(method) {
     case UFUNC_ERR_WARN:
         PyOS_snprintf(msg, sizeof(msg), "%s encountered in %s", errtype, name);
-        if (PyErr_Warn(PyExc_RuntimeWarning, msg) < 0) {
+        if (PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1) < 0) {
             goto fail;
         }
         break;

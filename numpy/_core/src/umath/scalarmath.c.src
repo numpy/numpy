@@ -25,6 +25,7 @@
 #include "templ_common.h"
 
 #include "binop_override.h"
+#include "module_state.h"
 #include "npy_longdouble.h"
 
 #include "arraytypes.h"
@@ -700,7 +701,7 @@ static inline int
  *   - The reverse should work, so we return NotImplemented to defer.
  *     (If self is a subclass, this will end up in the "unknown" path.)
  *   - Neither works (e.g. `uint8 + int8`):  We currently use the array path.
- * - The other object is a unknown.  It could be either a scalar, an array,
+ * - The other object is an unknown.  It could be either a scalar, an array,
  *   or an array-like (including a list!).  Because NumPy scalars pretend to be
  *   arrays we fall into the array fallback path here _normally_ (through
  *   the generic scalar path).
@@ -798,8 +799,9 @@ typedef enum {
      */
     CONVERT_PYSCALAR,
     /*
-     * Other object is an unknown scalar or array-like, we (typically) use
+     * Other object is an unknown scalar or array-like, we also use
      * the generic path, which normally ends up in the ufunc machinery.
+     * (So it ends up identical to PROMOTION_REQUIRED.)
      */
     OTHER_IS_UNKNOWN_OBJECT,
     /*
@@ -825,6 +827,10 @@ typedef enum {
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #scalar_type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ *                npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *                npy_half, npy_float, npy_double, npy_longdouble,
+ *                npy_float, npy_double, npy_longdouble#
  * #c = x*14, f, , l#
  */
 
@@ -845,10 +851,10 @@ typedef enum {
         *result = npy_float_to_half((float)(value))
 #elif defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
     #define CONVERT_TO_RESULT(value)  \
-        npy_csetreal@c@(result, value);  \
+        npy_csetreal@c@(result, ((@scalar_type@)(value)));  \
         npy_csetimag@c@(result, 0)
 #else
-    #define CONVERT_TO_RESULT(value) *result = value
+    #define CONVERT_TO_RESULT(value) *result = ((@type@)(value))
 #endif
 
 
@@ -936,7 +942,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
     if (PyArray_IsScalar(value, @Name@)) {
         *result = PyArrayScalar_VAL(value, @Name@);
         /*
-         * In principle special, assyemetric, handling could be possible for
+         * In principle special, asymmetric, handling could be possible for
          * explicit subclasses.
          * In practice, we just check the normal deferring logic.
          */
@@ -953,20 +959,8 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         return CONVERSION_SUCCESS;
     }
 
-    if (PyFloat_Check(value)) {
-        if (!PyFloat_CheckExact(value)) {
-            /* A NumPy double is a float subclass, but special. */
-            if (PyArray_IsScalar(value, Double)) {
-                descr = PyArray_DescrFromType(NPY_DOUBLE);
-                goto numpy_scalar;
-            }
-            *may_need_deferring = NPY_TRUE;
-        }
+    if (PyFloat_CheckExact(value)) {
         if (!IS_SAFE(NPY_DOUBLE, NPY_@TYPE@)) {
-            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
-                /* Legacy promotion and weak-and-warn not handled here */
-                return PROMOTION_REQUIRED;
-            }
             /* Weak promotion is used when self is float or complex: */
             if (!PyTypeNum_ISFLOAT(NPY_@TYPE@) && !PyTypeNum_ISCOMPLEX(NPY_@TYPE@)) {
                 return PROMOTION_REQUIRED;
@@ -977,28 +971,18 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         return CONVERSION_SUCCESS;
     }
 
-    if (PyLong_Check(value)) {
-        if (!PyLong_CheckExact(value)) {
-            *may_need_deferring = NPY_TRUE;
-        }
+    if (PyLong_CheckExact(value)) {
         if (!IS_SAFE(NPY_LONG, NPY_@TYPE@)) {
             /*
              * long -> (c)longdouble is safe, so `OTHER_IS_UNKNOWN_OBJECT` will
              * be returned below for huge integers.
              */
-            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
-                /* Legacy promotion and weak-and-warn not handled here */
-                return PROMOTION_REQUIRED;
-            }
             return CONVERT_PYSCALAR;
         }
         int overflow;
         long val = PyLong_AsLongAndOverflow(value, &overflow);
         if (overflow) {
             /* handle as if "unsafe" */
-            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
-                return OTHER_IS_UNKNOWN_OBJECT;
-            }
             return CONVERT_PYSCALAR;
         }
         if (error_converting(val)) {
@@ -1008,20 +992,8 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         return CONVERSION_SUCCESS;
     }
 
-    if (PyComplex_Check(value)) {
-        if (!PyComplex_CheckExact(value)) {
-            /* A NumPy complex double is a float subclass, but special. */
-            if (PyArray_IsScalar(value, CDouble)) {
-                descr = PyArray_DescrFromType(NPY_CDOUBLE);
-                goto numpy_scalar;
-            }
-            *may_need_deferring = NPY_TRUE;
-        }
+    if (PyComplex_CheckExact(value)) {
         if (!IS_SAFE(NPY_CDOUBLE, NPY_@TYPE@)) {
-            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
-                /* Legacy promotion and weak-and-warn not handled here */
-                return PROMOTION_REQUIRED;
-            }
             /* Weak promotion is used when self is float or complex: */
             if (!PyTypeNum_ISCOMPLEX(NPY_@TYPE@)) {
                 return PROMOTION_REQUIRED;
@@ -1078,7 +1050,6 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         return OTHER_IS_UNKNOWN_OBJECT;
     }
 
-  numpy_scalar:
     if (descr->typeobj != Py_TYPE(value)) {
         /*
          * This is a subclass of a builtin type, we may continue normally,
@@ -1262,12 +1233,9 @@ static PyObject *
              * also integers that are too large to convert to `long`), or
              * even a subclass of a NumPy scalar (currently).
              *
-             * Generally, we try dropping through to the array path here,
-             * but this can lead to infinite recursions for (c)longdouble.
+             * We drop through to the generic path here which checks for the
+             * infinite recursion problem (gh-18548, gh-26767).
              */
-#if defined(IS_longdouble) || defined(IS_clongdouble)
-            Py_RETURN_NOTIMPLEMENTED;
-#endif
         case PROMOTION_REQUIRED:
             /*
              * Python scalar that is larger than the current one, or two
@@ -1279,7 +1247,7 @@ static PyObject *
              */
             return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
         case CONVERT_PYSCALAR:
-            if (@NAME@_setitem(other, (char *)&other_val, NULL) < 0) {
+            if (@NAME@_setitem(NULL, other, (char *)&other_val) < 0) {
                 return NULL;
             }
             break;
@@ -1391,7 +1359,7 @@ static PyObject *
      */
     PyObject *ret;
     npy_float64 arg1, arg2, other_val;
-    @type@ other_val_conv;
+    @type@ other_val_conv = 0;
 
     int is_forward;
     if (Py_TYPE(a) == &Py@Name@ArrType_Type) {
@@ -1411,7 +1379,8 @@ static PyObject *
     npy_bool may_need_deferring;
     conversion_result res = convert_to_@name@(
             other, &other_val_conv, &may_need_deferring);
-    other_val = other_val_conv;  /* Need a float value */
+    /* Actual float cast `other_val` is set below on success. */
+
     if (res == CONVERSION_ERROR) {
         return NULL;  /* an error occurred (should never happen) */
     }
@@ -1422,13 +1391,14 @@ static PyObject *
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
+            other_val = (double)other_val_conv;  /* Need a float value */
             break;  /* successfully extracted value we can proceed */
         case OTHER_IS_UNKNOWN_OBJECT:
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_as_number->nb_true_divide(a,b);
         case CONVERT_PYSCALAR:
             /* This is the special behavior, convert to float64 directly */
-            if (DOUBLE_setitem(other, (char *)&other_val, NULL) < 0) {
+            if (DOUBLE_setitem(NULL, other, (char *)&other_val) < 0) {
                 return NULL;
             }
             break;
@@ -1440,12 +1410,12 @@ static PyObject *
     npy_clear_floatstatus_barrier((char*)&arg1);
 
     if (is_forward) {
-        arg1 = PyArrayScalar_VAL(a, @Name@);
+        arg1 = (double)PyArrayScalar_VAL(a, @Name@);
         arg2 = other_val;
     }
     else {
         arg1 = other_val;
-        arg2 = PyArrayScalar_VAL(b, @Name@);
+        arg2 = (double)PyArrayScalar_VAL(b, @Name@);
     }
 
     /* Note that arguments are already float64, so we can just divide */
@@ -1544,13 +1514,10 @@ static PyObject *
         case CONVERSION_SUCCESS:
             break;  /* successfully extracted value we can proceed */
         case OTHER_IS_UNKNOWN_OBJECT:
-#if defined(IS_longdouble) || defined(IS_clongdouble)
-            Py_RETURN_NOTIMPLEMENTED;
-#endif
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_as_number->nb_power(a, b, modulo);
         case CONVERT_PYSCALAR:
-            if (@NAME@_setitem(other, (char *)&other_val, NULL) < 0) {
+            if (@NAME@_setitem(NULL, other, (char *)&other_val) < 0) {
                 return NULL;
             }
             break;
@@ -1788,12 +1755,7 @@ static int
 static int
 emit_complexwarning(void)
 {
-    static PyObject *cls = NULL;
-    npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
-    if (cls == NULL) {
-        return -1;
-    }
-    return PyErr_WarnEx(cls,
+    return PyErr_WarnEx(_npy_module_state->static_pydata.ComplexWarning,
             "Casting complex values to real discards the imaginary part", 1);
 }
 
@@ -1874,7 +1836,7 @@ static PyObject *
     }
     return @func@(@to_ctype@(npy_creal@n@(PyArrayScalar_VAL(obj, @Name@))));
 #else
-    return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@)));
+    return @func@((double)(@to_ctype@(PyArrayScalar_VAL(obj, @Name@))));
 #endif
 }
 /**end repeat**/
@@ -1960,13 +1922,10 @@ static PyObject*
         case CONVERSION_SUCCESS:
             break;  /* successfully extracted value we can proceed */
         case OTHER_IS_UNKNOWN_OBJECT:
-#if defined(IS_longdouble) || defined(IS_clongdouble)
-            Py_RETURN_NOTIMPLEMENTED;
-#endif
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
         case CONVERT_PYSCALAR:
-            if (@NAME@_setitem(other, (char *)&arg2, NULL) < 0) {
+            if (@NAME@_setitem(NULL, other, (char *)&arg2) < 0) {
                 return NULL;
             }
             break;

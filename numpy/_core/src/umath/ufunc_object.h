@@ -3,6 +3,9 @@
 
 #include <numpy/ufuncobject.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 NPY_NO_EXPORT const char*
 ufunc_get_name_cstr(PyUFuncObject *ufunc);
@@ -10,9 +13,8 @@ ufunc_get_name_cstr(PyUFuncObject *ufunc);
 NPY_NO_EXPORT PyObject *
 PyUFunc_GetDefaultIdentity(PyUFuncObject *ufunc, npy_bool *reorderable);
 
-/* strings from umathmodule.c that are interned on umath import */
-NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_array_ufunc;
-NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_array_wrap;
-NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_pyvals_name;
+#ifdef __cplusplus
+}
+#endif
 
 #endif

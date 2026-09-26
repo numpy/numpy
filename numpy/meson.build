@@ -32,7 +32,7 @@ endif
 # than a `.a` file extension in order not to break including them in a
 # distutils-based build (see gh-23981 and
 # https://mesonbuild.com/FAQ.html#why-does-building-my-project-with-msvc-output-static-libraries-called-libfooa)
-if is_windows and cc.get_id() == 'msvc'
+if is_windows and cc.get_id() in ['msvc', 'clang-cl']
   name_prefix_staticlib = ''
   name_suffix_staticlib = 'lib'
 else
@@ -71,7 +71,7 @@ endif
 blas_order = get_option('blas-order')
 if blas_order == ['auto']
   blas_order = []
-  if host_machine.system() == 'darwin'
+  if host_machine.system() in ['darwin', 'ios']
     blas_order += 'accelerate'
   endif
   if host_machine.cpu_family() == 'x86_64'
@@ -82,7 +82,7 @@ endif
 lapack_order = get_option('lapack-order')
 if lapack_order == ['auto']
   lapack_order = []
-  if host_machine.system() == 'darwin'
+  if host_machine.system() in ['darwin', 'ios']
     lapack_order += 'accelerate'
   endif
   if host_machine.cpu_family() == 'x86_64'
@@ -214,6 +214,52 @@ else
   lapack_dep = declare_dependency(dependencies: [lapack, blas_dep])
 endif
 
+# Determine whether it is necessary to link libatomic with gcc. This
+# could be the case on 32-bit platforms when atomic operations are used
+# on 64-bit types or on RISC-V using 8-bit atomics, so we explicitly
+# check for both 64 bit and 8 bit operations.  The check is adapted from
+# SciPy, who copied it from Mesa.
+null_dep = dependency('', required : false)
+atomic_dep = null_dep
+code_non_lockfree = '''
+  #include <stdint.h>
+  #include <stddef.h>
+  int main() {
+   struct {
+     void *p;
+     uint8_t u8v;
+   } x;
+   x.p = NULL;
+   x.u8v = 0;
+   uint8_t res = __atomic_load_n(&x.u8v, __ATOMIC_SEQ_CST);
+   __atomic_store_n(&x.u8v, 1, __ATOMIC_SEQ_CST);
+   void *p = __atomic_load_n((void **)x.p, __ATOMIC_SEQ_CST);
+   __atomic_store_n((void **)x.p, NULL, __ATOMIC_SEQ_CST);
+   return 0;
+   }
+'''
+if cc.get_id() != 'msvc'
+  if not cc.links(
+      code_non_lockfree,
+      name : 'Check atomic builtins without -latomic'
+    )
+    atomic_dep = cc.find_library('atomic', required: false)
+    if atomic_dep.found()
+      # We're not sure that with `-latomic` things will work for all compilers,
+      # so verify and only keep libatomic as a dependency if this works. It is
+      # possible the build will fail later otherwise - unclear under what
+      # circumstances (compilers, runtimes, etc.) exactly and this may need to
+      # be extended when support is added for new CPUs
+      if not cc.links(
+          code_non_lockfree,
+          dependencies: atomic_dep,
+          name : 'Check atomic builtins with -latomic'
+        )
+        atomic_dep = null_dep
+      endif
+    endif
+  endif
+endif
 
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
 __init__py = fs.copyfile('__init__.py')
@@ -226,20 +272,26 @@ python_sources = [
   '__init__.pxd',
   '__init__.py',
   '__init__.pyi',
+  '__config__.pyi',
+  '_array_api_info.py',
+  '_array_api_info.pyi',
   '_configtool.py',
+  '_configtool.pyi',
   '_distributor_init.py',
+  '_distributor_init.pyi',
   '_globals.py',
+  '_globals.pyi',
   '_pytesttester.py',
   '_pytesttester.pyi',
   '_expired_attrs_2_0.py',
+  '_expired_attrs_2_0.pyi',
   'conftest.py',
-  'ctypeslib.py',
-  'ctypeslib.pyi',
   'exceptions.py',
   'exceptions.pyi',
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
+  'matlib.pyi',
   'py.typed',
   'version.pyi',
 ]
@@ -265,7 +317,7 @@ pure_subdirs = [
   '_pyinstaller',
   '_typing',
   '_utils',
-  'compat',
+  'ctypeslib',
   'doc',
   'f2py',
   'lib',
@@ -273,7 +325,6 @@ pure_subdirs = [
   'matrixlib',
   'polynomial',
   'testing',
-  'tests',
   'typing',
   'rec',
   'char',
@@ -312,13 +363,33 @@ else
 endif
 
 foreach subdir: pure_subdirs
-  install_subdir(subdir, install_dir: np_dir, install_tag: 'python-runtime')
+  install_subdir(
+    subdir,
+    install_dir: np_dir,
+    install_tag: 'python-runtime',
+    exclude_directories: ['tests', '__pycache__']
+  )
+  if fs.is_dir(subdir/'tests')
+    install_subdir(
+      subdir/'tests',
+      install_dir: np_dir/subdir,
+      install_tag: 'tests',
+      exclude_directories: ['__pycache__']
+    )
+  endif
 endforeach
+
+install_subdir(
+  'tests',
+  install_dir: np_dir,
+  install_tag: 'tests',
+  exclude_directories: ['__pycache__']
+)
 
 compilers = {
   'C': cc,
   'CPP': cpp,
-  'CYTHON': meson.get_compiler('cython')
+  'CYTHON': cy,
 }
 
 machines = {
@@ -352,7 +423,7 @@ foreach name, machine : machines
   conf_data.set(name + '_CPU_SYSTEM', machine.system())
 endforeach
 
-conf_data.set('CROSS_COMPILED', meson.is_cross_build())
+conf_data.set('CROSS_COMPILED', meson.is_cross_build() ? 'True' : 'False')
 
 # Python information
 conf_data.set('PYTHON_PATH', py.full_path())
@@ -362,19 +433,19 @@ conf_data.set('PYTHON_VERSION', py.language_version())
 # `np.show_config()`; needs some special handling for the case BLAS was found
 # but CBLAS not (and hence BLAS was also disabled)
 dependency_map = {
-  'LAPACK': lapack_dep,
+  'LAPACK': lapack,
 }
 if have_blas
   dependency_map += {'BLAS': blas}
 else
   conf_data.set('BLAS_NAME', blas_name)
-  conf_data.set('BLAS_FOUND', false)
+  conf_data.set('BLAS_FOUND', 'False')
 endif
 
 
 foreach name, dep : dependency_map
   conf_data.set(name + '_NAME', dep.name())
-  conf_data.set(name + '_FOUND', dep.found())
+  conf_data.set(name + '_FOUND', dep.found() ? 'True' : 'False')
   if dep.found()
     conf_data.set(name + '_VERSION', dep.version())
     conf_data.set(name + '_TYPE_NAME', dep.type_name())

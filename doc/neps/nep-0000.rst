@@ -146,7 +146,8 @@ thread in the mailing list archives.
 
 NEPs can also be ``Superseded`` by a different NEP, rendering the
 original obsolete.  The ``Replaced-By`` and ``Replaces`` headers
-should be added to the original and new NEPs respectively.
+containing references to the original and new NEPs, like
+``:ref:`NEP#number``` should be added respectively.
 
 Process NEPs may also have a status of ``Active`` if they are never
 meant to be completed, e.g. NEP 0 (this NEP).

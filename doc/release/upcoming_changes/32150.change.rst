@@ -1,0 +1,3 @@
+* ``ndarray.byteswap`` now supports dtypes that have no defined byte order
+  (e.g. when ``dtype.byteorder == "|"``). Such values are left unchanged,
+  including when they occur in structured dtypes.

@@ -62,6 +62,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <Python.h>
+
 /* static char const rcsid[] =
   "@(#) $Jeannot: randomkit.c,v 1.28 2005/07/21 22:14:09 js Exp $"; */
 
@@ -135,7 +137,7 @@
 #define RK_DEV_RANDOM "/dev/random"
 #endif
 
-char *rk_strerror[RK_ERR_MAX] = {"no error", "random device unvavailable"};
+char *rk_strerror[RK_ERR_MAX] = {"no error", "random device unavailable"};
 
 /* static functions */
 static unsigned long rk_hash(unsigned long key);

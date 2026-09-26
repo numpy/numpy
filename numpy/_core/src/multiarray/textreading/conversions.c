@@ -13,6 +13,7 @@
 #include "conversions.h"
 #include "str_to_int.h"
 
+#include "alloc.h"
 #include "array_coercion.h"
 
 
@@ -63,20 +64,13 @@ double_from_ucs4(
         return -1;  /* empty or only whitespace: not a floating point number */
     }
 
-    /* We convert to ASCII for the Python parser, use stack if small: */
-    char stack_buf[128];
-    char *heap_buf = NULL;
-    char *ascii = stack_buf;
-
     size_t str_len = end - str + 1;
-    if (str_len > 128) {
-        heap_buf = PyMem_MALLOC(str_len);
-        if (heap_buf == NULL) {
-            PyErr_NoMemory();
-            return -1;
-        }
-        ascii = heap_buf;
+    /* We convert to ASCII for the Python parser, use stack if small: */
+    NPY_ALLOC_WORKSPACE(ascii, char, 128, str_len);
+    if (ascii == NULL) {
+        return -1;
     }
+
     char *c = ascii;
     for (; str < end; str++, c++) {
         if (NPY_UNLIKELY(*str >= 128)) {
@@ -93,7 +87,7 @@ double_from_ucs4(
     /* Rewind `end` to the first UCS4 character not parsed: */
     end = end - (c - end_parsed);
 
-    PyMem_FREE(heap_buf);
+    npy_free_workspace(ascii);
 
     if (*result == -1. && PyErr_Occurred()) {
         return -1;

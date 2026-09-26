@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
+
 import numpy as np
 
 c16 = np.complex128()
@@ -18,10 +19,10 @@ td = np.timedelta64(0, "D")
 
 b_ = np.bool()
 
-b = bool()
-c = complex()
-f = float()
-i = int()
+b = False
+c = 0j
+f = 0.0
+i = 0
 
 SEQ = (0, 1, 2, 3, 4)
 
@@ -30,8 +31,11 @@ AR_u: np.ndarray[Any, np.dtype[np.uint32]] = np.array([1], dtype=np.uint32)
 AR_i: np.ndarray[Any, np.dtype[np.int_]] = np.array([1])
 AR_f: np.ndarray[Any, np.dtype[np.float64]] = np.array([1.0])
 AR_c: np.ndarray[Any, np.dtype[np.complex128]] = np.array([1.0j])
-AR_m: np.ndarray[Any, np.dtype[np.timedelta64]] = np.array([np.timedelta64("1")])
-AR_M: np.ndarray[Any, np.dtype[np.datetime64]] = np.array([np.datetime64("1")])
+AR_S: np.ndarray[Any, np.dtype[np.bytes_]] = np.array([b"a"], "S")
+AR_T = cast(np.ndarray[Any, np.dtypes.StringDType], np.array(["a"], "T"))
+AR_U: np.ndarray[Any, np.dtype[np.str_]] = np.array(["a"], "U")
+AR_m: np.ndarray[Any, np.dtype[np.timedelta64]] = np.array([np.timedelta64("1", "s")])
+AR_M: np.ndarray[Any, np.dtype[np.datetime64]] = np.array([np.datetime64("1", "s")])
 AR_O: np.ndarray[Any, np.dtype[np.object_]] = np.array([1], dtype=object)
 
 # Arrays
@@ -66,6 +70,17 @@ AR_c > AR_i
 AR_c > AR_f
 AR_c > AR_c
 
+AR_S > AR_S
+AR_S > b""
+
+AR_T > AR_T
+AR_T > AR_U
+AR_T > ""
+
+AR_U > AR_U
+AR_U > AR_T
+AR_U > ""
+
 AR_m > AR_b
 AR_m > AR_u
 AR_m > AR_i
@@ -84,11 +99,11 @@ AR_O > 1
 dt > dt
 
 td > td
-td > i
-td > i4
-td > i8
+td > i  # type: ignore[deprecated]
+td > i4  # type: ignore[deprecated]
+td > i8  # type: ignore[deprecated]
 td > AR_i
-td > SEQ
+td > SEQ  # type: ignore[deprecated]
 
 # boolean
 

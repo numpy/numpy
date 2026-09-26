@@ -1,16 +1,13 @@
-import sys
-from typing import Any
+from typing import assert_type
 
 import numpy as np
-
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
 
 f: float
 f8: np.float64
 c8: np.complex64
+c16: np.complex128
+
+_dtype_c16: np.dtype[np.complex128]
 
 i: int
 i8: np.int64
@@ -19,10 +16,12 @@ u4: np.uint32
 finfo_f8: np.finfo[np.float64]
 iinfo_i8: np.iinfo[np.int64]
 
-assert_type(np.finfo(f), np.finfo[np.double])
+assert_type(np.finfo(f), np.finfo[np.float64])
 assert_type(np.finfo(f8), np.finfo[np.float64])
 assert_type(np.finfo(c8), np.finfo[np.float32])
-assert_type(np.finfo('f2'), np.finfo[np.floating[Any]])
+assert_type(np.finfo(c16), np.finfo[np.float64])
+assert_type(np.finfo(_dtype_c16), np.finfo[np.float64])
+assert_type(np.finfo("f2"), np.finfo[np.float16])
 
 assert_type(finfo_f8.dtype, np.dtype[np.float64])
 assert_type(finfo_f8.bits, int)
@@ -46,7 +45,8 @@ assert_type(finfo_f8.smallest_subnormal, np.float64)
 assert_type(np.iinfo(i), np.iinfo[np.int_])
 assert_type(np.iinfo(i8), np.iinfo[np.int64])
 assert_type(np.iinfo(u4), np.iinfo[np.uint32])
-assert_type(np.iinfo('i2'), np.iinfo[Any])
+assert_type(np.iinfo("i2"), np.iinfo[np.int16])
+assert_type(np.iinfo("u2"), np.iinfo[np.uint16])
 
 assert_type(iinfo_i8.dtype, np.dtype[np.int64])
 assert_type(iinfo_i8.kind, str)

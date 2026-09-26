@@ -52,6 +52,10 @@ functions may change during the lifetime of the process, each ``ndarray``
 carries with it the functions used at the time of its instantiation, and these
 will be used to reallocate or free the data memory of the instance.
 
+NumPy stores the memory handler state in a :py:mod:`context variable
+<python:contextvars>`, allowing different threads or async tasks to have
+independent configurations. See :ref:`context_local` for more information.
+
 .. c:type:: PyDataMem_Handler
 
     A struct to hold function pointers used to manipulate memory
@@ -134,9 +138,8 @@ A better technique would be to use a ``PyCapsule`` as a base object:
 Example of memory tracing with ``np.lib.tracemalloc_domain``
 ------------------------------------------------------------
 
-Note that since Python 3.6 (or newer), the builtin ``tracemalloc`` module can be used to
-track allocations inside NumPy. NumPy places its CPU memory allocations into the 
-``np.lib.tracemalloc_domain`` domain.
+The builtin ``tracemalloc`` module can be used to track allocations inside NumPy.
+NumPy places its CPU memory allocations into the  ``np.lib.tracemalloc_domain`` domain.
 For additional information, check: https://docs.python.org/3/library/tracemalloc.html.
 
 Here is an example on how to use ``np.lib.tracemalloc_domain``:

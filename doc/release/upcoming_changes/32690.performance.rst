@@ -1,0 +1,6 @@
+Descending sorts and partitions are now SIMD accelerated on x86
+---------------------------------------------------------------
+`numpy.sort`, `numpy.argsort`, `numpy.partition` and `numpy.argpartition`
+with ``descending=True`` no longer fall back to scalar code on x86, and now
+use the same SIMD kernels as the ascending versions for most integer and
+floating point dtypes.  On AVX2 this is 2-9x faster than before.

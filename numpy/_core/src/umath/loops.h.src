@@ -10,6 +10,10 @@
     #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  *****************************************************************************
  **                             BOOLEAN LOOPS                               **
@@ -36,10 +40,8 @@
 typedef struct PyArrayMethod_Context_tag PyArrayMethod_Context;
 typedef struct NpyAuxData_tag NpyAuxData;
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_comparison.dispatch.h"
-#endif
 
+#include "loops_comparison.dispatch.h"
 /**begin repeat
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
  */
@@ -47,10 +49,8 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void BOOL_@kind@,
     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_logical.dispatch.h"
-#endif
 
+#include "loops_logical.dispatch.h"
 /**begin repeat
  * #kind = logical_and, logical_or, logical_not, absolute#
  */
@@ -69,11 +69,9 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
 /**end repeat**/
 
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_autovec.dispatch.h"
-#endif
+#include "loops_autovec.dispatch.h"
 /**begin repeat
- * #kind = isnan, isinf, isfinite#
+ * #kind = isnan, isinf, isfinite, floor, ceil, trunc#
  */
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void BOOL_@kind@,
     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
@@ -85,10 +83,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void BOOL_@kind@,
  *****************************************************************************
  */
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_arithmetic.dispatch.h"
-#endif
-
+#include "loops_arithmetic.dispatch.h"
 /**begin repeat
  * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
            BYTE,  SHORT,  INT,  LONG,  LONGLONG#
@@ -102,10 +97,7 @@ NPY_NO_EXPORT int
 /**end repeat3**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_modulo.dispatch.h"
-#endif
-
+#include "loops_modulo.dispatch.h"
 /**begin repeat
  * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
            BYTE,  SHORT,  INT,  LONG,  LONGLONG#
@@ -118,10 +110,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
 /**end repeat1**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_comparison.dispatch.h"
-#endif
-
+#include "loops_comparison.dispatch.h"
 /**begin repeat
  * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
            BYTE,  SHORT,  INT,  LONG,  LONGLONG#
@@ -135,9 +124,8 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
 /**end repeat**/
 
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_autovec.dispatch.h"
-#endif
+
+#include "loops_autovec.dispatch.h"
 /**begin repeat
  * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
            BYTE,  SHORT,  INT,  LONG,  LONGLONG#
@@ -174,6 +162,12 @@ NPY_NO_EXPORT void
 
 NPY_NO_EXPORT void
 @S@@TYPE@_positive(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+
+/**begin repeat2
+ * #kind = floor, ceil, trunc#
+ */
+#define @S@@TYPE@_@kind@ @S@@TYPE@_positive
+/**end repeat2**/
 
 /**begin repeat2
  * Arithmetic
@@ -224,9 +218,7 @@ LONGLONG_qQ_bool_@kind@(char **args, npy_intp const *dimensions, npy_intp const 
 /**end repeat**/
 
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_unary.dispatch.h"
-#endif
+#include "loops_unary.dispatch.h"
 /**begin repeat
  * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
  *         BYTE,  SHORT,  INT,  LONG,  LONGLONG#
@@ -245,9 +237,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
  **                             FLOAT LOOPS                                 **
  *****************************************************************************
  */
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_unary_fp.dispatch.h"
-#endif
+#include "loops_unary_fp.dispatch.h"
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE#
  */
@@ -259,9 +249,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
 /**end repeat1**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_unary_fp_le.dispatch.h"
-#endif
+#include "loops_unary_fp_le.dispatch.h"
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE#
  */
@@ -273,9 +261,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
 /**end repeat1**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_unary.dispatch.h"
-#endif
+#include "loops_unary.dispatch.h"
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  */
@@ -287,9 +273,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
 /**end repeat1**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_arithm_fp.dispatch.h"
-#endif
+#include "loops_arithm_fp.dispatch.h"
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE#
  */
@@ -306,9 +290,7 @@ NPY_NO_EXPORT int
 /**end repeat1**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_hyperbolic.dispatch.h"
-#endif
+#include "loops_hyperbolic.dispatch.h"
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE#
  */
@@ -321,10 +303,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
 /**end repeat**/
 
 // SVML
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_umath_fp.dispatch.h"
-#endif
-
+#include "loops_umath_fp.dispatch.h"
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE#
  */
@@ -338,6 +317,9 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
 /**end repeat1**/
 /**end repeat**/
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_half.dispatch.h"
+#endif
 /**begin repeat
  * #func = sin, cos, tan, exp, exp2, log, log2, log10, expm1, log1p, cbrt, arcsin, arccos, arctan, sinh, cosh, tanh, arcsinh, arccosh, arctanh#
  */
@@ -360,10 +342,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
 /**end repeat1**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_trigonometric.dispatch.h"
-#endif
-
+#include "loops_trigonometric.dispatch.h"
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE#
  */
@@ -376,9 +355,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@, (
 /**end repeat1**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_exponent_log.dispatch.h"
-#endif
+#include "loops_exponent_log.dispatch.h"
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE#
  */
@@ -391,9 +368,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@, (
 /**end repeat1**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_comparison.dispatch.h"
-#endif
+#include "loops_comparison.dispatch.h"
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE#
  */
@@ -540,9 +515,7 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_autovec.dispatch.h"
-#endif
+#include "loops_autovec.dispatch.h"
 /**begin repeat
  * #TYPE = HALF#
  */
@@ -558,9 +531,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
  **                           COMPLEX LOOPS                                 **
  *****************************************************************************
  */
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_arithm_fp.dispatch.h"
-#endif
+#include "loops_arithm_fp.dispatch.h"
 /**begin repeat
  * #TYPE = CFLOAT, CDOUBLE#
  */
@@ -572,9 +543,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
 /**end repeat1**/
 /**end repeat**/
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_unary_complex.dispatch.h"
-#endif
+#include "loops_unary_complex.dispatch.h"
 /**begin repeat
  * #TYPE = CFLOAT, CDOUBLE#
  */
@@ -771,8 +740,9 @@ TIMEDELTA_md_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
 NPY_NO_EXPORT void
 TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
-NPY_NO_EXPORT void
-TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+#include "loops_arithmetic_timedelta.dispatch.h"
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void TIMEDELTA_mq_m_divide,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
 
 NPY_NO_EXPORT void
 TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -780,8 +750,8 @@ TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
 NPY_NO_EXPORT void
 TIMEDELTA_mm_d_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
-NPY_NO_EXPORT void
-TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void TIMEDELTA_mm_q_floor_divide,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
 
 NPY_NO_EXPORT void
 TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -790,14 +760,11 @@ NPY_NO_EXPORT void
 TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 /* Special case equivalents to above functions */
-#define TIMEDELTA_mq_m_floor_divide TIMEDELTA_mq_m_divide
 #define TIMEDELTA_md_m_floor_divide TIMEDELTA_md_m_divide
 /* #define TIMEDELTA_mm_d_floor_divide TIMEDELTA_mm_d_divide */
 
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_autovec.dispatch.h"
-#endif
+#include "loops_autovec.dispatch.h"
 /**begin repeat
  * #TYPE = TIMEDELTA, DATETIME#
  */
@@ -839,9 +806,7 @@ PyUFunc_OOO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
  *****************************************************************************
  */
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "loops_minmax.dispatch.h"
-#endif
+#include "loops_minmax.dispatch.h"
 
 //---------- Integers ----------
 
@@ -870,10 +835,38 @@ PyUFunc_OOO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
 /**end repeat1**/
 /**end repeat**/
 
+//---------- Fused minimummaximum ----------
+
+/**begin repeat
+ * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         FLOAT, DOUBLE, LONGDOUBLE#
+ */
+ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_minimummaximum,
+   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
+ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT int @TYPE@_minimummaximum_reduce,
+   (PyArrayMethod_Context *context, char *const *data, npy_intp const *dimensions,
+    npy_intp const *strides, NpyAuxData *auxdata))
+/**end repeat**/
+
+/**begin repeat
+ * #TYPE = BOOL, HALF, CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *         DATETIME, TIMEDELTA, OBJECT#
+ */
+NPY_NO_EXPORT void
+@TYPE@_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT int
+@TYPE@_minimummaximum_reduce(PyArrayMethod_Context *context, char *const *data,
+    npy_intp const *dimensions, npy_intp const *strides, NpyAuxData *auxdata);
+/**end repeat**/
+
 /*
  *****************************************************************************
  **                              END LOOPS                                  **
  *****************************************************************************
  */
-
+#ifdef __cplusplus
+}
+#endif
 #endif

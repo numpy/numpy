@@ -11,6 +11,8 @@
 // Enough limit to allow us to use _mm512_i32gather_* and _mm512_i32scatter_*
 #define NPY_SIMD_MAXLOAD_STRIDE32  (0x7fffffff / 16)
 #define NPY_SIMD_MAXSTORE_STRIDE32 (0x7fffffff / 16)
+#define NPY_SIMD_MAXLOAD_STRIDE64  (0x7fffffff / 16)
+#define NPY_SIMD_MAXSTORE_STRIDE64 (0x7fffffff / 16)
 
 typedef __m512i npyv_u8;
 typedef __m512i npyv_s8;

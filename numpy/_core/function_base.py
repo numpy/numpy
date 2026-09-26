@@ -1,14 +1,16 @@
 import functools
-import warnings
+import inspect
 import operator
 import types
+import warnings
 
 import numpy as np
-from . import numeric as _nx
-from .numeric import result_type, nan, asanyarray, ndim
-from numpy._core.multiarray import add_docstring
-from numpy._core._multiarray_umath import _array_converter
 from numpy._core import overrides
+from numpy._core._multiarray_umath import _array_converter
+from numpy._core.multiarray import add_docstring
+
+from . import numeric as _nx
+from .numeric import asanyarray, nan, result_type
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 
@@ -33,13 +35,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     The endpoint of the interval can optionally be excluded.
 
-    .. versionchanged:: 1.16.0
-        Non-scalar `start` and `stop` are now supported.
-
     .. versionchanged:: 1.20.0
         Values are rounded towards ``-inf`` instead of ``0`` when an
         integer ``dtype`` is specified. The old behavior can
-        still be obtained with ``np.linspace(start, stop, num).astype(int)``
+        still be obtained with ``np.linspace(start, stop, num).astype(np.int_)``
 
     Parameters
     ----------
@@ -63,14 +62,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         is inferred from `start` and `stop`. The inferred dtype will never be
         an integer; `float` is chosen even if the arguments would produce an
         array of integers.
-
-        .. versionadded:: 1.9.0
     axis : int, optional
         The axis in the result to store the samples.  Relevant only if start
         or stop are array-like.  By default (0), the samples will be along a
         new axis inserted at the beginning. Use -1 to get an axis at the end.
-
-        .. versionadded:: 1.16.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -101,6 +96,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.linspace(2.0, 3.0, num=5)
     array([2.  , 2.25, 2.5 , 2.75, 3.  ])
     >>> np.linspace(2.0, 3.0, num=5, endpoint=False)
@@ -127,7 +123,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     num = operator.index(num)
     if num < 0:
         raise ValueError(
-            "Number of samples, %s, must be non-negative." % num
+            f"Number of samples, {num}, must be non-negative."
         )
     div = (num - 1) if endpoint else num
 
@@ -141,18 +137,31 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     else:
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
 
-    # Use `dtype=type(dt)` to enforce a floating point evaluation:
-    delta = np.subtract(stop, start, dtype=type(dt))
+    # Equal endpoints (including equal infinities) must produce a zero step,
+    # so skip the subtraction there: `inf - inf` would otherwise yield a
+    # spurious nan and an "invalid value" warning.  Using `where=` avoids the
+    # bad element entirely rather than suppressing warnings globally, so
+    # genuine invalid operations (e.g. mixed infinities) still warn.
+    equal = start == stop
+    # Wrapping delta ensures that ndarray subclasses like astropy's Quantity
+    # can override the subtraction correctly below. See gh-7142.
+    delta = conv.wrap(
+        np.zeros(shape=equal.shape, dtype=type(dt)),
+        to_scalar=False
+    )
+    # Use `dtype=type(dt)` to enforce a floating point evaluation.
+    np.subtract(stop, start, dtype=type(dt), where=~equal, out=delta)
+
+    # Now start the real work, by generating the range of numbers.
     y = _nx.arange(
         0, num, dtype=dt, device=device
-    ).reshape((-1,) + (1,) * ndim(delta))
-
-    # In-place multiplication y *= delta/div is faster, but prevents
-    # the multiplicant from overriding what class is produced, and thus
-    # prevents, e.g. use of Quantities, see gh-7142. Hence, we multiply
-    # in place only for standard scalar types.
+    ).reshape((-1,) + (1,) * equal.ndim)
+    # In-place multiplication y *= delta/div is fastest, but cannot work
+    # if the input and output shapes are not equal, and may fail for
+    # subclasses, where the output needs to be a subclass. Hence, we multiply
+    # in place only if delta is a scalar non-subclassed array.
     if div > 0:
-        _mult_inplace = _nx.isscalar(delta)
+        _mult_inplace = delta.ndim == 0 and type(delta) is np.ndarray
         step = delta / div
         any_step_zero = (
             step == 0 if _mult_inplace else _nx.asanyarray(step == 0).any())
@@ -163,16 +172,15 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
                 y *= delta
             else:
                 y = y * delta
+        elif _mult_inplace:
+            y *= step
         else:
-            if _mult_inplace:
-                y *= step
-            else:
-                y = y * step
+            y = y * step
     else:
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step
         step = nan
-        # Multiply with delta to allow possible override of output class.
+        # Multiply out-of-place in case delta is not scalar or a subclass.
         y = y * delta
 
     y += start
@@ -186,7 +194,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     if integer_dtype:
         _nx.floor(y, out=y)
 
-    y = conv.wrap(y.astype(dtype, copy=False))
+    y = y.astype(dtype, copy=False)
     if retstep:
         return y, step
     else:
@@ -207,9 +215,6 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     In linear space, the sequence starts at ``base ** start``
     (`base` to the power of `start`) and ends with ``base ** stop``
     (see `endpoint` below).
-
-    .. versionchanged:: 1.16.0
-        Non-scalar `start` and `stop` are now supported.
 
     .. versionchanged:: 1.25.0
         Non-scalar 'base` is now supported
@@ -243,9 +248,6 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
         along a new axis inserted at the beginning. Use -1 to get an axis at
         the end.
 
-        .. versionadded:: 1.16.0
-
-
     Returns
     -------
     samples : ndarray
@@ -272,6 +274,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.logspace(2.0, 3.0, num=4)
     array([ 100.        ,  215.443469  ,  464.15888336, 1000.        ])
     >>> np.logspace(2.0, 3.0, num=4, endpoint=False)
@@ -326,9 +329,6 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     This is similar to `logspace`, but with endpoints specified directly.
     Each output sample is a constant multiple of the previous.
 
-    .. versionchanged:: 1.16.0
-        Non-scalar `start` and `stop` are now supported.
-
     Parameters
     ----------
     start : array_like
@@ -353,8 +353,6 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
         or stop are array-like.  By default (0), the samples will be along a
         new axis inserted at the beginning. Use -1 to get an axis at the end.
 
-        .. versionadded:: 1.16.0
-
     Returns
     -------
     samples : ndarray
@@ -378,6 +376,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.geomspace(1, 1000, num=4)
     array([    1.,    10.,   100.,  1000.])
     >>> np.geomspace(1, 1000, num=3, endpoint=False)
@@ -389,9 +388,9 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
     Note that the above may not produce exact integers:
 
-    >>> np.geomspace(1, 256, num=9, dtype=int)
+    >>> np.geomspace(1, 256, num=9, dtype=np.int_)
     array([  1,   2,   4,   7,  16,  32,  63, 127, 256])
-    >>> np.around(np.geomspace(1, 256, num=9)).astype(int)
+    >>> np.around(np.geomspace(1, 256, num=9)).astype(np.int_)
     array([  1,   2,   4,   8,  16,  32,  64, 128, 256])
 
     Negative, decreasing, and complex inputs are allowed:
@@ -474,25 +473,44 @@ def _needs_add_docstring(obj):
 
     This function errs on the side of being overly conservative.
     """
-    Py_TPFLAGS_HEAPTYPE = 1 << 9
+    Py_TPFLAGS_IMMUTABLETYPE = 1 << 8
 
     if isinstance(obj, (types.FunctionType, types.MethodType, property)):
         return False
 
-    if isinstance(obj, type) and obj.__flags__ & Py_TPFLAGS_HEAPTYPE:
-        return False
+    if isinstance(obj, type):
+        # ``__doc__`` is read-only exactly on immutable types: static
+        # types, plus heap types that set ``Py_TPFLAGS_IMMUTABLETYPE``.
+        return bool(obj.__flags__ & Py_TPFLAGS_IMMUTABLETYPE)
 
     return True
 
 
 def _add_docstring(obj, doc, warn_on_python):
+    doc = inspect.cleandoc(doc)
+
     if warn_on_python and not _needs_add_docstring(obj):
         warnings.warn(
-            "add_newdoc was used on a pure-python object {}. "
-            "Prefer to attach it directly to the source."
-            .format(obj),
+            f"add_newdoc was used on a pure-python object {obj}. "
+            "Prefer to attach it directly to the source.",
             UserWarning,
             stacklevel=3)
+
+    # For types, try to assign ``__doc__`` directly (works for heap types).
+    # When that succeeds, ``add_docstring`` only needs to populate
+    # ``__text_signature__`` from any ``"\n--\n\n"`` stub.  Static types
+    # (where ``__doc__`` is read-only) fall through unchanged.
+    if isinstance(obj, type):
+        head, sep, body = doc.partition("\n--\n\n")
+        try:
+            obj.__doc__ = body if sep else doc
+        except Exception:
+            pass  # just assume we should use add_docstring.
+        else:
+            if not sep:
+                return
+            doc = head + sep  # set only text-signature part
+
     try:
         add_docstring(obj, doc)
     except Exception:
@@ -510,10 +528,10 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     ----------
     place : str
         The absolute name of the module to import from
-    obj : str or None
+    obj : str | None
         The name of the object to add documentation to, typically a class or
         function name.
-    doc : {str, Tuple[str, str], List[Tuple[str, str]]}
+    doc : str | tuple[str, str] | list[tuple[str, str]]
         If a string, the documentation to apply to `obj`
 
         If a tuple, then the first element is interpreted as an attribute
@@ -548,12 +566,12 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     """
     new = getattr(__import__(place, globals(), {}, [obj]), obj)
     if isinstance(doc, str):
-        _add_docstring(new, doc.strip(), warn_on_python)
+        if "${ARRAY_FUNCTION_LIKE}" in doc:
+            doc = overrides.get_array_function_like_doc(new, doc)
+        _add_docstring(new, doc, warn_on_python)
     elif isinstance(doc, tuple):
         attr, docstring = doc
-        _add_docstring(getattr(new, attr), docstring.strip(), warn_on_python)
+        _add_docstring(getattr(new, attr), docstring, warn_on_python)
     elif isinstance(doc, list):
         for attr, docstring in doc:
-            _add_docstring(
-                getattr(new, attr), docstring.strip(), warn_on_python
-            )
+            _add_docstring(getattr(new, attr), docstring, warn_on_python)

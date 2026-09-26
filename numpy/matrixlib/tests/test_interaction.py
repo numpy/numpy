@@ -2,15 +2,21 @@
 
 Note that tests with MaskedArray and linalg are done in separate files.
 """
-import pytest
-
 import textwrap
 import warnings
 
+import pytest
+
 import numpy as np
-from numpy.testing import (assert_, assert_equal, assert_raises,
-                           assert_raises_regex, assert_array_equal,
-                           assert_almost_equal, assert_array_almost_equal)
+from numpy.testing import (
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 def test_fancy_indexing():
@@ -225,7 +231,7 @@ def test_nanfunctions_matrices_general():
         assert_(res.shape == (3, 3))
         res = f(mat)
         assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (1, 3*3))
+        assert_(res.shape == (1, 3 * 3))
 
 
 def test_average_matrix():
@@ -238,7 +244,7 @@ def test_average_matrix():
 
     r = np.average(a, axis=0, weights=w)
     assert_equal(type(r), np.matrix)
-    assert_equal(r, [[2.5, 10.0/3]])
+    assert_equal(r, [[2.5, 10.0 / 3]])
 
 
 def test_dot_matrix():
@@ -255,8 +261,8 @@ def test_dot_matrix():
 
 def test_ediff1d_matrix():
     # 2018-04-29: moved here from core.tests.test_arraysetops.
-    assert(isinstance(np.ediff1d(np.matrix(1)), np.matrix))
-    assert(isinstance(np.ediff1d(np.matrix(1), to_begin=1), np.matrix))
+    assert isinstance(np.ediff1d(np.matrix(1)), np.matrix)
+    assert isinstance(np.ediff1d(np.matrix(1), to_begin=1), np.matrix)
 
 
 def test_apply_along_axis_matrix():

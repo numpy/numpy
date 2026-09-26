@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Block(Benchmark):
@@ -76,7 +76,7 @@ class Block2D(Benchmark):
     def setup(self, shape, dtype, n_chunks):
 
         self.block_list = [
-             [np.full(shape=[s//n_chunk for s, n_chunk in zip(shape, n_chunks)],
+             [np.full(shape=[s // n_chunk for s, n_chunk in zip(shape, n_chunks)],
                      fill_value=1, dtype=dtype) for _ in range(n_chunks[1])]
             for _ in range(n_chunks[0])
         ]
@@ -152,3 +152,19 @@ class Kron(Benchmark):
 
     def time_mat_kron(self):
         np.kron(self.large_mat, self.large_mat)
+
+class AtLeast1D(Benchmark):
+    """Benchmarks for np.atleast_1d"""
+
+    def setup(self):
+        self.x = np.array([1, 2, 3])
+        self.zero_d = np.float64(1.)
+
+    def time_atleast_1d(self):
+        np.atleast_1d(self.x, self.x, self.x)
+
+    def time_atleast_1d_reshape(self):
+        np.atleast_1d(self.zero_d, self.zero_d, self.zero_d)
+
+    def time_atleast_1d_single_argument(self):
+        np.atleast_1d(self.x)

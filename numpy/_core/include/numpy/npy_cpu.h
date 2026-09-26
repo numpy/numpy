@@ -18,7 +18,9 @@
  *              NPY_CPU_ARCEL
  *              NPY_CPU_ARCEB
  *              NPY_CPU_RISCV64
+ *              NPY_CPU_RISCV32
  *              NPY_CPU_LOONGARCH
+ *              NPY_CPU_SW_64
  *              NPY_CPU_WASM
  */
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_CPU_H_
@@ -102,28 +104,23 @@
     #define NPY_CPU_ARCEL
 #elif defined(__arc__) && defined(__BIG_ENDIAN__)
     #define NPY_CPU_ARCEB
-#elif defined(__riscv) && defined(__riscv_xlen) && __riscv_xlen == 64
-    #define NPY_CPU_RISCV64
-#elif defined(__loongarch__)
-    #define NPY_CPU_LOONGARCH
-#elif defined(__EMSCRIPTEN__)
+#elif defined(__riscv)
+    #if __riscv_xlen == 64
+	#define NPY_CPU_RISCV64
+    #elif __riscv_xlen == 32
+	#define NPY_CPU_RISCV32
+    #endif
+#elif defined(__loongarch_lp64)
+    #define NPY_CPU_LOONGARCH64
+#elif defined(__sw_64__)
+    #define NPY_CPU_SW_64
+#elif defined(__EMSCRIPTEN__) || defined(__wasm__)
     /* __EMSCRIPTEN__ is defined by emscripten: an LLVM-to-Web compiler */
+    /* __wasm__ is defined by clang when targeting wasm */
     #define NPY_CPU_WASM
 #else
     #error Unknown CPU, please report this to numpy maintainers with \
     information about your platform (OS, CPU and compiler)
-#endif
-
-/*
- * Except for the following architectures, memory access is limited to the natural
- * alignment of data types otherwise it may lead to bus error or performance regression.
- * For more details about unaligned access, see https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt.
-*/
-#if defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64) || defined(__aarch64__) || defined(__powerpc64__)
-    #define NPY_ALIGNMENT_REQUIRED 0
-#endif
-#ifndef NPY_ALIGNMENT_REQUIRED
-    #define NPY_ALIGNMENT_REQUIRED 1
 #endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_CPU_H_ */

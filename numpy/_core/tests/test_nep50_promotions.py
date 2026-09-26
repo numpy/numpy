@@ -6,74 +6,50 @@ is adopted in the main test suite.  A few may be moved elsewhere.
 
 import operator
 
-import numpy as np
-
 import pytest
-import hypothesis
-from hypothesis import strategies
 
-from numpy.testing import assert_array_equal, IS_WASM
-
-
-@pytest.fixture(scope="module", autouse=True)
-def _weak_promotion_enabled():
-    state = np._get_promotion_state()
-    np._set_promotion_state("weak_and_warn")
-    yield
-    np._set_promotion_state(state)
+import numpy as np
+from numpy.testing import assert_array_equal
+from numpy.testing._private.hypothesis_helpers import (
+    HAS_HYPOTHESIS,
+    hypothesis,
+    strategies,
+)
 
 
-@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for fp errors")
 def test_nep50_examples():
-    with pytest.warns(UserWarning, match="result dtype changed"):
-        res = np.uint8(1) + 2
+    res = np.uint8(1) + 2
     assert res.dtype == np.uint8
 
-    with pytest.warns(UserWarning, match="result dtype changed"):
-        res = np.array([1], np.uint8) + np.int64(1)
+    res = np.array([1], np.uint8) + np.int64(1)
     assert res.dtype == np.int64
 
-    with pytest.warns(UserWarning, match="result dtype changed"):
-        res = np.array([1], np.uint8) + np.array(1, dtype=np.int64)
+    res = np.array([1], np.uint8) + np.array(1, dtype=np.int64)
     assert res.dtype == np.int64
 
-    with pytest.warns(UserWarning, match="result dtype changed"):
-        # Note: For "weak_and_warn" promotion state the overflow warning is
-        #       unfortunately not given (because we use the full array path).
-        with np.errstate(over="raise"):
-            res = np.uint8(100) + 200
+    with pytest.warns(RuntimeWarning, match="overflow"):
+        res = np.uint8(100) + 200
     assert res.dtype == np.uint8
 
-    with pytest.warns(Warning) as recwarn:
+    with pytest.warns(RuntimeWarning, match="overflow"):
         res = np.float32(1) + 3e100
 
-    # Check that both warnings were given in the one call:
-    warning = str(recwarn.pop(UserWarning).message)
-    assert warning.startswith("result dtype changed")
-    warning = str(recwarn.pop(RuntimeWarning).message)
-    assert warning.startswith("overflow")
-    assert len(recwarn) == 0  # no further warnings
     assert np.isinf(res)
     assert res.dtype == np.float32
 
-    # Changes, but we don't warn for it (too noisy)
     res = np.array([0.1], np.float32) == np.float64(0.1)
     assert res[0] == False
 
-    # Additional test, since the above silences the warning:
-    with pytest.warns(UserWarning, match="result dtype changed"):
-        res = np.array([0.1], np.float32) + np.float64(0.1)
+    res = np.array([0.1], np.float32) + np.float64(0.1)
     assert res.dtype == np.float64
 
-    with pytest.warns(UserWarning, match="result dtype changed"):
-        res = np.array([1.], np.float32) + np.int64(3)
+    res = np.array([1.], np.float32) + np.int64(3)
     assert res.dtype == np.float64
 
 
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
 def test_nep50_weak_integers(dtype):
     # Avoids warning (different code path for scalars)
-    np._set_promotion_state("weak")
     scalar_type = np.dtype(dtype).type
 
     maxint = int(np.iinfo(dtype).max)
@@ -92,7 +68,6 @@ def test_nep50_weak_integers(dtype):
 @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
 def test_nep50_weak_integers_with_inexact(dtype):
     # Avoids warning (different code path for scalars)
-    np._set_promotion_state("weak")
     scalar_type = np.dtype(dtype).type
 
     too_big_int = int(np.finfo(dtype).max) * 2
@@ -135,7 +110,6 @@ def test_nep50_weak_integers_with_inexact(dtype):
 @pytest.mark.parametrize("op", [operator.add, operator.pow])
 def test_weak_promotion_scalar_path(op):
     # Some additional paths exercising the weak scalars.
-    np._set_promotion_state("weak")
 
     # Integer path:
     res = op(np.uint8(3), 5)
@@ -152,17 +126,13 @@ def test_weak_promotion_scalar_path(op):
 
 
 def test_nep50_complex_promotion():
-    np._set_promotion_state("weak")
-
     with pytest.warns(RuntimeWarning, match=".*overflow"):
         res = np.complex64(3) + complex(2**300)
 
-    assert type(res) == np.complex64
+    assert type(res) is np.complex64
 
 
 def test_nep50_integer_conversion_errors():
-    # Do not worry about warnings here (auto-fixture will reset).
-    np._set_promotion_state("weak")
     # Implementation for error paths is mostly missing (as of writing)
     with pytest.raises(OverflowError, match=".*uint8"):
         np.array([1], np.uint8) + 300
@@ -176,51 +146,24 @@ def test_nep50_integer_conversion_errors():
         np.uint8(1) + -1
 
 
-def test_nep50_integer_regression():
-    # Test the old integer promotion rules.  When the integer is too large,
-    # we need to keep using the old-style promotion.
-    np._set_promotion_state("legacy")
-    arr = np.array(1)
-    assert (arr + 2**63).dtype == np.float64
-    assert (arr[()] + 2**63).dtype == np.float64
-
-
 def test_nep50_with_axisconcatenator():
-    # I promised that this will be an error in the future in the 1.25
-    # release notes;  test this (NEP 50 opt-in makes the deprecation an error).
-    np._set_promotion_state("weak")
-
+    # Concatenate/r_ does not promote, so this has to error:
     with pytest.raises(OverflowError):
         np.r_[np.arange(5, dtype=np.int8), 255]
 
 
 @pytest.mark.parametrize("ufunc", [np.add, np.power])
-@pytest.mark.parametrize("state", ["weak", "weak_and_warn"])
-def test_nep50_huge_integers(ufunc, state):
+def test_nep50_huge_integers(ufunc):
     # Very large integers are complicated, because they go to uint64 or
-    # object dtype.  This tests covers a few possible paths (some of which
-    # cannot give the NEP 50 warnings).
-    np._set_promotion_state(state)
-
+    # object dtype.  This tests covers a few possible paths.
     with pytest.raises(OverflowError):
         ufunc(np.int64(0), 2**63)  # 2**63 too large for int64
 
-    if state == "weak_and_warn":
-        with pytest.warns(UserWarning,
-                match="result dtype changed.*float64.*uint64"):
-            with pytest.raises(OverflowError):
-                ufunc(np.uint64(0), 2**64)
-    else:
-        with pytest.raises(OverflowError):
-            ufunc(np.uint64(0), 2**64)  # 2**64 cannot be represented by uint64
+    with pytest.raises(OverflowError):
+        ufunc(np.uint64(0), 2**64)  # 2**64 cannot be represented by uint64
 
     # However, 2**63 can be represented by the uint64 (and that is used):
-    if state == "weak_and_warn":
-        with pytest.warns(UserWarning,
-                match="result dtype changed.*float64.*uint64"):
-            res = ufunc(np.uint64(1), 2**63)
-    else:
-        res = ufunc(np.uint64(1), 2**63)
+    res = ufunc(np.uint64(1), 2**63)
 
     assert res.dtype == np.uint64
     assert res == ufunc(1, 2**63, dtype=object)
@@ -238,17 +181,82 @@ def test_nep50_huge_integers(ufunc, state):
 
 
 def test_nep50_in_concat_and_choose():
-    np._set_promotion_state("weak_and_warn")
-
-    with pytest.warns(UserWarning, match="result dtype changed"):
-        res = np.concatenate([np.float32(1), 1.], axis=None)
+    res = np.concatenate([np.float32(1), 1.], axis=None)
     assert res.dtype == "float32"
 
-    with pytest.warns(UserWarning, match="result dtype changed"):
-        res = np.choose(1, [np.float32(1), 1.])
+    res = np.choose(1, [np.float32(1), 1.])
     assert res.dtype == "float32"
 
 
+def test_nep50_in_ufunc_at():
+    # Python scalars passed to ufunc.at are weak, like for ufunc.__call__.
+    arr = np.array([2**63], dtype=np.uint64)
+    np.add.at(arr, [0], 1)  # uint64 loop; float64 would round the result
+    assert arr[0] == np.uint64(2**63 + 1)
+
+    arr = np.zeros(3, dtype=np.float32)
+    np.add.at(arr, [0, 0, 1], 0.25)
+    assert_array_equal(arr, np.array([0.5, 0.25, 0], dtype=np.float32),
+                       strict=True)
+
+    arr = np.zeros(2, dtype=np.complex64)
+    np.add.at(arr, [1], 1j)
+    assert_array_equal(arr, np.array([0, 1j], dtype=np.complex64),
+                       strict=True)
+
+    # Huge Python integers work when the resolved dtype can hold the value:
+    arr = np.zeros(1)
+    np.add.at(arr, [0], 2**100)
+    assert arr[0] == 2.0**100
+
+    # NumPy scalars and 0-d arrays remain strongly typed:
+    arr = np.zeros(2, dtype=np.uint8)
+    np.add.at(arr, [0], np.int64(-1))
+    assert arr[0] == 255
+    np.add.at(arr, [1], np.array(-1))
+    assert arr[1] == 255
+
+
+@pytest.mark.parametrize("scalar", [-1, 300, 2**100])
+def test_nep50_in_ufunc_at_overflow(scalar):
+    arr = np.zeros(2, dtype=np.uint8)
+    with pytest.raises(OverflowError):
+        np.add.at(arr, [0], scalar)
+    # the error is raised before any element is modified
+    assert arr[0] == 0
+
+
+@pytest.mark.parametrize("scalar,expected", [
+    (1, "float32"), (1., "float32"), (1j, "complex64")])
+def test_nep50_in_ufunc_outer(scalar, expected):
+    # gh-32076: outer used to convert Python scalars to arrays, making them
+    # strongly typed.
+    arr = np.arange(6, dtype="float32").reshape(3, 2)
+
+    res = np.add.outer(scalar, arr)
+    assert res.dtype == expected
+    assert_array_equal(res, np.add(scalar, arr))
+
+    res = np.add.outer(arr, scalar)
+    assert res.dtype == expected
+    assert_array_equal(res, np.add(arr, scalar))
+
+
+def test_nep50_in_ufunc_outer_strong_operands():
+    # gh-32076: NumPy scalars and 0-d arrays remain strongly typed.
+    arr = np.arange(6, dtype="float32").reshape(3, 2)
+    assert np.add.outer(np.float64(1), arr).dtype == "float64"
+    assert np.add.outer(np.array(1.), arr).dtype == "float64"
+
+
+def test_nep50_in_ufunc_outer_huge_integer():
+    # gh-32076: a weak Python int stays weak, so a huge one overflows here
+    # rather than silently going to object dtype (matching ufunc.__call__).
+    with pytest.raises(OverflowError):
+        np.add.outer(2**100, 1)
+
+
+@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
 @pytest.mark.parametrize("expected,dtypes,optional_dtypes", [
         (np.float32, [np.float32],
             [np.float16, 0.0, np.uint16, np.int16, np.int8, 0]),
@@ -261,8 +269,6 @@ def test_nep50_in_concat_and_choose():
         ])
 @hypothesis.given(data=strategies.data())
 def test_expected_promotion(expected, dtypes, optional_dtypes, data):
-    np._set_promotion_state("weak")
-
     # Sample randomly while ensuring "dtypes" is always present:
     optional = data.draw(strategies.lists(
             strategies.sampled_from(dtypes + optional_dtypes)))
@@ -277,13 +283,11 @@ def test_expected_promotion(expected, dtypes, optional_dtypes, data):
         [np.int8, np.int16, np.int32, np.int64,
          np.uint8, np.uint16, np.uint32, np.uint64])
 @pytest.mark.parametrize("other_val",
-        [-2*100, -1, 0, 9, 10, 11, 2**63, 2*100])
+        [-2 * 100, -1, 0, 9, 10, 11, 2**63, 2 * 100])
 @pytest.mark.parametrize("comp",
         [operator.eq, operator.ne, operator.le, operator.lt,
          operator.ge, operator.gt])
 def test_integer_comparison(sctype, other_val, comp):
-    np._set_promotion_state("weak")
-
     # Test that comparisons with integers (especially out-of-bound) ones
     # works correctly.
     val_obj = 10
@@ -301,12 +305,24 @@ def test_integer_comparison(sctype, other_val, comp):
     assert_array_equal(comp(other_val, val_obj), comp(other_val, val))
 
 
+@pytest.mark.parametrize("arr", [
+    np.ones((100, 100), dtype=np.uint8)[::2],  # not trivially iterable
+    np.ones(20000, dtype=">u4"),  # cast and >buffersize
+    np.ones(100, dtype=">u4"),  # fast path compatible with cast
+])
+def test_integer_comparison_with_cast(arr):
+    # Similar to above, but mainly test a few cases that cover the slow path
+    # the test is limited to unsigned ints and -1 for simplicity.
+    res = arr >= -1
+    assert_array_equal(res, np.ones_like(arr, dtype=bool))
+    res = arr < -1
+    assert_array_equal(res, np.zeros_like(arr, dtype=bool))
+
+
 @pytest.mark.parametrize("comp",
         [np.equal, np.not_equal, np.less_equal, np.less,
          np.greater_equal, np.greater])
 def test_integer_integer_comparison(comp):
-    np._set_promotion_state("weak")
-
     # Test that the NumPy comparison ufuncs work with large Python integers
     assert comp(2**200, -2**200) == comp(2**200, -2**200, dtype=object)
 

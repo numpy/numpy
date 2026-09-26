@@ -1,7 +1,5 @@
 #cython: binding=True
 
-from cpython.pycapsule cimport PyCapsule_New
-
 import numpy as np
 cimport numpy as np
 
@@ -54,8 +52,8 @@ cdef double philox_double(void*st) noexcept nogil:
     return uint64_to_double(philox_next64(<philox_state *> st))
 
 cdef class Philox(BitGenerator):
-    """
-    Philox(seed=None, counter=None, key=None)
+    # the first line is used to populate `__text_signature__`
+    """Philox(seed=None, counter=None, key=None)\n--
 
     Container for the Philox (4x64) pseudo-random number generator.
 
@@ -93,14 +91,14 @@ cdef class Philox(BitGenerator):
     the sequence in increments of :math:`2^{128}`. These features allow
     multiple non-overlapping sequences to be generated.
 
-    ``Philox`` provides a capsule containing function pointers that produce
+    `Philox` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers. These are not
-    directly consumable in Python and must be consumed by a ``Generator``
+    directly consumable in Python and must be consumed by a `Generator`
     or similar object that supports low-level access.
 
     **State and Seeding**
 
-    The ``Philox`` state vector consists of a 256-bit value encoded as
+    The `Philox` state vector consists of a 256-bit value encoded as
     a 4-element uint64 array and a 128-bit value encoded as a 2-element uint64
     array. The former is a counter which is incremented by 1 for every 4 64-bit
     randoms produced. The second is a key which determined the sequence
@@ -122,10 +120,10 @@ cdef class Philox(BitGenerator):
     >>> sg = SeedSequence(1234)
     >>> rg = [Generator(Philox(s)) for s in sg.spawn(10)]
 
-    ``Philox`` can be used in parallel applications by calling the ``jumped``
-    method  to advances the state as-if :math:`2^{128}` random numbers have
-    been generated. Alternatively, ``advance`` can be used to advance the
-    counter for any positive step in [0, 2**256). When using ``jumped``, all
+    `Philox` can be used in parallel applications by calling the :meth:`jumped`
+    method to advance the state as-if :math:`2^{128}` random numbers have
+    been generated. Alternatively, :meth:`advance` can be used to advance the
+    counter for any positive step in [0, 2**256). When using :meth:`jumped`, all
     generators should be chained to ensure that the segments come from the same
     sequence.
 
@@ -136,7 +134,7 @@ cdef class Philox(BitGenerator):
     ...    rg.append(Generator(bit_generator))
     ...    bit_generator = bit_generator.jumped()
 
-    Alternatively, ``Philox`` can be used in parallel applications by using
+    Alternatively, `Philox` can be used in parallel applications by using
     a sequence of distinct keys where each instance uses different key.
 
     >>> key = 2**96 + 2**33 + 2**17 + 2**9
@@ -144,7 +142,7 @@ cdef class Philox(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``Philox`` makes a guarantee that a fixed ``seed`` will always produce
+    `Philox` makes a guarantee that a fixed ``seed`` will always produce
     the same random integer stream.
 
     Examples
@@ -196,7 +194,7 @@ cdef class Philox(BitGenerator):
 
     cdef _reset_state_variables(self):
         cdef philox_state *rng_state = &self.rng_state
-         
+
         rng_state[0].has_uint32 = 0
         rng_state[0].uinteger = 0
         rng_state[0].buffer_pos = PHILOX_BUFFER_SIZE
@@ -217,20 +215,21 @@ cdef class Philox(BitGenerator):
         ctr = np.empty(4, dtype=np.uint64)
         key = np.empty(2, dtype=np.uint64)
         buffer = np.empty(PHILOX_BUFFER_SIZE, dtype=np.uint64)
-        for i in range(4):
-            ctr[i] = self.rng_state.ctr.v[i]
-            if i < 2:
-                key[i] = self.rng_state.key.v[i]
-        for i in range(PHILOX_BUFFER_SIZE):
-            buffer[i] = self.rng_state.buffer[i]
+        with self.lock:
+            for i in range(4):
+                ctr[i] = self.rng_state.ctr.v[i]
+                if i < 2:
+                    key[i] = self.rng_state.key.v[i]
+            for i in range(PHILOX_BUFFER_SIZE):
+                buffer[i] = self.rng_state.buffer[i]
 
-        state = {'counter': ctr, 'key': key}
-        return {'bit_generator': self.__class__.__name__,
-                'state': state,
-                'buffer': buffer,
-                'buffer_pos': self.rng_state.buffer_pos,
-                'has_uint32': self.rng_state.has_uint32,
-                'uinteger': self.rng_state.uinteger}
+            state = {'counter': ctr, 'key': key}
+            return {'bit_generator': self.__class__.__name__,
+                    'state': state,
+                    'buffer': buffer,
+                    'buffer_pos': self.rng_state.buffer_pos,
+                    'has_uint32': self.rng_state.has_uint32,
+                    'uinteger': self.rng_state.uinteger}
 
     @state.setter
     def state(self, value):
@@ -238,18 +237,18 @@ cdef class Philox(BitGenerator):
             raise TypeError('state must be a dict')
         bitgen = value.get('bit_generator', '')
         if bitgen != self.__class__.__name__:
-            raise ValueError('state must be for a {0} '
-                             'PRNG'.format(self.__class__.__name__))
-        for i in range(4):
-            self.rng_state.ctr.v[i] = <uint64_t> value['state']['counter'][i]
-            if i < 2:
-                self.rng_state.key.v[i] = <uint64_t> value['state']['key'][i]
-        for i in range(PHILOX_BUFFER_SIZE):
-            self.rng_state.buffer[i] = <uint64_t> value['buffer'][i]
+            raise ValueError(f'state must be for a {self.__class__.__name__} PRNG')
+        with self.lock:
+            for i in range(4):
+                self.rng_state.ctr.v[i] = <uint64_t> value['state']['counter'][i]
+                if i < 2:
+                    self.rng_state.key.v[i] = <uint64_t> value['state']['key'][i]
+            for i in range(PHILOX_BUFFER_SIZE):
+                self.rng_state.buffer[i] = <uint64_t> value['buffer'][i]
 
-        self.rng_state.has_uint32 = value['has_uint32']
-        self.rng_state.uinteger = value['uinteger']
-        self.rng_state.buffer_pos = value['buffer_pos']
+            self.rng_state.has_uint32 = value['has_uint32']
+            self.rng_state.uinteger = value['uinteger']
+            self.rng_state.buffer_pos = value['buffer_pos']
 
     cdef jump_inplace(self, iter):
         """
@@ -310,7 +309,7 @@ cdef class Philox(BitGenerator):
 
         Notes
         -----
-        Advancing a RNG updates the underlying RNG state as-if a given
+        Advancing an RNG updates the underlying RNG state as-if a given
         number of calls to the underlying RNG have been made. In general
         there is not a one-to-one relationship between the number output
         random values from a particular distribution and the number of
@@ -318,7 +317,7 @@ cdef class Philox(BitGenerator):
 
         * The random values are simulated using a rejection-based method
           and so, on average, more than one value from the underlying
-          RNG is required to generate an single draw.
+          RNG is required to generate a single draw.
         * The number of bits required to generate a simulated value
           differs from the number of bits generated by the underlying
           RNG.  For example, two 16-bit integer values can be simulated
@@ -331,6 +330,7 @@ cdef class Philox(BitGenerator):
 
         cdef np.ndarray delta_a
         delta_a = int_to_array(delta, 'step', 256, 64)
-        philox_advance(<uint64_t *> delta_a.data, &self.rng_state)
-        self._reset_state_variables()
+        with self.lock:
+            philox_advance(<uint64_t *> delta_a.data, &self.rng_state)
+            self._reset_state_variables()
         return self

@@ -1,0 +1,22 @@
+[package.build]
+source.path = "../.."
+flags = ["asan"]
+
+[package.build.backend]
+name = "pixi-build-python"
+version = "*"
+
+[package.build.config]
+extra-input-globs = ["**/*.c.src"]
+compilers = ["c", "cxx"]
+env.ASAN_OPTIONS = "detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1:use_sigaltstack=0"
+extra-args = ["-Csetup-args=-Db_sanitize=address", "-Csetup-args=-Dbuildtype=debug"] 
+
+[package.host-dependencies]
+python.flags = ["asan"]
+python.git = "https://github.com/python/cpython"
+python.subdirectory = "Tools/pixi-packages"
+python.rev = "847d099efa4785658ba9bd3163e35cb4ae742f6d"
+
+meson-python = "*"
+cython = "*"

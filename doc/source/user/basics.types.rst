@@ -35,7 +35,26 @@ See :ref:`arrays.dtypes.constructing` for more information about specifying and
 constructing data type objects, including how to specify parameters like the
 byte order.
 
-To convert the type of an array, use the .astype() method. For example: ::
+To determine the type of an array, look at the dtype attribute::
+
+    >>> z.dtype
+    dtype('uint8')
+
+dtype objects also contain information about the type, such as its bit-width
+and its byte-order.  The data type can also be used indirectly to query
+properties of the type, such as whether it is an integer::
+
+    >>> d = np.dtype(np.int64)
+    >>> d
+    dtype('int64')
+
+    >>> np.issubdtype(d, np.integer)
+    True
+
+    >>> np.issubdtype(d, np.floating)
+    False
+
+To convert the type of an array, use the .astype() method. For example::
 
     >>> z.astype(np.float64)                 #doctest: +NORMALIZE_WHITESPACE
     array([0.,  1.,  2.])
@@ -47,24 +66,20 @@ instead of `numpy.float64`.  NumPy knows that
 :class:`complex` is `numpy.complex128`.  The other data-types do not have
 Python equivalents.
 
-To determine the type of an array, look at the dtype attribute::
+Sometimes the conversion can overflow, for instance when converting a `numpy.int64` value
+300 to `numpy.int8`. NumPy follows C casting rules, so that value would overflow and
+become 44 ``(300 - 256)``. If you wish to avoid such overflows, you can specify that the
+overflow action fail by using ``same_value`` for the ``casting`` argument (see also
+:ref:`overflow-errors`)::
 
-    >>> z.dtype
-    dtype('uint8')
+    >>> w = np.array([300], dtype=np.int64)
+    >>> w.astype(np.int8)
+    array([44], dtype=int8)
+    >>> w.astype(np.int8, casting="same_value")
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ValueError: could not cast 'same_value' long to byte
 
-dtype objects also contain information about the type, such as its bit-width
-and its byte-order.  The data type can also be used indirectly to query
-properties of the type, such as whether it is an integer::
-
-    >>> d = np.dtype(int64)
-    >>> d
-    dtype('int64')
-
-    >>> np.issubdtype(d, np.integer)
-    True
-
-    >>> np.issubdtype(d, np.floating)
-    False
 
 Numerical Data Types
 --------------------
@@ -84,7 +99,7 @@ Data Types for Strings and Bytes
 --------------------------------
 
 In addition to numerical types, NumPy also supports storing unicode strings, via
-the `numpy.str_` dtype (``U`` character code), null-terminated byte sequences via
+the `numpy.str_` dtype (``U`` character code), null-padded byte sequences via
 `numpy.bytes_` (``S`` character code), and arbitrary byte sequences, via
 `numpy.void` (``V`` character code).
 
@@ -123,7 +138,7 @@ nulls::
   >>> x = [b"hello\0\0", b"world"]
   >>> a = np.array(x, dtype="S7")
   >>> print(a[0])
-  b"hello"
+  b'hello'
   >>> a[0] == x[0]
   False
 
@@ -142,8 +157,8 @@ Advanced types, not listed above, are explored in section
 
 .. _canonical-python-and-c-types:
 
-Relationship Between NumPy Data Types and C Data Data Types
-===========================================================
+Relationship Between NumPy Data Types and C Data Types
+======================================================
 
 NumPy provides both bit sized type names and names based on the names of C types.
 Since the definition of C types are platform dependent, this means the explicitly
@@ -217,7 +232,7 @@ confusion with builtin python type names, such as `numpy.bool_`.
     * - N/A
       - ``'P'``
       - ``uintptr_t``
-      - Guaranteed to hold pointers. Character code only (Python and C).
+      - Guaranteed to hold pointers without sign. Character code only (Python and C).
 
     * - `numpy.int32` or `numpy.int64`
       - `numpy.long`
@@ -314,7 +329,7 @@ but gives -1486618624 (incorrect) for a 32-bit integer.
     >>> np.power(100, 9, dtype=np.int64)
     1000000000000000000
     >>> np.power(100, 9, dtype=np.int32)
-    -1486618624
+    np.int32(-1486618624)
 
 The behaviour of NumPy and Python integer types differs significantly for
 integer overflows and may confuse users expecting NumPy integers to behave
@@ -341,6 +356,30 @@ range of possible values.
     0
     >>> np.power(100, 100, dtype=np.float64)
     1e+200
+
+Floating point precision
+========================
+
+Many functions in NumPy, especially those in `numpy.linalg`, involve floating-point
+arithmetic, which can introduce small inaccuracies due to the way computers 
+represent decimal numbers. For instance, when performing basic arithmetic operations 
+involving floating-point numbers:
+
+    >>> 0.3 - 0.2 - 0.1  # This does not equal 0 due to floating-point precision
+    -2.7755575615628914e-17
+
+To handle such cases, it's advisable to use functions like `np.isclose` to compare 
+values, rather than checking for exact equality:
+
+    >>> np.isclose(0.3 - 0.2 - 0.1, 0, rtol=1e-05)  # Check for closeness to 0
+    True
+
+In this example, `np.isclose` accounts for the minor inaccuracies that occur in 
+floating-point calculations by applying a relative tolerance, ensuring that results
+within a small threshold are considered close.
+
+For information about precision in calculations, see `Floating-Point Arithmetic <https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html>`_.
+
 
 Extended precision
 ==================

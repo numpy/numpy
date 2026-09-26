@@ -13,38 +13,42 @@ or distributed).
 ------------------------
 
 NumPy allows you to spawn new (with very high probability) independent
-`~BitGenerator` and `~Generator` instances via their ``spawn()`` method.
-This spawning is implemented by the `~SeedSequence` used for initializing
+`BitGenerator` and `Generator` instances via their ``spawn()`` method.
+This spawning is implemented by the `SeedSequence` used for initializing
 the bit generators random stream.
 
-`~SeedSequence` `implements an algorithm`_ to process a user-provided seed,
+`SeedSequence` `implements an algorithm`_ to process a user-provided seed,
 typically as an integer of some size, and to convert it into an initial state for
-a `~BitGenerator`. It uses hashing techniques to ensure that low-quality seeds
+a `BitGenerator`. It uses hashing techniques to ensure that low-quality seeds
 are turned into high quality initial states (at least, with very high
 probability).
 
-For example, `MT19937` has a state consisting of 624
-`uint32` integers. A naive way to take a 32-bit integer seed would be to just set
+For example, `MT19937` has a state consisting of 624 ``uint32`` 
+integers. A naive way to take a 32-bit integer seed would be to just set
 the last element of the state to the 32-bit seed and leave the rest 0s. This is
 a valid state for `MT19937`, but not a good one. The Mersenne Twister
 algorithm `suffers if there are too many 0s`_. Similarly, two adjacent 32-bit
 integer seeds (i.e. ``12345`` and ``12346``) would produce very similar
 streams.
 
-`~SeedSequence` avoids these problems by using successions of integer hashes
+`SeedSequence` avoids these problems by using successions of integer hashes
 with good `avalanche properties`_ to ensure that flipping any bit in the input
 has about a 50% chance of flipping any bit in the output. Two input seeds that
 are very close to each other will produce initial states that are very far
 from each other (with very high probability). It is also constructed in such
 a way that you can provide arbitrary-sized integers or lists of integers.
-`~SeedSequence` will take all of the bits that you provide and mix them
-together to produce however many bits the consuming `~BitGenerator` needs to
+`SeedSequence` will take all of the bits that you provide and mix them
+together to produce however many bits the consuming `BitGenerator` needs to
 initialize itself.
 
 These properties together mean that we can safely mix together the usual
-user-provided seed with simple incrementing counters to get `~BitGenerator`
+user-provided seed with simple incrementing counters to get `BitGenerator`
 states that are (to very high probability) independent of each other. We can
 wrap this together into an API that is easy to use and difficult to misuse.
+Note that while `SeedSequence` attempts to solve many of the issues related to
+user-provided small seeds, we still :ref:`recommend<recommend-secrets-randbits>`
+using :py:func:`secrets.randbits` to generate seeds with 128 bits of entropy to
+avoid the remaining biases introduced by human-chosen seeds.
 
 .. code-block:: python
 
@@ -58,7 +62,7 @@ wrap this together into an API that is easy to use and difficult to misuse.
 
 .. end_block
 
-For convenience the direct use of `~SeedSequence` is not necessary.
+For convenience the direct use of `SeedSequence` is not necessary.
 The above ``streams`` can be spawned directly from a parent generator
 via `~Generator.spawn`:
 
@@ -70,7 +74,7 @@ via `~Generator.spawn`:
 .. end_block
 
 Child objects can also spawn to make grandchildren, and so on.
-Each child has a `~SeedSequence` with its position in the tree of spawned
+Each child has a `SeedSequence` with its position in the tree of spawned
 child objects mixed in with the user-provided seed to generate independent
 (with very high probability) streams.
 
@@ -88,7 +92,7 @@ Python has increasingly-flexible mechanisms for parallelization available, and
 this scheme fits in very well with that kind of use.
 
 Using this scheme, an upper bound on the probability of a collision can be
-estimated if one knows the number of streams that you derive. `~SeedSequence`
+estimated if one knows the number of streams that you derive. `SeedSequence`
 hashes its inputs, both the seed and the spawn-tree-path, down to a 128-bit
 pool by default. The probability that there is a collision in
 that pool, pessimistically-estimated ([1]_), will be about :math:`n^2*2^{-128}` where
@@ -106,7 +110,7 @@ territory ([2]_).
 .. [2] In this calculation, we can mostly ignore the amount of numbers drawn from each
        stream. See :ref:`upgrading-pcg64` for the technical details about
        `PCG64`. The other PRNGs we provide have some extra protection built in
-       that avoids overlaps if the `~SeedSequence` pools differ in the
+       that avoids overlaps if the `SeedSequence` pools differ in the
        slightest bit. `PCG64DXSM` has :math:`2^{127}` separate cycles
        determined by the seed in addition to the position in the
        :math:`2^{128}` long period for each cycle, so one has to both get on or
@@ -129,7 +133,7 @@ territory ([2]_).
 Sequence of integer seeds
 -------------------------
 
-As discussed in the previous section, `~SeedSequence` can not only take an
+As discussed in the previous section, `SeedSequence` can not only take an
 integer seed, it can also take an arbitrary-length sequence of (non-negative)
 integers. If one exercises a little care, one can use this feature to design
 *ad hoc* schemes for getting safe parallel PRNG streams with similar safety
@@ -160,7 +164,7 @@ integer in a list.
 This can be used to replace a number of unsafe strategies that have been used
 in the past which try to combine the root seed and the ID back into a single
 integer seed value. For example, it is common to see users add the worker ID to
-the root seed, especially with the legacy `~RandomState` code.
+the root seed, especially with the legacy `RandomState` code.
 
 .. code-block:: python
 
@@ -249,13 +253,13 @@ are listed below.
 +-----------------+-------------------------+-------------------------+-------------------------+
 | BitGenerator    | Period                  |  Jump Size              | Bits per Draw           |
 +=================+=========================+=========================+=========================+
-| MT19937         | :math:`2^{19937}-1`     | :math:`2^{128}`         | 32                      |
+| `MT19937`       | :math:`2^{19937}-1`     | :math:`2^{128}`         | 32                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
-| PCG64           | :math:`2^{128}`         | :math:`~2^{127}` ([3]_) | 64                      |
+| `PCG64`         | :math:`2^{128}`         | :math:`~2^{127}` ([3]_) | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
-| PCG64DXSM       | :math:`2^{128}`         | :math:`~2^{127}` ([3]_) | 64                      |
+| `PCG64DXSM`     | :math:`2^{128}`         | :math:`~2^{127}` ([3]_) | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
-| Philox          | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
+| `Philox`        | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
 
 .. [3] The jump size is :math:`(\phi-1)*2^{128}` where :math:`\phi` is the

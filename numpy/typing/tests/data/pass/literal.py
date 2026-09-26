@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import Any
 from functools import partial
-from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import pytest
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 AR = np.array(0)
 AR.setflags(write=False)
@@ -15,7 +18,6 @@ ACF = frozenset({None, "A", "C", "F"})
 CF = frozenset({None, "C", "F"})
 
 order_list: list[tuple[frozenset[str | None], Callable[..., Any]]] = [
-    (KACF, partial(np.ndarray, 1)),
     (KACF, AR.tobytes),
     (KACF, partial(AR.astype, int)),
     (KACF, AR.copy),
@@ -23,6 +25,8 @@ order_list: list[tuple[frozenset[str | None], Callable[..., Any]]] = [
     (KACF, AR.flatten),
     (KACF, AR.ravel),
     (KACF, partial(np.array, 1)),
+    # NOTE: __call__ is needed due to python/mypy#17620
+    (KACF, partial(np.ndarray.__call__, 1)),
     (CF, partial(np.zeros, 1)),
     (CF, partial(np.ones, 1)),
     (CF, partial(np.empty, 1)),
@@ -31,7 +35,7 @@ order_list: list[tuple[frozenset[str | None], Callable[..., Any]]] = [
     (KACF, partial(np.ones_like, AR)),
     (KACF, partial(np.empty_like, AR)),
     (KACF, partial(np.full_like, AR, 1)),
-    (KACF, partial(np.add, 1, 1)),  # i.e. np.ufunc.__call__
+    (KACF, partial(np.add.__call__, 1, 1)),  # i.e. np.ufunc.__call__
     (ACF, partial(np.reshape, AR, 1)),
     (KACF, partial(np.ravel, AR)),
     (KACF, partial(np.asarray, 1)),

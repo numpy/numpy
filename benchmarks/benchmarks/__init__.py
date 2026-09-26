@@ -1,11 +1,13 @@
-from . import common
-import sys
 import os
+import sys
+
+from . import common
+
 
 def show_cpu_features():
     from numpy.lib._utils_impl import _opt_info
     info = _opt_info()
-    info = "NumPy CPU features: " + (info if info else 'nothing enabled')
+    info = "NumPy CPU features: " + (info or 'nothing enabled')
     # ASV wrapping stdout & stderr, so we assume having a tty here
     if 'SHELL' in os.environ and sys.platform != 'win32':
         # to avoid the red color that imposed by ASV
@@ -42,7 +44,7 @@ def dirty_lock(lock_name, lock_on_count=1):
                 count = 0
             f.seek(0)
             f.truncate()
-            f.write(f"{str(count)} {str(ppid)}")
+            f.write(f"{count} {ppid}")
     except OSError:
         pass
     return False

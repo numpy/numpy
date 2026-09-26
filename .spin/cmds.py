@@ -1,26 +1,20 @@
-import os
-import shutil
-import sys
-import argparse
-import tempfile
-import pathlib
-import shutil
-import json
-import pathlib
 import importlib
+import os
+import pathlib
+import shutil
 import subprocess
+import sys
 
 import click
-from spin import util
+import spin
 from spin.cmds import meson
-
 
 # Check that the meson git submodule is present
 curdir = pathlib.Path(__file__).parent
 meson_import_dir = curdir.parent / 'vendored-meson' / 'meson' / 'mesonbuild'
 if not meson_import_dir.exists():
     raise RuntimeError(
-        'The `vendored-meson/meson` git submodule does not exist! ' +
+        'The `vendored-meson/meson` git submodule does not exist! '
         'Run `git submodule update --init` to fix this problem.'
     )
 
@@ -42,8 +36,7 @@ def _get_numpy_tools(filename):
     "revision-range",
     required=True
 )
-@click.pass_context
-def changelog(ctx, token, revision_range):
+def changelog(token, revision_range):
     """👩 Get change log for provided revision range
 
     \b
@@ -53,8 +46,8 @@ def changelog(ctx, token, revision_range):
     $ spin authors -t $GH_TOKEN --revision-range v1.25.0..v1.26.0
     """
     try:
-        from github.GithubException import GithubException
         from git.exc import GitError
+        from github.GithubException import GithubException
         changelog = _get_numpy_tools(pathlib.Path('changelog.py'))
     except ModuleNotFoundError as e:
         raise click.ClickException(
@@ -78,69 +71,24 @@ def changelog(ctx, token, revision_range):
         )
 
 
-@click.command()
-@click.option(
-    "-j", "--jobs",
-    help="Number of parallel tasks to launch",
-    type=int
-)
-@click.option(
-    "--clean", is_flag=True,
-    help="Clean build directory before build"
-)
-@click.option(
-    "-v", "--verbose", is_flag=True,
-    help="Print all build output, even installation"
-)
 @click.option(
     "--with-scipy-openblas", type=click.Choice(["32", "64"]),
     default=None,
     help="Build with pre-installed scipy-openblas32 or scipy-openblas64 wheel"
 )
-@click.argument("meson_args", nargs=-1)
-@click.pass_context
-def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=False, quiet=False):
-    """🔧 Build package with Meson/ninja and install
-
-    MESON_ARGS are passed through e.g.:
-
-    spin build -- -Dpkg_config_path=/lib64/pkgconfig
-
-    The package is installed to build-install
-
-    By default builds for release, to be able to use a debugger set CFLAGS
-    appropriately. For example, for linux use
-
-    CFLAGS="-O0 -g" spin build
-    """
-    # XXX keep in sync with upstream build
+@spin.util.extend_command(spin.cmds.meson.build)
+def build(*, parent_callback, meson_args, with_scipy_openblas, **kwargs):
     if with_scipy_openblas:
         _config_openblas(with_scipy_openblas)
-    ctx.params.pop("with_scipy_openblas", None)
-    ctx.forward(meson.build)
+
+    # Avoid byte-compiling on every rebuild/reinstall, that's very expensive
+    meson_args += ("-Dpython.bytecompile=-1",)
+
+    parent_callback(**{'meson_args': meson_args, **kwargs})
 
 
-@click.command()
-@click.argument("sphinx_target", default="html")
-@click.option(
-    "--clean", is_flag=True,
-    default=False,
-    help="Clean previously built docs before building"
-)
-@click.option(
-    "--build/--no-build",
-    "first_build",
-    default=True,
-    help="Build numpy before generating docs",
-)
-@click.option(
-    '--jobs', '-j',
-    metavar='N_JOBS',
-    default="auto",
-    help="Number of parallel build jobs"
-)
-@click.pass_context
-def docs(ctx, sphinx_target, clean, first_build, jobs):
+@spin.util.extend_command(spin.cmds.meson.docs)
+def docs(*, parent_callback, **kwargs):
     """📖 Build Sphinx documentation
 
     By default, SPHINXOPTS="-W", raising errors on warnings.
@@ -161,103 +109,178 @@ def docs(ctx, sphinx_target, clean, first_build, jobs):
       spin docs dist
 
     """
-    meson.docs.ignore_unknown_options = True
+    kwargs['clean_dirs'] = [
+        './doc/build/',
+        './doc/source/reference/generated',
+        './doc/source/reference/random/bit_generators/generated',
+        './doc/source/reference/random/generated',
+    ]
 
     # Run towncrier without staging anything for commit. This is the way to get
     # release notes snippets included in a local doc build.
     cmd = ['towncrier', 'build', '--version', '2.x.y', '--keep', '--draft']
-    p = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    p = subprocess.run(cmd, check=True, capture_output=True, text=True,
+                       encoding="utf-8", env=env)
     outfile = curdir.parent / 'doc' / 'source' / 'release' / 'notes-towncrier.rst'
     with open(outfile, 'w') as f:
         f.write(p.stdout)
 
-    ctx.forward(meson.docs)
+    parent_callback(**kwargs)
 
 
-@click.command()
-@click.argument("pytest_args", nargs=-1)
+# Override default jobs to 1
+jobs_param = next(p for p in docs.params if p.name == 'jobs')
+jobs_param.default = 1
+
+default = "not slow"
+
 @click.option(
     "-m",
     "markexpr",
     metavar='MARKEXPR',
-    default="not slow",
+    default=default,
     help="Run tests with the given markers"
 )
 @click.option(
-    "-j",
-    "n_jobs",
-    metavar='N_JOBS',
+    "-p",
+    "--parallel-threads",
+    metavar='PARALLEL_THREADS',
     default="1",
-    help=("Number of parallel jobs for testing. "
-          "Can be set to `auto` to use all cores.")
+    help="Run tests many times in number of parallel threads under pytest-run-parallel."
+         " Can be set to `auto` to use all cores. Use `spin test -p <number> -- "
+         "--skip-thread-unsafe=true` to only run tests that can run in parallel. "
+         "pytest-run-parallel must be installed to use."
 )
-@click.option(
-    "--tests", "-t",
-    metavar='TESTS',
-    help=("""
-Which tests to run. Can be a module, function, class, or method:
-
- \b
- numpy.random
- numpy.random.tests.test_generator_mt19937
- numpy.random.tests.test_generator_mt19937::TestMultivariateHypergeometric
- numpy.random.tests.test_generator_mt19937::TestMultivariateHypergeometric::test_edge_cases
- \b
-""")
-)
-@click.option(
-    '--verbose', '-v', is_flag=True, default=False
-)
-@click.pass_context
-def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose):
-    """🔧 Run tests
-
-    PYTEST_ARGS are passed through directly to pytest, e.g.:
-
-      spin test -- --pdb
-
-    To run tests on a directory or file:
-
-     \b
-     spin test numpy/linalg
-     spin test numpy/linalg/tests/test_linalg.py
-
-    To report the durations of the N slowest tests:
-
-      spin test -- --durations=N
-
-    To run tests that match a given pattern:
-
-     \b
-     spin test -- -k "geometric"
-     spin test -- -k "geometric and not rgeometric"
-
+@spin.util.extend_command(spin.cmds.meson.test)
+def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **kwargs):
+    """
     By default, spin will run `-m 'not slow'`. To run the full test suite, use
-    `spin -m full`
+    `spin test -m full`
 
-    For more, see `pytest --help`.
-    """  # noqa: E501
+    When pytest-run-parallel is avaliable, use `spin test -p auto` or
+    `spin test -p <num_of_threads>` to run tests sequentional in parallel threads.
+    """
     if (not pytest_args) and (not tests):
-        pytest_args = ('numpy',)
+        pytest_args = ('--pyargs', 'numpy')
 
     if '-m' not in pytest_args:
         if markexpr != "full":
             pytest_args = ('-m', markexpr) + pytest_args
 
-    if (n_jobs != "1") and ('-n' not in pytest_args):
-        pytest_args = ('-n', str(n_jobs)) + pytest_args
+    if parallel_threads != "1":
+        pytest_args = ('--parallel-threads', parallel_threads) + pytest_args
 
-    if tests and not ('--pyargs' in pytest_args):
-        pytest_args = ('--pyargs', tests) + pytest_args
+    if kwargs.get('coverage'):
+        coveragerc = curdir.parent / '.coveragerc'
+        pytest_args = (f'--cov-config={coveragerc}',) + pytest_args
+        os.environ['COVERAGE_FILE'] = str(curdir.parent / '.coverage')
 
-    if verbose:
-        pytest_args = ('-v',) + pytest_args
+    kwargs['pytest_args'] = pytest_args
+    parent_callback(**{'pytest_args': pytest_args, 'tests': tests, **kwargs})
 
-    ctx.params['pytest_args'] = pytest_args
 
-    for extra_param in ('markexpr', 'n_jobs', 'tests', 'verbose'):
-        del ctx.params[extra_param]
-    ctx.forward(meson.test)
+@spin.util.extend_command(test, doc='')
+def check_docs(*, parent_callback, pytest_args, **kwargs):
+    """🔧 Run doctests of objects in the public API.
+
+    PYTEST_ARGS are passed through directly to pytest, e.g.:
+
+      spin check-docs -- --pdb
+
+    To run tests on a directory:
+
+     \b
+     spin check-docs numpy/linalg
+
+    To report the durations of the N slowest doctests:
+
+      spin check-docs -- --durations=N
+
+    To run doctests that match a given pattern:
+
+     \b
+     spin check-docs -- -k "slogdet"
+     spin check-docs numpy/linalg -- -k "det and not slogdet"
+
+    \b
+    Note:
+    -----
+
+    \b
+     - This command only runs doctests and skips everything under tests/
+     - This command only doctests public objects: those which are accessible
+       from the top-level `__init__.py` file.
+
+    """
+    try:
+        # prevent obscure error later
+        import scipy_doctest
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError("scipy-doctest not installed") from e
+    if scipy_doctest.__version__ < '1.8.0':
+        raise ModuleNotFoundError("please update scipy_doctests to >= 1.8.0")
+
+    if (not pytest_args):
+        pytest_args = ('--pyargs', 'numpy')
+
+    # turn doctesting on:
+    doctest_args = (
+        '--doctest-modules',
+        '--doctest-only-doctests=true',
+        '--doctest-collect=api'
+    )
+
+    pytest_args = pytest_args + doctest_args
+
+    parent_callback(**{'pytest_args': pytest_args, **kwargs})
+
+
+@spin.util.extend_command(test, doc='')
+def check_tutorials(*, parent_callback, pytest_args, **kwargs):
+    """🔧 Run doctests of user-facing rst tutorials.
+
+    To test all tutorials in the numpy doc/source/user/ directory, use
+
+      spin check-tutorials
+
+    To run tests on a specific RST file:
+
+     \b
+     spin check-tutorials doc/source/user/absolute-beginners.rst
+
+    \b
+    Note:
+    -----
+
+    \b
+     - This command only runs doctests and skips everything under tests/
+     - This command only doctests public objects: those which are accessible
+       from the top-level `__init__.py` file.
+
+    """
+    # handle all of
+    #   - `spin check-tutorials` (pytest_args == ())
+    #   - `spin check-tutorials path/to/rst`, and
+    #   - `spin check-tutorials path/to/rst -- --durations=3`
+    if (not pytest_args) or all(arg.startswith('-') for arg in pytest_args):
+        pytest_args = ('doc/source/user',) + pytest_args
+
+    # make all paths relative to the numpy source folder
+    pytest_args = tuple(
+        str(curdir / '..' / arg) if not arg.startswith('-') else arg
+        for arg in pytest_args
+   )
+
+    # turn doctesting on:
+    doctest_args = (
+        '--doctest-glob=*rst',
+    )
+
+    pytest_args = pytest_args + doctest_args
+
+    parent_callback(**{'pytest_args': pytest_args, **kwargs})
 
 
 # From scipy: benchmarks/benchmarks/common.py
@@ -266,6 +289,7 @@ def _set_mem_rlimit(max_mem=None):
     Set address space rlimit
     """
     import resource
+
     import psutil
 
     mem = psutil.virtual_memory()
@@ -284,9 +308,9 @@ def _set_mem_rlimit(max_mem=None):
 
 
 def _commit_to_sha(commit):
-    p = util.run(['git', 'rev-parse', commit], output=False, echo=False)
+    p = spin.util.run(['git', 'rev-parse', commit], output=False, echo=False)
     if p.returncode != 0:
-        raise(
+        raise (
             click.ClickException(
                 f'Could not find SHA matching commit `{commit}`'
             )
@@ -297,10 +321,10 @@ def _commit_to_sha(commit):
 
 def _dirty_git_working_dir():
     # Changes to the working directory
-    p0 = util.run(['git', 'diff-files', '--quiet'])
+    p0 = spin.util.run(['git', 'diff-files', '--quiet'])
 
     # Staged changes
-    p1 = util.run(['git', 'diff-index', '--quiet', '--cached', 'HEAD'])
+    p1 = spin.util.run(['git', 'diff-index', '--quiet', '--cached', 'HEAD'])
 
     return (p0.returncode != 0 or p1.returncode != 0)
 
@@ -313,7 +337,7 @@ def _run_asv(cmd):
         '/usr/local/lib/ccache', '/usr/local/lib/f90cache'
     ])
     env = os.environ
-    env['PATH'] = f'EXTRA_PATH:{PATH}'
+    env['PATH'] = f'{EXTRA_PATH}{os.pathsep}{PATH}'
 
     # Control BLAS/LAPACK threads
     env['OPENBLAS_NUM_THREADS'] = '1'
@@ -325,40 +349,24 @@ def _run_asv(cmd):
     except (ImportError, RuntimeError):
         pass
 
-    util.run(cmd, cwd='benchmarks', env=env)
+    spin.util.run(cmd, cwd='benchmarks', env=env)
 
 @click.command()
 @click.option(
-    "-b", "--branch",
-    metavar='branch',
-    default="main",
-)
-@click.option(
-    '--uncommitted',
+    '--fix',
     is_flag=True,
     default=False,
     required=False,
 )
 @click.pass_context
-def lint(ctx, branch, uncommitted):
-    """🔦 Run lint checks on diffs.
-    Provide target branch name or `uncommitted` to check changes before committing:
+def lint(ctx, fix):
+    """🔦 Run lint checks with Ruff
 
     \b
-    Examples:
+    To run automatic fixes use:
 
     \b
-    For lint checks of your development brach with `main` or a custom branch:
-
-    \b
-    $ spin lint # defaults to main
-    $ spin lint --branch custom_branch
-
-    \b
-    To check just the uncommitted changes before committing
-
-    \b
-    $ spin lint --uncommitted
+    $ spin lint --fix
     """
     try:
         linter = _get_numpy_tools(pathlib.Path('linter.py'))
@@ -367,7 +375,7 @@ def lint(ctx, branch, uncommitted):
             f"{e.msg}. Install using requirements/linter_requirements.txt"
         )
 
-    linter.DiffLinter(branch).run_lint(uncommitted)
+    linter.DiffLinter().run_lint(fix)
 
 @click.command()
 @click.option(
@@ -391,13 +399,25 @@ def lint(ctx, branch, uncommitted):
     '--quick', '-q', is_flag=True, default=False,
     help="Run each benchmark only once (timings won't be accurate)"
 )
+@click.option(
+    '--factor', '-f', default=1.05,
+    help="The factor above or below which a benchmark result is "
+         "considered reportable. This is passed on to the asv command."
+)
+@click.option(
+    '--cpu-affinity', default=None, multiple=False,
+    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3. "
+         "Default: not set"
+)
 @click.argument(
     'commits', metavar='',
     required=False,
     nargs=-1
 )
+@meson.build_dir_option
 @click.pass_context
-def bench(ctx, tests, compare, verbose, quick, commits):
+def bench(ctx, tests, compare, verbose, quick, factor, cpu_affinity,
+          commits, build_dir):
     """🏋 Run benchmarks.
 
     \b
@@ -440,6 +460,9 @@ def bench(ctx, tests, compare, verbose, quick, commits):
     if quick:
         bench_args = ['--quick'] + bench_args
 
+    if cpu_affinity:
+        bench_args += ['--cpu-affinity', cpu_affinity]
+
     if not compare:
         # No comparison requested; we build and benchmark the current version
 
@@ -449,10 +472,10 @@ def bench(ctx, tests, compare, verbose, quick, commits):
         )
         ctx.invoke(build)
 
-        meson._set_pythonpath()
+        meson._set_pythonpath(build_dir)
 
-        p = util.run(
-            ['python', '-c', 'import numpy as np; print(np.__version__)'],
+        p = spin.util.run(
+            [sys.executable, '-c', 'import numpy as np; print(np.__version__)'],
             cwd='benchmarks',
             echo=False,
             output=False
@@ -469,7 +492,7 @@ def bench(ctx, tests, compare, verbose, quick, commits):
         ] + bench_args
         _run_asv(cmd)
     else:
-        # Ensure that we don't have uncommited changes
+        # Ensure that we don't have uncommitted changes
         commit_a, commit_b = [_commit_to_sha(c) for c in commits]
 
         if commit_b == 'HEAD' and _dirty_git_working_dir():
@@ -480,34 +503,25 @@ def bench(ctx, tests, compare, verbose, quick, commits):
             )
 
         cmd_compare = [
-            'asv', 'continuous', '--factor', '1.05',
+            'asv', 'continuous', '--factor', str(factor),
         ] + bench_args + [commit_a, commit_b]
         _run_asv(cmd_compare)
 
 
-@click.command(context_settings={
-    'ignore_unknown_options': True
-})
-@click.argument("python_args", metavar='', nargs=-1)
-@click.pass_context
-def python(ctx, python_args):
-    """🐍 Launch Python shell with PYTHONPATH set
-
-    OPTIONS are passed through directly to Python, e.g.:
-
-    spin python -c 'import sys; print(sys.path)'
-    """
+@spin.util.extend_command(meson.python)
+def python(*, parent_callback, **kwargs):
     env = os.environ
     env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
-    ctx.forward(meson.python)
+
+    parent_callback(**kwargs)
 
 
 @click.command(context_settings={
     'ignore_unknown_options': True
 })
 @click.argument("ipython_args", metavar='', nargs=-1)
-@click.pass_context
-def ipython(ctx, ipython_args):
+@meson.build_dir_option
+def ipython(*, ipython_args, build_dir):
     """💻 Launch IPython shell with PYTHONPATH set
 
     OPTIONS are passed through directly to IPython, e.g.:
@@ -517,16 +531,19 @@ def ipython(ctx, ipython_args):
     env = os.environ
     env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
 
+    ctx = click.get_current_context()
     ctx.invoke(build)
 
-    ppath = meson._set_pythonpath()
+    ppath = meson._set_pythonpath(build_dir)
 
     print(f'💻 Launching IPython with PYTHONPATH="{ppath}"')
+
+    # In spin >= 0.13.1, can replace with extended command, setting `pre_import`
     preimport = (r"import numpy as np; "
                  r"print(f'\nPreimported NumPy {np.__version__} as np')")
-    util.run(["ipython", "--ignore-cwd",
-              f"--TerminalIPythonApp.exec_lines={preimport}"] +
-             list(ipython_args))
+    spin.util.run(["ipython", "--ignore-cwd",
+                   f"--TerminalIPythonApp.exec_lines={preimport}"] +
+                  list(ipython_args))
 
 
 @click.command(context_settings={"ignore_unknown_options": True})
@@ -534,11 +551,58 @@ def ipython(ctx, ipython_args):
 def mypy(ctx):
     """🦆 Run Mypy tests for NumPy
     """
+    ctx.invoke(build)
     env = os.environ
     env['NPY_RUN_MYPY_IN_TESTSUITE'] = '1'
     ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
     ctx.params['markexpr'] = 'full'
     ctx.forward(test)
+
+
+@click.command()
+def pyrefly() -> None:
+    """🪲 Type-check the stubs with Pyrefly
+    """
+    spin.util.run(['pyrefly', 'check'])
+
+
+@click.command()
+@click.option(
+    '--concise',
+    is_flag=True,
+    default=False,
+    help="Concise output format",
+)
+@meson.build_dir_option
+def stubtest(*, concise: bool, build_dir: str) -> None:
+    """🧐 Run stubtest on NumPy's .pyi stubs
+
+    Requires mypy to be installed
+    """
+    click.get_current_context().invoke(build)
+    meson._set_pythonpath(build_dir)
+    print(f"{build_dir = !r}")
+
+    import sysconfig
+    purellib = sysconfig.get_paths()["purelib"]
+    print(f"{purellib = !r}")
+
+    stubtest_dir = curdir.parent / 'tools' / 'stubtest'
+    mypy_config = stubtest_dir / 'mypy.ini'
+    allowlist = stubtest_dir / 'allowlist.txt'
+
+    cmd = [
+        'stubtest',
+        '--ignore-disjoint-bases',
+        f'--mypy-config-file={mypy_config}',
+        f'--allowlist={allowlist}',
+    ]
+    if concise:
+        cmd.append('--concise')
+    cmd.append('numpy')
+
+    spin.util.run(cmd)
+
 
 @click.command(context_settings={
     'ignore_unknown_options': True
@@ -585,8 +649,7 @@ def _config_openblas(blas_variant):
     help="NumPy version of release",
     required=False
 )
-@click.pass_context
-def notes(ctx, version_override):
+def notes(version_override):
     """🎉 Generate release notes and validate
 
     \b
@@ -601,7 +664,7 @@ def notes(ctx, version_override):
     \b
     $ spin notes
     """
-    project_config = util.get_config()
+    project_config = spin.util.get_config()
     version = version_override or project_config['project.version']
 
     click.secho(
@@ -612,7 +675,7 @@ def notes(ctx, version_override):
     # Check if `towncrier` is installed
     if not shutil.which("towncrier"):
         raise click.ClickException(
-            f"please install `towncrier` to use this command"
+            "please install `towncrier` to use this command"
         )
 
     click.secho(
@@ -621,16 +684,10 @@ def notes(ctx, version_override):
     )
     # towncrier build --version 2.1 --yes
     cmd = ["towncrier", "build", "--version", version, "--yes"]
-    try:
-        p = util.run(
-                cmd=cmd,
-                sys_exit=False,
-                output=True,
-                encoding="utf-8"
-            )
-    except subprocess.SubprocessError as e:
+    p = spin.util.run(cmd=cmd, sys_exit=False, output=True, encoding="utf-8")
+    if p.returncode != 0:
         raise click.ClickException(
-            f"`towncrier` failed returned {e.returncode} with error `{e.stderr}`"
+            f"`towncrier` failed returned {p.returncode} with error `{p.stderr}`"
         )
 
     output_path = project_config['tool.towncrier.filename'].format(version=version)
@@ -645,7 +702,8 @@ def notes(ctx, version_override):
     )
 
     try:
-        test_notes = _get_numpy_tools(pathlib.Path('ci', 'test_all_newsfragments_used.py'))
+        cmd = pathlib.Path('ci', 'test_all_newsfragments_used.py')
+        test_notes = _get_numpy_tools(cmd)
     except ModuleNotFoundError as e:
         raise click.ClickException(
             f"{e.msg}. Install the missing packages to use this command."

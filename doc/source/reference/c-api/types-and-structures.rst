@@ -36,10 +36,10 @@ New types are defined in C by two basic steps:
 
 Instead of special method names which define behavior for Python
 classes, there are "function tables" which point to functions that
-implement the desired results. Since Python 2.2, the PyTypeObject
-itself has become dynamic which allows C types that can be "sub-typed
-"from other C-types in C, and sub-classed in Python. The children
-types inherit the attributes and methods from their parent(s).
+implement the desired results. The PyTypeObject itself is dynamic
+which allows C types that can be "sub-typed" from other C-types in C,
+and sub-classed in Python. The children types inherit the attributes
+and methods from their parent(s).
 
 There are two major new types: the ndarray ( :c:data:`PyArray_Type` )
 and the ufunc ( :c:data:`PyUFunc_Type` ). Additional types play a
@@ -215,12 +215,11 @@ The :c:data:`PyArray_Type` can also be sub-typed.
 
 .. tip::
 
-    The ``tp_as_number`` methods use a generic approach to call whatever
-    function has been registered for handling the operation.  When the
-    ``_multiarray_umath module`` is imported, it sets the numeric operations
-    for all arrays to the corresponding ufuncs. This choice can be changed with
-    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
-    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
+    The :c:member:`tp_as_number <PyTypeObject.tp_as_number>` methods use
+    a generic approach to call whatever function has been registered for
+    handling the operation. When the ``_multiarray_umath`` module is imported,
+    it sets the numeric operations for all arrays to the corresponding ufuncs.
+    This choice can be changed with :c:func:`PyUFunc_ReplaceLoopBySignature`.
 
 PyGenericArrType_Type
 ---------------------
@@ -313,7 +312,7 @@ PyArrayDescr_Type and PyArray_Descr
        interface typestring notation). A 'b' represents Boolean, a 'i'
        represents signed integer, a 'u' represents unsigned integer, 'f'
        represents floating point, 'c' represents complex floating point, 'S'
-       represents 8-bit zero-terminated bytes, 'U' represents 32-bit/character
+       represents 8-bit null-padded bytes, 'U' represents 32-bit/character
        unicode string, and 'V' represents arbitrary.
 
    .. c:member:: char type
@@ -366,7 +365,7 @@ PyArrayDescr_Type and PyArray_Descr
        places an item of this type: ``offsetof(struct {char c; type v;},
        v)``
 
-       See `PyDataType_ALIGNMENT` for a way to access this field in a NumPy 1.x
+       See :c:func:`PyDataType_ALIGNMENT` for a way to access this field in a NumPy 1.x
        compatible way.
 
    .. c:member:: PyObject *metadata
@@ -729,6 +728,7 @@ PyArrayMethod_Context and PyArrayMethod_Spec
           PyObject *caller;
           struct PyArrayMethodObject_tag *method;
           PyArray_Descr *const *descriptors;
+          void *parameters;
       } PyArrayMethod_Context
 
    .. c:member:: PyObject *caller
@@ -744,6 +744,15 @@ PyArrayMethod_Context and PyArrayMethod_Spec
 
       An array of descriptors for the ufunc loop, filled in by
       ``resolve_descriptors``. The length of the array is ``nin`` + ``nout``.
+
+   .. c:member:: void *parameters
+
+      A pointer to a structure containing any runtime parameters needed by the
+      loop. This is ``NULL`` if no parameters are needed. The type of the
+      struct is specific to the registered function.
+
+     .. versionchanged:: NumPy 2.4
+        The `parameters` member was added in NumPy 2.4.
 
 .. c:type:: PyArrayMethod_Spec
 
@@ -976,7 +985,7 @@ PyUFunc_Type and PyUFuncObject
           PyUFuncGenericFunction *functions;
           void **data;
           int ntypes;
-          int reserved1;
+          int _ufunc_flags;
           const char *name;
           char *types;
           const char *doc;
@@ -1609,6 +1618,32 @@ for completeness and assistance in understanding the code.
    The C-structure associated with :c:var:`PyArrayMapIter_Type`.
    This structure is useful if you are trying to
    understand the advanced-index mapping code. It is defined in the
-   ``arrayobject.h`` header. This type is not exposed to Python and
+   ``multiarray/mapping.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
+
+
+NumPy C-API and C complex
+=========================
+When you use the NumPy C-API, you will have access to complex real declarations
+``npy_cdouble`` and ``npy_cfloat``, which are declared in terms of the C
+standard types from ``complex.h``. Unfortunately, ``complex.h`` contains
+``#define I ...`` (where the actual definition depends on the compiler), which
+means that any downstream user that does ``#include <numpy/arrayobject.h>``
+could get ``I`` defined, and using something like declaring ``double I;`` in
+their code will result in an obscure compiler error like
+
+.. code-block::C
+    error: expected ‘)’ before ‘__extension__’
+                    double I,
+
+This error can be avoided  by adding::
+
+    #undef I
+
+to your code.
+
+.. versionchanged:: 2.0
+    The inclusion of ``complex.h`` was new in NumPy 2, so that code defining
+    a different ``I`` may not have required the ``#undef I`` on older versions.
+    NumPy 2.0.1 briefly included the ``#under I``

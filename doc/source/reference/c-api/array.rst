@@ -66,14 +66,10 @@ and its sub-types).
 
 .. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
 
-    .. versionadded:: 1.7
-
     Enables the specified array flags. This function does no validation,
     and assumes that you know what you're doing.
 
 .. c:function:: void PyArray_CLEARFLAGS(PyArrayObject* arr, int flags)
-
-    .. versionadded:: 1.7
 
     Clears the specified array flags. This function does no validation,
     and assumes that you know what you're doing.
@@ -96,8 +92,6 @@ and its sub-types).
     of the array. Can return ``NULL`` for 0-dimensional arrays.
 
 .. c:function:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
-
-    .. versionadded:: 1.7
 
     A synonym for :c:func:`PyArray_DIMS`, named to be consistent with the
     `shape <numpy.ndarray.shape>` usage within Python.
@@ -127,7 +121,7 @@ and its sub-types).
 
     Returns the total size (in number of elements) of the array.
 
-.. c:function:: npy_intp PyArray_Size(PyArrayObject* obj)
+.. c:function:: npy_intp PyArray_Size(PyObject* obj)
 
     Returns 0 if *obj* is not a sub-class of ndarray. Otherwise,
     returns the total number of elements in the array. Safer version
@@ -156,8 +150,6 @@ and its sub-types).
     Returns a borrowed reference to the dtype property of the array.
 
 .. c:function:: PyArray_Descr *PyArray_DTYPE(PyArrayObject* arr)
-
-    .. versionadded:: 1.7
 
     A synonym for PyArray_DESCR, named to be consistent with the
     'dtype' usage within Python.
@@ -274,8 +266,6 @@ From scratch
 .. c:function:: PyObject* PyArray_NewLikeArray( \
         PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr, \
         int subok)
-
-    .. versionadded:: 1.6
 
     This function steals a reference to *descr* if it is not NULL.
     This array creation routine allows for the convenient creation of
@@ -406,8 +396,6 @@ From scratch
 
 .. c:function:: int PyArray_SetBaseObject(PyArrayObject* arr, PyObject* obj)
 
-    .. versionadded:: 1.7
-
     This function **steals a reference** to ``obj`` and sets it as the
     base property of ``arr``.
 
@@ -514,6 +502,13 @@ From other objects
     Special case of :c:func:`PyArray_FromAny` for when *op* is already an
     array but it needs to be of a specific *newtype* (including
     byte-order) or has certain *requirements*.
+
+    If *newtype* is an unsized flexible descriptor, the result takes the
+    itemsize of *op* without inspecting its values. :c:func:`PyArray_FromAny`
+    and :c:func:`PyArray_CastToType` instead adapt an unsized descriptor to the
+    values of *op*, so converting a ``NPY_VSTRING`` or ``NPY_OBJECT`` array to
+    ``NPY_STRING`` or ``NPY_UNICODE`` infers the width of the output by finding
+    the length of the longest input string.
 
 .. c:function:: PyObject* PyArray_FromStructInterface(PyObject* op)
 
@@ -688,7 +683,7 @@ From other objects
     Encapsulate the functionality of functions and methods that take
     the axis= keyword and work properly with None as the axis
     argument. The input array is ``obj``, while ``*axis`` is a
-    converted integer (so that >=MAXDIMS is the None value), and
+    converted integer (so that ``*axis == NPY_RAVEL_AXIS`` is the None value), and
     ``requirements`` gives the needed properties of ``obj``. The
     output is a converted version of the input so that requirements
     are met and if needed a flattening has occurred. On output
@@ -796,7 +791,7 @@ cannot not be accessed directly.
     Allows setting of the itemsize, this is *only* relevant for string/bytes
     datatypes as it is the current pattern to define one with a new size.
 
-.. c:function:: npy_intp PyDataType_ALIGNENT(PyArray_Descr *descr)
+.. c:function:: npy_intp PyDataType_ALIGNMENT(PyArray_Descr *descr)
 
     The alignment of the datatype.
 
@@ -823,7 +818,7 @@ cannot not be accessed directly.
 
 .. c:function:: PyArray_ArrayDescr *PyDataType_SUBARRAY(PyArray_Descr *descr)
 
-    Information about a subarray dtype eqivalent to the Python `np.dtype.base`
+    Information about a subarray dtype equivalent to the Python `np.dtype.base`
     and `np.dtype.shape`.
 
     If this is non- ``NULL``, then this data-type descriptor is a
@@ -853,6 +848,35 @@ cannot not be accessed directly.
             The shape (always C-style contiguous) of the sub-array as a Python
             tuple.
 
+.. c:function:: char PyDataType_TYPE(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    Data type character code. See `numpy.dtype.char`. Only set for built-in and
+    legacy user DTypes. Null character (``b'\x00'``) otherwise.
+
+.. c:function:: char PyDataType_KIND(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    Data type kind character code. See `numpy.dtype.kind`. Only set for built-in
+    and legacy user DTypes.  Null character (``b'\x00``) otherwise.
+
+.. c:function:: char PyDataType_BYTEORDER(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    Data type bytorder character code. One of ``'='`` (native), ``'<'``
+    (little-endian), ``'>'`` (big-endian), or ``'|'`` (not applicable). See
+    `numpy.dtype.byteorder`.
+
+.. c:function:: PyTypeObject *PyDataType_TYPEOBJ(PyArray_Descr *descr)
+
+    .. versionadded:: 2.5
+
+    The type object for the scalar type. See the ``typeobj`` member of the
+    ``PyArray_Descr`` struct. See :c:data:`PyArray_Descr` for a full description
+    of the ``PyArray_Descr`` struct layout.
 
 Data-type checking
 ~~~~~~~~~~~~~~~~~~
@@ -933,8 +957,6 @@ argument must be a :c:expr:`PyObject *` that can be directly interpreted as a
     Type has no size information attached, and can be resized. Should only be
     called on flexible dtypes. Types that are attached to an array will always
     be sized, hence the array form of this macro not existing.
-
-    .. versionchanged:: 1.18
 
     For structured datatypes with no fields this function now returns False.
 
@@ -1065,8 +1087,6 @@ Converting data types
 .. c:function:: int PyArray_CanCastTypeTo( \
         PyArray_Descr* fromtype, PyArray_Descr* totype, NPY_CASTING casting)
 
-    .. versionadded:: 1.6
-
     Returns non-zero if an array of data type *fromtype* (which can
     include flexible types) can be cast safely to an array of data
     type *totype* (which can include flexible types) according to
@@ -1081,23 +1101,18 @@ Converting data types
 .. c:function:: int PyArray_CanCastArrayTo( \
         PyArrayObject* arr, PyArray_Descr* totype, NPY_CASTING casting)
 
-    .. versionadded:: 1.6
-
     Returns non-zero if *arr* can be cast to *totype* according
     to the casting rule given in *casting*.  If *arr* is an array
     scalar, its value is taken into account, and non-zero is also
     returned when the value will not overflow or be truncated to
     an integer when converting to a smaller type.
 
-    This is almost the same as the result of
-    PyArray_CanCastTypeTo(PyArray_MinScalarType(arr), totype, casting),
-    but it also handles a special case arising because the set
-    of uint values is not a subset of the int values for types with the
-    same number of bits.
-
 .. c:function:: PyArray_Descr* PyArray_MinScalarType(PyArrayObject* arr)
 
-    .. versionadded:: 1.6
+    .. note::
+        With the adoption of NEP 50 in NumPy 2, this function is not used
+        internally.  It is currently provided for backwards compatibility,
+        but expected to be eventually deprecated.
 
     If *arr* is an array, returns its data type descriptor, but if
     *arr* is an array scalar (has 0 dimensions), it finds the data type
@@ -1111,8 +1126,6 @@ Converting data types
 .. c:function:: PyArray_Descr* PyArray_PromoteTypes( \
         PyArray_Descr* type1, PyArray_Descr* type2)
 
-    .. versionadded:: 1.6
-
     Finds the data type of smallest size and kind to which *type1* and
     *type2* may be safely converted. This function is symmetric and
     associative. A string or unicode result will be the proper size for
@@ -1121,8 +1134,6 @@ Converting data types
 .. c:function:: PyArray_Descr* PyArray_ResultType( \
         npy_intp narrs, PyArrayObject **arrs, npy_intp ndtypes, \
         PyArray_Descr **dtypes)
-
-    .. versionadded:: 1.6
 
     This applies type promotion to all the input arrays and dtype
     objects, using the NumPy rules for combining scalars and arrays, to
@@ -1134,8 +1145,7 @@ Converting data types
 
 .. c:function:: int PyArray_ObjectType(PyObject* op, int mintype)
 
-    This function is superseded by :c:func:`PyArray_MinScalarType` and/or
-    :c:func:`PyArray_ResultType`.
+    This function is superseded by :c:func:`PyArray_ResultType`.
 
     This function is useful for determining a common type that two or
     more arrays can be converted to. It only works for non-flexible
@@ -1162,11 +1172,6 @@ Converting data types
     (using :c:func:`PyDataMem_FREE` ) and all the array objects in it
     ``DECREF`` 'd or a memory-leak will occur. The example template-code
     below shows a typical usage:
-
-    .. versionchanged:: 1.18.0
-       A mix of scalars and zero-dimensional arrays now produces a type
-       capable of holding the scalar value.
-       Previously priority was given to the dtype of the arrays.
 
     .. code-block:: c
 
@@ -1240,6 +1245,24 @@ User-defined data types
         With these two changes, the code should compile and work on both 1.x
         and 2.x or later.
 
+        In the unlikely case that you are heap allocating the dtype struct you
+        should free it again on NumPy 2, since a copy is made.
+        The struct is not a valid Python object, so do not use ``Py_DECREF``
+        on it.
+
+        **Transitioning to the new DType API**
+
+        Users currently using the old DType API may not be able to easily
+        transition due to NumPy issues that would cause regressions.
+        While new DTypes may reasonably limit themselves to newer NumPy
+        versions, existing DTypes cannot do so.
+
+        You can transition to the new DType API by using the
+        :c:macro:`NPY_DT_legacy_descriptor_proto` slot when registering.
+        This slot is available when compiling with NumPy 2.5 and provides
+        support for NumPy 2.0 and higher (it can also be vendored to compile
+        on older versions of NumPy).
+
     Register a data-type as a new user-defined data type for
     arrays. The type must have most of its entries filled in. This is
     not always checked and errors can produce segfaults. In
@@ -1259,6 +1282,13 @@ User-defined data types
     registered (checked only by the address of the pointer), then
     return the previously-assigned type-number.
 
+    The number of user DTypes known to numpy is stored in
+    ``NPY_NUMUSERTYPES``, a static global variable that is public in the
+    C API.  Accessing this symbol is inherently *not* thread-safe. If
+    for some reason you need to use this API in a multithreaded context,
+    you will need to add your own locking, NumPy does not ensure new
+    data types can be added in a thread-safe manner.
+
 .. c:function:: int PyArray_RegisterCastFunc( \
         PyArray_Descr* descr, int totype, PyArray_VectorUnaryFunc* castfunc)
 
@@ -1266,6 +1296,11 @@ User-defined data types
     from the data-type, *descr*, to the given data-type number,
     *totype*. Any old casting function is over-written. A ``0`` is
     returned on success or a ``-1`` on failure.
+
+    .. note::
+        This function will eventually be deprecated. Please migrate to the new
+        DType API for casts.  See :c:macro:`NPY_DT_legacy_descriptor_proto`
+        for details.
 
     .. c:type:: PyArray_VectorUnaryFunc
 
@@ -1279,6 +1314,12 @@ User-defined data types
     *scalar* = :c:data:`NPY_NOSCALAR` to register that an array of data-type
     *descr* can be cast safely to a data-type whose type_number is
     *totype*. The return value is 0 on success or -1 on failure.
+
+    .. note::
+        This function will eventually be deprecated. Please migrate to the new
+        DType API for casts.  See :c:macro:`NPY_DT_legacy_descriptor_proto`
+        for details.  The new DType API provides more flexibility and speed
+        even for dtypes compatible with the legacy API.
 
 
 Special functions for NPY_OBJECT
@@ -1565,7 +1606,7 @@ Flag checking
 For all of these macros *arr* must be an instance of a (subclass of)
 :c:data:`PyArray_Type`.
 
-.. c:function:: int PyArray_CHKFLAGS(PyObject *arr, int flags)
+.. c:function:: int PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 
     The first parameter, arr, must be an ndarray or subclass. The
     parameter, *flags*, should be an integer consisting of bitwise
@@ -1574,60 +1615,60 @@ For all of these macros *arr* must be an instance of a (subclass of)
     :c:data:`NPY_ARRAY_OWNDATA`, :c:data:`NPY_ARRAY_ALIGNED`,
     :c:data:`NPY_ARRAY_WRITEABLE`, :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`.
 
-.. c:function:: int PyArray_IS_C_CONTIGUOUS(PyObject *arr)
+.. c:function:: int PyArray_IS_C_CONTIGUOUS(const PyArrayObject *arr)
 
     Evaluates true if *arr* is C-style contiguous.
 
-.. c:function:: int PyArray_IS_F_CONTIGUOUS(PyObject *arr)
+.. c:function:: int PyArray_IS_F_CONTIGUOUS(const PyArrayObject *arr)
 
     Evaluates true if *arr* is Fortran-style contiguous.
 
-.. c:function:: int PyArray_ISFORTRAN(PyObject *arr)
+.. c:function:: int PyArray_ISFORTRAN(const PyArrayObject *arr)
 
     Evaluates true if *arr* is Fortran-style contiguous and *not*
     C-style contiguous. :c:func:`PyArray_IS_F_CONTIGUOUS`
     is the correct way to test for Fortran-style contiguity.
 
-.. c:function:: int PyArray_ISWRITEABLE(PyObject *arr)
+.. c:function:: int PyArray_ISWRITEABLE(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* can be written to
 
-.. c:function:: int PyArray_ISALIGNED(PyObject *arr)
+.. c:function:: int PyArray_ISALIGNED(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is properly aligned on
     the machine.
 
-.. c:function:: int PyArray_ISBEHAVED(PyObject *arr)
+.. c:function:: int PyArray_ISBEHAVED(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is aligned and writeable
     and in machine byte-order according to its descriptor.
 
-.. c:function:: int PyArray_ISBEHAVED_RO(PyObject *arr)
+.. c:function:: int PyArray_ISBEHAVED_RO(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is aligned and in machine
     byte-order.
 
-.. c:function:: int PyArray_ISCARRAY(PyObject *arr)
+.. c:function:: int PyArray_ISCARRAY(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is C-style contiguous,
     and :c:func:`PyArray_ISBEHAVED` (*arr*) is true.
 
-.. c:function:: int PyArray_ISFARRAY(PyObject *arr)
+.. c:function:: int PyArray_ISFARRAY(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is Fortran-style
     contiguous and :c:func:`PyArray_ISBEHAVED` (*arr*) is true.
 
-.. c:function:: int PyArray_ISCARRAY_RO(PyObject *arr)
+.. c:function:: int PyArray_ISCARRAY_RO(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is C-style contiguous,
     aligned, and in machine byte-order.
 
-.. c:function:: int PyArray_ISFARRAY_RO(PyObject *arr)
+.. c:function:: int PyArray_ISFARRAY_RO(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is Fortran-style
     contiguous, aligned, and in machine byte-order **.**
 
-.. c:function:: int PyArray_ISONESEGMENT(PyObject *arr)
+.. c:function:: int PyArray_ISONESEGMENT(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* consists of a single
     (C-style or Fortran-style) contiguous segment.
@@ -1802,20 +1843,103 @@ the functions that must be implemented for each slot.
    "default" value that may differ from the "identity" value normally used.
    For example:
 
-       - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
-         identity otherwise as it preserves the sign for ``sum([-0.0])``.
-       - We use no identity for object, but return the default of ``0`` and
-         ``1`` for the empty ``sum([], dtype=object)`` and
-         ``prod([], dtype=object)``.
-         This allows ``np.sum(np.array(["a", "b"], dtype=object))`` to work.
-       - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
-         ``INT_MIN`` not a good *default* when there are no items.
+   - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
+     identity otherwise as it preserves the sign for ``sum([-0.0])``.
+   - We use no identity for object, but return the default of ``0`` and
+     ``1`` for the empty ``sum([], dtype=np.object_)`` and
+     ``prod([], dtype=np.object_)``.
+     This allows ``np.sum(np.array(["a", "b"], dtype=np.object_))`` to work.
+   - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
+     ``INT_MIN`` not a good *default* when there are no items.
 
    *initial* is a pointer to the data for the initial value, which should be
    filled in. Returns -1, 0, or 1 indicating error, no initial value, and the
    initial value being successfully filled. Errors must not be given when no
    initial value is correct, since NumPy may call this even when it is not
    strictly necessary to do so.
+
+.. c:type:: int (PyArrayMethod_GetMultiReductionInitials)( \
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty, \
+        void **initials)
+
+   Multi-output version of :c:type:`PyArrayMethod_GetReductionInitial`, used to
+   query the per-output initial values for a reduction. It behaves the same as
+   :c:type:`PyArrayMethod_GetReductionInitial`, except that *initials*
+   is an array of ``nout`` pointers, one per reduction output, each pointing
+   to the buffer to fill. The *reduction_is_empty* argument and the -1, 0, or 1
+   return value have the same meaning as :c:type:`PyArrayMethod_GetReductionInitial`.
+   A return of 1 indicates every initial value has been successfully initialized
+   with valid data.
+
+.. c:macro:: NPY_METH_get_reduction_loop
+
+   .. versionadded:: 2.6
+
+   Registers a dedicated loop for use by :meth:`~numpy.ufunc.reduce`,
+   implemented as a :c:type:`PyArrayMethod_GetLoop` function (the same
+   typedef used for ``NPY_METH_get_loop``). This is required to reduce
+   ufuncs with more than one output, since the "forward" elementwise loop of
+   such a ufunc cannot be used as a reduction loop the way a single-output loop
+   can (by pointing the output and the first input at the same memory, so that
+   the loop accumulates in place). Instead, the returned
+   :c:type:`PyArrayMethod_StridedLoop` must implement the reduction
+   directly, with an ``(nout + 1)``-in/``nout``-out signature: it takes the
+   current per-output accumulators followed by one streamed input element,
+   and writes the updated accumulators. That is, for a ufunc whose forward
+   loop has ``nout`` outputs, the *data*, *strides*, and descriptor arrays
+   passed to the reduction loop are laid out as::
+
+       [acc_0, ..., acc_{nout-1}, x, out_0, ..., out_{nout-1}]
+
+   where ``x`` is the streamed element being reduced in, and each ``out_i``
+   points at the same memory as the matching ``acc_i`` (and typically has a
+   stride of 0 relative to it).
+
+   The *strides* argument passed to ``NPY_METH_get_reduction_loop`` itself at
+   setup time uses this same layout, so that ``strides[i]`` describes the
+   ``i``-th operand of the loop being requested. ``strides[nout]`` is the
+   stride of the streamed input, and each ``strides[nout + 1 + i]`` repeats
+   ``strides[i]``, because ``out_i`` and ``acc_i`` are the same buffer. The
+   accumulator strides are normally 0, since the reduction accumulates in
+   place. When a ``where=`` mask is used, one further entry at
+   ``strides[2 * nout + 1]`` holds the mask stride.
+
+   If ``NPY_METH_get_reduction_loop`` is not set, :meth:`~numpy.ufunc.reduce`
+   falls back to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only
+   works for the typical two-input/one-output case. Calling
+   :meth:`~numpy.ufunc.reduce` on a ufunc with more than one output whose
+   resolved ArrayMethod does not register a reduction loop raises a
+   :exc:`TypeError`. See :ref:`c-api.reduction-loop-tutorial` for a
+   worked example.
+
+   Note that this slot only lifts the restriction on how many outputs a
+   ufunc may have. It does not change how many inputs a ufunc may have:
+   :meth:`~numpy.ufunc.reduce` (as well as :meth:`~numpy.ufunc.accumulate`
+   and :meth:`~numpy.ufunc.reduceat`) still only works on ufuncs that take
+   exactly two inputs, whether or not a reduction loop is registered.
+   Calling any of these methods on a ufunc with a number of inputs other
+   than two raises a :exc:`ValueError`.
+
+.. c:macro:: NPY_METH_get_multi_reduction_initials
+
+   .. versionadded:: 2.6
+
+   Registers the per-output reduction identity/initial values, implemented as
+   a :c:type:`PyArrayMethod_GetMultiReductionInitials` function. It is the
+   multi-output version of :c:macro:`NPY_METH_get_reduction_initial` and fills
+   one initial value per reduction output instead of a single one.
+   :meth:`~numpy.ufunc.reduce` uses it to seed the accumulators when the
+   reduction is empty or when a ``where=`` mask is given, for a ufunc whose
+   loop also registers a :c:macro:`NPY_METH_get_reduction_loop`. See
+   :c:type:`PyArrayMethod_GetMultiReductionInitials` for the signature.
+
+   A method may register at most one of
+   :c:macro:`NPY_METH_get_reduction_initial` and
+   ``NPY_METH_get_multi_reduction_initials``. The latter supports single-output
+   reductions too. For a ufunc with more than one output it must be paired with
+   a :c:macro:`NPY_METH_get_reduction_loop`, otherwise
+   :meth:`~numpy.ufunc.reduce` is unreachable and the identity would never be
+   used. See :ref:`c-api.reduction-loop-tutorial` for a worked example.
 
 Flags
 ~~~~~
@@ -1905,6 +2029,42 @@ with the rest of the ArrayMethod API.
    the main ufunc registration function.  This adds a new implementation/loop
    to a ufunc.  It replaces `PyUFunc_RegisterLoopForType`.
 
+.. c:type:: PyUFunc_LoopSlot
+
+   Structure used to add multiple loops to ufuncs from ArrayMethod specs.
+   This is used in `PyUFunc_AddLoopsFromSpecs`.
+
+    .. c:struct:: PyUFunc_LoopSlot
+
+        .. c:member:: const char *name
+
+            The name of the ufunc to add the loop to, in the form like that of
+            entry points, ``(module ':')? (object '.')* name``, with ``numpy``
+            the default module. Examples: ``sin``, ``strings.str_len``,
+            ``numpy.strings:str_len``.
+            Note that some names are supported but do not directly correspond
+            to ufuncs: ``"sort"``, ``"argsort"``, ``"real"``, ``"imag"``.
+            (These do use ufunc-likes or even ufuncs internally.)
+
+        .. c:member:: PyArrayMethod_Spec *spec
+
+            The ArrayMethod spec to use to create the loop.
+
+.. c:function:: int PyUFunc_AddLoopsFromSpecs( \
+                        PyUFunc_LoopSlot *slots)
+
+    .. versionadded:: 2.4
+
+    Add multiple loops to ufuncs from ArrayMethod specs. This also
+    handles the registration of methods for the ufunc-like functions
+    ``sort`` and ``argsort`` (see :ref:`array-methods-sorting` for details),
+    as well as for the array attributes ``.real`` and ``.imag`` needed
+    for user defined complex DTypes (with ``"real"`` and ``"imag"`` as names).
+
+    The ``slots`` argument must be a  NULL-terminated array of
+    `PyUFunc_LoopSlot` (see above), which give the name of the
+    ufunc and spec needed to create the loop.
+
 .. c:function:: int PyUFunc_AddPromoter( \
                         PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
 
@@ -1929,6 +2089,22 @@ with the rest of the ArrayMethod API.
    operation and requested DType signatures and can mutate the signatures to
    attempt a search for a new loop or promoter that can accomplish the operation
    by casting the inputs to the "promoted" DTypes.
+
+    A promoter should honor ``signature[]`` (if set). A promoter must return ``-1``
+    on failure. A Python error may be set but is not required (a general error is
+    set in either paths, although the original error is chained).
+    A promoter must return ``0`` or ``1`` on success.  NumPy normally checks that
+    ``new_op_dtypes`` are different from ``op_dtypes`` to prevent recursion.
+    This check is skipped if the promoter returns ``1``, which allows the promoter
+    to add a new loop (when adding a new loop, ``new_op_dtypes`` should be identical
+    to ``op_dtypes``).
+
+    .. versionchanged:: 2.5
+        After 2.5 a return of ``1`` indicates that the promoter was successful
+        skipping a recursion protection step.
+        This mainly allows the promoter to add new loop to the ufunc that must
+        now match instead of the promoter itself.
+        (Normally, a promoter must modify the DTypes help find the right loop.)
 
 .. c:function:: int PyUFunc_GiveFloatingpointErrors( \
                         const char *name, int fpe_errors)
@@ -1964,7 +2140,7 @@ with the rest of the ArrayMethod API.
     The new descriptors MUST be viewable with the old ones, `NULL` must be
     supported (for output arguments) and should normally be forwarded.
 
-    The output of of this function will be used to construct
+    The output of this function will be used to construct
     views of the arguments as if they were the translated dtypes and
     does not use a cast. This means this mechanism is mostly useful for
     DTypes that "wrap" another DType implementation. For example, a unit
@@ -2054,6 +2230,70 @@ code:
         loop_descrs[2] = PyArray_DescrFromType(NPY_FLOAT64);
         Py_INCREF(loop_descrs[2]);
     }
+
+.. _array-methods-sorting:
+
+Sorting and Argsorting
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Sorting and argsorting methods for dtypes can be registered using the
+ArrayMethod API. This is done by adding an ArrayMethod spec with the name
+``"sort"`` or ``"argsort"`` respectively.  The spec must have ``nin=1``
+and ``nout=1`` for both sort and argsort. Sorting is inplace, hence we
+enforce that ``data[0] == data[1]``. Argsorting returns a new array of
+indices, so the output must be of ``NPY_INTP`` type.
+
+The ``context`` passed to the loop contains the ``parameters`` field which
+for these operations is a ``PyArrayMethod_SortParameters *`` struct. This
+struct contains a ``flags`` field which is a bitwise OR of ``NPY_SORTKIND``
+values indicating the kind of sort to perform (that is, whether it is a
+stable and/or descending sort). If the strided loop depends on the flags,
+a good way to deal with this is to define :c:macro:`NPY_METH_get_loop`,
+and not set any of the other loop slots.
+
+.. c:struct:: PyArrayMethod_SortParameters
+
+    .. c:member:: NPY_SORTKIND flags
+
+        The flags passed to the sort operation. This is a bitwise OR of
+        ``NPY_SORTKIND`` values indicating the kind of sort to perform.
+
+These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
+along with other ufunc loops.
+
+Partitioning and Argpartitioning
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similarly to sorting and argsorting, partitioning and argpartitioning methods
+can be registered using the ArrayMethod API. This is done by adding an
+ArrayMethod spec with the name ``"partition"`` or ``"argpartition"`` respectively.
+The spec must have ``nin=2`` and ``nout=1`` for both partition and argpartition,
+where the first input ``data[0]`` is the array to partition and the second input
+``data[1]`` is the kth array of indices to partition by. Partitioning is
+inplace, hence we enforce that ``data[0] == data[2]``. ``data[1]`` is always
+a contiguous array of type ``NPY_INTP`` that contains the partition indices.
+If multiple partition indices are given, the array is partitioned for each
+index. Argpartitioning returns a new array of indices, so the output must be of
+``NPY_INTP`` type.
+
+The ``context`` passed to the loop contains the ``parameters`` field which
+for these operations is a ``PyArrayMethod_PartitionParameters *`` struct. This
+struct contains a ``flags`` field which is a bitwise OR of ``NPY_SELECTKIND``
+values indicating the kind of partition to perform (that is, whether it is a
+descending partition). If the strided loop depends on the flags, a good way
+to deal with this is to define :c:macro:`NPY_METH_get_loop`, and not set any
+of the other loop slots. For the loop, ``dimensions[0]`` is the number of
+elements to partition, and ``dimensions[1]`` is the number of partition indices.
+
+.. c:struct:: PyArrayMethod_PartitionParameters
+
+    .. c:member:: NPY_SELECTKIND flags
+
+        The flags passed to the partition operation. This is a bitwise OR of
+        ``NPY_SELECTKIND`` values indicating the kind of partition to perform.
+
+These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
+along with other ufunc loops.
 
 API for calling array methods
 -----------------------------
@@ -2206,18 +2446,29 @@ Shape Manipulation
         PyArrayObject* self, PyArray_Dims* newshape, int refcheck, \
         NPY_ORDER fortran)
 
-    Equivalent to :meth:`ndarray.resize<numpy.ndarray.resize>` (*self*, *newshape*, refcheck
-    ``=`` *refcheck*, order= fortran ). This function only works on
-    single-segment arrays. It changes the shape of *self* inplace and
-    will reallocate the memory for *self* if *newshape* has a
-    different total number of elements then the old shape. If
-    reallocation is necessary, then *self* must own its data, have
-    *self* - ``>base==NULL``, have *self* - ``>weakrefs==NULL``, and
-    (unless refcheck is 0) not be referenced by any other array.
-    The fortran argument can be :c:data:`NPY_ANYORDER`, :c:data:`NPY_CORDER`,
-    or :c:data:`NPY_FORTRANORDER`. It currently has no effect. Eventually
-    it could be used to determine how the resize operation should view
-    the data when constructing a differently-dimensioned array.
+    Equivalent to :meth:`ndarray.resize<numpy.ndarray.resize>` (*self*, *newshape*, *refcheck*).
+    This function only works on single-segment arrays. It changes the shape of
+    *self* inplace and will reallocate the memory for *self* if *newshape* has
+    a different total number of elements then the old shape. If reallocation is
+    necessary, then *self* must own its data, have *self* - ``>base==NULL``,
+    have *self* - ``>weakrefs==NULL``, and (unless refcheck is 0) not be
+    referenced by any other array. The *fortran* argument has no effect.
+
+    On Python 3.13 and older, the check allows uniquely referenced objects and
+    objects with exactly one reference to be reallocated in-place. On Python
+    3.14 and newer, the array must be uniquely referenced. See the Python 3.14
+    `What's New entry
+    <https://docs.python.org/3/whatsnew/3.14.html#whatsnew314-refcount>`_ on
+    this topic for more information on why there is a behavior difference.
+
+    Reallocating arrays in-place can often lead to memory fragmentation and
+    should be avoided. If the goal is to reclaim over-allocated memory,
+    alternatives are to create a view or a copy of just the desired data, or
+    using two passes to build the array: one to cheaply determine the shape and
+    another to allocate and fill. Benchmark your use case to determine what is
+    optimum. You may be surprised to find ``resize`` actually slows down or
+    bloats your application.
+
     Returns None on success and NULL on error.
 
 .. c:function:: PyObject* PyArray_Transpose( \
@@ -2322,21 +2573,36 @@ Item selection and manipulation
 
 .. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
 
-    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*).
-    Return an array with the items of *self* sorted along *axis*. The array
-    is sorted using the algorithm denoted by *kind*, which is an integer/enum pointing
-    to the type of sorting algorithms used.
+    Return an array with the items of ``self`` sorted along ``axis``. The array
+    is sorted using an algorithm whose properties are specified by the value of
+    ``kind``, an integer/enum specifying the requirements of the sorting
+    algorithm used. If ``self* ->descr`` is a data-type with fields defined,
+    then ``self->descr->names`` is used to determine the sort order. A comparison
+    where the first field is equal will use the second field and so on. To
+    alter the sort order of a structured array, create a new data-type with a
+    different order of names and construct a view of the array with that new
+    data-type.
 
-.. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis)
+    This is the C level function called by the ndarray method
+    :meth:`ndarray.sort<numpy.ndarray.sort>`, though with a different meaning
+    of ``kind`` -- see ``NPY_SORTKIND`` below.
 
-    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*).
-    Return an array of indices such that selection of these indices
-    along the given ``axis`` would return a sorted version of *self*. If *self* ->descr
-    is a data-type with fields defined, then self->descr->names is used
-    to determine the sort order. A comparison where the first field is equal
-    will use the second field and so on. To alter the sort order of a
-    structured array, create a new data-type with a different order of names
-    and construct a view of the array with that new data-type.
+.. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
+
+    Return an array of indices such that selection of these indices along the
+    given ``axis`` would return a sorted version of ``self``.  The array is
+    sorted using an algorithm whose properties are specified by ``kind``, an
+    integer/enum specifying the requirements of the sorting algorithm used. If
+    ``self->descr`` is a data-type with fields defined, then
+    ``self->descr->names`` is used to determine the sort order. A comparison
+    where the first field is equal will use the second field and so on. To
+    alter the sort order of a structured array, create a new data-type with a
+    different order of names and construct a view of the array with that new
+    data-type.
+
+    This is the C level function called by the ndarray method
+    :meth:`ndarray.argsort<numpy.ndarray.argsort>`, though with a different
+    meaning of ``kind`` -- see ``NPY_SORTKIND`` below.
 
 .. c:function:: PyObject* PyArray_LexSort(PyObject* sort_keys, int axis)
 
@@ -2410,8 +2676,6 @@ Item selection and manipulation
     *axis1* and *axis2*.
 
 .. c:function:: npy_intp PyArray_CountNonzero(PyArrayObject* self)
-
-    .. versionadded:: 1.6
 
     Counts the number of non-zero elements in the array object *self*.
 
@@ -2672,8 +2936,6 @@ Array Functions
 .. c:function:: PyObject* PyArray_MatrixProduct2( \
         PyObject* obj1, PyObject* obj, PyArrayObject* out)
 
-    .. versionadded:: 1.6
-
     Same as PyArray_MatrixProduct, but store the result in *out*.  The
     output array must have the correct shape, type, and be
     C-contiguous, or an exception is raised.
@@ -2682,8 +2944,6 @@ Array Functions
         char* subscripts, npy_intp nop, PyArrayObject** op_in, \
         PyArray_Descr* dtype, NPY_ORDER order, NPY_CASTING casting, \
         PyArrayObject* out)
-
-    .. versionadded:: 1.6
 
     Applies the Einstein summation convention to the array operands
     provided, returning a new array or placing the result in *out*.
@@ -2776,8 +3036,6 @@ Other functions
 Auxiliary data with object semantics
 ------------------------------------
 
-.. versionadded:: 1.7.0
-
 .. c:type:: NpyAuxData
 
 When working with more complex dtypes which are composed of other dtypes,
@@ -2804,12 +3062,12 @@ an element copier function as a primitive.
         eldoubler_aux_data *d = (eldoubler_aux_data *)data;
         /* Free the memory owned by this auxdata */
         NPY_AUXDATA_FREE(d->funcdata);
-        PyArray_free(d);
+        PyMem_RawFree(d);
     }
 
     NpyAuxData *clone_element_doubler_aux_data(NpyAuxData *data)
     {
-        eldoubler_aux_data *ret = PyArray_malloc(sizeof(eldoubler_aux_data));
+        eldoubler_aux_data *ret = PyMem_RawMalloc(sizeof(eldoubler_aux_data));
         if (ret == NULL) {
             return NULL;
         }
@@ -2820,7 +3078,7 @@ an element copier function as a primitive.
         /* Fix up the owned auxdata so we have our own copy */
         ret->funcdata = NPY_AUXDATA_CLONE(ret->funcdata);
         if (ret->funcdata == NULL) {
-            PyArray_free(ret);
+            PyMem_RawFree(ret);
             return NULL;
         }
 
@@ -2831,7 +3089,7 @@ an element copier function as a primitive.
                                 ElementCopier_Func *func,
                                 NpyAuxData *funcdata)
     {
-        eldoubler_aux_data *ret = PyArray_malloc(sizeof(eldoubler_aux_data));
+        eldoubler_aux_data *ret = PyMem_RawMalloc(sizeof(eldoubler_aux_data));
         if (ret == NULL) {
             PyErr_NoMemory();
             return NULL;
@@ -2910,7 +3168,7 @@ of this useful approach to looping over an array from C.
 
 .. c:function:: void PyArray_ITER_NEXT(PyObject* iterator)
 
-    Incremement the index and the dataptr members of the *iterator* to
+    Increment the index and the dataptr members of the *iterator* to
     point to the next element of the array. If the array is not
     (C-style) contiguous, also increment the N-dimensional coordinates
     array.
@@ -3058,8 +3316,6 @@ Broadcasting (multi-iterators)
 
 Neighborhood iterator
 ---------------------
-
-.. versionadded:: 1.4.0
 
 Neighborhood iterators are subclasses of the iterator object, and can be used
 to iter over a neighborhood of a point. For example, you may want to iterate
@@ -3238,30 +3494,18 @@ Array scalars
 .. c:function:: NPY_SCALARKIND PyArray_ScalarKind( \
         int typenum, PyArrayObject** arr)
 
-    See the function :c:func:`PyArray_MinScalarType` for an alternative
-    mechanism introduced in NumPy 1.6.0.
+    Legacy way to query special promotion for scalar values.  This is not
+    used in NumPy itself anymore and is expected to be deprecated eventually.
 
-    Return the kind of scalar represented by *typenum* and the array
-    in *\*arr* (if *arr* is not ``NULL`` ). The array is assumed to be
-    rank-0 and only used if *typenum* represents a signed integer. If
-    *arr* is not ``NULL`` and the first element is negative then
-    :c:data:`NPY_INTNEG_SCALAR` is returned, otherwise
-    :c:data:`NPY_INTPOS_SCALAR` is returned. The possible return values
-    are the enumerated values in :c:type:`NPY_SCALARKIND`.
+    New DTypes can define promotion rules specific to Python scalars.
 
 .. c:function:: int PyArray_CanCoerceScalar( \
         char thistype, char neededtype, NPY_SCALARKIND scalar)
 
-    See the function :c:func:`PyArray_ResultType` for details of
-    NumPy type promotion, updated in NumPy 1.6.0.
+    Legacy way to query special promotion for scalar values.  This is not
+    used in NumPy itself anymore and is expected to be deprecated eventually.
 
-    Implements the rules for scalar coercion. Scalars are only
-    silently coerced from thistype to neededtype if this function
-    returns nonzero.  If scalar is :c:data:`NPY_NOSCALAR`, then this
-    function is equivalent to :c:func:`PyArray_CanCastSafely`. The rule is
-    that scalars of the same KIND can be coerced into arrays of the
-    same KIND. This rule means that high-precision scalars will never
-    cause low-precision arrays of the same KIND to be upcast.
+    Use ``PyArray_ResultType`` for similar purposes.
 
 
 Data-type descriptors
@@ -3371,13 +3615,13 @@ Data-type descriptors
     can also be used with the "O&" character in PyArg_ParseTuple
     processing.
 
-.. c:function:: int Pyarray_DescrAlignConverter( \
+.. c:function:: int PyArray_DescrAlignConverter( \
         PyObject* obj, PyArray_Descr** dtype)
 
     Like :c:func:`PyArray_DescrConverter` except it aligns C-struct-like
     objects on word-boundaries as the compiler would.
 
-.. c:function:: int Pyarray_DescrAlignConverter2( \
+.. c:function:: int PyArray_DescrAlignConverter2( \
         PyObject* obj, PyArray_Descr** dtype)
 
     Like :c:func:`PyArray_DescrConverter2` except it aligns C-struct-like
@@ -3445,6 +3689,11 @@ Also see :ref:`dtypemeta` for documentation on ``PyArray_DTypeMeta`` and
  the examples in the ``numpy-user-dtypes`` repository for usage with both
  parametric and non-parametric data types.
 
+ .. note::
+
+    Custom DType registration is expected to happen during module import.
+    The registration API mutates global state and is not thread-safe.
+
 .. _dtype-flags:
 
 Flags
@@ -3475,6 +3724,37 @@ Slot IDs and API Function Typedefs
 These IDs correspond to slots in the DType API and are used to identify
 implementations of each slot from the items of the ``slots`` array
 member of ``PyArrayDTypeMeta_Spec`` struct.
+
+.. c:macro:: NPY_DT_legacy_descriptor_proto
+
+   Compatibility slot to transition legacy dtypes to the new DType API.
+   Existing legacy dtypes that currently use ``PyArray_RegisterDataType``
+   should use this to transition to the new DType API.
+   The value of this slot is the ``PyArray_DescrProto`` struct.
+
+   This slot allows an *existing* legacy DType to use the new DType API
+   without breaking backwards compatibility (or with very minor changes).
+   I.e. NumPy will still consider this a "legacy" DType and use old code paths
+   where applicable, but use new features as they become available.
+
+   If used, this slot is required to be the first slot.  The ``ArrFuncs``
+   fields are copied, but you may also set them via the slots below.
+   (This allows backporting e.g. sorts, although NumPy 2.4+ does support
+   a new way to implement sorts.)
+
+   .. versionadded:: 2.5
+
+      This feature is added in NumPy 2.5, but is backported to be compatible
+      with NumPy 2.0+.  You can vendor this backport from ``npy_2_compat.h``
+      if you wish to compile with older NumPy versions.
+
+   .. note::
+      This slot exists for DTypes that currently use
+      ``PyArray_RegisterDataType`` allowing them to transition when otherwise
+      regressions would block them from doing so.
+      It is a path for deprecating ``PyArray_RegisterDataType``,
+      ``PyArray_RegisterCastFunc``, ``PyArray_RegisterCanCast`` and further
+      slots in the future.
 
 .. c:macro:: NPY_DT_discover_descr_from_pyobject
 
@@ -3561,6 +3841,126 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    instance after an array is created. One use of this function is to
    force newly created arrays to have a newly created descriptor
    instance, no matter what input descriptor is provided by a user.
+
+.. c:macro:: NPY_DT_get_constant
+
+.. c:type:: int (PyArrayDTypeMeta_GetConstant)( \
+                PyArray_Descr *descr, int constant_id, void *out)
+
+   If defined, allows the DType to expose constant values such as machine
+   limits, special values (infinity, NaN), and floating-point characteristics.
+   The *descr* is the descriptor instance, *constant_id* is one of the
+   ``NPY_CONSTANT_*`` macros, and *out* is a pointer to uninitialized memory
+   where the constant value should be written. The memory pointed to by *out*
+   may be unaligned and is uninitialized.
+   Returns 1 on success, 0 if the constant is not available,
+   or -1 with an error set.
+
+   Implementing all ``finfo`` constants allows the DType to be used together
+   with `numpy.finfo`. Complex dtypes can support ``finfo`` by implementing the
+   ``imag`` and ``real`` slots (see  :c:func:`PyUFunc_AddLoopFromSpec`) when
+   the corresponding real DType implements it.
+
+   **Constant IDs**:
+
+    The following constant IDs are defined for retrieving dtype-specific values:
+
+    **Basic constants** (available for all numeric types):
+
+   .. c:macro:: NPY_CONSTANT_zero
+
+       The zero value for the dtype.
+
+   .. c:macro:: NPY_CONSTANT_one
+
+       The one value for the dtype.
+
+   .. c:macro:: NPY_CONSTANT_minimum_finite
+
+       The minimum finite value representable by the dtype. For floating-point types,
+       this is the most negative finite value (e.g., ``-FLT_MAX``).
+
+   .. c:macro:: NPY_CONSTANT_maximum_finite
+
+       The maximum finite value representable by the dtype.
+
+   **Floating-point special values**:
+
+   .. c:macro:: NPY_CONSTANT_inf
+
+       Positive infinity (only for floating-point types).
+
+   .. c:macro:: NPY_CONSTANT_ninf
+
+       Negative infinity (only for floating-point types).
+
+   .. c:macro:: NPY_CONSTANT_nan
+
+       Not-a-Number (only for floating-point types).
+
+   **Floating-point characteristics** (values of the dtype's native type):
+
+   .. c:macro:: NPY_CONSTANT_finfo_radix
+
+       The radix (base) of the floating-point representation. This is 2 for all
+       floating-point types.
+
+   .. c:macro:: NPY_CONSTANT_finfo_eps
+
+       Machine epsilon: the difference between 1.0 and the next representable value
+       greater than 1.0. Corresponds to C macros like ``FLT_EPSILON``, ``DBL_EPSILON``.
+
+       .. note::
+           For long double in IBM double-double format (PowerPC), this is defined as
+           ``0x1p-105L`` (2^-105) based on the ~106 bits of mantissa precision.
+
+   .. c:macro:: NPY_CONSTANT_finfo_epsneg
+
+       The difference between 1.0 and the next representable value less than 1.0.
+       Typically ``eps / radix`` for binary floating-point types.
+
+   .. c:macro:: NPY_CONSTANT_finfo_smallest_normal
+
+       The smallest positive normalized floating-point number. Corresponds to C
+       macros like ``FLT_MIN``, ``DBL_MIN``. This is the smallest value with a
+       leading 1 bit in the mantissa.
+
+   .. c:macro:: NPY_CONSTANT_finfo_smallest_subnormal
+
+       The smallest positive subnormal (denormalized) floating-point number.
+       Corresponds to C macros like ``FLT_TRUE_MIN``, ``DBL_TRUE_MIN``. This is
+       the smallest representable positive value, with leading 0 bits in the mantissa.
+
+   **Floating-point characteristics** (integer values, type ``npy_intp``):
+
+   These constants return integer metadata about the floating-point representation.
+   They are marked with the ``1 << 16`` bit to indicate they return ``npy_intp``
+   values rather than the dtype's native type.
+
+   .. c:macro:: NPY_CONSTANT_finfo_nmant
+
+       Number of mantissa bits (excluding the implicit leading bit). For example,
+       IEEE 754 binary64 (double) has 52 explicit mantissa bits, so this returns 52.
+       Corresponds to ``MANT_DIG - 1`` from C standard macros.
+
+   .. c:macro:: NPY_CONSTANT_finfo_min_exp
+
+       Minimum exponent value. This is the minimum negative integer such that the
+       radix raised to the power of one less than that integer is a normalized
+       floating-point number. Corresponds to ``MIN_EXP - 1`` from C standard macros
+       (e.g., ``FLT_MIN_EXP - 1``).
+
+   .. c:macro:: NPY_CONSTANT_finfo_max_exp
+
+       Maximum exponent value. This is the maximum positive integer such that the
+       radix raised to the power of one less than that integer is a representable
+       finite floating-point number. Corresponds to ``MAX_EXP`` from C standard
+       macros (e.g., ``FLT_MAX_EXP``).
+
+   .. c:macro:: NPY_CONSTANT_finfo_decimal_digits
+
+       The number of decimal digits of precision. Corresponds to ``DIG`` from C
+       standard macros (e.g., ``FLT_DIG``, ``DBL_DIG``).
 
 PyArray_ArrFuncs slots
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -3812,16 +4212,121 @@ Other conversions
 
     Convert any Python sequence (or single Python number) passed in as
     *seq* to (up to) *maxvals* pointer-sized integers and place them
-    in the *vals* array. The sequence can be smaller then *maxvals* as
+    in the *vals* array. The sequence can be smaller than *maxvals* as
     the number of converted objects is returned.
 
+.. _including-the-c-api:
 
-Miscellaneous
--------------
+Including and importing the C API
+---------------------------------
+
+To use the NumPy C-API you typically need to include the
+``numpy/ndarrayobject.h`` header and ``numpy/ufuncobject.h`` for some ufunc
+related functionality (``arrayobject.h`` is an alias for ``ndarrayobject.h``).
+
+These two headers export most relevant functionality.  In general any project
+which uses the NumPy API must import NumPy using one of the functions
+``PyArray_ImportNumPyAPI()`` or ``import_array()``.
+In some places, functionality which requires ``import_array()`` is not
+needed, because you only need type definitions.  In this case, it is
+sufficient to include ``numpy/ndarratypes.h``.
+
+For the typical Python project, multiple C or C++ files will be compiled into
+a single shared object (the Python C-module) and ``PyArray_ImportNumPyAPI()``
+should be called inside it's module initialization.
+
+When you have a single C-file, this will consist of:
+
+.. code-block:: c
+
+    #include "numpy/ndarrayobject.h"
+
+    PyMODINIT_FUNC PyInit_my_module(void)
+    {
+        if (PyArray_ImportNumPyAPI() < 0) {
+            return NULL;
+        }
+        /* Other initialization code. */
+    }
+
+However, most projects will have additional C files which are all
+linked together into a single Python module.
+In this case, the helper C files typically do not have a canonical place
+where ``PyArray_ImportNumPyAPI`` should be called (although it is OK and
+fast to call it often).
+
+To solve this, NumPy provides the following pattern that the main
+file is modified to define ``PY_ARRAY_UNIQUE_SYMBOL`` before the include:
+
+.. code-block:: c
+
+    /* Main module file */
+    #define PY_ARRAY_UNIQUE_SYMBOL MyModule
+    #include "numpy/ndarrayobject.h"
+
+    PyMODINIT_FUNC PyInit_my_module(void)
+    {
+        if (PyArray_ImportNumPyAPI() < 0) {
+            return NULL;
+        }
+        /* Other initialization code. */
+    }
+
+while the other files use:
+
+.. code-block:: C
+
+    /* Second file without any import */
+    #define NO_IMPORT_ARRAY
+    #define PY_ARRAY_UNIQUE_SYMBOL MyModule
+    #include "numpy/ndarrayobject.h"
+
+You can of course add the defines to a local header used throughout.
+You just have to make sure that the main file does _not_ define
+``NO_IMPORT_ARRAY``.
+
+For ``numpy/ufuncobject.h`` the same logic applies, but the unique symbol
+mechanism is ``#define PY_UFUNC_UNIQUE_SYMBOL`` (both can match).
+
+Additionally, you will probably wish to add a
+``#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION``
+to avoid warnings about possible use of old API.
+
+.. note::
+    If you are experiencing access violations make sure that the NumPy API
+    was properly imported and the symbol ``PyArray_API`` is not ``NULL``.
+    When in a debugger, this symbols actual name will be
+    ``PY_ARRAY_UNIQUE_SYMBOL``+``PyArray_API``, so for example
+    ``MyModulePyArray_API`` in the above.
+    (E.g. even a ``printf("%p\n", PyArray_API);`` just before the crash.)
 
 
-Importing the API
-~~~~~~~~~~~~~~~~~
+Mechanism details and dynamic linking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The main part of the mechanism is that without NumPy needs to define
+a ``void **PyArray_API`` table for you to look up all functions.
+Depending on your macro setup, this takes different routes depending on
+whether :c:macro:`NO_IMPORT_ARRAY` and  :c:macro:`PY_ARRAY_UNIQUE_SYMBOL`
+are defined:
+
+* If neither is defined, the C-API is declared to
+  ``static void **PyArray_API``, so it is only visible within the
+  compilation unit/file using ``#include <numpy/arrayobject.h>``.
+* If only ``PY_ARRAY_UNIQUE_SYMBOL`` is defined (it could be empty) then
+  the it is declared to a non-static ``void **`` allowing it to be used
+  by other files which are linked.
+* If ``NO_IMPORT_ARRAY`` is defined, the table is declared as
+  ``extern void **``, meaning that it must be linked to a file which does not
+  use ``NO_IMPORT_ARRAY``.
+
+The ``PY_ARRAY_UNIQUE_SYMBOL`` mechanism additionally mangles the names to
+avoid conflicts.
+
+.. versionchanged::
+    NumPy 2.1 changed the headers to avoid sharing the table outside of a
+    single shared object/dll (this was always the case on Windows).
+    Please see :c:macro:`NPY_API_SYMBOL_ATTRIBUTE` for details.
 
 In order to make use of the C-API from another extension module, the
 :c:func:`import_array` function must be called. If the extension module is
@@ -3845,31 +4350,46 @@ the C-API is needed then some additional steps must be taken.
     module that will make use of the C-API. It imports the module
     where the function-pointer table is stored and points the correct
     variable to it.
+    This macro includes a ``return NULL;`` on error, so that
+    ``PyArray_ImportNumPyAPI()`` is preferable for custom error checking.
+    You may also see use of ``_import_array()`` (a function, not
+    a macro, but you may want to raise a better error if it fails) and
+    the variations ``import_array1(ret)`` which customizes the return value.
 
 .. c:macro:: PY_ARRAY_UNIQUE_SYMBOL
 
+.. c:macro:: NPY_API_SYMBOL_ATTRIBUTE
+
+    .. versionadded:: 2.1
+
+    An additional symbol which can be used to share e.g. visibility beyond
+    shared object boundaries.
+    By default, NumPy adds the C visibility hidden attribute (if available):
+    ``void __attribute__((visibility("hidden"))) **PyArray_API;``.
+    You can change this by defining ``NPY_API_SYMBOL_ATTRIBUTE``, which will
+    make this:
+    ``void NPY_API_SYMBOL_ATTRIBUTE **PyArray_API;`` (with additional
+    name mangling via the unique symbol).
+
+    Adding an empty ``#define NPY_API_SYMBOL_ATTRIBUTE`` will have the same
+    behavior as NumPy 1.x.
+
+    .. note::
+        Windows never had shared visibility although you can use this macro
+        to achieve it.  We generally discourage sharing beyond shared boundary
+        lines since importing the array API includes NumPy version checks.
+
 .. c:macro:: NO_IMPORT_ARRAY
 
-    Using these #defines you can use the C-API in multiple files for a
-    single extension module. In each file you must define
-    :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` to some name that will hold the
-    C-API (*e.g.* myextension_ARRAY_API). This must be done **before**
-    including the numpy/arrayobject.h file. In the module
-    initialization routine you call :c:func:`import_array`. In addition,
-    in the files that do not have the module initialization
-    sub_routine define :c:macro:`NO_IMPORT_ARRAY` prior to including
-    numpy/arrayobject.h.
-
-    Suppose I have two files coolmodule.c and coolhelper.c which need
-    to be compiled and linked into a single extension module. Suppose
-    coolmodule.c contains the required initcool module initialization
-    function (with the import_array() function called). Then,
-    coolmodule.c would have at the top:
+    Defining ``NO_IMPORT_ARRAY`` before the ``ndarrayobject.h`` include
+    indicates that the NumPy C API import is handled in a different file
+    and the include mechanism will not be added here.
+    You must have one file without ``NO_IMPORT_ARRAY`` defined.
 
     .. code-block:: c
 
         #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
-        #include numpy/arrayobject.h
+        #include <numpy/arrayobject.h>
 
     On the other hand, coolhelper.c would contain at the top:
 
@@ -3877,7 +4397,7 @@ the C-API is needed then some additional steps must be taken.
 
         #define NO_IMPORT_ARRAY
         #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
-        #include numpy/arrayobject.h
+        #include <numpy/arrayobject.h>
 
     You can also put the common two last lines into an extension-local
     header file as long as you make sure that NO_IMPORT_ARRAY is
@@ -3901,43 +4421,37 @@ the C-API is needed then some additional steps must be taken.
       defaults to ``PyArray_API``, to whatever the macro is
       #defined to.
 
+
 Checking the API Version
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Because python extensions are not used in the same way as usual libraries on
-most platforms, some errors cannot be automatically detected at build time or
-even runtime. For example, if you build an extension using a function available
-only for numpy >= 1.3.0, and you import the extension later with numpy 1.2, you
-will not get an import error (but almost certainly a segmentation fault when
-calling the function). That's why several functions are provided to check for
-numpy versions. The macros :c:data:`NPY_VERSION`  and
-:c:data:`NPY_FEATURE_VERSION` corresponds to the numpy version used to build the
-extension, whereas the versions returned by the functions
-:c:func:`PyArray_GetNDArrayCVersion` and :c:func:`PyArray_GetNDArrayCFeatureVersion`
-corresponds to the runtime numpy's version.
+The following definitions allow checking the NumPy compile time version,
+enabled C-API feature version and runtime version.
 
-The rules for ABI and API compatibilities can be summarized as follows:
+ABI and C-API compatibility are automatically checked when calling
+:c:func:`PyArray_ImportNumPyAPI` or :c:func:`import_array` and an error
+will be raised when these are incompatible with the NumPy runtime.
+User code should generally **not** check these manually.
 
-* Whenever :c:data:`NPY_VERSION` != ``PyArray_GetNDArrayCVersion()``, the
-  extension has to be recompiled (ABI incompatibility).
-* :c:data:`NPY_VERSION` == ``PyArray_GetNDArrayCVersion()`` and
-  :c:data:`NPY_FEATURE_VERSION` <= ``PyArray_GetNDArrayCFeatureVersion()`` means
-  backward compatible changes.
-
-ABI incompatibility is automatically detected in every numpy's version. API
-incompatibility detection was added in numpy 1.4.0. If you want to supported
-many different numpy versions with one extension binary, you have to build your
-extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
+For details about NumPy C-API compatibility see
+:ref:`for-downstream-package-authors`.
 
 .. c:macro:: NPY_VERSION
 
-    The current version of the ndarray object (check to see if this
-    variable is defined to guarantee the ``numpy/arrayobject.h`` header is
-    being used).
+    The ABI version of the NumPy headers at compile time.
 
 .. c:macro:: NPY_FEATURE_VERSION
 
-    The current version of the C-API.
+    The version of the NumPy C-API the compilation targets.
+    Setting ``NPY_TARGET_VERSION`` may modify this value to make newer
+    NumPy API features available or, in principle, to be compatible with
+    older NumPy versions.
+
+.. c:macro:: PyArray_RUNTIME_VERSION
+
+    After the C-API has been imported ``PyArray_RUNTIME_VERSION`` is set to
+    the current runtime C-API version. ``PyArray_RUNTIME_VERSION`` is
+    mainly used when necessary to support both old and new NumPy versions.
 
 .. c:function:: unsigned int PyArray_GetNDArrayCVersion(void)
 
@@ -3950,26 +4464,9 @@ extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
 
 .. c:function:: unsigned int PyArray_GetNDArrayCFeatureVersion(void)
 
-    .. versionadded:: 1.4.0
-
     This just returns the value :c:data:`NPY_FEATURE_VERSION`.
     :c:data:`NPY_FEATURE_VERSION` changes whenever the API changes (e.g. a
     function is added). A changed value does not always require a recompile.
-
-Internal Flexibility
-~~~~~~~~~~~~~~~~~~~~
-
-.. c:function:: void PyArray_SetStringFunction(PyObject* op, int repr)
-
-    This function allows you to alter the tp_str and tp_repr methods
-    of the array object to any Python function. Thus you can alter
-    what happens for all arrays when str(arr) or repr(arr) is called
-    from Python. The function to be called is passed in as *op*. If
-    *repr* is non-zero, then this function will be called in response
-    to repr(arr), otherwise the function will be called in response to
-    str(arr). No check on whether or not *op* is callable is
-    performed. The callable passed in to *op* should expect an array
-    argument and should return a string to be printed.
 
 
 Memory management
@@ -3981,8 +4478,8 @@ Memory management
 
 .. c:function:: char* PyDataMem_RENEW(void * ptr, size_t newbytes)
 
-    Macros to allocate, free, and reallocate memory. These macros are used
-    internally to create arrays.
+    Functions to allocate, free, and reallocate memory. These are used
+    internally to manage array data memory unless overridden.
 
 .. c:function:: npy_intp*  PyDimMem_NEW(int nd)
 
@@ -3998,19 +4495,22 @@ Memory management
 
 .. c:function:: void* PyArray_realloc(npy_intp* ptr, size_t nbytes)
 
-    These macros use different memory allocators, depending on the
-    constant :c:data:`NPY_USE_PYMEM`. The system malloc is used when
-    :c:data:`NPY_USE_PYMEM` is 0, if :c:data:`NPY_USE_PYMEM` is 1, then
-    the Python memory allocator is used.
+    These macros are aliases for ``PyMem_RawMalloc``, ``PyMem_RawFree``, and
+    ``PyMem_RawRealloc``. They exist to maintain backward compatibility for code
+    written against older versions of NumPy's C API. For new code, we recommend
+    using the `CPython Raw Memory Interface
+    <https://docs.python.org/3/c-api/memory.html#raw-memory-interface>`_.
 
-    .. c:macro:: NPY_USE_PYMEM
+.. c:macro:: NPY_USE_PYMEM
+
+   Always defined to be ``1`` and present in the API for backward compatibility.
 
 .. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
 
     If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
-    clears the flags, `DECREF` s
-    `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. It then
-    copies ``obj->data`` to `obj->base->data`, and returns the error state of
+    clears the flags, ``DECREF`` s
+    ``obj->base`` and makes it writeable, and sets ``obj->base`` to NULL. It then
+    copies ``obj->data`` to ``obj->base->data``, and returns the error state of
     the copy operation. This is the opposite of
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called once
     you are finished with ``obj``, just before ``Py_DECREF(obj)``. It may be called
@@ -4018,6 +4518,8 @@ Memory management
     :c:func:`PyArray_DiscardWritebackIfCopy`.
 
     Returns 0 if nothing was done, -1 on error, and 1 if action was taken.
+
+.. _array.ndarray.capi.threading:
 
 Threading support
 ~~~~~~~~~~~~~~~~~
@@ -4244,9 +4746,9 @@ Miscellaneous Macros
 
     If ``obj->flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
     clears the flags, `DECREF` s
-    `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. In
+    ``obj->base`` and makes it writeable, and sets ``obj->base`` to NULL. In
     contrast to :c:func:`PyArray_ResolveWritebackIfCopy` it makes no attempt
-    to copy the data from `obj->base`. This undoes
+    to copy the data from ``obj->base``. This undoes
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called after an
     error when you are finished with ``obj``, just before ``Py_DECREF(obj)``.
     It may be called multiple times, or with ``NULL`` input.
@@ -4258,7 +4760,11 @@ Enumerated Types
 .. c:enum:: NPY_SORTKIND
 
     A special variable-type which can take on different values to indicate
-    the sorting algorithm being used.
+    the sorting algorithm being used. These algorithm types have not been
+    treated strictly for some time, but rather treated as stable/not stable.
+    In NumPy 2.4 they are replaced by requirements (see below), but done in a
+    backwards compatible way. These values will continue to work, except that
+    that NPY_HEAPSORT will do the same thing as NPY_QUICKSORT.
 
     .. c:enumerator:: NPY_QUICKSORT
 
@@ -4272,11 +4778,30 @@ Enumerated Types
 
     .. c:enumerator:: NPY_NSORTS
 
-       Defined to be the number of sorts. It is fixed at three by the need for
-       backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
-       :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
-       of several stable sorting algorithms depending on the data type.
+        Defined to be the number of sorts. It is fixed at three by the need for
+        backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
+        :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
+        of several stable sorting algorithms depending on the data type.
 
+    In NumPy 2.4 the algorithm names are replaced by requirements. You can still use
+    the old values, a recompile is not needed, but they are reinterpreted such that
+
+    * NPY_QUICKSORT and NPY_HEAPSORT -> NPY_SORT_DEFAULT
+    * NPY_MERGESORT and NPY_STABLE -> NPY_SORT_STABLE
+
+    .. c:enumerator:: NPY_SORT_DEFAULT
+
+        The default sort for the type. For the NumPy builtin types it may be
+        stable or not, but will be ascending and sort NaN types to the end. It
+        is usually chosen for speed and/or low memory.
+
+    .. c:enumerator:: NPY_SORT_STABLE
+
+        (Requirement) Specifies that the sort must be stable.
+
+    .. c:enumerator:: NPY_SORT_DESCENDING
+
+        (Requirement) Specifies that the sort must be in descending order.
 
 .. c:enum:: NPY_SCALARKIND
 
@@ -4357,13 +4882,23 @@ Enumerated Types
 
 .. c:enum:: NPY_SELECTKIND
 
-    A variable type indicating the selection algorithm being used.
+    A variable type indicating the selection algorithm options for
+    the partitioning functions, see also :c:type:`NPY_SORTKIND`.
+
+    .. c:enumerator:: NPY_SELECT_DEFAULT
+
+        The default selection algorithm.
+
+    .. c:enumerator:: NPY_SELECT_DESCENDING
+
+        (Requirement) Flag that changes the partition/sort order to descending.
 
     .. c:enumerator:: NPY_INTROSELECT
 
-.. c:enum:: NPY_CASTING
+        Identical to ``NPY_SELECT_DEFAULT`` but defined prior to NumPy 2.5.
+        Prefer ``NPY_SELECT_DEFAULT`` if compiling with NumPy 2.5 or later.
 
-    .. versionadded:: 1.6
+.. c:enum:: NPY_CASTING
 
     An enumeration type indicating how permissive data conversions should
     be. This is used by the iterator added in NumPy 1.6, and is intended
@@ -4390,6 +4925,13 @@ Enumerated Types
     .. c:enumerator:: NPY_UNSAFE_CASTING
 
        Allow any cast, no matter what kind of data loss may occur.
+
+.. c:macro:: NPY_SAME_VALUE_CASTING
+
+       Error if any values change during a cast. Currently
+       supported only in ``ndarray.astype(... casting='same_value')``
+
+       .. versionadded:: 2.4
 
 .. index::
    pair: ndarray; C-API

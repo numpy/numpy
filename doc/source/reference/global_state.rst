@@ -1,14 +1,13 @@
 .. _global_state:
 
-************
-Global state
-************
+****************************
+Global Configuration Options
+****************************
 
-NumPy has a few import-time, compile-time, or runtime options
-which change the global behaviour.
-Most of these are related to performance or for debugging
-purposes and will not be interesting to the vast majority
-of users.
+NumPy has a few import-time, compile-time, or runtime configuration
+options which change the global behaviour.  Most of these are related to
+performance or for debugging purposes and will not be interesting to the
+vast majority of users.
 
 
 Performance-related options

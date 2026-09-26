@@ -4,10 +4,14 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
-
+#include "npy_static_data.h"
+#include "module_state.h"
+#include "multiarraymodule.h"
+#include "npy_pycompat.h"
 #include "override.h"
 #include "ufunc_override.h"
 
+#include "common.h"
 
 /*
  * For each positional argument and each argument in a possible "out"
@@ -23,28 +27,27 @@
  * Returns -1 on failure.
  */
 static int
-get_array_ufunc_overrides(PyObject *in_args, PyObject *out_args, PyObject *wheremask_obj,
+get_array_ufunc_overrides(PyObject *const *in_args, int nin,
+                          PyObject *const *out_args, int nout,
+                          PyObject *wheremask_obj,
                           PyObject **with_override, PyObject **methods)
 {
     int i;
     int num_override_args = 0;
-    int narg, nout, nwhere;
+    int nwhere;
 
-    narg = (int)PyTuple_GET_SIZE(in_args);
-    /* It is valid for out_args to be NULL: */
-    nout = (out_args != NULL) ? (int)PyTuple_GET_SIZE(out_args) : 0;
     nwhere = (wheremask_obj != NULL) ? 1: 0;
 
-    for (i = 0; i < narg + nout + nwhere; ++i) {
+    for (i = 0; i < nin + nout + nwhere; ++i) {
         PyObject *obj;
         int j;
         int new_class = 1;
 
-        if (i < narg) {
-            obj = PyTuple_GET_ITEM(in_args, i);
+        if (i < nin) {
+            obj = in_args[i];
         }
-        else if (i < narg + nout){
-            obj = PyTuple_GET_ITEM(out_args, i - narg);
+        else if (i < nin + nout){
+            obj = out_args[i - nin];
         }
         else {
             obj = wheremask_obj;
@@ -98,7 +101,7 @@ fail:
  * normalized version (and always pass it even if it was passed by position).
  */
 static int
-initialize_normal_kwds(PyObject *out_args,
+initialize_normal_kwds(PyObject *const *out_args, int nout,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         PyObject *normal_kwds)
 {
@@ -110,17 +113,17 @@ initialize_normal_kwds(PyObject *out_args,
             }
         }
     }
-    static PyObject *out_str = NULL;
-    if (out_str == NULL) {
-        out_str = PyUnicode_InternFromString("out");
-        if (out_str == NULL) {
+
+    PyObject *out_str = _npy_module_state->interned_str.out;
+    if (out_args != NULL) {
+        assert(nout > 0);
+        /* Replace `out` argument with the normalized version */
+        PyObject *out_tuple = PyTuple_FromArray(out_args, nout);
+        if (out_tuple == NULL) {
             return -1;
         }
-    }
-
-    if (out_args != NULL) {
-        /* Replace `out` argument with the normalized version */
-        int res = PyDict_SetItem(normal_kwds, out_str, out_args);
+        int res = PyDict_SetItem(normal_kwds, out_str, out_tuple);
+        Py_DECREF(out_tuple);
         if (res < 0) {
             return -1;
         }
@@ -148,18 +151,17 @@ static int
 normalize_signature_keyword(PyObject *normal_kwds)
 {
     /* If the keywords include `sig` rename to `signature`. */
-    PyObject* obj = _PyDict_GetItemStringWithError(normal_kwds, "sig");
-    if (obj == NULL && PyErr_Occurred()) {
+    PyObject* obj = NULL;
+    int result = PyDict_GetItemStringRef(normal_kwds, "sig", &obj);
+    if (result == -1) {
         return -1;
     }
-    if (obj != NULL) {
-        /*
-         * No INCREF or DECREF needed: got a borrowed reference above,
-         * and, unlike e.g. PyList_SetItem, PyDict_SetItem INCREF's it.
-         */
+    if (result == 1) {
         if (PyDict_SetItemString(normal_kwds, "signature", obj) < 0) {
+            Py_DECREF(obj);
             return -1;
         }
+        Py_DECREF(obj);
         if (PyDict_DelItemString(normal_kwds, "sig") < 0) {
             return -1;
         }
@@ -183,10 +185,8 @@ copy_positional_args_to_kwargs(const char **keywords,
              * This is only relevant for reduce, which is the only one with
              * 5 keyword arguments.
              */
-            static PyObject *NoValue = NULL;
             assert(strcmp(keywords[i], "initial") == 0);
-            npy_cache_import("numpy", "_NoValue", &NoValue);
-            if (args[i] == NoValue) {
+            if (args[i] == _npy_module_state->static_pydata._NoValue) {
                 continue;
             }
         }
@@ -212,10 +212,13 @@ copy_positional_args_to_kwargs(const char **keywords,
  */
 NPY_NO_EXPORT int
 PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
-        PyObject *in_args, PyObject *out_args, PyObject *wheremask_obj,
+        PyObject *const *in_args, int nin,
+        PyObject *const *out_args, int nout,
+        PyObject *wheremask_obj,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         PyObject **result)
 {
+    multiarray_umath_state *state = _npy_module_state;
     int status;
 
     int num_override_args;
@@ -231,7 +234,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
      * Check inputs for overrides
      */
     num_override_args = get_array_ufunc_overrides(
-           in_args, out_args, wheremask_obj, with_override, array_ufunc_methods);
+           in_args, nin, out_args, nout, wheremask_obj, with_override, array_ufunc_methods);
     if (num_override_args == -1) {
         goto fail;
     }
@@ -249,7 +252,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     if (normal_kwds == NULL) {
         goto fail;
     }
-    if (initialize_normal_kwds(out_args,
+    if (initialize_normal_kwds(out_args, nout,
             args, len_args, kwnames, normal_kwds) < 0) {
         goto fail;
     }
@@ -311,8 +314,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         goto fail;
     }
 
-    int len = (int)PyTuple_GET_SIZE(in_args);
-
     /* Call __array_ufunc__ functions in correct order */
     while (1) {
         PyObject *override_obj = NULL;
@@ -350,45 +351,41 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         }
         /*
          * Set override arguments for each call since the tuple must
-         * not be mutated after use in PyPy
+         * not be mutated after use
          * We increase all references since SET_ITEM steals
          * them and they will be DECREF'd when the tuple is deleted.
          */
-        override_args = PyTuple_New(len + 3);
+        override_args = PyTuple_New(nin + 3);
         if (override_args == NULL) {
             goto fail;
         }
-        Py_INCREF(ufunc);
-        PyTuple_SET_ITEM(override_args, 1, (PyObject *)ufunc);
-        Py_INCREF(method_name);
-        PyTuple_SET_ITEM(override_args, 2, method_name);
-        for (int i = 0; i < len; i++) {
-            PyObject *item = PyTuple_GET_ITEM(in_args, i);
-
-            Py_INCREF(item);
-            PyTuple_SET_ITEM(override_args, i + 3, item);
+        PyTuple_SET_ITEM(override_args, 1, Py_NewRef(ufunc));
+        PyTuple_SET_ITEM(override_args, 2, Py_NewRef(method_name));
+        for (int i = 0; i < nin; i++) {
+            PyObject *item = in_args[i];
+            PyTuple_SET_ITEM(override_args, i + 3, Py_NewRef(item));
         }
 
         /* Check if there is a method left to call */
         if (!override_obj) {
             /* No acceptable override found. */
-            static PyObject *errmsg_formatter = NULL;
             PyObject *errmsg;
 
-            npy_cache_import("numpy._core._internal",
-                             "array_ufunc_errmsg_formatter",
-                             &errmsg_formatter);
-
-            if (errmsg_formatter != NULL) {
-                /* All tuple items must be set before use */
-                Py_INCREF(Py_None);
-                PyTuple_SET_ITEM(override_args, 0, Py_None);
-                errmsg = PyObject_Call(errmsg_formatter, override_args,
-                                       normal_kwds);
-                if (errmsg != NULL) {
-                    PyErr_SetObject(PyExc_TypeError, errmsg);
-                    Py_DECREF(errmsg);
-                }
+            /* All tuple items must be set before use */
+            PyTuple_SET_ITEM(override_args, 0, Py_NewRef(Py_None));
+            npy_runtime_imports_struct *imports = &state->runtime_imports;
+            if (npy_cache_import_runtime(
+                    "numpy._core._internal",
+                    "array_ufunc_errmsg_formatter",
+                    &imports->array_ufunc_errmsg_formatter) == -1) {
+                goto fail;
+            }
+            errmsg = PyObject_Call(
+                    state->runtime_imports.array_ufunc_errmsg_formatter,
+                    override_args, normal_kwds);
+            if (errmsg != NULL) {
+                PyErr_SetObject(PyExc_TypeError, errmsg);
+                Py_DECREF(errmsg);
             }
             Py_DECREF(override_args);
             goto fail;

@@ -187,7 +187,7 @@ New Features
 Reading extra flags from site.cfg
 ---------------------------------
 Previously customization of compilation of dependency libraries and numpy
-itself was only accomblishable via code changes in the distutils package.
+itself was only accomplishable via code changes in the distutils package.
 Now numpy.distutils reads in the following extra flags from each group of the
 *site.cfg*:
 

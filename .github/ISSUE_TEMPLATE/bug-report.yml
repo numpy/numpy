@@ -56,7 +56,7 @@ body:
     label: "Runtime Environment:"
     description: |
       1. Install `threadpoolctl` (e.g. with `pip` or `conda`)
-      2. Paste the output of `import numpy; print(numpy.show_runtime())`.
+      2. Paste the output of `import numpy; numpy.show_runtime()`.
 
       Note: Only valid for NumPy 1.24 or newer.
   validations:
@@ -64,10 +64,12 @@ body:
 
 - type: textarea
   attributes:
-    label: "Context for the issue:"
+    label: "How does this issue affect you or how did you find it:"
     description: |
-      Please explain how this issue affects your work or why it should be prioritized.
+      Please explain how this issue concretely affects you or others.
+      Especially if it does not impact you how did you find it?
+      (If an issue has no concrete impact this is also helpful to know.)
     placeholder: |
-      << your explanation here >>
+      << description of how the issue affects you >>
   validations:
     required: false

@@ -7,8 +7,6 @@ Array iterator API
    pair: iterator; C-API
    pair: C-API; iterator
 
-.. versionadded:: 1.6
-
 Array iterator
 --------------
 
@@ -436,6 +434,9 @@ Construction and destruction
     is enabled, the caller must be sure to check whether
     ``NpyIter_IterationNeedsAPI(iter)`` is true, in which case
     it may not release the GIL during iteration.
+    If you are working with known dtypes `NpyIter_GetTransferFlags` is
+    a faster and more precise way to check for whether the iterator needs
+    the API due to buffering.
 
 .. c:macro:: NPY_ITER_ZEROSIZE_OK
 
@@ -639,8 +640,6 @@ Construction and destruction
 
 .. c:macro:: NPY_ITER_ARRAYMASK
 
-    .. versionadded:: 1.7
-
     Indicates that this operand is the mask to use for
     selecting elements when writing to operands which have
     the :c:data:`NPY_ITER_WRITEMASKED` flag applied to them.
@@ -662,8 +661,6 @@ Construction and destruction
     of input masks.
 
 .. c:macro:: NPY_ITER_WRITEMASKED
-
-    .. versionadded:: 1.7
 
     This array is the mask for all `writemasked <numpy.nditer>`
     operands. Code uses the ``writemasked`` flag which indicates 
@@ -715,7 +712,7 @@ Construction and destruction
     may not be repeated.  The following example is how normal broadcasting
     applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
 
-    **Note**: Before NumPy 1.8 ``oa_ndim == 0` was used for signalling
+    **Note**: Before NumPy 1.8 ``oa_ndim == 0`` was used for signalling
     that ``op_axes`` and ``itershape`` are unused. This is deprecated and
     should be replaced with -1. Better backward compatibility may be
     achieved by using :c:func:`NpyIter_MultiNew` for this case.
@@ -828,6 +825,20 @@ Construction and destruction
     Deallocates the iterator object and resolves any needed writebacks.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+
+.. c:function:: NPY_ARRAYMETHOD_FLAGS NpyIter_GetTransferFlags(NpyIter *iter)
+
+    .. versionadded:: 2.3
+
+    Fetches the `NPY_METH_RUNTIME_FLAGS` which provide the information on
+    whether buffering needs the Python GIL (`NPY_METH_REQUIRES_PYAPI`) or
+    floating point errors may be set (`NPY_METH_NO_FLOATINGPOINT_ERRORS`).
+
+    Prior to NumPy 2.3, the public function available was
+    ``NpyIter_IterationNeedsAPI``, which is still available and additionally
+    checks for object (or similar) dtypes and not exclusively for
+    buffering/iteration needs itself.
+    In general, this function should be preferred.
 
 .. c:function:: int NpyIter_Reset(NpyIter* iter, char** errmsg)
 
@@ -1126,8 +1137,6 @@ Construction and destruction
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
 .. c:function:: npy_bool NpyIter_IsFirstVisit(NpyIter* iter, int iop)
-
-    .. versionadded:: 1.7
 
     Checks to see whether this is the first time the elements of the
     specified reduction operand which the iterator points at are being

@@ -21,6 +21,8 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
+#include "npy_argparse.h"
 #include "abstract.h"
 
 #include "numpy/npy_math.h"
@@ -29,7 +31,12 @@
 #include "string_ufuncs.h"
 #include "stringdtype_ufuncs.h"
 #include "special_integer_comparisons.h"
+#include "minmax.h"
+#include "real_imag_ufuncs.h"
+#include "unwrap.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
+#include "module_state.h"
+#include "ufunc_type_resolution.h"
 
 /* Automatically generated code to define all ufuncs: */
 #include "funcs.inc"
@@ -116,7 +123,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     if (i) {
         offset[1] += (sizeof(void *)-i);
     }
-    ptr = PyArray_malloc(offset[0] + offset[1] + sizeof(void *) +
+    ptr = PyMem_RawMalloc(offset[0] + offset[1] + sizeof(void *) +
                             (fname_len + 14));
     if (ptr == NULL) {
         Py_XDECREF(pyname);
@@ -147,7 +154,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
             str, doc, /* unused */ 0, NULL, identity);
 
     if (self == NULL) {
-        PyArray_free(ptr);
+        PyMem_RawFree(ptr);
         return NULL;
     }
     Py_INCREF(function);
@@ -155,49 +162,8 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     self->ptr = ptr;
 
     self->type_resolver = &object_ufunc_type_resolver;
-    PyObject_GC_Track(self);
 
     return (PyObject *)self;
-}
-
-/* docstring in numpy.add_newdocs.py */
-PyObject *
-add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
-{
-    PyUFuncObject *ufunc;
-    PyObject *str;
-    if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
-                                        &PyUnicode_Type, &str)) {
-        return NULL;
-    }
-    if (ufunc->doc != NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot change docstring of ufunc with non-NULL docstring");
-        return NULL;
-    }
-
-    PyObject *tmp = PyUnicode_AsUTF8String(str);
-    if (tmp == NULL) {
-        return NULL;
-    }
-    char *docstr = PyBytes_AS_STRING(tmp);
-
-    /*
-     * This introduces a memory leak, as the memory allocated for the doc
-     * will not be freed even if the ufunc itself is deleted. In practice
-     * this should not be a problem since the user would have to
-     * repeatedly create, document, and throw away ufuncs.
-     */
-    char *newdocstr = malloc(strlen(docstr) + 1);
-    if (!newdocstr) {
-        Py_DECREF(tmp);
-        return PyErr_NoMemory();
-    }
-    strcpy(newdocstr, docstr);
-    ufunc->doc = newdocstr;
-
-    Py_DECREF(tmp);
-    Py_RETURN_NONE;
 }
 
 
@@ -207,30 +173,23 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  *****************************************************************************
  */
 
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_ufunc = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
-NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
-
-/* intern some strings used in ufuncs, returns 0 on success */
-static int
-intern_strings(void)
-{
-    npy_um_str_array_ufunc = PyUnicode_InternFromString("__array_ufunc__");
-    if (npy_um_str_array_ufunc == NULL) {
-        return -1;
-    }
-    npy_um_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
-    if (npy_um_str_array_wrap == NULL) {
-        return -1;
-    }
-    npy_um_str_pyvals_name = PyUnicode_InternFromString(UFUNC_PYVALS_NAME);
-    if (npy_um_str_pyvals_name == NULL) {
-        return -1;
-    }
-    return 0;
-}
-
 /* Setup the umath part of the module */
+
+/* Add a float constant; immortal on free-threaded builds */
+static int
+add_float_constant(PyObject *m, const char *name, double value)
+{
+    PyObject *obj = PyFloat_FromDouble(value);
+    if (obj == NULL) {
+        return -1;
+    }
+#if defined(Py_GIL_DISABLED) && PY_VERSION_HEX >= 0x030e0000
+    PyUnstable_SetImmortal(obj);
+#endif
+    int res = PyModule_AddObjectRef(m, name, obj);
+    Py_DECREF(obj);
+    return res;
+}
 
 int initumath(PyObject *m)
 {
@@ -241,19 +200,18 @@ int initumath(PyObject *m)
     UFUNC_FLOATING_POINT_SUPPORT = 0;
 #endif
 
-    /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 
     if (InitOperators(d) < 0) {
         return -1;
     }
 
-    PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
-    Py_DECREF(s);
-    PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(NPY_E));
-    Py_DECREF(s);
-    PyDict_SetItemString(d, "euler_gamma", s = PyFloat_FromDouble(NPY_EULER));
-    Py_DECREF(s);
+    /* Add some symbolic constants to the module */
+    if (add_float_constant(m, "pi", NPY_PI) < 0
+            || add_float_constant(m, "e", NPY_E) < 0
+            || add_float_constant(m, "euler_gamma", NPY_EULER) < 0) {
+        return -1;
+    }
 
 #define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
 #define ADDSCONST(str) PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
@@ -271,63 +229,78 @@ int initumath(PyObject *m)
 #undef ADDSCONST
     PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)NPY_BUFSIZE);
 
-    Py_INCREF(npy_extobj_contextvar);
-    PyModule_AddObject(m, "_extobj_contextvar", npy_extobj_contextvar);
+    multiarray_umath_state *state = get_module_state(m);
+    Py_INCREF(state->static_pydata.npy_extobj_contextvar);
+    PyModule_AddObject(m, "_extobj_contextvar",
+                       state->static_pydata.npy_extobj_contextvar);
 
-    PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
-    PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));
-    PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(NPY_PZERO));
-    PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
-    PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
+    if (add_float_constant(m, "PINF", NPY_INFINITY) < 0
+            || add_float_constant(m, "NINF", -NPY_INFINITY) < 0
+            || add_float_constant(m, "PZERO", NPY_PZERO) < 0
+            || add_float_constant(m, "NZERO", NPY_NZERO) < 0
+            || add_float_constant(m, "NAN", NPY_NAN) < 0) {
+        return -1;
+    }
 
-    s = PyDict_GetItemString(d, "divide");
+    s = PyDict_GetItemString(d, "divide"); // noqa: borrowed-ref OK
     PyDict_SetItemString(d, "true_divide", s);
 
-    s = PyDict_GetItemString(d, "conjugate");
-    s2 = PyDict_GetItemString(d, "remainder");
+    s = PyDict_GetItemString(d, "conjugate"); // noqa: borrowed-ref OK
+    s2 = PyDict_GetItemString(d, "remainder"); // noqa: borrowed-ref OK
+
     /* Setup the array object's numerical structures with appropriate
        ufuncs in d*/
-    _PyArray_SetNumericOps(d);
+    if (_PyArray_SetNumericOps(d) < 0) {
+        return -1;
+    }
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
-
-    if (intern_strings() < 0) {
-        PyErr_SetString(PyExc_RuntimeError,
-           "cannot intern umath strings while initializing _multiarray_umath.");
-        return -1;
-    }
 
     /*
      * Set up promoters for logical functions
      * TODO: This should probably be done at a better place, or even in the
      *       code generator directly.
      */
-    s = _PyDict_GetItemStringWithError(d, "logical_and");
-    if (s == NULL) {
+    int res = PyDict_GetItemStringRef(d, "logical_and", &s);
+    if (res <= 0) {
         return -1;
     }
     if (install_logical_ufunc_promoter(s) < 0) {
+        Py_DECREF(s);
         return -1;
     }
+    Py_DECREF(s);
 
-    s = _PyDict_GetItemStringWithError(d, "logical_or");
-    if (s == NULL) {
+    res = PyDict_GetItemStringRef(d, "logical_or", &s);
+    if (res <= 0) {
         return -1;
     }
     if (install_logical_ufunc_promoter(s) < 0) {
+        Py_DECREF(s);
         return -1;
     }
+    Py_DECREF(s);
 
-    s = _PyDict_GetItemStringWithError(d, "logical_xor");
-    if (s == NULL) {
+    res = PyDict_GetItemStringRef(d, "logical_xor", &s);
+    if (res <= 0) {
         return -1;
     }
     if (install_logical_ufunc_promoter(s) < 0) {
+        Py_DECREF(s);
+        return -1;
+    }
+    Py_DECREF(s);
+
+    if (init_unwrap_ufunc(d) < 0 ) {
         return -1;
     }
 
     if (init_string_ufuncs(d) < 0) {
+        return -1;
+    }
+
+    if (init_real_imag_ufuncs(m) < 0) {
         return -1;
     }
 
@@ -336,6 +309,14 @@ int initumath(PyObject *m)
     }
 
     if (init_special_int_comparisons(d) < 0) {
+        return -1;
+    }
+
+    if (init_minimummaximum(d) < 0) {
+        return -1;
+    }
+
+    if (init_argparse_mutex() < 0) {
         return -1;
     }
 

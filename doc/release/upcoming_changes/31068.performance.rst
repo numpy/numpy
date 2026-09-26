@@ -1,0 +1,9 @@
+Faster ufunc calls through inner-loop caching
+---------------------------------------------
+Ufuncs implemented through the legacy ufunc API (which includes most ufuncs
+provided by NumPy itself) now cache the selected inner-loop function instead
+of looking it up on every call. This speeds up ufunc calls, most notably for
+scalar and small-array inputs (roughly 10% faster). Note that as a
+consequence, loops must be registered through the official API
+(e.g. ``PyUFunc_ReplaceLoopBySignature``); directly modifying the
+``functions`` member of a ufunc no longer takes effect.

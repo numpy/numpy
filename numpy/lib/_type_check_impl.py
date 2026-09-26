@@ -2,18 +2,19 @@
 
 """
 import functools
+import warnings
 
 __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'isreal', 'nan_to_num', 'real', 'real_if_close',
            'typename', 'mintypecode',
            'common_type']
 
-from .._utils import set_module
 import numpy._core.numeric as _nx
-from numpy._core.numeric import asarray, asanyarray, isnan, zeros
-from numpy._core import overrides, getlimits
-from ._ufunclike_impl import isneginf, isposinf
+from numpy._core import getlimits, overrides
+from numpy._core.numeric import asanyarray, asarray, isnan, zeros
+from numpy._utils import set_module
 
+from ._ufunclike_impl import isneginf, isposinf
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -56,6 +57,7 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.mintypecode(['d', 'f', 'S'])
     'd'
     >>> x = np.array([1.1, 2-3.j])
@@ -68,7 +70,7 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
     """
     typecodes = ((isinstance(t, str) and t) or asarray(t).dtype.char
                  for t in typechars)
-    intersection = set(t for t in typecodes if t in typeset)
+    intersection = {t for t in typecodes if t in typeset}
     if not intersection:
         return default
     if 'F' in intersection and 'd' in intersection:
@@ -103,6 +105,7 @@ def real(val):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1+2j, 3+4j, 5+6j])
     >>> a.real
     array([1.,  3.,  5.])
@@ -149,6 +152,7 @@ def imag(val):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1+2j, 3+4j, 5+6j])
     >>> a.imag
     array([2.,  4.,  6.])
@@ -195,6 +199,7 @@ def iscomplex(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.iscomplex([1+1j, 1+0j, 4.5, 3, 2, 2j])
     array([ True, False, False, False, False,  True])
 
@@ -235,28 +240,23 @@ def isreal(x):
 
     Examples
     --------
-    >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=complex)
+    >>> import numpy as np
+    >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=np.complex128)
     >>> np.isreal(a)
     array([False,  True,  True,  True,  True, False])
 
     The function does not work on string arrays.
 
-    >>> a = np.array([2j, "a"], dtype="U")
-    >>> np.isreal(a)  # Warns about non-elementwise comparison
-    False
+    >>> a = np.array([2j, "a"], dtype=np.str_)
+    >>> np.isreal(a)  # returns the result of `"" == 0` currently.
+    array([False, False])
 
-    Returns True for all elements in input array of ``dtype=object`` even if
-    any of the elements is complex.
+    Returns True for all elements that either have no ``.imag`` attribute
+    or for which that attribute is zero:
 
-    >>> a = np.array([1, "2", 3+4j], dtype=object)
+    >>> a = np.array([1, "2", 3+4j], dtype=np.object_)
     >>> np.isreal(a)
-    array([ True,  True,  True])
-
-    isreal should not be used with object arrays
-
-    >>> a = np.array([1+2j, 2+1j], dtype=object)
-    >>> np.isreal(a)
-    array([ True,  True])
+    array([ True,  True,  False])
 
     """
     return imag(x) == 0
@@ -287,6 +287,7 @@ def iscomplexobj(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.iscomplexobj(1)
     False
     >>> np.iscomplexobj(1+0j)
@@ -341,6 +342,7 @@ def isrealobj(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.isrealobj(1)
     True
     >>> np.isrealobj(1+0j)
@@ -386,38 +388,32 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     ----------
     x : scalar or array_like
         Input data.
-    copy : bool, optional
-        Whether to create a copy of `x` (True) or to replace values
-        in-place (False). The in-place operation only occurs if
-        casting to an array does not require a copy.
-        Default is True.
-
-        .. versionadded:: 1.13
-    nan : int, float, optional
-        Value to be used to fill NaN values. If no value is passed
+    copy : bool or None, optional
+        Whether to create a copy of `x` (``True``) or to replace values
+        in-place (``False``). The in-place operation only occurs if
+        casting to an array does not require a copy. If ``False``, a
+        ``ValueError`` is raised if a copy cannot be avoided. If ``None``,
+        a copy is made only if needed (e.g., when converting a sequence
+        to an array or when casting is required), otherwise values are
+        replaced in-place.
+        Default is ``True``.
+    nan : int, float, or bool or array_like of int, float, or bool, optional
+        Values to be used to fill NaN values. If no values are passed
         then NaN values will be replaced with 0.0.
-
-        .. versionadded:: 1.17
-    posinf : int, float, optional
-        Value to be used to fill positive infinity values. If no value is
+    posinf : int, float, or bool or array_like of int, float, or bool, optional
+        Values to be used to fill positive infinity values. If no values are
         passed then positive infinity values will be replaced with a very
         large number.
-
-        .. versionadded:: 1.17
-    neginf : int, float, optional
-        Value to be used to fill negative infinity values. If no value is
+    neginf : int, float, or bool or array_like of int, float, or bool, optional
+        Values to be used to fill negative infinity values. If no values are
         passed then negative infinity values will be replaced with a very
         small (or negative) number.
-
-        .. versionadded:: 1.17
-
-
 
     Returns
     -------
     out : ndarray
-        `x`, with the non-finite values replaced. If `copy` is False, this may
-        be `x` itself.
+        `x`, with the non-finite values replaced. If `copy` is False or None,
+        this may be `x` itself.
 
     See Also
     --------
@@ -434,6 +430,7 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.nan_to_num(np.inf)
     1.7976931348623157e+308
     >>> np.nan_to_num(-np.inf)
@@ -447,6 +444,12 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     >>> np.nan_to_num(x, nan=-9999, posinf=33333333, neginf=33333333)
     array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03,
            -1.2800000e+02,  1.2800000e+02])
+    >>> nan = np.array([11, 12, -9999, 13, 14])
+    >>> posinf = np.array([33333333, 11, 12, 13, 14])
+    >>> neginf = np.array([11, 33333333, 12, 13, 14])
+    >>> np.nan_to_num(x, nan=nan, posinf=posinf, neginf=neginf)
+    array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03, -1.2800000e+02,
+            1.2800000e+02])
     >>> y = np.array([complex(np.inf, np.nan), np.nan, complex(np.nan, np.inf)])
     array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000, # may vary
          -1.28000000e+002,   1.28000000e+002])
@@ -456,6 +459,11 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
              0.00000000e+000 +1.79769313e+308j])
     >>> np.nan_to_num(y, nan=111111, posinf=222222)
     array([222222.+111111.j, 111111.     +0.j, 111111.+222222.j])
+    >>> nan = np.array([11, 12, 13])
+    >>> posinf = np.array([21, 22, 23])
+    >>> neginf = np.array([31, 32, 33])
+    >>> np.nan_to_num(y, nan=nan, posinf=posinf, neginf=neginf)
+    array([21.+11.j, 12. +0.j, 13.+23.j])
     """
     x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
@@ -525,6 +533,7 @@ def real_if_close(a, tol=100):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.finfo(float).eps
     2.2204460492503131e-16 # may vary
 
@@ -577,6 +586,9 @@ def typename(char):
     """
     Return a description for the given data type code.
 
+    .. deprecated:: 2.5
+        `numpy.typename` is deprecated. Use `numpy.dtype.name` instead.
+
     Parameters
     ----------
     char : str
@@ -593,6 +605,7 @@ def typename(char):
 
     Examples
     --------
+    >>> import numpy as np
     >>> typechars = ['S1', '?', 'B', 'D', 'G', 'F', 'I', 'H', 'L', 'O', 'Q',
     ...              'S', 'U', 'V', 'b', 'd', 'g', 'f', 'i', 'h', 'l', 'q']
     >>> for typechar in typechars:
@@ -622,6 +635,12 @@ def typename(char):
     q  :  long long integer
 
     """
+    # Deprecated in NumPy 2.5, 2026-02-03
+    warnings.warn(
+        "numpy.typename is deprecated. Use numpy.dtype.name instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
     return _namefromtype[char]
 
 #-----------------------------------------------------------------------------
@@ -683,13 +702,20 @@ def common_type(*arrays):
     is_complex = False
     precision = 0
     for a in arrays:
-        t = a.dtype.type
+        try:
+            t = a.dtype.type
+        except AttributeError:
+            raise TypeError(
+                f"common_type takes array inputs, not '{a}'. "
+                "To find a common type for dtypes or scalar types use "
+                "np.result_type or np.promote_types instead."
+            ) from None
         if iscomplexobj(a):
             is_complex = True
         if issubclass(t, _nx.integer):
             p = 2  # array_precision[_nx.double]
         else:
-            p = array_precision.get(t, None)
+            p = array_precision.get(t)
             if p is None:
                 raise TypeError("can't get common type for non-numeric array")
         precision = max(precision, p)

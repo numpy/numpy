@@ -7,17 +7,16 @@ name: numpy-dev
 channels:
   - conda-forge
 dependencies:
-  - python=3.11 #need to pin to avoid issues with builds
+  - python=3.12 # need to pin to avoid issues with builds
   - cython>=3.0
   - compilers
   - openblas
   - nomkl
-  - setuptools
+  - setuptools==65.5.1
   - ninja
   - pkg-config
   - meson-python
-  - pip
-  - spin
+  - spin==0.15
   - ccache
   # For testing
   - pytest
@@ -25,23 +24,29 @@ dependencies:
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - typing_extensions>=4.2.0  # needed for python < 3.10
-  - mypy=1.7.1
+  - mypy==2.3.1
+  - orjson # makes mypy faster
   # For building docs
-  - sphinx>=4.5.0
+  - sphinx>=8.0
+  - sphinx-copybutton
   - sphinx-design
-  - numpydoc=1.4.0
+  - numpydoc=1.11.0
   - ipython
   - scipy
   - pandas
   - matplotlib
-  - pydata-sphinx-theme=0.13.3
+  - pydata-sphinx-theme>=0.15.2
   - doxygen
+  - towncrier
+  - jupyterlite-sphinx>=0.18.0
+  # see https://github.com/jupyterlite/pyodide-kernel#compatibility
+  - jupyterlite-pyodide-kernel==0.5.2 # supports Pyodide 0.27.1
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe>4.33.0
   # For linting
-  - pycodestyle=2.8.0
+  - cython-lint
+  - ruff==0.16.6
   - gitpython
   # Used in some tests
   - cffi
-  - pytz
+  - tzdata

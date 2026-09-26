@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-# System imports
 import sys
 import unittest
 
-# Import NumPy
 import numpy as np
-major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
-if major == 0: BadListError = TypeError
-else:          BadListError = ValueError
+
+major, minor = [int(d) for d in np.__version__.split(".")[:2]]
+if major == 0:
+    BadListError = TypeError
+else:
+    BadListError = ValueError
 
 import Vector
 
@@ -17,7 +18,7 @@ class VectorTestCase(unittest.TestCase):
 
     def __init__(self, methodName="runTest"):
         unittest.TestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
     # Test the (type IN_ARRAY1[ANY]) typemap
@@ -222,7 +223,7 @@ class VectorTestCase(unittest.TestCase):
         eoSplit = Vector.__dict__[self.typeStr + "EOSplit"]
         even, odd = eoSplit([1, 2, 3])
         self.assertEqual((even == [1, 0, 3]).all(), True)
-        self.assertEqual((odd  == [0, 2, 0]).all(), True)
+        self.assertEqual((odd == [0, 2, 0]).all(), True)
 
     # Test the (type* ARGOUT_ARRAY1, int DIM1) typemap
     def testTwos(self):
@@ -259,7 +260,7 @@ class VectorTestCase(unittest.TestCase):
 class scharTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "schar"
+        self.typeStr = "schar"
         self.typeCode = "b"
 
 ######################################################################
@@ -267,7 +268,7 @@ class scharTestCase(VectorTestCase):
 class ucharTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "uchar"
+        self.typeStr = "uchar"
         self.typeCode = "B"
 
 ######################################################################
@@ -275,7 +276,7 @@ class ucharTestCase(VectorTestCase):
 class shortTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "short"
+        self.typeStr = "short"
         self.typeCode = "h"
 
 ######################################################################
@@ -283,7 +284,7 @@ class shortTestCase(VectorTestCase):
 class ushortTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "ushort"
+        self.typeStr = "ushort"
         self.typeCode = "H"
 
 ######################################################################
@@ -291,7 +292,7 @@ class ushortTestCase(VectorTestCase):
 class intTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "int"
+        self.typeStr = "int"
         self.typeCode = "i"
 
 ######################################################################
@@ -299,7 +300,7 @@ class intTestCase(VectorTestCase):
 class uintTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "uint"
+        self.typeStr = "uint"
         self.typeCode = "I"
 
 ######################################################################
@@ -307,7 +308,7 @@ class uintTestCase(VectorTestCase):
 class longTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "long"
+        self.typeStr = "long"
         self.typeCode = "l"
 
 ######################################################################
@@ -315,7 +316,7 @@ class longTestCase(VectorTestCase):
 class ulongTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "ulong"
+        self.typeStr = "ulong"
         self.typeCode = "L"
 
 ######################################################################
@@ -323,7 +324,7 @@ class ulongTestCase(VectorTestCase):
 class longLongTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "longLong"
+        self.typeStr = "longLong"
         self.typeCode = "q"
 
 ######################################################################
@@ -331,7 +332,7 @@ class longLongTestCase(VectorTestCase):
 class ulongLongTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "ulongLong"
+        self.typeStr = "ulongLong"
         self.typeCode = "Q"
 
 ######################################################################
@@ -339,7 +340,7 @@ class ulongLongTestCase(VectorTestCase):
 class floatTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "float"
+        self.typeStr = "float"
         self.typeCode = "f"
 
 ######################################################################
@@ -347,27 +348,28 @@ class floatTestCase(VectorTestCase):
 class doubleTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
 ######################################################################
+
 
 if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(    scharTestCase))
-    suite.addTest(unittest.makeSuite(    ucharTestCase))
-    suite.addTest(unittest.makeSuite(    shortTestCase))
-    suite.addTest(unittest.makeSuite(   ushortTestCase))
-    suite.addTest(unittest.makeSuite(      intTestCase))
-    suite.addTest(unittest.makeSuite(     uintTestCase))
-    suite.addTest(unittest.makeSuite(     longTestCase))
-    suite.addTest(unittest.makeSuite(    ulongTestCase))
-    suite.addTest(unittest.makeSuite( longLongTestCase))
-    suite.addTest(unittest.makeSuite(ulongLongTestCase))
-    suite.addTest(unittest.makeSuite(    floatTestCase))
-    suite.addTest(unittest.makeSuite(   doubleTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    scharTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    ucharTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    shortTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(   ushortTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(      intTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(     uintTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(     longTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    ulongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase( longLongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ulongLongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    floatTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(   doubleTestCase))
 
     # Execute the test suite
     print("Testing 1D Functions of Module Vector")

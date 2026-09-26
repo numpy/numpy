@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Core(Benchmark):
@@ -14,6 +14,7 @@ class Core(Benchmark):
         self.l_view = [memoryview(a) for a in self.l]
         self.l10x10 = np.ones((10, 10))
         self.float64_dtype = np.dtype(np.float64)
+        self.arr = np.arange(10000).reshape(100, 100)
 
     def time_array_1(self):
         np.array(1)
@@ -47,6 +48,9 @@ class Core(Benchmark):
 
     def time_can_cast(self):
         np.can_cast(self.l10x10, self.float64_dtype)
+
+    def time_tobytes_noncontiguous(self):
+        self.arr.T.tobytes()
 
     def time_can_cast_same_kind(self):
         np.can_cast(self.l10x10, self.float64_dtype, casting="same_kind")
@@ -109,6 +113,49 @@ class Core(Benchmark):
         np.tril_indices(500)
 
 
+class SmallMethodDispatch(Benchmark):
+    # Small-array benchmarks for fromnumeric functions that dispatch to
+    # an ndarray method through the C helpers _wrapfunc/_wrapit
+    # (see gh-32165).
+    def setup(self):
+        self.a = np.arange(20)
+        self.m = np.ones((10, 10))
+        self.sorted = np.arange(20, dtype=np.float64)
+        self.lst = list(range(20))
+
+    def time_reshape(self):
+        np.reshape(self.a, (4, 5))
+
+    def time_transpose(self):
+        np.transpose(self.m)
+
+    def time_take(self):
+        np.take(self.a, [1, 2])
+
+    def time_argsort(self):
+        np.argsort(self.a)
+
+    def time_argmax_axis(self):
+        np.argmax(self.m, axis=0)
+
+    def time_searchsorted(self):
+        np.searchsorted(self.sorted, 5.5)
+
+    def time_cumsum(self):
+        np.cumsum(self.a)
+
+    def time_round(self):
+        np.round(self.a, 2)
+
+    def time_argsort_list(self):
+        # list input exercises the _wrapit conversion fallback
+        np.argsort(self.lst)
+
+    def time_cumsum_list(self):
+        # list input exercises the _wrapit conversion fallback
+        np.cumsum(self.lst)
+
+
 class Temporaries(Benchmark):
     def setup(self):
         self.amid = np.ones(50000)
@@ -137,7 +184,7 @@ class CorrConv(Benchmark):
 
     def setup(self, size1, size2, mode):
         self.x1 = np.linspace(0, 1, num=size1)
-        self.x2 = np.cos(np.linspace(0, 2*np.pi, num=size2))
+        self.x2 = np.cos(np.linspace(0, 2 * np.pi, num=size2))
 
     def time_correlate(self, size1, size2, mode):
         np.correlate(self.x1, self.x2, mode=mode)
@@ -151,7 +198,8 @@ class CountNonzero(Benchmark):
     params = [
         [1, 2, 3],
         [100, 10000, 1000000],
-        [bool, np.int8, np.int16, np.int32, np.int64, str, object]
+        [bool, np.int8, np.int16, np.int32, np.int64, np.float32,
+         np.float64, str, object]
     ]
 
     def setup(self, numaxes, size, dtype):
@@ -170,9 +218,34 @@ class CountNonzero(Benchmark):
                 self.x.ndim - 1, self.x.ndim - 2))
 
 
+class Nonzero(Benchmark):
+    params = [
+        [bool, np.uint8, np.uint64, np.int64, np.float32, np.float64],
+        [(1_000_000,), (1000, 1000), (100, ), (2, )]
+    ]
+    param_names = ["dtype", "shape"]
+
+    def setup(self, dtype, size):
+        self.x = np.random.randint(0, 3, size=size).astype(dtype)
+        self.x_sparse = np.zeros(size).astype(dtype)
+        self.x_sparse[1] = 1
+        self.x_sparse[-1] = 1
+        self.x_dense = np.ones(size).astype(dtype)
+
+    def time_nonzero(self, dtype, size):
+        np.nonzero(self.x)
+
+    def time_nonzero_sparse(self, dtype, size):
+        np.nonzero(self.x_sparse)
+
+    def time_nonzero_dense(self, dtype, size):
+        np.nonzero(self.x_dense)
+
+
 class PackBits(Benchmark):
     param_names = ['dtype']
     params = [[bool, np.uintp]]
+
     def setup(self, dtype):
         self.d = np.ones(10000, dtype=dtype)
         self.d2 = np.ones((200, 1000), dtype=dtype)
@@ -251,10 +324,10 @@ class StatsMethods(Benchmark):
 
 class NumPyChar(Benchmark):
     def setup(self):
-        self.A = np.array([100*'x', 100*'y'])
+        self.A = np.array([100 * 'x', 100 * 'y'])
         self.B = np.array(1000 * ['aa'])
 
-        self.C = np.array([100*'x' + 'z', 100*'y' + 'z' + 'y', 100*'x'])
+        self.C = np.array([100 * 'x' + 'z', 100 * 'y' + 'z' + 'y', 100 * 'x'])
         self.D = np.array(1000 * ['ab'] + 1000 * ['ac'])
 
     def time_isalpha_small_list_big_string(self):

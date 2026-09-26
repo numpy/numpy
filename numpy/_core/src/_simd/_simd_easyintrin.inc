@@ -243,7 +243,6 @@
     NPY_EXPAND(FN(8,  __VA_ARGS__))
 
 #define SIMD__IMPL_COUNT_15(FN, ...)     \
-    NPY_EXPAND(FN(0,  __VA_ARGS__))      \
     SIMD__IMPL_COUNT_15_(FN, __VA_ARGS__)
 
 #define SIMD__IMPL_COUNT_16(FN, ...)      \
@@ -251,7 +250,6 @@
     NPY_EXPAND(FN(16,  __VA_ARGS__))
 
 #define SIMD__IMPL_COUNT_31(FN, ...)     \
-    NPY_EXPAND(FN(0,  __VA_ARGS__))      \
     SIMD__IMPL_COUNT_31_(FN, __VA_ARGS__)
 
 #define SIMD__IMPL_COUNT_32(FN, ...)      \
@@ -267,7 +265,6 @@
     NPY_EXPAND(FN(48,  __VA_ARGS__))
 
 #define SIMD__IMPL_COUNT_63(FN, ...)     \
-    NPY_EXPAND(FN(0,  __VA_ARGS__))      \
     SIMD__IMPL_COUNT_63_(FN, __VA_ARGS__)
 
 #define SIMD__IMPL_COUNT_64(FN, ...)      \

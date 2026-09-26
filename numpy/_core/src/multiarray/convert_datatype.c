@@ -26,6 +26,7 @@
 #include "legacy_dtype_implementation.h"
 #include "stringdtype/dtype.h"
 
+#include "alloc.h"
 #include "abstractdtypes.h"
 #include "convert_datatype.h"
 #include "_datetime.h"
@@ -35,7 +36,9 @@
 #include "dtype_transfer.h"
 #include "dtype_traversal.h"
 #include "arrayobject.h"
-
+#include "npy_static_data.h"
+#include "module_state.h"
+#include "multiarraymodule.h"
 
 /*
  * Required length of string when converting from unsigned integer type.
@@ -47,15 +50,6 @@
  *   or 9223372036854775807
  */
 NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
-
-/*
- * Whether or not legacy value-based promotion/casting is used.
- */
-NPY_NO_EXPORT int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
-NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX = NULL;
-NPY_NO_EXPORT PyObject *npy_DTypePromotionError = NULL;
-NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError = NULL;
-
 
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void);
@@ -70,117 +64,24 @@ static PyObject *
 PyArray_GetObjectToGenericCastingImpl(void);
 
 
-/*
- * Return 1 if promotion warnings should be given and 0 if they are currently
- * suppressed in the local context.
- */
-NPY_NO_EXPORT int
-npy_give_promotion_warnings(void)
+static PyObject *
+create_casting_impl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 {
-    PyObject *val;
-
-    npy_cache_import(
-            "numpy._core._ufunc_config", "NO_NEP50_WARNING",
-            &NO_NEP50_WARNING_CTX);
-    if (NO_NEP50_WARNING_CTX == NULL) {
-        PyErr_WriteUnraisable(NULL);
-        return 1;
-    }
-
-    if (PyContextVar_Get(NO_NEP50_WARNING_CTX, Py_False, &val) < 0) {
-        /* Errors should not really happen, but if it does assume we warn. */
-        PyErr_WriteUnraisable(NULL);
-        return 1;
-    }
-    Py_DECREF(val);
-    /* only when the no-warnings context is false, we give warnings */
-    return val == Py_False;
-}
-
-
-NPY_NO_EXPORT PyObject *
-npy__get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg)) {
-    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
-        return PyUnicode_FromString("weak");
-    }
-    else if (npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN) {
-        return PyUnicode_FromString("weak_and_warn");
-    }
-    else if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
-        return PyUnicode_FromString("legacy");
-    }
-    PyErr_SetString(PyExc_SystemError, "invalid promotion state!");
-    return NULL;
-}
-
-
-NPY_NO_EXPORT PyObject *
-npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
-{
-    if (!PyUnicode_Check(arg)) {
-        PyErr_SetString(PyExc_TypeError,
-                "_set_promotion_state() argument or NPY_PROMOTION_STATE "
-                "must be a string.");
-        return NULL;
-    }
-    if (PyUnicode_CompareWithASCIIString(arg, "weak") == 0) {
-        npy_promotion_state = NPY_USE_WEAK_PROMOTION;
-    }
-    else if (PyUnicode_CompareWithASCIIString(arg, "weak_and_warn") == 0) {
-        npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
-    }
-    else if (PyUnicode_CompareWithASCIIString(arg, "legacy") == 0) {
-        npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
-    }
-    else {
-        PyErr_Format(PyExc_TypeError,
-                "_set_promotion_state() argument or NPY_PROMOTION_STATE must be "
-                "'weak', 'legacy', or 'weak_and_warn' but got '%.100S'", arg);
-        return NULL;
-    }
-    Py_RETURN_NONE;
-}
-
-/**
- * Fetch the casting implementation from one DType to another.
- *
- * @params from
- * @params to
- *
- * @returns A castingimpl (PyArrayDTypeMethod *), None or NULL with an
- *          error set.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
-{
-    PyObject *res;
-    if (from == to) {
-        res = (PyObject *)NPY_DT_SLOTS(from)->within_dtype_castingimpl;
-    }
-    else {
-        res = PyDict_GetItemWithError(NPY_DT_SLOTS(from)->castingimpls, (PyObject *)to);
-    }
-    if (res != NULL || PyErr_Occurred()) {
-        Py_XINCREF(res);
-        return res;
-    }
     /*
-     * The following code looks up CastingImpl based on the fact that anything
+     * Look up CastingImpl based on the fact that anything
      * can be cast to and from objects or structured (void) dtypes.
-     *
-     * The last part adds casts dynamically based on legacy definition
      */
     if (from->type_num == NPY_OBJECT) {
-        res = PyArray_GetObjectToGenericCastingImpl();
+        return PyArray_GetObjectToGenericCastingImpl();
     }
     else if (to->type_num == NPY_OBJECT) {
-        res = PyArray_GetGenericToObjectCastingImpl();
+        return PyArray_GetGenericToObjectCastingImpl();
     }
     else if (from->type_num == NPY_VOID) {
-        res = PyArray_GetVoidToGenericCastingImpl();
+        return PyArray_GetVoidToGenericCastingImpl();
     }
     else if (to->type_num == NPY_VOID) {
-        res = PyArray_GetGenericToVoidCastingImpl();
+        return PyArray_GetGenericToVoidCastingImpl();
     }
     /*
      * Reject non-legacy dtypes. They need to use the new API to add casts and
@@ -204,50 +105,113 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
                     from->singleton, to->type_num);
             if (castfunc == NULL) {
                 PyErr_Clear();
-                /* Remember that this cast is not possible */
-                if (PyDict_SetItem(NPY_DT_SLOTS(from)->castingimpls,
-                            (PyObject *) to, Py_None) < 0) {
-                    return NULL;
-                }
                 Py_RETURN_NONE;
             }
         }
-
-        /* PyArray_AddLegacyWrapping_CastingImpl find the correct casting level: */
-        /*
-         * TODO: Possibly move this to the cast registration time. But if we do
-         *       that, we have to also update the cast when the casting safety
-         *       is registered.
+        /* Create a cast using the state of the legacy casting setup defined
+         * during the setup of the DType.
+         *
+         * Ideally we would do this when we create the DType, but legacy user
+         * DTypes don't have a way to signal that a DType is done setting up
+         * casts. Without such a mechanism, the safest way to know that a
+         * DType is done setting up is to register the cast lazily the first
+         * time a user does the cast.
+         *
+         * We *could* register the casts when we create the wrapping
+         * DTypeMeta, but that means the internals of the legacy user DType
+         * system would need to update the state of the casting safety flags
+         * in the cast implementations stored on the DTypeMeta. That's an
+         * inversion of abstractions and would be tricky to do without
+         * creating circular dependencies inside NumPy.
          */
         if (PyArray_AddLegacyWrapping_CastingImpl(from, to, -1) < 0) {
             return NULL;
         }
+        /* castingimpls is unconditionally filled by
+         * AddLegacyWrapping_CastingImpl, so this won't create a recursive
+         * critical section
+         */
         return PyArray_GetCastingImpl(from, to);
     }
+}
 
-    if (res == NULL) {
+static PyObject *
+ensure_castingimpl_exists(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
+{
+    int return_error = 0;
+    PyObject *res = NULL;
+
+    /* Need to create the cast. This might happen at runtime so we enter a
+       critical section to avoid races */
+
+    Py_BEGIN_CRITICAL_SECTION(NPY_DT_SLOTS(from)->castingimpls);
+
+    /* check if another thread filled it while this thread was blocked on
+       acquiring the critical section */
+    if (PyDict_GetItemRef(NPY_DT_SLOTS(from)->castingimpls, (PyObject *)to,
+                          &res) < 0) {
+        return_error = 1;
+    }
+    else if (res == NULL) {
+        res = create_casting_impl(from, to);
+        if (res == NULL) {
+            return_error = 1;
+        }
+        else if (PyDict_SetItem(NPY_DT_SLOTS(from)->castingimpls,
+                                (PyObject *)to, res) < 0) {
+            return_error = 1;
+        }
+    }
+    Py_END_CRITICAL_SECTION();
+    if (return_error) {
+        Py_XDECREF(res);
         return NULL;
     }
-    if (from == to) {
+    if (from == to && res == Py_None) {
         PyErr_Format(PyExc_RuntimeError,
                 "Internal NumPy error, within-DType cast missing for %S!", from);
-        Py_DECREF(res);
-        return NULL;
-    }
-    if (PyDict_SetItem(NPY_DT_SLOTS(from)->castingimpls,
-                (PyObject *)to, res) < 0) {
         Py_DECREF(res);
         return NULL;
     }
     return res;
 }
 
+/**
+ * Fetch the casting implementation from one DType to another.
+ *
+ * @param from The implementation to cast from
+ * @param to The implementation to cast to
+ *
+ * @returns A castingimpl (PyArrayDTypeMethod *), None or NULL with an
+ *          error set.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
+{
+    PyObject *res = NULL;
+    if (from == to) {
+        if ((NPY_DT_SLOTS(from)->within_dtype_castingimpl) != NULL) {
+            res = Py_XNewRef(
+                    (PyObject *)NPY_DT_SLOTS(from)->within_dtype_castingimpl);
+        }
+    }
+    else if (PyDict_GetItemRef(NPY_DT_SLOTS(from)->castingimpls,
+                               (PyObject *)to, &res) < 0) {
+        return NULL;
+    }
+    if (res != NULL) {
+        return res;
+    }
+
+    return ensure_castingimpl_exists(from, to);
+}
+
 
 /**
  * Fetch the (bound) casting implementation from one DType to another.
  *
- * @params from
- * @params to
+ * @params from source DType
+ * @params to destination DType
  *
  * @returns A bound casting implementation or None (or NULL for error).
  */
@@ -269,6 +233,7 @@ PyArray_GetBoundCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     res->dtypes = PyMem_Malloc(2 * sizeof(PyArray_DTypeMeta *));
     if (res->dtypes == NULL) {
         Py_DECREF(res);
+        PyErr_NoMemory();
         return NULL;
     }
     Py_INCREF(from);
@@ -292,14 +257,91 @@ _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args)
 }
 
 
+NPY_NO_EXPORT PyObject *
+_get_all_cast_information(PyObject *NPY_UNUSED(module),
+                          PyObject *NPY_UNUSED(args))
+{
+    PyObject *result = PyList_New(0);
+    if (result == NULL) {
+        return NULL;
+    }
+    PyObject *classes = PyObject_CallMethod(
+            (PyObject *)&PyArrayDescr_Type, "__subclasses__", "");
+    if (classes == NULL) {
+        goto fail;
+    }
+    Py_SETREF(classes, PySequence_Fast(classes, NULL)); // noqa: borrowed-ref OK
+    if (classes == NULL) {
+        goto fail;
+    }
+
+    Py_ssize_t nclass = PySequence_Length(classes);
+    for (Py_ssize_t  i = 0; i < nclass; i++) {
+        PyArray_DTypeMeta *from_dtype = (
+                (PyArray_DTypeMeta *)PySequence_Fast_GET_ITEM(classes, i));
+        if (NPY_DT_is_abstract(from_dtype)) {
+            /*
+             * TODO: In principle probably needs to recursively check this,
+             *       also we may allow casts to abstract dtypes at some point.
+             */
+            continue;
+        }
+
+        PyObject *to_dtype, *cast_obj;
+        Py_ssize_t pos = 0;
+
+        while (PyDict_Next(NPY_DT_SLOTS(from_dtype)->castingimpls, // noqa: borrowed-ref OK
+                           &pos, &to_dtype, &cast_obj)) {
+            if (cast_obj == Py_None) {
+                continue;
+            }
+            PyArrayMethodObject *cast = (PyArrayMethodObject *)cast_obj;
+
+            /* Pass some information about this cast out! */
+            PyObject *cast_info = Py_BuildValue("{sOsOsisisisisiss}",
+                    "from", from_dtype,
+                    "to", to_dtype,
+                    "legacy", (cast->name != NULL &&
+                               strncmp(cast->name, "legacy_", 7) == 0),
+                    "casting", cast->casting,
+                    "requires_pyapi", cast->flags & NPY_METH_REQUIRES_PYAPI,
+                    "supports_unaligned",
+                        cast->flags & NPY_METH_SUPPORTS_UNALIGNED,
+                    "no_floatingpoint_errors",
+                        cast->flags & NPY_METH_NO_FLOATINGPOINT_ERRORS,
+                    "name", cast->name);
+            if (cast_info == NULL) {
+                goto fail;
+            }
+            int res = PyList_Append(result, cast_info);
+            Py_DECREF(cast_info);
+            if (res < 0) {
+                goto fail;
+            }
+        }
+    }
+    Py_DECREF(classes);
+    return result;
+
+  fail:
+    Py_XDECREF(classes);
+    Py_XDECREF(result);
+    return NULL;
+}
+
+
 /**
  * Find the minimal cast safety level given two cast-levels as input.
  * Supports the NPY_CAST_IS_VIEW check, and should be preferred to allow
  * extending cast-levels if necessary.
  * It is not valid for one of the arguments to be -1 to indicate an error.
+ * Pass through NPY_SAME_VALUE_CASTING_FLAG on casting1, unless both have the
+ * flag, in which case return max_casting | NPY_SAME_VALUE_CASTING_FLAG.
+ * Usually this will be exactly NPY_SAME_VALUE_CASTING, but the logic here
+ * should handle other 'casting with same_value' options
  *
- * @param casting1
- * @param casting2
+ * @param casting1 First (left-hand) casting level to compare
+ * @param casting2 Second (right-hand) casting level to compare
  * @return The minimal casting error (can be -1).
  */
 NPY_NO_EXPORT NPY_CASTING
@@ -308,11 +350,14 @@ PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2)
     if (casting1 < 0 || casting2 < 0) {
         return -1;
     }
+    int both_same_casting = casting1 & casting2 & NPY_SAME_VALUE_CASTING_FLAG;
+    casting1 &= ~NPY_SAME_VALUE_CASTING_FLAG;
+    casting2 &= ~NPY_SAME_VALUE_CASTING_FLAG;
     /* larger casting values are less safe */
     if (casting1 > casting2) {
-        return casting1;
+        return casting1 | both_same_casting;
     }
-    return casting2;
+    return casting2 | both_same_casting;
 }
 
 
@@ -381,7 +426,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             PyObject *cobj;
 
             key = PyLong_FromLong(type_num);
-            cobj = PyDict_GetItem(obj, key);
+            cobj = PyDict_GetItem(obj, key); // noqa: borrowed-ref OK
             Py_DECREF(key);
             if (cobj && PyCapsule_CheckExact(cobj)) {
                 castfunc = PyCapsule_GetPointer(cobj, NULL);
@@ -395,12 +440,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             !PyTypeNum_ISCOMPLEX(type_num) &&
             PyTypeNum_ISNUMBER(type_num) &&
             !PyTypeNum_ISBOOL(type_num)) {
-        static PyObject *cls = NULL;
-        npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
-        if (cls == NULL) {
-            return NULL;
-        }
-        int ret = PyErr_WarnEx(cls,
+        int ret = PyErr_WarnEx(_npy_module_state->static_pydata.ComplexWarning,
                 "Casting complex values to real discards "
                 "the imaginary part", 1);
         if (ret < 0) {
@@ -493,11 +533,13 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
  * implementations fully to have them available for doing the actual cast
  * later.
  *
- * @param from
+ * @param from The descriptor to cast from
  * @param to The descriptor to cast to (may be NULL)
  * @param to_dtype If `to` is NULL, must pass the to_dtype (otherwise this
  *        is ignored).
- * @param[out] view_offset
+ * @param view_offset If set, the cast can be described by a view with
+ *        this byte offset.  For example, casting "i8" to "i8,"
+ *        (the structured dtype) can be described with `*view_offset = 0`.
  * @return NPY_CASTING or -1 on error or if the cast is not possible.
  */
 NPY_NO_EXPORT NPY_CASTING
@@ -542,7 +584,7 @@ PyArray_GetCastInfo(
  * user would have to guess the string length.)
  *
  * @param casting the requested casting safety.
- * @param from
+ * @param from The descriptor to cast from
  * @param to The descriptor to cast to (may be NULL)
  * @param to_dtype If `to` is NULL, must pass the to_dtype (otherwise this
  *        is ignored).
@@ -680,6 +722,36 @@ PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
 }
 
 
+/*
+ * Python-level helper answering whether reinterpreting data of dtype *from*
+ * as dtype *to* is a view. Unlike descriptor equality or `np.can_cast` with
+ * "no" casting, this distinguishes equivalent descriptor instances with
+ * separate internal state (e.g. StringDType allocators).
+ */
+NPY_NO_EXPORT PyObject *
+_is_view_safe_cast(PyObject *NPY_UNUSED(module), PyObject *const *args,
+                   Py_ssize_t len_args)
+{
+    if (len_args != 2) {
+        PyErr_SetString(PyExc_TypeError,
+                "_is_view_safe_cast() takes exactly two arguments");
+        return NULL;
+    }
+    if (!PyArray_DescrCheck(args[0]) || !PyArray_DescrCheck(args[1])) {
+        PyErr_SetString(PyExc_TypeError,
+                "_is_view_safe_cast() arguments must be dtype instances");
+        return NULL;
+    }
+    PyArray_Descr *from = (PyArray_Descr *)args[0];
+    PyArray_Descr *to = (PyArray_Descr *)args[1];
+    npy_intp view_offset = NPY_MIN_INTP;
+    /* ignore_error=1: dtype pairs with no resolvable cast are simply not views */
+    npy_intp is_safe = PyArray_SafeCast(from, to, &view_offset,
+                                        NPY_NO_CASTING, 1);
+    return PyBool_FromLong(is_safe && view_offset == 0);
+}
+
+
 /* Provides an ordering for the dtype 'kind' character codes */
 NPY_NO_EXPORT int
 dtype_kind_to_ordering(char kind)
@@ -702,7 +774,6 @@ dtype_kind_to_ordering(char kind)
             return 5;
         /* String kind */
         case 'S':
-        case 'a':
             return 6;
         /* Unicode kind */
         case 'U':
@@ -719,26 +790,6 @@ dtype_kind_to_ordering(char kind)
          */
         default:
             return -1;
-    }
-}
-
-/* Converts a type number from unsigned to signed */
-static int
-type_num_unsigned_to_signed(int type_num)
-{
-    switch (type_num) {
-        case NPY_UBYTE:
-            return NPY_BYTE;
-        case NPY_USHORT:
-            return NPY_SHORT;
-        case NPY_UINT:
-            return NPY_INT;
-        case NPY_ULONG:
-            return NPY_LONG;
-        case NPY_ULONGLONG:
-            return NPY_LONGLONG;
-        default:
-            return type_num;
     }
 }
 
@@ -787,83 +838,6 @@ static int min_scalar_type_num(char *valueptr, int type_num,
                                             int *is_small_unsigned);
 
 
-/*
- * NOTE: This function uses value based casting logic for scalars. It will
- *       require updates when we phase out value-based-casting.
- */
-NPY_NO_EXPORT npy_bool
-can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
-                    PyArray_Descr *to, NPY_CASTING casting)
-{
-    /*
-     * If the two dtypes are actually references to the same object
-     * or if casting type is forced unsafe then always OK.
-     *
-     * TODO: Assuming that unsafe casting always works is not actually correct
-     */
-    if (scal_type == to || casting == NPY_UNSAFE_CASTING ) {
-        return 1;
-    }
-
-    int valid = PyArray_CheckCastSafety(casting, scal_type, to, NPY_DTYPE(to));
-    if (valid == 1) {
-        /* This is definitely a valid cast. */
-        return 1;
-    }
-    if (valid < 0) {
-        /* Probably must return 0, but just keep trying for now. */
-        PyErr_Clear();
-    }
-
-    /*
-     * If the scalar isn't a number, value-based casting cannot kick in and
-     * we must not attempt it.
-     * (Additional fast-checks would be possible, but probably unnecessary.)
-     */
-    if (!PyTypeNum_ISNUMBER(scal_type->type_num)) {
-        return 0;
-    }
-
-    /*
-     * At this point we have to check value-based casting.
-     */
-    PyArray_Descr *dtype;
-    int is_small_unsigned = 0, type_num;
-    /* An aligned memory buffer large enough to hold any builtin numeric type */
-    npy_longlong value[4];
-
-    int swap = !PyArray_ISNBO(scal_type->byteorder);
-    PyDataType_GetArrFuncs(scal_type)->copyswap(&value, scal_data, swap, NULL);
-
-    type_num = min_scalar_type_num((char *)&value, scal_type->type_num,
-                                    &is_small_unsigned);
-
-    /*
-     * If we've got a small unsigned scalar, and the 'to' type
-     * is not unsigned, then make it signed to allow the value
-     * to be cast more appropriately.
-     */
-    if (is_small_unsigned && !(PyTypeNum_ISUNSIGNED(to->type_num))) {
-        type_num = type_num_unsigned_to_signed(type_num);
-    }
-
-    dtype = PyArray_DescrFromType(type_num);
-    if (dtype == NULL) {
-        return 0;
-    }
-#if 0
-    printf("min scalar cast ");
-    PyObject_Print(dtype, stdout, 0);
-    printf(" to ");
-    PyObject_Print(to, stdout, 0);
-    printf("\n");
-#endif
-    npy_bool ret = PyArray_CanCastTypeTo(dtype, to, casting);
-    Py_DECREF(dtype);
-    return ret;
-}
-
-
 NPY_NO_EXPORT npy_bool
 can_cast_pyscalar_scalar_to(
         int flags, PyArray_Descr *to, NPY_CASTING casting)
@@ -883,30 +857,41 @@ can_cast_pyscalar_scalar_to(
     }
     else if (PyDataType_ISFLOAT(to)) {
         if (flags & NPY_ARRAY_WAS_PYTHON_COMPLEX) {
-            return casting == NPY_UNSAFE_CASTING;
+            return ((casting == NPY_UNSAFE_CASTING) || ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0));
         }
         return 1;
     }
     else if (PyDataType_ISINTEGER(to)) {
         if (!(flags & NPY_ARRAY_WAS_PYTHON_INT)) {
-            return casting == NPY_UNSAFE_CASTING;
+            return ((casting == NPY_UNSAFE_CASTING) || ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0));
         }
         return 1;
     }
 
     /*
-     * For all other cases we use the default dtype.
+     * For all other cases we need to make a bit of a dance to find the cast
+     * safety.  We do so by finding the descriptor for the "scalar" (without
+     * a value; for parametric user dtypes a value may be needed eventually).
      */
-    PyArray_Descr *from;
+    PyArray_DTypeMeta *from_DType;
+    PyArray_Descr *default_dtype;
     if (flags & NPY_ARRAY_WAS_PYTHON_INT) {
-        from = PyArray_DescrFromType(NPY_LONG);
+        default_dtype = PyArray_DescrNewFromType(NPY_INTP);
+        from_DType = &PyArray_PyLongDType;
     }
     else if (flags & NPY_ARRAY_WAS_PYTHON_FLOAT) {
-        from = PyArray_DescrFromType(NPY_DOUBLE);
+        default_dtype = PyArray_DescrNewFromType(NPY_FLOAT64);
+        from_DType =  &PyArray_PyFloatDType;
     }
     else {
-        from = PyArray_DescrFromType(NPY_CDOUBLE);
+        default_dtype = PyArray_DescrNewFromType(NPY_COMPLEX128);
+        from_DType = &PyArray_PyComplexDType;
     }
+
+    PyArray_Descr *from = npy_find_descr_for_scalar(
+        NULL, default_dtype, from_DType, NPY_DTYPE(to));
+    Py_DECREF(default_dtype);
+
     int res = PyArray_CanCastTypeTo(from, to, casting);
     Py_DECREF(from);
     return res;
@@ -930,25 +915,14 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
         to = NULL;
     }
 
-    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
-        /*
-         * If it's a scalar, check the value.  (This only currently matters for
-         * numeric types and for `to == NULL` it can't be numeric.)
-         */
-        if (PyArray_NDIM(arr) == 0 && !PyArray_HASFIELDS(arr) && to != NULL) {
-            return can_cast_scalar_to(from, PyArray_DATA(arr), to, casting);
-        }
-    }
-    else {
-        /*
-         * If it's a scalar, check the value.  (This only currently matters for
-         * numeric types and for `to == NULL` it can't be numeric.)
-         */
-        if (PyArray_FLAGS(arr) & NPY_ARRAY_WAS_PYTHON_LITERAL && to != NULL) {
-            return can_cast_pyscalar_scalar_to(
-                    PyArray_FLAGS(arr) & NPY_ARRAY_WAS_PYTHON_LITERAL, to,
-                    casting);
-        }
+    /*
+        * If it's a scalar, check the value.  (This only currently matters for
+        * numeric types and for `to == NULL` it can't be numeric.)
+        */
+    if (PyArray_FLAGS(arr) & NPY_ARRAY_WAS_PYTHON_LITERAL && to != NULL) {
+        return can_cast_pyscalar_scalar_to(
+                PyArray_FLAGS(arr) & NPY_ARRAY_WAS_PYTHON_LITERAL, to,
+                casting);
     }
 
     /* Otherwise, use the standard rules (same as `PyArray_CanCastTypeTo`) */
@@ -965,7 +939,7 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
 NPY_NO_EXPORT const char *
 npy_casting_to_string(NPY_CASTING casting)
 {
-    switch (casting) {
+    switch ((int)casting) {
         case NPY_NO_CASTING:
             return "'no'";
         case NPY_EQUIV_CASTING:
@@ -976,6 +950,16 @@ npy_casting_to_string(NPY_CASTING casting)
             return "'same_kind'";
         case NPY_UNSAFE_CASTING:
             return "'unsafe'";
+        case NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'no and same_value'";
+        case NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'equiv and same_value'";
+        case NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'safe and same_value'";
+        case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'same_kind and same_value'";
+        case NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'same_value'";
         default:
             return "<unknown>";
     }
@@ -985,11 +969,10 @@ npy_casting_to_string(NPY_CASTING casting)
 /**
  * Helper function to set a useful error when casting is not possible.
  *
- * @param src_dtype
- * @param dst_dtype
- * @param casting
- * @param scalar Whether this was a "scalar" cast (includes 0-D array with
- *               PyArray_CanCastArrayTo result).
+ * @param src_dtype The source descriptor to cast from
+ * @param dst_dtype The destination descriptor trying to cast to
+ * @param casting The casting rule that was violated
+ * @param scalar Boolean flag indicating if this was a "scalar" cast.
  */
 NPY_NO_EXPORT void
 npy_set_invalid_cast_error(
@@ -1028,58 +1011,6 @@ PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
     return (npy_bool) PyArray_CanCastSafely(fromtype, totype);
 }
 
-/*
- * Internal promote types function which handles unsigned integers which
- * fit in same-sized signed integers specially.
- */
-static PyArray_Descr *
-promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
-                        int is_small_unsigned1, int is_small_unsigned2)
-{
-    if (is_small_unsigned1) {
-        int type_num1 = type1->type_num;
-        int type_num2 = type2->type_num;
-        int ret_type_num;
-
-        if (type_num2 < NPY_NTYPES_LEGACY && !(PyTypeNum_ISBOOL(type_num2) ||
-                                        PyTypeNum_ISUNSIGNED(type_num2))) {
-            /* Convert to the equivalent-sized signed integer */
-            type_num1 = type_num_unsigned_to_signed(type_num1);
-
-            ret_type_num = _npy_type_promotion_table[type_num1][type_num2];
-            /* The table doesn't handle string/unicode/void, check the result */
-            if (ret_type_num >= 0) {
-                return PyArray_DescrFromType(ret_type_num);
-            }
-        }
-
-        return PyArray_PromoteTypes(type1, type2);
-    }
-    else if (is_small_unsigned2) {
-        int type_num1 = type1->type_num;
-        int type_num2 = type2->type_num;
-        int ret_type_num;
-
-        if (type_num1 < NPY_NTYPES_LEGACY && !(PyTypeNum_ISBOOL(type_num1) ||
-                                        PyTypeNum_ISUNSIGNED(type_num1))) {
-            /* Convert to the equivalent-sized signed integer */
-            type_num2 = type_num_unsigned_to_signed(type_num2);
-
-            ret_type_num = _npy_type_promotion_table[type_num1][type_num2];
-            /* The table doesn't handle string/unicode/void, check the result */
-            if (ret_type_num >= 0) {
-                return PyArray_DescrFromType(ret_type_num);
-            }
-        }
-
-        return PyArray_PromoteTypes(type1, type2);
-    }
-    else {
-        return PyArray_PromoteTypes(type1, type2);
-    }
-
-}
-
 
 /**
  * This function should possibly become public API eventually.  At this
@@ -1104,7 +1035,7 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
         Py_INCREF(descr);
         return descr;
     }
-    if (!NPY_DT_is_parametric(given_DType)) {
+    if (!NPY_DT_is_parametric(given_DType) && !NPY_DT_is_abstract(given_DType)) {
         /*
          * Don't actually do anything, the default is always the result
          * of any cast.
@@ -1167,10 +1098,8 @@ PyArray_FindConcatenationDescriptor(
 
     PyArray_DTypeMeta *common_dtype;
     PyArray_Descr *result = NULL;
-    if (PyArray_ExtractDTypeAndDescriptor(
-            requested_dtype, &result, &common_dtype) < 0) {
-        return NULL;
-    }
+    PyArray_ExtractDTypeAndDescriptor(
+            requested_dtype, &result, &common_dtype);
     if (result != NULL) {
         if (PyDataType_SUBARRAY(result) != NULL) {
             PyErr_Format(PyExc_TypeError,
@@ -1574,11 +1503,19 @@ static int min_scalar_type_num(char *valueptr, int type_num,
 }
 
 
+/*NUMPY_API
+ * If arr is a scalar (has 0 dimensions) with a built-in number data type,
+ * finds the smallest type size/kind which can still represent its data.
+ * Otherwise, returns the array's data type.
+ *
+ * NOTE: This API is a left over from before NumPy 2 (and NEP 50) and should
+ *       probably be eventually deprecated and removed.
+ */
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_MinScalarType_internal(PyArrayObject *arr, int *is_small_unsigned)
+PyArray_MinScalarType(PyArrayObject *arr)
 {
+    int is_small_unsigned;
     PyArray_Descr *dtype = PyArray_DESCR(arr);
-    *is_small_unsigned = 0;
     /*
      * If the array isn't a numeric scalar, just return the array's dtype.
      */
@@ -1595,23 +1532,11 @@ PyArray_MinScalarType_internal(PyArrayObject *arr, int *is_small_unsigned)
 
         return PyArray_DescrFromType(
                         min_scalar_type_num((char *)&value,
-                                dtype->type_num, is_small_unsigned));
+                                dtype->type_num, &is_small_unsigned));
 
     }
 }
 
-/*NUMPY_API
- * If arr is a scalar (has 0 dimensions) with a built-in number data type,
- * finds the smallest type size/kind which can still represent its data.
- * Otherwise, returns the array's data type.
- *
- */
-NPY_NO_EXPORT PyArray_Descr *
-PyArray_MinScalarType(PyArrayObject *arr)
-{
-    int is_small_unsigned;
-    return PyArray_MinScalarType_internal(arr, &is_small_unsigned);
-}
 
 /*
  * Provides an ordering for the dtype 'kind' character codes, to help
@@ -1786,40 +1711,21 @@ PyArray_ResultType(
         return NPY_DT_CALL_ensure_canonical(result);
     }
 
-    void **info_on_heap = NULL;
-    void *_info_on_stack[NPY_MAXARGS * 2];
-    PyArray_DTypeMeta **all_DTypes;
-    PyArray_Descr **all_descriptors;
+    NPY_ALLOC_WORKSPACE(workspace, void *, 2 * 8, 2 * (narrs + ndtypes));
+    if (workspace == NULL) {
+        return NULL;
+    }
 
-    if (narrs + ndtypes > NPY_MAXARGS) {
-        info_on_heap = PyMem_Malloc(2 * (narrs+ndtypes) * sizeof(PyObject *));
-        if (info_on_heap == NULL) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-        all_DTypes = (PyArray_DTypeMeta **)info_on_heap;
-        all_descriptors = (PyArray_Descr **)(info_on_heap + narrs + ndtypes);
-    }
-    else {
-        all_DTypes = (PyArray_DTypeMeta **)_info_on_stack;
-        all_descriptors = (PyArray_Descr **)(_info_on_stack + narrs + ndtypes);
-    }
+    PyArray_DTypeMeta **all_DTypes = (PyArray_DTypeMeta **)workspace; // borrowed references
+    PyArray_Descr **all_descriptors = (PyArray_Descr **)(&all_DTypes[narrs+ndtypes]);
 
     /* Copy all dtypes into a single array defining non-value-based behaviour */
     for (npy_intp i=0; i < ndtypes; i++) {
         all_DTypes[i] = NPY_DTYPE(descrs[i]);
-        Py_INCREF(all_DTypes[i]);
         all_descriptors[i] = descrs[i];
     }
 
-    int at_least_one_scalar = 0;
-    int all_pyscalar = ndtypes == 0;
     for (npy_intp i=0, i_all=ndtypes; i < narrs; i++, i_all++) {
-        /* Array descr is also the correct "default" for scalars: */
-        if (PyArray_NDIM(arrs[i]) == 0) {
-            at_least_one_scalar = 1;
-        }
-
         /*
          * If the original was a Python scalar/literal, we use only the
          * corresponding abstract DType (and no descriptor) below.
@@ -1829,10 +1735,6 @@ PyArray_ResultType(
         if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_INT) {
             /* This could even be an object dtype here for large ints */
             all_DTypes[i_all] = &PyArray_PyLongDType;
-            if (PyArray_TYPE(arrs[i]) != NPY_LONG) {
-                /* Not a "normal" scalar, so we cannot avoid the legacy path */
-                all_pyscalar = 0;
-            }
         }
         else if (PyArray_FLAGS(arrs[i]) & NPY_ARRAY_WAS_PYTHON_FLOAT) {
             all_DTypes[i_all] = &PyArray_PyFloatDType;
@@ -1843,16 +1745,11 @@ PyArray_ResultType(
         else {
             all_descriptors[i_all] = PyArray_DTYPE(arrs[i]);
             all_DTypes[i_all] = NPY_DTYPE(all_descriptors[i_all]);
-            all_pyscalar = 0;
         }
-        Py_INCREF(all_DTypes[i_all]);
     }
 
     PyArray_DTypeMeta *common_dtype = PyArray_PromoteDTypeSequence(
             narrs+ndtypes, all_DTypes);
-    for (npy_intp i=0; i < narrs+ndtypes; i++) {
-        Py_DECREF(all_DTypes[i]);
-    }
     if (common_dtype == NULL) {
         goto error;
     }
@@ -1904,172 +1801,17 @@ PyArray_ResultType(
         }
     }
 
-    /*
-     * Unfortunately, when 0-D "scalar" arrays are involved and mixed, we *may*
-     * have to use the value-based logic.
-     * `PyArray_CheckLegacyResultType` may behave differently based on the
-     * current value of `npy_legacy_promotion`:
-     * 1. It does nothing (we use the "new" behavior)
-     * 2. It does nothing, but warns if there the result would differ.
-     * 3. It replaces the result based on the legacy value-based logic.
-     */
-    if (at_least_one_scalar && !all_pyscalar && result->type_num < NPY_NTYPES_LEGACY) {
-        if (PyArray_CheckLegacyResultType(
-                &result, narrs, arrs, ndtypes, descrs) < 0) {
-            Py_DECREF(common_dtype);
-            Py_DECREF(result);
-            return NULL;
-        }
-    }
-
     Py_DECREF(common_dtype);
-    PyMem_Free(info_on_heap);
+    npy_free_workspace(workspace);
     return result;
 
   error:
     Py_XDECREF(result);
     Py_XDECREF(common_dtype);
-    PyMem_Free(info_on_heap);
+    npy_free_workspace(workspace);
     return NULL;
 }
 
-
-/*
- * Produces the result type of a bunch of inputs, using the UFunc
- * type promotion rules. Use this function when you have a set of
- * input arrays, and need to determine an output array dtype.
- *
- * If all the inputs are scalars (have 0 dimensions) or the maximum "kind"
- * of the scalars is greater than the maximum "kind" of the arrays, does
- * a regular type promotion.
- *
- * Otherwise, does a type promotion on the MinScalarType
- * of all the inputs.  Data types passed directly are treated as array
- * types.
- */
-NPY_NO_EXPORT int
-PyArray_CheckLegacyResultType(
-        PyArray_Descr **new_result,
-        npy_intp narrs, PyArrayObject **arr,
-        npy_intp ndtypes, PyArray_Descr **dtypes)
-{
-    PyArray_Descr *ret = NULL;
-    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
-        return 0;
-    }
-    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
-            && !npy_give_promotion_warnings()) {
-        return 0;
-    }
-
-    npy_intp i;
-
-    /* If there's just one type, results must match */
-    if (narrs + ndtypes == 1) {
-        return 0;
-    }
-
-    int use_min_scalar = should_use_min_scalar(narrs, arr, ndtypes, dtypes);
-
-    /* Loop through all the types, promoting them */
-    if (!use_min_scalar) {
-
-        /* Build a single array of all the dtypes */
-        PyArray_Descr **all_dtypes = PyArray_malloc(
-            sizeof(*all_dtypes) * (narrs + ndtypes));
-        if (all_dtypes == NULL) {
-            PyErr_NoMemory();
-            return -1;
-        }
-        for (i = 0; i < narrs; ++i) {
-            all_dtypes[i] = PyArray_DESCR(arr[i]);
-        }
-        for (i = 0; i < ndtypes; ++i) {
-            all_dtypes[narrs + i] = dtypes[i];
-        }
-        ret = PyArray_PromoteTypeSequence(all_dtypes, narrs + ndtypes);
-        PyArray_free(all_dtypes);
-    }
-    else {
-        int ret_is_small_unsigned = 0;
-
-        for (i = 0; i < narrs; ++i) {
-            int tmp_is_small_unsigned;
-            PyArray_Descr *tmp = PyArray_MinScalarType_internal(
-                arr[i], &tmp_is_small_unsigned);
-            if (tmp == NULL) {
-                Py_XDECREF(ret);
-                return -1;
-            }
-            /* Combine it with the existing type */
-            if (ret == NULL) {
-                ret = tmp;
-                ret_is_small_unsigned = tmp_is_small_unsigned;
-            }
-            else {
-                PyArray_Descr *tmpret = promote_types(
-                    tmp, ret, tmp_is_small_unsigned, ret_is_small_unsigned);
-                Py_DECREF(tmp);
-                Py_DECREF(ret);
-                ret = tmpret;
-                if (ret == NULL) {
-                    return -1;
-                }
-
-                ret_is_small_unsigned = tmp_is_small_unsigned &&
-                                        ret_is_small_unsigned;
-            }
-        }
-
-        for (i = 0; i < ndtypes; ++i) {
-            PyArray_Descr *tmp = dtypes[i];
-            /* Combine it with the existing type */
-            if (ret == NULL) {
-                ret = tmp;
-                Py_INCREF(ret);
-            }
-            else {
-                PyArray_Descr *tmpret = promote_types(
-                    tmp, ret, 0, ret_is_small_unsigned);
-                Py_DECREF(ret);
-                ret = tmpret;
-                if (ret == NULL) {
-                    return -1;
-                }
-            }
-        }
-        /* None of the above loops ran */
-        if (ret == NULL) {
-            PyErr_SetString(PyExc_TypeError,
-                    "no arrays or types available to calculate result type");
-        }
-    }
-
-    if (ret == NULL) {
-        return -1;
-    }
-
-    int unchanged_result = PyArray_EquivTypes(*new_result, ret);
-    if (unchanged_result) {
-        Py_DECREF(ret);
-        return 0;
-    }
-    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
-        Py_SETREF(*new_result, ret);
-        return 0;
-    }
-
-    assert(npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN);
-    if (PyErr_WarnFormat(PyExc_UserWarning, 1,
-            "result dtype changed due to the removal of value-based "
-            "promotion from NumPy. Changed from %S to %S.",
-            ret, *new_result) < 0) {
-        Py_DECREF(ret);
-        return -1;
-    }
-    Py_DECREF(ret);
-    return 0;
-}
 
 /**
  * Promotion of descriptors (of arbitrary DType) to their correctly
@@ -2077,7 +1819,7 @@ PyArray_CheckLegacyResultType(
  * I.e. the given DType could be a string, which then finds the correct
  * string length, given all `descrs`.
  *
- * @param ndescrs number of descriptors to cast and find the common instance.
+ * @param ndescr number of descriptors to cast and find the common instance.
  *        At least one must be passed in.
  * @param descrs The descriptors to work with.
  * @param DType The DType of the desired output descriptor.
@@ -2161,9 +1903,9 @@ _check_object_rec(PyArray_Descr *descr)
 NPY_NO_EXPORT char *
 PyArray_Zero(PyArrayObject *arr)
 {
+    multiarray_umath_state *state = _npy_module_state;
     char *zeroval;
     int ret, storeflags;
-    static PyObject * zero_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -2174,25 +1916,19 @@ PyArray_Zero(PyArrayObject *arr)
         return NULL;
     }
 
-    if (zero_obj == NULL) {
-        zero_obj = PyLong_FromLong((long) 0);
-        if (zero_obj == NULL) {
-            return NULL;
-        }
-    }
     if (PyArray_ISOBJECT(arr)) {
         /* XXX this is dangerous, the caller probably is not
            aware that zeroval is actually a static PyObject*
            In the best case they will only use it as-is, but
-           if they simply memcpy it into a ndarray without using
+           if they simply memcpy it into an ndarray without using
            setitem(), refcount errors will occur
         */
-        memcpy(zeroval, &zero_obj, sizeof(PyObject *));
+        memcpy(zeroval, &state->static_pydata.zero_obj, sizeof(PyObject *));
         return zeroval;
     }
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_SETITEM(arr, zeroval, zero_obj);
+    ret = PyArray_SETITEM(arr, zeroval, state->static_pydata.zero_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
@@ -2207,9 +1943,9 @@ PyArray_Zero(PyArrayObject *arr)
 NPY_NO_EXPORT char *
 PyArray_One(PyArrayObject *arr)
 {
+    multiarray_umath_state *state = _npy_module_state;
     char *oneval;
     int ret, storeflags;
-    static PyObject * one_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -2220,26 +1956,20 @@ PyArray_One(PyArrayObject *arr)
         return NULL;
     }
 
-    if (one_obj == NULL) {
-        one_obj = PyLong_FromLong((long) 1);
-        if (one_obj == NULL) {
-            return NULL;
-        }
-    }
     if (PyArray_ISOBJECT(arr)) {
         /* XXX this is dangerous, the caller probably is not
            aware that oneval is actually a static PyObject*
            In the best case they will only use it as-is, but
-           if they simply memcpy it into a ndarray without using
+           if they simply memcpy it into an ndarray without using
            setitem(), refcount errors will occur
         */
-        memcpy(oneval, &one_obj, sizeof(PyObject *));
+        memcpy(oneval, &state->static_pydata.one_obj, sizeof(PyObject *));
         return oneval;
     }
 
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_SETITEM(arr, oneval, one_obj);
+    ret = PyArray_SETITEM(arr, oneval, state->static_pydata.one_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
     if (ret < 0) {
         PyDataMem_FREE(oneval);
@@ -2312,14 +2042,21 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     PyArray_Descr *common_descr = NULL;
     PyArrayObject **mps = NULL;
 
-    *retn = n = PySequence_Length(op);
-    if (n == 0) {
+    Py_ssize_t length = PySequence_Length(op);
+    if (length == 0) {
         PyErr_SetString(PyExc_ValueError, "0-length sequence.");
     }
     if (PyErr_Occurred()) {
         *retn = 0;
         return NULL;
     }
+    if (length > INT_MAX) {
+        PyErr_SetString(PyExc_ValueError,
+            "sequence too large to convert in common type.");
+        *retn = 0;
+        return NULL;
+    }
+    *retn = n = (int)length;
     mps = (PyArrayObject **)PyDataMem_NEW(n*sizeof(PyArrayObject *));
     if (mps == NULL) {
         *retn = 0;
@@ -2358,6 +2095,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
             goto fail;
         }
         npy_mark_tmp_array_if_pyscalar(tmp, mps[i], NULL);
+        npy_mark_tmp_array_if_pystr(tmp, mps[i]);
         Py_DECREF(tmp);
     }
 
@@ -2369,8 +2107,13 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     /* Make sure all arrays are contiguous and have the correct dtype. */
     for (i = 0; i < n; i++) {
         int flags = NPY_ARRAY_CARRAY;
-        PyArrayObject *tmp = mps[i];
 
+        if (npy_update_operand_if_pyscalar(&mps[i], op, i, common_descr,
+                                           NPY_SAFE_CASTING) < 0) {
+            goto fail;
+        }
+
+        PyArrayObject *tmp = mps[i];
         Py_INCREF(common_descr);
         mps[i] = (PyArrayObject *)PyArray_FromArray(tmp, common_descr, flags);
         Py_DECREF(tmp);
@@ -2396,7 +2139,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
  * Private function to add a casting implementation by unwrapping a bound
  * array method.
  *
- * @param meth
+ * @param meth The array method to be unwrapped
  * @return 0 on success -1 on failure.
  */
 NPY_NO_EXPORT int
@@ -2448,7 +2191,12 @@ PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
 /**
  * Add a new casting implementation using a PyArrayMethod_Spec.
  *
- * @param spec
+ * Using this function outside of module initialization without holding a
+ * critical section on the castingimpls dict may lead to a race to fill the
+ * dict. Use PyArray_GetGastingImpl to lazily register casts at runtime
+ * safely.
+ *
+ * @param spec The specification to use as a source
  * @param private If private, allow slots not publicly exposed.
  * @return 0 on success -1 on failure
  */
@@ -2460,6 +2208,7 @@ PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private)
     if (meth == NULL) {
         return -1;
     }
+    meth->method->flags |= _NPY_METH_IS_CAST;
     int res = PyArray_AddCastingImplementation(meth);
     Py_DECREF(meth);
     if (res < 0) {
@@ -2502,9 +2251,9 @@ legacy_same_dtype_resolve_descriptors(
     if (PyDataType_ISNOTSWAPPED(loop_descrs[0]) ==
                 PyDataType_ISNOTSWAPPED(loop_descrs[1])) {
         *view_offset = 0;
-        return NPY_NO_CASTING;
+        return NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG;
     }
-    return NPY_EQUIV_CASTING;
+    return NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG;
 }
 
 
@@ -2622,13 +2371,7 @@ complex_to_noncomplex_get_loop(
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    static PyObject *cls = NULL;
-    int ret;
-    npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
-    if (cls == NULL) {
-        return -1;
-    }
-    ret = PyErr_WarnEx(cls,
+    int ret = PyErr_WarnEx(_npy_module_state->static_pydata.ComplexWarning,
             "Casting complex values to real discards "
             "the imaginary part", 1);
     if (ret < 0) {
@@ -2697,6 +2440,7 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     if (dtypes[0]->singleton->kind == dtypes[1]->singleton->kind
             && from_itemsize == to_itemsize) {
         spec.casting = NPY_EQUIV_CASTING;
+        spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
 
         /* When there is no casting (equivalent C-types) use byteswap loops */
         slots[0].slot = NPY_METH_resolve_descriptors;
@@ -2711,13 +2455,17 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     }
     else if (_npy_can_cast_safely_table[from->type_num][to->type_num]) {
         spec.casting = NPY_SAFE_CASTING;
-    }
-    else if (dtype_kind_to_ordering(dtypes[0]->singleton->kind) <=
-             dtype_kind_to_ordering(dtypes[1]->singleton->kind)) {
-        spec.casting = NPY_SAME_KIND_CASTING;
+        spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
     }
     else {
-        spec.casting = NPY_UNSAFE_CASTING;
+        if (dtype_kind_to_ordering(dtypes[0]->singleton->kind) <=
+                dtype_kind_to_ordering(dtypes[1]->singleton->kind)) {
+            spec.casting = NPY_SAME_KIND_CASTING;
+        }
+        else {
+            spec.casting = NPY_UNSAFE_CASTING;
+        }
+        spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
     }
 
     /* Create a bound method, unbind and store it */
@@ -2826,6 +2574,11 @@ cast_to_string_resolve_descriptors(
             return -1;
     }
     if (dtypes[1]->type_num == NPY_UNICODE) {
+        if (size > NPY_MAX_INT / 4) {
+            PyErr_Format(PyExc_TypeError,
+                    "string of length %zd is too large to store inside array.", size);
+            return -1;
+        }
         size *= 4;
     }
 
@@ -2850,10 +2603,10 @@ cast_to_string_resolve_descriptors(
         return -1;
     }
 
-    if (self->casting == NPY_UNSAFE_CASTING) {
+    if ((self->casting == NPY_UNSAFE_CASTING) || ((self->casting & NPY_SAME_VALUE_CASTING_FLAG) > 0)){
         assert(dtypes[0]->type_num == NPY_UNICODE &&
                dtypes[1]->type_num == NPY_STRING);
-        return NPY_UNSAFE_CASTING;
+        return self->casting;
     }
 
     if (loop_descrs[1]->elsize >= size) {
@@ -3136,7 +2889,7 @@ nonstructured_to_structured_resolve_descriptors(
 
             Py_ssize_t pos = 0;
             PyObject *key, *tuple;
-            while (PyDict_Next(to_descr->fields, &pos, &key, &tuple)) {
+            while (PyDict_Next(to_descr->fields, &pos, &key, &tuple)) { // noqa: borrowed-ref OK
                 PyArray_Descr *field_descr = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
                 npy_intp field_view_off = NPY_MIN_INTP;
                 NPY_CASTING field_casting = PyArray_GetCastInfo(
@@ -3252,31 +3005,12 @@ nonstructured_to_structured_get_loop(
     return 0;
 }
 
-
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void)
 {
-    static PyArrayMethodObject *method = NULL;
-
-    if (method != NULL) {
-        Py_INCREF(method);
-        return (PyObject *)method;
-    }
-
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (method == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    method->name = "any_to_void_cast";
-    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    method->casting = -1;
-    method->resolve_descriptors = &nonstructured_to_structured_resolve_descriptors;
-    method->get_strided_loop = &nonstructured_to_structured_get_loop;
-    method->nin = 1;
-    method->nout = 1;
-
-    return (PyObject *)method;
+    multiarray_umath_state *state = _npy_module_state;
+    Py_INCREF(state->static_pydata.GenericToVoidMethod);
+    return state->static_pydata.GenericToVoidMethod;
 }
 
 
@@ -3305,7 +3039,7 @@ structured_to_nonstructured_resolve_descriptors(
             return -1;
         }
         PyObject *key = PyTuple_GetItem(PyDataType_NAMES(given_descrs[0]), 0);
-        PyObject *base_tup = PyDict_GetItem(PyDataType_FIELDS(given_descrs[0]), key);
+        PyObject *base_tup = PyDict_GetItem(PyDataType_FIELDS(given_descrs[0]), key); // noqa: borrowed-ref OK
         base_descr = (PyArray_Descr *)PyTuple_GET_ITEM(base_tup, 0);
         struct_view_offset = PyLong_AsSsize_t(PyTuple_GET_ITEM(base_tup, 1));
         if (error_converting(struct_view_offset)) {
@@ -3413,27 +3147,9 @@ structured_to_nonstructured_get_loop(
 static PyObject *
 PyArray_GetVoidToGenericCastingImpl(void)
 {
-    static PyArrayMethodObject *method = NULL;
-
-    if (method != NULL) {
-        Py_INCREF(method);
-        return (PyObject *)method;
-    }
-
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (method == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    method->name = "void_to_any_cast";
-    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    method->casting = -1;
-    method->resolve_descriptors = &structured_to_nonstructured_resolve_descriptors;
-    method->get_strided_loop = &structured_to_nonstructured_get_loop;
-    method->nin = 1;
-    method->nout = 1;
-
-    return (PyObject *)method;
+    multiarray_umath_state *state = _npy_module_state;
+    Py_INCREF(state->static_pydata.VoidToGenericMethod);
+    return state->static_pydata.VoidToGenericMethod;
 }
 
 
@@ -3459,7 +3175,7 @@ can_cast_fields_safety(
     for (Py_ssize_t i = 0; i < field_count; i++) {
         npy_intp field_view_off = NPY_MIN_INTP;
         PyObject *from_key = PyTuple_GET_ITEM(PyDataType_NAMES(from), i);
-        PyObject *from_tup = PyDict_GetItemWithError(PyDataType_FIELDS(from), from_key);
+        PyObject *from_tup = PyDict_GetItemWithError(PyDataType_FIELDS(from), from_key); // noqa: borrowed-ref OK
         if (from_tup == NULL) {
             return give_bad_field_error(from_key);
         }
@@ -3467,7 +3183,7 @@ can_cast_fields_safety(
 
         /* Check whether the field names match */
         PyObject *to_key = PyTuple_GET_ITEM(PyDataType_NAMES(to), i);
-        PyObject *to_tup = PyDict_GetItem(PyDataType_FIELDS(to), to_key);
+        PyObject *to_tup = PyDict_GetItem(PyDataType_FIELDS(to), to_key); // noqa: borrowed-ref OK
         if (to_tup == NULL) {
             return give_bad_field_error(from_key);
         }
@@ -3679,7 +3395,22 @@ void_to_void_get_loop(
 {
     if (PyDataType_NAMES(context->descriptors[0]) != NULL ||
             PyDataType_NAMES(context->descriptors[1]) != NULL) {
-        if (get_fields_transfer_function(
+        /*
+         * Fast path: if dtypes are equivalent and the destination is
+         * trivially copyable, use memcpy instead of field-by-field transfer.
+         */
+        if ((context->descriptors[0] == context->descriptors[1] ||
+                    PyArray_EquivTypes(context->descriptors[0], context->descriptors[1])) &&
+                PyDataType_ISTRIVIALLYCOPYABLE(context->descriptors[1])) {
+            if (PyArray_GetStridedZeroPadCopyFn(
+                    0, 0, strides[0], strides[1],
+                    context->descriptors[0]->elsize, context->descriptors[1]->elsize,
+                    out_loop, out_transferdata) == NPY_FAIL) {
+                return -1;
+            }
+            *flags = PyArrayMethod_MINIMAL_FLAGS;
+        }
+        else if (get_fields_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,
@@ -3797,29 +3528,10 @@ object_to_any_resolve_descriptors(
 static PyObject *
 PyArray_GetObjectToGenericCastingImpl(void)
 {
-    static PyArrayMethodObject *method = NULL;
-
-    if (method != NULL) {
-        Py_INCREF(method);
-        return (PyObject *)method;
-    }
-
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (method == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    method->nin = 1;
-    method->nout = 1;
-    method->name = "object_to_any_cast";
-    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    method->casting = NPY_UNSAFE_CASTING;
-    method->resolve_descriptors = &object_to_any_resolve_descriptors;
-    method->get_strided_loop = &object_to_any_get_loop;
-
-    return (PyObject *)method;
+    multiarray_umath_state *state = _npy_module_state;
+    Py_INCREF(state->static_pydata.ObjectToGenericMethod);
+    return state->static_pydata.ObjectToGenericMethod;
 }
-
 
 
 /* Any object is simple (could even use the default) */
@@ -3854,27 +3566,9 @@ any_to_object_resolve_descriptors(
 static PyObject *
 PyArray_GetGenericToObjectCastingImpl(void)
 {
-    static PyArrayMethodObject *method = NULL;
-
-    if (method != NULL) {
-        Py_INCREF(method);
-        return (PyObject *)method;
-    }
-
-    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
-    if (method == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    method->nin = 1;
-    method->nout = 1;
-    method->name = "any_to_object_cast";
-    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
-    method->casting = NPY_SAFE_CASTING;
-    method->resolve_descriptors = &any_to_object_resolve_descriptors;
-    method->get_strided_loop = &any_to_object_get_loop;
-
-    return (PyObject *)method;
+    multiarray_umath_state *state = _npy_module_state;
+    Py_INCREF(state->static_pydata.GenericToObjectMethod);
+    return state->static_pydata.GenericToObjectMethod;
 }
 
 
@@ -3926,6 +3620,76 @@ PyArray_InitializeObjectToObjectCast(void)
     return res;
 }
 
+static int
+initialize_void_and_object_globals(void) {
+    multiarray_umath_state *state = _npy_module_state;
+    PyArrayMethodObject *method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    method->name = "void_to_any_cast";
+    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->casting = -1;
+    method->resolve_descriptors = &structured_to_nonstructured_resolve_descriptors;
+    method->get_strided_loop = &structured_to_nonstructured_get_loop;
+    method->nin = 1;
+    method->nout = 1;
+    state->static_pydata.VoidToGenericMethod = (PyObject *)method;
+
+    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    method->name = "any_to_void_cast";
+    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->casting = -1;
+    method->resolve_descriptors = &nonstructured_to_structured_resolve_descriptors;
+    method->get_strided_loop = &nonstructured_to_structured_get_loop;
+    method->nin = 1;
+    method->nout = 1;
+    state->static_pydata.GenericToVoidMethod = (PyObject *)method;
+
+    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    method->nin = 1;
+    method->nout = 1;
+    method->name = "object_to_any_cast";
+    method->flags = (NPY_METH_SUPPORTS_UNALIGNED
+                     | NPY_METH_REQUIRES_PYAPI
+                     | NPY_METH_NO_FLOATINGPOINT_ERRORS);
+    method->casting = NPY_UNSAFE_CASTING;
+    method->resolve_descriptors = &object_to_any_resolve_descriptors;
+    method->get_strided_loop = &object_to_any_get_loop;
+    state->static_pydata.ObjectToGenericMethod = (PyObject *)method;
+
+    method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    if (method == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    method->nin = 1;
+    method->nout = 1;
+    method->name = "any_to_object_cast";
+    method->flags = (NPY_METH_SUPPORTS_UNALIGNED
+                     | NPY_METH_REQUIRES_PYAPI
+                     | NPY_METH_NO_FLOATINGPOINT_ERRORS);
+    method->casting = NPY_SAFE_CASTING;
+    method->resolve_descriptors = &any_to_object_resolve_descriptors;
+    method->get_strided_loop = &any_to_object_get_loop;
+    state->static_pydata.GenericToObjectMethod = (PyObject *)method;
+
+    return 0;
+}
+
 
 NPY_NO_EXPORT int
 PyArray_InitializeCasts()
@@ -3946,5 +3710,10 @@ PyArray_InitializeCasts()
     if (PyArray_InitializeDatetimeCasts() < 0) {
         return -1;
     }
+
+    if (initialize_void_and_object_globals() < 0) {
+        return -1;
+    }
+
     return 0;
 }

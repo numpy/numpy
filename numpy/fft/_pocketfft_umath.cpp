@@ -12,8 +12,8 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #define PY_SSIZE_T_CLEAN
-#include <assert.h>
 #include <Python.h>
+#include <assert.h>
 
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
@@ -32,7 +32,7 @@
 template<PyUFuncGenericFunction cpp_ufunc>
 static void
 wrap_legacy_cpp_ufunc(char **args, npy_intp const *dimensions,
-                      ptrdiff_t const *steps, void *func)
+                      npy_intp const *steps, void *func)
 {
     NPY_ALLOW_C_API_DEF
     try {
@@ -86,14 +86,14 @@ copy_output(T buff[], char *out, npy_intp step_out, size_t n)
  */
 template <typename T>
 static void
-fft_loop(char **args, npy_intp const *dimensions, ptrdiff_t const *steps,
+fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps,
          void *func)
 {
     char *ip = args[0], *fp = args[1], *op = args[2];
     size_t n_outer = (size_t)dimensions[0];
-    ptrdiff_t si = steps[0], sf = steps[1], so = steps[2];
+    npy_intp si = steps[0], sf = steps[1], so = steps[2];
     size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
-    ptrdiff_t step_in = steps[3], step_out = steps[4];
+    npy_intp step_in = steps[3], step_out = steps[4];
     bool direction = *((bool *)func); /* pocketfft::FORWARD or BACKWARD */
 
     assert (nout > 0);
@@ -144,9 +144,9 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
 {
     char *ip = args[0], *fp = args[1], *op = args[2];
     size_t n_outer = (size_t)dimensions[0];
-    ptrdiff_t si = steps[0], sf = steps[1], so = steps[2];
+    npy_intp si = steps[0], sf = steps[1], so = steps[2];
     size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
-    ptrdiff_t step_in = steps[3], step_out = steps[4];
+    npy_intp step_in = steps[3], step_out = steps[4];
 
     assert (nout > 0 && nout == npts / 2 + 1);
 
@@ -172,6 +172,7 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
     auto plan = pocketfft::detail::get_plan<pocketfft::detail::pocketfft_r<T>>(npts);
     auto buffered = (step_out != sizeof(std::complex<T>));
     pocketfft::detail::arr<std::complex<T>> buff(buffered ? nout : 0);
+    auto nin_used = nin <= npts ? nin : npts;
     for (size_t i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
         std::complex<T> *op_or_buff = buffered ? buff.data() : (std::complex<T> *)op;
         /*
@@ -183,10 +184,10 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
          * Pocketfft uses FFTpack order, R0,R1,I1,...Rn-1,In-1,Rn[,In] (last
          * for npts odd only). To make unpacking easy, we place the real data
          * offset by one in the buffer, so that we just have to move R0 and
-         * create I0=0. Note that copy_data will zero the In component for
+         * create I0=0. Note that copy_input will zero the In component for
          * even number of points.
          */
-        copy_input(ip, step_in, nin, &((T *)op_or_buff)[1], nout*2 - 1);
+        copy_input(ip, step_in, nin_used, &((T *)op_or_buff)[1], nout*2 - 1);
         plan->exec(&((T *)op_or_buff)[1], *(T *)fp, pocketfft::FORWARD);
         op_or_buff[0] = op_or_buff[0].imag();  // I0->R0, I0=0
         if (buffered) {
@@ -232,14 +233,13 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
     size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
     ptrdiff_t step_in = steps[3], step_out = steps[4];
 
-    size_t npts_in = nout / 2 + 1;
-
     assert(nout > 0);
 
 #ifndef POCKETFFT_NO_VECTORS
     /*
      * Call pocketfft directly if vectorization is possible.
      */
+    size_t npts_in = nout / 2 + 1;
     constexpr auto vlen = pocketfft::detail::VLEN<T>::val;
     if (vlen > 1 && n_outer >= vlen && nin >= npts_in && sf == 0) {
         std::vector<size_t> axes = { 1 };
@@ -297,17 +297,17 @@ static PyUFuncGenericFunction fft_functions[] = {
     wrap_legacy_cpp_ufunc<fft_loop<npy_float>>,
     wrap_legacy_cpp_ufunc<fft_loop<npy_longdouble>>
 };
-static char fft_types[] = {
+static const char fft_types[] = {
     NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE,
     NPY_CFLOAT, NPY_FLOAT, NPY_CFLOAT,
     NPY_CLONGDOUBLE, NPY_LONGDOUBLE, NPY_CLONGDOUBLE
 };
-static void *fft_data[] = {
+static void *const fft_data[] = {
     (void*)&pocketfft::FORWARD,
     (void*)&pocketfft::FORWARD,
     (void*)&pocketfft::FORWARD
 };
-static void *ifft_data[] = {
+static void *const ifft_data[] = {
     (void*)&pocketfft::BACKWARD,
     (void*)&pocketfft::BACKWARD,
     (void*)&pocketfft::BACKWARD
@@ -323,7 +323,7 @@ static PyUFuncGenericFunction rfft_n_odd_functions[] = {
     wrap_legacy_cpp_ufunc<rfft_n_odd_loop<npy_float>>,
     wrap_legacy_cpp_ufunc<rfft_n_odd_loop<npy_longdouble>>
 };
-static char rfft_types[] = {
+static const char rfft_types[] = {
     NPY_DOUBLE, NPY_DOUBLE, NPY_CDOUBLE,
     NPY_FLOAT, NPY_FLOAT, NPY_CFLOAT,
     NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_CLONGDOUBLE
@@ -334,7 +334,7 @@ static PyUFuncGenericFunction irfft_functions[] = {
     wrap_legacy_cpp_ufunc<irfft_loop<npy_float>>,
     wrap_legacy_cpp_ufunc<irfft_loop<npy_longdouble>>
 };
-static char irfft_types[] = {
+static const char irfft_types[] = {
     NPY_CDOUBLE, NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_FLOAT, NPY_FLOAT,
     NPY_CLONGDOUBLE, NPY_LONGDOUBLE, NPY_LONGDOUBLE
@@ -387,36 +387,57 @@ add_gufuncs(PyObject *dictionary) {
     return 0;
 }
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_multiarray_umath",
-    NULL,
-    -1,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
+static int module_loaded = 0;
 
-/* Initialization function for the module */
-PyMODINIT_FUNC PyInit__pocketfft_umath(void)
+static int
+_pocketfft_umath_exec(PyObject *m)
 {
-    PyObject *m = PyModule_Create(&moduledef);
-    if (m == NULL) {
-        return NULL;
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
     }
+    module_loaded = 1;
 
     /* Import the array and ufunc objects */
-    import_array();
-    import_ufunc();
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return -1;
+    }
+    if (PyUFunc_ImportUFuncAPI() < 0) {
+        return -1;
+    }
 
     PyObject *d = PyModule_GetDict(m);
     if (add_gufuncs(d) < 0) {
         Py_DECREF(d);
-        Py_DECREF(m);
-        return NULL;
+        return -1;
     }
 
-    return m;
+    return 0;
+}
+
+static struct PyModuleDef_Slot _pocketfft_umath_slots[] = {
+    {Py_mod_exec, (void*)_pocketfft_umath_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0 && (!defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x030d0000) // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,  /* m_base */
+    "_pocketfft_umath",     /* m_name */
+    NULL,                   /* m_doc */
+    0,                      /* m_size */
+    NULL,                   /* m_methods */
+    _pocketfft_umath_slots, /* m_slots */
+};
+
+PyMODINIT_FUNC PyInit__pocketfft_umath(void) {
+    return PyModuleDef_Init(&moduledef);
 }

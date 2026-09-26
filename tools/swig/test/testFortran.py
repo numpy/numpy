@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-# System imports
 import sys
 import unittest
 
-# Import NumPy
 import numpy as np
-major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
-if major == 0: BadListError = TypeError
-else:          BadListError = ValueError
+
+major, minor = [int(d) for d in np.__version__.split(".")[:2]]
+if major == 0:
+    BadListError = TypeError
+else:
+    BadListError = ValueError
 
 import Fortran
 
@@ -17,7 +18,7 @@ class FortranTestCase(unittest.TestCase):
 
     def __init__(self, methodName="runTests"):
         unittest.TestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
     # Test (type* IN_FARRAY2, int DIM1, int DIM2) typemap
@@ -41,7 +42,7 @@ class FortranTestCase(unittest.TestCase):
 class scharTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "schar"
+        self.typeStr = "schar"
         self.typeCode = "b"
 
 ######################################################################
@@ -49,7 +50,7 @@ class scharTestCase(FortranTestCase):
 class ucharTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "uchar"
+        self.typeStr = "uchar"
         self.typeCode = "B"
 
 ######################################################################
@@ -57,7 +58,7 @@ class ucharTestCase(FortranTestCase):
 class shortTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "short"
+        self.typeStr = "short"
         self.typeCode = "h"
 
 ######################################################################
@@ -65,7 +66,7 @@ class shortTestCase(FortranTestCase):
 class ushortTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "ushort"
+        self.typeStr = "ushort"
         self.typeCode = "H"
 
 ######################################################################
@@ -73,7 +74,7 @@ class ushortTestCase(FortranTestCase):
 class intTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "int"
+        self.typeStr = "int"
         self.typeCode = "i"
 
 ######################################################################
@@ -81,7 +82,7 @@ class intTestCase(FortranTestCase):
 class uintTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "uint"
+        self.typeStr = "uint"
         self.typeCode = "I"
 
 ######################################################################
@@ -89,7 +90,7 @@ class uintTestCase(FortranTestCase):
 class longTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "long"
+        self.typeStr = "long"
         self.typeCode = "l"
 
 ######################################################################
@@ -97,7 +98,7 @@ class longTestCase(FortranTestCase):
 class ulongTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "ulong"
+        self.typeStr = "ulong"
         self.typeCode = "L"
 
 ######################################################################
@@ -105,7 +106,7 @@ class ulongTestCase(FortranTestCase):
 class longLongTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "longLong"
+        self.typeStr = "longLong"
         self.typeCode = "q"
 
 ######################################################################
@@ -113,7 +114,7 @@ class longLongTestCase(FortranTestCase):
 class ulongLongTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "ulongLong"
+        self.typeStr = "ulongLong"
         self.typeCode = "Q"
 
 ######################################################################
@@ -121,7 +122,7 @@ class ulongLongTestCase(FortranTestCase):
 class floatTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "float"
+        self.typeStr = "float"
         self.typeCode = "f"
 
 ######################################################################
@@ -129,27 +130,28 @@ class floatTestCase(FortranTestCase):
 class doubleTestCase(FortranTestCase):
     def __init__(self, methodName="runTest"):
         FortranTestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
 ######################################################################
+
 
 if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(    scharTestCase))
-    suite.addTest(unittest.makeSuite(    ucharTestCase))
-    suite.addTest(unittest.makeSuite(    shortTestCase))
-    suite.addTest(unittest.makeSuite(   ushortTestCase))
-    suite.addTest(unittest.makeSuite(      intTestCase))
-    suite.addTest(unittest.makeSuite(     uintTestCase))
-    suite.addTest(unittest.makeSuite(     longTestCase))
-    suite.addTest(unittest.makeSuite(    ulongTestCase))
-    suite.addTest(unittest.makeSuite( longLongTestCase))
-    suite.addTest(unittest.makeSuite(ulongLongTestCase))
-    suite.addTest(unittest.makeSuite(    floatTestCase))
-    suite.addTest(unittest.makeSuite(   doubleTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    scharTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    ucharTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    shortTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(   ushortTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(      intTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(     uintTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(     longTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    ulongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase( longLongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ulongLongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    floatTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(   doubleTestCase))
 
     # Execute the test suite
     print("Testing 2D Functions of Module Matrix")

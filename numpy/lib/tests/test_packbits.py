@@ -1,7 +1,8 @@
+import pytest
+
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal, assert_raises
-import pytest
-from itertools import chain
+
 
 def test_packbits():
     # Copied from the docstring.
@@ -89,7 +90,6 @@ def test_packbits_large(bitorder):
         b = [np.packbits(arr[:-i], axis=None)[-1] for i in range(1, 16)]
         assert_array_equal(b, [128, 128, 128, 31, 30, 28, 24, 16, 0, 0, 0, 199,
                                198, 196, 192])
-
 
         arr = arr.reshape(36, 25)
         b = np.packbits(arr, axis=0)
@@ -196,7 +196,6 @@ def test_packbits_large(bitorder):
                                [ 74,  90, 131, 170, 192],
                                [ 88,  18, 163, 168, 128]])
 
-
     # result is the same if input is multiplied with a nonzero value
     for dtype in 'bBhHiIlLqQ':
         arr = np.array(a, dtype=dtype)
@@ -237,11 +236,10 @@ def test_pack_unpack_order():
     b_big = np.unpackbits(a, axis=1, bitorder='big')
     assert_array_equal(b, b_big)
     assert_array_equal(a, np.packbits(b_little, axis=1, bitorder='little'))
-    assert_array_equal(b[:,::-1], b_little)
+    assert_array_equal(b[:, ::-1], b_little)
     assert_array_equal(a, np.packbits(b_big, axis=1, bitorder='big'))
     assert_raises(ValueError, np.unpackbits, a, bitorder='r')
     assert_raises(TypeError, np.unpackbits, a, bitorder=10)
-
 
 
 def test_unpackbits_empty():
@@ -282,7 +280,7 @@ def test_unpackbits_large():
     assert_array_equal(np.packbits(np.unpackbits(d, axis=0), axis=0), d)
 
 
-class TestCount():
+class TestCount:
     x = np.array([
         [1, 0, 1, 0, 0, 1, 0],
         [0, 1, 1, 1, 0, 0, 0],
@@ -300,7 +298,7 @@ class TestCount():
     padded2[:7, :7] = x
 
     @pytest.mark.parametrize('bitorder', ('little', 'big'))
-    @pytest.mark.parametrize('count', chain(range(58), range(-1, -57, -1)))
+    @pytest.mark.parametrize('count', [*range(58), *range(-1, -57, -1)])
     def test_roundtrip(self, bitorder, count):
         if count < 0:
             # one extra zero of padding
@@ -324,7 +322,7 @@ class TestCount():
 
     @pytest.mark.parametrize('bitorder', ('little', 'big'))
     # delta==-1 when count<0 because one extra zero of padding
-    @pytest.mark.parametrize('count', chain(range(8), range(-1, -9, -1)))
+    @pytest.mark.parametrize('count', [*range(8), *range(-1, -9, -1)])
     def test_roundtrip_axis(self, bitorder, count):
         if count < 0:
             # one extra zero of padding
@@ -345,9 +343,9 @@ class TestCount():
 
     @pytest.mark.parametrize('kwargs', [
                     {}, {'count': None},
-                    {'bitorder' : 'little'},
+                    {'bitorder': 'little'},
                     {'bitorder': 'little', 'count': None},
-                    {'bitorder' : 'big'},
+                    {'bitorder': 'big'},
                     {'bitorder': 'big', 'count': None},
                     ])
     def test_axis_count(self, kwargs):

@@ -1,4 +1,3 @@
-#!python
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 from numpy cimport npy_intp
 

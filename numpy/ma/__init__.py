@@ -22,8 +22,8 @@ masked arrays:
 
 >>> m = np.ma.masked_array(x, np.isnan(x))
 >>> m
-masked_array(data = [2.0 1.0 3.0 -- 5.0 2.0 3.0 --],
-      mask = [False False False  True False False False  True],
+masked_array(data=[2.0, 1.0, 3.0, --, 5.0, 2.0, 3.0, --],
+             mask=[False, False, False, True, False, False, False, True],
       fill_value=1e+20)
 
 Here, we construct a masked array that suppress all ``NaN`` values.  We
@@ -39,10 +39,8 @@ may now proceed to calculate the mean of the other values:
 .. moduleauthor:: Jarrod Millman
 
 """
-from . import core
+from . import core, extras
 from .core import *
-
-from . import extras
 from .extras import *
 
 __all__ = ['core', 'extras']
@@ -50,5 +48,6 @@ __all__ += core.__all__
 __all__ += extras.__all__
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

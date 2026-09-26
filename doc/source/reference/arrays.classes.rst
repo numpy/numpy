@@ -32,7 +32,7 @@ Note that :func:`asarray` always returns the base-class ndarray. If
 you are confident that your use of the array object can handle any
 subclass of an ndarray, then :func:`asanyarray` can be used to allow
 subclasses to propagate more cleanly through your subroutine. In
-principal a subclass could redefine any aspect of the array and
+principle, a subclass could redefine any aspect of the array and
 therefore, under strict guidelines, :func:`asanyarray` would rarely be
 useful. However, most subclasses of the array object will not
 redefine certain aspects of the array object such as the buffer
@@ -51,8 +51,6 @@ Special attributes and methods
 NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array_ufunc__(ufunc, method, *inputs, **kwargs)
-
-   .. versionadded:: 1.13
 
    Any class, ndarray subclass or not, can define this method or set it to
    None in order to override the behavior of NumPy's ufuncs. This works
@@ -155,8 +153,6 @@ NumPy provides several hooks that classes can customize:
         :ref:`Subclassing ndarray <basics.subclassing>` for details.
 
 .. py:method:: class.__array_function__(func, types, args, kwargs)
-
-   .. versionadded:: 1.16
 
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.
@@ -292,7 +288,7 @@ NumPy provides several hooks that classes can customize:
 
    .. note::
       It is hoped to eventually deprecate this method in favour of
-      func:`__array_ufunc__` for ufuncs (and :func:`__array_function__`
+      :func:`__array_ufunc__` for ufuncs (and :func:`__array_function__`
       for a few other functions like :func:`numpy.squeeze`).
 
 .. py:attribute:: class.__array_priority__
@@ -307,19 +303,31 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array__(dtype=None, copy=None)
 
-   If defined on an object, should return an ``ndarray``.
-   This method is called by array-coercion functions like np.array()
+   If defined on an object, it must return a NumPy ``ndarray``.
+   This method is called by array-coercion functions like ``np.array()``
    if an object implementing this interface is passed to those functions.
-   The third-party implementations of ``__array__`` must take ``dtype`` and
-   ``copy`` keyword arguments, as ignoring them might break third-party code
-   or NumPy itself.
 
-   - ``dtype`` is a data type of the returned array.
-   - ``copy`` is an optional boolean that indicates whether a copy should be
-     returned. For ``True`` a copy should always be made, for ``None`` only
-     if required (e.g. due to passed ``dtype`` value), and for ``False`` a copy
-     should never be made (if a copy is still required, an appropriate exception
-     should be raised).
+   Third-party implementations of ``__array__`` must take ``dtype`` and
+   ``copy`` arguments.
+
+   .. deprecated:: NumPy 2.0
+      Not implementing ``copy`` and ``dtype`` is deprecated as of NumPy 2.
+      When adding them, you must ensure correct behavior for ``copy``.
+
+   - ``dtype`` is the requested data type of the returned array and is passed
+     by NumPy positionally (only if requested by the user).
+     It is acceptable to ignore the ``dtype`` because NumPy will check the
+     result and cast to ``dtype`` if necessary.  If it is more efficient to
+     coerce the data to the requested dtype without relying on NumPy,
+     you should handle it in your library.
+   - ``copy`` is a boolean passed by keyword.  If ``copy=True`` you *must*
+     return a copy. Returning a view into existing data will lead to incorrect
+     user code.
+     If ``copy=False`` the user requested that a copy is never made and you *must*
+     raise an error unless no copy is made and the returned array is a view into
+     existing data.  It is valid to always raise an error for ``copy=False``.
+     The default ``copy=None`` (not passed) allows for the result to either be a
+     view or a copy.  However, a view return should be preferred when possible.
 
    Please refer to :ref:`Interoperability with NumPy <basics.interoperability>`
    for the protocol hierarchy, of which ``__array__`` is the oldest and least
@@ -329,6 +337,66 @@ NumPy provides several hooks that classes can customize:
              method is used as the output object of an :ref:`ufunc
              <ufuncs-output-type>`, results will *not* be written to the object
              returned by :func:`__array__`. This practice will return ``TypeError``.
+
+   **Example**
+
+   Use ``__array__`` to create a diagonal array of fixed size and value:
+
+   >>> import numpy as np
+   >>> class DiagonalArray:
+   ...     def __init__(self, N, value):
+   ...         self._N = N
+   ...         self._i = value
+   ...     def __repr__(self):
+   ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
+   ...     def __array__(self, dtype=None, copy=None):
+   ...         if copy is False:
+   ...             raise ValueError(
+   ...                 "`copy=False` isn't supported. A copy is always created."
+   ...             )
+   ...         return self._i * np.eye(self._N, dtype=dtype)
+
+   Our custom array can be instantiated like:
+
+   >>> arr = DiagonalArray(5, 1)
+   >>> arr
+   DiagonalArray(N=5, value=1)
+
+   We can convert to a numpy array using :func:`numpy.array` or
+   :func:`numpy.asarray`, which will call its ``__array__`` method to obtain a
+   standard ``numpy.ndarray``.
+
+   >>> np.asarray(arr)
+   array([[1., 0., 0., 0., 0.],
+          [0., 1., 0., 0., 0.],
+          [0., 0., 1., 0., 0.],
+          [0., 0., 0., 1., 0.],
+          [0., 0., 0., 0., 1.]])
+
+   Using ``dtype`` should return an appropriate ndarray or raise an error:
+
+   >>> np.asarray(arr, dtype=np.float32)
+   array([[1., 0., 0., 0., 0.],
+          [0., 1., 0., 0., 0.],
+          [0., 0., 1., 0., 0.],
+          [0., 0., 0., 1., 0.],
+          [0., 0., 0., 0., 1.]], dtype=float32)
+
+   If we operate on ``arr`` with a numpy function, numpy will again use the
+   ``__array__`` interface to convert it to an array and then apply the function
+   in the usual way.
+
+   >>> np.multiply(arr, 2)
+   array([[2., 0., 0., 0., 0.],
+          [0., 2., 0., 0., 0.],
+          [0., 0., 2., 0., 0.],
+          [0., 0., 0., 2., 0.],
+          [0., 0., 0., 0., 2.]])
+
+   Notice that the return type is a standard ``numpy.ndarray``.
+
+   >>> type(np.multiply(arr, 2))
+   <class 'numpy.ndarray'>
 
 .. _matrix-objects:
 
@@ -409,24 +477,33 @@ alias for "matrix "in NumPy.
 
 Example 1: Matrix creation from a string
 
->>> a = np.asmatrix('1 2 3; 4 5 3')
->>> print((a*a.T).I)
+.. try_examples::
+
+  >>> import numpy as np
+  >>> a = np.asmatrix('1 2 3; 4 5 3')
+  >>> print((a*a.T).I)
     [[ 0.29239766 -0.13450292]
-     [-0.13450292  0.08187135]]
+    [-0.13450292  0.08187135]]
 
 
-Example 2: Matrix creation from nested sequence
+Example 2: Matrix creation from a nested sequence
 
->>> np.asmatrix([[1,5,10],[1.0,3,4j]])
-matrix([[  1.+0.j,   5.+0.j,  10.+0.j],
-        [  1.+0.j,   3.+0.j,   0.+4.j]])
+.. try_examples::
+
+  >>> import numpy as np
+  >>> np.asmatrix([[1,5,10],[1.0,3,4j]])
+  matrix([[  1.+0.j,   5.+0.j,  10.+0.j],
+          [  1.+0.j,   3.+0.j,   0.+4.j]])
 
 Example 3: Matrix creation from an array
 
->>> np.asmatrix(np.random.rand(3,3)).T
-matrix([[4.17022005e-01, 3.02332573e-01, 1.86260211e-01],
-        [7.20324493e-01, 1.46755891e-01, 3.45560727e-01],
-        [1.14374817e-04, 9.23385948e-02, 3.96767474e-01]])
+.. try_examples::
+
+  >>> import numpy as np
+  >>> np.asmatrix(np.random.rand(3,3)).T
+  matrix([[4.17022005e-01, 3.02332573e-01, 1.86260211e-01],
+          [7.20324493e-01, 1.46755891e-01, 3.45560727e-01],
+          [1.14374817e-04, 9.23385948e-02, 3.96767474e-01]])
 
 
 Memory-mapped file arrays
@@ -458,16 +535,22 @@ array actually get written to disk.
 
 Example:
 
->>> a = np.memmap('newfile.dat', dtype=float, mode='w+', shape=1000)
->>> a[10] = 10.0
->>> a[30] = 30.0
->>> del a
->>> b = np.fromfile('newfile.dat', dtype=float)
->>> print(b[10], b[30])
-10.0 30.0
->>> a = np.memmap('newfile.dat', dtype=float)
->>> print(a[10], a[30])
-10.0 30.0
+.. try_examples::
+
+  >>> import numpy as np
+
+  >>> a = np.memmap('newfile.dat', dtype=np.float64, mode='w+', shape=1000)
+  >>> a[10] = 10.0
+  >>> a[30] = 30.0
+  >>> del a
+
+  >>> b = np.fromfile('newfile.dat', dtype=np.float64)
+  >>> print(b[10], b[30])
+  10.0 30.0
+
+  >>> a = np.memmap('newfile.dat', dtype=np.float64)
+  >>> print(a[10], a[30])
+  10.0 30.0
 
 
 Character arrays (:mod:`numpy.char`)
@@ -484,6 +567,10 @@ Character arrays (:mod:`numpy.char`)
    1.4, if one needs arrays of strings, it is recommended to use arrays of
    `dtype` `object_`, `bytes_` or `str_`, and use the free functions
    in the `numpy.char` module for fast vectorized string operations.
+
+.. deprecated:: 2.5
+   ``numpy.char.chararray`` is deprecated. Use an ``ndarray`` with a string or
+   bytes dtype instead.
 
 These are enhanced arrays of either :class:`str_` type or
 :class:`bytes_` type.  These arrays inherit from the
@@ -558,7 +645,7 @@ encouraged to use the ndarray class directly if you can.
 .. autosummary::
    :toctree: generated/
 
-   numpy.lib.user_array.container
+   lib.user_array.container
 
 .. index::
    single: user_array
@@ -602,15 +689,18 @@ This default iterator selects a sub-array of dimension :math:`N-1`
 from the array. This can be a useful construct for defining recursive
 algorithms. To loop over the entire array requires :math:`N` for-loops.
 
->>> a = np.arange(24).reshape(3,2,4)+10
->>> for val in a:
-...     print('item:', val)
-item: [[10 11 12 13]
- [14 15 16 17]]
-item: [[18 19 20 21]
- [22 23 24 25]]
-item: [[26 27 28 29]
- [30 31 32 33]]
+.. try_examples::
+
+  >>> import numpy as np
+  >>> a = np.arange(24).reshape(3,2,4) + 10
+  >>> for val in a:
+  ...     print('item:', val)
+  item: [[10 11 12 13]
+  [14 15 16 17]]
+  item: [[18 19 20 21]
+  [22 23 24 25]]
+  item: [[26 27 28 29]
+  [30 31 32 33]]
 
 
 Flat iteration
@@ -625,13 +715,16 @@ As mentioned previously, the flat attribute of ndarray objects returns
 an iterator that will cycle over the entire array in C-style
 contiguous order.
 
->>> for i, val in enumerate(a.flat):
-...     if i%5 == 0: print(i, val)
-0 10
-5 15
-10 20
-15 25
-20 30
+.. try_examples::
+
+  >>> import numpy as np
+  >>> for i, val in enumerate(a.flat):
+  ...     if i%5 == 0: print(i, val)
+  0 10
+  5 15
+  10 20
+  15 25
+  20 30
 
 Here, I've used the built-in enumerate iterator to return the iterator
 index as well as the value.
@@ -648,12 +741,16 @@ N-dimensional enumeration
 Sometimes it may be useful to get the N-dimensional index while
 iterating. The ndenumerate iterator can achieve this.
 
->>> for i, val in np.ndenumerate(a):
-...     if sum(i)%5 == 0: print(i, val)
-(0, 0, 0) 10
-(1, 1, 3) 25
-(2, 0, 3) 29
-(2, 1, 2) 32
+.. try_examples::
+
+  >>> import numpy as np
+  >>> for i, val in np.ndenumerate(a):
+  ...     if sum(i)%5 == 0:
+              print(i, val)
+  (0, 0, 0) 10
+  (1, 1, 3) 25
+  (2, 0, 3) 29
+  (2, 1, 2) 32
 
 
 Iterator for broadcasting
@@ -670,9 +767,12 @@ objects as inputs and returns an iterator that returns tuples
 providing each of the input sequence elements in the broadcasted
 result.
 
->>> for val in np.broadcast([[1, 0], [2, 3]], [0, 1]):
-...     print(val)
-(np.int64(1), np.int64(0))
-(np.int64(0), np.int64(1))
-(np.int64(2), np.int64(0))
-(np.int64(3), np.int64(1))
+.. try_examples::
+
+  >>> import numpy as np
+  >>> for val in np.broadcast([[1, 0], [2, 3]], [0, 1]):
+  ...     print(val)
+  (np.int64(1), np.int64(0))
+  (np.int64(0), np.int64(1))
+  (np.int64(2), np.int64(0))
+  (np.int64(3), np.int64(1))

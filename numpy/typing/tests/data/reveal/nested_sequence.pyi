@@ -1,13 +1,7 @@
-import sys
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, assert_type
 
 from numpy._typing import _NestedSequence
-
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
 
 a: Sequence[int]
 b: Sequence[Sequence[int]]
@@ -18,8 +12,7 @@ f: tuple[int, ...]
 g: list[int]
 h: Sequence[Any]
 
-def func(a: _NestedSequence[int]) -> None:
-    ...
+def func(a: _NestedSequence[int]) -> None: ...
 
 assert_type(func(a), None)
 assert_type(func(b), None)

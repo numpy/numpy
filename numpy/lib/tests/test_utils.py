@@ -1,10 +1,10 @@
+from io import StringIO
+
 import pytest
 
 import numpy as np
-from numpy.testing import assert_raises_regex
 import numpy.lib._utils_impl as _utils_impl
-
-from io import StringIO
+from numpy.testing import assert_raises_regex
 
 
 def test_assert_raises_regex_context_manager():
@@ -43,7 +43,7 @@ def test_drop_metadata():
     assert dt_m.metadata is None
     assert dt_m['l1'].metadata is None
     assert dt_m['l1']['l2'].metadata is None
-    
+
     # alignment
     dt = np.dtype([('x', '<f8'), ('y', '<i4')],
                   align=True,

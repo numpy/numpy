@@ -9,28 +9,19 @@ extern "C" {
 
 extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 
-#define NPY_USE_LEGACY_PROMOTION 0
-#define NPY_USE_WEAK_PROMOTION 1
-#define NPY_USE_WEAK_PROMOTION_AND_WARN 2
-extern NPY_NO_EXPORT int npy_promotion_state;
-extern NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX;
-extern NPY_NO_EXPORT PyObject *npy_DTypePromotionError;
-extern NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError;
-
-NPY_NO_EXPORT int
-npy_give_promotion_warnings(void);
-
-NPY_NO_EXPORT PyObject *
-npy__get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg));
-
-NPY_NO_EXPORT PyObject *
-npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg);
-
 NPY_NO_EXPORT PyObject *
 PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to);
 
 NPY_NO_EXPORT PyObject *
 _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args);
+
+NPY_NO_EXPORT PyObject *
+_get_all_cast_information(PyObject *NPY_UNUSED(module),
+                          PyObject *NPY_UNUSED(args));
+
+NPY_NO_EXPORT PyObject *
+_is_view_safe_cast(PyObject *NPY_UNUSED(module), PyObject *const *args,
+                   Py_ssize_t len_args);
 
 NPY_NO_EXPORT PyArray_VectorUnaryFunc *
 PyArray_GetCastFunc(PyArray_Descr *descr, int type_num);
@@ -56,11 +47,6 @@ PyArray_ValidType(int type);
 
 NPY_NO_EXPORT int
 dtype_kind_to_ordering(char kind);
-
-/* Used by PyArray_CanCastArrayTo and in the legacy ufunc type resolution */
-NPY_NO_EXPORT npy_bool
-can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
-                   PyArray_Descr *to, NPY_CASTING casting);
 
 NPY_NO_EXPORT npy_bool
 can_cast_pyscalar_scalar_to(

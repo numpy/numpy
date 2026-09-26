@@ -1,15 +1,9 @@
-import sys
-import fractions
 import decimal
-from typing import Any
+import fractions
+from typing import assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
 
 c16 = np.complex128()
 f8 = np.float64()
@@ -26,37 +20,39 @@ td = np.timedelta64(0, "D")
 
 b_ = np.bool()
 
-b = bool()
-c = complex()
-f = float()
-i = int()
+b = False
+c = 0j
+f = 0.0
+i = 0
 
 AR = np.array([0], dtype=np.int64)
 AR.setflags(write=False)
+
+AR_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
 
 SEQ = (0, 1, 2, 3, 4)
 
 # object-like comparisons
 
-assert_type(i8 > fractions.Fraction(1, 5), Any)
-assert_type(i8 > [fractions.Fraction(1, 5)], Any)
-assert_type(i8 > decimal.Decimal("1.5"), Any)
-assert_type(i8 > [decimal.Decimal("1.5")], Any)
+assert_type(i8 > fractions.Fraction(1, 5), np.bool)
+assert_type(i8 > [fractions.Fraction(1, 5)], npt.NDArray[np.bool])
+assert_type(i8 > decimal.Decimal("1.5"), np.bool)
+assert_type(i8 > [decimal.Decimal("1.5")], npt.NDArray[np.bool])
 
 # Time structures
 
 assert_type(dt > dt, np.bool)
 
 assert_type(td > td, np.bool)
-assert_type(td > i, np.bool)
-assert_type(td > i4, np.bool)
-assert_type(td > i8, np.bool)
+assert_type(td > i, np.bool)  # type: ignore[deprecated]
+assert_type(td > i4, np.bool)  # type: ignore[deprecated]
+assert_type(td > i8, np.bool)  # type: ignore[deprecated]
 
-assert_type(td > AR, npt.NDArray[np.bool])
-assert_type(td > SEQ, npt.NDArray[np.bool])
+assert_type(td > AR, npt.NDArray[np.bool])  # type: ignore[deprecated]
+assert_type(td > SEQ, npt.NDArray[np.bool])  # type: ignore[deprecated]
 assert_type(AR > SEQ, npt.NDArray[np.bool])
-assert_type(AR > td, npt.NDArray[np.bool])
-assert_type(SEQ > td, npt.NDArray[np.bool])
+assert_type(AR > td, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(SEQ > td, npt.NDArray[np.bool])  # type: ignore[deprecated]
 assert_type(SEQ > AR, npt.NDArray[np.bool])
 
 # boolean
@@ -104,7 +100,7 @@ assert_type(b > c16, np.bool)
 assert_type(c > c16, np.bool)
 assert_type(f > c16, np.bool)
 assert_type(i > c16, np.bool)
-assert_type(AR > c16, npt.NDArray[np.bool])
+assert_type(AR > c16, np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(SEQ > c16, npt.NDArray[np.bool])
 
 assert_type(c8 > c16, np.bool)
@@ -132,7 +128,7 @@ assert_type(b > c8, np.bool)
 assert_type(c > c8, np.bool)
 assert_type(f > c8, np.bool)
 assert_type(i > c8, np.bool)
-assert_type(AR > c8, npt.NDArray[np.bool])
+assert_type(AR > c8, np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(SEQ > c8, npt.NDArray[np.bool])
 
 # Float
@@ -158,7 +154,7 @@ assert_type(b > f8, np.bool)
 assert_type(c > f8, np.bool)
 assert_type(f > f8, np.bool)
 assert_type(i > f8, np.bool)
-assert_type(AR > f8, npt.NDArray[np.bool])
+assert_type(AR > f8, np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(SEQ > f8, npt.NDArray[np.bool])
 
 assert_type(f4 > f8, np.bool)
@@ -182,7 +178,7 @@ assert_type(b > f4, np.bool)
 assert_type(c > f4, np.bool)
 assert_type(f > f4, np.bool)
 assert_type(i > f4, np.bool)
-assert_type(AR > f4, npt.NDArray[np.bool])
+assert_type(AR > f4, np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(SEQ > f4, npt.NDArray[np.bool])
 
 # Int
@@ -219,7 +215,7 @@ assert_type(b > i8, np.bool)
 assert_type(c > i8, np.bool)
 assert_type(f > i8, np.bool)
 assert_type(i > i8, np.bool)
-assert_type(AR > i8, npt.NDArray[np.bool])
+assert_type(AR > i8, np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(SEQ > i8, npt.NDArray[np.bool])
 
 assert_type(u8 > u8, np.bool)
@@ -230,7 +226,7 @@ assert_type(b > u8, np.bool)
 assert_type(c > u8, np.bool)
 assert_type(f > u8, np.bool)
 assert_type(i > u8, np.bool)
-assert_type(AR > u8, npt.NDArray[np.bool])
+assert_type(AR > u8, np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(SEQ > u8, npt.NDArray[np.bool])
 
 assert_type(i4 > i8, np.bool)
@@ -256,7 +252,7 @@ assert_type(i4 > i4, np.bool)
 assert_type(i > i4, np.bool)
 assert_type(b_ > i4, np.bool)
 assert_type(b > i4, np.bool)
-assert_type(AR > i4, npt.NDArray[np.bool])
+assert_type(AR > i4, np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(SEQ > i4, npt.NDArray[np.bool])
 
 assert_type(i8 > u4, np.bool)
@@ -266,5 +262,23 @@ assert_type(u4 > u4, np.bool)
 assert_type(b_ > u4, np.bool)
 assert_type(b > u4, np.bool)
 assert_type(i > u4, np.bool)
-assert_type(AR > u4, npt.NDArray[np.bool])
+assert_type(AR > u4, np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(SEQ > u4, npt.NDArray[np.bool])
+
+#
+
+assert_type(AR == i, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR == f8, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR == b_, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR == "x", np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR == AR, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR == AR_2d, npt.NDArray[np.bool])
+assert_type(AR == SEQ, npt.NDArray[np.bool])
+
+assert_type(AR != i, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR != f8, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR != b_, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR != "x", np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR != AR, np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(AR != AR_2d, npt.NDArray[np.bool])
+assert_type(AR != SEQ, npt.NDArray[np.bool])

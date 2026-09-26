@@ -8,12 +8,9 @@ import pickle
 import warnings
 from contextlib import nullcontext
 
-from numpy._core import multiarray as mu
-from numpy._core import umath as um
+import numpy as np
+from numpy._core import multiarray as mu, numerictypes as nt, umath as um
 from numpy._core.multiarray import asanyarray
-from numpy._core import numerictypes as nt
-from numpy._core import _exceptions
-from numpy._core._ufunc_config import _no_nep50_warning
 from numpy._globals import _NoValue
 
 # save those O(100) nanoseconds!
@@ -28,13 +25,13 @@ umr_all = um.logical_and.reduce
 
 # Complex types to -> (2,)float view for fast-path computation in _var()
 _complex_to_float = {
-    nt.dtype(nt.csingle) : nt.dtype(nt.single),
-    nt.dtype(nt.cdouble) : nt.dtype(nt.double),
+    nt.dtype(nt.csingle): nt.dtype(nt.single),
+    nt.dtype(nt.cdouble): nt.dtype(nt.double),
 }
 # Special case for windows: ensure double takes precedence
 if nt.dtype(nt.longdouble) != nt.dtype(nt.double):
     _complex_to_float.update({
-        nt.dtype(nt.clongdouble) : nt.dtype(nt.longdouble),
+        nt.dtype(nt.clongdouble): nt.dtype(nt.longdouble),
     })
 
 # avoid keyword arguments to speed up parsing, saves about 15%-20% for very
@@ -97,10 +94,18 @@ def _count_reduce_items(arr, axis, keepdims=False, where=True):
     return items
 
 def _clip(a, min=None, max=None, out=None, **kwargs):
-    if min is None and max is None:
-        raise ValueError("One of max or min must be given")
+    if a.dtype.kind in "iu":
+        # If min/max is a Python integer, deal with out-of-bound values here.
+        # (This enforces NEP 50 rules as no value based promotion is done.)
+        if type(min) is int and min <= np.iinfo(a.dtype).min:
+            min = None
+        if type(max) is int and max >= np.iinfo(a.dtype).max:
+            max = None
 
-    if min is None:
+    if min is None and max is None:
+        # return identity
+        return um.positive(a, out=out, **kwargs)
+    elif min is None:
         return um.minimum(a, max, out=out, **kwargs)
     elif max is None:
         return um.maximum(a, min, out=out, **kwargs)
@@ -114,7 +119,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
 
     rcount = _count_reduce_items(arr, axis, keepdims=keepdims, where=where)
     if rcount == 0 if where is True else umr_any(rcount == 0, axis=None):
-        warnings.warn("Mean of empty slice.", RuntimeWarning, stacklevel=2)
+        warnings.warn("Mean of empty slice", RuntimeWarning, stacklevel=2)
 
     # Cast bool, unsigned int, and int to float64 by default
     if dtype is None:
@@ -126,9 +131,8 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
 
     ret = umr_sum(arr, axis, dtype, out, keepdims, where=where)
     if isinstance(ret, mu.ndarray):
-        with _no_nep50_warning():
-            ret = um.true_divide(
-                    ret, rcount, out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
         if is_float16_result and out is None:
             ret = arr.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
@@ -171,9 +175,8 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
             # matching rcount to arrmean when where is specified as array
             div = rcount.reshape(arrmean.shape)
         if isinstance(arrmean, mu.ndarray):
-            with _no_nep50_warning():
-                arrmean = um.true_divide(arrmean, div, out=arrmean,
-                                         casting='unsafe', subok=False)
+            arrmean = um.true_divide(arrmean, div, out=arrmean,
+                                     casting='unsafe', subok=False)
         elif hasattr(arrmean, "dtype"):
             arrmean = arrmean.dtype.type(arrmean / rcount)
         else:
@@ -182,15 +185,14 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     # Compute sum of squared deviations from mean
     # Note that x may not be inexact and that we need it to be an array,
     # not a scalar.
-    x = asanyarray(arr - arrmean)
-
+    x = um.subtract(arr, arrmean, out=...)
     if issubclass(arr.dtype.type, (nt.floating, nt.integer)):
-        x = um.multiply(x, x, out=x)
+        x = um.square(x, out=x)
     # Fast-paths for built-in complex types
-    elif x.dtype in _complex_to_float:
-        xv = x.view(dtype=(_complex_to_float[x.dtype], (2,)))
-        um.multiply(xv, xv, out=xv)
-        x = um.add(xv[..., 0], xv[..., 1], out=x.real).real
+    elif (_float_dtype := _complex_to_float.get(x.dtype)) is not None:
+        xv = x.view(dtype=(_float_dtype, (2,)))
+        um.square(xv, out=xv)
+        x = um.add(xv[..., 0], xv[..., 1], out=x.real)
     # Most general case; includes handling object arrays containing imaginary
     # numbers and complex types with non-native byteorder
     else:
@@ -203,9 +205,8 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
 
     # divide by degrees of freedom
     if isinstance(ret, mu.ndarray):
-        with _no_nep50_warning():
-            ret = um.true_divide(
-                    ret, rcount, out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
     elif hasattr(ret, 'dtype'):
         ret = ret.dtype.type(ret / rcount)
     else:

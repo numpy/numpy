@@ -163,28 +163,7 @@ typedef struct {
     char repr[16384];
 } Dragon4_Scratch;
 
-static int _bigint_static_in_use = 0;
-static Dragon4_Scratch _bigint_static;
-
-static Dragon4_Scratch*
-get_dragon4_bigint_scratch(void) {
-    /* this test+set is not threadsafe, but no matter because we have GIL */
-    if (_bigint_static_in_use) {
-        PyErr_SetString(PyExc_RuntimeError,
-            "numpy float printing code is not re-entrant. "
-            "Ping the devs to fix it.");
-        return NULL;
-    }
-    _bigint_static_in_use = 1;
-
-    /* in this dummy implementation we only return the static allocation */
-    return &_bigint_static;
-}
-
-static void
-free_dragon4_bigint_scratch(Dragon4_Scratch *mem){
-    _bigint_static_in_use = 0;
-}
+static NPY_TLS Dragon4_Scratch _bigint_static;
 
 /* Copy integer */
 static void
@@ -1636,7 +1615,8 @@ typedef struct Dragon4_Options {
  *
  * See Dragon4_Options for description of remaining arguments.
  */
-static npy_uint32
+
+static npy_int32
 FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                  npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
                  npy_bool hasUnequalMargins, DigitMode digit_mode,
@@ -1667,7 +1647,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         buffer[pos++] = '-';
         has_sign = 1;
     }
-
+        
     numDigits = Dragon4(mantissa, exponent, mantissaBit, hasUnequalMargins,
                         digit_mode, cutoff_mode, precision, min_digits,
                         buffer + has_sign, maxPrintLen - has_sign,
@@ -1679,14 +1659,14 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
     /* if output has a whole number */
     if (printExponent >= 0) {
         /* leave the whole number at the start of the buffer */
-        numWholeDigits = printExponent+1;
+        numWholeDigits = printExponent+1;        
         if (numDigits <= numWholeDigits) {
             npy_int32 count = numWholeDigits - numDigits;
             pos += numDigits;
 
-            /* don't overflow the buffer */
-            if (pos + count > maxPrintLen) {
-                count = maxPrintLen - pos;
+            if (count > maxPrintLen - pos) {
+                PyErr_SetString(PyExc_RuntimeError, "Float formatting result too large");
+                return -1;
             }
 
             /* add trailing zeros up to the decimal point */
@@ -1788,9 +1768,12 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
              pos < maxPrintLen) {
         /* add trailing zeros up to add_digits length */
         /* compute the number of trailing zeros needed */
+        
         npy_int32 count = desiredFractionalDigits - numFractionDigits;
-        if (pos + count > maxPrintLen) {
-            count = maxPrintLen - pos;
+        
+        if (count > maxPrintLen - pos) {
+            PyErr_SetString(PyExc_RuntimeError, "Float formatting result too large");
+            return -1;
         }
         numFractionDigits += count;
 
@@ -1823,7 +1806,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
     }
 
     /* add any whitespace padding to right side */
-    if (digits_right >= numFractionDigits) {
+    if (digits_right >= numFractionDigits) {        
         npy_int32 count = digits_right - numFractionDigits;
 
         /* in trim_mode DptZeros, if right padding, add a space for the . */
@@ -1832,8 +1815,9 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
             buffer[pos++] = ' ';
         }
 
-        if (pos + count > maxPrintLen) {
-            count = maxPrintLen - pos;
+        if (count > maxPrintLen - pos) {
+            PyErr_SetString(PyExc_RuntimeError, "Float formatting result too large");
+            return -1;
         }
 
         for ( ; count > 0; count--) {
@@ -1844,14 +1828,16 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
     if (digits_left > numWholeDigits + has_sign) {
         npy_int32 shift = digits_left - (numWholeDigits + has_sign);
         npy_int32 count = pos;
-
-        if (count + shift > maxPrintLen) {
-            count = maxPrintLen - shift;
+                
+        if (count > maxPrintLen - shift) {
+            PyErr_SetString(PyExc_RuntimeError, "Float formatting result too large");
+            return -1;
         }
 
         if (count > 0) {
             memmove(buffer + shift, buffer, count);
         }
+
         pos = shift + count;
         for ( ; shift > 0; shift--) {
             buffer[shift - 1] = ' ';
@@ -1881,7 +1867,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
  *
  * See Dragon4_Options for description of remaining arguments.
  */
-static npy_uint32
+static npy_int32
 FormatScientific (char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                   npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
                   npy_bool hasUnequalMargins, DigitMode digit_mode,
@@ -2179,7 +2165,7 @@ PrintInfNan(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
  * Helper function that takes Dragon4 parameters and options and
  * calls Dragon4.
  */
-static npy_uint32
+static npy_int32
 Format_floatbits(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                  npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
                  npy_bool hasUnequalMargins, Dragon4_Options *opt)
@@ -2208,13 +2194,13 @@ Format_floatbits(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
  * exponent:  5 bits
  * mantissa: 10 bits
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary16(
-        Dragon4_Scratch *scratch, npy_half *value, Dragon4_Options *opt)
+        npy_half *value, Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     npy_uint16 val = *value;
     npy_uint32 floatExponent, floatMantissa, floatSign;
@@ -2295,14 +2281,14 @@ Dragon4_PrintFloat_IEEE_binary16(
  * exponent:  8 bits
  * mantissa: 23 bits
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary32(
-        Dragon4_Scratch *scratch, npy_float32 *value,
+        npy_float32 *value,
         Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     union
     {
@@ -2388,13 +2374,13 @@ Dragon4_PrintFloat_IEEE_binary32(
  * exponent: 11 bits
  * mantissa: 52 bits
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary64(
-        Dragon4_Scratch *scratch, npy_float64 *value, Dragon4_Options *opt)
+        npy_float64 *value, Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     union
     {
@@ -2503,13 +2489,13 @@ typedef struct FloatVal128 {
  * intbit     1 bit,  first u64
  * mantissa: 63 bits, first u64
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_Intel_extended(
-    Dragon4_Scratch *scratch, FloatVal128 value, Dragon4_Options *opt)
+    FloatVal128 value, Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     npy_uint32 floatExponent, floatSign;
     npy_uint64 floatMantissa;
@@ -2601,9 +2587,9 @@ Dragon4_PrintFloat_Intel_extended(
  * system. But numpy defines NPY_FLOAT80, so if we come across it, assume it is
  * an Intel extended format.
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_Intel_extended80(
-    Dragon4_Scratch *scratch, npy_float80 *value, Dragon4_Options *opt)
+    npy_float80 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     union {
@@ -2619,15 +2605,15 @@ Dragon4_PrintFloat_Intel_extended80(
     val128.lo = buf80.integer.a;
     val128.hi = buf80.integer.b;
 
-    return Dragon4_PrintFloat_Intel_extended(scratch, val128, opt);
+    return Dragon4_PrintFloat_Intel_extended(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_INTEL_EXTENDED_10_BYTES_LE */
 
 #ifdef HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE
 /* Intel's 80-bit IEEE extended precision format, 96-bit storage */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_Intel_extended96(
-    Dragon4_Scratch *scratch, npy_float96 *value, Dragon4_Options *opt)
+    npy_float96 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     union {
@@ -2643,15 +2629,15 @@ Dragon4_PrintFloat_Intel_extended96(
     val128.lo = buf96.integer.a;
     val128.hi = buf96.integer.b;
 
-    return Dragon4_PrintFloat_Intel_extended(scratch, val128, opt);
+    return Dragon4_PrintFloat_Intel_extended(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE */
 
 #ifdef HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE
 /* Motorola Big-endian equivalent of the Intel-extended 96 fp format */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_Motorola_extended96(
-    Dragon4_Scratch *scratch, npy_float96 *value, Dragon4_Options *opt)
+    npy_float96 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     union {
@@ -2668,7 +2654,7 @@ Dragon4_PrintFloat_Motorola_extended96(
     val128.hi = buf96.integer.a >> 16;
     /* once again we assume the int has same endianness as the float */
 
-    return Dragon4_PrintFloat_Intel_extended(scratch, val128, opt);
+    return Dragon4_PrintFloat_Intel_extended(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE */
 
@@ -2686,9 +2672,9 @@ typedef union FloatUnion128
 
 #ifdef HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
 /* Intel's 80-bit IEEE extended precision format, 128-bit storage */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_Intel_extended128(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+    npy_float128 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     FloatUnion128 buf128;
@@ -2698,7 +2684,7 @@ Dragon4_PrintFloat_Intel_extended128(
     val128.lo = buf128.integer.a;
     val128.hi = buf128.integer.b;
 
-    return Dragon4_PrintFloat_Intel_extended(scratch, val128, opt);
+    return Dragon4_PrintFloat_Intel_extended(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE */
 
@@ -2715,13 +2701,13 @@ Dragon4_PrintFloat_Intel_extended128(
  * I am not sure if the arch also supports uint128, and C does not seem to
  * support int128 literals. So we use uint64 to do manipulation.
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary128(
-    Dragon4_Scratch *scratch, FloatVal128 val128, Dragon4_Options *opt)
+    FloatVal128 val128, Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     npy_uint32 floatExponent, floatSign;
 
@@ -2800,9 +2786,9 @@ Dragon4_PrintFloat_IEEE_binary128(
 }
 
 #if defined(HAVE_LDOUBLE_IEEE_QUAD_LE)
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary128_le(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+    npy_float128 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     FloatUnion128 buf128;
@@ -2811,7 +2797,7 @@ Dragon4_PrintFloat_IEEE_binary128_le(
     val128.lo = buf128.integer.a;
     val128.hi = buf128.integer.b;
 
-    return Dragon4_PrintFloat_IEEE_binary128(scratch, val128, opt);
+    return Dragon4_PrintFloat_IEEE_binary128(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_IEEE_QUAD_LE */
 
@@ -2820,9 +2806,9 @@ Dragon4_PrintFloat_IEEE_binary128_le(
  * This function is untested, very few, if any, architectures implement
  * big endian IEEE binary128 floating point.
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary128_be(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+    npy_float128 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     FloatUnion128 buf128;
@@ -2831,7 +2817,7 @@ Dragon4_PrintFloat_IEEE_binary128_be(
     val128.lo = buf128.integer.b;
     val128.hi = buf128.integer.a;
 
-    return Dragon4_PrintFloat_IEEE_binary128(scratch, val128, opt);
+    return Dragon4_PrintFloat_IEEE_binary128(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_IEEE_QUAD_BE */
 
@@ -2875,13 +2861,13 @@ Dragon4_PrintFloat_IEEE_binary128_be(
  * https://gcc.gnu.org/wiki/Ieee128PowerPCA
  * https://www.ibm.com/support/knowledgecenter/en/ssw_aix_71/com.ibm.aix.genprogc/128bit_long_double_floating-point_datatype.htm
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IBM_double_double(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+    npy_float128 *value, Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     FloatVal128 val128;
     FloatUnion128 buf128;
@@ -3062,22 +3048,17 @@ Dragon4_PrintFloat_IBM_double_double(
  * which goes up to about 10^4932. The Dragon4_scratch struct provides a string
  * buffer of this size.
  */
+
 #define make_dragon4_typefuncs_inner(Type, npy_type, format) \
 \
 PyObject *\
 Dragon4_Positional_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
 {\
     PyObject *ret;\
-    Dragon4_Scratch *scratch = get_dragon4_bigint_scratch();\
-    if (scratch == NULL) {\
+    if (Dragon4_PrintFloat_##format(val, opt) < 0) {\
         return NULL;\
     }\
-    if (Dragon4_PrintFloat_##format(scratch, val, opt) < 0) {\
-        free_dragon4_bigint_scratch(scratch);\
-        return NULL;\
-    }\
-    ret = PyUnicode_FromString(scratch->repr);\
-    free_dragon4_bigint_scratch(scratch);\
+    ret = PyUnicode_FromString(_bigint_static.repr);\
     return ret;\
 }\
 \
@@ -3106,16 +3087,10 @@ PyObject *\
 Dragon4_Scientific_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
 {\
     PyObject *ret;\
-    Dragon4_Scratch *scratch = get_dragon4_bigint_scratch();\
-    if (scratch == NULL) {\
+    if (Dragon4_PrintFloat_##format(val, opt) < 0) {    \
         return NULL;\
     }\
-    if (Dragon4_PrintFloat_##format(scratch, val, opt) < 0) {\
-        free_dragon4_bigint_scratch(scratch);\
-        return NULL;\
-    }\
-    ret = PyUnicode_FromString(scratch->repr);\
-    free_dragon4_bigint_scratch(scratch);\
+    ret = PyUnicode_FromString(_bigint_static.repr);\
     return ret;\
 }\
 PyObject *\

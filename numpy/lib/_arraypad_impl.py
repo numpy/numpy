@@ -3,10 +3,11 @@ The arraypad module contains a group of functions to pad values onto the edges
 of an n-dimensional array.
 
 """
+import typing
+
 import numpy as np
 from numpy._core.overrides import array_function_dispatch
 from numpy.lib._index_tricks_impl import ndindex
-
 
 __all__ = ['pad']
 
@@ -49,7 +50,7 @@ def _slice_at_axis(sl, axis):
 
     Examples
     --------
-    >>> _slice_at_axis(slice(None, 3, -1), 1)
+    >>> np._slice_at_axis(slice(None, 3, -1), 1)
     (slice(None, None, None), slice(None, 3, -1), (...,))
     """
     return (slice(None),) * axis + (sl,) + (...,)
@@ -210,7 +211,7 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     left_ramp, right_ramp = (
         np.linspace(
             start=end_value,
-            stop=edge.squeeze(axis), # Dimension is replaced by linspace
+            stop=edge.squeeze(axis),  # Dimension is replaced by linspace
             num=width,
             endpoint=False,
             dtype=padded.dtype,
@@ -220,11 +221,31 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
             end_value_pair, edge_pair, width_pair
         )
     )
-        
+
     # Reverse linear space in appropriate dimension
     right_ramp = right_ramp[_slice_at_axis(slice(None, None, -1), axis)]
 
     return left_ramp, right_ramp
+
+
+def _validate_zero_width_linear_ramp(roi, axis, end_value_pair):
+    """
+    Preserve zero-width linear_ramp validation without constructing ramps.
+    """
+    if roi.dtype.hasobject:
+        _get_linear_ramps(roi, axis, (0, 0), end_value_pair)
+        return
+
+    edge = np.zeros((1,) * (roi.ndim - 1), dtype=roi.dtype)
+    for end_value in end_value_pair:
+        np.linspace(
+            start=end_value,
+            stop=edge,
+            num=0,
+            endpoint=False,
+            dtype=roi.dtype,
+            axis=axis
+        )
 
 
 def _get_stats(padded, axis, width_pair, length_pair, stat_func):
@@ -293,7 +314,20 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     return left_stat, right_stat
 
 
-def _set_reflect_both(padded, axis, width_pair, method, include_edge=False):
+def _validate_zero_width_stat(roi, axis, length_pair, stat_func):
+    """
+    Preserve zero-width statistic validation without reducing full arrays.
+    """
+    if roi.dtype.hasobject:
+        _get_stats(roi, axis, (0, 0), length_pair, stat_func)
+        return
+
+    validation_slice = (slice(0, 1),) * roi.ndim
+    _get_stats(roi[validation_slice], axis, (0, 0), length_pair, stat_func)
+
+
+def _set_reflect_both(padded, axis, width_pair, method,
+                      original_period, include_edge=False):
     """
     Pad `axis` of `arr` with reflection.
 
@@ -308,6 +342,8 @@ def _set_reflect_both(padded, axis, width_pair, method, include_edge=False):
         dimension.
     method : str
         Controls method of reflection; options are 'even' or 'odd'.
+    original_period : int
+        Original length of data on `axis` of `arr`.
     include_edge : bool
         If true, edge value is included in reflection, otherwise the edge
         value forms the symmetric axis to the reflection.
@@ -322,9 +358,18 @@ def _set_reflect_both(padded, axis, width_pair, method, include_edge=False):
     old_length = padded.shape[axis] - right_pad - left_pad
 
     if include_edge:
+        # Avoid wrapping with only a subset of the original area
+        # by ensuring period can only be a multiple of the original
+        # area's length.
+        old_length = old_length // original_period * original_period
         # Edge is included, we need to offset the pad amount by 1
         edge_offset = 1
     else:
+        # Avoid wrapping with only a subset of the original area
+        # by ensuring period can only be a multiple of the original
+        # area's length.
+        old_length = ((old_length - 1) // (original_period - 1)
+            * (original_period - 1) + 1)
         edge_offset = 0  # Edge is not included, no need to offset pad amount
         old_length -= 1  # but must be omitted from the chunk
 
@@ -539,7 +584,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
     ----------
     array : array_like of rank N
         The array to pad.
-    pad_width : {sequence, array_like, int}
+    pad_width : {sequence, array_like, int, dict}
         Number of values padded to the edges of each axis.
         ``((before_1, after_1), ... (before_N, after_N))`` unique pad widths
         for each axis.
@@ -547,6 +592,9 @@ def pad(array, pad_width, mode='constant', **kwargs):
         and after pad for each axis.
         ``(pad,)`` or ``int`` is a shortcut for before = after = pad width
         for all axes.
+        If a ``dict``, each key is an axis and its corresponding value is an ``int`` or
+        ``int`` pair describing the padding ``(before, after)`` or ``pad`` width for
+        that axis.
     mode : str or function, optional
         One of the following string values or a user supplied function.
 
@@ -582,8 +630,6 @@ def pad(array, pad_width, mode='constant', **kwargs):
             end values are used to pad the beginning.
         'empty'
             Pads with undefined values.
-
-            .. versionadded:: 1.17
 
         <function>
             Padding function, see Notes.
@@ -643,8 +689,6 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     Notes
     -----
-    .. versionadded:: 1.7.0
-
     For an array with rank greater than 1, some of the padding of later
     axes is calculated from padding of previous axes.  This is easiest to
     think about with a rank 2 array where the corners of the padded array
@@ -672,6 +716,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = [1, 2, 3, 4, 5]
     >>> np.pad(a, (2, 3), 'constant', constant_values=(4, 6))
     array([4, 4, 1, ..., 6, 6, 6])
@@ -737,8 +782,39 @@ def pad(array, pad_width, mode='constant', **kwargs):
            [100, 100,   3,   4,   5, 100, 100],
            [100, 100, 100, 100, 100, 100, 100],
            [100, 100, 100, 100, 100, 100, 100]])
+
+    >>> a = np.arange(1, 7).reshape(2, 3)
+    >>> np.pad(a, {1: (1, 2)})
+    array([[0, 1, 2, 3, 0, 0],
+           [0, 4, 5, 6, 0, 0]])
+    >>> np.pad(a, {-1: 2})
+    array([[0, 0, 1, 2, 3, 0, 0],
+           [0, 0, 4, 5, 6, 0, 0]])
+    >>> np.pad(a, {0: (3, 0)})
+    array([[0, 0, 0],
+           [0, 0, 0],
+           [0, 0, 0],
+           [1, 2, 3],
+           [4, 5, 6]])
+    >>> np.pad(a, {0: (3, 0), 1: 2})
+    array([[0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 1, 2, 3, 0, 0],
+           [0, 0, 4, 5, 6, 0, 0]])
     """
     array = np.asarray(array)
+    if isinstance(pad_width, dict):
+        seq = [(0, 0)] * array.ndim
+        for axis, width in pad_width.items():
+            match width:
+                case int(both):
+                    seq[axis] = both, both
+                case tuple((int(before), int(after))):
+                    seq[axis] = before, after
+                case _ as invalid:
+                    typing.assert_never(invalid)
+        pad_width = seq
     pad_width = np.asarray(pad_width)
 
     if not pad_width.dtype.kind == 'i':
@@ -785,10 +861,10 @@ def pad(array, pad_width, mode='constant', **kwargs):
     try:
         unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
     except KeyError:
-        raise ValueError("mode '{}' is not supported".format(mode)) from None
+        raise ValueError(f"mode '{mode}' is not supported") from None
     if unsupported_kwargs:
-        raise ValueError("unsupported keyword arguments for mode '{}': {}"
-                         .format(mode, unsupported_kwargs))
+        raise ValueError("unsupported keyword arguments for mode "
+                         f"'{mode}': {unsupported_kwargs}")
 
     stat_functions = {"maximum": np.amax, "minimum": np.amin,
                       "mean": np.mean, "median": np.median}
@@ -817,8 +893,8 @@ def pad(array, pad_width, mode='constant', **kwargs):
         for axis, width_pair in zip(axes, pad_width):
             if array.shape[axis] == 0 and any(width_pair):
                 raise ValueError(
-                    "can't extend empty axis {} using modes other than "
-                    "'constant' or 'empty'".format(axis)
+                    f"can't extend empty axis {axis} using modes other than "
+                    "'constant' or 'empty'"
                 )
         # passed, don't need to do anything more as _pad_simple already
         # returned the correct result
@@ -834,21 +910,27 @@ def pad(array, pad_width, mode='constant', **kwargs):
         end_values = _as_pairs(end_values, padded.ndim)
         for axis, width_pair, value_pair in zip(axes, pad_width, end_values):
             roi = _view_roi(padded, original_area_slice, axis)
+            if not any(width_pair):
+                _validate_zero_width_linear_ramp(roi, axis, value_pair)
+                continue
             ramp_pair = _get_linear_ramps(roi, axis, width_pair, value_pair)
             _set_pad_area(roi, axis, width_pair, ramp_pair)
 
     elif mode in stat_functions:
         func = stat_functions[mode]
-        length = kwargs.get("stat_length", None)
+        length = kwargs.get("stat_length")
         length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, width_pair, length_pair in zip(axes, pad_width, length):
             roi = _view_roi(padded, original_area_slice, axis)
+            if not any(width_pair):
+                _validate_zero_width_stat(roi, axis, length_pair, func)
+                continue
             stat_pair = _get_stats(roi, axis, width_pair, length_pair, func)
             _set_pad_area(roi, axis, width_pair, stat_pair)
 
     elif mode in {"reflect", "symmetric"}:
         method = kwargs.get("reflect_type", "even")
-        include_edge = True if mode == "symmetric" else False
+        include_edge = mode == "symmetric"
         for axis, (left_index, right_index) in zip(axes, pad_width):
             if array.shape[axis] == 1 and (left_index > 0 or right_index > 0):
                 # Extending singleton dimension for 'reflect' is legacy
@@ -865,7 +947,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
                 # the length of the original values in the current dimension.
                 left_index, right_index = _set_reflect_both(
                     roi, axis, (left_index, right_index),
-                    method, include_edge
+                    method, array.shape[axis], include_edge
                 )
 
     elif mode == "wrap":

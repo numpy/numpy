@@ -1,10 +1,11 @@
-from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
-
-import numpy as np
 import itertools
-from packaging import version
 import operator
 
+from packaging import version
+
+import numpy as np
+
+from .common import DLPACK_TYPES, TYPES1, Benchmark, get_squares_
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_count', 'bitwise_not',
@@ -16,18 +17,28 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'left_shift', 'less',
           'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
           'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
-          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf',
-          'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
+          'logical_xor', 'matmul', 'matvec', 'maximum', 'minimum', 'mod',
+          'modf', 'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
           'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
           'right_shift', 'rint', 'sign', 'signbit', 'sin',
           'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
-          'true_divide', 'trunc']
+          'true_divide', 'trunc', 'vecdot', 'vecmat']
 arrayfuncdisp = ['real', 'round']
 
+for name in ufuncs:
+    f = getattr(np, name, None)
+    if not isinstance(f, np.ufunc):
+        raise ValueError(f"Bench target `np.{name}` is not a ufunc")
 
-for name in dir(np):
-    if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
-        print("Missing ufunc %r" % (name,))
+all_ufuncs = (getattr(np, name, None) for name in dir(np))
+all_ufuncs = set(filter(lambda f: isinstance(f, np.ufunc), all_ufuncs))
+bench_ufuncs = {getattr(np, name, None) for name in ufuncs}
+
+missing_ufuncs = all_ufuncs - bench_ufuncs
+if len(missing_ufuncs) > 0:
+    missing_ufunc_names = [f.__name__ for f in missing_ufuncs]
+    raise NotImplementedError(
+        f"Missing benchmarks for ufuncs {missing_ufunc_names!r}")
 
 
 class ArrayFunctionDispatcher(Benchmark):
@@ -40,9 +51,9 @@ class ArrayFunctionDispatcher(Benchmark):
         try:
             self.afdn = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.args = []
-        for _, aarg in get_squares_().items():
+        for aarg in get_squares_().values():
             arg = (aarg,) * 1  # no nin
             try:
                 self.afdn(*arg)
@@ -60,6 +71,20 @@ class Broadcast(Benchmark):
         self.e = np.ones((100,), dtype=np.float64)
 
     def time_broadcast(self):
+        self.d - self.e
+
+
+class BroadcastTrailing(Benchmark):
+    # Broadcasting an operand over a short trailing axis refills the iterator
+    # buffer many times; see gh-13307, gh-17471 and gh-18028.
+    params = [1, 3, 10, 100]
+    param_names = ['trailing']
+
+    def setup(self, trailing):
+        self.d = np.ones((3000000 // trailing, trailing), dtype=np.float64)
+        self.e = np.ones((trailing,), dtype=np.float64)
+
+    def time_broadcast(self, trailing):
         self.d - self.e
 
 
@@ -87,9 +112,9 @@ class UFunc(Benchmark):
         try:
             self.ufn = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.args = []
-        for _, aarg in get_squares_().items():
+        for aarg in get_squares_().values():
             arg = (aarg,) * self.ufn.nin
             try:
                 self.ufn(*arg)
@@ -241,14 +266,14 @@ class NDArrayGetItem(Benchmark):
 
     def setup(self, margs, msize):
         self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        self.xl = np.random.uniform(-1, 1, 50*50).reshape(50, 50)
+        self.xl = np.random.uniform(-1, 1, 50 * 50).reshape(50, 50)
 
     def time_methods_getitem(self, margs, msize):
         if msize == 'small':
             mdat = self.xs
         elif msize == 'big':
             mdat = self.xl
-        getattr(mdat, '__getitem__')(margs)
+        mdat.__getitem__(margs)
 
 
 class NDArraySetItem(Benchmark):
@@ -258,7 +283,7 @@ class NDArraySetItem(Benchmark):
 
     def setup(self, margs, msize):
         self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        self.xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        self.xl = np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
 
     def time_methods_setitem(self, margs, msize):
         if msize == 'small':
@@ -293,7 +318,7 @@ class DLPMethods(Benchmark):
 class NDArrayAsType(Benchmark):
     """ Benchmark for type conversion
     """
-    params = [list(itertools.combinations(TYPES1, 2))]
+    params = [list(itertools.product(TYPES1, TYPES1))]
     param_names = ['typeconv']
     timeout = 10
 
@@ -322,7 +347,7 @@ class UFuncSmall(Benchmark):
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.array_5 = np.array([1., 2., 10., 3., 4.])
         self.array_int_3 = np.array([1, 2, 3])
         self.float64 = np.float64(1.1)
@@ -332,7 +357,7 @@ class UFuncSmall(Benchmark):
         self.f(self.array_5)
 
     def time_ufunc_small_array_inplace(self, ufuncname):
-        self.f(self.array_5, out = self.array_5)
+        self.f(self.array_5, out=self.array_5)
 
     def time_ufunc_small_int_array(self, ufuncname):
         self.f(self.array_int_3)
@@ -422,7 +447,7 @@ class CustomScalar(Benchmark):
 
 
 class CustomComparison(Benchmark):
-    params = (np.int8,  np.int16,  np.int32,  np.int64, np.uint8, np.uint16,
+    params = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
               np.uint32, np.uint64, np.float32, np.float64, np.bool)
     param_names = ['dtype']
 
@@ -487,7 +512,7 @@ class CustomArrayFloorDivideInt(Benchmark):
 class Scalar(Benchmark):
     def setup(self):
         self.x = np.asarray(1.0)
-        self.y = np.asarray((1.0 + 1j))
+        self.y = np.asarray(1.0 + 1j)
         self.z = complex(1.0, 1.0)
 
     def time_add_scalar(self):
@@ -502,13 +527,15 @@ class Scalar(Benchmark):
 
 class ArgPack:
     __slots__ = ['args', 'kwargs']
+
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
     def __repr__(self):
         return '({})'.format(', '.join(
             [repr(a) for a in self.args] +
-            ['{}={}'.format(k, repr(v)) for k, v in self.kwargs.items()]
+            [f'{k}={v!r}' for k, v in self.kwargs.items()]
         ))
 
 
@@ -559,21 +586,46 @@ class ArgParsingReduce(Benchmark):
         np.add.reduce(*arg_pack.args, **arg_pack.kwargs)
 
 class BinaryBench(Benchmark):
-    def setup(self):
+    params = [np.float32, np.float64]
+    param_names = ['dtype']
+
+    def setup(self, dtype):
         N = 1000000
-        self.a32 = np.random.rand(N).astype(np.float32)
-        self.b32 = np.random.rand(N).astype(np.float32)
-        self.a64 = np.random.rand(N).astype(np.float64)
-        self.b64 = np.random.rand(N).astype(np.float64)
+        self.a = np.random.rand(N).astype(dtype)
+        self.b = np.random.rand(N).astype(dtype)
 
-    def time_pow_32(self):
-        np.power(self.a32, self.b32)
+    def time_pow(self, dtype):
+        np.power(self.a, self.b)
 
-    def time_pow_64(self):
-        np.power(self.a64, self.b64)
+    def time_pow_2(self, dtype):
+        np.power(self.a, 2.0)
 
-    def time_atan2_32(self):
-        np.arctan2(self.a32, self.b32)
+    def time_pow_half(self, dtype):
+        np.power(self.a, 0.5)
 
-    def time_atan2_64(self):
-        np.arctan2(self.a64, self.b64)
+    def time_pow_2_op(self, dtype):
+        self.a ** 2
+
+    def time_pow_half_op(self, dtype):
+        self.a ** 0.5
+
+    def time_atan2(self, dtype):
+        np.arctan2(self.a, self.b)
+
+class BinaryBenchInteger(Benchmark):
+    params = [np.int32, np.int64]
+    param_names = ['dtype']
+
+    def setup(self, dtype):
+        N = 1000000
+        self.a = np.random.randint(20, size=N).astype(dtype)
+        self.b = np.random.randint(4, size=N).astype(dtype)
+
+    def time_pow(self, dtype):
+        np.power(self.a, self.b)
+
+    def time_pow_two(self, dtype):
+        np.power(self.a, 2)
+
+    def time_pow_five(self, dtype):
+        np.power(self.a, 5)

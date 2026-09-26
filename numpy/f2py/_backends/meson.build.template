@@ -7,8 +7,13 @@ project('${modulename}',
                             'buildtype=${buildtype}'
                           ])
 fc = meson.get_compiler('fortran')
+cc = meson.get_compiler('c')
 
-py = import('python').find_installation('${python}', pure: false)
+add_project_arguments(
+  cc.get_supported_arguments( '-fno-strict-aliasing'), language : 'c'
+)
+
+py = import('python').find_installation('''${python}''', pure: false)
 py_dep = py.dependency()
 
 incdir_numpy = run_command(py,
@@ -44,6 +49,9 @@ ${source_list},
                      inc_np,
 ${inc_list}
                      ],
+                     objects: [
+${obj_list}
+                     ],
                      dependencies : [
                      py_dep,
                      quadmath_dep,
@@ -51,4 +59,5 @@ ${dep_list}
 ${lib_list}
 ${lib_dir_list}
                      ],
+${fortran_args}
                      install : true)

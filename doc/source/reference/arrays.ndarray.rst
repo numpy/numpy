@@ -32,35 +32,39 @@ objects implementing the :class:`memoryview` or :ref:`array
 
 .. admonition:: Example
 
-   A 2-dimensional array of size 2 x 3, composed of 4-byte integer
-   elements:
+   .. try_examples::
 
-   >>> x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
-   >>> type(x)
-   <class 'numpy.ndarray'>
-   >>> x.shape
-   (2, 3)
-   >>> x.dtype
-   dtype('int32')
+      A 2-dimensional array of size 2 x 3, composed of 4-byte integer
+      elements:
 
-   The array can be indexed using Python container-like syntax:
+      >>> import numpy as np
 
-   >>> # The element of x in the *second* row, *third* column, namely, 6.
-   >>> x[1, 2]
-   6
+      >>> x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
+      >>> type(x)
+      <class 'numpy.ndarray'>
+      >>> x.shape
+      (2, 3)
+      >>> x.dtype
+      dtype('int32')
 
-   For example :ref:`slicing <arrays.indexing>` can produce views of
-   the array:
+      The array can be indexed using Python container-like syntax:
 
-   >>> y = x[:,1]
-   >>> y
-   array([2, 5], dtype=int32)
-   >>> y[0] = 9 # this also changes the corresponding element in x
-   >>> y
-   array([9, 5], dtype=int32)
-   >>> x
-   array([[1, 9, 3],
-          [4, 5, 6]], dtype=int32)
+      >>> # The element of x in the *second* row, *third* column, namely, 6.
+      >>> x[1, 2]
+         6
+
+      For example :ref:`slicing <arrays.indexing>` can produce views of
+      the array:
+
+      >>> y = x[:,1]
+      >>> y
+      array([2, 5], dtype=int32)
+      >>> y[0] = 9 # this also changes the corresponding element in x
+      >>> y
+      array([9, 5], dtype=int32)
+      >>> x
+      array([[1, 9, 3],
+             [4, 5, 6]], dtype=int32)
 
 
 Constructing arrays
@@ -287,7 +291,6 @@ Array conversion
 
    ndarray.item
    ndarray.tolist
-   ndarray.tostring
    ndarray.tobytes
    ndarray.tofile
    ndarray.dump
@@ -360,36 +363,40 @@ Many of these methods take an argument named *axis*. In such cases,
 
 .. admonition:: Example of the *axis* argument
 
-   A 3-dimensional array of size 3 x 3 x 3, summed over each of its
-   three axes
+   .. try_examples::
 
-   >>> x = np.arange(27).reshape((3,3,3))
-   >>> x
-   array([[[ 0,  1,  2],
-           [ 3,  4,  5],
-           [ 6,  7,  8]],
-          [[ 9, 10, 11],
-           [12, 13, 14],
-           [15, 16, 17]],
-          [[18, 19, 20],
-           [21, 22, 23],
-           [24, 25, 26]]])
-   >>> x.sum(axis=0)
-   array([[27, 30, 33],
-          [36, 39, 42],
-          [45, 48, 51]])
-   >>> # for sum, axis is the first keyword, so we may omit it,
-   >>> # specifying only its value
-   >>> x.sum(0), x.sum(1), x.sum(2)
-   (array([[27, 30, 33],
-           [36, 39, 42],
-           [45, 48, 51]]),
-    array([[ 9, 12, 15],
-           [36, 39, 42],
-           [63, 66, 69]]),
-    array([[ 3, 12, 21],
-           [30, 39, 48],
-           [57, 66, 75]]))
+      A 3-dimensional array of size 3 x 3 x 3, summed over each of its
+      three axes:
+
+      >>> import numpy as np
+
+      >>> x = np.arange(27).reshape((3,3,3))
+      >>> x
+      array([[[ 0,  1,  2],
+            [ 3,  4,  5],
+            [ 6,  7,  8]],
+            [[ 9, 10, 11],
+            [12, 13, 14],
+            [15, 16, 17]],
+            [[18, 19, 20],
+            [21, 22, 23],
+            [24, 25, 26]]])
+      >>> x.sum(axis=0)
+      array([[27, 30, 33],
+            [36, 39, 42],
+            [45, 48, 51]])
+      >>> # for sum, axis is the first keyword, so we may omit it,
+      >>> # specifying only its value
+      >>> x.sum(0), x.sum(1), x.sum(2)
+      (array([[27, 30, 33],
+            [36, 39, 42],
+            [45, 48, 51]]),
+      array([[ 9, 12, 15],
+            [36, 39, 42],
+            [63, 66, 69]]),
+      array([[ 3, 12, 21],
+            [30, 39, 48],
+            [57, 66, 75]]))
 
 The parameter *dtype* specifies the data type over which a reduction
 operation (like summing) should take place. The default reduce data
@@ -463,11 +470,11 @@ Truth value of an array (:class:`bool() <bool>`):
 
    Truth-value testing of an array invokes
    :meth:`ndarray.__bool__`, which raises an error if the number of
-   elements in the array is larger than 1, because the truth value
+   elements in the array is not 1, because the truth value
    of such arrays is ambiguous. Use :meth:`.any() <ndarray.any>` and
    :meth:`.all() <ndarray.all>` instead to be clear about what is meant
-   in such cases. (If the number of elements is 0, the array evaluates
-   to ``False``.)
+   in such cases. (If you wish to check for whether an array is empty,
+   use for example ``.size > 0``.)
 
 
 Unary operations:
@@ -611,3 +618,27 @@ Utility method for typing:
    :toctree: generated/
 
    ndarray.__class_getitem__
+
+.. _arrays.ndarray.pattern-matching:
+
+Structural pattern matching
+===========================
+
+Arrays support :pep:`structural pattern matching <634>`. The array is matched
+as a sequence, so you can unpack arrays along the first dimension in
+``match``/``case`` statements::
+
+   >>> arr = np.array([[1, 2], [3, 4]])
+   >>> match arr:
+   ...     case [row1, row2]:
+   ...         print(f"row1={row1}, row2={row2}")
+   row1=[1 2], row2=[3 4]
+
+Nested patterns work too, matching inner dimensions::
+
+   >>> match arr:
+   ...     case [[a, b], [c, d]]:
+   ...         print(f"a={a}, b={b}, c={c}, d={d}")
+   a=1, b=2, c=3, d=4
+
+All ndarray subclasses inherit this behavior.

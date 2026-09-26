@@ -9,8 +9,6 @@
 extern "C" {
 #endif
 
-extern NPY_NO_EXPORT npy_bool numpy_warn_if_no_mem_policy;
-
 NPY_NO_EXPORT PyObject *
 _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                      int rstrip);
@@ -20,6 +18,13 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op);
 
 NPY_NO_EXPORT int
 array_might_be_written(PyArrayObject *obj);
+
+/*
+ * For use in __setstate__, where pickle gives us an instance on which we
+ * have to replace all the actual data. Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+clear_array_attributes(PyArrayObject *self);
 
 /*
  * This flag is used to mark arrays which we would like to, in the future,
@@ -54,6 +59,24 @@ static const int NPY_ARRAY_WAS_PYTHON_COMPLEX = (1 << 28);
  */
 static const int NPY_ARRAY_WAS_INT_AND_REPLACED = (1 << 27);
 static const int NPY_ARRAY_WAS_PYTHON_LITERAL = (1 << 30 | 1 << 29 | 1 << 28);
+
+/*
+ * Mark an array converted from an exact Python str.  Unlike the flags above
+ * it does not participate in promotion (the array keeps its discovered
+ * dtype); it only lets scalar-aware paths (ufuncs, copyto, where) convert
+ * the operand again from the original object once the operation's
+ * descriptors are resolved.  Not part of NPY_ARRAY_WAS_PYTHON_LITERAL,
+ * whose consumers assume a numeric scalar.
+ */
+static const int NPY_ARRAY_WAS_PYTHON_STR = (1 << 25);
+
+/*
+ * This flag allows same kind casting, similar to NPY_ARRAY_FORCECAST.
+ *
+ * An array never has this flag set; they're only used as parameter
+ * flags to the various FromAny functions.
+ */
+static const int NPY_ARRAY_SAME_KIND_CASTING = (1 << 26);
 
 #ifdef __cplusplus
 }

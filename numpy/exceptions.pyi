@@ -1,6 +1,13 @@
 from typing import overload
 
-__all__: list[str]
+__all__ = [
+    "ComplexWarning",
+    "VisibleDeprecationWarning",
+    "ModuleDeprecationWarning",
+    "TooHardError",
+    "AxisError",
+    "DTypePromotionError",
+]
 
 class ComplexWarning(RuntimeWarning): ...
 class ModuleDeprecationWarning(DeprecationWarning): ...
@@ -10,10 +17,11 @@ class TooHardError(RuntimeError): ...
 class DTypePromotionError(TypeError): ...
 
 class AxisError(ValueError, IndexError):
-    axis: None | int
-    ndim: None | int
+    __slots__ = "_msg", "axis", "ndim"
+
+    axis: int | None
+    ndim: int | None
     @overload
-    def __init__(self, axis: str, ndim: None = ..., msg_prefix: None = ...) -> None: ...
+    def __init__(self, axis: str, ndim: None = None, msg_prefix: None = None) -> None: ...
     @overload
-    def __init__(self, axis: int, ndim: int, msg_prefix: None | str = ...) -> None: ...
-    def __str__(self) -> str: ...
+    def __init__(self, axis: int, ndim: int, msg_prefix: str | None = None) -> None: ...

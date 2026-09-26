@@ -51,9 +51,7 @@ needs and then changes in the Python ecosystem.
 Support for strings was added to NumPy to support users of the NumArray
 ``chararray`` type. Remnants of this are still visible in the NumPy API:
 string-related functionality lives in ``np.char``, to support the
-``np.char.chararray`` class. This class is not formally deprecated, but has a
-had comment in the module docstring suggesting to use string dtypes instead
-since NumPy 1.4.
+``np.char.chararray`` class, which was deprecated in NumPy 2.5.
 
 NumPy's ``bytes_`` DType was originally used to represent the Python 2 ``str``
 type before Python 3 support was added to NumPy. The bytes DType makes the most
@@ -224,7 +222,7 @@ to fixed-width unicode arrays::
 
   In [3]: data = [str(i) * 10 for i in range(100_000)]
 
-  In [4]: %timeit arr_object = np.array(data, dtype=object)
+  In [4]: %timeit arr_object = np.array(data, dtype=np.object_)
   3.15 ms ± 74.4 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
   In [5]: %timeit arr_stringdtype = np.array(data, dtype=StringDType())
@@ -242,7 +240,7 @@ for strings, the string loading performance of ``StringDType`` should improve.
 
 String operations have similar performance::
 
-  In [7]: %timeit np.array([s.capitalize() for s in data], dtype=object)
+  In [7]: %timeit np.array([s.capitalize() for s in data], dtype=np.object_)
   31.6 ms ± 728 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
   In [8]: %timeit np.char.capitalize(arr_stringdtype)
@@ -534,11 +532,33 @@ future NumPy or a downstream library may add locale-aware sorting, case folding,
 and normalization for NumPy unicode strings arrays, but we are not proposing
 adding these features at this time.
 
-Two ``StringDType`` instances are considered identical if they are created with
-the same ``na_object`` and ``coerce`` parameter. We propose checking for unequal
-``StringDType`` instances in the ``resolve_descriptors`` function of binary
-ufuncs that take two string arrays and raising an error if an operation is
-performed with unequal ``StringDType`` instances.
+Two ``StringDType`` instances are considered equal if they are created with the
+same ``na_object`` and ``coerce`` parameter. For ufuncs that accept more than
+one string argument we also introduce the concept of "compatible"
+``StringDType`` instances. We allow distinct DType instances to be used in ufunc
+operations together if have the same ``na_object`` or if only one
+or the other DType has an ``na_object`` explicitly set. We do not consider
+string coercion for determining whether instances are compatible, although if
+the result of the operation is a string, the result will inherit the stricter
+string coercion setting of the original operands.
+
+This notion of "compatible" instances will be enforced in the
+``resolve_descriptors`` function of binary ufuncs. This choice makes it easier
+to work with non-default ``StringDType`` instances, because python strings are
+coerced to the default ``StringDType`` instance, so the following idiomatic
+expression is allowed::
+
+  >>> arr = np.array(["hello", "world"], dtype=StringDType(na_object=None))
+  >>> arr + "!"
+  array(['hello!', 'world!'], dtype=StringDType(na_object=None))
+
+If we only considered equality of ``StringDType`` instances, this would
+be an error, making for an awkward user experience. If the operands have
+distinct ``na_object`` settings, NumPy will raise an error because the choice
+for the result DType is ambiguous::
+
+  >>> arr + np.array("!", dtype=StringDType(na_object=""))
+  TypeError: Cannot find common instance for incompatible dtype instances
 
 ``np.strings`` namespace
 ************************
@@ -968,7 +988,7 @@ in the array buffer as a short string.
 
 No matter where it is stored, once a string is initialized it is marked with the
 ``NPY_STRING_INITIALIZED`` flag. This lets us clearly distinguish between an
-unitialized empty string and a string that has been mutated into the empty
+uninitialized empty string and a string that has been mutated into the empty
 string.
 
 The size of the allocation is stored in the arena to allow reuse of the arena

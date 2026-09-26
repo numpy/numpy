@@ -1,33 +1,21 @@
-from typing import (
-    Any,
-    TypeVar,
-    Protocol,
-)
+from _typeshed import SupportsWrite
+from typing import Any, Literal, LiteralString, overload
 
-from numpy._core.numerictypes import (
-    issubdtype as issubdtype,
-)
+import numpy as np
 
-_T_contra = TypeVar("_T_contra", contravariant=True)
+__all__ = ["get_include", "info", "show_runtime"]
 
-# A file-like object opened in `w` mode
-class _SupportsWrite(Protocol[_T_contra]):
-    def write(self, s: _T_contra, /) -> Any: ...
-
-__all__: list[str]
-
-def get_include() -> str: ...
-
+def get_include() -> LiteralString: ...
+@overload
+def show_runtime(mode: Literal["stdout"] = "stdout") -> None: ...
+@overload
+def show_runtime(mode: Literal["dicts"]) -> list[dict[str, Any]]: ...
 def info(
-    object: object = ...,
-    maxwidth: int = ...,
-    output: None | _SupportsWrite[str] = ...,
-    toplevel: str = ...,
+    object: object = None, maxwidth: int = 76, output: SupportsWrite[str] | None = None, toplevel: str = "numpy"
 ) -> None: ...
+def drop_metadata[DTypeT: np.dtype](dtype: DTypeT, /) -> DTypeT: ...
 
-def source(
-    object: object,
-    output: None | _SupportsWrite[str] = ...,
-) -> None: ...
-
-def show_runtime() -> None: ...
+# used internally by `lib._function_base_impl._median`
+def _median_nancheck[ScalarOrArrayT: np.generic | np.ndarray](
+    data: np.ndarray, result: ScalarOrArrayT, axis: int
+) -> ScalarOrArrayT: ...

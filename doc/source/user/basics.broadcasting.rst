@@ -23,6 +23,7 @@ NumPy operations are usually done on pairs of arrays on an
 element-by-element basis.  In the simplest case, the two arrays must
 have exactly the same shape, as in the following example:
 
+  >>> import numpy as np
   >>> a = np.array([1.0, 2.0, 3.0])
   >>> b = np.array([2.0, 2.0, 2.0])
   >>> a * b
@@ -32,6 +33,7 @@ NumPy's broadcasting rule relaxes this constraint when the arrays'
 shapes meet certain constraints. The simplest broadcasting example occurs
 when an array and a scalar value are combined in an operation:
 
+>>> import numpy as np
 >>> a = np.array([1.0, 2.0, 3.0])
 >>> b = 2.0
 >>> a * b
@@ -162,6 +164,7 @@ Here are examples of shapes that do not broadcast::
 
 An example of broadcasting when a 1-d array is added to a 2-d array::
 
+  >>> import numpy as np
   >>> a = np.array([[ 0.0,  0.0,  0.0],
   ...               [10.0, 10.0, 10.0],
   ...               [20.0, 20.0, 20.0],
@@ -209,6 +212,7 @@ Broadcasting provides a convenient way of taking the outer product (or
 any other outer operation) of two arrays. The following example shows an
 outer addition operation of two 1-d arrays::
 
+  >>> import numpy as np
   >>> a = np.array([0.0, 10.0, 20.0, 30.0])
   >>> b = np.array([1.0, 2.0, 3.0])
   >>> a[:, np.newaxis] + b

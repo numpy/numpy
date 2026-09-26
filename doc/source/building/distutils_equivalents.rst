@@ -3,7 +3,7 @@
 Meson and ``distutils`` ways of doing things
 --------------------------------------------
 
-*Old workflows (numpy.distutils based):*
+*Old workflows (numpy.distutils based, no longer relevant):*
 
 1. ``python runtests.py``
 2. ``python setup.py build_ext -i`` + ``export

@@ -6,7 +6,9 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 #include "alloc.h"
+#include "shape.h"  // For PyArray_Resize_int
 
 #include <string.h>
 #include <stdbool.h>
@@ -58,13 +60,16 @@ create_conv_funcs(
 
     PyObject *key, *value;
     Py_ssize_t pos = 0;
-    while (PyDict_Next(converters, &pos, &key, &value)) {
+    int error = 0;
+    Py_BEGIN_CRITICAL_SECTION(converters);
+    while (PyDict_Next(converters, &pos, &key, &value)) { // noqa: borrowed-ref OK
         Py_ssize_t column = PyNumber_AsSsize_t(key, PyExc_IndexError);
         if (column == -1 && PyErr_Occurred()) {
             PyErr_Format(PyExc_TypeError,
                     "keys of the converters dictionary must be integers; "
                     "got %.100R", key);
-            goto error;
+            error = 1;
+            break;
         }
         if (usecols != NULL) {
             /*
@@ -92,7 +97,8 @@ create_conv_funcs(
                 PyErr_Format(PyExc_ValueError,
                         "converter specified for column %zd, which is invalid "
                         "for the number of fields %zd.", column, num_fields);
-                goto error;
+                error = 1;
+                break;
             }
             if (column < 0) {
                 column += num_fields;
@@ -102,11 +108,18 @@ create_conv_funcs(
             PyErr_Format(PyExc_TypeError,
                     "values of the converters dictionary must be callable, "
                     "but the value associated with key %R is not", key);
-            goto error;
+            error = 1;
+            break;
         }
         Py_INCREF(value);
         conv_funcs[column] = value;
     }
+    Py_END_CRITICAL_SECTION();
+
+    if (error) {
+        goto error;
+    }
+
     return conv_funcs;
 
   error:
@@ -142,11 +155,9 @@ create_conv_funcs(
  * @param out_descr The dtype used for allocating a new array.  This is not
  *        used if `data_array` is provided.  Note that the actual dtype of the
  *        returned array can differ for strings.
- * @param num_cols Pointer in which the actual (discovered) number of columns
- *        is returned.  This is only relevant if `homogeneous` is true.
  * @param homogeneous Whether the datatype of the array is not homogeneous,
  *        i.e. not structured.  In this case the number of columns has to be
- *        discovered an the returned array will be 2-dimensional rather than
+ *        discovered and the returned array will be 2-dimensional rather than
  *        1-dimensional.
  *
  * @returns Returns the result as an array object or NULL on error.  The result
@@ -165,19 +176,15 @@ read_rows(stream *s,
     npy_intp row_size = out_descr->elsize;
     PyObject **conv_funcs = NULL;
 
-    bool needs_init = PyDataType_FLAGCHK(out_descr, NPY_NEEDS_INIT);
-
     int ndim = homogeneous ? 2 : 1;
     npy_intp result_shape[2] = {0, 1};
+    PyArray_Dims new_dims = {result_shape, ndim};  /* for resizing */
 
     bool data_array_allocated = data_array == NULL;
     /* Make sure we own `data_array` for the purpose of error handling */
     Py_XINCREF(data_array);
     size_t rows_per_block = 1;  /* will be increased depending on row size */
     npy_intp data_allocated_rows = 0;
-
-    /* We give a warning if max_rows is used and an empty line is encountered */
-    bool give_empty_row_warning = max_rows >= 0;
 
     int ts_result = 0;
     tokenizer_state ts;
@@ -216,29 +223,8 @@ read_rows(stream *s,
         }
         current_num_fields = ts.num_fields;
         field_info *fields = ts.fields;
+
         if (NPY_UNLIKELY(ts.num_fields == 0)) {
-            /*
-             * Deprecated NumPy 1.23, 2021-01-13 (not really a deprecation,
-             * but similar policy should apply to removing the warning again)
-             */
-             /* Tokenizer may give a final "empty line" even if there is none */
-            if (give_empty_row_warning && ts_result == 0) {
-                give_empty_row_warning = false;
-                if (PyErr_WarnFormat(PyExc_UserWarning, 3,
-                        "Input line %zd contained no data and will not be "
-                        "counted towards `max_rows=%zd`.  This differs from "
-                        "the behaviour in NumPy <=1.22 which counted lines "
-                        "rather than rows.  If desired, the previous behaviour "
-                        "can be achieved by using `itertools.islice`.\n"
-                        "Please see the 1.23 release notes for an example on "
-                        "how to do this.  If you wish to ignore this warning, "
-                        "use `warnings.filterwarnings`.  This warning is "
-                        "expected to be removed in the future and is given "
-                        "only once per `loadtxt` call.",
-                        row_count + skiplines + 1, max_rows) < 0) {
-                    goto error;
-                }
-            }
             continue;  /* Ignore empty line */
         }
 
@@ -301,9 +287,6 @@ read_rows(stream *s,
                 if (data_array == NULL) {
                     goto error;
                 }
-                if (needs_init) {
-                    memset(PyArray_BYTES(data_array), 0, PyArray_NBYTES(data_array));
-                }
             }
             else {
                 assert(max_rows >=0);
@@ -344,22 +327,15 @@ read_rows(stream *s,
                         "providing a maximum number of rows to read may help.");
                 goto error;
             }
-
-            char *new_data = PyDataMem_UserRENEW(
-                    PyArray_BYTES(data_array), alloc_size ? alloc_size : 1,
-                    PyArray_HANDLER(data_array));
-            if (new_data == NULL) {
-                PyErr_NoMemory();
+            /*
+             * Resize the array.
+             */
+            result_shape[0] = new_rows;
+            if (PyArray_Resize_int(data_array, &new_dims, 0) < 0) {
                 goto error;
             }
-            /* Replace the arrays data since it may have changed */
-            ((PyArrayObject_fields *)data_array)->data = new_data;
-            ((PyArrayObject_fields *)data_array)->dimensions[0] = new_rows;
-            data_ptr = new_data + row_count * row_size;
+            data_ptr = (char *)PyArray_DATA(data_array) + row_count * row_size;
             data_allocated_rows = new_rows;
-            if (needs_init) {
-                memset(data_ptr, '\0', (new_rows - row_count) * row_size);
-            }
         }
 
         for (Py_ssize_t i = 0; i < actual_num_fields; ++i) {
@@ -464,22 +440,21 @@ read_rows(stream *s,
 
     /*
      * Note that if there is no data, `data_array` may still be NULL and
-     * row_count is 0.  In that case, always realloc just in case.
+     * row_count is 0.  In that case, always resize just in case.
      */
     if (data_array_allocated && data_allocated_rows != row_count) {
-        size_t size = row_count * row_size;
-        char *new_data = PyDataMem_UserRENEW(
-                PyArray_BYTES(data_array), size ? size : 1,
-                PyArray_HANDLER(data_array));
-        if (new_data == NULL) {
-            Py_DECREF(data_array);
-            PyErr_NoMemory();
-            return NULL;
+        result_shape[0] = row_count;
+        if (PyArray_Resize_int(data_array, &new_dims, 0) < 0) {
+            goto error;
         }
-        ((PyArrayObject_fields *)data_array)->data = new_data;
-        ((PyArrayObject_fields *)data_array)->dimensions[0] = row_count;
     }
 
+    /*
+     * If row_size is too big, F_CONTIGUOUS is always set
+     * as array was created for only one row of data.
+     * We just update the contiguous flags here.
+     */
+    PyArray_UpdateFlags(data_array, NPY_ARRAY_F_CONTIGUOUS);
     return data_array;
 
   error:

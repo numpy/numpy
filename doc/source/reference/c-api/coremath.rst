@@ -1,8 +1,7 @@
 NumPy core math library
 =======================
 
-The numpy core math library ('npymath') is a first step in this direction. This
-library contains most math-related C99 functionality, which can be used on
+This library contains most math-related C99 functionality, which can be used on
 platforms where C99 is not well supported. The core math functions have the
 same API as the C99 ones, except for the ``npy_*`` prefix.
 
@@ -185,8 +184,6 @@ Those can be useful for precise floating point comparison.
     * NPY_FPE_UNDERFLOW
     * NPY_FPE_INVALID
 
-    .. versionadded:: 1.15.0
-
 .. c:function:: int npy_clear_floatstatus()
 
     Clears the floating point status. Returns the previous status mask.
@@ -200,8 +197,6 @@ Those can be useful for precise floating point comparison.
     Clears the floating point status. A pointer to a local variable is passed in to
     prevent aggressive compiler optimizations from reordering this function call.
     Returns the previous status mask.
-
-    .. versionadded:: 1.15.0
 
 .. _complex-numbers:
 
@@ -304,7 +299,7 @@ Linking against the core math library in an extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To use the core math library that NumPy ships as a static library in your own
-Python extension, you need to add the npymath compile and link options to your
+Python extension, you need to add the ``npymath`` compile and link options to your
 extension. The exact steps to take will depend on the build system you are using.
 The generic steps to take are:
 
@@ -321,20 +316,6 @@ The generic steps to take are:
    for the platform you are building for, not the native one for the build
    machine. Otherwise you pick up a static library built for the wrong
    architecture.
-
-When you build with ``numpy.distutils`` (deprecated), then use this in your ``setup.py``:
-
-        .. hidden in a comment so as to be included in refguide but not rendered documentation
-                >>> import numpy.distutils.misc_util
-                >>> config = np.distutils.misc_util.Configuration(None, '', '.')
-                >>> with open('foo.c', 'w') as f: pass
-
-        >>> from numpy.distutils.misc_util import get_info
-        >>> info = get_info('npymath')
-        >>> _ = config.add_extension('foo', sources=['foo.c'], extra_info=info)
-
-In other words, the usage of ``info`` is exactly the same as when using
-``blas_info`` and co.
 
 When you are building with `Meson <https://mesonbuild.com>`__, use::
 

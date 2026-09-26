@@ -20,7 +20,7 @@ There are 6 general mechanisms for creating arrays:
 6) Use of special library functions (e.g., random)
 
 You can use these methods to create ndarrays or :ref:`structured_arrays`.
-This document will cover general methods for ndarray creation. 
+This document will cover general methods for ndarray creation.
 
 1) Converting Python sequences to NumPy arrays
 ==============================================
@@ -29,12 +29,13 @@ NumPy arrays can be defined using Python sequences such as lists and
 tuples. Lists and tuples are defined using ``[...]`` and ``(...)``,
 respectively. Lists and tuples can define ndarray creation:
 
-* a list of numbers will create a 1D array, 
-* a list of lists will create a 2D array, 
+* a list of numbers will create a 1D array,
+* a list of lists will create a 2D array,
 * further nested lists will create higher-dimensional arrays. In general, any array object is called an **ndarray** in NumPy.
 
 ::
 
+  >>> import numpy as np
   >>> a1D = np.array([1, 2, 3, 4])
   >>> a2D = np.array([[1, 2], [3, 4]])
   >>> a3D = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
@@ -47,6 +48,7 @@ are handled in C/C++ functions.
 When values do not fit and you are using a ``dtype``, NumPy may raise an
 error::
 
+  >>> import numpy as np
   >>> np.array([127, 128, 129], dtype=np.int8)
   Traceback (most recent call last):
   ...
@@ -56,8 +58,9 @@ An 8-bit signed integer represents integers from -128 to 127.
 Assigning the ``int8`` array to integers outside of this range results
 in overflow. This feature can often be misunderstood. If you
 perform calculations with mismatching ``dtypes``, you can get unwanted
-results,  for example::
+results, for example::
 
+    >>> import numpy as np
     >>> a = np.array([2, 3, 4], dtype=np.uint32)
     >>> b = np.array([5, 6, 7], dtype=np.uint32)
     >>> c_unsigned32 = a - b
@@ -69,10 +72,10 @@ results,  for example::
 
 Notice when you perform operations with two arrays of the same
 ``dtype``: ``uint32``, the resulting array is the same type. When you
-perform operations with different ``dtype``, NumPy will 
+perform operations with different ``dtype``, NumPy will
 assign a new type that satisfies all of the array elements involved in
 the computation, here ``uint32`` and ``int32`` can both be represented in
-as ``int64``. 
+as ``int64``.
 
 The default NumPy behavior is to create arrays in either 32 or 64-bit signed
 integers (platform dependent and matches C ``long`` size) or double precision
@@ -84,8 +87,8 @@ you create the array.
 ===========================================
 
 ..
-  40 functions seems like a small number, but the routies.array-creation
-  has ~47. I'm sure there are more. 
+  40 functions seems like a small number, but the routines.array-creation
+  has ~47. I'm sure there are more.
 
 NumPy has over 40 built-in functions for creating arrays as laid
 out in the :ref:`Array creation routines <routines.array-creation>`.
@@ -101,15 +104,16 @@ dimension of the array they create:
 
 The 1D array creation functions e.g. :func:`numpy.linspace` and
 :func:`numpy.arange` generally need at least two inputs, ``start`` and
-``stop``. 
+``stop``.
 
 :func:`numpy.arange` creates arrays with regularly incrementing values.
 Check the documentation for complete information and examples. A few
 examples are shown::
 
+ >>> import numpy as np
  >>> np.arange(10)
  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
- >>> np.arange(2, 10, dtype=float)
+ >>> np.arange(2, 10, dtype=np.float64)
  array([2., 3., 4., 5., 6., 7., 8., 9.])
  >>> np.arange(2, 3, 0.1)
  array([2. , 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9])
@@ -117,13 +121,14 @@ examples are shown::
 Note: best practice for :func:`numpy.arange` is to use integer start, end, and
 step values. There are some subtleties regarding ``dtype``. In the second
 example, the ``dtype`` is defined. In the third example, the array is
-``dtype=float`` to accommodate the step size of ``0.1``. Due to roundoff error,
-the ``stop`` value is sometimes included. 
+``dtype=np.float64`` to accommodate the step size of ``0.1``. Due to roundoff error,
+the ``stop`` value is sometimes included.
 
 :func:`numpy.linspace` will create arrays with a specified number of elements, and
 spaced equally between the specified beginning and end values. For
 example: ::
 
+ >>> import numpy as np
  >>> np.linspace(1., 4., 6)
  array([1. ,  1.6,  2.2,  2.8,  3.4,  4. ])
 
@@ -135,11 +140,12 @@ number of elements and the starting and end point. The previous
 -------------------------------
 
 The 2D array creation functions e.g. :func:`numpy.eye`, :func:`numpy.diag`, and :func:`numpy.vander`
-define properties of special matrices represented as 2D arrays. 
+define properties of special matrices represented as 2D arrays.
 
 ``np.eye(n, m)`` defines a 2D identity matrix. The elements where i=j (row index and column index are equal) are 1
 and the rest are 0, as such::
 
+ >>> import numpy as np
  >>> np.eye(3)
  array([[1., 0., 0.],
         [0., 1., 0.],
@@ -153,7 +159,8 @@ and the rest are 0, as such::
 the diagonal *or* if given a 2D array returns a 1D array that is
 only the diagonal elements. The two array creation functions can be helpful while
 doing linear algebra, as such::
- 
+
+ >>> import numpy as np
  >>> np.diag([1, 2, 3])
  array([[1, 0, 0],
         [0, 2, 0],
@@ -172,7 +179,8 @@ of the Vandermonde matrix is a decreasing power of the input 1D array or
 list or tuple,
 ``x`` where the highest polynomial order is ``n-1``. This array creation
 routine is helpful in generating linear least squares models, as such::
- 
+
+ >>> import numpy as np
  >>> np.vander(np.linspace(0, 2, 5), 2)
  array([[0. , 1. ],
        [0.5, 1. ],
@@ -189,7 +197,7 @@ routine is helpful in generating linear least squares models, as such::
         [ 8,  4,  2,  1],
         [27,  9,  3,  1],
         [64, 16,  4,  1]])
- 
+
 3 - general ndarray creation functions
 --------------------------------------
 
@@ -197,19 +205,20 @@ The ndarray creation functions e.g. :func:`numpy.ones`,
 :func:`numpy.zeros`, and :meth:`~numpy.random.Generator.random` define
 arrays based upon the desired shape.  The  ndarray creation functions
 can create arrays with any dimension by specifying how many dimensions
-and length along that dimension in a tuple or list. 
+and length along that dimension in a tuple or list.
 
 :func:`numpy.zeros` will create an array filled with 0 values with the
 specified shape. The default dtype is ``float64``::
 
+ >>> import numpy as np
  >>> np.zeros((2, 3))
- array([[0., 0., 0.], 
+ array([[0., 0., 0.],
         [0., 0., 0.]])
  >>> np.zeros((2, 3, 2))
  array([[[0., 0.],
          [0., 0.],
          [0., 0.]],
- <BLANKLINE>        
+ <BLANKLINE>
         [[0., 0.],
          [0., 0.],
          [0., 0.]]])
@@ -217,8 +226,9 @@ specified shape. The default dtype is ``float64``::
 :func:`numpy.ones` will create an array filled with 1 values. It is identical to
 ``zeros`` in all other respects as such::
 
+ >>> import numpy as np
  >>> np.ones((2, 3))
- array([[1., 1., 1.], 
+ array([[1., 1., 1.],
         [1., 1., 1.]])
  >>> np.ones((2, 3, 2))
  array([[[1., 1.],
@@ -236,6 +246,7 @@ library. Below, two arrays are created with shapes (2,3) and (2,3,2),
 respectively. The seed is set to 42 so you can reproduce these
 pseudorandom numbers::
 
+ >>> import numpy as np
  >>> from numpy.random import default_rng
  >>> default_rng(42).random((2,3))
  array([[0.77395605, 0.43887844, 0.85859792],
@@ -250,14 +261,15 @@ pseudorandom numbers::
 
 :func:`numpy.indices` will create a set of arrays (stacked as a one-higher
 dimensioned array), one per dimension with each representing variation in that
-dimension: ::
+dimension::
 
+ >>> import numpy as np
  >>> np.indices((3,3))
- array([[[0, 0, 0], 
-         [1, 1, 1], 
-         [2, 2, 2]], 
-        [[0, 1, 2], 
-         [0, 1, 2], 
+ array([[[0, 0, 0],
+         [1, 1, 1],
+         [2, 2, 2]],
+        [[0, 1, 2],
+         [0, 1, 2],
          [0, 1, 2]]])
 
 This is particularly useful for evaluating functions of multiple dimensions on
@@ -272,6 +284,7 @@ elements to a new variable, you have to explicitly :func:`numpy.copy` the array,
 otherwise the variable is a view into the original array. Consider the
 following example::
 
+ >>> import numpy as np
  >>> a = np.array([1, 2, 3, 4, 5, 6])
  >>> b = a[:2]
  >>> b += 1
@@ -283,6 +296,7 @@ In this example, you did not create a new array. You created a variable,
 would get the same result by adding 1 to ``a[:2]``. If you want to create a
 *new* array, use the :func:`numpy.copy` array creation routine as such::
 
+ >>> import numpy as np
  >>> a = np.array([1, 2, 3, 4])
  >>> b = a[:2].copy()
  >>> b += 1
@@ -296,6 +310,7 @@ There are a number of routines to join existing arrays e.g. :func:`numpy.vstack`
 :func:`numpy.hstack`, and :func:`numpy.block`. Here is an example of joining four 2-by-2
 arrays into a 4-by-4 array using ``block``::
 
+ >>> import numpy as np
  >>> A = np.ones((2, 2))
  >>> B = np.eye(2, 2)
  >>> C = np.zeros((2, 2))
@@ -307,7 +322,7 @@ arrays into a 4-by-4 array using ``block``::
         [ 0.,  0.,  0., -4.]])
 
 Other routines use similar syntax to join ndarrays. Check the
-routine's documentation for further examples and syntax. 
+routine's documentation for further examples and syntax.
 
 4) Reading arrays from disk, either from standard or custom formats
 ===================================================================
@@ -315,7 +330,7 @@ routine's documentation for further examples and syntax.
 This is the most common case of large array creation. The details depend
 greatly on the format of data on disk. This section gives general pointers on
 how to handle various formats. For more detailed examples of IO look at
-:ref:`How to Read and Write files <how-to-io>`. 
+:ref:`How to Read and Write files <how-to-io>`.
 
 Standard binary formats
 -----------------------
@@ -354,6 +369,7 @@ and :func:`numpy.genfromtxt`. These functions have more involved use cases in
 
 Importing ``simple.csv`` is accomplished using :func:`numpy.loadtxt`::
 
+ >>> import numpy as np
  >>> np.loadtxt('simple.csv', delimiter = ',', skiprows = 1) # doctest: +SKIP
  array([[0., 0.],
         [1., 1.],
@@ -381,4 +397,4 @@ knowledge to interface with C or C++.
 NumPy is the fundamental library for array containers in the Python Scientific Computing
 stack. Many Python libraries, including SciPy, Pandas, and OpenCV, use NumPy ndarrays
 as the common format for data exchange, These libraries can create,
-operate on, and work with NumPy arrays. 
+operate on, and work with NumPy arrays.

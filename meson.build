@@ -1,18 +1,16 @@
 project(
   'NumPy',
   'c', 'cpp', 'cython',
-  version: run_command(
-    # This should become `numpy/_version.py` in NumPy 2.0
-    ['numpy/_build_utils/gitversion.py'],
-    check: true).stdout().strip(),
-  license: 'BSD-3',
-  meson_version: '>=1.2.99',  # version in vendored-meson is 1.2.99
+  version: run_command(['numpy/_build_utils/gitversion.py'], check: true).stdout().strip(),
+  license: 'BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0',
+  meson_version: '>=1.8.3',  # version in vendored-meson
   default_options: [
     'buildtype=debugoptimized',
     'b_ndebug=if-release',
     'c_std=c11',
     'cpp_std=c++17',
     'pkgconfig.relocatable=true',
+    'python.allow_limited_api=false',
   ],
 )
 
@@ -24,20 +22,38 @@ cy = meson.get_compiler('cython')
 
 # Check compiler is recent enough (see the SciPy Toolchain Roadmap for details)
 if cc.get_id() == 'gcc'
-  if not cc.version().version_compare('>=8.4')
-    error('NumPy requires GCC >= 8.4')
+  if not cc.version().version_compare('>=10.3')
+    error('NumPy requires GCC >= 10.3')
   endif
 elif cc.get_id() == 'msvc'
-  if not cc.version().version_compare('>=19.20')
-    error('NumPy requires at least vc142 (default with Visual Studio 2019) ' + \
+  if not cc.version().version_compare('>=19.35')
+    error('NumPy requires at least vc143 (default with Visual Studio 2022) ' + \
           'when building with MSVC')
   endif
+  add_project_arguments('/experimental:c11atomics', language: 'c')
 endif
-if not cy.version().version_compare('>=3.0.6')
-  error('NumPy requires Cython >= 3.0.6')
+if not cy.version().version_compare('>=3.1.0')
+  error('NumPy requires Cython >= 3.1.0')
 endif
 
 py = import('python').find_installation(pure: false)
+
+# Target version for the Limited C API, used by extension modules that
+# have been ported. Controlled by python.allow_limited_api (default: false).
+# The hex form is the same version, for targets that must define
+# `Py_LIMITED_API` themselves; keep the two in sync.
+#
+# `Py_LIMITED_API` selects abi3, which is non-free-threaded only; the
+# free-threaded ABI (abi3t) needs Python 3.15. Leave both empty on a
+# free-threaded build, where a `limited_api:` kwarg would otherwise be acted
+# on and produce a module that cannot be built.
+if py.get_variable('Py_GIL_DISABLED', 0) == 0
+  py_limited_api = '3.13'
+  py_limited_api_hex = '0x030d0000'
+else
+  py_limited_api = ''
+  py_limited_api_hex = ''
+endif
 py_dep = py.dependency()
 
 if not cc.has_header('Python.h', dependencies: py_dep)
@@ -80,12 +96,6 @@ if cc_id.startswith('clang')
     endif
     add_project_arguments(trapping_math, language: ['c', 'cpp'])
   endif
-endif
-
-if host_machine.system() == 'darwin' and cc.has_link_argument('-Wl,-ld_classic')
-  # New linker introduced in macOS 14 not working yet with at least OpenBLAS in Spack,
-  # see gh-24964 (and linked scipy issue from there).
-  add_project_link_arguments('-Wl,-ld_classic', language : ['c', 'cpp'])
 endif
 
 subdir('meson_cpu')

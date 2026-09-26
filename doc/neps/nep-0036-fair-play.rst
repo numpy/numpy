@@ -121,10 +121,8 @@ Fair play rules
 
 4. *DO* use official mechanism to engage with the API.
 
-   Protocols such as `__array_ufunc__
-   <https://numpy.org/neps/nep-0013-ufunc-overrides.html>`__ and
-   `__array_function__
-   <https://numpy.org/neps/nep-0018-array-function-protocol.html>`__
+   Protocols such as :ref:`__array_ufunc__ <NEP13>` and
+   :ref:`__array_function__ <NEP18>`
    were designed to help external packages interact more easily with
    NumPy.  E.g., the latter allows objects from foreign libraries to
    pass through NumPy.  We actively encourage using any of

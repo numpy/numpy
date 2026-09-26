@@ -46,7 +46,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
 NPY_NO_EXPORT int
 raw_array_assign_scalar(int ndim, npy_intp const *shape,
         PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data);
+        PyArray_Descr *src_dtype, char *src_data, NPY_CASTING casting);
 
 /*
  * Assigns the scalar value to every element of the destination raw array
@@ -59,7 +59,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
         PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
         PyArray_Descr *src_dtype, char *src_data,
         PyArray_Descr *wheremask_dtype, char *wheremask_data,
-        npy_intp const *wheremask_strides);
+        npy_intp const *wheremask_strides, NPY_CASTING casting);
 
 /******** LOW-LEVEL ARRAY MANIPULATION HELPERS ********/
 

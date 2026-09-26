@@ -42,6 +42,10 @@ enter in a script or at a Python prompt. Everything else is **output**, the
 results of running your code. Note that ``>>>`` and ``...`` are not part of the
 code and may cause an error if entered at a Python prompt.
 
+To run the code in the examples, you can copy and paste it into a Python script or
+REPL, or use the experimental interactive examples in the browser provided in various
+locations in the documentation.
+
 Why use NumPy?
 --------------
 
@@ -235,7 +239,7 @@ only one "data type". The data type is recorded in the ``dtype`` attribute.
     >>> a.dtype
     dtype('int64')  # "int" for integer, "64" for 64-bit
 
-ref:`Read more about array attributes here <arrays.ndarray>` and learn about
+:ref:`Read more about array attributes here <arrays.ndarray>` and learn about
 :ref:`array objects here <arrays>`.
 
 How to create a basic array
@@ -402,7 +406,7 @@ Can you reshape an array?
 
 **Yes!**
 
-Using ``arr.reshape()`` will give a new shape to an array without changing the
+Using ``arr.reshape()`` will return a reshaped array without changing the
 data. Just remember that when you use the reshape method, the array you want to
 produce needs to have the same number of elements as the original array. If you
 start with an array with 12 elements, you'll need to make sure that your new
@@ -425,12 +429,12 @@ this array to an array with three rows and two columns::
 
 With ``np.reshape``, you can specify a few optional parameters::
 
-  >>> np.reshape(a, newshape=(1, 6), order='C')
+  >>> np.reshape(a, shape=(1, 6), order='C')
   array([[0, 1, 2, 3, 4, 5]])
 
 ``a`` is the array to be reshaped.
 
-``newshape`` is the new shape you want. You can specify an integer or a tuple of
+``shape`` is the new shape you want. You can specify an integer or a tuple of
 integers. If you specify an integer, the result will be an array of that length.
 The shape should be compatible with the original shape.
 
@@ -552,7 +556,7 @@ it's straightforward with NumPy.
 
 For example, if you start with this array::
 
-  >>> a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can easily print all of the values in the array that are less than 5. ::
 
@@ -664,7 +668,10 @@ where you want to slice your array. ::
   array([4, 5, 6, 7, 8])
 
 Here, you grabbed a section of your array from index position 3 through index
-position 8.
+position 8 but not including position 8 itself.
+
+*Reminder: Array indexes begin at 0. This means the first element of the array is at index 0,
+the second element is at index 1, and so on.*
 
 You can also stack two existing arrays, both vertically and horizontally. Let's
 say you have two arrays, ``a1`` and ``a2``::
@@ -772,7 +779,7 @@ You can add the arrays together with the plus sign.
 ::
 
   >>> data = np.array([1, 2])
-  >>> ones = np.ones(2, dtype=int)
+  >>> ones = np.ones(2, dtype=np.int_)
   >>> data + ones
   array([2, 3])
 
@@ -856,12 +863,13 @@ NumPy also performs aggregation functions. In addition to ``min``, ``max``, and
 result of multiplying the elements together, ``std`` to get the standard
 deviation, and more. ::
 
+  >>> data = np.array([1, 2, 3])
   >>> data.max()
-  2.0
+  3
   >>> data.min()
-  1.0
+  1
   >>> data.sum()
-  3.0
+  6
 
 .. image:: images/np_aggregation.png
 
@@ -1274,7 +1282,7 @@ Since ``ravel`` does not create a copy, it's memory efficient.
 
 If you start with this array::
 
-  >>> x = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> x = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can use ``flatten`` to flatten your array into a 1D array. ::
 
@@ -1340,7 +1348,7 @@ For example::
       With a single iterable argument, return its biggest item. The
       default keyword-only argument specifies an object to return if
       the provided iterable is empty.
-      With two or more arguments, return the largest argument.
+      With two or more ...arguments, return the largest argument.
   <BLANKLINE>
 
 
@@ -1733,4 +1741,5 @@ For directions regarding installing Matplotlib, see the official
 
 -------------------------------------------------------
 
-*Image credits: Jay Alammar https://jalammar.github.io/*
+*Image credits: Jay Alammar*
+`https://jalammar.github.io/ <https://jalammar.github.io/>`_

@@ -11,6 +11,11 @@ if not cy.version().version_compare('>=3.0.6')
   error('tests requires Cython >= 3.0.6')
 endif
 
+base_cython_args = []
+if cy.version().version_compare('>=3.1.0')
+  base_cython_args += ['-Xfreethreading_compatible=True']
+endif
+
 _numpy_abs = run_command(py3, ['-c',
                'import os; os.chdir(".."); import numpy; print(os.path.abspath(numpy.get_include() + "../../.."))'],
                          check: true).stdout().strip()
@@ -27,6 +32,7 @@ py3.extension_module(
     install: false,
     include_directories: [npy_include_path],
     dependencies: [npyrandom_lib, npymath_lib],
+    cython_args: base_cython_args,
 )
 py3.extension_module(
     'extending',
@@ -34,13 +40,14 @@ py3.extension_module(
     install: false,
     include_directories: [npy_include_path],
     dependencies: [npyrandom_lib, npymath_lib],
+    cython_args: base_cython_args,
 )
 py3.extension_module(
     'extending_cpp',
     'extending_distributions.pyx',
     install: false,
     override_options : ['cython_language=cpp'],
-    cython_args: ['--module-name', 'extending_cpp'],
+    cython_args: base_cython_args + ['--module-name', 'extending_cpp'],
     include_directories: [npy_include_path],
     dependencies: [npyrandom_lib, npymath_lib],
 )

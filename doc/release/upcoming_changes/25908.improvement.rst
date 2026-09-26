@@ -1,5 +1,0 @@
-``center``, ``ljust``, ``rjust``, and ``zfill`` are now implemented using ufuncs
---------------------------------------------------------------------------------
-
-The text justification functions in `numpy.strings` are now implemented using
-ufuncs under the hood and should be significantly faster.

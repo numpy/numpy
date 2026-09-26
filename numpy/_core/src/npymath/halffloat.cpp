@@ -1,11 +1,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-/*
- * If these are 1, the conversions try to trigger underflow,
- * overflow, and invalid exceptions in the FP system when needed.
- */
+/* Generate the overflow status flag when half-precision spacing overflows. */
 #define NPY_HALF_GENERATE_OVERFLOW 1
-#define NPY_HALF_GENERATE_INVALID 1
 
 #include "numpy/halffloat.h"
 
@@ -68,10 +64,12 @@ npy_half npy_half_spacing(npy_half h)
     npy_uint16 h_exp = h&0x7c00u;
     npy_uint16 h_sig = h&0x03ffu;
     if (h_exp == 0x7c00u) {
-#if NPY_HALF_GENERATE_INVALID
-        npy_set_floatstatus_invalid();
-#endif
-        ret = NPY_HALF_NAN;
+        /* NaN passes through quietly; infinities return NaN. */
+        if (h_sig == 0) {
+            ret = NPY_HALF_NAN;
+        } else {
+            ret = h;
+        }
     } else if (h == 0x7bffu) {
 #if NPY_HALF_GENERATE_OVERFLOW
         npy_set_floatstatus_overflow();
@@ -108,7 +106,7 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
     if (npy_half_isnan(x) || npy_half_isnan(y)) {
         ret = NPY_HALF_NAN;
     } else if (npy_half_eq_nonan(x, y)) {
-        ret = x;
+        ret = y;
     } else if (npy_half_iszero(x)) {
         ret = (y&0x8000u) + 1; /* Smallest subnormal half */
     } else if (!(x&0x8000u)) { /* x > 0 */
@@ -198,41 +196,21 @@ npy_half npy_half_divmod(npy_half h1, npy_half h2, npy_half *modulus)
 
 npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
 {
-    if constexpr (Half::kNativeConversion<float>) {
-        return BitCast<uint16_t>(Half(BitCast<float>(f)));
-    }
-    else {
-        return half_private::FromFloatBits(f);
-    }
+    return BitCast<uint16_t>(Half(BitCast<float>(f)));
 }
 
 npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
 {
-    if constexpr (Half::kNativeConversion<double>) {
-        return BitCast<uint16_t>(Half(BitCast<double>(d)));
-    }
-    else {
-        return half_private::FromDoubleBits(d);
-    }
+    return BitCast<uint16_t>(Half(BitCast<double>(d)));
 }
 
 npy_uint32 npy_halfbits_to_floatbits(npy_uint16 h)
 {
-    if constexpr (Half::kNativeConversion<float>) {
-        return BitCast<uint32_t>(static_cast<float>(Half::FromBits(h)));
-    }
-    else {
-        return half_private::ToFloatBits(h);
-    }
+    return BitCast<uint32_t>(static_cast<float>(Half::FromBits(h)));
 }
 
 npy_uint64 npy_halfbits_to_doublebits(npy_uint16 h)
 {
-    if constexpr (Half::kNativeConversion<double>) {
-        return BitCast<uint64_t>(static_cast<double>(Half::FromBits(h)));
-    }
-    else {
-        return half_private::ToDoubleBits(h);
-    }
+    return BitCast<uint64_t>(static_cast<double>(Half::FromBits(h)));
 }
 

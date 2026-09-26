@@ -131,20 +131,44 @@ npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
     __mmask16 gh = _mm512_kunpackb((__mmask16)h, (__mmask16)g);
     return npyv_pack_b8_b32(ab, cd, ef, gh);
 }
-
+/*
+ * A compiler bug workaround on Intel Compiler Classic.
+ * The bug manifests specifically when the
+ * scalar result of _cvtmask64_u64 is compared against the constant -1. This
+ * comparison uniquely triggers a bug under conditions of equality (==) or
+ * inequality (!=) checks, which are typically used in reduction operations like
+ * np.logical_or.
+ *
+ * The underlying issue arises from the compiler's optimizer. When the last
+ * vector comparison instruction operates on zmm, the optimizer erroneously
+ * emits a duplicate of this instruction but on the lower half register ymm. It
+ * then performs a bitwise XOR operation between the mask produced by this
+ * duplicated instruction and the mask from the original comparison instruction.
+ * This erroneous behavior leads to incorrect results.
+ *
+ * See https://github.com/numpy/numpy/issues/26197#issuecomment-2056750975
+ */
+#ifdef __INTEL_COMPILER
+#define NPYV__VOLATILE_CVTMASK64 volatile
+#else
+#define NPYV__VOLATILE_CVTMASK64
+#endif
 // convert boolean vectors to integer bitfield
-NPY_FINLINE npy_uint64 npyv_tobits_b8(npyv_b8 a)
-{
+NPY_FINLINE npy_uint64 npyv_tobits_b8(npyv_b8 a) {
 #ifdef NPY_HAVE_AVX512BW_MASK
-    return (npy_uint64)_cvtmask64_u64(a);
+    npy_uint64 NPYV__VOLATILE_CVTMASK64 t = (npy_uint64)_cvtmask64_u64(a);
+    return t;
 #elif defined(NPY_HAVE_AVX512BW)
-    return (npy_uint64)a;
+    npy_uint64 NPYV__VOLATILE_CVTMASK64 t = (npy_uint64)a;
+    return t;
 #else
     int mask_lo = _mm256_movemask_epi8(npyv512_lower_si256(a));
     int mask_hi = _mm256_movemask_epi8(npyv512_higher_si256(a));
     return (unsigned)mask_lo | ((npy_uint64)(unsigned)mask_hi << 32);
 #endif
 }
+#undef NPYV__VOLATILE_CVTMASK64
+
 NPY_FINLINE npy_uint64 npyv_tobits_b16(npyv_b16 a)
 {
 #ifdef NPY_HAVE_AVX512BW_MASK

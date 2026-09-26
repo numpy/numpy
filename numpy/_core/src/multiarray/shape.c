@@ -7,22 +7,18 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-
-
-
 #include "arraywrap.h"
 #include "ctors.h"
-
 #include "shape.h"
-
-#include "multiarraymodule.h" /* for interned strings */
+#include "npy_static_data.h" /* for interned strings */
+#include "module_state.h"
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "common.h" /* for convert_shape_to_string */
 #include "alloc.h"
+#include "refcount.h"
 
 static int
 _fix_unknown_dimension(PyArray_Dims *newshape, PyArrayObject *arr);
@@ -31,23 +27,12 @@ static int
 _attempt_nocopy_reshape(PyArrayObject *self, int newnd, const npy_intp *newdims,
                         npy_intp *newstrides, int is_f_order);
 
-static void
-_putzero(char *optr, PyObject *zero, PyArray_Descr *dtype);
-
-/*NUMPY_API
- * Resize (reallocate data).  Only works if nothing else is referencing this
- * array and it is contiguous.  If refcheck is 0, then the reference count is
- * not checked and assumed to be 1.  You still must own this data and have no
- * weak-references and no base object.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
-               NPY_ORDER NPY_UNUSED(order))
+NPY_NO_EXPORT int
+PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
 {
     npy_intp oldnbytes, newnbytes;
     npy_intp oldsize, newsize;
     int new_nd=newshape->len, k, elsize;
-    int refcnt;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
     npy_intp *dimptr;
@@ -56,7 +41,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_ValueError,
                 "resize only works on single-segment arrays");
-        return NULL;
+        return -1;
     }
 
     /* Compute total size of old and new arrays. The new size might overflow */
@@ -70,10 +55,11 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         if (new_dimensions[k] < 0) {
             PyErr_SetString(PyExc_ValueError,
                     "negative dimensions not allowed");
-            return NULL;
+            return -1;
         }
         if (npy_mul_sizes_with_overflow(&newsize, newsize, new_dimensions[k])) {
-            return PyErr_NoMemory();
+            PyErr_NoMemory();
+            return -1;
         }
     }
 
@@ -81,80 +67,90 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     elsize = PyArray_ITEMSIZE(self);
     oldnbytes = oldsize * elsize;
     if (npy_mul_sizes_with_overflow(&newnbytes, newsize, elsize)) {
-        return PyErr_NoMemory();
+        PyErr_NoMemory();
+        return -1;
     }
 
     if (oldnbytes != newnbytes) {
         if (!(PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize this array: it does not own its data");
-            return NULL;
+            return -1;
         }
 
+        static const char *msg =
+                "cannot resize an array that references or is referenced\n"
+                "by another object in this way.\n"
+                "Use the np.resize function to get a new resized copy or\n "
+                "set refcheck=False to disable this check";
         if (PyArray_BASE(self) != NULL
               || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array that "
-                    "references or is referenced\n"
-                    "by another array in this way. Use the np.resize function.");
-            return NULL;
+            PyErr_SetString(PyExc_ValueError, msg);
+            return -1;
         }
         if (refcheck) {
-#ifdef PYPY_VERSION
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array with refcheck=True on PyPy.\n"
-                    "Use the np.resize function or refcheck=False");
-            return NULL;
+#if PY_VERSION_HEX >= 0x030E00B0
+            // Python 3.14 changed reference counting semantics for function-
+            // local variables. There is no way to tell if the calling function
+            // has been optimized (because it might be implemented in C or Cython)
+            //
+            // Instead, warn if the refcount is exactly 2 that this might be a
+            // false positive
+            if (!PyUnstable_Object_IsUniquelyReferenced((PyObject *)self)) {
+                if (Py_REFCNT(self) == 2) {
+                    PyErr_SetString(
+                            PyExc_ValueError,
+                            "cannot resize an array that may be referenced "
+                            "by another object.\n"
+                            "It is possible that this is a false positive.\n"
+                            "If you are sure that the array is uniquely referenced, "
+                            "set refcheck=False.");
+                    return -1;
+                }
 #else
-            refcnt = Py_REFCNT(self);
-#endif /* PYPY_VERSION */
+            if (Py_REFCNT(self) > 2) {
+#endif
+                PyErr_SetString(PyExc_ValueError, msg);
+                return -1;
+            }
         }
-        else {
-            refcnt = 1;
-        }
-        if (refcnt > 2) {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array that "
-                    "references or is referenced\n"
-                    "by another array in this way.\n"
-                    "Use the np.resize function or refcheck=False");
-            return NULL;
-        }
-
         /* Reallocate space if needed - allocating 0 is forbidden */
         PyObject *handler = PyArray_HANDLER(self);
         if (handler == NULL) {
             /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
             PyErr_SetString(PyExc_RuntimeError,
                             "no memory handler found but OWNDATA flag set");
-            return NULL;
+            return -1;
         }
+        if (newnbytes < oldnbytes) {
+            /* Clear now removed data (if dtype has references) */
+            if (PyArray_ClearBuffer(
+                    PyArray_DESCR(self), PyArray_BYTES(self) + newnbytes,
+                    elsize, oldsize-newsize, PyArray_ISALIGNED(self)) < 0) {
+                return -1;
+            }
+        }
+
         new_data = PyDataMem_UserRENEW(PyArray_DATA(self),
-                                       newnbytes == 0 ? elsize : newnbytes,
+                                       newnbytes == 0 ? 1 : newnbytes,
                                        handler);
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                     "cannot allocate memory for array");
-            return NULL;
+            return -1;
         }
         ((PyArrayObject_fields *)self)->data = new_data;
-    }
 
-    if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
-        /* Fill new memory with zeros */
-        if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_REFCOUNT)) {
-            PyObject *zero = PyLong_FromLong(0);
-            char *optr;
-            optr = PyArray_BYTES(self) + oldnbytes;
-            npy_intp n_new = newsize - oldsize;
-            for (npy_intp i = 0; i < n_new; i++) {
-                _putzero((char *)optr, zero, PyArray_DESCR(self));
-                optr += elsize;
+        if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
+            /* Fill new memory with zeros (PyLong zero for object arrays) */
+            npy_intp stride = elsize;
+            npy_intp size = newsize - oldsize;
+            char *data = PyArray_BYTES(self) + oldnbytes;
+            int aligned = PyArray_ISALIGNED(self);
+            if (PyArray_ZeroContiguousBuffer(PyArray_DESCR(self), data,
+                                            stride, size, aligned) < 0) {
+                return -1;
             }
-            Py_DECREF(zero);
-        }
-        else{
-            memset(PyArray_BYTES(self) + oldnbytes, 0, newnbytes - oldnbytes);
         }
     }
 
@@ -167,7 +163,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             if (dimptr == NULL) {
                 PyErr_SetString(PyExc_MemoryError,
                                 "cannot allocate memory for array");
-                return NULL;
+                return -1;
             }
             ((PyArrayObject_fields *)self)->dimensions = dimptr;
             ((PyArrayObject_fields *)self)->strides = dimptr + new_nd;
@@ -180,10 +176,32 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
     }
     else {
-        PyDimMem_FREE(((PyArrayObject_fields *)self)->dimensions);
+        npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->nd = 0;
         ((PyArrayObject_fields *)self)->dimensions = NULL;
         ((PyArrayObject_fields *)self)->strides = NULL;
+    }
+    return 0;
+}
+
+/*NUMPY_API
+ * Resize (reallocate data).  Only works if nothing else is referencing this
+ * array and it is contiguous.  If refcheck is 0, then the reference count is
+ * not checked and assumed to be 1.  You still must own this data and have no
+ * weak-references and no base object.
+ *
+ * On Python 3.13 and older, the check allows objects with exactly one
+ * reference to be reallocated in-place. On Python 3.14 and newer, the array
+ * must be uniquely referenced. In some cases this can lead to spurious
+ * ValueErrors.
+ *
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
+               NPY_ORDER NPY_UNUSED(order))
+{
+    if (PyArray_Resize_int(self, newshape, refcheck) < 0) {
+        return NULL;
     }
     Py_RETURN_NONE;
 }
@@ -202,6 +220,14 @@ NPY_NO_EXPORT PyObject *
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                  NPY_ORDER order)
 {
+    return _reshape_with_copy_arg(self, newdims, order, NPY_COPY_IF_NEEDED);
+}
+
+
+NPY_NO_EXPORT PyObject *
+_reshape_with_copy_arg(PyArrayObject *array, PyArray_Dims *newdims,
+                       NPY_ORDER order, NPY_COPYMODE copy)
+{
     npy_intp i;
     npy_intp *dimensions = newdims->ptr;
     PyArrayObject *ret;
@@ -212,7 +238,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     int flags;
 
     if (order == NPY_ANYORDER) {
-        order = PyArray_ISFORTRAN(self) ? NPY_FORTRANORDER : NPY_CORDER;
+        order = PyArray_ISFORTRAN(array) ? NPY_FORTRANORDER : NPY_CORDER;
     }
     else if (order == NPY_KEEPORDER) {
         PyErr_SetString(PyExc_ValueError,
@@ -220,56 +246,74 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         return NULL;
     }
     /*  Quick check to make sure anything actually needs to be done */
-    if (ndim == PyArray_NDIM(self)) {
+    if (ndim == PyArray_NDIM(array) && copy != NPY_COPY_ALWAYS) {
         same = NPY_TRUE;
         i = 0;
         while (same && i < ndim) {
-            if (PyArray_DIM(self,i) != dimensions[i]) {
+            if (PyArray_DIM(array, i) != dimensions[i]) {
                 same=NPY_FALSE;
             }
             i++;
         }
         if (same) {
-            return PyArray_View(self, NULL, NULL);
+            return PyArray_View(array, NULL, NULL);
         }
     }
 
     /*
      * fix any -1 dimensions and check new-dimensions against old size
      */
-    if (_fix_unknown_dimension(newdims, self) < 0) {
+    if (_fix_unknown_dimension(newdims, array) < 0) {
         return NULL;
     }
     /*
-     * sometimes we have to create a new copy of the array
-     * in order to get the right orientation and
-     * because we can't just reuse the buffer with the
-     * data in the order it is in.
+     * Memory order doesn't depend on a copy/no-copy context.
+     * 'order' argument is always honored.
      */
-    Py_INCREF(self);
-    if (((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
-         (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(self)))) {
-        int success = 0;
-        success = _attempt_nocopy_reshape(self, ndim, dimensions,
-                                          newstrides, order);
-        if (success) {
-            /* no need to copy the array after all */
-            strides = newstrides;
+    if (copy == NPY_COPY_ALWAYS) {
+        PyObject *newcopy = PyArray_NewCopy(array, order);
+        if (newcopy == NULL) {
+            return NULL;
         }
-        else {
-            PyObject *newcopy;
-            newcopy = PyArray_NewCopy(self, order);
-            Py_DECREF(self);
-            if (newcopy == NULL) {
+        array = (PyArrayObject *)newcopy;
+    }
+    else {
+        /*
+         * sometimes we have to create a new copy of the array
+         * in order to get the right orientation and
+         * because we can't just reuse the buffer with the
+         * data in the order it is in.
+         */
+        Py_INCREF(array);
+        if (((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(array)) ||
+                (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(array)))) {
+            int success = 0;
+            success = _attempt_nocopy_reshape(array, ndim, dimensions,
+                                              newstrides, order);
+            if (success) {
+                /* no need to copy the array after all */
+                strides = newstrides;
+            }
+            else if (copy == NPY_COPY_NEVER) {
+                PyErr_SetString(PyExc_ValueError,
+                                "Unable to avoid creating a copy while reshaping.");
+                Py_DECREF(array);
                 return NULL;
             }
-            self = (PyArrayObject *)newcopy;
+            else {
+                PyObject *newcopy = PyArray_NewCopy(array, order);
+                Py_DECREF(array);
+                if (newcopy == NULL) {
+                    return NULL;
+                }
+                array = (PyArrayObject *)newcopy;
+            }
         }
     }
     /* We always have to interpret the contiguous buffer correctly */
 
     /* Make sure the flags argument is set. */
-    flags = PyArray_FLAGS(self);
+    flags = PyArray_FLAGS(array);
     if (ndim > 1) {
         if (order == NPY_FORTRANORDER) {
             flags &= ~NPY_ARRAY_C_CONTIGUOUS;
@@ -281,16 +325,15 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         }
     }
 
-    Py_INCREF(PyArray_DESCR(self));
+    Py_INCREF(PyArray_DESCR(array));
     ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-            Py_TYPE(self), PyArray_DESCR(self),
-            ndim, dimensions, strides, PyArray_DATA(self),
-            flags, (PyObject *)self, (PyObject *)self,
+            Py_TYPE(array), PyArray_DESCR(array),
+            ndim, dimensions, strides, PyArray_DATA(array),
+            flags, (PyObject *)array, (PyObject *)array,
             _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
-    Py_DECREF(self);
+    Py_DECREF(array);
     return (PyObject *)ret;
 }
-
 
 
 /* For backward compatibility -- Not recommended */
@@ -310,41 +353,6 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
     ret = PyArray_Newshape(self, &newdims, NPY_CORDER);
     npy_free_cache_dim_obj(newdims);
     return ret;
-}
-
-
-static void
-_putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
-{
-    if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {
-        memset(optr, 0, dtype->elsize);
-    }
-    else if (PyDataType_HASFIELDS(dtype)) {
-        PyObject *key, *value, *title = NULL;
-        PyArray_Descr *new;
-        int offset;
-        Py_ssize_t pos = 0;
-        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) {
-            if (NPY_TITLE_KEY(key, value)) {
-                continue;
-            }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
-                return;
-            }
-            _putzero(optr + offset, zero, new);
-        }
-    }
-    else {
-        npy_intp i;
-        npy_intp nsize = dtype->elsize / sizeof(zero);
-
-        for (i = 0; i < nsize; i++) {
-            Py_INCREF(zero);
-            memcpy(optr, &zero, sizeof(zero));
-            optr += sizeof(zero);
-        }
-    }
-    return;
 }
 
 
@@ -643,10 +651,11 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
     int n = PyArray_NDIM(ap);
     int i;
 
-    if (check_and_adjust_axis_msg(&a1, n, npy_ma_str_axis1) < 0) {
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
+    if (check_and_adjust_axis_msg(&a1, n, interned_str->axis1) < 0) {
         return NULL;
     }
-    if (check_and_adjust_axis_msg(&a2, n, npy_ma_str_axis2) < 0) {
+    if (check_and_adjust_axis_msg(&a2, n, interned_str->axis2) < 0) {
         return NULL;
     }
 

@@ -56,7 +56,6 @@ array_concat(PyObject *self, PyObject *other)
 {
     /*
      * Throw a type error, when trying to concat NDArrays
-     * NOTE: This error is not Thrown when running with PyPy
      */
     PyErr_SetString(PyExc_TypeError,
             "Concatenation operation is not implemented for NumPy arrays, "

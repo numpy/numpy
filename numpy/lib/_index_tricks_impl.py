@@ -1,20 +1,17 @@
 import functools
-import sys
 import math
-import warnings
+import sys
+from itertools import product
 
 import numpy as np
-from .._utils import set_module
 import numpy._core.numeric as _nx
+import numpy.matrixlib as matrixlib
+from numpy._core import linspace, overrides
+from numpy._core.multiarray import ravel_multi_index, unravel_index
 from numpy._core.numeric import ScalarType, array
 from numpy._core.numerictypes import issubdtype
-
-import numpy.matrixlib as matrixlib
-from numpy._core.multiarray import ravel_multi_index, unravel_index
-from numpy._core import overrides, linspace
-from numpy.lib.stride_tricks import as_strided
+from numpy._utils import set_module
 from numpy.lib._function_base_impl import diff
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -65,6 +62,7 @@ def ix_(*args):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(10).reshape(2, 5)
     >>> a
     array([[0, 1, 2, 3, 4],
@@ -101,7 +99,7 @@ def ix_(*args):
             raise ValueError("Cross index must be 1 dimensional")
         if issubdtype(new.dtype, _nx.bool):
             new, = new.nonzero()
-        new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
+        new = new.reshape((1,) * k + (new.size,) + (1,) * (nd - k - 1))
         out.append(new)
     return tuple(out)
 
@@ -140,6 +138,7 @@ class nd_grid:
     Users should use these pre-defined instances instead of using `nd_grid`
     directly.
     """
+    __slots__ = ('sparse',)
 
     def __init__(self, sparse=False):
         self.sparse = sparse
@@ -163,12 +162,12 @@ class nd_grid:
                     size.append(int(step))
                 else:
                     size.append(
-                        int(math.ceil((stop - start) / (step*1.0))))
+                        math.ceil((stop - start) / step))
                 num_list += [start, stop, step]
             typ = _nx.result_type(*num_list)
             if self.sparse:
                 nn = [_nx.arange(_x, dtype=_t)
-                      for _x, _t in zip(size, (typ,)*len(size))]
+                      for _x, _t in zip(size, (typ,) * len(size))]
             else:
                 nn = _nx.indices(size, typ)
             for k, kk in enumerate(key):
@@ -182,9 +181,9 @@ class nd_grid:
                     step = int(abs(step))
                     if step != 1:
                         step = (kk.stop - start) / float(step - 1)
-                nn[k] = (nn[k]*step+start)
+                nn[k] = (nn[k] * step + start)
             if self.sparse:
-                slobj = [_nx.newaxis]*len(size)
+                slobj = [_nx.newaxis] * len(size)
                 for k in range(len(size)):
                     slobj[k] = slice(None, None)
                     nn[k] = nn[k][tuple(slobj)]
@@ -202,9 +201,9 @@ class nd_grid:
                 step_float = abs(step)
                 step = length = int(step_float)
                 if step != 1:
-                    step = (key.stop-start)/float(step-1)
+                    step = (key.stop - start) / float(step - 1)
                 typ = _nx.result_type(start, stop, step_float)
-                return _nx.arange(0, length, 1, dtype=typ)*step + start
+                return _nx.arange(0, length, 1, dtype=typ) * step + start
             else:
                 return _nx.arange(start, stop, step)
 
@@ -239,6 +238,7 @@ class MGridClass(nd_grid):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.mgrid[0:5, 0:5]
     array([[[0, 0, 0, 0, 0],
             [1, 1, 1, 1, 1],
@@ -261,6 +261,7 @@ class MGridClass(nd_grid):
     (3, 4, 5, 6)
 
     """
+    __slots__ = ()
 
     def __init__(self):
         super().__init__(sparse=False)
@@ -312,6 +313,7 @@ class OGridClass(nd_grid):
      array([[0, 1, 2, 3, 4]]))
 
     """
+    __slots__ = ()
 
     def __init__(self):
         super().__init__(sparse=True)
@@ -326,6 +328,8 @@ class AxisConcatenator:
 
     For detailed documentation on usage, see `r_`.
     """
+    __slots__ = ('axis', 'matrix', 'ndmin', 'trans1d')
+
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)
     makemat = staticmethod(matrixlib.matrix)
@@ -392,7 +396,7 @@ class AxisConcatenator:
                         continue
                     except Exception as e:
                         raise ValueError(
-                            "unknown special directive {!r}".format(item)
+                            f"unknown special directive {item!r}"
                         ) from e
                 try:
                     axis = int(item)
@@ -440,7 +444,7 @@ class AxisConcatenator:
     def __len__(self):
         return 0
 
-# separate classes are used here instead of just making r_ = concatentor(0),
+# separate classes are used here instead of just making r_ = concatenator(0),
 # etc. because otherwise we couldn't get the doc string to come out right
 # in help(r_)
 
@@ -468,9 +472,9 @@ class RClass(AxisConcatenator):
     Optional character strings placed as the first element of the index
     expression can be used to change the output. The strings 'r' or 'c' result
     in matrix output. If the result is 1-D and 'r' is specified a 1 x N (row)
-    matrix is produced. If the result is 1-D and 'c' is specified, then a N x 1
-    (column) matrix is produced. If the result is 2-D then both provide the
-    same matrix result.
+    matrix is produced. If the result is 1-D and 'c' is specified, then
+    an N x 1 (column) matrix is produced.
+    If the result is 2-D then both provide the same matrix result.
 
     A string integer specifies which axis to stack multiple comma separated
     arrays along. A string of two comma-separated integers allows indication
@@ -505,6 +509,7 @@ class RClass(AxisConcatenator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.r_[np.array([1,2,3]), 0, 0, np.array([4,5,6])]
     array([1, 2, 3, ..., 4, 5, 6])
     >>> np.r_[-1:1:6j, [0]*3, 5, 6]
@@ -539,6 +544,7 @@ class RClass(AxisConcatenator):
     matrix([[1, 2, 3, 4, 5, 6]])
 
     """
+    __slots__ = ()
 
     def __init__(self):
         AxisConcatenator.__init__(self, 0)
@@ -563,6 +569,7 @@ class CClass(AxisConcatenator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.c_[np.array([1,2,3]), np.array([4,5,6])]
     array([[1, 4],
            [2, 5],
@@ -571,6 +578,7 @@ class CClass(AxisConcatenator):
     array([[1, 2, 3, ..., 4, 5, 6]])
 
     """
+    __slots__ = ()
 
     def __init__(self):
         AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
@@ -597,6 +605,7 @@ class ndenumerate:
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> for index, x in np.ndenumerate(a):
     ...     print(index, x)
@@ -649,6 +658,8 @@ class ndindex:
 
     Examples
     --------
+    >>> import numpy as np
+
     Dimensions as individual arguments
 
     >>> for index in np.ndindex(3, 2, 1):
@@ -676,29 +687,12 @@ class ndindex:
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
-        x = as_strided(_nx.zeros(1), shape=shape,
-                       strides=_nx.zeros_like(shape))
-        self._it = _nx.nditer(x, flags=['multi_index', 'zerosize_ok'],
-                              order='C')
+        if min(shape, default=0) < 0:
+            raise ValueError("negative dimensions are not allowed")
+        self._iter = product(*map(range, shape))
 
     def __iter__(self):
         return self
-
-    def ndincr(self):
-        """
-        Increment the multi-dimensional index by one.
-
-        This method is for backward compatibility only: do not use.
-
-        .. deprecated:: 1.20.0
-            This method has been advised against since numpy 1.8.0, but only
-            started emitting DeprecationWarning as of this version.
-        """
-        # NumPy 1.20.0, 2020-09-08
-        warnings.warn(
-            "`ndindex.ndincr()` is deprecated, use `next(ndindex)` instead",
-            DeprecationWarning, stacklevel=2)
-        next(self)
 
     def __next__(self):
         """
@@ -712,8 +706,7 @@ class ndindex:
             iteration.
 
         """
-        next(self._it)
-        return self._it.multi_index
+        return next(self._iter)
 
 
 # You can do all this with slice() plus a few special objects,
@@ -749,10 +742,10 @@ class IndexExpression:
     See Also
     --------
     s_ : Predefined instance without tuple conversion:
-       `s_ = IndexExpression(maketuple=False)`.
+       ``s_ = IndexExpression(maketuple=False)``.
        The ``index_exp`` is another predefined instance that
        always returns a tuple:
-       `index_exp = IndexExpression(maketuple=True)`.
+       ``index_exp = IndexExpression(maketuple=True)``.
 
     Notes
     -----
@@ -762,6 +755,7 @@ class IndexExpression:
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.s_[2::2]
     slice(2, None, 2)
     >>> np.index_exp[2::2]
@@ -771,6 +765,7 @@ class IndexExpression:
     array([2, 4])
 
     """
+    __slots__ = ('maketuple',)
 
     def __init__(self, maketuple):
         self.maketuple = maketuple
@@ -825,14 +820,13 @@ def fill_diagonal(a, val, wrap=False):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
-
     This functionality can be obtained via `diag_indices`, but internally
     this version uses a much faster implementation that never constructs the
     indices and uses simple slicing.
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.zeros((3, 3), int)
     >>> np.fill_diagonal(a, 5)
     >>> a
@@ -953,12 +947,10 @@ def diag_indices(n, ndim=2):
     --------
     diag_indices_from
 
-    Notes
-    -----
-    .. versionadded:: 1.4.0
-
     Examples
     --------
+    >>> import numpy as np
+
     Create a set of indices to access the diagonal of a (4, 4) array:
 
     >>> di = np.diag_indices(4)
@@ -985,7 +977,7 @@ def diag_indices(n, ndim=2):
 
     And use it to set the diagonal of an array of zeros to 1:
 
-    >>> a = np.zeros((2, 2, 2), dtype=int)
+    >>> a = np.zeros((2, 2, 2), dtype=np.int_)
     >>> a[d3] = 1
     >>> a
     array([[[1, 0],
@@ -1017,13 +1009,10 @@ def diag_indices_from(arr):
     --------
     diag_indices
 
-    Notes
-    -----
-    .. versionadded:: 1.4.0
-
     Examples
     --------
-    
+    >>> import numpy as np
+
     Create a 4 by 4 array.
 
     >>> a = np.arange(16).reshape(4, 4)
@@ -1032,7 +1021,7 @@ def diag_indices_from(arr):
            [ 4,  5,  6,  7],
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
-    
+
     Get the indices of the diagonal elements.
 
     >>> di = np.diag_indices_from(a)

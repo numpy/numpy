@@ -1,7 +1,6 @@
 """
 Introspection helper functions.
 """
-import re
 
 __all__ = ['opt_func_info']
 
@@ -30,11 +29,12 @@ def opt_func_info(func_name=None, signature=None):
     Retrieve dispatch information for functions named 'add' or 'sub' and
     data types 'float64' or 'float32':
 
+    >>> import numpy as np
     >>> dict = np.lib.introspect.opt_func_info(
     ...     func_name="add|abs", signature="float64|complex64"
     ... )
     >>> import json
-    >>> print(json.dumps(dict, indent=2))
+    >>> print(json.dumps(dict, indent=2))   # may vary (architecture)
         {
           "absolute": {
             "dd": {
@@ -63,9 +63,9 @@ def opt_func_info(func_name=None, signature=None):
         }
 
     """
-    from numpy._core._multiarray_umath import (
-        __cpu_targets_info__ as targets, dtype
-    )
+    import re
+
+    from numpy._core._multiarray_umath import __cpu_targets_info__ as targets, dtype
 
     if func_name is not None:
         func_pattern = re.compile(func_name)
@@ -82,12 +82,11 @@ def opt_func_info(func_name=None, signature=None):
         for k, v in matching_funcs.items():
             matching_chars = {}
             for chars, targets in v.items():
-                if any([
-                    sig_pattern.search(c) or
-                    sig_pattern.search(dtype(c).name)
+                if any(
+                    sig_pattern.search(c) or sig_pattern.search(dtype(c).name)
                     for c in chars
-                ]):
-                    matching_chars[chars] = targets
+                ):
+                    matching_chars[chars] = targets  # noqa: PERF403
             if matching_chars:
                 matching_sigs[k] = matching_chars
     else:

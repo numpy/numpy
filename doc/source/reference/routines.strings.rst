@@ -9,10 +9,12 @@ String functionality
 
 The `numpy.strings` module provides a set of universal functions operating
 on arrays of type `numpy.str_` or `numpy.bytes_`.
-For example
+For example,
 
-      >>> np.strings.add(["num", "doc"], ["py", "umentation"])
-      array(['numpy', 'documentation'], dtype='<U13')
+.. try_examples::
+
+   >>> np.strings.add(["num", "doc"], ["py", "umentation"])
+   array(['numpy', 'documentation'], dtype='<U13')
 
 These universal functions are also used in `numpy.char`, which provides
 the `numpy.char.chararray` array subclass, in order for those routines
@@ -31,9 +33,28 @@ String operations
    :toctree: generated/
 
    add
+   center
+   capitalize
+   decode
+   encode
+   expandtabs
+   ljust
+   lower
    lstrip
+   mod
+   multiply
+   partition
+   replace
+   rjust
+   rpartition
    rstrip
+   slice
    strip
+   swapcase
+   title
+   translate
+   upper
+   zfill
 
 Comparison
 ----------
@@ -60,11 +81,17 @@ String information
    count
    endswith
    find
+   index
+   isalnum
    isalpha
    isdecimal
    isdigit
+   islower
    isnumeric
    isspace
+   istitle
+   isupper
    rfind
+   rindex
    startswith
    str_len

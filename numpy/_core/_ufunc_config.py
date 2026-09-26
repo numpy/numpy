@@ -4,17 +4,15 @@ Functions for changing global ufunc configuration
 This provides helpers which wrap `_get_extobj_dict` and `_make_extobj`, and
 `_extobj_contextvar` from umath.
 """
-import collections.abc
-import contextlib
-import contextvars
 import functools
 
-from .._utils import set_module
-from .umath import _make_extobj, _get_extobj_dict, _extobj_contextvar
+from numpy._utils import set_module
+
+from .umath import _extobj_contextvar, _get_extobj_dict, _make_extobj
 
 __all__ = [
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
-    "errstate", '_no_nep50_warning'
+    "errstate"
 ]
 
 
@@ -59,6 +57,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     seterrcall : Set a callback function for the 'call' mode.
     geterr, geterrcall, errstate
 
+
     Notes
     -----
     The floating-point exceptions are defined in the IEEE 754 standard [1]_:
@@ -70,13 +69,16 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     - Invalid operation: result is not an expressible number, typically
       indicates that a NaN was produced.
 
+    **Concurrency note:** see  :ref:`fp_error_handling`
+
     .. [1] https://en.wikipedia.org/wiki/IEEE_754
 
     Examples
     --------
+    >>> import numpy as np
     >>> orig_settings = np.seterr(all='ignore')  # seterr to known value
     >>> np.int16(32000) * np.int16(3)
-    30464
+    np.int16(30464)
     >>> np.seterr(over='raise')
     {'divide': 'ignore', 'over': 'ignore', 'under': 'ignore', 'invalid': 'ignore'}
     >>> old_settings = np.seterr(all='warn', over='raise')
@@ -89,7 +91,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     >>> np.geterr()
     {'divide': 'print', 'over': 'print', 'under': 'print', 'invalid': 'print'}
     >>> np.int16(32000) * np.int16(3)
-    30464
+    np.int16(30464)
     >>> np.seterr(**orig_settings)  # restore original
     {'divide': 'print', 'over': 'print', 'under': 'print', 'invalid': 'print'}
 
@@ -128,8 +130,11 @@ def geterr():
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
 
+    **Concurrency note:** see :doc:`/reference/routines.err`
+
     Examples
     --------
+    >>> import numpy as np
     >>> np.geterr()
     {'divide': 'warn', 'over': 'warn', 'under': 'ignore', 'invalid': 'warn'}
     >>> np.arange(3.) / np.arange(3.)  # doctest: +SKIP
@@ -167,7 +172,32 @@ def setbufsize(size):
     size : int
         Size of buffer.
 
+    Returns
+    -------
+    bufsize : int
+        Previous size of ufunc buffer in bytes.
+
+    Notes
+    -----
+    **Concurrency note:** see :doc:`/reference/routines.err`
+
+    Examples
+    --------
+    When exiting a `numpy.errstate` context manager the bufsize is restored:
+
+    >>> import numpy as np
+    >>> with np.errstate():
+    ...     np.setbufsize(4096)
+    ...     print(np.getbufsize())
+    ...
+    8192
+    4096
+    >>> np.getbufsize()
+    8192
+
     """
+    if size < 0:
+        raise ValueError("buffer size must be non-negative")
     old = _get_extobj_dict()["bufsize"]
     extobj = _make_extobj(bufsize=size)
     _extobj_contextvar.set(extobj)
@@ -183,6 +213,18 @@ def getbufsize():
     -------
     getbufsize : int
         Size of ufunc buffer in bytes.
+
+    Notes
+    -----
+
+    **Concurrency note:** see :doc:`/reference/routines.err`
+
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.getbufsize()
+    8192
 
     """
     return _get_extobj_dict()["bufsize"]
@@ -229,6 +271,11 @@ def seterrcall(func):
     --------
     seterr, geterr, geterrcall
 
+    Notes
+    -----
+
+    **Concurrency note:** see :doc:`/reference/routines.err`
+
     Examples
     --------
     Callback upon error:
@@ -236,6 +283,8 @@ def seterrcall(func):
     >>> def err_handler(type, flag):
     ...     print("Floating point error (%s), with flag %s" % (type, flag))
     ...
+
+    >>> import numpy as np
 
     >>> orig_handler = np.seterrcall(err_handler)
     >>> orig_err = np.seterr(all='call')
@@ -302,8 +351,11 @@ def geterrcall():
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
 
+    **Concurrency note:** see :ref:`fp_error_handling`
+
     Examples
     --------
+    >>> import numpy as np
     >>> np.geterrcall()  # we did not yet set a handler, returns None
 
     >>> orig_settings = np.seterr(all='call')
@@ -369,8 +421,11 @@ class errstate:
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
 
+    **Concurrency note:** see :ref:`fp_error_handling`
+
     Examples
     --------
+    >>> import numpy as np
     >>> olderr = np.seterr(all='ignore')  # Set error handling to known state.
 
     >>> np.arange(3) / 0.
@@ -395,7 +450,14 @@ class errstate:
 
     """
     __slots__ = (
-        "_call", "_all", "_divide", "_over", "_under", "_invalid", "_token")
+        "_all",
+        "_call",
+        "_divide",
+        "_invalid",
+        "_over",
+        "_token",
+        "_under",
+    )
 
     def __init__(self, *, call=_Unspecified,
                  all=None, divide=None, over=None, under=None, invalid=None):
@@ -451,22 +513,3 @@ class errstate:
                 _extobj_contextvar.reset(_token)
 
         return inner
-
-
-NO_NEP50_WARNING = contextvars.ContextVar("_no_nep50_warning", default=False)
-
-@set_module('numpy')
-@contextlib.contextmanager
-def _no_nep50_warning():
-    """
-    Context manager to disable NEP 50 warnings.  This context manager is
-    only relevant if the NEP 50 warnings are enabled globally (which is not
-    thread/context safe).
-
-    This warning context manager itself is fully safe, however.
-    """
-    token = NO_NEP50_WARNING.set(True)
-    try:
-        yield
-    finally:
-        NO_NEP50_WARNING.reset(token)

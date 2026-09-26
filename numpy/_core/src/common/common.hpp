@@ -5,8 +5,8 @@
  * they are gathered to make it easy for us and for the future need to support PCH.
  */
 #include "npdef.hpp"
-#include "utils.hpp"
 #include "npstd.hpp"
+#include "utils.hpp"
 #include "half.hpp"
 #include "meta.hpp"
 #include "float_status.hpp"

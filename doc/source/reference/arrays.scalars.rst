@@ -37,9 +37,8 @@ of the flexible itemsize array types (:class:`str_`,
 
    **Figure:** Hierarchy of type objects representing the array data
    types. Not shown are the two integer types :class:`intp` and
-   :class:`uintp` which just point to the integer type that holds a
-   pointer for the platform. All the number types can be obtained
-   using bit-width names as well.
+   :class:`uintp` which are used for indexing (the same as the
+   default integer since NumPy 2).
 
 
 .. TODO - use something like this instead of the diagram above, as it generates
@@ -66,10 +65,10 @@ Some of the scalar types are essentially equivalent to fundamental
 Python types and therefore inherit from them as well as from the
 generic array scalar type:
 
-====================  ===========================  =============
+====================  ===========================  =========
 Array scalar type     Related Python type          Inherits?
-====================  ===========================  =============
-:class:`int_`         :class:`int`                 Python 2 only
+====================  ===========================  =========
+:class:`int_`         :class:`int`                 no
 :class:`double`       :class:`float`               yes
 :class:`cdouble`      :class:`complex`             yes
 :class:`bytes_`       :class:`bytes`               yes
@@ -77,7 +76,7 @@ Array scalar type     Related Python type          Inherits?
 :class:`bool_`        :class:`bool`                no
 :class:`datetime64`   :class:`datetime.datetime`   no
 :class:`timedelta64`  :class:`datetime.timedelta`  no
-====================  ===========================  =============
+====================  ===========================  =========
 
 The :class:`bool_` data type is very similar to the Python
 :class:`bool` but does not inherit from it because Python's
@@ -87,9 +86,9 @@ Python Boolean scalar.
 
 .. warning::
 
-   The :class:`int_` type does **not** inherit from the
-   :class:`int` built-in under Python 3, because type :class:`int` is no
-   longer a fixed-width integer type.
+   The :class:`int_` type does **not** inherit from the built-in
+   :class:`int`, because type :class:`int` is not a fixed-width
+   integer type.
 
 .. tip:: The default data type in NumPy is :class:`double`.
 
@@ -190,31 +189,35 @@ Inexact types
    `format_float_positional` and `format_float_scientific`.
 
    This means that variables with equal binary values but whose datatypes are of
-   different precisions may display differently::
+   different precisions may display differently:
 
-       >>> f16 = np.float16("0.1")
-       >>> f32 = np.float32(f16)
-       >>> f64 = np.float64(f32)
-       >>> f16 == f32 == f64
-       True
-       >>> f16, f32, f64
-       (0.1, 0.099975586, 0.0999755859375)
+   .. try_examples::
 
-   Note that none of these floats hold the exact value :math:`\frac{1}{10}`;
-   ``f16`` prints as ``0.1`` because it is as close to that value as possible,
-   whereas the other types do not as they have more precision and therefore have
-   closer values.
+      >>> import numpy as np
 
-   Conversely, floating-point scalars of different precisions which approximate
-   the same decimal value may compare unequal despite printing identically:
+      >>> f16 = np.float16("0.1")
+      >>> f32 = np.float32(f16)
+      >>> f64 = np.float64(f32)
+      >>> f16 == f32 == f64
+      True
+      >>> f16, f32, f64
+      (0.1, 0.099975586, 0.0999755859375)
 
-       >>> f16 = np.float16("0.1")
-       >>> f32 = np.float32("0.1")
-       >>> f64 = np.float64("0.1")
-       >>> f16 == f32 == f64
-       False
-       >>> f16, f32, f64
-       (0.1, 0.1, 0.1)
+      Note that none of these floats hold the exact value :math:`\frac{1}{10}`;
+      ``f16`` prints as ``0.1`` because it is as close to that value as possible,
+      whereas the other types do not as they have more precision and therefore have
+      closer values.
+
+      Conversely, floating-point scalars of different precisions which approximate
+      the same decimal value may compare unequal despite printing identically:
+
+      >>> f16 = np.float16("0.1")
+      >>> f32 = np.float32("0.1")
+      >>> f64 = np.float64("0.1")
+      >>> f16 == f32 == f64
+      False
+      >>> f16, f32, f64
+      (0.1, 0.1, 0.1)
 
 Floating-point types
 ~~~~~~~~~~~~~~~~~~~~
@@ -324,8 +327,6 @@ elements the data type consists of.)
 
 .. warning::
 
-   See :ref:`Note on string types<string-dtype-note>`.
-
    Numeric Compatibility: If you used old typecode characters in your
    Numeric code (which was never recommended), you will need to change
    some of them to the new characters. In particular, the needed
@@ -377,21 +378,29 @@ are also provided.
 
    Alias for the signed integer type (one of `numpy.byte`, `numpy.short`,
    `numpy.intc`, `numpy.int_`, `numpy.long` and `numpy.longlong`)
-   that is the same size as a pointer.
+   that is used as a default integer and for indexing.
 
-   Compatible with the C ``intptr_t``.
+   Compatible with the C ``Py_ssize_t``.
 
-   :Character code: ``'p'``
+   :Character code: ``'n'``
+
+   .. versionchanged:: 2.0
+      Before NumPy 2, this had the same size as a pointer.  In practice this
+      is almost always identical, but the character code ``'p'`` maps to the C
+      ``intptr_t``.  The character code ``'n'`` was added in NumPy 2.0.
 
 .. attribute:: uintp
 
-   Alias for the unsigned integer type (one of `numpy.ubyte`, `numpy.ushort`,
-   `numpy.uintc`, `numpy.uint`, `numpy.ulong` and `numpy.ulonglong`)
-   that is the same size as a pointer.
+   Alias for the unsigned integer type that is the same size as ``intp``.
 
-   Compatible with the C ``uintptr_t``.
+   Compatible with the C ``size_t``.
 
-   :Character code: ``'P'``
+   :Character code: ``'N'``
+
+   .. versionchanged:: 2.0
+      Before NumPy 2, this had the same size as a pointer.  In practice this
+      is almost always identical, but the character code ``'P'`` maps to the C
+      ``uintptr_t``.  The character code ``'N'`` was added in NumPy 2.0.
 
 .. autoclass:: numpy.float16
 

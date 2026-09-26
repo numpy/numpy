@@ -282,7 +282,7 @@ fix_ascii_format(char* buf, size_t buflen, int decimal)
  *      - format: The printf()-style format to use for the code to use for
  *      converting.
  *      - value: The value to convert
- *      - decimal: if != 0, always has a decimal, and at leasat one digit after
+ *      - decimal: if != 0, always has a decimal, and at least one digit after
  *      the decimal. This has the same effect as passing 'Z' in the original
  *      PyOS_ascii_formatd
  *
@@ -591,7 +591,14 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
     if (clocale) {
         errno = 0;
         result = strtold_l(s, endptr, clocale);
+        /*
+         * On some platforms (e.g. Darwin/iOS), successful freelocale can set errno.
+         * We're interested in the strtold_l failure; so save the errno
+         * after that call, and restore after freelocale(). See gh-32124.
+         */
+        int saved_errno = errno;
         freelocale(clocale);
+        errno = saved_errno;
     }
     else {
         if (endptr != NULL) {

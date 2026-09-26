@@ -1,8 +1,12 @@
+from pathlib import Path
+
 import pytest
+
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal
+
 from . import util
-from pathlib import Path
+
 
 def get_docdir():
     parents = Path(__file__).resolve().parents
@@ -17,6 +21,7 @@ def get_docdir():
         return docdir
     # Assumes that an editable install is used to run tests
     return parents[3] / "doc" / "source" / "f2py" / "code"
+
 
 pytestmark = pytest.mark.skipif(
     not get_docdir().is_dir(),
@@ -34,11 +39,11 @@ class TestDocAdvanced(util.F2PyTest):
                _path('ftype.f')]
 
     def test_asterisk1(self):
-        foo = getattr(self.module, 'foo1')
+        foo = self.module.foo1
         assert_equal(foo(), b'123456789A12')
 
     def test_asterisk2(self):
-        foo = getattr(self.module, 'foo2')
+        foo = self.module.foo2
         assert_equal(foo(2), b'12')
         assert_equal(foo(12), b'123456789A12')
         assert_equal(foo(20), b'123456789A123456789B')
@@ -55,5 +60,7 @@ class TestDocAdvanced(util.F2PyTest):
         ftype.data.x[1] = 45
         assert_array_equal(ftype.data.x,
                            np.array([1, 45, 3], dtype=np.float32))
+        # gh-26718 Cleanup for repeated test runs
+        ftype.data.a = 0
 
     # TODO: implement test methods for other example Fortran codes

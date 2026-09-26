@@ -24,6 +24,7 @@ Each file should be named like ``<PULL REQUEST>.<TYPE>.rst``, where
 * ``improvement``: General improvements and edge-case changes which are
   not new features or compatibility related.
 * ``performance``: Performance changes that should not affect other behaviour.
+* ``typing``: Improvements and changes related to static typing.
 * ``change``: Other changes
 * ``highlight``: Adds a highlight bullet point to use as a possibly highlight
   of the release.
@@ -40,7 +41,7 @@ So for example: ``123.new_feature.rst`` would have the content::
     The ``my_new_feature`` option is now available for `my_favorite_function`.
     To use it, write ``np.my_favorite_function(..., my_new_feature=True)``.
 
-``highlight`` is usually formatted as bulled points making the fragment
+``highlight`` is usually formatted as bullet points making the fragment
 ``* This is a highlight``.
 
 Note the use of single-backticks to get an internal link (assuming
@@ -59,4 +60,3 @@ will look in the final release notes.
 
     This README was adapted from the pytest changelog readme under the terms of
     the MIT licence.
-

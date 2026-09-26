@@ -1,11 +1,11 @@
 .. _NEP54:
 
 ===================================================================================
-NEP 54 — SIMD infrastructure evolution: adopting Google Highway when moving to C++?
+NEP 54 — SIMD infrastructure evolution: adopting Google Highway when moving to C++
 ===================================================================================
 
 :Author: Sayed Adel, Jan Wassenberg, Matti Picus, Ralf Gommers, Chris Sidebottom
-:Status: Draft
+:Status: Accepted
 :Type: Standards Track
 :Created: 2023-07-06
 :Resolution: TODO
@@ -17,7 +17,7 @@ Abstract
 We are moving the SIMD intrinsic framework, Universal Intrinsics, from C to
 C++. We have also moved to Meson as the build system. The Google Highway
 intrinsics project is proposing we use Highway instead of our Universal
-Intrinsics as described in `NEP 38`_. This is a complex and multi-faceted
+Intrinsics as described in :ref:`NEP 38 <NEP38>`. This is a complex and multi-faceted
 decision - this NEP is an attempt to describe the trade-offs involved and
 what would need to be done.
 
@@ -227,7 +227,7 @@ Our experience of the past four years says that bugs with "invalid instruction"
 type crashes are invariably due to issues with feature detection - most often
 because users are running under emulation, and sometimes because there are
 actual issues with our CPU feature detection code. There is little evidence
-we're aware of of the linker pulling in a function which is compiled multiple
+we're aware of the linker pulling in a function which is compiled multiple
 times for different architectures and picking the one with unsupported
 instructions. To ensure to avoid the issue, it's advisable to keep numerical
 kernels inside the source code and refrain from defining non-inlined functions
@@ -350,7 +350,6 @@ References and Footnotes
    this NEP as an example) or licensed under the `Open Publication License`_.
 
 .. _Open Publication License: https://www.opencontent.org/openpub/
-.. _`NEP 38`: https://numpy.org/neps/nep-0038-SIMD-optimizations.html
 .. _`gh-20866`: https://github.com/numpy/numpy/pull/20866
 .. _`gh-21057`: https://github.com/numpy/numpy/pull/21057
 .. _`gh-23096`: https://github.com/numpy/numpy/pull/23096

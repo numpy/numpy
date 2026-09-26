@@ -33,12 +33,19 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 import functools
 import warnings
 
+from numpy._core import (
+    asarray,
+    conjugate,
+    empty_like,
+    overrides,
+    reciprocal,
+    result_type,
+    sqrt,
+    take,
+)
 from numpy.lib.array_utils import normalize_axis_index
-from numpy._core import (asarray, empty, zeros, swapaxes, result_type,
-                         conjugate, take, sqrt, reciprocal)
-from . import _pocketfft_umath as pfu
-from numpy._core import overrides
 
+from . import _pocketfft_umath as pfu
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.fft')
@@ -65,7 +72,7 @@ def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
     elif norm == "forward":
         fct = reciprocal(n, dtype=real_dtype)
     else:
-        raise ValueError(f'Invalid norm value {norm}; should be "backward",'
+        raise ValueError(f'Invalid norm value {norm}; should be "backward", '
                          '"ortho" or "forward".')
 
     n_out = n
@@ -85,8 +92,8 @@ def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
             out_dtype = real_dtype
         else:  # Others, complex output.
             out_dtype = result_type(a.dtype, 1j)
-        out = empty(a.shape[:axis] + (n_out,) + a.shape[axis+1:],
-                    dtype=out_dtype)
+        out = empty_like(a, shape=a.shape[:axis] + (n_out,) + a.shape[axis + 1:],
+                         dtype=out_dtype)
     elif ((shape := getattr(out, "shape", None)) is not None
           and (len(shape) != a.ndim or shape[axis] != n_out)):
         raise ValueError("output array has wrong shape.")
@@ -117,7 +124,7 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
 
     This function computes the one-dimensional *n*-point discrete Fourier
     Transform (DFT) with the efficient Fast Fourier Transform (FFT)
-    algorithm [CT].
+    algorithm [CT]_.
 
     Parameters
     ----------
@@ -132,8 +139,6 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
         Axis over which to compute the FFT.  If not given, the last axis is
         used.
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -185,6 +190,7 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.fft.fft(np.exp(2j * np.pi * np.arange(8) / 8))
     array([-2.33486982e-16+1.14423775e-17j,  8.00000000e+00-1.25557246e-15j,
             2.33486982e-16+2.33486982e-16j,  0.00000000e+00+1.22464680e-16j,
@@ -199,8 +205,7 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
     >>> t = np.arange(256)
     >>> sp = np.fft.fft(np.sin(t))
     >>> freq = np.fft.fftfreq(t.shape[-1])
-    >>> plt.plot(freq, sp.real, freq, sp.imag)
-    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
+    >>> _ = plt.plot(freq, sp.real, freq, sp.imag)
     >>> plt.show()
 
     """
@@ -248,8 +253,6 @@ def ifft(a, n=None, axis=-1, norm=None, out=None):
         Axis over which to compute the inverse DFT.  If not given, the last
         axis is used.
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -291,6 +294,7 @@ def ifft(a, n=None, axis=-1, norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.fft.ifft([0, 4, 0, 0])
     array([ 1.+0.j,  0.+1.j, -1.+0.j,  0.-1.j]) # may vary
 
@@ -298,7 +302,7 @@ def ifft(a, n=None, axis=-1, norm=None, out=None):
 
     >>> import matplotlib.pyplot as plt
     >>> t = np.arange(400)
-    >>> n = np.zeros((400,), dtype=complex)
+    >>> n = np.zeros((400,), dtype=np.complex128)
     >>> n[40:60] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20,)))
     >>> s = np.fft.ifft(n)
     >>> plt.plot(t, s.real, label='real')
@@ -339,8 +343,6 @@ def rfft(a, n=None, axis=-1, norm=None, out=None):
         Axis over which to compute the FFT. If not given, the last axis is
         used.
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -398,6 +400,7 @@ def rfft(a, n=None, axis=-1, norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.fft.fft([0, 1, 0, 0])
     array([ 1.+0.j,  0.-1.j, -1.+0.j,  0.+1.j]) # may vary
     >>> np.fft.rfft([0, 1, 0, 0])
@@ -446,8 +449,6 @@ def irfft(a, n=None, axis=-1, norm=None, out=None):
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -493,7 +494,7 @@ def irfft(a, n=None, axis=-1, norm=None, out=None):
 
     If you specify an `n` such that `a` must be zero-padded or truncated, the
     extra/removed values will be added/removed at high frequencies. One can
-    thus resample a series to `m` points via Fourier interpolation by:
+    thus resample a series to ``m`` points via Fourier interpolation by:
     ``a_resamp = irfft(rfft(a), m)``.
 
     The correct interpretation of the hermitian input depends on the length of
@@ -506,6 +507,7 @@ def irfft(a, n=None, axis=-1, norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.fft.ifft([1, -1j, -1, 1j])
     array([0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]) # may vary
     >>> np.fft.irfft([1, -1j, -1])
@@ -545,8 +547,6 @@ def hfft(a, n=None, axis=-1, norm=None, out=None):
         Axis over which to compute the FFT. If not given, the last
         axis is used.
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -601,6 +601,7 @@ def hfft(a, n=None, axis=-1, norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> signal = np.array([1, 2, 3, 4, 3, 2])
     >>> np.fft.fft(signal)
     array([15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j]) # may vary
@@ -624,7 +625,7 @@ def hfft(a, n=None, axis=-1, norm=None, out=None):
     if n is None:
         n = (a.shape[axis] - 1) * 2
     new_norm = _swap_direction(norm)
-    output = irfft(conjugate(a), n, axis, norm=new_norm, out=None)
+    output = irfft(conjugate(a), n, axis, norm=new_norm, out=out)
     return output
 
 
@@ -647,8 +648,6 @@ def ihfft(a, n=None, axis=-1, norm=None, out=None):
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -686,6 +685,7 @@ def ihfft(a, n=None, axis=-1, norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> spectrum = np.array([ 15, -4, 0, -1, 0, -4])
     >>> np.fft.ifft(spectrum)
     array([1.+0.j,  2.+0.j,  3.+0.j,  4.+0.j,  3.+0.j,  2.+0.j]) # may vary
@@ -802,8 +802,6 @@ def fftn(a, s=None, axes=None, norm=None, out=None):
             must be explicitly specified too.
 
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -855,6 +853,7 @@ def fftn(a, s=None, axes=None, norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.mgrid[:3, :3, :3][0]
     >>> np.fft.fftn(a, axes=(1, 2))
     array([[[ 0.+0.j,   0.+0.j,   0.+0.j], # may vary
@@ -944,8 +943,6 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
             must be explicitly specified too.
 
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -996,6 +993,7 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.eye(4)
     >>> np.fft.ifftn(np.fft.fftn(a, axes=(0,)), axes=(1,))
     array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j], # may vary
@@ -1007,7 +1005,7 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
     Create and plot an image with band-limited frequency content:
 
     >>> import matplotlib.pyplot as plt
-    >>> n = np.zeros((200,200), dtype=complex)
+    >>> n = np.zeros((200,200), dtype=np.complex128)
     >>> n[60:80, 20:40] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20, 20)))
     >>> im = np.fft.ifftn(n).real
     >>> plt.imshow(im)
@@ -1069,8 +1067,6 @@ def fft2(a, s=None, axes=(-2, -1), norm=None, out=None):
             must not be ``None``.
 
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -1127,6 +1123,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.mgrid[:5, :5][0]
     >>> np.fft.fft2(a)
     array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        , # may vary
@@ -1202,8 +1199,6 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
             must not be ``None``.
 
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -1256,6 +1251,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = 4 * np.eye(4)
     >>> np.fft.ifft2(a)
     array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j], # may vary
@@ -1264,7 +1260,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
            [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
-    return _raw_fftnd(a, s, axes, ifft, norm, out=None)
+    return _raw_fftnd(a, s, axes, ifft, norm, out=out)
 
 
 @array_function_dispatch(_fftn_dispatcher)
@@ -1318,8 +1314,6 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
             must be explicitly specified too.
 
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -1373,6 +1367,7 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.ones((2, 2, 2))
     >>> np.fft.rfftn(a)
     array([[[8.+0.j,  0.+0.j], # may vary
@@ -1390,7 +1385,7 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
     a = rfft(a, s[-1], axes[-1], norm, out=out)
-    for ii in range(len(axes)-1):
+    for ii in range(len(axes) - 2, -1, -1):
         a = fft(a, s[ii], axes[ii], norm, out=out)
     return a
 
@@ -1431,8 +1426,6 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
             must not be ``None``.
 
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -1465,6 +1458,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.mgrid[:5, :5][0]
     >>> np.fft.rfft2(a)
     array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        ],
@@ -1526,7 +1520,7 @@ def irfftn(a, s=None, axes=None, norm=None, out=None):
 
     axes : sequence of ints, optional
         Axes over which to compute the inverse FFT. If not given, the last
-        `len(s)` axes are used, or all axes if `s` is also not specified.
+        ``len(s)`` axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
 
@@ -1536,8 +1530,6 @@ def irfftn(a, s=None, axes=None, norm=None, out=None):
             must be explicitly specified too.
 
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -1597,6 +1589,7 @@ def irfftn(a, s=None, axes=None, norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.zeros((3, 2, 2))
     >>> a[0, 0, 0] = 3 * 2 * 2
     >>> np.fft.irfftn(a)
@@ -1610,7 +1603,7 @@ def irfftn(a, s=None, axes=None, norm=None, out=None):
     """
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
-    for ii in range(len(axes)-1):
+    for ii in range(len(axes) - 1):
         a = ifft(a, s[ii], axes[ii], norm)
     a = irfft(a, s[-1], axes[-1], norm, out=out)
     return a
@@ -1653,8 +1646,6 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
             must not be ``None``.
 
     norm : {"backward", "ortho", "forward"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
@@ -1689,6 +1680,7 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.mgrid[:5, :5][0]
     >>> A = np.fft.rfft2(a)
     >>> np.fft.irfft2(A, s=a.shape)
@@ -1698,4 +1690,4 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
            [3., 3., 3., 3., 3.],
            [4., 4., 4., 4., 4.]])
     """
-    return irfftn(a, s, axes, norm, out=None)
+    return irfftn(a, s, axes, norm, out=out)

@@ -1,14 +1,9 @@
-import sys
 from io import StringIO
+from typing import assert_type
 
 import numpy as np
-import numpy.typing as npt
 import numpy.lib.array_utils as array_utils
-
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+import numpy.typing as npt
 
 AR: npt.NDArray[np.float64]
 AR_DICT: dict[str, npt.NDArray[np.float64]]

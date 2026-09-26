@@ -1,7 +1,8 @@
-from .common import Benchmark, get_squares, get_squares_
+from io import SEEK_SET, BytesIO, StringIO
 
 import numpy as np
-from io import SEEK_SET, StringIO, BytesIO
+
+from .common import Benchmark, get_squares, get_squares_
 
 
 class Copy(Benchmark):
@@ -59,6 +60,32 @@ class CopyTo(Benchmark):
         np.copyto(self.d, self.e, where=self.im8)
 
 
+class CopyStructured(Benchmark):
+    params = [
+        [10, 100, 1000],
+        [
+            # Contiguous layout (trivially copyable, uses memcpy)
+            [('a', 'f8'), ('b', 'f8'), ('c', 'f8')],
+            # Many small fields (trivially copyable, uses memcpy)
+            [('x', 'i4'), ('y', 'i4'), ('z', 'i4'),
+             ('w', 'i4'), ('v', 'i4')],
+        ],
+    ]
+    param_names = ['n_kilo_elements', 'dtype']
+
+    def setup(self, n_kilo, dtype):
+        n = n_kilo * 1000
+        self.dt = np.dtype(dtype)
+        self.src = np.ones(n, dtype=self.dt)
+        self.dst = np.empty(n, dtype=self.dt)
+
+    def time_copy(self, n_kilo, dtype):
+        self.src.copy()
+
+    def time_assign(self, n_kilo, dtype):
+        self.dst[...] = self.src
+
+
 class Savez(Benchmark):
     def setup(self):
         self.squares = get_squares()
@@ -88,7 +115,7 @@ class LoadtxtCSVComments(Benchmark):
         # unfortunately, timeit will only run setup()
         # between repeat events, but not for iterations
         # within repeats, so the StringIO object
-        # will have to be rewinded in the benchmark proper
+        # will have to be rewound in the benchmark proper
         self.data_comments = StringIO('\n'.join(data))
 
     def time_comment_loadtxt_csv(self, num_lines):

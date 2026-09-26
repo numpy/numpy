@@ -3,11 +3,15 @@ Provide python-space access to the functions exposed in numpy/__init__.pxd
 for testing.
 """
 
-import numpy as np
-from distutils.core import setup
-from Cython.Build import cythonize
-from setuptools.extension import Extension
 import os
+
+import Cython
+from Cython.Build import cythonize
+from distutils.core import setup
+from setuptools.extension import Extension
+
+import numpy as np
+from numpy._utils import _pep440
 
 macros = [
     ("NPY_NO_DEPRECATED_API", 0),
@@ -24,6 +28,12 @@ checks = Extension(
 
 extensions = [checks]
 
+compiler_directives = {}
+if _pep440.parse(Cython.__version__) >= _pep440.parse("3.1.0a0"):
+    compiler_directives['freethreading_compatible'] = True
+
 setup(
-    ext_modules=cythonize(extensions)
+    ext_modules=cythonize(
+        extensions,
+        compiler_directives=compiler_directives)
 )

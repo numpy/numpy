@@ -288,6 +288,9 @@ Glossary
          casts within a kind, like float64 to float32.
        - ``unsafe``: any data conversions may be done.
 
+       Python ``int``, ``float`` and ``complex`` scalars are treated by kind
+       rather than by dtype, see :ref:`arrays.promotion.python-scalar-casting`.
+
    column-major
        See `Row- and column-major order <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_.
 
@@ -472,7 +475,8 @@ Glossary
 
        Strides are computed automatically from an array's dtype and
        shape, but can be directly specified using
-       :doc:`as_strided. <reference/generated/numpy.lib.stride_tricks.as_strided>`
+       :doc:`as_strided <reference/generated/numpy.lib.stride_tricks.as_strided>`.
+       Bounds validation can be enabled with the ``check_bounds`` parameter.
 
        For details, see
        :doc:`numpy.ndarray.strides <reference/generated/numpy.ndarray.strides>`.

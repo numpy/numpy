@@ -7,6 +7,11 @@ PyArray_ClearBuffer(
         npy_intp stride, npy_intp size, int aligned);
 
 NPY_NO_EXPORT int
+PyArray_ZeroContiguousBuffer(
+        PyArray_Descr *descr, char *data,
+        npy_intp stride, npy_intp size, int aligned);
+
+NPY_NO_EXPORT int
 PyArray_ClearArray(PyArrayObject *arr);
 
 NPY_NO_EXPORT void

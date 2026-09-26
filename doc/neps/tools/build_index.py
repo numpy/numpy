@@ -4,10 +4,11 @@ metadata is passed to Jinja for filling out the toctrees for various NEP
 categories.
 """
 
-import os
-import jinja2
 import glob
+import os
 import re
+
+import jinja2
 
 
 def render(tpl_path, context):
@@ -19,7 +20,7 @@ def render(tpl_path, context):
 def nep_metadata():
     ignore = ('nep-template.rst')
     sources = sorted(glob.glob(r'nep-*.rst'))
-    sources = [s for s in sources if not s in ignore]
+    sources = [s for s in sources if s not in ignore]
 
     meta_re = r':([a-zA-Z\-]*): (.*)'
 
@@ -45,7 +46,7 @@ def nep_metadata():
             else:
                 raise RuntimeError("Unable to find NEP title.")
 
-            tags['Title'] = lines[i+1].strip()
+            tags['Title'] = lines[i + 1].strip()
             tags['Filename'] = source
 
         if not tags['Title'].startswith(f'NEP {nr} — '):
@@ -55,7 +56,7 @@ def nep_metadata():
                 f'    {tags["Title"]!r}')
 
         if tags['Status'] in ('Accepted', 'Rejected', 'Withdrawn'):
-            if not 'Resolution' in tags:
+            if 'Resolution' not in tags:
                 raise RuntimeError(
                     f'NEP {nr} is Accepted/Rejected/Withdrawn but '
                     'has no Resolution tag'
@@ -70,15 +71,15 @@ def nep_metadata():
 
     for nr, tags in neps.items():
         if tags['Status'] == 'Superseded':
-            if not 'Replaced-By' in tags:
+            if 'Replaced-By' not in tags:
                 raise RuntimeError(
                     f'NEP {nr} has been Superseded, but has no Replaced-By tag'
                 )
 
-            replaced_by = int(tags['Replaced-By'])
+            replaced_by = int(re.findall(r'\d+', tags['Replaced-By'])[0])
             replacement_nep = neps[replaced_by]
 
-            if not 'Replaces' in replacement_nep:
+            if 'Replaces' not in replacement_nep:
                 raise RuntimeError(
                     f'NEP {nr} is superseded by {replaced_by}, but that NEP has '
                     f"no Replaces tag."
@@ -105,13 +106,8 @@ def nep_metadata():
 
 def parse_replaces_metadata(replacement_nep):
     """Handle :Replaces: as integer or list of integers"""
-    replaces = replacement_nep['Replaces']
-    if ' ' in replaces:
-        # Replaces multiple NEPs, should be comma-separated ints
-        replaced_neps = [int(s) for s in replaces.split(', ')]
-    else:
-        replaced_neps = [int(replaces)]
-
+    replaces = re.findall(r'\d+', replacement_nep['Replaces'])
+    replaced_neps = [int(s) for s in replaces]
     return replaced_neps
 
 
@@ -122,7 +118,7 @@ for nepcat in (
     "open", "rejected",
 ):
     infile = f"{nepcat}.rst.tmpl"
-    outfile =f"{nepcat}.rst"
+    outfile = f"{nepcat}.rst"
 
     print(f'Compiling {infile} -> {outfile}')
     genf = render(infile, meta)

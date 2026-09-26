@@ -1,17 +1,16 @@
 """A module with the precisions of platform-specific `~numpy.number`s."""
 
-from typing import Any
+from ._nbit_base import _8Bit, _16Bit, _32Bit, _64Bit, _96Bit, _128Bit
 
-# To-be replaced with a `npt.NBitBase` subclass by numpy's mypy plugin
-_NBitByte = Any
-_NBitShort = Any
-_NBitIntC = Any
-_NBitIntP = Any
-_NBitInt = Any
-_NBitLong = Any
-_NBitLongLong = Any
+type _NBitByte = _8Bit
+type _NBitShort = _16Bit
+type _NBitIntC = _32Bit
+type _NBitIntP = _32Bit | _64Bit
+type _NBitInt = _NBitIntP
+type _NBitLong = _32Bit | _64Bit
+type _NBitLongLong = _64Bit
 
-_NBitHalf = Any
-_NBitSingle = Any
-_NBitDouble = Any
-_NBitLongDouble = Any
+type _NBitHalf = _16Bit
+type _NBitSingle = _32Bit
+type _NBitDouble = _64Bit
+type _NBitLongDouble = _64Bit | _96Bit | _128Bit

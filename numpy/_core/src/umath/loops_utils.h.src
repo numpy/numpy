@@ -16,28 +16,31 @@
 #endif
 /*
  * nomemoverlap - returns false if two strided arrays have an overlapping
- * region in memory. ip_size/op_size = size of the arrays which can be negative
- * indicating negative steps.
+ * region in memory.
  */
 NPY_FINLINE npy_bool
-nomemoverlap(char *ip, npy_intp ip_size, char *op, npy_intp op_size)
+nomemoverlap(char *ip, npy_intp ip_step, char *op, npy_intp op_step, npy_intp len)
 {
+    // Calculate inclusive ranges for offsets of items in arrays.
+    // The end pointer points to address of the last item.
+    const npy_intp ip_offset = ip_step * (len - 1);
+    const npy_intp op_offset = op_step * (len - 1);
     char *ip_start, *ip_end, *op_start, *op_end;
-    if (ip_size < 0) {
-        ip_start = ip + ip_size;
+    if (ip_step < 0) {
+        ip_start = ip + ip_offset;
         ip_end = ip;
     }
     else {
         ip_start = ip;
-        ip_end = ip + ip_size;
+        ip_end = ip + ip_offset;
     }
-    if (op_size < 0) {
-        op_start = op + op_size;
+    if (op_step < 0) {
+        op_start = op + op_offset;
         op_end = op;
     }
     else {
         op_start = op;
-        op_end = op + op_size;
+        op_end = op + op_offset;
     }
     return (ip_start == op_start && op_end == ip_end) ||
            (ip_start > op_end) || (op_start > ip_end);
@@ -48,7 +51,7 @@ nomemoverlap(char *ip, npy_intp ip_size, char *op, npy_intp op_size)
 NPY_FINLINE npy_bool
 is_mem_overlap(const void *src, npy_intp src_step, const void *dst, npy_intp dst_step, npy_intp len)
 {
-    return !(nomemoverlap((char*)src, src_step*len, (char*)dst, dst_step*len));
+    return !(nomemoverlap((char*)src, src_step, (char*)dst, dst_step, len));
 }
 
 /*
