@@ -1,0 +1,3 @@
+``numpy._core._multiarray_umath.set_typeDict`` now raises ``TypeError`` when
+passed an object other than a dictionary, rather than storing invalid module
+state that can fail in later dtype operations.

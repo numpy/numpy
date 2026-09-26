@@ -147,6 +147,11 @@ array_set_typeDict(PyObject *module, PyObject *args)
     if (!PyArg_ParseTuple(args, "O:set_typeDict", &dict)) {
         return NULL;
     }
+    if (!PyDict_Check(dict)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "set_typeDict() argument must be a dictionary");
+        return NULL;
+    }
     multiarray_umath_state *state = get_module_state(module);
     Py_XSETREF(state->typeDict, Py_NewRef(dict));
     Py_RETURN_NONE;

@@ -506,6 +506,18 @@ class TestIsDType:
         assert np.uint64 in sctypes['uint']
 
 class TestSctypeDict:
+    def test_set_type_dict_rejects_non_dict(self):
+        type_dict = np._core.sctypeDict
+        try:
+            with pytest.raises(TypeError, match="must be a dictionary"):
+                np._core._multiarray_umath.set_typeDict(object())
+        finally:
+            # Restore the module state even when running this test against an
+            # unpatched build where set_typeDict accepts arbitrary objects.
+            np._core._multiarray_umath.set_typeDict(type_dict)
+
+        assert np.promote_types("int8", "float64") == np.dtype("float64")
+
     def test_longdouble(self):
         assert_(np._core.sctypeDict['float64'] is not np.longdouble)
         assert_(np._core.sctypeDict['complex128'] is not np.clongdouble)
