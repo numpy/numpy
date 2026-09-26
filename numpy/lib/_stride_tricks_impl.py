@@ -444,7 +444,12 @@ def sliding_window_view(x, window_shape, axis=None, *,
                       subok=subok, writeable=writeable)
 
 
-def _broadcast_to(array, shape, subok, readonly):
+# nditer flags used to create broadcast views: `multi_index` prevents nditer
+# from coalescing axes, so the views keep the broadcast shape.
+_BROADCAST_ITER_FLAGS = ['multi_index', 'refs_ok', 'zerosize_ok']
+
+
+def _broadcast_to(array, shape, subok):
     shape = tuple(shape) if np.iterable(shape) else (shape,)
     array = np.array(array, copy=None, subok=subok)
     if not shape and array.shape:
@@ -460,10 +465,6 @@ def _broadcast_to(array, shape, subok, readonly):
         # never really has writebackifcopy semantics
         broadcast = it.itviews[0]
     result = _maybe_view_as_subclass(array, broadcast)
-    # In a future version this will go away
-    if not readonly and array.flags._writeable_no_warn:
-        result.flags.writeable = True
-        result.flags._warn_on_write = True
     return result
 
 
@@ -514,7 +515,7 @@ def broadcast_to(array, shape, subok=False):
            [1, 2, 3],
            [1, 2, 3]])
     """
-    return _broadcast_to(array, shape, subok=subok, readonly=True)
+    return _broadcast_to(array, shape, subok=subok)
 
 
 def _broadcast_shape(*args):
@@ -602,17 +603,14 @@ def broadcast_arrays(*args, subok=False):
     Returns
     -------
     broadcasted : tuple of arrays
-        These arrays are views on the original arrays.  They are typically
-        not contiguous.  Furthermore, more than one element of a
+        These arrays are read-only views on the original arrays.  They are
+        typically not contiguous.  Furthermore, more than one element of a
         broadcasted array may refer to a single memory location. If you need
-        to write to the arrays, make copies first. While you can set the
-        ``writable`` flag True, writing to a single output value may end up
-        changing more than one location in the output array.
+        to write to the arrays, make copies first.
 
-        .. deprecated:: 1.17
-            The output is currently marked so that if written to, a deprecation
-            warning will be emitted. A future version will set the
-            ``writable`` flag False so writing to it will raise an error.
+        .. versionchanged:: 2.6.0
+            The returned arrays are always read-only views, also when no
+            broadcasting was necessary.
 
     See Also
     --------
@@ -641,16 +639,20 @@ def broadcast_arrays(*args, subok=False):
             [5, 5, 5]])]
 
     """
-    # nditer is not used here to avoid the limit of 64 arrays.
-    # Otherwise, something like the following one-liner would suffice:
-    # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
-    #                  order='C').itviews
+    if 0 < len(args) < 65 and not subok:
+        # Fast path: a single nditer handles up to NPY_MAXARGS (64) operands.
+        return np.nditer(args, flags=_BROADCAST_ITER_FLAGS, order='C').itviews
 
     args = [np.array(_m, copy=None, subok=subok) for _m in args]
-
     shape = _broadcast_shape(*args)
-
-    result = [array if array.shape == shape
-              else _broadcast_to(array, shape, subok=subok, readonly=False)
-                              for array in args]
-    return tuple(result)
+    # Create the views in chunks of at most NPY_MAXARGS operands. The views
+    # are read-only, exactly like the ones returned by the fast path.
+    views = []
+    for pos in range(0, len(args), 64):
+        it = np.nditer(args[pos:pos + 64], flags=_BROADCAST_ITER_FLAGS,
+                       op_flags=['readonly'], itershape=shape, order='C')
+        views.extend(it.itviews)
+    if subok:
+        views = [_maybe_view_as_subclass(array, view)
+                 for array, view in zip(args, views)]
+    return tuple(views)
