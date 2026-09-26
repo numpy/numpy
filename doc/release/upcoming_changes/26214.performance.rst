@@ -1,0 +1,3 @@
+* `numpy.broadcast_arrays` is significantly faster, in particular when
+  broadcasting is needed (roughly 5x for two arrays), because the views are
+  now created by a single ``nditer``.
