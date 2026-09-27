@@ -11,7 +11,6 @@ import numpy as np
 from numpy.testing import (
     HAS_SUBPROCESSES,
     IS_EDITABLE,
-    IS_MESON_BROKEN_FOR_PYPY312,
     assert_array_equal,
 )
 from numpy.testing._private.utils import run_subprocess
@@ -45,8 +44,6 @@ def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
     if not HAS_SUBPROCESSES:
         pytest.skip("platform cannot start subprocesses")
-    if IS_MESON_BROKEN_FOR_PYPY312:
-        pytest.skip("meson <= 1.12.0 cannot probe PyPy 3.12+ (missing distutils)")
 
     # Build against a copy of the sources placed next to the build dir:
     # meson refers to sources via paths relative to the build dir, and on
