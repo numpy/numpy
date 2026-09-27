@@ -2019,7 +2019,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         }
     }
 
-    if (wheremask_in != NULL) {
+    if (wheremask_in != NULL && wheremask_in != Py_True) {
         /* Get the boolean where mask */
         PyArray_Descr *descr = PyArray_DescrFromType(NPY_BOOL);
         if (descr == NULL) {
