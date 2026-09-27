@@ -1496,25 +1496,19 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
     string : str
         A string containing the data.
     dtype : data-type, optional
-        The data type of the array; default: `numpy.float64`.  For binary input data,
-        the data must be in exactly this format. Most builtin numeric types are
-        supported and extension types may be supported.
+        The data type of the array; default: `numpy.float64`. Most builtin
+        numeric types are supported and extension types may be supported.
     count : int, optional
         Read this number of `dtype` elements from the data.  If this is
         negative (the default), the count will be determined from the
         length of the data.
-    sep : str, optional
+    sep : str
         The string separating numbers in the data; extra whitespace between
-        elements is also ignored.
+        elements is also ignored. This cannot be an empty string.
 
-        .. deprecated:: 1.14
-            Passing ``sep=''``, the default, is deprecated since it will
-            trigger the deprecated binary mode of this function. This mode
-            interprets `string` as binary bytes, rather than ASCII text with
-            decimal numbers, an operation which is better spelt
-            ``frombuffer(string, dtype, count)``. If `string` contains unicode
-            text, the binary mode of `fromstring` will first encode it into
-            bytes using utf-8, which will not produce sane results.
+        .. versionchanged:: 2.3.0
+            Binary mode (``sep=''`` or omitted), which interpreted `string` as
+            raw bytes, was removed. Use `frombuffer` instead to read raw bytes.
 
     ${ARRAY_FUNCTION_LIKE}
 
@@ -1528,8 +1522,7 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
     Raises
     ------
     ValueError
-        If the string is not the correct size to satisfy the requested
-        `dtype` and `count`.
+        If `sep` is omitted or is empty.
 
     See Also
     --------
