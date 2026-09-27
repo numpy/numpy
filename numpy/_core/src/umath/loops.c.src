@@ -2213,27 +2213,29 @@ NPY_NO_EXPORT void
         const @ftype@ in2i = ((@ftype@ *)ip2)[1];
         const @ftype@ in2r_abs = npy_fabs@c@(in2r);
         const @ftype@ in2i_abs = npy_fabs@c@(in2i);
+        const npy_bool in1r_nan = npy_isnan(in1r);
+        const npy_bool in1i_nan = npy_isnan(in1i);
         if (npy_isnan(in2r) || npy_isnan(in2i)) {
             ((@ftype@ *)op1)[0] = npy_isnan(in2r) ? in2r : in2i;
             ((@ftype@ *)op1)[1] = npy_isnan(in2i) ? in2i : in2r;
         }
-        else if ((npy_isnan(in1r) || npy_isnan(in1i)) &&
-                (((npy_isinf(in1r) || npy_isinf(in1i)) &&
+        else if ((in1r_nan || in1i_nan) &&
+                ((((!in1r_nan && npy_isinf(in1r)) ||
+                (!in1i_nan && npy_isinf(in1i))) &&
                 (in2r != 0 || in2i != 0)) ||
                 (npy_isinf(in2r) && npy_isinf(in2i)))) {
-            const @ftype@ nan = npy_isnan(in1r) ? in1r : in1i;
+            const @ftype@ nan = in1r_nan ? in1r : in1i;
             ((@ftype@ *)op1)[0] = nan;
             ((@ftype@ *)op1)[1] = nan;
         }
         else if (in2r_abs >= in2i_abs) {
             if (in2r_abs == 0 && in2i_abs == 0) {
-                if ((npy_isnan(in1r) &&
-                        (in1i == 0 || npy_isnan(in1i))) ||
-                        (in1r == 0 && npy_isnan(in1i))) {
+                if ((in1r_nan && (in1i == 0 || in1i_nan)) ||
+                        (in1r == 0 && in1i_nan)) {
                     ((@ftype@ *)op1)[0] =
-                            npy_isnan(in1r) ? in1r : in1i;
+                            in1r_nan ? in1r : in1i;
                     ((@ftype@ *)op1)[1] =
-                            npy_isnan(in1i) ? in1i : in1r;
+                            in1i_nan ? in1i : in1r;
                 }
                 /* divide by zero should yield a complex inf or nan */
                 else {
