@@ -592,6 +592,7 @@ def genfromtxt(
     encoding: str | None = None,
     *,
     ndmin: L[0, 1, 2] = 0,
+    commented_names: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.float64 | Any]: ...
 @overload  # Nd T, dtype=<known>, ndmin<3  (fallback)
@@ -621,6 +622,7 @@ def genfromtxt[ScalarT: np.generic](
     encoding: str | None = None,
     *,
     ndmin: L[0, 1, 2] = 0,
+    commented_names: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload  # Nd ~void, names=<given>
@@ -679,5 +681,6 @@ def genfromtxt(
     encoding: str | None = None,
     *,
     ndmin: L[0, 1, 2] = 0,
+    commented_names: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
