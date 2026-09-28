@@ -25,6 +25,10 @@ from numpy._typing import (
     _SupportsArray,
 )
 
+@type_check_only
+class _CanArray[ArrayT: np.ndarray](Protocol):
+    def __array__(self, /) -> ArrayT: ...
+
 # compatible with e.g. int, float, complex, Decimal, Fraction, and ABCPolyBase
 @type_check_only
 class _SupportsCoefOps[T](Protocol):
