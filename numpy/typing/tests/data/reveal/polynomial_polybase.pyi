@@ -5,6 +5,7 @@ from typing import Any, Literal as L, assert_type
 import numpy as np
 import numpy.polynomial as npp
 import numpy.typing as npt
+from numpy._typing import _SupportsArray
 
 type _Ar_x = npt.NDArray[np.inexact | np.object_]
 type _Ar_f = npt.NDArray[np.floating]
@@ -22,6 +23,7 @@ type _Ar_c_2 = np.ndarray[tuple[L[2]], np.dtype[np.complexfloating]]
 type _Ar_O_2 = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
 
 type _Ar_1d[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Ar_2d[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 type _BasisName = L["X"]
 
@@ -40,11 +42,17 @@ AR_c: npt.NDArray[np.complex128]
 AR_c_co: npt.NDArray[np.complex128] | npt.NDArray[np.float64] | npt.NDArray[np.int_]
 AR_O: npt.NDArray[np.object_]
 AR_O_co: npt.NDArray[np.object_ | np.number]
+AR_f_2d: _Ar_2d[np.float64]
+AR_c_2d: _Ar_2d[np.complex128]
+AR_O_2d: _Ar_2d[np.object_[int]]
+AL_f: _SupportsArray[np.dtype[np.float64]]
 
 SQ_i: Sequence[int]
 SQ_f: Sequence[float]
 SQ_c: Sequence[complex]
 SQ_O: Sequence[Decimal]
+SQ_f_2d: Sequence[Sequence[float]]
+SQ_c_2d: Sequence[Sequence[complex]]
 
 PS_poly: npp.Polynomial
 PS_cheb: npp.Chebyshev
@@ -174,9 +182,14 @@ assert_type(next(iter(PS_all)), np.float64 | Any)
 
 assert_type(PS_all(SC_f_co), np.float64 | Any)
 assert_type(PS_all(SC_c_co), np.complex128 | Any)
-assert_type(PS_all(Decimal()), np.float64 | Any)
-assert_type(PS_poly(SQ_f), npt.NDArray[np.float64 | Any])
-assert_type(PS_poly(SQ_c), npt.NDArray[np.complex128 | Any])
+assert_type(PS_poly(AR_f_2d), _Ar_2d[np.float64 | Any])
+assert_type(PS_poly(AR_c_2d), _Ar_2d[np.complex128 | Any])
+assert_type(PS_poly(AR_O_2d), _Ar_2d[np.object_])
+assert_type(PS_poly(SQ_f), _Ar_1d[np.float64 | Any])
+assert_type(PS_poly(SQ_c), _Ar_1d[np.complex128 | Any])
+assert_type(PS_poly(SQ_f_2d), npt.NDArray[np.float64 | Any])
+assert_type(PS_poly(SQ_c_2d), npt.NDArray[np.complex128 | Any])
+assert_type(PS_poly(AL_f), npt.NDArray[Any] | Any)
 assert_type(PS_poly(SQ_O), npt.NDArray[np.object_])
 assert_type(PS_poly(AR_f), npt.NDArray[np.float64 | Any])
 assert_type(PS_poly(AR_c), npt.NDArray[np.complex128 | Any])
