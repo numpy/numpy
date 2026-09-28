@@ -7372,7 +7372,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_call = &PyVectorcall_Call,
     .tp_str = (reprfunc)ufunc_repr,
     .tp_flags = Py_TPFLAGS_DEFAULT |
-        _Py_TPFLAGS_HAVE_VECTORCALL |
+        Py_TPFLAGS_HAVE_VECTORCALL |
         Py_TPFLAGS_HAVE_GC,
     .tp_traverse = (traverseproc)ufunc_traverse,
     .tp_methods = ufunc_methods,

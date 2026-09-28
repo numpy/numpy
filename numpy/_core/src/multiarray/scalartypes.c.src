@@ -82,31 +82,6 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 };
 /**end repeat**/
 
-static PyObject *
-gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
-{
-    PyObject *obj;
-    const size_t size = _PyObject_VAR_SIZE(type, nitems + 1);
-
-    obj = (PyObject *)PyObject_Malloc(size);
-    if (obj == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    /*
-     * If we don't need to zero memory, we could use
-     * PyObject_{New, NewVar} for this whole function.
-     */
-    memset(obj, 0, size);
-    if (type->tp_itemsize == 0) {
-        PyObject_Init(obj, type);
-    }
-    else {
-        (void) PyObject_InitVar((PyVarObject *)obj, type, nitems);
-    }
-    return obj;
-}
-
 static void
 gentype_dealloc(PyObject *v)
 {
@@ -3302,7 +3277,7 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
                 self);
         return -1;
     }
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+    if ((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
@@ -3356,7 +3331,7 @@ static PyBufferProcs gentype_arrtype_as_buffer = {
 static int
 @name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+    if ((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
@@ -3396,7 +3371,7 @@ static PyBufferProcs @name@_arrtype_as_buffer = {
 static int
 unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+    if ((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
@@ -3465,7 +3440,7 @@ static PyBufferProcs unicode_arrtype_as_buffer = {
 static int
 @name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+    if ((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
@@ -3548,7 +3523,7 @@ object_arrtype_alloc(PyTypeObject *type, Py_ssize_t items)
             "this will raise a TypeError in the future.", 1) < 0) {
         return NULL;
     }
-    return gentype_alloc(type, items);
+    return PyType_GenericAlloc(type, items);
 }
 
 
@@ -4584,7 +4559,7 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_methods = gentype_methods;
     PyGenericArrType_Type.tp_getset = gentype_getsets;
     PyGenericArrType_Type.tp_new = NULL;
-    PyGenericArrType_Type.tp_alloc = gentype_alloc;
+    PyGenericArrType_Type.tp_alloc = PyType_GenericAlloc;
     PyGenericArrType_Type.tp_free = (freefunc)gentype_free;
     PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
     PyGenericArrType_Type.tp_as_buffer = &gentype_arrtype_as_buffer;
