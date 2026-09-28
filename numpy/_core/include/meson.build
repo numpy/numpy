@@ -19,6 +19,7 @@ installed_headers = [
   'numpy/numpyconfig.h',
   'numpy/ufuncobject.h',
   'numpy/utils.h',
+  'numpy/float16.h',
 ]
 
 py.install_sources(
