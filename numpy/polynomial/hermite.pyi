@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, ClassVar, Final, Literal as L, overload
+from typing import Any, ClassVar, Final, Literal as L, SupportsIndex, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -19,7 +19,6 @@ from ._polytypes import (
     _FuncBinOp,
     _FuncCompanion,
     _FuncDer,
-    _FuncFit,
     _FuncFromRoots,
     _FuncGauss,
     _FuncInteg,
@@ -78,10 +77,14 @@ __all__ = [
 ###
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _ToArray1D[ScalarT: np.generic, T] = _Array1D[ScalarT] | Sequence[T]
 
 type _AsFloat64 = np.float64 | np.integer | np.bool
 type _ToFloat64 = np.float64 | np.float32 | np.float16 | np.integer | np.bool
+
+type _ToComplex128_1D = _SupportsArray[np.dtype[np.number | np.bool]] | Sequence[_NumberLike_co]
+type _ToInt_1D = _SupportsArray[np.dtype[np.integer]] | Sequence[SupportsIndex]
 
 ###
 
@@ -198,7 +201,104 @@ hermgrid3d: Final[_FuncVal3D] = ...
 hermvander: Final[_FuncVander] = ...
 hermvander2d: Final[_FuncVander2D] = ...
 hermvander3d: Final[_FuncVander3D] = ...
-hermfit: Final[_FuncFit] = ...
+
+# keep in sync with `polynomial.*fit`
+@overload  # Nd +f64
+def hermfit[ShapeT: _Shape](
+    x: _ToArray1D[_ToFloat64, float],
+    y: np.ndarray[ShapeT, np.dtype[_AsFloat64]],
+    deg: SupportsIndex | _ToInt_1D,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ToArray1D[_ToFloat64, float] | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # Nd +f64, full=True
+def hermfit[ShapeT: _Shape](
+    x: _ToArray1D[_ToFloat64, float],
+    y: np.ndarray[ShapeT, np.dtype[_AsFloat64]],
+    deg: SupportsIndex | _ToInt_1D,
+    rcond: float | None = None,
+    *,
+    full: L[True],
+    w: _ToArray1D[_ToFloat64, float] | None = None,
+) -> tuple[np.ndarray[ShapeT, np.dtype[np.float64]], list[Any]]: ...
+@overload  # 1d +f64
+def hermfit(
+    x: _ToArray1D[_ToFloat64, float],
+    y: Sequence[float],
+    deg: SupportsIndex | _ToInt_1D,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ToArray1D[_ToFloat64, float] | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d +f64, full=True
+def hermfit(
+    x: _ToArray1D[_ToFloat64, float],
+    y: Sequence[float],
+    deg: SupportsIndex | _ToInt_1D,
+    rcond: float | None = None,
+    *,
+    full: L[True],
+    w: _ToArray1D[_ToFloat64, float] | None = None,
+) -> tuple[_Array1D[np.float64], list[Any]]: ...
+@overload  # 2d +f64
+def hermfit(
+    x: _ToArray1D[_ToFloat64, float],
+    y: Sequence[Sequence[float]],
+    deg: SupportsIndex | _ToInt_1D,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ToArray1D[_ToFloat64, float] | None = None,
+) -> _Array2D[np.float64]: ...
+@overload  # 2d +f64, full=True
+def hermfit(
+    x: _ToArray1D[_ToFloat64, float],
+    y: Sequence[Sequence[float]],
+    deg: SupportsIndex | _ToInt_1D,
+    rcond: float | None = None,
+    *,
+    full: L[True],
+    w: _ToArray1D[_ToFloat64, float] | None = None,
+) -> tuple[_Array2D[np.float64], list[Any]]: ...
+@overload  # Nd
+def hermfit[ShapeT: _Shape](
+    x: _ToComplex128_1D,
+    y: np.ndarray[ShapeT, np.dtype[np.number | np.bool]],
+    deg: SupportsIndex | _ToInt_1D,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ToComplex128_1D | None = None,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # Nd, full=True
+def hermfit[ShapeT: _Shape](
+    x: _ToComplex128_1D,
+    y: np.ndarray[ShapeT, np.dtype[np.number | np.bool]],
+    deg: SupportsIndex | _ToInt_1D,
+    rcond: float | None = None,
+    *,
+    full: L[True],
+    w: _ToComplex128_1D | None = None,
+) -> tuple[np.ndarray[ShapeT, np.dtype[Any]], list[Any]]: ...
+@overload  # ?d  (fallback)
+def hermfit(
+    x: _ToComplex128_1D,
+    y: _ArrayLikeNumber_co,
+    deg: SupportsIndex | _ToInt_1D,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ToComplex128_1D | None = None,
+) -> npt.NDArray[Any]: ...
+@overload  # ?d, full=True
+def hermfit(
+    x: _ToComplex128_1D,
+    y: _ArrayLikeNumber_co,
+    deg: SupportsIndex | _ToInt_1D,
+    rcond: float | None = None,
+    *,
+    full: L[True],
+    w: _ToComplex128_1D | None = None,
+) -> tuple[npt.NDArray[Any], list[Any]]: ...
+
 hermcompanion: Final[_FuncCompanion] = ...
 hermroots: Final[_FuncRoots] = ...
 
