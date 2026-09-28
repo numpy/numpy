@@ -388,12 +388,12 @@ array_swapaxes(PyArrayObject *self, PyObject *const *args, Py_ssize_t len_args)
   steals reference to typed, must not be NULL
 */
 NPY_NO_EXPORT PyObject *
-PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
+PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, npy_intp offset)
 {
     multiarray_umath_state *state = _npy_module_state;
     PyObject *ret = NULL;
     PyObject *safe;
-    int self_elsize, typed_elsize;
+    npy_intp self_elsize, typed_elsize;
 
     if (self == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -418,7 +418,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 
         /* only returns True or raises */
         safe = PyObject_CallFunction(state->runtime_imports._getfield_is_safe,
-                                     "OOi", PyArray_DESCR(self),
+                                     "OOn", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
             Py_DECREF(typed);
@@ -461,12 +461,12 @@ array_getfield(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyArray_Descr *dtype = NULL;
-    int offset = 0;
+    npy_intp offset = 0;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("getfield", args, len_args, kwnames,
             {"dtype", &PyArray_DescrConverter, &dtype},
-            {"|offset", &PyArray_PythonPyIntFromInt, &offset}) < 0) {
+            {"|offset", &PyArray_IntpFromPyIntConverter, &offset}) < 0) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -481,7 +481,7 @@ array_getfield(PyArrayObject *self,
 */
 NPY_NO_EXPORT int
 PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
-                 int offset, PyObject *val)
+                 npy_intp offset, PyObject *val)
 {
     PyObject *ret = NULL;
     int retval = 0;
@@ -519,14 +519,14 @@ array_setfield(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyArray_Descr *dtype = NULL;
-    int offset = 0;
+    npy_intp offset = 0;
     PyObject *value;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("setfield", args, len_args, kwnames,
             {"value", NULL, &value},
             {"dtype", &PyArray_DescrConverter, &dtype},
-            {"|offset", &PyArray_PythonPyIntFromInt, &offset}) < 0) {
+            {"|offset", &PyArray_IntpFromPyIntConverter, &offset}) < 0) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -549,6 +549,12 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
     PyArray_CopySwapNFunc *copyswapn;
     PyArrayIterObject *it;
 
+    if (PyArray_DESCR(self)->elsize > NPY_MAX_INT) {
+        PyErr_SetString(PyExc_TypeError,
+                "byte-swapping with itemsize larger than INT_MAX "
+                "is not supported");
+        return NULL;
+    }
     if (inplace && PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
         return NULL;
     }
@@ -1668,13 +1674,14 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
     else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
-        int offset, res;
+        npy_intp offset;
+        int res;
         Py_ssize_t pos = 0;
         while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
+            if (!PyArg_ParseTuple(value, "On|O", &new, &offset,
                                   &title)) {
                 return -1;
             }

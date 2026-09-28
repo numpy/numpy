@@ -22,6 +22,11 @@ extern "C" {
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
+NPY_NO_EXPORT npy_bool
+npy_check_strides(npy_intp elsize, int nd, npy_intp numbytes,
+                  npy_intp offset, const npy_intp *dims,
+                  const npy_intp *newstrides);
+
 static inline void
 multi_DECREF(PyObject *const *objects, npy_intp n)
 {
@@ -285,7 +290,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
 static inline npy_uintp
-npy_uint_alignment(int itemsize)
+npy_uint_alignment(npy_intp itemsize)
 {
     npy_uintp alignment = 0; /* return value of 0 means unaligned */
 
