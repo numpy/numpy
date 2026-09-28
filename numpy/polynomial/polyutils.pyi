@@ -293,7 +293,7 @@ def _pow(mul_f: _AnyMulF, c: _SeriesLikeObject_co, pow: _AnyInt, maxpower: _AnyI
 @overload
 def _pow(mul_f: _AnyMulF, c: _SeriesLikeCoef_co, pow: _AnyInt, maxpower: _AnyInt | None) -> _CoefSeries: ...
 
-# keep in sync with `_polytypes._FuncFit`
+# keep in sync with `polynomial.*fit`
 @overload
 def _fit(
     vander_f: _AnyVanderF,
