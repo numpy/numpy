@@ -215,7 +215,8 @@ PyArray_GenericBinaryFunction(PyObject *m1, PyObject *m2, PyObject *op)
 NPY_NO_EXPORT PyObject *
 PyArray_GenericUnaryFunction(PyArrayObject *m1, PyObject *op)
 {
-    return PyObject_CallOneArg(op, (PyObject *)m1);
+    PyObject *args[1] = {(PyObject *)m1};
+    return PyObject_Vectorcall(op, args, 1, NULL);
 }
 
 static PyObject *

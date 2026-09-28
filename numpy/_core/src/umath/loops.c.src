@@ -334,7 +334,8 @@ PyUFunc_OO_O_method(char **args, npy_intp const *dimensions, npy_intp const *ste
         /* hold the operands: the call can clear their array slots */
         PyObject *obj = Py_NewRef(in1 ? in1 : Py_None);
         PyObject *arg = Py_NewRef(in2 ? in2 : Py_None);
-        PyObject *ret = PyObject_CallMethodOneArg(obj, meth_name, arg);
+        PyObject *call_args[2] = {obj, arg};
+        PyObject *ret = PyObject_VectorcallMethod(meth_name, call_args, 2, NULL);
         Py_DECREF(obj);
         Py_DECREF(arg);
         if (ret == NULL) {
