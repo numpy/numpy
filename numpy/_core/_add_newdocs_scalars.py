@@ -187,8 +187,8 @@ add_newdoc_for_scalar_type('cdouble', '(real=0, imag=0, /)', """
 Complex number type composed of two double-precision floating-point numbers,
 compatible with Python :class:`complex`.
 
-Unlike Python :class:`complex`, this constructor does not accept keyword
-arguments.
+Unlike Python :class:`complex`, ``real`` and ``imag`` must be passed
+positionally; keyword arguments are not accepted.
 """)
 
 add_newdoc_for_scalar_type('clongdouble', '(value=0, /)', """
