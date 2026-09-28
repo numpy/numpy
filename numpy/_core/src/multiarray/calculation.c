@@ -651,8 +651,8 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
                 PyObject *args[2] = {(PyObject *)a, (PyObject *)out};
                 return PyObject_Vectorcall(state->n_ops.rint, args, 2, NULL);
             }
-            PyObject *args[1] = {(PyObject *)a};
-            return PyObject_Vectorcall(state->n_ops.rint, args, 1, NULL);
+            PyObject *arg = (PyObject *)a;
+            return PyObject_Vectorcall(state->n_ops.rint, &arg, 1, NULL);
         }
         op1 = state->n_ops.multiply;
         op2 = state->n_ops.true_divide;
