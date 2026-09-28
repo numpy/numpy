@@ -2,11 +2,6 @@ from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-from numpy.lib._arraysetops_impl import (
-    UniqueAllResult,
-    UniqueCountsResult,
-    UniqueInverseResult,
-)
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Int1D = _Array1D[np.intp]
@@ -20,6 +15,8 @@ AR_M: npt.NDArray[np.datetime64]
 AR_O: npt.NDArray[np.object_]
 
 AR_LIKE_f8: list[float]
+
+_f8: np.float64
 
 assert_type(np.ediff1d(AR_b), _Array1D[np.int8])
 assert_type(np.ediff1d(AR_i8, to_end=[1, 2, 3]), _Array1D[np.int64])
@@ -145,11 +142,26 @@ assert_type(np.unique(AR_LIKE_f8, True, True, True, axis=0), tuple[npt.NDArray[A
 
 ###
 
-assert_type(np.unique_all(AR_f8), UniqueAllResult[np.float64])
-assert_type(np.unique_all(AR_LIKE_f8), UniqueAllResult[Any])
-assert_type(np.unique_counts(AR_f8), UniqueCountsResult[np.float64])
-assert_type(np.unique_counts(AR_LIKE_f8), UniqueCountsResult[Any])
-assert_type(np.unique_inverse(AR_f8), UniqueInverseResult[np.float64])
-assert_type(np.unique_inverse(AR_LIKE_f8), UniqueInverseResult[Any])
+assert_type(np.unique_all(AR_f8_1d).values, _Array1D[np.float64])
+assert_type(np.unique_all(AR_f8_1d).indices, _Array1D[np.intp])
+assert_type(np.unique_all(AR_f8_1d).inverse_indices, _Array1D[np.intp])
+assert_type(np.unique_all(AR_f8_1d).counts, _Array1D[np.intp])
+assert_type(np.unique_all(_f8).values, _Array1D[np.float64])
+assert_type(np.unique_all(_f8).inverse_indices, npt.NDArray[np.intp])
+assert_type(np.unique_all(AR_LIKE_f8).values, _Array1D[Any])
+assert_type(np.unique_all(AR_LIKE_f8).inverse_indices, npt.NDArray[np.intp])
+
+assert_type(np.unique_counts(AR_f8).values, _Array1D[np.float64])
+assert_type(np.unique_counts(AR_f8).counts, _Array1D[np.intp])
+assert_type(np.unique_counts(AR_LIKE_f8).values, _Array1D[Any])
+assert_type(np.unique_counts(AR_LIKE_f8).counts, _Array1D[np.intp])
+
+assert_type(np.unique_inverse(AR_f8_1d).values, _Array1D[np.float64])
+assert_type(np.unique_inverse(AR_f8_1d).inverse_indices, _Array1D[np.intp])
+assert_type(np.unique_inverse(_f8).values, _Array1D[np.float64])
+assert_type(np.unique_inverse(_f8).inverse_indices, npt.NDArray[np.intp])
+assert_type(np.unique_inverse(AR_LIKE_f8).values, _Array1D[Any])
+assert_type(np.unique_inverse(AR_LIKE_f8).inverse_indices, npt.NDArray[np.intp])
+
 assert_type(np.unique_values(AR_f8), _Array1D[np.float64])
 assert_type(np.unique_values(AR_LIKE_f8), _Array1D[Any])

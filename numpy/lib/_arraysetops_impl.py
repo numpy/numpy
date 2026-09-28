@@ -909,14 +909,53 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             "Please select 'sort' or None for kind."
         )
 
-    # Check if one of the arrays may contain arbitrary objects
-    contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
+    string_dtype = None
+    if (ar1.dtype.kind == "T" or ar2.dtype.kind == "T") and (
+            ar1.dtype.kind in "TU" and ar2.dtype.kind in "TU"):
+        try:
+            # promote to the result dtype so we can use the fast hashing path
+            string_dtype = np.result_type(ar1, ar2)
+        except TypeError:
+            # fall back to slow sorting path with e.g. ar1.na_object == None
+            # and ar2.na_object == np.nan
+            pass
 
-    # This code is run when
-    # a) the first condition is true, making the code significantly faster
-    # b) the second condition is true (i.e. `ar1` or `ar2` may contain
-    #    arbitrary objects), since then sorting is not guaranteed to work
-    if len(ar2) < 10 * len(ar1) ** 0.145 or contains_object:
+    # Check if one of the arrays may contain arbitrary objects
+    contains_object = (ar1.dtype.hasobject or ar2.dtype.hasobject) and (
+        string_dtype is None)
+
+    scalar_comparisons_are_faster = len(ar2) < 10 * len(ar1) ** 0.145
+    result = None
+    # Remove non-NaN missing values before sorting. Non-string sentinels
+    # cannot be ordered with strings. String sentinels are sortable, but
+    # filtering is faster when missing values are common and adds only a
+    # small overhead otherwise.
+    if (not scalar_comparisons_are_faster and string_dtype is not None and
+            string_dtype._has_na and not string_dtype._has_nan_na):
+        na = np.asarray(string_dtype.na_object, dtype=string_dtype)
+        missing1, missing2 = ar1 == na, ar2 == na
+        has_missing2 = missing2.any()
+        if missing1.any():
+            result = np.full(
+                ar1.shape, has_missing2 != invert, dtype=bool)
+            valid1 = ~missing1
+            ar1 = ar1[valid1]
+        if has_missing2:
+            ar2 = ar2[~missing2]
+        # Filtering can make scalar comparisons cheaper than sorting.
+        scalar_comparisons_are_faster = len(ar2) < 10 * len(ar1) ** 0.145
+
+    # Use direct comparisons for few candidates or arbitrary objects, which
+    # cannot be sorted reliably.
+    if scalar_comparisons_are_faster or contains_object:
+        if string_dtype is not None:
+            # StringDType scalars are str or na_object, so ensure iteration
+            # always produces arrays this could be deleted if StringDType ever
+            # grew a NumPy scalar type
+            ar2 = ar2.reshape(-1, 1)
+            if ar2.dtype.kind == "T" and ar2.dtype._has_nan_na:
+                na_object = ar2.dtype.na_object
+                ar2 = (a for a in ar2 if a[0] is not na_object)
         if invert:
             mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
@@ -925,9 +964,16 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             mask = np.zeros(len(ar1), dtype=bool)
             for a in ar2:
                 mask |= (ar1 == a)
-        return mask
+    else:
+        mask = _isin_sorting(ar1, ar2, assume_unique, invert)
 
-    # Otherwise use sorting
+    if result is not None:
+        result[valid1] = mask
+        return result
+    return mask
+
+
+def _isin_sorting(ar1, ar2, assume_unique, invert):
     if not assume_unique:
         ar1, rev_idx = np.unique(ar1, return_inverse=True)
         ar2 = np.unique(ar2)

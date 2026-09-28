@@ -395,6 +395,8 @@ assert_type(MAR_2d_f4.mT, np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32
 
 assert_type(MAR_c16.real, MaskedArray[np.float64])
 assert_type(MAR_c16.imag, MaskedArray[np.float64])
+assert_type(MAR_1d.real, np.ma.MaskedArray[tuple[int], np.dtype[Any]])
+assert_type(MAR_1d.imag, np.ma.MaskedArray[tuple[int], np.dtype[Any]])
 
 assert_type(MAR_2d_f4.baseclass, type[NDArray[Any]])
 
@@ -510,7 +512,7 @@ def invalid_resize() -> None:
 assert_type(np.ma.MaskedArray(AR_f4), MaskedArray[np.float32])
 assert_type(np.ma.MaskedArray(np.array([1, 2, 3]), [True, True, False], np.float16), MaskedArray[np.float16])
 assert_type(np.ma.MaskedArray(np.array([1, 2, 3]), dtype=np.float16), MaskedArray[np.float16])
-assert_type(np.ma.MaskedArray(np.array([1, 2, 3]), copy=True), MaskedArray[Any])
+assert_type(np.ma.MaskedArray(np.array([1, 2, 3]), copy=True), MaskedArray[np.int_])
 # TODO: This one could be made more precise, the return type could be `MaskedArraySubclassC`
 assert_type(np.ma.MaskedArray(MAR_subclass), MaskedArray[np.complex128])
 # TODO: This one could be made more precise, the return type could be `MaskedArraySubclass[np.float32]`

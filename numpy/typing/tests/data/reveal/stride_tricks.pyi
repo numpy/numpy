@@ -6,6 +6,7 @@ import numpy.typing as npt
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
 
 AR_f8: npt.NDArray[np.float64]
 AR_LIKE_f: list[float]
@@ -21,14 +22,21 @@ shape_2d: tuple[int, int]
 shape_3d: tuple[int, int, int]
 interface_dict: dict[str, Any]
 
-assert_type(np.lib.stride_tricks.as_strided(AR_f8), npt.NDArray[np.float64])
-assert_type(np.lib.stride_tricks.as_strided(AR_LIKE_f), npt.NDArray[Any])
+assert_type(np.lib.stride_tricks.as_strided(AR_f8_2d), _Array2D[np.float64])
 assert_type(np.lib.stride_tricks.as_strided(AR_f8, strides=(1, 5)), npt.NDArray[np.float64])
+assert_type(np.lib.stride_tricks.as_strided(AR_f8, shape_2d, (8, 8)), _Array2D[np.float64])
+assert_type(np.lib.stride_tricks.as_strided(AR_f8, shape=shape_3d), _Array3D[np.float64])
 assert_type(np.lib.stride_tricks.as_strided(AR_f8, shape=[9, 20]), npt.NDArray[np.float64])
+assert_type(np.lib.stride_tricks.as_strided(AR_LIKE_f, shape=shape_1d), _Array1D[Any])
+assert_type(np.lib.stride_tricks.as_strided(AR_LIKE_f), npt.NDArray[Any])
 
+assert_type(np.lib.stride_tricks.sliding_window_view(AR_i8_1d, 5), _Array2D[np.int64])
+assert_type(np.lib.stride_tricks.sliding_window_view(AR_i8_2d, 5, axis=0), _Array3D[np.int64])
+assert_type(np.lib.stride_tricks.sliding_window_view(AR_i8_2d, (2, 5)), _Array4D[np.int64])
+assert_type(np.lib.stride_tricks.sliding_window_view(AR_i8_3d, (5,), axis=-1), _Array4D[np.int64])
 assert_type(np.lib.stride_tricks.sliding_window_view(AR_f8, 5), npt.NDArray[np.float64])
-assert_type(np.lib.stride_tricks.sliding_window_view(AR_LIKE_f, (1, 5)), npt.NDArray[Any])
 assert_type(np.lib.stride_tricks.sliding_window_view(AR_f8, [9], axis=1), npt.NDArray[np.float64])
+assert_type(np.lib.stride_tricks.sliding_window_view(AR_LIKE_f, (1, 5)), npt.NDArray[Any])
 
 assert_type(np.broadcast_to(AR_f8, 1), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.broadcast_to(AR_f8, ()), np.ndarray[tuple[()], np.dtype[np.float64]])

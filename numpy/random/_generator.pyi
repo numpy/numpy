@@ -28,10 +28,16 @@ from .mtrand import RandomState
 
 ###
 
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
-type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
-type _Array4D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ScalarT]]
+type _0D = tuple[()]
+type _1D = tuple[int]
+type _2D = tuple[int, int]
+type _3D = tuple[int, int, int]
+type _4D = tuple[int, int, int, int]
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[_1D, np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[_2D, np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[_3D, np.dtype[ScalarT]]
+type _Array4D[ScalarT: np.generic] = np.ndarray[_4D, np.dtype[ScalarT]]
 
 type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | list[ScalarT]
 type _NestedList[T] = _NestedSequence[list[T]] | list[T]
@@ -76,7 +82,7 @@ class Generator:
     @overload
     def standard_cauchy(self, size: SupportsIndex) -> _Array1D[np.float64]: ...
     @overload
-    def standard_cauchy[ShapeT: _Shape](self, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    def standard_cauchy[ShapeT: (_0D, _1D, _2D, _3D)](self, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload
     def standard_cauchy(self, size: _ShapeLike) -> _ArrayF64: ...
 
@@ -96,7 +102,7 @@ class Generator:
         out: None = None,
     ) -> _Array1D[np.float64]: ...
     @overload  # size=<known>, dtype=f64 (default)
-    def random[ShapeT: _Shape](
+    def random[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         size: ShapeT,
         dtype: _DTypeLikeF64 = np.float64,
@@ -117,7 +123,7 @@ class Generator:
         out: None = None,
     ) -> _Array1D[np.float32]: ...
     @overload  # size=<known>, dtype=f32
-    def random[ShapeT: _Shape](
+    def random[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         size: ShapeT,
         dtype: _DTypeLikeF32,
@@ -177,7 +183,7 @@ class Generator:
         out: None = None,
     ) -> _Array1D[np.float64]: ...
     @overload  # size=<known>, dtype=f64 (default)
-    def standard_normal[ShapeT: _Shape](
+    def standard_normal[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         size: ShapeT,
         dtype: _DTypeLikeF64 = np.float64,
@@ -198,7 +204,7 @@ class Generator:
         out: None = None,
     ) -> _Array1D[np.float32]: ...
     @overload  # size=<known>, dtype=f32
-    def standard_normal[ShapeT: _Shape](
+    def standard_normal[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         size: ShapeT,
         dtype: _DTypeLikeF32,
@@ -252,7 +258,7 @@ class Generator:
         self, size: int, dtype: _DTypeLikeF64 = ..., method: _MethodExp = "zig", out: None = None
     ) -> _Array1D[np.float64]: ...
     @overload  # size=<known>, dtype=f64 (default)
-    def standard_exponential[ShapeT: _Shape](
+    def standard_exponential[ShapeT: (_0D, _1D, _2D, _3D)](
         self, size: ShapeT, dtype: _DTypeLikeF64 = ..., method: _MethodExp = "zig", out: None = None
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>, dtype=f64 (default)
@@ -264,7 +270,7 @@ class Generator:
         self, size: int, dtype: _DTypeLikeF32, method: _MethodExp = "zig", out: None = None
     ) -> _Array1D[np.float32]: ...
     @overload  # size=<known>, dtype=f32
-    def standard_exponential[ShapeT: _Shape](
+    def standard_exponential[ShapeT: (_0D, _1D, _2D, _3D)](
         self, size: ShapeT, dtype: _DTypeLikeF32, method: _MethodExp = "zig", out: None = None
     ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
     @overload  # size=<unknown>, dtype=f32
@@ -318,7 +324,7 @@ class Generator:
         self, shape: _ArrayLikeFloat_co, size: int, dtype: _DTypeLikeF64 = ..., out: None = None
     ) -> _Array1D[np.float64]: ...
     @overload  # >=0d, size=<known>, dtype=f64 (default)
-    def standard_gamma[ShapeT: _Shape](
+    def standard_gamma[ShapeT: (_0D, _1D, _2D, _3D)](
         self, shape: _ArrayLikeFloat_co, size: ShapeT, dtype: _DTypeLikeF64 = ..., out: None = None
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # >=0d, size=<unknown>, dtype=f64 (default)
@@ -330,7 +336,7 @@ class Generator:
         self, shape: _ArrayLikeFloat_co, size: int, dtype: _DTypeLikeF32, *, out: None = None
     ) -> _Array1D[np.float32]: ...
     @overload  # >=0d, size=<known>, dtype=f32
-    def standard_gamma[ShapeT: _Shape](
+    def standard_gamma[ShapeT: (_0D, _1D, _2D, _3D)](
         self, shape: _ArrayLikeFloat_co, size: ShapeT, dtype: _DTypeLikeF32, *, out: None = None
     ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
     @overload  # >=0d, size=<unknown>, dtype=f32
@@ -364,7 +370,9 @@ class Generator:
     @overload  # size=<1d>
     def power(self, /, a: _ArrayLikeFloat_co, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def power[ShapeT: _Shape](self, /, a: _ArrayLikeFloat_co, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    def power[ShapeT: (_0D, _1D, _2D, _3D)](
+        self, /, a: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
     def power(self, /, a: _ArrayLikeFloat_co, size: _ShapeLike) -> _ArrayF64: ...
 
@@ -378,7 +386,9 @@ class Generator:
     @overload  # size=<1d>
     def pareto(self, /, a: _ArrayLikeFloat_co, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def pareto[ShapeT: _Shape](self, /, a: _ArrayLikeFloat_co, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    def pareto[ShapeT: (_0D, _1D, _2D, _3D)](
+        self, /, a: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
     def pareto(self, /, a: _ArrayLikeFloat_co, size: _ShapeLike) -> _ArrayF64: ...
 
@@ -392,7 +402,9 @@ class Generator:
     @overload  # size=<1d>
     def weibull(self, /, a: _ArrayLikeFloat_co, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def weibull[ShapeT: _Shape](self, /, a: _ArrayLikeFloat_co, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    def weibull[ShapeT: (_0D, _1D, _2D, _3D)](
+        self, /, a: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
     def weibull(self, /, a: _ArrayLikeFloat_co, size: _ShapeLike) -> _ArrayF64: ...
 
@@ -406,7 +418,9 @@ class Generator:
     @overload  # size=<1d>
     def standard_t(self, /, df: _ArrayLikeFloat_co, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def standard_t[ShapeT: _Shape](self, /, df: _ArrayLikeFloat_co, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    def standard_t[ShapeT: (_0D, _1D, _2D, _3D)](
+        self, /, df: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
     def standard_t(self, /, df: _ArrayLikeFloat_co, size: _ShapeLike) -> _ArrayF64: ...
 
@@ -420,7 +434,9 @@ class Generator:
     @overload  # size=<1d>
     def chisquare(self, /, df: _ArrayLikeFloat_co, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def chisquare[ShapeT: _Shape](self, /, df: _ArrayLikeFloat_co, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+    def chisquare[ShapeT: (_0D, _1D, _2D, _3D)](
+        self, /, df: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
     def chisquare(self, /, df: _ArrayLikeFloat_co, size: _ShapeLike) -> _ArrayF64: ...
 
@@ -436,11 +452,11 @@ class Generator:
     @overload  # size=<1d> (keyword)
     def exponential(self, /, scale: _ArrayLikeFloat_co = 1.0, *, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known> (positional)
-    def exponential[ShapeT: _Shape](
+    def exponential[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, scale: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<known> (keyword)
-    def exponential[ShapeT: _Shape](
+    def exponential[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, scale: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown> (positional)
@@ -460,11 +476,11 @@ class Generator:
     @overload  # size=<1d> (keyword)
     def rayleigh(self, /, scale: _ArrayLikeFloat_co = 1.0, *, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known> (positional)
-    def rayleigh[ShapeT: _Shape](
+    def rayleigh[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, scale: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<known> (keyword)
-    def rayleigh[ShapeT: _Shape](
+    def rayleigh[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, scale: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown> (positional)
@@ -484,7 +500,7 @@ class Generator:
     @overload  # size=<1d>
     def noncentral_chisquare(self, /, df: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def noncentral_chisquare[ShapeT: _Shape](
+    def noncentral_chisquare[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, df: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
@@ -502,7 +518,7 @@ class Generator:
     @overload  # size=<1d>
     def f(self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def f[ShapeT: _Shape](
+    def f[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
@@ -520,7 +536,7 @@ class Generator:
     @overload  # size=<1d>
     def vonmises(self, /, mu: _ArrayLikeFloat_co, kappa: _ArrayLikeFloat_co, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def vonmises[ShapeT: _Shape](
+    def vonmises[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, mu: _ArrayLikeFloat_co, kappa: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
@@ -538,7 +554,7 @@ class Generator:
     @overload  # size=<1d>
     def wald(self, /, mean: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def wald[ShapeT: _Shape](
+    def wald[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, mean: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
@@ -556,7 +572,7 @@ class Generator:
     @overload  # size=<1d>
     def beta(self, /, a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def beta[ShapeT: _Shape](
+    def beta[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
@@ -576,11 +592,11 @@ class Generator:
     @overload  # size=<1d> (keyword)
     def gamma(self, /, shape: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co = 1.0, *, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known> (positional)
-    def gamma[ShapeT: _Shape](
+    def gamma[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, shape: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<known> (keyword)
-    def gamma[ShapeT: _Shape](
+    def gamma[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, shape: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown> (positional)
@@ -604,11 +620,11 @@ class Generator:
     @overload  # size=<1d> (keyword)
     def uniform(self, /, low: _ArrayLikeFloat_co = 0.0, high: _ArrayLikeFloat_co = 1.0, *, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known> (positional)
-    def uniform[ShapeT: _Shape](
+    def uniform[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, low: _ArrayLikeFloat_co, high: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<known> (keyword)
-    def uniform[ShapeT: _Shape](
+    def uniform[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, low: _ArrayLikeFloat_co = 0.0, high: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown> (positional)
@@ -632,11 +648,11 @@ class Generator:
     @overload  # size=<1d> (keyword)
     def normal(self, /, loc: _ArrayLikeFloat_co = 0.0, scale: _ArrayLikeFloat_co = 1.0, *, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known> (positional)
-    def normal[ShapeT: _Shape](
+    def normal[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, loc: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<known> (keyword)
-    def normal[ShapeT: _Shape](
+    def normal[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, loc: _ArrayLikeFloat_co = 0.0, scale: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown> (positional)
@@ -660,11 +676,11 @@ class Generator:
     @overload  # size=<1d> (keyword)
     def gumbel(self, /, loc: _ArrayLikeFloat_co = 0.0, scale: _ArrayLikeFloat_co = 1.0, *, size: int) -> _Array1D[np.float64]: ...
     @overload  # size=<known> (positional)
-    def gumbel[ShapeT: _Shape](
+    def gumbel[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, loc: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<known> (keyword)
-    def gumbel[ShapeT: _Shape](
+    def gumbel[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, loc: _ArrayLikeFloat_co = 0.0, scale: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown> (positional)
@@ -692,11 +708,11 @@ class Generator:
         self, /, loc: _ArrayLikeFloat_co = 0.0, scale: _ArrayLikeFloat_co = 1.0, *, size: int
     ) -> _Array1D[np.float64]: ...
     @overload  # size=<known> (positional)
-    def logistic[ShapeT: _Shape](
+    def logistic[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, loc: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<known> (keyword)
-    def logistic[ShapeT: _Shape](
+    def logistic[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, loc: _ArrayLikeFloat_co = 0.0, scale: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown> (positional)
@@ -724,11 +740,11 @@ class Generator:
         self, /, loc: _ArrayLikeFloat_co = 0.0, scale: _ArrayLikeFloat_co = 1.0, *, size: int
     ) -> _Array1D[np.float64]: ...
     @overload  # size=<known> (positional)
-    def laplace[ShapeT: _Shape](
+    def laplace[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, loc: _ArrayLikeFloat_co, scale: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<known> (keyword)
-    def laplace[ShapeT: _Shape](
+    def laplace[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, loc: _ArrayLikeFloat_co = 0.0, scale: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown> (positional)
@@ -756,11 +772,11 @@ class Generator:
         self, /, mean: _ArrayLikeFloat_co = 0.0, sigma: _ArrayLikeFloat_co = 1.0, *, size: int
     ) -> _Array1D[np.float64]: ...
     @overload  # size=<known> (positional)
-    def lognormal[ShapeT: _Shape](
+    def lognormal[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, mean: _ArrayLikeFloat_co, sigma: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<known> (keyword)
-    def lognormal[ShapeT: _Shape](
+    def lognormal[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, mean: _ArrayLikeFloat_co = 0.0, sigma: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown> (positional)
@@ -792,7 +808,7 @@ class Generator:
         self, /, left: _ArrayLikeFloat_co, mode: _ArrayLikeFloat_co, right: _ArrayLikeFloat_co, size: int
     ) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def triangular[ShapeT: _Shape](
+    def triangular[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, left: _ArrayLikeFloat_co, mode: _ArrayLikeFloat_co, right: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
@@ -824,7 +840,7 @@ class Generator:
         self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: int
     ) -> _Array1D[np.float64]: ...
     @overload  # size=<known>
-    def noncentral_f[ShapeT: _Shape](
+    def noncentral_f[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, nonc: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
     @overload  # size=<unknown>
@@ -858,7 +874,8 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None,
         size: int,
-        *, dtype: _DTypeLike[ScalarT],
+        *,
+        dtype: _DTypeLike[ScalarT],
         endpoint: bool = False,
     ) -> _Array1D[ScalarT]: ...
     @overload  # integer dtype, size=<1d> (keyword)
@@ -872,16 +889,17 @@ class Generator:
         endpoint: bool = False,
     ) -> _Array1D[ScalarT]: ...
     @overload  # integer dtype, size=<known> (positional)
-    def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
+    def integers[ScalarT: np.integer | np.bool, ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None,
         size: ShapeT,
-        *, dtype: _DTypeLike[ScalarT],
+        *,
+        dtype: _DTypeLike[ScalarT],
         endpoint: bool = False,
     ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
     @overload  # integer dtype, size=<known> (keyword)
-    def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
+    def integers[ScalarT: np.integer | np.bool, ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
@@ -920,7 +938,7 @@ class Generator:
         endpoint: bool = False,
     ) -> _Array1D[np.int64]: ...
     @overload  # int64 (default), size=<known> (positional)
-    def integers[ShapeT: _Shape](
+    def integers[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None,
@@ -929,7 +947,7 @@ class Generator:
         endpoint: bool = False,
     ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
     @overload  # int64 (default), size=<known> (keyword)
-    def integers[ShapeT: _Shape](
+    def integers[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
@@ -968,7 +986,7 @@ class Generator:
         endpoint: bool = False,
     ) -> _Array1D[Any]: ...
     @overload  # unknown, size=<known> (positional)
-    def integers[ShapeT: _Shape](
+    def integers[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None,
@@ -977,7 +995,7 @@ class Generator:
         endpoint: bool = False,
     ) -> np.ndarray[ShapeT]: ...
     @overload  # unknown, size=<known> (keyword)
-    def integers[ShapeT: _Shape](
+    def integers[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
@@ -1035,7 +1053,9 @@ class Generator:
     @overload  # size=<1d>
     def zipf(self, /, a: _ArrayLikeFloat_co, size: int) -> _Array1D[np.int64]: ...
     @overload  # size=<known>
-    def zipf[ShapeT: _Shape](self, /, a: _ArrayLikeFloat_co, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    def zipf[ShapeT: (_0D, _1D, _2D, _3D)](
+        self, /, a: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
     @overload  # size=<unknown>
     def zipf(self, /, a: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.int64]: ...
 
@@ -1049,7 +1069,9 @@ class Generator:
     @overload  # size=<1d>
     def geometric(self, /, p: _ArrayLikeFloat_co, size: int) -> _Array1D[np.int64]: ...
     @overload  # size=<known>
-    def geometric[ShapeT: _Shape](self, /, p: _ArrayLikeFloat_co, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    def geometric[ShapeT: (_0D, _1D, _2D, _3D)](
+        self, /, p: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
     @overload  # size=<unknown>
     def geometric(self, /, p: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.int64]: ...
 
@@ -1063,7 +1085,9 @@ class Generator:
     @overload  # size=<1d>
     def logseries(self, /, p: _ArrayLikeFloat_co, size: int) -> _Array1D[np.int64]: ...
     @overload  # size=<known>
-    def logseries[ShapeT: _Shape](self, /, p: _ArrayLikeFloat_co, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    def logseries[ShapeT: (_0D, _1D, _2D, _3D)](
+        self, /, p: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
     @overload  # size=<unknown>
     def logseries(self, /, p: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.int64]: ...
 
@@ -1079,9 +1103,11 @@ class Generator:
     @overload  # size=<1d> (keyword)
     def poisson(self, /, lam: _ArrayLikeFloat_co = 1.0, *, size: int) -> _Array1D[np.int64]: ...
     @overload  # size=<known> (positional)
-    def poisson[ShapeT: _Shape](self, /, lam: _ArrayLikeFloat_co, size: ShapeT) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    def poisson[ShapeT: (_0D, _1D, _2D, _3D)](
+        self, /, lam: _ArrayLikeFloat_co, size: ShapeT
+    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
     @overload  # size=<known> (keyword)
-    def poisson[ShapeT: _Shape](
+    def poisson[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, lam: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
     @overload  # size=<unknown> (positional)
@@ -1101,7 +1127,7 @@ class Generator:
     @overload  # size=<1d>
     def binomial(self, /, n: _ArrayLikeInt_co, p: _ArrayLikeFloat_co, size: int) -> _Array1D[np.int64]: ...
     @overload  # size=<known>
-    def binomial[ShapeT: _Shape](
+    def binomial[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, n: _ArrayLikeInt_co, p: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
     @overload  # size=<unknown>
@@ -1121,7 +1147,7 @@ class Generator:
     @overload  # size=<1d>
     def negative_binomial(self, /, n: _ArrayLikeFloat_co, p: _ArrayLikeFloat_co, size: int) -> _Array1D[np.int64]: ...
     @overload  # size=<known>
-    def negative_binomial[ShapeT: _Shape](
+    def negative_binomial[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, n: _ArrayLikeFloat_co, p: _ArrayLikeFloat_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
     @overload  # size=<unknown>
@@ -1151,7 +1177,7 @@ class Generator:
         self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _ArrayLikeInt_co, size: int
     ) -> _Array1D[np.int64]: ...
     @overload  # size=<known>
-    def hypergeometric[ShapeT: _Shape](
+    def hypergeometric[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _ArrayLikeInt_co, size: ShapeT
     ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
     @overload  # size=<unknown>
@@ -1442,7 +1468,7 @@ class Generator:
         shuffle: bool = True,
     ) -> _Array1D[np.bool]: ...
     @overload  # 1d ~bool, size=<known>
-    def choice[ShapeT: _Shape](
+    def choice[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         /,
         a: list[bool],
@@ -1475,7 +1501,7 @@ class Generator:
         shuffle: bool = True,
     ) -> _Array1D[np.int_]: ...
     @overload  # 1d ~int, size=<known>
-    def choice[ShapeT: _Shape](
+    def choice[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         /,
         a: int | list[int],
@@ -1508,7 +1534,7 @@ class Generator:
         shuffle: bool = True,
     ) -> _Array1D[np.float64]: ...
     @overload  # 1d ~float, size=<known>
-    def choice[ShapeT: _Shape](
+    def choice[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         /,
         a: list[float],
@@ -1541,7 +1567,7 @@ class Generator:
         shuffle: bool = True,
     ) -> _Array1D[np.str_]: ...
     @overload  # 1d ~str, size=<known>
-    def choice[ShapeT: _Shape](
+    def choice[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         /,
         a: list[str],
@@ -1574,7 +1600,7 @@ class Generator:
         shuffle: bool = True,
     ) -> _Array1D[ScalarT]: ...
     @overload  # 1d known, size=<known>
-    def choice[ScalarT: np.generic, ShapeT: _Shape](
+    def choice[ScalarT: np.generic, ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         /,
         a: _ToArray1D[ScalarT],

@@ -6,13 +6,19 @@ from numpy._typing import ArrayLike, NDArray, _AnyShape, _ArrayLike, _Shape, _Sh
 
 __all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes"]
 
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
-type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
-type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
+type _0D = tuple[()]
+type _1D = tuple[int]
+type _2D = tuple[int, int]
+type _3D = tuple[int, int, int]
+type _4D = tuple[int, int, int, int]
 
-type _ToShape1D = int | np.integer | tuple[int]
-type _ToShape2D = _ToShape1D | tuple[int, int]
+type _Array1D[ScalarT: np.generic] = np.ndarray[_1D, np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[_2D, np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[_3D, np.dtype[ScalarT]]
+type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[_1D | _2D, np.dtype[ScalarT]]
+
+type _ToShape1D = int | np.integer | _1D
+type _ToShape2D = _ToShape1D | _2D
 
 # workaround for mypy and pyright not following the typing spec for overloads
 type _ShapeNoD = tuple[Never, Never, Never, Never]
@@ -26,7 +32,28 @@ class DummyArray:
         base: NDArray[Any] | None = None,
     ) -> None: ...
 
-@overload
+#
+@overload  # Nd T, None
+def as_strided[ShapeT: _Shape, DTypeT: np.dtype](
+    x: np.ndarray[ShapeT, DTypeT],
+    shape: None = None,
+    strides: Iterable[int] | None = None,
+    subok: bool = False,
+    writeable: bool = True,
+    *,
+    check_bounds: bool | None = None,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # ?d T, Nd
+def as_strided[ScalarT: np.generic, ShapeT: _Shape](
+    x: _ArrayLike[ScalarT],
+    shape: ShapeT,
+    strides: Iterable[int] | None = None,
+    subok: bool = False,
+    writeable: bool = True,
+    *,
+    check_bounds: bool | None = None,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # ?d T, ?d
 def as_strided[ScalarT: np.generic](
     x: _ArrayLike[ScalarT],
     shape: Iterable[int] | None = None,
@@ -34,9 +61,19 @@ def as_strided[ScalarT: np.generic](
     subok: bool = False,
     writeable: bool = True,
     *,
-    check_bounds: bool | None = None
+    check_bounds: bool | None = None,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, Nd
+def as_strided[ShapeT: _Shape](
+    x: ArrayLike,
+    shape: ShapeT,
+    strides: Iterable[int] | None = None,
+    subok: bool = False,
+    writeable: bool = True,
+    *,
+    check_bounds: bool | None = None,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # ?d, ?d  (fallback)
 def as_strided(
     x: ArrayLike,
     shape: Iterable[int] | None = None,
@@ -44,10 +81,56 @@ def as_strided(
     subok: bool = False,
     writeable: bool = True,
     *,
-    check_bounds: bool | None = None
+    check_bounds: bool | None = None,
 ) -> NDArray[Any]: ...
 
-@overload
+#
+@overload  # ?d T, ?d  (workaround)
+def sliding_window_view[DTypeT: np.dtype](
+    x: np.ndarray[_ShapeNoD, DTypeT],
+    window_shape: int | Iterable[int],
+    axis: int | tuple[int, ...] | None = None,
+    *,
+    subok: bool = False,
+    writeable: bool = False,
+) -> np.ndarray[_AnyShape, DTypeT]: ...
+@overload  # 1d T, 1d
+def sliding_window_view[DTypeT: np.dtype](
+    x: np.ndarray[tuple[int], DTypeT],
+    window_shape: int | tuple[int],
+    axis: int | tuple[int] | None = None,
+    *,
+    subok: bool = False,
+    writeable: bool = False,
+) -> np.ndarray[tuple[int, int], DTypeT]: ...
+@overload  # 2d T, 1d, axis=<given>
+def sliding_window_view[DTypeT: np.dtype](
+    x: np.ndarray[tuple[int, int], DTypeT],
+    window_shape: int | tuple[int],
+    axis: int | tuple[int],
+    *,
+    subok: bool = False,
+    writeable: bool = False,
+) -> np.ndarray[tuple[int, int, int], DTypeT]: ...
+@overload  # 2d T, 2d
+def sliding_window_view[DTypeT: np.dtype](
+    x: np.ndarray[tuple[int, int], DTypeT],
+    window_shape: tuple[int, int],
+    axis: tuple[int, int] | None = None,
+    *,
+    subok: bool = False,
+    writeable: bool = False,
+) -> np.ndarray[tuple[int, int, int, int], DTypeT]: ...
+@overload  # 3d T, 1d, axis=<given>
+def sliding_window_view[DTypeT: np.dtype](
+    x: np.ndarray[tuple[int, int, int], DTypeT],
+    window_shape: int | tuple[int],
+    axis: int | tuple[int],
+    *,
+    subok: bool = False,
+    writeable: bool = False,
+) -> np.ndarray[tuple[int, int, int, int], DTypeT]: ...
+@overload  # ?d T, ?d
 def sliding_window_view[ScalarT: np.generic](
     x: _ArrayLike[ScalarT],
     window_shape: int | Iterable[int],
@@ -56,7 +139,7 @@ def sliding_window_view[ScalarT: np.generic](
     subok: bool = False,
     writeable: bool = False,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, ?d  (fallback)
 def sliding_window_view(
     x: ArrayLike,
     window_shape: int | Iterable[int],
@@ -74,7 +157,7 @@ def broadcast_to[ScalarT: np.generic](
     subok: bool = False,
 ) -> np.ndarray[tuple[int], np.dtype[ScalarT]]: ...
 @overload  # known dtype, known shape
-def broadcast_to[ScalarT: np.generic, ShapeT: tuple[int, ...]](
+def broadcast_to[ScalarT: np.generic, ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     array: _ArrayLike[ScalarT],
     shape: ShapeT,
     subok: bool = False,
@@ -92,7 +175,7 @@ def broadcast_to(
     subok: bool = False,
 ) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
 @overload  # unknown dtype, known shape
-def broadcast_to[ShapeT: tuple[int, ...]](
+def broadcast_to[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     array: ArrayLike,
     shape: ShapeT,
     subok: bool = False,

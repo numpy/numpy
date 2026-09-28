@@ -10,7 +10,7 @@ Please keep in mind that even seemingly small changes can have unexpected conseq
 for workflows unrelated to the ones you may be familiar with. For this reason, maintainers
 carefully consider the risks of all changes, including bug fixes.
 
-Make sure to review [the guidelines for contributing code to NumPy](https://numpy.org/devdocs/dev/index.html#guidelines) and fill out the AI disclosure section below.
+Make sure to review the guidelines for contributing code to NumPy (https://numpy.org/devdocs/dev/index.html#guidelines) and fill out the AI disclosure section below.
 
 Please note that non-maintainers may only have 2 non-draft PRs open for review at a
 time.

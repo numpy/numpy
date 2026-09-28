@@ -21,8 +21,12 @@ AR_i8_1d: _Array1D[np.int64]
 AR_i8_2d: _Array2D[np.int64]
 AR_i8_3d: _Array3D[np.int64]
 AR_i8_4d: _Array4D[np.int64]
+AR_i8_5d: _Array5D[np.int64]
+AR_i8_nd: np.ndarray[tuple[int, *tuple[int, ...]], np.dtype[np.int64]]
 AR_f8: npt.NDArray[np.float64]
 AR_O: npt.NDArray[np.object_]
+AR_O_int_1d: _Array1D[np.object_[int]]
+AR_T_1d: np.ndarray[tuple[int], np.dtypes.StringDType]
 
 AR_LIKE_b: list[bool]
 AR_LIKE_f8: list[float]
@@ -45,6 +49,9 @@ def _func_b(spleen: _Array1D[np.int64]) -> bool: ...
 def _func_i(pulsar: _Array1D[np.int64]) -> int: ...
 def _func_f(yoneda: _Array1D[np.int64]) -> float: ...
 def _func_c(potato: _Array1D[np.int64]) -> complex: ...
+def _func_axis_f64(axolotl: _Array1D[np.int64], axis: int) -> np.float64: ...
+def _func_axis_f64_2d(foam: _Array3D[np.int64], axis: int) -> _Array2D[np.float64]: ...
+def _func_axis_f64_nd(newt: npt.NDArray[np.int64], axis: int) -> npt.NDArray[np.float64]: ...
 
 ###
 
@@ -154,8 +161,15 @@ assert_type(np.tile(AR_LIKE_f8, (1, 2, 3)), _Array3D[Any])
 assert_type(np.tile(AR_LIKE_f8, (1, 2, 3, 4)), _Array4D[Any])
 assert_type(np.tile(AR_LIKE_f8, [2, 2]), npt.NDArray[Any])
 
-assert_type(np.unstack(AR_i8, axis=0), tuple[npt.NDArray[np.int64], ...])
-assert_type(np.unstack(AR_LIKE_f8, axis=0), tuple[npt.NDArray[Any], ...])
+assert_type(np.unstack(AR_i8), tuple[npt.NDArray[np.int64], ...])
+assert_type(np.unstack(AR_i8_1d), tuple[np.int64, ...])
+assert_type(np.unstack(AR_i8_2d, axis=1), tuple[_Array1D[np.int64], ...])
+assert_type(np.unstack(AR_i8_3d, axis=-1), tuple[_Array2D[np.int64], ...])
+assert_type(np.unstack(AR_i8_4d), tuple[_Array3D[np.int64], ...])
+assert_type(np.unstack(AR_i8_5d), tuple[npt.NDArray[np.int64], ...])
+assert_type(np.unstack(AR_i8_nd), tuple[Any, ...])
+assert_type(np.unstack(AR_O_int_1d), tuple[int, ...])
+assert_type(np.unstack(AR_T_1d), tuple[str, ...])
 
 assert_type(np.apply_along_axis(_func_f64_nd, 0, AR_i8_2d), npt.NDArray[np.float64])
 assert_type(np.apply_along_axis(_func_f64, 0, AR_i8), npt.NDArray[np.float64])
@@ -180,3 +194,11 @@ assert_type(np.apply_along_axis(_func_f, 0, AR_i8_3d), _Array2D[np.float64])
 assert_type(np.apply_along_axis(_func_c, 0, AR_i8_3d), _Array2D[np.complex128])
 assert_type(np.apply_along_axis(_func_f64_nd, 0, AR_LIKE_f8), npt.NDArray[np.float64])
 assert_type(np.apply_along_axis(str, 0, AR_i8_2d), npt.NDArray[Any])
+
+assert_type(np.apply_over_axes(_func_axis_f64_nd, AR_i8, 0), npt.NDArray[np.float64])
+assert_type(np.apply_over_axes(_func_axis_f64, AR_i8_1d, 0), _Array1D[np.float64])
+assert_type(np.apply_over_axes(np.sum, AR_i8_2d, 0), _Array2D[np.int_])
+assert_type(np.apply_over_axes(np.mean, AR_i8_3d, [0, 2]), _Array3D[np.float64])
+assert_type(np.apply_over_axes(_func_axis_f64_nd, AR_i8_2d, [0]), _Array2D[np.float64])
+assert_type(np.apply_over_axes(_func_axis_f64_2d, AR_i8_3d, 0), _Array3D[np.float64])
+assert_type(np.apply_over_axes(lambda x, ax: np.sum(x, axis=ax, keepdims=True), AR_i8_4d, (0, 1)), _Array4D[np.int_])

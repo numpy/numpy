@@ -1,6 +1,6 @@
 from builtins import bytes as py_bytes
 from collections.abc import Callable
-from typing import Any, Literal, overload
+from typing import Any, Literal, SupportsIndex, overload
 from typing_extensions import disjoint_base
 
 import numpy as np
@@ -445,13 +445,13 @@ class RandomState:
     @overload
     def rand(self, /) -> float: ...
     @overload
-    def rand(self, arg0: int, /, *args: int) -> NDArray[np.float64]: ...
+    def rand(self, arg0: SupportsIndex, /, *args: SupportsIndex) -> NDArray[np.float64]: ...
 
     #
     @overload
     def randn(self, /) -> float: ...
     @overload
-    def randn(self, arg0: int, /, *args: int) -> NDArray[np.float64]: ...
+    def randn(self, arg0: SupportsIndex, /, *args: SupportsIndex) -> NDArray[np.float64]: ...
 
     #
     @overload

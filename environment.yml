@@ -30,7 +30,7 @@ dependencies:
   - sphinx>=8.0
   - sphinx-copybutton
   - sphinx-design
-  - numpydoc=1.4.0
+  - numpydoc=1.11.0
   - ipython
   - scipy
   - pandas

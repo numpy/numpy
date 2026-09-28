@@ -74,6 +74,20 @@ class Broadcast(Benchmark):
         self.d - self.e
 
 
+class BroadcastTrailing(Benchmark):
+    # Broadcasting an operand over a short trailing axis refills the iterator
+    # buffer many times; see gh-13307, gh-17471 and gh-18028.
+    params = [1, 3, 10, 100]
+    param_names = ['trailing']
+
+    def setup(self, trailing):
+        self.d = np.ones((3000000 // trailing, trailing), dtype=np.float64)
+        self.e = np.ones((trailing,), dtype=np.float64)
+
+    def time_broadcast(self, trailing):
+        self.d - self.e
+
+
 class At(Benchmark):
     def setup(self):
         rng = np.random.default_rng(1)

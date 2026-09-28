@@ -766,11 +766,9 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
             Py_INCREF(self);
             return (PyArray_Descr *)self;
         }
-        PyArray_Descr *new = PyArray_DescrNew((PyArray_Descr *)self);
-        if (new == NULL) {
-            return NULL;
-        }
-        Py_SETREF(((_PyArray_LegacyDescr *)new)->subarray->base, new_base);
+        PyArray_Descr *new = arraydescr_new_from_subarray(
+                new_base, self->subarray->shape);
+        Py_DECREF(new_base);
         return new;
     }
     else if (self->names != NULL) {
@@ -926,12 +924,9 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
             return (PyArray_Descr *)descr1;
         }
 
-        PyArray_Descr *new_descr = PyArray_DescrNew((PyArray_Descr *)descr1);
-        if (new_descr == NULL) {
-            Py_DECREF(new_base);
-            return NULL;
-        }
-        Py_SETREF(((_PyArray_LegacyDescr *)new_descr)->subarray->base, new_base);
+        PyArray_Descr *new_descr = arraydescr_new_from_subarray(
+                new_base, descr1->subarray->shape);
+        Py_DECREF(new_base);
         return new_descr;
     }
 

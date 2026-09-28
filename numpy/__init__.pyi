@@ -11,7 +11,7 @@ from fractions import Fraction
 from types import EllipsisType, ModuleType, MappingProxyType, GenericAlias
 from uuid import UUID
 
-from numpy.__config__ import show as show_config
+from numpy.__config__ import show_config
 from numpy._pytesttester import PytestTester
 from numpy._core._internal import _ctypes
 
@@ -1156,8 +1156,8 @@ class _HasRealAndImag[RealT, ImagT](Protocol):
 
 @type_check_only
 class _HasTypeWithRealAndImag[RealT, ImagT](Protocol):
-    @property
-    def type(self, /) -> py_type[_HasRealAndImag[RealT, ImagT]]: ...
+    @property  # the `Callable` is a workaround for Pyright that'll otherwise reject `dtype[Any]`
+    def type(self, /) -> py_type[_HasRealAndImag[RealT, ImagT]] | Callable[[], _HasRealAndImag[RealT, ImagT]]: ...
 
 @type_check_only
 class _HasDTypeWithRealAndImag[RealT, ImagT](Protocol):
@@ -10747,8 +10747,10 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     def __getitem__(
         self, key: tuple[None, None, None], /
     ) -> ndarray[tuple[int, int, int], _dtype[Self]]: ...
-    @overload  # Limited support for (None,) * N > 3
-    def __getitem__(self, key: tuple[None, ...], /) -> NDArray[Self]: ...
+    @overload
+    def __getitem__(self, key: tuple[None, *tuple[None, ...]], /) -> NDArray[Self]: ...
+    @overload
+    def __getitem__(self, key: tuple[None,  ...], /) -> Self | NDArray[Self]: ...
 
     #
     @overload
@@ -13191,8 +13193,10 @@ class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]
     def __getitem__(
         self, key: tuple[None, None, None], /
     ) -> ndarray[tuple[int, int, int], dtype[Self]]: ...
-    @overload  # Limited support for (None,) * N > 3
-    def __getitem__(self, key: tuple[None, ...], /) -> NDArray[Self]: ...
+    @overload
+    def __getitem__(self, key: tuple[None, *tuple[None, ...]], /) -> NDArray[Self]: ...
+    @overload
+    def __getitem__(self, key: tuple[None,  ...], /) -> Self | NDArray[Self]: ...
     @overload
     def __getitem__(self, key: str | SupportsIndex, /) -> Any: ...
     @overload

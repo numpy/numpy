@@ -18,6 +18,8 @@ type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[S
 _1d: tuple[int]
 _2d: tuple[int, int]
 
+_i64: np.int64
+
 ###
 
 def_rng = np.random.default_rng()
@@ -1548,9 +1550,11 @@ assert_type(random_st.set_state(random_st_get_state), None)
 assert_type(random_st.rand(), float)
 assert_type(random_st.rand(1), npt.NDArray[np.float64])
 assert_type(random_st.rand(1, 2), npt.NDArray[np.float64])
+assert_type(random_st.rand(_i64, _i64), npt.NDArray[np.float64])
 assert_type(random_st.randn(), float)
 assert_type(random_st.randn(1), npt.NDArray[np.float64])
 assert_type(random_st.randn(1, 2), npt.NDArray[np.float64])
+assert_type(random_st.randn(_i64, _i64), npt.NDArray[np.float64])
 assert_type(random_st.random_sample(), float)
 assert_type(random_st.random_sample(1), npt.NDArray[np.float64])
 assert_type(random_st.random_sample(size=(1, 2)), npt.NDArray[np.float64])

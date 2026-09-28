@@ -1,0 +1,2 @@
+* Doing ``v[...,]`` on a void scalar previously returned a ``np.void`` scalar while
+  ``v[...]`` returned a 0d array.  Both now return a 0d array, matching the behaviour of every other scalar type.

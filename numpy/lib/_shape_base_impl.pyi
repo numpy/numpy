@@ -323,11 +323,18 @@ def apply_along_axis[**Tss](
 ) -> NDArray[Any]: ...
 
 #
-def apply_over_axes[ScalarT: np.generic](
-    func: Callable[[np.ndarray, int], NDArray[ScalarT]],
-    a: ArrayLike,
+@overload  # (Nd T) -> ?d T, Nd T
+def apply_over_axes[ShapeT: _Shape, ScalarT: np.generic, ResultT: np.generic](
+    func: Callable[[np.ndarray[ShapeT, np.dtype[ScalarT]], int], NDArray[ResultT]],
+    a: np.ndarray[ShapeT, np.dtype[ScalarT]],
     axes: _ShapeLike,
-) -> NDArray[ScalarT]: ...
+) -> np.ndarray[ShapeT, np.dtype[ResultT]]: ...
+@overload  # (1d T) -> ?d T, 1d T
+def apply_over_axes[ScalarT: np.generic, ResultT: np.generic](
+    func: Callable[[_Array1D[ScalarT], int], NDArray[ResultT] | ResultT],
+    a: _Array1D[ScalarT],
+    axes: _ShapeLike,
+) -> _Array1D[ResultT]: ...
 
 #
 @overload  # Nd -> Nd

@@ -976,6 +976,29 @@ def test_pinv_rtol_arg():
         np.linalg.pinv(a, rcond=0.5, rtol=0.5)
 
 
+@pytest.mark.parametrize("dtype", [np.int16, np.int64, np.uint8, np.bool_])
+def test_pinv_rtol_none_non_inexact(dtype):
+    # gh-30917: the default tolerance must come from the dtype pinv
+    # computes in, not from the input dtype (finfo rejects integers).
+    a = np.array([[1, 2, 3], [4, 1, 1], [2, 3, 1]]).astype(dtype)
+    expected = np.linalg.pinv(a.astype(np.float64), rtol=None)
+    res = np.linalg.pinv(a, rtol=None)
+    assert res.dtype == expected.dtype
+    assert_almost_equal(res, expected)
+
+
+@pytest.mark.parametrize("shape", [(0, 3), (3, 0), (0, 0), (2, 0, 3)])
+@pytest.mark.parametrize("dtype", [np.int64, np.float32, np.complex64])
+def test_pinv_empty_dtype(shape, dtype):
+    # gh-18527: the empty shortcut must return the same dtype as the
+    # svd path does for a non-empty input.
+    res = np.linalg.pinv(np.empty(shape, dtype=dtype))
+    ref = np.linalg.pinv(np.ones((1, 1), dtype=dtype))
+    assert res.shape == shape[:-2] + shape[-2:][::-1]
+    assert res.dtype == ref.dtype
+    assert np.linalg.pinv(np.empty(shape, dtype=dtype), rtol=None).dtype == ref.dtype
+
+
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):

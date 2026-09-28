@@ -54,13 +54,6 @@ init_argparse_mutex(void) {
 NPY_NO_EXPORT int
 PyArray_PythonPyIntFromInt(PyObject *obj, int *value)
 {
-    /* Pythons behaviour is to check only for float explicitly... */
-    if (NPY_UNLIKELY(PyFloat_Check(obj))) {
-        PyErr_SetString(PyExc_TypeError,
-                        "integer argument expected, got float");
-        return NPY_FAIL;
-    }
-
     long result = PyLong_AsLong(obj);
     if (NPY_UNLIKELY((result == -1) && PyErr_Occurred())) {
         return NPY_FAIL;

@@ -209,7 +209,7 @@ To achieve better load balancing, consider the following strategies:
 Determine the correct number of cpus
 +++++++++++++++++++++++++++++++++++++
 
-Pythons provides `os.cpu_count` and `os.process_cpu_count <https://docs.python.org/3/library/os.html#os.process_cpu_count>`__
+Python provides `os.cpu_count` and `os.process_cpu_count <https://docs.python.org/3/library/os.html#os.process_cpu_count>`__
 functions to get the number of CPUs in the system and the current process, respectively.
 However, in some environments (e.g., Docker containers or HPC clusters),
 this may not reflect the actual number of CPUs available to the process.
@@ -433,7 +433,7 @@ than using Python's standard libraries.
 Dask
 ----
 
-Dask is an open-source library that provides parallel compuing features
+Dask is an open-source library that provides parallel computing features
 not only for a single machine but also for a cluster of machines.
 It also provides ``DaskArray`` which has a similar API to NumPy's ``ndarray``. 
 If you are familiar with NumPy, you can easily get started with ``DaskArray``.

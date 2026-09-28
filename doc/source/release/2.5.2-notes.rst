@@ -4,6 +4,8 @@
 NumPy 2.5.2 Release Notes
 =========================
 
+*Released on 2026-08-09.*
+
 The NumPy 2.5.2 is a patch release that fixes bugs discovered after the 2.5.1
 release. The big news is that it includes wheels for the newly released
 Python 3.15.0rc1.
