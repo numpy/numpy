@@ -37,6 +37,7 @@ PS_cheb: npp.Chebyshev
 PS_leg: npp.Legendre
 PS_lag: npp.Laguerre
 PS_herm: npp.Hermite
+PS_herme: npp.HermiteE
 
 assert_type(npp.polynomial.polyroots(AR_f8), _ArrFloat1D64)
 assert_type(npp.polynomial.polyroots(AR_c16), _ArrComplex1D128)
@@ -149,6 +150,21 @@ assert_type(npp.hermite.hermval(AR_f8_2d, _py_f64_2d), npt.NDArray[Any] | Any)
 assert_type(npp.hermite.hermval(_py_decimal_1d, _py_decimal_1d), _Array1D[np.object_])
 assert_type(npp.hermite.hermval(PS_herm, _py_f_1d), npp.Hermite)
 assert_type(npp.hermite.hermval(Decimal(), _py_decimal_1d), Decimal)
+
+assert_type(npp.hermite_e.hermeval(AR_f8_2d, _py_f_1d), _Array2D[np.float64])
+assert_type(npp.hermite_e.hermeval(AR_f8_2d, _py_c_1d), _Array2D[np.complex128])
+assert_type(npp.hermite_e.hermeval(AR_c16_2d, _py_f_1d), _Array2D[np.complex128])
+assert_type(npp.hermite_e.hermeval(AR_O_2d, _py_f_1d), _Array2D[np.object_])
+assert_type(npp.hermite_e.hermeval(AR_f10_2d, _py_f_1d), _Array2D[Any])
+assert_type(npp.hermite_e.hermeval(1.0, _py_f_1d), np.float64)
+assert_type(npp.hermite_e.hermeval(1j, _py_c_1d), np.complex128)
+assert_type(npp.hermite_e.hermeval(_py_f_1d, _py_f_1d), _Array1D[np.float64])
+assert_type(npp.hermite_e.hermeval(_py_c_1d, _py_f_1d), _Array1D[np.complex128])
+assert_type(npp.hermite_e.hermeval([1.0, 2.0], AR_f4_1d), _Array1D[Any])
+assert_type(npp.hermite_e.hermeval(AR_f8_2d, _py_f64_2d), npt.NDArray[Any] | Any)
+assert_type(npp.hermite_e.hermeval(_py_decimal_1d, _py_decimal_1d), _Array1D[np.object_])
+assert_type(npp.hermite_e.hermeval(PS_herme, _py_f_1d), npp.HermiteE)
+assert_type(npp.hermite_e.hermeval(Decimal(), _py_decimal_1d), Decimal)
 
 assert_type(npp.polynomial.polyval2d(AR_b, AR_b, AR_b), npt.NDArray[np.floating])
 assert_type(npp.polynomial.polyval2d(AR_u4, AR_u4, AR_b), npt.NDArray[np.floating])
