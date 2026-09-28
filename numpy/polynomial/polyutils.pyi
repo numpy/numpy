@@ -1,14 +1,23 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import Final, Literal, Protocol, SupportsIndex, overload, type_check_only
+from typing import (
+    Any,
+    Final,
+    Literal,
+    Protocol,
+    SupportsIndex,
+    overload,
+    type_check_only,
+)
 
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import (
+    _ArrayLike,
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
     _ArrayLikeObject_co,
     _FloatLike_co,
-    _NumberLike_co,
+    _Shape,
 )
 
 from ._polytypes import (
@@ -17,6 +26,7 @@ from ._polytypes import (
     _ArrayLikeCoef_co,
     _CoefArray,
     _CoefLike_co,
+    _CoefObjectLike_co,
     _CoefSeries,
     _ComplexArray,
     _ComplexSeries,
@@ -25,11 +35,13 @@ from ._polytypes import (
     _FuncBinOp,
     _ObjectArray,
     _ObjectSeries,
+    _Series,
     _SeriesLikeCoef_co,
     _SeriesLikeComplex_co,
     _SeriesLikeFloat_co,
     _SeriesLikeInt_co,
     _SeriesLikeObject_co,
+    _SupportsCoefOps,
     _Tuple2,
 )
 
@@ -114,32 +126,78 @@ def mapparms(old: _SeriesLikeComplex_co, new: _SeriesLikeComplex_co) -> _Tuple2[
 def mapparms(old: _SeriesLikeCoef_co, new: _SeriesLikeCoef_co) -> _Tuple2[object]: ...
 
 #
-@overload
-def mapdomain(x: _FloatLike_co, old: _SeriesLikeFloat_co, new: _SeriesLikeFloat_co) -> np.floating: ...
-@overload
-def mapdomain(x: _NumberLike_co, old: _SeriesLikeComplex_co, new: _SeriesLikeComplex_co) -> np.complexfloating: ...
-@overload
+@overload  # 0d +float
 def mapdomain(
-    x: npt.NDArray[np.floating | np.integer],
-    old: npt.NDArray[np.floating | np.integer],
-    new: npt.NDArray[np.floating | np.integer],
-) -> _FloatSeries: ...
-@overload
-def mapdomain(x: npt.NDArray[np.number], old: npt.NDArray[np.number], new: npt.NDArray[np.number]) -> _ComplexSeries: ...
-@overload
+    x: float | np.integer | np.bool,
+    old: _SeriesLikeFloat_co,
+    new: _SeriesLikeFloat_co,
+) -> float: ...
+@overload  # 0d ~complex
 def mapdomain(
-    x: npt.NDArray[np.object_ | np.number],
-    old: npt.NDArray[np.object_ | np.number],
-    new: npt.NDArray[np.object_ | np.number],
-) -> _ObjectSeries: ...
-@overload
-def mapdomain(x: _SeriesLikeFloat_co, old: _SeriesLikeFloat_co, new: _SeriesLikeFloat_co) -> _FloatSeries: ...
-@overload
-def mapdomain(x: _SeriesLikeComplex_co, old: _SeriesLikeComplex_co, new: _SeriesLikeComplex_co) -> _ComplexSeries: ...
-@overload
-def mapdomain(x: _SeriesLikeCoef_co, old: _SeriesLikeCoef_co, new: _SeriesLikeCoef_co) -> _ObjectSeries: ...
-@overload
-def mapdomain(x: _CoefLike_co, old: _SeriesLikeCoef_co, new: _SeriesLikeCoef_co) -> object: ...
+    x: complex | np.integer | np.bool,
+    old: _SeriesLikeComplex_co,
+    new: _SeriesLikeComplex_co,
+) -> complex: ...
+@overload  # Nd +f64
+def mapdomain[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.float64 | np.integer | np.bool]],
+    old: _SeriesLikeFloat_co,
+    new: _SeriesLikeFloat_co,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # Nd ~complex128
+def mapdomain[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.complex128]],
+    old: _SeriesLikeComplex_co,
+    new: _SeriesLikeComplex_co,
+) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...
+@overload  # Nd ~object_
+def mapdomain[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.object_]],
+    old: _SeriesLikeCoef_co,
+    new: _SeriesLikeCoef_co,
+) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+@overload  # Nd  (fallback)
+def mapdomain[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.number | np.bool]],
+    old: _SeriesLikeCoef_co,
+    new: _SeriesLikeCoef_co,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # 1d +float
+def mapdomain(
+    x: Sequence[float | np.integer | np.bool],
+    old: _SeriesLikeFloat_co,
+    new: _SeriesLikeFloat_co,
+) -> _Series[np.float64]: ...
+@overload  # 1d ~complex
+def mapdomain(
+    x: list[complex],
+    old: _SeriesLikeComplex_co,
+    new: _SeriesLikeComplex_co,
+) -> _Series[np.complex128]: ...
+@overload  # 1d  (fallback)
+def mapdomain(
+    x: Sequence[complex | np.number | np.bool],
+    old: _SeriesLikeCoef_co,
+    new: _SeriesLikeCoef_co,
+) -> _Series[Any]: ...
+@overload  # ?d  (fallback)
+def mapdomain(
+    x: _ArrayLike[np.number | np.bool | np.object_],
+    old: _SeriesLikeCoef_co,
+    new: _SeriesLikeCoef_co,
+) -> npt.NDArray[Any] | Any: ...
+@overload  # 1d ~object_
+def mapdomain(
+    x: Sequence[_CoefObjectLike_co],
+    old: _SeriesLikeCoef_co,
+    new: _SeriesLikeCoef_co,
+) -> _Series[np.object_]: ...
+@overload  # 0d T
+def mapdomain[CoefT: _SupportsCoefOps[Any]](
+    x: CoefT,
+    old: _SeriesLikeCoef_co,
+    new: _SeriesLikeCoef_co,
+) -> CoefT: ...
 
 #
 def _nth_slice(i: SupportsIndex, ndim: SupportsIndex) -> tuple[slice | None, ...]: ...
