@@ -232,6 +232,17 @@ assert_type(npp.legendre.legfit(AR_f8, AR_c16_2d, 2, full=True), tuple[_Array2D[
 assert_type(npp.legendre.legfit(AR_f8, _py_c_1d, 2), npt.NDArray[Any])
 assert_type(npp.legendre.legfit(AR_f8, _py_c_1d, 2, full=True), tuple[npt.NDArray[Any], list[Any]])
 
+assert_type(npp.laguerre.lagfit(AR_f8, AR_f8_2d, 2), _Array2D[np.float64])
+assert_type(npp.laguerre.lagfit(AR_f8, AR_f8_2d, AR_i8, full=True), tuple[_Array2D[np.float64], list[Any]])
+assert_type(npp.laguerre.lagfit(AR_f8, _py_f_1d, 2), _Array1D[np.float64])
+assert_type(npp.laguerre.lagfit(AR_f8, _py_f_1d, 2, full=True), tuple[_Array1D[np.float64], list[Any]])
+assert_type(npp.laguerre.lagfit(AR_f8, _py_f_2d, 2), _Array2D[np.float64])
+assert_type(npp.laguerre.lagfit(AR_f8, _py_f_2d, 2, full=True), tuple[_Array2D[np.float64], list[Any]])
+assert_type(npp.laguerre.lagfit(AR_f8, AR_c16_2d, 2), _Array2D[Any])
+assert_type(npp.laguerre.lagfit(AR_f8, AR_c16_2d, 2, full=True), tuple[_Array2D[Any], list[Any]])
+assert_type(npp.laguerre.lagfit(AR_f8, _py_c_1d, 2), npt.NDArray[Any])
+assert_type(npp.laguerre.lagfit(AR_f8, _py_c_1d, 2, full=True), tuple[npt.NDArray[Any], list[Any]])
+
 assert_type(npp.chebyshev.chebgauss(2), tuple[_ArrFloat1D64, _ArrFloat1D64])
 
 assert_type(npp.chebyshev.chebweight(AR_f8), npt.NDArray[np.float64])
