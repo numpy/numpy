@@ -680,6 +680,15 @@ class TestDivision:
             y = 0.0 / x
             assert_(np.isnan(y)[0])
 
+    @pytest.mark.parametrize("dt", np.typecodes["Complex"])
+    def test_reciprocal_zero_complex(self, dt):
+        x = np.array([0j, complex(-0.0, 0.0), complex(0.0, -0.0)], dtype=dt)
+        with np.errstate(invalid="ignore", divide="raise"):
+            with pytest.raises(FloatingPointError, match="divide by zero"):
+                np.reciprocal(x)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            assert_equal(np.reciprocal(x), 1.0 / x)
+
     def test_floor_division_complex(self):
         # check that floor division, divmod and remainder raises type errors
         x = np.array(
