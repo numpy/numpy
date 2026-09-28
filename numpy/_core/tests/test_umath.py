@@ -680,7 +680,14 @@ class TestDivision:
             y = 0.0 / x
             assert_(np.isnan(y)[0])
 
-    @pytest.mark.parametrize("dt", np.typecodes["Complex"])
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.parametrize(
+        "dt",
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code == "G" else [])
+            for code in np.typecodes["Complex"]
+        ],
+    )
     def test_reciprocal_zero_complex(self, dt):
         x = np.array([0j, complex(-0.0, 0.0), complex(0.0, -0.0)], dtype=dt)
         with np.errstate(invalid="ignore", divide="raise"):
