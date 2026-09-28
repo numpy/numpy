@@ -599,7 +599,7 @@ def test_writeable():
                     broadcast_arrays(0, original, subok=True),
                     broadcast_arrays(0, *[original] * 64)]:
         for result in results:
-            assert_equal(result.flags.writeable, False)
+            assert not result.flags.writeable
             assert_raises(ValueError, result.__setitem__, slice(None), 0)
             assert memoryview(result).readonly
 
@@ -609,13 +609,13 @@ def test_writeable():
             # the views can be made writeable explicitly, as the base is
             # writeable (writing to a broadcast view is a bad idea though)
             result.flags.writeable = True
-            assert_equal(result.flags.writeable, True)
+            assert result.flags.writeable
             result[:] = 0
 
     # keep readonly input readonly
     original.flags.writeable = False
     _, result = broadcast_arrays(0, original)
-    assert_equal(result.flags.writeable, False)
+    assert not result.flags.writeable
 
     # regression test for GH6491
     shape = (2,)

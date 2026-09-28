@@ -639,20 +639,26 @@ def broadcast_arrays(*args, subok=False):
             [5, 5, 5]])]
 
     """
-    if 0 < len(args) < 65 and not subok:
-        # Fast path: a single nditer handles up to NPY_MAXARGS (64) operands.
-        return np.nditer(args, flags=_BROADCAST_ITER_FLAGS, order='C').itviews
+    if 0 < len(args) < 65:
+        # Fast path: a single nditer handles up to NPY_MAXARGS (64) operands
+        # (but requires at least one, hence the ``0 <``).
+        views = np.nditer(args, flags=_BROADCAST_ITER_FLAGS, order='C').itviews
+    else:
+        arrays = [np.asarray(_m) for _m in args]
+        shape = _broadcast_shape(*arrays)
+        # Create the views in chunks of at most NPY_MAXARGS operands. The
+        # views are read-only, exactly like the ones returned by the fast path.
+        views = []
+        for pos in range(0, len(arrays), 64):
+            it = np.nditer(arrays[pos:pos + 64], flags=_BROADCAST_ITER_FLAGS,
+                           op_flags=['readonly'], itershape=shape, order='C')
+            views.extend(it.itviews)
+        views = tuple(views)
 
-    args = [np.array(_m, copy=None, subok=subok) for _m in args]
-    shape = _broadcast_shape(*args)
-    # Create the views in chunks of at most NPY_MAXARGS operands. The views
-    # are read-only, exactly like the ones returned by the fast path.
-    views = []
-    for pos in range(0, len(args), 64):
-        it = np.nditer(args[pos:pos + 64], flags=_BROADCAST_ITER_FLAGS,
-                       op_flags=['readonly'], itershape=shape, order='C')
-        views.extend(it.itviews)
     if subok:
-        views = [_maybe_view_as_subclass(array, view)
-                 for array, view in zip(args, views)]
-    return tuple(views)
+        # Only ndarray subclasses need to be viewed as the input type; other
+        # inputs were converted to base-class arrays above.
+        views = tuple(_maybe_view_as_subclass(array, view)
+                      if isinstance(array, np.ndarray) else view
+                      for array, view in zip(args, views))
+    return views
