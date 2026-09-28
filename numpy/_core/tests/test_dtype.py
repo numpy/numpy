@@ -2249,6 +2249,39 @@ def test_gh_31308_dict_itemsize_override_large():
 
 
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+@pytest.mark.parametrize("spec", [
+    lambda limit: [("a", f"V{limit}"), ("b", "i1")],
+    lambda limit: f"V{limit},i1",
+    lambda limit: dict(names=["a"], formats=["i1"], offsets=[limit]),
+])
+def test_gh_31308_structured_size_overflow(spec):
+    limit = np.iinfo(np.intp).max
+    with pytest.raises(ValueError, match="structured dtype is too large"):
+        np.dtype(spec(limit))
+
+
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+def test_gh_31308_structured_alignment_overflow():
+    limit = np.iinfo(np.intp).max
+    with pytest.raises(ValueError, match="structured dtype is too large"):
+        np.dtype([("a", "i2"), ("b", f"V{limit - 2}")], align=True)
+
+
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+def test_gh_31308_large_itemsize_strides_need_full_buffer():
+    dtype = np.dtype(f"V{2 ** 32 + 1}")
+    with pytest.raises(ValueError, match="strides is incompatible"):
+        np.ndarray((1,), dtype=dtype, buffer=bytearray(1), strides=(1,))
+
+
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+def test_gh_31308_strides_reject_size_overflow():
+    dtype = np.dtype(f"V{np.iinfo(np.intp).max}")
+    with pytest.raises(ValueError, match="strides is incompatible"):
+        np.ndarray((2,), dtype=dtype, strides=(1,))
+
+
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 def test_gh_31308_array_itemsize_getter_large_dtype():
     kind_dtype = np.dtype([("x", np.float64, 2 ** 28)])
     arr = np.empty(0, dtype=kind_dtype)
