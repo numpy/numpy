@@ -1,0 +1,6 @@
+``ufunc.accumulate`` on a multi-output ufunc now raises ``TypeError``
+---------------------------------------------------------------------
+Calling :meth:`~numpy.ufunc.accumulate` on a ufunc with more than one output
+that does not register a reduction loop now raises a :exc:`TypeError`
+instead of a :exc:`ValueError`. Of NumPy's own ufuncs only `numpy.divmod`
+is affected.
