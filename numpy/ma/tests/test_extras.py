@@ -1721,6 +1721,42 @@ class TestArraySetOps:
 
         assert_array_equal([], in1d([], [], invert=True))
 
+    def test_in1d_isin_masked_gh19877(self):
+        # gh-19877: the result of `in1d`/`isin` must be masked at exactly the
+        # positions that are masked in the first argument (the old sort-based
+        # implementation placed the mask at the wrong positions), while
+        # membership is decided from the underlying data.
+        a = array([0, 1, 2, 3, 4], mask=[0, 1, 0, 1, 0])
+        b = array([1, 2, 3])
+        res = isin(a, b)
+        assert_(isinstance(res, MaskedArray))
+        # the mask follows the input, it is not reordered by the algorithm
+        assert_array_equal(getmaskarray(res), getmaskarray(a))
+        # the data at the unmasked positions is the plain membership result
+        unmasked = ~getmaskarray(a)
+        assert_array_equal(res.data[unmasked],
+                           np.isin(a.data, b.data)[unmasked])
+        # `in1d` (the flattened version) behaves the same way
+        assert_array_equal(getmaskarray(in1d(a, b)), getmaskarray(a))
+
+        # a masked value in the test elements has no value and matches nothing
+        a2 = array([1, 2, 3, 4])
+        b2 = array([2, 3, 4], mask=[0, 1, 0])  # the value 3 is masked away
+        assert_array_equal(isin(a2, b2),
+                           np.isin(a2.data, b2[~b2.mask].data))
+
+        # an empty test set: nothing is present, and the mask still follows
+        # the input exactly (gh-19877)
+        w = array([1, 2, 3, 4, 5], mask=[0, 1, 0, 0, 1])
+        res = isin(w, [])
+        assert_array_equal(res.data, zeros(5, dtype=bool))
+        assert_array_equal(getmaskarray(res), getmaskarray(w))
+
+        # an unmasked input yields an unmasked result (`mask is nomask`), as
+        # the `in1d`/`isin` docstrings show
+        assert_(in1d(array([0, 1, 2, 5, 0]), [0, 2]).mask is nomask)
+        assert_(isin(array([1, 2, 3]), [2]).mask is nomask)
+
     def test_union1d(self):
         # Test union1d
         a = array([1, 2, 5, 7, 5, -1], mask=[0, 0, 0, 0, 0, 1])
