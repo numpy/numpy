@@ -279,7 +279,7 @@ fromfile_skip_separator(FILE **fp, const char *sep, void *NPY_UNUSED(stream_data
 
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
-                             npy_intp instrides, npy_intp N, int elsize)
+                             npy_intp instrides, npy_intp N, npy_intp elsize)
 {
     npy_intp i;
     char *tout = dst;
