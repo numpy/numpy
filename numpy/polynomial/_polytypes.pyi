@@ -78,7 +78,6 @@ type _Line[ScalarT: _PolyScalar] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Companion[ScalarT: _PolyScalar] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 type _AnyDegrees = Sequence[SupportsIndex]
-type _FullFitResult = Sequence[np.inexact | np.int32]
 
 @type_check_only
 class _FuncLine(Protocol):
@@ -383,111 +382,6 @@ class _FuncVander3D(Protocol):
         z: npt.ArrayLike,
         deg: _AnyDegrees,
     ) -> _CoefArray: ...
-
-@type_check_only
-class _FuncFit(Protocol):
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _SeriesLikeFloat_co,
-        y: _ArrayLikeFloat_co,
-        deg: int | _SeriesLikeInt_co,
-        rcond: float | None = ...,
-        full: Literal[False] = False,
-        w: _SeriesLikeFloat_co | None = ...,
-    ) -> _FloatArray: ...
-    @overload
-    def __call__(
-        self,
-        x: _SeriesLikeFloat_co,
-        y: _ArrayLikeFloat_co,
-        deg: int | _SeriesLikeInt_co,
-        rcond: float | None,
-        full: Literal[True],
-        /,
-        w: _SeriesLikeFloat_co | None = ...,
-    ) -> tuple[_FloatArray, _FullFitResult]: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _SeriesLikeFloat_co,
-        y: _ArrayLikeFloat_co,
-        deg: int | _SeriesLikeInt_co,
-        rcond: float | None = ...,
-        *,
-        full: Literal[True],
-        w: _SeriesLikeFloat_co | None = ...,
-    ) -> tuple[_FloatArray, _FullFitResult]: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _SeriesLikeComplex_co,
-        y: _ArrayLikeComplex_co,
-        deg: int | _SeriesLikeInt_co,
-        rcond: float | None = ...,
-        full: Literal[False] = False,
-        w: _SeriesLikeFloat_co | None = ...,
-    ) -> _ComplexArray: ...
-    @overload
-    def __call__(
-        self,
-        x: _SeriesLikeComplex_co,
-        y: _ArrayLikeComplex_co,
-        deg: int | _SeriesLikeInt_co,
-        rcond: float | None,
-        full: Literal[True],
-        /,
-        w: _SeriesLikeFloat_co | None = ...,
-    ) -> tuple[_ComplexArray, _FullFitResult]: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _SeriesLikeComplex_co,
-        y: _ArrayLikeComplex_co,
-        deg: int | _SeriesLikeInt_co,
-        rcond: float | None = ...,
-        *,
-        full: Literal[True],
-        w: _SeriesLikeFloat_co | None = ...,
-    ) -> tuple[_ComplexArray, _FullFitResult]: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _SeriesLikeComplex_co,
-        y: _ArrayLikeCoef_co,
-        deg: int | _SeriesLikeInt_co,
-        rcond: float | None = ...,
-        full: Literal[False] = False,
-        w: _SeriesLikeFloat_co | None = ...,
-    ) -> _ObjectArray: ...
-    @overload
-    def __call__(
-        self,
-        x: _SeriesLikeComplex_co,
-        y: _ArrayLikeCoef_co,
-        deg: int | _SeriesLikeInt_co,
-        rcond: float | None,
-        full: Literal[True],
-        /,
-        w: _SeriesLikeFloat_co | None = ...,
-    ) -> tuple[_ObjectArray, _FullFitResult]: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _SeriesLikeComplex_co,
-        y: _ArrayLikeCoef_co,
-        deg: int | _SeriesLikeInt_co,
-        rcond: float | None = ...,
-        *,
-        full: Literal[True],
-        w: _SeriesLikeFloat_co | None = ...,
-    ) -> tuple[_ObjectArray, _FullFitResult]: ...
 
 @type_check_only
 class _FuncRoots(Protocol):
