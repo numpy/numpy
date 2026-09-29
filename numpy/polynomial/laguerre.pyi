@@ -30,7 +30,6 @@ from ._polytypes import (
     _FuncUnOp,
     _FuncVal2D,
     _FuncVal3D,
-    _FuncValND,
     _FuncVander2D,
     _FuncVander3D,
     _PolyScalar,
@@ -292,7 +291,72 @@ def lagval3d[CoefT: _SupportsCoefOps[Any]](
     c: _SupportsArray[np.dtype[np.object_]] | Sequence[Sequence[Sequence[_SupportsCoefOps[Any]]]],
 ) -> CoefT: ...
 
-lagvalnd: Final[_FuncValND] = ...
+# keep in sync with `polynomial.*valnd`
+@overload  # *Nd +f64, ?d +f64
+def lagvalnd[ShapeT: _Shape](
+    pts: Sequence[np.ndarray[ShapeT, np.dtype[_ToFloat64]]],
+    c: _SupportsArray[np.dtype[_AsFloat64]] | _NestedSequence[float],
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # *Nd +c128, ?d ~c128
+def lagvalnd[ShapeT: _Shape](
+    pts: Sequence[np.ndarray[ShapeT, np.dtype[np.complex128 | np.complex64 | _ToFloat64]]],
+    c: _SupportsArray[np.dtype[np.complex128]] | list[complex] | _NestedSequence[list[complex]],
+) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...
+@overload  # *Nd ~c128, ?d +c128
+def lagvalnd[ShapeT: _Shape](
+    pts: Sequence[np.ndarray[ShapeT, np.dtype[np.complex128]]],
+    c: _SupportsArray[np.dtype[np.complex128 | np.complex64 | _ToFloat64]] | _NestedSequence[complex],
+) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...
+@overload  # *Nd ~O, ?d +O
+def lagvalnd[ShapeT: _Shape](
+    pts: Sequence[np.ndarray[ShapeT, np.dtype[np.object_]]],
+    c: _SupportsArray[np.dtype[_PolyScalar]] | _NestedSequence[_NumberLike_co | _SupportsCoefOps[Any]],
+) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+@overload  # *Nd ?, ?d ?  (fallback)
+def lagvalnd[ShapeT: _Shape](
+    pts: Sequence[np.ndarray[ShapeT, np.dtype[_PolyScalar]]],
+    c: _SupportsArray[np.dtype[_PolyScalar]] | _NestedSequence[_NumberLike_co],
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # *0d +f64, ?d +f64
+def lagvalnd(
+    pts: Sequence[float | _ToFloat64],
+    c: _SupportsArray[np.dtype[_AsFloat64]] | _NestedSequence[float],
+) -> np.float64: ...
+@overload  # *0d +c128, ?d ~c128
+def lagvalnd(
+    pts: Sequence[complex | np.complex64 | _ToFloat64],
+    c: _SupportsArray[np.dtype[np.complex128]] | list[complex] | _NestedSequence[list[complex]],
+) -> np.complex128: ...
+@overload  # *1d +f64, ?d +f64
+def lagvalnd(
+    pts: Sequence[Sequence[float]],
+    c: _SupportsArray[np.dtype[_AsFloat64]] | _NestedSequence[float],
+) -> _Array1D[np.float64]: ...
+@overload  # *1d ~c128, ?d +c128
+def lagvalnd(
+    pts: Sequence[list[complex]],
+    c: _SupportsArray[np.dtype[np.complex128 | _AsFloat64]] | _NestedSequence[complex],
+) -> _Array1D[np.complex128]: ...
+@overload  # *1d ?, ?d ?  (fallback)
+def lagvalnd(
+    pts: Sequence[Sequence[_NumberLike_co]],
+    c: _SupportsArray[np.dtype[_PolyScalar]] | _NestedSequence[_NumberLike_co],
+) -> _Array1D[Any]: ...
+@overload  # *poly, ?d ?
+def lagvalnd[PolyT: ABCPolyBase](
+    pts: Sequence[PolyT],
+    c: _SupportsArray[np.dtype[_PolyScalar]] | _NestedSequence[_NumberLike_co | _SupportsCoefOps[Any]],
+) -> PolyT: ...
+@overload  # *1d ~O, ?d ~O
+def lagvalnd(
+    pts: Sequence[Sequence[_SupportsCoefOps[Any]]],
+    c: _SupportsArray[np.dtype[np.object_]] | _NestedSequence[_SupportsCoefOps[Any]],
+) -> _Array1D[np.object_]: ...
+@overload  # *?d ?, ?d ?  (fallback)
+def lagvalnd(
+    pts: Sequence[_ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]]],
+    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+) -> npt.NDArray[Any] | Any: ...
 
 # keep in sync with `polynomial.*val`
 @overload  # Nd +f64, 1d +f64
