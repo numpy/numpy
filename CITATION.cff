@@ -1,0 +1,85 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Numpy
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Charles R.
+    family-names: Harris
+  - given-names: K. Jarrod
+    family-names: Millman
+  - given-names: Stéfan J
+    family-names: van der Walt
+  - given-names: Ralf
+    family-names: Gommers
+  - given-names: Pauli
+    family-names: Virtanen
+  - given-names: David
+    family-names: Cournapeau
+  - given-names: Eric
+    family-names: Wieser
+  - given-names: Julian
+    family-names: Taylor
+  - given-names: Sebastian
+    family-names: Berg
+  - given-names: Nathaniel J.
+    family-names: Smith
+  - given-names: Robert
+    family-names: Kern
+  - given-names: Matti
+    family-names: Picus
+  - given-names: Stephan
+    family-names: Hoyer
+  - given-names: Marten H.
+    family-names: van Kerkwijk
+  - given-names: Matthew
+    family-names: Brett
+  - given-names: Allan
+    family-names: Haldane
+  - given-names: Jaime
+    family-names: Fernández del Río
+  - given-names: Mark
+    family-names: Wiebe
+  - given-names: Pearu
+    family-names: Peterson
+  - given-names: Pierre
+    family-names: Gérard-Marchant
+  - given-names: Kevin
+    family-names: Sheppard
+  - given-names: Tyler
+    family-names: Reddy
+  - given-names: Warren
+    family-names: Weckesser
+  - given-names: Hameer
+    family-names: Abbasi
+  - given-names: Christoph
+    family-names: Gohlke
+  - given-names: Travis E.
+    family-names: Oliphant
+identifiers:
+  - type: doi
+    value: 10.1038/s41586-020-2649-2
+    description: 'Harris, C.R., Millman, K.J., van der Walt, S.J. et al. Array programming with NumPy. Nature 585, 357–362 (2020).'
+repository-code: 'https://github.com/numpy/numpy'
+url: 'https://numpy.org/'
+abstract: >-
+  NumPy is the fundamental package for scientific computing
+  in Python. It is a Python library that provides a
+  multidimensional array object, various derived objects
+  (such as masked arrays and matrices), and an assortment of
+  routines for fast operations on arrays, including
+  mathematical, logical, shape manipulation, sorting,
+  selecting, I/O, discrete Fourier transforms, basic linear
+  algebra, basic statistical operations, random simulation
+  and much more.
+keywords:
+  - Scientific computing
+  - Python
+  - Multidimensional arrays
+  - Linear algebra
+  - Fourier transform
+license: BSD-3-Clause
