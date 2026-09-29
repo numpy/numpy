@@ -33,7 +33,6 @@ from ._polytypes import (
     _FuncVander,
     _FuncVander2D,
     _FuncVander3D,
-    _FuncWeight,
     _PolyScalar,
     _SupportsCoefOps,
 )
@@ -308,7 +307,34 @@ def _normed_hermite_n[ShapeT: _Shape](
 ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
 
 hermgauss: Final[_FuncGauss] = ...
-hermweight: Final[_FuncWeight] = ...
+
+# keep in sync with `.laguerre.lagweight`  (plus `np.bool`)
+@overload  # Nd T
+def hermweight[ShapeT: _Shape, ScalarT: np.inexact](
+    x: np.ndarray[ShapeT, np.dtype[ScalarT]],
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # Nd +f64
+def hermweight[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.int64 | np.int32 | np.uint64 | np.uint32]],
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # Nd +f32
+def hermweight[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.int16 | np.uint16]],
+) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+@overload  # Nd +f16
+def hermweight[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.int8 | np.uint8 | np.bool]],
+) -> np.ndarray[ShapeT, np.dtype[np.float16]]: ...
+@overload  # 0d T
+def hermweight[ScalarT: np.inexact](x: ScalarT) -> ScalarT: ...
+@overload  # 0d +f64
+def hermweight(x: float | np.int64 | np.int32 | np.uint64 | np.uint32 | np.bool) -> np.float64: ...
+@overload  # 0d +f32
+def hermweight(x: np.int16 | np.uint16) -> np.float32: ...
+@overload  # 0d +f16
+def hermweight(x: np.int8 | np.uint8) -> np.float16: ...
+@overload  # 0d ~c128
+def hermweight(x: complex) -> np.complex128 | Any: ...
 
 class Hermite(ABCPolyBase[L["H"]]):
     basis_name: ClassVar[L["H"]] = "H"  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
