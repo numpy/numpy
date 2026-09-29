@@ -44,6 +44,8 @@ class _SupportsCoefOps[T](Protocol):
     def __rsub__(self, x: T, /) -> Self: ...
     def __rmul__(self, x: T, /) -> Self: ...
 
+type _ToCoef1D = _SupportsCoefOps[Any] | Sequence[_SupportsCoefOps[Any]] | npt.NDArray[np.number | np.bool | np.object_]
+
 type _PolyScalar = np.bool | np.number | np.object_
 
 type _Series[ScalarT: _PolyScalar] = np.ndarray[tuple[int], np.dtype[ScalarT]]
