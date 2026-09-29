@@ -47,12 +47,13 @@ _bounded_integers_pyx = custom_target('_bounded_integer_pyx',
 c_args_random = [
   cflags_large_file_support,
   '-DNPY_NO_DEPRECATED_API=0',  # Cython still uses old NumPy C API
+  '-DCYTHON_USE_TYPE_SPECS=1',  # see https://github.com/cython/cython/pull/7947
 ]
 if host_machine.system() == 'cygwin'
   c_args_random += ['-Wl,--export-all-symbols']
 endif
 
-cython_args = []
+cython_args = []  
 if cy.version().version_compare('>=3.1.0')
   cython_args += ['-Xfreethreading_compatible=True']
 endif

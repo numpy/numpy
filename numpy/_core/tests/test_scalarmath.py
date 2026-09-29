@@ -12,6 +12,7 @@ from numpy._core._rational_tests import rational, rational2
 from numpy._utils import _pep440
 from numpy.exceptions import ComplexWarning
 from numpy.testing import (
+    IS_PYPY,
     _gen_alignment_data,
     assert_,
     assert_almost_equal,
@@ -650,6 +651,7 @@ class TestRepr:
             self._test_type_repr(t)
 
 
+@pytest.mark.skipif(IS_PYPY, reason="sys.getsizeof() is not valid on PyPy")
 class TestSizeOf:
 
     def test_equal_nbytes(self):
