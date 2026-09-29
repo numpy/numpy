@@ -639,12 +639,12 @@ def broadcast_arrays(*args, subok=False):
             [5, 5, 5]])]
 
     """
-    if 0 < len(args) < 65:
+    arrays = [np.asarray(_m) for _m in args]
+    if 0 < len(arrays) < 65:
         # Fast path: a single nditer handles up to NPY_MAXARGS (64) operands
         # (but requires at least one, hence the ``0 <``).
-        views = np.nditer(args, flags=_BROADCAST_ITER_FLAGS, order='C').itviews
+        views = np.nditer(arrays, flags=_BROADCAST_ITER_FLAGS, order='C').itviews
     else:
-        arrays = [np.asarray(_m) for _m in args]
         shape = _broadcast_shape(*arrays)
         # Create the views in chunks of at most NPY_MAXARGS operands. The
         # views are read-only, exactly like the ones returned by the fast path.
