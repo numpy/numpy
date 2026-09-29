@@ -33,7 +33,6 @@ from ._polytypes import (
     _FuncValND,
     _FuncVander2D,
     _FuncVander3D,
-    _FuncWeight,
     _PolyScalar,
     _SupportsCoefOps,
 )
@@ -375,7 +374,22 @@ def _normed_hermite_e_n[ShapeT: _Shape](
 ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
 
 hermegauss: Final[_FuncGauss] = ...
-hermeweight: Final[_FuncWeight] = ...
+
+# keep in sync with `.chebyshev.chebweight`
+@overload  # Nd T
+def hermeweight[ShapeT: _Shape, ScalarT: np.inexact](
+    x: np.ndarray[ShapeT, np.dtype[ScalarT]],
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # Nd +f64
+def hermeweight[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.integer | np.bool]],
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # 0d T
+def hermeweight[ScalarT: np.inexact](x: ScalarT) -> ScalarT: ...
+@overload  # 0d +f64
+def hermeweight(x: float | np.integer | np.bool) -> np.float64: ...
+@overload  # 0d ~c128
+def hermeweight(x: complex) -> np.complex128 | Any: ...
 
 class HermiteE(ABCPolyBase[L["He"]]):
     basis_name: ClassVar[L["He"]] = "He"  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]

@@ -15,13 +15,22 @@ type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
+b: np.bool
+i1: np.int8
+i2: np.int16
+i8: np.int64
+f4: np.float32
+
 AR_b: npt.NDArray[np.bool]
 AR_u4: npt.NDArray[np.uint32]
 AR_i8: npt.NDArray[np.int64]
 AR_f8: npt.NDArray[np.float64]
 AR_c16: npt.NDArray[np.complex128]
 AR_O: npt.NDArray[np.object_[int]]
+AR_i1_1d: _Array1D[np.int8]
+AR_i2_1d: _Array1D[np.int16]
 AR_f4_1d: _Array1D[np.float32]
+AR_i8_2d: _Array2D[np.int64]
 AR_f8_2d: _Array2D[np.float64]
 AR_f10_2d: _Array2D[np.longdouble]
 AR_c16_2d: _Array2D[np.complex128]
@@ -351,9 +360,45 @@ assert_type(npp.hermite_e.hermefit(AR_f8, _py_c_1d, 2, full=True), tuple[npt.NDA
 
 assert_type(npp.chebyshev.chebgauss(2), tuple[_ArrFloat1D64, _ArrFloat1D64])
 
-assert_type(npp.chebyshev.chebweight(AR_f8), npt.NDArray[np.float64])
-assert_type(npp.chebyshev.chebweight(AR_c16), npt.NDArray[np.complex128])
-assert_type(npp.chebyshev.chebweight(AR_O), npt.NDArray[np.object_])
+assert_type(npp.chebyshev.chebweight(AR_c16_2d), _Array2D[np.complex128])
+assert_type(npp.chebyshev.chebweight(AR_i8_2d), _Array2D[np.float64])
+assert_type(npp.chebyshev.chebweight(f4), np.float32)
+assert_type(npp.chebyshev.chebweight(0.5), np.float64)
+assert_type(npp.chebyshev.chebweight(0.5j), np.complex128 | Any)
+
+assert_type(npp.legendre.legweight(AR_c16_2d), _Array2D[np.complex128])
+assert_type(npp.legendre.legweight(AR_i8_2d), _Array2D[np.float64])
+assert_type(npp.legendre.legweight(AR_O_2d), _Array2D[np.object_])
+assert_type(npp.legendre.legweight(f4), np.float32)
+assert_type(npp.legendre.legweight(i8), np.float64)
+assert_type(npp.legendre.legweight(0.5), float)
+assert_type(npp.legendre.legweight(0.5j), complex)
+
+assert_type(npp.laguerre.lagweight(AR_c16_2d), _Array2D[np.complex128])
+assert_type(npp.laguerre.lagweight(AR_i8_2d), _Array2D[np.float64])
+assert_type(npp.laguerre.lagweight(AR_i2_1d), _Array1D[np.float32])
+assert_type(npp.laguerre.lagweight(AR_i1_1d), _Array1D[np.float16])
+assert_type(npp.laguerre.lagweight(f4), np.float32)
+assert_type(npp.laguerre.lagweight(i8), np.float64)
+assert_type(npp.laguerre.lagweight(i2), np.float32)
+assert_type(npp.laguerre.lagweight(i1), np.float16)
+assert_type(npp.laguerre.lagweight(0.5j), np.complex128 | Any)
+
+assert_type(npp.hermite.hermweight(AR_c16_2d), _Array2D[np.complex128])
+assert_type(npp.hermite.hermweight(AR_i8_2d), _Array2D[np.float64])
+assert_type(npp.hermite.hermweight(AR_i2_1d), _Array1D[np.float32])
+assert_type(npp.hermite.hermweight(AR_b), npt.NDArray[np.float16])
+assert_type(npp.hermite.hermweight(f4), np.float32)
+assert_type(npp.hermite.hermweight(b), np.float64)
+assert_type(npp.hermite.hermweight(i2), np.float32)
+assert_type(npp.hermite.hermweight(i1), np.float16)
+assert_type(npp.hermite.hermweight(0.5j), np.complex128 | Any)
+
+assert_type(npp.hermite_e.hermeweight(AR_c16_2d), _Array2D[np.complex128])
+assert_type(npp.hermite_e.hermeweight(AR_i8_2d), _Array2D[np.float64])
+assert_type(npp.hermite_e.hermeweight(f4), np.float32)
+assert_type(npp.hermite_e.hermeweight(0.5), np.float64)
+assert_type(npp.hermite_e.hermeweight(0.5j), np.complex128 | Any)
 
 assert_type(npp.chebyshev.poly2cheb(AR_f8), _ArrFloat1D)
 assert_type(npp.chebyshev.poly2cheb(AR_c16), _ArrComplex1D)

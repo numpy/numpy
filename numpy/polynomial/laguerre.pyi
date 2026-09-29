@@ -33,7 +33,6 @@ from ._polytypes import (
     _FuncValND,
     _FuncVander2D,
     _FuncVander3D,
-    _FuncWeight,
     _PolyScalar,
     _SupportsCoefOps,
 )
@@ -369,7 +368,34 @@ def lagfit(
 lagcompanion: Final[_FuncCompanion] = ...
 lagroots: Final[_FuncRoots] = ...
 laggauss: Final[_FuncGauss] = ...
-lagweight: Final[_FuncWeight] = ...
+
+# keep in sync with `.hermite.hermweight`  (minus `np.bool`)
+@overload  # Nd T
+def lagweight[ShapeT: _Shape, ScalarT: np.inexact](
+    x: np.ndarray[ShapeT, np.dtype[ScalarT]],
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # Nd +f64
+def lagweight[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.int64 | np.int32 | np.uint64 | np.uint32]],
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # Nd +f32
+def lagweight[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.int16 | np.uint16]],
+) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+@overload  # Nd +f16
+def lagweight[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.int8 | np.uint8]],
+) -> np.ndarray[ShapeT, np.dtype[np.float16]]: ...
+@overload  # 0d T
+def lagweight[ScalarT: np.inexact](x: ScalarT) -> ScalarT: ...
+@overload  # 0d +f64
+def lagweight(x: float | np.int64 | np.int32 | np.uint64 | np.uint32) -> np.float64: ...
+@overload  # 0d +f32
+def lagweight(x: np.int16 | np.uint16) -> np.float32: ...
+@overload  # 0d +f16
+def lagweight(x: np.int8 | np.uint8) -> np.float16: ...
+@overload  # 0d ~c128
+def lagweight(x: complex) -> np.complex128 | Any: ...
 
 class Laguerre(ABCPolyBase[L["L"]]):
     basis_name: ClassVar[L["L"]] = "L"  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
