@@ -19,7 +19,6 @@ from ._polytypes import (
     _CanArray,
     _FuncBinOp,
     _FuncCompanion,
-    _FuncDer,
     _FuncFromRoots,
     _FuncGauss,
     _FuncInteg,
@@ -108,7 +107,93 @@ hermmulx: Final[_FuncUnOp] = ...
 hermmul: Final[_FuncBinOp] = ...
 hermdiv: Final[_FuncBinOp] = ...
 hermpow: Final[_FuncPow] = ...
-hermder: Final[_FuncDer] = ...
+
+# keep in sync with `polynomial.*der`
+@overload  # ?d T  (workaround)
+def hermder[ScalarT: np.inexact](
+    c: _ArrayJustND[ScalarT],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> npt.NDArray[ScalarT]: ...
+@overload  # ?d +f64  (workaround)
+def hermder(
+    c: _ArrayJustND[np.integer | np.bool],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d ~O  (workaround)
+def hermder(
+    c: _ArrayJustND[np.object_],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> npt.NDArray[np.object_]: ...
+@overload  # <=1d T
+def hermder[ScalarT: np.inexact](
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array1D[ScalarT]: ...
+@overload  # <=1d +f64
+def hermder(
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.integer | np.bool]]] | Sequence[float] | float,
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array1D[np.float64]: ...
+@overload  # <=1d ~c128
+def hermder(
+    c: list[complex],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array1D[np.complex128]: ...
+@overload  # <=1d ~O
+def hermder(
+    c: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array1D[np.object_]: ...
+@overload  # 2d T
+def hermder[ScalarT: np.inexact](
+    c: _Array2D[ScalarT],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array2D[ScalarT]: ...
+@overload  # 2d +f64
+def hermder(
+    c: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array2D[np.float64]: ...
+@overload  # 2d ~c128
+def hermder(
+    c: Sequence[list[complex]],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array2D[np.complex128]: ...
+@overload  # 2d ~O
+def hermder(
+    c: _Array2D[np.object_],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array2D[np.object_]: ...
+@overload  # ?d  (fallback)
+def hermder(
+    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    m: SupportsIndex = 1,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> npt.NDArray[Any]: ...
+
 hermint: Final[_FuncInteg] = ...
 hermval2d: Final[_FuncVal2D] = ...
 hermval3d: Final[_FuncVal3D] = ...
