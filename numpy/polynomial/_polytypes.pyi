@@ -44,6 +44,8 @@ class _SupportsCoefOps[T](Protocol):
     def __rsub__(self, x: T, /) -> Self: ...
     def __rmul__(self, x: T, /) -> Self: ...
 
+type _ToCoef1D = _SupportsCoefOps[Any] | Sequence[_SupportsCoefOps[Any]] | npt.NDArray[np.number | np.bool | np.object_]
+
 type _PolyScalar = np.bool | np.number | np.object_
 
 type _Series[ScalarT: _PolyScalar] = np.ndarray[tuple[int], np.dtype[ScalarT]]
@@ -142,42 +144,6 @@ class _FuncPow(Protocol):
     def __call__(self, /, c: _SeriesLikeComplex_co, pow: _IntLike_co, maxpower: _IntLike_co | None = ...) -> _ComplexSeries: ...
     @overload
     def __call__(self, /, c: _SeriesLikeCoef_co, pow: _IntLike_co, maxpower: _IntLike_co | None = ...) -> _ObjectSeries: ...
-
-@type_check_only
-class _FuncInteg(Protocol):
-    @overload
-    def __call__(
-        self,
-        /,
-        c: _ArrayLikeFloat_co,
-        m: SupportsIndex = 1,
-        k: _FloatLike_co | _SeriesLikeFloat_co = [],
-        lbnd: _FloatLike_co = 0,
-        scl: _FloatLike_co = 1,
-        axis: SupportsIndex = 0,
-    ) -> _FloatArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        c: _ArrayLikeComplex_co,
-        m: SupportsIndex = 1,
-        k: _ComplexLike_co | _SeriesLikeComplex_co = [],
-        lbnd: _ComplexLike_co = 0,
-        scl: _ComplexLike_co = 1,
-        axis: SupportsIndex = 0,
-    ) -> _ComplexArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        c: _ArrayLikeCoef_co,
-        m: SupportsIndex = 1,
-        k: _CoefLike_co | _SeriesLikeCoef_co = [],
-        lbnd: _CoefLike_co = 0,
-        scl: _CoefLike_co = 1,
-        axis: SupportsIndex = 0,
-    ) -> _ObjectArray: ...
 
 @type_check_only
 class _FuncVal2D(Protocol):
