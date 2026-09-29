@@ -21,7 +21,6 @@ from ._polytypes import (
     _FuncCompanion,
     _FuncFromRoots,
     _FuncGauss,
-    _FuncInteg,
     _FuncLine,
     _FuncPoly2Ortho,
     _FuncPow,
@@ -33,6 +32,7 @@ from ._polytypes import (
     _FuncVander3D,
     _PolyScalar,
     _SupportsCoefOps,
+    _ToCoef1D,
 )
 from .polyutils import trimcoef as lagtrim
 
@@ -195,7 +195,115 @@ def lagder(
     axis: SupportsIndex = 0,
 ) -> npt.NDArray[Any]: ...
 
-lagint: Final[_FuncInteg] = ...
+# keep in sync with `polynomial.*int`
+@overload  # ?d T  (workaround)
+def lagint[ScalarT: np.inexact](
+    c: _ArrayJustND[ScalarT],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> npt.NDArray[ScalarT]: ...
+@overload  # ?d +f64  (workaround)
+def lagint(
+    c: _ArrayJustND[np.integer | np.bool],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d ~O  (workaround)
+def lagint(
+    c: _ArrayJustND[np.object_],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> npt.NDArray[np.object_]: ...
+@overload  # <=1d T
+def lagint[ScalarT: np.inexact](
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array1D[ScalarT]: ...
+@overload  # <=1d +f64
+def lagint(
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.integer | np.bool]]] | Sequence[float] | float,
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array1D[np.float64]: ...
+@overload  # <=1d ~c128
+def lagint(
+    c: list[complex],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array1D[np.complex128]: ...
+@overload  # <=1d ~O
+def lagint(
+    c: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array1D[np.object_]: ...
+@overload  # 2d T
+def lagint[ScalarT: np.inexact](
+    c: _Array2D[ScalarT],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array2D[ScalarT]: ...
+@overload  # 2d +f64
+def lagint(
+    c: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array2D[np.float64]: ...
+@overload  # 2d ~c128
+def lagint(
+    c: Sequence[list[complex]],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array2D[np.complex128]: ...
+@overload  # 2d ~O
+def lagint(
+    c: _Array2D[np.object_],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> _Array2D[np.object_]: ...
+@overload  # ?d  (fallback)
+def lagint(
+    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    m: SupportsIndex = 1,
+    k: _ToCoef1D = [],
+    lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
+    axis: SupportsIndex = 0,
+) -> npt.NDArray[Any]: ...
 
 # keep in sync with `polynomial.*val2d`
 @overload  # Nd +f64, Nd +f64, 2d +f64
