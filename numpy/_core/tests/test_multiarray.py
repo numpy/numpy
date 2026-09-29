@@ -6544,6 +6544,16 @@ class TestTake:
 
 
 class TestLexsort:
+    @pytest.mark.slow
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=21.5e9)
+    def test_large_structured_dtype(self):
+        # gh-32809
+        np.lexsort([np.zeros(3, [("x", "u1", 2**31 + 2)])[::2]])
+        np.lexsort([np.zeros(3, "V2147483650")[::2]])
+        np.lexsort([np.zeros(3, [("x", "u1", 2**32 + 1)])[::2]])
+        np.lexsort([np.zeros(3, "V4294967297")[::2]])
+
     @pytest.mark.parametrize('dtype', [
         np.uint8, np.uint16, np.uint32, np.uint64,
         np.int8, np.int16, np.int32, np.int64,

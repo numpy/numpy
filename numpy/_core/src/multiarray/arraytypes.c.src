@@ -2779,8 +2779,8 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
 static npy_bool
 VOID_nonzero (char *ip, PyArrayObject *ap)
 {
-    int i;
-    int len;
+    npy_intp i;
+    npy_intp len;
     npy_bool nonz = NPY_FALSE;
 
     if (PyArray_HASFIELDS(ap)) {
