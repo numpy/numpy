@@ -639,9 +639,6 @@ def broadcast_arrays(*args, subok=False):
             [5, 5, 5]])]
 
     """
-    # Convert the inputs first: nditer treats a bare ``None`` operand as a
-    # request to allocate an output, whereas here it must broadcast as a
-    # 0-d object array.
     arrays = [np.asarray(_m) for _m in args]
     if 0 < len(arrays) < 65:
         # Fast path: a single nditer handles up to NPY_MAXARGS (64) operands
