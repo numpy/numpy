@@ -2020,7 +2020,8 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
             return array_reduce_ex_regular(self, protocol);
         }
     }
-    buffer = PyObject_CallOneArg(picklebuf_class, transposed_array == NULL ? (PyObject*) self: transposed_array);
+    PyObject *arg = transposed_array == NULL ? (PyObject *)self : transposed_array;
+    buffer = PyObject_Vectorcall(picklebuf_class, &arg, 1, NULL);
     if (buffer == NULL) {
         /* Some arrays may refuse to export a buffer, in which case
          * just fall back on regular __reduce_ex__ implementation

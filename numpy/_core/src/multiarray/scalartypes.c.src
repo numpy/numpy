@@ -254,7 +254,8 @@ find_binary_operation_path(
      * Retrying then succeeds. So if (and only if) `self.item()` returns a new
      * type, we can safely attempt the operation (again) with that.
      */
-    PyObject *self_item = PyObject_CallMethodNoArgs(self, state->interned_str.item);
+    PyObject *self_item = PyObject_VectorcallMethod(
+            state->interned_str.item, &self, 1, NULL);
     if (self_item == NULL) {
         return -1;
     }
