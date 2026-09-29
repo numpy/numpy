@@ -144,36 +144,6 @@ class _FuncPow(Protocol):
     def __call__(self, /, c: _SeriesLikeCoef_co, pow: _IntLike_co, maxpower: _IntLike_co | None = ...) -> _ObjectSeries: ...
 
 @type_check_only
-class _FuncDer(Protocol):
-    @overload
-    def __call__(
-        self,
-        /,
-        c: _ArrayLikeFloat_co,
-        m: SupportsIndex = 1,
-        scl: _FloatLike_co = 1,
-        axis: SupportsIndex = 0,
-    ) -> _FloatArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        c: _ArrayLikeComplex_co,
-        m: SupportsIndex = 1,
-        scl: _ComplexLike_co = 1,
-        axis: SupportsIndex = 0,
-    ) -> _ComplexArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        c: _ArrayLikeCoef_co,
-        m: SupportsIndex = 1,
-        scl: _CoefLike_co = 1,
-        axis: SupportsIndex = 0,
-    ) -> _ObjectArray: ...
-
-@type_check_only
 class _FuncInteg(Protocol):
     @overload
     def __call__(
