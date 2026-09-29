@@ -236,9 +236,9 @@ PyArray_GetBoundCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
         PyErr_NoMemory();
         return NULL;
     }
-    Py_INCREF(from);
+    Py_INCREF((PyObject *)from);
     res->dtypes[0] = from;
-    Py_INCREF(to);
+    Py_INCREF((PyObject *)to);
     res->dtypes[1] = to;
 
     return (PyObject *)res;
@@ -386,7 +386,7 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
         return NULL;
     }
 
-    out = PyArray_NewFromDescr(Py_TYPE(arr), dtype,
+    out = PyArray_NewFromDescr(Py_TYPE((PyObject *)arr), dtype,
                                PyArray_NDIM(arr),
                                PyArray_DIMS(arr),
                                NULL, NULL,
@@ -1032,7 +1032,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
 {
     if (NPY_DTYPE(descr) == given_DType) {
-        Py_INCREF(descr);
+        Py_INCREF((PyObject *)descr);
         return descr;
     }
     if (!NPY_DT_is_parametric(given_DType) && !NPY_DT_is_abstract(given_DType)) {
@@ -1043,7 +1043,7 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
         return NPY_DT_CALL_default_descr(given_DType);
     }
     if (PyObject_TypeCheck((PyObject *)descr, (PyTypeObject *)given_DType)) {
-        Py_INCREF(descr);
+        Py_INCREF((PyObject *)descr);
         return descr;
     }
 
@@ -1159,7 +1159,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
              */
             && NPY_DT_is_legacy(NPY_DTYPE(type1))
             && PyArray_ISNBO(type1->byteorder) && type1->type_num != NPY_VOID) {
-        Py_INCREF(type1);
+        Py_INCREF((PyObject *)type1);
         return type1;
     }
 
@@ -1520,7 +1520,7 @@ PyArray_MinScalarType(PyArrayObject *arr)
      * If the array isn't a numeric scalar, just return the array's dtype.
      */
     if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(dtype->type_num)) {
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         return dtype;
     }
     else {
@@ -1760,7 +1760,7 @@ PyArray_ResultType(
         if (tmp_descr == NULL) {
             goto error;
         }
-        Py_INCREF(NPY_DTYPE(tmp_descr));
+        Py_INCREF((PyObject *)NPY_DTYPE(tmp_descr));
         Py_SETREF(common_dtype, NPY_DTYPE(tmp_descr));
         Py_DECREF(tmp_descr);
     }
@@ -1806,8 +1806,8 @@ PyArray_ResultType(
     return result;
 
   error:
-    Py_XDECREF(result);
-    Py_XDECREF(common_dtype);
+    Py_XDECREF((PyObject *)result);
+    Py_XDECREF((PyObject *)common_dtype);
     npy_free_workspace(workspace);
     return NULL;
 }
@@ -2021,7 +2021,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
         ret = dtype->type_num;
     }
 
-    Py_XDECREF(dtype);
+    Py_XDECREF((PyObject *)dtype);
 
     return ret;
 }
@@ -2114,7 +2114,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         }
 
         PyArrayObject *tmp = mps[i];
-        Py_INCREF(common_descr);
+        Py_INCREF((PyObject *)common_descr);
         mps[i] = (PyArrayObject *)PyArray_FromArray(tmp, common_descr, flags);
         Py_DECREF(tmp);
         if (mps[i] == NULL) {
@@ -2125,10 +2125,10 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     return mps;
 
  fail:
-    Py_XDECREF(common_descr);
+    Py_XDECREF((PyObject *)common_descr);
     *retn = 0;
     for (i = 0; i < n; i++) {
-        Py_XDECREF(mps[i]);
+        Py_XDECREF((PyObject *)mps[i]);
     }
     PyDataMem_FREE(mps);
     return NULL;
@@ -2169,7 +2169,7 @@ PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
                     meth->dtypes[0], meth->dtypes[1], meth->method->name);
             return -1;
         }
-        Py_INCREF(meth->method);
+        Py_INCREF((PyObject *)meth->method);
         NPY_DT_SLOTS(meth->dtypes[0])->within_dtype_castingimpl = meth->method;
 
         return 0;
@@ -2226,7 +2226,7 @@ legacy_same_dtype_resolve_descriptors(
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     if (given_descrs[1] == NULL) {
@@ -2237,7 +2237,7 @@ legacy_same_dtype_resolve_descriptors(
         }
     }
     else {
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
 
@@ -2669,7 +2669,7 @@ string_to_string_resolve_descriptors(
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     if (given_descrs[1] == NULL) {
@@ -2679,7 +2679,7 @@ string_to_string_resolve_descriptors(
         }
     }
     else {
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
 
@@ -2806,7 +2806,7 @@ PyArray_InitializeStringCasts(void)
 
     result = 0;
   finish:
-    Py_XDECREF(other_dt);
+    Py_XDECREF((PyObject *)other_dt);
     return result;
 }
 
@@ -2827,7 +2827,7 @@ cast_to_void_dtype_class(
         return -1;
     }
     loop_descrs[1]->elsize = given_descrs[0]->elsize;
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     *view_offset = 0;
@@ -2939,9 +2939,9 @@ nonstructured_to_structured_resolve_descriptors(
     }
 
     /* Void dtypes always do the full cast. */
-    Py_INCREF(from_descr);
+    Py_INCREF((PyObject *)from_descr);
     loop_descrs[0] = from_descr;
-    Py_INCREF(to_descr);
+    Py_INCREF((PyObject *)to_descr);
     loop_descrs[1] = (PyArray_Descr *)to_descr;
 
     return casting;
@@ -3088,10 +3088,10 @@ structured_to_nonstructured_resolve_descriptors(
         }
     }
     else {
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     return NPY_UNSAFE_CASTING;
@@ -3375,9 +3375,9 @@ void_to_void_resolve_descriptors(
     }
 
     /* Void dtypes always do the full cast. */
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
 
     return casting;
@@ -3512,11 +3512,11 @@ object_to_any_resolve_descriptors(
         }
     }
     else {
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
     return NPY_UNSAFE_CASTING;
 }
@@ -3550,11 +3550,11 @@ any_to_object_resolve_descriptors(
         }
     }
     else {
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
     return NPY_SAFE_CASTING;
 }

@@ -81,7 +81,7 @@ get_dummy_stack_array(PyArrayObject *orig)
     PyArrayObject_fields new_fields;
     new_fields.flags = PyArray_FLAGS(orig);
     /* Set to NULL so the dummy object can be distinguished from the real one */
-    Py_SET_TYPE(&new_fields, NULL);
+    Py_SET_TYPE((PyObject *)&new_fields, NULL);
     new_fields.base = (PyObject *)orig;
     return new_fields;
 }
@@ -919,7 +919,7 @@ VOID_getitem(void *input, void *vap)
                     "invalid shape in fixed-type tuple.");
             return NULL;
         }
-        Py_INCREF(descr->subarray->base);
+        Py_INCREF((PyObject *)descr->subarray->base);
 
         /*
          * NOTE: There is the possibility of recursive calls from the above
@@ -1138,7 +1138,7 @@ VOID_setitem(PyArray_Descr *descr_, PyObject *op, char *ip)
                     "invalid shape in fixed-type tuple.");
             return -1;
         }
-        Py_INCREF(descr->subarray->base);
+        Py_INCREF((PyObject *)descr->subarray->base);
         /*
          * Note we set no base object here, as to not rely on the input
          * being a valid object for base setting. `ret` nevertheless does
@@ -4396,7 +4396,7 @@ PyArray_DescrFromType(int type)
                 "Invalid data-type for array");
     }
     else if (!is_stringdtype) {
-        Py_INCREF(ret);
+        Py_INCREF((PyObject *)ret);
     }
 
     return ret;
@@ -4890,7 +4890,7 @@ set_typeinfo(PyObject *dict)
      * (duplicates making the name lowercase)
      */
 #define SETTYPE(Name, name)                                    \
-    Py_INCREF(&Py##Name##ArrType_Type);                  \
+    Py_INCREF((PyObject *)&Py##Name##ArrType_Type);      \
     if (PyDict_SetItemString(dict, #name,                \
             (PyObject *)&Py##Name##ArrType_Type) < 0) {  \
         goto error;                                      \

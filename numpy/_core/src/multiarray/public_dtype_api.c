@@ -29,7 +29,7 @@ int
 PyArrayInitDTypeMeta_FromSpec(
         PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *spec)
 {
-    if (!PyObject_TypeCheck(DType, &PyArrayDTypeMeta_Type)) {
+    if (!PyObject_TypeCheck((PyObject *)DType, &PyArrayDTypeMeta_Type)) {
         PyErr_SetString(PyExc_RuntimeError,
                 "Passed in DType must be a valid (initialized) DTypeMeta "
                 "instance!");
@@ -48,7 +48,7 @@ PyArrayInitDTypeMeta_FromSpec(
         return -1;
     }
 
-    if (spec->typeobj == NULL || !PyType_Check(spec->typeobj)) {
+    if (spec->typeobj == NULL || !PyType_Check((PyObject *)spec->typeobj)) {
         PyErr_SetString(PyExc_TypeError,
                 "Not giving a type object is currently not supported, but "
                 "is expected to be supported eventually.  This would mean "

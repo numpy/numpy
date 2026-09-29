@@ -217,7 +217,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     /* convert to 0-dim array of scalar typecode */
     PyArray_Descr *typecode = PyArray_DescrFromScalar(scalar);
     if (typecode == NULL) {
-        Py_XDECREF(outcode);
+        Py_XDECREF((PyObject *)outcode);
         return NULL;
     }
     if ((typecode->type_num == NPY_VOID) &&
@@ -236,7 +236,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
             0, NULL,
             NULL, NULL, 0, NULL);
     if (r == NULL) {
-        Py_XDECREF(outcode);
+        Py_XDECREF((PyObject *)outcode);
         return NULL;
     }
     /* the dtype used by the array may be different to the one requested */
@@ -244,7 +244,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     if (PyDataType_FLAGCHK(typecode, NPY_USE_SETITEM)) {
         if (PyDataType_GetArrFuncs(typecode)->setitem(scalar, PyArray_DATA(r), r) < 0) {
             Py_DECREF(r);
-            Py_XDECREF(outcode);
+            Py_XDECREF((PyObject *)outcode);
             return NULL;
         }
     }
@@ -379,8 +379,8 @@ PyArray_DescrFromTypeObject(PyObject *type)
             new->subarray = conv->subarray;
             conv->subarray = NULL;
         }
-        Py_XDECREF(conv);
-        Py_XDECREF(new->typeobj);
+        Py_XDECREF((PyObject *)conv);
+        Py_XDECREF((PyObject *)new->typeobj);
         new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);
         return (PyArray_Descr *)new;
@@ -564,9 +564,9 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             PyVoidScalarObject *vobj = (PyVoidScalarObject *)obj;
             vobj->base = NULL;
             vobj->descr = (_PyArray_LegacyDescr *)descr;
-            Py_INCREF(descr);
+            Py_INCREF((PyObject *)descr);
             vobj->obval = NULL;
-            Py_SET_SIZE(vobj, itemsize);
+            Py_SET_SIZE((PyVarObject *)vobj, itemsize);
             vobj->flags = NPY_ARRAY_CARRAY | NPY_ARRAY_F_CONTIGUOUS | NPY_ARRAY_OWNDATA;
             swap = 0;
             if (PyDataType_HASFIELDS(descr)) {
@@ -623,10 +623,10 @@ PyArray_Return(PyArrayObject *mp)
         return NULL;
     }
     if (PyErr_Occurred()) {
-        Py_XDECREF(mp);
+        Py_XDECREF((PyObject *)mp);
         return NULL;
     }
-    if (!PyArray_Check(mp)) {
+    if (!PyArray_Check((PyObject *)mp)) {
         return (PyObject *)mp;
     }
     if (PyArray_NDIM(mp) == 0) {

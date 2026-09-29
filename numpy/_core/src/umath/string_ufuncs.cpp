@@ -824,7 +824,7 @@ string_strip_whitespace_resolve_descriptors(
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
-    Py_INCREF(loop_descrs[0]);
+    Py_INCREF((PyObject *)loop_descrs[0]);
     loop_descrs[1] = loop_descrs[0];
 
     return NPY_NO_CASTING;
@@ -849,7 +849,7 @@ string_strip_chars_resolve_descriptors(
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
-    Py_INCREF(loop_descrs[0]);
+    Py_INCREF((PyObject *)loop_descrs[0]);
     loop_descrs[2] = loop_descrs[0];
 
     return NPY_NO_CASTING;
@@ -861,9 +861,9 @@ string_findlike_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
-    Py_INCREF(op_dtypes[1]);
+    Py_INCREF((PyObject *)op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
@@ -877,18 +877,18 @@ string_replace_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
 
-    Py_INCREF(op_dtypes[1]);
+    Py_INCREF((PyObject *)op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
 
-    Py_INCREF(op_dtypes[2]);
+    Py_INCREF((PyObject *)op_dtypes[2]);
     new_op_dtypes[2] = op_dtypes[2];
 
     new_op_dtypes[3] = PyArray_DTypeFromTypeNum(NPY_INT64);
 
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[4] = op_dtypes[0];
     return 0;
 }
@@ -937,9 +937,9 @@ string_startswith_endswith_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
-    Py_INCREF(op_dtypes[1]);
+    Py_INCREF((PyObject *)op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_Int64DType);
@@ -953,7 +953,7 @@ string_expandtabs_length_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_XINCREF(op_dtypes[0]);
+    Py_XINCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[2] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);
@@ -966,10 +966,10 @@ string_expandtabs_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[2] = op_dtypes[0];
     return 0;
 }
@@ -1014,12 +1014,12 @@ string_center_ljust_rjust_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[2] = op_dtypes[0];
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[3] = op_dtypes[0];
     return 0;
 }
@@ -1069,10 +1069,10 @@ string_zfill_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[2] = op_dtypes[0];
     return 0;
 }
@@ -1117,18 +1117,18 @@ string_partition_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
-    Py_INCREF(op_dtypes[1]);
+    Py_INCREF((PyObject *)op_dtypes[1]);
     new_op_dtypes[1] = op_dtypes[1];
 
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_Int64DType);
 
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[3] = op_dtypes[0];
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[4] = op_dtypes[0];
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[5] = op_dtypes[0];
     return 0;
 }
@@ -1166,12 +1166,12 @@ string_slice_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_IntpDType);
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_IntpDType);
     new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_IntpDType);
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[4] = op_dtypes[0];
     return 0;
 }
@@ -2067,8 +2067,8 @@ _umath_strings_richcompare(
     if (NpyIter_Deallocate(iter) < 0) {
         Py_CLEAR(result);
     }
-    Py_XDECREF(descrs[0]);
-    Py_XDECREF(descrs[1]);
-    Py_XDECREF(descrs[2]);
+    Py_XDECREF((PyObject *)descrs[0]);
+    Py_XDECREF((PyObject *)descrs[1]);
+    Py_XDECREF((PyObject *)descrs[2]);
     return result;
 }

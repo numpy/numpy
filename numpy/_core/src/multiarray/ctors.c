@@ -1028,7 +1028,7 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
     if (descr == NULL && dtype == NULL) {
         /* If no override data type, use the one from the prototype */
         descr = PyArray_DESCR(prototype);
-        Py_INCREF(descr);
+        Py_INCREF((PyObject *)descr);
     }
     else if (descr == NULL) {
         descr = _infer_descr_from_dtype(dtype);
@@ -1059,7 +1059,8 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
 
     /* If it's not KEEPORDER, this is simple */
     if (order != NPY_KEEPORDER) {
-        ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
+        ret = PyArray_NewFromDescr(subok ? Py_TYPE((PyObject *)prototype)
+                                         : &PyArray_Type,
                                         descr,
                                         ndim,
                                         dims,
@@ -1098,7 +1099,8 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
         }
 
         /* Finally, allocate the array */
-        ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
+        ret = PyArray_NewFromDescr(subok ? Py_TYPE((PyObject *)prototype)
+                                         : &PyArray_Type,
                                         descr,
                                         ndim,
                                         dims,
@@ -1351,7 +1353,7 @@ _array_from_buffer_3118(PyObject *memoryview)
 
 fail:
     Py_XDECREF(r);
-    Py_XDECREF(descr);
+    Py_XDECREF((PyObject *)descr);
     return NULL;
 
 }
@@ -1462,7 +1464,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 {
     if (context != NULL) {
         PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
-        Py_XDECREF(newtype);
+        Py_XDECREF((PyObject *)newtype);
         return NULL;
     }
 
@@ -1471,7 +1473,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     PyArray_ExtractDTypeAndDescriptor(
         newtype, &dt_info.descr, &dt_info.dtype);
 
-    Py_XDECREF(newtype);
+    Py_XDECREF((PyObject *)newtype);
 
     /*
      * The internal implementation treats 0 as actually wanting a zero-dimensional
@@ -1488,8 +1490,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             op, dt_info.descr, dt_info.dtype,
             min_depth, max_depth, flags, &was_scalar);
 
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     return ret;
 }
 
@@ -1582,7 +1584,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
             flags = flags & ~NPY_ARRAY_ENSURECOPY;
         }
         // PyArray_FromArray steals a reference to the dtype
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         ret = (PyArrayObject *)PyArray_FromArray(arr, dtype, flags);
         npy_unlink_coercion_cache(cache);
         goto cleanup;
@@ -1601,7 +1603,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
          */
         assert(ndim == 0);
         // PyArray_NewFromDescrAndBase steals a reference to the dtype
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 &PyArray_Type, dtype,
                 0, NULL, NULL,
@@ -1645,7 +1647,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
          * https://github.com/pandas-dev/pandas/issues/35481
          */
         // PyArray_FromScalar steals a reference to dtype
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         ret = (PyArrayObject *)PyArray_FromScalar(op, dtype);
         goto cleanup;
     }
@@ -1659,7 +1661,8 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     }
 
     /* Create a new array and copy the data */
-    Py_INCREF(dtype);  /* hold on in case of a subarray that is replaced */
+    /* hold on in case of a subarray that is replaced */
+    Py_INCREF((PyObject *)dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, dtype, ndim, dims, NULL, NULL,
             flags&NPY_ARRAY_F_CONTIGUOUS, NULL);
@@ -1674,7 +1677,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
          * S1 or U1, although that should likely change.
          */
         Py_SETREF(dtype, PyArray_DESCR(ret));
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
     }
 
     if (cache == NULL) {
@@ -1708,7 +1711,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
 
 cleanup:;
 
-    Py_XDECREF(dtype);
+    Py_XDECREF((PyObject *)dtype);
     return (PyObject *)ret;
 }
 
@@ -1765,7 +1768,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 {
     if (context != NULL) {
         PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
-        Py_XDECREF(descr);
+        Py_XDECREF((PyObject *)descr);
         return NULL;
     }
 
@@ -1774,7 +1777,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     PyArray_ExtractDTypeAndDescriptor(
         descr, &dt_info.descr, &dt_info.dtype);
 
-    Py_XDECREF(descr);
+    Py_XDECREF((PyObject *)descr);
 
     /* See comment in PyArray_FromAny for rationale */
     if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
@@ -1784,8 +1787,8 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     PyObject* ret =  PyArray_CheckFromAny_int(
         op, dt_info.descr, dt_info.dtype, min_depth, max_depth, requirements);
 
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     return ret;
 }
 
@@ -1799,11 +1802,11 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
                          int max_depth, int requirements)
 {
     PyObject *obj;
-    Py_XINCREF(in_descr);  /* take ownership as we may replace it */
+    Py_XINCREF((PyObject *)in_descr);  /* take ownership as we may replace it */
     if (requirements & NPY_ARRAY_NOTSWAPPED) {
         if (!in_descr && PyArray_Check(op)) {
             in_descr = PyArray_DESCR((PyArrayObject *)op);
-            Py_INCREF(in_descr);
+            Py_INCREF((PyObject *)in_descr);
         }
         if (in_descr) {
             PyArray_DESCR_REPLACE_CANONICAL(in_descr);
@@ -1816,7 +1819,7 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
     int was_scalar;
     obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
                               max_depth, requirements, &was_scalar);
-    Py_XDECREF(in_descr);
+    Py_XDECREF((PyObject *)in_descr);
     if (obj == NULL) {
         return NULL;
     }
@@ -1857,11 +1860,11 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
          * If so return it directly instead of checking for casting.
          */
         if (flags == 0) {
-            Py_INCREF(arr);
+            Py_INCREF((PyObject *)arr);
             return (PyObject *)arr;
         }
         newtype = oldtype;
-        Py_INCREF(oldtype);
+        Py_INCREF((PyObject *)oldtype);
     }
     else if (PyDataType_ISUNSIZED(newtype)) {
         /*
@@ -1939,7 +1942,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         if ((flags & NPY_ARRAY_ENSUREARRAY)) {
             subok = 0;
         }
-        Py_INCREF(newtype);
+        Py_INCREF((PyObject *)newtype);
         ret = (PyArrayObject *)PyArray_NewLikeArray(arr, order,
                                                     newtype, subok);
         if (ret == NULL) {
@@ -1967,7 +1970,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
 
         if (flags & NPY_ARRAY_WRITEBACKIFCOPY) {
-            Py_INCREF(arr);
+            Py_INCREF((PyObject *)arr);
             if (PyArray_SetWritebackIfCopyBase(ret, arr) < 0) {
                 Py_DECREF(ret);
                 return NULL;
@@ -1995,7 +1998,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             }
         }
         else {
-            Py_INCREF(arr);
+            Py_INCREF((PyObject *)arr);
             ret = arr;
         }
     }
@@ -2423,7 +2426,7 @@ PyArray_FromInterface(PyObject *origin)
 
  fail:
     Py_XDECREF(attr);
-    Py_XDECREF(dtype);
+    Py_XDECREF((PyObject *)dtype);
     Py_XDECREF(iface);
     return NULL;
 }
@@ -2622,7 +2625,7 @@ PyArray_DescrFromObject(PyObject *op, PyArray_Descr *mintype)
     PyArray_Descr *dtype;
 
     dtype = mintype;
-    Py_XINCREF(dtype);
+    Py_XINCREF((PyObject *)dtype);
 
     if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, &dtype) < 0) {
         return NULL;
@@ -2957,13 +2960,13 @@ PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
         type, &dt_info.descr, &dt_info.dtype);
 
     // steal reference
-    Py_XDECREF(type);
+    Py_XDECREF((PyObject *)type);
 
     PyObject *ret = PyArray_Zeros_int(nd, dims, dt_info.descr, dt_info.dtype,
                                       is_f_order);
 
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
 
     return ret;
 }
@@ -2990,7 +2993,7 @@ PyArray_Zeros_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
      * PyArray_NewFromDescr_int steals a ref to descr,
      * incref so caller of this function can clean up descr
      */
-    Py_INCREF(descr);
+    Py_INCREF((PyObject *)descr);
     ret = PyArray_NewFromDescr_int(
             &PyArray_Type, descr,
             nd, dims, NULL, NULL,
@@ -3016,13 +3019,13 @@ PyArray_Empty(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
         type, &dt_info.descr, &dt_info.dtype);
 
     // steal reference
-    Py_XDECREF(type);
+    Py_XDECREF((PyObject *)type);
 
     PyObject *ret = PyArray_Empty_int(
         nd, dims, dt_info.descr, dt_info.dtype, is_f_order);
 
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     return ret;
 }
 
@@ -3048,7 +3051,7 @@ PyArray_Empty_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
      * PyArray_NewFromDescr steals a ref to descr,
      * incref so caller of this function can clean up descr
      */
-    Py_INCREF(descr);
+    Py_INCREF((PyObject *)descr);
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                                 descr, nd, dims,
                                                 NULL, NULL,
@@ -3320,7 +3323,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     Py_XINCREF(start);
     Py_XINCREF(stop);
     Py_XINCREF(step);
-    Py_XINCREF(dtype);
+    Py_XINCREF((PyObject *)dtype);
 
     if (!dtype) {
         /* intentionally made to be at least NPY_LONG */
@@ -3355,7 +3358,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         swap = 1;
     }
     else {
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         native = dtype;
         swap = 0;
     }
@@ -3365,7 +3368,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         /* This effectively forbids subarray types as well... */
         PyErr_Format(PyExc_TypeError,
                 "arange() not supported for inputs with DType %S.",
-                Py_TYPE(dtype));
+                Py_TYPE((PyObject *)dtype));
         goto fail;
     }
 
@@ -3397,7 +3400,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         length = 0;
     }
 
-    Py_INCREF(native);
+    Py_INCREF((PyObject *)native);
     range = (PyArrayObject *)PyArray_SimpleNewFromDescr(1, &length, native);
     if (range == NULL) {
         goto fail;
@@ -3441,7 +3444,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         Py_DECREF(new);
         /* Replace dtype after swapping in-place above: */
         Py_DECREF(PyArray_DESCR(range));
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         ((PyArrayObject_fields *)range)->descr = dtype;
     }
     Py_DECREF(dtype);
@@ -3453,13 +3456,13 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     return (PyObject *)range;
 
  fail:
-    Py_XDECREF(dtype);
-    Py_XDECREF(native);
+    Py_XDECREF((PyObject *)dtype);
+    Py_XDECREF((PyObject *)native);
     Py_XDECREF(start);
     Py_XDECREF(stop);
     Py_XDECREF(step);
     Py_XDECREF(next);
-    Py_XDECREF(range);
+    Py_XDECREF((PyObject *)range);
     return NULL;
 }
 
@@ -3502,7 +3505,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
      */
     elsize = dtype->elsize;
 
-    Py_INCREF(dtype);  /* do not steal the original dtype. */
+    Py_INCREF((PyObject *)dtype);  /* do not steal the original dtype. */
     r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &num,
                                               NULL, NULL, 0, NULL);
     if (r == NULL) {
@@ -3541,7 +3544,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
      * Array creation may move sub-array dimensions from the dtype to array
      * dimensions, so we need to use the original dtype when reading.
      */
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
 
     r = (PyArrayObject *)
         PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
@@ -3994,7 +3997,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     elsize = dtype->elsize;
 
 
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1,
                                                 &elcount, NULL,NULL, 0, NULL);
     if (ret == NULL) {
@@ -4067,9 +4070,9 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
 
   done:
     Py_XDECREF(iter);
-    Py_XDECREF(dtype);
+    Py_XDECREF((PyObject *)dtype);
     if (PyErr_Occurred()) {
-        Py_XDECREF(ret);
+        Py_XDECREF((PyObject *)ret);
         return NULL;
     }
     return (PyObject *)ret;

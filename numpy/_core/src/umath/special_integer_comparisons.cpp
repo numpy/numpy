@@ -353,7 +353,7 @@ patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
     }
     PyArrayMethodObject *method =
             (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
-    assert(PyObject_TypeCheck(method, &PyArrayMethod_Type));
+    assert(PyObject_TypeCheck((PyObject *)method, &PyArrayMethod_Type));
 
     /* Concrete (Int, Int, Bool) loop: selector matches on type_num. */
     PyArray_Descr *descrs[3] = {
@@ -396,7 +396,7 @@ add_dtype_loops(PyObject *umath, PyArrayMethod_Spec *spec, PyObject *info)
     if (ufunc == nullptr) {
         return -1;
     }
-    if (Py_TYPE(ufunc) != &PyUFunc_Type) {
+    if (Py_TYPE((PyObject *)ufunc) != &PyUFunc_Type) {
         PyErr_SetString(PyExc_RuntimeError,
                 "internal NumPy error: comparison not a ufunc");
         goto fail;

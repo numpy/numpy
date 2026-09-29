@@ -50,7 +50,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta *
 PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
 {
     if (dtype1 == dtype2) {
-        Py_INCREF(dtype1);
+        Py_INCREF((PyObject *)dtype1);
         return dtype1;
     }
 
@@ -123,7 +123,7 @@ reduce_dtypes_to_most_knowledgeable(
         npy_intp high = length - 1 - low;
         if (dtypes[high] == dtypes[low]) {
             /* Fast path for identical dtypes: do not call common_dtype */
-            Py_INCREF(dtypes[low]);
+            Py_INCREF((PyObject *)dtypes[low]);
             Py_XSETREF(res, dtypes[low]);
         }
         else {
@@ -207,7 +207,7 @@ PyArray_PromoteDTypeSequence(
         npy_intp length, PyArray_DTypeMeta **dtypes_in)
 {
     if (length == 1) {
-        Py_INCREF(dtypes_in[0]);
+        Py_INCREF((PyObject *)dtypes_in[0]);
         return dtypes_in[0];
     }
     PyArray_DTypeMeta *result = NULL;
@@ -275,7 +275,7 @@ PyArray_PromoteDTypeSequence(
                 goto finish;
             }
             for (npy_intp l=0; l < length; l++) {
-                Py_INCREF(dtypes_in[l]);
+                Py_INCREF((PyObject *)dtypes_in[l]);
                 PyTuple_SET_ITEM(dtypes_in_tuple, l, (PyObject *)dtypes_in[l]);
             }
             PyErr_Format(_npy_module_state->static_pydata.DTypePromotionError,

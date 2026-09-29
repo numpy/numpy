@@ -316,9 +316,9 @@ get_single_op_view(PyArrayObject *op, char *labels,
     }
     /* If we processed all the input axes, return a view */
     if (idim == ndim) {
-        Py_INCREF(PyArray_DESCR(op));
+        Py_INCREF((PyObject *)PyArray_DESCR(op));
         *ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-                Py_TYPE(op), PyArray_DESCR(op),
+                Py_TYPE((PyObject *)op), PyArray_DESCR(op),
                 ndim_output, new_dims, new_strides, PyArray_DATA(op),
                 PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
                 (PyObject *)op, (PyObject *)op, (_NPY_CREATION_FLAGS)0);
@@ -372,7 +372,7 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
 
     /* A fast path to avoid unnecessary calculations. */
     if (!_any_labels_are_negative((signed char *)labels, ndim)) {
-        Py_INCREF(op);
+        Py_INCREF((PyObject *)op);
 
         return op;
     }
@@ -429,9 +429,9 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
     ndim = icombine;
 
     /* Create a view of the operand with the compressed dimensions. */
-    Py_INCREF(PyArray_DESCR(op));
+    Py_INCREF((PyObject *)PyArray_DESCR(op));
     ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
-            Py_TYPE(op), PyArray_DESCR(op),
+            Py_TYPE((PyObject *)op), PyArray_DESCR(op),
             ndim, new_dims, new_strides, PyArray_DATA(op),
             PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
             (PyObject *)op, (PyObject *)op);
@@ -1160,7 +1160,7 @@ finish:
     if (out != NULL) {
         ret = out;
     }
-    Py_INCREF(ret);
+    Py_INCREF((PyObject *)ret);
 
     NpyIter_Deallocate(iter);
     for (iop = 0; iop < nop; ++iop) {
@@ -1172,7 +1172,7 @@ finish:
 fail:
     NpyIter_Deallocate(iter);
     for (iop = 0; iop < nop; ++iop) {
-        Py_XDECREF(op[iop]);
+        Py_XDECREF((PyObject *)op[iop]);
     }
 
     return NULL;

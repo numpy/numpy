@@ -35,7 +35,7 @@ complex_to_real_resolve_descriptors(
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
     Py_INCREF(dtypes[1]->singleton);
     loop_descrs[1] = dtypes[1]->singleton;

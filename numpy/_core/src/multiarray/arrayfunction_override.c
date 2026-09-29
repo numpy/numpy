@@ -528,7 +528,7 @@ static int
 dispatcher_traverse(
         PyArray_ArrayFunctionDispatcherObject *self, visitproc visit, void *arg)
 {
-    Py_VISIT(Py_TYPE(self));
+    Py_VISIT(Py_TYPE((PyObject *)self));
     Py_VISIT(self->relevant_arg_func);
     Py_VISIT(self->default_impl);
     Py_VISIT(self->reduction);
@@ -556,7 +556,7 @@ dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
     PyObject_GC_UnTrack(self);
     dispatcher_clear(self);
 
-    PyTypeObject *type = Py_TYPE(self);
+    PyTypeObject *type = Py_TYPE((PyObject *)self);
     type->tp_free((PyObject *)self);
     Py_DECREF(type);
 }

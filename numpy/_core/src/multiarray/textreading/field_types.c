@@ -17,7 +17,7 @@ field_types_xclear(int num_field_types, field_type *ft) {
         return;
     }
     for (int i = 0; i < num_field_types; i++) {
-        Py_XDECREF(ft[i].descr);
+        Py_XDECREF((PyObject *)ft[i].descr);
         ft[i].descr = NULL;
     }
     PyMem_Free(ft);
@@ -164,7 +164,7 @@ field_type_grow_recursive(PyArray_Descr *descr,
         *ft = new_ft;
     }
 
-    Py_INCREF(descr);
+    Py_INCREF((PyObject *)descr);
     (*ft)[num_field_types].descr = descr;
     (*ft)[num_field_types].set_from_ucs4 = get_from_ucs4_function(descr);
     (*ft)[num_field_types].structured_offset = field_offset;

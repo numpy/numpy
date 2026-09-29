@@ -60,7 +60,7 @@ object_ufunc_type_resolver(PyUFuncObject *ufunc,
     }
 
     for (i = 1; i < nop; ++i) {
-        Py_INCREF(out_dtypes[0]);
+        Py_INCREF((PyObject *)out_dtypes[0]);
         out_dtypes[i] = out_dtypes[0];
     }
 

@@ -173,7 +173,7 @@ PyArray_DTypeFromTypeNum(int typenum)
 {
     PyArray_Descr *descr = PyArray_DescrFromType(typenum);
     PyArray_DTypeMeta *dtype = NPY_DTYPE(descr);
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     Py_DECREF(descr);
     return dtype;
 }

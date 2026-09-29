@@ -493,7 +493,7 @@ business_day_offset(PyArrayObject *dates, PyArrayObject *offsets,
         goto fail;
     }
     dtypes[2] = dtypes[0];
-    Py_INCREF(dtypes[2]);
+    Py_INCREF((PyObject *)dtypes[2]);
 
     /* Set up the iterator parameters */
     flags = NPY_ITER_EXTERNAL_LOOP|
@@ -555,21 +555,21 @@ business_day_offset(PyArrayObject *dates, PyArrayObject *offsets,
 
     /* Get the return object from the iterator */
     ret = NpyIter_GetOperandArray(iter)[2];
-    Py_INCREF(ret);
+    Py_INCREF((PyObject *)ret);
 
     goto finish;
 
 fail:
-    Py_XDECREF(ret);
+    Py_XDECREF((PyObject *)ret);
     ret = NULL;
 
 finish:
-    Py_XDECREF(dtypes[0]);
-    Py_XDECREF(dtypes[1]);
-    Py_XDECREF(dtypes[2]);
+    Py_XDECREF((PyObject *)dtypes[0]);
+    Py_XDECREF((PyObject *)dtypes[1]);
+    Py_XDECREF((PyObject *)dtypes[2]);
     if (iter != NULL) {
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
-            Py_XDECREF(ret);
+            Py_XDECREF((PyObject *)ret);
             ret = NULL;
         }
     }
@@ -625,7 +625,7 @@ business_day_count(PyArrayObject *dates_begin, PyArrayObject *dates_end,
         goto fail;
     }
     dtypes[1] = dtypes[0];
-    Py_INCREF(dtypes[1]);
+    Py_INCREF((PyObject *)dtypes[1]);
     dtypes[2] = PyArray_DescrFromType(NPY_INT64);
     if (dtypes[2] == NULL) {
         goto fail;
@@ -690,21 +690,21 @@ business_day_count(PyArrayObject *dates_begin, PyArrayObject *dates_end,
 
     /* Get the return object from the iterator */
     ret = NpyIter_GetOperandArray(iter)[2];
-    Py_INCREF(ret);
+    Py_INCREF((PyObject *)ret);
 
     goto finish;
 
 fail:
-    Py_XDECREF(ret);
+    Py_XDECREF((PyObject *)ret);
     ret = NULL;
 
 finish:
-    Py_XDECREF(dtypes[0]);
-    Py_XDECREF(dtypes[1]);
-    Py_XDECREF(dtypes[2]);
+    Py_XDECREF((PyObject *)dtypes[0]);
+    Py_XDECREF((PyObject *)dtypes[1]);
+    Py_XDECREF((PyObject *)dtypes[2]);
     if (iter != NULL) {
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
-            Py_XDECREF(ret);
+            Py_XDECREF((PyObject *)ret);
             ret = NULL;
         }
     }
@@ -816,20 +816,20 @@ is_business_day(PyArrayObject *dates, PyArrayObject *out,
 
     /* Get the return object from the iterator */
     ret = NpyIter_GetOperandArray(iter)[1];
-    Py_INCREF(ret);
+    Py_INCREF((PyObject *)ret);
 
     goto finish;
 
 fail:
-    Py_XDECREF(ret);
+    Py_XDECREF((PyObject *)ret);
     ret = NULL;
 
 finish:
-    Py_XDECREF(dtypes[0]);
-    Py_XDECREF(dtypes[1]);
+    Py_XDECREF((PyObject *)dtypes[0]);
+    Py_XDECREF((PyObject *)dtypes[1]);
     if (iter != NULL) {
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
-            Py_XDECREF(ret);
+            Py_XDECREF((PyObject *)ret);
             ret = NULL;
         }
     }
@@ -1005,7 +1005,7 @@ array_busday_offset(PyObject *self,
     /* Make 'dates' into an array */
     if (PyArray_Check(dates_in)) {
         dates = (PyArrayObject *)dates_in;
-        Py_INCREF(dates);
+        Py_INCREF((PyObject *)dates);
     }
     else {
         PyArray_Descr *datetime_dtype;
@@ -1055,8 +1055,8 @@ array_busday_offset(PyObject *self,
     return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
 
 fail:
-    Py_XDECREF(dates);
-    Py_XDECREF(offsets);
+    Py_XDECREF((PyObject *)dates);
+    Py_XDECREF((PyObject *)offsets);
     if (allocated_holidays && holidays.begin != NULL) {
         PyMem_RawFree(holidays.begin);
     }
@@ -1135,7 +1135,7 @@ array_busday_count(PyObject *self,
     /* Make 'dates_begin' into an array */
     if (PyArray_Check(dates_begin_in)) {
         dates_begin = (PyArrayObject *)dates_begin_in;
-        Py_INCREF(dates_begin);
+        Py_INCREF((PyObject *)dates_begin);
     }
     else {
         PyArray_Descr *datetime_dtype;
@@ -1158,7 +1158,7 @@ array_busday_count(PyObject *self,
     /* Make 'dates_end' into an array */
     if (PyArray_Check(dates_end_in)) {
         dates_end = (PyArrayObject *)dates_end_in;
-        Py_INCREF(dates_end);
+        Py_INCREF((PyObject *)dates_end);
     }
     else {
         PyArray_Descr *datetime_dtype;
@@ -1201,8 +1201,8 @@ array_busday_count(PyObject *self,
     return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
 
 fail:
-    Py_XDECREF(dates_begin);
-    Py_XDECREF(dates_end);
+    Py_XDECREF((PyObject *)dates_begin);
+    Py_XDECREF((PyObject *)dates_end);
     if (allocated_holidays && holidays.begin != NULL) {
         PyMem_RawFree(holidays.begin);
     }
@@ -1280,7 +1280,7 @@ array_is_busday(PyObject *self,
     /* Make 'dates' into an array */
     if (PyArray_Check(dates_in)) {
         dates = (PyArrayObject *)dates_in;
-        Py_INCREF(dates);
+        Py_INCREF((PyObject *)dates);
     }
     else {
         PyArray_Descr *datetime_dtype;
@@ -1321,7 +1321,7 @@ array_is_busday(PyObject *self,
     return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
 
 fail:
-    Py_XDECREF(dates);
+    Py_XDECREF((PyObject *)dates);
     if (allocated_holidays && holidays.begin != NULL) {
         PyMem_RawFree(holidays.begin);
     }

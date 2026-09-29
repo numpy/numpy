@@ -278,8 +278,8 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     }
     if (!out) {
         dtype = PyArray_DESCR(self);
-        Py_INCREF(dtype);
-        obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+        Py_INCREF((PyObject *)dtype);
+        obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE((PyObject *)self),
                                                     dtype,
                                                     nd, shape,
                                                     NULL, NULL, 0,
@@ -326,7 +326,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             }
             flags |= NPY_ARRAY_FORCECAST;
         }
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
         if (obj == NULL) {
             goto fail;
@@ -363,18 +363,18 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             goto fail;
         }
         Py_DECREF(obj);
-        Py_INCREF(out);
+        Py_INCREF((PyObject *)out);
         obj = out;
     }
-    Py_XDECREF(indices);
-    Py_XDECREF(self);
+    Py_XDECREF((PyObject *)indices);
+    Py_XDECREF((PyObject *)self);
     return (PyObject *)obj;
 
  fail:
     PyArray_DiscardWritebackIfCopy(obj);
-    Py_XDECREF(obj);
-    Py_XDECREF(indices);
-    Py_XDECREF(self);
+    Py_XDECREF((PyObject *)obj);
+    Py_XDECREF((PyObject *)indices);
+    Py_XDECREF((PyObject *)self);
     return NULL;
 }
 
@@ -399,7 +399,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
 
     indices = NULL;
     values = NULL;
-    if (!PyArray_Check(self)) {
+    if (!PyArray_Check((PyObject *)self)) {
         PyErr_SetString(PyExc_TypeError,
                         "put: first argument must be an array");
         return NULL;
@@ -423,7 +423,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
                         "cannot replace elements of an empty array");
         goto fail;
     }
-    Py_INCREF(PyArray_DESCR(self));
+    Py_INCREF((PyObject *)PyArray_DESCR(self));
     values = (PyArrayObject *)PyArray_FromAny(values0, PyArray_DESCR(self), 0, 0,
                               NPY_ARRAY_DEFAULT | NPY_ARRAY_FORCECAST, NULL);
     if (values == NULL) {
@@ -440,7 +440,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY |
                     NPY_ARRAY_ENSURECOPY;
 
-        Py_INCREF(PyArray_DESCR(self));
+        Py_INCREF((PyObject *)PyArray_DESCR(self));
         obj = (PyArrayObject *)PyArray_FromArray(self,
                                                  PyArray_DESCR(self), flags);
         if (obj == NULL) {
@@ -588,8 +588,8 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
  finish:
     NPY_cast_info_xfree(&cast_info);
 
-    Py_XDECREF(values);
-    Py_XDECREF(indices);
+    Py_XDECREF((PyObject *)values);
+    Py_XDECREF((PyObject *)indices);
     if (copied) {
         PyArray_ResolveWritebackIfCopy(self);
         Py_DECREF(self);
@@ -599,11 +599,11 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
  fail:
     NPY_cast_info_xfree(&cast_info);
 
-    Py_XDECREF(indices);
-    Py_XDECREF(values);
+    Py_XDECREF((PyObject *)indices);
+    Py_XDECREF((PyObject *)values);
     if (copied) {
         PyArray_DiscardWritebackIfCopy(self);
-        Py_XDECREF(self);
+        Py_XDECREF((PyObject *)self);
     }
     return NULL;
 }
@@ -689,7 +689,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 
     mask = NULL;
     values = NULL;
-    if (!PyArray_Check(self)) {
+    if (!PyArray_Check((PyObject *)self)) {
         PyErr_SetString(PyExc_TypeError,
                         "putmask: first argument must "
                         "be an array");
@@ -714,7 +714,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     }
     mask_data = PyArray_DATA(mask);
     dtype = PyArray_DESCR(self);
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     values = (PyArrayObject *)PyArray_FromAny(values0, dtype,
                                     0, 0, NPY_ARRAY_CARRAY, NULL);
     if (values == NULL) {
@@ -722,8 +722,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     }
     nv = PyArray_SIZE(values); /* zero if null array */
     if (nv <= 0) {
-        Py_XDECREF(values);
-        Py_XDECREF(mask);
+        Py_XDECREF((PyObject *)values);
+        Py_XDECREF((PyObject *)mask);
         Py_RETURN_NONE;
     }
     src = PyArray_DATA(values);
@@ -738,7 +738,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         }
 
         dtype = PyArray_DESCR(self);
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         obj = (PyArrayObject *)PyArray_FromArray(self, dtype, flags);
         if (obj == NULL) {
             goto fail;
@@ -794,8 +794,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         NPY_END_THREADS;
     }
 
-    Py_XDECREF(values);
-    Py_XDECREF(mask);
+    Py_XDECREF((PyObject *)values);
+    Py_XDECREF((PyObject *)mask);
     if (copied) {
         PyArray_ResolveWritebackIfCopy(self);
         Py_DECREF(self);
@@ -803,11 +803,11 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     Py_RETURN_NONE;
 
  fail:
-    Py_XDECREF(mask);
-    Py_XDECREF(values);
+    Py_XDECREF((PyObject *)mask);
+    Py_XDECREF((PyObject *)values);
     if (copied) {
         PyArray_DiscardWritebackIfCopy(self);
-        Py_XDECREF(self);
+        Py_XDECREF((PyObject *)self);
     }
     return NULL;
 }
@@ -968,8 +968,8 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     dims[axis] = total;
 
     /* Construct new array */
-    Py_INCREF(PyArray_DESCR(aop));
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(aop),
+    Py_INCREF((PyObject *)PyArray_DESCR(aop));
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE((PyObject *)aop),
                                                 PyArray_DESCR(aop),
                                                 PyArray_NDIM(aop),
                                                 dims,
@@ -1009,14 +1009,14 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     }
 
     Py_DECREF(repeats);
-    Py_XDECREF(aop);
+    Py_XDECREF((PyObject *)aop);
     NPY_cast_info_xfree(&cast_info);
     return (PyObject *)ret;
 
  fail:
     Py_DECREF(repeats);
-    Py_XDECREF(aop);
-    Py_XDECREF(ret);
+    Py_XDECREF((PyObject *)aop);
+    Py_XDECREF((PyObject *)ret);
     NPY_cast_info_xfree(&cast_info);
     return NULL;
 }
@@ -1074,8 +1074,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     int copy_existing_out = 0;
     /* Set-up return array */
     if (out == NULL) {
-        Py_INCREF(dtype);
-        obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(ap),
+        Py_INCREF((PyObject *)dtype);
+        obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE((PyObject *)ap),
                                                     dtype,
                                                     multi->nd,
                                                     multi->dimensions,
@@ -1116,7 +1116,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         }
 
         if (copy_existing_out) {
-            Py_INCREF(dtype);
+            Py_INCREF((PyObject *)dtype);
             obj = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                                         dtype,
                                                         multi->nd,
@@ -1125,7 +1125,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                                                         (PyObject *)out);
         }
         else {
-            obj = (PyArrayObject *)Py_NewRef(out);
+            obj = (PyArrayObject *)Py_NewRef((PyObject *)out);
         }
     }
 
@@ -1216,7 +1216,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     Py_DECREF(multi);
     for (i = 0; i < n; i++) {
-        Py_XDECREF(mps[i]);
+        Py_XDECREF((PyObject *)mps[i]);
     }
     Py_DECREF(ap);
     PyDataMem_FREE(mps);
@@ -1226,7 +1226,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         if (res < 0) {
             return NULL;
         }
-        return Py_NewRef(out);
+        return Py_NewRef((PyObject *)out);
     }
     return (PyObject *)obj;
 
@@ -1237,14 +1237,14 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
             NPY_cast_info_xfree(&cast_infos[i]);
         }
     }
-    Py_XDECREF(multi);
+    Py_XDECREF((PyObject *)multi);
     for (i = 0; i < n; i++) {
-        Py_XDECREF(mps[i]);
+        Py_XDECREF((PyObject *)mps[i]);
     }
-    Py_XDECREF(ap);
+    Py_XDECREF((PyObject *)ap);
     PyDataMem_FREE(mps);
     PyArray_DiscardWritebackIfCopy(obj);
-    Py_XDECREF(obj);
+    Py_XDECREF((PyObject *)obj);
     return NULL;
 }
 
@@ -1311,7 +1311,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     if (strided_loop != NULL) {
         // Descriptors have already been resolved
         odescr = context->descriptors[0];
-        Py_INCREF(odescr);
+        Py_INCREF((PyObject *)odescr);
     }
     else {
         if (swap) {
@@ -1319,7 +1319,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         }
         else {
             odescr = descr;
-            Py_INCREF(odescr);
+            Py_INCREF((PyObject *)odescr);
         }
     }
 
@@ -1444,7 +1444,7 @@ fail:
     if (PyErr_Occurred() && ret == 0) {
         ret = -1;
     }
-    Py_XDECREF(odescr);
+    Py_XDECREF((PyObject *)odescr);
     Py_DECREF(it);
     Py_DECREF(mem_handler);
     NPY_cast_info_xfree(&to_cast_info);
@@ -1492,7 +1492,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         return NULL;
     }
     rop = (PyArrayObject *)PyArray_NewFromDescr(
-            Py_TYPE(op), PyArray_DescrFromType(NPY_INTP),
+            Py_TYPE((PyObject *)op), PyArray_DescrFromType(NPY_INTP),
             PyArray_NDIM(op), PyArray_DIMS(op), NULL, NULL,
             0, (PyObject *)op);
     if (rop == NULL) {
@@ -1527,7 +1527,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     if (strided_loop != NULL) {
         // Descriptors have already been resolved
         odescr = context->descriptors[0];
-        Py_INCREF(odescr);
+        Py_INCREF((PyObject *)odescr);
     }
     else {
         if (swap) {
@@ -1535,7 +1535,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         }
         else {
             odescr = descr;
-            Py_INCREF(odescr);
+            Py_INCREF((PyObject *)odescr);
         }
     }
 
@@ -1659,12 +1659,12 @@ fail:
             /* Out of memory during sorting or buffer creation */
             PyErr_NoMemory();
         }
-        Py_XDECREF(rop);
+        Py_XDECREF((PyObject *)rop);
         rop = NULL;
     }
-    Py_XDECREF(odescr);
-    Py_XDECREF(it);
-    Py_XDECREF(rit);
+    Py_XDECREF((PyObject *)odescr);
+    Py_XDECREF((PyObject *)it);
+    Py_XDECREF((PyObject *)rit);
     Py_DECREF(mem_handler);
     NPY_cast_info_xfree(&cast_info);
 
@@ -1715,7 +1715,7 @@ partition_prep_kth_array(PyArrayObject * ktharray,
                     (kth[i] < 0 || kth[i] >= shape[axis])) {
             PyErr_Format(PyExc_ValueError, "kth(=%zd) out of bounds (%zd)",
                          kth[i], shape[axis]);
-            Py_XDECREF(kthrvl);
+            Py_XDECREF((PyObject *)kthrvl);
             return NULL;
         }
     }
@@ -1910,7 +1910,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
 fail:
     Py_DECREF(kthrvl);
     Py_DECREF(op2);
-    Py_XDECREF(odescr);
+    Py_XDECREF((PyObject *)odescr);
 
     if (context.descriptors != NULL) {
         NPY_AUXDATA_FREE(auxdata);
@@ -2160,10 +2160,10 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 
  finish:
     for (i = 0; i < n; i++) {
-        Py_XDECREF(mps[i]);
-        Py_XDECREF(its[i]);
+        Py_XDECREF((PyObject *)mps[i]);
+        Py_XDECREF((PyObject *)its[i]);
     }
-    Py_XDECREF(rit);
+    Py_XDECREF((PyObject *)rit);
     PyMem_RawFree(mps);
     PyMem_RawFree(its);
     return (PyObject *)ret;
@@ -2174,11 +2174,11 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         /* Out of memory during sorting or buffer creation */
         PyErr_NoMemory();
     }
-    Py_XDECREF(rit);
-    Py_XDECREF(ret);
+    Py_XDECREF((PyObject *)rit);
+    Py_XDECREF((PyObject *)ret);
     for (i = 0; i < n; i++) {
-        Py_XDECREF(mps[i]);
-        Py_XDECREF(its[i]);
+        Py_XDECREF((PyObject *)mps[i]);
+        Py_XDECREF((PyObject *)its[i]);
     }
     PyMem_RawFree(mps);
     PyMem_RawFree(its);
@@ -2271,7 +2271,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
      * The dtype reference we had was used for creating ap2, which may have
      * replaced it with another. So here we copy the dtype of ap2 and use it for `ap1`.
      */
-     dtype = (PyArray_Descr *)Py_NewRef(PyArray_DESCR(ap2));
+     dtype = (PyArray_Descr *)Py_NewRef((PyObject *)PyArray_DESCR(ap2));
 
     /*
      * If the needle (ap2) is larger than the haystack (op1) we copy the
@@ -2389,11 +2389,11 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     return (PyObject *)ret;
 
  fail:
-    Py_XDECREF(ap1);
-    Py_XDECREF(ap2);
-    Py_XDECREF(ap3);
-    Py_XDECREF(sorter);
-    Py_XDECREF(ret);
+    Py_XDECREF((PyObject *)ap1);
+    Py_XDECREF((PyObject *)ap2);
+    Py_XDECREF((PyObject *)ap3);
+    Py_XDECREF((PyObject *)sorter);
+    Py_XDECREF((PyObject *)ret);
     return NULL;
 }
 
@@ -2481,9 +2481,9 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 
     /* Create the diagonal view */
     dtype = PyArray_DTYPE(self);
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     ret = PyArray_NewFromDescrAndBase(
-            Py_TYPE(self), dtype,
+            Py_TYPE((PyObject *)self), dtype,
             ndim-1, ret_shape, ret_strides, data,
             PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self);
     if (ret == NULL) {
@@ -2511,7 +2511,7 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
 
     if (PyArray_Check(condition)) {
         cond = (PyArrayObject *)condition;
-        Py_INCREF(cond);
+        Py_INCREF((PyObject *)cond);
     }
     else {
         PyArray_Descr *dtype = PyArray_DescrFromType(NPY_BOOL);
@@ -3227,7 +3227,7 @@ finish:
         npy_intp data_offset = nonzero_count == 0 ? 0 : i * NPY_SIZEOF_INTP;
 
         PyArrayObject *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
-            Py_TYPE(ret), PyArray_DescrFromType(NPY_INTP),
+            Py_TYPE((PyObject *)ret), PyArray_DescrFromType(NPY_INTP),
             1, &nonzero_count, &stride, PyArray_BYTES(ret) + data_offset,
             PyArray_FLAGS(ret), (PyObject *)ret, (PyObject *)ret);
         if (view == NULL) {

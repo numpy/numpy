@@ -1213,7 +1213,7 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
         NIT_ADVANCE_AXISDATA(axisdata, 1);
     }
 
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             &PyArray_Type, dtype,
             ndim, shape, strides, dataptr,

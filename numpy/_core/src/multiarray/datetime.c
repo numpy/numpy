@@ -3635,7 +3635,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
 
     /* Create the dtype of the result */
     if (dtype != NULL) {
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
     }
     else {
         dtype = create_datetime_dtype(type_nums[0], &meta);
@@ -3985,13 +3985,13 @@ time_to_time_resolve_descriptors(
         npy_intp *view_offset)
 {
     /* This is a within-dtype cast, which currently must handle byteswapping */
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
     if (given_descrs[1] == NULL) {
         loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     }
     else {
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
 
@@ -4173,7 +4173,7 @@ time_to_string_resolve_descriptors(
          * At the time of writing, NumPy does not check the length here,
          * but will error if filling fails.
          */
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
     else {
@@ -4266,7 +4266,7 @@ string_to_datetime_cast_resolve_descriptors(
     }
 
     /* We currently support byte-swapping, so any (unicode) string is OK */
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     return NPY_UNSAFE_CASTING;
@@ -4499,7 +4499,7 @@ PyArray_InitializeDatetimeCasts()
 
     result = 0;
   fail:
-    Py_XDECREF(tmp);
+    Py_XDECREF((PyObject *)tmp);
     return result;
 }
 

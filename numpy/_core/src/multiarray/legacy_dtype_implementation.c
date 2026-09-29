@@ -437,8 +437,8 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                 nbo_from = PyArray_DescrNewByteorder(from, NPY_NATIVE);
                 nbo_to = PyArray_DescrNewByteorder(to, NPY_NATIVE);
                 if (nbo_from == NULL || nbo_to == NULL) {
-                    Py_XDECREF(nbo_from);
-                    Py_XDECREF(nbo_to);
+                    Py_XDECREF((PyObject *)nbo_from);
+                    Py_XDECREF((PyObject *)nbo_to);
                     PyErr_Clear();
                     return 0;
                 }
