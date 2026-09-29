@@ -4326,6 +4326,16 @@ cdef class RandomState:
         --------
         random.Generator.multinomial: which should be used for new code.
 
+        Notes
+        -----
+        .. versionchanged:: 2.5.0
+            The stream of variates for a given seed once again matches
+            NumPy 1.16 and earlier. NumPy 1.17.0 inadvertently changed the
+            internal binomial sampler used by this method; the fix for
+            `binomial` in 1.17.3 did not cover `multinomial`, so seeded
+            outputs from NumPy 1.17.0 through 2.4.x differ from those of
+            both earlier and later versions.
+
         Examples
         --------
         Throw a dice 20 times:
