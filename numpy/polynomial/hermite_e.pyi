@@ -26,7 +26,6 @@ from ._polytypes import (
     _FuncPow,
     _FuncRoots,
     _FuncUnOp,
-    _FuncVal3D,
     _FuncVander2D,
     _FuncVander3D,
     _PolyScalar,
@@ -755,7 +754,147 @@ def hermegrid2d[CoefT: _SupportsCoefOps[Any]](
     c: _SupportsArray[np.dtype[np.object_]] | Sequence[Sequence[_SupportsCoefOps[Any]]],
 ) -> CoefT: ...
 
-hermegrid3d: Final[_FuncVal3D] = ...
+# keep in sync with `polynomial.*grid3d`
+@overload  # ?d +f64, Nd +f64, Nd +f64, 3d +f64  (workaround)
+def hermegrid3d(
+    x: _ArrayJustND[_ToFloat64],
+    y: _ToFloat64_ND,
+    z: _ToFloat64_ND,
+    c: _ToArray3D[_AsFloat64, float],
+) -> npt.NDArray[np.float64]: ...
+@overload  # Nd +f64, ?d +f64, Nd +f64, 3d +f64  (workaround)
+def hermegrid3d(
+    x: _ToFloat64_ND,
+    y: _ArrayJustND[_ToFloat64],
+    z: _ToFloat64_ND,
+    c: _ToArray3D[_AsFloat64, float],
+) -> npt.NDArray[np.float64]: ...
+@overload  # Nd +f64, Nd +f64, ?d +f64, 3d +f64  (workaround)
+def hermegrid3d(
+    x: _ToFloat64_ND,
+    y: _ToFloat64_ND,
+    z: _ArrayJustND[_ToFloat64],
+    c: _ToArray3D[_AsFloat64, float],
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d ?, Nd ?, Nd ?, 3d ?  (workaround)
+def hermegrid3d(
+    x: _ArrayJustND[_PolyScalar],
+    y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    z: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    c: _ToArray3D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> npt.NDArray[Any]: ...
+@overload  # Nd ?, ?d ?, Nd ?, 3d ?  (workaround)
+def hermegrid3d(
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    y: _ArrayJustND[_PolyScalar],
+    z: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    c: _ToArray3D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> npt.NDArray[Any]: ...
+@overload  # Nd ?, Nd ?, ?d ?, 3d ?  (workaround)
+def hermegrid3d(
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    z: _ArrayJustND[_PolyScalar],
+    c: _ToArray3D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> npt.NDArray[Any]: ...
+@overload  # 0d +f64, 0d +f64, 0d +f64, 3d +f64
+def hermegrid3d(
+    x: float | _ToFloat64,
+    y: float | _ToFloat64,
+    z: float | _ToFloat64,
+    c: _ToArray3D[_AsFloat64, float],
+) -> np.float64: ...
+@overload  # 0d +c128, 0d +c128, 0d +c128, 3d ~c128
+def hermegrid3d(
+    x: complex | np.complex64 | _ToFloat64,
+    y: complex | np.complex64 | _ToFloat64,
+    z: complex | np.complex64 | _ToFloat64,
+    c: _Array3D[np.complex128] | Sequence[Sequence[list[complex]]],
+) -> np.complex128: ...
+@overload  # 1d +f64, 1d +f64, 1d +f64, 3d +f64
+def hermegrid3d(
+    x: _ToArray1D[_ToFloat64, float],
+    y: _ToArray1D[_ToFloat64, float],
+    z: _ToArray1D[_ToFloat64, float],
+    c: _ToArray3D[_AsFloat64, float],
+) -> _Array3D[np.float64]: ...
+@overload  # 1d +c128, 1d +c128, 1d +c128, 3d ~c128
+def hermegrid3d(
+    x: _ToArray1D[np.complex128 | np.complex64 | _ToFloat64, complex],
+    y: _ToArray1D[np.complex128 | np.complex64 | _ToFloat64, complex],
+    z: _ToArray1D[np.complex128 | np.complex64 | _ToFloat64, complex],
+    c: _Array3D[np.complex128] | Sequence[Sequence[list[complex]]],
+) -> _Array3D[np.complex128]: ...
+@overload  # 1d ~c128, 1d +c128, 1d +c128, 3d +c128
+def hermegrid3d(
+    x: _Array1D[np.complex128] | list[complex],
+    y: _ToArray1D[np.complex128 | np.complex64 | _ToFloat64, complex],
+    z: _ToArray1D[np.complex128 | np.complex64 | _ToFloat64, complex],
+    c: _ToArray3D[np.complex128 | np.complex64 | _ToFloat64, complex],
+) -> _Array3D[np.complex128]: ...
+@overload  # 1d ~O, 1d ~O, 1d ~O, 3d +O
+def hermegrid3d(
+    x: _Array1D[np.object_],
+    y: _Array1D[np.object_],
+    z: _Array1D[np.object_],
+    c: _ToArray3D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> _Array3D[np.object_]: ...
+@overload  # 1d ?, 1d ?, 1d ?, 3d ?  (fallback)
+def hermegrid3d(
+    x: _ToArray1D[_PolyScalar, _NumberLike_co],
+    y: _ToArray1D[_PolyScalar, _NumberLike_co],
+    z: _ToArray1D[_PolyScalar, _NumberLike_co],
+    c: _ToArray3D[_PolyScalar, _NumberLike_co],
+) -> _Array3D[Any]: ...
+@overload  # ?d +f64, ?d +f64, ?d +f64, 3d +f64
+def hermegrid3d(
+    x: _ToFloat64_ND,
+    y: _ToFloat64_ND,
+    z: _ToFloat64_ND,
+    c: _ToArray3D[_AsFloat64, float],
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d +c128, ?d +c128, ?d +c128, 3d ~c128
+def hermegrid3d(
+    x: _ToComplex128_ND,
+    y: _ToComplex128_ND,
+    z: _ToComplex128_ND,
+    c: _Array3D[np.complex128] | Sequence[Sequence[list[complex]]],
+) -> npt.NDArray[np.complex128]: ...
+@overload  # ?d ~c128, ?d +c128, ?d +c128, 3d +c128
+def hermegrid3d(
+    x: np.ndarray[Any, np.dtype[np.complex128]] | _NestedSequence[list[complex]] | list[complex],
+    y: _ToComplex128_ND,
+    z: _ToComplex128_ND,
+    c: _ToArray3D[np.complex128 | np.complex64 | _ToFloat64, complex],
+) -> npt.NDArray[np.complex128]: ...
+@overload  # ?d ~O, ?d ~O, ?d ~O, 3d +O
+def hermegrid3d(
+    x: _ArrayLikeObject_co,
+    y: _ArrayLikeObject_co,
+    z: _ArrayLikeObject_co,
+    c: _ToArray3D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> npt.NDArray[np.object_]: ...
+@overload  # 1d ~O, 1d ~O, 1d ~O, ?d ~O
+def hermegrid3d(
+    x: Sequence[_SupportsCoefOps[Any]],
+    y: Sequence[_SupportsCoefOps[Any]],
+    z: Sequence[_SupportsCoefOps[Any]],
+    c: _SupportsArray[np.dtype[np.object_]] | Sequence[Sequence[Sequence[_SupportsCoefOps[Any]]]],
+) -> _Array3D[np.object_]: ...
+@overload  # ?d ?, ?d ?, ?d ?, ?d ?  (fallback)
+def hermegrid3d(
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    z: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+) -> npt.NDArray[Any] | Any: ...
+@overload  # 0d T, 0d T, 0d T, ?d ~O
+def hermegrid3d[CoefT: _SupportsCoefOps[Any]](
+    x: CoefT,
+    y: CoefT,
+    z: CoefT,
+    c: _SupportsArray[np.dtype[np.object_]] | Sequence[Sequence[Sequence[_SupportsCoefOps[Any]]]],
+) -> CoefT: ...
 
 # keep in sync with `polynomial.*vander`
 @overload  # ?d T  (workaround)
