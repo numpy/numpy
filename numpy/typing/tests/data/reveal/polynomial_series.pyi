@@ -31,6 +31,7 @@ AR_i1_1d: _Array1D[np.int8]
 AR_i2_1d: _Array1D[np.int16]
 AR_f4_1d: _Array1D[np.float32]
 AR_i8_2d: _Array2D[np.int64]
+AR_f4_2d: _Array2D[np.float32]
 AR_f8_2d: _Array2D[np.float64]
 AR_f10_2d: _Array2D[np.longdouble]
 AR_c16_2d: _Array2D[np.complex128]
@@ -42,6 +43,7 @@ _py_f_2d: list[list[float]]
 _py_c_1d: list[complex]
 _py_c_2d: list[list[complex]]
 _py_decimal_1d: list[Decimal]
+_py_decimal_2d: list[list[Decimal]]
 _py_f64_2d: list[_Array1D[np.float64]]
 
 PS_poly: npp.Polynomial
@@ -178,12 +180,20 @@ assert_type(npp.hermite_e.hermeval(_py_decimal_1d, _py_decimal_1d), _Array1D[np.
 assert_type(npp.hermite_e.hermeval(PS_herme, _py_f_1d), npp.HermiteE)
 assert_type(npp.hermite_e.hermeval(Decimal(), _py_decimal_1d), Decimal)
 
-assert_type(npp.polynomial.polyval2d(AR_b, AR_b, AR_b), npt.NDArray[np.floating])
-assert_type(npp.polynomial.polyval2d(AR_u4, AR_u4, AR_b), npt.NDArray[np.floating])
-assert_type(npp.polynomial.polyval2d(AR_i8, AR_i8, AR_i8), npt.NDArray[np.floating])
-assert_type(npp.polynomial.polyval2d(AR_f8, AR_f8, AR_i8), npt.NDArray[np.floating])
-assert_type(npp.polynomial.polyval2d(AR_i8, AR_i8, AR_c16), npt.NDArray[np.complexfloating])
-assert_type(npp.polynomial.polyval2d(AR_O, AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(npp.polynomial.polyval2d(AR_f8_2d, AR_f8_2d, _py_f_2d), _Array2D[np.float64])
+assert_type(npp.polynomial.polyval2d(AR_f8_2d, AR_f8_2d, _py_c_2d), _Array2D[np.complex128])
+assert_type(npp.polynomial.polyval2d(AR_c16_2d, AR_f8_2d, _py_f_2d), _Array2D[np.complex128])
+assert_type(npp.polynomial.polyval2d(AR_O_2d, AR_O_2d, _py_f_2d), _Array2D[np.object_])
+assert_type(npp.polynomial.polyval2d(AR_f10_2d, AR_f10_2d, _py_f_2d), _Array2D[Any])
+assert_type(npp.polynomial.polyval2d(1.0, 1.0, _py_f_2d), np.float64)
+assert_type(npp.polynomial.polyval2d(1j, 1j, _py_c_2d), np.complex128)
+assert_type(npp.polynomial.polyval2d(_py_f_1d, _py_f_1d, _py_f_2d), _Array1D[np.float64])
+assert_type(npp.polynomial.polyval2d(_py_c_1d, _py_f_1d, _py_f_2d), _Array1D[np.complex128])
+assert_type(npp.polynomial.polyval2d([1.0, 2.0], [1.0, 2.0], AR_f4_2d), _Array1D[Any])
+assert_type(npp.polynomial.polyval2d(AR_f8_2d, AR_f8_2d, _py_f64_2d), npt.NDArray[Any] | Any)
+assert_type(npp.polynomial.polyval2d(_py_decimal_1d, _py_decimal_1d, _py_decimal_2d), _Array1D[np.object_])
+assert_type(npp.polynomial.polyval2d(PS_poly, PS_poly, _py_f_2d), npp.Polynomial)
+assert_type(npp.polynomial.polyval2d(Decimal(), Decimal(), _py_decimal_2d), Decimal)
 
 assert_type(npp.polynomial.polyval3d(AR_b, AR_b, AR_b, AR_b), npt.NDArray[np.floating])
 assert_type(npp.polynomial.polyval3d(AR_u4, AR_u4, AR_u4, AR_b), npt.NDArray[np.floating])
