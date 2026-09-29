@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, ClassVar, Final, Literal as L, SupportsIndex, overload
+from typing import Any, ClassVar, Final, Literal as L, Never, SupportsIndex, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -16,6 +16,7 @@ from ._polybase import ABCPolyBase
 from ._polytypes import (
     _Array1,
     _Array2,
+    _CanArray,
     _FuncBinOp,
     _FuncCompanion,
     _FuncDer,
@@ -30,7 +31,6 @@ from ._polytypes import (
     _FuncVal2D,
     _FuncVal3D,
     _FuncValND,
-    _FuncVander,
     _FuncVander2D,
     _FuncVander3D,
     _FuncWeight,
@@ -78,6 +78,11 @@ __all__ = [
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
+
+# workaround for mypy and pyright not following the typing spec for overloads
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
+
 type _ToArray1D[ScalarT: np.generic, T] = _Array1D[ScalarT] | Sequence[T]
 
 type _AsFloat64 = np.float64 | np.integer | np.bool
@@ -198,7 +203,69 @@ def hermval[CoefT: _SupportsCoefOps[Any]](
 
 hermgrid2d: Final[_FuncVal2D] = ...
 hermgrid3d: Final[_FuncVal3D] = ...
-hermvander: Final[_FuncVander] = ...
+
+# keep in sync with `polynomial.*vander`
+@overload  # ?d T  (workaround)
+def hermvander[ScalarT: np.inexact](
+    x: _ArrayJustND[ScalarT],
+    deg: SupportsIndex,
+) -> npt.NDArray[ScalarT]: ...
+@overload  # ?d +f64  (workaround)
+def hermvander(
+    x: _ArrayJustND[np.integer | np.bool],
+    deg: SupportsIndex,
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d ~O  (workaround)
+def hermvander(
+    x: _ArrayJustND[np.object_],
+    deg: SupportsIndex,
+) -> npt.NDArray[np.object_]: ...
+@overload  # <=1d T
+def hermvander[ScalarT: np.inexact](
+    x: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    deg: SupportsIndex,
+) -> _Array2D[ScalarT]: ...
+@overload  # <=1d +f64
+def hermvander(
+    x: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.integer | np.bool]]] | Sequence[float] | float,
+    deg: SupportsIndex,
+) -> _Array2D[np.float64]: ...
+@overload  # <=1d ~c128
+def hermvander(
+    x: list[complex],
+    deg: SupportsIndex,
+) -> _Array2D[np.complex128]: ...
+@overload  # <=1d ~O
+def hermvander(
+    x: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    deg: SupportsIndex,
+) -> _Array2D[np.object_]: ...
+@overload  # 2d T
+def hermvander[ScalarT: np.inexact](
+    x: _Array2D[ScalarT],
+    deg: SupportsIndex,
+) -> _Array3D[ScalarT]: ...
+@overload  # 2d +f64
+def hermvander(
+    x: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    deg: SupportsIndex,
+) -> _Array3D[np.float64]: ...
+@overload  # 2d ~c128
+def hermvander(
+    x: Sequence[list[complex]],
+    deg: SupportsIndex,
+) -> _Array3D[np.complex128]: ...
+@overload  # 2d ~O
+def hermvander(
+    x: _Array2D[np.object_],
+    deg: SupportsIndex,
+) -> _Array3D[np.object_]: ...
+@overload  # ?d  (fallback)
+def hermvander(
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    deg: SupportsIndex,
+) -> npt.NDArray[Any]: ...
+
 hermvander2d: Final[_FuncVander2D] = ...
 hermvander3d: Final[_FuncVander3D] = ...
 

@@ -13,6 +13,7 @@ type _ArrObject1D = np.ndarray[tuple[int], np.dtype[np.object_]]
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
 AR_b: npt.NDArray[np.bool]
 AR_u4: npt.NDArray[np.uint32]
@@ -24,11 +25,13 @@ AR_f4_1d: _Array1D[np.float32]
 AR_f8_2d: _Array2D[np.float64]
 AR_f10_2d: _Array2D[np.longdouble]
 AR_c16_2d: _Array2D[np.complex128]
+AR_O_1d: _Array1D[np.object_[int]]
 AR_O_2d: _Array2D[np.object_[int]]
 
 _py_f_1d: list[float]
 _py_f_2d: list[list[float]]
 _py_c_1d: list[complex]
+_py_c_2d: list[list[complex]]
 _py_decimal_1d: list[Decimal]
 _py_f64_2d: list[_Array1D[np.float64]]
 
@@ -194,9 +197,83 @@ assert_type(npp.polynomial.polyvalfromroots(AR_f8_2d, _py_f64_2d), npt.NDArray[A
 assert_type(npp.polynomial.polyvalfromroots(_py_decimal_1d, _py_decimal_1d), _Array1D[np.object_])
 assert_type(npp.polynomial.polyvalfromroots(Decimal(), _py_decimal_1d), Decimal)
 
-assert_type(npp.polynomial.polyvander(AR_f8, 3), npt.NDArray[np.floating])
-assert_type(npp.polynomial.polyvander(AR_c16, 3), npt.NDArray[np.complexfloating])
+assert_type(npp.polynomial.polyvander(AR_f8, 3), npt.NDArray[np.float64])
+assert_type(npp.polynomial.polyvander(AR_i8, 3), npt.NDArray[np.float64])
 assert_type(npp.polynomial.polyvander(AR_O, 3), npt.NDArray[np.object_])
+assert_type(npp.polynomial.polyvander(AR_f4_1d, 3), _Array2D[np.float32])
+assert_type(npp.polynomial.polyvander(_py_f_1d, 3), _Array2D[np.float64])
+assert_type(npp.polynomial.polyvander(_py_c_1d, 3), _Array2D[np.complex128])
+assert_type(npp.polynomial.polyvander(AR_O_1d, 3), _Array2D[np.object_])
+assert_type(npp.polynomial.polyvander(AR_c16_2d, 3), _Array3D[np.complex128])
+assert_type(npp.polynomial.polyvander(_py_f_2d, 3), _Array3D[np.float64])
+assert_type(npp.polynomial.polyvander(_py_c_2d, 3), _Array3D[np.complex128])
+assert_type(npp.polynomial.polyvander(AR_O_2d, 3), _Array3D[np.object_])
+assert_type(npp.polynomial.polyvander(_py_f64_2d, 3), npt.NDArray[Any])
+
+assert_type(npp.chebyshev.chebvander(AR_f8, 3), npt.NDArray[np.float64])
+assert_type(npp.chebyshev.chebvander(AR_i8, 3), npt.NDArray[np.float64])
+assert_type(npp.chebyshev.chebvander(AR_O, 3), npt.NDArray[np.object_])
+assert_type(npp.chebyshev.chebvander(AR_f4_1d, 3), _Array2D[np.float32])
+assert_type(npp.chebyshev.chebvander(_py_f_1d, 3), _Array2D[np.float64])
+assert_type(npp.chebyshev.chebvander(_py_c_1d, 3), _Array2D[np.complex128])
+assert_type(npp.chebyshev.chebvander(AR_O_1d, 3), _Array2D[np.object_])
+assert_type(npp.chebyshev.chebvander(AR_c16_2d, 3), _Array3D[np.complex128])
+assert_type(npp.chebyshev.chebvander(_py_f_2d, 3), _Array3D[np.float64])
+assert_type(npp.chebyshev.chebvander(_py_c_2d, 3), _Array3D[np.complex128])
+assert_type(npp.chebyshev.chebvander(AR_O_2d, 3), _Array3D[np.object_])
+assert_type(npp.chebyshev.chebvander(_py_f64_2d, 3), npt.NDArray[Any])
+
+assert_type(npp.legendre.legvander(AR_f8, 3), npt.NDArray[np.float64])
+assert_type(npp.legendre.legvander(AR_i8, 3), npt.NDArray[np.float64])
+assert_type(npp.legendre.legvander(AR_O, 3), npt.NDArray[np.object_])
+assert_type(npp.legendre.legvander(AR_f4_1d, 3), _Array2D[np.float32])
+assert_type(npp.legendre.legvander(_py_f_1d, 3), _Array2D[np.float64])
+assert_type(npp.legendre.legvander(_py_c_1d, 3), _Array2D[np.complex128])
+assert_type(npp.legendre.legvander(AR_O_1d, 3), _Array2D[np.object_])
+assert_type(npp.legendre.legvander(AR_c16_2d, 3), _Array3D[np.complex128])
+assert_type(npp.legendre.legvander(_py_f_2d, 3), _Array3D[np.float64])
+assert_type(npp.legendre.legvander(_py_c_2d, 3), _Array3D[np.complex128])
+assert_type(npp.legendre.legvander(AR_O_2d, 3), _Array3D[np.object_])
+assert_type(npp.legendre.legvander(_py_f64_2d, 3), npt.NDArray[Any])
+
+assert_type(npp.laguerre.lagvander(AR_f8, 3), npt.NDArray[np.float64])
+assert_type(npp.laguerre.lagvander(AR_i8, 3), npt.NDArray[np.float64])
+assert_type(npp.laguerre.lagvander(AR_O, 3), npt.NDArray[np.object_])
+assert_type(npp.laguerre.lagvander(AR_f4_1d, 3), _Array2D[np.float32])
+assert_type(npp.laguerre.lagvander(_py_f_1d, 3), _Array2D[np.float64])
+assert_type(npp.laguerre.lagvander(_py_c_1d, 3), _Array2D[np.complex128])
+assert_type(npp.laguerre.lagvander(AR_O_1d, 3), _Array2D[np.object_])
+assert_type(npp.laguerre.lagvander(AR_c16_2d, 3), _Array3D[np.complex128])
+assert_type(npp.laguerre.lagvander(_py_f_2d, 3), _Array3D[np.float64])
+assert_type(npp.laguerre.lagvander(_py_c_2d, 3), _Array3D[np.complex128])
+assert_type(npp.laguerre.lagvander(AR_O_2d, 3), _Array3D[np.object_])
+assert_type(npp.laguerre.lagvander(_py_f64_2d, 3), npt.NDArray[Any])
+
+assert_type(npp.hermite.hermvander(AR_f8, 3), npt.NDArray[np.float64])
+assert_type(npp.hermite.hermvander(AR_i8, 3), npt.NDArray[np.float64])
+assert_type(npp.hermite.hermvander(AR_O, 3), npt.NDArray[np.object_])
+assert_type(npp.hermite.hermvander(AR_f4_1d, 3), _Array2D[np.float32])
+assert_type(npp.hermite.hermvander(_py_f_1d, 3), _Array2D[np.float64])
+assert_type(npp.hermite.hermvander(_py_c_1d, 3), _Array2D[np.complex128])
+assert_type(npp.hermite.hermvander(AR_O_1d, 3), _Array2D[np.object_])
+assert_type(npp.hermite.hermvander(AR_c16_2d, 3), _Array3D[np.complex128])
+assert_type(npp.hermite.hermvander(_py_f_2d, 3), _Array3D[np.float64])
+assert_type(npp.hermite.hermvander(_py_c_2d, 3), _Array3D[np.complex128])
+assert_type(npp.hermite.hermvander(AR_O_2d, 3), _Array3D[np.object_])
+assert_type(npp.hermite.hermvander(_py_f64_2d, 3), npt.NDArray[Any])
+
+assert_type(npp.hermite_e.hermevander(AR_f8, 3), npt.NDArray[np.float64])
+assert_type(npp.hermite_e.hermevander(AR_i8, 3), npt.NDArray[np.float64])
+assert_type(npp.hermite_e.hermevander(AR_O, 3), npt.NDArray[np.object_])
+assert_type(npp.hermite_e.hermevander(AR_f4_1d, 3), _Array2D[np.float32])
+assert_type(npp.hermite_e.hermevander(_py_f_1d, 3), _Array2D[np.float64])
+assert_type(npp.hermite_e.hermevander(_py_c_1d, 3), _Array2D[np.complex128])
+assert_type(npp.hermite_e.hermevander(AR_O_1d, 3), _Array2D[np.object_])
+assert_type(npp.hermite_e.hermevander(AR_c16_2d, 3), _Array3D[np.complex128])
+assert_type(npp.hermite_e.hermevander(_py_f_2d, 3), _Array3D[np.float64])
+assert_type(npp.hermite_e.hermevander(_py_c_2d, 3), _Array3D[np.complex128])
+assert_type(npp.hermite_e.hermevander(AR_O_2d, 3), _Array3D[np.object_])
+assert_type(npp.hermite_e.hermevander(_py_f64_2d, 3), npt.NDArray[Any])
 
 assert_type(npp.polynomial.polyvander2d(AR_f8, AR_f8, [4, 2]), npt.NDArray[np.floating])
 assert_type(npp.polynomial.polyvander2d(AR_c16, AR_c16, [4, 2]), npt.NDArray[np.complexfloating])

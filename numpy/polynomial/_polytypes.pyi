@@ -25,6 +25,10 @@ from numpy._typing import (
     _SupportsArray,
 )
 
+@type_check_only
+class _CanArray[ArrayT: np.ndarray](Protocol):
+    def __array__(self, /) -> ArrayT: ...
+
 # compatible with e.g. int, float, complex, Decimal, Fraction, and ABCPolyBase
 @type_check_only
 class _SupportsCoefOps[T](Protocol):
@@ -321,17 +325,6 @@ class _FuncValND(Protocol):
         pts: Sequence[_CoefLike_co],
         c: _SeriesLikeCoef_co,
     ) -> _SupportsCoefOps[Any]: ...
-
-@type_check_only
-class _FuncVander(Protocol):
-    @overload
-    def __call__(self, /, x: _ArrayLikeFloat_co, deg: SupportsIndex) -> _FloatArray: ...
-    @overload
-    def __call__(self, /, x: _ArrayLikeComplex_co, deg: SupportsIndex) -> _ComplexArray: ...
-    @overload
-    def __call__(self, /, x: _ArrayLikeCoef_co, deg: SupportsIndex) -> _ObjectArray: ...
-    @overload
-    def __call__(self, /, x: npt.ArrayLike, deg: SupportsIndex) -> _CoefArray: ...
 
 @type_check_only
 class _FuncVander2D(Protocol):
