@@ -146,17 +146,6 @@ class _FuncPow(Protocol):
     def __call__(self, /, c: _SeriesLikeCoef_co, pow: _IntLike_co, maxpower: _IntLike_co | None = ...) -> _ObjectSeries: ...
 
 @type_check_only
-class _FuncVander2D(Protocol):
-    @overload
-    def __call__(self, /, x: _ArrayLikeFloat_co, y: _ArrayLikeFloat_co, deg: _AnyDegrees) -> _FloatArray: ...
-    @overload
-    def __call__(self, /, x: _ArrayLikeComplex_co, y: _ArrayLikeComplex_co, deg: _AnyDegrees) -> _ComplexArray: ...
-    @overload
-    def __call__(self, /, x: _ArrayLikeCoef_co, y: _ArrayLikeCoef_co, deg: _AnyDegrees) -> _ObjectArray: ...
-    @overload
-    def __call__(self, /, x: npt.ArrayLike, y: npt.ArrayLike, deg: _AnyDegrees) -> _CoefArray: ...
-
-@type_check_only
 class _FuncVander3D(Protocol):
     @overload
     def __call__(
