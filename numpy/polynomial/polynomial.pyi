@@ -4,10 +4,8 @@ from typing import Any, ClassVar, Final, overload
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import (
-    _ArrayLikeFloat_co,
     _ArrayLikeNumber_co,
     _ArrayLikeObject_co,
-    _FloatLike_co,
     _NestedSequence,
     _NumberLike_co,
     _Shape,
@@ -18,7 +16,6 @@ from ._polybase import ABCPolyBase
 from ._polytypes import (
     _Array1,
     _Array2,
-    _ArrayLikeCoef_co,
     _FuncBinOp,
     _FuncCompanion,
     _FuncDer,
@@ -187,17 +184,85 @@ def polyval[CoefT: _SupportsCoefOps[Any]](
     tensor: bool = True,
 ) -> CoefT: ...
 
-#
-@overload
-def polyvalfromroots(x: _FloatLike_co, r: _FloatLike_co, tensor: bool = True) -> np.float64 | Any: ...
-@overload
-def polyvalfromroots(x: _NumberLike_co, r: _NumberLike_co, tensor: bool = True) -> np.complex128 | Any: ...
-@overload
-def polyvalfromroots(x: _ArrayLikeFloat_co, r: _ArrayLikeFloat_co, tensor: bool = True) -> npt.NDArray[np.float64 | Any]: ...
-@overload
-def polyvalfromroots(x: _ArrayLikeNumber_co, r: _ArrayLikeNumber_co, tensor: bool = True) -> npt.NDArray[np.complex128 | Any]: ...
-@overload
-def polyvalfromroots(x: _ArrayLikeCoef_co, r: _ArrayLikeCoef_co, tensor: bool = True) -> npt.NDArray[np.object_ | Any]: ...
+# keep in sync with `polyval` (minus the `PolyT` overload)
+@overload  # Nd +f64, 1d +f64
+def polyvalfromroots[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[_ToFloat64]],
+    r: _ToArray1D[_AsFloat64, float],
+    tensor: bool = True,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # Nd +f64, 1d ~c128
+def polyvalfromroots[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[_ToFloat64]],
+    r: _Array1D[np.complex128] | list[complex],
+    tensor: bool = True,
+) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...
+@overload  # Nd ~c128, 1d +c128
+def polyvalfromroots[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.complex128]],
+    r: _ToArray1D[np.complex128 | np.complex64 | _ToFloat64, complex],
+    tensor: bool = True,
+) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...
+@overload  # Nd ~O, 1d +O
+def polyvalfromroots[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.object_]],
+    r: _ToArray1D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+    tensor: bool = True,
+) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+@overload  # Nd ?, 1d ? (fallback)
+def polyvalfromroots[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[_PolyScalar]],
+    r: _ToArray1D[_PolyScalar, _NumberLike_co],
+    tensor: bool = True,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # 0d +f64, 1d +f64
+def polyvalfromroots(
+    x: float | _ToFloat64,
+    r: _ToArray1D[_AsFloat64, float],
+    tensor: bool = True,
+) -> np.float64: ...
+@overload  # 0d +c128, 1d ~c128
+def polyvalfromroots(
+    x: complex | np.complex64 | _ToFloat64,
+    r: _Array1D[np.complex128] | list[complex],
+    tensor: bool = True,
+) -> np.complex128: ...
+@overload  # 1d +f64, 1d +f64
+def polyvalfromroots(
+    x: Sequence[float],
+    r: _ToArray1D[_AsFloat64, float],
+    tensor: bool = True,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d ~c128, 1d +c128
+def polyvalfromroots(
+    x: list[complex],
+    r: _ToArray1D[np.complex128 | _AsFloat64, complex],
+    tensor: bool = True,
+) -> _Array1D[np.complex128]: ...
+@overload  # 1d ?, 1d ?  (fallback)
+def polyvalfromroots(
+    x: Sequence[_NumberLike_co],
+    r: _ToArray1D[_PolyScalar, _NumberLike_co],
+    tensor: bool = True,
+) -> _Array1D[Any]: ...
+@overload  # ?d ?, ?d ?  (fallback)
+def polyvalfromroots(
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    r: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    tensor: bool = True,
+) -> npt.NDArray[Any] | Any: ...
+@overload  # 1d ~O, ?d ~O
+def polyvalfromroots(
+    x: Sequence[_SupportsCoefOps[Any]],
+    r: _SupportsArray[np.dtype[np.object_]] | Sequence[_SupportsCoefOps[Any]],
+    tensor: bool = True,
+) -> _Array1D[np.object_]: ...
+@overload  # 0d T, ?d ~O
+def polyvalfromroots[CoefT: _SupportsCoefOps[Any]](
+    x: CoefT,
+    r: _SupportsArray[np.dtype[np.object_]] | Sequence[_SupportsCoefOps[Any]],
+    tensor: bool = True,
+) -> CoefT: ...
 
 polygrid2d: Final[_FuncVal2D] = ...
 polygrid3d: Final[_FuncVal3D] = ...
