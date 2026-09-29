@@ -26,7 +26,6 @@ from ._polytypes import (
     _FuncPow,
     _FuncRoots,
     _FuncUnOp,
-    _FuncVal2D,
     _FuncVal3D,
     _FuncVander2D,
     _FuncVander3D,
@@ -86,6 +85,9 @@ type _ToArray3D[ScalarT: np.generic, T] = _Array3D[ScalarT] | Sequence[Sequence[
 
 type _AsFloat64 = np.float64 | np.integer | np.bool
 type _ToFloat64 = np.float64 | np.float32 | np.float16 | np.integer | np.bool
+
+type _ToFloat64_ND = np.ndarray[Any, np.dtype[_ToFloat64]] | _NestedSequence[float]
+type _ToComplex128_ND = np.ndarray[Any, np.dtype[np.complex128 | np.complex64 | _ToFloat64]] | _NestedSequence[complex]
 
 type _ToComplex128_1D = _SupportsArray[np.dtype[np.number | np.bool]] | Sequence[_NumberLike_co]
 type _ToInt_1D = _SupportsArray[np.dtype[np.integer]] | Sequence[SupportsIndex]
@@ -637,7 +639,122 @@ def legval[CoefT: _SupportsCoefOps[Any]](
     tensor: bool = True,
 ) -> CoefT | float: ...
 
-leggrid2d: Final[_FuncVal2D] = ...
+# keep in sync with `polynomial.*grid2d`
+@overload  # ?d +f64, Nd +f64, 2d +f64  (workaround)
+def leggrid2d(
+    x: _ArrayJustND[_ToFloat64],
+    y: _ToFloat64_ND,
+    c: _ToArray2D[_AsFloat64, float],
+) -> npt.NDArray[np.float64]: ...
+@overload  # Nd +f64, ?d +f64, 2d +f64  (workaround)
+def leggrid2d(
+    x: _ToFloat64_ND,
+    y: _ArrayJustND[_ToFloat64],
+    c: _ToArray2D[_AsFloat64, float],
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d ?, Nd ?, 2d ?  (workaround)
+def leggrid2d(
+    x: _ArrayJustND[_PolyScalar],
+    y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    c: _ToArray2D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> npt.NDArray[Any]: ...
+@overload  # Nd ?, ?d ?, 2d ?  (workaround)
+def leggrid2d(
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    y: _ArrayJustND[_PolyScalar],
+    c: _ToArray2D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> npt.NDArray[Any]: ...
+@overload  # 0d +f64, 0d +f64, 2d +f64
+def leggrid2d(
+    x: float | _ToFloat64,
+    y: float | _ToFloat64,
+    c: _ToArray2D[_AsFloat64, float],
+) -> np.float64: ...
+@overload  # 0d +c128, 0d +c128, 2d ~c128
+def leggrid2d(
+    x: complex | np.complex64 | _ToFloat64,
+    y: complex | np.complex64 | _ToFloat64,
+    c: _Array2D[np.complex128] | Sequence[list[complex]],
+) -> np.complex128: ...
+@overload  # 1d +f64, 1d +f64, 2d +f64
+def leggrid2d(
+    x: _ToArray1D[_ToFloat64, float],
+    y: _ToArray1D[_ToFloat64, float],
+    c: _ToArray2D[_AsFloat64, float],
+) -> _Array2D[np.float64]: ...
+@overload  # 1d +c128, 1d +c128, 2d ~c128
+def leggrid2d(
+    x: _ToArray1D[np.complex128 | np.complex64 | _ToFloat64, complex],
+    y: _ToArray1D[np.complex128 | np.complex64 | _ToFloat64, complex],
+    c: _Array2D[np.complex128] | Sequence[list[complex]],
+) -> _Array2D[np.complex128]: ...
+@overload  # 1d ~c128, 1d +c128, 2d +c128
+def leggrid2d(
+    x: _Array1D[np.complex128] | list[complex],
+    y: _ToArray1D[np.complex128 | np.complex64 | _ToFloat64, complex],
+    c: _ToArray2D[np.complex128 | np.complex64 | _ToFloat64, complex],
+) -> _Array2D[np.complex128]: ...
+@overload  # 1d ~O, 1d ~O, 2d +O
+def leggrid2d(
+    x: _Array1D[np.object_],
+    y: _Array1D[np.object_],
+    c: _ToArray2D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> _Array2D[np.object_]: ...
+@overload  # 1d ?, 1d ?, 2d ?  (fallback)
+def leggrid2d(
+    x: _ToArray1D[_PolyScalar, _NumberLike_co],
+    y: _ToArray1D[_PolyScalar, _NumberLike_co],
+    c: _ToArray2D[_PolyScalar, _NumberLike_co],
+) -> _Array2D[Any]: ...
+@overload  # ?d +f64, ?d +f64, 2d +f64
+def leggrid2d(
+    x: _ToFloat64_ND,
+    y: _ToFloat64_ND,
+    c: _ToArray2D[_AsFloat64, float],
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d +c128, ?d +c128, 2d ~c128
+def leggrid2d(
+    x: _ToComplex128_ND,
+    y: _ToComplex128_ND,
+    c: _Array2D[np.complex128] | Sequence[list[complex]],
+) -> npt.NDArray[np.complex128]: ...
+@overload  # ?d ~c128, ?d +c128, 2d +c128
+def leggrid2d(
+    x: np.ndarray[Any, np.dtype[np.complex128]] | _NestedSequence[list[complex]] | list[complex],
+    y: _ToComplex128_ND,
+    c: _ToArray2D[np.complex128 | np.complex64 | _ToFloat64, complex],
+) -> npt.NDArray[np.complex128]: ...
+@overload  # ?d ~O, ?d ~O, 2d +O
+def leggrid2d(
+    x: _ArrayLikeObject_co,
+    y: _ArrayLikeObject_co,
+    c: _ToArray2D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> npt.NDArray[np.object_]: ...
+@overload  # 1d ~O, 1d ~O, ?d ~O
+def leggrid2d(
+    x: Sequence[_SupportsCoefOps[Any]],
+    y: Sequence[_SupportsCoefOps[Any]],
+    c: _SupportsArray[np.dtype[np.object_]] | Sequence[Sequence[_SupportsCoefOps[Any]]],
+) -> _Array2D[np.object_]: ...
+@overload  # poly, poly, 2d ?
+def leggrid2d[PolyT: ABCPolyBase](
+    x: PolyT,
+    y: PolyT,
+    c: _ToArray2D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> PolyT: ...
+@overload  # ?d ?, ?d ?, ?d ?  (fallback)
+def leggrid2d(
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+) -> npt.NDArray[Any] | Any: ...
+@overload  # 0d T, 0d T, ?d ~O
+def leggrid2d[CoefT: _SupportsCoefOps[Any]](
+    x: CoefT,
+    y: CoefT,
+    c: _SupportsArray[np.dtype[np.object_]] | Sequence[Sequence[_SupportsCoefOps[Any]]],
+) -> CoefT: ...
+
 leggrid3d: Final[_FuncVal3D] = ...
 
 # keep in sync with `polynomial.*vander`
