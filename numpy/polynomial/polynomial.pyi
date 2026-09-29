@@ -187,7 +187,7 @@ def polyder(
     axis: SupportsIndex = 0,
 ) -> npt.NDArray[Any]: ...
 
-#
+# keep in sync with `polynomial.*int`
 @overload  # ?d T  (workaround)
 def polyint[ScalarT: np.inexact](
     c: _ArrayJustND[ScalarT],
