@@ -317,6 +317,12 @@ assert_type(npp.hermite.hermweight(i2), np.float32)
 assert_type(npp.hermite.hermweight(i1), np.float16)
 assert_type(npp.hermite.hermweight(0.5j), np.complex128 | Any)
 
+assert_type(npp.hermite_e.hermeweight(AR_c16_2d), _Array2D[np.complex128])
+assert_type(npp.hermite_e.hermeweight(AR_i8_2d), _Array2D[np.float64])
+assert_type(npp.hermite_e.hermeweight(f4), np.float32)
+assert_type(npp.hermite_e.hermeweight(0.5), np.float64)
+assert_type(npp.hermite_e.hermeweight(0.5j), np.complex128 | Any)
+
 assert_type(npp.chebyshev.poly2cheb(AR_f8), _ArrFloat1D)
 assert_type(npp.chebyshev.poly2cheb(AR_c16), _ArrComplex1D)
 assert_type(npp.chebyshev.poly2cheb(AR_O), _ArrObject1D)
