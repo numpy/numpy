@@ -33,7 +33,6 @@ from ._polytypes import (
     _FuncVander,
     _FuncVander2D,
     _FuncVander3D,
-    _FuncWeight,
     _PolyScalar,
     _SupportsCoefOps,
 )
@@ -302,7 +301,27 @@ def legfit(
 legcompanion: Final[_FuncCompanion] = ...
 legroots: Final[_FuncRoots] = ...
 leggauss: Final[_FuncGauss] = ...
-legweight: Final[_FuncWeight] = ...
+
+@overload  # Nd T
+def legweight[ShapeT: _Shape, ScalarT: np.inexact](
+    x: np.ndarray[ShapeT, np.dtype[ScalarT]],
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # Nd +f64
+def legweight[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.integer | np.bool]],
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # Nd ~O
+def legweight[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.object_]],
+) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+@overload  # 0d T
+def legweight[ScalarT: np.inexact](x: ScalarT) -> ScalarT: ...
+@overload  # 0d +f64
+def legweight(x: np.integer | np.bool) -> np.float64: ...
+@overload  # 0d ~float
+def legweight(x: float) -> float: ...
+@overload  # 0d ~complex
+def legweight(x: complex) -> complex: ...
 
 class Legendre(ABCPolyBase[L["P"]]):
     basis_name: ClassVar[L["P"]] = "P"  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
