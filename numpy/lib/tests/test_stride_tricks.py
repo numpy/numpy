@@ -643,6 +643,28 @@ def test_broadcast_arrays_no_args():
 
 
 @pytest.mark.parametrize("subok", [False, True])
+def test_broadcast_arrays_none(subok):
+    # gh-26214: None must broadcast as a 0-d object array, not be treated
+    # as an "allocate an output" operand by the underlying nditer.
+    a, b = broadcast_arrays(np.zeros(3), None, subok=subok)
+    assert b.dtype == object
+    assert b.shape == (3,)
+    assert b[0] is None
+    assert b.flags.writeable is False
+    assert_array_equal(a, np.zeros(3))
+
+    b, a = broadcast_arrays(None, np.zeros((2, 3)), subok=subok)
+    assert b.dtype == object
+    assert b.shape == (2, 3)
+    assert b[1, 2] is None
+
+    (b,) = broadcast_arrays(None, subok=subok)
+    assert b.dtype == object
+    assert b.shape == ()
+    assert b[()] is None
+
+
+@pytest.mark.parametrize("subok", [False, True])
 def test_broadcast_arrays_many_args(subok):
     # A single nditer handles at most 64 operands; more arguments (and
     # subok=True) use a chunked fallback that must give the same views.
