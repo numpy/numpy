@@ -414,25 +414,85 @@ def chebweight(x: complex) -> np.complex128 | Any: ...
 def chebpts1(npts: ConvertibleToInt) -> np.ndarray[tuple[int], np.dtype[np.float64]]: ...
 def chebpts2(npts: ConvertibleToInt) -> np.ndarray[tuple[int], np.dtype[np.float64]]: ...
 
-# keep in sync with `Chebyshev.interpolate` (minus `domain` parameter)
-@overload
+#
+@overload  # ?d +f64  (workaround)
 def chebinterpolate(
-    func: np.ufunc,
+    func: Callable[[_Array1D[np.float64]], _ArrayJustND[_ToFloat64]],
     deg: _IntLike_co,
     args: tuple[()] = (),
-) -> npt.NDArray[np.float64 | np.complex128 | np.object_]: ...
-@overload
-def chebinterpolate[CoefScalarT: np.number | np.bool | np.object_](
-    func: Callable[[npt.NDArray[np.float64]], CoefScalarT],
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d +f64, args=<given>  (workaround)
+def chebinterpolate[*Ts](
+    func: Callable[[_Array1D[np.float64], *Ts], _ArrayJustND[_ToFloat64]],
+    deg: _IntLike_co,
+    args: tuple[*Ts],
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d ~c128  (workaround)
+def chebinterpolate(
+    func: Callable[[_Array1D[np.float64]], _ArrayJustND[np.complex128]],
     deg: _IntLike_co,
     args: tuple[()] = (),
-) -> npt.NDArray[CoefScalarT]: ...
-@overload
-def chebinterpolate[CoefScalarT: np.number | np.bool | np.object_](
-    func: Callable[Concatenate[npt.NDArray[np.float64], ...], CoefScalarT],
+) -> npt.NDArray[np.complex128]: ...
+@overload  # ?d ~c128, args=<given>  (workaround)
+def chebinterpolate[*Ts](
+    func: Callable[[_Array1D[np.float64], *Ts], _ArrayJustND[np.complex128]],
     deg: _IntLike_co,
-    args: Iterable[Any],
-) -> npt.NDArray[CoefScalarT]: ...
+    args: tuple[*Ts],
+) -> npt.NDArray[np.complex128]: ...
+@overload  # ?d ~O  (workaround)
+def chebinterpolate(
+    func: Callable[[_Array1D[np.float64]], _ArrayJustND[np.object_]],
+    deg: _IntLike_co,
+    args: tuple[()] = (),
+) -> npt.NDArray[np.object_]: ...
+@overload  # ?d ~O, args=<given>  (workaround)
+def chebinterpolate[*Ts](
+    func: Callable[[_Array1D[np.float64], *Ts], _ArrayJustND[np.object_]],
+    deg: _IntLike_co,
+    args: tuple[*Ts],
+) -> npt.NDArray[np.object_]: ...
+@overload  # 1d +f64
+def chebinterpolate(
+    func: Callable[[_Array1D[np.float64]], _Array1D[_ToFloat64]],
+    deg: _IntLike_co,
+    args: tuple[()] = (),
+) -> _Array1D[np.float64]: ...
+@overload  # 1d +f64, args=<given>
+def chebinterpolate[*Ts](
+    func: Callable[[_Array1D[np.float64], *Ts], _Array1D[_ToFloat64]],
+    deg: _IntLike_co,
+    args: tuple[*Ts],
+) -> _Array1D[np.float64]: ...
+@overload  # 1d ~c128
+def chebinterpolate(
+    func: Callable[[_Array1D[np.float64]], _Array1D[np.complex128]],
+    deg: _IntLike_co,
+    args: tuple[()] = (),
+) -> _Array1D[np.complex128]: ...
+@overload  # 1d ~c128, args=<given>
+def chebinterpolate[*Ts](
+    func: Callable[[_Array1D[np.float64], *Ts], _Array1D[np.complex128]],
+    deg: _IntLike_co,
+    args: tuple[*Ts],
+) -> _Array1D[np.complex128]: ...
+@overload  # 1d ~O
+def chebinterpolate(
+    func: Callable[[_Array1D[np.float64]], _Array1D[np.object_]],
+    deg: _IntLike_co,
+    args: tuple[()] = (),
+) -> _Array1D[np.object_]: ...
+@overload  # 1d ~O, args=<given>
+def chebinterpolate[*Ts](
+    func: Callable[[_Array1D[np.float64], *Ts], _Array1D[np.object_]],
+    deg: _IntLike_co,
+    args: tuple[*Ts],
+) -> _Array1D[np.object_]: ...
+@overload  # ?  (fallback)
+def chebinterpolate(
+    func: Callable[..., object],
+    deg: _IntLike_co,
+    args: Iterable[Any] = (),
+) -> npt.NDArray[Any]: ...
 
 class Chebyshev(ABCPolyBase[L["T"]]):
     basis_name: ClassVar[L["T"]] = "T"  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]

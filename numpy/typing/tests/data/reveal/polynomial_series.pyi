@@ -51,6 +51,19 @@ PS_lag: npp.Laguerre
 PS_herm: npp.Hermite
 PS_herme: npp.HermiteE
 
+def _func_f4_nd_args(x: _Array1D[np.float64], a: float, /) -> npt.NDArray[np.float32]: ...
+def _func_c16_nd(x: _Array1D[np.float64], /) -> npt.NDArray[np.complex128]: ...
+def _func_c16_nd_args(x: _Array1D[np.float64], a: float, /) -> npt.NDArray[np.complex128]: ...
+def _func_O_nd(x: _Array1D[np.float64], /) -> npt.NDArray[np.object_[int]]: ...
+def _func_O_nd_args(x: _Array1D[np.float64], a: float, /) -> npt.NDArray[np.object_[int]]: ...
+def _func_i8_1d(x: _Array1D[np.float64], /) -> _Array1D[np.int64]: ...
+def _func_i8_1d_args(x: _Array1D[np.float64], a: float, /) -> _Array1D[np.int64]: ...
+def _func_c16_1d(x: _Array1D[np.float64], /) -> _Array1D[np.complex128]: ...
+def _func_c16_1d_args(x: _Array1D[np.float64], a: float, /) -> _Array1D[np.complex128]: ...
+def _func_O_1d(x: _Array1D[np.float64], /) -> _Array1D[np.object_[int]]: ...
+def _func_O_1d_args(x: _Array1D[np.float64], a: float, /) -> _Array1D[np.object_[int]]: ...
+def _func_f8_2d(x: _Array1D[np.float64], /) -> _Array2D[np.float64]: ...
+
 assert_type(npp.polynomial.polyroots(AR_f8), _ArrFloat1D64)
 assert_type(npp.polynomial.polyroots(AR_c16), _ArrComplex1D128)
 assert_type(npp.polynomial.polyroots(AR_O), _ArrObject1D)
@@ -411,7 +424,16 @@ assert_type(npp.chebyshev.cheb2poly(AR_O), _ArrObject1D)
 assert_type(npp.chebyshev.chebpts1(6), _ArrFloat1D64)
 assert_type(npp.chebyshev.chebpts2(6), _ArrFloat1D64)
 
-assert_type(
-    npp.chebyshev.chebinterpolate(np.tanh, 3),
-    npt.NDArray[np.float64 | np.complex128 | np.object_],
-)
+assert_type(npp.chebyshev.chebinterpolate(np.tanh, 3), npt.NDArray[np.float64])
+assert_type(npp.chebyshev.chebinterpolate(_func_f4_nd_args, 3, (1.0,)), npt.NDArray[np.float64])
+assert_type(npp.chebyshev.chebinterpolate(_func_c16_nd, 3), npt.NDArray[np.complex128])
+assert_type(npp.chebyshev.chebinterpolate(_func_c16_nd_args, 3, (1.0,)), npt.NDArray[np.complex128])
+assert_type(npp.chebyshev.chebinterpolate(_func_O_nd, 3), npt.NDArray[np.object_])
+assert_type(npp.chebyshev.chebinterpolate(_func_O_nd_args, 3, (1.0,)), npt.NDArray[np.object_])
+assert_type(npp.chebyshev.chebinterpolate(_func_i8_1d, 3), _Array1D[np.float64])
+assert_type(npp.chebyshev.chebinterpolate(_func_i8_1d_args, 3, (1.0,)), _Array1D[np.float64])
+assert_type(npp.chebyshev.chebinterpolate(_func_c16_1d, 3), _Array1D[np.complex128])
+assert_type(npp.chebyshev.chebinterpolate(_func_c16_1d_args, 3, (1.0,)), _Array1D[np.complex128])
+assert_type(npp.chebyshev.chebinterpolate(_func_O_1d, 3), _Array1D[np.object_])
+assert_type(npp.chebyshev.chebinterpolate(_func_O_1d_args, 3, (1.0,)), _Array1D[np.object_])
+assert_type(npp.chebyshev.chebinterpolate(_func_f8_2d, 3), npt.NDArray[Any])
