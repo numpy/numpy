@@ -771,7 +771,7 @@ _convert_from_commastring(PyObject *obj, int align)
             &state->runtime_imports._commastring) == -1) {
         return NULL;
     }
-    parsed = PyObject_CallOneArg(state->runtime_imports._commastring, obj);
+    parsed = PyObject_Vectorcall(state->runtime_imports._commastring, &obj, 1, NULL);
     if (parsed == NULL) {
         return NULL;
     }
