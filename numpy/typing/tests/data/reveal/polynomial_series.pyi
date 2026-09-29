@@ -14,6 +14,8 @@ type _ArrObject1D = np.ndarray[tuple[int], np.dtype[np.object_]]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
+f4: np.float32
+
 AR_b: npt.NDArray[np.bool]
 AR_u4: npt.NDArray[np.uint32]
 AR_i8: npt.NDArray[np.int64]
@@ -21,6 +23,7 @@ AR_f8: npt.NDArray[np.float64]
 AR_c16: npt.NDArray[np.complex128]
 AR_O: npt.NDArray[np.object_[int]]
 AR_f4_1d: _Array1D[np.float32]
+AR_i8_2d: _Array2D[np.int64]
 AR_f8_2d: _Array2D[np.float64]
 AR_f10_2d: _Array2D[np.longdouble]
 AR_c16_2d: _Array2D[np.complex128]
@@ -274,9 +277,11 @@ assert_type(npp.hermite_e.hermefit(AR_f8, _py_c_1d, 2, full=True), tuple[npt.NDA
 
 assert_type(npp.chebyshev.chebgauss(2), tuple[_ArrFloat1D64, _ArrFloat1D64])
 
-assert_type(npp.chebyshev.chebweight(AR_f8), npt.NDArray[np.float64])
-assert_type(npp.chebyshev.chebweight(AR_c16), npt.NDArray[np.complex128])
-assert_type(npp.chebyshev.chebweight(AR_O), npt.NDArray[np.object_])
+assert_type(npp.chebyshev.chebweight(AR_c16_2d), _Array2D[np.complex128])
+assert_type(npp.chebyshev.chebweight(AR_i8_2d), _Array2D[np.float64])
+assert_type(npp.chebyshev.chebweight(f4), np.float32)
+assert_type(npp.chebyshev.chebweight(0.5), np.float64)
+assert_type(npp.chebyshev.chebweight(0.5j), np.complex128 | Any)
 
 assert_type(npp.chebyshev.poly2cheb(AR_f8), _ArrFloat1D)
 assert_type(npp.chebyshev.poly2cheb(AR_c16), _ArrComplex1D)
