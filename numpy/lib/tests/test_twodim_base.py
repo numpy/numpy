@@ -322,6 +322,12 @@ class TestHistogram2d:
                            match='x and y must have the same length.'):
             histogram2d(x, y)
 
+    @pytest.mark.parametrize("weights", [np.ones(5), np.ones((6, 1)), 1.0])
+    def test_bad_weights_shape(self, weights):
+        x = y = np.arange(6)
+        with pytest.raises(ValueError, match="same shape as"):
+            histogram2d(x, y, weights=weights)
+
     @pytest.mark.parametrize("bins", [3, [2, 3], [0., 2., 5.],
                                       [[0., 2., 5.], [0., 5.]]])
     def test_subclass_dropped(self, bins):

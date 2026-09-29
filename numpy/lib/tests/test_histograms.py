@@ -885,6 +885,14 @@ class TestHistogramdd:
         assert_equal(hist, [3, 1])
         assert_equal(edges[0], [0, 50, 100])
 
-    def test_arr_weights_mismatch(self):
-        with assert_raises_regex(ValueError, "same shape as"):
-            histogramdd(np.arange(3), weights=np.ones(2))
+    @pytest.mark.parametrize("sample", [
+        np.arange(6),
+        np.arange(12).reshape(6, 2),
+        [np.arange(6), np.arange(6)],
+    ])
+    @pytest.mark.parametrize("weights", [
+        np.ones(5), np.ones(7), np.ones((6, 1)), np.ones((6, 2)), 1.0,
+    ])
+    def test_arr_weights_mismatch(self, sample, weights):
+        with pytest.raises(ValueError, match="same shape as"):
+            histogramdd(sample, weights=weights)
