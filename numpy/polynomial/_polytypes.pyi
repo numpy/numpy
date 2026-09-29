@@ -14,8 +14,6 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import (
-    _ArrayLikeComplex_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeNumber_co,
     _ComplexLike_co,
     _FloatLike_co,
@@ -83,8 +81,6 @@ type _ArrayLikeCoef_co = npt.NDArray[_PolyScalar] | _ArrayLikeNumber_co | _Array
 type _Line[ScalarT: _PolyScalar] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Companion[ScalarT: _PolyScalar] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
-type _AnyDegrees = Sequence[SupportsIndex]
-
 @type_check_only
 class _FuncLine(Protocol):
     @overload
@@ -144,45 +140,6 @@ class _FuncPow(Protocol):
     def __call__(self, /, c: _SeriesLikeComplex_co, pow: _IntLike_co, maxpower: _IntLike_co | None = ...) -> _ComplexSeries: ...
     @overload
     def __call__(self, /, c: _SeriesLikeCoef_co, pow: _IntLike_co, maxpower: _IntLike_co | None = ...) -> _ObjectSeries: ...
-
-@type_check_only
-class _FuncVander3D(Protocol):
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _ArrayLikeFloat_co,
-        y: _ArrayLikeFloat_co,
-        z: _ArrayLikeFloat_co,
-        deg: _AnyDegrees,
-    ) -> _FloatArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _ArrayLikeComplex_co,
-        y: _ArrayLikeComplex_co,
-        z: _ArrayLikeComplex_co,
-        deg: _AnyDegrees,
-    ) -> _ComplexArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _ArrayLikeCoef_co,
-        y: _ArrayLikeCoef_co,
-        z: _ArrayLikeCoef_co,
-        deg: _AnyDegrees,
-    ) -> _ObjectArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: npt.ArrayLike,
-        y: npt.ArrayLike,
-        z: npt.ArrayLike,
-        deg: _AnyDegrees,
-    ) -> _CoefArray: ...
 
 @type_check_only
 class _FuncRoots(Protocol):
