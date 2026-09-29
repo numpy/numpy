@@ -84,6 +84,7 @@ type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, N
 
 type _ToArray1D[ScalarT: np.generic, T] = _Array1D[ScalarT] | Sequence[T]
 type _ToArray2D[ScalarT: np.generic, T] = _Array2D[ScalarT] | Sequence[Sequence[T]]
+type _ToArray3D[ScalarT: np.generic, T] = _Array3D[ScalarT] | Sequence[Sequence[Sequence[T]]]
 
 type _AsFloat64 = np.float64 | np.integer | np.bool
 type _ToFloat64 = np.float64 | np.float32 | np.float16 | np.integer | np.bool
@@ -198,7 +199,99 @@ def hermeval2d[CoefT: _SupportsCoefOps[Any]](
     c: _SupportsArray[np.dtype[np.object_]] | Sequence[Sequence[_SupportsCoefOps[Any]]],
 ) -> CoefT: ...
 
-hermeval3d: Final[_FuncVal3D] = ...
+# keep in sync with `polynomial.*val3d`
+@overload  # Nd +f64, Nd +f64, Nd +f64, 3d +f64
+def hermeval3d[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[_ToFloat64]],
+    y: np.ndarray[ShapeT, np.dtype[_ToFloat64]],
+    z: np.ndarray[ShapeT, np.dtype[_ToFloat64]],
+    c: _ToArray3D[_AsFloat64, float],
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # Nd +c128, Nd +c128, Nd +c128, 3d ~c128
+def hermeval3d[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.complex128 | np.complex64 | _ToFloat64]],
+    y: np.ndarray[ShapeT, np.dtype[np.complex128 | np.complex64 | _ToFloat64]],
+    z: np.ndarray[ShapeT, np.dtype[np.complex128 | np.complex64 | _ToFloat64]],
+    c: _Array3D[np.complex128] | Sequence[Sequence[list[complex]]],
+) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...
+@overload  # Nd ~c128, Nd +c128, Nd +c128, 3d +c128
+def hermeval3d[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.complex128]],
+    y: np.ndarray[ShapeT, np.dtype[np.complex128 | np.complex64 | _ToFloat64]],
+    z: np.ndarray[ShapeT, np.dtype[np.complex128 | np.complex64 | _ToFloat64]],
+    c: _ToArray3D[np.complex128 | np.complex64 | _ToFloat64, complex],
+) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...
+@overload  # Nd ~O, Nd ~O, Nd ~O, 3d +O
+def hermeval3d[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[np.object_]],
+    y: np.ndarray[ShapeT, np.dtype[np.object_]],
+    z: np.ndarray[ShapeT, np.dtype[np.object_]],
+    c: _ToArray3D[_PolyScalar, _NumberLike_co | _SupportsCoefOps[Any]],
+) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+@overload  # Nd ?, Nd ?, Nd ?, 3d ?  (fallback)
+def hermeval3d[ShapeT: _Shape](
+    x: np.ndarray[ShapeT, np.dtype[_PolyScalar]],
+    y: np.ndarray[ShapeT, np.dtype[_PolyScalar]],
+    z: np.ndarray[ShapeT, np.dtype[_PolyScalar]],
+    c: _ToArray3D[_PolyScalar, _NumberLike_co],
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # 0d +f64, 0d +f64, 0d +f64, 3d +f64
+def hermeval3d(
+    x: float | _ToFloat64,
+    y: float | _ToFloat64,
+    z: float | _ToFloat64,
+    c: _ToArray3D[_AsFloat64, float],
+) -> np.float64: ...
+@overload  # 0d +c128, 0d +c128, 0d +c128, 3d ~c128
+def hermeval3d(
+    x: complex | np.complex64 | _ToFloat64,
+    y: complex | np.complex64 | _ToFloat64,
+    z: complex | np.complex64 | _ToFloat64,
+    c: _Array3D[np.complex128] | Sequence[Sequence[list[complex]]],
+) -> np.complex128: ...
+@overload  # 1d +f64, 1d +f64, 1d +f64, 3d +f64
+def hermeval3d(
+    x: Sequence[float],
+    y: Sequence[float],
+    z: Sequence[float],
+    c: _ToArray3D[_AsFloat64, float],
+) -> _Array1D[np.float64]: ...
+@overload  # 1d ~c128, 1d +c128, 1d +c128, 3d +c128
+def hermeval3d(
+    x: list[complex],
+    y: Sequence[complex],
+    z: Sequence[complex],
+    c: _ToArray3D[np.complex128 | _AsFloat64, complex],
+) -> _Array1D[np.complex128]: ...
+@overload  # 1d ?, 1d ?, 1d ?, 3d ?  (fallback)
+def hermeval3d(
+    x: Sequence[_NumberLike_co],
+    y: Sequence[_NumberLike_co],
+    z: Sequence[_NumberLike_co],
+    c: _ToArray3D[_PolyScalar, _NumberLike_co],
+) -> _Array1D[Any]: ...
+@overload  # ?d ?, ?d ?, ?d ?, ?d ?  (fallback)
+def hermeval3d(
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    z: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+) -> npt.NDArray[Any] | Any: ...
+@overload  # 1d ~O, 1d ~O, 1d ~O, ?d ~O
+def hermeval3d(
+    x: Sequence[_SupportsCoefOps[Any]],
+    y: Sequence[_SupportsCoefOps[Any]],
+    z: Sequence[_SupportsCoefOps[Any]],
+    c: _SupportsArray[np.dtype[np.object_]] | Sequence[Sequence[Sequence[_SupportsCoefOps[Any]]]],
+) -> _Array1D[np.object_]: ...
+@overload  # 0d T, 0d T, 0d T, ?d ~O
+def hermeval3d[CoefT: _SupportsCoefOps[Any]](
+    x: CoefT,
+    y: CoefT,
+    z: CoefT,
+    c: _SupportsArray[np.dtype[np.object_]] | Sequence[Sequence[Sequence[_SupportsCoefOps[Any]]]],
+) -> CoefT: ...
+
 hermevalnd: Final[_FuncValND] = ...
 
 # keep in sync with `polynomial.*val`
