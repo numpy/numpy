@@ -146,63 +146,6 @@ class _FuncPow(Protocol):
     def __call__(self, /, c: _SeriesLikeCoef_co, pow: _IntLike_co, maxpower: _IntLike_co | None = ...) -> _ObjectSeries: ...
 
 @type_check_only
-class _FuncVal3D(Protocol):
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _FloatLike_co,
-        y: _FloatLike_co,
-        z: _FloatLike_co,
-        c: _SeriesLikeFloat_co,
-    ) -> np.floating: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _NumberLike_co,
-        y: _NumberLike_co,
-        z: _NumberLike_co,
-        c: _SeriesLikeComplex_co,
-    ) -> np.complexfloating: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _ArrayLikeFloat_co,
-        y: _ArrayLikeFloat_co,
-        z: _ArrayLikeFloat_co,
-        c: _ArrayLikeFloat_co,
-    ) -> _FloatArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _ArrayLikeComplex_co,
-        y: _ArrayLikeComplex_co,
-        z: _ArrayLikeComplex_co,
-        c: _ArrayLikeComplex_co,
-    ) -> _ComplexArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _ArrayLikeCoef_co,
-        y: _ArrayLikeCoef_co,
-        z: _ArrayLikeCoef_co,
-        c: _ArrayLikeCoef_co,
-    ) -> _ObjectArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _CoefLike_co,
-        y: _CoefLike_co,
-        z: _CoefLike_co,
-        c: _SeriesLikeCoef_co,
-    ) -> _SupportsCoefOps[Any]: ...
-
-@type_check_only
 class _FuncVander2D(Protocol):
     @overload
     def __call__(self, /, x: _ArrayLikeFloat_co, y: _ArrayLikeFloat_co, deg: _AnyDegrees) -> _FloatArray: ...
