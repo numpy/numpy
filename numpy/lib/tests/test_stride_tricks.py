@@ -644,8 +644,7 @@ def test_broadcast_arrays_no_args():
 
 @pytest.mark.parametrize("subok", [False, True])
 def test_broadcast_arrays_none(subok):
-    # gh-26214: None must broadcast as a 0-d object array, not be treated
-    # as an "allocate an output" operand by the underlying nditer.
+    # gh-26214: None must broadcast as a 0-d object array
     a, b = broadcast_arrays(np.zeros(3), None, subok=subok)
     assert b.dtype == object
     assert b.shape == (3,)
