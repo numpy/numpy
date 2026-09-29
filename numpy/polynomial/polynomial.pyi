@@ -27,6 +27,7 @@ from ._polytypes import (
     _PolyScalar,
     _SupportsCoefOps,
     _ToCoef1D,
+    _ToCoefND,
 )
 from .polyutils import trimcoef as polytrim
 
@@ -159,7 +160,7 @@ def polyder[ScalarT: np.inexact](
 ) -> _Array2D[ScalarT]: ...
 @overload  # 2d +f64
 def polyder(
-    c: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    c: _ToArray2D[np.integer | np.bool, float],
     m: SupportsIndex = 1,
     scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
     axis: SupportsIndex = 0,
@@ -180,7 +181,7 @@ def polyder(
 ) -> _Array2D[np.object_]: ...
 @overload  # ?d  (fallback)
 def polyder(
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND | _SupportsCoefOps[Any],
     m: SupportsIndex = 1,
     scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
     axis: SupportsIndex = 0,
@@ -261,7 +262,7 @@ def polyint[ScalarT: np.inexact](
 ) -> _Array2D[ScalarT]: ...
 @overload  # 2d +f64
 def polyint(
-    c: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    c: _ToArray2D[np.integer | np.bool, float],
     m: SupportsIndex = 1,
     k: _ToCoef1D = [],
     lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
@@ -288,7 +289,7 @@ def polyint(
 ) -> _Array2D[np.object_]: ...
 @overload  # ?d  (fallback)
 def polyint(
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND | _SupportsCoefOps[Any],
     m: SupportsIndex = 1,
     k: _ToCoef1D = [],
     lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
@@ -361,7 +362,7 @@ def polyval2d(
 def polyval2d(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 1d ~O, 1d ~O, ?d ~O
 def polyval2d(
@@ -458,7 +459,7 @@ def polyval3d(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     z: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 1d ~O, 1d ~O, 1d ~O, ?d ~O
 def polyval3d(
@@ -538,8 +539,8 @@ def polyvalnd(
 ) -> _Array1D[np.object_]: ...
 @overload  # *?d ?, ?d ?  (fallback)
 def polyvalnd(
-    pts: Sequence[_ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]]],
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    pts: Sequence[_ToCoefND | _SupportsCoefOps[Any]],
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 
 # keep in sync with `polynomial.*val`
@@ -606,7 +607,7 @@ def polyval(
 @overload  # ?d ?, ?d ?  (fallback)
 def polyval(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND,
     tensor: bool = True,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 1d ~O, ?d ~O
@@ -692,7 +693,7 @@ def polyvalfromroots(
 @overload  # ?d ?, ?d ?  (fallback)
 def polyvalfromroots(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    r: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    r: _ToCoefND,
     tensor: bool = True,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 1d ~O, ?d ~O
@@ -813,9 +814,9 @@ def polygrid2d[PolyT: ABCPolyBase](
 ) -> PolyT: ...
 @overload  # ?d ?, ?d ?, ?d ?  (fallback)
 def polygrid2d(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND,
+    y: _ToCoefND,
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 0d T, 0d T, ?d ~O
 def polygrid2d[CoefT: _SupportsCoefOps[Any]](
@@ -953,10 +954,10 @@ def polygrid3d(
 ) -> _Array3D[np.object_]: ...
 @overload  # ?d ?, ?d ?, ?d ?, ?d ?  (fallback)
 def polygrid3d(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    z: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND,
+    y: _ToCoefND,
+    z: _ToCoefND,
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 0d T, 0d T, 0d T, ?d ~O
 def polygrid3d[CoefT: _SupportsCoefOps[Any]](
@@ -1009,7 +1010,7 @@ def polyvander[ScalarT: np.inexact](
 ) -> _Array3D[ScalarT]: ...
 @overload  # 2d +f64
 def polyvander(
-    x: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    x: _ToArray2D[np.integer | np.bool, float],
     deg: SupportsIndex,
 ) -> _Array3D[np.float64]: ...
 @overload  # 2d ~c128
@@ -1024,7 +1025,7 @@ def polyvander(
 ) -> _Array3D[np.object_]: ...
 @overload  # ?d  (fallback)
 def polyvander(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND | _SupportsCoefOps[Any],
     deg: SupportsIndex,
 ) -> npt.NDArray[Any]: ...
 
@@ -1079,8 +1080,8 @@ def polyvander2d[ScalarT: np.inexact](
 ) -> _Array3D[ScalarT]: ...
 @overload  # 2d +f64, 2d +f64
 def polyvander2d(
-    x: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
-    y: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
+    x: _ToArray2D[_AsFloat64, float],
+    y: _ToArray2D[_AsFloat64, float],
     deg: Sequence[SupportsIndex],
 ) -> _Array3D[np.float64]: ...
 @overload  # 2d ~c128, 2d +c128
@@ -1097,8 +1098,8 @@ def polyvander2d(
 ) -> _Array3D[np.object_]: ...
 @overload  # ?d, ?d  (fallback)
 def polyvander2d(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
-    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND | _SupportsCoefOps[Any],
+    y: _ToCoefND | _SupportsCoefOps[Any],
     deg: Sequence[SupportsIndex],
 ) -> npt.NDArray[Any]: ...
 
@@ -1161,9 +1162,9 @@ def polyvander3d[ScalarT: np.inexact](
 ) -> _Array3D[ScalarT]: ...
 @overload  # 2d +f64, 2d +f64, 2d +f64
 def polyvander3d(
-    x: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
-    y: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
-    z: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
+    x: _ToArray2D[_AsFloat64, float],
+    y: _ToArray2D[_AsFloat64, float],
+    z: _ToArray2D[_AsFloat64, float],
     deg: Sequence[SupportsIndex],
 ) -> _Array3D[np.float64]: ...
 @overload  # 2d ~c128, 2d +c128, 2d +c128
@@ -1182,9 +1183,9 @@ def polyvander3d(
 ) -> _Array3D[np.object_]: ...
 @overload  # ?d, ?d, ?d  (fallback)
 def polyvander3d(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
-    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
-    z: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND | _SupportsCoefOps[Any],
+    y: _ToCoefND | _SupportsCoefOps[Any],
+    z: _ToCoefND | _SupportsCoefOps[Any],
     deg: Sequence[SupportsIndex],
 ) -> npt.NDArray[Any]: ...
 

@@ -29,6 +29,7 @@ from ._polytypes import (
     _PolyScalar,
     _SupportsCoefOps,
     _ToCoef1D,
+    _ToCoefND,
 )
 from .polyutils import trimcoef as lagtrim
 
@@ -167,7 +168,7 @@ def lagder[ScalarT: np.inexact](
 ) -> _Array2D[ScalarT]: ...
 @overload  # 2d +f64
 def lagder(
-    c: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    c: _ToArray2D[np.integer | np.bool, float],
     m: SupportsIndex = 1,
     scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
     axis: SupportsIndex = 0,
@@ -188,7 +189,7 @@ def lagder(
 ) -> _Array2D[np.object_]: ...
 @overload  # ?d  (fallback)
 def lagder(
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND | _SupportsCoefOps[Any],
     m: SupportsIndex = 1,
     scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
     axis: SupportsIndex = 0,
@@ -269,7 +270,7 @@ def lagint[ScalarT: np.inexact](
 ) -> _Array2D[ScalarT]: ...
 @overload  # 2d +f64
 def lagint(
-    c: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    c: _ToArray2D[np.integer | np.bool, float],
     m: SupportsIndex = 1,
     k: _ToCoef1D = [],
     lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
@@ -296,7 +297,7 @@ def lagint(
 ) -> _Array2D[np.object_]: ...
 @overload  # ?d  (fallback)
 def lagint(
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND | _SupportsCoefOps[Any],
     m: SupportsIndex = 1,
     k: _ToCoef1D = [],
     lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
@@ -369,7 +370,7 @@ def lagval2d(
 def lagval2d(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 1d ~O, 1d ~O, ?d ~O
 def lagval2d(
@@ -466,7 +467,7 @@ def lagval3d(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     z: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 1d ~O, 1d ~O, 1d ~O, ?d ~O
 def lagval3d(
@@ -546,8 +547,8 @@ def lagvalnd(
 ) -> _Array1D[np.object_]: ...
 @overload  # *?d ?, ?d ?  (fallback)
 def lagvalnd(
-    pts: Sequence[_ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]]],
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    pts: Sequence[_ToCoefND | _SupportsCoefOps[Any]],
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 
 # keep in sync with `polynomial.*val`
@@ -614,7 +615,7 @@ def lagval(
 @overload  # ?d ?, ?d ?  (fallback)
 def lagval(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND,
     tensor: bool = True,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 1d ~O, ?d ~O
@@ -741,9 +742,9 @@ def laggrid2d[PolyT: ABCPolyBase](
 ) -> PolyT: ...
 @overload  # ?d ?, ?d ?, ?d ?  (fallback)
 def laggrid2d(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND,
+    y: _ToCoefND,
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 0d T, 0d T, ?d ~O
 def laggrid2d[CoefT: _SupportsCoefOps[Any]](
@@ -881,10 +882,10 @@ def laggrid3d(
 ) -> _Array3D[np.object_]: ...
 @overload  # ?d ?, ?d ?, ?d ?, ?d ?  (fallback)
 def laggrid3d(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    z: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND,
+    y: _ToCoefND,
+    z: _ToCoefND,
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 0d T, 0d T, 0d T, ?d ~O
 def laggrid3d[CoefT: _SupportsCoefOps[Any]](
@@ -937,7 +938,7 @@ def lagvander[ScalarT: np.inexact](
 ) -> _Array3D[ScalarT]: ...
 @overload  # 2d +f64
 def lagvander(
-    x: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    x: _ToArray2D[np.integer | np.bool, float],
     deg: SupportsIndex,
 ) -> _Array3D[np.float64]: ...
 @overload  # 2d ~c128
@@ -952,7 +953,7 @@ def lagvander(
 ) -> _Array3D[np.object_]: ...
 @overload  # ?d  (fallback)
 def lagvander(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND | _SupportsCoefOps[Any],
     deg: SupportsIndex,
 ) -> npt.NDArray[Any]: ...
 
@@ -1007,8 +1008,8 @@ def lagvander2d[ScalarT: np.inexact](
 ) -> _Array3D[ScalarT]: ...
 @overload  # 2d +f64, 2d +f64
 def lagvander2d(
-    x: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
-    y: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
+    x: _ToArray2D[_AsFloat64, float],
+    y: _ToArray2D[_AsFloat64, float],
     deg: Sequence[SupportsIndex],
 ) -> _Array3D[np.float64]: ...
 @overload  # 2d ~c128, 2d +c128
@@ -1025,8 +1026,8 @@ def lagvander2d(
 ) -> _Array3D[np.object_]: ...
 @overload  # ?d, ?d  (fallback)
 def lagvander2d(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
-    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND | _SupportsCoefOps[Any],
+    y: _ToCoefND | _SupportsCoefOps[Any],
     deg: Sequence[SupportsIndex],
 ) -> npt.NDArray[Any]: ...
 
@@ -1089,9 +1090,9 @@ def lagvander3d[ScalarT: np.inexact](
 ) -> _Array3D[ScalarT]: ...
 @overload  # 2d +f64, 2d +f64, 2d +f64
 def lagvander3d(
-    x: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
-    y: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
-    z: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
+    x: _ToArray2D[_AsFloat64, float],
+    y: _ToArray2D[_AsFloat64, float],
+    z: _ToArray2D[_AsFloat64, float],
     deg: Sequence[SupportsIndex],
 ) -> _Array3D[np.float64]: ...
 @overload  # 2d ~c128, 2d +c128, 2d +c128
@@ -1110,9 +1111,9 @@ def lagvander3d(
 ) -> _Array3D[np.object_]: ...
 @overload  # ?d, ?d, ?d  (fallback)
 def lagvander3d(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
-    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
-    z: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND | _SupportsCoefOps[Any],
+    y: _ToCoefND | _SupportsCoefOps[Any],
+    z: _ToCoefND | _SupportsCoefOps[Any],
     deg: Sequence[SupportsIndex],
 ) -> npt.NDArray[Any]: ...
 

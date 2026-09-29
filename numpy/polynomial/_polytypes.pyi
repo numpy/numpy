@@ -15,6 +15,7 @@ import numpy as np
 import numpy.typing as npt
 from numpy._typing import (
     _ArrayLikeNumber_co,
+    _ArrayLikeObject_co,
     _ComplexLike_co,
     _FloatLike_co,
     _IntLike_co,
@@ -43,6 +44,7 @@ class _SupportsCoefOps[T](Protocol):
     def __rmul__(self, x: T, /) -> Self: ...
 
 type _ToCoef1D = _SupportsCoefOps[Any] | Sequence[_SupportsCoefOps[Any]] | npt.NDArray[np.number | np.bool | np.object_]
+type _ToCoefND = _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]]
 
 type _PolyScalar = np.bool | np.number | np.object_
 
