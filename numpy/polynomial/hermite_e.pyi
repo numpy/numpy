@@ -26,7 +26,6 @@ from ._polytypes import (
     _FuncPow,
     _FuncRoots,
     _FuncUnOp,
-    _FuncVander3D,
     _PolyScalar,
     _SupportsCoefOps,
     _ToCoef1D,
@@ -1031,7 +1030,91 @@ def hermevander2d(
     deg: Sequence[SupportsIndex],
 ) -> npt.NDArray[Any]: ...
 
-hermevander3d: Final[_FuncVander3D] = ...
+# keep in sync with `polynomial.*vander3d`
+@overload  # ?d T, ?d T, ?d T  (workaround)
+def hermevander3d[ScalarT: np.inexact](
+    x: _ArrayJustND[ScalarT],
+    y: _ArrayJustND[ScalarT],
+    z: _ArrayJustND[ScalarT],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[ScalarT]: ...
+@overload  # ?d +f64, ?d +f64, ?d +f64  (workaround)
+def hermevander3d(
+    x: _ArrayJustND[_AsFloat64],
+    y: _ArrayJustND[_AsFloat64],
+    z: _ArrayJustND[_AsFloat64],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d ~O, ?d ~O, ?d ~O  (workaround)
+def hermevander3d(
+    x: _ArrayJustND[np.object_],
+    y: _ArrayJustND[np.object_],
+    z: _ArrayJustND[np.object_],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[np.object_]: ...
+@overload  # <=1d T, <=1d T, <=1d T
+def hermevander3d[ScalarT: np.inexact](
+    x: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    y: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    z: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[ScalarT]: ...
+@overload  # <=1d +f64, <=1d +f64, <=1d +f64
+def hermevander3d(
+    x: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[_AsFloat64]]] | Sequence[float] | float,
+    y: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[_AsFloat64]]] | Sequence[float] | float,
+    z: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[_AsFloat64]]] | Sequence[float] | float,
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[np.float64]: ...
+@overload  # <=1d ~c128, <=1d +c128, <=1d +c128
+def hermevander3d(
+    x: list[complex],
+    y: Sequence[complex] | complex,
+    z: Sequence[complex] | complex,
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[np.complex128]: ...
+@overload  # 1d ~O, 1d ~O, 1d ~O
+def hermevander3d(
+    x: _Array1D[np.object_],
+    y: _Array1D[np.object_],
+    z: _Array1D[np.object_],
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[np.object_]: ...
+@overload  # 2d T, 2d T, 2d T
+def hermevander3d[ScalarT: np.inexact](
+    x: _Array2D[ScalarT],
+    y: _Array2D[ScalarT],
+    z: _Array2D[ScalarT],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[ScalarT]: ...
+@overload  # 2d +f64, 2d +f64, 2d +f64
+def hermevander3d(
+    x: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
+    y: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
+    z: _Array2D[_AsFloat64] | Sequence[Sequence[float]],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[np.float64]: ...
+@overload  # 2d ~c128, 2d +c128, 2d +c128
+def hermevander3d(
+    x: Sequence[list[complex]],
+    y: Sequence[Sequence[complex]],
+    z: Sequence[Sequence[complex]],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[np.complex128]: ...
+@overload  # 2d ~O, 2d ~O, 2d ~O
+def hermevander3d(
+    x: _Array2D[np.object_],
+    y: _Array2D[np.object_],
+    z: _Array2D[np.object_],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[np.object_]: ...
+@overload  # ?d, ?d, ?d  (fallback)
+def hermevander3d(
+    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    z: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[Any]: ...
 
 # keep in sync with `polynomial.*fit`
 @overload  # Nd +f64
