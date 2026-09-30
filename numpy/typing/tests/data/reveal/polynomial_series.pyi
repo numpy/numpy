@@ -78,10 +78,6 @@ def _func_O_1d(x: _Array1D[np.float64], /) -> _Array1D[np.object_[int]]: ...
 def _func_O_1d_args(x: _Array1D[np.float64], a: float, /) -> _Array1D[np.object_[int]]: ...
 def _func_f8_2d(x: _Array1D[np.float64], /) -> _Array2D[np.float64]: ...
 
-assert_type(npp.polynomial.polyfromroots(AR_f8), _ArrFloat1D)
-assert_type(npp.polynomial.polyfromroots(AR_c16), _ArrComplex1D)
-assert_type(npp.polynomial.polyfromroots(AR_O), _ArrObject1D)
-
 # assert_type(npp.polynomial.polyadd(AR_b, AR_b), NoReturn)
 assert_type(npp.polynomial.polyadd(AR_u4, AR_b), _ArrFloat1D)
 assert_type(npp.polynomial.polyadd(AR_i8, AR_i8), _ArrFloat1D)
@@ -1295,6 +1291,38 @@ assert_type(npp.laguerre.lagroots(_f4_1d_list), _Array1D[np.float32 | np.complex
 assert_type(npp.laguerre.lagroots(_py_f_1d), _Array1D[np.float64 | np.complex128])
 assert_type(npp.laguerre.lagroots(_py_c_1d), _Array1D[np.complex128])
 assert_type(npp.laguerre.lagroots(_py_decimal_1d), _Array1D[Any])
+
+# fromroots
+
+assert_type(npp.polynomial.polyfromroots(AR_f10_1d), _Array1D[np.longdouble])
+assert_type(npp.polynomial.polyfromroots(AR_f4_1d), _Array1D[np.float64])
+assert_type(npp.polynomial.polyfromroots(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.polynomial.polyfromroots(AR_O_1d), _Array1D[Any])
+
+assert_type(npp.chebyshev.chebfromroots(AR_f10_1d), _Array1D[np.longdouble])
+assert_type(npp.chebyshev.chebfromroots(AR_f4_1d), _Array1D[np.float64])
+assert_type(npp.chebyshev.chebfromroots(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.chebyshev.chebfromroots(AR_O_1d), _Array1D[Any])
+
+assert_type(npp.legendre.legfromroots(AR_f10_1d), _Array1D[np.longdouble])
+assert_type(npp.legendre.legfromroots(AR_f4_1d), _Array1D[np.float64])
+assert_type(npp.legendre.legfromroots(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.legendre.legfromroots(AR_O_1d), _Array1D[Any])
+
+assert_type(npp.hermite.hermfromroots(AR_f10_1d), _Array1D[np.longdouble])
+assert_type(npp.hermite.hermfromroots(AR_f4_1d), _Array1D[np.float64])
+assert_type(npp.hermite.hermfromroots(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.hermite.hermfromroots(AR_O_1d), _Array1D[Any])
+
+assert_type(npp.hermite_e.hermefromroots(AR_f10_1d), _Array1D[np.longdouble])
+assert_type(npp.hermite_e.hermefromroots(AR_f4_1d), _Array1D[np.float64])
+assert_type(npp.hermite_e.hermefromroots(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.hermite_e.hermefromroots(AR_O_1d), _Array1D[Any])
+
+assert_type(npp.laguerre.lagfromroots(AR_f10_1d), _Array1D[np.longdouble])
+assert_type(npp.laguerre.lagfromroots(AR_f4_1d), _Array1D[np.float64])
+assert_type(npp.laguerre.lagfromroots(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.laguerre.lagfromroots(AR_O_1d), _Array1D[Any])
 
 # mulx
 

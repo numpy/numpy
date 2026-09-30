@@ -255,7 +255,7 @@ def _vander_nd_flat(
     degrees: Sequence[SupportsIndex],
 ) -> _CoefArray: ...
 
-# keep in sync with `._polytypes._FuncFromRoots`
+#
 @overload
 def _fromroots(line_f: _AnyLineF, mul_f: _AnyMulF, roots: _SeriesLikeFloat_co) -> _FloatSeries: ...
 @overload

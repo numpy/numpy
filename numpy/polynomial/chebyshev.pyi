@@ -29,7 +29,6 @@ from ._polytypes import (
     _CanArray,
     _CoefSeries,
     _FuncBinOp,
-    _FuncFromRoots,
     _FuncLine,
     _FuncPow,
     _PolyScalar,
@@ -150,7 +149,25 @@ chebone: Final[_Array1D[np.int_]] = ...
 chebx: Final[_Array1D[np.int_]] = ...
 
 chebline: Final[_FuncLine] = ...
-chebfromroots: Final[_FuncFromRoots] = ...
+
+# keep in sync with `polynomial.*fromroots`
+@overload  # 1d T
+def chebfromroots[ScalarT: np.longdouble | np.clongdouble](
+    roots: _CanArray[_Array1D[ScalarT]],
+) -> _Array1D[ScalarT]: ...
+@overload  # 1d +f64
+def chebfromroots(
+    roots: _CanArray[_Array1D[np.float64 | np.float32 | np.float16 | np.integer]] | Sequence[float],
+) -> _Array1D[np.float64]: ...
+@overload  # 1d +c128
+def chebfromroots(
+    roots: _CanArray[_Array1D[np.complex128 | np.complex64]] | list[complex],
+) -> _Array1D[np.complex128]: ...
+@overload  # 1d  (fallback)
+def chebfromroots(
+    roots: _CanArray[_Array1D[np.number | np.object_]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]],
+) -> _Array1D[Any]: ...
+
 chebadd: Final[_FuncBinOp] = ...
 chebsub: Final[_FuncBinOp] = ...
 
