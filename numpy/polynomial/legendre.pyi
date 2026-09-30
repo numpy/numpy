@@ -18,7 +18,6 @@ from ._polytypes import (
     _FuncBinOp,
     _FuncFromRoots,
     _FuncLine,
-    _FuncPoly2Ortho,
     _FuncPow,
     _PolyScalar,
     _SupportsCoefOps,
@@ -86,7 +85,23 @@ type _ToInt_1D = _SupportsArray[np.dtype[np.integer]] | Sequence[SupportsIndex]
 
 ###
 
-poly2leg: Final[_FuncPoly2Ortho] = ...
+# keep in sync with `polynomial.poly2*`
+@overload  # <=1d T
+def poly2leg[ScalarT: np.longdouble | np.clongdouble](
+    pol: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+) -> _Array1D[ScalarT]: ...
+@overload  # <=1d +f64
+def poly2leg(
+    pol: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[_ToFloat64]]] | Sequence[float] | float,
+) -> _Array1D[np.float64]: ...
+@overload  # <=1d +c128
+def poly2leg(
+    pol: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64]]] | list[complex],
+) -> _Array1D[np.complex128]: ...
+@overload  # <=1d  (fallback)
+def poly2leg(
+    pol: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+) -> _Array1D[Any]: ...
 
 # keep in sync with `polynomial.*2poly`
 @overload  # <=1d T
