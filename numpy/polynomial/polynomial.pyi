@@ -550,9 +550,9 @@ def polyval[ShapeT: _Shape](
     c: _ToArray1D[_AsFloat64, float],
     tensor: bool = True,
 ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
-@overload  # Nd +f64, 1d ~c128
+@overload  # Nd +c128, 1d ~c128
 def polyval[ShapeT: _Shape](
-    x: np.ndarray[ShapeT, np.dtype[_ToFloat64]],
+    x: np.ndarray[ShapeT, np.dtype[np.complex128 | np.complex64 | _ToFloat64]],
     c: _Array1D[np.complex128] | list[complex],
     tensor: bool = True,
 ) -> np.ndarray[ShapeT, np.dtype[np.complex128]]: ...

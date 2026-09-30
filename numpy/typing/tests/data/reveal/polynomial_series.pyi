@@ -35,6 +35,7 @@ AR_f4_2d: _Array2D[np.float32]
 AR_f4_3d: _Array3D[np.float32]
 AR_f8_2d: _Array2D[np.float64]
 AR_f10_2d: _Array2D[np.longdouble]
+AR_c8_2d: _Array2D[np.complex64]
 AR_c16_2d: _Array2D[np.complex128]
 AR_O_1d: _Array1D[np.object_[int]]
 AR_O_2d: _Array2D[np.object_[int]]
@@ -257,6 +258,7 @@ assert_type(npp.hermite_e.hermeint(_py_f64_2d), npt.NDArray[Any])
 
 assert_type(npp.polynomial.polyval(AR_f8_2d, _py_f_1d), _Array2D[np.float64])
 assert_type(npp.polynomial.polyval(AR_f8_2d, _py_c_1d), _Array2D[np.complex128])
+assert_type(npp.polynomial.polyval(AR_c8_2d, _py_c_1d), _Array2D[np.complex128])
 assert_type(npp.polynomial.polyval(AR_c16_2d, _py_f_1d), _Array2D[np.complex128])
 assert_type(npp.polynomial.polyval(AR_O_2d, _py_f_1d), _Array2D[np.object_])
 assert_type(npp.polynomial.polyval(AR_f10_2d, _py_f_1d), _Array2D[Any])
