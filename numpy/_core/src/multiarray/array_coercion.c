@@ -237,6 +237,12 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
     else if (pytype == &PyLong_Type) {
         return &PyArray_PyLongDType;
     }
+    else if (pytype == &PyBool_Type) {
+        return typenum_to_dtypemeta(NPY_BOOL);
+    }
+    else if (pytype == &PyComplex_Type) {
+        return &PyArray_PyComplexDType;
+    }
     /* Builtin scalar types: avoid the dict lookup (it must take a reference) */
     int typenum = _typenum_fromtypeobj((PyObject *)pytype, 0);
     if (typenum != NPY_NOTYPE) {
