@@ -1484,6 +1484,56 @@ assert_type(npp.laguerre.lagsub(AR_O_1d, _py_f_1d), npt.Array1D[np.object_])
 assert_type(npp.laguerre.lagsub(_py_f_1d, AR_O_1d), npt.Array1D[np.object_])
 assert_type(npp.laguerre.lagsub(_py_decimal_1d, _py_decimal_1d), npt.Array1D[Any])
 
+# mul
+
+assert_type(npp.polynomial.polymul(AR_f4_1d, AR_f4_1d), npt.Array1D[np.float32])
+assert_type(npp.polynomial.polymul(_py_f_1d, _py_f_1d), npt.Array1D[np.float64])
+assert_type(npp.polynomial.polymul(_py_c_1d, _py_f_1d), npt.Array1D[np.complex128])
+assert_type(npp.polynomial.polymul(_py_f_1d, _py_c_1d), npt.Array1D[np.complex128])
+assert_type(npp.polynomial.polymul(AR_O_1d, _py_f_1d), npt.Array1D[np.object_])
+assert_type(npp.polynomial.polymul(_py_f_1d, AR_O_1d), npt.Array1D[np.object_])
+assert_type(npp.polynomial.polymul(_py_decimal_1d, _py_decimal_1d), npt.Array1D[Any])
+
+assert_type(npp.chebyshev.chebmul(AR_f4_1d, AR_f4_1d), npt.Array1D[np.float32])
+assert_type(npp.chebyshev.chebmul(_py_f_1d, _py_f_1d), npt.Array1D[np.float64])
+assert_type(npp.chebyshev.chebmul(_py_c_1d, _py_f_1d), npt.Array1D[np.complex128])
+assert_type(npp.chebyshev.chebmul(_py_f_1d, _py_c_1d), npt.Array1D[np.complex128])
+assert_type(npp.chebyshev.chebmul(AR_O_1d, _py_f_1d), npt.Array1D[np.object_])
+assert_type(npp.chebyshev.chebmul(_py_f_1d, AR_O_1d), npt.Array1D[np.object_])
+assert_type(npp.chebyshev.chebmul(_py_decimal_1d, _py_decimal_1d), npt.Array1D[Any])
+
+assert_type(npp.legendre.legmul(AR_f4_1d, AR_f4_1d), npt.Array1D[np.float32])
+assert_type(npp.legendre.legmul(_py_f_1d, _py_f_1d), npt.Array1D[np.float64])
+assert_type(npp.legendre.legmul(_py_c_1d, _py_f_1d), npt.Array1D[np.complex128])
+assert_type(npp.legendre.legmul(_py_f_1d, _py_c_1d), npt.Array1D[np.complex128])
+assert_type(npp.legendre.legmul(AR_O_1d, _py_f_1d), npt.Array1D[np.object_])
+assert_type(npp.legendre.legmul(_py_f_1d, AR_O_1d), npt.Array1D[np.object_])
+assert_type(npp.legendre.legmul(_py_decimal_1d, _py_decimal_1d), npt.Array1D[Any])
+
+assert_type(npp.hermite.hermmul(AR_f4_1d, AR_f4_1d), npt.Array1D[np.float32])
+assert_type(npp.hermite.hermmul(_py_f_1d, _py_f_1d), npt.Array1D[np.float64])
+assert_type(npp.hermite.hermmul(_py_c_1d, _py_f_1d), npt.Array1D[np.complex128])
+assert_type(npp.hermite.hermmul(_py_f_1d, _py_c_1d), npt.Array1D[np.complex128])
+assert_type(npp.hermite.hermmul(AR_O_1d, _py_f_1d), npt.Array1D[np.object_])
+assert_type(npp.hermite.hermmul(_py_f_1d, AR_O_1d), npt.Array1D[np.object_])
+assert_type(npp.hermite.hermmul(_py_decimal_1d, _py_decimal_1d), npt.Array1D[Any])
+
+assert_type(npp.hermite_e.hermemul(AR_f4_1d, AR_f4_1d), npt.Array1D[np.float32])
+assert_type(npp.hermite_e.hermemul(_py_f_1d, _py_f_1d), npt.Array1D[np.float64])
+assert_type(npp.hermite_e.hermemul(_py_c_1d, _py_f_1d), npt.Array1D[np.complex128])
+assert_type(npp.hermite_e.hermemul(_py_f_1d, _py_c_1d), npt.Array1D[np.complex128])
+assert_type(npp.hermite_e.hermemul(AR_O_1d, _py_f_1d), npt.Array1D[np.object_])
+assert_type(npp.hermite_e.hermemul(_py_f_1d, AR_O_1d), npt.Array1D[np.object_])
+assert_type(npp.hermite_e.hermemul(_py_decimal_1d, _py_decimal_1d), npt.Array1D[Any])
+
+assert_type(npp.laguerre.lagmul(AR_f4_1d, AR_f4_1d), npt.Array1D[np.float32])
+assert_type(npp.laguerre.lagmul(_py_f_1d, _py_f_1d), npt.Array1D[np.float64])
+assert_type(npp.laguerre.lagmul(_py_c_1d, _py_f_1d), npt.Array1D[np.complex128])
+assert_type(npp.laguerre.lagmul(_py_f_1d, _py_c_1d), npt.Array1D[np.complex128])
+assert_type(npp.laguerre.lagmul(AR_O_1d, _py_f_1d), npt.Array1D[np.object_])
+assert_type(npp.laguerre.lagmul(_py_f_1d, AR_O_1d), npt.Array1D[np.object_])
+assert_type(npp.laguerre.lagmul(_py_decimal_1d, _py_decimal_1d), npt.Array1D[Any])
+
 # mulx
 
 assert_type(npp.polynomial.polymulx(AR_f4_1d), npt.Array1D[np.float32])
