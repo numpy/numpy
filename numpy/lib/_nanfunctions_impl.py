@@ -1673,8 +1673,14 @@ def _nanquantile_1d(
     arr1d, weights, overwrite_input = _remove_nan_1d(arr1d,
         second_arr1d=weights, overwrite_input=overwrite_input)
     if arr1d.size == 0:
-        # convert to scalar
-        return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
+        # Match the dtype selected by quantile for this method and q, so an
+        # all-NaN first slice cannot narrow later results in apply_along_axis.
+        return fnb._quantile_unchecked(
+            np.full(1, np.nan, dtype=arr1d.dtype),
+            q,
+            method=method,
+            weak_q=weak_q,
+        )
 
     return fnb._quantile_unchecked(
         arr1d,
