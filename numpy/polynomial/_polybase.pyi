@@ -17,7 +17,6 @@ from numpy._typing import (
 
 from ._polytypes import (
     _AnyInt,
-    _Array2,
     _ArrayLikeCoef_co,
     _ArrayLikeCoefObject_co,
     _CoefLike_co,
@@ -50,10 +49,10 @@ class ABCPolyBase(Generic[_NameT_co], abc.ABC):  # noqa: UP046
     def symbol(self, /) -> str: ...
     @property
     @abc.abstractmethod
-    def domain(self) -> _Array2[np.float64 | Any]: ...
+    def domain(self) -> np.ndarray[tuple[int], np.dtype[np.float64 | Any]]: ...
     @property
     @abc.abstractmethod
-    def window(self) -> _Array2[np.float64 | Any]: ...
+    def window(self) -> np.ndarray[tuple[int], np.dtype[np.float64 | Any]]: ...
     @property
     @abc.abstractmethod
     def basis_name(self) -> _NameT_co: ...

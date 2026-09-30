@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from typing import (
     Any,
-    Literal,
     NoReturn,
     Protocol,
     Self,
@@ -61,8 +60,6 @@ type _ObjectArray = npt.NDArray[np.object_]
 type _CoefArray = npt.NDArray[np.inexact | np.object_]
 
 type _Tuple2[_T] = tuple[_T, _T]
-type _Array1[ScalarT: _PolyScalar] = np.ndarray[tuple[Literal[1]], np.dtype[ScalarT]]
-type _Array2[ScalarT: _PolyScalar] = np.ndarray[tuple[Literal[2]], np.dtype[ScalarT]]
 
 type _AnyInt = SupportsInt | SupportsIndex
 

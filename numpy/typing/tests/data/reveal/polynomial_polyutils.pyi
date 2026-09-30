@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from decimal import Decimal
 from fractions import Fraction
-from typing import Any, Literal as L, assert_type
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.polynomial.polyutils as pu
@@ -11,10 +11,6 @@ from numpy.polynomial._polytypes import _Tuple2
 type _ArrFloat1D = np.ndarray[tuple[int], np.dtype[np.floating]]
 type _ArrComplex1D = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
 type _ArrObject1D = np.ndarray[tuple[int], np.dtype[np.object_]]
-
-type _ArrFloat1D_2 = np.ndarray[tuple[L[2]], np.dtype[np.float64]]
-type _ArrComplex1D_2 = np.ndarray[tuple[L[2]], np.dtype[np.complex128]]
-type _ArrObject1D_2 = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
 
 type _Ar1d[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Ar2d[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
@@ -127,31 +123,31 @@ assert_type(pu.trimcoef(seq_sct_object), _ArrObject1D)
 
 # getdomain
 
-assert_type(pu.getdomain(num_int), _ArrFloat1D_2)
-assert_type(pu.getdomain(num_float), _ArrFloat1D_2)
-assert_type(pu.getdomain(num_complex), _ArrComplex1D_2)
-assert_type(pu.getdomain(num_object), _ArrObject1D_2)
-assert_type(pu.getdomain(num_object), _ArrObject1D_2)
+assert_type(pu.getdomain(num_int), _Ar1d[np.float64])
+assert_type(pu.getdomain(num_float), _Ar1d[np.float64])
+assert_type(pu.getdomain(num_complex), _Ar1d[np.complex128])
+assert_type(pu.getdomain(num_object), _Ar1d[np.object_])
+assert_type(pu.getdomain(num_object), _Ar1d[np.object_])
 
-assert_type(pu.getdomain(sct_int), _ArrFloat1D_2)
-assert_type(pu.getdomain(sct_float), _ArrFloat1D_2)
-assert_type(pu.getdomain(sct_complex), _ArrComplex1D_2)
-assert_type(pu.getdomain(sct_object), _ArrObject1D_2)
+assert_type(pu.getdomain(sct_int), _Ar1d[np.float64])
+assert_type(pu.getdomain(sct_float), _Ar1d[np.float64])
+assert_type(pu.getdomain(sct_complex), _Ar1d[np.complex128])
+assert_type(pu.getdomain(sct_object), _Ar1d[np.object_])
 
-assert_type(pu.getdomain(arr_int), _ArrFloat1D_2)
-assert_type(pu.getdomain(arr_float), _ArrFloat1D_2)
-assert_type(pu.getdomain(arr_complex), _ArrComplex1D_2)
-assert_type(pu.getdomain(arr_object), _ArrObject1D_2)
+assert_type(pu.getdomain(arr_int), _Ar1d[np.float64])
+assert_type(pu.getdomain(arr_float), _Ar1d[np.float64])
+assert_type(pu.getdomain(arr_complex), _Ar1d[np.complex128])
+assert_type(pu.getdomain(arr_object), _Ar1d[np.object_])
 
-assert_type(pu.getdomain(seq_num_int), _ArrFloat1D_2)
-assert_type(pu.getdomain(seq_num_float), _ArrFloat1D_2)
-assert_type(pu.getdomain(seq_num_complex), _ArrComplex1D_2)
-assert_type(pu.getdomain(seq_num_object), _ArrObject1D_2)
+assert_type(pu.getdomain(seq_num_int), _Ar1d[np.float64])
+assert_type(pu.getdomain(seq_num_float), _Ar1d[np.float64])
+assert_type(pu.getdomain(seq_num_complex), _Ar1d[np.complex128])
+assert_type(pu.getdomain(seq_num_object), _Ar1d[np.object_])
 
-assert_type(pu.getdomain(seq_sct_int), _ArrFloat1D_2)
-assert_type(pu.getdomain(seq_sct_float), _ArrFloat1D_2)
-assert_type(pu.getdomain(seq_sct_complex), _ArrComplex1D_2)
-assert_type(pu.getdomain(seq_sct_object), _ArrObject1D_2)
+assert_type(pu.getdomain(seq_sct_int), _Ar1d[np.float64])
+assert_type(pu.getdomain(seq_sct_float), _Ar1d[np.float64])
+assert_type(pu.getdomain(seq_sct_complex), _Ar1d[np.complex128])
+assert_type(pu.getdomain(seq_sct_object), _Ar1d[np.object_])
 
 # mapparms
 

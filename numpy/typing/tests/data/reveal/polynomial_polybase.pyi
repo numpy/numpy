@@ -17,11 +17,6 @@ type _Ar_f_n = np.ndarray[tuple[int], np.dtype[np.floating]]
 type _Ar_c_n = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
 type _Ar_O_n = np.ndarray[tuple[int], np.dtype[np.object_]]
 
-type _Ar_x_2 = np.ndarray[tuple[L[2]], np.dtype[np.float64 | Any]]
-type _Ar_f_2 = np.ndarray[tuple[L[2]], np.dtype[np.floating]]
-type _Ar_c_2 = np.ndarray[tuple[L[2]], np.dtype[np.complexfloating]]
-type _Ar_O_2 = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
-
 type _Ar_1d[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Ar_2d[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
@@ -107,8 +102,8 @@ assert_type(type(PS_herme).cast(PS_leg), npp.HermiteE)
 # attributes / properties
 
 assert_type(PS_all.coef, np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
-assert_type(PS_all.domain, _Ar_x_2)
-assert_type(PS_all.window, _Ar_x_2)
+assert_type(PS_all.domain, _Ar_1d[np.float64 | Any])
+assert_type(PS_all.window, _Ar_1d[np.float64 | Any])
 assert_type(PS_all.symbol, str)
 
 # instance methods

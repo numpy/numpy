@@ -22,7 +22,6 @@ from numpy._typing import (
 
 from ._polytypes import (
     _AnyInt,
-    _Array2,
     _ArrayLikeCoef_co,
     _CoefArray,
     _CoefLike_co,
@@ -50,6 +49,8 @@ __all__ = ["as_series", "format_float", "getdomain", "mapdomain", "mapparms", "t
 type _AnyLineF = Callable[[float, float], _CoefArray]
 type _AnyMulF = Callable[[np.ndarray | list[int], np.ndarray], _CoefArray]
 type _AnyVanderF = Callable[[np.ndarray, int], _CoefArray]
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 
 @type_check_only
 class _ValFunc[T](Protocol):
@@ -95,17 +96,17 @@ def trimcoef(c: _SeriesLikeCoef_co | object, tol: _FloatLike_co = 0) -> _ObjectS
 
 #
 @overload
-def getdomain(x: _FloatArray | npt.NDArray[np.integer]) -> _Array2[np.float64]: ...
+def getdomain(x: _FloatArray | npt.NDArray[np.integer]) -> _Array1D[np.float64]: ...
 @overload
-def getdomain(x: _ComplexArray) -> _Array2[np.complex128]: ...
+def getdomain(x: _ComplexArray) -> _Array1D[np.complex128]: ...
 @overload
-def getdomain(x: _ObjectArray) -> _Array2[np.object_]: ...
+def getdomain(x: _ObjectArray) -> _Array1D[np.object_]: ...
 @overload
-def getdomain(x: _SeriesLikeFloat_co | float) -> _Array2[np.float64]: ...
+def getdomain(x: _SeriesLikeFloat_co | float) -> _Array1D[np.float64]: ...
 @overload
-def getdomain(x: _SeriesLikeComplex_co | complex) -> _Array2[np.complex128]: ...
+def getdomain(x: _SeriesLikeComplex_co | complex) -> _Array1D[np.complex128]: ...
 @overload
-def getdomain(x: _SeriesLikeCoef_co | object) -> _Array2[np.object_]: ...
+def getdomain(x: _SeriesLikeCoef_co | object) -> _Array1D[np.object_]: ...
 
 #
 @overload
