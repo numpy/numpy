@@ -1228,6 +1228,10 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
 
     NPY_END_THREADS;
     NPY_AUXDATA_FREE(auxdata);
+    /* Legacy loops may set an error without returning -1, see the trivial loop. */
+    if (PyErr_Occurred()) {
+        res = -1;
+    }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
@@ -6280,6 +6284,9 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     }
 
     NPY_END_THREADS;
+    if (PyErr_Occurred()) {
+        res = -1;
+    }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
@@ -6449,6 +6456,9 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
 
     if (res != 0 && err_msg) {
         PyErr_SetString(PyExc_ValueError, err_msg);
+    }
+    if (PyErr_Occurred()) {
+        res = -1;
     }
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */

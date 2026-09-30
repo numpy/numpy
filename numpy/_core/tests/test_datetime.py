@@ -1386,6 +1386,11 @@ class TestDateTime:
         pytest.param(lambda: _TD_ARR * 2.5, id="arr*float"),
         pytest.param(lambda: 2.5 * _TD_ARR, id="float*arr"),
         pytest.param(lambda: _TD_ARR / 0.4, id="arr/float"),
+        # non-trivial loops with an inf result also set the FPU overflow flag
+        pytest.param(lambda: _TD_ARR * np.full((2, 1), 1e300), id="arr*inf-bcast"),
+        pytest.param(lambda: _TD_ARR / np.full((2, 1), 1e-300), id="arr/tiny-bcast"),
+        pytest.param(lambda: np.multiply.at(_TD_ARR.copy(), [1], 1e300),
+                     id="multiply.at"),
     ])
     def test_float_arithmetic_overflow_raises(self, expr):
         with pytest.raises(OverflowError, match="Overflow"):
