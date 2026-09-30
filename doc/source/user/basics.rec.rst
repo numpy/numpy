@@ -621,6 +621,19 @@ When promoting multiple dtypes, the result is aligned if any of the inputs is::
 The ``<`` and ``>`` operators always return ``False`` when comparing void
 structured arrays, and arithmetic and bitwise operations are not supported.
 
+More generally, ufuncs and methods built on them, such as reductions like
+`~numpy.ndarray.sum`, `~numpy.ndarray.mean` or `~numpy.ndarray.max`, do not
+work on structured arrays (including record arrays) and raise an error. (The
+``==`` and ``!=`` operators described above are handled specially.) These
+operations should be applied to the individual fields instead::
+
+ >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', 'f8'), ('y', 'i8')])
+ >>> x['x'].sum()
+ np.float64(4.0)
+
+Supporting a ufunc for a structured dtype requires registering a custom
+loop, see :ref:`sec:NumPy-struct-dtype`.
+
 .. versionchanged:: 1.23
     Before NumPy 1.23, a warning was given and ``False`` returned when
     promotion to a common dtype failed.
