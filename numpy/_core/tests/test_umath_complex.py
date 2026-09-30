@@ -426,13 +426,18 @@ class TestCpow:
 class TestCdiv:
     @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
     @pytest.mark.parametrize("numerator, denominator", [
+        # Case 1
         (1 + 1j, complex(np.nan, 1)),
         (1 + 1j, complex(1, np.nan)),
         (1 + 1j, complex(np.nan, np.nan)),
+        # Case 2
+        (complex(np.nan, np.inf), 1),
+        (complex(np.inf, np.nan), 1),
+        (complex(np.nan, 1), complex(np.inf, np.inf)),
+        # Case 3
         (complex(np.nan, 0), 0j),
         (complex(0, np.nan), 0j),
-        (complex(np.nan, np.inf), 1),
-        (complex(np.nan, 1), complex(np.inf, np.inf)),
+        (complex(np.nan, np.nan), 0j),
     ])
     def test_nan_components(self, dtype, numerator, denominator):
         numerator = np.array(numerator, dtype=dtype)
