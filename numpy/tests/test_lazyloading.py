@@ -33,3 +33,23 @@ def test_lazy_load():
         np.ndarray
         """)
     run_subprocess((sys.executable, '-c', code))
+
+
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
+@pytest.mark.skipif(sys.version_info < (3, 15),
+                    reason="__lazy_modules__ needs Python 3.15")
+def test_lazy_modules_not_imported():
+    # Modules declared in `__lazy_modules__` are only loaded on first use.
+    code = textwrap.dedent(r"""
+        import sys
+        import numpy as np
+        lazy = {"platform", "numpy.linalg", "numpy.polynomial.legendre"}
+        assert not lazy & set(sys.modules), lazy & set(sys.modules)
+        np.polynomial.Polynomial([1, 2])(3)
+        assert "numpy.polynomial.legendre" not in sys.modules
+        assert np.polyfit([0, 1, 2], [0, 1, 2], 1).round(3).tolist() == [1.0, 0.0]
+        assert "numpy.linalg" in sys.modules
+        print("ok")
+        """)
+    p = run_subprocess([sys.executable, "-c", code])
+    assert p.stdout.strip() == "ok"
