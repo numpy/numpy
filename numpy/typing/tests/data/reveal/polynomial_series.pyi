@@ -1534,6 +1534,56 @@ assert_type(npp.laguerre.lagmul(AR_O_1d, _py_f_1d), npt.Array1D[np.object_])
 assert_type(npp.laguerre.lagmul(_py_f_1d, AR_O_1d), npt.Array1D[np.object_])
 assert_type(npp.laguerre.lagmul(_py_decimal_1d, _py_decimal_1d), npt.Array1D[Any])
 
+# div
+
+assert_type(npp.polynomial.polydiv(AR_f10_1d, AR_f10_1d), tuple[npt.Array1D[np.longdouble], npt.Array1D[np.longdouble]])
+assert_type(npp.polynomial.polydiv(_py_f_1d, _py_f_1d), tuple[npt.Array1D[np.float64], npt.Array1D[np.float64]])
+assert_type(npp.polynomial.polydiv(_py_c_1d, _py_f_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.polynomial.polydiv(_py_f_1d, _py_c_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.polynomial.polydiv(AR_O_1d, _py_f_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.polynomial.polydiv(_py_f_1d, AR_O_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.polynomial.polydiv(_py_decimal_1d, _py_decimal_1d), tuple[npt.Array1D[Any], npt.Array1D[Any]])
+
+assert_type(npp.chebyshev.chebdiv(AR_f10_1d, AR_f10_1d), tuple[npt.Array1D[np.longdouble], npt.Array1D[np.longdouble]])
+assert_type(npp.chebyshev.chebdiv(_py_f_1d, _py_f_1d), tuple[npt.Array1D[np.float64], npt.Array1D[np.float64]])
+assert_type(npp.chebyshev.chebdiv(_py_c_1d, _py_f_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.chebyshev.chebdiv(_py_f_1d, _py_c_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.chebyshev.chebdiv(AR_O_1d, _py_f_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.chebyshev.chebdiv(_py_f_1d, AR_O_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.chebyshev.chebdiv(_py_decimal_1d, _py_decimal_1d), tuple[npt.Array1D[Any], npt.Array1D[Any]])
+
+assert_type(npp.legendre.legdiv(AR_f10_1d, AR_f10_1d), tuple[npt.Array1D[np.longdouble], npt.Array1D[np.longdouble]])
+assert_type(npp.legendre.legdiv(_py_f_1d, _py_f_1d), tuple[npt.Array1D[np.float64], npt.Array1D[np.float64]])
+assert_type(npp.legendre.legdiv(_py_c_1d, _py_f_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.legendre.legdiv(_py_f_1d, _py_c_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.legendre.legdiv(AR_O_1d, _py_f_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.legendre.legdiv(_py_f_1d, AR_O_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.legendre.legdiv(_py_decimal_1d, _py_decimal_1d), tuple[npt.Array1D[Any], npt.Array1D[Any]])
+
+assert_type(npp.hermite.hermdiv(AR_f10_1d, AR_f10_1d), tuple[npt.Array1D[np.longdouble], npt.Array1D[np.longdouble]])
+assert_type(npp.hermite.hermdiv(_py_f_1d, _py_f_1d), tuple[npt.Array1D[np.float64], npt.Array1D[np.float64]])
+assert_type(npp.hermite.hermdiv(_py_c_1d, _py_f_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.hermite.hermdiv(_py_f_1d, _py_c_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.hermite.hermdiv(AR_O_1d, _py_f_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.hermite.hermdiv(_py_f_1d, AR_O_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.hermite.hermdiv(_py_decimal_1d, _py_decimal_1d), tuple[npt.Array1D[Any], npt.Array1D[Any]])
+
+assert_type(npp.hermite_e.hermediv(AR_f10_1d, AR_f10_1d), tuple[npt.Array1D[np.longdouble], npt.Array1D[np.longdouble]])
+assert_type(npp.hermite_e.hermediv(_py_f_1d, _py_f_1d), tuple[npt.Array1D[np.float64], npt.Array1D[np.float64]])
+assert_type(npp.hermite_e.hermediv(_py_c_1d, _py_f_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.hermite_e.hermediv(_py_f_1d, _py_c_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.hermite_e.hermediv(AR_O_1d, _py_f_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.hermite_e.hermediv(_py_f_1d, AR_O_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.hermite_e.hermediv(_py_decimal_1d, _py_decimal_1d), tuple[npt.Array1D[Any], npt.Array1D[Any]])
+
+assert_type(npp.laguerre.lagdiv(AR_f10_1d, AR_f10_1d), tuple[npt.Array1D[np.longdouble], npt.Array1D[np.longdouble]])
+assert_type(npp.laguerre.lagdiv(_py_f_1d, _py_f_1d), tuple[npt.Array1D[np.float64], npt.Array1D[np.float64]])
+assert_type(npp.laguerre.lagdiv(_py_c_1d, _py_f_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.laguerre.lagdiv(_py_f_1d, _py_c_1d), tuple[npt.Array1D[np.complex128], npt.Array1D[np.complex128]])
+assert_type(npp.laguerre.lagdiv(AR_O_1d, _py_f_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.laguerre.lagdiv(_py_f_1d, AR_O_1d), tuple[npt.Array1D[np.object_], npt.Array1D[np.object_]])
+assert_type(npp.laguerre.lagdiv(_py_decimal_1d, _py_decimal_1d), tuple[npt.Array1D[Any], npt.Array1D[Any]])
+
 # mulx
 
 assert_type(npp.polynomial.polymulx(AR_f4_1d), npt.Array1D[np.float32])
