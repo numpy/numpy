@@ -22,7 +22,6 @@ from ._polytypes import (
     _FuncLine,
     _FuncPoly2Ortho,
     _FuncPow,
-    _FuncRoots,
     _FuncUnOp,
     _PolyScalar,
     _SupportsCoefOps,
@@ -1222,13 +1221,24 @@ def hermecompanion(c: list[complex]) -> _Array2D[np.complex128]: ...
 @overload  # 1d  (fallback)
 def hermecompanion(c: _CanArray[_Array1D[_PolyScalar]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]]) -> _Array2D[Any]: ...
 
-hermeroots: Final[_FuncRoots] = ...
+# keep in sync with `polynomial.*roots`
+@overload  # 1d T
+def hermeroots[ScalarT: np.complexfloating](c: _CanArray[_Array1D[ScalarT]] | Sequence[ScalarT]) -> _Array1D[ScalarT]: ...
+@overload  # 1d ~f32
+def hermeroots(c: _CanArray[_Array1D[np.float32]] | Sequence[np.float32]) -> _Array1D[np.float32 | np.complex64]: ...
+@overload  # 1d +f64
+def hermeroots(c: _CanArray[_Array1D[np.float64 | np.integer]] | Sequence[float]) -> _Array1D[np.float64 | np.complex128]: ...
+@overload  # 1d ~c128
+def hermeroots(c: list[complex]) -> _Array1D[np.complex128]: ...
+@overload  # 1d  (fallback)
+def hermeroots(c: _CanArray[_Array1D[_PolyScalar]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]]) -> _Array1D[Any]: ...
 
 def _normed_hermite_e_n[ShapeT: _Shape](
     x: np.ndarray[ShapeT, np.dtype[np.float64]],
     n: int,
 ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
 
+#
 def hermegauss(deg: SupportsIndex) -> tuple[_Array1D[np.float64], _Array1D[np.float64]]: ...
 
 # keep in sync with `.chebyshev.chebweight`
