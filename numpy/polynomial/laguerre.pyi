@@ -6,6 +6,7 @@ import numpy.typing as npt
 from numpy._typing import (
     _ArrayLikeNumber_co,
     _ArrayLikeObject_co,
+    _IntLike_co,
     _NestedSequence,
     _NumberLike_co,
     _Shape,
@@ -14,10 +15,10 @@ from numpy._typing import (
 
 from ._polybase import ABCPolyBase
 from ._polytypes import (
+    _AnyInt,
     _CanArray,
     _FuncBinOp,
     _FuncLine,
-    _FuncPow,
     _PolyScalar,
     _SupportsCoefOps,
     _ToCoef1D,
@@ -166,7 +167,38 @@ def lagmulx(
 
 lagmul: Final[_FuncBinOp] = ...
 lagdiv: Final[_FuncBinOp] = ...
-lagpow: Final[_FuncPow] = ...
+
+# keep in sync with `polynomial.*pow`
+@overload  # <=1d T
+def lagpow[ScalarT: np.inexact](
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    pow: _AnyInt,
+    maxpower: _IntLike_co | None = 16,
+) -> _Array1D[ScalarT]: ...
+@overload  # <=1d +f64
+def lagpow(
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.integer]]] | Sequence[float] | float,
+    pow: _AnyInt,
+    maxpower: _IntLike_co | None = 16,
+) -> _Array1D[np.float64]: ...
+@overload  # <=1d ~c128
+def lagpow(
+    c: list[complex],
+    pow: _AnyInt,
+    maxpower: _IntLike_co | None = 16,
+) -> _Array1D[np.complex128]: ...
+@overload  # <=1d ~O
+def lagpow(
+    c: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    pow: _AnyInt,
+    maxpower: _IntLike_co | None = 16,
+) -> _Array1D[np.object_]: ...
+@overload  # <=1d  (fallback)
+def lagpow(
+    c: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+    pow: _AnyInt,
+    maxpower: _IntLike_co | None = 16,
+) -> _Array1D[Any]: ...
 
 # keep in sync with `polynomial.*der`
 @overload  # ?d T  (workaround)
