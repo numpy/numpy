@@ -39,13 +39,12 @@ from ._polytypes import (
     _FuncPow,
     _FuncRoots,
     _FuncUnOp,
-    _FuncVander2D,
-    _FuncVander3D,
     _PolyScalar,
     _Series,
     _SeriesLikeCoef_co,
     _SupportsCoefOps,
     _ToCoef1D,
+    _ToCoefND,
 )
 from .polyutils import trimcoef as chebtrim
 
@@ -194,7 +193,7 @@ def chebder[ScalarT: np.inexact](
 ) -> _Array2D[ScalarT]: ...
 @overload  # 2d +f64
 def chebder(
-    c: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    c: _ToArray2D[np.integer | np.bool, float],
     m: SupportsIndex = 1,
     scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
     axis: SupportsIndex = 0,
@@ -215,7 +214,7 @@ def chebder(
 ) -> _Array2D[np.object_]: ...
 @overload  # ?d  (fallback)
 def chebder(
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND | _SupportsCoefOps[Any],
     m: SupportsIndex = 1,
     scl: _NumberLike_co | _SupportsCoefOps[Any] = 1,
     axis: SupportsIndex = 0,
@@ -296,7 +295,7 @@ def chebint[ScalarT: np.inexact](
 ) -> _Array2D[ScalarT]: ...
 @overload  # 2d +f64
 def chebint(
-    c: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    c: _ToArray2D[np.integer | np.bool, float],
     m: SupportsIndex = 1,
     k: _ToCoef1D = [],
     lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
@@ -323,7 +322,7 @@ def chebint(
 ) -> _Array2D[np.object_]: ...
 @overload  # ?d  (fallback)
 def chebint(
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND | _SupportsCoefOps[Any],
     m: SupportsIndex = 1,
     k: _ToCoef1D = [],
     lbnd: _NumberLike_co | _SupportsCoefOps[Any] = 0,
@@ -396,7 +395,7 @@ def chebval2d(
 def chebval2d(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 1d ~O, 1d ~O, ?d ~O
 def chebval2d(
@@ -493,7 +492,7 @@ def chebval3d(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     z: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 1d ~O, 1d ~O, 1d ~O, ?d ~O
 def chebval3d(
@@ -573,8 +572,8 @@ def chebvalnd(
 ) -> _Array1D[np.object_]: ...
 @overload  # *?d ?, ?d ?  (fallback)
 def chebvalnd(
-    pts: Sequence[_ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]]],
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    pts: Sequence[_ToCoefND | _SupportsCoefOps[Any]],
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 
 # keep in sync with `polynomial.*val`
@@ -641,7 +640,7 @@ def chebval(
 @overload  # ?d ?, ?d ?  (fallback)
 def chebval(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    c: _ToCoefND,
     tensor: bool = True,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 1d ~O, ?d ~O
@@ -768,9 +767,9 @@ def chebgrid2d[PolyT: ABCPolyBase](
 ) -> PolyT: ...
 @overload  # ?d ?, ?d ?, ?d ?  (fallback)
 def chebgrid2d(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND,
+    y: _ToCoefND,
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 0d T, 0d T, ?d ~O
 def chebgrid2d[CoefT: _SupportsCoefOps[Any]](
@@ -908,10 +907,10 @@ def chebgrid3d(
 ) -> _Array3D[np.object_]: ...
 @overload  # ?d ?, ?d ?, ?d ?, ?d ?  (fallback)
 def chebgrid3d(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    y: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    z: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
-    c: _ArrayLikeNumber_co | _ArrayLikeObject_co | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND,
+    y: _ToCoefND,
+    z: _ToCoefND,
+    c: _ToCoefND,
 ) -> npt.NDArray[Any] | Any: ...
 @overload  # 0d T, 0d T, 0d T, ?d ~O
 def chebgrid3d[CoefT: _SupportsCoefOps[Any]](
@@ -964,7 +963,7 @@ def chebvander[ScalarT: np.inexact](
 ) -> _Array3D[ScalarT]: ...
 @overload  # 2d +f64
 def chebvander(
-    x: _Array2D[np.integer | np.bool] | Sequence[Sequence[float]],
+    x: _ToArray2D[np.integer | np.bool, float],
     deg: SupportsIndex,
 ) -> _Array3D[np.float64]: ...
 @overload  # 2d ~c128
@@ -979,12 +978,169 @@ def chebvander(
 ) -> _Array3D[np.object_]: ...
 @overload  # ?d  (fallback)
 def chebvander(
-    x: _ArrayLikeNumber_co | _ArrayLikeObject_co | _SupportsCoefOps[Any] | _NestedSequence[_SupportsCoefOps[Any]],
+    x: _ToCoefND | _SupportsCoefOps[Any],
     deg: SupportsIndex,
 ) -> npt.NDArray[Any]: ...
 
-chebvander2d: Final[_FuncVander2D] = ...
-chebvander3d: Final[_FuncVander3D] = ...
+# keep in sync with `polynomial.*vander2d`
+@overload  # ?d T, ?d T  (workaround)
+def chebvander2d[ScalarT: np.inexact](
+    x: _ArrayJustND[ScalarT],
+    y: _ArrayJustND[ScalarT],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[ScalarT]: ...
+@overload  # ?d +f64, ?d +f64  (workaround)
+def chebvander2d(
+    x: _ArrayJustND[_AsFloat64],
+    y: _ArrayJustND[_AsFloat64],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d ~O, ?d ~O  (workaround)
+def chebvander2d(
+    x: _ArrayJustND[np.object_],
+    y: _ArrayJustND[np.object_],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[np.object_]: ...
+@overload  # <=1d T, <=1d T
+def chebvander2d[ScalarT: np.inexact](
+    x: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    y: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[ScalarT]: ...
+@overload  # <=1d +f64, <=1d +f64
+def chebvander2d(
+    x: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[_AsFloat64]]] | Sequence[float] | float,
+    y: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[_AsFloat64]]] | Sequence[float] | float,
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[np.float64]: ...
+@overload  # <=1d ~c128, <=1d +c128
+def chebvander2d(
+    x: list[complex],
+    y: Sequence[complex] | complex,
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[np.complex128]: ...
+@overload  # 1d ~O, 1d ~O
+def chebvander2d(
+    x: _Array1D[np.object_],
+    y: _Array1D[np.object_],
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[np.object_]: ...
+@overload  # 2d T, 2d T
+def chebvander2d[ScalarT: np.inexact](
+    x: _Array2D[ScalarT],
+    y: _Array2D[ScalarT],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[ScalarT]: ...
+@overload  # 2d +f64, 2d +f64
+def chebvander2d(
+    x: _ToArray2D[_AsFloat64, float],
+    y: _ToArray2D[_AsFloat64, float],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[np.float64]: ...
+@overload  # 2d ~c128, 2d +c128
+def chebvander2d(
+    x: Sequence[list[complex]],
+    y: Sequence[Sequence[complex]],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[np.complex128]: ...
+@overload  # 2d ~O, 2d ~O
+def chebvander2d(
+    x: _Array2D[np.object_],
+    y: _Array2D[np.object_],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[np.object_]: ...
+@overload  # ?d, ?d  (fallback)
+def chebvander2d(
+    x: _ToCoefND | _SupportsCoefOps[Any],
+    y: _ToCoefND | _SupportsCoefOps[Any],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[Any]: ...
+
+# keep in sync with `polynomial.*vander3d`
+@overload  # ?d T, ?d T, ?d T  (workaround)
+def chebvander3d[ScalarT: np.inexact](
+    x: _ArrayJustND[ScalarT],
+    y: _ArrayJustND[ScalarT],
+    z: _ArrayJustND[ScalarT],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[ScalarT]: ...
+@overload  # ?d +f64, ?d +f64, ?d +f64  (workaround)
+def chebvander3d(
+    x: _ArrayJustND[_AsFloat64],
+    y: _ArrayJustND[_AsFloat64],
+    z: _ArrayJustND[_AsFloat64],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[np.float64]: ...
+@overload  # ?d ~O, ?d ~O, ?d ~O  (workaround)
+def chebvander3d(
+    x: _ArrayJustND[np.object_],
+    y: _ArrayJustND[np.object_],
+    z: _ArrayJustND[np.object_],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[np.object_]: ...
+@overload  # <=1d T, <=1d T, <=1d T
+def chebvander3d[ScalarT: np.inexact](
+    x: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    y: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    z: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[ScalarT]: ...
+@overload  # <=1d +f64, <=1d +f64, <=1d +f64
+def chebvander3d(
+    x: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[_AsFloat64]]] | Sequence[float] | float,
+    y: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[_AsFloat64]]] | Sequence[float] | float,
+    z: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[_AsFloat64]]] | Sequence[float] | float,
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[np.float64]: ...
+@overload  # <=1d ~c128, <=1d +c128, <=1d +c128
+def chebvander3d(
+    x: list[complex],
+    y: Sequence[complex] | complex,
+    z: Sequence[complex] | complex,
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[np.complex128]: ...
+@overload  # 1d ~O, 1d ~O, 1d ~O
+def chebvander3d(
+    x: _Array1D[np.object_],
+    y: _Array1D[np.object_],
+    z: _Array1D[np.object_],
+    deg: Sequence[SupportsIndex],
+) -> _Array2D[np.object_]: ...
+@overload  # 2d T, 2d T, 2d T
+def chebvander3d[ScalarT: np.inexact](
+    x: _Array2D[ScalarT],
+    y: _Array2D[ScalarT],
+    z: _Array2D[ScalarT],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[ScalarT]: ...
+@overload  # 2d +f64, 2d +f64, 2d +f64
+def chebvander3d(
+    x: _ToArray2D[_AsFloat64, float],
+    y: _ToArray2D[_AsFloat64, float],
+    z: _ToArray2D[_AsFloat64, float],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[np.float64]: ...
+@overload  # 2d ~c128, 2d +c128, 2d +c128
+def chebvander3d(
+    x: Sequence[list[complex]],
+    y: Sequence[Sequence[complex]],
+    z: Sequence[Sequence[complex]],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[np.complex128]: ...
+@overload  # 2d ~O, 2d ~O, 2d ~O
+def chebvander3d(
+    x: _Array2D[np.object_],
+    y: _Array2D[np.object_],
+    z: _Array2D[np.object_],
+    deg: Sequence[SupportsIndex],
+) -> _Array3D[np.object_]: ...
+@overload  # ?d, ?d, ?d  (fallback)
+def chebvander3d(
+    x: _ToCoefND | _SupportsCoefOps[Any],
+    y: _ToCoefND | _SupportsCoefOps[Any],
+    z: _ToCoefND | _SupportsCoefOps[Any],
+    deg: Sequence[SupportsIndex],
+) -> npt.NDArray[Any]: ...
 
 # keep in sync with `polynomial.*fit`
 @overload  # Nd +f64
