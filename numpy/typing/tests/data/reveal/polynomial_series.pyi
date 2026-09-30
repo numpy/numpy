@@ -1295,6 +1295,8 @@ assert_type(npp.laguerre.lagroots(_py_f_1d), _Array1D[np.float64 | np.complex128
 assert_type(npp.laguerre.lagroots(_py_c_1d), _Array1D[np.complex128])
 assert_type(npp.laguerre.lagroots(_py_decimal_1d), _Array1D[Any])
 
+# mulx
+
 assert_type(npp.polynomial.polymulx(AR_f4_1d), _Array1D[np.float32])
 assert_type(npp.polynomial.polymulx(_py_f_1d), _Array1D[np.float64])
 assert_type(npp.polynomial.polymulx(_py_c_1d), _Array1D[np.complex128])
@@ -1337,13 +1339,36 @@ assert_type(npp.laguerre.lagmulx(AR_O_1d), _Array1D[np.object_])
 assert_type(npp.laguerre.lagmulx(_py_decimal_1d), _Array1D[Any])
 assert_type(npp.laguerre.lagmulx(_ArrayLikeObject1D()), _Array1D[Any])
 
+# 2poly
+
+assert_type(npp.chebyshev.cheb2poly(AR_f4_1d), _Array1D[np.float32])
+assert_type(npp.chebyshev.cheb2poly(_py_f_1d), _Array1D[np.float64])
+assert_type(npp.chebyshev.cheb2poly(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.chebyshev.cheb2poly(AR_O_1d), _Array1D[Any])
+
+assert_type(npp.legendre.leg2poly(AR_f4_1d), _Array1D[np.float32])
+assert_type(npp.legendre.leg2poly(_py_f_1d), _Array1D[np.float64])
+assert_type(npp.legendre.leg2poly(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.legendre.leg2poly(AR_O_1d), _Array1D[Any])
+
+assert_type(npp.hermite.herm2poly(AR_f4_1d), _Array1D[np.float32])
+assert_type(npp.hermite.herm2poly(_py_f_1d), _Array1D[np.float64])
+assert_type(npp.hermite.herm2poly(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.hermite.herm2poly(AR_O_1d), _Array1D[Any])
+
+assert_type(npp.hermite_e.herme2poly(AR_f4_1d), _Array1D[np.float32])
+assert_type(npp.hermite_e.herme2poly(_py_f_1d), _Array1D[np.float64])
+assert_type(npp.hermite_e.herme2poly(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.hermite_e.herme2poly(AR_O_1d), _Array1D[Any])
+
+assert_type(npp.laguerre.lag2poly(AR_f4_1d), _Array1D[np.float32])
+assert_type(npp.laguerre.lag2poly(_py_f_1d), _Array1D[np.float64])
+assert_type(npp.laguerre.lag2poly(_py_c_1d), _Array1D[np.complex128])
+assert_type(npp.laguerre.lag2poly(AR_O_1d), _Array1D[Any])
+
 assert_type(npp.chebyshev.poly2cheb(AR_f8), _ArrFloat1D)
 assert_type(npp.chebyshev.poly2cheb(AR_c16), _ArrComplex1D)
 assert_type(npp.chebyshev.poly2cheb(AR_O), _ArrObject1D)
-
-assert_type(npp.chebyshev.cheb2poly(AR_f8), _ArrFloat1D)
-assert_type(npp.chebyshev.cheb2poly(AR_c16), _ArrComplex1D)
-assert_type(npp.chebyshev.cheb2poly(AR_O), _ArrObject1D)
 
 assert_type(npp.chebyshev.chebpts1(6), _ArrFloat1D64)
 assert_type(npp.chebyshev.chebpts2(6), _ArrFloat1D64)

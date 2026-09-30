@@ -20,7 +20,6 @@ from ._polytypes import (
     _FuncLine,
     _FuncPoly2Ortho,
     _FuncPow,
-    _FuncUnOp,
     _PolyScalar,
     _SupportsCoefOps,
     _ToCoef1D,
@@ -88,7 +87,22 @@ type _ToInt_1D = _SupportsArray[np.dtype[np.integer]] | Sequence[SupportsIndex]
 ###
 
 poly2leg: Final[_FuncPoly2Ortho] = ...
-leg2poly: Final[_FuncUnOp] = ...
+
+# keep in sync with `polynomial.*2poly`
+@overload  # <=1d T
+def leg2poly[ScalarT: np.inexact](
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+) -> _Array1D[ScalarT]: ...
+@overload  # <=1d +f64
+def leg2poly(
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.integer]]] | Sequence[float] | float,
+) -> _Array1D[np.float64]: ...
+@overload  # <=1d ~c128
+def leg2poly(c: list[complex]) -> _Array1D[np.complex128]: ...
+@overload  # <=1d  (fallback)
+def leg2poly(
+    c: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+) -> _Array1D[Any]: ...
 
 legdomain: Final[_Array1D[np.float64]] = ...
 legzero: Final[_Array1D[np.int_]] = ...

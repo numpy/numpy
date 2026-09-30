@@ -33,7 +33,6 @@ from ._polytypes import (
     _FuncLine,
     _FuncPoly2Ortho,
     _FuncPow,
-    _FuncUnOp,
     _PolyScalar,
     _Series,
     _SeriesLikeCoef_co,
@@ -113,7 +112,22 @@ def _zseries_der[ScalarT: np.number | np.object_](zs: npt.NDArray[ScalarT]) -> _
 def _zseries_int[ScalarT: np.number | np.object_](zs: npt.NDArray[ScalarT]) -> _Series[ScalarT]: ...
 
 poly2cheb: Final[_FuncPoly2Ortho] = ...
-cheb2poly: Final[_FuncUnOp] = ...
+
+# keep in sync with `polynomial.*2poly`
+@overload  # <=1d T
+def cheb2poly[ScalarT: np.inexact](
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+) -> _Array1D[ScalarT]: ...
+@overload  # <=1d +f64
+def cheb2poly(
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.integer]]] | Sequence[float] | float,
+) -> _Array1D[np.float64]: ...
+@overload  # <=1d ~c128
+def cheb2poly(c: list[complex]) -> _Array1D[np.complex128]: ...
+@overload  # <=1d  (fallback)
+def cheb2poly(
+    c: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+) -> _Array1D[Any]: ...
 
 chebdomain: Final[_Array1D[np.float64]] = ...
 chebzero: Final[_Array1D[np.int_]] = ...
