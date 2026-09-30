@@ -3,20 +3,18 @@
 import re
 import textwrap
 
-from ._array import NDArray
-
 _docstrings_list = []
 
 
-def add_newdoc(name: str, value: str, doc: str) -> None:
+def add_newdoc(name: str, value: str | None, doc: str) -> None:
     """Append ``_docstrings_list`` with a docstring for `name`.
 
     Parameters
     ----------
     name : str
         The name of the object.
-    value : str
-        A string-representation of the object.
+    value : str or None
+        A string-representation of the object, or ``None`` to omit it.
     doc : str
         The docstring of the object.
 
@@ -52,7 +50,8 @@ def _parse_docstrings() -> str:
                 new_lines.append(f"{indent}{line}")
 
         s = "\n".join(new_lines)
-        s_block = f""".. data:: {name}\n    :value: {value}\n    {s}"""
+        s_value = "" if value is None else f"\n    :value: {value}"
+        s_block = f""".. data:: {name}{s_value}\n    {s}"""
         type_list_ret.append(s_block)
     return "\n".join(type_list_ret)
 
@@ -118,14 +117,14 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
 
     """)
 
-add_newdoc('NDArray', repr(NDArray),
+add_newdoc('NDArray[ST: generic]', None,
     """
-    A `np.ndarray[tuple[Any, ...], np.dtype[ScalarT]] <numpy.ndarray>`
-    type alias :term:`generic <generic type>` w.r.t. its
-    `dtype.type <numpy.dtype.type>`.
+    A :term:`generic <generic type>` type alias for arrays with a given
+    dtype and unspecified shape.
 
-    Can be used during runtime for typing arrays with a given dtype
-    and unspecified shape.
+    .. code-block:: python
+
+        type NDArray[ST: generic] = ndarray[tuple[Any, ...], dtype[ST]]
 
     .. versionadded:: 1.21
 
@@ -147,6 +146,111 @@ add_newdoc('NDArray', repr(NDArray),
 
         >>> def func(a: npt.ArrayLike) -> npt.NDArray[Any]:
         ...     return np.array(a)
+
+    """)
+
+add_newdoc('Array0D[ST: generic]', None,
+    """
+    A 0-d `NDArray` generic type alias.
+
+    .. code-block:: python
+
+        type Array0D[ST: generic] = ndarray[tuple[()], dtype[ST]]
+
+    .. versionadded:: 2.6
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> import numpy.typing as npt
+
+        >>> x: npt.Array0D[np.float64] = np.array(3.14)
+
+    """)
+
+add_newdoc('Array1D[ST: generic]', None,
+    """
+    A 1-d `NDArray` generic type alias.
+
+    .. code-block:: python
+
+        type Array1D[ST: generic] = ndarray[tuple[int], dtype[ST]]
+
+    .. versionadded:: 2.6
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> import numpy.typing as npt
+
+        >>> t: npt.Array1D[np.float64] = np.linspace(0, 1, 5)
+
+    """)
+
+add_newdoc('Array2D[ST: generic]', None,
+    """
+    A 2-d `NDArray` generic type alias.
+
+    .. code-block:: python
+
+        type Array2D[ST: generic] = ndarray[tuple[int, int], dtype[ST]]
+
+    .. versionadded:: 2.6
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> import numpy.typing as npt
+
+        >>> m: npt.Array2D[np.float64] = np.eye(3)
+
+    """)
+
+add_newdoc('Array3D[ST: generic]', None,
+    """
+    A 3-d `NDArray` generic type alias.
+
+    .. code-block:: python
+
+        type Array3D[ST: generic] = ndarray[tuple[int, int, int], dtype[ST]]
+
+    .. versionadded:: 2.6
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> import numpy.typing as npt
+
+        >>> rgb: npt.Array3D[np.uint8] = np.zeros((480, 640, 3), dtype=np.uint8)
+
+    """)
+
+add_newdoc('Array4D[ST: generic]', None,
+    """
+    A 4-d `NDArray` generic type alias.
+
+    .. code-block:: python
+
+        type Array4D[ST: generic] = ndarray[tuple[int, int, int, int], dtype[ST]]
+
+    .. versionadded:: 2.6
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> import numpy.typing as npt
+
+        >>> rgb_gif: npt.Array4D[np.uint8] = np.zeros((8, 480, 640, 3), dtype=np.uint8)
 
     """)
 
