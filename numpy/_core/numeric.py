@@ -551,6 +551,10 @@ def isfortran(a):
     """
     Check if the array is Fortran contiguous but *not* C contiguous.
 
+    .. deprecated:: 2.5
+        `numpy.isfortran` is deprecated. Use ``a.flags.fnc`` instead.
+
+
     This function is obsolete. If you only want to check if an array is Fortran
     contiguous use ``a.flags.f_contiguous`` instead.
 
@@ -610,6 +614,11 @@ def isfortran(a):
     False
 
     """
+    warnings.warn(
+        "numpy.isfortran is deprecated. Use a.flags.fnc instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return a.flags.fnc
 
 
