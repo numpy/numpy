@@ -607,6 +607,7 @@ assert_type(npp.hermite_e.hermevalnd([AR_f8_2d, AR_f8_2d], _py_f64_2d), npt.NDAr
 
 assert_type(npp.polynomial.polyvalfromroots(AR_f8_2d, _py_f_1d), _Array2D[np.float64])
 assert_type(npp.polynomial.polyvalfromroots(AR_f8_2d, _py_c_1d), _Array2D[np.complex128])
+assert_type(npp.polynomial.polyvalfromroots(AR_c8_2d, _py_c_1d), _Array2D[np.complex128])
 assert_type(npp.polynomial.polyvalfromroots(AR_c16_2d, _py_f_1d), _Array2D[np.complex128])
 assert_type(npp.polynomial.polyvalfromroots(AR_O_2d, _py_f_1d), _Array2D[np.object_])
 assert_type(npp.polynomial.polyvalfromroots(AR_f10_2d, _py_f_1d), _Array2D[Any])
