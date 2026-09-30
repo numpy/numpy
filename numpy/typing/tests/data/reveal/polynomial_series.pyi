@@ -274,6 +274,7 @@ assert_type(npp.polynomial.polyval(Decimal(), _py_decimal_1d), Decimal)
 
 assert_type(npp.chebyshev.chebval(AR_f8_2d, _py_f_1d), _Array2D[np.float64])
 assert_type(npp.chebyshev.chebval(AR_f8_2d, _py_c_1d), _Array2D[np.complex128])
+assert_type(npp.chebyshev.chebval(AR_c8_2d, _py_c_1d), _Array2D[np.complex128])
 assert_type(npp.chebyshev.chebval(AR_c16_2d, _py_f_1d), _Array2D[np.complex128])
 assert_type(npp.chebyshev.chebval(AR_O_2d, _py_f_1d), _Array2D[np.object_])
 assert_type(npp.chebyshev.chebval(AR_f10_2d, _py_f_1d), _Array2D[Any])
