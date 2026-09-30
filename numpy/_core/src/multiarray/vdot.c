@@ -152,8 +152,8 @@ OBJECT_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp
             tmp1 = Py_NewRef(Py_False);
         }
         else {
-            tmp0 = PyObject_CallMethodNoArgs(*((PyObject **)ip1),
-                                             conjugate);
+            PyObject *obj = *((PyObject **)ip1);
+            tmp0 = PyObject_VectorcallMethod(conjugate, &obj, 1, NULL);
             if (tmp0 == NULL) {
                 Py_XDECREF(tmp);
                 return;

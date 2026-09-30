@@ -334,7 +334,8 @@ PyUFunc_OO_O_method(char **args, npy_intp const *dimensions, npy_intp const *ste
         /* hold the operands: the call can clear their array slots */
         PyObject *obj = Py_NewRef(in1 ? in1 : Py_None);
         PyObject *arg = Py_NewRef(in2 ? in2 : Py_None);
-        PyObject *ret = PyObject_CallMethodOneArg(obj, meth_name, arg);
+        PyObject *call_args[2] = {obj, arg};
+        PyObject *ret = PyObject_VectorcallMethod(meth_name, call_args, 2, NULL);
         Py_DECREF(obj);
         Py_DECREF(arg);
         if (ret == NULL) {
@@ -2226,7 +2227,7 @@ NPY_NO_EXPORT void
             ((@ftype@ *)op1)[1] = nan;
         }
         else if (isgreaterequal(in2r_abs, in2i_abs)) {
-            if (in2r_abs == 0 && in2i_abs == 0) {
+            if (in2r_abs == 0) {
                 if ((in1r_nan && (in1i == 0 || in1i_nan)) ||
                         (in1r == 0 && in1i_nan)) {
                     ((@ftype@ *)op1)[0] =
@@ -2353,11 +2354,20 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        if (npy_fabs@c@(in1i) <= npy_fabs@c@(in1r)) {
-            const @ftype@ r = in1i/in1r;
-            const @ftype@ d = in1r + in1i*r;
-            ((@ftype@ *)op1)[0] = 1/d;
-            ((@ftype@ *)op1)[1] = -r/d;
+        const @ftype@ in1r_abs = npy_fabs@c@(in1r);
+        const @ftype@ in1i_abs = npy_fabs@c@(in1i);
+        if (in1i_abs <= in1r_abs) {
+            if (in1r_abs == 0) {
+                /* divide by zero should yield a complex inf or nan */
+                ((@ftype@ *)op1)[0] = 1/in1r_abs;
+                ((@ftype@ *)op1)[1] = 0/in1i_abs;
+            }
+            else {
+                const @ftype@ r = in1i/in1r;
+                const @ftype@ d = in1r + in1i*r;
+                ((@ftype@ *)op1)[0] = 1/d;
+                ((@ftype@ *)op1)[1] = -r/d;
+            }
         } else {
             const @ftype@ r = in1r/in1i;
             const @ftype@ d = in1r*r + in1i;

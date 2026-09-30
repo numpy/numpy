@@ -1,0 +1,5 @@
+* `numpy.broadcast_arrays` now always returns read-only views. Writing to
+  the broadcast results has emitted a ``DeprecationWarning`` since NumPy 1.17;
+  it now raises a ``ValueError``. Arrays that did not require broadcasting
+  were previously returned unchanged (and writeable), these are now read-only
+  views as well. Make a copy if you need to write to the result.
