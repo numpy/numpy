@@ -322,6 +322,7 @@ assert_type(npp.laguerre.lagval(Decimal(), _py_decimal_1d), Decimal)
 
 assert_type(npp.hermite.hermval(AR_f8_2d, _py_f_1d), _Array2D[np.float64])
 assert_type(npp.hermite.hermval(AR_f8_2d, _py_c_1d), _Array2D[np.complex128])
+assert_type(npp.hermite.hermval(AR_c8_2d, _py_c_1d), _Array2D[np.complex128])
 assert_type(npp.hermite.hermval(AR_c16_2d, _py_f_1d), _Array2D[np.complex128])
 assert_type(npp.hermite.hermval(AR_O_2d, _py_f_1d), _Array2D[np.object_])
 assert_type(npp.hermite.hermval(AR_f10_2d, _py_f_1d), _Array2D[Any])
