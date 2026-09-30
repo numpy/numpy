@@ -151,27 +151,27 @@ chebx: Final[Array1D[np.int_]] = ...
 def chebline[ScalarT: np.number | np.bool](
     off: ScalarT,
     scl: ScalarT,
-) -> _Array1D[ScalarT]: ...
+) -> Array1D[ScalarT]: ...
 @overload  # 0d ~i8, 0d ~i8
 def chebline(
     off: int,
     scl: int,
-) -> _Array1D[np.int_]: ...
+) -> Array1D[np.int_]: ...
 @overload  # 0d +f64, 0d +f64
 def chebline(
     off: float | np.float64 | np.float32 | np.float16 | np.integer,
     scl: float | np.float64 | np.float32 | np.float16 | np.integer,
-) -> _Array1D[np.float64 | Any]: ...
+) -> Array1D[np.float64 | Any]: ...
 @overload  # 0d +c128, 0d +c128
 def chebline(
     off: complex | np.complex128 | np.complex64 | np.float64 | np.float32 | np.float16 | np.integer,
     scl: complex | np.complex128 | np.complex64 | np.float64 | np.float32 | np.float16 | np.integer,
-) -> _Array1D[np.complex128 | Any]: ...
+) -> Array1D[np.complex128 | Any]: ...
 @overload  # 0d, 0d  (fallback)
 def chebline(
     off: _NumberLike_co | _SupportsCoefOps[Any] | np.object_,
     scl: _NumberLike_co | _SupportsCoefOps[Any] | np.object_,
-) -> _Array1D[Any]: ...
+) -> Array1D[Any]: ...
 
 # keep in sync with `polynomial.*fromroots`
 @overload  # 1d T
@@ -191,7 +191,43 @@ def chebfromroots(
     roots: _CanArray[Array1D[np.number | np.object_]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]],
 ) -> Array1D[Any]: ...
 
-chebadd: Final[_FuncBinOp] = ...
+# keep in sync with `polynomial.*add`
+@overload  # <=1d T, <=1d T
+def chebadd[ScalarT: (np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble)](
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+) -> Array1D[ScalarT]: ...
+@overload  # <=1d +f64, <=1d +f64
+def chebadd(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+) -> Array1D[np.float64]: ...
+@overload  # <=1d ~c128, <=1d +c128
+def chebadd(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+) -> Array1D[np.complex128]: ...
+@overload  # <=1d +c128, <=1d ~c128
+def chebadd(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+) -> Array1D[np.complex128]: ...
+@overload  # <=1d ~O, <=1d
+def chebadd(
+    c1: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    c2: _ToCoef1D,
+) -> Array1D[np.object_]: ...
+@overload  # <=1d, <=1d ~O
+def chebadd(
+    c1: _ToCoef1D,
+    c2: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+) -> Array1D[np.object_]: ...
+@overload  # <=1d, <=1d  (fallback)
+def chebadd(
+    c1: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+    c2: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+) -> Array1D[Any]: ...
+
 chebsub: Final[_FuncBinOp] = ...
 
 # keep in sync with `polynomial.*mulx`
