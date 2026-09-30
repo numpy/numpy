@@ -10,6 +10,22 @@ import os
 
 from numpy.version import version as __version__
 
+# Lazy on Python 3.15+ (PEP 810); ignored by older Pythons.  Names defined in C
+# come from the always-loaded multiarray, umath and numerictypes modules.
+__lazy_modules__ = [
+    "numpy._core",
+    "numpy._core.numeric",
+    "numpy._core.fromnumeric",
+    "numpy._core.arrayprint",
+    "numpy._core._ufunc_config",
+    "numpy._core._asarray",
+    "numpy._core.shape_base",
+    "numpy._core.function_base",
+    "numpy._core.getlimits",
+    "numpy._core.einsumfunc",
+    "numpy._core.records",
+]
+
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
 env_added = []
@@ -108,46 +124,376 @@ from . import numerictypes as nt
 from .numerictypes import sctypeDict, sctypes
 
 multiarray.set_typeDict(nt.sctypeDict)
-from . import einsumfunc, fromnumeric, function_base, getlimits, numeric, shape_base
-from .einsumfunc import *
-from .fromnumeric import *
-from .function_base import *
-from .getlimits import *
-
-# Note: module name memmap is overwritten by a class with same name
-from .memmap import *
-from .numeric import *
-from .records import recarray, record
-from .shape_base import *
-
 del nt
 
-# do this after everything else, to minimize the chance of this misleadingly
-# appearing in an import-time traceback
-# add these for module-freeze analysis (like PyInstaller)
-from . import (
-    _add_newdocs,
-    _add_newdocs_scalars,
-    _dtype,
-    _dtype_ctypes,
-    _internal,
-    _methods,
+# always loaded (C-defined objects)
+# eager: `memmap` is also the module name, an import of it would replace a proxy
+from .memmap import memmap
+from .multiarray import (
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    ascontiguousarray,
+    asfortranarray,
+    broadcast,
+    busday_count,
+    busday_offset,
+    busdaycalendar,
+    can_cast,
+    character,
+    complexfloating,
+    concatenate,
+    copyto,
+    datetime_as_string,
+    datetime_data,
+    dot,
+    dtype,
+    empty,
+    empty_like,
+    flatiter,
+    flexible,
+    floating,
+    from_dlpack,
+    frombuffer,
+    fromfile,
+    fromiter,
+    fromstring,
+    generic,
+    inexact,
+    inner,
+    integer,
+    is_busday,
+    lexsort,
+    may_share_memory,
+    min_scalar_type,
+    ndarray,
+    nditer,
+    nested_iters,
+    number,
+    promote_types,
+    putmask,
+    result_type,
+    shares_memory,
+    signedinteger,
+    unsignedinteger,
+    vdot,
+    where,
+    zeros,
 )
-from .numeric import absolute as abs
+from .numerictypes import (
+    ScalarType,
+    bool,
+    bool_,
+    byte,
+    bytes_,
+    cdouble,
+    clongdouble,
+    complex64,
+    complex128,
+    complex256,
+    csingle,
+    datetime64,
+    double,
+    float16,
+    float32,
+    float64,
+    float128,
+    half,
+    int8,
+    int16,
+    int32,
+    int64,
+    int_,
+    intc,
+    intp,
+    isdtype,
+    issubdtype,
+    long,
+    longdouble,
+    longlong,
+    object_,
+    short,
+    single,
+    str_,
+    timedelta64,
+    typecodes,
+    ubyte,
+    uint,
+    uint8,
+    uint16,
+    uint32,
+    uint64,
+    uintc,
+    uintp,
+    ulong,
+    ulonglong,
+    ushort,
+    void,
+)
+from .umath import (
+    absolute,
+    absolute as abs,
+    add,
+    arccos,
+    arccos as acos,
+    arccosh,
+    arccosh as acosh,
+    arcsin,
+    arcsin as asin,
+    arcsinh,
+    arcsinh as asinh,
+    arctan,
+    arctan as atan,
+    arctan2,
+    arctan2 as atan2,
+    arctanh,
+    arctanh as atanh,
+    bitwise_and,
+    bitwise_count,
+    bitwise_or,
+    bitwise_xor,
+    cbrt,
+    ceil,
+    conj,
+    conjugate,
+    copysign,
+    cos,
+    cosh,
+    deg2rad,
+    degrees,
+    divide,
+    divmod,
+    e,
+    equal,
+    euler_gamma,
+    exp,
+    exp2,
+    expm1,
+    fabs,
+    float_power,
+    floor,
+    floor_divide,
+    fmax,
+    fmin,
+    fmod,
+    frexp,
+    frompyfunc,
+    gcd,
+    greater,
+    greater_equal,
+    heaviside,
+    hypot,
+    invert,
+    invert as bitwise_invert,
+    isfinite,
+    isinf,
+    isnan,
+    isnat,
+    lcm,
+    ldexp,
+    left_shift,
+    left_shift as bitwise_left_shift,
+    less,
+    less_equal,
+    log,
+    log1p,
+    log2,
+    log10,
+    logaddexp,
+    logaddexp2,
+    logical_and,
+    logical_not,
+    logical_or,
+    logical_xor,
+    matmul,
+    matvec,
+    maximum,
+    minimum,
+    mod,
+    modf,
+    multiply,
+    negative,
+    nextafter,
+    not_equal,
+    pi,
+    positive,
+    power,
+    power as pow,
+    rad2deg,
+    radians,
+    reciprocal,
+    remainder,
+    right_shift,
+    right_shift as bitwise_right_shift,
+    rint,
+    sign,
+    signbit,
+    sin,
+    sinh,
+    spacing,
+    sqrt,
+    square,
+    subtract,
+    tan,
+    tanh,
+    true_divide,
+    trunc,
+    vecdot,
+    vecmat,
+)
 
-acos = numeric.arccos
-acosh = numeric.arccosh
-asin = numeric.arcsin
-asinh = numeric.arcsinh
-atan = numeric.arctan
-atanh = numeric.arctanh
-atan2 = numeric.arctan2
-concat = numeric.concatenate
-bitwise_left_shift = numeric.left_shift
-bitwise_invert = numeric.invert
-bitwise_right_shift = numeric.right_shift
-permute_dims = numeric.transpose
-pow = numeric.power
+concat = multiarray.concatenate
+ufunc = type(umath.sin)
+
+# lazy on 3.15+; `numeric` first where eager (the others import it, and it
+# imports arrayprint at its end)
+from . import numeric  # noqa: I001
+from . import (
+    _asarray,
+    _ufunc_config,
+    arrayprint,
+    einsumfunc,
+    fromnumeric,
+    function_base,
+    getlimits,
+    records,
+    shape_base,
+)
+from .numeric import (
+    False_,
+    True_,
+    allclose,
+    argwhere,
+    array_equal,
+    array_equiv,
+    astype,
+    base_repr,
+    binary_repr,
+    bitwise_not,
+    convolve,
+    correlate,
+    count_nonzero,
+    cross,
+    flatnonzero,
+    fromfunction,
+    full,
+    full_like,
+    identity,
+    indices,
+    inf,
+    isclose,
+    isfortran,
+    isscalar,
+    little_endian,
+    moveaxis,
+    newaxis,
+    ones,
+    ones_like,
+    outer,
+    roll,
+    rollaxis,
+    tensordot,
+    zeros_like,
+)
+from .fromnumeric import (
+    all,
+    amax,
+    amin,
+    any,
+    argmax,
+    argmin,
+    argpartition,
+    argsort,
+    around,
+    choose,
+    clip,
+    compress,
+    cumprod,
+    cumsum,
+    cumulative_prod,
+    cumulative_sum,
+    diagonal,
+    matrix_transpose,
+    max,
+    mean,
+    min,
+    ndim,
+    nonzero,
+    partition,
+    prod,
+    ptp,
+    put,
+    ravel,
+    repeat,
+    reshape,
+    resize,
+    round,
+    searchsorted,
+    shape,
+    size,
+    sort,
+    squeeze,
+    std,
+    sum,
+    swapaxes,
+    take,
+    top_k,
+    trace,
+    transpose,
+    var,
+)
+from .arrayprint import (
+    array2string,
+    array_repr,
+    array_str,
+    errstate,
+    format_float_positional,
+    format_float_scientific,
+    get_printoptions,
+    printoptions,
+    set_printoptions,
+)
+from ._ufunc_config import (
+    getbufsize,
+    geterr,
+    geterrcall,
+    setbufsize,
+    seterr,
+    seterrcall,
+)
+from ._asarray import (
+    require,
+)
+from .shape_base import (
+    atleast_1d,
+    atleast_2d,
+    atleast_3d,
+    block,
+    hstack,
+    stack,
+    unstack,
+    vstack,
+)
+from .function_base import (
+    geomspace,
+    linspace,
+    logspace,
+    nan,
+)
+from .getlimits import (
+    finfo,
+    iinfo,
+)
+from .einsumfunc import (
+    einsum,
+    einsum_path,
+)
+from .records import (
+    recarray,
+    record,
+)
+from .fromnumeric import transpose as permute_dims
 
 # The public names bound above except the submodules (only names are inspected,
 # nothing is imported); checked against the submodules in test_public_api.py.
@@ -162,21 +508,21 @@ __all__ = [
 ]
 del _not_exported
 
+# side-effect imports (docstrings)
+import numpy._core._add_newdocs as _add_newdocs
+import numpy._core._add_newdocs_scalars as _add_newdocs_scalars
+
+# add these for module-freeze analysis (like PyInstaller)
+from . import _dtype, _dtype_ctypes, _internal, _methods
+
 
 def _ufunc_reduce(func):
-    # Report the `__name__`. pickle will try to find the module. Note that
-    # pickle supports for this `__name__` to be a `__qualname__`. It may
-    # make sense to add a `__qualname__` to ufuncs, to allow this more
-    # explicitly (Numba has ufuncs as attributes).
-    # See also: https://github.com/dask/distributed/issues/3450
     return func.__name__
 
 
 def _DType_reconstruct(scalar_type):
-    # This is a work-around to pickle type(np.dtype(np.float64)), etc.
-    # and it should eventually be replaced with a better solution, e.g. when
-    # DTypes become HeapTypes.
-    return type(dtype(scalar_type))
+    # This is a work-around to allow DType classes to pickle
+    return type(multiarray.dtype(scalar_type))
 
 
 def _DType_reduce(DType):
@@ -193,9 +539,8 @@ def _DType_reduce(DType):
 
 import copyreg
 
-copyreg.pickle(ufunc, _ufunc_reduce)
-copyreg.pickle(type(dtype), _DType_reduce, _DType_reconstruct)
-
+copyreg.pickle(type(umath.sin), _ufunc_reduce)
+copyreg.pickle(type(multiarray.dtype), _DType_reduce, _DType_reconstruct)
 # Unclutter namespace (must keep _*_reconstruct for unpickling)
 del copyreg, _ufunc_reduce, _DType_reduce
 

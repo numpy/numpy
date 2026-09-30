@@ -86,6 +86,39 @@ import os
 import sys
 import warnings
 
+# Lazy on Python 3.15+ (PEP 810); ignored by older Pythons.
+__lazy_modules__ = [
+    "numpy",
+    "numpy._core",
+    "numpy.lib",
+    "numpy.matrixlib",
+    "numpy._array_api_info",
+    "numpy._expired_attrs_2_0",
+    "numpy.lib._arraypad_impl",
+    "numpy.lib._arraysetops_impl",
+    "numpy.lib._arrayterator_impl",
+    "numpy.lib._function_base_impl",
+    "numpy.lib._histograms_impl",
+    "numpy.lib._index_tricks_impl",
+    "numpy.lib._nanfunctions_impl",
+    "numpy.lib._npyio_impl",
+    "numpy.lib._polynomial_impl",
+    "numpy.lib._shape_base_impl",
+    "numpy.lib._stride_tricks_impl",
+    "numpy.lib._twodim_base_impl",
+    "numpy.lib._type_check_impl",
+    "numpy.lib._ufunclike_impl",
+    "numpy.lib._utils_impl",
+    "numpy.lib._version",
+    "numpy.lib.array_utils",
+    "numpy.lib.format",
+    "numpy.lib.introspect",
+    "numpy.lib.mixins",
+    "numpy.lib.npyio",
+    "numpy.lib.scimath",
+    "numpy.lib.stride_tricks",
+]
+
 # If a version with git hash was stored, use that instead
 from . import version
 from ._expired_attrs_2_0 import __expired_attributes__
@@ -103,7 +136,7 @@ if __NUMPY_SETUP__:
     sys.stderr.write('Running from numpy source directory.\n')
 else:
     # Allow distributors to run custom init code before importing numpy._core
-    from . import _distributor_init
+    import numpy._distributor_init as _distributor_init
 
     try:
         from numpy.__config__ import show_config
@@ -787,7 +820,7 @@ else:
 
         """
         try:
-            x = ones(2, dtype=float32)
+            x = array([1, 1], dtype=float32)
             if not abs(x.dot(x) - float32(2.0)) < 1e-5:
                 raise AssertionError
         except AssertionError:
