@@ -18,7 +18,6 @@ from ._polytypes import (
     _AnyInt,
     _CanArray,
     _FuncBinOp,
-    _FuncLine,
     _PolyScalar,
     _SupportsCoefOps,
     _ToCoef1D,
@@ -124,7 +123,32 @@ lagzero: Final[_Array1D[np.int_]] = ...
 lagone: Final[_Array1D[np.int_]] = ...
 lagx: Final[_Array1D[np.int_]] = ...
 
-lagline: Final[_FuncLine] = ...
+# keep in sync with `polynomial.*line`
+@overload  # 0d T, 0d T
+def lagline[ScalarT: np.number | np.bool](
+    off: ScalarT,
+    scl: ScalarT,
+) -> _Array1D[ScalarT]: ...
+@overload  # 0d ~i8, 0d ~i8
+def lagline(
+    off: int,
+    scl: int,
+) -> _Array1D[np.int_]: ...
+@overload  # 0d +f64, 0d +f64
+def lagline(
+    off: float | np.float64 | np.float32 | np.float16 | np.integer,
+    scl: float | np.float64 | np.float32 | np.float16 | np.integer,
+) -> _Array1D[np.float64 | Any]: ...
+@overload  # 0d +c128, 0d +c128
+def lagline(
+    off: complex | np.complex128 | np.complex64 | np.float64 | np.float32 | np.float16 | np.integer,
+    scl: complex | np.complex128 | np.complex64 | np.float64 | np.float32 | np.float16 | np.integer,
+) -> _Array1D[np.complex128 | Any]: ...
+@overload  # 0d, 0d  (fallback)
+def lagline(
+    off: _NumberLike_co | _SupportsCoefOps[Any] | np.object_,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] | np.object_,
+) -> _Array1D[Any]: ...
 
 # keep in sync with `polynomial.*fromroots`
 @overload  # 1d T

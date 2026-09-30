@@ -18,7 +18,6 @@ from ._polytypes import (
     _AnyInt,
     _CanArray,
     _FuncBinOp,
-    _FuncLine,
     _PolyScalar,
     _SupportsCoefOps,
     _ToCoef1D,
@@ -124,7 +123,27 @@ hermzero: Final[_Array1D[np.int_]] = ...
 hermone: Final[_Array1D[np.int_]] = ...
 hermx: Final[_Array1D[np.int_]] = ...
 
-hermline: Final[_FuncLine] = ...
+# keep in sync with `polynomial.*line`  (minus the `~i8` overload; `T` bound to `np.inexact`)
+@overload  # 0d T, 0d T
+def hermline[ScalarT: np.inexact](
+    off: ScalarT,
+    scl: ScalarT,
+) -> _Array1D[ScalarT]: ...
+@overload  # 0d +f64, 0d +f64
+def hermline(
+    off: float | np.float64 | np.float32 | np.float16 | np.integer,
+    scl: float | np.float64 | np.float32 | np.float16 | np.integer,
+) -> _Array1D[np.float64 | Any]: ...
+@overload  # 0d +c128, 0d +c128
+def hermline(
+    off: complex | np.complex128 | np.complex64 | np.float64 | np.float32 | np.float16 | np.integer,
+    scl: complex | np.complex128 | np.complex64 | np.float64 | np.float32 | np.float16 | np.integer,
+) -> _Array1D[np.complex128 | Any]: ...
+@overload  # 0d, 0d  (fallback)
+def hermline(
+    off: _NumberLike_co | _SupportsCoefOps[Any] | np.object_,
+    scl: _NumberLike_co | _SupportsCoefOps[Any] | np.object_,
+) -> _Array1D[Any]: ...
 
 # keep in sync with `polynomial.*fromroots`
 @overload  # 1d T

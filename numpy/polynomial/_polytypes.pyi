@@ -77,21 +77,6 @@ type _SeriesLikeCoef_co = _SupportsArray[np.dtype[_PolyScalar]] | Sequence[_Coef
 type _ArrayLikeCoefObject_co = _CoefObjectLike_co | _SeriesLikeObject_co | _NestedSequence[_SeriesLikeObject_co]
 type _ArrayLikeCoef_co = npt.NDArray[_PolyScalar] | _ArrayLikeNumber_co | _ArrayLikeCoefObject_co
 
-type _Line[ScalarT: _PolyScalar] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-
-@type_check_only
-class _FuncLine(Protocol):
-    @overload
-    def __call__[ScalarT: _PolyScalar](self, /, off: ScalarT, scl: ScalarT) -> _Line[ScalarT]: ...
-    @overload
-    def __call__(self, /, off: int, scl: int) -> _Line[np.int_]: ...
-    @overload
-    def __call__(self, /, off: float, scl: float) -> _Line[np.float64]: ...
-    @overload
-    def __call__(self, /, off: complex, scl: complex) -> _Line[np.complex128]: ...
-    @overload
-    def __call__(self, /, off: _SupportsCoefOps[Any], scl: _SupportsCoefOps[Any]) -> _Line[np.object_]: ...
-
 @type_check_only
 class _FuncBinOp(Protocol):
     @overload
