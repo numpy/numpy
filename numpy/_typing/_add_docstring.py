@@ -3,7 +3,7 @@
 import re
 import textwrap
 
-from ._array_like import NDArray
+from ._array import NDArray
 
 _docstrings_list = []
 
