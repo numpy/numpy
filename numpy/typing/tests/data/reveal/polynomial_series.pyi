@@ -1213,6 +1213,44 @@ assert_type(npp.hermite_e.hermeweight(f4), np.float32)
 assert_type(npp.hermite_e.hermeweight(0.5), np.float64)
 assert_type(npp.hermite_e.hermeweight(0.5j), np.complex128 | Any)
 
+# companion
+
+assert_type(npp.polynomial.polycompanion(AR_f4_1d), _Array2D[np.float32])
+assert_type(npp.polynomial.polycompanion(_py_f_1d), _Array2D[np.float64])
+assert_type(npp.polynomial.polycompanion(_py_c_1d), _Array2D[np.complex128])
+assert_type(npp.polynomial.polycompanion(_py_decimal_1d), _Array2D[Any])
+assert_type(npp.polynomial.polycompanion(AR_O_1d), _Array2D[Any])
+
+assert_type(npp.chebyshev.chebcompanion(AR_f4_1d), _Array2D[np.float32])
+assert_type(npp.chebyshev.chebcompanion(_py_f_1d), _Array2D[np.float64])
+assert_type(npp.chebyshev.chebcompanion(_py_c_1d), _Array2D[np.complex128])
+assert_type(npp.chebyshev.chebcompanion(_py_decimal_1d), _Array2D[Any])
+assert_type(npp.chebyshev.chebcompanion(AR_O_1d), _Array2D[Any])
+
+assert_type(npp.legendre.legcompanion(AR_f4_1d), _Array2D[np.float32])
+assert_type(npp.legendre.legcompanion(_py_f_1d), _Array2D[np.float64])
+assert_type(npp.legendre.legcompanion(_py_c_1d), _Array2D[np.complex128])
+assert_type(npp.legendre.legcompanion(_py_decimal_1d), _Array2D[Any])
+assert_type(npp.legendre.legcompanion(AR_O_1d), _Array2D[Any])
+
+assert_type(npp.hermite.hermcompanion(AR_f4_1d), _Array2D[np.float32])
+assert_type(npp.hermite.hermcompanion(_py_f_1d), _Array2D[np.float64])
+assert_type(npp.hermite.hermcompanion(_py_c_1d), _Array2D[np.complex128])
+assert_type(npp.hermite.hermcompanion(_py_decimal_1d), _Array2D[Any])
+assert_type(npp.hermite.hermcompanion(AR_O_1d), _Array2D[Any])
+
+assert_type(npp.hermite_e.hermecompanion(AR_f4_1d), _Array2D[np.float32])
+assert_type(npp.hermite_e.hermecompanion(_py_f_1d), _Array2D[np.float64])
+assert_type(npp.hermite_e.hermecompanion(_py_c_1d), _Array2D[np.complex128])
+assert_type(npp.hermite_e.hermecompanion(_py_decimal_1d), _Array2D[Any])
+assert_type(npp.hermite_e.hermecompanion(AR_O_1d), _Array2D[Any])
+
+assert_type(npp.laguerre.lagcompanion(AR_f4_1d), _Array2D[np.float32])
+assert_type(npp.laguerre.lagcompanion(_py_f_1d), _Array2D[np.float64])
+assert_type(npp.laguerre.lagcompanion(_py_c_1d), _Array2D[np.complex128])
+assert_type(npp.laguerre.lagcompanion(_py_decimal_1d), _Array2D[Any])
+assert_type(npp.laguerre.lagcompanion(AR_O_1d), _Array2D[Any])
+
 assert_type(npp.chebyshev.poly2cheb(AR_f8), _ArrFloat1D)
 assert_type(npp.chebyshev.poly2cheb(AR_c16), _ArrComplex1D)
 assert_type(npp.chebyshev.poly2cheb(AR_O), _ArrObject1D)

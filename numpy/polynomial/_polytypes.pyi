@@ -81,7 +81,6 @@ type _ArrayLikeCoefObject_co = _CoefObjectLike_co | _SeriesLikeObject_co | _Nest
 type _ArrayLikeCoef_co = npt.NDArray[_PolyScalar] | _ArrayLikeNumber_co | _ArrayLikeCoefObject_co
 
 type _Line[ScalarT: _PolyScalar] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Companion[ScalarT: _PolyScalar] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 @type_check_only
 class _FuncLine(Protocol):
@@ -151,12 +150,3 @@ class _FuncRoots(Protocol):
     def __call__(self, /, c: _SeriesLikeComplex_co) -> _Series[np.complex128]: ...
     @overload
     def __call__(self, /, c: _SeriesLikeCoef_co) -> _ObjectSeries: ...
-
-@type_check_only
-class _FuncCompanion(Protocol):
-    @overload
-    def __call__(self, /, c: _SeriesLikeFloat_co) -> _Companion[np.float64]: ...
-    @overload
-    def __call__(self, /, c: _SeriesLikeComplex_co) -> _Companion[np.complex128]: ...
-    @overload
-    def __call__(self, /, c: _SeriesLikeCoef_co) -> _Companion[np.object_]: ...

@@ -18,7 +18,6 @@ from ._polytypes import (
     _Array2,
     _CanArray,
     _FuncBinOp,
-    _FuncCompanion,
     _FuncFromRoots,
     _FuncLine,
     _FuncPoly2Ortho,
@@ -1213,7 +1212,16 @@ def hermefit(
     w: _ToComplex128_1D | None = None,
 ) -> tuple[npt.NDArray[Any], list[Any]]: ...
 
-hermecompanion: Final[_FuncCompanion] = ...
+# keep in sync with `polynomial.*companion`
+@overload  # 1d T
+def hermecompanion[ScalarT: np.inexact](c: _CanArray[_Array1D[ScalarT]]) -> _Array2D[ScalarT]: ...
+@overload  # 1d +f64
+def hermecompanion(c: _CanArray[_Array1D[np.integer]] | Sequence[float]) -> _Array2D[np.float64]: ...
+@overload  # 1d ~c128
+def hermecompanion(c: list[complex]) -> _Array2D[np.complex128]: ...
+@overload  # 1d  (fallback)
+def hermecompanion(c: _CanArray[_Array1D[_PolyScalar]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]]) -> _Array2D[Any]: ...
+
 hermeroots: Final[_FuncRoots] = ...
 
 def _normed_hermite_e_n[ShapeT: _Shape](
