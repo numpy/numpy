@@ -33,7 +33,6 @@ from ._polytypes import (
     _FuncBinOp,
     _FuncCompanion,
     _FuncFromRoots,
-    _FuncGauss,
     _FuncLine,
     _FuncPoly2Ortho,
     _FuncPow,
@@ -1241,7 +1240,7 @@ def chebfit(
 
 chebcompanion: Final[_FuncCompanion] = ...
 chebroots: Final[_FuncRoots] = ...
-chebgauss: Final[_FuncGauss] = ...
+def chebgauss(deg: SupportsIndex) -> tuple[_Array1D[np.float64], _Array1D[np.float64]]: ...
 
 # keep in sync with `.hermite_e.hermeweight`
 @overload  # Nd T

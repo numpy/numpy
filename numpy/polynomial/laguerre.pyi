@@ -20,7 +20,6 @@ from ._polytypes import (
     _FuncBinOp,
     _FuncCompanion,
     _FuncFromRoots,
-    _FuncGauss,
     _FuncLine,
     _FuncPoly2Ortho,
     _FuncPow,
@@ -1216,7 +1215,7 @@ def lagfit(
 
 lagcompanion: Final[_FuncCompanion] = ...
 lagroots: Final[_FuncRoots] = ...
-laggauss: Final[_FuncGauss] = ...
+def laggauss(deg: SupportsIndex) -> tuple[_Array1D[np.float64], _Array1D[np.float64]]: ...
 
 # keep in sync with `.hermite.hermweight`  (minus `np.bool`)
 @overload  # Nd T

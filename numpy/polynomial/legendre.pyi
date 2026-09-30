@@ -20,7 +20,6 @@ from ._polytypes import (
     _FuncBinOp,
     _FuncCompanion,
     _FuncFromRoots,
-    _FuncGauss,
     _FuncLine,
     _FuncPoly2Ortho,
     _FuncPow,
@@ -1216,7 +1215,7 @@ def legfit(
 
 legcompanion: Final[_FuncCompanion] = ...
 legroots: Final[_FuncRoots] = ...
-leggauss: Final[_FuncGauss] = ...
+def leggauss(deg: SupportsIndex) -> tuple[_Array1D[np.float64], _Array1D[np.float64]]: ...
 
 @overload  # Nd T
 def legweight[ShapeT: _Shape, ScalarT: np.inexact](

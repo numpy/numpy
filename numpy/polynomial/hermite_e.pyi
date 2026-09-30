@@ -20,7 +20,6 @@ from ._polytypes import (
     _FuncBinOp,
     _FuncCompanion,
     _FuncFromRoots,
-    _FuncGauss,
     _FuncLine,
     _FuncPoly2Ortho,
     _FuncPow,
@@ -1222,7 +1221,7 @@ def _normed_hermite_e_n[ShapeT: _Shape](
     n: int,
 ) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
 
-hermegauss: Final[_FuncGauss] = ...
+def hermegauss(deg: SupportsIndex) -> tuple[_Array1D[np.float64], _Array1D[np.float64]]: ...
 
 # keep in sync with `.chebyshev.chebweight`
 @overload  # Nd T
