@@ -1,14 +1,5 @@
 from collections.abc import Sequence
-from typing import (
-    Any,
-    NoReturn,
-    Protocol,
-    Self,
-    SupportsIndex,
-    SupportsInt,
-    overload,
-    type_check_only,
-)
+from typing import Any, Protocol, Self, SupportsIndex, SupportsInt, type_check_only
 
 import numpy as np
 import numpy.typing as npt
@@ -67,7 +58,6 @@ type _CoefObjectLike_co = np.object_ | _SupportsCoefOps[Any]
 type _CoefLike_co = _NumberLike_co | _CoefObjectLike_co
 
 # The term "series" is used here to refer to 1-d arrays of numeric scalars.
-type _SeriesLikeBool_co = _SupportsArray[np.dtype[np.bool]] | Sequence[bool | np.bool]
 type _SeriesLikeInt_co = _SupportsArray[np.dtype[np.integer | np.bool]] | Sequence[_IntLike_co]
 type _SeriesLikeFloat_co = _SupportsArray[np.dtype[np.floating | np.integer | np.bool]] | Sequence[_FloatLike_co]
 type _SeriesLikeComplex_co = _SupportsArray[np.dtype[np.number | np.bool]] | Sequence[_ComplexLike_co]
@@ -76,14 +66,3 @@ type _SeriesLikeCoef_co = _SupportsArray[np.dtype[_PolyScalar]] | Sequence[_Coef
 
 type _ArrayLikeCoefObject_co = _CoefObjectLike_co | _SeriesLikeObject_co | _NestedSequence[_SeriesLikeObject_co]
 type _ArrayLikeCoef_co = npt.NDArray[_PolyScalar] | _ArrayLikeNumber_co | _ArrayLikeCoefObject_co
-
-@type_check_only
-class _FuncBinOp(Protocol):
-    @overload
-    def __call__(self, /, c1: _SeriesLikeBool_co, c2: _SeriesLikeBool_co) -> NoReturn: ...
-    @overload
-    def __call__(self, /, c1: _SeriesLikeFloat_co, c2: _SeriesLikeFloat_co) -> _FloatSeries: ...
-    @overload
-    def __call__(self, /, c1: _SeriesLikeComplex_co, c2: _SeriesLikeComplex_co) -> _ComplexSeries: ...
-    @overload
-    def __call__(self, /, c1: _SeriesLikeCoef_co, c2: _SeriesLikeCoef_co) -> _ObjectSeries: ...
