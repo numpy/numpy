@@ -31,13 +31,10 @@ from ._polytypes import (
     _CanArray,
     _CoefSeries,
     _FuncBinOp,
-    _FuncCompanion,
     _FuncFromRoots,
-    _FuncGauss,
     _FuncLine,
     _FuncPoly2Ortho,
     _FuncPow,
-    _FuncRoots,
     _FuncUnOp,
     _PolyScalar,
     _Series,
@@ -1239,9 +1236,30 @@ def chebfit(
     w: _ToComplex128_1D | None = None,
 ) -> tuple[npt.NDArray[Any], list[Any]]: ...
 
-chebcompanion: Final[_FuncCompanion] = ...
-chebroots: Final[_FuncRoots] = ...
-chebgauss: Final[_FuncGauss] = ...
+# keep in sync with `polynomial.*companion`
+@overload  # 1d T
+def chebcompanion[ScalarT: np.inexact](c: _CanArray[_Array1D[ScalarT]]) -> _Array2D[ScalarT]: ...
+@overload  # 1d +f64
+def chebcompanion(c: _CanArray[_Array1D[np.integer]] | Sequence[float]) -> _Array2D[np.float64]: ...
+@overload  # 1d ~c128
+def chebcompanion(c: list[complex]) -> _Array2D[np.complex128]: ...
+@overload  # 1d  (fallback)
+def chebcompanion(c: _CanArray[_Array1D[_PolyScalar]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]]) -> _Array2D[Any]: ...
+
+# keep in sync with `polynomial.*roots`
+@overload  # 1d T
+def chebroots[ScalarT: np.complexfloating](c: _CanArray[_Array1D[ScalarT]] | Sequence[ScalarT]) -> _Array1D[ScalarT]: ...
+@overload  # 1d ~f32
+def chebroots(c: _CanArray[_Array1D[np.float32]] | Sequence[np.float32]) -> _Array1D[np.float32 | np.complex64]: ...
+@overload  # 1d +f64
+def chebroots(c: _CanArray[_Array1D[np.float64 | np.integer]] | Sequence[float]) -> _Array1D[np.float64 | np.complex128]: ...
+@overload  # 1d ~c128
+def chebroots(c: list[complex]) -> _Array1D[np.complex128]: ...
+@overload  # 1d  (fallback)
+def chebroots(c: _CanArray[_Array1D[_PolyScalar]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]]) -> _Array1D[Any]: ...
+
+#
+def chebgauss(deg: SupportsIndex) -> tuple[_Array1D[np.float64], _Array1D[np.float64]]: ...
 
 # keep in sync with `.hermite_e.hermeweight`
 @overload  # Nd T

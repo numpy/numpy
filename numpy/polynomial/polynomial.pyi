@@ -18,11 +18,9 @@ from ._polytypes import (
     _Array2,
     _CanArray,
     _FuncBinOp,
-    _FuncCompanion,
     _FuncFromRoots,
     _FuncLine,
     _FuncPow,
-    _FuncRoots,
     _FuncUnOp,
     _PolyScalar,
     _SupportsCoefOps,
@@ -1286,8 +1284,27 @@ def polyfit(
     w: _ToComplex128_1D | None = None,
 ) -> tuple[npt.NDArray[Any], list[Any]]: ...
 
-polycompanion: Final[_FuncCompanion] = ...
-polyroots: Final[_FuncRoots] = ...
+# keep in sync with `polynomial.*companion`
+@overload  # 1d T
+def polycompanion[ScalarT: np.inexact](c: _CanArray[_Array1D[ScalarT]]) -> _Array2D[ScalarT]: ...
+@overload  # 1d +f64
+def polycompanion(c: _CanArray[_Array1D[np.integer]] | Sequence[float]) -> _Array2D[np.float64]: ...
+@overload  # 1d ~c128
+def polycompanion(c: list[complex]) -> _Array2D[np.complex128]: ...
+@overload  # 1d  (fallback)
+def polycompanion(c: _CanArray[_Array1D[_PolyScalar]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]]) -> _Array2D[Any]: ...
+
+# keep in sync with `polynomial.*roots`
+@overload  # 1d T
+def polyroots[ScalarT: np.complexfloating](c: _CanArray[_Array1D[ScalarT]] | Sequence[ScalarT]) -> _Array1D[ScalarT]: ...
+@overload  # 1d ~f32
+def polyroots(c: _CanArray[_Array1D[np.float32]] | Sequence[np.float32]) -> _Array1D[np.float32 | np.complex64]: ...
+@overload  # 1d +f64
+def polyroots(c: _CanArray[_Array1D[np.float64 | np.integer]] | Sequence[float]) -> _Array1D[np.float64 | np.complex128]: ...
+@overload  # 1d ~c128
+def polyroots(c: list[complex]) -> _Array1D[np.complex128]: ...
+@overload  # 1d  (fallback)
+def polyroots(c: _CanArray[_Array1D[_PolyScalar]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]]) -> _Array1D[Any]: ...
 
 class Polynomial(ABCPolyBase[None]):
     basis_name: ClassVar[None] = None  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
