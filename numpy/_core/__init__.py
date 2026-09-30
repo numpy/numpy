@@ -149,16 +149,18 @@ bitwise_right_shift = numeric.right_shift
 permute_dims = numeric.transpose
 pow = numeric.power
 
+# The public names bound above except the submodules (only names are inspected,
+# nothing is imported); checked against the submodules in test_public_api.py.
+_not_exported = {
+    "multiarray", "umath", "numerictypes", "overrides", "numeric", "fromnumeric",
+    "arrayprint", "_ufunc_config", "_asarray", "shape_base", "function_base",
+    "getlimits", "einsumfunc", "records", "sctypes",
+}
 __all__ = [
-    "abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2",
-    "bitwise_invert", "bitwise_left_shift", "bitwise_right_shift", "concat",
-    "pow", "permute_dims", "memmap", "sctypeDict", "record", "recarray"
+    name for name in globals()
+    if not name.startswith("_") and name not in _not_exported
 ]
-__all__ += numeric.__all__
-__all__ += function_base.__all__
-__all__ += getlimits.__all__
-__all__ += shape_base.__all__
-__all__ += einsumfunc.__all__
+del _not_exported
 
 
 def _ufunc_reduce(func):

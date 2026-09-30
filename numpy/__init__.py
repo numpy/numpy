@@ -672,26 +672,17 @@ else:
 
     from ._array_api_info import __array_namespace_info__
 
-    __all__ = list(
-        __numpy_submodules__ |
-        set(_core.__all__) |
-        set(_mat.__all__) |
-        set(lib._histograms_impl.__all__) |
-        set(lib._nanfunctions_impl.__all__) |
-        set(lib._function_base_impl.__all__) |
-        set(lib._twodim_base_impl.__all__) |
-        set(lib._shape_base_impl.__all__) |
-        set(lib._type_check_impl.__all__) |
-        set(lib._arraysetops_impl.__all__) |
-        set(lib._ufunclike_impl.__all__) |
-        set(lib._arraypad_impl.__all__) |
-        set(lib._utils_impl.__all__) |
-        set(lib._stride_tricks_impl.__all__) |
-        set(lib._polynomial_impl.__all__) |
-        set(lib._npyio_impl.__all__) |
-        set(lib._index_tricks_impl.__all__) |
-        {"emath", "show_config", "__version__", "__array_namespace_info__"}
+    # The public names bound above (only names are inspected, nothing is imported);
+    # checked against the submodules in numpy/tests/test_public_api.py.
+    _not_exported = {"os", "sys", "warnings", "version", "matrixlib"}
+    _exported = (
+        {name for name in globals() if not name.startswith("_")}
+        - _not_exported
+        | __numpy_submodules__
+        | {"__version__", "__array_namespace_info__"}
     )
+    __all__ = sorted(_exported)  # noqa: PLE0605 (computed, but a plain list)
+    del _exported, _not_exported
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
