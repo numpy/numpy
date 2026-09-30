@@ -167,7 +167,7 @@ def hermefromroots(
     roots: _CanArray[Array1D[np.number | np.object_]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]],
 ) -> Array1D[Any]: ...
 
-# keep in sync with `polynomial.*add`
+# keep in sync with `polynomial.*{add,sub}`
 @overload  # <=1d T, <=1d T
 def hermeadd[ScalarT: (np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble)](
     c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
@@ -204,7 +204,42 @@ def hermeadd(
     c2: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
 ) -> Array1D[Any]: ...
 
-hermesub: Final[_FuncBinOp] = ...
+# keep in sync with `polynomial.*{add,sub}`
+@overload  # <=1d T, <=1d T
+def hermesub[ScalarT: (np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble)](
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+) -> Array1D[ScalarT]: ...
+@overload  # <=1d +f64, <=1d +f64
+def hermesub(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+) -> Array1D[np.float64]: ...
+@overload  # <=1d ~c128, <=1d +c128
+def hermesub(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+) -> Array1D[np.complex128]: ...
+@overload  # <=1d +c128, <=1d ~c128
+def hermesub(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+) -> Array1D[np.complex128]: ...
+@overload  # <=1d ~O, <=1d
+def hermesub(
+    c1: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    c2: _ToCoef1D,
+) -> Array1D[np.object_]: ...
+@overload  # <=1d, <=1d ~O
+def hermesub(
+    c1: _ToCoef1D,
+    c2: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+) -> Array1D[np.object_]: ...
+@overload  # <=1d, <=1d  (fallback)
+def hermesub(
+    c1: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+    c2: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+) -> Array1D[Any]: ...
 
 # keep in sync with `polynomial.*mulx`
 @overload  # <=1d T
