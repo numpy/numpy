@@ -17,10 +17,9 @@
 #include <numpy/npy_common.h>
 #include <numpy/arrayobject.h>
 
-#include <array_assign.h>   //PyArray_AssignRawScalar
-
 #include <ctype.h>
 extern "C" {
+#include <array_assign.h>   //PyArray_AssignRawScalar
 #include "convert.h"
 #include "common.h"
 #include "ctors.h"
@@ -1055,10 +1054,27 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         goto fail;
     }
 
-    /* Initialize the output to all zeros or None*/
+    /*
+     * Initialize the output: zeros for numeric loops, None for object-dtype
+     * loops. Object dtype has no universal additive identity, so the object
+     * sum-of-products loop treats None as "no value yet" and seeds the
+     * reduction with the first contribution. Key on the loop dtype, not the
+     * output array's dtype: einsum(..., dtype='f8', out=object_array) reduces
+     * in f8 and must seed 0 (the f8 buffer cannot hold None).
+     */
     ret = NpyIter_GetOperandArray(iter)[nop];
-    if (PyArray_AssignZero(ret, NULL) < 0) {
-        goto fail;
+    {
+        PyArray_Descr *loop_dtype = NpyIter_GetDescrArray(iter)[nop];
+        if (loop_dtype->type_num == NPY_OBJECT && PyArray_ISOBJECT(ret)) {
+            PyObject *none = Py_None;
+            if (PyArray_AssignRawScalar(ret, PyArray_DESCR(ret), (char *)&none,
+                                        NULL, NPY_SAFE_CASTING) < 0) {
+                goto fail;
+            }
+        }
+        else if (PyArray_AssignZero(ret, NULL) < 0) {
+            goto fail;
+        }
     }
 
     /***************************/
@@ -1161,6 +1177,22 @@ finish:
         ret = out;
     }
     Py_INCREF(ret);
+
+    /*
+     * When the iteration is empty (a contracted axis of size 0) the
+     * sum-of-products loop never runs, so an object output still holds the
+     * None seed. Collapse it to 0 to match np.sum/np.dot on empty object
+     * arrays. A zero iteration size means every output element is empty
+     * (einsum contracts the same axes for all of them), so this cannot
+     * overwrite real contributions.
+     */
+    if (PyArray_ISOBJECT(ret) && PyArray_SIZE(ret) > 0
+            && NpyIter_GetIterSize(iter) == 0) {
+        if (PyArray_AssignZero(ret, NULL) < 0) {
+            Py_DECREF(ret);
+            goto fail;
+        }
+    }
 
     NpyIter_Deallocate(iter);
     for (iop = 0; iop < nop; ++iop) {
