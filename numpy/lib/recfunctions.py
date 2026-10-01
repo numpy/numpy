@@ -932,6 +932,27 @@ def _common_stride(offsets, counts, itemsize):
     return stride
 
 
+def _flat_field_arrays(arr):
+    """Yield each scalar leaf field of a structured array, in the same order
+    used by the view-based ``structured_to_unstructured`` path: fields
+    left-to-right, subarray elements outer, nested base fields inner. Each
+    yielded array has the same shape as ``arr``."""
+    for name in arr.dtype.names:
+        field = arr[name]
+        subshape = field.shape[arr.ndim:]
+        if subshape:
+            for idx in np.ndindex(subshape):
+                elem = field[(Ellipsis, *idx)]
+                if elem.dtype.names is not None:
+                    yield from _flat_field_arrays(elem)
+                else:
+                    yield elem
+        elif field.dtype.names is not None:
+            yield from _flat_field_arrays(field)
+        else:
+            yield field
+
+
 def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
                                            casting=None):
     return (arr,)
@@ -952,7 +973,8 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     Parameters
     ----------
     arr : ndarray
-       Structured array or dtype to convert. Cannot contain object datatype.
+       Structured array or dtype to convert. If it contains object fields a
+       copy is always returned, since a view is not possible in that case.
     dtype : dtype, optional
        The dtype of the output unstructured array.
     copy : bool, optional
@@ -1023,6 +1045,21 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
                                  'formats': dts,
                                  'offsets': offsets,
                                  'itemsize': arr.dtype.itemsize})
+    if arr.dtype.hasobject:
+        # A view cannot reinterpret object fields (gh-14104), but
+        # structured_to_unstructured always uses every field, so copying each
+        # one into a new trailing axis is safe. As with copy=False elsewhere, a
+        # view is returned only when possible; for object dtypes it never is, so
+        # this branch always returns a copy. Cast each field before stacking so
+        # that `casting` is checked from the original field dtype, as in the
+        # packed-array path below.
+        columns = [field.astype(out_dtype, copy=False, casting=casting)
+                   for field in _flat_field_arrays(arr)]
+        if not columns:
+            # e.g. only zero-length subarray fields; match the view path's
+            # empty trailing axis.
+            return np.empty(arr.shape + (0,), dtype=out_dtype)
+        return np.stack(columns, axis=-1)
     arr = arr.view(flattened_fields)
 
     # we only allow a few types to be unstructured by manipulating the

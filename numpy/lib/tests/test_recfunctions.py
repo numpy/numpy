@@ -382,6 +382,38 @@ class TestRecFunctions:
         assert_equal(dd, dd_expected)
         assert_equal(ddd, dd_expected)
 
+    def test_structured_to_unstructured_with_object(self):
+        # gh-21990: object fields are supported (always returning a copy, since
+        # a view that could hide objects in padding is not possible).
+        # The empty array from the original report no longer raises.
+        out = structured_to_unstructured(np.empty(0, 'O,O'), copy=True)
+        assert_equal(out.shape, (0, 2))
+        assert_equal(out.dtype, np.dtype('O'))
+
+        a = np.array([(1, 2), (3, 4)], dtype='O,O')
+        out = structured_to_unstructured(a)
+        assert_equal(out.tolist(), [[1, 2], [3, 4]])
+        # the result is a copy: mutating it must not affect the input
+        out[0, 0] = 99
+        assert_equal(a['f0'].tolist(), [1, 3])
+
+        # subarray and nested object fields flatten left-to-right
+        a = np.zeros(3, dtype=[('x', 'O'), ('y', 'O', (2,))])
+        assert_equal(structured_to_unstructured(a).shape, (3, 3))
+        a = np.zeros(3, dtype=[('a', 'O'), ('b', [('c', 'O'), ('d', 'O')])])
+        assert_equal(structured_to_unstructured(a).shape, (3, 3))
+
+        # column order matches the (non-object) view-based path: subarray
+        # elements outer, nested base fields inner
+        a = np.zeros(1, dtype=[('x', [('a', 'O'), ('b', 'O')], (2,))])
+        a['x']['a'] = [[1, 3]]  # element 0 -> 1, element 1 -> 3
+        a['x']['b'] = [[2, 4]]  # element 0 -> 2, element 1 -> 4
+        assert_equal(structured_to_unstructured(a).tolist(), [[1, 2, 3, 4]])
+
+        # a zero-length subarray field gives an empty trailing axis
+        a = np.zeros(3, dtype=[('x', 'O', (0,))])
+        assert_equal(structured_to_unstructured(a).shape, (3, 0))
+
     def test_unstructured_to_structured(self):
         # test if dtype is the args of np.dtype
         a = np.zeros((20, 2))
