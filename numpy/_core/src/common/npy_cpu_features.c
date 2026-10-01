@@ -685,11 +685,13 @@ npy__cpu_init_features(void)
     hwcap = getauxval(AT_HWCAP2);
 #else
     unsigned long hwcap;
-    elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
+    if (elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap)) != 0)
+        hwcap = 0;
     if ((hwcap & PPC_FEATURE_HAS_VSX) == 0)
         return;
 
-    elf_aux_info(AT_HWCAP2, &hwcap, sizeof(hwcap));
+    if (elf_aux_info(AT_HWCAP2, &hwcap, sizeof(hwcap)) != 0)
+        hwcap = 0;
 #endif // __linux__
     if (hwcap & PPC_FEATURE2_ARCH_3_1)
     {
