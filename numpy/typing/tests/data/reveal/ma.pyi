@@ -1,11 +1,11 @@
 from typing import Any, Literal, NoReturn, assert_type
 
 import numpy as np
+import numpy.typing as npt
 from numpy._typing import NDArray, _AnyShape
 
 type MaskedArray[ScalarT: np.generic] = np.ma.MaskedArray[_AnyShape, np.dtype[ScalarT]]
 type _NoMaskType = np.bool[Literal[False]]
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _MArray1D[ScalarT: np.generic] = np.ma.MaskedArray[tuple[int], np.dtype[ScalarT]]
 type _MArray2D[ScalarT: np.generic] = np.ma.MaskedArray[tuple[int, int], np.dtype[ScalarT]]
 type _MArray3D[ScalarT: np.generic] = np.ma.MaskedArray[tuple[int, int, int], np.dtype[ScalarT]]
@@ -453,7 +453,7 @@ assert_type(MAR_2d_f4.dot(1), MaskedArray[Any])
 assert_type(MAR_2d_f4.dot([1]), MaskedArray[Any])
 assert_type(MAR_2d_f4.dot(1, out=MAR_subclass), MaskedArraySubclassC)
 
-assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], _Array1D[np.intp]])
+assert_type(MAR_2d_f4.nonzero(), tuple[npt.Array1D[np.intp], npt.Array1D[np.intp]])
 
 assert_type(MAR_f8.trace(), Any)
 assert_type(MAR_f8.trace(out=MAR_subclass), MaskedArraySubclassC)

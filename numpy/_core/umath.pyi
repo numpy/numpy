@@ -24,6 +24,10 @@ import numpy as np
 import numpy.typing as npt
 from numpy import _CastingKind, _OrderKACF, e, euler_gamma, pi
 from numpy._typing import (
+    Array0D,
+    Array1D,
+    Array2D,
+    Array3D,
     _ArrayLike,
     _ArrayLikeAnyString_co,
     _ArrayLikeBool_co,
@@ -157,10 +161,6 @@ _T_contra = TypeVar("_T_contra", contravariant=True)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
-type _Array0D[ScalarT: np.generic] = _Array[tuple[()], ScalarT]
-type _Array1D[ScalarT: np.generic] = _Array[tuple[int], ScalarT]
-type _Array2D[ScalarT: np.generic] = _Array[tuple[int, int], ScalarT]
-type _Array3D[ScalarT: np.generic] = _Array[tuple[int, int, int], ScalarT]
 
 # workaround for microsoft/pyright#10232
 type _JustAnyShape = tuple[Never, Never, Never, Never]
@@ -502,7 +502,7 @@ class _ufunc_11_m_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array0D[np.bool]: ...
+    ) -> Array0D[np.bool]: ...
     @overload  # 1d
     def __call__(
         self,
@@ -512,7 +512,7 @@ class _ufunc_11_m_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.bool]: ...
+    ) -> Array1D[np.bool]: ...
     @overload  # 2d
     def __call__(
         self,
@@ -522,7 +522,7 @@ class _ufunc_11_m_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.bool]: ...
+    ) -> Array2D[np.bool]: ...
     @overload  # 3d
     def __call__(
         self,
@@ -532,7 +532,7 @@ class _ufunc_11_m_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array3D[np.bool]: ...
+    ) -> Array3D[np.bool]: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -594,7 +594,7 @@ class _ufunc_11_f_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array0D[np.bool]: ...
+    ) -> Array0D[np.bool]: ...
     @overload  # 1d
     def __call__(
         self,
@@ -604,7 +604,7 @@ class _ufunc_11_f_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.bool]: ...
+    ) -> Array1D[np.bool]: ...
     @overload  # 2d
     def __call__(
         self,
@@ -614,7 +614,7 @@ class _ufunc_11_f_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.bool]: ...
+    ) -> Array2D[np.bool]: ...
     @overload  # 3d
     def __call__(
         self,
@@ -624,7 +624,7 @@ class _ufunc_11_f_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array3D[np.bool]: ...
+    ) -> Array3D[np.bool]: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -686,7 +686,7 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array0D[np.bool]: ...
+    ) -> Array0D[np.bool]: ...
     @overload  # 1d
     def __call__(
         self,
@@ -696,7 +696,7 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.bool]: ...
+    ) -> Array1D[np.bool]: ...
     @overload  # 2d
     def __call__(
         self,
@@ -706,7 +706,7 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.bool]: ...
+    ) -> Array2D[np.bool]: ...
     @overload  # 3d
     def __call__(
         self,
@@ -716,7 +716,7 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array3D[np.bool]: ...
+    ) -> Array3D[np.bool]: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -788,7 +788,7 @@ class _ufunc_11_bifgco_bo(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array0D[np.bool]: ...
+    ) -> Array0D[np.bool]: ...
     @overload  # 1d
     def __call__(
         self,
@@ -798,7 +798,7 @@ class _ufunc_11_bifgco_bo(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.bool]: ...
+    ) -> Array1D[np.bool]: ...
     @overload  # 2d
     def __call__(
         self,
@@ -808,7 +808,7 @@ class _ufunc_11_bifgco_bo(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.bool]: ...
+    ) -> Array2D[np.bool]: ...
     @overload  # 3d
     def __call__(
         self,
@@ -818,7 +818,7 @@ class _ufunc_11_bifgco_bo(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array3D[np.bool]: ...
+    ) -> Array3D[np.bool]: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -890,7 +890,7 @@ class _ufunc_11_io(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array0D[np.uint8]: ...
+    ) -> Array0D[np.uint8]: ...
     @overload  # 1d
     def __call__(
         self,
@@ -900,7 +900,7 @@ class _ufunc_11_io(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.uint8]: ...
+    ) -> Array1D[np.uint8]: ...
     @overload  # 2d
     def __call__(
         self,
@@ -910,7 +910,7 @@ class _ufunc_11_io(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.uint8]: ...
+    ) -> Array2D[np.uint8]: ...
     @overload  # 3d
     def __call__(
         self,
@@ -920,7 +920,7 @@ class _ufunc_11_io(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array3D[np.uint8]: ...
+    ) -> Array3D[np.uint8]: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -1032,7 +1032,7 @@ class _ufunc_11_f(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.float64]: ...
+    ) -> Array1D[np.float64]: ...
     @overload  # 2d, +float
     def __call__(
         self,
@@ -1042,7 +1042,7 @@ class _ufunc_11_f(_ufunc_11):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.float64]: ...
+    ) -> Array2D[np.float64]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: np.floating](
         self,
@@ -1224,7 +1224,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.float64]: ...
+    ) -> Array1D[np.float64]: ...
     @overload  # 2d, +float
     def __call__(
         self,
@@ -1234,7 +1234,7 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.float64]: ...
+    ) -> Array2D[np.float64]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: np.floating](
         self,
@@ -1416,7 +1416,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.float64]: ...
+    ) -> Array1D[np.float64]: ...
     @overload  # 1d, ~complex
     def __call__(
         self,
@@ -1426,7 +1426,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.complex128]: ...
+    ) -> Array1D[np.complex128]: ...
     @overload  # 2d, +float
     def __call__(
         self,
@@ -1436,7 +1436,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.float64]: ...
+    ) -> Array2D[np.float64]: ...
     @overload  # 2d, ~complex
     def __call__(
         self,
@@ -1446,7 +1446,7 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.complex128]: ...
+    ) -> Array2D[np.complex128]: ...
     @overload  # scalar, +complex  (overlaps with float)
     def __call__(
         self,
@@ -1628,7 +1628,7 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.int8]: ...
+    ) -> Array1D[np.int8]: ...
     @overload  # 1d, ~int
     def __call__(
         self,
@@ -1638,7 +1638,7 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.int_]: ...
+    ) -> Array1D[np.int_]: ...
     @overload  # 1d, ~float
     def __call__(
         self,
@@ -1648,7 +1648,7 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.float64]: ...
+    ) -> Array1D[np.float64]: ...
     @overload  # 1d, ~complex
     def __call__(
         self,
@@ -1658,7 +1658,7 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.complex128]: ...
+    ) -> Array1D[np.complex128]: ...
     @overload  # 2d, bool
     def __call__(
         self,
@@ -1668,7 +1668,7 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.int8]: ...
+    ) -> Array2D[np.int8]: ...
     @overload  # 2d, ~int
     def __call__(
         self,
@@ -1678,7 +1678,7 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.int_]: ...
+    ) -> Array2D[np.int_]: ...
     @overload  # 2d, ~float
     def __call__(
         self,
@@ -1688,7 +1688,7 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.float64]: ...
+    ) -> Array2D[np.float64]: ...
     @overload  # 2d, ~complex
     def __call__(
         self,
@@ -1698,7 +1698,7 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.complex128]: ...
+    ) -> Array2D[np.complex128]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: np.number](
         self,
@@ -1870,7 +1870,7 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.int_]: ...
+    ) -> Array1D[np.int_]: ...
     @overload  # 1d, ~float | m
     def __call__(
         self,
@@ -1880,7 +1880,7 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.float64]: ...
+    ) -> Array1D[np.float64]: ...
     @overload  # 1d, ~complex
     def __call__(
         self,
@@ -1890,7 +1890,7 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.complex128]: ...
+    ) -> Array1D[np.complex128]: ...
     @overload  # 2d, int
     def __call__(
         self,
@@ -1900,7 +1900,7 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.int_]: ...
+    ) -> Array2D[np.int_]: ...
     @overload  # 2d, ~float | m
     def __call__(
         self,
@@ -1910,7 +1910,7 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.float64]: ...
+    ) -> Array2D[np.float64]: ...
     @overload  # 2d, ~complex
     def __call__(
         self,
@@ -1920,7 +1920,7 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.complex128]: ...
+    ) -> Array2D[np.complex128]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: np.number](
         self,
@@ -2072,7 +2072,7 @@ class _ufunc_11_ifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.int_]: ...
+    ) -> Array1D[np.int_]: ...
     @overload  # 1d, ~float
     def __call__(
         self,
@@ -2082,7 +2082,7 @@ class _ufunc_11_ifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.float64]: ...
+    ) -> Array1D[np.float64]: ...
     @overload  # 1d, ~complex
     def __call__(
         self,
@@ -2092,7 +2092,7 @@ class _ufunc_11_ifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.complex128]: ...
+    ) -> Array1D[np.complex128]: ...
     @overload  # 2d, ~int
     def __call__(
         self,
@@ -2102,7 +2102,7 @@ class _ufunc_11_ifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.int_]: ...
+    ) -> Array2D[np.int_]: ...
     @overload  # 2d, ~float
     def __call__(
         self,
@@ -2112,7 +2112,7 @@ class _ufunc_11_ifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.float64]: ...
+    ) -> Array2D[np.float64]: ...
     @overload  # 2d, ~complex
     def __call__(
         self,
@@ -2122,7 +2122,7 @@ class _ufunc_11_ifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.complex128]: ...
+    ) -> Array2D[np.complex128]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: np.number](
         self,
@@ -2264,7 +2264,7 @@ class _ufunc_11_bio(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.bool]: ...
+    ) -> Array1D[np.bool]: ...
     @overload  # 1d, ~int
     def __call__(
         self,
@@ -2274,7 +2274,7 @@ class _ufunc_11_bio(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.int_]: ...
+    ) -> Array1D[np.int_]: ...
     @overload  # 1d, +int
     def __call__(
         self,
@@ -2284,7 +2284,7 @@ class _ufunc_11_bio(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.int_ | Any]: ...
+    ) -> Array1D[np.int_ | Any]: ...
     @overload  # 2d, bool
     def __call__(
         self,
@@ -2294,7 +2294,7 @@ class _ufunc_11_bio(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.bool]: ...
+    ) -> Array2D[np.bool]: ...
     @overload  # 2d, ~int
     def __call__(
         self,
@@ -2304,7 +2304,7 @@ class _ufunc_11_bio(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.int_]: ...
+    ) -> Array2D[np.int_]: ...
     @overload  # 2d, +int
     def __call__(
         self,
@@ -2314,7 +2314,7 @@ class _ufunc_11_bio(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.int_ | Any]: ...
+    ) -> Array2D[np.int_ | Any]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: _to_integer](
         self,
@@ -2466,7 +2466,7 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.bool]: ...
+    ) -> Array1D[np.bool]: ...
     @overload  # 1d, ~int
     def __call__(
         self,
@@ -2476,7 +2476,7 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.int_]: ...
+    ) -> Array1D[np.int_]: ...
     @overload  # 1d, ~float
     def __call__(
         self,
@@ -2486,7 +2486,7 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.float64]: ...
+    ) -> Array1D[np.float64]: ...
     @overload  # 1d, +float
     def __call__(
         self,
@@ -2496,7 +2496,7 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.float64 | Any]: ...
+    ) -> Array1D[np.float64 | Any]: ...
     @overload  # 2d, bool
     def __call__(
         self,
@@ -2506,7 +2506,7 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.bool]: ...
+    ) -> Array2D[np.bool]: ...
     @overload  # 2d, ~int
     def __call__(
         self,
@@ -2516,7 +2516,7 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.int_]: ...
+    ) -> Array2D[np.int_]: ...
     @overload  # 2d, ~float
     def __call__(
         self,
@@ -2526,7 +2526,7 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.float64]: ...
+    ) -> Array2D[np.float64]: ...
     @overload  # 2d, +float
     def __call__(
         self,
@@ -2536,7 +2536,7 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.float64 | Any]: ...
+    ) -> Array2D[np.float64 | Any]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: _to_floating](
         self,
@@ -2748,7 +2748,7 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.bool]: ...
+    ) -> Array1D[np.bool]: ...
     @overload  # 1d, ~int
     def __call__(
         self,
@@ -2758,7 +2758,7 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.int_]: ...
+    ) -> Array1D[np.int_]: ...
     @overload  # 1d, ~float | ~complex
     def __call__(
         self,
@@ -2768,7 +2768,7 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.float64]: ...
+    ) -> Array1D[np.float64]: ...
     @overload  # 1d, +complex
     def __call__(
         self,
@@ -2778,7 +2778,7 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.float64 | Any]: ...
+    ) -> Array1D[np.float64 | Any]: ...
     @overload  # 2d, bool
     def __call__(
         self,
@@ -2788,7 +2788,7 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.bool]: ...
+    ) -> Array2D[np.bool]: ...
     @overload  # 2d, ~int
     def __call__(
         self,
@@ -2798,7 +2798,7 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.int_]: ...
+    ) -> Array2D[np.int_]: ...
     @overload  # 2d, ~float | ~complex
     def __call__(
         self,
@@ -2808,7 +2808,7 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.float64]: ...
+    ) -> Array2D[np.float64]: ...
     @overload  # 2d, +complex
     def __call__(
         self,
@@ -2818,7 +2818,7 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
         out: None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.float64 | Any]: ...
+    ) -> Array2D[np.float64 | Any]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: _to_floating | np.timedelta64](
         self,
@@ -2950,7 +2950,7 @@ class _ufunc_11_ut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
         out: EllipsisType,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array0D[np.bool]: ...
+    ) -> Array0D[np.bool]: ...
     @overload  # 1d  (`list` because `Sequence[str] :> str` would cause overlap)
     def __call__(
         self,
@@ -2960,7 +2960,7 @@ class _ufunc_11_ut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.bool]: ...
+    ) -> Array1D[np.bool]: ...
     @overload  # 2d
     def __call__(
         self,
@@ -2970,7 +2970,7 @@ class _ufunc_11_ut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.bool]: ...
+    ) -> Array2D[np.bool]: ...
     @overload  # 3d
     def __call__(
         self,
@@ -2980,7 +2980,7 @@ class _ufunc_11_ut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array3D[np.bool]: ...
+    ) -> Array3D[np.bool]: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -3042,7 +3042,7 @@ class _ufunc_11_sut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
         out: EllipsisType,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array0D[np.bool]: ...
+    ) -> Array0D[np.bool]: ...
     @overload  # 1d
     def __call__(
         self,
@@ -3052,7 +3052,7 @@ class _ufunc_11_sut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.bool]: ...
+    ) -> Array1D[np.bool]: ...
     @overload  # 2d
     def __call__(
         self,
@@ -3062,7 +3062,7 @@ class _ufunc_11_sut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.bool]: ...
+    ) -> Array2D[np.bool]: ...
     @overload  # 3d
     def __call__(
         self,
@@ -3072,7 +3072,7 @@ class _ufunc_11_sut_b(_ufunc_11[Literal[False]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array3D[np.bool]: ...
+    ) -> Array3D[np.bool]: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -3134,7 +3134,7 @@ class _ufunc_11_sut_i(_ufunc_11[Literal[0]]):  # type: ignore[misc]
         out: EllipsisType,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array0D[np.int_]: ...
+    ) -> Array0D[np.int_]: ...
     @overload  # 1d
     def __call__(
         self,
@@ -3144,7 +3144,7 @@ class _ufunc_11_sut_i(_ufunc_11[Literal[0]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array1D[np.int_]: ...
+    ) -> Array1D[np.int_]: ...
     @overload  # 2d
     def __call__(
         self,
@@ -3154,7 +3154,7 @@ class _ufunc_11_sut_i(_ufunc_11[Literal[0]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array2D[np.int_]: ...
+    ) -> Array2D[np.int_]: ...
     @overload  # 3d
     def __call__(
         self,
@@ -3164,7 +3164,7 @@ class _ufunc_11_sut_i(_ufunc_11[Literal[0]]):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs11],
-    ) -> _Array3D[np.int_]: ...
+    ) -> Array3D[np.int_]: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -3359,7 +3359,7 @@ class _ufunc_12_frexp(_ufunc_12):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> tuple[_Array1D[np.float64], _Array1D[np.int32]]: ...
+    ) -> tuple[Array1D[np.float64], Array1D[np.int32]]: ...
     @overload  # 2d, +float
     def __call__(
         self,
@@ -3369,7 +3369,7 @@ class _ufunc_12_frexp(_ufunc_12):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> tuple[_Array2D[np.float64], _Array2D[np.int32]]: ...
+    ) -> tuple[Array2D[np.float64], Array2D[np.int32]]: ...
     @overload  # ?d, unknown dtype
     def __call__(
         self,
@@ -3484,7 +3484,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> _tuple2[_Array1D[np.float64]]: ...
+    ) -> _tuple2[Array1D[np.float64]]: ...
     @overload  # 2d, +float
     def __call__(
         self,
@@ -3494,7 +3494,7 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         out: EllipsisType | None = None,
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
-    ) -> _tuple2[_Array2D[np.float64]]: ...
+    ) -> _tuple2[Array2D[np.float64]]: ...
     @overload  # scalar, dtype=<known>
     def __call__[ScalarT: np.floating](
         self,
@@ -20822,7 +20822,7 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     def __call__(
         self,
         x1: _ArrayJustND[_to_number | np.object_],
-        x2: _ArrayJustND[_to_number | np.object_] | _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x2: _ArrayJustND[_to_number | np.object_] | Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
         /,
         *,
         out: EllipsisType | None = None,
@@ -20834,7 +20834,7 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # ?d|1d ?, ?d ?  (workaround)
     def __call__(
         self,
-        x1: _ArrayJustND[_to_number | np.object_] | _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x1: _ArrayJustND[_to_number | np.object_] | Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
         x2: _ArrayJustND[_to_number | np.object_],
         /,
         *,
@@ -20847,8 +20847,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~bool, 1d ~bool
     def __call__(
         self,
-        x1: _Array1D[np.bool] | Sequence[bool | np.bool],
-        x2: _Array1D[np.bool] | Sequence[bool | np.bool],
+        x1: Array1D[np.bool] | Sequence[bool | np.bool],
+        x2: Array1D[np.bool] | Sequence[bool | np.bool],
         /,
         *,
         out: None = None,
@@ -20873,8 +20873,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~i64, 1d +i64
     def __call__(
         self,
-        x1: _Array1D[np.int64],
-        x2: _Array1D[_to_integer] | Sequence[_IntLike_co],
+        x1: Array1D[np.int64],
+        x2: Array1D[_to_integer] | Sequence[_IntLike_co],
         /,
         *,
         out: None = None,
@@ -20886,8 +20886,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +i64, 1d ~i64
     def __call__(
         self,
-        x1: _Array1D[_to_integer] | Sequence[_IntLike_co],
-        x2: _Array1D[np.int64],
+        x1: Array1D[_to_integer] | Sequence[_IntLike_co],
+        x2: Array1D[np.int64],
         /,
         *,
         out: None = None,
@@ -20925,8 +20925,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~i32, 1d +i32
     def __call__(
         self,
-        x1: _Array1D[np.int32],
-        x2: _Array1D[_to_i32] | Sequence[int | _to_i32],
+        x1: Array1D[np.int32],
+        x2: Array1D[_to_i32] | Sequence[int | _to_i32],
         /,
         *,
         out: None = None,
@@ -20938,8 +20938,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +i32, 1d ~i32
     def __call__(
         self,
-        x1: _Array1D[_to_i32] | Sequence[int | _to_i32],
-        x2: _Array1D[np.int32],
+        x1: Array1D[_to_i32] | Sequence[int | _to_i32],
+        x2: Array1D[np.int32],
         /,
         *,
         out: None = None,
@@ -20977,8 +20977,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~u8, 1d +u8
     def __call__(
         self,
-        x1: _Array1D[np.uint8],
-        x2: _Array1D[_to_u8] | Sequence[int | _to_u8],
+        x1: Array1D[np.uint8],
+        x2: Array1D[_to_u8] | Sequence[int | _to_u8],
         /,
         *,
         out: None = None,
@@ -20990,8 +20990,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +u8, 1d ~u8
     def __call__(
         self,
-        x1: _Array1D[_to_u8] | Sequence[int | _to_u8],
-        x2: _Array1D[np.uint8],
+        x1: Array1D[_to_u8] | Sequence[int | _to_u8],
+        x2: Array1D[np.uint8],
         /,
         *,
         out: None = None,
@@ -21029,8 +21029,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d T@integer, 1d +biik
     def __call__[ScalarT: np.integer](
         self,
-        x1: _Array1D[ScalarT],
-        x2: _Array1D[np.bool] | Sequence[bool | np.bool],
+        x1: Array1D[ScalarT],
+        x2: Array1D[np.bool] | Sequence[bool | np.bool],
         /,
         *,
         out: None = None,
@@ -21042,8 +21042,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +bool, 1d T@integer
     def __call__[ScalarT: np.integer](
         self,
-        x1: _Array1D[np.bool] | Sequence[bool | np.bool],
-        x2: _Array1D[ScalarT],
+        x1: Array1D[np.bool] | Sequence[bool | np.bool],
+        x2: Array1D[ScalarT],
         /,
         *,
         out: None = None,
@@ -21133,8 +21133,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~f64, 1d +f64
     def __call__(
         self,
-        x1: _Array1D[np.float64] | list[float],
-        x2: _Array1D[_to_f64] | Sequence[float | _to_f64],
+        x1: Array1D[np.float64] | list[float],
+        x2: Array1D[_to_f64] | Sequence[float | _to_f64],
         /,
         *,
         out: None = None,
@@ -21146,8 +21146,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +f64, 1d ~f64
     def __call__(
         self,
-        x1: _Array1D[_to_f64] | Sequence[float | _to_f64],
-        x2: _Array1D[np.float64] | list[float],
+        x1: Array1D[_to_f64] | Sequence[float | _to_f64],
+        x2: Array1D[np.float64] | list[float],
         /,
         *,
         out: None = None,
@@ -21185,8 +21185,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~f32, 1d +f32
     def __call__(
         self,
-        x1: _Array1D[np.float32],
-        x2: _Array1D[_to_f32] | Sequence[_to_f32],
+        x1: Array1D[np.float32],
+        x2: Array1D[_to_f32] | Sequence[_to_f32],
         /,
         *,
         out: None = None,
@@ -21198,8 +21198,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +f32, 1d ~f32
     def __call__(
         self,
-        x1: _Array1D[_to_f32] | Sequence[_to_f32],
-        x2: _Array1D[np.float32],
+        x1: Array1D[_to_f32] | Sequence[_to_f32],
+        x2: Array1D[np.float32],
         /,
         *,
         out: None = None,
@@ -21237,8 +21237,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~c128, 1d +c128
     def __call__(
         self,
-        x1: _Array1D[np.complex128] | list[complex],
-        x2: _Array1D[_to_c128] | Sequence[complex | _to_c128],
+        x1: Array1D[np.complex128] | list[complex],
+        x2: Array1D[_to_c128] | Sequence[complex | _to_c128],
         /,
         *,
         out: None = None,
@@ -21250,8 +21250,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +c128, 1d ~c128
     def __call__(
         self,
-        x1: _Array1D[_to_c128] | Sequence[complex | _to_c128],
-        x2: _Array1D[np.complex128] | list[complex],
+        x1: Array1D[_to_c128] | Sequence[complex | _to_c128],
+        x2: Array1D[np.complex128] | list[complex],
         /,
         *,
         out: None = None,
@@ -21289,8 +21289,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~c64, 1d +c64
     def __call__(
         self,
-        x1: _Array1D[np.complex64],
-        x2: _Array1D[_to_c64] | Sequence[_to_c64],
+        x1: Array1D[np.complex64],
+        x2: Array1D[_to_c64] | Sequence[_to_c64],
         /,
         *,
         out: None = None,
@@ -21302,8 +21302,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +c64, 1d ~c64
     def __call__(
         self,
-        x1: _Array1D[_to_c64] | Sequence[_to_c64],
-        x2: _Array1D[np.complex64],
+        x1: Array1D[_to_c64] | Sequence[_to_c64],
+        x2: Array1D[np.complex64],
         /,
         *,
         out: None = None,
@@ -21341,8 +21341,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~c64, 1d ~f64
     def __call__(
         self,
-        x1: _Array1D[np.complex64],
-        x2: _Array1D[np.float64 | _as_f64] | Sequence[np.float64 | _as_f64],
+        x1: Array1D[np.complex64],
+        x2: Array1D[np.float64 | _as_f64] | Sequence[np.float64 | _as_f64],
         /,
         *,
         out: None = None,
@@ -21354,8 +21354,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~f64, 1d ~c64
     def __call__(
         self,
-        x1: _Array1D[np.float64 | _as_f64] | Sequence[np.float64 | _as_f64],
-        x2: _Array1D[np.complex64],
+        x1: Array1D[np.float64 | _as_f64] | Sequence[np.float64 | _as_f64],
+        x2: Array1D[np.complex64],
         /,
         *,
         out: None = None,
@@ -21393,8 +21393,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ~obj, 1d +obj
     def __call__(
         self,
-        x1: _Array1D[np.object_],
-        x2: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x1: Array1D[np.object_],
+        x2: Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
         /,
         *,
         out: None = None,
@@ -21406,8 +21406,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +obj, 1d ~obj
     def __call__(
         self,
-        x1: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
-        x2: _Array1D[np.object_],
+        x1: Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x2: Array1D[np.object_],
         /,
         *,
         out: None = None,
@@ -21445,8 +21445,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d T@inexact, 1d +float | +f16
     def __call__[ScalarT: np.inexact | np.object_](
         self,
-        x1: _Array1D[ScalarT],
-        x2: _Array1D[_to_f16] | Sequence[bool | _to_f16],
+        x1: Array1D[ScalarT],
+        x2: Array1D[_to_f16] | Sequence[bool | _to_f16],
         /,
         *,
         out: None = None,
@@ -21458,8 +21458,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +float | +f16, 1d T@inexact
     def __call__[ScalarT: np.inexact | np.object_](
         self,
-        x1: _Array1D[_to_f16] | Sequence[bool | _to_f16],
-        x2: _Array1D[ScalarT],
+        x1: Array1D[_to_f16] | Sequence[bool | _to_f16],
+        x2: Array1D[ScalarT],
         /,
         *,
         out: None = None,
@@ -21497,8 +21497,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d T@complexfloating, 1d +c64
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _Array1D[ScalarT],
-        x2: _Array1D[_to_c64] | Sequence[bool | _to_c64],
+        x1: Array1D[ScalarT],
+        x2: Array1D[_to_c64] | Sequence[bool | _to_c64],
         /,
         *,
         out: None = None,
@@ -21510,8 +21510,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d +c64, 1d T@complexfloating
     def __call__[ScalarT: np.complexfloating | np.object_](
         self,
-        x1: _Array1D[_to_c64] | Sequence[bool | _to_c64],
-        x2: _Array1D[ScalarT],
+        x1: Array1D[_to_c64] | Sequence[bool | _to_c64],
+        x2: Array1D[ScalarT],
         /,
         *,
         out: None = None,
@@ -21549,8 +21549,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d _, 1d _, dtype=<known>
     def __call__[ScalarT: _to_number](
         self,
-        x1: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
-        x2: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x1: Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x2: Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
         /,
         *,
         out: EllipsisType | None = None,
@@ -21588,8 +21588,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
     @overload  # 1d ?, 1d ?  (fallback)
     def __call__(
         self,
-        x1: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
-        x2: _Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x1: Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
+        x2: Array1D[_to_number | np.object_] | Sequence[_NumberLike_co],
         /,
         *,
         out: None = None,
