@@ -1,3 +1,4 @@
+import types
 from _typeshed import Incomplete
 from collections.abc import Iterator, Sequence
 from typing import (
@@ -96,6 +97,9 @@ class poly1d(Generic[_ScalarT_co]):
     __module__: L["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
 
     __hash__: ClassVar[None]  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    __type_params__: ClassVar[tuple[Any]] = ...
+    def __class_getitem__(cls, item: object, /) -> types.GenericAlias: ...
 
     @property
     def variable(self) -> str: ...
