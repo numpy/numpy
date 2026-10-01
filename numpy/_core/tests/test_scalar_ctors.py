@@ -94,9 +94,6 @@ class TestArrayFromScalar:
         if arg is None:
             x = t1()
         elif isinstance(arg, tuple):
-            if t1 is np.clongdouble:
-                pytest.xfail("creating a clongdouble from real and "
-                             "imaginary parts isn't supported")
             x = t1(*arg)
         else:
             x = t1(arg)
@@ -131,6 +128,24 @@ class TestArrayFromScalar:
             t(1, None)
         with pytest.raises(TypeError):
             t(None, 1)
+        with pytest.raises(TypeError):
+            t(np.array([1, 2]), 1)
+
+    def test_clongdouble_constructor_preserves_precision(self):
+        real = np.nextafter(np.longdouble(1), np.longdouble(2))
+        imag = np.nextafter(np.longdouble(2), np.longdouble(3))
+
+        value = np.clongdouble(real)
+        assert value.real == real
+        assert value.imag == 0
+
+        value = np.clongdouble(real, imag)
+
+        assert value.real == real
+        assert value.imag == imag
+        if np.finfo(np.longdouble).nmant > np.finfo(np.float64).nmant:
+            assert value.real != np.longdouble(float(real))
+            assert value.imag != np.longdouble(float(imag))
 
 
 @pytest.mark.parametrize("length",
