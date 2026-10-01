@@ -44,6 +44,10 @@ type _Int_co = np.integer | np.bool
 type _Float_co = np.floating | np.integer | np.bool
 type _Number_co = np.number | np.bool
 
+type _ToInt64 = np.signedinteger | np.uint32 | np.uint16 | np.uint8 | np.bool
+type _ToFloat64 = np.float64 | np.float32 | np.float16 | _Int_co
+type _FromFloat64 = np.float64 | np.complex128 | np.longdouble | np.clongdouble
+
 # workaround for mypy and pyright not following the typing spec for overloads
 type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
 
@@ -214,7 +218,7 @@ class poly1d(Generic[_ScalarT_co]):
     @overload  # ~c128, 2d ~c128
     def __call__(self: poly1d[np.complex128], /, val: Sequence[Sequence[complex]]) -> Array2D[np.complex128]: ...
     @overload  # poly1d
-    def __call__(self, /, val: poly1d) -> poly1d: ...
+    def __call__(self, /, val: poly1d) -> poly1d[Any]: ...
     @overload  # Nd
     def __call__[ShapeT: _Shape](
         self,
@@ -265,7 +269,7 @@ class poly1d(Generic[_ScalarT_co]):
     @overload  # ~c128, <=1d ~c128
     def __add__(self: poly1d[np.complex128], other: complex | Sequence[complex], /) -> poly1d[np.complex128]: ...
     @overload  # <=1d  (fallback)
-    def __add__(self, other: ArrayLike, /) -> poly1d: ...
+    def __add__(self, other: ArrayLike, /) -> poly1d[Any]: ...
 
     #
     @overload  # T, <=1d T
@@ -275,7 +279,7 @@ class poly1d(Generic[_ScalarT_co]):
     @overload  # ~c128, <=1d ~c128
     def __radd__(self: poly1d[np.complex128], other: complex | Sequence[complex], /) -> poly1d[np.complex128]: ...
     @overload  # <=1d  (fallback)
-    def __radd__(self, other: ArrayLike, /) -> poly1d: ...
+    def __radd__(self, other: ArrayLike, /) -> poly1d[Any]: ...
 
     #
     @overload  # T, <=1d T
@@ -285,7 +289,7 @@ class poly1d(Generic[_ScalarT_co]):
     @overload  # ~c128, <=1d ~c128
     def __sub__(self: poly1d[np.complex128], other: complex | Sequence[complex], /) -> poly1d[np.complex128]: ...
     @overload  # <=1d  (fallback)
-    def __sub__(self, other: ArrayLike, /) -> poly1d: ...
+    def __sub__(self, other: ArrayLike, /) -> poly1d[Any]: ...
 
     #
     @overload  # T, <=1d T
@@ -295,13 +299,13 @@ class poly1d(Generic[_ScalarT_co]):
     @overload  # ~c128, <=1d ~c128
     def __rsub__(self: poly1d[np.complex128], other: complex | Sequence[complex], /) -> poly1d[np.complex128]: ...
     @overload  # <=1d  (fallback)
-    def __rsub__(self, other: ArrayLike, /) -> poly1d: ...
+    def __rsub__(self, other: ArrayLike, /) -> poly1d[Any]: ...
 
     #
     @overload  # T, <=1d T
     def __mul__[ScalarT: _Number_co](self: poly1d[ScalarT], other: _ArrayLike[ScalarT], /) -> poly1d[ScalarT]: ...
     @overload  # 0d
-    def __mul__(self, other: np.number | np.bool, /) -> poly1d: ...
+    def __mul__(self, other: np.number | np.bool, /) -> poly1d[Any]: ...
     @overload  # T, 0d ~i8
     def __mul__[ScalarT: np.number](self: poly1d[ScalarT], other: int, /) -> poly1d[ScalarT]: ...
     @overload  # T, 0d ~f64
@@ -313,13 +317,13 @@ class poly1d(Generic[_ScalarT_co]):
     @overload  # ~c128, 1d ~c128
     def __mul__(self: poly1d[np.complex128], other: Sequence[complex], /) -> poly1d[np.complex128]: ...
     @overload  # <=1d  (fallback)
-    def __mul__(self, other: ArrayLike, /) -> poly1d: ...
+    def __mul__(self, other: ArrayLike, /) -> poly1d[Any]: ...
 
     #
     @overload  # T, <=1d T
     def __rmul__[ScalarT: _Number_co](self: poly1d[ScalarT], other: _ArrayLike[ScalarT], /) -> poly1d[ScalarT]: ...
     @overload  # 0d
-    def __rmul__(self, other: np.number | np.bool, /) -> poly1d: ...
+    def __rmul__(self, other: np.number | np.bool, /) -> poly1d[Any]: ...
     @overload  # T, 0d ~i8
     def __rmul__[ScalarT: np.number](self: poly1d[ScalarT], other: int, /) -> poly1d[ScalarT]: ...
     @overload  # T, 0d ~f64
@@ -331,74 +335,42 @@ class poly1d(Generic[_ScalarT_co]):
     @overload  # ~c128, 1d ~c128
     def __rmul__(self: poly1d[np.complex128], other: Sequence[complex], /) -> poly1d[np.complex128]: ...
     @overload  # <=1d  (fallback)
-    def __rmul__(self, other: ArrayLike, /) -> poly1d: ...
+    def __rmul__(self, other: ArrayLike, /) -> poly1d[Any]: ...
 
     #
     @overload  # T
-    def __pow__[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
-        self: poly1d[ScalarT],
-        val: _IntLike_co,
-        /,
-    ) -> poly1d[ScalarT]: ...
+    def __pow__[ScalarT: _FromFloat64](self: poly1d[ScalarT], val: _IntLike_co, /) -> poly1d[ScalarT]: ...
     @overload  # +int
-    def __pow__(
-        self: poly1d[np.signedinteger | np.uint32 | np.uint16 | np.uint8 | np.bool],
-        val: _IntLike_co,
-        /,
-    ) -> poly1d[np.int_]: ...
+    def __pow__(self: poly1d[_ToInt64], val: _IntLike_co, /) -> poly1d[np.int_]: ...
     @overload  # +f64
     def __pow__(self: poly1d[np.float32 | np.float16 | np.uint64], val: _IntLike_co, /) -> poly1d[np.float64]: ...
     @overload  # +c128
     def __pow__(self: poly1d[np.complex64], val: _IntLike_co, /) -> poly1d[np.complex128]: ...
     @overload  # fallback
-    def __pow__(self, val: _IntLike_co, /) -> poly1d: ...
+    def __pow__(self, val: _IntLike_co, /) -> poly1d[Any]: ...
 
     #
     @overload  # T, 0d T
-    def __truediv__[ScalarT: np.inexact](
-        self: poly1d[ScalarT],
-        other: ScalarT,
-        /,
-    ) -> poly1d[ScalarT]: ...
+    def __truediv__[ScalarT: np.inexact](self: poly1d[ScalarT], other: ScalarT, /) -> poly1d[ScalarT]: ...
     @overload  # 0d
-    def __truediv__(
-        self,
-        other: np.number | np.bool,
-        /,
-    ) -> poly1d: ...
+    def __truediv__(self, other: np.number | np.bool, /) -> poly1d[Any]: ...
     @overload  # T, 0d ~f64
-    def __truediv__[ScalarT: np.inexact](
-        self: poly1d[ScalarT],
-        other: float,
-        /,
-    ) -> poly1d[ScalarT]: ...
+    def __truediv__[ScalarT: np.inexact](self: poly1d[ScalarT], other: float, /) -> poly1d[ScalarT]: ...
     @overload  # +int, 0d ~f64
-    def __truediv__(
-        self: poly1d[_Int_co],
-        other: float,
-        /,
-    ) -> poly1d[np.float64]: ...
+    def __truediv__(self: poly1d[_Int_co], other: float, /) -> poly1d[np.float64]: ...
     @overload  # T, 0d ~c128
-    def __truediv__[ScalarT: np.complexfloating](
-        self: poly1d[ScalarT],
-        other: complex,
-        /,
-    ) -> poly1d[ScalarT]: ...
+    def __truediv__[ScalarT: np.complexfloating](self: poly1d[ScalarT], other: complex, /) -> poly1d[ScalarT]: ...
     @overload  # 0d  (fallback)
-    def __truediv__(
-        self,
-        other: complex,
-        /,
-    ) -> poly1d: ...
+    def __truediv__(self, other: complex, /) -> poly1d[Any]: ...
     @overload  # T, <=1d T
     def __truediv__[ScalarT: np.inexact](
         self: poly1d[ScalarT],
-        other: NDArray[ScalarT] | poly1d[ScalarT],
+        other: poly1d[ScalarT] | NDArray[ScalarT],
         /,
     ) -> _2Tup[poly1d[ScalarT]]: ...
     @overload  # +f64, 1d ~f64
     def __truediv__(
-        self: poly1d[np.float64 | np.float32 | np.float16 | _Int_co],
+        self: poly1d[_ToFloat64],
         other: Sequence[float],
         /,
     ) -> _2Tup[poly1d[np.float64]]: ...
@@ -411,47 +383,23 @@ class poly1d(Generic[_ScalarT_co]):
     @overload  # <=1d  (fallback)
     def __truediv__(
         self,
-        other: NDArray[_Number_co | np.object_] | poly1d | Sequence[_ComplexLike_co],
+        other: poly1d | NDArray[_Number_co | np.object_] | Sequence[_ComplexLike_co],
         /,
-    ) -> _2Tup[poly1d]: ...
+    ) -> _2Tup[poly1d[Any]]: ...
 
     #
     @overload  # T, 0d T
-    def __rtruediv__[ScalarT: np.inexact](
-        self: poly1d[ScalarT],
-        other: ScalarT,
-        /,
-    ) -> poly1d[ScalarT]: ...
+    def __rtruediv__[ScalarT: np.inexact](self: poly1d[ScalarT], other: ScalarT, /) -> poly1d[ScalarT]: ...
     @overload  # 0d
-    def __rtruediv__(
-        self,
-        other: np.number | np.bool,
-        /,
-    ) -> poly1d: ...
+    def __rtruediv__(self, other: np.number | np.bool, /) -> poly1d[Any]: ...
     @overload  # T, 0d ~f64
-    def __rtruediv__[ScalarT: np.inexact](
-        self: poly1d[ScalarT],
-        other: float,
-        /,
-    ) -> poly1d[ScalarT]: ...
+    def __rtruediv__[ScalarT: np.inexact](self: poly1d[ScalarT], other: float, /) -> poly1d[ScalarT]: ...
     @overload  # +int, 0d ~f64
-    def __rtruediv__(
-        self: poly1d[_Int_co],
-        other: float,
-        /,
-    ) -> poly1d[np.float64]: ...
+    def __rtruediv__(self: poly1d[_Int_co], other: float, /) -> poly1d[np.float64]: ...
     @overload  # T, 0d ~c128
-    def __rtruediv__[ScalarT: np.complexfloating](
-        self: poly1d[ScalarT],
-        other: complex,
-        /,
-    ) -> poly1d[ScalarT]: ...
+    def __rtruediv__[ScalarT: np.complexfloating](self: poly1d[ScalarT], other: complex, /) -> poly1d[ScalarT]: ...
     @overload  # 0d  (fallback)
-    def __rtruediv__(
-        self,
-        other: complex,
-        /,
-    ) -> poly1d: ...
+    def __rtruediv__(self, other: complex, /) -> poly1d[Any]: ...
     @overload  # T, <=1d T
     def __rtruediv__[ScalarT: np.inexact](
         self: poly1d[ScalarT],
@@ -460,7 +408,7 @@ class poly1d(Generic[_ScalarT_co]):
     ) -> _2Tup[poly1d[ScalarT]]: ...
     @overload  # +f64, 1d ~f64
     def __rtruediv__(
-        self: poly1d[np.float64 | np.float32 | np.float16 | _Int_co],
+        self: poly1d[_ToFloat64],
         other: Sequence[float],
         /,
     ) -> _2Tup[poly1d[np.float64]]: ...
@@ -473,9 +421,9 @@ class poly1d(Generic[_ScalarT_co]):
     @overload  # <=1d  (fallback)
     def __rtruediv__(
         self,
-        other: NDArray[_Number_co | np.object_] | poly1d | Sequence[_ComplexLike_co],
+        other: poly1d | NDArray[_Number_co | np.object_] | Sequence[_ComplexLike_co],
         /,
-    ) -> _2Tup[poly1d]: ...
+    ) -> _2Tup[poly1d[Any]]: ...
 
     #
     @override
@@ -485,39 +433,19 @@ class poly1d(Generic[_ScalarT_co]):
 
     #
     @overload  # T
-    def deriv[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
-        self: poly1d[ScalarT],
-        /,
-        m: SupportsIndex = 1,
-    ) -> poly1d[ScalarT]: ...
+    def deriv[ScalarT: _FromFloat64](self: poly1d[ScalarT], /, m: SupportsIndex = 1) -> poly1d[ScalarT]: ...
     @overload  # +f64
-    def deriv(
-        self: poly1d[np.float32 | np.float16 | np.uint64],
-        /,
-        m: SupportsIndex = 1,
-    ) -> poly1d[np.float64]: ...
+    def deriv(self: poly1d[np.float32 | np.float16 | np.uint64], /, m: SupportsIndex = 1) -> poly1d[np.float64]: ...
     @overload  # +int
-    def deriv(
-        self: poly1d[np.signedinteger | np.uint32 | np.uint16 | np.uint8 | np.bool],
-        /,
-        m: SupportsIndex = 1,
-    ) -> poly1d[np.int_]: ...
+    def deriv(self: poly1d[_ToInt64], /, m: SupportsIndex = 1) -> poly1d[np.int_]: ...
     @overload  # +c128
-    def deriv(
-        self: poly1d[np.complex64],
-        /,
-        m: SupportsIndex = 1,
-    ) -> poly1d[np.complex128]: ...
+    def deriv(self: poly1d[np.complex64], /, m: SupportsIndex = 1) -> poly1d[np.complex128]: ...
     @overload  # fallback
-    def deriv(
-        self,
-        /,
-        m: SupportsIndex = 1,
-    ) -> poly1d: ...
+    def deriv(self, /, m: SupportsIndex = 1) -> poly1d[Any]: ...
 
     #
     @overload  # T
-    def integ[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def integ[ScalarT: _FromFloat64](
         self: poly1d[ScalarT],
         /,
         m: SupportsIndex = 1,
@@ -543,7 +471,7 @@ class poly1d(Generic[_ScalarT_co]):
         /,
         m: SupportsIndex = 1,
         k: _ArrayLikeComplex_co | _ArrayLikeObject_co | None = 0,
-    ) -> poly1d: ...
+    ) -> poly1d[Any]: ...
 
 #
 @overload  # <=2d Any  (workaround)
@@ -585,7 +513,7 @@ def polyint(
     k: _ArrayLikeComplex_co | _ArrayLikeObject_co | None = None,
 ) -> poly1d: ...
 @overload  # 1d T
-def polyint[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble | np.object_](
+def polyint[ScalarT: _FromFloat64 | np.object_](
     p: Array1D[ScalarT] | Sequence[ScalarT],
     m: SupportsIndex = 1,
     k: _ArrayLikeFloat64_co | None = None,
@@ -613,17 +541,17 @@ def polyint(
 @overload  # poly1d
 def polyder(p: poly1d, m: SupportsIndex = 1) -> poly1d: ...
 @overload  # 1d T
-def polyder[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble | np.object_](
+def polyder[ScalarT: _FromFloat64 | np.object_](
     p: Array1D[ScalarT] | Sequence[ScalarT],
     m: SupportsIndex = 1,
 ) -> Array1D[ScalarT]: ...
 @overload  # 1d +int
 def polyder(
-    p: Array1D[np.bool | np.signedinteger | np.uint8 | np.uint16 | np.uint32] | list[int],
+    p: Array1D[_ToInt64] | list[int],
     m: SupportsIndex = 1,
 ) -> Array1D[np.int_]: ...
 @overload  # 1d +f64
-def polyder(p: Array1D[np.float16 | np.float32 | np.uint64] | list[float], m: SupportsIndex = 1) -> Array1D[np.float64]: ...
+def polyder(p: Array1D[np.float32 | np.float16 | np.uint64] | list[float], m: SupportsIndex = 1) -> Array1D[np.float64]: ...
 @overload  # 1d +c128
 def polyder(p: Array1D[np.complex64] | list[complex], m: SupportsIndex = 1) -> Array1D[np.complex128]: ...
 @overload  # 1d  (fallback)
