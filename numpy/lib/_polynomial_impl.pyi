@@ -1,4 +1,4 @@
-from _typeshed import ConvertibleToInt, Incomplete
+from _typeshed import Incomplete
 from collections.abc import Iterator, Sequence
 from typing import (
     Any,
@@ -488,35 +488,62 @@ class poly1d(Generic[_ScalarT_co]):
     def deriv[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
         self: poly1d[ScalarT],
         /,
-        m: ConvertibleToInt = 1,
+        m: SupportsIndex = 1,
     ) -> poly1d[ScalarT]: ...
     @overload  # +f64
     def deriv(
         self: poly1d[np.float32 | np.float16 | np.uint64],
         /,
-        m: ConvertibleToInt = 1,
+        m: SupportsIndex = 1,
     ) -> poly1d[np.float64]: ...
     @overload  # +int
     def deriv(
         self: poly1d[np.signedinteger | np.uint32 | np.uint16 | np.uint8 | np.bool],
         /,
-        m: ConvertibleToInt = 1,
+        m: SupportsIndex = 1,
     ) -> poly1d[np.int_]: ...
     @overload  # +c128
     def deriv(
         self: poly1d[np.complex64],
         /,
-        m: ConvertibleToInt = 1,
+        m: SupportsIndex = 1,
     ) -> poly1d[np.complex128]: ...
     @overload  # fallback
     def deriv(
         self,
         /,
-        m: ConvertibleToInt = 1,
+        m: SupportsIndex = 1,
     ) -> poly1d: ...
 
     #
-    def integ(self, /, m: ConvertibleToInt = 1, k: _ArrayLikeComplex_co | _ArrayLikeObject_co | None = 0) -> poly1d: ...
+    @overload  # T
+    def integ[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+        self: poly1d[ScalarT],
+        /,
+        m: SupportsIndex = 1,
+        k: _ArrayLikeFloat64_co | None = 0,
+    ) -> poly1d[ScalarT]: ...
+    @overload  # +f64
+    def integ(
+        self: poly1d[np.float32 | np.float16 | _Int_co],
+        /,
+        m: SupportsIndex = 1,
+        k: _ArrayLikeFloat64_co | None = 0,
+    ) -> poly1d[np.float64]: ...
+    @overload  # +c128
+    def integ(
+        self: poly1d[np.complex64],
+        /,
+        m: SupportsIndex = 1,
+        k: _ArrayLikeComplex128_co | None = 0,
+    ) -> poly1d[np.complex128]: ...
+    @overload  # fallback
+    def integ(
+        self,
+        /,
+        m: SupportsIndex = 1,
+        k: _ArrayLikeComplex_co | _ArrayLikeObject_co | None = 0,
+    ) -> poly1d: ...
 
 #
 @overload  # <=2d Any  (workaround)

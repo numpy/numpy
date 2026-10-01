@@ -160,7 +160,10 @@ assert_type(_poly_f4.deriv(), np.poly1d[np.float64])  # type: ignore[assert-type
 assert_type(_poly_c8.deriv(), np.poly1d[np.complex128])  # type: ignore[assert-type]
 assert_type(_poly_O.deriv(), np.poly1d[Any])
 
-assert_type(_poly.integ(), np.poly1d[Any])
+assert_type(_poly_f8.integ(), np.poly1d[np.float64])
+assert_type(_poly_b.integ(), np.poly1d[np.float64])
+assert_type(_poly_c8.integ(), np.poly1d[np.complex128])  # type: ignore[assert-type]
+assert_type(_poly_O.integ(), np.poly1d[Any])
 
 assert_type(np.poly(_poly_f8), npt.Array1D[Any])
 assert_type(np.poly(AR_f4), npt.Array1D[np.float32])
