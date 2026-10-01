@@ -323,7 +323,24 @@ class poly1d(Generic[_ScalarT_co]):
     def __rmul__(self, other: ArrayLike, /) -> poly1d: ...
 
     #
-    def __pow__(self, val: _FloatLike_co, /) -> poly1d: ...  # Integral floats are accepted
+    @overload  # T
+    def __pow__[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble | np.object_](
+        self: poly1d[ScalarT],
+        val: _IntLike_co,
+        /,
+    ) -> poly1d[ScalarT]: ...
+    @overload  # +int
+    def __pow__(
+        self: poly1d[np.signedinteger | np.uint32 | np.uint16 | np.uint8 | np.bool],
+        val: _IntLike_co,
+        /,
+    ) -> poly1d[np.int_]: ...
+    @overload  # +f64
+    def __pow__(self: poly1d[np.float32 | np.float16 | np.uint64], val: _IntLike_co, /) -> poly1d[np.float64]: ...
+    @overload  # +c128
+    def __pow__(self: poly1d[np.complex64], val: _IntLike_co, /) -> poly1d[np.complex128]: ...
+    @overload  # fallback
+    def __pow__(self, val: _IntLike_co, /) -> poly1d: ...
 
     #
     def __truediv__(self, other: ArrayLike, /) -> poly1d: ...

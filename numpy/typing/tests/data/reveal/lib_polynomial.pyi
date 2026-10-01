@@ -29,6 +29,7 @@ _poly: np.poly1d
 _poly_b: np.poly1d[np.bool]
 _poly_f4: np.poly1d[np.float32]
 _poly_f8: np.poly1d[np.float64]
+_poly_c8: np.poly1d[np.complex64]
 _poly_c16: np.poly1d[np.complex128]
 _poly_O: np.poly1d[np.object_[Fraction]]
 
@@ -109,8 +110,10 @@ assert_type([_f8] - _poly_f8, np.poly1d[np.float64])
 assert_type(5 - _poly_f8, np.poly1d[np.float64])
 assert_type(5j - _poly_c16, np.poly1d[np.complex128])
 assert_type(5 - _poly_f4, np.poly1d[Any])
-assert_type(_poly_f8**1, np.poly1d[Any])
-assert_type(_poly_f8**1.0, np.poly1d[Any])
+assert_type(_poly_f8**2, np.poly1d[np.float64])
+assert_type(_poly_b**2, np.poly1d[np.int_])
+assert_type(_poly_f4**2, np.poly1d[np.float64])  # type: ignore[assert-type]
+assert_type(_poly_c8**2, np.poly1d[np.complex128])  # type: ignore[assert-type]
 assert_type(_poly_f8 / 5, np.poly1d[Any])
 assert_type(5 / _poly_f8, np.poly1d[Any])
 
