@@ -26,12 +26,11 @@ from numpy._typing import (
 
 from ._polybase import ABCPolyBase
 from ._polytypes import (
+    _AnyInt,
     _CanArray,
     _CoefSeries,
     _FuncBinOp,
-    _FuncFromRoots,
     _FuncLine,
-    _FuncPow,
     _PolyScalar,
     _Series,
     _SeriesLikeCoef_co,
@@ -150,7 +149,25 @@ chebone: Final[_Array1D[np.int_]] = ...
 chebx: Final[_Array1D[np.int_]] = ...
 
 chebline: Final[_FuncLine] = ...
-chebfromroots: Final[_FuncFromRoots] = ...
+
+# keep in sync with `polynomial.*fromroots`
+@overload  # 1d T
+def chebfromroots[ScalarT: np.longdouble | np.clongdouble](
+    roots: _CanArray[_Array1D[ScalarT]],
+) -> _Array1D[ScalarT]: ...
+@overload  # 1d +f64
+def chebfromroots(
+    roots: _CanArray[_Array1D[np.float64 | np.float32 | np.float16 | np.integer]] | Sequence[float],
+) -> _Array1D[np.float64]: ...
+@overload  # 1d +c128
+def chebfromroots(
+    roots: _CanArray[_Array1D[np.complex128 | np.complex64]] | list[complex],
+) -> _Array1D[np.complex128]: ...
+@overload  # 1d  (fallback)
+def chebfromroots(
+    roots: _CanArray[_Array1D[np.number | np.object_]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]],
+) -> _Array1D[Any]: ...
+
 chebadd: Final[_FuncBinOp] = ...
 chebsub: Final[_FuncBinOp] = ...
 
@@ -174,7 +191,38 @@ def chebmulx(
 
 chebmul: Final[_FuncBinOp] = ...
 chebdiv: Final[_FuncBinOp] = ...
-chebpow: Final[_FuncPow] = ...
+
+# keep in sync with `polynomial.*pow`
+@overload  # <=1d T
+def chebpow[ScalarT: np.inexact](
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    pow: _AnyInt,
+    maxpower: _IntLike_co | None = 16,
+) -> _Array1D[ScalarT]: ...
+@overload  # <=1d +f64
+def chebpow(
+    c: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.integer]]] | Sequence[float] | float,
+    pow: _AnyInt,
+    maxpower: _IntLike_co | None = 16,
+) -> _Array1D[np.float64]: ...
+@overload  # <=1d ~c128
+def chebpow(
+    c: list[complex],
+    pow: _AnyInt,
+    maxpower: _IntLike_co | None = 16,
+) -> _Array1D[np.complex128]: ...
+@overload  # <=1d ~O
+def chebpow(
+    c: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    pow: _AnyInt,
+    maxpower: _IntLike_co | None = 16,
+) -> _Array1D[np.object_]: ...
+@overload  # <=1d  (fallback)
+def chebpow(
+    c: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+    pow: _AnyInt,
+    maxpower: _IntLike_co | None = 16,
+) -> _Array1D[Any]: ...
 
 # keep in sync with `polynomial.*der`
 @overload  # ?d T  (workaround)

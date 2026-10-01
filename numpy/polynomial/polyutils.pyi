@@ -255,7 +255,7 @@ def _vander_nd_flat(
     degrees: Sequence[SupportsIndex],
 ) -> _CoefArray: ...
 
-# keep in sync with `._polytypes._FuncFromRoots`
+#
 @overload
 def _fromroots(line_f: _AnyLineF, mul_f: _AnyMulF, roots: _SeriesLikeFloat_co) -> _FloatSeries: ...
 @overload
@@ -284,7 +284,7 @@ def _div(mul_f: _AnyMulF, c1: _SeriesLikeCoef_co, c2: _SeriesLikeCoef_co) -> _Tu
 _add: Final[_FuncBinOp] = ...
 _sub: Final[_FuncBinOp] = ...
 
-# keep in sync with `_polytypes._FuncPow`
+#
 @overload
 def _pow(mul_f: _AnyMulF, c: _SeriesLikeFloat_co, pow: _AnyInt, maxpower: _AnyInt | None) -> _FloatSeries: ...
 @overload
