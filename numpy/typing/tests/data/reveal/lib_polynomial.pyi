@@ -26,7 +26,10 @@ _py_c_1d: list[complex]
 _py_f_2d: list[list[float]]
 
 _poly: np.poly1d
+_poly_b: np.poly1d[np.bool]
+_poly_f4: np.poly1d[np.float32]
 _poly_f8: np.poly1d[np.float64]
+_poly_c16: np.poly1d[np.complex128]
 _poly_O: np.poly1d[np.object_[Fraction]]
 
 assert_type(np.poly1d(AR_f4), np.poly1d[np.float32])
@@ -48,12 +51,26 @@ assert_type(_poly_f8.coefficients, npt.Array1D[np.float64])
 assert_type(_poly.__hash__, None)
 assert_type(_poly_f8.__array__(), npt.Array1D[np.float64])
 
-assert_type(_poly_f8(_poly_f8), np.poly1d[Any])
+assert_type(_poly_f8(_poly_f8), np.poly1d[np.float64])
+assert_type(_poly_f8(AR_f8_2d), npt.Array2D[np.float64])
+assert_type(_poly_f8(_f8), np.float64)
+assert_type(_poly_f8([_f8]), npt.Array1D[np.float64])
+assert_type(_poly_f8([[_f8]]), npt.Array2D[np.float64])
+assert_type(_poly(_f8), Any)
 assert_type(_poly(AR_f8_2d), npt.Array2D[Any])
-assert_type(_poly(1), Any)
-assert_type(_poly([1]), npt.Array1D[Any])
-assert_type(_poly([[1.0]]), npt.Array2D[Any])
-assert_type(_poly([AR_f8]), npt.NDArray[Any])
+assert_type(_poly_f8(1.0), np.float64)
+assert_type(_poly_f8(_py_f_1d), npt.Array1D[np.float64])
+assert_type(_poly_f8(_py_f_2d), npt.Array2D[np.float64])
+assert_type(_poly_c16(1j), np.complex128)
+assert_type(_poly_c16(_py_c_1d), npt.Array1D[np.complex128])
+assert_type(_poly_c16(_py_f_2d), npt.Array2D[np.complex128])
+assert_type(_poly_f8(_poly_f4), np.poly1d[Any])
+assert_type(_poly_b(_poly_b), np.poly1d[Any])
+assert_type(_poly_f4(AR_f8_2d), npt.Array2D[Any])
+assert_type(_poly_f4(1.0), Any)
+assert_type(_poly_f4(_py_f_1d), npt.Array1D[Any])
+assert_type(_poly_f4(_py_f_2d), npt.Array2D[Any])
+assert_type(_poly_f4([AR_f8]), npt.NDArray[Any])
 
 assert_type(len(_poly), int)
 assert_type(-_poly, np.poly1d[Any])
