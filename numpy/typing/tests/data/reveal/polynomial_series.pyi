@@ -10,6 +10,7 @@ i1: np.int8
 i2: np.int16
 i8: np.int64
 f4: np.float32
+O: np.object_
 
 AR_b: npt.NDArray[np.bool]
 AR_u4: npt.NDArray[np.uint32]
@@ -1275,6 +1276,50 @@ assert_type(npp.laguerre.lagroots(_f4_1d_list), npt.Array1D[np.float32 | np.comp
 assert_type(npp.laguerre.lagroots(_py_f_1d), npt.Array1D[np.float64 | np.complex128])
 assert_type(npp.laguerre.lagroots(_py_c_1d), npt.Array1D[np.complex128])
 assert_type(npp.laguerre.lagroots(_py_decimal_1d), npt.Array1D[Any])
+
+# line
+
+assert_type(npp.polynomial.polyline(f4, f4), _Array1D[np.float32])
+assert_type(npp.polynomial.polyline(1, 2), _Array1D[np.int_])
+assert_type(npp.polynomial.polyline(1.0, 2.0), _Array1D[np.float64 | Any])
+assert_type(npp.polynomial.polyline(1j, 2.0), _Array1D[np.complex128 | Any])
+assert_type(npp.polynomial.polyline(Decimal("1"), Decimal("2")), _Array1D[Any])
+assert_type(npp.polynomial.polyline(O, O), _Array1D[Any])
+
+assert_type(npp.chebyshev.chebline(f4, f4), _Array1D[np.float32])
+assert_type(npp.chebyshev.chebline(1, 2), _Array1D[np.int_])
+assert_type(npp.chebyshev.chebline(1.0, 2.0), _Array1D[np.float64 | Any])
+assert_type(npp.chebyshev.chebline(1j, 2.0), _Array1D[np.complex128 | Any])
+assert_type(npp.chebyshev.chebline(Decimal("1"), Decimal("2")), _Array1D[Any])
+assert_type(npp.chebyshev.chebline(O, O), _Array1D[Any])
+
+assert_type(npp.legendre.legline(f4, f4), _Array1D[np.float32])
+assert_type(npp.legendre.legline(1, 2), _Array1D[np.int_])
+assert_type(npp.legendre.legline(1.0, 2.0), _Array1D[np.float64 | Any])
+assert_type(npp.legendre.legline(1j, 2.0), _Array1D[np.complex128 | Any])
+assert_type(npp.legendre.legline(Decimal("1"), Decimal("2")), _Array1D[Any])
+assert_type(npp.legendre.legline(O, O), _Array1D[Any])
+
+assert_type(npp.hermite.hermline(f4, f4), _Array1D[np.float32])
+assert_type(npp.hermite.hermline(1, 2), _Array1D[np.float64 | Any])
+assert_type(npp.hermite.hermline(1.0, 2.0), _Array1D[np.float64 | Any])
+assert_type(npp.hermite.hermline(1j, 2.0), _Array1D[np.complex128 | Any])
+assert_type(npp.hermite.hermline(Decimal("1"), Decimal("2")), _Array1D[Any])
+assert_type(npp.hermite.hermline(O, O), _Array1D[Any])
+
+assert_type(npp.hermite_e.hermeline(f4, f4), _Array1D[np.float32])
+assert_type(npp.hermite_e.hermeline(1, 2), _Array1D[np.int_])
+assert_type(npp.hermite_e.hermeline(1.0, 2.0), _Array1D[np.float64 | Any])
+assert_type(npp.hermite_e.hermeline(1j, 2.0), _Array1D[np.complex128 | Any])
+assert_type(npp.hermite_e.hermeline(Decimal("1"), Decimal("2")), _Array1D[Any])
+assert_type(npp.hermite_e.hermeline(O, O), _Array1D[Any])
+
+assert_type(npp.laguerre.lagline(f4, f4), _Array1D[np.float32])
+assert_type(npp.laguerre.lagline(1, 2), _Array1D[np.int_])
+assert_type(npp.laguerre.lagline(1.0, 2.0), _Array1D[np.float64 | Any])
+assert_type(npp.laguerre.lagline(1j, 2.0), _Array1D[np.complex128 | Any])
+assert_type(npp.laguerre.lagline(Decimal("1"), Decimal("2")), _Array1D[Any])
+assert_type(npp.laguerre.lagline(O, O), _Array1D[Any])
 
 # fromroots
 
