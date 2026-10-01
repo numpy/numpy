@@ -3,16 +3,17 @@ from collections.abc import Iterator, Sequence
 from typing import (
     Any,
     ClassVar,
+    Generic,
     Literal as L,
     Never,
     NoReturn,
     Self,
     SupportsIndex,
     SupportsInt,
-    TypeVar,
     overload,
     override,
 )
+from typing_extensions import TypeVar
 
 import numpy as np
 from numpy import complex128, float64
@@ -62,6 +63,7 @@ _AnyNumberT = TypeVar(
     np.object_,
 )
 _ShapeT = TypeVar("_ShapeT", bound=_AnyShape)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=_Number_co | np.object_, default=Any, covariant=True)
 
 ###
 
@@ -79,7 +81,7 @@ __all__ = [
     "polyfit",
 ]
 
-class poly1d:
+class poly1d(Generic[_ScalarT_co]):
     __module__: L["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
 
     __hash__: ClassVar[None]  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -95,42 +97,91 @@ class poly1d:
     @property
     def r(self) -> Array1D[Incomplete]: ...
 
+    # NOTE: setting coefficients is type-unsafe, so we disallow this (using `Never`)
+
     #
     @property
-    def coeffs(self) -> Array1D[Incomplete]: ...
+    def coeffs(self) -> Array1D[_ScalarT_co]: ...
     @coeffs.setter
-    def coeffs(self, value: Array1D[_Number_co | np.object_], /) -> None: ...
+    def coeffs(self, value: Never, /) -> None: ...
 
     #
     @property
-    def c(self) -> Array1D[Incomplete]: ...
+    def c(self) -> Array1D[_ScalarT_co]: ...
     @c.setter
-    def c(self, value: Array1D[_Number_co | np.object_], /) -> None: ...
+    def c(self, value: Never, /) -> None: ...
 
     #
     @property
-    def coef(self) -> Array1D[Incomplete]: ...
+    def coef(self) -> Array1D[_ScalarT_co]: ...
     @coef.setter
-    def coef(self, value: Array1D[_Number_co | np.object_], /) -> None: ...
+    def coef(self, value: Never, /) -> None: ...
 
     #
     @property
-    def coefficients(self) -> Array1D[Incomplete]: ...
+    def coefficients(self) -> Array1D[_ScalarT_co]: ...
     @coefficients.setter
-    def coefficients(self, value: Array1D[_Number_co | np.object_], /) -> None: ...
+    def coefficients(self, value: Never, /) -> None: ...
 
     #
-    def __init__(self, /, c_or_r: ArrayLike, r: bool = False, variable: str | None = None) -> None: ...
+    @overload  # T
+    def __init__[ScalarT: _Number_co | np.object_](
+        self: poly1d[ScalarT],
+        /,
+        c_or_r: _ArrayLike[ScalarT],
+        r: L[False] = False,
+        variable: str | None = None,
+    ) -> None: ...
+    @overload  # ~bool
+    def __init__(
+        self: poly1d[np.bool],
+        /,
+        c_or_r: list[bool],
+        r: L[False] = False,
+        variable: str | None = None,
+    ) -> None: ...
+    @overload  # ~int
+    def __init__(
+        self: poly1d[np.int_],
+        /,
+        c_or_r: list[int],
+        r: L[False] = False,
+        variable: str | None = None,
+    ) -> None: ...
+    @overload  # ~float
+    def __init__(
+        self: poly1d[np.float64],
+        /,
+        c_or_r: list[float],
+        r: L[False] = False,
+        variable: str | None = None,
+    ) -> None: ...
+    @overload  # ~complex
+    def __init__(
+        self: poly1d[np.complex128],
+        /,
+        c_or_r: list[complex],
+        r: L[False] = False,
+        variable: str | None = None,
+    ) -> None: ...
+    @overload  # fallback
+    def __init__(
+        self: poly1d[Any],
+        /,
+        c_or_r: ArrayLike,
+        r: bool = False,
+        variable: str | None = None,
+    ) -> None: ...
 
     #
     @overload
-    def __array__(self, /, t: None = None, copy: bool | None = None) -> Array1D[Incomplete]: ...
+    def __array__(self, /, t: None = None, copy: bool | None = None) -> Array1D[_ScalarT_co]: ...
     @overload
     def __array__[DTypeT: np.dtype](self, /, t: DTypeT, copy: bool | None = None) -> np.ndarray[tuple[int], DTypeT]: ...
 
     #
     @overload  # poly1d
-    def __call__(self, /, val: poly1d) -> Self: ...
+    def __call__(self, /, val: poly1d) -> poly1d: ...
     @overload  # Nd
     def __call__[ShapeT: _AnyShape](
         self,
@@ -148,33 +199,44 @@ class poly1d:
 
     #
     def __len__(self) -> int: ...
-    def __iter__(self) -> Iterator[Incomplete]: ...
 
     #
-    def __getitem__(self, val: int, /) -> Incomplete: ...
+    @overload  # ~object_
+    def __iter__[T](self: poly1d[np.object_[T]]) -> Iterator[T]: ...
+    @overload  # T
+    def __iter__[ScalarT: _Number_co](self: poly1d[ScalarT]) -> Iterator[ScalarT]: ...
+
+    #
+    @overload  # ~object_
+    def __getitem__[T](self: poly1d[np.object_[T]], val: int, /) -> T: ...
+    @overload  # T
+    def __getitem__[ScalarT: _Number_co](self: poly1d[ScalarT], val: int, /) -> ScalarT: ...
+
+    #
     def __setitem__(self, key: int, val: _ComplexLike_co, /) -> None: ...
 
+    #
     def __neg__(self) -> Self: ...
     def __pos__(self) -> Self: ...
 
     #
-    def __add__(self, other: ArrayLike, /) -> Self: ...
-    def __radd__(self, other: ArrayLike, /) -> Self: ...
+    def __add__(self, other: ArrayLike, /) -> poly1d: ...
+    def __radd__(self, other: ArrayLike, /) -> poly1d: ...
 
     #
-    def __sub__(self, other: ArrayLike, /) -> Self: ...
-    def __rsub__(self, other: ArrayLike, /) -> Self: ...
+    def __sub__(self, other: ArrayLike, /) -> poly1d: ...
+    def __rsub__(self, other: ArrayLike, /) -> poly1d: ...
 
     #
-    def __mul__(self, other: ArrayLike, /) -> Self: ...
-    def __rmul__(self, other: ArrayLike, /) -> Self: ...
+    def __mul__(self, other: ArrayLike, /) -> poly1d: ...
+    def __rmul__(self, other: ArrayLike, /) -> poly1d: ...
 
     #
-    def __pow__(self, val: _FloatLike_co, /) -> Self: ...  # Integral floats are accepted
+    def __pow__(self, val: _FloatLike_co, /) -> poly1d: ...  # Integral floats are accepted
 
     #
-    def __truediv__(self, other: ArrayLike, /) -> Self: ...
-    def __rtruediv__(self, other: ArrayLike, /) -> Self: ...
+    def __truediv__(self, other: ArrayLike, /) -> poly1d: ...
+    def __rtruediv__(self, other: ArrayLike, /) -> poly1d: ...
 
     #
     @override
@@ -183,7 +245,7 @@ class poly1d:
     def __ne__(self, other: poly1d, /) -> bool: ...  # type:ignore[override]
 
     #
-    def deriv(self, /, m: ConvertibleToInt = 1) -> Self: ...
+    def deriv(self, /, m: ConvertibleToInt = 1) -> poly1d: ...
     def integ(self, /, m: ConvertibleToInt = 1, k: _ArrayLikeComplex_co | _ArrayLikeObject_co | None = 0) -> poly1d: ...
 
 #
