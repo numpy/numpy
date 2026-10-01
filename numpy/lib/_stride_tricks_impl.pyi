@@ -2,7 +2,17 @@ from collections.abc import Iterable, Sequence
 from typing import Any, Never, SupportsIndex, overload
 
 import numpy as np
-from numpy._typing import ArrayLike, NDArray, _AnyShape, _ArrayLike, _Shape, _ShapeLike
+from numpy._typing import (
+    Array1D,
+    Array2D,
+    Array3D,
+    ArrayLike,
+    NDArray,
+    _AnyShape,
+    _ArrayLike,
+    _Shape,
+    _ShapeLike,
+)
 
 __all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes"]
 
@@ -12,9 +22,6 @@ type _2D = tuple[int, int]
 type _3D = tuple[int, int, int]
 type _4D = tuple[int, int, int, int]
 
-type _Array1D[ScalarT: np.generic] = np.ndarray[_1D, np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[_2D, np.dtype[ScalarT]]
-type _Array3D[ScalarT: np.generic] = np.ndarray[_3D, np.dtype[ScalarT]]
 type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[_1D | _2D, np.dtype[ScalarT]]
 
 type _ToShape1D = int | np.integer | _1D
@@ -248,44 +255,44 @@ def broadcast_arrays[DTypeT0: np.dtype, DTypeT1: np.dtype](
 ) -> tuple[np.ndarray[_AnyShape, DTypeT0], np.ndarray[_AnyShape, DTypeT1]]: ...
 @overload  # 1d T, 1d T
 def broadcast_arrays[ScalarT0: np.generic, ScalarT1: np.generic](
-    a0: _Array1D[ScalarT0],
-    a1: _Array1D[ScalarT1],
+    a0: Array1D[ScalarT0],
+    a1: Array1D[ScalarT1],
     /,
     *,
     subok: bool = False,
-) -> tuple[_Array1D[ScalarT0], _Array1D[ScalarT1]]: ...
+) -> tuple[Array1D[ScalarT0], Array1D[ScalarT1]]: ...
 @overload  # 1d T, 2d T
 def broadcast_arrays[ScalarT0: np.generic, ScalarT1: np.generic](
-    a0: _Array1D[ScalarT0],
-    a1: _Array2D[ScalarT1],
+    a0: Array1D[ScalarT0],
+    a1: Array2D[ScalarT1],
     /,
     *,
     subok: bool = False,
-) -> tuple[_Array2D[ScalarT0], _Array2D[ScalarT1]]: ...
+) -> tuple[Array2D[ScalarT0], Array2D[ScalarT1]]: ...
 @overload  # 2d T, <=2d T
 def broadcast_arrays[ScalarT0: np.generic, ScalarT1: np.generic](
-    a0: _Array2D[ScalarT0],
+    a0: Array2D[ScalarT0],
     a1: _ArrayMax2D[ScalarT1],
     /,
     *,
     subok: bool = False,
-) -> tuple[_Array2D[ScalarT0], _Array2D[ScalarT1]]: ...
+) -> tuple[Array2D[ScalarT0], Array2D[ScalarT1]]: ...
 @overload  # <=2d T, 3d T
 def broadcast_arrays[ScalarT0: np.generic, ScalarT1: np.generic](
     a0: _ArrayMax2D[ScalarT0],
-    a1: _Array3D[ScalarT1],
+    a1: Array3D[ScalarT1],
     /,
     *,
     subok: bool = False,
-) -> tuple[_Array3D[ScalarT0], _Array3D[ScalarT1]]: ...
+) -> tuple[Array3D[ScalarT0], Array3D[ScalarT1]]: ...
 @overload  # 3d T, <=3d T
 def broadcast_arrays[ScalarT0: np.generic, ScalarT1: np.generic](
-    a0: _Array3D[ScalarT0],
+    a0: Array3D[ScalarT0],
     a1: np.ndarray[tuple[int] | tuple[int, int] | tuple[int, int, int], np.dtype[ScalarT1]],
     /,
     *,
     subok: bool = False,
-) -> tuple[_Array3D[ScalarT0], _Array3D[ScalarT1]]: ...
+) -> tuple[Array3D[ScalarT0], Array3D[ScalarT1]]: ...
 @overload  # Nd T, 0d T
 def broadcast_arrays[ShapeT: _Shape, DTypeT: np.dtype, ScalarT: np.generic](
     a0: np.ndarray[ShapeT, DTypeT],

@@ -16,6 +16,9 @@ import numpy as np
 from numpy import _CastingKind
 from numpy._globals import _NoValueType
 from numpy._typing import (
+    Array1D,
+    Array2D,
+    Array3D,
     ArrayLike,
     DTypeLike,
     NDArray,
@@ -92,10 +95,6 @@ type _MArray1D[ScalarT: np.generic] = MaskedArray[tuple[int], np.dtype[ScalarT]]
 type _MArray2D[ScalarT: np.generic] = MaskedArray[tuple[int, int], np.dtype[ScalarT]]
 type _MArray3D[ScalarT: np.generic] = MaskedArray[tuple[int, int, int], np.dtype[ScalarT]]
 type _MArray4D[ScalarT: np.generic] = MaskedArray[tuple[int, int, int, int], np.dtype[ScalarT]]
-
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
-type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
 
 # input only; keep in sync with `numpy._core.shape_base`
 type _AtLeast2D = tuple[int, int, *tuple[Any, ...]]
@@ -393,7 +392,7 @@ def stack(
 ) -> _MArray1D[Incomplete]: ...
 @overload  # 1d -> 2d
 def stack[ScalarT: np.generic](
-    arrays: Sequence[_Array1D[ScalarT]],
+    arrays: Sequence[Array1D[ScalarT]],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
@@ -402,7 +401,7 @@ def stack[ScalarT: np.generic](
 ) -> _MArray2D[ScalarT]: ...
 @overload  # 1d -> 2d, dtype=<known>
 def stack[ScalarT: np.generic](
-    arrays: Sequence[_Array1D[np.generic]],
+    arrays: Sequence[Array1D[np.generic]],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
@@ -411,7 +410,7 @@ def stack[ScalarT: np.generic](
 ) -> _MArray2D[ScalarT]: ...
 @overload  # 1d -> 2d, dtype=<unknown>
 def stack(
-    arrays: Sequence[_Array1D[np.generic]],
+    arrays: Sequence[Array1D[np.generic]],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
@@ -420,7 +419,7 @@ def stack(
 ) -> _MArray2D[Incomplete]: ...
 @overload  # 2d -> 3d
 def stack[ScalarT: np.generic](
-    arrays: Sequence[_Array2D[ScalarT]],
+    arrays: Sequence[Array2D[ScalarT]],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
@@ -429,7 +428,7 @@ def stack[ScalarT: np.generic](
 ) -> _MArray3D[ScalarT]: ...
 @overload  # 2d -> 3d, dtype=<known>
 def stack[ScalarT: np.generic](
-    arrays: Sequence[_Array2D[np.generic]],
+    arrays: Sequence[Array2D[np.generic]],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
@@ -438,7 +437,7 @@ def stack[ScalarT: np.generic](
 ) -> _MArray3D[ScalarT]: ...
 @overload  # 2d -> 3d, dtype=<unknown>
 def stack(
-    arrays: Sequence[_Array2D[np.generic]],
+    arrays: Sequence[Array2D[np.generic]],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
@@ -447,7 +446,7 @@ def stack(
 ) -> _MArray3D[Incomplete]: ...
 @overload  # 3d -> 4d
 def stack[ScalarT: np.generic](
-    arrays: Sequence[_Array3D[ScalarT]],
+    arrays: Sequence[Array3D[ScalarT]],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
@@ -456,7 +455,7 @@ def stack[ScalarT: np.generic](
 ) -> _MArray4D[ScalarT]: ...
 @overload  # 3d -> 4d, dtype=<known>
 def stack[ScalarT: np.generic](
-    arrays: Sequence[_Array3D[np.generic]],
+    arrays: Sequence[Array3D[np.generic]],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
@@ -465,7 +464,7 @@ def stack[ScalarT: np.generic](
 ) -> _MArray4D[ScalarT]: ...
 @overload  # 3d -> 4d, dtype=<unknown>
 def stack(
-    arrays: Sequence[_Array3D[np.generic]],
+    arrays: Sequence[Array3D[np.generic]],
     axis: SupportsIndex = 0,
     out: None = None,
     *,
@@ -698,21 +697,21 @@ def compress_nd(x: ArrayLike, axis: _ShapeLike | None = None) -> NDArray[Incompl
 
 #
 @overload
-def compress_rowcols[ScalarT: np.generic](x: _ArrayLike[ScalarT], axis: int | None = None) -> _Array2D[ScalarT]: ...
+def compress_rowcols[ScalarT: np.generic](x: _ArrayLike[ScalarT], axis: int | None = None) -> Array2D[ScalarT]: ...
 @overload
-def compress_rowcols(x: ArrayLike, axis: int | None = None) -> _Array2D[Incomplete]: ...
+def compress_rowcols(x: ArrayLike, axis: int | None = None) -> Array2D[Incomplete]: ...
 
 #
 @overload
-def compress_rows[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> _Array2D[ScalarT]: ...
+def compress_rows[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> Array2D[ScalarT]: ...
 @overload
-def compress_rows(a: ArrayLike) -> _Array2D[Incomplete]: ...
+def compress_rows(a: ArrayLike) -> Array2D[Incomplete]: ...
 
 #
 @overload
-def compress_cols[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> _Array2D[ScalarT]: ...
+def compress_cols[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> Array2D[ScalarT]: ...
 @overload
-def compress_cols(a: ArrayLike) -> _Array2D[Incomplete]: ...
+def compress_cols(a: ArrayLike) -> Array2D[Incomplete]: ...
 
 #
 def mask_rowcols(a: ArrayLike, axis: SupportsIndex | None = None) -> _MArray[Incomplete]: ...
@@ -946,15 +945,15 @@ def ndenumerate(
 
 #
 @overload
-def flatnotmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> _Array1D[ScalarT] | None: ...
+def flatnotmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> Array1D[ScalarT] | None: ...
 @overload
-def flatnotmasked_edges(a: ArrayLike) -> _Array1D[Incomplete] | None: ...
+def flatnotmasked_edges(a: ArrayLike) -> Array1D[Incomplete] | None: ...
 
 #
 @overload
-def notmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: None = None) -> _Array1D[ScalarT] | None: ...
+def notmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: None = None) -> Array1D[ScalarT] | None: ...
 @overload
-def notmasked_edges(a: ArrayLike, axis: None = None) -> _Array1D[Incomplete] | None: ...
+def notmasked_edges(a: ArrayLike, axis: None = None) -> Array1D[Incomplete] | None: ...
 @overload
 def notmasked_edges(a: ArrayLike, axis: SupportsIndex) -> Incomplete: ...
 
@@ -974,15 +973,15 @@ def clump_masked(a: np.ndarray) -> list[slice[int, int, None]]: ...
 
 # keep in sync with `lib._twodim_base_impl.vander`
 @overload
-def vander[ScalarT: np.number | np.object_](x: _ArrayLike[ScalarT], n: int | None = None) -> _Array2D[ScalarT]: ...
+def vander[ScalarT: np.number | np.object_](x: _ArrayLike[ScalarT], n: int | None = None) -> Array2D[ScalarT]: ...
 @overload
-def vander(x: _ArrayLike[np.bool] | list[int], n: int | None = None) -> _Array2D[np.int_]: ...
+def vander(x: _ArrayLike[np.bool] | list[int], n: int | None = None) -> Array2D[np.int_]: ...
 @overload
-def vander(x: list[float], n: int | None = None) -> _Array2D[np.float64]: ...
+def vander(x: list[float], n: int | None = None) -> Array2D[np.float64]: ...
 @overload
-def vander(x: list[complex], n: int | None = None) -> _Array2D[np.complex128]: ...
+def vander(x: list[complex], n: int | None = None) -> Array2D[np.complex128]: ...
 @overload  # fallback
-def vander(x: Sequence[_NumberLike_co], n: int | None = None) -> _Array2D[Any]: ...
+def vander(x: Sequence[_NumberLike_co], n: int | None = None) -> Array2D[Any]: ...
 
 # keep roughly in sync with `lib._polynomial_impl.polyfit`
 @overload  # float dtype, cov: False (default)
