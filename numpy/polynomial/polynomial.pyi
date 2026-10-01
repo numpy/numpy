@@ -20,7 +20,6 @@ from ._polybase import ABCPolyBase
 from ._polytypes import (
     _AnyInt,
     _CanArray,
-    _FuncBinOp,
     _PolyScalar,
     _SupportsCoefOps,
     _ToCoef1D,
@@ -90,27 +89,27 @@ polyx: Final[Array1D[np.int_]] = ...
 def polyline[ScalarT: np.number | np.bool](
     off: ScalarT,
     scl: ScalarT,
-) -> _Array1D[ScalarT]: ...
+) -> Array1D[ScalarT]: ...
 @overload  # 0d ~i8, 0d ~i8
 def polyline(
     off: int,
     scl: int,
-) -> _Array1D[np.int_]: ...
+) -> Array1D[np.int_]: ...
 @overload  # 0d +f64, 0d +f64
 def polyline(
     off: float | np.float64 | np.float32 | np.float16 | np.integer,
     scl: float | np.float64 | np.float32 | np.float16 | np.integer,
-) -> _Array1D[np.float64 | Any]: ...
+) -> Array1D[np.float64 | Any]: ...
 @overload  # 0d +c128, 0d +c128
 def polyline(
     off: complex | np.complex128 | np.complex64 | np.float64 | np.float32 | np.float16 | np.integer,
     scl: complex | np.complex128 | np.complex64 | np.float64 | np.float32 | np.float16 | np.integer,
-) -> _Array1D[np.complex128 | Any]: ...
+) -> Array1D[np.complex128 | Any]: ...
 @overload  # 0d, 0d  (fallback)
 def polyline(
     off: _NumberLike_co | _SupportsCoefOps[Any] | np.object_,
     scl: _NumberLike_co | _SupportsCoefOps[Any] | np.object_,
-) -> _Array1D[Any]: ...
+) -> Array1D[Any]: ...
 
 # keep in sync with `polynomial.*fromroots`
 @overload  # 1d T
@@ -130,8 +129,79 @@ def polyfromroots(
     roots: _CanArray[Array1D[np.number | np.object_]] | Sequence[_NumberLike_co | _SupportsCoefOps[Any]],
 ) -> Array1D[Any]: ...
 
-polyadd: Final[_FuncBinOp] = ...
-polysub: Final[_FuncBinOp] = ...
+# keep in sync with `polynomial.*{add,sub,mul}`
+@overload  # <=1d T, <=1d T
+def polyadd[ScalarT: (np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble)](
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+) -> Array1D[ScalarT]: ...
+@overload  # <=1d +f64, <=1d +f64
+def polyadd(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+) -> Array1D[np.float64]: ...
+@overload  # <=1d ~c128, <=1d +c128
+def polyadd(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+) -> Array1D[np.complex128]: ...
+@overload  # <=1d +c128, <=1d ~c128
+def polyadd(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+) -> Array1D[np.complex128]: ...
+@overload  # <=1d ~O, <=1d
+def polyadd(
+    c1: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    c2: _ToCoef1D,
+) -> Array1D[np.object_]: ...
+@overload  # <=1d, <=1d ~O
+def polyadd(
+    c1: _ToCoef1D,
+    c2: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+) -> Array1D[np.object_]: ...
+@overload  # <=1d, <=1d  (fallback)
+def polyadd(
+    c1: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+    c2: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+) -> Array1D[Any]: ...
+
+# keep in sync with `polynomial.*{add,sub,mul}`
+@overload  # <=1d T, <=1d T
+def polysub[ScalarT: (np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble)](
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+) -> Array1D[ScalarT]: ...
+@overload  # <=1d +f64, <=1d +f64
+def polysub(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+) -> Array1D[np.float64]: ...
+@overload  # <=1d ~c128, <=1d +c128
+def polysub(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+) -> Array1D[np.complex128]: ...
+@overload  # <=1d +c128, <=1d ~c128
+def polysub(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+) -> Array1D[np.complex128]: ...
+@overload  # <=1d ~O, <=1d
+def polysub(
+    c1: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    c2: _ToCoef1D,
+) -> Array1D[np.object_]: ...
+@overload  # <=1d, <=1d ~O
+def polysub(
+    c1: _ToCoef1D,
+    c2: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+) -> Array1D[np.object_]: ...
+@overload  # <=1d, <=1d  (fallback)
+def polysub(
+    c1: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+    c2: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+) -> Array1D[Any]: ...
 
 # keep in sync with `polynomial.*mulx`
 @overload  # <=1d T
@@ -151,8 +221,79 @@ def polymulx(
     c: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
 ) -> Array1D[Any]: ...
 
-polymul: Final[_FuncBinOp] = ...
-polydiv: Final[_FuncBinOp] = ...
+# keep in sync with `polynomial.*{add,sub,mul}`
+@overload  # <=1d T, <=1d T
+def polymul[ScalarT: (np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble)](
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+) -> Array1D[ScalarT]: ...
+@overload  # <=1d +f64, <=1d +f64
+def polymul(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+) -> Array1D[np.float64]: ...
+@overload  # <=1d ~c128, <=1d +c128
+def polymul(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+) -> Array1D[np.complex128]: ...
+@overload  # <=1d +c128, <=1d ~c128
+def polymul(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+) -> Array1D[np.complex128]: ...
+@overload  # <=1d ~O, <=1d
+def polymul(
+    c1: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    c2: _ToCoef1D,
+) -> Array1D[np.object_]: ...
+@overload  # <=1d, <=1d ~O
+def polymul(
+    c1: _ToCoef1D,
+    c2: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+) -> Array1D[np.object_]: ...
+@overload  # <=1d, <=1d  (fallback)
+def polymul(
+    c1: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+    c2: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+) -> Array1D[Any]: ...
+
+# keep in sync with `polynomial.*div`
+@overload  # <=1d T, <=1d T
+def polydiv[ScalarT: (np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble)](
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]],
+) -> tuple[Array1D[ScalarT], Array1D[ScalarT]]: ...
+@overload  # <=1d +f64, <=1d +f64
+def polydiv(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.float64 | np.integer]]] | Sequence[float] | float,
+) -> tuple[Array1D[np.float64], Array1D[np.float64]]: ...
+@overload  # <=1d ~c128, <=1d +c128
+def polydiv(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+) -> tuple[Array1D[np.complex128], Array1D[np.complex128]]: ...
+@overload  # <=1d +c128, <=1d ~c128
+def polydiv(
+    c1: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128 | np.complex64 | _ToFloat64]]] | Sequence[complex],
+    c2: _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.complex128]]] | list[complex],
+) -> tuple[Array1D[np.complex128], Array1D[np.complex128]]: ...
+@overload  # <=1d ~O, <=1d
+def polydiv(
+    c1: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+    c2: _ToCoef1D,
+) -> tuple[Array1D[np.object_], Array1D[np.object_]]: ...
+@overload  # <=1d, <=1d ~O
+def polydiv(
+    c1: _ToCoef1D,
+    c2: np.ndarray[tuple[()] | tuple[int], np.dtype[np.object_]],
+) -> tuple[Array1D[np.object_], Array1D[np.object_]]: ...
+@overload  # <=1d, <=1d  (fallback)
+def polydiv(
+    c1: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+    c2: _ToCoef1D | _CanArray[np.ndarray[tuple[()] | tuple[int], np.dtype[np.number | np.object_]]],
+) -> tuple[Array1D[Any], Array1D[Any]]: ...
 
 # keep in sync with `polynomial.*pow`
 @overload  # <=1d T

@@ -1,13 +1,5 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import (
-    Any,
-    Final,
-    Literal,
-    Protocol,
-    SupportsIndex,
-    overload,
-    type_check_only,
-)
+from typing import Any, Literal, Protocol, SupportsIndex, overload, type_check_only
 
 import numpy as np
 import numpy.typing as npt
@@ -32,7 +24,6 @@ from ._polytypes import (
     _ComplexSeries,
     _FloatArray,
     _FloatSeries,
-    _FuncBinOp,
     _ObjectArray,
     _ObjectSeries,
     _Series,
@@ -270,7 +261,7 @@ def _valnd[T](val_f: _ValFunc[T], c: T, *args: npt.ArrayLike) -> T: ...
 # keep in sync with `_valnd`
 def _gridnd[T](val_f: _ValFunc[T], c: T, *args: npt.ArrayLike) -> T: ...
 
-# keep in sync with `_polytypes._FuncBinOp`
+#
 @overload
 def _div(mul_f: _AnyMulF, c1: _SeriesLikeFloat_co, c2: _SeriesLikeFloat_co) -> _Tuple2[_FloatSeries]: ...
 @overload
@@ -280,8 +271,9 @@ def _div(mul_f: _AnyMulF, c1: _SeriesLikeObject_co, c2: _SeriesLikeObject_co) ->
 @overload
 def _div(mul_f: _AnyMulF, c1: _SeriesLikeCoef_co, c2: _SeriesLikeCoef_co) -> _Tuple2[_CoefSeries]: ...
 
-_add: Final[_FuncBinOp] = ...
-_sub: Final[_FuncBinOp] = ...
+#
+def _add(c1: _SeriesLikeCoef_co, c2: _SeriesLikeCoef_co) -> _Series[Any]: ...
+def _sub(c1: _SeriesLikeCoef_co, c2: _SeriesLikeCoef_co) -> _Series[Any]: ...
 
 #
 @overload
