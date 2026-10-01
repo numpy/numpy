@@ -50,6 +50,7 @@ assert_type(_poly_f8.c, npt.Array1D[np.float64])
 assert_type(_poly_f8.coef, npt.Array1D[np.float64])
 assert_type(_poly_f8.coefficients, npt.Array1D[np.float64])
 assert_type(_poly.__hash__, None)
+
 assert_type(_poly_f8.__array__(), npt.Array1D[np.float64])
 
 assert_type(_poly_f8(_poly_f8), np.poly1d[np.float64])
@@ -74,8 +75,37 @@ assert_type(_poly_f4(_py_f_2d), npt.Array2D[Any])
 assert_type(_poly_f4([AR_f8]), npt.NDArray[Any])
 
 assert_type(len(_poly), int)
+
+assert_type(iter(_poly_O), Iterator[Fraction])
+assert_type(iter(_poly_f8), Iterator[np.float64])
+
+assert_type(_poly_O[0], Fraction)
+assert_type(_poly_f8[0], np.float64)
+_poly[0] = 5
+
 assert_type(-_poly, np.poly1d[Any])
 assert_type(+_poly, np.poly1d[Any])
+
+assert_type(_poly_f8 + _poly_f8, np.poly1d[np.float64])
+assert_type(_poly_f8 + 5, np.poly1d[np.float64])
+assert_type(_poly_c16 + 5j, np.poly1d[np.complex128])
+assert_type(_poly_f4 + 5, np.poly1d[Any])
+
+assert_type([_f8] + _poly_f8, np.poly1d[np.float64])
+assert_type(5 + _poly_f8, np.poly1d[np.float64])
+assert_type(5j + _poly_c16, np.poly1d[np.complex128])
+assert_type(5 + _poly_f4, np.poly1d[Any])
+
+assert_type(_poly_f8 - _poly_f8, np.poly1d[np.float64])
+assert_type(_poly_f8 - 5, np.poly1d[np.float64])
+assert_type(_poly_c16 - 5j, np.poly1d[np.complex128])
+assert_type(_poly_f4 - 5, np.poly1d[Any])
+assert_type(_poly_b - _poly_b, np.poly1d[Any])
+
+assert_type([_f8] - _poly_f8, np.poly1d[np.float64])
+assert_type(5 - _poly_f8, np.poly1d[np.float64])
+assert_type(5j - _poly_c16, np.poly1d[np.complex128])
+assert_type(5 - _poly_f4, np.poly1d[Any])
 
 assert_type(_poly_f8 * _poly_f8, np.poly1d[np.float64])
 assert_type(_poly_f4 * _f8, np.poly1d[Any])
@@ -85,6 +115,7 @@ assert_type(_poly_c16 * 5j, np.poly1d[np.complex128])
 assert_type(_poly_f8 * _py_f_1d, np.poly1d[np.float64])
 assert_type(_poly_c16 * _py_c_1d, np.poly1d[np.complex128])
 assert_type(_poly_f4 * _py_f_1d, np.poly1d[Any])
+
 assert_type(_poly_f8.__rmul__(_f8), np.poly1d[np.float64])
 assert_type(_poly_f4.__rmul__(_f8), np.poly1d[Any])
 assert_type(5 * _poly_f4, np.poly1d[np.float32])
@@ -93,35 +124,25 @@ assert_type(5j * _poly_c16, np.poly1d[np.complex128])
 assert_type(_py_f_1d * _poly_f8, np.poly1d[np.float64])
 assert_type(_py_c_1d * _poly_c16, np.poly1d[np.complex128])
 assert_type(_py_f_1d * _poly_f4, np.poly1d[Any])
-assert_type(_poly_f8 + _poly_f8, np.poly1d[np.float64])
-assert_type(_poly_f8 + 5, np.poly1d[np.float64])
-assert_type(_poly_c16 + 5j, np.poly1d[np.complex128])
-assert_type(_poly_f4 + 5, np.poly1d[Any])
-assert_type([_f8] + _poly_f8, np.poly1d[np.float64])
-assert_type(5 + _poly_f8, np.poly1d[np.float64])
-assert_type(5j + _poly_c16, np.poly1d[np.complex128])
-assert_type(5 + _poly_f4, np.poly1d[Any])
-assert_type(_poly_f8 - _poly_f8, np.poly1d[np.float64])
-assert_type(_poly_f8 - 5, np.poly1d[np.float64])
-assert_type(_poly_c16 - 5j, np.poly1d[np.complex128])
-assert_type(_poly_f4 - 5, np.poly1d[Any])
-assert_type(_poly_b - _poly_b, np.poly1d[Any])
-assert_type([_f8] - _poly_f8, np.poly1d[np.float64])
-assert_type(5 - _poly_f8, np.poly1d[np.float64])
-assert_type(5j - _poly_c16, np.poly1d[np.complex128])
-assert_type(5 - _poly_f4, np.poly1d[Any])
+
 assert_type(_poly_f8**2, np.poly1d[np.float64])
 assert_type(_poly_b**2, np.poly1d[np.int_])
 assert_type(_poly_f4**2, np.poly1d[np.float64])  # type: ignore[assert-type]
 assert_type(_poly_c8**2, np.poly1d[np.complex128])  # type: ignore[assert-type]
-assert_type(_poly_f8 / 5, np.poly1d[Any])
+
+assert_type(_poly_f8 / _f8, np.poly1d[np.float64])
+assert_type(_poly_f4 / _f8, np.poly1d[Any])
+assert_type(_poly_f4 / 5.0, np.poly1d[np.float32])
+assert_type(_poly_b / 5, np.poly1d[np.float64])
+assert_type(_poly_c8 / 5j, np.poly1d[np.complex64])
+assert_type(_poly_f8 / 5j, np.poly1d[Any])
+assert_type(_poly_f8 / _poly_f8, tuple[np.poly1d[np.float64], np.poly1d[np.float64]])
+assert_type(_poly_f4 / _py_f_1d, tuple[np.poly1d[np.float64], np.poly1d[np.float64]])
+assert_type(_poly_c8 / _py_f_1d, tuple[np.poly1d[np.complex128], np.poly1d[np.complex128]])
+assert_type(_poly_f4 / AR_f8, tuple[np.poly1d[Any], np.poly1d[Any]])
+
 assert_type(5 / _poly_f8, np.poly1d[Any])
 
-assert_type(_poly_O[0], Fraction)
-assert_type(_poly_f8[0], np.float64)
-_poly[0] = 5
-assert_type(iter(_poly_O), Iterator[Fraction])
-assert_type(iter(_poly_f8), Iterator[np.float64])
 assert_type(_poly_f8.deriv(), np.poly1d[Any])
 assert_type(_poly.integ(), np.poly1d[Any])
 
