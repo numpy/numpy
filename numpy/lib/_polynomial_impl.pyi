@@ -335,7 +335,7 @@ class poly1d(Generic[_ScalarT_co]):
 
     #
     @overload  # T
-    def __pow__[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble | np.object_](
+    def __pow__[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
         self: poly1d[ScalarT],
         val: _IntLike_co,
         /,
@@ -484,7 +484,38 @@ class poly1d(Generic[_ScalarT_co]):
     def __ne__(self, other: poly1d, /) -> bool: ...  # type:ignore[override]
 
     #
-    def deriv(self, /, m: ConvertibleToInt = 1) -> poly1d: ...
+    @overload  # T
+    def deriv[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+        self: poly1d[ScalarT],
+        /,
+        m: ConvertibleToInt = 1,
+    ) -> poly1d[ScalarT]: ...
+    @overload  # +f64
+    def deriv(
+        self: poly1d[np.float32 | np.float16 | np.uint64],
+        /,
+        m: ConvertibleToInt = 1,
+    ) -> poly1d[np.float64]: ...
+    @overload  # +int
+    def deriv(
+        self: poly1d[np.signedinteger | np.uint32 | np.uint16 | np.uint8 | np.bool],
+        /,
+        m: ConvertibleToInt = 1,
+    ) -> poly1d[np.int_]: ...
+    @overload  # +c128
+    def deriv(
+        self: poly1d[np.complex64],
+        /,
+        m: ConvertibleToInt = 1,
+    ) -> poly1d[np.complex128]: ...
+    @overload  # fallback
+    def deriv(
+        self,
+        /,
+        m: ConvertibleToInt = 1,
+    ) -> poly1d: ...
+
+    #
     def integ(self, /, m: ConvertibleToInt = 1, k: _ArrayLikeComplex_co | _ArrayLikeObject_co | None = 0) -> poly1d: ...
 
 #
