@@ -405,7 +405,66 @@ class poly1d(Generic[_ScalarT_co]):
     ) -> _2Tup[poly1d]: ...
 
     #
-    def __rtruediv__(self, other: ArrayLike, /) -> poly1d: ...
+    @overload  # T, 0d T
+    def __rtruediv__[ScalarT: np.inexact](
+        self: poly1d[ScalarT],
+        other: ScalarT,
+        /,
+    ) -> poly1d[ScalarT]: ...
+    @overload  # 0d
+    def __rtruediv__(
+        self,
+        other: np.number | np.bool,
+        /,
+    ) -> poly1d: ...
+    @overload  # T, 0d ~f64
+    def __rtruediv__[ScalarT: np.inexact](
+        self: poly1d[ScalarT],
+        other: float,
+        /,
+    ) -> poly1d[ScalarT]: ...
+    @overload  # +int, 0d ~f64
+    def __rtruediv__(
+        self: poly1d[_Int_co],
+        other: float,
+        /,
+    ) -> poly1d[np.float64]: ...
+    @overload  # T, 0d ~c128
+    def __rtruediv__[ScalarT: np.complexfloating](
+        self: poly1d[ScalarT],
+        other: complex,
+        /,
+    ) -> poly1d[ScalarT]: ...
+    @overload  # 0d  (fallback)
+    def __rtruediv__(
+        self,
+        other: complex,
+        /,
+    ) -> poly1d: ...
+    @overload  # T, <=1d T
+    def __rtruediv__[ScalarT: np.inexact](
+        self: poly1d[ScalarT],
+        other: poly1d[ScalarT],
+        /,
+    ) -> _2Tup[poly1d[ScalarT]]: ...
+    @overload  # +f64, 1d ~f64
+    def __rtruediv__(
+        self: poly1d[np.float64 | np.float32 | np.float16 | _Int_co],
+        other: Sequence[float],
+        /,
+    ) -> _2Tup[poly1d[np.float64]]: ...
+    @overload  # +c128, 1d ~c128
+    def __rtruediv__(
+        self: poly1d[np.complex128 | np.complex64],
+        other: Sequence[complex],
+        /,
+    ) -> _2Tup[poly1d[np.complex128]]: ...
+    @overload  # <=1d  (fallback)
+    def __rtruediv__(
+        self,
+        other: NDArray[_Number_co | np.object_] | poly1d | Sequence[_ComplexLike_co],
+        /,
+    ) -> _2Tup[poly1d]: ...
 
     #
     @override
