@@ -7,11 +7,13 @@ from typing import (
     Literal as L,
     Never,
     NoReturn,
+    Protocol,
     Self,
     SupportsIndex,
     SupportsInt,
     overload,
     override,
+    type_check_only,
 )
 from typing_extensions import TypeVar
 
@@ -65,6 +67,10 @@ _AnyNumberT = TypeVar(
 )
 _ShapeT = TypeVar("_ShapeT", bound=_AnyShape)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=_Number_co | np.object_, default=Any, covariant=True)
+
+@type_check_only
+class _CanNeg[T](Protocol):
+    def __neg__(self, /) -> T: ...
 
 ###
 
@@ -243,7 +249,12 @@ class poly1d(Generic[_ScalarT_co]):
     def __setitem__(self, key: int, val: _ComplexLike_co, /) -> None: ...
 
     #
-    def __neg__(self) -> Self: ...
+    @overload  # T
+    def __neg__[ScalarT: np.number](self: poly1d[ScalarT], /) -> poly1d[ScalarT]: ...
+    @overload  # ~object_
+    def __neg__[T](self: poly1d[np.object_[_CanNeg[T]]], /) -> poly1d[np.object_[T]]: ...
+
+    #
     def __pos__(self) -> Self: ...
 
     #

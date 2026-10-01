@@ -83,7 +83,8 @@ assert_type(_poly_O[0], Fraction)
 assert_type(_poly_f8[0], np.float64)
 _poly[0] = 5
 
-assert_type(-_poly, np.poly1d[Any])
+assert_type(-_poly_f8, np.poly1d[np.float64])
+assert_type(-_poly_O, np.poly1d[np.object_[Fraction]])
 assert_type(+_poly, np.poly1d[Any])
 
 assert_type(_poly_f8 + _poly_f8, np.poly1d[np.float64])
