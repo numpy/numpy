@@ -24,7 +24,15 @@ from typing_extensions import TypeVar
 
 import numpy as np
 from numpy._core.multiarray import packbits, unpackbits
-from numpy._typing import ArrayLike, DTypeLike, NDArray, _DTypeLike, _SupportsArrayFunc
+from numpy._typing import (
+    Array1D,
+    Array2D,
+    ArrayLike,
+    DTypeLike,
+    NDArray,
+    _DTypeLike,
+    _SupportsArrayFunc,
+)
 
 from ._datasource import DataSource as DataSource
 
@@ -47,9 +55,6 @@ type _FName = StrPath | Iterable[str] | Iterable[bytes]
 type _FNameRead = StrPath | SupportsRead[str] | SupportsRead[bytes]
 type _FNameWriteBytes = StrPath | SupportsWrite[bytes]
 type _FNameWrite = _FNameWriteBytes | SupportsWrite[str]
-
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 type _Converters = Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any]
 
@@ -189,7 +194,7 @@ def loadtxt(
     max_rows: int | None = None,
     quotechar: str | None = None,
     like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.float64]: ...
+) -> Array2D[np.float64]: ...
 @overload  # 2d T, dtype=<known>, ndmin=2
 def loadtxt[ScalarT: np.generic](
     fname: _FName,
@@ -206,7 +211,7 @@ def loadtxt[ScalarT: np.generic](
     max_rows: int | None = None,
     quotechar: str | None = None,
     like: _SupportsArrayFunc | None = None,
-) -> _Array2D[ScalarT]: ...
+) -> Array2D[ScalarT]: ...
 @overload  # 2d, ndmin=2  (fallback)
 def loadtxt(
     fname: _FName,
@@ -223,7 +228,7 @@ def loadtxt(
     max_rows: int | None = None,
     quotechar: str | None = None,
     like: _SupportsArrayFunc | None = None,
-) -> _Array2D[Any]: ...
+) -> Array2D[Any]: ...
 @overload  # Nd +f64, dtype=None, ndmin<3  (fallback)
 def loadtxt(
     fname: _FName,
@@ -294,14 +299,14 @@ def fromregex[ScalarT: np.generic](
     regexp: str | bytes | Pattern[Any],
     dtype: _DTypeLike[ScalarT],
     encoding: str | None = None,
-) -> _Array1D[ScalarT]: ...
+) -> Array1D[ScalarT]: ...
 @overload
 def fromregex(
     file: _FNameRead,
     regexp: str | bytes | Pattern[Any],
     dtype: DTypeLike | None,
     encoding: str | None = None,
-) -> _Array1D[Any]: ...
+) -> Array1D[Any]: ...
 
 #
 @overload  # Nd ~int, dtype=int, ndmin<2
@@ -506,7 +511,7 @@ def genfromtxt(
     *,
     ndmin: L[2],
     like: _SupportsArrayFunc | None = None,
-) -> _Array2D[np.float64 | Any]: ...
+) -> Array2D[np.float64 | Any]: ...
 @overload  # 2d T, dtype=<known>, ndmin=2
 def genfromtxt[ScalarT: np.generic](
     fname: _FName,
@@ -535,7 +540,7 @@ def genfromtxt[ScalarT: np.generic](
     *,
     ndmin: L[2],
     like: _SupportsArrayFunc | None = None,
-) -> _Array2D[ScalarT]: ...
+) -> Array2D[ScalarT]: ...
 @overload  # 2d, ndmin=2  (fallback)
 def genfromtxt(
     fname: _FName,
@@ -564,7 +569,7 @@ def genfromtxt(
     *,
     ndmin: L[2],
     like: _SupportsArrayFunc | None = None,
-) -> _Array2D[Any]: ...
+) -> Array2D[Any]: ...
 @overload  # Nd +f64, dtype=float, ndmin<3  (fallback)
 def genfromtxt(
     fname: _FName,

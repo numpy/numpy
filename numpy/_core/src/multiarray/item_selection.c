@@ -1941,8 +1941,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     npy_intp astride, rstride, *iptr;
     int nd;
     int needcopy = 0;
-    int elsize;
-    int maxelsize;
+    npy_intp elsize;
+    npy_intp maxelsize;
     int object = 0;
     PyArray_ArgSortFunc *argsort;
     NPY_BEGIN_THREADS_DEF;

@@ -2,7 +2,15 @@ from collections.abc import Sequence
 from typing import Any, Literal as L, Protocol, overload, type_check_only
 
 import numpy as np
-from numpy._typing import ArrayLike, NDArray, _ArrayLike, _ArrayLikeInt, _Shape
+from numpy._typing import (
+    Array1D,
+    Array2D,
+    ArrayLike,
+    NDArray,
+    _ArrayLike,
+    _ArrayLikeInt,
+    _Shape,
+)
 
 __all__ = ["pad"]
 
@@ -29,9 +37,6 @@ type _PadWidth = (
     | dict[int, tuple[int, int]]
     | dict[int, int | tuple[int, int]]
 )
-
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 ###
 
@@ -84,7 +89,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array1D[np.bool]: ...
+) -> Array1D[np.bool]: ...
 @overload  # 1d int
 def pad(
     array: list[int],
@@ -95,7 +100,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array1D[np.int_]: ...
+) -> Array1D[np.int_]: ...
 @overload  # 1d float
 def pad(
     array: list[float],
@@ -106,7 +111,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array1D[np.float64]: ...
+) -> Array1D[np.float64]: ...
 @overload  # 1d complex
 def pad(
     array: list[complex],
@@ -117,7 +122,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array1D[np.complex128]: ...
+) -> Array1D[np.complex128]: ...
 @overload  # 2d bool
 def pad(
     array: Sequence[list[bool]],
@@ -128,7 +133,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array2D[np.bool]: ...
+) -> Array2D[np.bool]: ...
 @overload  # 2d int
 def pad(
     array: Sequence[list[int]],
@@ -139,7 +144,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array2D[np.int_]: ...
+) -> Array2D[np.int_]: ...
 @overload  # 2d float
 def pad(
     array: Sequence[list[float]],
@@ -150,7 +155,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array2D[np.float64]: ...
+) -> Array2D[np.float64]: ...
 @overload  # 2d complex
 def pad(
     array: Sequence[list[complex]],
@@ -161,7 +166,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array2D[np.complex128]: ...
+) -> Array2D[np.complex128]: ...
 @overload  # Nd T, mode="constant"
 def pad[ScalarT: np.generic](
     array: _ArrayLike[ScalarT],

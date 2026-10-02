@@ -3,12 +3,6 @@ from typing import Any, assert_type
 import numpy as np
 import numpy.typing as npt
 
-type _Array0D[ST: np.generic] = np.ndarray[tuple[()], np.dtype[ST]]
-type _Array1D[ST: np.generic] = np.ndarray[tuple[int], np.dtype[ST]]
-type _Array2D[ST: np.generic] = np.ndarray[tuple[int, int], np.dtype[ST]]
-type _Array3D[ST: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ST]]
-type _Array4D[ST: np.generic] = np.ndarray[tuple[int, int, int, int], np.dtype[ST]]
-
 _py_U: str
 _py_b_1d: list[bool]
 _py_i_1d: list[int]
@@ -17,10 +11,10 @@ _py_c_1d: list[complex]
 _py_U_1d: list[str]
 
 _u32_1d_list: list[np.uint32]
-_f64_1d: _Array1D[np.float64]
-_f64_2d: _Array2D[np.float64]
-_f64_3d: _Array3D[np.float64]
-_f64_4d: _Array4D[np.float64]
+_f64_1d: npt.Array1D[np.float64]
+_f64_2d: npt.Array2D[np.float64]
+_f64_3d: npt.Array3D[np.float64]
+_f64_4d: npt.Array4D[np.float64]
 _f64_nd: npt.NDArray[np.float64]
 _c128_nd: npt.NDArray[np.complex128]
 
@@ -33,31 +27,31 @@ assert_type(np.einsum("i->", _f64_1d), np.float64)
 assert_type(np.einsum("ii", _f64_2d), np.float64)
 assert_type(np.einsum("i,i", _f64_1d, _f64_1d), np.float64)
 assert_type(np.einsum("ij,ij->", _f64_nd, _f64_nd), np.float64)
-assert_type(np.einsum("i,i", _f64_1d, _f64_1d, optimize=True), np.float64 | _Array0D[np.float64])
+assert_type(np.einsum("i,i", _f64_1d, _f64_1d, optimize=True), np.float64 | npt.Array0D[np.float64])
 
 # 1d
 
-assert_type(np.einsum("ii->i", _f64_2d), _Array1D[np.float64])
-assert_type(np.einsum("ij,j", _f64_2d, _f64_1d), _Array1D[np.float64])
-assert_type(np.einsum("ij,ij->i", _f64_nd, _f64_nd), _Array1D[np.float64])
-assert_type(np.einsum("i,i->i", _u32_1d_list, _u32_1d_list), _Array1D[np.uint32])
+assert_type(np.einsum("ii->i", _f64_2d), npt.Array1D[np.float64])
+assert_type(np.einsum("ij,j", _f64_2d, _f64_1d), npt.Array1D[np.float64])
+assert_type(np.einsum("ij,ij->i", _f64_nd, _f64_nd), npt.Array1D[np.float64])
+assert_type(np.einsum("i,i->i", _u32_1d_list, _u32_1d_list), npt.Array1D[np.uint32])
 
 # 2d
 
-assert_type(np.einsum("ij->ji", _f64_2d), _Array2D[np.float64])
-assert_type(np.einsum("i,j->ij", _f64_1d, _f64_1d), _Array2D[np.float64])
-assert_type(np.einsum("ij,jk->ik", _f64_2d, _f64_2d), _Array2D[np.float64])
-assert_type(np.einsum("ij,jk", _f64_nd, _f64_nd, optimize=True), _Array2D[np.float64])
-assert_type(np.einsum("ijk,ij->ik", _f64_3d, _f64_2d), _Array2D[np.float64])
+assert_type(np.einsum("ij->ji", _f64_2d), npt.Array2D[np.float64])
+assert_type(np.einsum("i,j->ij", _f64_1d, _f64_1d), npt.Array2D[np.float64])
+assert_type(np.einsum("ij,jk->ik", _f64_2d, _f64_2d), npt.Array2D[np.float64])
+assert_type(np.einsum("ij,jk", _f64_nd, _f64_nd, optimize=True), npt.Array2D[np.float64])
+assert_type(np.einsum("ijk,ij->ik", _f64_3d, _f64_2d), npt.Array2D[np.float64])
 
 # 3d
 
-assert_type(np.einsum("bij,bjk->bik", _f64_3d, _f64_3d), _Array3D[np.float64])
-assert_type(np.einsum("i,j,k->ijk", _f64_1d, _f64_1d, _f64_1d), _Array3D[np.float64])
+assert_type(np.einsum("bij,bjk->bik", _f64_3d, _f64_3d), npt.Array3D[np.float64])
+assert_type(np.einsum("i,j,k->ijk", _f64_1d, _f64_1d, _f64_1d), npt.Array3D[np.float64])
 
 # 4d
 
-assert_type(np.einsum("abcd,cdjk->abjk", _f64_4d, _f64_4d), _Array4D[np.float64])
+assert_type(np.einsum("abcd,cdjk->abjk", _f64_4d, _f64_4d), npt.Array4D[np.float64])
 
 # ?d
 

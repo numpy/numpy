@@ -10,10 +10,6 @@ from typing import Any, assert_type
 import numpy as np
 import numpy.typing as npt
 
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
-type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
-
 class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.int64]]): ...
 
 i8: np.int64
@@ -140,11 +136,11 @@ assert_type(np.tensordot(_to_1d_complex, _to_1d_complex), npt.NDArray[np.complex
 # cross
 assert_type(np.cross(AR_i8, AR_i8_1d), npt.NDArray[np.int64])
 assert_type(np.cross(AR_i8_1d, AR_i8), npt.NDArray[np.int64])
-assert_type(np.cross(AR_i8_1d, AR_i8_1d), _Array1D[np.int64])
-assert_type(np.cross(AR_i8_1d, AR_i8_2d), _Array2D[np.int64])
-assert_type(np.cross(AR_i8_2d, AR_i8_1d), _Array2D[np.int64])
-assert_type(np.cross(AR_i8_2d, AR_i8_3d), _Array3D[np.int64])
-assert_type(np.cross(AR_i8_3d, AR_i8_2d), _Array3D[np.int64])
+assert_type(np.cross(AR_i8_1d, AR_i8_1d), npt.Array1D[np.int64])
+assert_type(np.cross(AR_i8_1d, AR_i8_2d), npt.Array2D[np.int64])
+assert_type(np.cross(AR_i8_2d, AR_i8_1d), npt.Array2D[np.int64])
+assert_type(np.cross(AR_i8_2d, AR_i8_3d), npt.Array3D[np.int64])
+assert_type(np.cross(AR_i8_3d, AR_i8_2d), npt.Array3D[np.int64])
 assert_type(np.cross(AR_i8_4d, AR_i8_4d), npt.NDArray[np.int64])
 assert_type(np.cross(_to_1d_int, _to_1d_int), npt.NDArray[np.int_ | Any])
 assert_type(np.cross(AR_f8, AR_i8), npt.NDArray[np.float64 | Any])

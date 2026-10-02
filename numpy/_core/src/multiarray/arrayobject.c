@@ -59,6 +59,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "numpyos.h"
 #include "refcount.h"
 #include "strfuncs.h"
+#include "templ_common.h"
 
 #include "binop_override.h"
 #include "array_coercion.h"
@@ -1047,7 +1048,7 @@ NPY_NO_EXPORT int
 PyArray_ElementStrides(PyObject *obj)
 {
     PyArrayObject *arr;
-    int itemsize;
+    npy_intp itemsize;
     int i, ndim;
     npy_intp *strides;
 
@@ -1086,17 +1087,19 @@ PyArray_ElementStrides(PyObject *obj)
  * or negative).
  */
 
-/*NUMPY_API*/
 NPY_NO_EXPORT npy_bool
-PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
-                     npy_intp const *dims, npy_intp const *newstrides)
+npy_check_strides(npy_intp elsize, int nd, npy_intp numbytes, npy_intp offset,
+                  npy_intp const *dims, npy_intp const *newstrides)
 {
     npy_intp begin, end;
     npy_intp lower_offset;
     npy_intp upper_offset;
 
     if (numbytes == 0) {
-        numbytes = PyArray_MultiplyList(dims, nd) * elsize;
+        npy_intp count = PyArray_OverflowMultiplyList(dims, nd);
+        if (count < 0 || npy_mul_sizes_with_overflow(&numbytes, count, elsize)) {
+            return NPY_FALSE;
+        }
     }
 
     begin = -offset;
@@ -1111,6 +1114,14 @@ PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
     return NPY_TRUE;
 }
 
+/*NUMPY_API*/
+NPY_NO_EXPORT npy_bool
+PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
+                     npy_intp const *dims, npy_intp const *newstrides)
+{
+    return npy_check_strides(elsize, nd, numbytes, offset, dims, newstrides);
+}
+
 
 static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
@@ -1118,7 +1129,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"shape", "dtype", "buffer", "offset", "strides",
                              "order", NULL};
     PyArray_Descr *descr = NULL;
-    int itemsize;
+    npy_intp itemsize;
     PyArray_Dims dims = {NULL, 0};
     PyArray_Dims strides = {NULL, -1};
     PyArray_Chunk buffer;
@@ -1175,9 +1186,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
 
 
-        if (!PyArray_CheckStrides(itemsize, dims.len,
-                                  nb, off,
-                                  dims.ptr, strides.ptr)) {
+        if (!npy_check_strides(
+                itemsize, dims.len, nb, off, dims.ptr, strides.ptr)) {
             PyErr_SetString(PyExc_ValueError,
                             "strides is incompatible "      \
                             "with shape of requested "      \

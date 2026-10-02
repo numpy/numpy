@@ -2267,8 +2267,9 @@ validate_and_return:
                 }
 
             /* The utcoffset function should return a timedelta */
-            PyObject *offset = PyObject_CallMethodOneArg(
-                    tzinfo, state->interned_str.utcoffset, obj);
+            PyObject *args[2] = {tzinfo, obj};
+            PyObject *offset = PyObject_VectorcallMethod(
+                    state->interned_str.utcoffset, args, 2, NULL);
             Py_DECREF(tzinfo);
             if (offset == NULL) {
                 return -1;
@@ -2278,8 +2279,8 @@ validate_and_return:
              * The timedelta should have a function "total_seconds"
              * which contains the value we want.
              */
-            PyObject *total_seconds = PyObject_CallMethodNoArgs(
-                    offset, state->interned_str.total_seconds);
+            PyObject *total_seconds = PyObject_VectorcallMethod(
+                    state->interned_str.total_seconds, &offset, 1, NULL);
             Py_DECREF(offset);
             if (total_seconds == NULL) {
                 return -1;
@@ -2343,8 +2344,9 @@ get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
     }
 
     /* Convert the datetime from UTC to local time */
-    loc_dt = PyObject_CallMethodOneArg(
-            dt, _npy_module_state->interned_str.astimezone, timezone_obj);
+    PyObject *args[2] = {dt, timezone_obj};
+    loc_dt = PyObject_VectorcallMethod(
+            _npy_module_state->interned_str.astimezone, args, 2, NULL);
     Py_DECREF(dt);
     if (loc_dt == NULL) {
         return -1;

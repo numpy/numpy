@@ -797,8 +797,8 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
         int aligned = PyDataType_FLAGCHK((PyArray_Descr *)new, NPY_ALIGNED_STRUCT);
         new->flags = new->flags & ~NPY_FROM_FIELDS;
         new->flags |= NPY_NEEDS_PYAPI;  /* always needed for field access */
-        int totalsize = 0;
-        int maxalign = 1;
+        npy_intp totalsize = 0;
+        npy_intp maxalign = 1;
         for (Py_ssize_t i = 0; i < field_num; i++) {
             PyObject *name = PyTuple_GET_ITEM(self->names, i);
             PyObject *tuple = PyDict_GetItem(self->fields, name); // noqa: borrowed-ref OK
@@ -814,11 +814,14 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
             PyTuple_SET_ITEM(new_tuple, 0, (PyObject *)field_descr);
 
             if (aligned) {
-                totalsize = NPY_NEXT_ALIGNED_OFFSET(
-                        totalsize, field_descr->alignment);
+                if (npy_align_descr_size(&totalsize, field_descr->alignment) < 0) {
+                    Py_DECREF(new_tuple);
+                    Py_DECREF(new);
+                    return NULL;
+                }
                 maxalign = PyArray_MAX(maxalign, field_descr->alignment);
             }
-            PyObject *offset_obj = PyLong_FromLong(totalsize);
+            PyObject *offset_obj = PyLong_FromSsize_t(totalsize);
             if (offset_obj == NULL) {
                 Py_DECREF(new_tuple);
                 Py_DECREF(new);
@@ -842,9 +845,15 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
                 return NULL;
             }
             Py_DECREF(new_tuple);  /* Reference now owned by PyDataType_FIELDS(new) */
-            totalsize += field_descr->elsize;
+            if (npy_add_to_descr_size(&totalsize, field_descr->elsize) < 0) {
+                Py_DECREF(new);
+                return NULL;
+            }
         }
-        totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
+        if (npy_align_descr_size(&totalsize, maxalign) < 0) {
+            Py_DECREF(new);
+            return NULL;
+        }
         new->elsize = totalsize;
         new->alignment = maxalign;
         return (PyArray_Descr *)new;
