@@ -636,7 +636,7 @@ some print statements:
           print('   self is %s' % repr(self))
           print('   arr is %s' % repr(out_arr))
           # then just call the parent
-          return super().__array_wrap__(self, out_arr, context, return_scalar)
+          return super().__array_wrap__(out_arr, context, return_scalar)
 
 We run a ufunc on an instance of our new array:
 
