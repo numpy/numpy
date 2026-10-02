@@ -2,6 +2,7 @@
 #define NUMPY_CORE_SRC_NPYSORT_NPYSORT_COMMON_H_
 
 #include <numpy/ndarraytypes.h>
+#include <string.h>
 #include "dtypemeta.h"
 
 #ifdef __cplusplus
