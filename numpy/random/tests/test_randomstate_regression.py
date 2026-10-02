@@ -4,7 +4,7 @@ import pytest
 
 import numpy as np
 from numpy import random
-from numpy.testing import assert_, assert_array_equal, assert_raises
+from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
 
 
 class TestRegression:
@@ -225,6 +225,44 @@ class TestRegression:
         bg.state = state
         rs = random.RandomState(bg)
         assert_array_equal(rs.multinomial(500, [0.5, 0.5]), [227, 273])
+
+    def test_multinomial_zero_probability_stream(self):
+        # gh-32299: zero probabilities must not consume random draws.
+        rng = random.RandomState(1234)
+        pvals = [0.5, 0.0, 0.5, 0.0, 0.0, 0.0]
+        expected = np.array([
+            [0, 0, 2, 0, 0, 0],
+            [1, 0, 1, 0, 0, 0],
+            [2, 0, 0, 0, 0, 0],
+            [1, 0, 1, 0, 0, 0],
+            [2, 0, 0, 0, 0, 0],
+        ])
+
+        assert_array_equal(rng.multinomial(2, pvals, 5), expected)
+        assert_equal(rng.random_sample(), 0.9581393536837052)
+
+    def test_multinomial_zero_count_stream(self):
+        rng = random.RandomState(1234)
+
+        assert_array_equal(rng.multinomial(0, [0.5, 0.5], 5), np.zeros((5, 2)))
+        assert_equal(rng.random_sample(), 0.1915194503788923)
+
+    def test_multinomial_small_p_uses_current_inversion(self):
+        state = {
+            'bit_generator': 'PCG64',
+            'state': {
+                'state': 169755515854538203297949045700863217783,
+                'inc': 87136372517582989555478159403783844777,
+            },
+            'has_uint32': 0,
+            'uinteger': 0,
+        }
+        bg = random.PCG64()
+        bg.state = state
+        rng = random.RandomState(bg)
+
+        actual = rng.multinomial(2_000_000_000, [5e-17, 1.0])
+        assert_array_equal(actual, [1, 1_999_999_999])
 
     def test_n_zero_stream(self):
         # Regression test for gh-14522.  Ensure that future versions
