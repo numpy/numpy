@@ -91,11 +91,63 @@ multiarray_types_api = {
     'PyHalfArrType_Type':               (217,),
     'NpyIter_Type':                     (218,),
     # End 1.6 API
-    # NOTE: The Slots 320-360 are defined in `_experimental_dtype_api.h`
-    #       and filled explicitly outside the code generator as the metaclass
-    #       makes them tricky to expose.  (This may be refactored.)
-    # Slot 366, 367, 368 are the abstract DTypes
-    # End 2.0 API
+}
+
+# These slots must be filled at runtime, after DType initialization.
+# index, public C type, minimum API version
+multiarray_dtype_api = {
+    'PyArrayDTypeMeta_Type': (320, 'PyTypeObject', MinVersion("2.0")),
+    'PyArray_BoolDType': (321, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    # Integers
+    'PyArray_ByteDType': (322, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_UByteDType': (323, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_ShortDType': (324, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_UShortDType': (325, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_IntDType': (326, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_UIntDType': (327, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_LongDType': (328, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_ULongDType': (329, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_LongLongDType': (330, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_ULongLongDType': (331, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    # Integer aliases
+    'PyArray_Int8DType': (332, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_UInt8DType': (333, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_Int16DType': (334, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_UInt16DType': (335, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_Int32DType': (336, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_UInt32DType': (337, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_Int64DType': (338, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_UInt64DType': (339, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_IntpDType': (340, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_UIntpDType': (341, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    # Floats
+    'PyArray_HalfDType': (342, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_FloatDType': (343, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_DoubleDType': (344, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_LongDoubleDType': (345, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    # Complex
+    'PyArray_CFloatDType': (346, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_CDoubleDType': (347, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_CLongDoubleDType': (348, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    # String/Bytes
+    'PyArray_BytesDType': (349, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_UnicodeDType': (350, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    # Datetime/Timedelta
+    'PyArray_DatetimeDType': (351, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_TimedeltaDType': (352, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    # Object/Void
+    'PyArray_ObjectDType': (353, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_VoidDType': (354, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    # Python scalar markers
+    'PyArray_PyLongDType': (355, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_PyFloatDType': (356, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_PyComplexDType': (357, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_DefaultIntDType': (358, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_StringDType': (359, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    # Slot 360 is free.
+    'PyArray_IntAbstractDType': (366, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_FloatAbstractDType': (367, 'PyArray_DTypeMeta', MinVersion("2.0")),
+    'PyArray_ComplexAbstractDType': (368, 'PyArray_DTypeMeta', MinVersion("2.0")),
 }
 
 # define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
@@ -107,9 +159,7 @@ multiarray_funcs_api = {
         [1, 4, 40, 41, 66, 67, 68, 81, 82, 83,
          103, 115, 117, 122, 163, 164, 171, 173, 197,
          201, 202, 208, 219, 220, 221, 222, 278,
-         291, 293, 294, 295, 301]
-        # range/slots reserved DType classes (see _public_dtype_api_table.h):
-        + list(range(320, 361)) + [366, 367, 368]
+         291, 293, 294, 295, 301, 360]
         ),
     'PyArray_GetNDArrayCVersion':           (0,),
     # Unused slot 40, was `PyArray_SetNumericOps`
@@ -398,7 +448,7 @@ multiarray_funcs_api = {
     'NpyString_acquire_allocators':                  (317, MinVersion("2.0")),
     'NpyString_release_allocator':                   (318, MinVersion("2.0")),
     'NpyString_release_allocators':                  (319, MinVersion("2.0")),
-    # Slots 320-360 reserved for DType classes (see comment in types)
+    # Slots 320-359 and 366-368 are defined in multiarray_dtype_api.
     'PyArray_GetDefaultDescr':                       (361, MinVersion("2.0")),
     'PyArrayInitDTypeMeta_FromSpec':                 (362, MinVersion("2.0")),
     'PyArray_CommonDType':                           (363, MinVersion("2.0")),
@@ -490,6 +540,7 @@ multiarray_api = (
         multiarray_scalar_bool_values,
         multiarray_types_api,
         multiarray_funcs_api,
+        multiarray_dtype_api,
 )
 
 ufunc_api = (
