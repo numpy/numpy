@@ -319,6 +319,7 @@ The rest of the story
    howto_build_docs
    development_workflow
    development_advanced_debugging
+   howto-add-c-api
    development_ghcodespaces
    reviewer_guidelines
    ../benchmarking
