@@ -27,6 +27,7 @@
 #include "npy_import.h"
 #include "npy_static_data.h"
 #include "module_state.h"
+#include "npy_hashtable.h"
 #include "refcount.h"
 
 #include "umathmodule.h"
@@ -90,6 +91,8 @@
  *       want to be able to use `np.array([pytype()])`.
  *       It should be possible to retrofit this without too much trouble
  *       (all type objects support weak references).
+ *       Lookups return borrowed references, which relies on entries never
+ *       being removed.
  */
 
 
@@ -106,29 +109,41 @@ enum _dtype_discovery_flags {
 };
 
 
+/* Add `pytype -> value` to the mapping, which keeps both alive forever. */
+static int
+_add_pytype_mapping(multiarray_umath_state *state,
+                    PyTypeObject *pytype, PyObject *value)
+{
+    PyObject *key = (PyObject *)pytype;
+    PyObject *stored;
+    if (PyArrayIdentityHash_SetItemDefault(
+                state->pytype_to_dtype_hash, &key, value, &stored) < 0) {
+        return -1;
+    }
+    assert(stored == value);
+    Py_INCREF(key);
+    Py_INCREF(value);
+    return 0;
+}
+
 /**
- * Adds known sequence types to the global type dictionary, note that when
+ * Adds known sequence types to the type mapping, note that when
  * a DType is passed in, this lookup may be ignored.
  *
  * @return -1 on error 0 on success
  */
 static int
-_prime_global_pytype_to_type_dict(PyObject *dict)
+_prime_pytype_to_dtype_hash(multiarray_umath_state *state)
 {
-    int res;
-
     /* Add the basic Python sequence types */
-    res = PyDict_SetItem(dict, (PyObject *)&PyList_Type, Py_None);
-    if (res < 0) {
+    if (_add_pytype_mapping(state, &PyList_Type, Py_None) < 0) {
         return -1;
     }
-    res = PyDict_SetItem(dict, (PyObject *)&PyTuple_Type, Py_None);
-    if (res < 0) {
+    if (_add_pytype_mapping(state, &PyTuple_Type, Py_None) < 0) {
         return -1;
     }
     /* NumPy Arrays are not handled as scalars */
-    res = PyDict_SetItem(dict, (PyObject *)&PyArray_Type, Py_None);
-    if (res < 0) {
+    if (_add_pytype_mapping(state, &PyArray_Type, Py_None) < 0) {
         return -1;
     }
     return 0;
@@ -182,22 +197,21 @@ _PyArray_MapPyTypeToDType(
 
     multiarray_umath_state *state = _npy_module_state;
 
-    /* Create the global dictionary if it does not exist */
-    if (NPY_UNLIKELY(state->global_pytype_to_type_dict == NULL)) {
-        state->global_pytype_to_type_dict = PyDict_New();
-        if (state->global_pytype_to_type_dict == NULL) {
+    /* Create the mapping if it does not exist */
+    if (NPY_UNLIKELY(state->pytype_to_dtype_hash == NULL)) {
+        state->pytype_to_dtype_hash = PyArrayIdentityHash_New(1);
+        if (state->pytype_to_dtype_hash == NULL) {
             return -1;
         }
-        if (_prime_global_pytype_to_type_dict(state->global_pytype_to_type_dict) < 0) {
+        if (_prime_pytype_to_dtype_hash(state) < 0) {
             return -1;
         }
     }
 
-    int res = PyDict_Contains(state->global_pytype_to_type_dict, (PyObject *)pytype);
-    if (res < 0) {
-        return -1;
-    }
-    else if (DType == &PyArray_StringDType) {
+    PyObject *key = (PyObject *)pytype;
+    int res = PyArrayIdentityHash_GetItem(
+            state->pytype_to_dtype_hash, &key) != NULL;
+    if (DType == &PyArray_StringDType) {
         // PyArray_StringDType's scalar is str which we allow because it doesn't
         // participate in DType inference, so don't add it to the
         // pytype to type mapping
@@ -209,8 +223,7 @@ _PyArray_MapPyTypeToDType(
         return -1;
     }
 
-    return PyDict_SetItem(state->global_pytype_to_type_dict,
-            (PyObject *)pytype, Dtype_obj);
+    return _add_pytype_mapping(state, pytype, Dtype_obj);
 }
 
 
@@ -218,38 +231,32 @@ _PyArray_MapPyTypeToDType(
  * Lookup the DType for a registered known python scalar type.
  *
  * @param pytype Python Type to look up
- * @return DType, None if it is a known non-scalar, or NULL if an unknown object.
+ * @return Borrowed DType, None for a known non-scalar, NULL if unknown.
  */
 static inline PyArray_DTypeMeta *
 npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 {
-    PyObject *DType;
-
     if (pytype == &PyArray_Type) {
-        DType = Py_NewRef(Py_None);
+        return (PyArray_DTypeMeta *)Py_None;
     }
     else if (pytype == &PyFloat_Type) {
-        DType = Py_NewRef((PyObject *)&PyArray_PyFloatDType);
+        return &PyArray_PyFloatDType;
     }
     else if (pytype == &PyLong_Type) {
-        DType = Py_NewRef((PyObject *)&PyArray_PyLongDType);
+        return &PyArray_PyLongDType;
     }
-    else {
-        int res = PyDict_GetItemRef(_npy_module_state->global_pytype_to_type_dict,
-                                    (PyObject *)pytype, (PyObject **)&DType);
-
-        if (res <= 0) {
-            /* the python type is not known or an error was set */
-            return NULL;
-        }
-    }
-    assert(DType == Py_None || PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
+    PyObject *key = (PyObject *)pytype;
+    PyObject *DType = PyArrayIdentityHash_GetItem(  /* borrowed */
+            _npy_module_state->pytype_to_dtype_hash, &key);
+    assert(DType == NULL || DType == Py_None
+           || PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     return (PyArray_DTypeMeta *)DType;
 }
 
 /*
  * Note: This function never fails, but will return `NULL` for unknown scalars or
  *       known array-likes (e.g. tuple, list, ndarray).
+ *       The returned reference is borrowed.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype)
@@ -274,7 +281,8 @@ PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype)
  *        flags is NULL, this is not
  * @param fixed_DType if not NULL, will be checked first for whether or not
  *        it can/wants to handle the (possible) scalar value.
- * @return New reference to either a DType class, Py_None, or NULL on error.
+ * @return Borrowed reference to either a DType class, Py_None, or NULL on
+ *         error.
  */
 static inline PyArray_DTypeMeta *
 discover_dtype_from_pyobject(
@@ -290,7 +298,6 @@ discover_dtype_from_pyobject(
          */
         if ((Py_TYPE(obj) == fixed_DType->scalar_type) ||
                 NPY_DT_CALL_is_known_scalar_type(fixed_DType, Py_TYPE(obj))) {
-            Py_INCREF(fixed_DType);
             return fixed_DType;
         }
     }
@@ -312,7 +319,6 @@ discover_dtype_from_pyobject(
         }
     }
     else if (flags == NULL) {
-        Py_INCREF(Py_None);
         return (PyArray_DTypeMeta *)Py_None;
     }
     else if (PyBytes_Check(obj)) {
@@ -326,8 +332,9 @@ discover_dtype_from_pyobject(
     }
 
     if (legacy_descr != NULL) {
+        /* Borrowed: legacy DTypes are never freed, others are kept alive
+         * by the pytype-to-DType mapping. */
         DType = NPY_DTYPE(legacy_descr);
-        Py_INCREF(DType);
         Py_DECREF(legacy_descr);
         /* TODO: Enable warning about subclass handling */
         if ((0) && !((*flags) & GAVE_SUBCLASS_WARNING)) {
@@ -343,7 +350,6 @@ discover_dtype_from_pyobject(
         }
         return DType;
     }
-    Py_INCREF(Py_None);
     return (PyArray_DTypeMeta *)Py_None;
 }
 
@@ -506,8 +512,6 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
          *       so in some contexts we need to let it handled like a scalar.
          *       (If we manage to deprecate the above, we can do that.)
          */
-        Py_DECREF(DType);
-
         PyArrayObject *arr = (PyArrayObject *)value;
         if (PyArray_DESCR(arr) == descr && !PyDataType_REFCHK(descr)) {
             /* light-weight fast-path for when the descrs obviously matches */
@@ -520,12 +524,10 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
     }
     if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
         /* We can set the element directly (or at least will try to) */
-        Py_XDECREF(DType);
         return NPY_DT_CALL_setitem(descr, value, item);
     }
     PyArray_Descr *tmp_descr;
     tmp_descr = NPY_DT_CALL_discover_descr_from_pyobject(DType, value);
-    Py_DECREF(DType);
     if (tmp_descr == NULL) {
         return -1;
     }
@@ -835,7 +837,7 @@ find_descriptor_from_array(
                 return -1;
             }
             if (item_DType == (PyArray_DTypeMeta *)Py_None) {
-                Py_SETREF(item_DType, NULL);
+                item_DType = NULL;
             }
             int flat_max_dims = 0;
             if (handle_scalar(elem, 0, &flat_max_dims, out_descr,
@@ -843,10 +845,8 @@ find_descriptor_from_array(
                 Py_DECREF(iter);
                 Py_DECREF(elem);
                 Py_XDECREF(*out_descr);
-                Py_XDECREF(item_DType);
                 return -1;
             }
-            Py_XDECREF(item_DType);
             Py_DECREF(elem);
             PyArray_ITER_NEXT(iter);
         }
@@ -1018,14 +1018,10 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     if (DType == NULL) {
         return -1;
     }
-    else if (DType == (PyArray_DTypeMeta *)Py_None) {
-        Py_DECREF(Py_None);
-    }
-    else {
+    else if (DType != (PyArray_DTypeMeta *)Py_None) {
         max_dims = handle_scalar(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
                 flags, DType);
-        Py_DECREF(DType);
         return max_dims;
     }
 
