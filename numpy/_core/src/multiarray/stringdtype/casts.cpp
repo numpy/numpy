@@ -5,7 +5,9 @@
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
 
+#include <cerrno>
 #include <cmath>
+#include <cstdio>
 #include <type_traits>
 
 #include "numpy/ndarraytypes.h"

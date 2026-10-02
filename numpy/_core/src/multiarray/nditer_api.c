@@ -18,6 +18,8 @@
 #include "templ_common.h"
 #include "ctors.h"
 
+#include <stdio.h>
+
 
 /*NUMPY_API
  * Removes an axis from iteration. This requires that NPY_ITER_MULTI_INDEX

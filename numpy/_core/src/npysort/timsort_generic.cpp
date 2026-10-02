@@ -11,6 +11,7 @@
 #include "npysort_common.h"
 
 #include <cstdlib>
+#include <cstring>
 #include <utility>
 
 /* enough for 32 * 1.618 ** 128 elements.

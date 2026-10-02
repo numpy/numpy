@@ -5,6 +5,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <ctype.h>
 
 #include "numpy/arrayobject.h"
 #include "arrayobject.h"
