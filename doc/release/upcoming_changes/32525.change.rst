@@ -1,0 +1,9 @@
+`numpy.ma.cov` and `numpy.ma.corrcoef` use pairwise-complete observations
+-------------------------------------------------------------------------
+For masked arrays, each entry of `numpy.ma.cov` and `numpy.ma.corrcoef` is now
+computed only from the observations where both variables are unmasked, with
+the means and variances taken over those same observations.
+`numpy.ma.corrcoef` therefore no longer returns values outside ``[-1, 1]``.
+It also masks a pair in which either variable is constant over the shared
+observations.  For a single variable with at least two observations and a
+non-zero variance, it now returns ``1.0`` instead of ``numpy.ma.masked``.
