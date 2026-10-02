@@ -548,8 +548,12 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
 }
 
 
+/*
+ * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
+ * type refcount contention on free-threaded 3.14+.
+ */
 static void
-arraymethod_dealloc(PyObject *self)
+arraymethod_free(void *self)
 {
     PyArrayMethodObject *meth;
     meth = ((PyArrayMethodObject *)self);
@@ -565,14 +569,12 @@ arraymethod_dealloc(PyObject *self)
         PyMem_Free(meth->wrapped_dtypes);
     }
 
-    PyTypeObject *type = Py_TYPE(self);
     PyObject_Free(self);
-    Py_DECREF(type);
 }
 
 
 static PyType_Slot arraymethod_slots[] = {
-    {Py_tp_dealloc, arraymethod_dealloc},
+    {Py_tp_free, arraymethod_free},
     {0, NULL},
 };
 
@@ -602,8 +604,12 @@ boundarraymethod_repr(PyBoundArrayMethodObject *self)
 }
 
 
+/*
+ * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
+ * type refcount contention on free-threaded 3.14+.
+ */
 static void
-boundarraymethod_dealloc(PyObject *self)
+boundarraymethod_free(void *self)
 {
     PyBoundArrayMethodObject *meth;
     meth = ((PyBoundArrayMethodObject *)self);
@@ -616,9 +622,7 @@ boundarraymethod_dealloc(PyObject *self)
 
     Py_XDECREF(meth->method);
 
-    PyTypeObject *type = Py_TYPE(self);
     PyObject_Free(self);
-    Py_DECREF(type);
 }
 
 
@@ -1096,7 +1100,7 @@ PyGetSetDef boundarraymethods_getters[] = {
 
 
 static PyType_Slot boundarraymethod_slots[] = {
-    {Py_tp_dealloc, boundarraymethod_dealloc},
+    {Py_tp_free, boundarraymethod_free},
     {Py_tp_repr, boundarraymethod_repr},
     {Py_tp_methods, boundarraymethod_methods},
     {Py_tp_getset, boundarraymethods_getters},
