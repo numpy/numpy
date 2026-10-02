@@ -402,21 +402,15 @@ busdaycalendar_traverse(NpyBusDayCalendar *self, visitproc visit, void *arg)
     return 0;
 }
 
+/*
+ * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
+ * type refcount contention on free-threaded 3.14+.
+ */
 static void
-busdaycalendar_dealloc(NpyBusDayCalendar *self)
+busdaycalendar_free(void *self)
 {
-    PyObject_GC_UnTrack(self);
-
-    /* Clear the holidays */
-    if (self->holidays.begin != NULL) {
-        PyMem_RawFree(self->holidays.begin);
-        self->holidays.begin = NULL;
-        self->holidays.end = NULL;
-    }
-
-    PyTypeObject *type = Py_TYPE(self);
-    type->tp_free((PyObject *)self);
-    Py_DECREF(type);
+    PyMem_RawFree(((NpyBusDayCalendar *)self)->holidays.begin);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -477,7 +471,7 @@ static PyGetSetDef busdaycalendar_getsets[] = {
 };
 
 static PyType_Slot busdaycalendar_slots[] = {
-    {Py_tp_dealloc, busdaycalendar_dealloc},
+    {Py_tp_free, busdaycalendar_free},
     {Py_tp_traverse, busdaycalendar_traverse},
     {Py_tp_getset, busdaycalendar_getsets},
     {Py_tp_init, busdaycalendar_init},

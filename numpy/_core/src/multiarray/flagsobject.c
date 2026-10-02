@@ -175,14 +175,15 @@ arrayflags_clear(PyArrayFlagsObject *self)
     return 0;
 }
 
+/*
+ * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
+ * type refcount contention on free-threaded 3.14+.
+ */
 static void
-arrayflags_dealloc(PyArrayFlagsObject *self)
+arrayflags_free(void *self)
 {
-    PyObject_GC_UnTrack(self);
-    Py_XDECREF(self->arr);
-    PyTypeObject *type = Py_TYPE(self);
-    type->tp_free((PyObject *)self);
-    Py_DECREF(type);
+    Py_XDECREF(((PyArrayFlagsObject *)self)->arr);
+    PyObject_GC_Del(self);
 }
 
 
@@ -698,7 +699,7 @@ arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNU
 }
 
 static PyType_Slot arrayflags_slots[] = {
-    {Py_tp_dealloc, arrayflags_dealloc},
+    {Py_tp_free, arrayflags_free},
     {Py_tp_traverse, arrayflags_traverse},
     {Py_tp_clear, arrayflags_clear},
     {Py_tp_repr, arrayflags_print},
