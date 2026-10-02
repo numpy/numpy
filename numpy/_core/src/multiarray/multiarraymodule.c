@@ -54,6 +54,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "scalartypes.h"
 #include "convert_datatype.h"
 #include "conversion_utils.h"
+#include "iterators.h"
 #include "nditer_pywrap.h"
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
@@ -5270,6 +5271,19 @@ multiarray_umath_free(void *m)
 }
 #endif
 
+/*
+ * Heap types have no compile time address, so the generated `PyArray_API`
+ * initializer leaves their slots NULL.  The public macros still read those
+ * slots, so fill them once the types exist, as `_fill_dtype_api` does.
+ */
+static void
+_fill_heap_type_api(void *api_table[], multiarray_umath_state *state)
+{
+    api_table[NPY_API_INDEX_PyArrayIter_Type] = state->flatiter_type;
+    api_table[NPY_API_INDEX_PyArrayMultiIter_Type] = state->broadcast_type;
+    api_table[NPY_API_INDEX_NpyIter_Type] = state->nditer_type;
+}
+
 static int
 _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     PyObject *d, *s, *c_api;
@@ -5365,23 +5379,20 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
         return -1;
     }
 
-    PyArrayIter_Type.tp_iter = PyObject_SelfIter;
-    NpyIter_Type.tp_iter = PyObject_SelfIter;
-    PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
-    if (PyType_Ready(&PyArrayIter_Type) < 0) {
+    if (init_array_iter_type(m) < 0) {
         return -1;
     }
     if (PyType_Ready(&PyArrayMapIter_Type) < 0) {
         return -1;
     }
-    if (PyType_Ready(&PyArrayMultiIter_Type) < 0) {
+    if (init_array_multiiter_type(m) < 0) {
         return -1;
     }
     PyArrayNeighborhoodIter_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {
         return -1;
     }
-    if (PyType_Ready(&NpyIter_Type) < 0) {
+    if (init_nditer_type(m) < 0) {
         return -1;
     }
 
@@ -5472,10 +5483,9 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
 #undef ADDCONST
 
     PyDict_SetItemString(d, "ndarray", (PyObject *)&PyArray_Type);
-    PyDict_SetItemString(d, "flatiter", (PyObject *)&PyArrayIter_Type);
-    PyDict_SetItemString(d, "nditer", (PyObject *)&NpyIter_Type);
-    PyDict_SetItemString(d, "broadcast",
-                         (PyObject *)&PyArrayMultiIter_Type);
+    PyDict_SetItemString(d, "flatiter", (PyObject *)state->flatiter_type);
+    PyDict_SetItemString(d, "nditer", (PyObject *)state->nditer_type);
+    PyDict_SetItemString(d, "broadcast", (PyObject *)state->broadcast_type);
     PyDict_SetItemString(d, "dtype", (PyObject *)&PyArrayDescr_Type);
     PyDict_SetItemString(d, "flagsobj", (PyObject *)state->PyArrayFlags_Type);
 
@@ -5643,6 +5653,8 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     c_api = PyCapsule_New((void *)PyArray_API, NULL, NULL);
     /* The dtype API is not auto-filled/generated via Python scripts: */
     _fill_dtype_api(PyArray_API);
+    /* Nor are the slots of the types created at import time: */
+    _fill_heap_type_api(PyArray_API, state);
     if (c_api == NULL) {
         return -1;
     }
