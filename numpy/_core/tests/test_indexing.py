@@ -1444,6 +1444,25 @@ class TestInvalidIndexErrorMessage:
                            match=r"cannot index with <class 'list'>"):
             a[[slice(None), slice(None)]]
 
+    def test_tuple_of_non_indexables(self):
+        # For a tuple of indices the error must point at the current
+        # element that fails, not at the tuple itself (gh-26115).
+        a = np.zeros((5, 5))
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            a["1", "2"]
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            a["1"]
+
+    def test_tuple_mixed_good_bad(self):
+        # The good element is consumed first; the error points at the
+        # element that actually fails.
+        a = np.zeros((5, 5))
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            a[0, "1"]
+
 
 class TestCApiAccess:
     def test_getitem(self):
