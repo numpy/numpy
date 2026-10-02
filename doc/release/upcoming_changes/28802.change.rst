@@ -1,0 +1,7 @@
+Correct behaviour for ``np.genfromtxt`` 
+---------------------------------------
+Earlier, whenever ``usecols`` had all the column names present in
+``fname`` (data), but in different order, columns would not match its
+names.
+Now, the name assignment is well done, even if names in ``usecols`` are
+out of order.
