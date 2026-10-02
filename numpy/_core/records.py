@@ -350,10 +350,9 @@ class recarray(ndarray):
     2. Use the `buf` keyword.
     3. Use `np.rec.fromrecords`.
 
-    Although `recarray` inherits methods such as `~numpy.ndarray.sum` and
-    `~numpy.ndarray.mean` from `~numpy.ndarray`, ufuncs and reductions are
-    not defined for structured dtypes and raise an error. Apply them to
-    individual fields instead, e.g. ``arr.x.sum()``.
+    ``==`` and ``!=`` are defined for record arrays, but other functionality
+    such as `~numpy.ndarray.sum` cannot be applied to multiple fields at once.
+    Use the individual fields instead, e.g. ``arr.x.sum()``.
 
     Examples
     --------
