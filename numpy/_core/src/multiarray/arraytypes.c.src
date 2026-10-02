@@ -494,7 +494,9 @@ NPY_NO_EXPORT int
             if (args == NULL) {
                 return -1;
             }
-            pycomplex = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
+            newfunc complex_new = (newfunc)PyType_GetSlot(
+                    &PyComplex_Type, Py_tp_new);
+            pycomplex = complex_new(&PyComplex_Type, args, NULL);
             Py_DECREF(args);
             if (pycomplex == NULL) {
                 return -1;

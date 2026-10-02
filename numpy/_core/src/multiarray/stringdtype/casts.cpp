@@ -1421,7 +1421,8 @@ string_to_pycomplex(char *in, int has_null, int has_nan_na,
     if (args == NULL) {
         return NULL;
     }
-    PyObject *pycomplex_value = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
+    newfunc complex_new = (newfunc)PyType_GetSlot(&PyComplex_Type, Py_tp_new);
+    PyObject *pycomplex_value = complex_new(&PyComplex_Type, args, NULL);
     Py_DECREF(args);
     return pycomplex_value;
 }

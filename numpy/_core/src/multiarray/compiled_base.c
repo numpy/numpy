@@ -1450,7 +1450,7 @@ arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
         return NULL;
     }
 
-    docstr = PyUnicode_AsUTF8(str);
+    docstr = PyUnicode_AsUTF8AndSize(str, NULL);
     if (docstr == NULL) {
         return NULL;
     }

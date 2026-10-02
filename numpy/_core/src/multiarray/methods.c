@@ -2897,7 +2897,9 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
         if (args == NULL) {
             return NULL;
         }
-        res = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
+        newfunc complex_new = (newfunc)PyType_GetSlot(
+                &PyComplex_Type, Py_tp_new);
+        res = complex_new(&PyComplex_Type, args, NULL);
         Py_DECREF(args);
         return res;
     }
@@ -2906,7 +2908,8 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     if (arr == NULL) {
         return NULL;
     }
-    c = PyComplex_FromCComplex(*((Py_complex*)PyArray_DATA(arr)));
+    double *value = (double *)PyArray_DATA(arr);
+    c = PyComplex_FromDoubles(value[0], value[1]);
     Py_DECREF(arr);
     return c;
 }
