@@ -244,6 +244,29 @@ In Python:
 .. literalinclude:: ./code/results/extcallback_session.dat
   :language: python
 
+Two-stage callback workflows
+----------------------------
+
+In some Fortran codebases, a Python-facing entry point calls one or more
+deeper Fortran routines, and it is the deeper routine that ultimately invokes
+the Python callback. The existing ``extcallback.f`` example already
+demonstrates this pattern: ``f1`` (the entry point) calls ``f2``, and ``f2``
+is where the ``fpy`` callback is declared and invoked.
+
+The key constraint is that **F2PY only generates a callback trampoline for
+routines that appear in the wrapping step**, either directly or via a
+``cf2py intent(callback)`` directive. A deeper Fortran routine that never
+appears in the F2PY signature file has no trampoline, and the callback cannot
+reach it through module assignment alone. Therefore:
+
+* The routine that declares and calls the callback (e.g. ``f2``) must be
+  included in the F2PY wrapping step (via ``cf2py`` directives or the
+  ``.pyf`` signature file).
+* Pure host-library routines that do not themselves invoke callbacks can
+  remain outside signature generation and be linked in externally.
+* Python callback registration still happens at the final Python/F2PY
+  boundary, but the callback-bearing routine must be visible to F2PY.
+
 .. note::
 
    When using modified Fortran code via ``callstatement`` or other directives,
