@@ -206,6 +206,7 @@ extern "C" {
     F(_convert_to_stringdtype_kwargs)   \
     F(_default_array_repr)              \
     F(_default_array_str)               \
+    F(_dot_fallback)                    \
     F(_dump)                            \
     F(_dumps)                           \
     F(_getfield_is_safe)                \
@@ -222,6 +223,7 @@ extern "C" {
     F(_ufunc_inspect_signature_builder) \
     F(_usefields)                       \
     F(_var)                             \
+    F(_vdot_fallback)                   \
     F(_view_is_safe)                    \
     F(_void_scalar_to_string)
 
