@@ -250,7 +250,7 @@
 
 /*
  * No-ops with the GIL, as CPython defines them. From 3.15 the Limited API
- * versions call functions that older Pythons do not have.
+ * versions call functions that are not in the stable ABI before 3.15.
  */
 #ifndef Py_GIL_DISABLED
 #undef Py_BEGIN_CRITICAL_SECTION
