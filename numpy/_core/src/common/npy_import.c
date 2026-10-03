@@ -42,9 +42,7 @@ npy_import_entry_point(const char *entry_point) {
     if (colon) { // there is a module.
         result = PyUnicode_FromStringAndSize(entry_point, colon - entry_point);
         if (result != NULL) {
-            PyObject *module = PyImport_Import(result);
-            Py_DECREF(result);
-            result = module;
+            Py_SETREF(result, PyImport_Import(result));
         }
         item = colon + 1;
     }
@@ -63,9 +61,7 @@ npy_import_entry_point(const char *entry_point) {
             Py_DECREF(result);
             return NULL;
         }
-        PyObject *attr = PyObject_GetAttr(result, string);
-        Py_DECREF(result);
-        result = attr;
+        Py_SETREF(result, PyObject_GetAttr(result, string));
         Py_DECREF(string);
     }
     return result;

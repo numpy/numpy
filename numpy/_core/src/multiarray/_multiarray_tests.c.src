@@ -2269,9 +2269,7 @@ static PyObject *
 _npy_import_entry_point(PyObject *NPY_UNUSED(self), PyObject *obj) {
     PyObject *res = PyUnicode_AsASCIIString(obj);
     if (res != NULL) {
-        PyObject *imported = npy_import_entry_point(PyBytes_AsString(res));
-        Py_DECREF(res);
-        res = imported;
+        Py_SETREF(res, npy_import_entry_point(PyBytes_AsString(res)));
     }
     return res;
 }
