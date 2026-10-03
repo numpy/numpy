@@ -536,6 +536,9 @@ cdef class BitGenerator:
     def __init__(self, seed=None):
         self.lock = RLock()
         self._bitgen.state = <void *>0
+        self._bitgen.fill_uint32 = NULL
+        self._bitgen.fill_uint64 = NULL
+        self._bitgen.fill_next_uint64 = NULL
         if type(self) is BitGenerator:
             raise NotImplementedError('BitGenerator is a base class and cannot be instantized')
 

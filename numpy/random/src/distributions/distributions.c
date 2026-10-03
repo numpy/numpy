@@ -1557,8 +1557,26 @@ void random_bounded_uint64_fill(bitgen_t *bitgen_state, uint64_t off,
      * so we handle both cases here.
      */
     if (rng == 0xFFFFFFFFUL) {
-      for (i = 0; i < cnt; i++) {
-        out[i] = off + (uint64_t) next_uint32(bitgen_state);
+      if (bitgen_state->fill_uint32 != NULL && cnt >= 32) {
+        enum { BULK_UINT32_COUNT = 256 };
+        uint32_t raw[BULK_UINT32_COUNT];
+        npy_intp produced = 0;
+
+        while (produced < cnt) {
+          size_t requested = (size_t)(cnt - produced);
+          size_t j;
+          if (requested > BULK_UINT32_COUNT) {
+            requested = BULK_UINT32_COUNT;
+          }
+          bitgen_state->fill_uint32(bitgen_state->state, requested, raw);
+          for (j = 0; j < requested; j++) {
+            out[produced++] = off + (uint64_t)raw[j];
+          }
+        }
+      } else {
+        for (i = 0; i < cnt; i++) {
+          out[i] = off + (uint64_t) next_uint32(bitgen_state);
+        }
       }
     } else {
       uint32_t buf = 0;
@@ -1572,6 +1590,27 @@ void random_bounded_uint64_fill(bitgen_t *bitgen_state, uint64_t off,
           out[i] = off + buffered_bounded_masked_uint32(bitgen_state, rng, mask,
                                                         &bcnt, &buf);
         }
+      } else if (bitgen_state->fill_uint32 != NULL && cnt >= 32) {
+        enum { BULK_UINT32_COUNT = 256 };
+        uint32_t raw[BULK_UINT32_COUNT];
+        const uint32_t rng_excl = (uint32_t)rng + 1;
+        const uint32_t threshold = (UINT32_MAX - (uint32_t)rng) % rng_excl;
+        npy_intp produced = 0;
+
+        while (produced < cnt) {
+          size_t requested = (size_t)(cnt - produced);
+          size_t j;
+          if (requested > BULK_UINT32_COUNT) {
+            requested = BULK_UINT32_COUNT;
+          }
+          bitgen_state->fill_uint32(bitgen_state->state, requested, raw);
+          for (j = 0; j < requested; j++) {
+            uint64_t product = ((uint64_t)raw[j]) * rng_excl;
+            if ((uint32_t)product >= threshold) {
+              out[produced++] = off + (uint64_t)(product >> 32);
+            }
+          }
+        }
       } else {
         for (i = 0; i < cnt; i++) {
           out[i] = off +
@@ -1581,8 +1620,12 @@ void random_bounded_uint64_fill(bitgen_t *bitgen_state, uint64_t off,
     }
   } else if (rng == 0xFFFFFFFFFFFFFFFFULL) {
     /* Lemire64 doesn't support rng = 0xFFFFFFFFFFFFFFFF. */
-    for (i = 0; i < cnt; i++) {
-      out[i] = off + next_uint64(bitgen_state);
+    if (off == 0 && bitgen_state->fill_next_uint64 != NULL) {
+      bitgen_state->fill_next_uint64(bitgen_state->state, (size_t)cnt, out);
+    } else {
+      for (i = 0; i < cnt; i++) {
+        out[i] = off + next_uint64(bitgen_state);
+      }
     }
   } else {
     if (use_masked) {
@@ -1592,7 +1635,32 @@ void random_bounded_uint64_fill(bitgen_t *bitgen_state, uint64_t off,
       for (i = 0; i < cnt; i++) {
         out[i] = off + bounded_masked_uint64(bitgen_state, rng, mask);
       }
-    } else {
+    }
+#if __SIZEOF_INT128__
+    else if (bitgen_state->fill_next_uint64 != NULL && cnt >= 32) {
+      enum { BULK_UINT64_COUNT = 256 };
+      uint64_t raw[BULK_UINT64_COUNT];
+      const uint64_t rng_excl = rng + 1;
+      const uint64_t threshold = (UINT64_MAX - rng) % rng_excl;
+      npy_intp produced = 0;
+
+      while (produced < cnt) {
+        size_t requested = (size_t)(cnt - produced);
+        size_t j;
+        if (requested > BULK_UINT64_COUNT) {
+          requested = BULK_UINT64_COUNT;
+        }
+        bitgen_state->fill_next_uint64(bitgen_state->state, requested, raw);
+        for (j = 0; j < requested; j++) {
+          __uint128_t product = ((__uint128_t)raw[j]) * rng_excl;
+          if ((uint64_t)product >= threshold) {
+            out[produced++] = off + (uint64_t)(product >> 64);
+          }
+        }
+      }
+    }
+#endif
+    else {
       for (i = 0; i < cnt; i++) {
         out[i] = off + bounded_lemire_uint64(bitgen_state, rng);
       }
@@ -1617,8 +1685,12 @@ void random_bounded_uint32_fill(bitgen_t *bitgen_state, uint32_t off,
     }
   } else if (rng == 0xFFFFFFFFUL) {
     /* Lemire32 doesn't support rng = 0xFFFFFFFF. */
-    for (i = 0; i < cnt; i++) {
-      out[i] = off + next_uint32(bitgen_state);
+    if (off == 0 && bitgen_state->fill_uint32 != NULL) {
+      bitgen_state->fill_uint32(bitgen_state->state, (size_t)cnt, out);
+    } else {
+      for (i = 0; i < cnt; i++) {
+        out[i] = off + next_uint32(bitgen_state);
+      }
     }
   } else {
     if (use_masked) {
@@ -1628,6 +1700,27 @@ void random_bounded_uint32_fill(bitgen_t *bitgen_state, uint32_t off,
       for (i = 0; i < cnt; i++) {
         out[i] = off + buffered_bounded_masked_uint32(bitgen_state, rng, mask,
                                                       &bcnt, &buf);
+      }
+    } else if (bitgen_state->fill_uint32 != NULL && cnt >= 32) {
+      enum { BULK_UINT32_COUNT = 256 };
+      uint32_t raw[BULK_UINT32_COUNT];
+      const uint32_t rng_excl = rng + 1;
+      const uint32_t threshold = (UINT32_MAX - rng) % rng_excl;
+      npy_intp produced = 0;
+
+      while (produced < cnt) {
+        size_t requested = (size_t)(cnt - produced);
+        size_t j;
+        if (requested > BULK_UINT32_COUNT) {
+          requested = BULK_UINT32_COUNT;
+        }
+        bitgen_state->fill_uint32(bitgen_state->state, requested, raw);
+        for (j = 0; j < requested; j++) {
+          uint64_t product = ((uint64_t)raw[j]) * rng_excl;
+          if ((uint32_t)product >= threshold) {
+            out[produced++] = off + (uint32_t)(product >> 32);
+          }
+        }
       }
     } else {
       for (i = 0; i < cnt; i++) {

@@ -23,6 +23,9 @@ cdef extern from "src/mt19937/mt19937.h":
     uint64_t mt19937_next64(mt19937_state *state)  nogil
     uint32_t mt19937_next32(mt19937_state *state)  nogil
     double mt19937_next_double(mt19937_state *state)  nogil
+    void mt19937_fill_uint32(mt19937_state *state, size_t count, uint32_t *out) nogil
+    void mt19937_fill_uint64(mt19937_state *state, size_t count, uint64_t *out) nogil
+    void mt19937_fill_next_uint64(mt19937_state *state, size_t count, uint64_t *out) nogil
     void mt19937_init_by_array(mt19937_state *state, uint32_t *init_key, int key_length)
     void mt19937_seed(mt19937_state *state, uint32_t seed)
     void mt19937_jump(mt19937_state *state)
@@ -41,6 +44,15 @@ cdef double mt19937_double(void *st) noexcept nogil:
 
 cdef uint64_t mt19937_raw(void *st) noexcept nogil:
     return <uint64_t>mt19937_next32(<mt19937_state *> st)
+
+cdef void mt19937_uint32_fill(void *st, size_t count, uint32_t *out) noexcept nogil:
+    mt19937_fill_uint32(<mt19937_state *>st, count, out)
+
+cdef void mt19937_uint64_fill(void *st, size_t count, uint64_t *out) noexcept nogil:
+    mt19937_fill_uint64(<mt19937_state *>st, count, out)
+
+cdef void mt19937_next_uint64_fill(void *st, size_t count, uint64_t *out) noexcept nogil:
+    mt19937_fill_next_uint64(<mt19937_state *>st, count, out)
 
 cdef class MT19937(BitGenerator):
     # the first line is used to populate `__text_signature__`
@@ -141,6 +153,9 @@ cdef class MT19937(BitGenerator):
         self._bitgen.next_uint32 = &mt19937_uint32
         self._bitgen.next_double = &mt19937_double
         self._bitgen.next_raw = &mt19937_raw
+        self._bitgen.fill_uint32 = &mt19937_uint32_fill
+        self._bitgen.fill_uint64 = &mt19937_uint64_fill
+        self._bitgen.fill_next_uint64 = &mt19937_next_uint64_fill
 
     def _legacy_seeding(self, seed):
         """

@@ -1,5 +1,6 @@
 #pragma once
 #include <math.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #if defined(_WIN32) && !defined (__MINGW32__)
@@ -57,5 +58,10 @@ static inline double mt19937_next_double(mt19937_state *state) {
   int32_t a = mt19937_next(state) >> 5, b = mt19937_next(state) >> 6;
   return (a * 67108864.0 + b) / 9007199254740992.0;
 }
+
+void mt19937_fill_uint32(mt19937_state *state, size_t count, uint32_t *out);
+void mt19937_fill_uint64(mt19937_state *state, size_t count, uint64_t *out);
+void mt19937_fill_next_uint64(mt19937_state *state, size_t count,
+                              uint64_t *out);
 
 void mt19937_jump(mt19937_state *state);
