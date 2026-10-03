@@ -1445,6 +1445,36 @@ class TestMultipleEllipsisError:
         assert_raises(IndexError, a.__getitem__, ((Ellipsis,) * 3,))
 
 
+class TestInvalidIndexErrorMessage:
+    """The invalid index error should point at the indexing object (gh-26115).
+
+    """
+    def test_list_of_slices(self):
+        a = np.zeros((5, 5))
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'list'>"):
+            a[[slice(None), slice(None)]]
+
+    def test_tuple_of_non_indexables(self):
+        # For a tuple of indices the error must point at the current
+        # element that fails, not at the tuple itself (gh-26115).
+        a = np.zeros((5, 5))
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            a["1", "2"]
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            a["1"]
+
+    def test_tuple_mixed_good_bad(self):
+        # The good element is consumed first; the error points at the
+        # element that actually fails.
+        a = np.zeros((5, 5))
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            a[0, "1"]
+
+
 class TestCApiAccess:
     def test_getitem(self):
         subscript = functools.partial(array_indexing, 0)
@@ -1551,9 +1581,7 @@ class TestFlatiterIndexing:
     def test_flatiter_indexing_not_supported_newaxis_mutlidimensional_float(self):
         a = np.arange(9).reshape((3, 3))
         with pytest.raises(IndexError,
-                           match=r"only integers, slices \(`:`\), "
-                                 r"ellipsis \(`\.\.\.`\) and "
-                                 r"integer or boolean arrays are valid indices"):
+                           match=r"cannot index with <class 'NoneType'>"):
             a.flat[None]
 
         with pytest.raises(IndexError,
@@ -1676,9 +1704,7 @@ class TestFlatiterIndexing:
     def test_flatiter_indexing_not_supported_newaxis_mutlid_float_assign(self):
         a = np.arange(9).reshape((3, 3))
         with pytest.raises(IndexError,
-                           match=r"only integers, slices \(`:`\), "
-                                 r"ellipsis \(`\.\.\.`\) and "
-                                 r"integer or boolean arrays are valid indices"):
+                           match=r"cannot index with <class 'NoneType'>"):
             a.flat[None] = 10
 
         a.flat[[1, 2]] = 10
@@ -1708,8 +1734,7 @@ class TestFlatiterIndexing:
         a = np.arange(9).reshape((3, 3))
         b = np.array(["a"], dtype="S")
         with pytest.raises(IndexError,
-                match=r"only integers, slices \(`:`\), ellipsis \(`\.\.\.`\) "
-                      r"and integer or boolean arrays are valid indices"):
+                match=r"cannot index with <class 'numpy.flatiter'>"):
             a.flat[b.flat]
 
 
