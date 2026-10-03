@@ -551,7 +551,7 @@ def isfortran(a):
     """
     Check if the array is Fortran contiguous but *not* C contiguous.
 
-    .. deprecated:: 2.5
+    .. deprecated:: 2.6
         `numpy.isfortran` is deprecated. Use ``a.flags.fnc`` instead.
 
 
