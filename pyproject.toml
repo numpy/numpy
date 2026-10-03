@@ -101,6 +101,7 @@ source = "https://github.com/numpy/numpy"
 download = "https://pypi.org/project/numpy/#files"
 tracker = "https://github.com/numpy/numpy/issues"
 "release notes" = "https://numpy.org/doc/stable/release"
+changelog = "https://github.com/numpy/numpy/tree/main/doc/changelog"
 
 [tool.towncrier]
     single_file = false

@@ -198,11 +198,9 @@ trigger the upload.
 3. Upload files to GitHub Releases
 ----------------------------------
 
-Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v2.4.0``
-tag, click on it and hit the edit button for that tag and update the title to
-"v2.4.0 (<date>)". There are two ways to add files, using an editable text
-window and as binary uploads. The text window needs markdown, so translate the
-release notes from rst to md::
+Go to `<https://github.com/numpy/numpy/releases>`_, click on the ``v2.4.0``
+tag, edit that tag and set the title to "v2.4.0 (<date>)". The description
+needs markdown, so translate the release notes to md::
 
     $ python tools/write_release.py 2.4.0
 
@@ -212,21 +210,18 @@ that need unwrapping and links that should be changed to monospaced text. Then
 copy the contents to the clipboard and paste them into the text window. It may
 take several tries to get it look right. Then
 
-- Download the sdist (``numpy-2.4.0.tar.gz``) from PyPI and upload it to GitHub
-  as a binary file. You cannot do this using pip.
-- Upload ``release/README.rst`` as a binary file.
-- Upload ``doc/changelog/2.4.0-changelog.rst`` as a binary file.
-- Check the pre-release button if this is a pre-releases.
+- Check the pre-release button if this is a pre-release.
 - Hit the ``Publish release`` button at the bottom.
 
+We don't upload any artifacts apart from publishing the note.
+
 .. note::
-   Please ensure that all 3 files are uploaded are present and the
-   release text is complete. Releases are configured to be immutable, so
-   mistakes can't (easily) be fixed anymore.
+   Please ensure that the release text is complete. Releases are configured to
+   be immutable, so mistakes can't (easily) be fixed anymore.
 
 
-4. Upload documents to numpy.org (skip for prereleases)
--------------------------------------------------------
+4. Upload documents to numpy.org (skip for pre-releases)
+--------------------------------------------------------
 
 .. note:: You will need a GitHub personal access token to push the update.
 
@@ -283,8 +278,8 @@ Once everything seems satisfactory, update, commit and upload the changes::
     $ popd
 
 
-5. Reset the maintenance branch into a development state (skip for prereleases)
--------------------------------------------------------------------------------
+5. Reset the maintenance branch into a development state (skip for pre-releases)
+--------------------------------------------------------------------------------
 
 Create release notes for next release and edit them to set the version. These
 notes will be a skeleton and have little content::
@@ -312,8 +307,8 @@ add a line ``[skip actions]``, then push::
 Go to GitHub and make a PR. It should be merged quickly.
 
 
-6. Announce the release on numpy.org (skip for prereleases)
------------------------------------------------------------
+6. Announce the release on numpy.org (skip for pre-releases)
+------------------------------------------------------------
 
 This assumes that you have forked `<https://github.com/numpy/numpy.org>`_::
 
@@ -350,8 +345,8 @@ release notes above. If you cross-post, make sure that python-announce-list is
 BCC so that replies will not be sent to that list.
 
 
-8. Post-release update main (skip for prereleases)
---------------------------------------------------
+8. Post-release update main (skip for pre-releases)
+---------------------------------------------------
 
 Checkout main and forward port the documentation changes. You may also want
 to update these notes if procedures have changed or improved::
