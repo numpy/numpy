@@ -773,6 +773,11 @@ def dot(a, b, out=None):
 
         dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
 
+      .. deprecated:: 2.6
+          When `a` has 2 or more dimensions and `b` has more than 2 dimensions,
+          the dimension-interleaving behavior is deprecated and will eventually
+          raise an error. Use ``tensordot(a, b, axes=[-1, -2])`` instead.
+
     It uses an optimized BLAS library when possible (see `numpy.linalg`).
 
     Parameters
@@ -830,6 +835,9 @@ def dot(a, b, out=None):
     >>> np.dot(a, b)
     array([[4, 1],
            [2, 2]])
+
+    The following example uses arrays where `b.ndim > 2`, which is deprecated
+    (see note above):
 
     >>> a = np.arange(3*4*5*6).reshape((3,4,5,6))
     >>> b = np.arange(3*4*5*6)[::-1].reshape((5,4,6,3))

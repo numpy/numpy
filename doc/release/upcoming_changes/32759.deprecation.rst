@@ -1,0 +1,8 @@
+``np.dot`` dimension-interleaving behavior is deprecated
+--------------------------------------------------------
+
+The dimension-interleaving behavior of `numpy.dot` when the first argument
+has 2 or more dimensions and the second argument has more than 2 dimensions
+is deprecated. This behavior is confusing and rarely intended.
+Use ``numpy.tensordot(a, b, axes=[-1, -2])`` for the same result,
+or ``numpy.matmul`` / ``@`` for standard batched matrix multiplication.
