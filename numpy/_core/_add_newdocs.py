@@ -5041,7 +5041,7 @@ add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('as_arrays',
     """))
 
 add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('result_type',
-    """result_type(/, extra_dtype=None, ensure_inexact=False)
+    """result_type(/, extra_dtype=None, ensure_inexact=False, *, strict_strings=False)
 
     Find the ``result_type`` just as ``np.result_type`` would, but taking
     into account that the original inputs (before converting to an array) may
@@ -5055,6 +5055,12 @@ add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('result_type',
     ensure_inexact : True or False
         When ``True``, ensures a floating point (or complex) result replacing
         the ``arr * 1.`` or ``result_type(..., 0.0)`` pattern.
+    strict_strings : True or False
+        When ``True``, bytes can only promote with bytes, and text (fixed-width
+        Unicode or StringDType) can only promote with text. Mixing these with
+        other DTypes raises DTypePromotionError. Promotion without string
+        inputs is unchanged. This checks the DTypes discovered for each input;
+        it does not change discovery within nested sequences.
     """))
 
 add_newdoc('numpy._core._multiarray_umath', '_array_converter', ('wrap',
