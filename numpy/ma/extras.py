@@ -1551,27 +1551,19 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
            fill_value=True)
 
     """
-    if not assume_unique:
-        ar1, rev_idx = unique(ar1, return_inverse=True)
-        ar2 = unique(ar2)
-
-    ar = ma.concatenate((ar1, ar2))
-    # We need this to be a stable sort, so always use 'mergesort'
-    # here. The values from the first array should always come before
-    # the values from the second array.
-    order = ar.argsort(kind='mergesort')
-    sar = ar[order]
-    if invert:
-        bool_ar = (sar[1:] != sar[:-1])
-    else:
-        bool_ar = (sar[1:] == sar[:-1])
-    flag = ma.concatenate((bool_ar, [invert]))
-    indx = order.argsort(kind='mergesort')[:len(ar1)]
-
-    if assume_unique:
-        return flag[indx]
-    else:
-        return flag[indx][rev_idx]
+    ar1 = ma.asarray(ar1)
+    # Only the unmasked values of `ar2` are the actual elements to test
+    # against; a masked entry represents "no value" and matches nothing.
+    ar2 = ma.asarray(ar2).compressed()
+    # Membership is decided by the underlying data.  A position that is masked
+    # in `ar1` has no value and so is masked in the result regardless of the
+    # (irrelevant) value stored there (gh-19877).
+    data = np.isin(getdata(ar1).ravel(), ar2,
+                   assume_unique=assume_unique, invert=invert)
+    mask = getmask(ar1)
+    if mask is not nomask:
+        mask = mask.ravel()
+    return ma.array(data, mask=mask)
 
 
 def isin(element, test_elements, assume_unique=False, invert=False):
@@ -1653,7 +1645,11 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     else:
         ar1 = unique(ar1)
         ar2 = unique(ar2)
-    return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
+    # `in1d` masks the entries that are masked in `ar1` (gh-19877); such an
+    # entry has no value and so belongs in the set difference, and it stays
+    # masked because `ar1` is masked there.  Fill the boolean selector with
+    # True at those positions so they are kept.
+    return ar1[in1d(ar1, ar2, assume_unique=True, invert=True).filled(True)]
 
 
 ###############################################################################
