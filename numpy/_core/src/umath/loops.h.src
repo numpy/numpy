@@ -750,6 +750,9 @@ TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
 NPY_NO_EXPORT void
 TIMEDELTA_mm_d_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void TIMEDELTA_mq_m_floor_divide,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void TIMEDELTA_mm_q_floor_divide,
     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
 
