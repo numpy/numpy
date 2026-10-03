@@ -145,7 +145,6 @@ object_minimummaximum_loop(PyArrayMethod_Context *NPY_UNUSED(context),
 
     for (npy_intp i = 0; i < n; i++) {
         PyObject *a = *(PyObject **)in1, *b = *(PyObject **)in2;
-        PyObject **o1 = (PyObject **)out1, **o2 = (PyObject **)out2;
         if (a == NULL) a = Py_None;
         if (b == NULL) b = Py_None;
         PyObject *lo = object_min(a, b);
@@ -155,11 +154,8 @@ object_minimummaximum_loop(PyArrayMethod_Context *NPY_UNUSED(context),
             Py_XDECREF(hi);
             return -1;
         }
-        PyObject *old1 = *o1, *old2 = *o2;
-        *o1 = lo;
-        *o2 = hi;
-        Py_XDECREF(old1);
-        Py_XDECREF(old2);
+        Py_XSETREF(*(PyObject **)out1, lo);
+        Py_XSETREF(*(PyObject **)out2, hi);
         in1 += strides[0]; in2 += strides[1];
         out1 += strides[2]; out2 += strides[3];
     }
@@ -180,7 +176,6 @@ object_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
         PyObject *cur_min = *(PyObject **)acc_min;
         PyObject *cur_max = *(PyObject **)acc_max;
         PyObject *val = *(PyObject **)x;
-        PyObject **o_min = (PyObject **)out_min, **o_max = (PyObject **)out_max;
         if (cur_min == NULL) cur_min = Py_None;
         if (cur_max == NULL) cur_max = Py_None;
         if (val == NULL) val = Py_None;
@@ -191,11 +186,8 @@ object_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
             Py_XDECREF(hi);
             return -1;
         }
-        PyObject *old_min = *o_min, *old_max = *o_max;
-        *o_min = lo;
-        *o_max = hi;
-        Py_XDECREF(old_min);
-        Py_XDECREF(old_max);
+        Py_XSETREF(*(PyObject **)out_min, lo);
+        Py_XSETREF(*(PyObject **)out_max, hi);
         acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
         out_min += strides[3]; out_max += strides[4];
     }
