@@ -248,7 +248,13 @@
 #define Py_XSETREF(dst, src) NPY__SETREF(dst, src, Py_XDECREF)
 #endif
 
+/*
+ * No-ops with the GIL, as CPython defines them. From 3.15 the Limited API
+ * versions call functions that older Pythons do not have.
+ */
 #ifndef Py_GIL_DISABLED
+#undef Py_BEGIN_CRITICAL_SECTION
+#undef Py_END_CRITICAL_SECTION
 #define Py_BEGIN_CRITICAL_SECTION(op) {
 #define Py_END_CRITICAL_SECTION() }
 #endif
