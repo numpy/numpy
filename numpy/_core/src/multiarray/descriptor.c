@@ -289,7 +289,7 @@ arraydescr_new_from_subarray(PyArray_Descr *base, PyObject *shape_obj)
     }
     newdescr->flags = base->flags;
     newdescr->alignment = base->alignment;
-    Py_INCREF(base);
+    Py_INCREF((PyObject *)base);
     newdescr->subarray->base = base;
     Py_XDECREF(newdescr->fields);
     Py_XDECREF(newdescr->names);
@@ -1533,11 +1533,11 @@ PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
 
     if (dtype != NULL) {
         *out_DType = NPY_DTYPE(dtype);
-        Py_INCREF(*out_DType);
+        Py_INCREF((PyObject *)*out_DType);
         if (!descr_is_legacy_parametric_instance((PyArray_Descr *)dtype,
                                                     *out_DType)) {
             *out_descr = (PyArray_Descr *)dtype;
-            Py_INCREF(*out_descr);
+            Py_INCREF((PyObject *)*out_descr);
         }
     }
 }
@@ -1719,7 +1719,7 @@ _convert_from_any(PyObject *obj, int align)
     }
     else if (PyArray_DescrCheck(obj)) {
         PyArray_Descr *ret = (PyArray_Descr *)obj;
-        Py_INCREF(ret);
+        Py_INCREF((PyObject *)ret);
         return ret;
     }
     else if (PyType_Check(obj)) {
@@ -2053,7 +2053,8 @@ PyArray_DescrNew(PyArray_Descr *base_descr)
         return NULL;
     }
     _PyArray_LegacyDescr *base = (_PyArray_LegacyDescr *)base_descr;
-    _PyArray_LegacyDescr *newdescr = PyObject_New(_PyArray_LegacyDescr, Py_TYPE(base));
+    _PyArray_LegacyDescr *newdescr = PyObject_New(_PyArray_LegacyDescr,
+                                                  Py_TYPE((PyObject *)base));
 
     if (newdescr == NULL) {
         return NULL;
@@ -2093,9 +2094,9 @@ PyArray_DescrNew(PyArray_Descr *base_descr)
         }
         memcpy(newdescr->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
         Py_INCREF(newdescr->subarray->shape);
-        Py_INCREF(newdescr->subarray->base);
+        Py_INCREF((PyObject *)newdescr->subarray->base);
     }
-    Py_XINCREF(newdescr->typeobj);
+    Py_XINCREF((PyObject *)newdescr->typeobj);
     Py_XINCREF(newdescr->metadata);
     newdescr->hash = -1;
 
@@ -2109,10 +2110,10 @@ PyArray_DescrNew(PyArray_Descr *base_descr)
 static void
 arraydescr_dealloc(PyArray_Descr *self)
 {
-    Py_XDECREF(self->typeobj);
+    Py_XDECREF((PyObject *)self->typeobj);
     if (!PyDataType_ISLEGACY(self)) {
         /* non legacy dtypes must not have fields, etc. */
-        Py_TYPE(self)->tp_free((PyObject *)self);
+        Py_TYPE((PyObject *)self)->tp_free((PyObject *)self);
         return;
     }
     _PyArray_LegacyDescr *lself = (_PyArray_LegacyDescr *)self;
@@ -2122,8 +2123,8 @@ arraydescr_dealloc(PyArray_Descr *self)
                 "an attempt was made to deallocate the dtype %d (%c) ***\n",
                 self->type_num, self->type);
         assert(0);
-        Py_INCREF(self);
-        Py_INCREF(self);
+        Py_INCREF((PyObject *)self);
+        Py_INCREF((PyObject *)self);
         return;
     }
     Py_XDECREF(lself->names);
@@ -2153,7 +2154,8 @@ arraydescr_dealloc(PyArray_Descr *self)
          * PyUnstable_Object_IsUniquelyReferenced because that excludes
          * objects on remote threads.
          */
-        while (base != NULL && Py_REFCNT(base) == 1 && PyDataType_HASSUBARRAY(base)) {
+        while (base != NULL && Py_REFCNT((PyObject *)base) == 1 &&
+                PyDataType_HASSUBARRAY(base)) {
             _PyArray_LegacyDescr *lbase = (_PyArray_LegacyDescr *)base;
             // steal reference owned by lbase and stash it in base
             // (Py_CLEAR without a DECREF)
@@ -2163,12 +2165,12 @@ arraydescr_dealloc(PyArray_Descr *self)
             // doesn't fire
             Py_DECREF(lbase);
         }
-        Py_XDECREF(base);
+        Py_XDECREF((PyObject *)base);
     }
     Py_XDECREF(lself->metadata);
     NPY_AUXDATA_FREE(lself->c_metadata);
     lself->c_metadata = NULL;
-    Py_TYPE(self)->tp_free((PyObject *)self);
+    Py_TYPE((PyObject *)self)->tp_free((PyObject *)self);
 }
 
 /*
@@ -2215,7 +2217,7 @@ NPY_NO_EXPORT PyObject *
 arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     if (!PyDataType_ISLEGACY(self)) {
-        return (PyObject *) Py_TYPE(self)->tp_str((PyObject *)self);
+        return (PyObject *) Py_TYPE((PyObject *)self)->tp_str((PyObject *)self);
     }
 
     char basic_ = self->kind;
@@ -2280,10 +2282,10 @@ static PyObject *
 arraydescr_base_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     if (!PyDataType_HASSUBARRAY(self)) {
-        Py_INCREF(self);
+        Py_INCREF((PyObject *)self);
         return (PyObject *)self;
     }
-    Py_INCREF(PyDataType_SUBARRAY(self)->base);
+    Py_INCREF((PyObject *)PyDataType_SUBARRAY(self)->base);
     return (PyObject *)(PyDataType_SUBARRAY(self)->base);
 }
 
@@ -2618,7 +2620,7 @@ arraydescr_new(PyTypeObject *subtype,
                 PyObject *args, PyObject *kwds)
 {
     if (subtype != &PyArrayDescr_Type) {
-        if (Py_TYPE(subtype) == &PyArrayDTypeMeta_Type &&
+        if (Py_TYPE((PyObject *)subtype) == &PyArrayDTypeMeta_Type &&
                 (NPY_DT_SLOTS((PyArray_DTypeMeta *)subtype)) != NULL &&
                 !NPY_DT_is_legacy((PyArray_DTypeMeta *)subtype) &&
                 subtype->tp_new != PyArrayDescr_Type.tp_new) {
@@ -3159,7 +3161,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     }
     self->byteorder = endian;
     if (self->subarray) {
-        Py_XDECREF(self->subarray->base);
+        Py_XDECREF((PyObject *)self->subarray->base);
         Py_XDECREF(self->subarray->shape);
         PyMem_RawFree(self->subarray);
     }
@@ -3206,7 +3208,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
             return PyErr_NoMemory();
         }
         self->subarray->base = (PyArray_Descr *)PyTuple_GET_ITEM(subarray, 0);
-        Py_INCREF(self->subarray->base);
+        Py_INCREF((PyObject *)self->subarray->base);
         self->subarray->shape = subarray_shape;
     }
 

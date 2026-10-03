@@ -1671,7 +1671,7 @@ voidtype_flags_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 voidtype_dtypedescr_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 {
-    Py_INCREF(self->descr);
+    Py_INCREF((PyObject *)self->descr);
     return (PyObject *)self->descr;
 }
 
@@ -1855,7 +1855,7 @@ finish:
     Py_XDECREF(strides);
     Py_XDECREF(shape);
     Py_XDECREF(typestr);
-    Py_XDECREF(array_descr);
+    Py_XDECREF((PyObject *)array_descr);
     return inter;
 }
 
@@ -1967,7 +1967,7 @@ gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
         npy_free_cache(temp, elsize);
     }
 
-    Py_XDECREF(typecode);
+    Py_XDECREF((PyObject *)typecode);
     return ret;
 }
 
@@ -2072,7 +2072,7 @@ gentype_getarray(PyObject *scalar, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "|O&:__array__", &PyArray_DescrConverter,
                 &outcode)) {
-        Py_XDECREF(outcode);
+        Py_XDECREF((PyObject *)outcode);
         return NULL;
     }
     ret = PyArray_FromScalar(scalar, outcode);
@@ -2099,7 +2099,7 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
         return NULL;
     }
 
-    Py_INCREF(arr);
+    Py_INCREF((PyObject *)arr);
     if (!return_scalar) {
         return (PyObject *)arr;
     }
@@ -2216,7 +2216,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
              * writes it so the buffer cannot be a bare malloc.  This is
              * equivalent to np.array([scalar]).byteswap()[0].
              */
-            Py_INCREF(descr);
+            Py_INCREF((PyObject *)descr);
             PyArrayObject *tmp = (PyArrayObject *)PyArray_NewFromDescr_int(
                     &PyArray_Type, descr, 0, NULL, NULL, NULL, 0, NULL, NULL,
                     _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
@@ -3499,14 +3499,14 @@ static void
 void_dealloc(PyVoidScalarObject *v)
 {
     if (v->flags & NPY_ARRAY_OWNDATA) {
-        npy_free_cache(v->obval, Py_SIZE(v));
+        npy_free_cache(v->obval, Py_SIZE((PyObject *)v));
     }
-    Py_XDECREF(v->descr);
+    Py_XDECREF((PyObject *)v->descr);
     Py_XDECREF(v->base);
     if (_buffer_info_free(v->_buffer_info, (PyObject *)v) < 0) {
         PyErr_WriteUnraisable(NULL);
     }
-    Py_TYPE(v)->tp_free(v);
+    Py_TYPE((PyObject *)v)->tp_free(v);
 }
 
 
@@ -3655,7 +3655,7 @@ static PyObject *
     }
 
     /* PyArray_FromAny steals a reference, reclaim it before it's gone */
-    Py_INCREF(typecode);
+    Py_INCREF((PyObject *)typecode);
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(
             obj, typecode, 0, 0, NPY_ARRAY_FORCECAST, NULL);
 #if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
@@ -3964,7 +3964,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             return PyErr_NoMemory();
         }
         ((PyVoidScalarObject *)ret)->obval = destptr;
-        Py_SET_SIZE((PyVoidScalarObject *)ret, (int) memu);
+        Py_SET_SIZE((PyVarObject *)ret, (int) memu);
         ((PyVoidScalarObject *)ret)->flags = NPY_ARRAY_BEHAVED |
                                              NPY_ARRAY_OWNDATA;
         ((PyVoidScalarObject *)ret)->base = NULL;

@@ -97,7 +97,7 @@ default_resolve_descriptors(
 
   fail:
     for (int i = 0; i < nin + nout; i++) {
-        Py_XDECREF(output_descrs[i]);
+        Py_XDECREF((PyObject *)output_descrs[i]);
     }
     return -1;
 }
@@ -222,7 +222,8 @@ validate_spec(PyArrayMethod_Spec *spec)
                     "(method: %s)", spec->name);
             return -1;
         }
-        if (!PyObject_TypeCheck(spec->dtypes[i], &PyArrayDTypeMeta_Type)) {
+        if (!PyObject_TypeCheck((PyObject *)spec->dtypes[i],
+                                &PyArrayDTypeMeta_Type)) {
             PyErr_Format(PyExc_TypeError,
                     "ArrayMethod provided object %R is not a DType. "
                     "(method: %s)", spec->dtypes[i], spec->name);
@@ -456,7 +457,8 @@ NPY_NO_EXPORT PyObject *
 PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec)
 {
     for (int i = 0; i < spec->nin + spec->nout; i++) {
-        if (!PyObject_TypeCheck(spec->dtypes[i], &PyArrayDTypeMeta_Type)) {
+        if (!PyObject_TypeCheck((PyObject *)spec->dtypes[i],
+                                &PyArrayDTypeMeta_Type)) {
             PyErr_SetString(PyExc_RuntimeError,
                     "ArrayMethod spec contained a non DType.");
             return NULL;
@@ -504,7 +506,7 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         return NULL;
     }
     for (int i = 0; i < nargs ; i++) {
-        Py_XINCREF(spec->dtypes[i]);
+        Py_XINCREF((PyObject *)spec->dtypes[i]);
         res->dtypes[i] = spec->dtypes[i];
     }
 
@@ -556,7 +558,7 @@ arraymethod_dealloc(PyObject *self)
         /* Cleanup for wrapping array method (defined in umath) */
         Py_DECREF(meth->wrapped_meth);
         for (int i = 0; i < meth->nin + meth->nout; i++) {
-            Py_XDECREF(meth->wrapped_dtypes[i]);
+            Py_XDECREF((PyObject *)meth->wrapped_dtypes[i]);
         }
         PyMem_Free(meth->wrapped_dtypes);
     }
@@ -599,11 +601,11 @@ boundarraymethod_dealloc(PyObject *self)
     int nargs = meth->method->nin + meth->method->nout;
 
     for (int i = 0; i < nargs; i++) {
-        Py_XDECREF(meth->dtypes[i]);
+        Py_XDECREF((PyObject *)meth->dtypes[i]);
     }
     PyMem_Free(meth->dtypes);
 
-    Py_XDECREF(meth->method);
+    Py_XDECREF((PyObject *)meth->method);
 
     Py_TYPE(self)->tp_free(self);
 }
@@ -790,7 +792,7 @@ boundarraymethod__simple_strided_call(
         descrs[i] = PyArray_DESCR(arrays[i]);
 
         /* Check that the input is compatible with a simple method call. */
-        if (Py_TYPE(descrs[i]) != (PyTypeObject *)self->dtypes[i]) {
+        if (Py_TYPE((PyObject *)descrs[i]) != (PyTypeObject *)self->dtypes[i]) {
             PyErr_Format(PyExc_TypeError,
                     "input dtype %S was not an exact instance of the bound "
                     "DType class %S.", descrs[i], self->dtypes[i]);

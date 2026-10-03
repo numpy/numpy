@@ -223,7 +223,7 @@ array_priority_get(PyArrayObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 static PyObject *
 array_descr_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
-    Py_INCREF(PyArray_DESCR(self));
+    Py_INCREF((PyObject *)PyArray_DESCR(self));
     return (PyObject *)PyArray_DESCR(self);
 }
 
@@ -463,7 +463,7 @@ array_struct_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     if (ret == NULL) {
         return NULL;
     }
-    Py_INCREF(self);
+    Py_INCREF((PyObject *)self);
     if (PyCapsule_SetContext(ret, self) < 0) {
         return NULL;
     }
@@ -502,9 +502,9 @@ _get_part(PyArrayObject *self, PyObject *ufunc, PyBoundArrayMethodObject *meth, 
         return NULL;
     }
     if (view_offset != NPY_MIN_INTP) {
-        Py_INCREF(loop_descrs[1]);
+        Py_INCREF((PyObject *)loop_descrs[1]);
         ret = PyArray_NewFromDescr_int(
-            Py_TYPE(self), loop_descrs[1],
+            Py_TYPE((PyObject *)self), loop_descrs[1],
             PyArray_NDIM(self), PyArray_DIMS(self),
             PyArray_STRIDES(self), PyArray_BYTES(self) + view_offset,
             PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self,
@@ -555,7 +555,7 @@ array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
 
     if (meth == NULL) {
         // See above, we may want to not guess this always...
-        Py_INCREF(self);
+        Py_INCREF((PyObject *)self);
         part = self;
     }
     else {
@@ -583,9 +583,9 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 
     if (meth == NULL) {
         // We assume this is a real type, so return a zeroed array.
-        Py_INCREF(PyArray_DESCR(self));
+        Py_INCREF((PyObject *)PyArray_DESCR(self));
         PyObject *ret = PyArray_NewFromDescr_int(
-                Py_TYPE(self),
+                Py_TYPE((PyObject *)self),
                 PyArray_DESCR(self),
                 PyArray_NDIM(self),
                 PyArray_DIMS(self),
@@ -657,7 +657,7 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     }
     if (PyArray_FailUnlessWriteable(self, "array") < 0) return -1;
     typecode = PyArray_DESCR(self);
-    Py_INCREF(typecode);
+    Py_INCREF((PyObject *)typecode);
     arr = (PyArrayObject *)PyArray_FromAny(val, typecode,
                   0, 0, NPY_ARRAY_FORCECAST | PyArray_FORTRAN_IF(self), NULL);
     if (arr == NULL) {
@@ -728,9 +728,9 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     retval = 0;
 
  exit:
-    Py_XDECREF(selfit);
-    Py_XDECREF(arrit);
-    Py_XDECREF(arr);
+    Py_XDECREF((PyObject *)selfit);
+    Py_XDECREF((PyObject *)arrit);
+    Py_XDECREF((PyObject *)arr);
     return retval;
 }
 

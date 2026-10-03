@@ -70,13 +70,13 @@ multiply_resolve_descriptors(
         }
     }
     else {
-        Py_INCREF(given_descrs[2]);
+        Py_INCREF((PyObject *)given_descrs[2]);
         out_descr = given_descrs[2];
     }
 
-    Py_INCREF(ldescr);
+    Py_INCREF((PyObject *)ldescr);
     loop_descrs[0] = ldescr;
-    Py_INCREF(rdescr);
+    Py_INCREF((PyObject *)rdescr);
     loop_descrs[1] = rdescr;
     loop_descrs[2] = out_descr;
 
@@ -268,9 +268,9 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *method,
         return (NPY_CASTING)-1;
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
 
     PyArray_Descr *out_descr = NULL;
@@ -284,7 +284,7 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *method,
         }
     }
     else {
-        Py_INCREF(given_descrs[2]);
+        Py_INCREF((PyObject *)given_descrs[2]);
         out_descr = given_descrs[2];
     }
 
@@ -576,9 +576,9 @@ string_comparison_resolve_descriptors(
         return (NPY_CASTING)-1;
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
     loop_descrs[2] = PyArray_DescrFromType(NPY_BOOL);  // cannot fail
 
@@ -623,7 +623,7 @@ string_bool_output_resolve_descriptors(
         PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
 {
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
     loop_descrs[1] = PyArray_DescrFromType(NPY_BOOL);  // cannot fail
 
@@ -637,7 +637,7 @@ string_intp_output_resolve_descriptors(
         PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[], npy_intp *NPY_UNUSED(view_offset))
 {
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
     loop_descrs[1] = PyArray_DescrFromType(NPY_INTP);  // cannot fail
 
@@ -811,19 +811,19 @@ string_findlike_resolve_descriptors(
         return (NPY_CASTING)-1;
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
-    Py_INCREF(given_descrs[2]);
+    Py_INCREF((PyObject *)given_descrs[2]);
     loop_descrs[2] = given_descrs[2];
-    Py_INCREF(given_descrs[3]);
+    Py_INCREF((PyObject *)given_descrs[3]);
     loop_descrs[3] = given_descrs[3];
     if (given_descrs[4] == NULL) {
         loop_descrs[4] = PyArray_DescrFromType(NPY_DEFAULT_INT);
     }
     else {
-        Py_INCREF(given_descrs[4]);
+        Py_INCREF((PyObject *)given_descrs[4]);
         loop_descrs[4] = given_descrs[4];
     }
 
@@ -858,19 +858,19 @@ string_startswith_endswith_resolve_descriptors(
         return (NPY_CASTING)-1;
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
-    Py_INCREF(given_descrs[2]);
+    Py_INCREF((PyObject *)given_descrs[2]);
     loop_descrs[2] = given_descrs[2];
-    Py_INCREF(given_descrs[3]);
+    Py_INCREF((PyObject *)given_descrs[3]);
     loop_descrs[3] = given_descrs[3];
     if (given_descrs[4] == NULL) {
         loop_descrs[4] = PyArray_DescrFromType(NPY_BOOL);
     }
     else {
-        Py_INCREF(given_descrs[4]);
+        Py_INCREF((PyObject *)given_descrs[4]);
         loop_descrs[4] = given_descrs[4];
     }
 
@@ -1185,7 +1185,7 @@ strip_whitespace_resolve_descriptors(
         PyArray_Descr *loop_descrs[],
         npy_intp *NPY_UNUSED(view_offset))
 {
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     PyArray_Descr *out_descr = NULL;
@@ -1200,7 +1200,7 @@ strip_whitespace_resolve_descriptors(
         }
     }
     else {
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         out_descr = given_descrs[1];
     }
 
@@ -1335,13 +1335,13 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *method,
         return (NPY_CASTING)-1;
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
-    Py_INCREF(given_descrs[2]);
+    Py_INCREF((PyObject *)given_descrs[2]);
     loop_descrs[2] = given_descrs[2];
-    Py_INCREF(given_descrs[3]);
+    Py_INCREF((PyObject *)given_descrs[3]);
     loop_descrs[3] = given_descrs[3];
 
     PyArray_Descr *out_descr = NULL;
@@ -1355,7 +1355,7 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *method,
         }
     }
     else {
-        Py_INCREF(given_descrs[4]);
+        Py_INCREF((PyObject *)given_descrs[4]);
         out_descr = given_descrs[4];
     }
 
@@ -1534,9 +1534,9 @@ static NPY_CASTING expandtabs_resolve_descriptors(
         PyArray_Descr *loop_descrs[],
         npy_intp *NPY_UNUSED(view_offset))
 {
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
     PyArray_Descr *out_descr = NULL;
     PyArray_StringDTypeObject *idescr =
@@ -1550,7 +1550,7 @@ static NPY_CASTING expandtabs_resolve_descriptors(
         }
     }
     else {
-        Py_INCREF(given_descrs[2]);
+        Py_INCREF((PyObject *)given_descrs[2]);
         out_descr = given_descrs[2];
     }
     loop_descrs[2] = out_descr;
@@ -1675,11 +1675,11 @@ center_ljust_rjust_resolve_descriptors(
         return (NPY_CASTING)-1;
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
-    Py_INCREF(given_descrs[2]);
+    Py_INCREF((PyObject *)given_descrs[2]);
     loop_descrs[2] = given_descrs[2];
 
     PyArray_Descr *out_descr = NULL;
@@ -1693,7 +1693,7 @@ center_ljust_rjust_resolve_descriptors(
         }
     }
     else {
-        Py_INCREF(given_descrs[3]);
+        Py_INCREF((PyObject *)given_descrs[3]);
         out_descr = given_descrs[3];
     }
 
@@ -2014,9 +2014,9 @@ string_partition_resolve_descriptors(
         return (NPY_CASTING)-1;
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
 
     for (int i=2; i<5; i++) {
@@ -2191,17 +2191,17 @@ string_inputs_promoter(
         if (signature[i]) {
             tmp = signature[i]; /* never replace a fixed one. */
         }
-        Py_INCREF(tmp);
+        Py_INCREF((PyObject *)tmp);
         new_op_dtypes[i] = tmp;
     }
     /* don't touch output dtypes if they are set */
     for (int i = ufunc->nin; i < ufunc->nargs; i++) {
         if (op_dtypes[i] != NULL) {
-            Py_INCREF(op_dtypes[i]);
+            Py_INCREF((PyObject *)op_dtypes[i]);
             new_op_dtypes[i] = op_dtypes[i];
         }
         else {
-            Py_INCREF(result_dtype);
+            Py_INCREF((PyObject *)result_dtype);
             new_op_dtypes[i] = result_dtype;
         }
     }
@@ -2214,12 +2214,12 @@ slice_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_IntpDType);
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_IntpDType);
     new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_IntpDType);
-    Py_INCREF(op_dtypes[0]);
+    Py_INCREF((PyObject *)op_dtypes[0]);
     new_op_dtypes[4] = op_dtypes[0];
     return 0;
 }
@@ -2240,7 +2240,7 @@ slice_resolve_descriptors(PyArrayMethodObject *self,
     }
 
     for (int i = 0; i < 4; i++) {
-        Py_INCREF(given_descrs[i]);
+        Py_INCREF((PyObject *)given_descrs[i]);
         loop_descrs[i] = given_descrs[i];
     }
 
@@ -2531,17 +2531,17 @@ string_multiply_promoter(PyObject *ufunc_obj,
         else {
             tmp = &PyArray_StringDType;
         }
-        Py_INCREF(tmp);
+        Py_INCREF((PyObject *)tmp);
         new_op_dtypes[i] = tmp;
     }
     /* don't touch output dtypes if they are set */
     for (int i = ufunc->nin; i < ufunc->nargs; i++) {
         if (op_dtypes[i]) {
-            Py_INCREF(op_dtypes[i]);
+            Py_INCREF((PyObject *)op_dtypes[i]);
             new_op_dtypes[i] = op_dtypes[i];
         }
         else {
-            Py_INCREF(&PyArray_StringDType);
+            Py_INCREF((PyObject *)&PyArray_StringDType);
             new_op_dtypes[i] = &PyArray_StringDType;
         }
     }

@@ -129,7 +129,7 @@ any_to_string_resolve_descriptors(
         loop_descrs[1] = new_instance;
     }
     else {
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
 
@@ -157,11 +157,11 @@ string_to_string_resolve_descriptors(PyObject *NPY_UNUSED(self),
         }
     }
     else {
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     PyArray_StringDTypeObject *descr0 = (PyArray_StringDTypeObject *)loop_descrs[0];
@@ -352,7 +352,7 @@ string_to_fixed_width_resolve_descriptors(
         }
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     return NPY_SAME_KIND_CASTING;
@@ -580,7 +580,7 @@ string_to_bool_resolve_descriptors(PyObject *NPY_UNUSED(self),
         }
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     return NPY_UNSAFE_CASTING;
@@ -865,7 +865,7 @@ string_to_int_resolve_descriptors(
         }
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     return NPY_UNSAFE_CASTING;
@@ -1290,7 +1290,7 @@ string_to_float_resolve_descriptors(
         }
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     return NPY_UNSAFE_CASTING;
@@ -1570,7 +1570,7 @@ string_to_datetime_timedelta_resolve_descriptors(
         }
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     return NPY_UNSAFE_CASTING;
@@ -1925,11 +1925,11 @@ string_to_void_resolve_descriptors(PyObject *NPY_UNUSED(self),
                     "supported.");
             return (NPY_CASTING)-1;
         }
-        Py_INCREF(given_descrs[1]);
+        Py_INCREF((PyObject *)given_descrs[1]);
         loop_descrs[1] = given_descrs[1];
     }
 
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     return NPY_UNSAFE_CASTING;

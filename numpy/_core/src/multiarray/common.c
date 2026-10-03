@@ -97,7 +97,7 @@ PyArray_DTypeFromObjectStringDiscovery(
     if (last_dtype != NULL &&
         last_dtype->type_num == string_type &&
         last_dtype->elsize >= itemsize) {
-        Py_INCREF(last_dtype);
+        Py_INCREF((PyObject *)last_dtype);
         return last_dtype;
     }
     PyArray_Descr *dtype = PyArray_DescrNewFromType(string_type);
@@ -437,7 +437,7 @@ _get_subarray_base_and_dimensions(
         }
     }
 
-    Py_INCREF(base);
+    Py_INCREF((PyObject *)base);
     return base;
 }
 
@@ -576,7 +576,7 @@ _check_compatibility_with_new_dtype(
         *newdims = PyArray_DIMS(self);
         *newstrides = PyArray_STRIDES(self);
     }
-    Py_INCREF(type);
+    Py_INCREF((PyObject *)type);
     return type;
 }
 
@@ -626,7 +626,7 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
             }
 
             /* set copy-back */
-            Py_INCREF(out);
+            Py_INCREF((PyObject *)out);
             if (PyArray_SetWritebackIfCopyBase(out_buf, out) < 0) {
                 Py_DECREF(out_buf);
                 // PyArray_SetWritebackIfCopyBase steals reference to second argument
@@ -634,12 +634,12 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
             }
         }
         else {
-            Py_INCREF(out);
+            Py_INCREF((PyObject *)out);
             out_buf = out;
         }
 
         if (result) {
-            Py_INCREF(out);
+            Py_INCREF((PyObject *)out);
             *result = out;
         }
 
@@ -652,24 +652,25 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
          * Need to choose an output array that can hold a sum
          * -- use priority to determine which subtype.
          */
-        if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
+        if (Py_TYPE((PyObject *)ap2) != Py_TYPE((PyObject *)ap1)) {
             prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
             prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-            subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
+            subtype = (prior2 > prior1 ? Py_TYPE((PyObject *)ap2)
+                                       : Py_TYPE((PyObject *)ap1));
         }
         else {
             prior1 = prior2 = 0.0;
-            subtype = Py_TYPE(ap1);
+            subtype = Py_TYPE((PyObject *)ap1);
         }
 
-        Py_INCREF(descr);
+        Py_INCREF((PyObject *)descr);
         out_buf = (PyArrayObject *)PyArray_NewFromDescr(subtype, descr, nd, dimensions,
                                                         NULL, NULL, 0,
                                                         (PyObject *)
                                                         (prior2 > prior1 ? ap2 : ap1));
 
         if (out_buf != NULL && result) {
-            Py_INCREF(out_buf);
+            Py_INCREF((PyObject *)out_buf);
             *result = out_buf;
         }
 

@@ -751,7 +751,7 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
     return index_type;
 
   failed_building_indices:
-    Py_XDECREF(arr);
+    Py_XDECREF((PyObject *)arr);
     for (i=0; i < curr_idx; i++) {
         Py_XDECREF(indices[i].object);
     }
@@ -921,9 +921,9 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
     }
 
     /* Create the new view and set the base array */
-    Py_INCREF(PyArray_DESCR(self));
+    Py_INCREF((PyObject *)PyArray_DESCR(self));
     *view = (PyArrayObject *)PyArray_NewFromDescr_int(
-            ensure_array ? &PyArray_Type : Py_TYPE(self),
+            ensure_array ? &PyArray_Type : Py_TYPE((PyObject *)self),
             PyArray_DESCR(self),
             new_dim, new_shape, new_strides, data_ptr,
             PyArray_FLAGS(self),
@@ -962,7 +962,7 @@ array_boolean_subscript(PyArrayObject *self,
 
     /* Allocate the output of the boolean indexing */
     dtype = PyArray_DESCR(self);
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
                                 NULL, NULL, 0, NULL);
     if (ret == NULL) {
@@ -1085,9 +1085,9 @@ array_boolean_subscript(PyArrayObject *self,
     if (!PyArray_CheckExact(self)) {
         PyArrayObject *tmp = ret;
 
-        Py_INCREF(ret_dtype);
+        Py_INCREF((PyObject *)ret_dtype);
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
-                Py_TYPE(self), ret_dtype,
+                Py_TYPE((PyObject *)self), ret_dtype,
                 1, &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
                 PyArray_FLAGS(ret), (PyObject *)self, (PyObject *)tmp);
 
@@ -1395,9 +1395,9 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         }
 
         /* view the array at the new offset+dtype */
-        Py_INCREF(fieldtype);
+        Py_INCREF((PyObject *)fieldtype);
         *view = (PyArrayObject*)PyArray_NewFromDescr_int(
-                Py_TYPE(arr),
+                Py_TYPE((PyObject *)arr),
                 fieldtype,
                 PyArray_NDIM(arr),
                 PyArray_SHAPE(arr),
@@ -1453,7 +1453,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         }
 
         *view = (PyArrayObject*)PyArray_NewFromDescr_int(
-                Py_TYPE(arr),
+                Py_TYPE((PyObject *)arr),
                 view_dtype,
                 PyArray_NDIM(arr),
                 PyArray_SHAPE(arr),
@@ -1596,7 +1596,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
-            Py_INCREF(PyArray_DESCR(self));
+            Py_INCREF((PyObject *)PyArray_DESCR(self));
             result = PyArray_NewFromDescr(&PyArray_Type,
                                           PyArray_DESCR(self),
                                           PyArray_NDIM(ind),
@@ -1729,9 +1729,9 @@ array_subscript(PyArrayObject *self, PyObject *op)
          */
         PyArrayObject *tmp_arr = (PyArrayObject *)result;
 
-        Py_INCREF(PyArray_DESCR(tmp_arr));
+        Py_INCREF((PyObject *)PyArray_DESCR(tmp_arr));
         result = PyArray_NewFromDescrAndBase(
-                Py_TYPE(self),
+                Py_TYPE((PyObject *)self),
                 PyArray_DESCR(tmp_arr),
                 PyArray_NDIM(tmp_arr),
                 PyArray_SHAPE(tmp_arr),
@@ -1747,8 +1747,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
   finish:
     NPY_cast_info_xfree(&cast_info);
-    Py_XDECREF(mit);
-    Py_XDECREF(view);
+    Py_XDECREF((PyObject *)mit);
+    Py_XDECREF((PyObject *)view);
     /* Clean up indices */
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
@@ -1885,7 +1885,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     /* Single boolean array */
     if (index_type == HAS_BOOL) {
         if (!PyArray_Check(op)) {
-            Py_INCREF(PyArray_DESCR(self));
+            Py_INCREF((PyObject *)PyArray_DESCR(self));
             tmp_arr = (PyArrayObject *)PyArray_FromAny(op,
                                                    PyArray_DESCR(self), 0, 0,
                                                    NPY_ARRAY_FORCECAST, NULL);
@@ -1940,7 +1940,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (view == NULL) {
             goto fail;
         }
-        if (!PyArray_Check(view)) {
+        if (!PyArray_Check((PyObject *)view)) {
             PyErr_SetString(PyExc_RuntimeError,
                             "Getitem not returning array");
             goto fail;
@@ -1984,7 +1984,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         }
         else {
             /* There is nothing fancy possible, so just make an array */
-            Py_INCREF(descr);
+            Py_INCREF((PyObject *)descr);
             tmp_arr = (PyArrayObject *)PyArray_FromAny(op, descr, 0, 0,
                                                     NPY_ARRAY_FORCECAST, NULL);
             if (tmp_arr == NULL) {
@@ -2083,7 +2083,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     if (tmp_arr == NULL) {
         /* Fill extra op, need to swap first */
         tmp_arr = mit->extra_op;
-        Py_INCREF(tmp_arr);
+        Py_INCREF((PyObject *)tmp_arr);
         if (mit->consec) {
             PyArray_MapIterSwapAxes(mit, &tmp_arr, 1);
             if (tmp_arr == NULL) {
@@ -2308,9 +2308,9 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
 
  fail:
     for (j = 0; j < nd; j++) {
-        Py_XDECREF(arrays[j]);
+        Py_XDECREF((PyObject *)arrays[j]);
     }
-    Py_XDECREF(ba);
+    Py_XDECREF((PyObject *)ba);
     return -1;
 }
 
@@ -2814,9 +2814,9 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     memset(mit, 0, sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
     PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
 
-    Py_INCREF(arr);
+    Py_INCREF((PyObject *)arr);
     mit->array = arr;
-    Py_XINCREF(subspace);
+    Py_XINCREF((PyObject *)subspace);
     mit->subspace = subspace;
 
     /*
@@ -2911,7 +2911,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
             }
         }
         else {
-            Py_INCREF(extra_op);
+            Py_INCREF((PyObject *)extra_op);
         }
 
         if (PyArray_NDIM(extra_op) > mit->nd) {
@@ -3035,7 +3035,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
          * Allocate new array. Note: Always base class, because
          * subclasses might mess with the shape.
          */
-        Py_INCREF(extra_op_dtype);
+        Py_INCREF((PyObject *)extra_op_dtype);
         extra_op = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                            extra_op_dtype,
                                            mit->nd_fancy + PyArray_NDIM(subspace),
@@ -3156,7 +3156,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         else {
             mit->extra_op = extra_op;
         }
-        Py_INCREF(mit->extra_op);
+        Py_INCREF((PyObject *)mit->extra_op);
     }
 
     /*
@@ -3206,7 +3206,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
     /* Can now return early if no subspace is being used */
     if (!uses_subspace) {
-        Py_XDECREF(extra_op);
+        Py_XDECREF((PyObject *)extra_op);
         Py_DECREF(intp_descr);
         return (PyObject *)mit;
     }
@@ -3268,7 +3268,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     mit->subspace_ptrs = NpyIter_GetDataPtrArray(mit->subspace_iter);
     mit->subspace_strides = NpyIter_GetInnerStrideArray(mit->subspace_iter);
 
-    Py_XDECREF(extra_op);
+    Py_XDECREF((PyObject *)extra_op);
     Py_DECREF(intp_descr);
     return (PyObject *)mit;
 
@@ -3329,7 +3329,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     Py_DECREF(shape2);
 
   finish:
-    Py_XDECREF(extra_op);
+    Py_XDECREF((PyObject *)extra_op);
     Py_DECREF(intp_descr);
     Py_DECREF(mit);
     return NULL;
@@ -3375,7 +3375,7 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
             goto fail;
         }
 
-        Py_INCREF(a);
+        Py_INCREF((PyObject *)a);
         if (PyArray_SetWritebackIfCopyBase(a_copy, a) < 0) {
             goto fail;
         }
@@ -3408,8 +3408,8 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
         goto fail;
     }
 
-    Py_XDECREF(a_copy);
-    Py_XDECREF(subspace);
+    Py_XDECREF((PyObject *)a_copy);
+    Py_XDECREF((PyObject *)subspace);
 
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
@@ -3418,8 +3418,8 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
     return (PyObject *)mit;
 
  fail:
-    Py_XDECREF(a_copy);
-    Py_XDECREF(subspace);
+    Py_XDECREF((PyObject *)a_copy);
+    Py_XDECREF((PyObject *)subspace);
     Py_XDECREF((PyObject *)mit);
     for (i = 0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
@@ -3442,9 +3442,9 @@ static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
     PyArray_ResolveWritebackIfCopy(mit->array);
-    Py_XDECREF(mit->array);
-    Py_XDECREF(mit->subspace);
-    Py_XDECREF(mit->extra_op);
+    Py_XDECREF((PyObject *)mit->array);
+    Py_XDECREF((PyObject *)mit->subspace);
+    Py_XDECREF((PyObject *)mit->extra_op);
     if (mit->outer != NULL) {
         NpyIter_Deallocate(mit->outer);
     }

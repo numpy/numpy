@@ -61,7 +61,7 @@ NPY_traverse_info_xfree(NPY_traverse_info *traverse_info)
     }
     traverse_info->func = NULL;
     NPY_AUXDATA_FREE(traverse_info->auxdata);
-    Py_XDECREF(traverse_info->descr);
+    Py_XDECREF((PyObject *)traverse_info->descr);
 }
 
 
@@ -85,7 +85,7 @@ NPY_traverse_info_copy(
     else {
         traverse_info->auxdata = NULL;
     }
-    Py_INCREF(original->descr);
+    Py_INCREF((PyObject *)original->descr);
     traverse_info->descr = original->descr;
     traverse_info->func = original->func;
 
