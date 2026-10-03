@@ -86,5 +86,6 @@
 0x00000015 = fbd24fc5b2ba4f7cd3606ec6128de7a5
 # Version 22 (NumPy 2.5.0) Opaque PyObject ABI support and
 # NPY_DT_legacy_descriptor_proto support.
-# Version 22 (NumPy 2.6.0) No change
 0x00000016 = 83149cba850edb61bf48e1dd180f17a6
+# Version 23 (NumPy 2.6.0) New abstract DTypes
+0x00000017 = 83149cba850edb61bf48e1dd180f17a6
