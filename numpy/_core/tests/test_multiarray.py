@@ -8016,7 +8016,17 @@ class TestVdot:
                          np.vdot(a.flatten(), b.flatten()))
             assert_equal(np.vdot(a, b.copy('F')),
                          np.vdot(a.flatten(), b.flatten()))
-
+    
+    def test_vdot_zero_length(self):
+        # https://github.com/numpy/numpy/issues/31735
+        cases = [
+            np.empty((0,), dtype=object),
+            np.empty((1,0), dtype=object),
+            np.empty((0,1), dtype=object),
+            np.empty((0,0), dtype=object),
+        ]
+        for test_case in cases:
+            assert_equal(np.vdot(test_case,test_case), 0)
 
 class TestDot:
     N = 7
