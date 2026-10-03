@@ -477,7 +477,7 @@ NPY_NO_EXPORT int
              * Unlike most numeric conversion functions PyComplex_AsCComplex
              * does not handle strings, so we have to use its constructor.
              */
-            PyObject *pycomplex, *args;
+            PyObject *pycomplex;
             if (PyBytes_Check(op)) {
                 /* The complex constructor expects unicode */
                 PyObject *unicode;
@@ -485,19 +485,14 @@ NPY_NO_EXPORT int
                 if (unicode == NULL) {
                     return -1;
                 }
-                args = PyTuple_Pack(1, unicode);
+                pycomplex = PyObject_Vectorcall(
+                        (PyObject *)&PyComplex_Type, &unicode, 1, NULL);
                 Py_DECREF(unicode);
             }
             else {
-                args = PyTuple_Pack(1, op);
+                pycomplex = PyObject_Vectorcall(
+                        (PyObject *)&PyComplex_Type, &op, 1, NULL);
             }
-            if (args == NULL) {
-                return -1;
-            }
-            newfunc complex_new = (newfunc)PyType_GetSlot(
-                    &PyComplex_Type, Py_tp_new);
-            pycomplex = complex_new(&PyComplex_Type, args, NULL);
-            Py_DECREF(args);
             if (pycomplex == NULL) {
                 return -1;
             }

@@ -1416,14 +1416,9 @@ string_to_pycomplex(char *in, int has_null, int has_nan_na,
     if (val_obj == NULL) {
         return NULL;
     }
-    PyObject *args = PyTuple_Pack(1, val_obj);
+    PyObject *pycomplex_value = PyObject_Vectorcall(
+            (PyObject *)&PyComplex_Type, &val_obj, 1, NULL);
     Py_DECREF(val_obj);
-    if (args == NULL) {
-        return NULL;
-    }
-    newfunc complex_new = (newfunc)PyType_GetSlot(&PyComplex_Type, Py_tp_new);
-    PyObject *pycomplex_value = complex_new(&PyComplex_Type, args, NULL);
-    Py_DECREF(args);
     return pycomplex_value;
 }
 
