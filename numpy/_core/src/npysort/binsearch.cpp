@@ -82,9 +82,9 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
      *
      * Keep the activation gate deliberately conservative.  The crossover is
      * hardware dependent (lower on the AMD runners used during validation),
-     * so 2048 is a portable default rather than a globally optimal constant.
+     * so 131072 is a deliberately conservative portable default rather than a globally optimal constant.
      */
-    constexpr npy_intp LOCALITY_MIN_KEYS = 2048;
+    constexpr npy_intp LOCALITY_MIN_KEYS = 131072;
     constexpr npy_intp LOCALITY_SAMPLES = 16;
     constexpr npy_intp LOCALITY_LEVELS = 3;
 
