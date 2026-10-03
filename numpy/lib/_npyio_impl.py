@@ -466,6 +466,9 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         fid.seek(-min(N, len(magic)), 1)  # back-up
         if magic.startswith((_ZIP_PREFIX, _ZIP_SUFFIX)):
             # zip-file (assume .npz)
+            if mmap_mode is not None:
+                raise ValueError("mmap_mode is not supported when loading .npz files.")
+            
             # Potentially transfer file ownership to NpzFile
             stack.pop_all()
             ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,
