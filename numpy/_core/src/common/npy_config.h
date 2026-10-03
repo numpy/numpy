@@ -248,6 +248,24 @@
 #define Py_XSETREF(dst, src) NPY__SETREF(dst, src, Py_XDECREF)
 #endif
 
+#define PyTuple_GET_SIZE(op) PyTuple_Size(op)
+#define PyTuple_GET_ITEM(op, i) PyTuple_GetItem(op, i)
+#define PyTuple_SET_ITEM(op, i, v) PyTuple_SetItem(op, i, v)
+#define PyList_GET_SIZE(op) PyList_Size(op)
+#define PyList_GET_ITEM(op, i) PyList_GetItem(op, i)
+#define PyList_SET_ITEM(op, i, v) PyList_SetItem(op, i, v)
+/* Python.h defines these before 3.14 */
+#ifndef PySequence_Fast_GET_SIZE
+#define PySequence_Fast_GET_SIZE(o)                                     \
+    (PyList_Check(o) ? PyList_GET_SIZE(o) : PyTuple_GET_SIZE(o))
+#define PySequence_Fast_GET_ITEM(o, i)                                  \
+    (PyList_Check(o) ? PyList_GET_ITEM(o, i) : PyTuple_GET_ITEM(o, i))
+#endif
+#define PyBytes_AS_STRING(op) PyBytes_AsString(op)
+#define PyBytes_GET_SIZE(op) PyBytes_Size(op)
+#define PyFloat_AS_DOUBLE(op) PyFloat_AsDouble(op)
+#define PyDict_GET_SIZE(op) PyDict_Size(op)
+
 /*
  * No-ops with the GIL, as CPython defines them. From 3.15 the Limited API
  * versions call functions that older Pythons do not have.
