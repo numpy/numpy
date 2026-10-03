@@ -197,10 +197,8 @@ _PyArray_MapPyTypeToDType(
     if (res < 0) {
         return -1;
     }
-    else if (DType == &PyArray_StringDType) {
-        // PyArray_StringDType's scalar is str which we allow because it doesn't
-        // participate in DType inference, so don't add it to the
-        // pytype to type mapping
+    else if (NPY_DT_is_stringlike(DType) && !PyType_IsSubtype(pytype, &PyGenericArrType_Type)) {
+        // StringDType's scalar is str, which doesn't participate in DType inference
         return 0;
     }
     else if (res) {
@@ -852,8 +850,12 @@ find_descriptor_from_array(
         }
         Py_DECREF(iter);
     }
-    else if (NPY_UNLIKELY(PyArray_TYPE(arr) == NPY_VSTRING &&
-                          PyTypeNum_ISFLEXIBLE(DType->type_num))) {
+    else if (NPY_UNLIKELY(
+                     (PyArray_TYPE(arr) == NPY_VSTRING &&
+                      PyTypeNum_ISFLEXIBLE(DType->type_num)) ||
+                     (PyArray_TYPE(arr) == NPY_VBYTES &&
+                      (DType->type_num == NPY_STRING ||
+                       DType->type_num == NPY_VOID)))) {
         /*
          * Casting a StringDType array to a fixed-width string DType with no
          * size means finding the width of the widest entry first, so that

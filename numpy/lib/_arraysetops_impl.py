@@ -386,11 +386,11 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool)
     mask[:1] = True
-    # Keep the last element typed so isnan handles StringDType's NA sentinel.
-    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmMT" and
+    # Keep the last element typed so isnan handles variable-width NA sentinels.
+    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmMTR" and
             np.isnan(aux[-1:])[0]):
-        if aux.dtype.kind in "cT":
-            # Complex NaNs and StringDType's NaN-like sentinels are equivalent.
+        if aux.dtype.kind in "cTR":
+            # Complex NaNs and variable-width NaN-like sentinels are equivalent.
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
         else:
             aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
@@ -910,8 +910,9 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         )
 
     string_dtype = None
-    if (ar1.dtype.kind == "T" or ar2.dtype.kind == "T") and (
-            ar1.dtype.kind in "TU" and ar2.dtype.kind in "TU"):
+    if (ar1.dtype.kind in "TR" or ar2.dtype.kind in "TR") and (
+            (ar1.dtype.kind in "TU" and ar2.dtype.kind in "TU") or
+            (ar1.dtype.kind in "RS" and ar2.dtype.kind in "RS")):
         try:
             # promote to the result dtype so we can use the fast hashing path
             string_dtype = np.result_type(ar1, ar2)
@@ -949,11 +950,10 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     # cannot be sorted reliably.
     if scalar_comparisons_are_faster or contains_object:
         if string_dtype is not None:
-            # StringDType scalars are str or na_object, so ensure iteration
-            # always produces arrays this could be deleted if StringDType ever
-            # grew a NumPy scalar type
+            # Missing scalars do not retain their dtype, so compare typed
+            # arrays even when nonmissing values have a NumPy scalar type.
             ar2 = ar2.reshape(-1, 1)
-            if ar2.dtype.kind == "T" and ar2.dtype._has_nan_na:
+            if ar2.dtype.kind in "TR" and ar2.dtype._has_nan_na:
                 na_object = ar2.dtype.na_object
                 ar2 = (a for a in ar2 if a[0] is not na_object)
         if invert:

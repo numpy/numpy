@@ -491,6 +491,7 @@ from numpy import (  # noqa: F401
     ushort,
     vander,
     var,
+    vbytes,
     vdot,
     vecdot,
     vecmat,

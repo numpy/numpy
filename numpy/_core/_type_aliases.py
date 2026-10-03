@@ -18,6 +18,7 @@ and sometimes other mappings too.
 """
 
 import numpy._core.multiarray as ma
+from numpy._core._multiarray_umath import vbytes
 from numpy._core.multiarray import dtype, typeinfo
 
 ######################################
@@ -47,6 +48,9 @@ for k, v in typeinfo.items():
         sctypeDict[k] = concrete_type
         del concrete_type
     del k, v
+
+allTypes["vbytes"] = vbytes
+sctypeDict["vbytes"] = vbytes
 
 _aliases = {
     "double": "float64",

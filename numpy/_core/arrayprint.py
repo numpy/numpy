@@ -464,12 +464,12 @@ def _object_format(o):
     return fmt.format(o)
 
 def repr_format(x):
-    if isinstance(x, (np.str_, np.bytes_)):
+    if isinstance(x, (np.str_, np.bytes_, np.vbytes)):
         return repr(x.item())
     return repr(x)
 
 def str_format(x):
-    if isinstance(x, (np.str_, np.bytes_)):
+    if isinstance(x, (np.str_, np.bytes_, np.vbytes)):
         return str(x.item())
     return str(x)
 
@@ -557,7 +557,7 @@ def _get_format_function(data, **options):
             return formatdict['longcomplexfloat']()
         else:
             return formatdict['complexfloat']()
-    elif issubclass(dtypeobj, (_nt.str_, _nt.bytes_)):
+    elif issubclass(dtypeobj, (_nt.str_, _nt.bytes_, _nt.vbytes)):
         return formatdict['numpystr']()
     elif issubclass(dtypeobj, _nt.datetime64):
         return formatdict['datetime']()

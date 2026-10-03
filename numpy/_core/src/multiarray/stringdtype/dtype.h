@@ -16,8 +16,15 @@ extern "C" {
 NPY_NO_EXPORT PyObject *
 new_stringdtype_instance(PyObject *na_object, int coerce);
 
+// `coerce` is ignored for ByteStringDType
+NPY_NO_EXPORT PyObject *
+new_stringlike_instance_of(PyArray_DTypeMeta *cls, PyObject *na_object, int coerce);
+
 NPY_NO_EXPORT int
 init_string_dtype(void);
+
+NPY_NO_EXPORT int
+init_bytestring_dtype(void);
 
 // Assumes that the caller has already acquired the allocator locks for both
 // descriptors
@@ -31,9 +38,6 @@ stringdtype_binsearch_compare(const void *a, const void *b,
 
 NPY_NO_EXPORT int
 init_string_na_object(PyObject *mod);
-
-NPY_NO_EXPORT int
-stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **dataptr);
 
 // the locks on both allocators must be acquired before calling this function
 NPY_NO_EXPORT int
@@ -49,6 +53,9 @@ load_new_string(npy_packed_static_string *out, npy_static_string *out_ss,
 
 NPY_NO_EXPORT PyArray_Descr *
 stringdtype_finalize_descr(PyArray_Descr *dtype);
+
+NPY_NO_EXPORT PyObject *
+bytestring_getitem_scalar(PyArray_StringDTypeObject *descr, char **dataptr);
 
 NPY_NO_EXPORT int
 stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na);

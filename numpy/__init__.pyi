@@ -100,6 +100,7 @@ from numpy._typing import (  # type: ignore[deprecated]
     _VoidCodes,
     _ObjectCodes,
     _StringCodes,
+    _ByteStringCodes,
     _UnsignedIntegerCodes,
     _SignedIntegerCodes,
     _IntegerCodes,
@@ -738,7 +739,7 @@ __all__ = [
     "complexfloating", "character", "unsignedinteger", "inexact", "generic", "floating",
     "integer", "signedinteger", "number", "flexible", "bool", "float16", "float32",
     "float64", "longdouble", "complex64", "complex128", "clongdouble",
-    "bytes_", "str_", "void", "object_", "datetime64", "timedelta64", "int8", "byte",
+    "bytes_", "vbytes", "str_", "void", "object_", "datetime64", "timedelta64", "int8", "byte",
     "uint8", "ubyte", "int16", "short", "uint16", "ushort", "int32", "intc", "uint32",
     "uintc", "int64", "long", "uint64", "ulong", "longlong", "ulonglong", "intp",
     "uintp", "double", "cdouble", "single", "csingle", "half", "bool_", "int_", "uint",
@@ -954,6 +955,7 @@ type _DTypeKind = L[
     "U",  # unicode-string (fixed-width)
     "V",  # void
     "T",  # unicode-string (variable-width)
+    "R",  # byte-string (variable-width)
 ]
 type _DTypeChar = L[
     "?",  # bool
@@ -982,6 +984,7 @@ type _DTypeChar = L[
     "m",  # timedelta64
     "c",  # bytes_ (S1)
     "T",  # StringDType
+    "R",  # ByteStringDType
 ]
 type _DTypeNum = L[
     0,  # bool
@@ -1011,6 +1014,7 @@ type _DTypeNum = L[
     25,  # no type
     256,  # user-defined
     2056,  # StringDType
+    2057,  # ByteStringDType
 ]
 type _DTypeBuiltinKind = L[0, 1, 2]
 
@@ -1649,6 +1653,16 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
         *,
         metadata: dict[py_str, Any] = ...,
     ) -> dtypes.StringDType: ...
+
+    @overload
+    def __new__(
+        cls,
+        dtype: dtypes.ByteStringDType | _ByteStringCodes,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[py_str, Any] = ...,
+    ) -> dtypes.ByteStringDType: ...
 
     # Combined char-codes and ctypes, analogous to the scalar-type hierarchy
     @overload
@@ -13215,6 +13229,27 @@ class character(flexible[_CharacterItemT_co], Generic[_CharacterItemT_co]):  # t
 
 @disjoint_base
 class bytes_(character[bytes], bytes):  # type: ignore[misc]
+    @overload
+    def __new__(cls, value: object = b"", /) -> Self: ...
+    @overload
+    def __new__(cls, value: str, /, encoding: str, errors: str = "strict") -> Self: ...
+
+    #
+    @override
+    def __hash__(self, /) -> int: ...
+
+    # re-declare inherited `bytes.__getitem__` shadowed by `generic.__getitem__`
+    @override  # type: ignore[override]
+    @overload
+    def __getitem__(self, key: SupportsIndex, /) -> int: ...
+    @overload
+    def __getitem__(self, key: slice[SupportsIndex | None], /) -> bytes: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    def __bytes__(self, /) -> bytes: ...
+
+@disjoint_base
+class vbytes(generic[bytes], bytes):  # type: ignore[misc]
     @overload
     def __new__(cls, value: object = b"", /) -> Self: ...
     @overload

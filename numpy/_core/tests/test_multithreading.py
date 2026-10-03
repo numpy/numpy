@@ -351,12 +351,18 @@ def test_structured_threadsafety2():
     assert arr.dtype is dt
 
 
-def test_stringdtype_multithreaded_access_and_mutation():
+@pytest.mark.parametrize("char", ["T", "R"])
+def test_stringdtype_multithreaded_access_and_mutation(char):
     # this test uses an RNG and may crash or cause deadlocks if there is a
-    # threading bug
+    # threading bug; the two variable-width DTypes share the allocator
+    # machinery, so both get the same op mix
     rng = np.random.default_rng(0x4D3D3D3)
 
-    string_list = random_unicode_string_list()
+    values = random_unicode_string_list()
+    suffix = "hello"
+    if char == "R":
+        values = [s.encode() for s in values]
+        suffix = b"hello"
 
     def func(arr):
         rnd = rng.random()
@@ -364,7 +370,7 @@ def test_stringdtype_multithreaded_access_and_mutation():
         # re-initialize the array
         if rnd < 0.25:
             num = np.random.randint(0, arr.size)
-            arr[num] = arr[num] + "hello"
+            arr[num] = arr[num] + suffix
         elif rnd < 0.5:
             if rnd < 0.375:
                 np.add(arr, arr)
@@ -376,12 +382,45 @@ def test_stringdtype_multithreaded_access_and_mutation():
             else:
                 np.multiply(arr, np.int64(2), out=arr)
         else:
-            arr[:] = string_list
+            arr[:] = values
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
-        arr = np.array(string_list, dtype="T")
+        arr = np.array(values, dtype=char)
         futures = [tpe.submit(func, arr) for _ in range(500)]
 
+        for f in futures:
+            f.result()
+
+
+def test_encode_decode_multithreaded():
+    # encode loads from an array other threads are re-packing (possibly
+    # reallocating the arena) and both directions pack into a freshly
+    # created descriptor's allocator; results are checked, so corruption
+    # fails, not just crashes
+    rng = np.random.default_rng(0x4D3D3D3)
+
+    string_list = [str(s) for s in random_unicode_string_list()]
+    alternate = [s + "x" for s in string_list]
+    expected = {s.encode() for s in string_list + alternate}
+    sarr = np.array(string_list, dtype="T")
+    rarr = np.strings.encode(np.array(alternate, dtype="T"),
+                             dtype=np.dtypes.ByteStringDType())
+
+    def func():
+        rnd = rng.random()
+        if rnd < 0.25:
+            sarr[:] = string_list if rnd < 0.125 else alternate
+        elif rnd < 0.75:
+            for b in np.strings.encode(sarr,
+                                       dtype=np.dtypes.ByteStringDType()):
+                assert b in expected
+        else:
+            s = np.strings.decode(rarr)
+            assert np.strings.encode(
+                s, dtype=np.dtypes.ByteStringDType()).tolist() == rarr.tolist()
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
+        futures = [tpe.submit(func) for _ in range(200)]
         for f in futures:
             f.result()
 

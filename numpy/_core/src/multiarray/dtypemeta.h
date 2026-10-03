@@ -283,6 +283,16 @@ extern PyArray_DTypeMeta *_Void_dtype;
 // we can refer to, so no need for the indirection we use for the built-in
 // dtypes.
 extern PyArray_DTypeMeta PyArray_StringDType;
+extern PyArray_DTypeMeta PyArray_ByteStringDType;
+
+static inline int
+NPY_DT_is_stringlike(PyArray_DTypeMeta *dtype)
+{
+    return dtype == &PyArray_StringDType || dtype == &PyArray_ByteStringDType;
+}
+
+#define PyTypeNum_ISVSTRINGLIKE(type) \
+        ((type) == NPY_VSTRING || (type) == NPY_VBYTES)
 /* Datetime/Timedelta */
 #define PyArray_DatetimeDType (*(_Datetime_dtype))
 #define PyArray_TimedeltaDType (*(_Timedelta_dtype))

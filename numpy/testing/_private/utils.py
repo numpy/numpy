@@ -775,7 +775,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         return x.dtype.char in "Mm"
 
     def isvstring(x):
-        return x.dtype.char == "T"
+        return x.dtype.char in "TR"
 
     def robust_any_difference(x, y):
         # We include work-arounds here to handle three types of slightly

@@ -6,7 +6,9 @@
 extern "C" {
 #endif
 
-PyArrayMethod_Spec **get_casts(void);
+PyArrayMethod_Spec **get_stringdtype_casts(void);
+
+PyArrayMethod_Spec **get_bytestringdtype_casts(void);
 
 // Load the string representation for *ps*. This might be the packed string
 // itself or, for a missing entry, str(na_object) when the descriptor has a
