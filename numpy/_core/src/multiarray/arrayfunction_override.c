@@ -550,15 +550,15 @@ dispatcher_clear(PyArray_ArrayFunctionDispatcherObject *self)
     return 0;
 }
 
+/*
+ * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
+ * type refcount contention on free-threaded 3.14+.
+ */
 static void
-dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
+dispatcher_free(void *self)
 {
-    PyObject_GC_UnTrack(self);
-    dispatcher_clear(self);
-
-    PyTypeObject *type = Py_TYPE(self);
-    type->tp_free((PyObject *)self);
-    Py_DECREF(type);
+    dispatcher_clear((PyArray_ArrayFunctionDispatcherObject *)self);
+    PyObject_GC_Del(self);
 }
 
 
@@ -942,7 +942,7 @@ static struct PyMemberDef dispatcher_members[] = {
 
 
 static PyType_Slot dispatcher_slots[] = {
-    {Py_tp_dealloc, dispatcher_dealloc},
+    {Py_tp_free, dispatcher_free},
     {Py_tp_traverse, dispatcher_traverse},
     {Py_tp_clear, dispatcher_clear},
     {Py_tp_new, dispatcher_new},
