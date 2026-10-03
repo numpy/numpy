@@ -386,6 +386,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
         return (PyArray_Descr *)new;
     }
 
+    /* borrowed reference */
     PyObject *DType = PyArray_DiscoverDTypeFromScalarType((PyTypeObject *)type);
     if (DType != NULL) {
         return PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
@@ -411,12 +412,10 @@ PyArray_DescrFromScalar(PyObject *sc)
      * correct instance-specific descriptor (handling void, datetime, string,
      * and new-style user-defined parametric dtypes correctly).
      */
-    PyArray_DTypeMeta *DType =
+    PyArray_DTypeMeta *DType =  /* borrowed */
             (PyArray_DTypeMeta *)PyArray_DiscoverDTypeFromScalarType(Py_TYPE(sc));
     if (DType != NULL) {
-        PyArray_Descr *result = NPY_DT_CALL_discover_descr_from_pyobject(DType, sc);
-        Py_DECREF(DType);
-        return result;
+        return NPY_DT_CALL_discover_descr_from_pyobject(DType, sc);
     }
 
     /*
