@@ -617,8 +617,14 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
          */
         if ((PyObject *)arr == obj) {
             /* The input was an array already */
-            PyErr_SetString(PyExc_IndexError,
-                "arrays used as indices must be of integer (or boolean) type");
+            PyObject *arrtype = PyObject_Str((PyObject *)PyArray_DESCR(arr));
+            if (arrtype == NULL) {
+                goto failed_building_indices;
+            }
+            PyErr_Format(PyExc_IndexError,
+                "arrays used as indices must be of integer (or boolean) "
+                "type, but the array dtype was %S", arrtype);
+            Py_DECREF(arrtype);
         }
         else {
             /*

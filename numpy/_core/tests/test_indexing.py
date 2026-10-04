@@ -1463,6 +1463,22 @@ class TestInvalidIndexErrorMessage:
                            match=r"cannot index with <class 'str'>"):
             a[0, "1"]
 
+    def test_fancy_index_error_shows_array_dtype(self):
+        # Indexing with a non-integer array must mention the array's
+        # actual dtype, so the message is actionable (gh-26115 follow-up).
+        a = np.zeros(10)
+        for idx, dtype_str in [
+            (np.array([1.5, 2.5]), "float64"),
+            (np.array([1.5, 2.5], dtype=np.float32), "float32"),
+            (np.array([1.5 + 0j]), "complex128"),
+        ]:
+            with pytest.raises(
+                    IndexError,
+                    match=(r"arrays used as indices must be of integer "
+                           r"\(or boolean\) type, but the array dtype was "
+                           r"(" + dtype_str + r")")):
+                a[idx]
+
 
 class TestCApiAccess:
     def test_getitem(self):
