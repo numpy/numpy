@@ -2,37 +2,9 @@
 #define NUMPY_CORE_SRC_COMMON_NPY_PYCOMPAT_H_
 
 #include "numpy/npy_3kcompat.h"
-
-#ifndef Py_LIMITED_API
 #include "pythoncapi-compat/pythoncapi_compat.h"
-#else
-static inline PyObject *
-PyTuple_FromArray(PyObject *const *array, Py_ssize_t size)
-{
-    PyObject *tuple = PyTuple_New(size);
-    if (tuple == NULL) {
-        return NULL;
-    }
-    for (Py_ssize_t i = 0; i < size; i++) {
-        if (PyTuple_SetItem(tuple, i, Py_NewRef(array[i])) < 0) {
-            Py_DECREF(tuple);
-            return NULL;
-        }
-    }
-    return tuple;
-}
 
-static inline int
-PyLong_IsZero(PyObject *obj)
-{
-    if (!PyLong_Check(obj)) {
-        PyErr_Format(PyExc_TypeError, "expected int, got %T", obj);
-        return -1;
-    }
-    int overflow;
-    return PyLong_AsLongAndOverflow(obj, &overflow) == 0;
-}
-
+#ifdef Py_LIMITED_API
 /*
  * TODO: remove when all supported Pythons define these in the Limited API,
  * see https://github.com/capi-workgroup/decisions/issues/110
