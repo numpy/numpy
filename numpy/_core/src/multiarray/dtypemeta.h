@@ -6,6 +6,7 @@
 
 #include "array_method.h"
 #include "dtype_traversal.h"
+#include "npy_pycompat.h"
 
 #ifdef __cplusplus
 extern "C" {
