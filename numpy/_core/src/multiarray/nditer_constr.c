@@ -18,6 +18,7 @@
 #include "nditer_impl.h"
 #include "arrayobject.h"
 #include "array_coercion.h"
+#include "dtypemeta.h"
 #include "templ_common.h"
 #include "array_assign.h"
 #include "dtype_traversal.h"
@@ -193,7 +194,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     /* Allocate memory for the iterator */
     iter = (NpyIter*)
-                PyObject_Malloc(NIT_SIZEOF_ITERATOR(itflags, ndim, nop));
+                PyMem_Malloc(NIT_SIZEOF_ITERATOR(itflags, ndim, nop));
     if (iter == NULL) {
         return NULL;
     }
@@ -219,7 +220,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
                         flags,
                         op_flags, op_itflags,
                         &NIT_MASKOP(iter))) {
-        PyObject_Free(iter);
+        PyMem_Free(iter);
         return NULL;
     }
     /* Set resetindex to zero as well (it's just after the resetdataptr) */
@@ -537,7 +538,7 @@ NpyIter_Copy(NpyIter *iter)
 
     /* Allocate memory for the new iterator */
     size = NIT_SIZEOF_ITERATOR(itflags, ndim, nop);
-    newiter = (NpyIter*)PyObject_Malloc(size);
+    newiter = (NpyIter*)PyMem_Malloc(size);
     if (newiter == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -572,7 +573,7 @@ NpyIter_Copy(NpyIter *iter)
                 }
                 else {
                     itemsize = dtypes[iop]->elsize;
-                    buffers[iop] = PyArray_malloc(itemsize*buffersize);
+                    buffers[iop] = PyMem_RawMalloc(itemsize*buffersize);
                     if (buffers[iop] == NULL) {
                         out_of_memory = 1;
                     }
@@ -626,13 +627,16 @@ NpyIter_Copy(NpyIter *iter)
             npyiter_goto_iterindex(newiter, NIT_ITERINDEX(newiter));
 
             /* Prepare the next buffers and set iterend/size */
-            npyiter_copy_to_buffers(newiter, NULL);
+            if (npyiter_copy_to_buffers(newiter, NULL) < 0) {
+                NpyIter_Deallocate(newiter);
+                return NULL;
+            }
         }
     }
 
     if (out_of_memory) {
-        NpyIter_Deallocate(newiter);
         PyErr_NoMemory();
+        NpyIter_Deallocate(newiter);
         return NULL;
     }
 
@@ -687,7 +691,7 @@ NpyIter_Deallocate(NpyIter *iter)
         /* buffers */
         buffers = NBF_BUFFERS(bufferdata);
         for (iop = 0; iop < nop; ++iop, ++buffers) {
-            PyArray_free(*buffers);
+            PyMem_RawFree(*buffers);
         }
 
         NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
@@ -717,7 +721,7 @@ NpyIter_Deallocate(NpyIter *iter)
     }
 
     /* Deallocate the iterator memory */
-    PyObject_Free(iter);
+    PyMem_Free(iter);
     return success;
 }
 
@@ -1423,7 +1427,7 @@ npyiter_check_reduce_ok_and_set_flags(
                     "result of a reduction");
             return 0;
         }
-        NPY_IT_DBG_PRINT("Iterator: Indicating that a reduction is"
+        NPY_IT_DBG_PRINT("Iterator: Indicating that a reduction is "
                          "occurring\n");
 
         NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
@@ -3069,6 +3073,21 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     return ret;
 }
 
+/*
+ * Replace an iterator-owned dtype when `finalize_descr` realized a different
+ * descriptor for its operand.  Other constructor changes, such as expanding a
+ * subarray dtype into the operand shape, must retain the requested dtype here.
+ */
+static inline void
+npyiter_sync_finalized_op_dtype(PyArray_Descr **op_dtype, PyArrayObject *op)
+{
+    if (*op_dtype != PyArray_DESCR(op) &&
+            NPY_DT_has_finalize(NPY_DTYPE(*op_dtype))) {
+        Py_INCREF(PyArray_DESCR(op));
+        Py_SETREF(*op_dtype, PyArray_DESCR(op));
+    }
+}
+
 static int
 npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
@@ -3211,6 +3230,8 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             op[iop] = out;
 
+            npyiter_sync_finalized_op_dtype(&op_dtype[iop], op[iop]);
+
             /*
              * Now we need to replace the pointers and strides with values
              * from the new array.
@@ -3245,6 +3266,8 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             Py_DECREF(op[iop]);
             op[iop] = temp;
+
+            npyiter_sync_finalized_op_dtype(&op_dtype[iop], op[iop]);
 
             /*
              * Now we need to replace the pointers and strides with values
@@ -3302,6 +3325,8 @@ npyiter_allocate_arrays(NpyIter *iter,
 
             Py_DECREF(op[iop]);
             op[iop] = temp;
+
+            npyiter_sync_finalized_op_dtype(&op_dtype[iop], op[iop]);
 
             /*
              * Now we need to replace the pointers and strides with values
@@ -3441,6 +3466,15 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
         }
         else {
             op_stride = strides[iop];
+        }
+
+        /*
+         * RemoveMultiIndex may coalesce a size-one inner axis, changing its
+         * zero stride.  Do not specialize for a stride that can change.
+         */
+        if ((itflags & NPY_ITFLAG_HASMULTIINDEX) &&
+                NAD_SHAPE(axisdata) == 1 && op_stride == 0) {
+            op_stride = NPY_MAX_INTP;
         }
 
         /*

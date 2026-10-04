@@ -5,6 +5,7 @@ from typing import (
     Concatenate,
     Final,
     Literal as L,
+    Never,
     SupportsIndex,
     TypeVar,
     overload,
@@ -15,6 +16,9 @@ import numpy as np
 from numpy import _CastingKind
 from numpy._globals import _NoValueType
 from numpy._typing import (
+    Array1D,
+    Array2D,
+    Array3D,
     ArrayLike,
     DTypeLike,
     NDArray,
@@ -24,6 +28,7 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
+    _ArrayLikeObject_co,
     _DTypeLike,
     _NestedSequence,
     _NumberLike_co,
@@ -80,6 +85,7 @@ __all__ = [
     "stack",
     "union1d",
     "unique",
+    "unwrap",
     "vander",
     "vstack",
 ]
@@ -87,8 +93,15 @@ __all__ = [
 type _MArray[ScalarT: np.generic] = MaskedArray[_AnyShape, np.dtype[ScalarT]]
 type _MArray1D[ScalarT: np.generic] = MaskedArray[tuple[int], np.dtype[ScalarT]]
 type _MArray2D[ScalarT: np.generic] = MaskedArray[tuple[int, int], np.dtype[ScalarT]]
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _MArray3D[ScalarT: np.generic] = MaskedArray[tuple[int, int, int], np.dtype[ScalarT]]
+type _MArray4D[ScalarT: np.generic] = MaskedArray[tuple[int, int, int, int], np.dtype[ScalarT]]
+
+# input only; keep in sync with `numpy._core.shape_base`
+type _AtLeast2D = tuple[int, int, *tuple[Any, ...]]
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
+type _To0D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()], np.dtype[ScalarT]]
+type _To1D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]
+type _To2D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]]
 
 type _IntArray = NDArray[np.intp]
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
@@ -172,22 +185,64 @@ def atleast_3d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[_MArray[Incomplete], _M
 @overload
 def atleast_3d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[_MArray[Incomplete], ...]: ...
 
-# keep in sync with `numpy._core.shape_base.vstack`
-@overload
+# keep in sync with `hstack` and `numpy._core.shape_base.vstack`
+@overload  # >=2d
+def vstack[ShapeT: _AtLeast2D, DTypeT: np.dtype](
+    tup: Sequence[np.ndarray[ShapeT, DTypeT]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
+) -> MaskedArray[ShapeT, DTypeT]: ...
+@overload  # >=2d, dtype=<known>
+def vstack[ShapeT: _AtLeast2D, ScalarT: np.generic](
+    tup: Sequence[np.ndarray[ShapeT]],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind"
+) -> MaskedArray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # >=2d, dtype=<unknown>
+def vstack[ShapeT: _AtLeast2D](
+    tup: Sequence[np.ndarray[ShapeT]],
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind"
+) -> MaskedArray[ShapeT, np.dtype[Incomplete]]: ...
+@overload  # <=2d
+def vstack[ScalarT: np.generic](
+    tup: Sequence[_To2D[ScalarT]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
+) -> _MArray2D[ScalarT]: ...
+@overload  # <=2d, dtype=<known>
+def vstack[ScalarT: np.generic](
+    tup: Sequence[_To2D[np.generic]],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind"
+) -> _MArray2D[ScalarT]: ...
+@overload  # <=2d, dtype=<unknown>
+def vstack(
+    tup: Sequence[_To2D[np.generic]],
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind"
+) -> _MArray2D[Incomplete]: ...
+@overload  # ?d
 def vstack[ScalarT: np.generic](
     tup: Sequence[_ArrayLike[ScalarT]],
     *,
     dtype: None = None,
     casting: _CastingKind = "same_kind"
 ) -> _MArray[ScalarT]: ...
-@overload
+@overload  # ?d, dtype=<known>
 def vstack[ScalarT: np.generic](
     tup: Sequence[ArrayLike],
     *,
     dtype: _DTypeLike[ScalarT],
     casting: _CastingKind = "same_kind"
 ) -> _MArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def vstack(
     tup: Sequence[ArrayLike],
     *,
@@ -197,22 +252,64 @@ def vstack(
 
 row_stack = vstack
 
-# keep in sync with `numpy._core.shape_base.hstack`
-@overload
+# keep in sync with `vstack` and `numpy._core.shape_base.hstack`
+@overload  # >=2d
+def hstack[ShapeT: _AtLeast2D, DTypeT: np.dtype](
+    tup: Sequence[np.ndarray[ShapeT, DTypeT]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
+) -> MaskedArray[ShapeT, DTypeT]: ...
+@overload  # >=2d, dtype=<known>
+def hstack[ShapeT: _AtLeast2D, ScalarT: np.generic](
+    tup: Sequence[np.ndarray[ShapeT]],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind"
+) -> MaskedArray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # >=2d, dtype=<unknown>
+def hstack[ShapeT: _AtLeast2D](
+    tup: Sequence[np.ndarray[ShapeT]],
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind"
+) -> MaskedArray[ShapeT, np.dtype[Incomplete]]: ...
+@overload  # <=1d
+def hstack[ScalarT: np.generic](
+    tup: Sequence[_To1D[ScalarT]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
+) -> _MArray1D[ScalarT]: ...
+@overload  # <=1d, dtype=<known>
+def hstack[ScalarT: np.generic](
+    tup: Sequence[_To1D[np.generic]],
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind"
+) -> _MArray1D[ScalarT]: ...
+@overload  # <=1d, dtype=<unknown>
+def hstack(
+    tup: Sequence[_To1D[np.generic]],
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind"
+) -> _MArray1D[Incomplete]: ...
+@overload  # ?d
 def hstack[ScalarT: np.generic](
     tup: Sequence[_ArrayLike[ScalarT]],
     *,
     dtype: None = None,
     casting: _CastingKind = "same_kind"
 ) -> _MArray[ScalarT]: ...
-@overload
+@overload  # ?d, dtype=<known>
 def hstack[ScalarT: np.generic](
     tup: Sequence[ArrayLike],
     *,
     dtype: _DTypeLike[ScalarT],
     casting: _CastingKind = "same_kind"
 ) -> _MArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def hstack(
     tup: Sequence[ArrayLike],
     *,
@@ -220,10 +317,16 @@ def hstack(
     casting: _CastingKind = "same_kind"
 ) -> _MArray[Incomplete]: ...
 
-# keep in sync with `numpy._core.shape_base_impl.column_stack`
-@overload
+# keep in sync with `numpy.lib._shape_base_impl.column_stack`
+@overload  # >=2d, known dtype
+def column_stack[ShapeT: _AtLeast2D, DTypeT: np.dtype](
+    tup: Sequence[np.ndarray[ShapeT, DTypeT]],
+) -> MaskedArray[ShapeT, DTypeT]: ...
+@overload  # <=2d, known dtype
+def column_stack[ScalarT: np.generic](tup: Sequence[_To2D[ScalarT]]) -> _MArray2D[ScalarT]: ...
+@overload  # ?d, known dtype
 def column_stack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> _MArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def column_stack(tup: Sequence[ArrayLike]) -> _MArray[Incomplete]: ...
 
 # keep in sync with `numpy._core.shape_base_impl.dstack`
@@ -233,7 +336,142 @@ def dstack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> _MArray[S
 def dstack(tup: Sequence[ArrayLike]) -> _MArray[Incomplete]: ...
 
 # keep in sync with `numpy._core.shape_base.stack`
-@overload
+@overload  # ?d  (workaround overload)
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_ArrayJustND[ScalarT]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
+) -> _MArray[ScalarT]: ...
+@overload  # ?d, dtype=<known>  (workaround overload)
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_ArrayJustND[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind"
+) -> _MArray[ScalarT]: ...
+@overload  # ?d, dtype=<unknown>  (workaround overload)
+def stack(
+    arrays: Sequence[_ArrayJustND[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind"
+) -> _MArray[Incomplete]: ...
+@overload  # 0d -> 1d
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_To0D[ScalarT]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
+) -> _MArray1D[ScalarT]: ...
+@overload  # 0d -> 1d, dtype=<known>
+def stack[ScalarT: np.generic](
+    arrays: Sequence[_To0D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind"
+) -> _MArray1D[ScalarT]: ...
+@overload  # 0d -> 1d, dtype=<unknown>
+def stack(
+    arrays: Sequence[_To0D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind"
+) -> _MArray1D[Incomplete]: ...
+@overload  # 1d -> 2d
+def stack[ScalarT: np.generic](
+    arrays: Sequence[Array1D[ScalarT]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
+) -> _MArray2D[ScalarT]: ...
+@overload  # 1d -> 2d, dtype=<known>
+def stack[ScalarT: np.generic](
+    arrays: Sequence[Array1D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind"
+) -> _MArray2D[ScalarT]: ...
+@overload  # 1d -> 2d, dtype=<unknown>
+def stack(
+    arrays: Sequence[Array1D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind"
+) -> _MArray2D[Incomplete]: ...
+@overload  # 2d -> 3d
+def stack[ScalarT: np.generic](
+    arrays: Sequence[Array2D[ScalarT]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
+) -> _MArray3D[ScalarT]: ...
+@overload  # 2d -> 3d, dtype=<known>
+def stack[ScalarT: np.generic](
+    arrays: Sequence[Array2D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind"
+) -> _MArray3D[ScalarT]: ...
+@overload  # 2d -> 3d, dtype=<unknown>
+def stack(
+    arrays: Sequence[Array2D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind"
+) -> _MArray3D[Incomplete]: ...
+@overload  # 3d -> 4d
+def stack[ScalarT: np.generic](
+    arrays: Sequence[Array3D[ScalarT]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
+) -> _MArray4D[ScalarT]: ...
+@overload  # 3d -> 4d, dtype=<known>
+def stack[ScalarT: np.generic](
+    arrays: Sequence[Array3D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    casting: _CastingKind = "same_kind"
+) -> _MArray4D[ScalarT]: ...
+@overload  # 3d -> 4d, dtype=<unknown>
+def stack(
+    arrays: Sequence[Array3D[np.generic]],
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: DTypeLike,
+    casting: _CastingKind = "same_kind"
+) -> _MArray4D[Incomplete]: ...
+@overload  # ?d
 def stack[ScalarT: np.generic](
     arrays: Sequence[_ArrayLike[ScalarT]],
     axis: SupportsIndex = 0,
@@ -242,7 +480,7 @@ def stack[ScalarT: np.generic](
     dtype: None = None,
     casting: _CastingKind = "same_kind"
 ) -> _MArray[ScalarT]: ...
-@overload
+@overload  # ?d, dtype=<known>
 def stack[ScalarT: np.generic](
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = 0,
@@ -251,7 +489,7 @@ def stack[ScalarT: np.generic](
     dtype: _DTypeLike[ScalarT],
     casting: _CastingKind = "same_kind"
 ) -> _MArray[ScalarT]: ...
-@overload
+@overload  # fallback
 def stack(
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = 0,
@@ -260,24 +498,24 @@ def stack(
     dtype: DTypeLike | None = None,
     casting: _CastingKind = "same_kind"
 ) -> _MArray[Incomplete]: ...
-@overload
-def stack[MArrayT: MaskedArray](
+@overload  # out=<given>  (positional)
+def stack[ShapeT: _Shape, DTypeT: np.dtype](
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex,
-    out: MArrayT,
+    out: np.ndarray[ShapeT, DTypeT],
     *,
     dtype: DTypeLike | None = None,
     casting: _CastingKind = "same_kind",
-) -> MArrayT: ...
-@overload
-def stack[MArrayT: MaskedArray](
+) -> MaskedArray[ShapeT, DTypeT]: ...
+@overload  # out=<given>  (keyword)
+def stack[ShapeT: _Shape, DTypeT: np.dtype](
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = 0,
     *,
-    out: MArrayT,
+    out: np.ndarray[ShapeT, DTypeT],
     dtype: DTypeLike | None = None,
     casting: _CastingKind = "same_kind",
-) -> MArrayT: ...
+) -> MaskedArray[ShapeT, DTypeT]: ...
 
 # keep in sync with `numpy._core.shape_base_impl.hsplit`
 @overload
@@ -292,7 +530,10 @@ def diagflat[ScalarT: np.generic](v: _ArrayLike[ScalarT], k: int = 0) -> _MArray
 def diagflat(v: ArrayLike, k: int = 0) -> _MArray[Incomplete]: ...
 
 #
-def count_masked(arr: ArrayLike, axis: SupportsIndex | None = None) -> NDArray[np.intp]: ...
+@overload
+def count_masked(arr: ArrayLike, axis: None = None) -> np.intp: ...
+@overload
+def count_masked(arr: ArrayLike, axis: SupportsIndex) -> NDArray[np.intp]: ...
 
 #
 @overload
@@ -456,26 +697,68 @@ def compress_nd(x: ArrayLike, axis: _ShapeLike | None = None) -> NDArray[Incompl
 
 #
 @overload
-def compress_rowcols[ScalarT: np.generic](x: _ArrayLike[ScalarT], axis: int | None = None) -> _Array2D[ScalarT]: ...
+def compress_rowcols[ScalarT: np.generic](x: _ArrayLike[ScalarT], axis: int | None = None) -> Array2D[ScalarT]: ...
 @overload
-def compress_rowcols(x: ArrayLike, axis: int | None = None) -> _Array2D[Incomplete]: ...
+def compress_rowcols(x: ArrayLike, axis: int | None = None) -> Array2D[Incomplete]: ...
 
 #
 @overload
-def compress_rows[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> _Array2D[ScalarT]: ...
+def compress_rows[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> Array2D[ScalarT]: ...
 @overload
-def compress_rows(a: ArrayLike) -> _Array2D[Incomplete]: ...
+def compress_rows(a: ArrayLike) -> Array2D[Incomplete]: ...
 
 #
 @overload
-def compress_cols[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> _Array2D[ScalarT]: ...
+def compress_cols[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> Array2D[ScalarT]: ...
 @overload
-def compress_cols(a: ArrayLike) -> _Array2D[Incomplete]: ...
+def compress_cols(a: ArrayLike) -> Array2D[Incomplete]: ...
 
 #
 def mask_rowcols(a: ArrayLike, axis: SupportsIndex | None = None) -> _MArray[Incomplete]: ...
 def mask_rows(a: ArrayLike, axis: _NoValueType = ...) -> _MArray[Incomplete]: ...
 def mask_cols(a: ArrayLike, axis: _NoValueType = ...) -> _MArray[Incomplete]: ...
+
+# keep in sync with `lib._function_base_impl.unwrap`
+@overload  # integer array + integer period keeps the integer dtype
+def unwrap[ScalarT: np.integer](
+    p: NDArray[ScalarT],
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: int,
+) -> _MArray[ScalarT]: ...
+@overload  # floating and object arrays keep their dtype
+def unwrap[ScalarT: np.floating | np.object_](
+    p: NDArray[ScalarT],
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: float | int = ...,  # = tau
+) -> _MArray[ScalarT]: ...
+@overload  # sequence of ints + integer period keeps the integer dtype
+def unwrap(
+    p: _ListSeqND[int],
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: int,
+) -> _MArray[np.int_]: ...
+@overload  # float64-like
+def unwrap(
+    p: _ArrayLikeFloat_co,
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: float = ...,  # = tau
+) -> _MArray[np.float64]: ...
+@overload  # fallback
+def unwrap(
+    p: _ArrayLikeFloat_co | _ArrayLikeObject_co,
+    discont: float | None = None,
+    axis: int = -1,
+    *,
+    period: float | int = ...,  # = tau
+) -> _MArray[Incomplete]: ...
 
 # keep in sync with `lib._arraysetops_impl.ediff1d`
 @overload
@@ -662,15 +945,15 @@ def ndenumerate(
 
 #
 @overload
-def flatnotmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> _Array1D[ScalarT] | None: ...
+def flatnotmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> Array1D[ScalarT] | None: ...
 @overload
-def flatnotmasked_edges(a: ArrayLike) -> _Array1D[Incomplete] | None: ...
+def flatnotmasked_edges(a: ArrayLike) -> Array1D[Incomplete] | None: ...
 
 #
 @overload
-def notmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: None = None) -> _Array1D[ScalarT] | None: ...
+def notmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: None = None) -> Array1D[ScalarT] | None: ...
 @overload
-def notmasked_edges(a: ArrayLike, axis: None = None) -> _Array1D[Incomplete] | None: ...
+def notmasked_edges(a: ArrayLike, axis: None = None) -> Array1D[Incomplete] | None: ...
 @overload
 def notmasked_edges(a: ArrayLike, axis: SupportsIndex) -> Incomplete: ...
 
@@ -690,15 +973,15 @@ def clump_masked(a: np.ndarray) -> list[slice[int, int, None]]: ...
 
 # keep in sync with `lib._twodim_base_impl.vander`
 @overload
-def vander[ScalarT: np.number | np.object_](x: _ArrayLike[ScalarT], n: int | None = None) -> _Array2D[ScalarT]: ...
+def vander[ScalarT: np.number | np.object_](x: _ArrayLike[ScalarT], n: int | None = None) -> Array2D[ScalarT]: ...
 @overload
-def vander(x: _ArrayLike[np.bool] | list[int], n: int | None = None) -> _Array2D[np.int_]: ...
+def vander(x: _ArrayLike[np.bool] | list[int], n: int | None = None) -> Array2D[np.int_]: ...
 @overload
-def vander(x: list[float], n: int | None = None) -> _Array2D[np.float64]: ...
+def vander(x: list[float], n: int | None = None) -> Array2D[np.float64]: ...
 @overload
-def vander(x: list[complex], n: int | None = None) -> _Array2D[np.complex128]: ...
+def vander(x: list[complex], n: int | None = None) -> Array2D[np.complex128]: ...
 @overload  # fallback
-def vander(x: Sequence[_NumberLike_co], n: int | None = None) -> _Array2D[Any]: ...
+def vander(x: Sequence[_NumberLike_co], n: int | None = None) -> Array2D[Any]: ...
 
 # keep roughly in sync with `lib._polynomial_impl.polyfit`
 @overload  # float dtype, cov: False (default)

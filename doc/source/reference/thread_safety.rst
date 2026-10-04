@@ -32,17 +32,73 @@ from use of the `threading` module, and instead might be better served with
 `multiprocessing`. In particular, operations on arrays with ``dtype=np.object_``
 do not release the GIL.
 
-Context-local state
+.. _context_local:
+
+Context Local State
 -------------------
 
-NumPy maintains some state for ufuncs context-local basis, which means each
-thread in a multithreaded program or task in an asyncio program has its own
-independent configuration of the `numpy.errstate` (see
-:doc:`/reference/routines.err`), and of :ref:`text_formatting_options`.
+NumPy stores user-adjustable configuration options in :py:mod:`context variables
+<python:contextvars>`. Context variables allow *context-local state*, which
+means each thread in a multithreaded program or task in an asyncio program has
+its own independent configuration. This includes the following state:
 
-You can update state stored in a context variable by entering a context manager.
-As soon as the context manager exits, the state will be reset to its value
-before entering the context manager.
+* The `numpy.errstate`, which storesl floating-point error handling configuration
+  options and the ufunc buffer size settable via `numpy.setbufsize`. See
+  :doc:`/reference/routines.err` and :ref:`use-of-internal-buffers` for
+  more details.
+* The `numpy.printoptions`  and all text-formatting configuration options.
+  See :ref:`text_formatting_options` for more details.
+* The memory allocator, see :ref:`data_memory` and :ref:`NEP 49 <NEP49>` for
+  more details.
+
+State stored in a context variable is set syntactically using the ``with``
+statement. For example, you can update the numpy printing options state like so:
+
+.. code-block:: pycon
+
+   >>> with np.printoptions(precision=2):
+   ...    np.array([2.0]) / 3
+   array([0.67])
+   >>> np.array([2.0]) / 3
+   array([0.66666667])
+
+
+This property applies to all context-local state, not just `numpy.printoptions`.
+
+Interaction with the `threading` module
++++++++++++++++++++++++++++++++++++++++
+
+Before Python 3.14, new threads always start with newly initialized context
+state. For example:
+
+.. code-block:: pycon
+
+     $ python3.12
+     >>> import numpy, threading
+     >>> def print_printoptions():
+     ...     print(numpy.get_printoptions()['precision'])
+     >>> with numpy.printoptions(precision=2):
+     ...     threading.Thread(target=print_printoptions).start()
+     8
+
+Starting in Python 3.14 a new ``thread_inherit_context`` startup configuration
+option for Python allows opting into a new behavior where context state for
+spawned threads behaves syntactically as one would expect the above code to
+behave:
+
+.. code-block:: pycon
+
+     $ python3.14 -Xthread_inherit_context=1
+     >>> import numpy, threading
+     >>> def print_printoptions():
+     ...     print(numpy.get_printoptions()['precision'])
+     >>> with numpy.printoptions(precision=2):
+     ...     threading.Thread(target=print_printoptions).start()
+     2
+
+See `the CPython documentation
+<https://docs.python.org/3/using/cmdline.html#envvar-PYTHON_THREAD_INHERIT_CONTEXT>`_
+for more details.
 
 Free-threaded Python
 --------------------
@@ -62,6 +118,9 @@ issues. In addition to the limitations about locking of the
 :class:`~numpy.ndarray` object noted above, this also means that arrays with
 ``dtype=np.object_`` are not protected by the GIL, creating data races for python
 objects that are not possible outside free-threaded python.
+
+Free-threaded Python has ``thread_inherit_context`` turned on by default
+starting in Python 3.14. See :ref:`context_local` for more information.
 
 C-API Threading Support
 -----------------------

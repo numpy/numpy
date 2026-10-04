@@ -61,9 +61,9 @@ typedef int (PyArray_ReduceLoopFunc)(PyArrayMethod_Context *context,
  * funcname    : The name of the reduction function, for error messages.
  * errormask   : forwarded from _get_bufsize_errmask
  */
-NPY_NO_EXPORT PyArrayObject *
+NPY_NO_EXPORT PyObject *
 PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
-        PyArrayObject *operand, PyArrayObject *out, PyArrayObject *wheremask,
+        PyArrayObject *operand, PyArrayObject **out, PyArrayObject *wheremask,
         npy_bool *axis_flags, int keepdims,
         PyObject *initial, PyArray_ReduceLoopFunc *loop,
         npy_intp buffersize, const char *funcname, int errormask);

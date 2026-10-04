@@ -183,7 +183,7 @@ class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     def tolist(self) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # these three methods will at least return a `2-d` array of shape (1, n)
-    def squeeze(self, /, axis: _ShapeLike | None = None) -> matrix[_2D, _DTypeT_co]: ...
+    def squeeze(self, /, axis: _ShapeLike | None = None) -> matrix[_2D, _DTypeT_co]: ...  # type: ignore[override]
     def ravel(self, /, order: L["K", "A", "C", "F"] | None = "C") -> matrix[_2D, _DTypeT_co]: ...  # type: ignore[override]
     def flatten(self, /, order: L["K", "A", "C", "F"] | None = "C") -> matrix[_2D, _DTypeT_co]: ...  # type: ignore[override]
 

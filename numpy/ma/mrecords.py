@@ -194,7 +194,7 @@ class MaskedRecords(ma.MaskedArray):
         _data = np.ndarray.view(self, _localdict['_baseclass'])
         obj = _data.getfield(*res)
         if obj.dtype.names is not None:
-            raise NotImplementedError("MaskedRecords is currently limited to"
+            raise NotImplementedError("MaskedRecords is currently limited to "
                                       "simple records.")
         # Get some special attributes
         # Reset the object's mask

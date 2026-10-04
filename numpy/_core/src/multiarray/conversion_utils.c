@@ -19,6 +19,7 @@
 #include "alloc.h"
 #include "npy_buffer.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 
 static int
@@ -227,8 +228,11 @@ PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copymode) {
 
     int int_copymode;
 
-    if ((PyObject *)Py_TYPE(obj) == npy_static_pydata._CopyMode) {
-        PyObject* mode_value = PyObject_GetAttrString(obj, "value");
+    multiarray_umath_state *state = _npy_module_state;
+
+    if ((PyObject *)Py_TYPE(obj) == state->static_pydata._CopyMode) {
+        PyObject* mode_value = PyObject_GetAttr(obj,
+                state->interned_str.value);
         if (mode_value == NULL) {
             return NPY_FAIL;
         }
@@ -262,7 +266,7 @@ PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copymode)
 {
     int int_copymode;
 
-    if ((PyObject *)Py_TYPE(obj) == npy_static_pydata._CopyMode) {
+    if ((PyObject *)Py_TYPE(obj) == _npy_module_state->static_pydata._CopyMode) {
         PyErr_SetString(PyExc_ValueError,
                         "_CopyMode enum is not allowed for astype function. "
                         "Use true/false instead.");
@@ -634,6 +638,10 @@ static int selectkind_parser(char const *str, Py_ssize_t length, void *data)
 NPY_NO_EXPORT int
 PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind)
 {
+    /* Leave the desired default from the caller for Py_None */
+    if (obj == Py_None) {
+        return NPY_SUCCEED;
+    }
     return string_converter_helper(
         obj, (void *)selectkind, selectkind_parser, "select kind",
         "must be 'introselect'");
@@ -789,6 +797,7 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
             PyErr_Format(PyExc_ValueError,
                     "integer clipmode must be RAISE, WRAP, or CLIP "
                     "from 'numpy._core.multiarray'");
+            return NPY_FAIL;
         }
     }
     return NPY_SUCCEED;
@@ -1387,7 +1396,7 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
 NPY_NO_EXPORT int
 _not_NoValue(PyObject *obj, PyObject **out)
 {
-    if (obj == npy_static_pydata._NoValue) {
+    if (obj == _npy_module_state->static_pydata._NoValue) {
         *out = NULL;
     }
     else {
@@ -1407,7 +1416,7 @@ PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device)
     }
 
     if (PyUnicode_Check(object) &&
-        PyUnicode_Compare(object, npy_interned_str.cpu) == 0) {
+        PyUnicode_Compare(object, _npy_module_state->interned_str.cpu) == 0) {
         *device = NPY_DEVICE_CPU;
         return NPY_SUCCEED;
     }

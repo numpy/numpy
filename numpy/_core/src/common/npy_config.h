@@ -65,6 +65,15 @@
 
 #endif
 
+/* Work around MSVC compiler bug, see gh-32229 */
+#if defined(_MSC_VER) && !defined(__clang__) && _MSC_VER == 1951
+
+#undef HAVE___BUILTIN_ISNAN
+#undef HAVE___BUILTIN_ISINF
+#undef HAVE___BUILTIN_ISFINITE
+
+#endif
+
 /* MSVC _hypot messes with fp precision mode on 32-bit, see gh-9567 */
 #if defined(_MSC_VER) && !defined(_WIN64)
 

@@ -61,6 +61,10 @@ assert_type(
     np.recarray,
 )
 assert_type(
+    np.rec.fromarrays(AR_LIST, names=["i8", "f8"]),
+    _RecArray,
+)
+assert_type(
     np.rec.fromarrays(
         AR_LIST,
         formats=[np.int64, np.float64],
@@ -73,7 +77,6 @@ assert_type(
     np.rec.fromrecords((1, 1.5)),
     _RecArray
 )
-
 assert_type(
     np.rec.fromrecords(
         [(1, 1.5)],
@@ -81,13 +84,16 @@ assert_type(
     ),
     _RecArray,
 )
-
 assert_type(
     np.rec.fromrecords(
         REC_AR_V,
         formats=[np.int64, np.float64],
         names=["i8", "f8"]
     ),
+    _RecArray,
+)
+assert_type(
+    np.rec.fromrecords(REC_AR_V, names=["i8", "f8"]),
     _RecArray,
 )
 

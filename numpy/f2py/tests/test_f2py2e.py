@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from numpy.f2py.f2py2e import main as f2pycli
+from numpy.f2py.f2py2e import get_newer_options, main as f2pycli
 from numpy.testing._private.utils import NOGIL_BUILD
 
 from . import util
@@ -714,13 +714,44 @@ def test_cli_obj(capfd, hello_world_f90, monkeypatch):
             assert f"'''{obj}'''" in mbld
 
 
-def test_inclpath():
+def test_inclpath(monkeypatch):
     """Add to the include directories
 
     CLI :: --include-paths
     """
-    # TODO: populate
-    pass
+    monkeypatch.setattr(os, "pathsep", ";")
+
+    include_paths, ftcompat, remain = get_newer_options(
+        ["--include-paths", r"C:\inc1"]
+    )
+
+    assert include_paths == [r"C:\inc1"]
+    assert ftcompat is None
+    assert remain == []
+
+    include_paths, ftcompat, remain = get_newer_options(
+        ["--include-paths", r"C:\inc1;D:\inc2"]
+    )
+
+    assert set(include_paths) == {r"C:\inc1", r"D:\inc2"}
+    assert ftcompat is None
+    assert remain == []
+
+    include_paths, ftcompat, remain = get_newer_options(
+        ["--include_paths", r"C:\inc1;D:\inc2"]
+    )
+
+    assert set(include_paths) == {r"C:\inc1", r"D:\inc2"}
+    assert ftcompat is None
+    assert remain == []
+
+    include_paths, ftcompat, remain = get_newer_options(
+        ["-I", r"C:\inc1;D:\inc2"]
+    )
+
+    assert include_paths == [r"C:\inc1;D:\inc2"]
+    assert ftcompat is None
+    assert remain == []
 
 
 def test_hlink():

@@ -24,13 +24,13 @@ dependencies:
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - mypy==1.20.2
+  - mypy==2.3.1
   - orjson # makes mypy faster
   # For building docs
-  - sphinx>=4.5.0
+  - sphinx>=8.0
   - sphinx-copybutton
   - sphinx-design
-  - numpydoc=1.4.0
+  - numpydoc=1.11.0
   - ipython
   - scipy
   - pandas
@@ -45,7 +45,7 @@ dependencies:
   - breathe>4.33.0
   # For linting
   - cython-lint
-  - ruff=0.15.10
+  - ruff==0.16.6
   - gitpython
   # Used in some tests
   - cffi

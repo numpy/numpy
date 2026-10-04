@@ -1,5 +1,0 @@
-``numpy.ma`` typing annotations
--------------------------------
-The ``numpy.ma`` module is now fully covered by typing annotations.
-This includes annotations for masked arrays, masks, and various functions and methods.
-With this, NumPy has achieved 100% typing coverage across all its submodules.

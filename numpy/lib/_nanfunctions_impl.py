@@ -229,6 +229,11 @@ def _divide_by_count(a, b, out=None):
     with np.errstate(invalid='ignore', divide='ignore'):
         if isinstance(a, np.ndarray):
             if out is None:
+                # `a` is normally a temporary we can divide into, but
+                # some reductions return a read-only result (gh-29117).
+                # Allocate then, keeping the dtype the in-place divide gives.
+                if not a.flags.writeable:
+                    return np.divide(a, b, dtype=a.dtype, casting='unsafe')
                 return np.divide(a, b, out=a, casting='unsafe')
             else:
                 return np.divide(a, b, out=out, casting='unsafe')
@@ -751,7 +756,7 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         the product of the flattened array.
     dtype : data-type, optional
         The type of the returned array and of the accumulator in which the
-        elements are summed.  By default, the dtype of `a` is used.  An
+        elements are multiplied.  By default, the dtype of `a` is used.  An
         exception is when `a` has an integer type with less precision than
         the platform (u)intp. In that case, the default will be either
         (u)int32 or (u)int64 depending on whether the platform is 32 or 64
@@ -1163,10 +1168,9 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     Returns
     -------
     median : ndarray
-        A new array holding the result. If the input contains integers
-        or floats smaller than ``float64``, then the output data-type is
-        ``np.float64``.  Otherwise, the data-type of the output is the
-        same as that of the input. If `out` is specified, that array is
+        A new array holding the result. If the input contains integers,
+        the output data-type is ``float64``. Otherwise, the output data-type
+        is the same as that of the input. If `out` is specified, that array is
         returned instead.
 
     See Also
@@ -1319,10 +1323,9 @@ def nanpercentile(
         is a scalar. If multiple percentiles are given, first axis of
         the result corresponds to the percentiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out` is
+        specified, that array is returned instead.
 
     See Also
     --------
@@ -1496,15 +1499,14 @@ def nanquantile(
         is a scalar. If multiple probability levels are given, first axis of
         the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out` is specified,
+        that array is returned instead.
 
     See Also
     --------
     quantile
-    nanmean, nanmedian
+    nanmean
     nanmedian : equivalent to ``nanquantile(..., 0.5)``
     nanpercentile : same as nanquantile, but with q in the range [0, 100].
 
@@ -1998,7 +2000,9 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
                  keepdims=keepdims, where=where, mean=mean,
                  correction=correction)
     if isinstance(var, np.ndarray):
-        std = np.sqrt(var, out=var)
+        # Take the square root in place, unless `var` came back read-only
+        # (gh-29117), in which case we have to allocate.
+        std = np.sqrt(var, out=var if var.flags.writeable else None)
     elif hasattr(var, 'dtype'):
         std = var.dtype.type(np.sqrt(var))
     else:

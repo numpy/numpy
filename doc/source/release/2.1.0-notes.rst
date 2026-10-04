@@ -4,6 +4,8 @@
 NumPy 2.1.0 Release Notes
 =========================
 
+*Released on 2024-08-18.*
+
 NumPy 2.1.0 provides support for the upcoming Python 3.13 release and drops
 support for Python 3.9. In addition to the usual bug fixes and updated Python
 support, it helps get us back into our usual release cycle after the extended

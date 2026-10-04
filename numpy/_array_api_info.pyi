@@ -10,6 +10,7 @@ _Capabilities = TypedDict(
     {
         "boolean indexing": Literal[True],
         "data-dependent shapes": Literal[True],
+        "max dimensions": Literal[64],
     },
 )
 

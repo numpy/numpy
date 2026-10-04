@@ -129,7 +129,11 @@ Functions
        The *func*, *data*, *types*, *name*, and *doc* arguments are not
        copied by :c:func:`PyUFunc_FromFuncAndData`. The caller must ensure
        that the memory used by these arrays is not freed as long as the
-       ufunc object is alive.
+       ufunc object is alive. The contents of *func* and *data* should be
+       considered fixed once the ufunc has been used: since NumPy 2.6 the
+       selected inner loop is cached, so modifying these arrays in place may
+       not take effect. Use :c:func:`PyUFunc_ReplaceLoopBySignature` to
+       replace a loop after the ufunc has been created.
 
     :param func:
         Must point to an array containing *ntypes*

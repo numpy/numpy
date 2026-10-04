@@ -23,7 +23,7 @@ jobs:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
           fetch-tags: true
@@ -54,7 +54,7 @@ jobs:
           dash -c "which python3.9; /usr/bin/python3.9 --version -V"
       - name: Build NumPy wheel
         run: |
-          dash -c "/usr/bin/python3.9 -m pip install build pytest hypothesis pytest-xdist Cython meson"
+          dash -c "/usr/bin/python3.9 -m pip install build pytest pytest-xdist Cython meson"
           dash -c "/usr/bin/python3.9 -m build . --wheel -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack -Csetup-args=-Dcpu-dispatch=none -Csetup-args=-Dcpu-baseline=native"
       - name: Install NumPy from wheel
         run: |

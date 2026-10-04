@@ -14,15 +14,6 @@ the two below:
 
 .. _typing-extensions: https://pypi.org/project/typing-extensions/
 
-Mypy plugin
------------
-
-.. versionadded:: 1.21
-
-.. automodule:: numpy.typing.mypy_plugin
-
-.. currentmodule:: numpy.typing
-
 Differences from the runtime NumPy API
 --------------------------------------
 
@@ -181,9 +172,29 @@ The `numpy.ndarray` class is a `generic type`_ that accepts two type arguments:
 
 # pyright: reportDeprecated=false
 
-from numpy._typing import ArrayLike, DTypeLike, NBitBase, NDArray
+from numpy._typing import (  # type: ignore[deprecated]
+    Array0D,
+    Array1D,
+    Array2D,
+    Array3D,
+    Array4D,
+    ArrayLike,
+    DTypeLike,
+    NBitBase,
+    NDArray,
+)
 
-__all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
+__all__ = [
+    "Array0D",
+    "Array1D",
+    "Array2D",
+    "Array3D",
+    "Array4D",
+    "ArrayLike",
+    "DTypeLike",
+    "NBitBase",
+    "NDArray",
+]
 
 
 __DIR = __all__ + [k for k in globals() if k.startswith("__") and k.endswith("__")]

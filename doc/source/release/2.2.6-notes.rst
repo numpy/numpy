@@ -4,6 +4,8 @@
 NumPy 2.2.6 Release Notes
 ==========================
 
+*Released on 2025-05-17.*
+
 NumPy 2.2.6 is a patch release that fixes bugs found after the 2.2.5 release.
 It is a mix of typing fixes/improvements as well as the normal bug
 fixes and some CI maintenance.

@@ -3,7 +3,7 @@
 
 #include "npstd.hpp"
 
-#include <fenv.h>
+#include "npy_fenv.h"
 
 namespace np {
 

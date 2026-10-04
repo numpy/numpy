@@ -1,4 +1,7 @@
+from typing import Final
 from unittest import TestCase
+
+from numpy._pytesttester import PytestTester
 
 from . import _private as _private, overrides
 from ._private import extbuild as extbuild
@@ -6,9 +9,11 @@ from ._private.utils import (  # type: ignore[deprecated]
     BLAS_SUPPORTS_FPE,
     HAS_LAPACK64,
     HAS_REFCOUNT,
+    HAS_SUBPROCESSES,
     IS_64BIT,
     IS_EDITABLE,
     IS_INSTALLED,
+    IS_IOS,
     IS_MUSL,
     IS_PYPY,
     IS_PYSTON,
@@ -57,9 +62,11 @@ __all__ = [
     "BLAS_SUPPORTS_FPE",
     "HAS_LAPACK64",
     "HAS_REFCOUNT",
+    "HAS_SUBPROCESSES",
     "IS_64BIT",
     "IS_EDITABLE",
     "IS_INSTALLED",
+    "IS_IOS",
     "IS_MUSL",
     "IS_PYPY",
     "IS_PYSTON",
@@ -105,3 +112,5 @@ __all__ = [
     "temppath",
     "verbose",
 ]
+
+test: Final[PytestTester] = ...

@@ -742,10 +742,10 @@ class IndexExpression:
     See Also
     --------
     s_ : Predefined instance without tuple conversion:
-       `s_ = IndexExpression(maketuple=False)`.
+       ``s_ = IndexExpression(maketuple=False)``.
        The ``index_exp`` is another predefined instance that
        always returns a tuple:
-       `index_exp = IndexExpression(maketuple=True)`.
+       ``index_exp = IndexExpression(maketuple=True)``.
 
     Notes
     -----

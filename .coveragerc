@@ -1,4 +1,18 @@
 [run]
 branch = True
 include = */numpy/*
+omit =
+    */tests/*
+    */numpy/conftest.py
 disable_warnings = include-ignored
+parallel = True
+patch = subprocess
+concurrency =
+    multiprocessing
+    thread
+
+[paths]
+source =
+    numpy/
+    */numpy/
+    */site-packages/numpy/

@@ -89,6 +89,7 @@ foreach gen: random_pyx_sources
     install: true,
     subdir: 'numpy/random',
     cython_args: cython_args,
+    limited_api: py_limited_api,
   )
 endforeach
 

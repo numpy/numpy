@@ -119,7 +119,10 @@ def docs(*, parent_callback, **kwargs):
     # Run towncrier without staging anything for commit. This is the way to get
     # release notes snippets included in a local doc build.
     cmd = ['towncrier', 'build', '--version', '2.x.y', '--keep', '--draft']
-    p = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    p = subprocess.run(cmd, check=True, capture_output=True, text=True,
+                       encoding="utf-8", env=env)
     outfile = curdir.parent / 'doc' / 'source' / 'release' / 'notes-towncrier.rst'
     with open(outfile, 'w') as f:
         f.write(p.stdout)
@@ -168,6 +171,11 @@ def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **k
 
     if parallel_threads != "1":
         pytest_args = ('--parallel-threads', parallel_threads) + pytest_args
+
+    if kwargs.get('coverage'):
+        coveragerc = curdir.parent / '.coveragerc'
+        pytest_args = (f'--cov-config={coveragerc}',) + pytest_args
+        os.environ['COVERAGE_FILE'] = str(curdir.parent / '.coverage')
 
     kwargs['pytest_args'] = pytest_args
     parent_callback(**{'pytest_args': pytest_args, 'tests': tests, **kwargs})
@@ -398,7 +406,7 @@ def lint(ctx, fix):
 )
 @click.option(
     '--cpu-affinity', default=None, multiple=False,
-    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3."
+    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3. "
          "Default: not set"
 )
 @click.argument(

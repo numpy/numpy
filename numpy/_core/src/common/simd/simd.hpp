@@ -17,7 +17,8 @@
  * When NPY_DISABLE_OPTIMIZATION is defined, SIMD operations are disabled
  * and the code falls back to scalar implementations.
  */
-#ifndef NPY_DISABLE_OPTIMIZATION
+
+#if !defined(NPY_DISABLE_OPTIMIZATION) && !defined(NPY_DISABLE_HIGHWAY)
 #include <hwy/highway.h>
 
 /**

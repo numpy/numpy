@@ -339,7 +339,7 @@ Each of these signatures is associated with a single inner-loop function defined
 in C, which does the actual calculation, and may be called multiple times.
 
 The main step in finding the correct inner-loop function is to call a
-:c:type:`PyUFunc_TypeResolutionFunc` which retrieves the input dtypes from
+:c:type:`PyUFuncObject.type_resolver.PyUFunc_TypeResolutionFunc` which retrieves the input dtypes from
 the provided input arrays
 and will determine the full type signature (including output dtype) to be executed.
 

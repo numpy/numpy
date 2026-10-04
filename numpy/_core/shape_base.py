@@ -238,8 +238,7 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
         each element along the zeroth axis is treated as a separate array.
 
     dtype : str or dtype
-        If provided, the destination array will have this dtype. Cannot be
-        provided together with `out`.
+        If provided, the destination array will have this dtype.
 
         .. versionadded:: 1.24
 
@@ -313,8 +312,7 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
         each element along the zeroth axis is treated as a separate array.
 
     dtype : str or dtype
-        If provided, the destination array will have this dtype. Cannot be
-        provided together with `out`.
+        If provided, the destination array will have this dtype.
 
         .. versionadded:: 1.24
 

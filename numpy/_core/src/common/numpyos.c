@@ -14,8 +14,11 @@
 #if defined(HAVE_STRTOLD_L) && !defined(_GNU_SOURCE)
 # define _GNU_SOURCE
 #endif
+#include <ctype.h>
+#include <errno.h>
 #include <locale.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_STRTOLD_L
 #include <stdlib.h>
@@ -591,7 +594,14 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
     if (clocale) {
         errno = 0;
         result = strtold_l(s, endptr, clocale);
+        /*
+         * On some platforms (e.g. Darwin/iOS), successful freelocale can set errno.
+         * We're interested in the strtold_l failure; so save the errno
+         * after that call, and restore after freelocale(). See gh-32124.
+         */
+        int saved_errno = errno;
         freelocale(clocale);
+        errno = saved_errno;
     }
     else {
         if (endptr != NULL) {

@@ -1,0 +1,4 @@
+``f2py`` allocatable character arrays now work correctly
+--------------------------------------------------------
+Allocatable character arrays in ``f2py``-wrapped Fortran 90 modules no longer
+raise ``ValueError`` when accessed after allocation.

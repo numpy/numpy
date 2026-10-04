@@ -18,7 +18,6 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
 
 import functools
 import operator
-import warnings
 from typing import Any, NamedTuple
 
 from numpy._core import (
@@ -917,7 +916,7 @@ def outer(x1, x2, /):
     out : (M, N) ndarray
         ``out[i, j] = a[i] * b[j]``
 
-    See also
+    See Also
     --------
     outer
 
@@ -993,15 +992,8 @@ def qr(a, mode='reduced'):
         * 'r'        : returns R only with dimensions (..., K, N)
         * 'raw'      : returns h, tau with dimensions (..., N, M), (..., K,)
 
-        The options 'reduced', 'complete, and 'raw' are new in numpy 1.8,
-        see the notes for more information. The default is 'reduced', and to
-        maintain backward compatibility with earlier versions of numpy both
-        it and the old default 'full' can be omitted. Note that array h
-        returned in 'raw' mode is transposed for calling Fortran. The
-        'economic' mode is deprecated.  The modes 'full' and 'economic' may
-        be passed using only the first letter for backwards compatibility,
-        but all others must be spelled out. See the Notes for more
-        explanation.
+        The default is 'reduced'. Note that array h returned in 'raw' mode
+        is transposed for calling Fortran. See the Notes for more explanation.
 
 
     Returns
@@ -1020,7 +1012,7 @@ def qr(a, mode='reduced'):
     (h, tau) : ndarrays of np.double or np.cdouble, optional
         The array h contains the Householder reflectors that generate q
         along with r. The tau array contains scaling factors for the
-        reflectors. In the deprecated  'economic' mode only h is returned.
+        reflectors.
 
     Raises
     ------
@@ -1045,12 +1037,6 @@ def qr(a, mode='reduced'):
 
     Subclasses of `ndarray` are preserved except for the 'raw' mode. So if
     `a` is of type `matrix`, all the return values will be matrices too.
-
-    New 'reduced', 'complete', and 'raw' options for mode were added in
-    NumPy 1.8.0 and the old option 'full' was made an alias of 'reduced'.  In
-    addition the options 'full' and 'economic' were deprecated.  Because
-    'full' was the previous default and 'reduced' is the new default,
-    backward compatibility can be maintained by letting `mode` default.
     The 'raw' option was added so that LAPACK routines that can multiply
     arrays by q using the Householder reflectors can be used. Note that in
     this case the returned arrays are of type np.double or np.cdouble and
@@ -1067,7 +1053,7 @@ def qr(a, mode='reduced'):
     >>> np.allclose(a, np.dot(Q, R))  # a does equal QR
     True
     >>> R2 = np.linalg.qr(a, mode='r')
-    >>> np.allclose(R, R2)  # mode='r' returns the same R as mode='full'
+    >>> np.allclose(R, R2)  # mode='r' returns the same R as mode='reduced'
     True
     >>> a = np.random.normal(size=(3, 2, 2)) # Stack of 2 x 2 matrices as input
     >>> Q, R = np.linalg.qr(a)
@@ -1108,19 +1094,12 @@ def qr(a, mode='reduced'):
 
     """
     if mode not in ('reduced', 'complete', 'r', 'raw'):
-        if mode in ('f', 'full'):
-            # 2013-04-01, 1.8
-            msg = (
-                "The 'full' option is deprecated in favor of 'reduced'.\n"
-                "For backward compatibility let mode default."
+        if mode in ('f', 'full', 'e', 'economic'):
+            raise ValueError(
+                f"The '{mode}' option was deprecated in NumPy 1.8 and has been "
+                f"removed. Use 'reduced' instead of 'full'/'f', and 'raw' instead "
+                f"of 'economic'/'e'."
             )
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-            mode = 'reduced'
-        elif mode in ('e', 'economic'):
-            # 2013-04-01, 1.8
-            msg = "The 'economic' option is deprecated."
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
-            mode = 'economic'
         else:
             raise ValueError(f"Unrecognized mode '{mode}'")
 
@@ -1148,10 +1127,6 @@ def qr(a, mode='reduced'):
         q = q.astype(result_t, copy=False)
         tau = tau.astype(result_t, copy=False)
         return wrap(q), tau
-
-    if mode == 'economic':
-        a = a.astype(result_t, copy=False)
-        return wrap(a)
 
     # mc is the number of columns in the resulting q
     # matrix. If the mode is complete then it is
@@ -1381,10 +1356,9 @@ def eig(a):
     eigenvalues : (..., M) array
         The eigenvalues, each repeated according to its multiplicity.
         The eigenvalues are not necessarily ordered. The resulting
-        array will be of complex type, unless the imaginary part is
-        zero in which case it will be cast to a real type. When `a`
-        is real the resulting eigenvalues will be real (0 imaginary
-        part) or occur in conjugate pairs
+        array will be of complex type. When `a` is real the resulting
+        eigenvalues will be real (0 imaginary part) or occur in
+        conjugate pairs.
 
     eigenvectors : (..., M, M) array
         The normalized (unit "length") eigenvectors, such that the
@@ -1906,6 +1880,16 @@ def svdvals(x, /):
     return svd(x, compute_uv=False, hermitian=False)
 
 
+def _cond_svdvals(x):
+    # like svd(x, compute_uv=False), but nan instead of an error for
+    # non-finite input (gh-32591)
+    t, result_t = _commonType(x)
+    signature = 'D->d' if isComplexType(t) else 'd->d'
+    with errstate(all='ignore'):
+        s = _umath_linalg.svd(x, signature=signature)
+    return s.astype(_realType(result_t), copy=False)
+
+
 def _cond_dispatcher(x, p=None):
     return (x,)
 
@@ -1923,7 +1907,7 @@ def cond(x, p=None):
     ----------
     x : (..., M, N) array_like
         The matrix whose condition number is sought.
-    p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
+    p : {None, 1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
         Order of the norm used in the condition number computation:
 
         =====  ============================
@@ -1931,6 +1915,7 @@ def cond(x, p=None):
         =====  ============================
         None   2-norm, computed directly using the ``SVD``
         'fro'  Frobenius norm
+        'nuc'  nuclear norm
         inf    max(sum(abs(x), axis=1))
         -inf   min(sum(abs(x), axis=1))
         1      max(sum(abs(x), axis=0))
@@ -1996,7 +1981,8 @@ def cond(x, p=None):
     if _is_empty_2d(x):
         raise LinAlgError("cond is not defined on empty arrays")
     if p is None or p in {2, -2}:
-        s = svd(x, compute_uv=False)
+        _assert_stacked_2d(x)
+        s = _cond_svdvals(x)
         with errstate(all='ignore'):
             if p == -2:
                 r = s[..., -1] / s[..., 0]
@@ -2011,7 +1997,12 @@ def cond(x, p=None):
         signature = 'D->D' if isComplexType(t) else 'd->d'
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)
-            r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
+            if p == 'nuc':
+                # norm() would raise for the nans of a failed inversion
+                r = (sum(_cond_svdvals(x), axis=-1, initial=0)
+                     * sum(_cond_svdvals(invx), axis=-1, initial=0))
+            else:
+                r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
         r = r.astype(result_t, copy=False)
 
     # Convert nans to infs unless the original array had nan entries
@@ -2238,7 +2229,8 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
         if rtol is _NoValue:
             rcond = 1e-15
         elif rtol is None:
-            rcond = max(a.shape[-2:]) * finfo(a.dtype).eps
+            result_t = _commonType(a)[1] if a.dtype.kind in "biu" else a.dtype
+            rcond = max(a.shape[-2:]) * finfo(result_t).eps
         else:
             rcond = rtol
     elif rtol is not _NoValue:
@@ -2250,7 +2242,8 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
     rcond = asarray(rcond)
     if _is_empty_2d(a):
         m, n = a.shape[-2:]
-        res = empty(a.shape[:-2] + (n, m), dtype=a.dtype)
+        result_t = _commonType(a)[1] if a.dtype.kind in "biu" else a.dtype
+        res = empty(a.shape[:-2] + (n, m), dtype=result_t)
         return wrap(res)
     a = a.conjugate()
     u, s, vt = svd(a, full_matrices=False, hermitian=hermitian)
@@ -2467,7 +2460,6 @@ def lstsq(a, b, rcond=None):
     Raises
     ------
     LinAlgError
-        If computation does not converge.
 
     See Also
     --------
@@ -3400,13 +3392,14 @@ def matmul(x1, x2, /):
 
 # tensordot
 
-def _tensordot_dispatcher(x1, x2, /, *, axes=None):
-    return (x1, x2)
+
+def _tensordot_dispatcher(a, b, /, *, axes=None):
+    return (a, b)
 
 
 @array_function_dispatch(_tensordot_dispatcher)
-def tensordot(x1, x2, /, *, axes=2):
-    return _core_tensordot(x1, x2, axes=axes)
+def tensordot(a, b, /, *, axes=2):
+    return _core_tensordot(a, b, axes=axes)
 
 
 tensordot.__doc__ = _core_tensordot.__doc__

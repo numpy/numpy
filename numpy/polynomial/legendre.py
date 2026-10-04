@@ -75,7 +75,7 @@ Misc Functions
    leg2poly
    poly2leg
 
-See also
+See Also
 --------
 numpy.polynomial
 

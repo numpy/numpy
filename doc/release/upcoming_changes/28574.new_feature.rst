@@ -1,0 +1,6 @@
+Recognize ISO Fortran Environment kinds in F2Py
+-----------------------------------------------
+
+This adds the ``int16``, ``int32``, and ``int64`` integer kinds and
+the ``real32`` and ``real64`` real kinds from the ISO Fortran
+Environment module to F2Py.

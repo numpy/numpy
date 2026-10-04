@@ -458,6 +458,7 @@ _check_compatibility_with_new_dtype(
     PyArrayObject *self, PyArray_Descr *type,
     int *newnd, npy_intp **newdims, npy_intp **newstrides)
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyArray_Descr *dtype = PyArray_DESCR(self);
     int nd = PyArray_NDIM(self);
 
@@ -465,11 +466,11 @@ _check_compatibility_with_new_dtype(
     if (_may_have_objects(dtype) || _may_have_objects(type)) {
         if (npy_cache_import_runtime(
                 "numpy._core._internal", "_view_is_safe",
-                &npy_runtime_imports._view_is_safe) == -1) {
+                &state->runtime_imports._view_is_safe) == -1) {
             return NULL;
         }
         PyObject *safe = PyObject_CallFunctionObjArgs(
-                npy_runtime_imports._view_is_safe, dtype, type, NULL);
+                state->runtime_imports._view_is_safe, dtype, type, NULL);
         if (safe == NULL) {
             return NULL;
         }

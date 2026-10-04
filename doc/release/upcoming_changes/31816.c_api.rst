@@ -1,0 +1,6 @@
+New mechanism to register reduction loops to ufuncs for multi-output reductions
+-------------------------------------------------------------------------------
+Ufuncs with more than one output can now support :meth:`~numpy.ufunc.reduce`
+by registering a dedicated reduction loop (and, optionally, per-output
+identities) on their ``ArrayMethod``. The reduction returns one array per
+output. See :ref:`c-api.reduction-loop-tutorial` for a worked example.

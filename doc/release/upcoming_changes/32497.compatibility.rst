@@ -1,0 +1,10 @@
+Python scalar promotion and casting
+-----------------------------------
+
+- `numpy.concatenate` with ``axis=None`` and `numpy.choose` now raise
+  ``OverflowError`` for Python integers outside the result dtype's range,
+  instead of wrapping.
+- Ufuncs, `numpy.copyto`, and `numpy.concatenate` now enforce the same Python
+  scalar restrictions for ``casting="no"`` as for ``casting="equiv"``.
+
+See :ref:`arrays.promotion.python-scalar-casting` for the detailed rules.

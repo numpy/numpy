@@ -18,6 +18,10 @@ import numpy as np
 from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
 from numpy.lib.stride_tricks import as_strided
 from numpy.testing import assert_array_equal, assert_equal
+from numpy.testing.print_coercion_tables import (
+    print_cancast_table,
+    print_new_cast_table,
+)
 
 # Simple skips object, parametric and long double (unsupported by struct)
 simple_dtypes = "?bhilqBHILQefdFD"
@@ -28,12 +32,14 @@ simple_dtypes = [type(np.dtype(c)) for c in simple_dtypes]
 
 
 def simple_dtype_instances():
+    params = []
     for dtype_class in simple_dtypes:
         dt = dtype_class()
-        yield pytest.param(dt, id=str(dt))
+        params.append(pytest.param(dt, id=str(dt)))
         if dt.byteorder != "|":
             dt = dt.newbyteorder()
-            yield pytest.param(dt, id=str(dt))
+            params.append(pytest.param(dt, id=str(dt)))
+    return params
 
 
 def get_expected_stringlength(dtype):
@@ -687,11 +693,11 @@ class TestCasting:
             assert data2.copy()[()] == element
 
     def test_void_to_string_special_case(self):
-        # Cover a small special case in void to string casting that could
-        # probably just as well be turned into an error (compare
-        # `test_object_to_parametric_internal_error` below).
-        assert np.array([], dtype="V5").astype("S").dtype.itemsize == 5
-        assert np.array([], dtype="V5").astype("U").dtype.itemsize == 4 * 5
+        # These used to succeed for empty arrays, but now we reject them:
+        with pytest.raises(TypeError, match="cannot cast"):
+            np.array([], dtype="V5").astype("S")  # was S5
+        with pytest.raises(TypeError, match="cannot cast"):
+            np.array([], dtype="V5").astype("U")  # was U5
 
     def test_object_to_parametric_internal_error(self):
         # We reject casting from object to a parametric type, without
@@ -966,3 +972,10 @@ class TestCasting:
         f = np.array(123, dtype=np.float64)
         assert i.astype(np.float64, casting='same_value') == f
         assert f.astype(np.int64, casting='same_value') == f
+
+
+def test_print_new_cast_table(capsys):
+    # print_cancast_table first: it registers casts with an error-code level.
+    print_cancast_table(np.typecodes['All'])
+    print_new_cast_table(can_cast=True, legacy=True, flags=True)
+    assert capsys.readouterr().out

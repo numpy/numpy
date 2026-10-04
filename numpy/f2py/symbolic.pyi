@@ -1,6 +1,6 @@
 from collections.abc import Callable, Mapping
 from enum import Enum
-from typing import Any, Generic, Literal as L, Self, overload
+from typing import Any, Generic, Literal as L, Self, overload, override
 from typing_extensions import TypeVar
 
 __all__ = ["Expr"]
@@ -102,6 +102,10 @@ class Expr(Generic[_OpT_co, _DataT_co]):
 
     #
     def __init__(self, /, op: Op, data: _DataT_co) -> None: ...
+
+    #
+    @override
+    def __eq__(self, other: object, /) -> bool: ...
 
     #
     def __lt__(self, other: Expr, /) -> bool: ...

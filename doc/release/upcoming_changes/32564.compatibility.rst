@@ -1,0 +1,9 @@
+StringDType NaN-like inequality comparisons
+-------------------------------------------
+Inequality comparisons involving a NaN-like ``StringDType`` missing value now
+return ``True``, matching floating-point NaN behavior. Previously, both equality
+and inequality returned ``False``. Equality and ordered comparisons still
+return ``False`` for NaN-like missing values.
+
+Filtering with ``arr[arr != "excluded"]`` therefore retains NaN-like missing
+values. To exclude them, use ``arr[(~np.isnan(arr)) & (arr != "excluded")]``.

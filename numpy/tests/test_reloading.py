@@ -1,5 +1,4 @@
 import pickle
-import subprocess
 import sys
 import textwrap
 from importlib import reload
@@ -7,7 +6,8 @@ from importlib import reload
 import pytest
 
 import numpy.exceptions as ex
-from numpy.testing import IS_WASM, assert_, assert_equal, assert_raises
+from numpy.testing import HAS_SUBPROCESSES, assert_, assert_equal, assert_raises
+from numpy.testing._private.utils import run_subprocess
 
 
 @pytest.mark.thread_unsafe(reason="reloads global module")
@@ -41,7 +41,7 @@ def test_novalue():
                                           protocol=proto)) is np._NoValue)
 
 
-@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 def test_full_reimport():
     # Reimporting numpy like this is not safe due to use of global C state,
     # and has unexpected side effects. Test that an ImportError is raised.
@@ -66,11 +66,4 @@ def test_full_reimport():
         else:
             raise SystemExit("DID NOT RAISE ImportError")
         """)
-    p = subprocess.run(
-        (sys.executable, '-c', code),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        encoding='utf-8',
-        check=False,
-    )
-    assert p.returncode == 0, p.stdout
+    run_subprocess((sys.executable, '-c', code))

@@ -645,7 +645,7 @@ encouraged to use the ndarray class directly if you can.
 .. autosummary::
    :toctree: generated/
 
-   numpy.lib.user_array.container
+   lib.user_array.container
 
 .. index::
    single: user_array

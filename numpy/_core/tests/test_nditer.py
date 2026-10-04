@@ -12,8 +12,8 @@ import numpy._core.umath as ncu
 from numpy import all, arange, array, nditer
 from numpy.testing import (
     HAS_REFCOUNT,
+    HAS_SUBPROCESSES,
     IS_64BIT,
-    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -851,6 +851,12 @@ def test_iter_flags_errors():
     assert_raises(ValueError, nditer, [a], ['bad flag'], [['readonly']])
     # Bad op flag
     assert_raises(ValueError, nditer, [a], [], [['readonly', 'bad flag']])
+    # Non-ASCII global flag
+    assert_raises(ValueError, nditer, [a], ['☃'], [['readonly']])
+    # Non-ASCII op flag
+    assert_raises(ValueError, nditer, [a], [], [['readonly', '☃']])
+    # Non-string flag
+    assert_raises(ValueError, nditer, [a], [], [['readonly', 3]])
     # Bad order parameter
     assert_raises(ValueError, nditer, [a], [], [['readonly']], order='G')
     # Bad casting parameter
@@ -914,6 +920,14 @@ def test_iter_flags_errors():
     assert_raises(ValueError, assign_iterrange, i)
     # Can't iterate if size is zero
     assert_raises(ValueError, nditer, np.array([]))
+
+def test_iter_bytes_flags():
+    # bytes flags are accepted for backwards compatibility
+    a = arange(6)
+    i = nditer(a, [b'buffered'], [['readonly']])
+    assert_equal([int(x) for x in i], [0, 1, 2, 3, 4, 5])
+    i = nditer(a, [], [[b'readonly']])
+    assert_equal([int(x) for x in i], [0, 1, 2, 3, 4, 5])
 
 def test_iter_slice():
     a, b, c = np.arange(3), np.arange(3), np.arange(3.)
@@ -1531,12 +1545,17 @@ def test_iter_copy():
 @pytest.mark.parametrize("loop_dtype", np.typecodes["All"])
 @pytest.mark.filterwarnings(
     "ignore::numpy.exceptions.ComplexWarning",
-    "ignore::DeprecationWarning",
 )
 def test_iter_copy_casts(dtype, loop_dtype):
-    # Ensure the dtype is never flexible:
+    if dtype.lower() == "m":
+        dtype = dtype + "8[D]"
+
+    is_datetimelike = False
     if loop_dtype.lower() == "m":
-        loop_dtype = loop_dtype + "[ms]"
+        loop_dtype = loop_dtype + "8[ms]"
+        is_datetimelike = True
+
+    # Ensure the dtype is never flexible:
     elif np.dtype(loop_dtype).itemsize == 0:
         loop_dtype = loop_dtype + "50"
 
@@ -1545,13 +1564,13 @@ def test_iter_copy_casts(dtype, loop_dtype):
     try:
         expected = arr.astype(loop_dtype)
     except Exception:
-        # Some casts are not possible, do not worry about them
+        pytest.xfail(reason=f"{dtype} -> {loop_dtype} cast intentionally skipped")
         return
 
     it = np.nditer((arr,), ["buffered", "external_loop", "refs_ok"],
                    op_dtypes=[loop_dtype], casting="unsafe")
 
-    if np.issubdtype(np.dtype(loop_dtype), np.number):
+    if np.issubdtype(np.dtype(loop_dtype), np.number) and not is_datetimelike:
         # Casting to strings may be strange, but for simple dtypes do not rely
         # on the cast being correct:
         assert_array_equal(expected, np.ones(1000, dtype=loop_dtype))
@@ -1848,6 +1867,18 @@ def test_iter_remove_multi_index_inner_loop():
     assert_equal(i.itersize, 24)
     assert_equal(i[0].shape, (24,))
     assert_equal(i.value, arange(24))
+
+
+def test_iter_remove_multi_index_buffered():
+    a = arange(10).reshape(10, 1)
+    i = nditer(a, ["buffered", "multi_index"], buffersize=5)
+
+    i.remove_multi_index()
+    i.enable_external_loop()
+
+    assert_equal(i.ndim, 1)
+    assert_array_equal(np.concatenate([chunk.copy() for chunk in i]), a.ravel())
+
 
 def test_iter_iterindex():
     # Make sure iterindex works
@@ -2207,7 +2238,7 @@ def test_buffered_cast_error_paths():
             buf = next(it)
             buf[...] = "a"  # cannot be converted to int.
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 def test_buffered_cast_error_paths_unraisable():
     # The following gives an unraisable error. Pytest sometimes captures that
     # (depending python and/or pytest version). So with Python>=3.8 this can
@@ -2601,6 +2632,221 @@ def test_iter_buffered_reduce_reuse_core():
     result = [next(it) for i in range(10)]
 
     assert expected[1:] == result
+
+
+@pytest.mark.parametrize("bufsize", [32, 128, 8192])
+@pytest.mark.parametrize("trailing", [1, 3, 7, 50])
+@pytest.mark.parametrize("dtype", ["f4", "f8", "i8", "c16"])
+def test_iter_buffered_broadcast_row_refills(dtype, trailing, bufsize):
+    # A row broadcast over a C-contiguous array has the same buffer content on
+    # every refill, so the buffer is re-used.  Compare with a materialised
+    # operand over many refills, including rows longer than the buffer.
+    rows = 1001
+    a = np.arange(rows * trailing).reshape(rows, trailing).astype(dtype)
+    v = np.arange(1, trailing + 1).astype(dtype)
+    v_full = np.broadcast_to(v, a.shape).copy()
+
+    with np.errstate():
+        np.setbufsize(bufsize)
+        inplace = a.copy()
+        inplace += v
+        res = a + v
+
+    assert_array_equal(res, a + v_full)
+    assert_array_equal(inplace, a + v_full)
+
+
+@pytest.mark.parametrize("buffersize", [3, 10, 100, 8192])
+def test_iter_buffered_broadcast_row_external_loop(buffersize):
+    # Like test_iter_buffered_reduce_reuse_core, but for plain (non-reduce)
+    # buffered iteration and buffer sizes that do not divide the row length.
+    rows, trailing = 1001, 3
+    m = np.arange(rows * trailing, dtype="f8").reshape(rows, trailing)
+    v = np.arange(1, trailing + 1, dtype="f8")
+    it = np.nditer((m, v), op_flags=[["readonly"], ["readonly"]],
+                   flags=["buffered", "external_loop"], buffersize=buffersize)
+    with it:
+        got = np.concatenate([a + b for a, b in it])
+    assert_array_equal(got, (m + np.broadcast_to(v, m.shape).copy()).ravel())
+
+
+@pytest.mark.parametrize("bufsize", [32, 128, 8192])
+def test_iter_buffered_broadcast_column_refills(bufsize):
+    # The source pointer advances with every row, so the buffer must not be
+    # re-used between refills.
+    rows, trailing = 1001, 3
+    a = np.arange(rows * trailing, dtype="f8").reshape(rows, trailing)
+    col = np.arange(1, rows + 1, dtype="f8").reshape(rows, 1)
+    with np.errstate():
+        np.setbufsize(bufsize)
+        res = a + col
+    assert_array_equal(res, a + np.broadcast_to(col, a.shape).copy())
+
+
+@pytest.mark.parametrize("bufsize", [32, 8192])
+@pytest.mark.parametrize("a_dtype, v_dtype",
+                         [("f8", "i4"), ("f4", "i8"), ("i8", "i2"),
+                          ("c16", "f4")])
+def test_iter_buffered_broadcast_row_cast(a_dtype, v_dtype, bufsize):
+    # The buffer is filled through a cast, so the fill copies cast output.
+    rows, trailing = 1001, 3
+    a = np.arange(rows * trailing).reshape(rows, trailing).astype(a_dtype)
+    v = np.array([1, 2, 3], dtype=v_dtype)
+    v_full = np.broadcast_to(v, a.shape).copy()
+
+    with np.errstate():
+        np.setbufsize(bufsize)
+        inplace = a.copy()
+        inplace += v
+        res = a + v
+
+    expected_inplace = a.copy()
+    expected_inplace += v_full
+    assert_array_equal(res, a + v_full)
+    assert_array_equal(inplace, expected_inplace)
+
+
+@pytest.mark.parametrize("bufsize", [32, 8192])
+def test_iter_buffered_broadcast_noncontiguous_and_3d(bufsize):
+    a = np.arange(1001 * 6, dtype="f8").reshape(1001, 6)[:, ::2]
+    v = np.array([0.5, 1.5, 2.5])
+    b = np.arange(40 * 30 * 3, dtype="f8").reshape(40, 30, 3)
+    w = np.arange(1, 31, dtype="f8").reshape(30, 1)
+
+    with np.errstate():
+        np.setbufsize(bufsize)
+        res2d, res3d_row, res3d_col = a + v, b + v, b + w
+
+    assert_array_equal(res2d, a + np.broadcast_to(v, a.shape).copy())
+    assert_array_equal(res3d_row, b + np.broadcast_to(v, b.shape).copy())
+    assert_array_equal(res3d_col, b + np.broadcast_to(w, b.shape).copy())
+
+
+@pytest.mark.parametrize("bufsize", [32, 8192])
+def test_iter_buffered_broadcast_three_operands(bufsize):
+    x = np.arange(1001 * 3, dtype="f8").reshape(1001, 3)
+    y = np.array([1.0, 2.0, 3.0])
+    z = np.array([0.0, 2.0, 4.0])
+    with np.errstate():
+        np.setbufsize(bufsize)
+        res = x * y + z
+    y_full = np.broadcast_to(y, x.shape).copy()
+    z_full = np.broadcast_to(z, x.shape).copy()
+    assert_array_equal(res, x * y_full + z_full)
+
+
+@pytest.mark.parametrize("bufsize", [32, 8192])
+def test_iter_buffered_broadcast_object_dtype(bufsize):
+    # Object arrays must not take a raw-byte fill path; check the values and
+    # that the operand's references are balanced.
+    rows = 1001
+    a = np.arange(rows * 3, dtype=object).reshape(rows, 3)
+    v = np.array([10**20, 2 * 10**20, 3 * 10**20], dtype=object)
+    expected = a + np.broadcast_to(v, a.shape).copy()
+
+    if HAS_REFCOUNT:
+        before = [sys.getrefcount(x) for x in v]
+    with np.errstate():
+        np.setbufsize(bufsize)
+        res = a + v
+    if HAS_REFCOUNT:
+        assert [sys.getrefcount(x) for x in v] == before
+    assert_array_equal(res, expected)
+
+
+@pytest.mark.parametrize("offsets, itemsize", [([0, 4], 8), ([0, 8], 12)])
+def test_iter_buffered_broadcast_structured_dtype(offsets, itemsize):
+    # Contiguous fields and fields with a gap (not trivially copyable).
+    dt = np.dtype({"names": ["a", "b"], "formats": ["i4", "i4"],
+                   "offsets": offsets, "itemsize": itemsize})
+    rows = 1001
+    src = np.zeros(3, dtype=dt)
+    src["a"] = [1, 2, 3]
+    src["b"] = [10, 20, 30]
+    dst = np.zeros((rows, 3), dtype=dt)
+    np.copyto(dst, src)
+    assert_array_equal(dst["a"], np.broadcast_to(src["a"], (rows, 3)))
+    assert_array_equal(dst["b"], np.broadcast_to(src["b"], (rows, 3)))
+
+
+@pytest.mark.parametrize("buffersize", [0, 3, 7, 16, 27, 100])
+def test_iter_buffered_broadcast_reuse_stride_sweep(buffersize):
+    # Sweep the strides of the non-broadcast operand while a second operand is
+    # broadcast (zero strides).  Buffer re-use must not depend on the strides.
+    base = np.arange(2 * 3**5)[3**5:3**5 + 1]
+    itemsize = base.itemsize
+    v = np.arange(1, 4, dtype="f8")
+    v_full = np.broadcast_to(v, (3, 3, 3)).copy()
+
+    for xs in range(-3**2, 3**2 + 1):
+        for ys in range(xs, 3**2 + 1):
+            strides = (xs * itemsize, ys * itemsize, itemsize)
+            arr = np.lib.stride_tricks.as_strided(base, (3, 3, 3), strides)
+            expected = arr.astype("f8") + v_full
+
+            it = np.nditer(
+                [arr, np.broadcast_to(v, (3, 3, 3)), None],
+                flags=["buffered", "external_loop", "refs_ok"],
+                op_flags=[["readonly"], ["readonly"],
+                          ["writeonly", "allocate"]],
+                op_dtypes=["f8", "f8", "f8"], buffersize=buffersize)
+            with it:
+                for x, y, z in it:
+                    z[...] = x + y
+                res = it.operands[2]
+            assert_array_equal(res, expected, err_msg=f"xs={xs} ys={ys}")
+
+
+@pytest.mark.parametrize("buffersize", [16, 30, 128])
+@pytest.mark.parametrize("skip", [1, 5, 17, 64])
+def test_iter_buffered_broadcast_reuse_iterindex(buffersize, skip):
+    # Setting iterindex leaves a coreoffset, which must disable re-use.  The
+    # values after the jump must match a straight iteration from that index.
+    rows, trailing = 200, 3
+    a = np.arange(rows * trailing, dtype="f8").reshape(rows, trailing)
+    v = np.arange(1, trailing + 1, dtype="f8")
+    ref = (a + np.broadcast_to(v, a.shape).copy()).ravel()
+
+    it = np.nditer([a, np.broadcast_to(v, a.shape)],
+                   flags=["buffered", "multi_index", "refs_ok"],
+                   op_flags=[["readonly"], ["readonly"]],
+                   op_dtypes=["f8", "f8"], buffersize=buffersize)
+    before = [sum(o.item() for o in next(it)) for _ in range(40)]
+    assert_array_equal(before, ref[:40])
+
+    it.iterindex = skip
+    after = [sum(o.item() for o in next(it)) for _ in range(10)]
+    assert_array_equal(after, ref[skip:skip + 10])
+
+
+@pytest.mark.parametrize("buffersize", [0, 16, 32, 128])
+def test_iter_buffered_broadcast_writemasked(buffersize):
+    # A writemasked operand is only partially written back, so the buffer must
+    # not be re-used with whatever the inner loop left in it.  A broadcast
+    # writemasked operand is only allowed when the mask broadcasts the same
+    # way, so mask and output share a shape here.
+    rows, trailing = 200, 3
+    a = np.arange(rows * trailing, dtype="f8").reshape(rows, trailing)
+    mask = np.array([[True, False, True]])
+
+    expected = np.zeros((1, trailing), dtype=np.float32)
+    for i in range(rows):
+        for j in range(trailing):
+            if mask[0, j]:
+                expected[0, j] = a[i, j]
+
+    out = np.zeros((1, trailing), dtype=np.float32)
+    it = np.nditer(
+        [a, np.broadcast_to(mask, (rows, trailing)), out],
+        flags=["buffered", "reduce_ok", "refs_ok"],
+        op_flags=[["readonly"], ["readonly", "arraymask"],
+                  ["readwrite", "writemasked"]],
+        op_dtypes=["f8", "?", "f8"], casting="same_kind",
+        buffersize=buffersize)
+    with it:
+        for x, _m, z in it:
+            z[...] = x
+    assert_array_equal(out, expected)
 
 
 def test_iter_no_broadcast():

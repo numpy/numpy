@@ -490,7 +490,7 @@ following.
 
 .. testcode::
 
-    input numpy as np
+    import numpy as np
 
     class A(np.ndarray):
         def __array_ufunc__(self, ufunc, method, *inputs, out=None, **kwargs):

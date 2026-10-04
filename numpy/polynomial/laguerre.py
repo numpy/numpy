@@ -71,7 +71,7 @@ Misc Functions
    lag2poly
    poly2lag
 
-See also
+See Also
 --------
 `numpy.polynomial`
 

@@ -1,0 +1,5 @@
+StringDType ``partition`` accepts ``str`` separators
+----------------------------------------------------
+`np.strings.partition` and `np.strings.rpartition` now accept a Python
+``str`` or fixed-width unicode separator when operating on ``StringDType``
+arrays. Previously the separator had to be a ``StringDType`` array itself.

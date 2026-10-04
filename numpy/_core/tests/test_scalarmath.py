@@ -6,9 +6,6 @@ import sys
 import warnings
 
 import pytest
-from hypothesis import given, settings
-from hypothesis.extra import numpy as hynp
-from hypothesis.strategies import sampled_from
 
 import numpy as np
 from numpy._core._rational_tests import rational, rational2
@@ -23,6 +20,14 @@ from numpy.testing import (
     assert_raises,
     check_support_sve,
 )
+from numpy.testing._private.hypothesis_helpers import (
+    HAS_HYPOTHESIS,
+    given,
+    hynp,
+    sampled_from,
+    settings,
+)
+from numpy.testing._private.utils import LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE
 
 types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -115,6 +120,7 @@ def check_ufunc_scalar_equivalence(op, arr1, arr2):
             assert_array_equal(scalar_res, res, strict=True)
 
 
+@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
 @pytest.mark.slow
 @settings(max_examples=10000, deadline=2000)
 @given(sampled_from(binary_operators_for_scalars),
@@ -129,6 +135,7 @@ def test_array_scalar_ufunc_equivalence(op, arr1, arr2):
     check_ufunc_scalar_equivalence(op, arr1, arr2)
 
 
+@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
 @pytest.mark.slow
 @given(sampled_from(binary_operators_for_scalars),
        hynp.scalar_dtypes(), hynp.scalar_dtypes())
@@ -521,7 +528,7 @@ class TestConversion:
 
     @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                         reason="long double is same as double")
-    @pytest.mark.skipif(platform.machine().startswith("ppc"),
+    @pytest.mark.skipif(LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                         reason="IBM double double")
     def test_int_from_huge_longdouble(self):
         # Produce a longdouble that would overflow a double,
@@ -867,6 +874,7 @@ def recursionlimit(n):
         sys.setrecursionlimit(o)
 
 
+@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
        sampled_from(types + [rational, rational2]))
@@ -879,6 +887,7 @@ def test_operator_object_left(o, op, type_):
         pass
 
 
+@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
        sampled_from(types + [rational, rational2]))
@@ -891,6 +900,7 @@ def test_operator_object_right(o, op, type_):
         pass
 
 
+@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
 @given(sampled_from(binary_operators_for_scalars),
        sampled_from(types),
        sampled_from(types))

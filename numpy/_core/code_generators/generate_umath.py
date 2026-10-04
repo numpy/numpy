@@ -409,9 +409,11 @@ defdict = {
           TD(ints, cfunc_alias='divide',
               dispatch=[('loops_arithmetic', 'bBhHiIlLqQ')]),
           TD(flts),
-          [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
+          [TypeDescription('m', FullTypeDescr, 'mq', 'm', cfunc_alias='divide',
+                           dispatch='loops_arithmetic_timedelta'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
-           TypeDescription('m', FullTypeDescr, 'mm', 'q'),
+           TypeDescription('m', FullTypeDescr, 'mm', 'q',
+                           dispatch='loops_arithmetic_timedelta'),
           ],
           TD(O, f='PyNumber_FloorDivide'),
           indexed=flts + ints
@@ -421,7 +423,8 @@ defdict = {
           docstrings.get('numpy._core.umath.divide'),
           'PyUFunc_TrueDivisionTypeResolver',
           TD(flts + cmplx, cfunc_alias='divide', dispatch=[('loops_arithm_fp', 'fd')]),
-          [TypeDescription('m', FullTypeDescr, 'mq', 'm', cfunc_alias='divide'),
+          [TypeDescription('m', FullTypeDescr, 'mq', 'm', cfunc_alias='divide',
+                           dispatch='loops_arithmetic_timedelta'),
            TypeDescription('m', FullTypeDescr, 'md', 'm', cfunc_alias='divide'),
            TypeDescription('m', FullTypeDescr, 'mm', 'd', cfunc_alias='divide'),
           ],
@@ -526,6 +529,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.positive'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
+          TD('?', cfunc_alias='absolute', dispatch=[('loops_logical', '?')]),
           TD(ints + flts + timedeltaonly),
           TD(cmplx, f='pos'),
           TD(O, f='PyNumber_Positive'),
@@ -677,6 +681,15 @@ defdict = {
           TD(no_obj_bool, dispatch=[('loops_minmax', ints + 'fdg')]),
           TD(O, f='npy_ObjectMin'),
           indexed=flts + ints,
+          no_float_errors=True,
+          ),
+'minimummaximum':
+    Ufunc(2, 2, ReorderableNone,
+          docstrings.get('numpy._core.umath.minimummaximum'),
+          'PyUFunc_SimpleUniformOperationTypeResolver',
+          TD('?'),
+          TD(no_obj_bool, dispatch=[('loops_minmax', ints + 'fdg')]),
+          TD(O),
           no_float_errors=True,
           ),
 'clip':
@@ -1206,6 +1219,12 @@ defdict = {
           TD(O),
           signature='(n),(n,m)->(m)',
           ),
+'_unwrap':
+    Ufunc(3, 1, None,
+          docstrings.get('numpy._core.umath._unwrap'),
+          None,
+          signature='(n),(),()->(n)',
+          ),
 # Real and imag ufunc helpers (loops added later):
 'real':
     Ufunc(1, 1, None,
@@ -1595,6 +1614,7 @@ def make_ufuncs(funcdict):
                 PyArray_DTypeMeta *dtype = PyArray_DTypeFromTypeNum({typenum});
                 PyObject *info = get_info_no_cast((PyUFuncObject *)f,
                                                    dtype, {count});
+                Py_DECREF(dtype);
                 if (info == NULL) {{
                     return -1;
                 }}
@@ -1608,6 +1628,7 @@ def make_ufuncs(funcdict):
                     PyErr_SetString(PyExc_RuntimeError,
                         "Not a PyArrayMethodObject in ufunc "
                         "{name} with {typenum}");
+                    return -1;
                 }}
                 ((PyArrayMethodObject*)info)->contiguous_indexed_loop =
                                                                  {funcname};

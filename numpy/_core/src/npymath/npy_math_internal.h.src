@@ -471,11 +471,12 @@ NPY_INPLACE @type@ npy_logaddexp@c@(@type@ x, @type@ y)
         return x + LOGE2;
     }
     else {
+        const @type@ ZERO = 0.0;
         const @type@ tmp = x - y;
-        if (tmp > 0) {
+        if (isgreater(tmp, ZERO)) {
             return x + npy_log1p@c@(npy_exp@c@(-tmp));
         }
-        else if (tmp <= 0) {
+        else if (islessequal(tmp, ZERO)) {
             return y + npy_log1p@c@(npy_exp@c@(tmp));
         }
         else {
@@ -492,11 +493,12 @@ NPY_INPLACE @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
         return x + 1;
     }
     else {
+        const @type@ ZERO = 0.0;
         const @type@ tmp = x - y;
-        if (tmp > 0) {
+        if (isgreater(tmp, ZERO)) {
             return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
         }
-        else if (tmp <= 0) {
+        else if (islessequal(tmp, ZERO)) {
             return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
         }
         else {

@@ -6,6 +6,9 @@
 NumPy 2.xx.x Release Notes
 ==========================
 
+.. replace with the release date, `*Released on 2024-06-15.*`
+
+*Unreleased.*
 
 Highlights
 ==========

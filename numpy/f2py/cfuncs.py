@@ -534,17 +534,13 @@ cppmacros['CHECKARRAY'] = """
 cppmacros['CHECKSTRING'] = """
 #define CHECKSTRING(check,tcheck,name,show,var)\\
     if (!(check)) {\\
-        char errstring[256];\\
-        snprintf(errstring, sizeof(errstring), \"%s: \"show, \"(\"tcheck\") failed for \"name, slen(var), var);\\
-        PyErr_SetString(#modulename#_error, errstring);\\
+        PyErr_Format(#modulename#_error, \"(\"tcheck\") failed for \"name\": \"show, slen(var), var);\\
         /*goto capi_fail;*/\\
     } else """
 cppmacros['CHECKSCALAR'] = """
 #define CHECKSCALAR(check,tcheck,name,show,var)\\
     if (!(check)) {\\
-        char errstring[256];\\
-        snprintf(errstring, sizeof(errstring), \"%s: \"show, \"(\"tcheck\") failed for \"name, var);\\
-        PyErr_SetString(#modulename#_error,errstring);\\
+        PyErr_Format(#modulename#_error, \"(\"tcheck\") failed for \"name\": \"show, var);\\
         /*goto capi_fail;*/\\
     } else """
 # cppmacros['CHECKDIMS']="""
@@ -840,9 +836,7 @@ character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
         }
     }
     {
-        /* TODO: This error (and most other) error handling needs cleaning. */
-        char mess[F2PY_MESSAGE_BUFFER_SIZE];
-        strcpy(mess, errmess);
+        PyObject *describe_obj;
         PyObject* err = PyErr_Occurred();
         if (err == NULL) {
             err = PyExc_TypeError;
@@ -852,11 +846,11 @@ character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
             Py_INCREF(err);
             PyErr_Clear();
         }
-        size_t len = strlen(mess);
-        snprintf(mess + len, F2PY_MESSAGE_BUFFER_SIZE - len,
-                " -- expected str|bytes|sequence-of-str-or-bytes, got ");
-        f2py_describe(obj, mess + strlen(mess));
-        PyErr_SetString(err, mess);
+        describe_obj = f2py_describe_obj(obj);
+        if (describe_obj) {
+            PyErr_Format(err, "%s -- expected str|bytes|sequence-of-str-or-bytes, got %U", errmess, describe_obj);
+            Py_DECREF(describe_obj);
+        }
         Py_DECREF(err);
     }
     return 0;
@@ -1278,14 +1272,19 @@ static int try_pyarr_from_character(PyObject* obj, character* v) {
         }
     }
     {
-        char mess[F2PY_MESSAGE_BUFFER_SIZE];
         PyObject* err = PyErr_Occurred();
         if (err == NULL) {
+            PyObject *describe_obj;
             err = PyExc_ValueError;
-            strcpy(mess, "try_pyarr_from_character failed"
-                         " -- expected bytes array-scalar|array, got ");
-            f2py_describe(obj, mess + strlen(mess));
-            PyErr_SetString(err, mess);
+            describe_obj = f2py_describe_obj(obj);
+            if (describe_obj) {
+                PyErr_Format(
+                    err,
+                    "try_pyarr_from_character failed  -- expected bytes array-scalar|array, got %U",
+                    describe_obj
+                );
+                Py_DECREF(describe_obj);
+            }
         }
     }
     return 0;
@@ -1391,10 +1390,29 @@ create_cb_arglist(PyObject* fun, PyTupleObject* xa , const int maxnofargs,
     }
 
     if (tmp_fun == NULL) {
+        const char *tp_name = \"NULL\";
+#if defined(Py_LIMITED_API)
+        PyObject *tp_name_obj=NULL;
+#endif
+        if (fun != NULL) {
+#if defined(Py_LIMITED_API)
+            tp_name_obj = PyType_GetFullyQualifiedName(Py_TYPE(fun));
+            if (!tp_name_obj) goto capi_fail;
+            tp_name = PyUnicode_AsUTF8AndSize(tp_name_obj, NULL);
+            if (tp_name == NULL) {
+                Py_DECREF(tp_name_obj); goto capi_fail;
+            }
+#else
+            tp_name = Py_TYPE(fun)->tp_name;
+#endif
+        }
         fprintf(stderr,
                 \"Call-back argument must be function|instance|instance.__call__|f2py-function \"
                 \"but got %s.\\n\",
-                ((fun == NULL) ? \"NULL\" : Py_TYPE(fun)->tp_name));
+                tp_name);
+#if defined(Py_LIMITED_API)
+        Py_XDECREF(tp_name_obj);
+#endif
         goto capi_fail;
     }
 

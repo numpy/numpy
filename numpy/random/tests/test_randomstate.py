@@ -2061,6 +2061,15 @@ def test_seed_alt_bit_gen(restore_singleton_bitgen):
 
 
 @pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
+def test_seed_alt_bit_gen_resets_gauss_cache(restore_singleton_bitgen):
+    np.random.set_bit_generator(PCG64(0))
+    np.random.seed(12345)
+    expected = np.random.standard_normal()
+    np.random.seed(12345)
+    assert np.random.standard_normal() == expected
+
+
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
 def test_state_error_alt_bit_gen(restore_singleton_bitgen):
     # GH 21808
     state = np.random.get_state()

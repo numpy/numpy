@@ -1,3 +1,5 @@
+import pytest
+
 import numpy as np
 from numpy import (
     common_type,
@@ -32,6 +34,14 @@ class TestCommonType:
         assert_(common_type(af64) == np.float64)
         assert_(common_type(acs) == np.complex64)
         assert_(common_type(acd) == np.complex128)
+
+    @pytest.mark.parametrize("bad", [np.dtype("f4"), np.float32])
+    def test_dtype_input_raises(self, bad):
+        # gh-30890: passing a dtype or scalar type used to raise a confusing
+        # AttributeError. It should now raise a clear TypeError pointing to
+        # the right tools for combining types.
+        with pytest.raises(TypeError, match="np.result_type or np.promote_types"):
+            common_type(bad)
 
 
 class TestMintypecode:

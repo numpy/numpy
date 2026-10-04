@@ -68,6 +68,10 @@ class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co], Generic[_ShapeT_co, _DT
     @override
     def __array_finalize__(self, obj: np.ndarray) -> None: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
+    def __getattribute__(self, attr: str, /) -> Any: ...
+    @override
+    def __setattr__(self, attr: str, val: Any, /) -> None: ...
+    @override
     def __getitem__(self, indx: str | _ToIndices, /) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
     @override
     def __setitem__(self, indx: str | _ToIndices, value: Incomplete, /) -> None: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]

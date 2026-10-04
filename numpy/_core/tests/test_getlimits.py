@@ -9,6 +9,7 @@ import pytest
 import numpy as np
 from numpy import double, half, longdouble, single
 from numpy._core import finfo, iinfo
+from numpy._core._rational_tests import rational
 from numpy.testing import assert_, assert_equal, assert_raises
 
 ##################################################
@@ -48,7 +49,7 @@ def assert_finfo_equal(f1, f2):
     for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machep',
                  'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
                  'nmant', 'precision', 'resolution', 'tiny',
-                 'smallest_normal', 'smallest_subnormal'):
+                 'smallest_normal', 'smallest_subnormal', 'dtype'):
         assert_equal(getattr(f1, attr), getattr(f2, attr),
                      f'finfo instances {f1} and {f2} differ on {attr}')
 
@@ -66,7 +67,20 @@ class TestFinfo:
         for dt1, dt2 in dts:
             assert_finfo_equal(finfo(dt1), finfo(dt2))
 
-        assert_raises(ValueError, finfo, 'i4')
+    @pytest.mark.parametrize('dt1, dt2',
+        [('>f2', '<f2'), ('>f4', '<f4'), ('>f8', '<f8'), ('>c8', '<c8'),
+         ('>c16', '<c16')])
+    def test_byteorder(self, dt1, dt2):
+        # finfo should normalize to native byte-order.
+        assert_finfo_equal(finfo(dt1), finfo(dt2))
+
+    @pytest.mark.parametrize('dt', [
+            np.int8, "V3", "S3", "f,f", rational, "O", "T"])
+    def test_rejects_others(self, dt):
+        dtype = np.dtype(dt)
+        with pytest.raises(ValueError,
+                match=r"data type .* not compatible with finfo"):
+            finfo(dtype)
 
     def test_regression_gh23108(self):
         # np.float32(1.0) and np.float64(1.0) have the same hash and are

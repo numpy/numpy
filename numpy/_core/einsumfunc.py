@@ -1300,8 +1300,20 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
 
     Returns
     -------
-    output : ndarray
+    output : ndarray or scalar
         The calculation based on the Einstein summation convention.
+
+        An output with one or more indices is always returned as an
+        ndarray. When the output has no indices (e.g. ``'i,i->'``) the
+        result is 0-dimensional and the exact type depends on the
+        arguments:
+
+        - If `out` is given, it is returned unchanged (an ndarray).
+        - With the default ``optimize=False``, a scalar (e.g.
+          ``np.float64``) is returned rather than a 0-d array.
+        - With ``optimize`` enabled the 0-d result may be either a scalar
+          or a 0-d ndarray depending on the contraction path, and should
+          not be relied upon. Pass `out` to guarantee an ndarray.
 
     See Also
     --------
