@@ -21,6 +21,7 @@
 #include "array_method.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
+#include "module_state.h"
 
 #include "loops.h"
 #include "minmax.h"
@@ -105,45 +106,21 @@ minimummaximum_get_reduction_loop(
  * instead of reaching a loop of another dtype by casting.
  */
 static int
-minimummaximum_promoter(PyObject *ufunc,
+minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[],
         PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    PyUFuncObject *minmax = (PyUFuncObject *)ufunc;
-    PyArray_DTypeMeta *common = NULL;
-
-    /* A homogeneous output signature fixes the operation DType. */
-    for (int i = minmax->nin; i < minmax->nargs; i++) {
-        if (signature[i] == NULL) {
-            continue;
-        }
-        if (common == NULL) {
-            common = signature[i];
-        }
-        else if (common != signature[i]) {
-            common = NULL;
-            break;
-        }
-    }
+    /* A fixed output DType fixes the operation DType. */
+    PyArray_DTypeMeta *common = signature[2] != NULL ? signature[2] : signature[3];
     if (common != NULL) {
         Py_INCREF(common);
     }
     else {
-        PyArray_DTypeMeta *inputs[NPY_MAXARGS];
-        int ninput = 0;
-        for (int i = 0; i < minmax->nin; i++) {
-            if (op_dtypes[i] != NULL) {
-                inputs[ninput++] = op_dtypes[i];
-            }
-        }
-        if (ninput == 0) {
-            /* Nothing to promote from, so there is no loop */
-            return -1;
-        }
-        common = PyArray_PromoteDTypeSequence(ninput, inputs);
+        common = PyArray_CommonDType(op_dtypes[0], op_dtypes[1]);
         if (common == NULL) {
-            if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+            if (PyErr_ExceptionMatches(
+                        _npy_module_state->static_pydata.DTypePromotionError)) {
                 /* Promotion failing means there is no loop */
                 PyErr_Clear();
             }
@@ -151,7 +128,7 @@ minimummaximum_promoter(PyObject *ufunc,
         }
     }
 
-    for (int i = 0; i < minmax->nargs; i++) {
+    for (int i = 0; i < 4; i++) {
         PyArray_DTypeMeta *dt = signature[i] != NULL ? signature[i] : common;
         Py_INCREF(dt);
         new_op_dtypes[i] = dt;
@@ -188,42 +165,19 @@ register_minimummaximum_promoter(PyObject *ufunc)
 */
 static NPY_CASTING
 minimummaximum_resolve_descriptors(
-        PyArrayMethodObject *self,
+        PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
         PyArray_Descr *const given_descrs[],
         PyArray_Descr *loop_descrs[],
         npy_intp *NPY_UNUSED(view_offset))
 {
-    int nargs = self->nin + self->nout;
-    PyArray_Descr *common = NULL;
-
-    for (int i = 0; i < self->nin; i++) {
-        if (given_descrs[i] == NULL) {
-            continue;
-        }
-        if (common == NULL) {
-            Py_INCREF(given_descrs[i]);
-            common = given_descrs[i];
-        }
-        else {
-            Py_SETREF(common, PyArray_PromoteTypes(common, given_descrs[i]));
-            if (common == NULL) {
-                return (NPY_CASTING)-1;
-            }
-        }
-    }
-    if (common == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "minimummaximum requires at least one input descriptor");
-        return (NPY_CASTING)-1;
-    }
-    Py_SETREF(common, NPY_DT_CALL_ensure_canonical(common));
+    PyArray_Descr *common = PyArray_PromoteTypes(given_descrs[0], given_descrs[1]);
     if (common == NULL) {
         return (NPY_CASTING)-1;
     }
 
     NPY_CASTING casting = NPY_NO_CASTING;
-    for (int i = 0; i < nargs; i++) {
+    for (int i = 0; i < 4; i++) {
         if (given_descrs[i] != NULL && given_descrs[i] != common) {
             casting = NPY_SAFE_CASTING;
         }
