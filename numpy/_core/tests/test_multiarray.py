@@ -7291,6 +7291,23 @@ class TestFlat:
 
 class TestResize:
 
+    @pytest.mark.parametrize("dtype", [
+        ("x", "u1", 5),
+        ("x", "u1", 2**32 + 1),
+        ("x", "u1", 2**31 + 1),
+        ])
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=21.5e9)
+    @pytest.mark.slow
+    def test_gh_32830(self, dtype):
+        a = np.zeros(2, [dtype])
+        a.resize(3, refcheck=False)
+        # regardless of the width of the dtype,
+        # the final column should contain 3 zeros:
+        actual = a["x"][:, -1]
+        expected = np.zeros(3, dtype=np.uint8)
+        assert_array_equal(actual, expected, strict=True)
+
     @_no_tracing
     def test_basic(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
