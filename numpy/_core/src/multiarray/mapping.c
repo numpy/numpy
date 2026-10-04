@@ -626,6 +626,23 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                 "type, but the array dtype was %S", arrtype);
             Py_DECREF(arrtype);
         }
+        else if (PyList_Check(obj)) {
+            /*
+             * A list is a valid index container, so reporting its type
+             * (e.g. "cannot index with <class 'list'>") is misleading:
+             * what is invalid is the non-integer content it converts to.
+             * Report the converted array's dtype instead (e.g. for
+             * arr[[1., 2.]] -> "the array dtype was float64").
+             */
+            PyObject *arrtype = PyObject_Str((PyObject *)PyArray_DESCR(arr));
+            if (arrtype == NULL) {
+                goto failed_building_indices;
+            }
+            PyErr_Format(PyExc_IndexError,
+                "arrays used as indices must be of integer (or boolean) "
+                "type, but the array dtype was %S", arrtype);
+            Py_DECREF(arrtype);
+        }
         else {
             /*
              * The input was not an array, so give a general error

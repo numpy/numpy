@@ -1440,8 +1440,11 @@ class TestInvalidIndexErrorMessage:
     """
     def test_list_of_slices(self):
         a = np.zeros((5, 5))
+        # A list of slices converts to an object array, so the message
+        # reports the converted array's dtype, consistent with indexing
+        # with a raw object array (gh-26115 follow-up).
         with pytest.raises(IndexError,
-                           match=r"cannot index with <class 'list'>"):
+                           match=r"the array dtype was object"):
             a[[slice(None), slice(None)]]
 
     def test_tuple_of_non_indexables(self):
@@ -1478,6 +1481,28 @@ class TestInvalidIndexErrorMessage:
                            r"\(or boolean\) type, but the array dtype was "
                            r"(" + dtype_str + r")")):
                 a[idx]
+
+    def test_fancy_index_error_list_shows_content_dtype(self):
+        # A list is a valid index container, so the message must point at
+        # its non-integer content (dtype), not the list type (gh-26115
+        # follow-up, review feedback on the list path).
+        a = np.zeros(10)
+        for idx, dtype_str in [
+            ([1.5, 2.5], "float64"),
+            ([1, 2, 3.5], "float64"),
+            (["a", "b"], r"<U1"),
+        ]:
+            with pytest.raises(
+                    IndexError,
+                    match=(r"arrays used as indices must be of integer "
+                           r"\(or boolean\) type, but the array dtype was "
+                           r"(" + dtype_str + r")")):
+                a[idx]
+        # A non-sequence element (e.g. str) keeps the element-type message.
+        b = np.zeros((5, 5))
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            b[0, "1"]
 
 
 class TestCApiAccess:
