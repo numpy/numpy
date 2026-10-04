@@ -80,9 +80,19 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
      * positions.  Reuse three levels of the existing batched binary search as
      * a coarse locality signal rather than scanning the query array first.
      *
-     * Keep the activation gate deliberately conservative.  The crossover is
-     * hardware dependent (lower on the AMD runners used during validation),
-     * so 131072 is a deliberately conservative portable default rather than a globally optimal constant.
+     * Keep the activation gate deliberately conservative.  Validation found
+     * materially different crossover points across CPUs: the AMD runners
+     * tolerated much smaller batches than the Intel runner, while Q=100000
+     * still showed a meaningful random-workload regression in the final
+     * production-shaped validation.  Use the next power of two above that
+     * largest observed unsafe batch size as the initial portable safety bound:
+     *
+     *     2^17 = 131072
+     *
+     * This is intentionally not claimed to be a globally optimal crossover.
+     * Future work may lower this bound, or replace the fixed Q gate with an
+     * architecture-neutral cost signal, once broader cross-platform evidence
+     * justifies doing so.
      */
     constexpr npy_intp LOCALITY_MIN_KEYS = 131072;
     constexpr npy_intp LOCALITY_SAMPLES = 16;
