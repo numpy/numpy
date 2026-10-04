@@ -238,8 +238,22 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     /*
      * Keep the historical batched search in a separate non-inlined function
      * so below-gate execution is isolated from locality-path code layout.
-     * Q=2^20 is a conservative portable safety bound, not a universal
-     * crossover; lower tested gates exposed non-target regressions.
+     *
+     * LOCALITY_MIN_KEYS is a tunable portable default, not an algorithmic or
+     * hardware boundary.  In validation performed on 2026-10-04, the tested
+     * AMD runners tolerated much smaller activation sizes (around Q=64 in the
+     * activation sweep), while the tested Intel runner required substantially
+     * larger batches (around Q=1024 still missed the conservative p95 target).
+     * Production-shaped tests also found non-target regressions at lower
+     * portable gates around Q=131072 and Q=262144.
+     *
+     * We therefore use Q=2^20 as a conservative cross-machine safety bound for
+     * the initial implementation.  Future CPUs, compilers, memory systems, or
+     * execution backends may shift this crossover.  A stronger low-cost
+     * selector may also justify lowering or replacing this fixed Q gate.
+     *
+     * The current choice intentionally favors portability and general-case
+     * safety over capturing every profitable smaller-locality workload.
      */
     constexpr npy_intp LOCALITY_MIN_KEYS = 1 << 20;
     const bool locality_candidate =
