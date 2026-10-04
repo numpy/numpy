@@ -2812,6 +2812,13 @@ class TestMinimumMaximum(_FilterInvalids):
             self.check(a, b)
             self.check_reduce(a)
 
+    def test_datetime_mixed_units(self):
+        for kind in 'mM':
+            a = np.arange(3).astype(f'{kind}8[D]')
+            b = a[::-1].astype(f'{kind}8[s]')
+            self.check(a, b)
+            assert ncu.minimummaximum(a, b)[0].dtype == np.dtype(f'{kind}8[s]')
+
     def test_strided_array(self):
         arr1 = np.array([-4.0, 1.0, 10.0, 0.0, np.nan, -np.nan, np.inf, -np.inf])
         arr2 = np.array([-2.0, -1.0, np.nan, 1.0, 0.0, np.nan, 1.0, -3.0])

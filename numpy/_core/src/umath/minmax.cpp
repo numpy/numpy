@@ -9,7 +9,6 @@
 #include <Python.h>
 
 #include "npy_pycompat.h"
-#include "object.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -18,6 +17,7 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 
+#include "abstractdtypes.h"
 #include "array_method.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
@@ -126,6 +126,19 @@ minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
             }
             return -1;
         }
+        if (common == &PyArray_PyLongDType
+                || common == &PyArray_PyFloatDType
+                || common == &PyArray_PyComplexDType) {
+            /* Only Python scalars were passed, use their default DType */
+            PyArray_Descr *descr = NPY_DT_CALL_default_descr(common);
+            Py_DECREF(common);
+            if (descr == NULL) {
+                return -1;
+            }
+            common = NPY_DTYPE(descr);
+            Py_INCREF(common);
+            Py_DECREF(descr);
+        }
     }
 
     for (int i = 0; i < 4; i++) {
@@ -159,10 +172,10 @@ register_minimummaximum_promoter(PyObject *ufunc)
 
 
 /*
-* `resolve_descriptors` for the datetime and timedelta loops that resolves
-* to the common unit of the inputs.
-* The other loops are not parametric and use the default legacy resolution.
-*/
+ * `resolve_descriptors` for the datetime and timedelta loops that resolves
+ * to the common unit of the inputs.
+ * The other loops are not parametric and use the default legacy resolution.
+ */
 static NPY_CASTING
 minimummaximum_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
@@ -176,16 +189,12 @@ minimummaximum_resolve_descriptors(
         return (NPY_CASTING)-1;
     }
 
-    NPY_CASTING casting = NPY_NO_CASTING;
     for (int i = 0; i < 4; i++) {
-        if (given_descrs[i] != NULL && given_descrs[i] != common) {
-            casting = NPY_SAFE_CASTING;
-        }
         Py_INCREF(common);
         loop_descrs[i] = common;
     }
     Py_DECREF(common);
-    return casting;
+    return NPY_NO_CASTING;
 }
 
 
