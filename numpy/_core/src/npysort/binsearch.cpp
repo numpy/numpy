@@ -81,11 +81,16 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
      * a coarse locality signal rather than scanning the query array first.
      *
      * Keep the activation gate deliberately conservative.  Validation found
-     * materially different crossover points across CPUs: the AMD runners
-     * tolerated much smaller batches than the Intel runner, while Q=100000
-     * still showed a meaningful random-workload regression in the final
-     * production-shaped validation.  Use the next power of two above that
-     * largest observed unsafe batch size as the initial portable safety bound:
+     * materially different crossover points across CPUs: in the activation
+     * sweep the AMD runners were already viable around Q=64, while the Intel
+     * runner only approached the crossover around Q=1024 and still narrowly
+     * missed the chosen random-workload p95 safety target there.  These are
+     * experimental crossover observations, not production gates.
+     *
+     * Separately, Q=100000 still showed a meaningful random-workload
+     * regression in the final production-shaped validation.  Use the next
+     * power of two above that largest observed unsafe batch size as the
+     * initial portable safety bound:
      *
      *     2^17 = 131072
      *
