@@ -87,19 +87,20 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
      * missed the chosen random-workload p95 safety target there.  These are
      * experimental crossover observations, not production gates.
      *
-     * Separately, Q=100000 still showed a meaningful random-workload
-     * regression in the final production-shaped validation.  Use the next
-     * power of two above that largest observed unsafe batch size as the
-     * initial portable safety bound:
+     * Final production-shaped validation still found meaningful random-path
+     * regressions at Q=131072 and Q=262144 on some runners.  At Q=1000000,
+     * the tested random cases were near baseline while strong-locality cases
+     * retained large speedups.  Use the next power of two above that measured
+     * stable region as the initial portable safety bound:
      *
-     *     2^17 = 131072
+     *     2^20 = 1048576
      *
      * This is intentionally not claimed to be a globally optimal crossover.
      * Future work may lower this bound, or replace the fixed Q gate with an
      * architecture-neutral cost signal, once broader cross-platform evidence
      * justifies doing so.
      */
-    constexpr npy_intp LOCALITY_MIN_KEYS = 131072;
+    constexpr npy_intp LOCALITY_MIN_KEYS = 1 << 20;
     constexpr npy_intp LOCALITY_SAMPLES = 16;
     constexpr npy_intp LOCALITY_LEVELS = 3;
 
