@@ -122,13 +122,6 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
                               PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_MinimumMaximumTypeResolver(PyUFuncObject *ufunc,
-                                   NPY_CASTING casting,
-                                   PyArrayObject **operands,
-                                   PyObject *type_tup,
-                                   PyArray_Descr **out_dtypes);
-
-NPY_NO_EXPORT int
 PyUFunc_ValidateOutCasting(PyUFuncObject *ufunc,
         NPY_CASTING casting, PyArrayObject **operands, PyArray_Descr **dtypes);
 
