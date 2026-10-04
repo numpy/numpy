@@ -377,13 +377,18 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             return (conv.wrap(hash_unique),)
 
-    # For the small integer kinds 'stable' is a radix sort, which leaves
-    # quicksort far behind whatever we are asked for.
-    # Here 'stable' is a timsort, and it is only worth the first
-    # occurrences it hands us for free: quicksort is the faster sort
-    # on complex and string data unless that data is rich in NaNs.
-    stable = ((ar.dtype.kind in "biu" and ar.dtype.itemsize <= 2)
-                or (return_index and ar.dtype.kind in "cT"))
+    # Stable sort prefereable for:
+    # - the boolean and small integer kinds (stable' is a radix sort, which
+    #   leaves quicksort far behind)
+    # - StringDType (stable is a timsort, whose fewer comparisons pay off)
+    # - complex data with NaNs (stable puts the first occurrence at the front
+    #   of the group)
+    # Elsewhere quicksort is the faster sort
+    stable = (
+        (ar.dtype.kind in "biu" and ar.dtype.itemsize <= 2) or
+        (optional_indices and ar.dtype.kind == "T") or
+        (return_index and ar.dtype.kind == "c" and np.isnan(ar).any())
+    )
 
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
