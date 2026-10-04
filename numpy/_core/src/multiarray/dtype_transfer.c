@@ -39,6 +39,7 @@
 #include "array_coercion.h"
 
 #include "umathmodule.h"
+#include "npy_pycompat.h"
 
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
 

@@ -13,6 +13,7 @@
 #include "numpy/npy_cpu.h"
 
 #include "npy_config.h"
+#include "npy_pycompat.h"
 
 
 

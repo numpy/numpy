@@ -13,6 +13,7 @@
 #include "mem_overlap.h"
 #include "npy_extint128.h"
 #include "npy_hashtable.h"
+#include "npy_pycompat.h"
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x

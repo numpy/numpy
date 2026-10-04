@@ -22,6 +22,7 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/dtype_api.h"
 #include "numpy/npy_math.h"
+#include "npy_pycompat.h"
 
 
 static inline double

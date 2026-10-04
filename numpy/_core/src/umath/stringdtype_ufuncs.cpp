@@ -26,6 +26,7 @@
 #include "stringdtype/static_string.h"
 #include "stringdtype/dtype.h"
 #include "stringdtype/utf8_utils.h"
+#include "npy_pycompat.h"
 
 #include <cstdio>
 #include <vector>

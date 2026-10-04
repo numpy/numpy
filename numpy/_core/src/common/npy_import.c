@@ -3,6 +3,7 @@
 
 #include "numpy/ndarraytypes.h"
 #include "npy_import.h"
+#include "npy_pycompat.h"
 #include <stdatomic.h>
 #include <string.h>
 

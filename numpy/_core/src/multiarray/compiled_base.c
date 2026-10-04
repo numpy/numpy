@@ -10,6 +10,7 @@
 #include "numpy/npy_math.h"
 #include "npy_argparse.h"
 #include "npy_config.h"
+#include "npy_pycompat.h"
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
 #include "alloc.h"
