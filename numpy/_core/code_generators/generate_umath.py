@@ -686,7 +686,7 @@ defdict = {
 'minimummaximum':
     Ufunc(2, 2, ReorderableNone,
           docstrings.get('numpy._core.umath.minimummaximum'),
-          'PyUFunc_MinimumMaximumTypeResolver',
+          'NULL',
           TD('?'),
           TD(no_obj_bool, dispatch=[('loops_minmax', ints + 'fdg')]),
           TD(O),
@@ -1604,7 +1604,9 @@ def make_ufuncs(funcdict):
             args['identity_expr'] = 'NULL'
 
         mlist.append(fmt.format(**args))
-        if uf.typereso is not None:
+        if uf.typereso == 'NULL':
+            mlist.append(r"((PyUFuncObject *)f)->type_resolver = NULL;")
+        elif uf.typereso is not None:
             mlist.append(rf"((PyUFuncObject *)f)->type_resolver = &{uf.typereso};")
         for c in uf.indexed:
             # Handle indexed loops by getting the underlying ArrayMethodObject

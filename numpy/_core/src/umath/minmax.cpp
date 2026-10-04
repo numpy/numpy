@@ -9,6 +9,7 @@
 #include <Python.h>
 
 #include "npy_pycompat.h"
+#include "object.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -98,6 +99,142 @@ minimummaximum_get_reduction_loop(
 }
 
 
+/*
+ * Promotes to the common DType of the inputs.
+ * A dtype without a `minimummaximum` loop reports no loop,
+ * instead of reaching a loop of another dtype by casting.
+ */
+static int
+minimummaximum_promoter(PyObject *ufunc,
+        PyArray_DTypeMeta *const op_dtypes[],
+        PyArray_DTypeMeta *const signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    PyUFuncObject *minmax = (PyUFuncObject *)ufunc;
+    PyArray_DTypeMeta *common = NULL;
+
+    /* A homogeneous output signature fixes the operation DType. */
+    for (int i = minmax->nin; i < minmax->nargs; i++) {
+        if (signature[i] == NULL) {
+            continue;
+        }
+        if (common == NULL) {
+            common = signature[i];
+        }
+        else if (common != signature[i]) {
+            common = NULL;
+            break;
+        }
+    }
+    if (common != NULL) {
+        Py_INCREF(common);
+    }
+    else {
+        PyArray_DTypeMeta *inputs[NPY_MAXARGS];
+        int ninput = 0;
+        for (int i = 0; i < minmax->nin; i++) {
+            if (op_dtypes[i] != NULL) {
+                inputs[ninput++] = op_dtypes[i];
+            }
+        }
+        if (ninput == 0) {
+            /* Nothing to promote from, so there is no loop */
+            return -1;
+        }
+        common = PyArray_PromoteDTypeSequence(ninput, inputs);
+        if (common == NULL) {
+            if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+                /* Promotion failing means there is no loop */
+                PyErr_Clear();
+            }
+            return -1;
+        }
+    }
+
+    for (int i = 0; i < minmax->nargs; i++) {
+        PyArray_DTypeMeta *dt = signature[i] != NULL ? signature[i] : common;
+        Py_INCREF(dt);
+        new_op_dtypes[i] = dt;
+    }
+    Py_DECREF(common);
+    return 0;
+}
+
+
+static int
+register_minimummaximum_promoter(PyObject *ufunc)
+{
+    PyObject *none_tuple = PyTuple_Pack(4, Py_None, Py_None, Py_None, Py_None);
+    if (none_tuple == NULL) {
+        return -1;
+    }
+    PyObject *promoter = PyCapsule_New(
+            (void *)&minimummaximum_promoter, "numpy._ufunc_promoter", NULL);
+    if (promoter == NULL) {
+        Py_DECREF(none_tuple);
+        return -1;
+    }
+    int res = PyUFunc_AddPromoter(ufunc, none_tuple, promoter);
+    Py_DECREF(none_tuple);
+    Py_DECREF(promoter);
+    return res;
+}
+
+
+/*
+* `resolve_descriptors` for the datetime and timedelta loops that resolves
+* to the common unit of the inputs.
+* The other loops are not parametric and use the default legacy resolution.
+*/
+static NPY_CASTING
+minimummaximum_resolve_descriptors(
+        PyArrayMethodObject *self,
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
+        PyArray_Descr *loop_descrs[],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    int nargs = self->nin + self->nout;
+    PyArray_Descr *common = NULL;
+
+    for (int i = 0; i < self->nin; i++) {
+        if (given_descrs[i] == NULL) {
+            continue;
+        }
+        if (common == NULL) {
+            Py_INCREF(given_descrs[i]);
+            common = given_descrs[i];
+        }
+        else {
+            Py_SETREF(common, PyArray_PromoteTypes(common, given_descrs[i]));
+            if (common == NULL) {
+                return (NPY_CASTING)-1;
+            }
+        }
+    }
+    if (common == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "minimummaximum requires at least one input descriptor");
+        return (NPY_CASTING)-1;
+    }
+    Py_SETREF(common, NPY_DT_CALL_ensure_canonical(common));
+    if (common == NULL) {
+        return (NPY_CASTING)-1;
+    }
+
+    NPY_CASTING casting = NPY_NO_CASTING;
+    for (int i = 0; i < nargs; i++) {
+        if (given_descrs[i] != NULL && given_descrs[i] != common) {
+            casting = NPY_SAFE_CASTING;
+        }
+        Py_INCREF(common);
+        loop_descrs[i] = common;
+    }
+    Py_DECREF(common);
+    return casting;
+}
+
+
 NPY_NO_EXPORT int
 init_minimummaximum(PyObject *umath)
 {
@@ -146,6 +283,13 @@ init_minimummaximum(PyObject *umath)
         meth->flags = (NPY_ARRAYMETHOD_FLAGS)(
                 meth->flags | NPY_METH_IS_REORDERABLE);
         meth->get_reduction_loop = &minimummaximum_get_reduction_loop;
+        if (typenums[k] == NPY_DATETIME || typenums[k] == NPY_TIMEDELTA) {
+            meth->resolve_descriptors = &minimummaximum_resolve_descriptors;
+        }
+    }
+
+    if (register_minimummaximum_promoter(ufunc) < 0) {
+        goto fail;
     }
 
     Py_DECREF(ufunc);
