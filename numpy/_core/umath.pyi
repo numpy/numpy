@@ -1093,26 +1093,6 @@ class _ufunc_11_f(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
-    @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: np.floating](
-        self,
-        x: _ArrayLikeFloat_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
-    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
-    @overload  # ?d, dtype=<unknown>
-    def __call__(
-        self,
-        x: _ArrayLikeFloat_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
-    ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -1133,6 +1113,26 @@ class _ufunc_11_f(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: np.floating](
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
 
     #
     @override
@@ -1285,26 +1285,6 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
     ) -> npt.NDArray[Any]: ...
-    @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: np.floating | np.object_](
-        self,
-        x: _ArrayLikeFloat_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
-    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
-    @overload  # ?d, dtype=<unknown>
-    def __call__(
-        self,
-        x: _ArrayLikeFloat_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
-    ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -1325,6 +1305,26 @@ class _ufunc_11_fo(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: np.floating | np.object_](
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
 
     #
     @override
@@ -1507,26 +1507,6 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
-    @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: np.inexact | np.object_](
-        self,
-        x: _ArrayLikeNumber_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
-    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
-    @overload  # ?d, dtype=<unknown>
-    def __call__(
-        self,
-        x: _ArrayLikeNumber_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
-    ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -1547,6 +1527,26 @@ class _ufunc_11_fco(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: np.inexact | np.object_](
+        self,
+        x: _ArrayLikeNumber_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeNumber_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
 
     #
     @override
@@ -1749,26 +1749,6 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
-    @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: np.number | np.object_](
-        self,
-        x: _ArrayLikeNumber_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
-    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
-    @overload  # ?d, dtype=<unknown>
-    def __call__(
-        self,
-        x: _ArrayLikeNumber_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
-    ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -1789,6 +1769,26 @@ class _ufunc_11_ifco(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: np.number | np.object_](
+        self,
+        x: _ArrayLikeNumber_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeNumber_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
 
     #
     @override
@@ -1971,26 +1971,6 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
-    @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: np.number | np.object_](
-        self,
-        x: _ArrayLikeNumericObj,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
-    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
-    @overload  # ?d, dtype=<unknown>
-    def __call__(
-        self,
-        x: _ArrayLikeNumericObj,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
-    ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -2011,6 +1991,26 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: np.number | np.object_](
+        self,
+        x: _ArrayLikeNumericObj,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeNumericObj,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
 
     #
     @override
@@ -2173,26 +2173,6 @@ class _ufunc_11_ifcmo(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
-    @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: _numeric | np.object_](
-        self,
-        x: _ArrayLikeNumericObj,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
-    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
-    @overload  # ?d, dtype=<unknown>
-    def __call__(
-        self,
-        x: _ArrayLikeNumericObj,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
-    ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -2213,6 +2193,26 @@ class _ufunc_11_ifcmo(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: _numeric | np.object_](
+        self,
+        x: _ArrayLikeNumericObj,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeNumericObj,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
 
     #
     @override
@@ -2365,26 +2365,6 @@ class _ufunc_11_bio(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
-    @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: _to_integer | np.object_](
-        self,
-        x: _ArrayLikeInt_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
-    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
-    @overload  # ?d, dtype=<unknown>
-    def __call__(
-        self,
-        x: _ArrayLikeInt_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
-    ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -2405,6 +2385,26 @@ class _ufunc_11_bio(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: _to_integer | np.object_](
+        self,
+        x: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeInt_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
 
     #
     @override
@@ -2587,26 +2587,6 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
-    @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: _to_floating | np.object_](
-        self,
-        x: _ArrayLikeFloat_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
-    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
-    @overload  # ?d, dtype=<unknown>
-    def __call__(
-        self,
-        x: _ArrayLikeFloat_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
-    ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -2627,6 +2607,26 @@ class _ufunc_11_bifo(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: _to_floating | np.object_](
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
 
     #
     @override
@@ -2869,26 +2869,6 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs11],
     ) -> np.ndarray: ...
-    @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: _to_floating | np.object_](
-        self,
-        x: _ArrayLikeNumericObj_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs11],
-    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
-    @overload  # ?d, dtype=<unknown>
-    def __call__(
-        self,
-        x: _ArrayLikeNumericObj_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs11],
-    ) -> Any: ...
     @overload  # out=<given>
     def __call__[OutT: np.ndarray](
         self,
@@ -2909,6 +2889,26 @@ class _ufunc_11_bifcmo(_ufunc_11):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: _to_floating | np.object_](
+        self,
+        x: _ArrayLikeNumericObj_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs11],
+    ) -> npt.NDArray[ScalarT] | Any: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeNumericObj_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> Any: ...
 
     #
     @override
@@ -3370,16 +3370,6 @@ class _ufunc_12_frexp(_ufunc_12):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs12],
     ) -> tuple[Array2D[np.float64], Array2D[np.int32]]: ...
-    @overload  # ?d, unknown dtype
-    def __call__(
-        self,
-        x: _ArrayLikeFloat_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: None = None,
-        **kwargs: Unpack[_Kwargs12],
-    ) -> _tuple2[Any]: ...
     @overload  # out=<given>
     def __call__[OutT1: np.ndarray, OutT2: np.ndarray](
         self,
@@ -3400,6 +3390,16 @@ class _ufunc_12_frexp(_ufunc_12):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs12],
     ) -> OutT: ...
+    @overload  # ?d, unknown dtype
+    def __call__(
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> _tuple2[Any]: ...
 
 # efdg => (efdg, efdg)
 @type_check_only
@@ -3545,26 +3545,6 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         dtype: npt.DTypeLike,
         **kwargs: Unpack[_Kwargs12],
     ) -> _tuple2[np.ndarray]: ...
-    @overload  # ?d, dtype=<known>
-    def __call__[ScalarT: np.floating](
-        self,
-        x: _ArrayLikeFloat_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: _DTypeLike[ScalarT],
-        **kwargs: Unpack[_Kwargs12],
-    ) -> _tuple2[npt.NDArray[ScalarT] | Any]: ...  # `| Any` because of overlap
-    @overload  # ?d, dtype=<unknown>
-    def __call__(
-        self,
-        x: _ArrayLikeFloat_co,
-        /,
-        *,
-        out: EllipsisType | None = None,
-        dtype: npt.DTypeLike | None = None,
-        **kwargs: Unpack[_Kwargs12],
-    ) -> _tuple2[Any]: ...
     @overload  # out=<given>
     def __call__[OutT1: np.ndarray, OutT2: np.ndarray](
         self,
@@ -3585,6 +3565,26 @@ class _ufunc_12_modf(_ufunc_12):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs12],
     ) -> OutT: ...
+    @overload  # ?d, dtype=<known>
+    def __call__[ScalarT: np.floating](
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLike[ScalarT],
+        **kwargs: Unpack[_Kwargs12],
+    ) -> _tuple2[npt.NDArray[ScalarT] | Any]: ...  # `| Any` because of overlap
+    @overload  # ?d, dtype=<unknown>
+    def __call__(
+        self,
+        x: _ArrayLikeFloat_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: npt.DTypeLike | None = None,
+        **kwargs: Unpack[_Kwargs12],
+    ) -> _tuple2[Any]: ...
 
 frexp: Final[_ufunc_12_frexp] = ...
 modf: Final[_ufunc_12_modf] = ...

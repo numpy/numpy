@@ -1,4 +1,4 @@
-from typing import Any, NoReturn, assert_type
+from typing import Any, Literal, NoReturn, Self, assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -127,6 +127,32 @@ _U_1d: npt.Array1D[np.str_]
 _S_0d: np.bytes_
 _S_1d: npt.Array1D[np.bytes_]
 _T_1d: np.ndarray[tuple[int], np.dtypes.StringDType]
+
+# `__array_ufunc__` takes precedence over `__array__`
+
+class _ArrayAndUFunc:
+    def __array__(
+        self, dtype: None = None, /, *, copy: bool | None = None
+    ) -> npt.NDArray[np.float64]: ...
+    def __array_ufunc__(
+        self, ufunc: np.ufunc, method: Literal["__call__"], /, *inputs: Any, **kwargs: Any
+    ) -> Self: ...
+
+_array_and_ufunc: _ArrayAndUFunc
+
+assert_type(np.isnan(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.absolute(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.ceil(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.invert(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.sin(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.sin(_array_and_ufunc, dtype=np.float32), _ArrayAndUFunc)
+assert_type(np.cbrt(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.spacing(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.sign(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.negative(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.square(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.frexp(_array_and_ufunc), _ArrayAndUFunc)
+assert_type(np.modf(_array_and_ufunc), _ArrayAndUFunc)
 
 # _ufunc_11_m_b
 # (isnat)
