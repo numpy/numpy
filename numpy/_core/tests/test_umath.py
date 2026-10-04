@@ -2817,7 +2817,20 @@ class TestMinimumMaximum(_FilterInvalids):
             a = np.arange(3).astype(f'{kind}8[D]')
             b = a[::-1].astype(f'{kind}8[s]')
             self.check(a, b)
-            assert ncu.minimummaximum(a, b)[0].dtype == np.dtype(f'{kind}8[s]')
+            lo, hi = ncu.minimummaximum(a, b)
+            assert lo.dtype == hi.dtype == np.dtype(f'{kind}8[s]')
+
+    def test_mixed_dtypes(self):
+        a = np.array([1, 5, 3], dtype=np.int8)
+        b = np.array([2., 4., 0.5], dtype=np.float32)
+        self.check(a, b)
+        self.check(a, 3)
+        self.check(a, 3.)
+        self.check(1, 2.)
+        self.check(True, 2)
+        assert ncu.minimummaximum(a, b)[0].dtype == np.float32
+        assert ncu.minimummaximum(a, 3)[0].dtype == np.int8
+        assert ncu.minimummaximum(1, 2.)[0].dtype == np.float64
 
     def test_strided_array(self):
         arr1 = np.array([-4.0, 1.0, 10.0, 0.0, np.nan, -np.nan, np.inf, -np.inf])
