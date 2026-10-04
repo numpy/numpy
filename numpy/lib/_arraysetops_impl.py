@@ -416,23 +416,22 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         mask[1:] = aux[1:] != aux[:-1]
 
     ret = (aux[mask],)
-    if return_index or return_counts:
-        # Where each group of equal elements starts in the sorted array.
-        unique_pos = np.flatnonzero(mask)
     if return_index:
         if stable:
             # A stable sort leaves each group's first occurrence at its front.
-            ret += (perm[unique_pos],)
+            ret += (perm[mask],)
         else:
+            unique_pos = np.flatnonzero(mask)
             # Otherwise the group is in arbitrary order, so pick its smallest
             # original position. This stays sequential over ``perm``.
             ret += (np.minimum.reduceat(perm, unique_pos),)
     if return_inverse:
+        imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)
-        inv_idx[perm] = np.cumsum(mask, dtype=np.intp) - 1
+        inv_idx[perm] = imask
         ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
     if return_counts:
-        idx = np.concatenate((unique_pos, [mask.size]))
+        idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(idx),)
     return ret
 
