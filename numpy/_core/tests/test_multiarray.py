@@ -5580,6 +5580,29 @@ class TestPickling:
 
         assert_equal(original.dtype, new.dtype)
 
+    @pytest.mark.parametrize("shape, items", [
+        ((4,), [1, 2, 3]), ((2,), [1, 2, 3]), ((), []), ((0,), [1])])
+    def test_setstate_object_list_size_mismatch(self, shape, items):
+        a = np.array([1, 2], dtype=object)
+        with pytest.raises(ValueError, match="list size does not match"):
+            a.__setstate__((1, shape, np.dtype(object), False, items))
+        assert_equal(a, np.array([1, 2], dtype=object))
+
+    def test_setstate_structured_object_list_size_mismatch(self):
+        dt = np.dtype([('a', object), ('b', int)])
+        with pytest.raises(ValueError, match="list size does not match"):
+            np.zeros(1, dt).__setstate__((1, (4,), dt, False, [(1, 1)]))
+
+    def test_reduce_shape_error(self):
+        class MyArr(np.ndarray):
+            @property
+            def shape(self):
+                raise RuntimeError("shape lookup failed")
+
+        a = np.arange(3).view(MyArr)
+        with pytest.raises(RuntimeError, match="shape lookup failed"):
+            a.__reduce__()
+
 
 class TestFancyIndexing:
     def test_list(self):
