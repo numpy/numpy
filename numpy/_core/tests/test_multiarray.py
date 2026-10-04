@@ -6274,13 +6274,20 @@ class TestMinMax:
         b = a.astype(a.dtype.newbyteorder())
         with pytest.raises(np._core._exceptions._UFuncNoLoopError):
             np._core.umath.minimummaximum(a, b)
-        lo, hi = np.minmax(a)
+        lo, hi = np.minmax(b)
         assert type(lo) is type(hi) is rational
+        assert_equal((lo, hi), (np.min(b), np.max(b)))
 
     def test_minmax_fallback_out_overlapping_input(self):
         a = np.array([3, 1, 2], dtype=rational)
         out = (a[:1].reshape(()), np.empty((), dtype=rational))
         assert_equal(np.minmax(a, out=out), (rational(1), rational(3)))
+
+    def test_minmax_fallback_out_in_input_list(self):
+        x = np.array(rational(5))
+        out = (x, np.empty((), dtype=rational))
+        res = np.minmax([x, rational(1), rational(3)], out=out)
+        assert_equal(res, (rational(1), rational(5)))
 
     def test_minmax_array_ufunc_no_fallback(self):
         # a subclass whose __array_ufunc__ declines the private minimummaximum

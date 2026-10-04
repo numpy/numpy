@@ -3546,8 +3546,9 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         if out_min is not None:
             # the minimum is written before the maximum's operands are read
             # check for aliasing and copy if needed
+            a = np.asanyarray(a)
             if np.may_share_memory(a, out_min):
-                a = np.asanyarray(a, copy=True)
+                a = a.copy()
             if where is not np._NoValue and np.may_share_memory(where, out_min):
                 where = np.asanyarray(where, copy=True)
             if (initial_max is not np._NoValue

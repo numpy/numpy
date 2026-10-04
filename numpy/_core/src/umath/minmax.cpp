@@ -21,7 +21,6 @@
 #include "array_method.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
-#include "module_state.h"
 
 #include "loops.h"
 #include "minmax.h"
@@ -119,11 +118,6 @@ minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
     else {
         common = PyArray_PromoteDTypeSequence(2, (PyArray_DTypeMeta **)op_dtypes);
         if (common == NULL) {
-            if (PyErr_ExceptionMatches(
-                        _npy_module_state->static_pydata.DTypePromotionError)) {
-                /* Promotion failing means there is no loop */
-                PyErr_Clear();
-            }
             return -1;
         }
         if (common == &PyArray_PyLongDType

@@ -703,10 +703,13 @@ sfloat_get_ufunc(const char *ufunc_name)
     }
     PyObject *ufunc = PyObject_GetAttrString(mod, ufunc_name);
     Py_DECREF(mod);
+    if (ufunc == NULL) {
+        return NULL;
+    }
     if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
         Py_DECREF(ufunc);
         PyErr_Format(PyExc_TypeError,
-                "numpy.%s was not a ufunc!", ufunc_name);
+                "numpy._core.umath.%s was not a ufunc!", ufunc_name);
         return NULL;
     }
     return ufunc;
