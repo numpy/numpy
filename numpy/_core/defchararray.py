@@ -6,8 +6,8 @@ operations and methods.
    The `chararray` class exists for backwards compatibility with
    Numarray, it is not recommended for new development. Starting from numpy
    1.4, if one needs arrays of strings, it is recommended to use arrays of
-   `dtype` ``object_``, ``str_`` or ``bytes_``, and use the free functions
-   in the `numpy.char` module for fast vectorized string operations.
+   `dtype` `~numpy.object_`, `~numpy.str_` or `~numpy.bytes_`, and use the free
+   functions in the `numpy.char` module for fast vectorized string operations.
 
 The preferred alias for `defchararray` is `numpy.char`.
 
@@ -66,7 +66,7 @@ def equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of ``str_`` or ``bytes_``
+    x1, x2 : array_like of str or bytes
         Input arrays of the same shape.
 
     Returns
@@ -100,7 +100,7 @@ def not_equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of ``str_`` or ``bytes_``
+    x1, x2 : array_like of str or bytes
         Input arrays of the same shape.
 
     Returns
@@ -135,7 +135,7 @@ def greater_equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of ``str_`` or ``bytes_``
+    x1, x2 : array_like of str or bytes
         Input arrays of the same shape.
 
     Returns
@@ -169,7 +169,7 @@ def less_equal(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of ``str_`` or ``bytes_``
+    x1, x2 : array_like of str or bytes
         Input arrays of the same shape.
 
     Returns
@@ -203,7 +203,7 @@ def greater(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of ``str_`` or ``bytes_``
+    x1, x2 : array_like of str or bytes
         Input arrays of the same shape.
 
     Returns
@@ -237,7 +237,7 @@ def less(x1, x2):
 
     Parameters
     ----------
-    x1, x2 : array_like of ``str_`` or ``bytes_``
+    x1, x2 : array_like of str or bytes
         Input arrays of the same shape.
 
     Returns
@@ -414,7 +414,7 @@ class chararray(ndarray):
        The `chararray` class exists for backwards compatibility with
        Numarray, it is not recommended for new development. Starting from numpy
        1.4, if one needs arrays of strings, it is recommended to use arrays of
-       `dtype` ``object_``, ``str_`` or ``bytes_``, and use
+       `dtype` `~numpy.object_`, `~numpy.str_` or `~numpy.bytes_`, and use
        the free functions in the `numpy.char` module for fast vectorized
        string operations.
 
@@ -1244,7 +1244,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
 
     Parameters
     ----------
-    obj : array_like, with ``str_`` or ``bytes_`` dtype
+    obj : array_like of str or bytes
 
     itemsize : int, optional
         `itemsize` is the number of characters per scalar in the
@@ -1266,7 +1266,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         None and `obj` is one of the following:
 
         - a `~numpy.char.chararray`,
-        - an ndarray of type ``str_`` or ``bytes_``
+        - an ndarray of type `~numpy.str_` or `~numpy.bytes_`
         - a Python `str` or `bytes` object,
 
         then the unicode setting of the output array will be
@@ -1386,7 +1386,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
 
     Parameters
     ----------
-    obj : array_like, with ``str_`` or ``bytes_`` dtype
+    obj : array_like of str or bytes
 
     itemsize : int, optional
         `itemsize` is the number of characters per scalar in the
@@ -1402,7 +1402,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
         None and `obj` is one of the following:
 
         - a `~numpy.char.chararray`,
-        - an ndarray of type ``str_`` or ``bytes_``
+        - an ndarray of type `~numpy.str_` or `~numpy.bytes_`
         - a Python `str` or `bytes` object,
 
         then the unicode setting of the output array will be
