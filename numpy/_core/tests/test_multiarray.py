@@ -9861,8 +9861,8 @@ class TestNewBufferProtocol:
         f.a = 3
         assert_equal(arr['a'], 3)
 
-    @pytest.mark.parametrize("scalar", [False, True],
-                             ids=["array", "void_scalar"])
+    @pytest.mark.parametrize(
+        "scalar", [False, True], ids=["array", "void_scalar"])
     def test_error_if_stored_buffer_info_is_corrupted(self, scalar):
         """
         If a user extends a NumPy array before 1.20 and then runs it
