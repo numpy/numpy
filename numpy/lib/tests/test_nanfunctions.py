@@ -1367,7 +1367,8 @@ class TestNanFunctions_Quantile:
     def test_allnan_first_slice_dtype(self, method):
         # gh-32832: the dtype must not depend on which slice comes first
         a = np.array([[np.nan, np.nan], [1, 2]], dtype=np.float32)
-        q = np.array([0.3], dtype=np.float32)
+        # q is float64 here, so the result dtype differs from the array dtype
+        q = np.array([0.3])
         expected = np.quantile(a[1], q, method=method)
         with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
             result = np.nanquantile(a, q, axis=1, method=method)
