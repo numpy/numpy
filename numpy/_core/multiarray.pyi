@@ -1464,7 +1464,7 @@ class busdaycalendar:
         self,
         /,
         weekmask: str | Sequence[_IntLike_co] | _SupportsArray[NDArray[np.bool | np.integer]] = "1111100",
-        holidays: Sequence[dt.date | np.datetime64[dt.date]] | _SupportsArray[NDArray[np.datetime64[dt.date]]] | None = None,
+        holidays: ArrayLike | _ToDates | None = None,
     ) -> None: ...
     @property
     def weekmask(self) -> _Array1D[np.bool]: ...
