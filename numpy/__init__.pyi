@@ -2514,9 +2514,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     #
     def byteswap(self, inplace: py_bool = ...) -> Self: ...
+
+    #
     @property
     def flat(self) -> flatiter[Self]: ...
+    @flat.setter
+    def flat(self, flat: ArrayLike, /) -> None: ...
 
+    #
     @overload  # use the same output type as that of the underlying `generic`
     def item[T](self: NDArray[generic[T]], i0: SupportsIndex | tuple[SupportsIndex, ...] = ..., /, *args: SupportsIndex) -> T: ...
     @overload  # special casing for `StringDType`, which has no scalar type

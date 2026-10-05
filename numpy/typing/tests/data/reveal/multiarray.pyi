@@ -421,3 +421,4 @@ assert_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], order="C", casting="no")
 assert_type(next(iter(AR_u1.flat)), np.uint8)
 assert_type(next(iter(AR_O_nd.flat)), Any)
 assert_type(next(iter(AR_T.flat)), str)
+AR_u1.flat = 1
