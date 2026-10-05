@@ -9862,8 +9862,9 @@ class TestNewBufferProtocol:
         assert_equal(arr['a'], 3)
 
     @pytest.mark.parametrize(
-        "scalar", [False, True], ids=["array", "void_scalar"])
-    def test_error_if_stored_buffer_info_is_corrupted(self, scalar):
+        "structured_scalar", [False, True], ids=["array", "void_scalar"])
+    def test_error_if_stored_buffer_info_is_corrupted(self,
+                                                      structured_scalar):
         """
         If a user extends a NumPy array before 1.20 and then runs it
         on NumPy 1.20+. A C-subclassed array might in theory modify
@@ -9872,7 +9873,7 @@ class TestNewBufferProtocol:
         This is a sanity check to help users transition to safe code, it
         may be deleted at any point.
         """
-        if scalar:
+        if structured_scalar:
             obj = np.ones(1, dtype="i,i")[()]
         else:
             obj = np.ones(3)
