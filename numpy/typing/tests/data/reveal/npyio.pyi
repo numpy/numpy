@@ -35,7 +35,7 @@ assert_type(npz_file.fid, IO[str] | None)
 assert_type(npz_file.files, list[str])
 assert_type(npz_file.allow_pickle, bool)
 assert_type(npz_file.pickle_kwargs, Mapping[str, Any] | None)
-assert_type(npz_file.f, BagObj[np.lib.npyio.NpzFile])
+assert_type(npz_file.f, BagObj[npt.NDArray[Any]])
 assert_type(npz_file["test"], npt.NDArray[Any])
 assert_type(len(npz_file), int)
 with npz_file as f:
