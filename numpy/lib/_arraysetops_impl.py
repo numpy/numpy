@@ -377,13 +377,9 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             return (conv.wrap(hash_unique),)
 
-    # Stable sort prefereable for:
-    # - the boolean and small integer kinds (stable' is a radix sort, which
-    #   leaves quicksort far behind)
-    # - StringDType (stable is a timsort, whose fewer comparisons pay off)
-    # - complex data with NaNs (stable puts the first occurrence at the front
-    #   of the group)
-    # Elsewhere quicksort is the faster sort
+    # Stable sort is faster for bools and small integers (radixsort) and
+    # StringDType (timsort does fewer comparisons). If returning indices
+    # for a complex array with NaNs, stable sorts preserve order between NaNs.
     stable = (
         (ar.dtype.kind in "biu" and ar.dtype.itemsize <= 2) or
         (optional_indices and ar.dtype.kind == "T") or
@@ -422,8 +418,8 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             ret += (perm[mask],)
         else:
             unique_pos = np.flatnonzero(mask)
-            # Otherwise the group is in arbitrary order, so pick its smallest
-            # original position. This stays sequential over ``perm``.
+            # If sort was unstable, the group is in arbitrary order, so pick it
+            # smallest original position.
             ret += (np.minimum.reduceat(perm, unique_pos),)
     if return_inverse:
         imask = np.cumsum(mask) - 1
