@@ -465,6 +465,32 @@ This will create the following output:
 
 .. legacy:: function
 
+.. _version_directives:
+
+Version directives
+==================
+
+``versionadded`` and ``versionchanged`` directives should normally be
+retained for at least five years after the release they reference.
+
+After five years, they may be removed as routine documentation
+maintenance when the version information is no longer useful for
+understanding the current API.
+
+This cleanup is normally batched with the removal of expired
+deprecations at the start of a release cycle.
+
+Directives may be retained longer when the historical information
+remains useful, for example when it explains otherwise surprising
+behavior or remains relevant to commonly supported downstream versions.
+
+Historical information remains available in release notes, versioned
+documentation, and the repository history.
+
+``deprecated`` directives are governed separately by NumPy's
+`backwards compatibility and deprecation policy
+<https://numpy.org/neps/nep-0023-backwards-compatibility.html>`_.
+
 *********************
 Documentation reading
 *********************
