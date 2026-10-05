@@ -228,7 +228,7 @@ type _ToDates = dt.date | _NestedSequence[dt.date]
 type _ToDeltas = dt.timedelta | _NestedSequence[dt.timedelta]
 
 type _BitOrder = L["big", "little"]
-type _MaxWork = L[-1, 0]
+type _TimezoneContext = L["naive", "UTC", "local"] | dt.tzinfo
 
 @type_check_only
 class _SupportsArray[ArrayT_co: np.ndarray](Protocol):
@@ -839,8 +839,8 @@ def unpackbits(
 ) -> NDArray[uint8]: ...
 
 # any two python objects will be accepted, not just `ndarray`s
-def shares_memory(a: object, b: object, /, max_work: _MaxWork = -1) -> bool: ...
-def may_share_memory(a: object, b: object, /, max_work: _MaxWork = 0) -> bool: ...
+def shares_memory(a: object, b: object, /, max_work: int | None = -1) -> bool: ...
+def may_share_memory(a: object, b: object, /, max_work: int | None = 0) -> bool: ...
 
 #
 @overload  # ndarray
