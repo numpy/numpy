@@ -409,6 +409,7 @@ assert_type(np.datetime_as_string(AR_LIKE_M_2d), np.ndarray[tuple[int, int], np.
 
 assert_type(np.busdaycalendar(holidays=date_seq), np.busdaycalendar)
 assert_type(np.busdaycalendar(holidays=[M]), np.busdaycalendar)
+assert_type(np.busdaycalendar(holidays=["2011-07-01", "2011-07-04"]), np.busdaycalendar)
 
 assert_type(np.char.compare_chararrays("a", "b", "!=", rstrip=False), npt.NDArray[np.bool])
 assert_type(np.char.compare_chararrays(b"a", b"a", "==", True), npt.NDArray[np.bool])
