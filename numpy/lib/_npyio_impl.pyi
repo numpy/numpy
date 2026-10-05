@@ -77,7 +77,7 @@ class NpzFile(Mapping[str, NDArray[_ScalarT_co]]):
     allow_pickle: bool
     max_header_size: int
     pickle_kwargs: Mapping[str, Any] | None
-    f: BagObj[NpzFile[_ScalarT_co]]
+    f: BagObj[NDArray[_ScalarT_co]]
 
     #
     def __init__(
