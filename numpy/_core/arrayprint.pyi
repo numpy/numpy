@@ -52,9 +52,9 @@ class _FormatDict(TypedDict, total=False):
 @type_check_only
 class _FormatOptions(TypedDict):
     precision: int
-    threshold: int
+    threshold: float
     edgeitems: int
-    linewidth: int
+    linewidth: float
     suppress: bool
     nanstr: str
     infstr: str
@@ -69,9 +69,9 @@ __docformat__: Final = "restructuredtext"  # undocumented
 
 def set_printoptions(
     precision: SupportsIndex | None = None,
-    threshold: int | None = None,
+    threshold: float | None = None,
     edgeitems: int | None = None,
-    linewidth: int | None = None,
+    linewidth: float | None = None,
     suppress: bool | None = None,
     nanstr: str | None = None,
     infstr: str | None = None,
@@ -87,14 +87,14 @@ def get_printoptions() -> _FormatOptions: ...
 # public numpy export
 def array2string(
     a: NDArray[Any],
-    max_line_width: int | None = None,
+    max_line_width: float | None = None,
     precision: SupportsIndex | None = None,
     suppress_small: bool | None = None,
     separator: str = " ",
     prefix: str = "",
     *,
     formatter: _FormatDict | None = None,
-    threshold: int | None = None,
+    threshold: float | None = None,
     edgeitems: int | None = None,
     sign: _Sign | None = None,
     floatmode: _FloatMode | None = None,
@@ -125,21 +125,21 @@ def format_float_positional(
 ) -> str: ...
 def array_repr(
     arr: NDArray[Any],
-    max_line_width: int | None = None,
+    max_line_width: float | None = None,
     precision: SupportsIndex | None = None,
     suppress_small: bool | None = None,
 ) -> str: ...
 def array_str(
     a: NDArray[Any],
-    max_line_width: int | None = None,
+    max_line_width: float | None = None,
     precision: SupportsIndex | None = None,
     suppress_small: bool | None = None,
 ) -> str: ...
 def printoptions(
     precision: SupportsIndex | None = ...,
-    threshold: int | None = ...,
+    threshold: float | None = ...,
     edgeitems: int | None = ...,
-    linewidth: int | None = ...,
+    linewidth: float | None = ...,
     suppress: bool | None = ...,
     nanstr: str | None = ...,
     infstr: str | None = ...,
