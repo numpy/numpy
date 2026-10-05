@@ -274,7 +274,6 @@ type _ToDatesND = _DualArrayLike[np.dtype[np.datetime64], dt.date | str]
 type _ToWeekmask = str | Sequence[_IntLike_co] | _SupportsArray[Array1D[np.bool | np.integer]]
 
 type _BitOrder = L["big", "little"]
-type _MaxWork = L[-1, 0]
 type _TimezoneContext = L["naive", "UTC", "local"] | dt.tzinfo
 
 @type_check_only
@@ -1663,8 +1662,8 @@ def unpackbits(
 ) -> NDArray[uint8]: ...
 
 # any two python objects will be accepted, not just `ndarray`s
-def shares_memory(a: object, b: object, /, max_work: _MaxWork = -1) -> bool: ...
-def may_share_memory(a: object, b: object, /, max_work: _MaxWork = 0) -> bool: ...
+def shares_memory(a: object, b: object, /, max_work: int | None = -1) -> bool: ...
+def may_share_memory(a: object, b: object, /, max_work: int | None = 0) -> bool: ...
 
 # NOTE: The strange overload order (2d, 3d, then 1d) is a necessary workaround for
 # pyright and mypy, which are sensitive to the order of these _disjoint_ overloads.

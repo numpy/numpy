@@ -254,10 +254,12 @@ assert_type(np.unpackbits(AR_u1), np.ndarray[tuple[int], np.dtype[np.uint8]])
 assert_type(np.unpackbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
 assert_type(np.shares_memory(1, 2), bool)
-assert_type(np.shares_memory(AR_f8, AR_f8, max_work=-1), bool)
+assert_type(np.shares_memory(AR_f8, AR_f8, max_work=42), bool)
+assert_type(np.shares_memory(AR_f8, AR_f8, max_work=None), bool)
 
 assert_type(np.may_share_memory(1, 2), bool)
-assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=0), bool)
+assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=42), bool)
+assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=None), bool)
 
 assert_type(np.promote_types(np.int32, np.int64), np.dtype)
 assert_type(np.promote_types("f4", float), np.dtype)
