@@ -1,3 +1,4 @@
+import numbers
 from _typeshed import Incomplete
 from builtins import bool as py_bool
 from collections.abc import Callable, Iterable, Sequence
@@ -6,10 +7,10 @@ from typing import (
     Literal as L,
     SupportsAbs,
     SupportsIndex,
-    TypeGuard,
     TypeVar,
     overload,
 )
+from typing_extensions import TypeIs
 
 import numpy as np
 from numpy import (
@@ -1243,8 +1244,8 @@ def fromfunction[ReturnT](
     **kwargs: object,
 ) -> ReturnT: ...
 
-#
-def isscalar(element: object) -> TypeGuard[generic | complex | str | bytes | memoryview]: ...
+# NOTE: simplifying `int | float | complex` to `complex` causes mypy issues
+def isscalar(element: object) -> TypeIs[generic | int | float | complex | str | bytes | memoryview | numbers.Number]: ...
 
 #
 def binary_repr(num: SupportsIndex, width: int | None = None) -> str: ...
