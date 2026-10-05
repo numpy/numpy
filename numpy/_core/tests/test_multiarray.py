@@ -9861,11 +9861,10 @@ class TestNewBufferProtocol:
         f.a = 3
         assert_equal(arr['a'], 3)
 
-    @pytest.mark.parametrize("obj", [np.ones(3), np.ones(1, dtype="i,i")[()]])
-    @pytest.mark.thread_unsafe(
-        reason="_multiarray_tests used memoryview, which is thread-unsafe",
-    )
-    def test_error_if_stored_buffer_info_is_corrupted(self, obj):
+    @pytest.mark.parametrize(
+        "structured_scalar", [False, True], ids=["array", "void_scalar"])
+    def test_error_if_stored_buffer_info_is_corrupted(self,
+                                                      structured_scalar):
         """
         If a user extends a NumPy array before 1.20 and then runs it
         on NumPy 1.20+. A C-subclassed array might in theory modify
@@ -9874,6 +9873,10 @@ class TestNewBufferProtocol:
         This is a sanity check to help users transition to safe code, it
         may be deleted at any point.
         """
+        if structured_scalar:
+            obj = np.ones(1, dtype="i,i")[()]
+        else:
+            obj = np.ones(3)
         # corrupt buffer info:
         _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
         name = type(obj)
