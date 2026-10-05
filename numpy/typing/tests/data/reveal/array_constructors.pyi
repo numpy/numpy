@@ -46,6 +46,11 @@ _py_c_1d: list[complex]
 _py_c_2d: list[list[complex]]
 _py_c_3d: list[list[list[complex]]]
 
+_py_rec_1d: list[tuple[int, float]]
+_py_rec_2d: list[list[tuple[int, float]]]
+_rec_spec: list[tuple[str, str]]
+_void_dtype: np.dtype[np.void]
+
 mixed_shape: tuple[int, np.int64]
 
 def _func_1d_i8(i: npt.Array1D[np.int8]) -> npt.Array1D[np.int8]: ...
@@ -123,6 +128,8 @@ assert_type(np.array([[np.float64(1), 2]], dtype=np.float32), npt.Array2D[np.flo
 assert_type(np.array([[np.float64(1), 2]], dtype="f4"), npt.Array2D[Any])
 assert_type(np.array(b"x"), npt.NDArray[Any])
 assert_type(np.array([b"x"]), npt.NDArray[Any])
+assert_type(np.array(_py_rec_1d, dtype=_void_dtype), npt.Array1D[np.void])
+assert_type(np.array(_py_rec_2d, dtype=_rec_spec), npt.NDArray[np.void])
 
 assert_type(np.zeros([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.zeros([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])
@@ -191,6 +198,8 @@ assert_type(np.asarray([[np.float64(1), 2]], dtype=np.float32), npt.Array2D[np.f
 assert_type(np.asarray([[np.float64(1), 2]], dtype="f4"), npt.Array2D[Any])
 assert_type(np.asarray(_py_i_3d, dtype=np.float32), npt.Array3D[np.float32])
 assert_type(np.asarray(_py_i_3d, dtype="f4"), npt.Array3D[Any])
+assert_type(np.asarray(_py_rec_1d, dtype=_void_dtype), npt.Array1D[np.void])
+assert_type(np.asarray(_py_rec_2d, dtype=_rec_spec), npt.NDArray[np.void])
 
 assert_type(np.asanyarray(A), npt.NDArray[np.float64])
 assert_type(np.asanyarray(B), SubClass[np.float64])
@@ -239,6 +248,8 @@ assert_type(np.asanyarray([[np.float64(1), 2]], dtype=np.float32), npt.Array2D[n
 assert_type(np.asanyarray([[np.float64(1), 2]], dtype="f4"), npt.Array2D[Any])
 assert_type(np.asanyarray(_py_i_3d, dtype=np.float32), npt.Array3D[np.float32])
 assert_type(np.asanyarray(_py_i_3d, dtype="f4"), npt.Array3D[Any])
+assert_type(np.asanyarray(_py_rec_1d, dtype=_void_dtype), npt.Array1D[np.void])
+assert_type(np.asanyarray(_py_rec_2d, dtype=_rec_spec), npt.NDArray[np.void])
 
 # same as below
 assert_type(np.ascontiguousarray(A), npt.NDArray[np.float64])
@@ -288,6 +299,8 @@ assert_type(np.ascontiguousarray([[np.float64(1), 2]], dtype=np.float32), npt.Ar
 assert_type(np.ascontiguousarray([[np.float64(1), 2]], dtype="f4"), npt.Array2D[Any])
 assert_type(np.ascontiguousarray(_py_i_3d, dtype=np.float32), npt.Array3D[np.float32])
 assert_type(np.ascontiguousarray(_py_i_3d, dtype="f4"), npt.Array3D[Any])
+assert_type(np.ascontiguousarray(_py_rec_1d, dtype=_void_dtype), npt.Array1D[np.void])
+assert_type(np.ascontiguousarray(_py_rec_2d, dtype=_rec_spec), npt.NDArray[np.void])
 
 # same as above
 assert_type(np.asfortranarray(A), npt.NDArray[np.float64])
@@ -337,6 +350,8 @@ assert_type(np.asfortranarray([[np.float64(1), 2]], dtype=np.float32), npt.Array
 assert_type(np.asfortranarray([[np.float64(1), 2]], dtype="f4"), npt.Array2D[Any])
 assert_type(np.asfortranarray(_py_i_3d, dtype=np.float32), npt.Array3D[np.float32])
 assert_type(np.asfortranarray(_py_i_3d, dtype="f4"), npt.Array3D[Any])
+assert_type(np.asfortranarray(_py_rec_1d, dtype=_void_dtype), npt.Array1D[np.void])
+assert_type(np.asfortranarray(_py_rec_2d, dtype=_rec_spec), npt.NDArray[np.void])
 
 assert_type(np.fromstring("1 1 1", sep=" "), npt.Array1D[np.float64])
 assert_type(np.fromstring(b"1 1 1", sep=" "), npt.Array1D[np.float64])
