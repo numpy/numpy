@@ -1152,6 +1152,9 @@ assert_type(np.ma.hstack([MAR_3d_f4, MAR_3d_f4]), _MArray3D[np.float32])
 assert_type(np.ma.hstack([MAR_3d_f4, MAR_3d_f4], dtype=np.int8), _MArray3D[np.int8])
 assert_type(np.ma.hstack([AR_LIKE_f, AR_LIKE_f]), MaskedArray[Any])
 
+assert_type(np.ma.hsplit(MAR_f4, AR_i8), list[MaskedArray[np.float32]])
+assert_type(np.ma.hsplit(AR_LIKE_f, AR_i8), list[MaskedArray[Any]])
+
 assert_type(np.ma.column_stack([MAR_f4, MAR_f4]), MaskedArray[np.float32])
 assert_type(np.ma.column_stack([AR_LIKE_f, AR_LIKE_f]), MaskedArray[Any])
 assert_type(np.ma.column_stack([MAR_0d_f4, MAR_0d_f4]), _MArray2D[np.float32])
