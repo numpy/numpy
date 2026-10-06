@@ -3,6 +3,7 @@ from typing import Any, Literal, NoReturn, assert_type
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import NDArray, _AnyShape
+from numpy.ma.mrecords import MaskedRecords, fromrecords
 
 type MaskedArray[ScalarT: np.generic] = np.ma.MaskedArray[_AnyShape, np.dtype[ScalarT]]
 type _NoMaskType = np.bool[Literal[False]]
@@ -535,6 +536,9 @@ assert_type(np.ma.fix_invalid(AR_LIKE_u, mask=[0, 1]), MaskedArray[np.uint32])
 assert_type(np.ma.fix_invalid(AR_LIKE_f, mask=0), MaskedArray[Any])
 
 assert_type(np.ma.mvoid(AR_f4, mask=[0, 1]), np.ma.mvoid)
+
+assert_type(MaskedRecords(2, mask=AR_i8), MaskedRecords)
+assert_type(fromrecords([(1, 2.0)], mask=[0, 1]), MaskedRecords[_AnyShape, np.dtype[Any]])
 
 # Masked Array addition
 
