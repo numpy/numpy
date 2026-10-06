@@ -1912,8 +1912,13 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
         return NULL;
     }
     PyTuple_SET_ITEM(state, 0, PyLong_FromLong(version));
-    PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self,
-                                                      "shape"));
+    obj = PyObject_GetAttrString((PyObject *)self, "shape");
+    if (obj == NULL) {
+        Py_DECREF(ret);
+        Py_DECREF(state);
+        return NULL;
+    }
+    PyTuple_SET_ITEM(state, 1, obj);
     descr = PyArray_DESCR(self);
     Py_INCREF(descr);
     PyTuple_SET_ITEM(state, 2, (PyObject *)descr);
@@ -2183,6 +2188,11 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (!PyList_Check(rawdata)) {
             PyErr_SetString(PyExc_TypeError,
                             "object pickle not returning list");
+            goto end;
+        }
+        if (PyList_GET_SIZE(rawdata) != PyArray_MultiplyList(dimensions, nd)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "list size does not match array size");
             goto end;
         }
     }
