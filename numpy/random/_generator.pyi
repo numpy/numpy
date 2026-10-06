@@ -876,7 +876,6 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None,
         size: int,
-        *,
         dtype: _DTypeLike[ScalarT],
         endpoint: bool = False,
     ) -> Array1D[ScalarT]: ...
@@ -896,7 +895,6 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None,
         size: ShapeT,
-        *,
         dtype: _DTypeLike[ScalarT],
         endpoint: bool = False,
     ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...

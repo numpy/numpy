@@ -688,6 +688,8 @@ assert_type(def_gen.integers(100, size=_2d), npt.Array2D[np.int64])
 assert_type(def_gen.integers(0, 100, size=3, dtype=np.int8), npt.Array1D[np.int8])
 assert_type(def_gen.integers(0, 100, size=_2d, dtype=np.uint8), npt.Array2D[np.uint8])
 assert_type(def_gen.integers(0, 100, size=3, dtype=np.uint8, endpoint=True), npt.Array1D[np.uint8])
+assert_type(def_gen.integers(0, 100, 3, np.int8), npt.Array1D[np.int8])
+assert_type(def_gen.integers(0, 100, _2d, np.uint8), npt.Array2D[np.uint8])
 
 I_bool_low: npt.NDArray[np.bool] = np.array([0], dtype=np.bool)
 I_bool_low_like: list[int] = [0]
