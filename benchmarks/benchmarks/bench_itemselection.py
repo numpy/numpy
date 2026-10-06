@@ -1,6 +1,60 @@
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
+
 import numpy as np
 
 from .common import TYPES1, Benchmark
+
+
+def _repeat_array(rows, width, dtype):
+    value = {
+        "float64": np.float64(3.14),
+        "string": "repeat benchmark value",
+        "object": {1, 2, 3, 4, 5, 6, 7},
+    }[dtype]
+    return np.full((rows, width), value)
+
+
+class Repeat(Benchmark):
+    # With width=1, rows=250 and 251 produce 500 and 502 output
+    # elements, respectively, straddling the GIL-release threshold.
+    # float64 widths 1 and 8 exercise 8-byte and 64-byte chunks,
+    # covering both the specialized and fallback copy paths.
+    params = [[16, 250, 251, 125000], [1, 8],
+              ["float64", "string", "object"]]
+    param_names = ["rows", "width", "dtype"]
+
+    def setup(self, rows, width, dtype):
+        self.arr = _repeat_array(rows, width, dtype)
+
+    def time_repeat(self, rows, width, dtype):
+        self.arr.repeat(2, axis=0)
+
+
+class RepeatThreads(Benchmark):
+    """Time the same two repeat calls using one or two workers."""
+
+    params = [[1, 2], [1, 8], ["float64", "string", "object"]]
+    param_names = ["workers", "width", "dtype"]
+
+    def setup(self, workers, width, dtype):
+        self.arrays = [_repeat_array(125000, width, dtype) for _ in range(2)]
+        self.pool = ThreadPoolExecutor(max_workers=workers)
+        # Force every worker to start before we begin timing.
+        barrier = Barrier(workers)
+        for _ in self.pool.map(lambda _: barrier.wait(), range(workers)):
+            pass
+
+    @staticmethod
+    def _repeat(arr):
+        arr.repeat(2, axis=0)
+
+    def time_repeat(self, workers, width, dtype):
+        for _ in self.pool.map(self._repeat, self.arrays):
+            pass
+
+    def teardown(self, workers, width, dtype):
+        self.pool.shutdown(wait=True)
 
 
 class Take(Benchmark):
