@@ -87,6 +87,7 @@ from numpy._typing import (
     _TD64Like_co,
 )
 from numpy._typing._array_like import _DualArrayLike
+from numpy._typing._dtype_like import _DTypeDict
 from numpy._typing._ufunc import (
     _2PTuple,
     _PyFunc_Nin1_Nout1,
@@ -1007,6 +1008,30 @@ def array[ItemT: _ObjItemT](
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.object_[ItemT | Any]]: ...  # `| Any` because it might be ragged
+@overload  # 1d tuple, dtype=void
+def array(
+    object: list[tuple[Any, ...]],
+    dtype: _DTypeLike[np.void] | list[Any] | _DTypeDict,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: L[0, 1] = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> Array1D[np.void]: ...
+@overload  # ?d, dtype=void
+def array(
+    object: object,
+    dtype: list[Any] | _DTypeDict,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: int = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[np.void]: ...
 @overload  # 0d, dtype=<known>
 def array[ScalarT: _ScalarNotObject](
     object: complex | str | np.generic,
@@ -1889,6 +1914,26 @@ def asarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> Array0D[np.complex128 | Any]: ...
+@overload  # 1d tuple, dtype=void
+def asarray(
+    a: list[tuple[Any, ...]],
+    dtype: _DTypeLike[np.void] | list[Any] | _DTypeDict,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> Array1D[np.void]: ...
+@overload  # ?d, dtype=void
+def asarray(
+    a: object,
+    dtype: list[Any] | _DTypeDict,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[np.void]: ...
 @overload  # 0d, dtype=<known>
 def asarray[ScalarT: np.generic](
     a: complex | str | np.generic,
@@ -2251,6 +2296,26 @@ def asanyarray(
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> Array0D[np.complex128 | Any]: ...
+@overload  # 1d tuple, dtype=void
+def asanyarray(
+    a: list[tuple[Any, ...]],
+    dtype: _DTypeLike[np.void] | list[Any] | _DTypeDict,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> Array1D[np.void]: ...
+@overload  # ?d, dtype=void
+def asanyarray(
+    a: object,
+    dtype: list[Any] | _DTypeDict,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[np.void]: ...
 @overload  # 0d, dtype=<known>
 def asanyarray[ScalarT: np.generic](
     a: complex | str | np.generic,
@@ -2568,6 +2633,20 @@ def ascontiguousarray(
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> Array1D[np.complex128 | Any]: ...
+@overload  # 1d tuple, dtype=void
+def ascontiguousarray(
+    a: list[tuple[Any, ...]],
+    dtype: _DTypeLike[np.void] | list[Any] | _DTypeDict,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> Array1D[np.void]: ...
+@overload  # ?d, dtype=void
+def ascontiguousarray(
+    a: object,
+    dtype: list[Any] | _DTypeDict,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[np.void]: ...
 @overload  # 0d, dtype=<known>
 def ascontiguousarray[ScalarT: np.generic](
     a: complex | str | np.generic,
@@ -2829,6 +2908,20 @@ def asfortranarray(
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> Array1D[np.complex128 | Any]: ...
+@overload  # 1d tuple, dtype=void
+def asfortranarray(
+    a: list[tuple[Any, ...]],
+    dtype: _DTypeLike[np.void] | list[Any] | _DTypeDict,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> Array1D[np.void]: ...
+@overload  # ?d, dtype=void
+def asfortranarray(
+    a: object,
+    dtype: list[Any] | _DTypeDict,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[np.void]: ...
 @overload  # 0d, dtype=<known>
 def asfortranarray[ScalarT: np.generic](
     a: complex | str | np.generic,
