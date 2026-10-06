@@ -1628,8 +1628,6 @@ def is_busday[OutT: np.ndarray](
     out: OutT,
 ) -> OutT: ...
 
-type _TimezoneContext = L["naive", "UTC", "local"] | dt.tzinfo
-
 @overload
 def datetime_as_string(
     arr: datetime64 | dt.date,
