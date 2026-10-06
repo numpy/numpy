@@ -421,6 +421,7 @@ assert_type(np.ma.MaskType, type[np.bool])
 
 assert_type(MAR_1d.__setmask__([True, False]), None)
 assert_type(MAR_1d.__setmask__(np.False_), None)
+assert_type(MAR_1d.__setmask__([1, 0]), None)
 
 assert_type(MAR_2d_f4.harden_mask(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 assert_type(MAR_i8.harden_mask(), MaskedArray[np.int64])
