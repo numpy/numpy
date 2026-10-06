@@ -29,6 +29,7 @@ py.install_sources(
 py.install_sources(
   [
     'numpy/random/bitgen.h',
+    'numpy/random/bitgen_bulk.h',
     'numpy/random/distributions.h',
   ],
   subdir: 'numpy/_core/include/numpy/random'

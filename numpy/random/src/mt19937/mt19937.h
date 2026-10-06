@@ -60,8 +60,8 @@ static inline double mt19937_next_double(mt19937_state *state) {
 }
 
 void mt19937_fill_uint32(mt19937_state *state, size_t count, uint32_t *out);
-void mt19937_fill_uint64(mt19937_state *state, size_t count, uint64_t *out);
-void mt19937_fill_next_uint64(mt19937_state *state, size_t count,
+void mt19937_fill_uint64(mt19937_state *state, size_t count,
                               uint64_t *out);
+void mt19937_fill_double(mt19937_state *state, size_t count, double *out);
 
 void mt19937_jump(mt19937_state *state);

@@ -40,7 +40,10 @@ from secrets import randbits
 
 from threading import RLock
 
-from cpython.pycapsule cimport PyCapsule_New
+from numpy.random._bitgen_bulk cimport BITGEN_BULK_ABI_VERSION
+from cpython.pycapsule cimport (
+    PyCapsule_GetPointer, PyCapsule_IsValid, PyCapsule_New,
+)
 
 import numpy as np
 cimport numpy as np
@@ -503,6 +506,28 @@ cdef class SeedSequence:
 ISpawnableSeedSequence.register(SeedSequence)
 
 
+cdef const bitgen_bulk_v1 *get_bitgen_bulk(object bit_generator) except? NULL:
+    cdef object capsule = getattr(bit_generator, "bulk_capsule", None)
+    cdef const bitgen_bulk_v1 *bulk
+    cdef const char *name = "BitGeneratorBulkV1"
+
+    if capsule is None:
+        return NULL
+    if not PyCapsule_IsValid(capsule, name):
+        raise ValueError(
+            "bulk_capsule must be a BitGeneratorBulkV1 capsule"
+        )
+
+    bulk = <const bitgen_bulk_v1 *>PyCapsule_GetPointer(capsule, name)
+    if bulk == NULL:
+        return NULL
+    if bulk.abi_version != BITGEN_BULK_ABI_VERSION:
+        return NULL
+    if bulk.struct_size < sizeof(bitgen_bulk_v1):
+        return NULL
+    return bulk
+
+
 cdef class BitGenerator:
     # the first line is used to populate `__text_signature__`
     """BitGenerator(seed=None)\n--
@@ -538,7 +563,7 @@ cdef class BitGenerator:
         self._bitgen.state = <void *>0
         self._bitgen.fill_uint32 = NULL
         self._bitgen.fill_uint64 = NULL
-        self._bitgen.fill_next_uint64 = NULL
+        self._bitgen.fill_double = NULL
         if type(self) is BitGenerator:
             raise NotImplementedError('BitGenerator is a base class and cannot be instantized')
 
