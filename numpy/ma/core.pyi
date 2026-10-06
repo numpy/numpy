@@ -580,21 +580,21 @@ def filled(a: ArrayLike, fill_value: _ScalarLike_co | None = None) -> NDArray[In
 @overload
 def fix_invalid[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT],
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     copy: bool = True,
     fill_value: _ScalarLike_co | None = None,
 ) -> MaskedArray[ShapeT, DTypeT]: ...
 @overload
 def fix_invalid[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     copy: bool = True,
     fill_value: _ScalarLike_co | None = None,
 ) -> _MaskedArray[ScalarT]: ...
 @overload
 def fix_invalid(
     a: ArrayLike,
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     copy: bool = True,
     fill_value: _ScalarLike_co | None = None,
 ) -> _MaskedArray[Incomplete]: ...
