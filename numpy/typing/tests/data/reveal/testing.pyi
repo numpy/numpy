@@ -1,6 +1,7 @@
 import contextlib
 import re
 import sys
+import threading
 import types
 import unittest
 import warnings
@@ -194,3 +195,21 @@ assert_type(np.testing.assert_no_gc_cycles(func3, 5), None)
 assert_type(np.testing.break_cycles(), None)
 
 assert_type(np.testing.TestCase(), unittest.case.TestCase)
+
+# run_threaded
+
+def _f_prepare() -> list[Any]: ...
+def _f_default() -> None: ...
+def _f_default_args(*args: Any) -> None: ...
+def _f_count(i: int) -> None: ...
+def _f_count_args(i: int, *args: Any) -> None: ...
+def _f_barrier(barrier: threading.Barrier) -> None: ...
+def _f_count_barrier(i: int, barrier: threading.Barrier) -> None: ...
+
+assert_type(np.testing.run_threaded(_f_default), None)
+assert_type(np.testing.run_threaded(_f_default_args, prepare_args=_f_prepare), None)
+assert_type(np.testing.run_threaded(_f_count, pass_count=True), None)
+assert_type(np.testing.run_threaded(_f_count_args, pass_count=True, prepare_args=_f_prepare), None)
+assert_type(np.testing.run_threaded(_f_barrier, pass_barrier=True), None)
+assert_type(np.testing.run_threaded(_f_count_barrier, pass_count=True, pass_barrier=True), None)
+assert_type(np.testing.run_threaded(_f_count_args, pass_count=True, pass_barrier=True, prepare_args=_f_prepare), None)

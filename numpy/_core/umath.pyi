@@ -1,10 +1,10 @@
 import contextvars
-import numpy as np
 from _typeshed import SupportsWrite
 from collections.abc import Callable
 from typing import Any, Final, Literal, TypedDict, Unpack, type_check_only
 from typing_extensions import CapsuleType
 
+import numpy as np
 from numpy import (
     absolute,
     add,

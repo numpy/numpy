@@ -228,7 +228,7 @@ type _ToDates = dt.date | _NestedSequence[dt.date]
 type _ToDeltas = dt.timedelta | _NestedSequence[dt.timedelta]
 
 type _BitOrder = L["big", "little"]
-type _MaxWork = L[-1, 0]
+type _TimezoneContext = L["naive", "UTC", "local"] | dt.tzinfo
 
 @type_check_only
 class _SupportsArray[ArrayT_co: np.ndarray](Protocol):
@@ -839,8 +839,8 @@ def unpackbits(
 ) -> NDArray[uint8]: ...
 
 # any two python objects will be accepted, not just `ndarray`s
-def shares_memory(a: object, b: object, /, max_work: _MaxWork = -1) -> bool: ...
-def may_share_memory(a: object, b: object, /, max_work: _MaxWork = 0) -> bool: ...
+def shares_memory(a: object, b: object, /, max_work: int | None = -1) -> bool: ...
+def may_share_memory(a: object, b: object, /, max_work: int | None = 0) -> bool: ...
 
 #
 @overload  # ndarray
@@ -1464,7 +1464,7 @@ class busdaycalendar:
         self,
         /,
         weekmask: str | Sequence[_IntLike_co] | _SupportsArray[NDArray[np.bool | np.integer]] = "1111100",
-        holidays: Sequence[dt.date | np.datetime64[dt.date]] | _SupportsArray[NDArray[np.datetime64[dt.date]]] | None = None,
+        holidays: ArrayLike | _ToDates | None = None,
     ) -> None: ...
     @property
     def weekmask(self) -> _Array1D[np.bool]: ...
@@ -1627,8 +1627,6 @@ def is_busday[OutT: np.ndarray](
     busdaycal: busdaycalendar | None,
     out: OutT,
 ) -> OutT: ...
-
-type _TimezoneContext = L["naive", "UTC", "local"] | dt.tzinfo
 
 @overload
 def datetime_as_string(

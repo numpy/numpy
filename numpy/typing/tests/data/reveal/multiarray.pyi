@@ -236,10 +236,12 @@ assert_type(np.unpackbits(AR_u1), np.ndarray[tuple[int], np.dtype[np.uint8]])
 assert_type(np.unpackbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
 assert_type(np.shares_memory(1, 2), bool)
-assert_type(np.shares_memory(AR_f8, AR_f8, max_work=-1), bool)
+assert_type(np.shares_memory(AR_f8, AR_f8, max_work=42), bool)
+assert_type(np.shares_memory(AR_f8, AR_f8, max_work=None), bool)
 
 assert_type(np.may_share_memory(1, 2), bool)
-assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=0), bool)
+assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=42), bool)
+assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=None), bool)
 
 assert_type(np.promote_types(np.int32, np.int64), np.dtype)
 assert_type(np.promote_types("f4", float), np.dtype)
@@ -322,6 +324,7 @@ assert_type(np.datetime_as_string(AR_M), npt.NDArray[np.str_])
 
 assert_type(np.busdaycalendar(holidays=date_seq), np.busdaycalendar)
 assert_type(np.busdaycalendar(holidays=[M]), np.busdaycalendar)
+assert_type(np.busdaycalendar(holidays=["2011-07-01", "2011-07-04"]), np.busdaycalendar)
 
 assert_type(np.char.compare_chararrays("a", "b", "!=", rstrip=False), npt.NDArray[np.bool])
 assert_type(np.char.compare_chararrays(b"a", b"a", "==", True), npt.NDArray[np.bool])
@@ -334,3 +337,4 @@ assert_type(np.nested_iters([AR_i8, AR_i8], [[0], [1]], order="C", casting="no")
 assert_type(next(iter(AR_u1.flat)), np.uint8)
 assert_type(next(iter(AR_O_nd.flat)), Any)
 assert_type(next(iter(AR_T.flat)), str)
+AR_u1.flat = 1
