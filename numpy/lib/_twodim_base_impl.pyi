@@ -1,6 +1,14 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
-from typing import Any, Literal as L, Never, Protocol, overload, type_check_only
+from typing import (
+    Any,
+    Literal as L,
+    Never,
+    Protocol,
+    SupportsIndex,
+    overload,
+    type_check_only,
+)
 
 import numpy as np
 from numpy import _OrderCF
@@ -120,9 +128,9 @@ def flipud(m: ArrayLike) -> NDArray[Any]: ...
 #
 @overload
 def eye(
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     dtype: None = ...,  # = float  # stubdefaulter: ignore[missing-default]
     order: _OrderCF = "C",
     *,
@@ -131,9 +139,9 @@ def eye(
 ) -> Array2D[np.float64]: ...
 @overload
 def eye[ScalarT: np.generic](
-    N: int,
-    M: int | None,
-    k: int,
+    N: SupportsIndex,
+    M: SupportsIndex | None,
+    k: SupportsIndex,
     dtype: _DTypeLike[ScalarT],
     order: _OrderCF = "C",
     *,
@@ -142,9 +150,9 @@ def eye[ScalarT: np.generic](
 ) -> Array2D[ScalarT]: ...
 @overload
 def eye[ScalarT: np.generic](
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     *,
     dtype: _DTypeLike[ScalarT],
     order: _OrderCF = "C",
@@ -153,9 +161,9 @@ def eye[ScalarT: np.generic](
 ) -> Array2D[ScalarT]: ...
 @overload
 def eye(
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     dtype: DTypeLike | None = ...,  # = float
     order: _OrderCF = "C",
     *,
@@ -188,36 +196,36 @@ def diagflat(v: ArrayLike, k: int = 0) -> Array2D[Incomplete]: ...
 #
 @overload
 def tri(
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     dtype: None = ...,  # = float  # stubdefaulter: ignore[missing-default]
     *,
     like: _SupportsArrayFunc | None = None
 ) -> Array2D[np.float64]: ...
 @overload
 def tri[ScalarT: np.generic](
-    N: int,
-    M: int | None,
-    k: int,
+    N: SupportsIndex,
+    M: SupportsIndex | None,
+    k: SupportsIndex,
     dtype: _DTypeLike[ScalarT],
     *,
     like: _SupportsArrayFunc | None = None
 ) -> Array2D[ScalarT]: ...
 @overload
 def tri[ScalarT: np.generic](
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     *,
     dtype: _DTypeLike[ScalarT],
     like: _SupportsArrayFunc | None = None
 ) -> Array2D[ScalarT]: ...
 @overload
 def tri(
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     dtype: DTypeLike | None = ...,  # = float
     *,
     like: _SupportsArrayFunc | None = None
@@ -440,8 +448,8 @@ def mask_indices(n: int, mask_func: _MaskFunc[int], k: int = 0) -> _Indices2D: .
 def mask_indices[T](n: int, mask_func: _MaskFunc[T], k: T) -> _Indices2D: ...
 
 #
-def tril_indices(n: int, k: int = 0, m: int | None = None) -> _Indices2D: ...
-def triu_indices(n: int, k: int = 0, m: int | None = None) -> _Indices2D: ...
+def tril_indices(n: SupportsIndex, k: SupportsIndex = 0, m: SupportsIndex | None = None) -> _Indices2D: ...
+def triu_indices(n: SupportsIndex, k: SupportsIndex = 0, m: SupportsIndex | None = None) -> _Indices2D: ...
 
 # these will accept anything with `shape: tuple[int, int]` and `ndim: int` attributes
 def tril_indices_from(arr: _HasShapeAndNDim, k: int = 0) -> _Indices2D: ...
