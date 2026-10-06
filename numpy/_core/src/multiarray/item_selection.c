@@ -1004,7 +1004,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
         }
     }
 
-    if (!needs_custom_copy) {
+    if (!needs_custom_copy || !(flags & NPY_METH_REQUIRES_PYAPI)) {
         NPY_BEGIN_THREADS_THRESHOLDED(PyArray_SIZE(ret));
     }
     int status = npy_fastrepeat(
