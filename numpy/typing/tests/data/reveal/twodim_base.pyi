@@ -92,6 +92,7 @@ assert_type(np.diagflat(_to_2d_bool, k=0), np.ndarray[_2D])
 
 # tri
 assert_type(np.tri(10), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.tri(np.int_(10)), np.ndarray[_2D, np.dtype[np.float64]])
 assert_type(np.tri(10, M=20, dtype=np.int64), np.ndarray[_2D, np.dtype[np.int64]])
 assert_type(np.tri(10, k=2, dtype=int), np.ndarray[_2D])
 

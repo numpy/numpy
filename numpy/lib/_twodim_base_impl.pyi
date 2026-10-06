@@ -188,36 +188,36 @@ def diagflat(v: ArrayLike, k: int = 0) -> Array2D[Incomplete]: ...
 #
 @overload
 def tri(
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     dtype: None = ...,  # = float  # stubdefaulter: ignore[missing-default]
     *,
     like: _SupportsArrayFunc | None = None
 ) -> Array2D[np.float64]: ...
 @overload
 def tri[ScalarT: np.generic](
-    N: int,
-    M: int | None,
-    k: int,
+    N: SupportsIndex,
+    M: SupportsIndex | None,
+    k: SupportsIndex,
     dtype: _DTypeLike[ScalarT],
     *,
     like: _SupportsArrayFunc | None = None
 ) -> Array2D[ScalarT]: ...
 @overload
 def tri[ScalarT: np.generic](
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     *,
     dtype: _DTypeLike[ScalarT],
     like: _SupportsArrayFunc | None = None
 ) -> Array2D[ScalarT]: ...
 @overload
 def tri(
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     dtype: DTypeLike | None = ...,  # = float
     *,
     like: _SupportsArrayFunc | None = None
