@@ -3583,28 +3583,11 @@ scalar_as_longdouble(PyObject *obj, npy_longdouble *value)
 
 
 static PyObject *
-cfloat_from_real_imag(PyObject *real_obj, PyObject *imag_obj)
-{
-    return PyObject_CallFunctionObjArgs((PyObject *)&PyComplex_Type,
-            real_obj, imag_obj, NULL);
-}
-
-
-static PyObject *
-cdouble_from_real_imag(PyObject *real_obj, PyObject *imag_obj)
-{
-    return PyObject_CallFunctionObjArgs((PyObject *)&PyComplex_Type,
-            real_obj, imag_obj, NULL);
-}
-
-
-static PyObject *
 clongdouble_from_real_imag(PyObject *real_obj, PyObject *imag_obj)
 {
     /*
-     * Unlike cfloat_from_real_imag and cdouble_from_real_imag, construct
-     * a clongdouble from its individual longdouble components rather than via
-     * Py_complex which woulld narrow to double.
+     * Construct a clongdouble from its individual longdouble components rather
+     * than via complex which would narrow to double.
      */
 
     npy_longdouble real, imag;
@@ -3678,7 +3661,9 @@ static PyObject *
     }
     if (!((imag_obj == NULL) ||
           ((PyNumber_Check(real_obj) && PyNumber_Check(imag_obj)) &&
-           !(PyComplex_Check(real_obj) || PyComplex_Check(imag_obj))))) {
+           !(PyComplex_Check(real_obj) || PyComplex_Check(imag_obj) ||
+             PyArray_IsScalar(real_obj, ComplexFloating) ||
+             PyArray_IsScalar(imag_obj, ComplexFloating))))) {
         PyErr_Format(PyExc_TypeError, parse_error, args);
         return NULL;
     }
@@ -3687,7 +3672,11 @@ static PyObject *
         Py_XINCREF(obj);
     }
     else {
-        obj = @name@_from_real_imag(real_obj, imag_obj);
+#if defined(_@TYPE@_IS_CLONGDOUBLE)
+        obj = clongdouble_from_real_imag(real_obj, imag_obj);
+#else
+        obj = PyObject_CallObject((PyObject *)&PyComplex_Type, args);
+#endif
         if (obj == NULL) {
             return NULL;
         }

@@ -130,6 +130,10 @@ class TestArrayFromScalar:
             t(None, 1)
         with pytest.raises(TypeError):
             t(np.array([1, 2]), 1)
+        with pytest.raises(TypeError):
+            t(np.complex64(1 + 2j), 1)
+        with pytest.raises(TypeError):
+            t(1, np.clongdouble(1 + 2j))
 
     def test_clongdouble_constructor_preserves_precision(self):
         real = np.nextafter(np.longdouble(1), np.longdouble(2))
@@ -147,6 +151,12 @@ class TestArrayFromScalar:
             assert value.real != np.longdouble(float(real))
             assert value.imag != np.longdouble(float(imag))
 
+    @pytest.mark.skipif(np.finfo(np.longdouble).nmant < 63,
+                        reason="needs a >= 64-bit longdouble mantissa")
+    def test_clongdouble_constructor_int_precision(self):
+        value = np.clongdouble(2**63 + 1, 2**63 + 3)
+        assert int(value.real) == 2**63 + 1
+        assert int(value.imag) == 2**63 + 3
 
 @pytest.mark.parametrize("length",
         [5, np.int8(5), np.array(5, dtype=np.uint16)])
