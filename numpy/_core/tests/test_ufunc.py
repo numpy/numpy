@@ -924,7 +924,7 @@ class TestUfunc:
         assert c is b
         assert_allclose(c, expected)
 
-    def test_matvec_empty_object_is_zero(self):
+    def test_matvec_object_empty_is_zero(self):
         A = np.empty((3, 0), dtype=object)
         v = np.empty((0,), dtype=object)
         result = np.matvec(A, v)
