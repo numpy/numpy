@@ -211,7 +211,31 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
         cache: bool = False,
         signature: str | None = None,
     ) -> None: ...
-    @overload  # signature=<given>
+    @overload  # ?, signature=<given>
+    def __init__(
+        self: vectorize[Any, Callable[[], object]],
+        /,
+        pyfunc: Callable[..., _ScalarLike_co],
+        otypes: str | Iterable[DTypeLike] | None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        *,
+        signature: str,
+    ) -> None: ...
+    @overload  # (?, ...), signature=<given>
+    def __init__(
+        self: vectorize[Any, Callable[[], tuple[Any, ...]]],
+        /,
+        pyfunc: Callable[..., tuple[Any, ...]],
+        otypes: str | Iterable[DTypeLike] | None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        *,
+        signature: str,
+    ) -> None: ...
+    @overload  # ?, signature=<given>
     def __init__(
         self: vectorize[Any, Callable[[], object]],
         /,
@@ -223,7 +247,29 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
         *,
         signature: str,
     ) -> None: ...
-    @overload  # otypes=<given>
+    @overload  # ?, otypes=<given>
+    def __init__[FuncT: Callable[..., _ScalarLike_co]](
+        self: vectorize[Any, FuncT],
+        /,
+        pyfunc: FuncT,
+        otypes: str | Iterable[DTypeLike],
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        signature: None = None,
+    ) -> None: ...
+    @overload  # (?, ...), otypes=<given>
+    def __init__(
+        self: vectorize[Any, Callable[[], tuple[Any, ...]]],
+        /,
+        pyfunc: Callable[..., tuple[Any, ...]],
+        otypes: str | Iterable[DTypeLike],
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        signature: None = None,
+    ) -> None: ...
+    @overload  # ?, otypes=<given>
     def __init__[FuncT: Callable[..., object]](
         self: vectorize[Any, FuncT],
         /,
@@ -300,6 +346,17 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
         cache: bool = False,
         signature: None = None,
     ) -> None: ...
+    @overload  # (?, ...)
+    def __init__(
+        self: vectorize[Any, Callable[[], tuple[Any, ...]]],
+        /,
+        pyfunc: Callable[..., tuple[Any, ...]],
+        otypes: None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        signature: None = None,
+    ) -> None: ...
     @overload  # ?
     def __init__[FuncT: Callable[..., object]](
         self: vectorize[Any, FuncT],
@@ -313,7 +370,19 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
     ) -> None: ...
 
     #
-    @overload  # decorator
+    @overload  # decorator, ?
+    def __call__[FuncT: Callable[..., _ScalarLike_co]](
+        self: vectorize[Never, _NoValueType],
+        pyfunc: FuncT,
+        /,
+    ) -> vectorize[Any, FuncT]: ...
+    @overload  # decorator, (?, ...)
+    def __call__(
+        self: vectorize[Never, _NoValueType],
+        pyfunc: Callable[..., tuple[Any, ...]],
+        /,
+    ) -> vectorize[Any, Callable[[], tuple[Any, ...]]]: ...
+    @overload  # decorator, ?
     def __call__[FuncT: Callable[..., object]](
         self: vectorize[Never, _NoValueType],
         pyfunc: FuncT,
@@ -419,6 +488,20 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
         /,
         *args: np.ndarray[ShapeT] | _ScalarLike_co,
     ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    @overload  # ?d
+    def __call__(
+        self: vectorize[Any, Callable[..., _ScalarLike_co]],
+        /,
+        *args: object,
+        **kwargs: object,
+    ) -> NDArray[Any]: ...
+    @overload  # tuple
+    def __call__(
+        self: vectorize[Any, Callable[[], tuple[Any, ...]]],
+        /,
+        *args: object,
+        **kwargs: object,
+    ) -> Any: ...
     @overload  # ?d  (fallback)
     def __call__(
         self: vectorize[Any, Callable[..., object]],
