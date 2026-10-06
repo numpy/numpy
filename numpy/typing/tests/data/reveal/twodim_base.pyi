@@ -70,6 +70,7 @@ assert_type(np.flipud(_to_2d_c128), np.ndarray[_2D, np.dtype[np.complex128]])
 
 # eye
 assert_type(np.eye(10), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.eye(np.int_(10)), np.ndarray[_2D, np.dtype[np.float64]])
 assert_type(np.eye(10, M=20, dtype=np.int64), np.ndarray[_2D, np.dtype[np.int64]])
 assert_type(np.eye(10, k=2, dtype=int), np.ndarray[_2D])
 
@@ -91,6 +92,7 @@ assert_type(np.diagflat(_to_2d_bool, k=0), np.ndarray[_2D])
 
 # tri
 assert_type(np.tri(10), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.tri(np.int_(10)), np.ndarray[_2D, np.dtype[np.float64]])
 assert_type(np.tri(10, M=20, dtype=np.int64), np.ndarray[_2D, np.dtype[np.int64]])
 assert_type(np.tri(10, k=2, dtype=int), np.ndarray[_2D])
 
@@ -224,10 +226,12 @@ assert_type(np.mask_indices(8, func2, "0"), _Indices2D)
 
 # tril_indices
 assert_type(np.tril_indices(3), _Indices2D)
+assert_type(np.tril_indices(np.int_(3)), _Indices2D)
 assert_type(np.tril_indices(3, 1), _Indices2D)
 assert_type(np.tril_indices(3, 1, 2), _Indices2D)
 # tril_indices
 assert_type(np.triu_indices(3), _Indices2D)
+assert_type(np.triu_indices(np.int_(3)), _Indices2D)
 assert_type(np.triu_indices(3, 1), _Indices2D)
 assert_type(np.triu_indices(3, 1, 2), _Indices2D)
 

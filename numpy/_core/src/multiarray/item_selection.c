@@ -1030,7 +1030,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
 {
     PyArrayObject *obj = NULL;
     PyArray_Descr *dtype;
-    int n, elsize;
+    int n;
+    npy_intp elsize;
     npy_intp i;
     char *ret_data;
     PyArrayObject **mps, *ap;

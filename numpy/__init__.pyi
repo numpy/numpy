@@ -2514,9 +2514,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     #
     def byteswap(self, inplace: py_bool = ...) -> Self: ...
+
+    #
     @property
     def flat(self) -> flatiter[Self]: ...
+    @flat.setter
+    def flat(self, flat: ArrayLike, /) -> None: ...
 
+    #
     @overload  # use the same output type as that of the underlying `generic`
     def item[T](self: NDArray[generic[T]], i0: SupportsIndex | tuple[SupportsIndex, ...] = ..., /, *args: SupportsIndex) -> T: ...
     @overload  # special casing for `StringDType`, which has no scalar type
@@ -5429,78 +5434,54 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     #
     @override  # type: ignore[override]
-    @overload  # 0d +int, 0d +int
+    @overload  # T, ~bool
+    def clip[SelfT: NDArray[bool_]](
+        self: SelfT,
+        /,
+        min: _BoolLike_co | _NoValueType | None = ...,
+        max: _BoolLike_co | _NoValueType | None = ...,
+        out: None = None,
+        *,
+        dtype: None = None,
+        subok: L[True] = True,
+        **kwargs: Unpack[_ClipKwargs],
+    ) -> SelfT: ...
+    @overload  # T, ~int
     def clip[SelfT: NDArray[number | object_]](
         self: SelfT,
         /,
-        min: _IntLike_co | _NoValueType | None = ...,
-        max: _IntLike_co | _NoValueType | None = ...,
+        min: int | bool_ | _NoValueType | None = ...,
+        max: int | bool_ | _NoValueType | None = ...,
         out: None = None,
         *,
         dtype: None = None,
         subok: L[True] = True,
         **kwargs: Unpack[_ClipKwargs],
     ) -> SelfT: ...
-    @overload  # ?d +int, ?d +int
-    def clip[DTypeT: _dtype[number | object_]](
-        self: ndarray[Any, DTypeT],
-        /,
-        min: _ArrayLikeInt_co | _NoValueType | None = ...,
-        max: _ArrayLikeInt_co | _NoValueType | None = ...,
-        out: None = None,
-        *,
-        dtype: None = None,
-        subok: py_bool = True,
-        **kwargs: Unpack[_ClipKwargs],
-    ) -> ndarray[_AnyShape, DTypeT]: ...
-    @overload  # 0d +float, 0d +float
+    @overload  # T, ~float
     def clip[SelfT: NDArray[inexact]](
         self: SelfT,
         /,
-        min: _FloatLike_co | _NoValueType | None = ...,
-        max: _FloatLike_co | _NoValueType | None = ...,
+        min: float | float16 | bool_ | _NoValueType | None = ...,
+        max: float | float16 | bool_ | _NoValueType | None = ...,
         out: None = None,
         *,
         dtype: None = None,
         subok: L[True] = True,
         **kwargs: Unpack[_ClipKwargs],
     ) -> SelfT: ...
-    @overload  # ?d +float, ?d +float
-    def clip[DTypeT: _dtype[inexact]](
-        self: ndarray[Any, DTypeT],
-        /,
-        min: _ArrayLikeFloat_co | _NoValueType | None = ...,
-        max: _ArrayLikeFloat_co | _NoValueType | None = ...,
-        out: None = None,
-        *,
-        dtype: None = None,
-        subok: py_bool = True,
-        **kwargs: Unpack[_ClipKwargs],
-    ) -> ndarray[_AnyShape, DTypeT]: ...
-    @overload  # 0d +complex, 0d +complex
+    @overload  # T, ~complex
     def clip[SelfT: NDArray[complexfloating]](
         self: SelfT,
         /,
-        min: _NumberLike_co | _NoValueType | None = ...,
-        max: _NumberLike_co | _NoValueType | None = ...,
+        min: complex | complex64 | float32 | float16 | bool_ | _NoValueType | None = ...,
+        max: complex | complex64 | float32 | float16 | bool_ | _NoValueType | None = ...,
         out: None = None,
         *,
         dtype: None = None,
         subok: L[True] = True,
         **kwargs: Unpack[_ClipKwargs],
     ) -> SelfT: ...
-    @overload  # ?d +complex, ?d +complex
-    def clip[DTypeT: _dtype[complexfloating]](
-        self: ndarray[Any, DTypeT],
-        /,
-        min: _ArrayLikeNumber_co | _NoValueType | None = ...,
-        max: _ArrayLikeNumber_co | _NoValueType | None = ...,
-        out: None = None,
-        *,
-        dtype: None = None,
-        subok: py_bool = True,
-        **kwargs: Unpack[_ClipKwargs],
-    ) -> ndarray[_AnyShape, DTypeT]: ...
     @overload  # 0d ~datetime, 0d ~datetime
     def clip[SelfT: NDArray[datetime64]](
         self: SelfT,

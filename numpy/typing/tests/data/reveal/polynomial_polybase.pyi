@@ -12,19 +12,6 @@ type _Ar_f = npt.NDArray[np.floating]
 type _Ar_c = npt.NDArray[np.complexfloating]
 type _Ar_O = npt.NDArray[np.object_]
 
-type _Ar_x_n = np.ndarray[tuple[int], np.dtype[np.inexact | np.object_]]
-type _Ar_f_n = np.ndarray[tuple[int], np.dtype[np.floating]]
-type _Ar_c_n = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
-type _Ar_O_n = np.ndarray[tuple[int], np.dtype[np.object_]]
-
-type _Ar_x_2 = np.ndarray[tuple[L[2]], np.dtype[np.float64 | Any]]
-type _Ar_f_2 = np.ndarray[tuple[L[2]], np.dtype[np.floating]]
-type _Ar_c_2 = np.ndarray[tuple[L[2]], np.dtype[np.complexfloating]]
-type _Ar_O_2 = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
-
-type _Ar_1d[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Ar_2d[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
-
 type _BasisName = L["X"]
 
 SC_i: np.int_
@@ -42,9 +29,9 @@ AR_c: npt.NDArray[np.complex128]
 AR_c_co: npt.NDArray[np.complex128] | npt.NDArray[np.float64] | npt.NDArray[np.int_]
 AR_O: npt.NDArray[np.object_]
 AR_O_co: npt.NDArray[np.object_ | np.number]
-AR_f_2d: _Ar_2d[np.float64]
-AR_c_2d: _Ar_2d[np.complex128]
-AR_O_2d: _Ar_2d[np.object_[int]]
+AR_f_2d: npt.Array2D[np.float64]
+AR_c_2d: npt.Array2D[np.complex128]
+AR_O_2d: npt.Array2D[np.object_[int]]
 AL_f: _SupportsArray[np.dtype[np.float64]]
 
 SQ_i: Sequence[int]
@@ -107,8 +94,8 @@ assert_type(type(PS_herme).cast(PS_leg), npp.HermiteE)
 # attributes / properties
 
 assert_type(PS_all.coef, np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
-assert_type(PS_all.domain, _Ar_x_2)
-assert_type(PS_all.window, _Ar_x_2)
+assert_type(PS_all.domain, npt.Array1D[np.float64 | Any])
+assert_type(PS_all.window, npt.Array1D[np.float64 | Any])
 assert_type(PS_all.symbol, str)
 
 # instance methods
@@ -146,16 +133,16 @@ assert_type(PS_lag.integ(SC_i_co, SC_f_co), npp.Laguerre)
 assert_type(PS_poly.deriv(), npp.Polynomial)
 assert_type(PS_herm.deriv(SC_i_co), npp.Hermite)
 
-assert_type(PS_poly.roots(), _Ar_x_n)
+assert_type(PS_poly.roots(), npt.Array1D[np.inexact | np.object_])
 
 assert_type(
     PS_poly.linspace(),
-    tuple[_Ar_1d[np.float64 | Any], _Ar_1d[np.float64 | Any]],
+    tuple[npt.Array1D[np.float64 | Any], npt.Array1D[np.float64 | Any]],
 )
 
 assert_type(
     PS_poly.linspace(9),
-    tuple[_Ar_1d[np.float64 | Any], _Ar_1d[np.float64 | Any]],
+    tuple[npt.Array1D[np.float64 | Any], npt.Array1D[np.float64 | Any]],
 )
 
 assert_type(PS_cheb.fit(AR_c_co, AR_c_co, SC_i_co), npp.Chebyshev)
@@ -182,11 +169,11 @@ assert_type(next(iter(PS_all)), np.float64 | Any)
 
 assert_type(PS_all(SC_f_co), np.float64 | Any)
 assert_type(PS_all(SC_c_co), np.complex128 | Any)
-assert_type(PS_poly(AR_f_2d), _Ar_2d[np.float64 | Any])
-assert_type(PS_poly(AR_c_2d), _Ar_2d[np.complex128 | Any])
-assert_type(PS_poly(AR_O_2d), _Ar_2d[np.object_])
-assert_type(PS_poly(SQ_f), _Ar_1d[np.float64 | Any])
-assert_type(PS_poly(SQ_c), _Ar_1d[np.complex128 | Any])
+assert_type(PS_poly(AR_f_2d), npt.Array2D[np.float64 | Any])
+assert_type(PS_poly(AR_c_2d), npt.Array2D[np.complex128 | Any])
+assert_type(PS_poly(AR_O_2d), npt.Array2D[np.object_])
+assert_type(PS_poly(SQ_f), npt.Array1D[np.float64 | Any])
+assert_type(PS_poly(SQ_c), npt.Array1D[np.complex128 | Any])
 assert_type(PS_poly(SQ_f_2d), npt.NDArray[np.float64 | Any])
 assert_type(PS_poly(SQ_c_2d), npt.NDArray[np.complex128 | Any])
 assert_type(PS_poly(AL_f), npt.NDArray[Any] | Any)

@@ -1,4 +1,5 @@
 #include <Python.h>
+#include <stdio.h>
 #include <string.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION

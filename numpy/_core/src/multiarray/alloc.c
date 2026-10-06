@@ -5,6 +5,7 @@
 #include <Python.h>
 #include <structmember.h>
 #include <pymem.h>
+#include <string.h>
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/arrayobject.h"

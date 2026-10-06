@@ -59,7 +59,7 @@ jobs:
           ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
 
     - name: Setup Miniforge
-      uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
+      uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
       with:
         python-version: ${{ matrix.python-version }}
         channels: conda-forge
@@ -118,7 +118,7 @@ jobs:
       matrix:
         build_runner:
           - [ macos-15-intel, "macos_x86_64" ]
-          - [ macos-14, "macos_arm64" ]
+          - [ macos-15, "macos_arm64" ]
         version: ["3.12", "3.15t-dev"]
 
     steps:
@@ -148,11 +148,11 @@ jobs:
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (fast tests)
-      if: ${{ matrix.version != '3.14t' || matrix.build_runner[0] != 'macos-14' }}
+      if: ${{ matrix.version != '3.14t' || matrix.build_runner[0] != 'macos-15' }}
       run: spin test -j2 -- --timeout=600 --durations=10
 
     - name: Test in multiple threads
-      if: ${{ matrix.version == '3.14t' && matrix.build_runner[0] == 'macos-14' }}
+      if: ${{ matrix.version == '3.14t' && matrix.build_runner[0] == 'macos-15' }}
       run:  |
         pip install pytest-run-parallel==0.8.2
         spin test -p 4 -- -sv --timeout=600 --durations=10

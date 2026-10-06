@@ -5580,6 +5580,29 @@ class TestPickling:
 
         assert_equal(original.dtype, new.dtype)
 
+    @pytest.mark.parametrize("shape, items", [
+        ((4,), [1, 2, 3]), ((2,), [1, 2, 3]), ((), []), ((0,), [1])])
+    def test_setstate_object_list_size_mismatch(self, shape, items):
+        a = np.array([1, 2], dtype=object)
+        with pytest.raises(ValueError, match="list size does not match"):
+            a.__setstate__((1, shape, np.dtype(object), False, items))
+        assert_equal(a, np.array([1, 2], dtype=object))
+
+    def test_setstate_structured_object_list_size_mismatch(self):
+        dt = np.dtype([('a', object), ('b', int)])
+        with pytest.raises(ValueError, match="list size does not match"):
+            np.zeros(1, dt).__setstate__((1, (4,), dt, False, [(1, 1)]))
+
+    def test_reduce_shape_error(self):
+        class MyArr(np.ndarray):
+            @property
+            def shape(self):
+                raise RuntimeError("shape lookup failed")
+
+        a = np.arange(3).view(MyArr)
+        with pytest.raises(RuntimeError, match="shape lookup failed"):
+            a.__reduce__()
+
 
 class TestFancyIndexing:
     def test_list(self):
@@ -7291,6 +7314,23 @@ class TestFlat:
 
 class TestResize:
 
+    @pytest.mark.parametrize("dtype", [
+        ("x", "u1", 5),
+        ("x", "u1", 2**32 + 1),
+        ("x", "u1", 2**31 + 1),
+        ])
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=21.5e9)
+    @pytest.mark.slow
+    def test_gh_32830(self, dtype):
+        a = np.zeros(2, [dtype])
+        a.resize(3, refcheck=False)
+        # regardless of the width of the dtype,
+        # the final column should contain 3 zeros:
+        actual = a["x"][:, -1]
+        expected = np.zeros(3, dtype=np.uint8)
+        assert_array_equal(actual, expected, strict=True)
+
     @_no_tracing
     def test_basic(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
@@ -8938,6 +8978,19 @@ class TestChoose:
         ind = [0, 0, 1]
         return x, y, x2, y2, ind
 
+    @pytest.mark.parametrize("dtype", [
+        ("x", "u1", 3),
+        ("x", "u1", 2**32 + 1),
+        ("x", "u1", 2**31 + 2),
+        ])
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=14e9)
+    def test_gh_32830(self, dtype):
+        a = np.zeros(2, [dtype])
+        a["x"][1, -1] = 2
+        actual = np.choose([1], a)["x"]
+        assert actual[:, -1] == 2
+
     def test_basic(self):
         x, y, _, _, ind = self._create_data()
         A = np.choose(ind, (x, y))
@@ -9844,11 +9897,10 @@ class TestNewBufferProtocol:
         f.a = 3
         assert_equal(arr['a'], 3)
 
-    @pytest.mark.parametrize("obj", [np.ones(3), np.ones(1, dtype="i,i")[()]])
-    @pytest.mark.thread_unsafe(
-        reason="_multiarray_tests used memoryview, which is thread-unsafe",
-    )
-    def test_error_if_stored_buffer_info_is_corrupted(self, obj):
+    @pytest.mark.parametrize(
+        "structured_scalar", [False, True], ids=["array", "void_scalar"])
+    def test_error_if_stored_buffer_info_is_corrupted(self,
+                                                      structured_scalar):
         """
         If a user extends a NumPy array before 1.20 and then runs it
         on NumPy 1.20+. A C-subclassed array might in theory modify
@@ -9857,6 +9909,10 @@ class TestNewBufferProtocol:
         This is a sanity check to help users transition to safe code, it
         may be deleted at any point.
         """
+        if structured_scalar:
+            obj = np.ones(1, dtype="i,i")[()]
+        else:
+            obj = np.ones(3)
         # corrupt buffer info:
         _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
         name = type(obj)

@@ -372,6 +372,22 @@ class RandomState:
         *,
         dtype: _DTypeLikeInt,
     ) -> NDArray[np.integer] | Any: ...
+    @overload  # size=<given>, dtype=<known sctype> (positional)
+    def randint[ScalarT: np.integer | np.bool](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: _ShapeLike,
+        dtype: _DTypeLike[ScalarT],
+    ) -> NDArray[ScalarT]: ...
+    @overload  # size=<given>, dtype=<unknown str> (positional)
+    def randint(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: _ShapeLike,
+        dtype: str,
+    ) -> NDArray[Any]: ...
 
     #
     def bytes(self, length: int) -> py_bytes: ...
