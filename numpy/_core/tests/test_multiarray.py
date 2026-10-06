@@ -2271,6 +2271,47 @@ class TestMethods:
         assert a.flags.f_contiguous
         assert np.round(a).flags.f_contiguous
 
+    @pytest.mark.parametrize("decimals", [-3, 2, 5, 7])
+    def test_round_float16(self, decimals):
+        # gh-13699: float16 computed ``x * 10**decimals`` in float16, which
+        # overflowed above 65504 (and 10**5 itself is inf in float16).  The
+        # result is now computed in float32 and converted back once.
+        h = np.arange(65536, dtype=np.uint16).view(np.float16)
+        p = np.float32(10.0 ** abs(decimals))
+        x = h.astype(np.float32)
+        with np.errstate(all="ignore"):
+            if decimals < 0:
+                expected = (np.rint(x / p) * p).astype(np.float16)
+            else:
+                expected = (np.rint(x * p) / p).astype(np.float16)
+            res = np.round(h, decimals)
+            out = np.empty_like(h)
+            assert np.round(h, decimals, out=out) is out
+            sout = np.empty(2 * h.size, dtype=np.float16)[::2]
+            np.round(h[::-1], decimals, out=sout)
+        nonan = ~np.isnan(h)
+        assert_array_equal(res.view(np.uint16)[nonan],
+                           expected.view(np.uint16)[nonan])
+        assert_array_equal(out.view(np.uint16)[nonan],
+                           expected.view(np.uint16)[nonan])
+        assert_array_equal(sout[::-1].view(np.uint16)[nonan],
+                           expected.view(np.uint16)[nonan])
+        assert np.isnan(res[~nonan]).all()
+
+    def test_round_float16_no_overflow(self):
+        with np.errstate(all="raise"):
+            assert np.round(np.float16(2.0), 5) == 2.0
+            res = np.round(np.array([1505.1, 880.4, 50020.0], np.float16), 2)
+        assert_array_equal(res, np.array([1505.1, 880.4, 50020.0], np.float16))
+
+    def test_round_float16_layout(self):
+        a = np.linspace(-100, 100, 24, dtype=np.float16).reshape(4, 6)
+        f = np.asfortranarray(a)
+        res = np.round(f, 1)
+        assert res.flags.f_contiguous
+        assert res.dtype == np.float16
+        assert_array_equal(res, np.round(a.astype(np.float32), 1).astype(np.float16))
+
     def test_squeeze(self):
         a = np.array([[[1], [2], [3]]])
         assert_equal(a.squeeze(), [1, 2, 3])
