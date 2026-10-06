@@ -908,6 +908,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     char *new_data, *old_data;
     NPY_cast_info cast_info;
     NPY_ARRAYMETHOD_FLAGS flags;
+    NPY_BEGIN_THREADS_DEF;
 
     repeats = (PyArrayObject *)PyArray_FromAny(op,
             PyArray_DescrFromType(NPY_INTP),
@@ -1003,8 +1004,14 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
         }
     }
 
-    if (npy_fastrepeat(n_outer, n, nel, chunk, broadcast, counts, new_data,
-                       old_data, elsize, &cast_info, needs_custom_copy) < 0) {
+    if (!needs_custom_copy) {
+        NPY_BEGIN_THREADS_THRESHOLDED(PyArray_SIZE(ret));
+    }
+    int status = npy_fastrepeat(
+        n_outer, n, nel, chunk, broadcast, counts, new_data,
+        old_data, elsize, &cast_info, needs_custom_copy);
+    NPY_END_THREADS;
+    if (status < 0) {
         goto fail;
     }
 
