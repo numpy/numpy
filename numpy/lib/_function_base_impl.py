@@ -4446,7 +4446,9 @@ def quantile(a,
     - ``lower``: ``g = 0``
     - ``midpoint``: ``g = 0.5``
     - ``higher``: ``g = 1``
-    - ``nearest``: ``g = (q*(n-1) % 1) > 0.5``
+    - ``nearest``: index calculation is implemented using ``np.round``
+      (half-to-even rounding on ``p = q*(n-1)``). When ``int(p)`` is even,
+      ``g = (p % 1) > 0.5``, and when ``int(p)`` is odd, ``g = (p % 1) >= 0.5``.
 
     **Weighted quantiles:**
     More formally, the quantile at probability level :math:`q` of a cumulative
