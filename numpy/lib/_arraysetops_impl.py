@@ -414,7 +414,6 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     ret = (aux[mask],)
     if return_index:
         if stable:
-            # A stable sort leaves each group's first occurrence at its front.
             ret += (perm[mask],)
         else:
             unique_pos = np.flatnonzero(mask)
