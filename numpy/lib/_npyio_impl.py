@@ -466,11 +466,13 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         fid.seek(-min(N, len(magic)), 1)  # back-up
         if magic.startswith((_ZIP_PREFIX, _ZIP_SUFFIX)):
             # zip-file (assume .npz)
-            # Potentially transfer file ownership to NpzFile
-            stack.pop_all()
             ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,
                           pickle_kwargs=pickle_kwargs,
                           max_header_size=max_header_size)
+            # Potentially transfer file ownership to NpzFile. Only do this
+            # once NpzFile was created, so that the file is still closed if
+            # it is not a valid zip file.
+            stack.pop_all()
             return ret
         elif magic == format.MAGIC_PREFIX:
             # .npy file
