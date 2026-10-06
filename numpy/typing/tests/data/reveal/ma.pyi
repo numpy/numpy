@@ -534,6 +534,8 @@ assert_type(np.ma.fix_invalid(AR_f4, mask=AR_i8), MaskedArray[np.float32])
 assert_type(np.ma.fix_invalid(AR_LIKE_u, mask=[0, 1]), MaskedArray[np.uint32])
 assert_type(np.ma.fix_invalid(AR_LIKE_f, mask=0), MaskedArray[Any])
 
+assert_type(np.ma.mvoid(AR_f4, mask=[0, 1]), np.ma.mvoid)
+
 # Masked Array addition
 
 assert_type(MAR_b + AR_LIKE_u, MaskedArray[np.uint32])

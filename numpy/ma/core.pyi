@@ -2964,7 +2964,7 @@ class mvoid(MaskedArray[_ShapeT_co, _DTypeT_co]):
         cls,
         /,
         data: ArrayLike,
-        mask: _ArrayLikeBool_co = nomask,
+        mask: _ArrayLikeInt_co = nomask,
         dtype: DTypeLike | None = None,
         fill_value: _FillValue = None,
         hardmask: bool = False,
