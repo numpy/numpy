@@ -34,6 +34,7 @@ from numpy._typing import (
     _ArrayLikeNumber_co,
     _ArrayLikeObject_co,
     _ArrayLikeTD64_co,
+    _FloatLike_co,
 )
 
 __all__ = [
@@ -323,8 +324,8 @@ def assert_raises_regex[**Tss](
 def assert_allclose(
     actual: _ArrayLikeTD64_co,
     desired: _ArrayLikeTD64_co,
-    rtol: float = 1e-7,
-    atol: float | np.timedelta64 = 0,
+    rtol: _FloatLike_co = 1e-7,
+    atol: _FloatLike_co | np.timedelta64 = 0,
     equal_nan: bool = True,
     err_msg: object = "",
     verbose: bool = True,
@@ -335,8 +336,8 @@ def assert_allclose(
 def assert_allclose(
     actual: _NumericArrayLike,
     desired: _NumericArrayLike,
-    rtol: float = 1e-7,
-    atol: float = 0,
+    rtol: _FloatLike_co = 1e-7,
+    atol: _FloatLike_co = 0,
     equal_nan: bool = True,
     err_msg: object = "",
     verbose: bool = True,
@@ -348,14 +349,14 @@ def assert_allclose(
 def assert_array_almost_equal_nulp(
     x: _ArrayLikeNumber_co,
     y: _ArrayLikeNumber_co,
-    nulp: float = 1,
+    nulp: _FloatLike_co = 1,
 ) -> None: ...
 
 #
 def assert_array_max_ulp(
     a: _ArrayLikeNumber_co,
     b: _ArrayLikeNumber_co,
-    maxulp: float = 1,
+    maxulp: _FloatLike_co = 1,
     dtype: DTypeLike | None = None,
 ) -> NDArray[Any]: ...
 
