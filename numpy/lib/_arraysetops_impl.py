@@ -388,10 +388,10 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
-        perm = ar.argsort(stable=stable)
+        perm = ar.argsort(kind='stable' if stable else 'quicksort')
         aux = ar[perm]
     else:
-        ar.sort(stable=stable)
+        ar.sort(kind='stable' if stable else 'quicksort')
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool)
     mask[:1] = True
