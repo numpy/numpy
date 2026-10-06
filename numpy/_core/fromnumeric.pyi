@@ -1703,19 +1703,67 @@ def compress[ArrayT: np.ndarray](
 ) -> ArrayT: ...
 
 #
-@overload  # known array/scalar
-def clip[ScalarOrArrayT: np.generic | np.ndarray](
-    a: ScalarOrArrayT,
+@overload  # 0|Nd T bool
+def clip[T: np.bool | NDArray[np.bool]](
+    a: T,
+    a_min: _BoolLike_co | _NoValueType | None = ...,
+    a_max: _BoolLike_co | _NoValueType | None = ...,
+    out: None = None,
+    *,
+    dtype: None = None,
+    min: _BoolLike_co | _NoValueType | None = ...,
+    max: _BoolLike_co | _NoValueType | None = ...,
+    **kwargs: Unpack[_UFuncKwargs],
+) -> T: ...
+@overload  # 0|Nd T int
+def clip[T: np.integer | NDArray[np.integer]](
+    a: T,
+    a_min: int | np.bool | _NoValueType | None = ...,
+    a_max: int | np.bool | _NoValueType | None = ...,
+    out: None = None,
+    *,
+    dtype: None = None,
+    min: int | np.bool | _NoValueType | None = ...,
+    max: int | np.bool | _NoValueType | None = ...,
+    **kwargs: Unpack[_UFuncKwargs],
+) -> T: ...
+@overload  # 0|Nd T float
+def clip[T: np.floating | NDArray[np.floating]](
+    a: T,
+    a_min: float | np.float16 | np.bool | _NoValueType | None = ...,
+    a_max: float | np.float16 | np.bool | _NoValueType | None = ...,
+    out: None = None,
+    *,
+    dtype: None = None,
+    min: float | np.float16 | np.bool | _NoValueType | None = ...,
+    max: float | np.float16 | np.bool | _NoValueType | None = ...,
+    **kwargs: Unpack[_UFuncKwargs],
+) -> T: ...
+@overload  # 0|Nd T complex
+def clip[T: np.complexfloating | NDArray[np.complexfloating]](
+    a: T,
+    a_min: complex | np.complex64 | np.float32 | np.float16 | np.bool | _NoValueType | None = ...,
+    a_max: complex | np.complex64 | np.float32 | np.float16 | np.bool | _NoValueType | None = ...,
+    out: None = None,
+    *,
+    dtype: None = None,
+    min: complex | np.complex64 | np.float32 | np.float16 | np.bool | _NoValueType | None = ...,
+    max: complex | np.complex64 | np.float32 | np.float16 | np.bool | _NoValueType | None = ...,
+    **kwargs: Unpack[_UFuncKwargs],
+) -> T: ...
+@overload  # Nd object_
+def clip[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.object_]],
     a_min: _ScalarLike_co | _NoValueType | None = ...,
     a_max: _ScalarLike_co | _NoValueType | None = ...,
     out: None = None,
     *,
     dtype: None = None,
-    min: ArrayLike | _NoValueType | None = ...,
-    max: ArrayLike | _NoValueType | None = ...,
+    min: _ScalarLike_co | _NoValueType | None = ...,
+    max: _ScalarLike_co | _NoValueType | None = ...,
     **kwargs: Unpack[_UFuncKwargs],
-) -> ScalarOrArrayT: ...
-@overload  # known array, dtype=<known>
+) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+@overload  # Nd T, dtype=<known>
 def clip[ShapeT: _Shape, ScalarT: np.generic](
     a: np.ndarray[ShapeT],
     a_min: _ScalarLike_co | _NoValueType | None = ...,
@@ -1723,35 +1771,23 @@ def clip[ShapeT: _Shape, ScalarT: np.generic](
     out: None = None,
     *,
     dtype: _DTypeLike[ScalarT],
-    min: ArrayLike | _NoValueType | None = ...,
-    max: ArrayLike | _NoValueType | None = ...,
+    min: _ScalarLike_co | _NoValueType | None = ...,
+    max: _ScalarLike_co | _NoValueType | None = ...,
     **kwargs: Unpack[_UFuncKwargs],
 ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
-@overload  # known array, dtype=<unknown>
+@overload  # Nd
 def clip[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
     a_min: _ScalarLike_co | _NoValueType | None = ...,
     a_max: _ScalarLike_co | _NoValueType | None = ...,
     out: None = None,
     *,
-    dtype: DTypeLike,
-    min: ArrayLike | _NoValueType | None = ...,
-    max: ArrayLike | _NoValueType | None = ...,
+    dtype: DTypeLike | None = None,
+    min: _ScalarLike_co | _NoValueType | None = ...,
+    max: _ScalarLike_co | _NoValueType | None = ...,
     **kwargs: Unpack[_UFuncKwargs],
 ) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
-@overload  # known array-like
-def clip[ScalarT: np.generic](
-    a: _ArrayLike[ScalarT],
-    a_min: ArrayLike | _NoValueType | None = ...,
-    a_max: ArrayLike | _NoValueType | None = ...,
-    out: None = None,
-    *,
-    dtype: None = None,
-    min: ArrayLike | _NoValueType | None = ...,
-    max: ArrayLike | _NoValueType | None = ...,
-    **kwargs: Unpack[_UFuncKwargs],
-) -> NDArray[ScalarT]: ...
-@overload  # unknown scalar-like, dtype=<known>
+@overload  # 0d, dtype=<known>
 def clip[ScalarT: np.generic](
     a: _ScalarLike_co,
     a_min: _ScalarLike_co | _NoValueType | None = ...,
@@ -1759,13 +1795,13 @@ def clip[ScalarT: np.generic](
     out: None = None,
     *,
     dtype: _DTypeLike[ScalarT],
-    min: ArrayLike | _NoValueType | None = ...,
-    max: ArrayLike | _NoValueType | None = ...,
+    min: _ScalarLike_co | _NoValueType | None = ...,
+    max: _ScalarLike_co | _NoValueType | None = ...,
     **kwargs: Unpack[_UFuncKwargs],
 ) -> ScalarT: ...
-@overload  # unknown >0d array-like, dtype=<known>
+@overload  # ?d, dtype=<known>
 def clip[ScalarT: np.generic](
-    a: _NestedSequence[_ScalarLike_co],
+    a: np.ndarray | _NestedSequence[_ScalarLike_co],
     a_min: ArrayLike | _NoValueType | None = ...,
     a_max: ArrayLike | _NoValueType | None = ...,
     out: None = None,
@@ -1775,7 +1811,19 @@ def clip[ScalarT: np.generic](
     max: ArrayLike | _NoValueType | None = ...,
     **kwargs: Unpack[_UFuncKwargs],
 ) -> NDArray[ScalarT]: ...
-@overload  # unknown >0d array-like
+@overload  # ?d
+def clip(
+    a: np.ndarray,
+    a_min: ArrayLike | _NoValueType | None = ...,
+    a_max: ArrayLike | _NoValueType | None = ...,
+    out: None = None,
+    *,
+    dtype: DTypeLike | None = None,
+    min: ArrayLike | _NoValueType | None = ...,
+    max: ArrayLike | _NoValueType | None = ...,
+    **kwargs: Unpack[_UFuncKwargs],
+) -> NDArray[Any]: ...
+@overload  # ?d sequence
 def clip(
     a: _NestedSequence[_ScalarLike_co],
     a_min: ArrayLike | _NoValueType | None = ...,
