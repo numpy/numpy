@@ -1,0 +1,7 @@
+``nanpercentile`` and ``nanquantile`` result shape for empty input
+------------------------------------------------------------------
+`numpy.nanpercentile` and `numpy.nanquantile` now return an array of NaNs with
+the shape ``q.shape + reduced_shape`` when the input array is empty and ``q``
+is not a scalar, as `numpy.quantile` does for non-empty input. Previously
+the shape of ``q`` was ignored and a single NaN (per reduced slice) was
+returned.

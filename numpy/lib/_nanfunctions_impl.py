@@ -1591,7 +1591,20 @@ def _nanquantile_unchecked(
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
     # so deal them upfront
     if a.size == 0:
-        return np.nanmean(a, axis, out=out, keepdims=keepdims)
+        if q.ndim == 0:
+            return np.nanmean(a, axis, out=out, keepdims=keepdims)
+        # nanmean gives the reduced shape, dtype and type; the quantiles go
+        # in front
+        mean = np.nanmean(a, axis, keepdims=keepdims)
+        if isinstance(mean, np.ndarray):
+            result = np.repeat(mean.reshape((1,) + mean.shape), q.size, axis=0)
+            result = result.reshape(q.shape + mean.shape)
+        else:
+            result = np.full(q.shape, np.nan, dtype=mean.dtype)
+        if out is not None:
+            out[...] = result
+            return out
+        return result
     return fnb._ureduce(a,
                         func=_nanquantile_ureduce_func,
                         q=q,

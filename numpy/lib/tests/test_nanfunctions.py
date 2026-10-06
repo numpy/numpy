@@ -1216,6 +1216,81 @@ class TestNanFunctions_Percentile:
                 assert_equal(np.nanpercentile(mat, 40, axis=axis), np.zeros([]))
                 assert_(len(w) == 0)
 
+    @pytest.mark.parametrize("func, q", [
+        (np.nanpercentile, [10, 50]),
+        (np.nanpercentile, [[10, 50], [90, 20]]),
+        (np.nanquantile, [0.1, 0.5]),
+        (np.nanquantile, [[0.1, 0.5], [0.9, 0.2]]),
+    ])
+    @pytest.mark.parametrize("shape, axis", [
+        ((0,), None), ((2, 0), 1), ((2, 0), 0), ((2, 0), None),
+        ((0, 3), 0), ((0, 3), 1), ((2, 0, 3), (0, 1)),
+    ])
+    @pytest.mark.parametrize("keepdims", [False, True])
+    def test_empty_q_shape(self, func, q, shape, axis, keepdims):
+        # gh-14599: the quantiles are the leading dimensions of the result
+        mat = np.zeros(shape)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            scalar = func(mat, q[0][0] if np.ndim(q) == 2 else q[0],
+                          axis=axis, keepdims=keepdims)
+            res = func(mat, q, axis=axis, keepdims=keepdims)
+        assert res.shape == np.shape(q) + np.shape(scalar)
+        assert np.isnan(res).all()
+
+    @pytest.mark.parametrize("dtype, res_dtype", [
+        (np.float32, np.float32), (np.float64, np.float64), (np.int64, np.float64),
+    ])
+    def test_empty_q_dtype(self, dtype, res_dtype):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            res = np.nanpercentile(np.zeros(0, dtype=dtype), [10, 50])
+        assert_equal(res, [np.nan, np.nan])
+        assert res.dtype == res_dtype
+
+    @pytest.mark.parametrize("func, q", [
+        (np.nanpercentile, 50), (np.nanpercentile, [10, 50]),
+        (np.nanquantile, 0.5), (np.nanquantile, [0.1, 0.5]),
+    ])
+    @pytest.mark.parametrize("axis", [None, 1])
+    @pytest.mark.parametrize("kind", ["subclass", "masked", "masked_all"])
+    def test_empty_subclass(self, func, q, axis, kind):
+        # the result of an empty input has the type (and mask) of nanmean's
+        class Sub(np.ndarray):
+            pass
+
+        mat = {"subclass": np.zeros((2, 0)).view(Sub),
+               "masked": np.ma.zeros((2, 0)),
+               "masked_all": np.ma.masked_all((2, 0))}[kind]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            res = func(mat, q, axis=axis)
+            mean = np.nanmean(mat, axis=axis)
+        assert res.shape == np.shape(q) + np.shape(mean)
+        mean_mask = np.ma.getmaskarray(mean)
+        if np.ndim(q) == 0:
+            assert type(res) is type(mean)
+            assert_equal(np.ma.getmaskarray(res), mean_mask)
+        elif isinstance(mean, np.ndarray):
+            # a MaskedConstant cannot have a shape
+            expected_type = (np.ma.MaskedArray
+                             if isinstance(mean, type(np.ma.masked))
+                             else type(mean))
+            assert type(res) is expected_type
+            assert_equal(np.ma.getmaskarray(res),
+                         np.broadcast_to(mean_mask, res.shape))
+        else:
+            assert type(res) is np.ndarray
+            assert np.isnan(res).all()
+
+    def test_empty_q_out(self):
+        mat = np.zeros((2, 0))
+        out = np.empty((2, 2))
+        with pytest.warns(RuntimeWarning, match="Mean of empty slice"):
+            res = np.nanpercentile(mat, [10, 50], axis=1, out=out)
+        assert res is out
+        assert np.isnan(out).all()
+
     def test_scalar(self):
         assert_equal(np.nanpercentile(0., 100), 0.)
         a = np.arange(6)
