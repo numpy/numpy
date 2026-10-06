@@ -98,23 +98,33 @@ assert_type(np.dstack([AR_LIKE_f8]), npt.NDArray[Any])
 
 assert_type(np.array_split(AR_i8, [3, 5, 6, 10]), list[npt.NDArray[np.int64]])
 assert_type(np.array_split(AR_LIKE_f8, [3, 5, 6, 10]), list[npt.NDArray[Any]])
+assert_type(np.array_split(AR_LIKE_f8, AR_i8), list[npt.NDArray[Any]])
 assert_type(np.array_split(splitable, 2), list[_SplitableArray])
+assert_type(np.array_split(splitable, AR_i8_1d), list[_SplitableArray])
 
 assert_type(np.split(AR_i8, [3, 5, 6, 10]), list[npt.NDArray[np.int64]])
 assert_type(np.split(AR_LIKE_f8, [3, 5, 6, 10]), list[npt.NDArray[Any]])
+assert_type(np.split(AR_LIKE_f8, AR_i8), list[npt.NDArray[Any]])
 assert_type(np.split(splitable, 2), list[_SplitableArray])
+assert_type(np.split(splitable, AR_i8_1d), list[_SplitableArray])
 
 assert_type(np.hsplit(AR_i8, [3, 5, 6, 10]), list[npt.NDArray[np.int64]])
 assert_type(np.hsplit(AR_LIKE_f8, [3, 5, 6, 10]), list[npt.NDArray[Any]])
+assert_type(np.hsplit(AR_LIKE_f8, AR_i8), list[npt.NDArray[Any]])
 assert_type(np.hsplit(splitable, 2), list[_SplitableArray])
+assert_type(np.hsplit(splitable, AR_i8_1d), list[_SplitableArray])
 
 assert_type(np.vsplit(AR_i8, [3, 5, 6, 10]), list[npt.NDArray[np.int64]])
 assert_type(np.vsplit(AR_LIKE_f8, [3, 5, 6, 10]), list[npt.NDArray[Any]])
+assert_type(np.vsplit(AR_LIKE_f8, AR_i8), list[npt.NDArray[Any]])
 assert_type(np.vsplit(splitable, 2), list[_SplitableArray])
+assert_type(np.vsplit(splitable, AR_i8_1d), list[_SplitableArray])
 
 assert_type(np.dsplit(AR_i8, [3, 5, 6, 10]), list[npt.NDArray[np.int64]])
 assert_type(np.dsplit(AR_LIKE_f8, [3, 5, 6, 10]), list[npt.NDArray[Any]])
+assert_type(np.dsplit(AR_LIKE_f8, AR_i8), list[npt.NDArray[Any]])
 assert_type(np.dsplit(splitable, 2), list[_SplitableArray])
+assert_type(np.dsplit(splitable, AR_i8_1d), list[_SplitableArray])
 
 assert_type(np.kron(AR_b, AR_b), npt.NDArray[np.bool])
 assert_type(np.kron(AR_b, AR_i8), npt.NDArray[np.int_ | Any])

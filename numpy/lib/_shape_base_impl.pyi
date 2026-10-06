@@ -103,6 +103,8 @@ type _To3D[ScalarT: np.generic] = (
 
 type _Func1D[ScalarT: np.generic, **Tss, ReturnT] = Callable[Concatenate[Array1D[ScalarT], Tss], ReturnT]
 
+type _IndicesOrSections = _ShapeLike | Array1D[np.integer]
+
 _AnyNumberT = TypeVar(
     "_AnyNumberT",
     np.bool,
@@ -435,57 +437,65 @@ def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 @overload
 def array_split[SplitableT: _SupportsSplitOps](
     ary: SplitableT,
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[SplitableT]: ...
 @overload
 def array_split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
 @overload
-def array_split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsIndex = 0) -> list[NDArray[Incomplete]]: ...
+def array_split(
+    ary: ArrayLike,
+    indices_or_sections: _IndicesOrSections,
+    axis: SupportsIndex = 0,
+) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
 def split[SplitableT: _SupportsSplitOps](
     ary: SplitableT,
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[SplitableT]: ...
 @overload
 def split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
 @overload
-def split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsIndex = 0) -> list[NDArray[Incomplete]]: ...
+def split(
+    ary: ArrayLike,
+    indices_or_sections: _IndicesOrSections,
+    axis: SupportsIndex = 0,
+) -> list[NDArray[Incomplete]]: ...
 
 # keep in sync with `numpy.ma.extras.hsplit`
 @overload
-def hsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
+def hsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _IndicesOrSections) -> list[SplitableT]: ...
 @overload
-def hsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+def hsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[NDArray[ScalarT]]: ...
 @overload
-def hsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
+def hsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
-def vsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
+def vsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _IndicesOrSections) -> list[SplitableT]: ...
 @overload
-def vsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+def vsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[NDArray[ScalarT]]: ...
 @overload
-def vsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
+def vsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
-def dsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
+def dsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _IndicesOrSections) -> list[SplitableT]: ...
 @overload
-def dsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+def dsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[NDArray[ScalarT]]: ...
 @overload
-def dsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
+def dsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload  # ?d T, ?d T  (workaround)

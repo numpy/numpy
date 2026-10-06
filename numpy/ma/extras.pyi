@@ -98,6 +98,7 @@ type _MArray4D[ScalarT: np.generic] = MaskedArray[tuple[int, int, int, int], np.
 
 # input only; keep in sync with `numpy._core.shape_base`
 type _AtLeast2D = tuple[int, int, *tuple[Any, ...]]
+type _IndicesOrSections = _ShapeLike | Array1D[np.integer]
 type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
 type _To0D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()], np.dtype[ScalarT]]
 type _To1D[ScalarT: np.generic] = ScalarT | np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]]
@@ -519,9 +520,9 @@ def stack[ShapeT: _Shape, DTypeT: np.dtype](
 
 # keep in sync with `numpy._core.shape_base_impl.hsplit`
 @overload
-def hsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[_MArray[ScalarT]]: ...
+def hsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[_MArray[ScalarT]]: ...
 @overload
-def hsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[_MArray[Incomplete]]: ...
+def hsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[_MArray[Incomplete]]: ...
 
 # keep in sync with `numpy._core.twodim_base_impl.hsplit`
 @overload
