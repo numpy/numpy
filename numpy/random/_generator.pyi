@@ -1,7 +1,7 @@
 # Alias for builtin shadowed by classes to avoid annotations resolving to class members by ty
 from builtins import bytes as py_bytes
 from collections.abc import Callable, MutableSequence, Sequence
-from typing import Any, Literal, Self, SupportsIndex, overload
+from typing import Any, Literal, Never, Self, SupportsIndex, overload
 from typing_extensions import disjoint_base
 
 import numpy as np
@@ -38,7 +38,10 @@ type _2D = tuple[int, int]
 type _3D = tuple[int, int, int]
 type _4D = tuple[int, int, int, int]
 
-type _ToArray1D[ScalarT: np.generic] = Array1D[ScalarT] | list[ScalarT]
+# workaround for mypy and pyright not following the typing spec for overloads
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
+
+type _ToArray1D[ScalarT: np.generic] = Array1D[ScalarT] | Sequence[ScalarT]
 type _NestedList[T] = _NestedSequence[list[T]] | list[T]
 
 type _ArrayF32 = NDArray[np.float32]
@@ -1389,62 +1392,128 @@ class Generator:
         axis: int = 0,
         shuffle: bool = True,
     ) -> int: ...
-    @overload  # >0d ~bool, size=None (default)
+    @overload  # ?d known, size=None (default)  (workaround)
+    def choice[ScalarT: np.generic](
+        self,
+        /,
+        a: _ArrayJustND[ScalarT],
+        size: None = None,
+        replace: bool = True,
+        p: _ArrayLikeFloat_co | None = None,
+        axis: int = 0,
+        shuffle: bool = True,
+    ) -> Any: ...
+    @overload  # 1d ~bool, size=None (default)
     def choice(
         self,
         /,
-        a: _NestedList[bool],
+        a: list[bool],
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
         axis: int = 0,
         shuffle: bool = True,
     ) -> np.bool: ...
-    @overload  # >0d ~int, size=None (default)
+    @overload  # 1d ~int, size=None (default)
     def choice(
         self,
         /,
-        a: _NestedList[int],
+        a: list[int],
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
         axis: int = 0,
         shuffle: bool = True,
     ) -> np.int_: ...
-    @overload  # >0d ~float, size=None (default)
+    @overload  # 1d ~float, size=None (default)
     def choice(
         self,
         /,
-        a: _NestedList[float],
+        a: list[float],
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
         axis: int = 0,
         shuffle: bool = True,
     ) -> np.float64: ...
-    @overload  # >0d ~str, size=None (default)
+    @overload  # 1d ~str, size=None (default)
     def choice(
         self,
         /,
-        a: _NestedList[str],
+        a: list[str],
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
         axis: int = 0,
         shuffle: bool = True,
     ) -> np.str_: ...
-    @overload  # >=0d known, size=None (default)
+    @overload  # 1d known, size=None (default)
     def choice[ScalarT: np.generic](
         self,
         /,
-        a: _ArrayLike[ScalarT],
+        a: _ToArray1D[ScalarT],
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
         axis: int = 0,
         shuffle: bool = True,
     ) -> ScalarT: ...
-    @overload  # >=0d unknown, size=None (default)
+    @overload  # >1d ~bool, size=None (default)
+    def choice(
+        self,
+        /,
+        a: Sequence[list[bool]],
+        size: None = None,
+        replace: bool = True,
+        p: _ArrayLikeFloat_co | None = None,
+        axis: int = 0,
+        shuffle: bool = True,
+    ) -> NDArray[np.bool]: ...
+    @overload  # >1d ~int, size=None (default)
+    def choice(
+        self,
+        /,
+        a: Sequence[list[int]],
+        size: None = None,
+        replace: bool = True,
+        p: _ArrayLikeFloat_co | None = None,
+        axis: int = 0,
+        shuffle: bool = True,
+    ) -> NDArray[np.int_]: ...
+    @overload  # >1d ~float, size=None (default)
+    def choice(
+        self,
+        /,
+        a: Sequence[list[float]],
+        size: None = None,
+        replace: bool = True,
+        p: _ArrayLikeFloat_co | None = None,
+        axis: int = 0,
+        shuffle: bool = True,
+    ) -> NDArray[np.float64]: ...
+    @overload  # >1d ~str, size=None (default)
+    def choice(
+        self,
+        /,
+        a: Sequence[list[str]],
+        size: None = None,
+        replace: bool = True,
+        p: _ArrayLikeFloat_co | None = None,
+        axis: int = 0,
+        shuffle: bool = True,
+    ) -> NDArray[np.str_]: ...
+    @overload  # >=0d known, size=None (default)
+    def choice[ScalarT: np.generic](
+        self,
+        /,
+        a: NDArray[ScalarT],
+        size: None = None,
+        replace: bool = True,
+        p: _ArrayLikeFloat_co | None = None,
+        axis: int = 0,
+        shuffle: bool = True,
+    ) -> NDArray[ScalarT]: ...
+    @overload  # ?d unknown, size=None (default)
     def choice(
         self,
         /,
@@ -1587,6 +1656,17 @@ class Generator:
         axis: int = 0,
         shuffle: bool = True,
     ) -> NDArray[np.str_]: ...
+    @overload  # ?d known, size=<unknown>  (workaround)
+    def choice[ScalarT: np.generic](
+        self,
+        /,
+        a: _ArrayJustND[ScalarT],
+        size: _ShapeLike,
+        replace: bool = True,
+        p: _ArrayLikeFloat_co | None = None,
+        axis: int = 0,
+        shuffle: bool = True,
+    ) -> NDArray[ScalarT]: ...
     @overload  # 1d known, size=<1d>
     def choice[ScalarT: np.generic](
         self,

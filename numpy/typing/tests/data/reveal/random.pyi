@@ -16,6 +16,12 @@ _2d: tuple[int, int]
 
 _i64: np.int64
 
+_f64_1d: npt.Array1D[np.float64]
+_f64_2d: npt.Array2D[np.float64]
+_tuple_f64: tuple[np.float64, ...]
+_py_str_1d: list[str]
+_py_str_2d: list[list[str]]
+
 ###
 
 def_rng = np.random.default_rng()
@@ -877,25 +883,32 @@ assert_type(def_gen.bit_generator, np.random.BitGenerator)
 assert_type(def_gen.bytes(2), bytes)
 
 assert_type(def_gen.choice(5), int)
-assert_type(def_gen.choice([1, 2]), np.int_)
-assert_type(def_gen.choice([True, False]), np.bool)
-assert_type(def_gen.choice([0.5, 1.5]), np.float64)
 assert_type(def_gen.choice(5, 3), npt.Array1D[np.int_])
 assert_type(def_gen.choice(5, _1d), npt.Array1D[np.int_])
 assert_type(def_gen.choice(5, _2d), npt.Array2D[np.int_])
 assert_type(def_gen.choice(5, 3, replace=True), npt.Array1D[np.int_])
 assert_type(def_gen.choice(5, 3, p=[1 / 5] * 5), npt.Array1D[np.int_])
 assert_type(def_gen.choice(5, 3, p=[1 / 5] * 5, replace=False), npt.Array1D[np.int_])
+assert_type(def_gen.choice([True, False]), np.bool)
+assert_type(def_gen.choice([[True], [False]]), npt.NDArray[np.bool])
 assert_type(def_gen.choice([True, False], 3), npt.Array1D[np.bool])
+assert_type(def_gen.choice([1, 2]), np.int_)
+assert_type(def_gen.choice([[1, 2], [3, 4]]), npt.NDArray[np.int_])
+assert_type(def_gen.choice([0.5, 1.5]), np.float64)
 assert_type(def_gen.choice([0.5, 1.5], 3), npt.Array1D[np.float64])
-
-str_list: list[str]
-assert_type(def_gen.choice(str_list), np.str_)
-assert_type(def_gen.choice(str_list, 3), npt.Array1D[np.str_])
-assert_type(def_gen.choice(str_list, _2d), npt.Array2D[np.str_])
-assert_type(def_gen.choice(str_list, 3, p=[1 / 4] * 4), npt.Array1D[np.str_])
-assert_type(def_gen.choice(str_list, 3, replace=True), npt.Array1D[np.str_])
-assert_type(def_gen.choice(str_list, 3, replace=False, p=np.array([1 / 8, 1 / 8, 1 / 2, 1 / 4])), npt.Array1D[np.str_])
+assert_type(def_gen.choice(_f64_1d), np.float64)
+assert_type(def_gen.choice(_f64_2d), npt.NDArray[np.float64])
+assert_type(def_gen.choice(_tuple_f64), np.float64)
+assert_type(def_gen.choice(D_arr_0p5), Any)
+assert_type(def_gen.choice(D_arr_0p5, 3), npt.NDArray[np.float64])
+assert_type(def_gen.choice(D_2D_like), npt.NDArray[np.float64])
+assert_type(def_gen.choice(_py_str_1d), np.str_)
+assert_type(def_gen.choice(_py_str_2d), npt.NDArray[np.str_])
+assert_type(def_gen.choice(_py_str_1d, 3), npt.Array1D[np.str_])
+assert_type(def_gen.choice(_py_str_1d, _2d), npt.Array2D[np.str_])
+assert_type(def_gen.choice(_py_str_1d, 3, p=[1 / 4] * 4), npt.Array1D[np.str_])
+assert_type(def_gen.choice(_py_str_1d, 3, replace=True), npt.Array1D[np.str_])
+assert_type(def_gen.choice(_py_str_1d, 3, replace=False, p=np.array([1 / 8, 1 / 8, 1 / 2, 1 / 4])), npt.Array1D[np.str_])
 
 assert_type(def_gen.dirichlet([0.5, 0.5]), npt.Array1D[np.float64])
 assert_type(def_gen.dirichlet(np.array([0.5, 0.5])), npt.Array1D[np.float64])
