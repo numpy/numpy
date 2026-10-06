@@ -451,17 +451,21 @@ def array_split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsI
 @overload
 def split[SplitableT: _SupportsSplitOps](
     ary: SplitableT,
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _ShapeLike | Array1D[np.integer],
     axis: SupportsIndex = 0,
 ) -> list[SplitableT]: ...
 @overload
 def split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _ShapeLike | Array1D[np.integer],
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
 @overload
-def split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsIndex = 0) -> list[NDArray[Incomplete]]: ...
+def split(
+    ary: ArrayLike,
+    indices_or_sections: _ShapeLike | Array1D[np.integer],
+    axis: SupportsIndex = 0,
+) -> list[NDArray[Incomplete]]: ...
 
 # keep in sync with `numpy.ma.extras.hsplit`
 @overload
