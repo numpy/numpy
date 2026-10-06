@@ -1,6 +1,14 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
-from typing import Any, Literal as L, Never, Protocol, SupportsIndex, overload, type_check_only
+from typing import (
+    Any,
+    Literal as L,
+    Never,
+    Protocol,
+    SupportsIndex,
+    overload,
+    type_check_only,
+)
 
 import numpy as np
 from numpy import _OrderCF
@@ -440,8 +448,8 @@ def mask_indices(n: int, mask_func: _MaskFunc[int], k: int = 0) -> _Indices2D: .
 def mask_indices[T](n: int, mask_func: _MaskFunc[T], k: T) -> _Indices2D: ...
 
 #
-def tril_indices(n: int, k: int = 0, m: int | None = None) -> _Indices2D: ...
-def triu_indices(n: int, k: int = 0, m: int | None = None) -> _Indices2D: ...
+def tril_indices(n: SupportsIndex, k: SupportsIndex = 0, m: SupportsIndex | None = None) -> _Indices2D: ...
+def triu_indices(n: SupportsIndex, k: SupportsIndex = 0, m: SupportsIndex | None = None) -> _Indices2D: ...
 
 # these will accept anything with `shape: tuple[int, int]` and `ndim: int` attributes
 def tril_indices_from(arr: _HasShapeAndNDim, k: int = 0) -> _Indices2D: ...

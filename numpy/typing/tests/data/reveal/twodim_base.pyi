@@ -226,10 +226,12 @@ assert_type(np.mask_indices(8, func2, "0"), _Indices2D)
 
 # tril_indices
 assert_type(np.tril_indices(3), _Indices2D)
+assert_type(np.tril_indices(np.int_(3)), _Indices2D)
 assert_type(np.tril_indices(3, 1), _Indices2D)
 assert_type(np.tril_indices(3, 1, 2), _Indices2D)
 # tril_indices
 assert_type(np.triu_indices(3), _Indices2D)
+assert_type(np.triu_indices(np.int_(3)), _Indices2D)
 assert_type(np.triu_indices(3, 1), _Indices2D)
 assert_type(np.triu_indices(3, 1, 2), _Indices2D)
 
