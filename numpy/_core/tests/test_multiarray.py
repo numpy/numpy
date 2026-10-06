@@ -2278,8 +2278,9 @@ class TestMethods:
         # result is now computed in float32 and converted back once.
         h = np.arange(65536, dtype=np.uint16).view(np.float16)
         p = np.float32(10.0 ** abs(decimals))
-        x = h.astype(np.float32)
         with np.errstate(all="ignore"):
+            # converting a signalling NaN raises "invalid" on some platforms
+            x = h.astype(np.float32)
             if decimals < 0:
                 expected = (np.rint(x / p) * p).astype(np.float16)
             else:
