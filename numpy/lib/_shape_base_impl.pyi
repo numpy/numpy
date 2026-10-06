@@ -102,6 +102,7 @@ type _To3D[ScalarT: np.generic] = (
 )
 
 type _Func1D[ScalarT: np.generic, **Tss, ReturnT] = Callable[Concatenate[Array1D[ScalarT], Tss], ReturnT]
+
 type _IndicesOrSections = _ShapeLike | Array1D[np.integer]
 
 _AnyNumberT = TypeVar(
@@ -482,11 +483,11 @@ def hsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDAr
 
 #
 @overload
-def vsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
+def vsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _IndicesOrSections) -> list[SplitableT]: ...
 @overload
-def vsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+def vsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[NDArray[ScalarT]]: ...
 @overload
-def vsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
+def vsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
