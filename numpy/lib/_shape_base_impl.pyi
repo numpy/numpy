@@ -435,17 +435,21 @@ def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 @overload
 def array_split[SplitableT: _SupportsSplitOps](
     ary: SplitableT,
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _ShapeLike | Array1D[np.integer],
     axis: SupportsIndex = 0,
 ) -> list[SplitableT]: ...
 @overload
 def array_split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _ShapeLike | Array1D[np.integer],
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
 @overload
-def array_split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsIndex = 0) -> list[NDArray[Incomplete]]: ...
+def array_split(
+    ary: ArrayLike,
+    indices_or_sections: _ShapeLike | Array1D[np.integer],
+    axis: SupportsIndex = 0,
+) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
