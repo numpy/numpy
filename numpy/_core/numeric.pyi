@@ -2,14 +2,7 @@ import numbers
 from _typeshed import Incomplete
 from builtins import bool as py_bool
 from collections.abc import Callable, Iterable, Sequence
-from typing import (
-    Any,
-    Literal as L,
-    SupportsAbs,
-    SupportsIndex,
-    TypeVar,
-    overload,
-)
+from typing import Any, Literal as L, SupportsAbs, SupportsIndex, TypeVar, overload
 from typing_extensions import TypeIs
 
 import numpy as np
