@@ -526,6 +526,10 @@ assert_type(np.ma.array(AR_f4, mask=[0, 1, 0]), MaskedArray[np.float32])
 assert_type(np.ma.array(AR_LIKE_f, dtype=np.float16, mask=0), MaskedArray[np.float16])
 assert_type(np.ma.array(AR_LIKE_f, mask=0), MaskedArray[Any])
 
+assert_type(np.ma.masked_where(AR_i8, AR_f4), MaskedArray[np.float32])
+assert_type(np.ma.masked_where([0, 1], AR_LIKE_u), MaskedArray[np.uint32])
+assert_type(np.ma.masked_where(0, AR_LIKE_f), MaskedArray[Any])
+
 # Masked Array addition
 
 assert_type(MAR_b + AR_LIKE_u, MaskedArray[np.uint32])

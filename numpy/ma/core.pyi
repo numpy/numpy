@@ -805,18 +805,18 @@ def masked_invalid(a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]:
 # keep in sync with other the `masked_*` functions
 @overload  # array-like of known scalar-type
 def masked_where[ShapeT: _Shape, DTypeT: np.dtype](
-    condition: _ArrayLikeBool_co,
+    condition: _ArrayLikeInt_co,
     a: ndarray[ShapeT, DTypeT],
     copy: bool = True,
 ) -> MaskedArray[ShapeT, DTypeT]: ...
 @overload  # array-like of known scalar-type
 def masked_where[ScalarT: np.generic](
-    condition: _ArrayLikeBool_co,
+    condition: _ArrayLikeInt_co,
     a: _ArrayLike[ScalarT],
     copy: bool = True,
 ) -> _MaskedArray[ScalarT]: ...
 @overload  # unknown array-like
-def masked_where(condition: _ArrayLikeBool_co, a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+def masked_where(condition: _ArrayLikeInt_co, a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
 
 # keep in sync with other the `masked_*` functions
 @overload  # known array with known shape and dtype
