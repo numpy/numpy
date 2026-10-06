@@ -70,6 +70,7 @@ assert_type(np.flipud(_to_2d_c128), np.ndarray[_2D, np.dtype[np.complex128]])
 
 # eye
 assert_type(np.eye(10), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.eye(np.int_(10)), np.ndarray[_2D, np.dtype[np.float64]])
 assert_type(np.eye(10, M=20, dtype=np.int64), np.ndarray[_2D, np.dtype[np.int64]])
 assert_type(np.eye(10, k=2, dtype=int), np.ndarray[_2D])
 

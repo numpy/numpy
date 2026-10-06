@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
-from typing import Any, Literal as L, Never, Protocol, overload, type_check_only
+from typing import Any, Literal as L, Never, Protocol, SupportsIndex, overload, type_check_only
 
 import numpy as np
 from numpy import _OrderCF
@@ -120,9 +120,9 @@ def flipud(m: ArrayLike) -> NDArray[Any]: ...
 #
 @overload
 def eye(
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     dtype: None = ...,  # = float  # stubdefaulter: ignore[missing-default]
     order: _OrderCF = "C",
     *,
@@ -131,9 +131,9 @@ def eye(
 ) -> Array2D[np.float64]: ...
 @overload
 def eye[ScalarT: np.generic](
-    N: int,
-    M: int | None,
-    k: int,
+    N: SupportsIndex,
+    M: SupportsIndex | None,
+    k: SupportsIndex,
     dtype: _DTypeLike[ScalarT],
     order: _OrderCF = "C",
     *,
@@ -142,9 +142,9 @@ def eye[ScalarT: np.generic](
 ) -> Array2D[ScalarT]: ...
 @overload
 def eye[ScalarT: np.generic](
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     *,
     dtype: _DTypeLike[ScalarT],
     order: _OrderCF = "C",
@@ -153,9 +153,9 @@ def eye[ScalarT: np.generic](
 ) -> Array2D[ScalarT]: ...
 @overload
 def eye(
-    N: int,
-    M: int | None = None,
-    k: int = 0,
+    N: SupportsIndex,
+    M: SupportsIndex | None = None,
+    k: SupportsIndex = 0,
     dtype: DTypeLike | None = ...,  # = float
     order: _OrderCF = "C",
     *,
