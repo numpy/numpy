@@ -8978,6 +8978,19 @@ class TestChoose:
         ind = [0, 0, 1]
         return x, y, x2, y2, ind
 
+    @pytest.mark.parametrize("dtype", [
+        ("x", "u1", 3),
+        ("x", "u1", 2**32 + 1),
+        ("x", "u1", 2**31 + 2),
+        ])
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=14e9)
+    def test_gh_32830(self, dtype):
+        a = np.zeros(2, [dtype])
+        a["x"][1, -1] = 2
+        actual = np.choose([1], a)["x"]
+        assert actual[:, -1] == 2
+
     def test_basic(self):
         x, y, _, _, ind = self._create_data()
         A = np.choose(ind, (x, y))
