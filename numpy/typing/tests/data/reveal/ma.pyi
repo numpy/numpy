@@ -510,13 +510,20 @@ def invalid_resize() -> None:
     assert_type(MAR_f8.resize((1, 1)), NoReturn)  # type: ignore[arg-type]
 
 assert_type(np.ma.MaskedArray(AR_f4), MaskedArray[np.float32])
+assert_type(np.ma.MaskedArray(AR_f4, mask=[0, 1, 0]), MaskedArray[np.float32])
 assert_type(np.ma.MaskedArray(np.array([1, 2, 3]), [True, True, False], np.float16), MaskedArray[np.float16])
+assert_type(np.ma.MaskedArray(np.array([1, 2, 3]), [0, 1, 0], np.float16), MaskedArray[np.float16])
 assert_type(np.ma.MaskedArray(np.array([1, 2, 3]), dtype=np.float16), MaskedArray[np.float16])
 assert_type(np.ma.MaskedArray(np.array([1, 2, 3]), copy=True), MaskedArray[np.int_])
 # TODO: This one could be made more precise, the return type could be `MaskedArraySubclassC`
 assert_type(np.ma.MaskedArray(MAR_subclass), MaskedArray[np.complex128])
 # TODO: This one could be made more precise, the return type could be `MaskedArraySubclass[np.float32]`
 assert_type(np.ma.MaskedArray(MAR_into_subclass), MaskedArray[np.float32])
+assert_type(np.ma.MaskedArray(AR_LIKE_f, mask=0), MaskedArray[Any])
+
+assert_type(np.ma.array(AR_f4, mask=[0, 1, 0]), MaskedArray[np.float32])
+assert_type(np.ma.array(AR_LIKE_f, dtype=np.float16, mask=0), MaskedArray[np.float16])
+assert_type(np.ma.array(AR_LIKE_f, mask=0), MaskedArray[Any])
 
 # Masked Array addition
 
