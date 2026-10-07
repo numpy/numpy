@@ -354,6 +354,15 @@ def empty[ScalarT: np.generic](
     device: L["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> Array1D[ScalarT]: ...
+@overload  # 1d, bool
+def empty(
+    shape: SupportsIndex,
+    dtype: _DTypeLikeBool,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> Array1D[np.bool]: ...
 @overload  # 1d, unknown dtype
 def empty(
     shape: SupportsIndex,
@@ -390,6 +399,15 @@ def empty[ShapeT: (_0D, _1D, _2D, _3D, _4D), ScalarT: np.generic](
     device: L["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array[ShapeT, ScalarT]: ...
+@overload  # known shape, bool
+def empty[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
+    shape: ShapeT,
+    dtype: _DTypeLikeBool,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array[ShapeT, np.bool]: ...
 @overload  # known shape, unknown dtype
 def empty[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     shape: ShapeT,
@@ -426,6 +444,15 @@ def empty[ScalarT: np.generic](
     device: L["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
+@overload  # unknown shape, bool
+def empty(
+    shape: _ShapeLike,
+    dtype: _DTypeLikeBool,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[np.bool]: ...
 @overload  # unknown shape, unknown dtype
 def empty(
     shape: _ShapeLike,
