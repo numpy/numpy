@@ -2778,7 +2778,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>  (workaround overload)
     def all(
         self: ndarray[_JustND],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2787,7 +2787,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # <=1d, axis=<single>
     def all(
         self: ndarray[_0D | _1D],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2796,7 +2796,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>
     def all(
         self: ndarray[_2D],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2814,7 +2814,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>
     def all(
         self: ndarray[_3D],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2832,7 +2832,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>
     def all(
         self: ndarray[_4D],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2850,7 +2850,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True
     def all(
         self,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         out: None = None,
         *,
         keepdims: L[True],
@@ -2859,7 +2859,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def all(
         self,
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2868,7 +2868,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (positional)
     def all[ArrayT: ndarray](
         self,
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         out: ArrayT,
         keepdims: py_bool = False,
         *,
@@ -2877,7 +2877,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (keyword)
     def all[ArrayT: ndarray](
         self,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         *,
         out: ArrayT,
         keepdims: py_bool = False,
@@ -2897,7 +2897,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>  (workaround overload)
     def any(
         self: ndarray[_JustND],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2906,7 +2906,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # <=1d, axis=<single>
     def any(
         self: ndarray[_0D | _1D],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2915,7 +2915,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>
     def any(
         self: ndarray[_2D],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2933,7 +2933,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>
     def any(
         self: ndarray[_3D],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2951,7 +2951,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>
     def any(
         self: ndarray[_4D],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2969,7 +2969,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True
     def any(
         self,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         out: None = None,
         *,
         keepdims: L[True],
@@ -2978,7 +2978,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def any(
         self,
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         out: None = None,
         keepdims: L[False] = False,
         *,
@@ -2987,7 +2987,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (positional)
     def any[ArrayT: ndarray](
         self,
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         out: ArrayT,
         keepdims: py_bool = False,
         *,
@@ -2996,7 +2996,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (keyword)
     def any[ArrayT: ndarray](
         self,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         *,
         out: ArrayT,
         keepdims: py_bool = False,
@@ -3063,7 +3063,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def prod[ScalarT: inexact | object_](
         self: ndarray[_JustND, _dtype[ScalarT]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -3074,7 +3074,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, +integer
     def prod(
         self: ndarray[_JustND, _dtype[integer | bool_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -3085,7 +3085,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<known>
     def prod[ScalarT: generic](
         self: ndarray[_JustND, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3096,7 +3096,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<unknown>
     def prod(
         self: ndarray[_JustND, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3107,7 +3107,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 0|1d, axis=<single>
     def prod[ScalarT: inexact | object_](
         self: ndarray[_0D | _1D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3118,7 +3118,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 0|1d, axis=<single>, +integer
     def prod(
         self: ndarray[_0D | _1D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3129,7 +3129,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 0|1d, axis=<single>, dtype=<known>
     def prod[ScalarT: generic](
         self: ndarray[_0D | _1D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3140,7 +3140,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 0|1d, axis=<single>, dtype=<unknown>
     def prod(
         self: ndarray[_0D | _1D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3151,7 +3151,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>
     def prod[ScalarT: inexact | object_](
         self: ndarray[_2D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3162,7 +3162,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, +integer
     def prod(
         self: ndarray[_2D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3173,7 +3173,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, dtype=<known>
     def prod[ScalarT: generic](
         self: ndarray[_2D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3184,7 +3184,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, dtype=<unknown>
     def prod(
         self: ndarray[_2D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3195,7 +3195,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>
     def prod[ScalarT: inexact | object_](
         self: ndarray[_3D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3206,7 +3206,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, +integer
     def prod(
         self: ndarray[_3D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3217,7 +3217,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, dtype=<known>
     def prod[ScalarT: generic](
         self: ndarray[_3D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3228,7 +3228,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, dtype=<unknown>
     def prod(
         self: ndarray[_3D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3239,7 +3239,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>
     def prod[ScalarT: inexact | object_](
         self: ndarray[_4D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3250,7 +3250,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, +integer
     def prod(
         self: ndarray[_4D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3261,7 +3261,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, dtype=<known>
     def prod[ScalarT: generic](
         self: ndarray[_4D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3272,7 +3272,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, dtype=<unknown>
     def prod(
         self: ndarray[_4D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3283,7 +3283,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def prod[ScalarT: inexact | object_](
         self: NDArray[ScalarT],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -3294,7 +3294,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, +integer
     def prod(
         self: NDArray[integer | bool_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -3305,7 +3305,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<known>
     def prod[ScalarT: generic](
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3316,7 +3316,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<unknown>
     def prod(
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3327,7 +3327,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True
     def prod[ArrayT: NDArray[inexact | object_]](
         self: ArrayT,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: None = None,
         out: None = None,
         *,
@@ -3338,7 +3338,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, +integer
     def prod(
         self: NDArray[integer | bool_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: None = None,
         out: None = None,
         *,
@@ -3349,7 +3349,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<known>  (keyword)
     def prod[ScalarT: generic](
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
@@ -3360,7 +3360,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<known>  (positional)
     def prod[ScalarT: generic](
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3371,7 +3371,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<unknown>
     def prod(
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3382,7 +3382,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (keyword)
     def prod[ArrayT: ndarray](
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: DTypeLike | None = None,
         *,
         out: ArrayT,
@@ -3393,7 +3393,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (positional)
     def prod[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         dtype: DTypeLike | None,
         out: ArrayT,
         *,
@@ -3462,7 +3462,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def sum[ScalarT: inexact | timedelta64 | object_](
         self: ndarray[_JustND, _dtype[ScalarT]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -3473,7 +3473,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, +integer
     def sum(
         self: ndarray[_JustND, _dtype[integer | bool_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -3484,7 +3484,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<known>
     def sum[ScalarT: generic](
         self: ndarray[_JustND, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3495,7 +3495,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<unknown>
     def sum(
         self: ndarray[_JustND, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3506,7 +3506,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 0|1d, axis=<single>
     def sum[ScalarT: inexact | timedelta64 | object_](
         self: ndarray[_0D | _1D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3517,7 +3517,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 0|1d, axis=<single>, +integer
     def sum(
         self: ndarray[_0D | _1D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3528,7 +3528,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 0|1d, axis=<single>, dtype=<known>
     def sum[ScalarT: generic](
         self: ndarray[_0D | _1D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3539,7 +3539,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 0|1d, axis=<single>, dtype=<unknown>
     def sum(
         self: ndarray[_0D | _1D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3550,7 +3550,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>
     def sum[ScalarT: inexact | timedelta64 | object_](
         self: ndarray[_2D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3561,7 +3561,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, +integer
     def sum(
         self: ndarray[_2D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3572,7 +3572,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, dtype=<known>
     def sum[ScalarT: generic](
         self: ndarray[_2D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3583,7 +3583,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, dtype=<unknown>
     def sum(
         self: ndarray[_2D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3594,7 +3594,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>
     def sum[ScalarT: inexact | timedelta64 | object_](
         self: ndarray[_3D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3605,7 +3605,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, +integer
     def sum(
         self: ndarray[_3D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3616,7 +3616,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, dtype=<known>
     def sum[ScalarT: generic](
         self: ndarray[_3D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3627,7 +3627,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, dtype=<unknown>
     def sum(
         self: ndarray[_3D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3638,7 +3638,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>
     def sum[ScalarT: inexact | timedelta64 | object_](
         self: ndarray[_4D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3649,7 +3649,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, +integer
     def sum(
         self: ndarray[_4D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -3660,7 +3660,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, dtype=<known>
     def sum[ScalarT: generic](
         self: ndarray[_4D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3671,7 +3671,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, dtype=<unknown>
     def sum(
         self: ndarray[_4D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3682,7 +3682,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def sum[ScalarT: inexact | timedelta64 | object_](
         self: NDArray[ScalarT],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -3693,7 +3693,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, +integer
     def sum(
         self: NDArray[integer | bool_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -3704,7 +3704,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<known>
     def sum[ScalarT: generic](
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3715,7 +3715,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<unknown>
     def sum(
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3726,7 +3726,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True
     def sum[ArrayT: NDArray[inexact | timedelta64 | object_]](
         self: ArrayT,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: None = None,
         out: None = None,
         *,
@@ -3737,7 +3737,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, +integer
     def sum(
         self: NDArray[integer | bool_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: None = None,
         out: None = None,
         *,
@@ -3748,7 +3748,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<known>  (keyword)
     def sum[ScalarT: generic](
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
@@ -3759,7 +3759,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<known>  (positional)
     def sum[ScalarT: generic](
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -3770,7 +3770,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<unknown>
     def sum(
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -3781,7 +3781,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (keyword)
     def sum[ArrayT: ndarray](
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: DTypeLike | None = None,
         *,
         out: ArrayT,
@@ -3792,7 +3792,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (positional)
     def sum[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         dtype: DTypeLike | None,
         out: ArrayT,
         *,
@@ -4026,7 +4026,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def mean[ScalarT: inexact | timedelta64 | object_](
         self: ndarray[_JustND, _dtype[ScalarT]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -4036,7 +4036,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, +integer
     def mean(
         self: ndarray[_JustND, _dtype[integer | bool_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -4046,7 +4046,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<known>
     def mean[ScalarT: generic](
         self: ndarray[_JustND, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -4056,7 +4056,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<unknown>
     def mean(
         self: ndarray[_JustND, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -4066,7 +4066,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>
     def mean[ScalarT: inexact | timedelta64 | object_](
         self: ndarray[_1D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -4076,7 +4076,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>, +integer
     def mean(
         self: ndarray[_1D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -4086,7 +4086,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>, dtype=<known>
     def mean[ScalarT: generic](
         self: ndarray[_1D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -4096,7 +4096,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>, dtype=<unknown>
     def mean(
         self: ndarray[_1D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -4106,7 +4106,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>
     def mean[ScalarT: inexact | timedelta64 | object_](
         self: ndarray[_2D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -4116,7 +4116,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, +integer
     def mean(
         self: ndarray[_2D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -4126,7 +4126,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, dtype=<known>
     def mean[ScalarT: generic](
         self: ndarray[_2D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -4136,7 +4136,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, dtype=<unknown>
     def mean(
         self: ndarray[_2D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -4146,7 +4146,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>
     def mean[ScalarT: inexact | timedelta64 | object_](
         self: ndarray[_3D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -4156,7 +4156,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, +integer
     def mean(
         self: ndarray[_3D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -4166,7 +4166,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, dtype=<known>
     def mean[ScalarT: generic](
         self: ndarray[_3D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -4176,7 +4176,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, dtype=<unknown>
     def mean(
         self: ndarray[_3D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -4186,7 +4186,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>
     def mean[ScalarT: inexact | timedelta64 | object_](
         self: ndarray[_4D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -4196,7 +4196,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, +integer
     def mean(
         self: ndarray[_4D, _dtype[integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         *,
@@ -4206,7 +4206,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, dtype=<known>
     def mean[ScalarT: generic](
         self: ndarray[_4D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -4216,7 +4216,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, dtype=<unknown>
     def mean(
         self: ndarray[_4D, _dtype[number | bool_ | timedelta64 | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -4226,7 +4226,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def mean[ScalarT: inexact | timedelta64 | object_](
         self: NDArray[ScalarT],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -4236,7 +4236,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, +integer
     def mean(
         self: NDArray[integer | bool_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         *,
@@ -4246,7 +4246,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<known>
     def mean[ScalarT: generic](
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -4256,7 +4256,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<unknown>
     def mean(
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -4266,7 +4266,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True
     def mean[ArrayT: NDArray[inexact | timedelta64 | object_]](
         self: ArrayT,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: None = None,
         out: None = None,
         *,
@@ -4276,7 +4276,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, +integer
     def mean(
         self: NDArray[integer | bool_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: None = None,
         out: None = None,
         *,
@@ -4286,7 +4286,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<known>  (keyword)
     def mean[ScalarT: generic](
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
@@ -4296,7 +4296,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<known>  (positional)
     def mean[ScalarT: generic](
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         *,
@@ -4306,7 +4306,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<unknown>
     def mean(
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: DTypeLike | None = None,
         out: None = None,
         *,
@@ -4316,7 +4316,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>
     def mean[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
         self: NDArray[number | bool_ | timedelta64 | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: DTypeLike | None = None,
         *,
         out: ArrayT,
@@ -4377,7 +4377,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, ~c128 | +integer
     def std(
         self: ndarray[_JustND, _dtype[complex128 | integer | bool_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4389,7 +4389,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def std[ScalarT: floating](
         self: ndarray[_JustND, _dtype[ScalarT]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4401,7 +4401,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<known>
     def std[ScalarT: inexact](
         self: ndarray[_JustND, _dtype[number | bool_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4413,7 +4413,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<unknown>
     def std(
         self: ndarray[_JustND, _dtype[number | bool_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4425,7 +4425,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>, ~c128 | +integer | ~object_
     def std(
         self: ndarray[_1D, _dtype[complex128 | integer | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4437,7 +4437,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>
     def std[ScalarT: floating](
         self: ndarray[_1D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4449,7 +4449,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>, dtype=<known>
     def std[ScalarT: number | bool_](
         self: ndarray[_1D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4461,7 +4461,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>, dtype=<unknown>
     def std(
         self: ndarray[_1D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4473,7 +4473,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, ~c128 | +integer
     def std(
         self: ndarray[_2D, _dtype[complex128 | integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4485,7 +4485,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>
     def std[ScalarT: floating](
         self: ndarray[_2D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4497,7 +4497,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, dtype=<known>
     def std[ScalarT: inexact](
         self: ndarray[_2D, _dtype[number | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4509,7 +4509,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, dtype=<unknown>
     def std(
         self: ndarray[_2D, _dtype[number | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4521,7 +4521,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, ~c128 | +integer
     def std(
         self: ndarray[_3D, _dtype[complex128 | integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4533,7 +4533,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>
     def std[ScalarT: floating](
         self: ndarray[_3D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4545,7 +4545,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, dtype=<known>
     def std[ScalarT: inexact](
         self: ndarray[_3D, _dtype[number | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4557,7 +4557,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, dtype=<unknown>
     def std(
         self: ndarray[_3D, _dtype[number | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4569,7 +4569,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, ~c128 | +integer
     def std(
         self: ndarray[_4D, _dtype[complex128 | integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4581,7 +4581,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>
     def std[ScalarT: floating](
         self: ndarray[_4D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4593,7 +4593,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, dtype=<known>
     def std[ScalarT: inexact](
         self: ndarray[_4D, _dtype[number | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4605,7 +4605,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, dtype=<unknown>
     def std(
         self: ndarray[_4D, _dtype[number | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4617,7 +4617,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, ~c128 | +integer
     def std(
         self: NDArray[complex128 | integer | bool_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4629,7 +4629,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def std[ScalarT: floating](
         self: NDArray[ScalarT],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4641,7 +4641,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<known>
     def std[ScalarT: inexact](
         self: NDArray[number | bool_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4653,7 +4653,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<unknown>
     def std(
         self: NDArray[number | bool_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4665,7 +4665,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, ~c128 | +integer
     def std(
         self: NDArray[complex128 | integer | bool_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4677,7 +4677,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True
     def std[ArrayT: NDArray[floating]](
         self: ArrayT,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4689,7 +4689,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<known>  (keyword)
     def std[ScalarT: inexact](
         self: NDArray[number | bool_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
@@ -4701,7 +4701,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<known>  (positional)
     def std[ScalarT: inexact](
         self: NDArray[number | bool_],
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4713,7 +4713,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<unknown>
     def std(
         self: NDArray[number | bool_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4725,7 +4725,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>
     def std[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
         self: NDArray[number | bool_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: DTypeLike | None = None,
         *,
         out: ArrayT,
@@ -4788,7 +4788,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, ~c128 | +integer
     def var(
         self: ndarray[_JustND, _dtype[complex128 | integer | bool_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4800,7 +4800,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def var[ScalarT: floating | object_](
         self: ndarray[_JustND, _dtype[ScalarT]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4812,7 +4812,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<known>
     def var[ScalarT: number | bool_](
         self: ndarray[_JustND, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4824,7 +4824,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<unknown>
     def var(
         self: ndarray[_JustND, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4836,7 +4836,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>, ~c128 | +integer | ~object_
     def var(
         self: ndarray[_1D, _dtype[complex128 | integer | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4848,7 +4848,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>
     def var[ScalarT: floating](
         self: ndarray[_1D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4860,7 +4860,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>, dtype=<known>
     def var[ScalarT: number | bool_](
         self: ndarray[_1D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4872,7 +4872,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 1d, axis=<single>, dtype=<unknown>
     def var(
         self: ndarray[_1D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4884,7 +4884,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, ~c128 | +integer
     def var(
         self: ndarray[_2D, _dtype[complex128 | integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4896,7 +4896,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>
     def var[ScalarT: floating | object_](
         self: ndarray[_2D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4908,7 +4908,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, dtype=<known>
     def var[ScalarT: number | bool_](
         self: ndarray[_2D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4920,7 +4920,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>, dtype=<unknown>
     def var(
         self: ndarray[_2D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4932,7 +4932,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, ~c128 | +integer
     def var(
         self: ndarray[_3D, _dtype[complex128 | integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4944,7 +4944,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>
     def var[ScalarT: floating | object_](
         self: ndarray[_3D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4956,7 +4956,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, dtype=<known>
     def var[ScalarT: number | bool_](
         self: ndarray[_3D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4968,7 +4968,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>, dtype=<unknown>
     def var(
         self: ndarray[_3D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4980,7 +4980,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, ~c128 | +integer
     def var(
         self: ndarray[_4D, _dtype[complex128 | integer | bool_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -4992,7 +4992,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>
     def var[ScalarT: floating | object_](
         self: ndarray[_4D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5004,7 +5004,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, dtype=<known>
     def var[ScalarT: number | bool_](
         self: ndarray[_4D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5016,7 +5016,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>, dtype=<unknown>
     def var(
         self: ndarray[_4D, _dtype[number | bool_ | object_]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5028,7 +5028,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, ~c128 | +integer
     def var(
         self: NDArray[complex128 | integer | bool_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5040,7 +5040,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>
     def var[ScalarT: floating | object_](
         self: NDArray[ScalarT],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5052,7 +5052,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<known>
     def var[ScalarT: number | bool_](
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5064,7 +5064,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>, dtype=<unknown>
     def var(
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5076,7 +5076,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, ~c128 | +integer
     def var(
         self: NDArray[complex128 | integer | bool_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5088,7 +5088,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True
     def var[ArrayT: NDArray[floating | object_]](
         self: ArrayT,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5100,7 +5100,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<known>  (keyword)
     def var[ScalarT: number | bool_](
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         *,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
@@ -5112,7 +5112,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<known>  (positional)
     def var[ScalarT: number | bool_](
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         dtype: _DTypeLike[ScalarT],
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5124,7 +5124,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True, dtype=<unknown>
     def var(
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: _FloatLike_co = 0,
@@ -5136,7 +5136,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>
     def var[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
         self: NDArray[number | bool_ | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         dtype: DTypeLike | None = None,
         *,
         out: ArrayT,
@@ -5171,7 +5171,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>  (workaround overload)
     def max[ScalarT: _ScalarOrderable | object_](
         self: ndarray[_JustND, _dtype[ScalarT]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5181,7 +5181,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # <=1d, axis=<single>
     def max[ScalarT: _ScalarOrderable](
         self: ndarray[_0D | _1D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5191,7 +5191,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>
     def max[ScalarT: _ScalarOrderable | object_](
         self: ndarray[_2D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5211,7 +5211,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>
     def max[ScalarT: _ScalarOrderable | object_](
         self: ndarray[_3D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5231,7 +5231,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>
     def max[ScalarT: _ScalarOrderable | object_](
         self: ndarray[_4D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5251,7 +5251,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True
     def max[ArrayT: NDArray[_ScalarOrderable | object_]](
         self: ArrayT,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         out: None = None,
         *,
         keepdims: L[True],
@@ -5261,7 +5261,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<any>
     def max[ScalarT: _ScalarOrderable | object_](
         self: NDArray[ScalarT],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5271,7 +5271,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (positional)
     def max[ArrayT: ndarray](
         self: NDArray[_ScalarOrderable | object_],
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         out: ArrayT,
         *,
         keepdims: py_bool | _NoValueType = ...,
@@ -5281,7 +5281,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (keyword)
     def max[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
         self: NDArray[_ScalarOrderable | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         *,
         out: ArrayT,
         keepdims: py_bool | _NoValueType = ...,
@@ -5314,7 +5314,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<given>  (workaround overload)
     def min[ScalarT: _ScalarOrderable | object_](
         self: ndarray[_JustND, _dtype[ScalarT]],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5324,7 +5324,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # <=1d, axis=<single>
     def min[ScalarT: _ScalarOrderable](
         self: ndarray[_0D | _1D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5334,7 +5334,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 2d, axis=<single>
     def min[ScalarT: _ScalarOrderable | object_](
         self: ndarray[_2D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5354,7 +5354,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 3d, axis=<single>
     def min[ScalarT: _ScalarOrderable | object_](
         self: ndarray[_3D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5374,7 +5374,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # 4d, axis=<single>
     def min[ScalarT: _ScalarOrderable | object_](
         self: ndarray[_4D, _dtype[ScalarT]],
-        axis: int | tuple[int],
+        axis: SupportsIndex | tuple[SupportsIndex],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5394,7 +5394,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # keepdims=True
     def min[ArrayT: NDArray[_ScalarOrderable | object_]](
         self: ArrayT,
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         out: None = None,
         *,
         keepdims: L[True],
@@ -5404,7 +5404,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # ?d, axis=<any>
     def min[ScalarT: _ScalarOrderable | object_](
         self: NDArray[ScalarT],
-        axis: int | tuple[int, ...],
+        axis: SupportsIndex | tuple[SupportsIndex, ...],
         out: None = None,
         *,
         keepdims: L[False] | _NoValueType = ...,
@@ -5414,7 +5414,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (positional)
     def min[ArrayT: ndarray](
         self: NDArray[_ScalarOrderable | object_],
-        axis: int | tuple[int, ...] | None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
         out: ArrayT,
         *,
         keepdims: py_bool | _NoValueType = ...,
@@ -5424,7 +5424,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # out=<given>  (keyword)
     def min[ArrayT: ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
         self: NDArray[_ScalarOrderable | object_],
-        axis: int | tuple[int, ...] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
         *,
         out: ArrayT,
         keepdims: py_bool | _NoValueType = ...,
