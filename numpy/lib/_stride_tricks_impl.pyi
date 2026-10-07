@@ -160,7 +160,7 @@ def sliding_window_view(
 @overload  # known dtype, 1d shape
 def broadcast_to[ScalarT: np.generic](
     array: _ArrayLike[ScalarT],
-    shape: int,
+    shape: SupportsIndex,
     subok: bool = False,
 ) -> np.ndarray[tuple[int], np.dtype[ScalarT]]: ...
 @overload  # known dtype, known shape
@@ -172,13 +172,13 @@ def broadcast_to[ScalarT: np.generic, ShapeT: (_0D, _1D, _2D, _3D, _4D)](
 @overload  # known dtype, unknown shape
 def broadcast_to[ScalarT: np.generic](
     array: _ArrayLike[ScalarT],
-    shape: Iterable[int],
+    shape: Iterable[SupportsIndex],
     subok: bool = False,
 ) -> NDArray[ScalarT]: ...
 @overload  # unknown dtype, 1d shape
 def broadcast_to(
     array: ArrayLike,
-    shape: int,
+    shape: SupportsIndex,
     subok: bool = False,
 ) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
 @overload  # unknown dtype, known shape
@@ -190,7 +190,7 @@ def broadcast_to[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
 @overload  # unknown dtype, unknown shape
 def broadcast_to(
     array: ArrayLike,
-    shape: Iterable[int],
+    shape: Iterable[SupportsIndex],
     subok: bool = False,
 ) -> NDArray[Any]: ...
 
