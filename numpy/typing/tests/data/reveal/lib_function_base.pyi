@@ -129,6 +129,7 @@ assert_type(np.select([AR_b], [AR_f8]), npt.NDArray[np.float64])
 
 # places
 assert_type(np.place(AR_f8, mask=AR_i8, vals=5.0), None)
+assert_type(np.place(AR_f8_2d, [[True, False], [False, True]], 0), None)
 
 # copy
 assert_type(np.copy(AR_LIKE_f8), np.ndarray)
