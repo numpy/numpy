@@ -1038,6 +1038,18 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         arr = (PyArrayObject *)obj;
         Py_INCREF(arr);
     }
+    else if (curr_dims > 0 && curr_dims == max_dims &&
+             fixed_DType != NULL && fixed_DType->type_num == NPY_OBJECT) {
+        /*
+         * For object dtype, a nested array-like at the maximum depth is
+         * always stored as an element of the result, the converted array
+         * would be discarded.  Converting it may be slow (e.g. when
+         * `__array__` makes a copy), so treat it as a scalar (gh-28651).
+         */
+        return handle_scalar(
+                obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
+                flags, NULL);
+    }
     else {
         PyArray_Descr *requested_descr = NULL;
         if (*flags & DESCRIPTOR_WAS_SET) {

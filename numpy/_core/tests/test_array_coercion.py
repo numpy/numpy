@@ -674,6 +674,43 @@ class TestArrayLikes:
         empty[:] = [obj]
         assert empty[0] is obj
 
+    def test_object_ragged_arraylike_not_converted(self):
+        # gh-28651: With object dtype, nested array-likes at the maximum
+        # depth are stored as objects, so they should not be converted.
+        converted = []
+
+        class ArrayLike:
+            def __init__(self, n):
+                self.n = n
+
+            def __array__(self, dtype=None, copy=None):
+                converted.append(self)
+                return np.ones(self.n, dtype=dtype)
+
+        data = [ArrayLike(n) for n in range(1, 11)]
+        res = np.array(data, dtype=object)
+        assert res.shape == (10,)
+        assert all(res[i] is data[i] for i in range(10))
+        # The first two are needed to find that the result is ragged
+        assert converted == data[:2]
+
+        converted.clear()
+        res = np.empty(10, dtype=object)
+        res[:] = data
+        assert all(res[i] is data[i] for i in range(10))
+        assert converted == []
+
+        converted.clear()
+        res = np.array([1, data[0]], dtype=object)
+        assert res[1] is data[0]
+        assert converted == []
+
+        # Array-likes are still converted when this is not the maximum depth
+        converted.clear()
+        res = np.array([data[1], data[1]], dtype=object)
+        assert res.shape == (2, 2)
+        assert converted == [data[1], data[1]]
+
     def test_0d_generic_special_case(self):
         class ArraySubclass(np.ndarray):
             def __float__(self):
