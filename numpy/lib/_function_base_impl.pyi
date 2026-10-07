@@ -191,11 +191,23 @@ class vectorize:
     def __call__(self, /, *args: Incomplete, **kwargs: Incomplete) -> Incomplete: ...
 
 @overload
-def rot90[ArrayT: np.ndarray](m: ArrayT, k: int = 1, axes: tuple[int, int] = (0, 1)) -> ArrayT: ...
+def rot90[ArrayT: np.ndarray](
+    m: ArrayT,
+    k: SupportsIndex = 1,
+    axes: Sequence[SupportsIndex] = (0, 1),
+) -> ArrayT: ...
 @overload
-def rot90[ScalarT: np.generic](m: _ArrayLike[ScalarT], k: int = 1, axes: tuple[int, int] = (0, 1)) -> NDArray[ScalarT]: ...
+def rot90[ScalarT: np.generic](
+    m: _ArrayLike[ScalarT],
+    k: SupportsIndex = 1,
+    axes: Sequence[SupportsIndex] = (0, 1),
+) -> NDArray[ScalarT]: ...
 @overload
-def rot90(m: ArrayLike, k: int = 1, axes: tuple[int, int] = (0, 1)) -> NDArray[Incomplete]: ...
+def rot90(
+    m: ArrayLike,
+    k: SupportsIndex = 1,
+    axes: Sequence[SupportsIndex] = (0, 1),
+) -> NDArray[Incomplete]: ...
 
 # NOTE: Technically `flip` also accept scalars, but that has no effect and complicates
 # the overloads significantly, so we ignore that case here.
