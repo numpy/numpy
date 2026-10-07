@@ -1,3 +1,4 @@
+from _typeshed import Unused
 from collections.abc import Sequence
 from typing import Any, Literal as L, Protocol, overload, type_check_only
 
@@ -18,18 +19,18 @@ __all__ = ["pad"]
 class _ModeFunc(Protocol):
     def __call__(
         self,
-        vector: NDArray[Any],
+        vector: Array1D[Any],
         iaxis_pad_width: tuple[int, int],
         iaxis: int,
         kwargs: dict[str, Any],
         /,
-    ) -> None: ...
+    ) -> Unused: ...
 
 # grouped by the keyword argument they accept
 type _ModeStatLength = L["maximum", "mean", "median", "minimum"]
 type _ModeReflectType = L["reflect", "symmetric"]
-type _ModeNoKwargs = L["edge", "wrap", "empty"] | _ModeFunc
-type _Mode = L["constant", "linear_ramp"] | _ModeStatLength | _ModeReflectType | _ModeNoKwargs
+type _ModeNoKwargs = L["edge", "wrap", "empty"]
+type _Mode = L["constant", "linear_ramp"] | _ModeStatLength | _ModeReflectType | _ModeNoKwargs | _ModeFunc
 
 type _PadWidth = (
     _ArrayLikeInt
@@ -78,6 +79,13 @@ def pad[ShapeT: _Shape, DTypeT: np.dtype](
     array: np.ndarray[ShapeT, DTypeT],
     pad_width: _PadWidth,
     mode: _ModeNoKwargs,
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # Nd, mode=<callable>
+def pad[ShapeT: _Shape, DTypeT: np.dtype](
+    array: np.ndarray[ShapeT, DTypeT],
+    pad_width: _PadWidth,
+    mode: _ModeFunc,
+    **kwargs: Any,
 ) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload  # 1d bool
 def pad(
@@ -205,6 +213,13 @@ def pad[ScalarT: np.generic](
     pad_width: _PadWidth,
     mode: _ModeNoKwargs,
 ) -> NDArray[ScalarT]: ...
+@overload  # Nd T, mode=<callable>
+def pad[ScalarT: np.generic](
+    array: _ArrayLike[ScalarT],
+    pad_width: _PadWidth,
+    mode: _ModeFunc,
+    **kwargs: Any,
+) -> NDArray[ScalarT]: ...
 @overload  # fallback, mode="constant"
 def pad(
     array: ArrayLike,
@@ -239,3 +254,5 @@ def pad(
 ) -> NDArray[Any]: ...
 @overload  # fallback, mode=<other>
 def pad(array: ArrayLike, pad_width: _PadWidth, mode: _ModeNoKwargs) -> NDArray[Any]: ...
+@overload  # fallback, mode=<callable>
+def pad(array: ArrayLike, pad_width: _PadWidth, mode: _ModeFunc, **kwargs: Any) -> NDArray[Any]: ...
