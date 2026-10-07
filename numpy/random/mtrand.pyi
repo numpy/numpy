@@ -319,6 +319,24 @@ class RandomState:
         *,
         dtype: _DTypeLike[np.int64] | _Int64Codes,
     ) -> NDArray[np.int64] | Any: ...
+    @overload  # size=<given> (positional), dtype=<int-like> (default)
+    def randint(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: _ShapeLike,
+        *,
+        dtype: type[int] | _DTypeLike[np.int_] | _IntPCodes = int,
+    ) -> NDArray[np.int_]: ...
+    @overload  # size=<given> (keyword), dtype=<int-like> (default)
+    def randint(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: _ShapeLike,
+        dtype: type[int] | _DTypeLike[np.int_] | _IntPCodes = int,
+    ) -> NDArray[np.int_]: ...
     @overload
     def randint(
         self,
