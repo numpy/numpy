@@ -561,6 +561,7 @@ assert_type(np.minmax(AR_O), tuple[int, int])
 assert_type(np.minmax(_dtype_list), tuple[Any, Any])
 assert_type(np.minmax(_dtype_list, axis=1), tuple[npt.NDArray[Any] | Any, npt.NDArray[Any] | Any])
 assert_type(np.minmax(_dtype_list, keepdims=True), tuple[npt.NDArray[Any], npt.NDArray[Any]])
+assert_type(np.minmax(AR_f4_2d, axis=i8), tuple[npt.Array1D[np.float32], npt.Array1D[np.float32]])
 
 assert_type(np.cumprod(b), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.cumprod(f4), np.ndarray[tuple[int], np.dtype[np.float32]])

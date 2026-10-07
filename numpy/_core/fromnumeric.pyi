@@ -3232,7 +3232,7 @@ def minmax(
 @overload  # bool, 1d, axis=<single>
 def minmax(
     a: list[bool],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3241,7 +3241,7 @@ def minmax(
 @overload  # bool, 2d, axis=<single>
 def minmax(
     a: Sequence[list[bool]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3250,7 +3250,7 @@ def minmax(
 @overload  # bool, 3d, axis=<single>
 def minmax(
     a: Sequence[Sequence[list[bool]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3259,7 +3259,7 @@ def minmax(
 @overload  # bool, >=1d, axis=<given>
 def minmax(
     a: _NestedList[bool],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3268,7 +3268,7 @@ def minmax(
 @overload  # bool, keepdims=True
 def minmax(
     a: _NestedList[bool],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -3287,7 +3287,7 @@ def minmax(
 @overload  # ~int, 1d, axis=<single>
 def minmax(
     a: list[int],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3296,7 +3296,7 @@ def minmax(
 @overload  # ~int, 2d, axis=<single>
 def minmax(
     a: Sequence[list[int]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3305,7 +3305,7 @@ def minmax(
 @overload  # ~int, 3d, axis=<single>
 def minmax(
     a: Sequence[Sequence[list[int]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3314,7 +3314,7 @@ def minmax(
 @overload  # ~int, >=1d, axis=<given>
 def minmax(
     a: _NestedList[int],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3323,7 +3323,7 @@ def minmax(
 @overload  # ~int, keepdims=True
 def minmax(
     a: _NestedList[int],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -3342,7 +3342,7 @@ def minmax(
 @overload  # ~float, 1d, axis=<single>
 def minmax(
     a: list[float],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3351,7 +3351,7 @@ def minmax(
 @overload  # ~float, 2d, axis=<single>
 def minmax(
     a: Sequence[list[float]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3360,7 +3360,7 @@ def minmax(
 @overload  # ~float, 3d, axis=<single>
 def minmax(
     a: Sequence[Sequence[list[float]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3369,7 +3369,7 @@ def minmax(
 @overload  # ~float, >=1d, axis=<given>
 def minmax(
     a: _NestedList[float],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3378,7 +3378,7 @@ def minmax(
 @overload  # ~float, keepdims=True
 def minmax(
     a: _NestedList[float],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -3397,7 +3397,7 @@ def minmax(
 @overload  # ~complex, 1d, axis=<single>
 def minmax(
     a: list[complex],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3406,7 +3406,7 @@ def minmax(
 @overload  # ~complex, 2d, axis=<single>
 def minmax(
     a: Sequence[list[complex]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3415,7 +3415,7 @@ def minmax(
 @overload  # ~complex, 3d, axis=<single>
 def minmax(
     a: Sequence[Sequence[list[complex]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3424,7 +3424,7 @@ def minmax(
 @overload  # ~complex, >=1d, axis=<given>
 def minmax(
     a: _NestedList[complex],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3433,7 +3433,7 @@ def minmax(
 @overload  # ~complex, keepdims=True
 def minmax(
     a: _NestedList[complex],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -3452,7 +3452,7 @@ def minmax[ScalarT: _ScalarOrderable](
 @overload  # known dtype, ?d, axis=<given>  (workaround)
 def minmax[ScalarT: _ScalarOrderable | np.object_](
     a: _ArrayJustND[ScalarT],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3461,7 +3461,7 @@ def minmax[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known dtype, 1d, axis=<single>
 def minmax[ScalarT: _ScalarOrderable](
     a: _ToArray1D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3470,7 +3470,7 @@ def minmax[ScalarT: _ScalarOrderable](
 @overload  # known dtype, 2d, axis=<single>
 def minmax[ScalarT: _ScalarOrderable](
     a: _ToArray2D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3479,7 +3479,7 @@ def minmax[ScalarT: _ScalarOrderable](
 @overload  # known dtype, 3d, axis=<single>
 def minmax[ScalarT: _ScalarOrderable | np.object_](
     a: _ToArray3D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3488,7 +3488,7 @@ def minmax[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known dtype, ?d, axis=<given>
 def minmax[ScalarT: _ScalarOrderable | np.object_](
     a: _ArrayLike[ScalarT],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3497,7 +3497,7 @@ def minmax[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known array, keepdims=True
 def minmax[ArrayT: NDArray[_ScalarOrderable | np.object_]](
     a: ArrayT,
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -3516,7 +3516,7 @@ def minmax[ItemT](
 @overload  # out=<given>  (positional)
 def minmax[ArrayT: np.ndarray](
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
-    axis: int | tuple[int, ...] | None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
     out: tuple[ArrayT, ArrayT],
     keepdims: bool | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3525,7 +3525,7 @@ def minmax[ArrayT: np.ndarray](
 @overload  # out=<given>  (keyword)
 def minmax[ArrayT: np.ndarray](
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     *,
     out: tuple[ArrayT, ArrayT],
     keepdims: bool | _NoValueType = ...,
@@ -3544,7 +3544,7 @@ def minmax(
 @overload  # fallback, ?d, axis=<given>
 def minmax(
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike2 | _NoValueType = ...,
@@ -3553,7 +3553,7 @@ def minmax(
 @overload  # fallback, keepdims=True
 def minmax(
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
