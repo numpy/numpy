@@ -56,7 +56,7 @@ type _FNameRead = StrPath | SupportsRead[str] | SupportsRead[bytes]
 type _FNameWriteBytes = StrPath | SupportsWrite[bytes]
 type _FNameWrite = _FNameWriteBytes | SupportsWrite[str]
 
-type _Converters = Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any]
+type _Converters[KeyT: int | str] = Mapping[KeyT, Callable[[str], Any]] | Callable[[str], Any]
 
 @type_check_only
 class _SupportsReadSeek[T](SupportsRead[T], Protocol):
@@ -126,14 +126,15 @@ def save(file: _FNameWriteBytes, arr: ArrayLike, allow_pickle: bool = True) -> N
 def savez(file: _FNameWriteBytes, *args: ArrayLike, allow_pickle: bool = True, **kwds: ArrayLike) -> None: ...
 def savez_compressed(file: _FNameWriteBytes, *args: ArrayLike, allow_pickle: bool = True, **kwds: ArrayLike) -> None: ...
 
+# NOTE: the free `KeyT` type parameter is used to deal with the _invariant_ `Mapping` key type
 # File-like objects only have to implement `__iter__` and, optionally, `encoding`
 @overload  # Nd +f64, dtype=None, ndmin<2
-def loadtxt(
+def loadtxt[KeyT: int | str](
     fname: _FName,
     dtype: None = None,
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
-    converters: _Converters | None = None,
+    converters: _Converters[KeyT] | None = None,
     skiprows: int = 0,
     usecols: int | Sequence[int] | None = None,
     unpack: bool = False,
@@ -145,12 +146,12 @@ def loadtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.float64]: ...
 @overload  # Nd T, dtype=<known>, ndmin<2
-def loadtxt[ScalarT: np.generic](
+def loadtxt[KeyT: int | str, ScalarT: np.generic](
     fname: _FName,
     dtype: _DTypeLike[ScalarT],
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
-    converters: _Converters | None = None,
+    converters: _Converters[KeyT] | None = None,
     skiprows: int = 0,
     usecols: int | Sequence[int] | None = None,
     unpack: bool = False,
@@ -162,12 +163,12 @@ def loadtxt[ScalarT: np.generic](
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload  # Nd, ndmin<2  (fallback)
-def loadtxt(
+def loadtxt[KeyT: int | str](
     fname: _FName,
     dtype: DTypeLike | None,
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
-    converters: _Converters | None = None,
+    converters: _Converters[KeyT] | None = None,
     skiprows: int = 0,
     usecols: int | Sequence[int] | None = None,
     unpack: bool = False,
@@ -179,12 +180,12 @@ def loadtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 @overload  # 2d +f64, dtype=None (default), ndmin=2
-def loadtxt(
+def loadtxt[KeyT: int | str](
     fname: _FName,
     dtype: None = None,
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
-    converters: _Converters | None = None,
+    converters: _Converters[KeyT] | None = None,
     skiprows: int = 0,
     usecols: int | Sequence[int] | None = None,
     unpack: bool = False,
@@ -196,12 +197,12 @@ def loadtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> Array2D[np.float64]: ...
 @overload  # 2d T, dtype=<known>, ndmin=2
-def loadtxt[ScalarT: np.generic](
+def loadtxt[KeyT: int | str, ScalarT: np.generic](
     fname: _FName,
     dtype: _DTypeLike[ScalarT],
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
-    converters: _Converters | None = None,
+    converters: _Converters[KeyT] | None = None,
     skiprows: int = 0,
     usecols: int | Sequence[int] | None = None,
     unpack: bool = False,
@@ -213,12 +214,12 @@ def loadtxt[ScalarT: np.generic](
     like: _SupportsArrayFunc | None = None,
 ) -> Array2D[ScalarT]: ...
 @overload  # 2d, ndmin=2  (fallback)
-def loadtxt(
+def loadtxt[KeyT: int | str](
     fname: _FName,
     dtype: DTypeLike | None,
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
-    converters: _Converters | None = None,
+    converters: _Converters[KeyT] | None = None,
     skiprows: int = 0,
     usecols: int | Sequence[int] | None = None,
     unpack: bool = False,
@@ -230,12 +231,12 @@ def loadtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> Array2D[Any]: ...
 @overload  # Nd +f64, dtype=None, ndmin<3  (fallback)
-def loadtxt(
+def loadtxt[KeyT: int | str](
     fname: _FName,
     dtype: None = None,
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
-    converters: _Converters | None = None,
+    converters: _Converters[KeyT] | None = None,
     skiprows: int = 0,
     usecols: int | Sequence[int] | None = None,
     unpack: bool = False,
@@ -247,12 +248,12 @@ def loadtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.float64]: ...
 @overload  # Nd T, dtype=<known>, ndmin<3  (fallback)
-def loadtxt[ScalarT: np.generic](
+def loadtxt[KeyT: int | str, ScalarT: np.generic](
     fname: _FName,
     dtype: _DTypeLike[ScalarT],
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
-    converters: _Converters | None = None,
+    converters: _Converters[KeyT] | None = None,
     skiprows: int = 0,
     usecols: int | Sequence[int] | None = None,
     unpack: bool = False,
@@ -264,12 +265,12 @@ def loadtxt[ScalarT: np.generic](
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload  # Nd, ndmin<3  (fallback)
-def loadtxt(
+def loadtxt[KeyT: int | str](
     fname: _FName,
     dtype: DTypeLike | None,
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
-    converters: _Converters | None = None,
+    converters: _Converters[KeyT] | None = None,
     skiprows: int = 0,
     usecols: int | Sequence[int] | None = None,
     unpack: bool = False,
@@ -281,6 +282,7 @@ def loadtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
+#
 def savetxt(
     fname: _FNameWrite,
     X: ArrayLike,
@@ -293,6 +295,7 @@ def savetxt(
     encoding: str | None = None,
 ) -> None: ...
 
+#
 @overload
 def fromregex[ScalarT: np.generic](
     file: _FNameRead,

@@ -1,7 +1,7 @@
 import pathlib
 import re
 import zipfile
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import IO, Any, Literal, assert_type
 
 import numpy as np
@@ -19,6 +19,8 @@ npz_file: np.lib.npyio.NpzFile
 
 AR_i8: npt.NDArray[np.int64]
 AR_LIKE_f8: list[float]
+
+_converters_i: dict[int, Callable[[str], float]]
 
 class BytesWriter:
     def write(self, data: bytes) -> None: ...
@@ -72,6 +74,7 @@ assert_type(np.loadtxt(str_path, dtype=str, skiprows=2), npt.NDArray[Any])
 assert_type(np.loadtxt(str_path, ndmin=2), npt.Array2D[np.float64])
 assert_type(np.loadtxt(pathlib_path, dtype=np.str_, ndmin=2), npt.Array2D[np.str_])
 assert_type(np.loadtxt(str_path, dtype=str, ndmin=2), npt.Array2D[Any])
+assert_type(np.loadtxt(str_path, converters=_converters_i), npt.NDArray[np.float64])
 
 assert_type(np.fromregex(bytes_file, "test", np.float64), npt.Array1D[np.float64])
 assert_type(np.fromregex(str_file, b"test", dtype=float), npt.Array1D[Any])
