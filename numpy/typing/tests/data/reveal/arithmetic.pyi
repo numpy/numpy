@@ -106,6 +106,7 @@ assert_type(+u4, np.uint32)
 assert_type(+m8_none, np.timedelta64[None])
 assert_type(+m8_int, np.timedelta64[int])
 assert_type(+m8_delta, np.timedelta64[dt.timedelta])
+assert_type(+b_, np.bool)
 assert_type(+AR_f, npt.NDArray[np.float64])
 assert_type(+AR_b, npt.NDArray[np.bool])
 
