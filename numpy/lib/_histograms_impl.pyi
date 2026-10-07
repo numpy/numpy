@@ -24,7 +24,7 @@ __all__ = ["histogram", "histogramdd", "histogram_bin_edges"]
 type _2Tuple[T] = tuple[T, T]
 type _3Tuple[T] = tuple[T, T, T]
 
-type _Range = _2Tuple[float]
+type _Range = _2Tuple[float] | list[float]
 type _NestedList[T] = list[T] | _NestedSequence[list[T]]
 
 type _WeightsLike = _ArrayLikeComplex_co | _ArrayLikeObject_co

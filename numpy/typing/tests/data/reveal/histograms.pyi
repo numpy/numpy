@@ -81,6 +81,7 @@ assert_type(np.histogram(AR_f4, list_f, density=True, weights=AR_c16), tuple[npt
 assert_type(np.histogram(AR_f4, list_f), tuple[npt.Array1D[np.intp], npt.Array1D[np.float64]])
 assert_type(np.histogram(AR_f4, list_f, weights=AR_f4), tuple[npt.Array1D[np.float32], npt.Array1D[np.float64]])
 assert_type(np.histogram(AR_f4, list_f, weights=list_f), tuple[npt.Array1D[Any], npt.Array1D[np.float64]])
+assert_type(np.histogram(AR_i8, range=list_f), tuple[npt.Array1D[np.intp], npt.Array1D[np.float64]])
 
 assert_type(np.histogramdd(AR_f8_2d, (AR_i8_1d, AR_i8_1d)), tuple[npt.NDArray[np.float64], list[npt.Array1D[np.int64]]])
 assert_type(np.histogramdd(AR_f8_2d, [[0, 1, 2], [0, 1, 2]]), tuple[npt.NDArray[np.float64], list[npt.Array1D[np.int_]]])
