@@ -134,11 +134,17 @@ assert_type(np.array(_py_rec_2d, dtype=_rec_spec), npt.NDArray[np.void])
 assert_type(np.zeros([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.zeros([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.zeros([1, 5, 6], dtype="c16"), npt.NDArray[Any])
+assert_type(np.zeros(3, dtype=bool), npt.Array1D[np.bool])
+assert_type(np.zeros((2, 3), dtype=bool), npt.Array2D[np.bool])
+assert_type(np.zeros([1, 5, 6], dtype=bool), npt.NDArray[np.bool])
 assert_type(np.zeros(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.empty([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.empty([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.empty([1, 5, 6], dtype="c16"), npt.NDArray[Any])
+assert_type(np.empty(3, dtype=bool), npt.Array1D[np.bool])
+assert_type(np.empty((2, 3), dtype=bool), npt.Array2D[np.bool])
+assert_type(np.empty([1, 5, 6], dtype=bool), npt.NDArray[np.bool])
 assert_type(np.empty(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.concatenate(A), npt.NDArray[np.float64])
@@ -504,6 +510,9 @@ assert_type(
     np.ndarray[tuple[Any, ...], np.dtypes.Int64DType],
 )
 assert_type(np.ones(_shape_like, dtype=int), npt.NDArray[Any])
+assert_type(np.ones(_size, dtype=bool), npt.Array1D[np.bool])
+assert_type(np.ones(_shape_2d, dtype=bool), npt.Array2D[np.bool])
+assert_type(np.ones(_shape_like, dtype=bool), npt.NDArray[np.bool])
 assert_type(np.ones(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.full(_size, i8), np.ndarray[tuple[int], np.dtype[np.int64]])
