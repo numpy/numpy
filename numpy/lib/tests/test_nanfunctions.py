@@ -1216,6 +1216,32 @@ class TestNanFunctions_Percentile:
                 assert_equal(np.nanpercentile(mat, 40, axis=axis), np.zeros([]))
                 assert_(len(w) == 0)
 
+    def test_allnan_first_slice_dtype(self):
+        # gh-32832: dtype must not depend on which slice comes first
+        a = np.array(
+            [[1, 2],
+             [np.nan, np.nan]],
+            dtype=np.float32,
+        )
+        q = np.array([30.0], dtype=np.float64)
+
+        with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+            normal = np.nanpercentile(a, q, axis=1)
+
+        with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+            reversed_ = np.nanpercentile(a[::-1], q, axis=1)
+
+        expected = np.percentile(a[0], q)
+
+        assert normal.dtype == expected.dtype
+        assert reversed_.dtype == expected.dtype
+        assert normal.dtype == reversed_.dtype
+
+        assert_array_equal(normal[..., 0], expected)
+        assert_array_equal(reversed_[..., 1], expected)
+        assert np.isnan(normal[..., 1])
+        assert np.isnan(reversed_[..., 0])
+
     def test_scalar(self):
         assert_equal(np.nanpercentile(0., 100), 0.)
         a = np.arange(6)
@@ -1342,6 +1368,33 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 0), 0.)
         assert_equal(np.nanquantile(x, 1), 3.5)
         assert_equal(np.nanquantile(x, 0.5), 1.75)
+
+    @pytest.mark.parametrize("method", ["linear", "lower"])
+    def test_allnan_first_slice_dtype(self, method):
+        # gh-32832: dtype must not depend on which slice comes first
+        a = np.array(
+            [[1, 2],
+             [np.nan, np.nan]],
+            dtype=np.float32,
+        )
+        q = np.array([0.3], dtype=np.float64)
+
+        with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+            normal = np.nanquantile(a, q, axis=1, method=method)
+
+        with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+            reversed_ = np.nanquantile(a[::-1], q, axis=1, method=method)
+
+        expected = np.quantile(a[0], q, method=method)
+
+        assert normal.dtype == expected.dtype
+        assert reversed_.dtype == expected.dtype
+        assert normal.dtype == reversed_.dtype
+
+        assert_array_equal(normal[..., 0], expected)
+        assert_array_equal(reversed_[..., 1], expected)
+        assert np.isnan(normal[..., 1])
+        assert np.isnan(reversed_[..., 0])
 
     def test_complex(self):
         arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
