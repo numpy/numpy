@@ -56,6 +56,10 @@ PS_all: (
     | npp.Legendre
 )
 
+# constructor
+
+assert_type(npp.Polynomial(SC_f), npp.Polynomial)
+
 # static- and classmethods
 
 assert_type(type(PS_poly).basis_name, None)
