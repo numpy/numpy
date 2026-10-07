@@ -382,6 +382,7 @@ assert_type(np.any(AR_f4_1d, keepdims=True), npt.Array1D[np.bool])
 assert_type(np.any(AR_f4_2d, keepdims=True), npt.Array2D[np.bool])
 assert_type(np.any(AR_f4_3d, keepdims=True), npt.Array3D[np.bool])
 assert_type(np.any(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.any(AR_f4_2d, axis=i8), npt.Array1D[np.bool])
 
 assert_type(np.cumsum(b), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.cumsum(f4), np.ndarray[tuple[int], np.dtype[np.float32]])
