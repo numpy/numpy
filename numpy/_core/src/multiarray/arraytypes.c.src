@@ -1604,7 +1604,7 @@ static void
     npy_intp i;
     PyObject *temp = NULL;
     int skip = 1;
-    int oskip = PyArray_ITEMSIZE(aop);
+    npy_intp oskip = PyArray_ITEMSIZE(aop);
     for (i = 0; i < n; i++, ip += skip, op += oskip) {
         temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
