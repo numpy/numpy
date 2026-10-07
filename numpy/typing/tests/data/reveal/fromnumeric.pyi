@@ -521,6 +521,7 @@ assert_type(np.amin([1j]), np.complex128)
 assert_type(np.amin(_dtype_list), Any)
 assert_type(np.amin(_dtype_list, axis=1), npt.NDArray[Any] | Any)
 assert_type(np.amin(_dtype_list, keepdims=True), npt.NDArray[Any])
+assert_type(np.amin(AR_f4_2d, axis=i8), npt.Array1D[np.float32])
 
 assert_type(np.minmax(AR_b), tuple[np.bool, np.bool])
 assert_type(np.minmax([True]), tuple[np.bool, np.bool])

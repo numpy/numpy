@@ -2888,7 +2888,7 @@ def amin(
 @overload  # bool, 1d, axis=<single>
 def amin(
     a: list[bool],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2897,7 +2897,7 @@ def amin(
 @overload  # bool, 2d, axis=<single>
 def amin(
     a: Sequence[list[bool]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2906,7 +2906,7 @@ def amin(
 @overload  # bool, 3d, axis=<single>
 def amin(
     a: Sequence[Sequence[list[bool]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2915,7 +2915,7 @@ def amin(
 @overload  # bool, >=1d, axis=<given>
 def amin(
     a: _NestedList[bool],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2924,7 +2924,7 @@ def amin(
 @overload  # bool, keepdims=True
 def amin(
     a: _NestedList[bool],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -2943,7 +2943,7 @@ def amin(
 @overload  # ~int, 1d, axis=<single>
 def amin(
     a: list[int],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2952,7 +2952,7 @@ def amin(
 @overload  # ~int, 2d, axis=<single>
 def amin(
     a: Sequence[list[int]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2961,7 +2961,7 @@ def amin(
 @overload  # ~int, 3d, axis=<single>
 def amin(
     a: Sequence[Sequence[list[int]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2970,7 +2970,7 @@ def amin(
 @overload  # ~int, >=1d, axis=<given>
 def amin(
     a: _NestedList[int],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2979,7 +2979,7 @@ def amin(
 @overload  # ~int, keepdims=True
 def amin(
     a: _NestedList[int],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -2998,7 +2998,7 @@ def amin(
 @overload  # ~float, 1d, axis=<single>
 def amin(
     a: list[float],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3007,7 +3007,7 @@ def amin(
 @overload  # ~float, 2d, axis=<single>
 def amin(
     a: Sequence[list[float]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3016,7 +3016,7 @@ def amin(
 @overload  # ~float, 3d, axis=<single>
 def amin(
     a: Sequence[Sequence[list[float]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3025,7 +3025,7 @@ def amin(
 @overload  # ~float, >=1d, axis=<given>
 def amin(
     a: _NestedList[float],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3034,7 +3034,7 @@ def amin(
 @overload  # ~float, keepdims=True
 def amin(
     a: _NestedList[float],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -3053,7 +3053,7 @@ def amin(
 @overload  # ~complex, 1d, axis=<single>
 def amin(
     a: list[complex],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3062,7 +3062,7 @@ def amin(
 @overload  # ~complex, 2d, axis=<single>
 def amin(
     a: Sequence[list[complex]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3071,7 +3071,7 @@ def amin(
 @overload  # ~complex, 3d, axis=<single>
 def amin(
     a: Sequence[Sequence[list[complex]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3080,7 +3080,7 @@ def amin(
 @overload  # ~complex, >=1d, axis=<given>
 def amin(
     a: _NestedList[complex],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3089,7 +3089,7 @@ def amin(
 @overload  # ~complex, keepdims=True
 def amin(
     a: _NestedList[complex],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -3108,7 +3108,7 @@ def amin[ScalarT: _ScalarOrderable](
 @overload  # known dtype, ?d, axis=<given>  (workaround)
 def amin[ScalarT: _ScalarOrderable | np.object_](
     a: _ArrayJustND[ScalarT],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3117,7 +3117,7 @@ def amin[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known dtype, 1d, axis=<single>
 def amin[ScalarT: _ScalarOrderable](
     a: _ToArray1D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3126,7 +3126,7 @@ def amin[ScalarT: _ScalarOrderable](
 @overload  # known dtype, 2d, axis=<single>
 def amin[ScalarT: _ScalarOrderable](
     a: _ToArray2D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3135,7 +3135,7 @@ def amin[ScalarT: _ScalarOrderable](
 @overload  # known dtype, 3d, axis=<single>
 def amin[ScalarT: _ScalarOrderable | np.object_](
     a: _ToArray3D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3144,7 +3144,7 @@ def amin[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known dtype, 4d, axis=<single>
 def amin[ScalarT: _ScalarOrderable | np.object_](
     a: _ToArray4D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3153,7 +3153,7 @@ def amin[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known dtype, ?d, axis=<given>
 def amin[ScalarT: _ScalarOrderable | np.object_](
     a: _ArrayLike[ScalarT],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3162,7 +3162,7 @@ def amin[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known array, keepdims=True
 def amin[ArrayT: NDArray[_ScalarOrderable | np.object_]](
     a: ArrayT,
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -3181,7 +3181,7 @@ def amin[ItemT](
 @overload  # out: ArrayT
 def amin[ArrayT: np.ndarray](
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     *,
     out: ArrayT,
     keepdims: bool | _NoValueType = ...,
@@ -3200,7 +3200,7 @@ def amin(
 @overload  # fallback, ?d, axis=<given>
 def amin(
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -3209,7 +3209,7 @@ def amin(
 @overload  # fallback, keepdims=True
 def amin(
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
