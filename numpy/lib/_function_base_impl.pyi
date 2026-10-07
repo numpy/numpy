@@ -1,4 +1,4 @@
-from _typeshed import ConvertibleToInt, Incomplete
+from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Any,
@@ -3634,7 +3634,7 @@ def meshgrid(
 ) -> tuple[NDArray[Any], ...]: ...
 
 #
-def place(arr: np.ndarray, mask: ConvertibleToInt | Sequence[ConvertibleToInt], vals: ArrayLike) -> None: ...
+def place(arr: np.ndarray, mask: _ArrayLikeInt_co, vals: ArrayLike) -> None: ...
 
 # keep in sync with `insert`
 @overload  # known scalar-type, axis=None (default)
