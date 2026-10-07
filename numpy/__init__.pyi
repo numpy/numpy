@@ -12650,6 +12650,8 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __new__(cls, value: timedelta64[_TD64ItemT_co], /) -> Self: ...
     @overload
+    def __new__(cls, value: dt.timedelta, /) -> timedelta64[dt.timedelta]: ...
+    @overload
     @deprecated(
         "Using 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. "
         "Please use a specific units instead."
@@ -12681,12 +12683,6 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     def __new__(cls, value: _IntLike_co, format: _TimeUnitSpec[_IntTD64Unit], /) -> timedelta64[int]: ...
     @overload
     def __new__(cls, value: dt.timedelta, format: _TimeUnitSpec[_IntTimeUnit], /) -> timedelta64[int]: ...
-    @overload
-    @deprecated(
-        "Using 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. "
-        "Please use a specific units instead."
-    )
-    def __new__(cls, value: dt.timedelta | _IntLike_co, /) -> timedelta64[dt.timedelta]: ...
     @overload
     def __new__(
         cls,
