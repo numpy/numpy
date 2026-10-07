@@ -670,7 +670,7 @@ class TestDateTime:
         assert_equal(clnan.astype('timedelta64[ns]'), nat)
         assert_equal(hnan.astype('timedelta64[ns]'), nat)
 
-        @pytest.mark.parametrize(
+    @pytest.mark.parametrize(
         "dtype", ['d', 'f', 'g', 'D', 'F', 'G', np.half])
     def test_datetime_nat_to_nan_casting(self, dtype):
         # gh-26177: NaT -> NaN, the reverse of NaN -> NaT above.
