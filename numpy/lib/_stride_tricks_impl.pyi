@@ -63,7 +63,7 @@ def as_strided[ScalarT: np.generic, ShapeT: _Shape](
 @overload  # ?d T, ?d
 def as_strided[ScalarT: np.generic](
     x: _ArrayLike[ScalarT],
-    shape: Iterable[int] | None = None,
+    shape: Iterable[SupportsIndex] | None = None,
     strides: Iterable[int] | None = None,
     subok: bool = False,
     writeable: bool = True,
@@ -83,7 +83,7 @@ def as_strided[ShapeT: _Shape](
 @overload  # ?d, ?d  (fallback)
 def as_strided(
     x: ArrayLike,
-    shape: Iterable[int] | None = None,
+    shape: Iterable[SupportsIndex] | None = None,
     strides: Iterable[int] | None = None,
     subok: bool = False,
     writeable: bool = True,
