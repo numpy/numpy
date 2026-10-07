@@ -447,6 +447,7 @@ assert_type(np.ptp([0.5, 1.5]), np.float64)
 assert_type(np.ptp([0.5, 1.5], axis=0), np.float64)
 assert_type(np.ptp([[1.0]], axis=(0, 1)), npt.NDArray[np.float64] | Any)
 assert_type(np.ptp([1j]), np.complex128)
+assert_type(np.ptp(AR_f4_2d, axis=i8), npt.Array1D[np.float32])
 
 assert_type(np.amax(AR_i8), np.int64)
 assert_type(np.amax(AR_i8, axis=0), npt.NDArray[np.int64] | Any)
