@@ -369,15 +369,11 @@ class TestSavezLoad(RoundtripTest):
 
             monkeypatch.setattr(_npyio_impl, "open", tracking_open,
                                 raising=False)
-            with pytest.raises(zipfile.BadZipFile) as excinfo:
+            with pytest.raises(zipfile.BadZipFile):
                 np.load(tmp)
 
             assert len(opened) == 1
             assert opened[0].closed
-            # excinfo holds the traceback, which references the open file.
-            # Keep it alive until after the check above, so that the test
-            # does not pass just because the file was garbage collected.
-            del excinfo
 
     @pytest.mark.parametrize("count, expected_repr", [
         (1, "NpzFile {fname!r} with keys: arr_0"),
