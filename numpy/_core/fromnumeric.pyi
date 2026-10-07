@@ -4395,7 +4395,7 @@ def sum(
 @overload  # +int, ?d, axis: <given>
 def sum(
     a: _ArrayJustND[np.integer | np.bool],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4405,7 +4405,7 @@ def sum(
 @overload  # +int, 1d, axis: <single>
 def sum(
     a: _ToArray1D2[np.integer | np.bool, int],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4415,7 +4415,7 @@ def sum(
 @overload  # +int, 2d, axis: <single>
 def sum(
     a: _ToArray2D2[np.integer | np.bool, int],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4425,7 +4425,7 @@ def sum(
 @overload  # +int, 3d, axis: <single>
 def sum(
     a: _ToArray3D2[np.integer | np.bool, int],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4435,7 +4435,7 @@ def sum(
 @overload  # +int, 4d, axis: <single>
 def sum(
     a: _ToArray4D2[np.integer | np.bool, int],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4445,7 +4445,7 @@ def sum(
 @overload  # ~int, ?d, axis: <given>
 def sum(
     a: _NestedSequence[list[int]] | list[int],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4455,7 +4455,7 @@ def sum(
 @overload  # +int, keepdims=True
 def sum[ShapeT: _Shape](
     a: np.ndarray[ShapeT, np.dtype[np.integer | np.bool]],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     dtype: None = None,
     out: None = None,
     *,
@@ -4476,7 +4476,7 @@ def sum(
 @overload  # ~float, 1d, axis: <single>
 def sum(
     a: list[float],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4486,7 +4486,7 @@ def sum(
 @overload  # ~float, 2d, axis: <single>
 def sum(
     a: Sequence[list[float]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4496,7 +4496,7 @@ def sum(
 @overload  # ~float, 3d, axis: <single>
 def sum(
     a: Sequence[Sequence[list[float]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4506,7 +4506,7 @@ def sum(
 @overload  # ~float, 4d, axis: <single>
 def sum(
     a: Sequence[Sequence[Sequence[list[float]]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4516,7 +4516,7 @@ def sum(
 @overload  # ~float, ?d, axis: <given>
 def sum(
     a: _NestedSequence[list[float]] | list[float],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4526,7 +4526,7 @@ def sum(
 @overload  # ~float, keepdims=True
 def sum(
     a: _NestedSequence[list[float]] | list[float],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     dtype: None = None,
     out: None = None,
     *,
@@ -4547,7 +4547,7 @@ def sum(
 @overload  # ~complex, axis: <given>
 def sum(
     a: _NestedSequence[list[complex]] | list[complex],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4557,7 +4557,7 @@ def sum(
 @overload  # ~complex, keepdims=True
 def sum(
     a: _NestedSequence[list[complex]] | list[complex],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     dtype: None = None,
     out: None = None,
     *,
@@ -4588,7 +4588,7 @@ def sum(
 @overload  # ~inexact | timedelta64 | object_, ?d, axis: <given>
 def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
     a: _ArrayJustND[ScalarT],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4598,7 +4598,7 @@ def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
 @overload  # ~object_, 1d, axis: <single>
 def sum(
     a: Array1D[np.object_],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4608,7 +4608,7 @@ def sum(
 @overload  # ~inexact | timedelta64, 1d, axis: <single>
 def sum[ScalarT: np.inexact | np.timedelta64](
     a: _ToArray1D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4618,7 +4618,7 @@ def sum[ScalarT: np.inexact | np.timedelta64](
 @overload  # ~inexact | timedelta64 | object_, 2d, axis: <single>
 def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
     a: _ToArray2D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4628,7 +4628,7 @@ def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
 @overload  # ~inexact | timedelta64 | object_, 3d, axis: <single>
 def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
     a: _ToArray3D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4638,7 +4638,7 @@ def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
 @overload  # ~inexact | timedelta64 | object_, 4d, axis: <single>
 def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
     a: _ToArray4D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4648,7 +4648,7 @@ def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
 @overload  # ~inexact | timedelta64 | object_, ?d, axis: <given>
 def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
     a: _ArrayLike[ScalarT],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4658,7 +4658,7 @@ def sum[ScalarT: np.inexact | np.timedelta64 | np.object_](
 @overload  # ~inexact | timedelta64 | object_, keepdims=True
 def sum[ArrayT: NDArray[np.inexact | np.timedelta64 | np.object_]](
     a: ArrayT,
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     dtype: None = None,
     out: None = None,
     *,
@@ -4679,7 +4679,7 @@ def sum(
 @overload  # +int, ?d, axis: <given>
 def sum(
     a: _ArrayLikeInt_co,
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4700,7 +4700,7 @@ def sum[ScalarT: np.generic](
 @overload  # ?d, dtype: ScalarT, axis: <given>
 def sum[ScalarT: np.generic](
     a: _ArrayJustND[np.number | np.bool | np.object_ | np.timedelta64],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: _DTypeLike[ScalarT],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4710,7 +4710,7 @@ def sum[ScalarT: np.generic](
 @overload  # 1d, dtype: ScalarT, axis: <single>
 def sum[ScalarT: np.generic](
     a: _ToNumeric1D,
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: _DTypeLike[ScalarT],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4720,7 +4720,7 @@ def sum[ScalarT: np.generic](
 @overload  # 2d, dtype: ScalarT, axis: <single>
 def sum[ScalarT: np.generic](
     a: _ToNumeric2D,
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: _DTypeLike[ScalarT],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4730,7 +4730,7 @@ def sum[ScalarT: np.generic](
 @overload  # 3d, dtype: ScalarT, axis: <single>
 def sum[ScalarT: np.generic](
     a: _ToNumeric3D,
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: _DTypeLike[ScalarT],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4740,7 +4740,7 @@ def sum[ScalarT: np.generic](
 @overload  # 4d, dtype: ScalarT, axis: <single>
 def sum[ScalarT: np.generic](
     a: _ToNumeric4D,
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: _DTypeLike[ScalarT],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4750,7 +4750,7 @@ def sum[ScalarT: np.generic](
 @overload  # ?d, dtype: <known>, axis: <given>
 def sum[ScalarT: np.generic](
     a: _ArrayLikeNumeric_co,
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: _DTypeLike[ScalarT],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4760,7 +4760,7 @@ def sum[ScalarT: np.generic](
 @overload  # dtype: <known> (keyword), keepdims=True
 def sum[ShapeT: _Shape, ScalarT: np.generic](
     a: np.ndarray[ShapeT, np.dtype[np.number | np.bool | np.timedelta64 | np.object_]],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     *,
     dtype: _DTypeLike[ScalarT],
     out: None = None,
@@ -4771,7 +4771,7 @@ def sum[ShapeT: _Shape, ScalarT: np.generic](
 @overload  # dtype: <known> (positional), keepdims=True
 def sum[ShapeT: _Shape, ScalarT: np.generic](
     a: np.ndarray[ShapeT, np.dtype[np.number | np.bool | np.timedelta64 | np.object_]],
-    axis: int | tuple[int, ...] | None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
     dtype: _DTypeLike[ScalarT],
     out: None = None,
     *,
@@ -4782,7 +4782,7 @@ def sum[ShapeT: _Shape, ScalarT: np.generic](
 @overload  # dtype: <known> (keyword), keepdims=True
 def sum[ScalarT: np.generic](
     a: _ArrayLikeNumeric_co,
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     *,
     dtype: _DTypeLike[ScalarT],
     out: None = None,
@@ -4793,7 +4793,7 @@ def sum[ScalarT: np.generic](
 @overload  # out: <given> (keyword)
 def sum[ArrayT: np.ndarray](
     a: _ArrayLikeNumeric_co,
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     dtype: DTypeLike | None = None,
     *,
     out: ArrayT,
@@ -4804,7 +4804,7 @@ def sum[ArrayT: np.ndarray](
 @overload  # out: <given> (positional)
 def sum[ArrayT: np.ndarray](
     a: _ArrayLikeNumeric_co,
-    axis: int | tuple[int, ...] | None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
     dtype: DTypeLike | None,
     out: ArrayT,
     keepdims: bool | _NoValueType = ...,
@@ -4824,7 +4824,7 @@ def sum(
 @overload  # fallback, ?d, axis: <given>
 def sum(
     a: _ArrayJustND[np.number | np.bool | np.object_ | np.timedelta64],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: DTypeLike | None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4834,7 +4834,7 @@ def sum(
 @overload  # fallback, 1d, axis: <single>
 def sum(
     a: _ToNumeric1D,
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: DTypeLike | None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4844,7 +4844,7 @@ def sum(
 @overload  # fallback, 2d, axis: <single>
 def sum(
     a: _ToNumeric2D,
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: DTypeLike | None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4854,7 +4854,7 @@ def sum(
 @overload  # fallback, 3d, axis: <single>
 def sum(
     a: _ToNumeric3D,
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: DTypeLike | None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4864,7 +4864,7 @@ def sum(
 @overload  # fallback, 4d, axis: <single>
 def sum(
     a: _ToNumeric4D,
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     dtype: DTypeLike | None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4874,7 +4874,7 @@ def sum(
 @overload  # fallback, ?d, axis: <given>
 def sum(
     a: _ArrayLikeNumeric_co,
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     dtype: DTypeLike | None = None,
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -4884,7 +4884,7 @@ def sum(
 @overload  # fallback, keepdims=True
 def sum(
     a: _ArrayLikeNumeric_co,
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     dtype: DTypeLike | None = None,
     out: None = None,
     *,

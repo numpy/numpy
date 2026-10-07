@@ -696,6 +696,7 @@ assert_type(np.sum(AR_f4_1d, dtype=np.float64, axis=0), np.float64)
 assert_type(np.sum(AR_f4_2d, dtype=np.float64, axis=0), npt.Array1D[np.float64])
 assert_type(np.sum(AR_f4_3d, dtype=np.float64, axis=0), npt.Array2D[np.float64])
 assert_type(np.sum(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.sum(AR_f4_2d, axis=i8), npt.Array1D[np.float32])
 
 #
 assert_type(np.mean(AR_b), np.float64)
