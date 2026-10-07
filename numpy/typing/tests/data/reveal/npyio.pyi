@@ -95,3 +95,4 @@ assert_type(np.genfromtxt(str_path, dtype=np.float32, ndmin=ndmin), npt.NDArray[
 assert_type(np.genfromtxt(str_path, dtype=None, ndmin=ndmin), npt.NDArray[Any])
 assert_type(np.genfromtxt(str_path, names=True), npt.NDArray[np.void])
 assert_type(np.genfromtxt(pathlib_path, dtype=np.str_), npt.NDArray[np.str_])
+assert_type(np.genfromtxt(str_path, converters=_converters_i), npt.NDArray[np.float64 | Any])

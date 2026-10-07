@@ -146,7 +146,7 @@ def loadtxt[KeyT: int | str](
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.float64]: ...
 @overload  # Nd T, dtype=<known>, ndmin<2
-def loadtxt[KeyT: int | str, ScalarT: np.generic](
+def loadtxt[ScalarT: np.generic, KeyT: int | str](
     fname: _FName,
     dtype: _DTypeLike[ScalarT],
     comments: str | Sequence[str] | None = "#",
@@ -197,7 +197,7 @@ def loadtxt[KeyT: int | str](
     like: _SupportsArrayFunc | None = None,
 ) -> Array2D[np.float64]: ...
 @overload  # 2d T, dtype=<known>, ndmin=2
-def loadtxt[KeyT: int | str, ScalarT: np.generic](
+def loadtxt[ScalarT: np.generic, KeyT: int | str](
     fname: _FName,
     dtype: _DTypeLike[ScalarT],
     comments: str | Sequence[str] | None = "#",
@@ -248,7 +248,7 @@ def loadtxt[KeyT: int | str](
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.float64]: ...
 @overload  # Nd T, dtype=<known>, ndmin<3  (fallback)
-def loadtxt[KeyT: int | str, ScalarT: np.generic](
+def loadtxt[ScalarT: np.generic, KeyT: int | str](
     fname: _FName,
     dtype: _DTypeLike[ScalarT],
     comments: str | Sequence[str] | None = "#",
@@ -313,14 +313,14 @@ def fromregex(
 
 #
 @overload  # Nd ~int, dtype=int, ndmin<2
-def genfromtxt(
+def genfromtxt[KeyT: int | str](
     fname: _FName,
     dtype: type[int],
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
@@ -342,14 +342,14 @@ def genfromtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.int_ | Any]: ...
 @overload  # Nd +f64, dtype=float, ndmin<2  (default)
-def genfromtxt(
+def genfromtxt[KeyT: int | str](
     fname: _FName,
     dtype: type[float] = ...,
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
@@ -371,14 +371,14 @@ def genfromtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.float64 | Any]: ...
 @overload  # Nd T, dtype=<known>, ndmin<2
-def genfromtxt[ScalarT: np.generic](
+def genfromtxt[ScalarT: np.generic, KeyT: int | str](
     fname: _FName,
     dtype: _DTypeLike[ScalarT],
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
@@ -400,14 +400,14 @@ def genfromtxt[ScalarT: np.generic](
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
 @overload  # Nd ~complex, dtype=complex, ndmin<2
-def genfromtxt(
+def genfromtxt[KeyT: int | str](
     fname: _FName,
     dtype: type[complex],
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
@@ -458,14 +458,14 @@ def genfromtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.str_]: ...
 @overload  # Nd, ndmin<2  (fallback)
-def genfromtxt(
+def genfromtxt[KeyT: int | str](
     fname: _FName,
     dtype: DTypeLike | None = ...,
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
@@ -487,14 +487,14 @@ def genfromtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 @overload  # 2d +f64, dtype=float, ndmin=2  (default)
-def genfromtxt(
+def genfromtxt[KeyT: int | str](
     fname: _FName,
     dtype: type[float] = ...,
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
@@ -516,14 +516,14 @@ def genfromtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> Array2D[np.float64 | Any]: ...
 @overload  # 2d T, dtype=<known>, ndmin=2
-def genfromtxt[ScalarT: np.generic](
+def genfromtxt[ScalarT: np.generic, KeyT: int | str](
     fname: _FName,
     dtype: _DTypeLike[ScalarT],
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
@@ -545,14 +545,14 @@ def genfromtxt[ScalarT: np.generic](
     like: _SupportsArrayFunc | None = None,
 ) -> Array2D[ScalarT]: ...
 @overload  # 2d, ndmin=2  (fallback)
-def genfromtxt(
+def genfromtxt[KeyT: int | str](
     fname: _FName,
     dtype: DTypeLike | None = ...,
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
@@ -574,14 +574,14 @@ def genfromtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> Array2D[Any]: ...
 @overload  # Nd +f64, dtype=float, ndmin<3  (fallback)
-def genfromtxt(
+def genfromtxt[KeyT: int | str](
     fname: _FName,
     dtype: type[float] = ...,
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
@@ -603,14 +603,14 @@ def genfromtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.float64 | Any]: ...
 @overload  # Nd T, dtype=<known>, ndmin<3  (fallback)
-def genfromtxt[ScalarT: np.generic](
+def genfromtxt[ScalarT: np.generic, KeyT: int | str](
     fname: _FName,
     dtype: _DTypeLike[ScalarT],
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
@@ -661,14 +661,14 @@ def genfromtxt(
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.void]: ...
 @overload  # Nd, ndmin<3  (fallback)
-def genfromtxt(
+def genfromtxt[KeyT: int | str](
     fname: _FName,
     dtype: DTypeLike | None = ...,
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,
     skip_footer: int = 0,
-    converters: Mapping[int | str, Callable[[str], Any]] | None = None,
+    converters: Mapping[KeyT, Callable[[str], Any]] | None = None,
     missing_values: Any = None,
     filling_values: Any = None,
     usecols: Sequence[int] | None = None,
