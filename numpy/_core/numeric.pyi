@@ -11,7 +11,7 @@ from typing import (
     TypeVar,
     overload,
 )
-from typing_extensions import deprecated, TypeIs
+from typing_extensions import TypeIs, deprecated
 
 import numpy as np
 from numpy import (
