@@ -11,6 +11,7 @@ AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
 AR_i8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.int64]]
 AR_i8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.int64]]
 f8: np.float64
+i8: np.int64
 
 shape_1d: tuple[int]
 shape_2d: tuple[int, int]
@@ -34,11 +35,13 @@ assert_type(np.lib.stride_tricks.sliding_window_view(AR_f8, [9], axis=1), npt.ND
 assert_type(np.lib.stride_tricks.sliding_window_view(AR_LIKE_f, (1, 5)), npt.NDArray[Any])
 
 assert_type(np.broadcast_to(AR_f8, 1), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.broadcast_to(AR_f8, i8), npt.Array1D[np.float64])
 assert_type(np.broadcast_to(AR_f8, ()), np.ndarray[tuple[()], np.dtype[np.float64]])
 assert_type(np.broadcast_to(AR_f8, (1,)), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.broadcast_to(AR_f8, (1, 2)), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 assert_type(np.broadcast_to(AR_f8, (1, 2, 3)), np.ndarray[tuple[int, int, int], np.dtype[np.float64]])
 assert_type(np.broadcast_to(AR_f8, [1, 2]), npt.NDArray[np.float64])
+assert_type(np.broadcast_to(AR_f8, (i8, 2)), npt.NDArray[np.float64])
 assert_type(np.broadcast_to(AR_LIKE_f, 1), np.ndarray[tuple[int], np.dtype[Any]])
 assert_type(np.broadcast_to(AR_LIKE_f, ()), np.ndarray[tuple[()], np.dtype[Any]])
 assert_type(np.broadcast_to(AR_LIKE_f, (1,)), np.ndarray[tuple[int], np.dtype[Any]])
