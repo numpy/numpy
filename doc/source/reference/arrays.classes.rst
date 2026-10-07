@@ -301,14 +301,15 @@ NumPy provides several hooks that classes can customize:
    .. note:: For ufuncs, it is hoped to eventually deprecate this method in
              favour of :func:`__array_ufunc__`.
 
-.. py:method:: class.__array__(dtype=None, copy=None)
+.. py:method:: class.__array__(dtype=None, *, copy=None)
 
    If defined on an object, it must return a NumPy ``ndarray``.
    This method is called by array-coercion functions like ``np.array()``
    if an object implementing this interface is passed to those functions.
 
-   Third-party implementations of ``__array__`` must take ``dtype`` and
-   ``copy`` arguments.
+   Third-party implementations of ``__array__`` must accept ``dtype`` and
+   ``copy`` arguments. To match ``ndarray.__array__``, ``copy`` should be
+   keyword-only.
 
    .. deprecated:: NumPy 2.0
       Not implementing ``copy`` and ``dtype`` is deprecated as of NumPy 2.
@@ -349,7 +350,7 @@ NumPy provides several hooks that classes can customize:
    ...         self._i = value
    ...     def __repr__(self):
    ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-   ...     def __array__(self, dtype=None, copy=None):
+   ...     def __array__(self, dtype=None, *, copy=None):
    ...         if copy is False:
    ...             raise ValueError(
    ...                 "`copy=False` isn't supported. A copy is always created."
