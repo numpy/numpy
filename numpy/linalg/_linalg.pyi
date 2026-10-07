@@ -1052,14 +1052,21 @@ def svd(
     compute_uv: L[False],
     hermitian: bool = False,
 ) -> NDArray[np.float64]: ...
-@overload  # compute_uv=False, fallback
+@overload  # compute_uv=False (keyword), fallback
 def svd(
     a: _ArrayLikeComplex_co,
     full_matrices: bool = True,
     *,
     compute_uv: L[False],
     hermitian: bool = False,
-) -> np.ndarray: ...
+) -> NDArray[Any]: ...
+@overload  # compute_uv=False (positional), fallback
+def svd(
+    a: _ArrayLikeComplex_co,
+    full_matrices: bool,
+    compute_uv: L[False],
+    hermitian: bool = False,
+) -> NDArray[Any]: ...
 
 #
 @overload  # abstract `inexact` (excluding concrete types)
