@@ -40,7 +40,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     DTypeLike,
     _DTypeLike,
     _DTypeLikeVoid,
-    _VoidDTypeLike,
     # Shapes
     _AnyShape,
     _Shape,
@@ -118,6 +117,7 @@ from numpy._typing._char_codes import (
     _TD64Codes_int,
     _TD64Codes_timedelta,
 )
+from numpy._typing._dtype_like import _DTypeDict
 
 from numpy._array_api_info import __array_namespace_info__
 
@@ -1312,7 +1312,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     @overload
     def __new__(
         cls,
-        dtype: py_type[bytes | ct.c_char] | _BytesCodes,
+        dtype: py_type[bytes | ct.c_char] | _BytesCodes | tuple[py_type[bytes] | _BytesCodes, SupportsIndex],
         align: py_bool = False,
         copy: py_bool = False,
         *,
@@ -1321,7 +1321,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     @overload
     def __new__(
         cls,
-        dtype: py_type[py_str] | _StrCodes,
+        dtype: py_type[py_str] | _StrCodes | tuple[py_type[py_str] | _StrCodes, SupportsIndex],
         align: py_bool = False,
         copy: py_bool = False,
         *,
@@ -1336,12 +1336,21 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     @overload
     def __new__(
         cls,
-        dtype: py_type[void | memoryview] | _VoidDTypeLike | _VoidCodes,
+        dtype: py_type[void | memoryview] | list[Any] | _DTypeDict | _VoidCodes,
         align: py_bool = False,
         copy: py_bool = False,
         *,
         metadata: dict[py_str, Any] = ...,
     ) -> dtype[void]: ...
+    @overload  # could be either str_, bytes_, or void
+    def __new__(
+        cls,
+        dtype: tuple[Any, Any],
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[py_str, Any] = ...,
+    ) -> dtype[Any]: ...
     # NOTE: `_: type[object]` would also accept e.g. `type[object | complex]`,
     # and is therefore not included here
     @overload
