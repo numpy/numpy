@@ -471,7 +471,8 @@ Version directives
 ==================
 
 ``versionadded`` and ``versionchanged`` directives should normally be
-retained for at least five years after the release they reference.
+retained for at least five years after the release they reference,
+which roughly tracks CPython's support window.
 
 After five years, they may be removed as routine documentation
 maintenance when the version information is no longer useful for
