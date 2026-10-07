@@ -1237,7 +1237,6 @@ class _DTypeMeta(type):
 
 @final
 class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
-    names: tuple[py_str, ...] | None
     def __hash__(self) -> int: ...
 
     # `None` results in the default dtype
@@ -1776,6 +1775,13 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __eq__(self, other: Any, /) -> py_bool: ...
     def __ne__(self, other: Any, /) -> py_bool: ...
 
+    #
+    @property
+    def names(self) -> tuple[py_str, ...] | None: ...
+    @names.setter
+    def names(self: dtype[void], names: Sequence[py_str], /) -> None: ...
+
+    #
     @property
     def alignment(self) -> int: ...
     @property
