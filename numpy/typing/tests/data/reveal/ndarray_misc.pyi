@@ -91,6 +91,7 @@ assert_type(AR_f8_3d.all(axis=0), np.ndarray[tuple[int, int], np.dtype[np.bool]]
 assert_type(AR_f8_3d.all(axis=(0, 1)), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(AR_f8_3d.all(keepdims=True), np.ndarray[tuple[int, int, int], np.dtype[np.bool]])
 assert_type(AR_f8.all(out=B), SubClass)
+assert_type(AR_f8_2d.all(axis=i8), np.ndarray[tuple[int], np.dtype[np.bool]])
 
 # same as above
 assert_type(f8.any(), np.bool)
@@ -109,6 +110,7 @@ assert_type(AR_f8_3d.any(axis=0), np.ndarray[tuple[int, int], np.dtype[np.bool]]
 assert_type(AR_f8_3d.any(axis=(0, 1)), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(AR_f8_3d.any(keepdims=True), np.ndarray[tuple[int, int, int], np.dtype[np.bool]])
 assert_type(AR_f8.any(out=B), SubClass)
+assert_type(AR_f8_2d.any(axis=i8), np.ndarray[tuple[int], np.dtype[np.bool]])
 
 # same as below
 assert_type(f8.argmax(), np.intp)
@@ -274,6 +276,7 @@ assert_type(AR_f8_3d.prod(dtype=np.float32, axis=0), npt.Array2D[np.float32])
 assert_type(AR_f8_3d.prod(keepdims=True), npt.Array3D[np.float64])
 assert_type(AR_f8_3d.prod(dtype=np.float32, keepdims=True), npt.Array3D[np.float32])
 assert_type(AR_any.prod(), Any)
+assert_type(AR_f8_2d.prod(axis=i8), npt.Array1D[np.float64])
 
 # same as above (but also accept `timedelta64`)
 assert_type(b1.sum(), np.int_)
@@ -318,6 +321,7 @@ assert_type(AR_f8_3d.sum(dtype=np.float32, axis=0), npt.Array2D[np.float32])
 assert_type(AR_f8_3d.sum(keepdims=True), npt.Array3D[np.float64])
 assert_type(AR_f8_3d.sum(dtype=np.float32, keepdims=True), npt.Array3D[np.float32])
 assert_type(AR_any.sum(), Any)
+assert_type(AR_f8_2d.sum(axis=i8), npt.Array1D[np.float64])
 
 # same as below
 assert_type(f8.mean(), Any)
@@ -351,6 +355,7 @@ assert_type(AR_f8_3d.mean(axis=0), npt.Array2D[np.float64])
 assert_type(AR_f8_3d.mean(dtype=np.float32, axis=0), npt.Array2D[np.float32])
 assert_type(AR_f8_3d.mean(keepdims=True), npt.Array3D[np.float64])
 assert_type(AR_f8_3d.mean(dtype=np.float32, keepdims=True), npt.Array3D[np.float32])
+assert_type(AR_f8_2d.mean(axis=i8), npt.Array1D[np.float64])
 
 #
 assert_type(f8.std(), Any)
@@ -384,6 +389,7 @@ assert_type(AR_f8_3d.std(), np.float64)
 assert_type(AR_f8_3d.std(axis=0), npt.Array2D[np.float64])
 assert_type(AR_f8_3d.std(dtype=np.float32, axis=0), npt.Array2D[np.float32])
 assert_type(AR_f8_3d.std(keepdims=True), npt.Array3D[np.float64])
+assert_type(AR_f8_2d.std(axis=i8), npt.Array1D[np.float64])
 
 #
 assert_type(f8.var(), Any)
@@ -418,6 +424,7 @@ assert_type(AR_f8_3d.var(), np.float64)
 assert_type(AR_f8_3d.var(axis=0), npt.Array2D[np.float64])
 assert_type(AR_f8_3d.var(dtype=np.float32, axis=0), npt.Array2D[np.float32])
 assert_type(AR_f8_3d.var(keepdims=True), npt.Array3D[np.float64])
+assert_type(AR_f8_2d.var(axis=i8), npt.Array1D[np.float64])
 
 # same as below
 assert_type(f8.max(), Any)
@@ -438,6 +445,7 @@ assert_type(AR_f8_3d.max(axis=0), np.ndarray[tuple[int, int], np.dtype[np.float6
 assert_type(AR_f8_3d.max(axis=(0, 1)), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(AR_f8_4d.max(axis=0), np.ndarray[tuple[int, int, int], np.dtype[np.float64]])
 assert_type(AR_f8_4d.max(axis=(0, 1)), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.max(axis=i8), np.ndarray[tuple[int], np.dtype[np.float64]])
 
 # same as above
 assert_type(f8.min(), Any)
@@ -458,6 +466,7 @@ assert_type(AR_f8_3d.min(axis=0), np.ndarray[tuple[int, int], np.dtype[np.float6
 assert_type(AR_f8_3d.min(axis=(0, 1)), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(AR_f8_4d.min(axis=0), np.ndarray[tuple[int, int, int], np.dtype[np.float64]])
 assert_type(AR_f8_4d.min(axis=(0, 1)), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(AR_f8_2d.min(axis=i8), np.ndarray[tuple[int], np.dtype[np.float64]])
 
 assert_type(f8.round(), np.float64)
 assert_type(AR_f8.round(), npt.NDArray[np.float64])
