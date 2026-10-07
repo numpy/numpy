@@ -2040,12 +2040,12 @@ class _ufunc_11_ifcmo_ifco(_ufunc_11):  # type: ignore[misc]
     @overload
     def at[IxT, OutT](self, a: _CanUfuncAt1[IxT, OutT], indices: IxT, /) -> OutT: ...
 
-# bBhHiIlLqQefdgmFDGO => bBhHiIlLqQefdgmFDGO
+# [?]bBhHiIlLqQefdgmFDGO => [?]bBhHiIlLqQefdgmFDGO
 @type_check_only
 class _ufunc_11_ifcmo(_ufunc_11):  # type: ignore[misc]
     @override
     @overload  # known shape, known scalar/array
-    def __call__[T: _numeric | npt.NDArray[_numeric | np.object_]](
+    def __call__[T: _numeric | np.bool | npt.NDArray[_numeric | np.bool | np.object_]](
         self,
         x: T,
         /,

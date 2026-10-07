@@ -573,6 +573,7 @@ assert_type(np.negative(_i16_2d, dtype="f4"), np.ndarray[tuple[int, int]])
 assert_type(np.negative(_py_i_0d, out=_i16_1d), npt.Array1D[np.int16])
 assert_type(np.negative(_py_f_1d, out=_f32_2d), npt.Array2D[np.float32])
 assert_type(np.negative(_py_c_2d, out=_c64_2d), npt.Array2D[np.complex64])
+assert_type(np.positive(_bool_1d), npt.Array1D[np.bool])
 
 # _ufunc_11_bio
 # (invert)
