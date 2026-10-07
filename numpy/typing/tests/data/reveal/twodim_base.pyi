@@ -219,6 +219,14 @@ assert_type(
         np.ndarray[_1D, np.dtype[np.complex128 | Any]],
     ],
 )
+assert_type(
+    np.histogram2d(_nd_i64, _nd_bool, range=[(0.0, 1.0), None]),
+    tuple[
+        np.ndarray[_2D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+    ],
+)
 
 # mask_indices
 assert_type(np.mask_indices(10, func1), _Indices2D)
