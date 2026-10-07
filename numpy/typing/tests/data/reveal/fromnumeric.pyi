@@ -779,6 +779,7 @@ assert_type(np.std(AR_f4_1d, dtype=np.float64, keepdims=True), npt.Array1D[np.fl
 assert_type(np.std(AR_f4_2d, dtype=np.float64, keepdims=True), npt.Array2D[np.float64])
 assert_type(np.std(AR_f4_3d, dtype=np.float64, keepdims=True), npt.Array3D[np.float64])
 assert_type(np.std(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.std(AR_f4_2d, axis=i8), npt.Array1D[np.float32])
 
 # same as above
 assert_type(np.var(AR_b), np.float64)
