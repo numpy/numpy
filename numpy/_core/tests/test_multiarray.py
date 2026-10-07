@@ -3644,7 +3644,6 @@ class TestMethods:
             actual = a.searchsorted(queries, side=side)
             assert_array_equal(actual, desired)
 
-
     def test_searchsorted_unicode(self):
         # Test searchsorted on unicode strings.
 
