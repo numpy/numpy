@@ -2544,7 +2544,7 @@ def amax(
 @overload  # bool, 1d, axis=<single>
 def amax(
     a: list[bool],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2553,7 +2553,7 @@ def amax(
 @overload  # bool, 2d, axis=<single>
 def amax(
     a: Sequence[list[bool]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2562,7 +2562,7 @@ def amax(
 @overload  # bool, 3d, axis=<single>
 def amax(
     a: Sequence[Sequence[list[bool]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2571,7 +2571,7 @@ def amax(
 @overload  # bool, >=1d, axis=<given>
 def amax(
     a: _NestedList[bool],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2580,7 +2580,7 @@ def amax(
 @overload  # bool, keepdims=True
 def amax(
     a: _NestedList[bool],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -2599,7 +2599,7 @@ def amax(
 @overload  # ~int, 1d, axis=<single>
 def amax(
     a: list[int],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2608,7 +2608,7 @@ def amax(
 @overload  # ~int, 2d, axis=<single>
 def amax(
     a: Sequence[list[int]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2617,7 +2617,7 @@ def amax(
 @overload  # ~int, 3d, axis=<single>
 def amax(
     a: Sequence[Sequence[list[int]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2626,7 +2626,7 @@ def amax(
 @overload  # ~int, >=1d, axis=<given>
 def amax(
     a: _NestedList[int],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2635,7 +2635,7 @@ def amax(
 @overload  # ~int, keepdims=True
 def amax(
     a: _NestedList[int],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -2654,7 +2654,7 @@ def amax(
 @overload  # ~float, 1d, axis=<single>
 def amax(
     a: list[float],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2663,7 +2663,7 @@ def amax(
 @overload  # ~float, 2d, axis=<single>
 def amax(
     a: Sequence[list[float]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2672,7 +2672,7 @@ def amax(
 @overload  # ~float, 3d, axis=<single>
 def amax(
     a: Sequence[Sequence[list[float]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2681,7 +2681,7 @@ def amax(
 @overload  # ~float, >=1d, axis=<given>
 def amax(
     a: _NestedList[float],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2690,7 +2690,7 @@ def amax(
 @overload  # ~float, keepdims=True
 def amax(
     a: _NestedList[float],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -2709,7 +2709,7 @@ def amax(
 @overload  # ~complex, 1d, axis=<single>
 def amax(
     a: list[complex],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2718,7 +2718,7 @@ def amax(
 @overload  # ~complex, 2d, axis=<single>
 def amax(
     a: Sequence[list[complex]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2727,7 +2727,7 @@ def amax(
 @overload  # ~complex, 3d, axis=<single>
 def amax(
     a: Sequence[Sequence[list[complex]]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2736,7 +2736,7 @@ def amax(
 @overload  # ~complex, >=1d, axis=<given>
 def amax(
     a: _NestedList[complex],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2745,7 +2745,7 @@ def amax(
 @overload  # ~complex, keepdims=True
 def amax(
     a: _NestedList[complex],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -2764,7 +2764,7 @@ def amax[ScalarT: _ScalarOrderable](
 @overload  # known dtype, ?d, axis=<given>  (workaround)
 def amax[ScalarT: _ScalarOrderable | np.object_](
     a: _ArrayJustND[ScalarT],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2773,7 +2773,7 @@ def amax[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known dtype, 1d, axis=<single>
 def amax[ScalarT: _ScalarOrderable](
     a: _ToArray1D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2782,7 +2782,7 @@ def amax[ScalarT: _ScalarOrderable](
 @overload  # known dtype, 2d, axis=<single>
 def amax[ScalarT: _ScalarOrderable](
     a: _ToArray2D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2791,7 +2791,7 @@ def amax[ScalarT: _ScalarOrderable](
 @overload  # known dtype, 3d, axis=<single>
 def amax[ScalarT: _ScalarOrderable | np.object_](
     a: _ToArray3D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2800,7 +2800,7 @@ def amax[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known dtype, 4d, axis=<single>
 def amax[ScalarT: _ScalarOrderable | np.object_](
     a: _ToArray4D[ScalarT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2809,7 +2809,7 @@ def amax[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known dtype, ?d, axis=<given>
 def amax[ScalarT: _ScalarOrderable | np.object_](
     a: _ArrayLike[ScalarT],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2818,7 +2818,7 @@ def amax[ScalarT: _ScalarOrderable | np.object_](
 @overload  # known array, keepdims=True
 def amax[ArrayT: NDArray[_ScalarOrderable | np.object_]](
     a: ArrayT,
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -2837,7 +2837,7 @@ def amax[ItemT](
 @overload  # out: ArrayT
 def amax[ArrayT: np.ndarray](
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     *,
     out: ArrayT,
     keepdims: bool | _NoValueType = ...,
@@ -2856,7 +2856,7 @@ def amax(
 @overload  # fallback, ?d, axis=<given>
 def amax(
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -2865,7 +2865,7 @@ def amax(
 @overload  # fallback, keepdims=True
 def amax(
     a: _ArrayLikeNumeric_co | _NestedSequence[_Orderable],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
