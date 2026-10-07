@@ -155,6 +155,27 @@ binsearch_locality(const char *arr, const char *key, char *ret,
         prev = pos;
     }
 
+    if (!reversed && direction >= 0) {
+        /*
+         * Sparse coarse samples can look monotone even when the query sequence
+         * between them is hostile to the locality path. Check the value
+         * immediately preceding each deterministic sample using the dtype's
+         * existing ordering semantics. This keeps the selector O(1) while
+         * rejecting the adversarial patterns found during review validation.
+         */
+        for (npy_intp j = 0; j <= LOCALITY_SAMPLES && !reversed; ++j) {
+            const npy_intp i = (j * last) >> 4;
+            if (i > 0) {
+                const T key_val = *(const T *)(key + i * key_str);
+                const T prev_key_val =
+                        *(const T *)(key + (i - 1) * key_str);
+                if (less(key_val, prev_key_val)) {
+                    reversed = true;
+                }
+            }
+        }
+    }
+
     if (!reversed && direction >= 0 && interval_length > 1) {
         npy_intp previous_pos = 0;
         T last_key_val = *(const T *)key;
