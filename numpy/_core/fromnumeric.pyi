@@ -1885,7 +1885,7 @@ def all(
 @overload  # ?d, axis=<given>  (workaround)
 def all(
     a: _ArrayJustND[Any],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     *,
@@ -1894,7 +1894,7 @@ def all(
 @overload  # 1d, axis=<single>
 def all(
     a: _ToArray1D[Any],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     *,
@@ -1903,7 +1903,7 @@ def all(
 @overload  # 2d, axis=<single>
 def all(
     a: _ToArray2D[Any],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     *,
@@ -1912,7 +1912,7 @@ def all(
 @overload  # 3d, axis=<single>
 def all(
     a: _ToArray3D[Any],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     *,
@@ -1921,7 +1921,7 @@ def all(
 @overload  # ?d, axis=<given>
 def all(
     a: ArrayLike,
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
     *,
@@ -1930,7 +1930,7 @@ def all(
 @overload  # Nd, keepdims=True
 def all[ShapeT: _Shape](
     a: np.ndarray[ShapeT],
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -1939,7 +1939,7 @@ def all[ShapeT: _Shape](
 @overload  # ?d, keepdims=True
 def all(
     a: ArrayLike,
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     out: None = None,
     *,
     keepdims: Literal[True],
@@ -1948,7 +1948,7 @@ def all(
 @overload  # out=<given> (keyword)
 def all[ArrayT: np.ndarray](
     a: ArrayLike | None,
-    axis: int | tuple[int, ...] | None = None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     *,
     out: ArrayT,
     keepdims: bool | _NoValueType = ...,
@@ -1957,7 +1957,7 @@ def all[ArrayT: np.ndarray](
 @overload  # out=<given> (positional)
 def all[ArrayT: np.ndarray](
     a: ArrayLike | None,
-    axis: int | tuple[int, ...] | None,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
     out: ArrayT,
     keepdims: bool | _NoValueType = ...,
     *,

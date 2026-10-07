@@ -363,6 +363,7 @@ assert_type(np.all(AR_f4_1d, keepdims=True), npt.Array1D[np.bool])
 assert_type(np.all(AR_f4_2d, keepdims=True), npt.Array2D[np.bool])
 assert_type(np.all(AR_f4_3d, keepdims=True), npt.Array3D[np.bool])
 assert_type(np.all(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.all(AR_f4_2d, axis=i8), npt.Array1D[np.bool])
 
 # same as above
 assert_type(np.any(b), np.bool)
