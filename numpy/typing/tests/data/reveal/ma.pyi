@@ -363,6 +363,8 @@ assert_type(np.ma.getmask(MAR_2d_f4), np.ndarray[tuple[int, int], np.dtype[np.bo
 assert_type(np.ma.getmask([1, 2]), NDArray[np.bool] | _NoMaskType)
 assert_type(np.ma.getmask(np.int64(1)), _NoMaskType)
 
+assert_type(np.ma.getmaskarray([1, 2]), NDArray[np.bool])
+
 assert_type(np.ma.is_mask(MAR_1d), bool)
 assert_type(np.ma.is_mask(AR_b), bool)
 
