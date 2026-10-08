@@ -114,8 +114,9 @@ type _SortsToComplex128 = (
     | np.object_
 )
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
+type _Numeric_co = np.number | np.bool | np.timedelta64 | np.object_
 type _InexactDouble = np.float64 | np.longdouble | np.complex128 | np.clongdouble
-type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[np.number | np.bool | np.timedelta64 | np.object_], complex]
+type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[_Numeric_co], complex]
 type _RealDouble = np.float64 | np.longdouble
 type _Time = np.timedelta64 | np.datetime64
 
@@ -1175,7 +1176,7 @@ def diff[T](
     append: ArrayLike | _NoValueType = ...,  # = _NoValue
 ) -> T: ...
 @overload  # known array-type
-def diff[ArrayT: NDArray[_ScalarNumeric]](
+def diff[ArrayT: NDArray[_Numeric_co]](
     a: ArrayT,
     n: int = 1,
     axis: SupportsIndex = -1,
@@ -1191,7 +1192,7 @@ def diff[ShapeT: _Shape](
     append: ArrayLike | _NoValueType = ...,
 ) -> _Array[ShapeT, np.timedelta64]: ...
 @overload  # unknown shape, known scalar-type
-def diff[ScalarT: _ScalarNumeric](
+def diff[ScalarT: _Numeric_co](
     a: _ArrayLike[ScalarT],
     n: int = 1,
     axis: SupportsIndex = -1,
