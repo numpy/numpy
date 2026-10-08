@@ -163,8 +163,15 @@ _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 
+type _0D = tuple[()]
+type _1D = tuple[int]
+type _2D = tuple[int, int]
+type _3D = tuple[int, int, int]
+type _4D = tuple[int, int, int, int]
+
 # workaround for microsoft/pyright#10232
-type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
+type _JustND = tuple[Never, Never, Never, Never]
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustND, np.dtype[ScalarT]]
 
 type _tuple2[T] = tuple[T, T]
 
@@ -206,7 +213,9 @@ type _DTypeString = np.dtype[np.str_] | np.dtypes.StringDType
 type _NativeArrayLike[ScalarT: np.generic] = npt.NDArray[ScalarT] | ScalarT | _NestedSequence[_SupportsArray[np.dtype[ScalarT]]]
 type _NativeDualArrayLike[ScalarT: np.generic, BuiltinT] = _NativeArrayLike[ScalarT] | BuiltinT | _NestedSequence[BuiltinT]
 type _NativeArrayLike_co = np.ndarray | _ScalarLike_co | _NestedSequence[_SupportsArray[np.dtype]] | _NestedSequence[_PyScalar]
-type _NativeArrayLikeStr_co = np.ndarray[Any, _DTypeString] | str | _NestedSequence[_SupportsArray[_DTypeString]] | _NestedSequence[str]
+type _NativeArrayLikeStr_co = (
+    np.ndarray[Any, _DTypeString] | str | _NestedSequence[_SupportsArray[_DTypeString]] | _NestedSequence[str]
+)
 type _NativeArrayLikeBool_co = _NativeDualArrayLike[np.bool, bool]
 type _NativeArrayLikeInt_co = _NativeDualArrayLike[_to_integer, int]
 type _NativeArrayLikeInt64_co = _NativeDualArrayLike[_to_i64, int]  # excludes u64
@@ -3625,6 +3634,50 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.bool: ...
+    @overload  # 0d, Nd
+    def __call__[ShapeT: _Shape](
+        self,
+        x1: _ScalarLike_co,
+        x2: np.ndarray[ShapeT, _DTypeNonObject],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[ShapeT, np.bool]: ...
+    @overload  # Nd, 0d
+    def __call__[ShapeT: _Shape](
+        self,
+        x1: np.ndarray[ShapeT, _DTypeNonObject],
+        x2: _ScalarLike_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[ShapeT, np.bool]: ...
+    @overload  # ?d, Nd  (workaround)
+    def __call__(
+        self,
+        x1: np.ndarray[_JustND, _DTypeNonObject],
+        x2: np.ndarray[Any, _DTypeNonObject],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # Nd, Nd
+    def __call__[AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](
+        self,
+        x1: np.ndarray[AnyShapeT, _DTypeNonObject],
+        x2: np.ndarray[AnyShapeT, _DTypeNonObject],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[AnyShapeT, np.bool]: ...
     @overload  # >0d, >=0d
     def __call__(
         self,
@@ -4071,7 +4124,7 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         out: np.ndarray | None = None,
     ) -> OutT: ...
 
-    # TODO
+    #
     @override
     @overload  # known shape
     def accumulate[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
@@ -4146,6 +4199,50 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.bool: ...
+    @overload  # 0d, Nd
+    def __call__[ShapeT: _Shape](
+        self,
+        x1: _ScalarLike_co,
+        x2: np.ndarray[ShapeT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[ShapeT, np.bool]: ...
+    @overload  # Nd, 0d
+    def __call__[ShapeT: _Shape](
+        self,
+        x1: np.ndarray[ShapeT],
+        x2: _ScalarLike_co,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[ShapeT, np.bool]: ...
+    @overload  # ?d, Nd  (workaround)
+    def __call__(
+        self,
+        x1: _ArrayJustND[Any],
+        x2: np.ndarray,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # Nd, Nd
+    def __call__[AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](
+        self,
+        x1: np.ndarray[AnyShapeT],
+        x2: np.ndarray[AnyShapeT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[AnyShapeT, np.bool]: ...
     @overload  # >0d, >=0d
     def __call__(
         self,
