@@ -161,14 +161,18 @@ assert_type(np.testing.measure(b"for i in range(1000): np.sqrt(i**2)", times=5),
 
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8), None)
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8, rtol=0.005), None)
+assert_type(np.testing.assert_allclose(AR_i8, AR_f8, rtol=np.float32(0.005)), None)
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8, atol=1), None)
+assert_type(np.testing.assert_allclose(AR_i8, AR_f8, atol=np.float32(1)), None)
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8, equal_nan=True), None)
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8, err_msg="err"), None)
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8, verbose=False), None)
 
 assert_type(np.testing.assert_array_almost_equal_nulp(AR_i8, AR_f8, nulp=2), None)
+assert_type(np.testing.assert_array_almost_equal_nulp(AR_i8, AR_f8, nulp=np.float32(2)), None)
 
 assert_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, maxulp=2), npt.NDArray[Any])
+assert_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, maxulp=np.float32(2)), npt.NDArray[Any])
 assert_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, dtype=np.float32), npt.NDArray[Any])
 
 assert_type(np.testing.assert_warns(RuntimeWarning), contextlib._GeneratorContextManager[None])  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]

@@ -61,6 +61,8 @@ assert_type(
 assert_type(np.rot90(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.rot90(AR_f8, k=2), npt.NDArray[np.float64])
 assert_type(np.rot90(AR_LIKE_f8, axes=(0, 1)), np.ndarray)
+assert_type(np.rot90(AR_f8, 1, [0, 1]), npt.NDArray[np.float64])
+assert_type(np.rot90(AR_f8, np.int_(1)), npt.NDArray[np.float64])
 
 # flip
 assert_type(np.flip(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
@@ -127,6 +129,7 @@ assert_type(np.select([AR_b], [AR_f8]), npt.NDArray[np.float64])
 
 # places
 assert_type(np.place(AR_f8, mask=AR_i8, vals=5.0), None)
+assert_type(np.place(AR_f8_2d, [[True, False], [False, True]], 0), None)
 
 # copy
 assert_type(np.copy(AR_LIKE_f8), np.ndarray)

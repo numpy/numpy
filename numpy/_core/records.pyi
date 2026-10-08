@@ -275,6 +275,20 @@ def array(
 ) -> _RecArray[record]: ...
 @overload
 def array(
+    obj: list[Any] | tuple[Any, ...],
+    dtype: None = None,
+    shape: _ShapeLike | None = None,
+    offset: int = 0,
+    strides: tuple[int, ...] | None = None,
+    formats: DTypeLike | None = None,
+    names: str | Sequence[str] | None = None,
+    titles: str | Sequence[str] | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    copy: bool = True,
+) -> _RecArray[record]: ...
+@overload
+def array(
     obj: None,
     dtype: DTypeLike | None,
     shape: _ShapeLike,
