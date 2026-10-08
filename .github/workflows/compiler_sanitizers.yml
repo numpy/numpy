@@ -102,7 +102,15 @@ jobs:
           git submodule update --init --recursive
       - name: Get OpenBLAS version
         run: |
-          version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['dependency-groups']['openblas64'][0].split('==')[1])")
+          version=$(python - <<'EOF'
+          import tomllib
+          
+          with open("pyproject.toml", "rb") as f:
+              req = tomllib.load(f)["dependency-groups"]["openblas64"][0]
+          
+          print(".".join(req.split("==")[1].split(".")[:3]))
+          EOF
+          )
           if [ -z "$version" ]; then
             echo "Could not obtain the scipy-openblas64 pin from pyproject.toml"
             exit 1
