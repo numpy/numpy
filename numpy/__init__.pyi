@@ -2281,16 +2281,86 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @imag.setter
     def imag(self, value: ArrayLike, /) -> None: ...
 
+    #
+    @overload  # 1d, dtype=<known>
+    def __new__[ScalarT: generic](
+        cls,
+        /,
+        shape: SupportsIndex,
+        dtype: _DTypeLike[ScalarT],
+        buffer: Buffer | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF | None = None,
+    ) -> ndarray[_1D, _dtype[ScalarT]]: ...
+    @overload  # 1d, dtype=None  (default)
     def __new__(
         cls,
-        shape: _ShapeLike,
-        dtype: DTypeLike | None = ...,
-        buffer: Buffer | None = ...,
-        offset: SupportsIndex = ...,
-        strides: _ShapeLike | None = ...,
-        order: _OrderKACF = ...,
+        /,
+        shape: SupportsIndex,
+        dtype: None = None,
+        buffer: Buffer | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF | None = None,
+    ) -> ndarray[_1D, _dtype[float64]]: ...
+    @overload  # 1d, dtype=<unknown>
+    def __new__(
+        cls,
+        /,
+        shape: SupportsIndex,
+        dtype: DTypeLike | None,
+        buffer: Buffer | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF | None = None,
+    ) -> ndarray[_1D, _dtype[Any]]: ...
+    @overload  # Nd, dtype=<known>
+    def __new__[AnyShapeT: (_0D, _1D, _2D, _3D, _4D), ScalarT: generic](
+        cls,
+        /,
+        shape: AnyShapeT,
+        dtype: _DTypeLike[ScalarT],
+        buffer: Buffer | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF | None = None,
+    ) -> ndarray[AnyShapeT, _dtype[ScalarT]]: ...
+    @overload  # Nd, dtype=None  (default)
+    def __new__[AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](
+        cls,
+        /,
+        shape: AnyShapeT,
+        dtype: None = None,
+        buffer: Buffer | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF | None = None,
+    ) -> ndarray[AnyShapeT, _dtype[float64]]: ...
+    @overload  # Nd, dtype=<unknown>
+    def __new__[AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](
+        cls,
+        /,
+        shape: AnyShapeT,
+        dtype: DTypeLike | None,
+        buffer: Buffer | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF | None = None,
+    ) -> ndarray[AnyShapeT, _dtype[Any]]: ...
+    @overload  # ?d  (fallback)
+    def __new__(
+        cls,
+        /,
+        shape: Sequence[SupportsIndex],
+        dtype: DTypeLike | None = None,
+        buffer: Buffer | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF | None = None,
     ) -> Self: ...
 
+    #
     def __buffer__(self, flags: int, /) -> memoryview: ...
 
     def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
