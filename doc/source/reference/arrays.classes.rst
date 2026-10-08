@@ -308,8 +308,8 @@ NumPy provides several hooks that classes can customize:
    if an object implementing this interface is passed to those functions.
 
    Third-party implementations of ``__array__`` must accept ``dtype`` and
-   ``copy`` arguments. To match ``ndarray.__array__``, ``copy`` should be
-   keyword-only.
+   ``copy`` arguments. NumPy passes ``dtype`` positionally and ``copy`` by
+   keyword, so making ``copy`` keyword-only is recommended.
 
    .. deprecated:: NumPy 2.0
       Not implementing ``copy`` and ``dtype`` is deprecated as of NumPy 2.
