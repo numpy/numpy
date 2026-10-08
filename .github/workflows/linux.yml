@@ -400,7 +400,7 @@ jobs:
         NRV32=$(grep -E '^scipy-openblas64' numpy-release/requirements/openblas_requirements.txt | sed -E 's/^scipy-openblas32[^0-9]*//')
         OBLA32=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['dependency-groups']['openblas32'][0].split('==')[1])")
 
-        if [ -z "$NRV32" ] || [ "$NRV32" != "$OBLA64" ]; then
+        if [ -z "$NRV32" ] || [ "$NRV32" != "$OBLA32" ]; then
           echo "::error file=pyproject.toml::scipy-openblas32 mismatch: numpy-release has '${NRV32}', this repo has '${OBLA32}'"
           exit 1
         fi
