@@ -69,6 +69,18 @@ def _func_nd(*args: npt.NDArray[np.float64]) -> SubClass[np.float64]: ...
 
 ###
 
+assert_type(np.ndarray(3), npt.Array1D[np.float64])
+assert_type(np.ndarray(3, np.float32), npt.Array1D[np.float32])
+assert_type(np.ndarray(3, "f4"), npt.Array1D[Any])
+assert_type(np.ndarray((2, 3), np.float32), npt.Array2D[np.float32])
+assert_type(np.ndarray((2, 3), "f4"), npt.Array2D[Any])
+assert_type(np.ndarray((2, 3, 4)), npt.Array3D[np.float64])
+assert_type(np.ndarray((2, 3, 4), np.float32), npt.Array3D[np.float32])
+assert_type(np.ndarray((2, 3, 4), "f4"), npt.Array3D[Any])
+assert_type(np.ndarray(mixed_shape), npt.NDArray[Any])
+assert_type(np.ndarray(mixed_shape, np.float32), npt.NDArray[Any])
+assert_type(SubClass[np.float32](mixed_shape, np.float32), SubClass[np.float32])
+
 assert_type(np.array(_py_b_1d), npt.Array1D[np.bool])
 assert_type(np.array(_py_b_2d), npt.Array2D[np.bool])
 assert_type(np.array(_py_b_3d), npt.Array3D[np.bool])
