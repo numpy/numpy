@@ -104,6 +104,11 @@ This will build NumPy from source if you haven't already, and run Sphinx to
 build the ``html`` docs. If all goes well, this will generate a ``build/html``
 subdirectory in the ``/doc`` directory, containing the built documentation.
 
+.. tip::
+
+   If you'd rather not set up a local environment, you can build and preview
+   the documentation in the cloud. See :ref:`development_ghcodespaces`.
+
 The documentation for NumPy distributed at https://numpy.org/doc in html and
 pdf format is also built with ``make dist``.  See `HOWTO RELEASE`_ for details
 on how to update https://numpy.org/doc.
