@@ -37,14 +37,15 @@
 #define PyTuple_GET_ITEM(op, i) PyTuple_GetItem(op, i)
 #define PyTuple_SET_ITEM(op, i, v) PyTuple_SetItem(op, i, v)
 #define PyList_GET_SIZE(op) PyList_Size(op)
-#define PyList_GET_ITEM(op, i) PyList_GetItem(op, i)
+#define PyList_GET_ITEM(op, i) PyList_GetItem(op, i) // noqa: borrowed-ref OK
 #define PyList_SET_ITEM(op, i, v) PyList_SetItem(op, i, v)
 /* Python.h defines these before 3.14 */
 #ifndef PySequence_Fast_GET_SIZE
 #define PySequence_Fast_GET_SIZE(o)                                     \
     (PyList_Check(o) ? PyList_GET_SIZE(o) : PyTuple_GET_SIZE(o))
 #define PySequence_Fast_GET_ITEM(o, i)                                  \
-    (PyList_Check(o) ? PyList_GET_ITEM(o, i) : PyTuple_GET_ITEM(o, i))
+    (PyList_Check(o) ?                                                  \
+     PyList_GET_ITEM(o, i) : PyTuple_GET_ITEM(o, i)) // noqa: borrowed-ref OK
 #endif
 #define PyBytes_AS_STRING(op) PyBytes_AsString(op)
 #define PyBytes_GET_SIZE(op) PyBytes_Size(op)
