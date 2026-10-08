@@ -1345,7 +1345,7 @@ init_promoter(PyObject *umath, const char *name, int nin, int nout,
         return -1;
     }
     for (int i = 0; i < nin + nout; i++) {
-        PyTuple_SET_ITEM(dtypes_tuple, i, Py_NewRef(Py_None));
+        PyTuple_SET_ITEM(dtypes_tuple, i, Py_None);
     }
 
     PyObject *info = PyTuple_Pack(2, dtypes_tuple, promoter_obj);
@@ -1355,13 +1355,9 @@ init_promoter(PyObject *umath, const char *name, int nin, int nout,
         return -1;
     }
 
-    if (install_promoter(umath, name, info) < 0) {
-        Py_DECREF(info);
-        return -1;
-    }
-
+    int res = install_promoter(umath, name, info);
     Py_DECREF(info);
-    return 0;
+    return res;
 }
 
 
