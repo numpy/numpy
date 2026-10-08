@@ -42,9 +42,13 @@ def test_lazy_modules_not_imported():
     # Modules declared in `__lazy_modules__` are only loaded on first use.
     code = textwrap.dedent(r"""
         import sys
+        before = set(sys.modules)
         import numpy as np
-        lazy = {"platform", "numpy.linalg", "numpy.polynomial.legendre"}
-        assert not lazy & set(sys.modules), lazy & set(sys.modules)
+        lazy = {"platform", "numpy.polynomial.legendre", "numpy.lib._npyio_impl"}
+        if sys.platform != "darwin":  # the macOS Accelerate check calls polyfit
+            lazy.add("numpy.linalg")
+        loaded = lazy & (set(sys.modules) - before)
+        assert not loaded, loaded
         np.polynomial.Polynomial([1, 2])(3)
         assert "numpy.polynomial.legendre" not in sys.modules
         assert np.polyfit([0, 1, 2], [0, 1, 2], 1).round(3).tolist() == [1.0, 0.0]

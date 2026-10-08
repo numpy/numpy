@@ -849,7 +849,7 @@ else:
             pass
 
     if sys.platform == "darwin":
-        from . import exceptions
+        import numpy.exceptions as exceptions
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
             # Throw runtime error, if the test failed
