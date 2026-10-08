@@ -170,20 +170,14 @@ class finfo:
         if dtype is None:
             raise TypeError("dtype must not be None")
 
-        try:
-            obj = cls._finfo_cache.get(dtype)  # most common path
-            if obj is not None:
-                return obj
-        except TypeError:
-            pass
+        if not isinstance(dtype, numeric.dtype):
+            try:
+                dtype = numeric.dtype(dtype)
+            except TypeError:
+                # In case a float instance was given
+                dtype = numeric.dtype(type(dtype))
 
-        try:
-            dtype = numeric.dtype(dtype)
-        except TypeError:
-            # In case a float instance was given
-            dtype = numeric.dtype(type(dtype))
-
-        obj = cls._finfo_cache.get(dtype)
+        obj = cls._finfo_cache.get((dtype, dtype.type))
         if obj is not None:
             return obj
         dtypes = [dtype]
@@ -192,10 +186,9 @@ class finfo:
         if newdtype is not dtype:
             dtypes.append(newdtype)
             dtype = newdtype
-
-        obj = cls._finfo_cache.get(dtype)
-        if obj is not None:
-            return obj
+            obj = cls._finfo_cache.get((dtype, dtype.type))
+            if obj is not None:
+                return obj
 
         sctype = newdtype.type
         if sctype is not None and not issubclass(sctype, numeric.floating):
@@ -205,17 +198,17 @@ class finfo:
                 dtypes.append(newdtype)
                 dtype = newdtype
 
-                obj = cls._finfo_cache.get(dtype, None)
+                obj = cls._finfo_cache.get((dtype, dtype.type), None)
                 if obj is not None:
                     # the original dtype was not in the cache, but the new
                     # dtype is in the cache. we add the original dtypes to
                     # the cache and return the result
                     for dt in dtypes:
-                        cls._finfo_cache[dt] = obj
+                        cls._finfo_cache[(dt, dt.type)] = obj
                     return obj
         obj = object.__new__(cls)._init(dtype)
         for dt in dtypes:
-            cls._finfo_cache[dt] = obj
+            cls._finfo_cache[(dt, dt.type)] = obj
         return obj
 
     def _init(self, dtype):
@@ -336,6 +329,14 @@ class finfo:
             double-double.
         """
         return self.smallest_normal
+
+    def __eq__(self, other):
+        if not isinstance(other, finfo):
+            return NotImplemented
+        return self.dtype == other.dtype
+
+    def __hash__(self):
+        return hash(self.dtype)
 
 
 @set_module('numpy')

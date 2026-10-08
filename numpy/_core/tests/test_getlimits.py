@@ -100,6 +100,87 @@ class TestFinfo:
     def test_no_none_sense(self):
         assert_raises(TypeError, finfo, None)
 
+    @pytest.fixture
+    def isolated_finfo_cache(self):
+        cache_backup = finfo._finfo_cache.copy()
+        finfo._finfo_cache.clear()
+        try:
+            yield
+        finally:
+            finfo._finfo_cache.clear()
+            finfo._finfo_cache.update(cache_backup)
+
+    def test_regression_gh32947_longdouble_first(self, isolated_finfo_cache):
+        # gh-32947: When longdouble was requested first on Windows/platforms
+        # where longdouble and double dtypes compare equal, a subsequent
+        # float64 finfo request returned the longdouble finfo instance.
+        ld = finfo(np.longdouble)
+        f64 = finfo(np.float64)
+        assert type(f64.eps) is np.float64
+        assert type(ld.eps) is np.longdouble
+        assert f64.dtype.type is np.float64
+        assert ld.dtype.type is np.longdouble
+        assert f64 is not ld
+
+    def test_regression_gh32947_float64_first(self, isolated_finfo_cache):
+        # gh-32947: When float64 was requested first, longdouble must not
+        # receive float64 metadata.
+        f64 = finfo(np.float64)
+        ld = finfo(np.longdouble)
+        assert type(f64.eps) is np.float64
+        assert type(ld.eps) is np.longdouble
+        assert f64.dtype.type is np.float64
+        assert ld.dtype.type is np.longdouble
+        assert f64 is not ld
+
+    def test_regression_gh32947_cache_identity(self, isolated_finfo_cache):
+        # Repeated requests for the same scalar type must reuse cached object
+        f64_1 = finfo(np.float64)
+        f64_2 = finfo(np.float64)
+        assert f64_1 is f64_2
+
+        ld_1 = finfo(np.longdouble)
+        ld_2 = finfo(np.longdouble)
+        assert ld_1 is ld_2
+
+        assert f64_1 is not ld_1
+
+    def test_regression_gh32947_aliases(self, isolated_finfo_cache):
+        # Scalar aliases and string names must map to the intended scalar entry
+        f64 = finfo(np.float64)
+        assert finfo(float) is f64
+        assert finfo(double) is f64
+        assert finfo("float64") is f64
+        assert finfo(np.dtype(np.float64)) is f64
+
+        ld = finfo(np.longdouble)
+        assert finfo("longdouble") is ld
+        assert finfo(np.dtype(np.longdouble)) is ld
+
+    def test_regression_gh32947_complex(self, isolated_finfo_cache):
+        # Complex dtypes must map to their corresponding real component limits
+        c128 = finfo(np.complex128)
+        f64 = finfo(np.float64)
+        assert c128 is f64
+
+        cld = finfo(np.clongdouble)
+        ld = finfo(np.longdouble)
+        assert cld is ld
+        assert c128 is not cld
+
+    def test_regression_gh32947_downstream_clip_and_lstsq(self, isolated_finfo_cache):
+        # Request longdouble first, then ensure float64 eps does not promote
+        # float64 arrays or break downstream linalg.lstsq
+        finfo(np.longdouble)
+        eps = finfo(np.float64).eps
+        assert type(eps) is np.float64
+
+        x = np.clip(np.ones(3, dtype=np.float64), eps, np.inf)
+        assert x.dtype.type is np.float64
+
+        res = np.linalg.lstsq(np.eye(3), x, rcond=None)
+        assert res[0].dtype.type is np.float64
+
 
 class TestIinfo:
     def test_basic(self):
