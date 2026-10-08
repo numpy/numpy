@@ -654,10 +654,11 @@ assert_type(
 
 assert_type(np.vstack([A, A]), npt.NDArray[np.float64])
 assert_type(np.vstack([A, A], dtype=np.float32), npt.NDArray[np.float32])
-assert_type(np.vstack([A, C]), npt.NDArray[Any])
-assert_type(np.vstack([C, C]), npt.NDArray[Any])
+assert_type(np.vstack([A, C]), npt.Array2D[Any])
+assert_type(np.vstack([C, C]), npt.Array2D[Any])
 assert_type(np.vstack([_f32_0d, _f32_0d]), npt.Array2D[np.float32])
 assert_type(np.vstack([_f32_1d, _f32_1d]), npt.Array2D[np.float32])
+assert_type(np.vstack((C, _f32_1d)), npt.Array2D[Any])
 assert_type(np.vstack([_f32_2d, _f32_2d]), npt.Array2D[np.float32])
 assert_type(np.vstack([_f32_3d, _f32_3d]), npt.Array3D[np.float32])
 assert_type(np.vstack([_f32_3d, _f32_3d], dtype=np.int8), npt.Array3D[np.int8])
