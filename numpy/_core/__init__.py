@@ -106,7 +106,7 @@ del envkey
 del env_added
 del os
 
-from . import umath
+import numpy._core.umath as umath
 
 # Check that multiarray,umath are pure python modules wrapping
 # _multiarray_umath and not either of the old c-extension modules
@@ -120,11 +120,16 @@ if not (hasattr(multiarray, '_multiarray_umath') and
         "numpy until none is found, then reinstall this version.")
     raise ImportError(msg.format(path))
 
-from . import numerictypes as nt
+import numpy._core.numerictypes as nt
+
 from .numerictypes import sctypeDict, sctypes
 
 multiarray.set_typeDict(nt.sctypeDict)
-del nt
+# extended precision types exist only on some platforms
+for _name in ("float96", "float128", "complex192", "complex256"):
+    if hasattr(nt, _name):
+        globals()[_name] = getattr(nt, _name)
+del nt, _name
 
 # always loaded (C-defined objects)
 # eager: `memmap` is also the module name, an import of it would replace a proxy
@@ -191,14 +196,12 @@ from .numerictypes import (
     clongdouble,
     complex64,
     complex128,
-    complex256,
     csingle,
     datetime64,
     double,
     float16,
     float32,
     float64,
-    float128,
     half,
     int8,
     int16,
