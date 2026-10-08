@@ -758,6 +758,17 @@ def correlate(a, v, mode='valid'):
     .. math:: c'_k = \sum_n a_{n} \cdot \overline{v_{n+k}}
 
     which is related to :math:`c_k` by :math:`c'_k = c_{-k}`.
+    For example:
+
+    >>> np.correlate([1, 1], [1, 2, 3, 4, 5, 6], "valid")
+    array([11,  9,  7,  5,  3])
+
+    Using NumPy's definition, the valid correlation values correspond to
+    the lags -4, -3, -2, -1, and 0, so the returned values correspond to
+    :math:`[c_{-4}, c_{-3}, c_{-2}, c_{-1}, c_0]`.
+
+    Under the alternative definition, :math:`c'_k = c_{-k}`, the same
+    correlation values are associated with the opposite lag sign.
 
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5)
     because it does not use the FFT to compute the convolution; in that case,
@@ -1835,20 +1846,24 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
     Construct an array by executing a function over each coordinate.
 
-    The resulting array therefore has a value ``fn(x, y, z)`` at
-    coordinate ``(x, y, z)``.
+    The function is called once with one coordinate array for each dimension
+    of `shape` instead of once per coordinate.
+
+    For functions that operate elementwise on array arguments, the resulting
+    array has a value ``fn(x, y, z)`` at coordinate ``(x, y, z)``.
 
     Parameters
     ----------
     function : callable
-        The function is called with N parameters, where N is the rank of
-        `shape`.  Each parameter represents the coordinates of the array
-        varying along a specific axis.  For example, if `shape`
-        were ``(2, 2)``, then the parameters would be
+        The function is called once with N coordinate arrays as parameters,
+        where N is the length of `shape`. Each array represents the
+        coordinates along a specific axis.  For example,
+        if `shape` were ``(2, 2)``, then the parameters would be
         ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
     shape : (N,) tuple of ints
-        Shape of the output array, which also determines the shape of
-        the coordinate arrays passed to `function`.
+        Shape of the coordinate arrays passed to `function`. The shape of the output
+        is determined by the value returned by `function` and may be different from
+        `shape`
     dtype : data-type, optional
         Data-type of the coordinate arrays passed to `function`.
         By default, `dtype` is float.
@@ -1871,6 +1886,12 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     Notes
     -----
     Keywords other than `dtype` and `like` are passed to `function`.
+
+    .. warning::
+        `shape` determines the shape of the coordinate arrays passed to
+        `function`. It does not enforce that the function returns a result
+        with that shape. If `function` returns a scalar, the result is a scalar
+        rather than an array with the given `shape`.
 
     Examples
     --------

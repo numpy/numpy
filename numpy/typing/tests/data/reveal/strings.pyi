@@ -151,9 +151,9 @@ assert_type(np.strings.rindex(AR_U, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.strings.rindex(AR_S, [b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
 assert_type(np.strings.rindex(AR_T, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 
-assert_type(np.strings.translate(AR_U, ""), npt.NDArray[np.str_])
-assert_type(np.strings.translate(AR_S, ""), npt.NDArray[np.bytes_])
-assert_type(np.strings.translate(AR_T, ""), AR_T_alias)
+assert_type(np.strings.translate(AR_U, str.maketrans("a", "b")), npt.NDArray[np.str_])
+assert_type(np.strings.translate(AR_S, None, b""), npt.NDArray[np.bytes_])
+assert_type(np.strings.translate(AR_T, str.maketrans("a", "b")), AR_T_alias)
 
 assert_type(np.strings.slice(AR_U, 1, 5, 2), npt.NDArray[np.str_])
 assert_type(np.strings.slice(AR_S, 1, 5, 2), npt.NDArray[np.bytes_])

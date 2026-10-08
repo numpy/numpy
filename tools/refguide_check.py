@@ -2,28 +2,21 @@
 """
 refguide_check.py [OPTIONS] [-- ARGS]
 
-- Check for a NumPy submodule whether the objects in its __all__ dict
-  correspond to the objects included in the reference guide.
-- Check docstring examples
-- Check example blocks in RST files
+Check for a NumPy submodule whether the objects in its __all__ dict
+correspond to the objects included in the reference guide.
 
 Example of usage::
 
     $ python tools/refguide_check.py
+    $ python tools/refguide_check.py ma        # check only numpy.ma
+    $ python tools/refguide_check.py -v linalg # verbose output
 
 Note that this is a helper script to be able to check if things are missing;
 the output of this script does need to be checked manually.  In some cases
 objects are left out of the refguide for a good reason (it's an alias of
 another function, or deprecated, or ...)
 
-Another use of this helper script is to check validity of code samples
-in docstrings::
-
-    $ python tools/refguide_check.py --doctests ma
-
-or in RST-based documentations::
-
-    $ python tools/refguide_check.py --rst doc/source
+To check docstring examples, use ``spin check-docs`` instead.
 
 """
 import copy

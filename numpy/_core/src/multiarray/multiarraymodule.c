@@ -532,9 +532,8 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
 
 /*
  * Concatenates a list of ndarrays, flattening each in the specified order.
- * `op` is the sequence `arrays` were converted from; any exact Python str in
- * it is converted again with the result descriptor so that trailing nulls
- * survive.
+ * `op` is the sequence `arrays` were converted from; any Python scalar in it
+ * is converted again with the result descriptor.
  */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
@@ -621,8 +620,8 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     }
 
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
-        if (npy_update_operand_if_pystr(&arrays[iarrays], op, iarrays,
-                                        PyArray_DESCR(ret)) < 0) {
+        if (npy_update_operand_if_pyscalar(&arrays[iarrays], op, iarrays,
+                                           PyArray_DESCR(ret), casting) < 0) {
             Py_DECREF(sliding_view);
             Py_DECREF(ret);
             return NULL;
@@ -1993,8 +1992,8 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
     if (src == NULL) {
         goto fail;
     }
+    /* borrowed, `src` keeps it alive */
     PyArray_DTypeMeta *DType = NPY_DTYPE(PyArray_DESCR(src));
-    Py_INCREF(DType);
     int is_pyscalar = npy_mark_tmp_array_if_pyscalar(src_obj, src, &DType);
     if (is_pyscalar || npy_mark_tmp_array_if_pystr(src_obj, src)) {
         PyArray_Descr *descr;
@@ -2010,7 +2009,6 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
             descr = npy_find_descr_for_scalar(src_obj, PyArray_DESCR(src), DType,
                                               dst_DType);
         }
-        Py_DECREF(DType);
         if (descr == NULL) {
             goto fail;
         }
@@ -2019,9 +2017,6 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         if (res < 0) {
             goto fail;
         }
-    }
-    else {
-        Py_DECREF(DType);
     }
 
     if (wheremask_in != NULL) {
@@ -4659,7 +4654,7 @@ array__wrapit(PyObject *NPY_UNUSED(self),
     multiarray_umath_state *state = _npy_module_state;
 
     PyObject *conv = PyObject_Vectorcall(
-            (PyObject *)&PyArrayArrayConverter_Type, args, 1, NULL);
+            (PyObject *)state->PyArrayArrayConverter_Type, args, 1, NULL);
     if (conv == NULL) {
         return NULL;
     }
@@ -4914,8 +4909,6 @@ static struct PyMethodDef array_module_methods[] = {
         "indicated by mask."},
     {"bincount", (PyCFunction)arr_bincount,
         METH_FASTCALL | METH_KEYWORDS, NULL},
-    {"_monotonicity", (PyCFunction)arr__monotonicity,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp", (PyCFunction)arr_interp,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"interp_complex", (PyCFunction)arr_interp_complex,
@@ -4936,6 +4929,11 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"_get_all_cast_information", _get_all_cast_information,
+        METH_NOARGS,
+        "Return a list with info on all available casts. Some of the info "
+        "may differ for an actual cast if it uses value-based casting "
+        "(flexible types)."},
     {"_is_view_safe_cast",  (PyCFunction)_is_view_safe_cast,
         METH_FASTCALL, NULL},
     {"_load_from_filelike", (PyCFunction)_load_from_filelike,
@@ -5205,6 +5203,9 @@ multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
     for (int i = 0; i < NPY_ERRMODE_STRING_COUNT; i++) {
         Py_VISIT(state->interned_str.errmode_strings[i]);
     }
+    for (int i = 0; i < NPY_SCALAR_METHOD_COUNT; i++) {
+        Py_VISIT(state->interned_str.scalar_method_names[i]);
+    }
 
 #define NPY_VISIT_FIELD(name) Py_VISIT(state->static_pydata.name);
     NPY_STATIC_PYDATA_FIELDS(NPY_VISIT_FIELD)
@@ -5216,6 +5217,7 @@ multiarray_umath_traverse(PyObject *m, visitproc visit, void *arg)
 
 #define NPY_VISIT_FIELD(name) Py_VISIT(state->name);
     NPY_MODULE_STATE_OBJECT_FIELDS(NPY_VISIT_FIELD)
+    NPY_MODULE_STATE_TYPE_FIELDS(NPY_VISIT_FIELD)
 #undef NPY_VISIT_FIELD
 
 #define NPY_VISIT_FIELD(name) Py_VISIT(state->n_ops.name);
@@ -5236,6 +5238,9 @@ multiarray_umath_clear(PyObject *m)
     for (int i = 0; i < NPY_ERRMODE_STRING_COUNT; i++) {
         Py_CLEAR(state->interned_str.errmode_strings[i]);
     }
+    for (int i = 0; i < NPY_SCALAR_METHOD_COUNT; i++) {
+        Py_CLEAR(state->interned_str.scalar_method_names[i]);
+    }
 
 #define NPY_CLEAR_FIELD(name) Py_CLEAR(state->static_pydata.name);
     NPY_STATIC_PYDATA_FIELDS(NPY_CLEAR_FIELD)
@@ -5247,6 +5252,7 @@ multiarray_umath_clear(PyObject *m)
 
 #define NPY_CLEAR_FIELD(name) Py_CLEAR(state->name);
     NPY_MODULE_STATE_OBJECT_FIELDS(NPY_CLEAR_FIELD)
+    NPY_MODULE_STATE_TYPE_FIELDS(NPY_CLEAR_FIELD)
 #undef NPY_CLEAR_FIELD
 
 #define NPY_CLEAR_FIELD(name) Py_CLEAR(state->n_ops.name);
@@ -5379,11 +5385,10 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
         return -1;
     }
 
-    if (PyType_Ready(&PyArrayFlags_Type) < 0) {
+    if (init_arrayflags_type(m) < 0) {
         return -1;
     }
-    NpyBusDayCalendar_Type.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&NpyBusDayCalendar_Type) < 0) {
+    if (init_busdaycalendar_type(m) < 0) {
         return -1;
     }
 
@@ -5472,11 +5477,11 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     PyDict_SetItemString(d, "broadcast",
                          (PyObject *)&PyArrayMultiIter_Type);
     PyDict_SetItemString(d, "dtype", (PyObject *)&PyArrayDescr_Type);
-    PyDict_SetItemString(d, "flagsobj", (PyObject *)&PyArrayFlags_Type);
+    PyDict_SetItemString(d, "flagsobj", (PyObject *)state->PyArrayFlags_Type);
 
     /* Business day calendar object */
     PyDict_SetItemString(d, "busdaycalendar",
-                            (PyObject *)&NpyBusDayCalendar_Type);
+                            (PyObject *)state->NpyBusDayCalendar_Type);
     set_flaginfo(d);
 
     if (PyType_Ready(&PyArrayMethod_Type) < 0) {
@@ -5514,19 +5519,19 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
         return -1;
     }
 
-    if (PyType_Ready(&PyArrayFunctionDispatcher_Type) < 0) {
+    if (init_array_function_dispatcher_type(m) < 0) {
         return -1;
     }
     PyDict_SetItemString(
             d, "_ArrayFunctionDispatcher",
-            (PyObject *)&PyArrayFunctionDispatcher_Type);
+            (PyObject *)state->PyArrayFunctionDispatcher_Type);
 
-    if (PyType_Ready(&PyArrayArrayConverter_Type) < 0) {
+    if (init_array_converter_type(m) < 0) {
         return -1;
     }
     PyDict_SetItemString(
             d, "_array_converter",
-            (PyObject *)&PyArrayArrayConverter_Type);
+            (PyObject *)state->PyArrayArrayConverter_Type);
 
     if (PyArray_InitializeCasts() < 0) {
         return -1;

@@ -550,7 +550,7 @@ def decode(a, encoding=None, errors=None):
        The name of an encoding
 
     errors : str, optional
-       Specifies how to handle encoding errors
+       Specifies how to handle decoding errors
 
     Returns
     -------
@@ -584,7 +584,7 @@ def decode(a, encoding=None, errors=None):
 @set_module("numpy.strings")
 @array_function_dispatch(_code_dispatcher)
 def encode(a, encoding=None, errors=None):
-    """
+    r"""
     Calls :meth:`str.encode` element-wise.
 
     The set of available codecs comes from the Python standard library,
@@ -1343,8 +1343,8 @@ def replace(a, old, new, count=-1):
         return _replace(a, old, new, count)
 
     a_dt = arr.dtype
-    old = old_arr.astype(old_dtype or a_dt, copy=False)
-    new = new_arr.astype(new_dtype or a_dt, copy=False)
+    old = old_arr.astype(old_dtype or a_dt.char, copy=False)
+    new = new_arr.astype(new_dtype or a_dt.char, copy=False)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
@@ -1591,7 +1591,7 @@ def partition(a, sep):
         return _partition(a, sep)
 
     a = a_arr
-    sep = sep_arr.astype(a_arr.dtype, copy=False)
+    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1664,7 +1664,7 @@ def rpartition(a, sep):
         return _rpartition(a, sep)
 
     a = a_arr
-    sep = sep_arr.astype(a_arr.dtype, copy=False)
+    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)

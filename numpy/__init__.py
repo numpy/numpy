@@ -365,6 +365,7 @@ else:
         min,
         min_scalar_type,
         minimum,
+        minmax,
         mod,
         modf,
         moveaxis,

@@ -127,7 +127,7 @@ supports, so data that is not bytes will be rejected by ``np.array()``:
 Converting between ``StringDType`` and ``ByteStringDType`` happens through
 ``np.strings.encode`` and ``np.strings.decode``. While the ``encode``
 default transitions (see :ref:`backward_compatibility`), the ByteStringDType
-result is requested explicitly:
+result is requested explicitly::
 
     >>> s = np.array(["héllo"], dtype=np.dtypes.StringDType())
     >>> b = np.strings.encode(s, "utf-8", dtype=ByteStringDType())
@@ -141,21 +141,21 @@ Backward compatibility
 
 There is only one major backward compatibility concern: dealing with
 ``np.strings.encode``. The function already exists and supports
-``StringDType``, but sub-optimally in a manner that cannot perserve trailing NUL
+``StringDType``, but sub-optimally in a manner that cannot preserve trailing NUL
 bytes. This presents some awkward backward compatibility concerns for
 this proposal. In the prototype branch, ``np.strings.encode`` emits a
 ``DeprecationWarning`` for StringDType input when the new ``dtype=`` argument is
 unspecified. Until the default flips to ByteStringDType in a later release, its
 behavior is otherwise unchanged: fixed-width ``S`` result, full codec and
 error-mode support, and 0-d arrays for 0-d input. See :ref:`encoding_decoding`
-for more detail and :ref:`open_questions` for whether this deprecation should
-happen.
+for more detail.
 
 Detailed Description
 --------------------
 
 The new dtype is exposed as ``ByteStringDType`` in ``np.dtypes``. The more
 natural name ``BytesDType`` is already taken by the fixed-width ``S`` dtype.
+Like ``StringDType``, it inherits directly from ``np.dtype``.
 
 Like ``StringDType``, it stores variable-length data and records each entry's
 length explicitly, so embedded and trailing NUL bytes survive where the
@@ -166,7 +166,8 @@ cast, which rejects bytes that are not valid UTF-8, the ``S`` to
 Any ``bytes`` instance may be stored, including subclasses like
 ``np.bytes_``, which are stored as their raw bytes. Elements are returned
 as instances of the scalar type described under :ref:`nep58-scalar`.
-Whether to also accept buffer-protocol objects is an open question below.
+Support for buffer-protocol objects such as ``bytearray`` and ``memoryview``
+is deferred to a later iteration.
 
 The ``ByteStringDType`` constructor does not support coercing data to bytes.
 Anything that is not bytes — including ``str`` — raises ``TypeError``.  The
@@ -182,12 +183,11 @@ The supported operations are the same set the fixed-width ``S`` dtype and the
 Python ``bytes`` type support. Search, slicing, lengths, and widths are all
 measured in bytes.
 
-The type code and number are tentative and listed as an `open question
-<open_questions>`_ below: the character ``'R'`` (for *raw* bytes) with
-``NPY_VBYTES = 2057``. No built-in dtype uses ``'R'``, but the character is
-used for the ``rational2`` test dtype, but that is not exposed publicly. The
-``'Y'`` code is also unused as a dtype character, but collides with the
-datetime YEAR unit character.
+The proposed type character is ``'R'`` (for *raw* bytes), with type number
+``NPY_VBYTES = 2057``. No built-in dtype uses ``'R'``, but
+the character is used for the ``rational2`` test dtype, which is not exposed
+publicly. The ``'Y'`` code is also unused as a dtype character, but collides
+with the datetime YEAR unit character.
 
 .. _nep58-scalar:
 
@@ -196,19 +196,20 @@ Scalar type
 
 ByteStringDType gets its own scalar type, ``np.vbytes``: a type that subclasses
 both ``bytes`` and ``np.generic``, holds its own copy of the bytes, and follows
-the implementation of ``np.bytes_``. Non-null entries returns an ``np.vbytes``
-instance for scalar acess and ``na_object`` for a null one; ``.item()`` and
+the implementation of ``np.bytes_``. Scalar access returns an ``np.vbytes``
+instance for a non-null entry and ``na_object`` for a null one; ``.item()`` and
 ``.tolist()`` return plain ``bytes``. ``np.bytes_`` cannot serve as the scalar
 because NumPy needs a distinct scalar type to distinguish from ``np.bytes_``.
 
 NEP 55 chose ``str`` as StringDType's scalar to avoid maintaining a subclass.
-On reflection, this was probably as mistake since it is an exception from the
+On reflection, this was probably a mistake since it is an exception from the
 rest of NumPy and is difficult to capture in NumPy's type stubs.  NumPy `PR
-#28196 <https://github.com/numpy/numpy/pull/28196>`__ now prototyped a
-StringDType scalar (``np.vstr``). Review there converged on two points this NEP
-adopts: the scalar subclasses ``str``, here ``bytes``, as well as
-``np.generic``, and it owns a copy of its data instead of refencing data storing
-references to arena storage.
+#28196 <https://github.com/numpy/numpy/pull/28196>`__ proposes a
+StringDType scalar (``np.vstr``) and remains open. Review there converged on
+two points this NEP adopts: the scalar subclasses ``str``, here ``bytes``,
+as well as ``np.generic``, and it owns a copy of its data instead of retaining
+references to arena storage. StringDType continues to return Python ``str``
+scalars on NumPy ``main``.
 
 .. _nep58-missing-data:
 
@@ -233,13 +234,20 @@ uses ``None``, and the pyarrow pull request for StringDType conversion
 (`apache/arrow#50951 <https://github.com/apache/arrow/pull/50951>`__)
 tests ``None``, a placeholder string, and ``float("nan")``. ``pd.NA`` is a
 pandas object NumPy cannot enumerate, so a closed set of sentinels would
-exclude the arrays pandas produces (see :ref:`nep58-alternatives`).
+exclude the arrays pandas produces (see :ref:`nep58-rejected-ideas`).
 
 Two reasons are specific to this NEP. ``encode`` and ``decode`` propagate
 nulls between the two dtypes (:ref:`nep58-null-round-trip`), so the bytes
 side needs somewhere to put them. The missing-data machinery is shared, so
 leaving it out of ByteStringDType would remove capability without
 removing code.
+
+The shared implementation follows StringDType's corrected missing-value
+semantics: comparisons involving a NaN-like missing value return ``False``
+except for inequality, which returns ``True``. Non-NaN object sentinels
+support equality and inequality, with nulls equal to other nulls and distinct
+from empty strings; ordered comparisons raise. These StringDType fixes
+landed in NumPy `PR #32564 <https://github.com/numpy/numpy/pull/32564>`__.
 
 The stubs parametrize ``StringDType`` by the type of ``na_object``, and
 ``ByteStringDType`` is typed the same way. That is exact for ``None``,
@@ -297,17 +305,18 @@ array (``arr[i] = b"q\0"``, including ``np.bytes_`` and other ``bytes``
 subclass values) preserve trailing NULs; setitem accepts any ``bytes``
 instance while the operand mechanism replaces only exact ``bytes``.
 
-The rule these mechanisms implement, and the release gate for the
-``bytes`` side, is: when an exact ``bytes`` scalar reaches an operation
-whose explicit or resolved target is ByteStringDType, the value is packed
-from the original object or the operation fails. It is never routed
-through fixed-width ``S`` first. Value-based conversions that infer ``S``
-before the target descriptor is known (``np.full`` fill values,
-``np.copyto`` scalars, ``np.where``, untyped ``np.concatenate`` operands)
-still strip trailing NULs in the prototype. NumPy `PR #32356
-<https://github.com/numpy/numpy/pull/32356>`__ fixes this for StringDType
-with NEP-50-style promotion outside ufuncs, and the ``bytes`` follow-up
-generalizes it.
+The rule these mechanisms implement is: when an exact ``bytes`` scalar
+reaches an operation whose explicit or resolved target is ByteStringDType,
+the value is packed from the original object or the operation fails.
+It is never routed through fixed-width ``S`` first. The prototype also
+preserves trailing NULs in exact ``bytes`` scalar operands to ``np.full``,
+``np.copyto``, ``np.where``, flattened ``np.concatenate``, and ``np.choose``
+when the target is ByteStringDType. It extends the shared scalar-conversion
+machinery added for StringDType in NumPy `PR #32356
+<https://github.com/numpy/numpy/pull/32356>`__. NumPy `PR #32497
+<https://github.com/numpy/numpy/pull/32497>`__ subsequently extended scalar
+handling in ``concatenate`` and ``choose``; the prototype reuses those
+paths for bytes.
 
 Python-level wrappers that convert untyped arguments with ``np.asarray``
 before any target is known (``np.append``, ``np.isin`` and
@@ -331,7 +340,8 @@ If the sentinel itself does not convert — ``decode`` on an array whose
 when every array element converts. Keeping the unconverted ``bytes``
 sentinel on the result instead would demote it from a string sentinel to
 an opaque object sentinel. String-sentinel nulls sort and compare like
-ordinary strings; object-sentinel nulls make those operations raise.
+ordinary strings; non-NaN object-sentinel nulls support equality and
+inequality, but sorting and ordered comparisons raise.
 
 The StringDType ``coerce`` parameter does not survive a round trip:
 ByteStringDType descriptors cannot carry it, so ``decode`` always produces
@@ -388,12 +398,23 @@ Casts
 ^^^^^
 
 The prototype registers the casts below. Casting levels follow
-StringDType's, except that the fixed-width ``S`` to ByteStringDType cast
-is *safe*: ``S`` cannot hold trailing NULs, so the cast loses nothing.
-NumPy `PR #32095 <https://github.com/numpy/numpy/pull/32095>`__ makes the
+StringDType's, including the *safe* fixed-width ``S`` to ByteStringDType
+cast: ``S`` cannot hold trailing NULs, so the cast loses nothing.
+NumPy `PR #32095 <https://github.com/numpy/numpy/pull/32095>`__ made the
 fixed-width to StringDType casts safe on the same grounds. Casts to and
 from numeric, datetime, ``U``, and StringDType are not registered, so
 ``astype`` raises ``TypeError`` for them.
+
+Conversions that inspect array values, such as ``arr.astype("S")`` and
+``np.array(arr, dtype="V")``, infer an unspecified destination width from
+the longest byte payload, including embedded and trailing NULs and the
+representation used for missing values. This extends the StringDType
+size inference added in NumPy `PR #32097
+<https://github.com/numpy/numpy/pull/32097>`__. An explicit width still
+truncates longer values. Descriptor-only resolution, such as
+``np.concatenate([arr, arr], dtype="S")``, cannot infer a width and raises
+``TypeError``. Fixed-width ``S`` still strips trailing NULs on scalar access,
+regardless of the inferred width.
 
 .. list-table::
    :header-rows: 1
@@ -413,17 +434,17 @@ from numeric, datetime, ``U``, and StringDType are not registered, so
    * - ByteStringDType to ``S``
      - same kind
      - a null is written as the sentinel bytes or its ``repr``; values
-       longer than the target width truncate; an unsized ``S`` raises
-       ``TypeError``
+       longer than an explicit target width truncate; array-value
+       conversions infer an unspecified width
    * - ``V`` to ByteStringDType and back
      - same kind
-     - as for ``S``, with no truncation of trailing NULs; an unsized or
+     - as for ``S``, preserving trailing NULs within the target width;
        structured ``V`` raises ``TypeError``
    * - bool to ByteStringDType and back
      - same kind
      - a NaN-like null is ``True`` and ``None`` is ``False``; a ``bytes``
-       sentinel follows its own truthiness once the prerequisite bool-cast
-       fix lands (see :ref:`nep58-prerequisites`)
+       sentinel follows its own truthiness, including a nonempty sentinel
+       made entirely of NUL bytes
 
 Numeric casts
 ^^^^^^^^^^^^^
@@ -466,30 +487,6 @@ other, NumPy's rule for non-promotable dtypes applies: ``==`` and ``!=``
 return all-``False`` and all-``True`` arrays, while ``np.equal`` itself and
 the ordering operators raise ``TypeError``.
 
-.. _open_questions:
-
-Open questions
-==============
-
-Decisions the prototype makes provisionally, for review to ratify:
-
-1. The type character ``'R'`` and the name ``ByteStringDType``.
-2. Should setitem also accept buffer-protocol objects (``bytearray``,
-   ``memoryview``)? I prefer to defer support to a later iteration to
-   reduce the complexity of the initial version.
-3. The ``np.strings.encode`` transition for StringDType input: this NEP
-   proposes emitting a ``DeprecationWarning`` now and flipping the default
-   result dtype to ByteStringDType in a later release, after the full
-   encoding/errors matrix lands. The flip also changes values whose
-   encoding ends in NUL bytes (see :ref:`encoding_decoding`). Ratify the
-   flip and its timing, or keep the variable-width result opt-in via
-   ``dtype=`` indefinitely?
-4. The name of the scalar type. The prototype uses ``np.vbytes``, since
-   ``np.bytes_`` belongs to the fixed-width dtype.
-5. Whether to expose a shared abstract base class for StringDType and
-   ByteStringDType in ``np.dtypes``. I prefer not to until a need for
-   such a thing arises.
-
 Reference implementation
 ========================
 
@@ -502,31 +499,21 @@ allocator, and dtype machinery over both DTypes. The test suite covers
 the scalar type, ``np.bytes_`` parity, the encode/decode bridge, and the
 cross-dtype comparison semantics.
 
-.. _nep58-prerequisites:
-
 Related Issues
 ==============
 
-These StringDType changes or issues are for problems shared with
-ByteStringDType.
-
-* NumPy `PR #31825 <https://github.com/numpy/numpy/pull/31825>`__ makes float
-  and complex NaN values map to a NaN-like ``na_object`` consistently in
-  casts and setitem.
-* NumPy `PR #32356 <https://github.com/numpy/numpy/pull/32356>`__ adds the
-  NEP-50-style string promotion outside ufuncs described above, which the
-  planned ``bytes`` follow-up mirrors.
-* numpy `issue #32431 <https://github.com/numpy/numpy/issues/32431>`_ tracks
-  ``np.append``, ``np.isin``, ``np.select``, and ``np.pad`` not losing
-  NUL bytes for python scalar or python sequence operands.
+NumPy `issue #32431 <https://github.com/numpy/numpy/issues/32431>`__ remains
+open and tracks trailing-NUL loss from Python scalar or sequence operands
+in wrappers including ``np.append``, ``np.isin``, ``np.select``, and
+``np.pad``.
 
 Acceptance and release plan
 ===========================
 
 Accepting this NEP ratifies the design. The prototype can be merged at that
 point. The NEP becomes Final when the scalar type, the deferred operations,
-the numeric casts, and the ``bytes`` scalar promotion for value-based
-conversions have landed.
+the numeric casts, and the prototype's ``bytes`` scalar promotion for
+value-based conversions have landed.
 
 .. _nep58-alternatives:
 
@@ -545,6 +532,30 @@ function templates over the policy. Nothing in this proposal blocks
 that; a future refactor could adopt it independently. I elected not to do
 this to simplify the prototype implementation.
 
+.. _nep58-rejected-ideas:
+
+Rejected ideas
+--------------
+
+**Omitting missing-data support for static typing.** ByteStringDType
+preserves StringDType's support for arbitrary ``na_object`` values rather
+than removing that support to fit current limitations in static typing.
+
+`PEP 586's discussion of illegal Literal parameters
+<https://peps.python.org/pep-0586/#illegal-parameters-for-literal-at-type-check-time>`__
+explicitly deferred float literal support for simplicity, citing the
+difficulty of representing infinity and NaN and the expectation that APIs
+would rarely depend on a float parameter's value. The `current typing
+specification
+<https://typing.python.org/en/latest/spec/literal.html#illegal-parameters-for-literal-at-type-check-time>`__
+still excludes float literals. StringDType and ByteStringDType now give
+the typing community and upstream Python a concrete use case for
+revisiting that deferral: a NaN missing-data sentinel needs to be
+distinguishable from ordinary float values in the element type.
+Describing the sentinel as ``float`` loses that distinction.
+The preferred resolution is to extend Python's typing specification to
+express this existing runtime behavior precisely.
+
 **A closed set of missing-data sentinels.** Restricting ``na_object`` to
 ``None`` and NaN, or to an enum, was suggested so that an array element
 has an exact static type. The dtype's type parameter already records the
@@ -552,6 +563,12 @@ sentinel's type and only NaN types imprecisely, while every sentinel
 outside the set, ``pd.NA`` included, would become unrepresentable. An
 enum stored as the element would also defeat the checks users choose NaN
 for, such as ``np.isnan`` and ``x != x``.
+
+**Representing missing values with the bytes scalar.** Missing entries
+return the configured ``na_object`` directly, as they do for StringDType.
+The ``np.vbytes`` scalar represents nonmissing bytes values; it does not
+wrap missing-value sentinels to give all array elements the same scalar
+type.
 
 Discussion
 ----------

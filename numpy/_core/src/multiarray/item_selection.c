@@ -409,8 +409,11 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         return NULL;
     }
 
-    indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
-                                                         NPY_INTP, 0, 0);
+    indices = (PyArrayObject *)PyArray_FromAny(indices0,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 0,
+            NPY_ARRAY_SAME_KIND_CASTING | NPY_ARRAY_DEFAULT,
+            NULL);
     if (indices == NULL) {
         goto fail;
     }
@@ -906,7 +909,12 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     NPY_cast_info cast_info;
     NPY_ARRAYMETHOD_FLAGS flags;
 
-    repeats = (PyArrayObject *)PyArray_ContiguousFromAny(op, NPY_INTP, 0, 1);
+    repeats = (PyArrayObject *)PyArray_FromAny(op,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 1,
+            NPY_ARRAY_SAME_KIND_CASTING | NPY_ARRAY_DEFAULT,
+            NULL);
+
     if (repeats == NULL) {
         return NULL;
     }
@@ -1022,7 +1030,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
 {
     PyArrayObject *obj = NULL;
     PyArray_Descr *dtype;
-    int n, elsize;
+    int n;
+    npy_intp elsize;
     npy_intp i;
     char *ret_data;
     PyArrayObject **mps, *ap;
@@ -1047,7 +1056,11 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
             goto fail;
         }
     }
-    ap = (PyArrayObject *)PyArray_FROM_OT((PyObject *)ip, NPY_INTP);
+    ap = (PyArrayObject *)PyArray_FromAny((PyObject *)ip,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 0,
+            NPY_ARRAY_SAME_KIND_CASTING,
+            NULL);
     if (ap == NULL) {
         goto fail;
     }
@@ -1929,8 +1942,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     npy_intp astride, rstride, *iptr;
     int nd;
     int needcopy = 0;
-    int elsize;
-    int maxelsize;
+    npy_intp elsize;
+    npy_intp maxelsize;
     int object = 0;
     PyArray_ArgSortFunc *argsort;
     NPY_BEGIN_THREADS_DEF;
@@ -2294,7 +2307,8 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         /* convert to known integer size */
         sorter = (PyArrayObject *)PyArray_FromArray(ap3,
                                     PyArray_DescrFromType(NPY_INTP),
-                                    NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED);
+                                    NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED |
+                                    NPY_ARRAY_SAME_KIND_CASTING);
         if (sorter == NULL) {
             PyErr_SetString(PyExc_ValueError,
                         "could not parse sorter argument");

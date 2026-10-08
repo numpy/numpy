@@ -1,3 +1,7 @@
+from typing import Final
+
+from numpy._pytesttester import PytestTester
+
 from . import core, extras
 from .core import (
     MAError,
@@ -128,6 +132,7 @@ from .core import (
     min,
     minimum,
     minimum_fill_value,
+    minmax,
     mod,
     multiply,
     mvoid,
@@ -360,6 +365,7 @@ __all__ = [
     "min",
     "minimum",
     "minimum_fill_value",
+    "minmax",
     "mod",
     "multiply",
     "mvoid",
@@ -458,3 +464,5 @@ __all__ = [
     "vander",
     "vstack",
 ]
+
+test: Final[PytestTester] = ...

@@ -1,0 +1,4 @@
+``logaddexp`` and ``logaddexp2`` no longer warn for NaN inputs
+--------------------------------------------------------------
+`numpy.logaddexp` and `numpy.logaddexp2` now propagate NaN inputs without
+emitting an invalid floating-point warning.

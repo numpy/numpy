@@ -5,6 +5,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <ctype.h>
 
 #include "numpy/arrayobject.h"
 #include "arrayobject.h"
@@ -279,7 +280,7 @@ fromfile_skip_separator(FILE **fp, const char *sep, void *NPY_UNUSED(stream_data
 
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
-                             npy_intp instrides, npy_intp N, int elsize)
+                             npy_intp instrides, npy_intp N, npy_intp elsize)
 {
     npy_intp i;
     char *tout = dst;
@@ -1207,6 +1208,11 @@ _dtype_from_buffer_3118(PyObject *memoryview)
          * TODO: void would make more sense here, as it wouldn't null
          *       terminate.
          */
+        if (view->itemsize > NPY_MAX_INT) {
+            PyErr_SetString(PyExc_ValueError,
+                    "buffer itemsize is too large for a string dtype");
+            return NULL;
+        }
         descr = PyArray_DescrNewFromType(NPY_STRING);
         if (descr == NULL) {
             return NULL;
@@ -2221,7 +2227,9 @@ PyArray_FromInterface(PyObject *origin)
     }
     if (result == 0) {
         /* Shape must be specified when 'data' is specified */
-        int result = PyDict_ContainsString(iface, "data");
+        PyObject *data_obj;
+        int result = PyDict_GetItemStringRef(iface, "data", &data_obj);
+        Py_XDECREF(data_obj);
         if (result < 0) {
             return NULL;
         }
@@ -3469,7 +3477,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
 {
     PyArrayObject *r;
     npy_off_t start, numbytes;
-    int elsize;
+    npy_intp elsize;
 
     if (num < 0) {
         int fail = 0;
@@ -3728,7 +3736,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     Py_buffer view;
     Py_ssize_t ts;
     npy_intp s, n;
-    int itemsize;
+    npy_intp itemsize;
     int writeable = 1;
 
     if (type == NULL) {
@@ -3815,7 +3823,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         n = s/itemsize;
     }
     else {
-        if (s < n*itemsize) {
+        if (itemsize != 0 && n > s / itemsize) {
             PyErr_SetString(PyExc_ValueError,
                             "buffer is smaller than requested"\
                             " size");
@@ -3865,7 +3873,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
                    npy_intp num, char *sep)
 {
-    int itemsize;
+    npy_intp itemsize;
     PyArrayObject *ret;
     npy_bool binary;
 
@@ -3903,7 +3911,7 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
             num = slen/itemsize;
         }
         else {
-            if (slen < num*itemsize) {
+            if (num > slen / itemsize) {
                 PyErr_SetString(PyExc_ValueError,
                                 "string is smaller than " \
                                 "requested size");

@@ -1,6 +1,7 @@
 import builtins
 import collections.abc
 import functools
+import math
 import operator
 import re
 import warnings
@@ -11,7 +12,6 @@ from numpy._core import overrides, transpose
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import any, mean, nonzero, partition, ravel, sum
 from numpy._core.multiarray import (
-    _monotonicity,
     _place,
     bincount,
     interp as compiled_interp,
@@ -3905,7 +3905,7 @@ def _ureduce(a, func, keepdims=False, **kwargs):
                 # move axis that should not be reduced to front
                 a = np.moveaxis(a, keep, range(nkeep))
                 # merge reduced axis
-                return a.reshape(a.shape[:nkeep] + (-1,))
+                return a.reshape(a.shape[:nkeep] + (math.prod(a.shape[nkeep:]),))
 
             a = reshape_arr(a)
 
@@ -5797,9 +5797,15 @@ def digitize(x, bins, right=False):
     # here for compatibility, searchsorted below is happy to take this
     if np.issubdtype(x.dtype, _nx.complexfloating):
         raise TypeError("x may not be complex")
-
-    mono = _monotonicity(bins)
-    if mono == 0:
+    if np.issubdtype(bins.dtype, _nx.complexfloating):
+        raise TypeError("bins may not be complex")
+    if bins.ndim != 1:
+        raise ValueError("bins must be one-dimensional")
+    if (bins[1:] >= bins[:-1]).all():
+        mono = 1
+    elif (bins[1:] <= bins[:-1]).all():
+        mono = -1
+    else:
         raise ValueError("bins must be monotonically increasing or decreasing")
 
     # this is backwards because the arguments below are swapped

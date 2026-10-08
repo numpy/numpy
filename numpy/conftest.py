@@ -244,7 +244,6 @@ if HAVE_SCPDT:
         'c-info.reduction-loop-tutorial.rst': '',
         'basics.interoperability.rst': 'needs pandas',
         'basics.dispatch.rst': 'errors out in /testing/overrides.py',
-        'basics.subclassing.rst': '.. testcode:: admonitions not understood',
         'misc.rst': 'manipulates warnings',
     }
 

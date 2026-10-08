@@ -1,0 +1,23 @@
+`numpy.ndarray` shape-typing
+----------------------------
+The methods and operators of `numpy.ndarray` now use the shape-type of the array to
+infer the shape-type of the result. This includes indexing, iteration, reductions along
+an ``axis``, and the arithmetic, bitwise, and comparison operators.
+Due to limitations of Python's type system, binary operators usually only do so for
+scalar operands and for arrays with the same shape-type.
+
+.. code-block:: python
+
+    x = np.ones((2, 3))
+
+    reveal_type(x[0])
+    # before: Any
+    # after:  ndarray[tuple[int], dtype[float64]]
+
+    reveal_type(x.sum(axis=0))
+    # before: ndarray[tuple[Any, ...], dtype[float64]]
+    # after:  ndarray[tuple[int], dtype[float64]]
+
+    reveal_type(x + x)
+    # before: ndarray[tuple[Any, ...], dtype[float64]]
+    # after:  ndarray[tuple[int, int], dtype[float64]]

@@ -45,6 +45,8 @@ by nature!), however if you prefer to discuss in a more private space first,
 you can do so on Slack (see `numpy.org/contribute
 <https://numpy.org/contribute/>`__ for details).
 
+.. _development-process-summary:
+
 Development process - summary
 =============================
 

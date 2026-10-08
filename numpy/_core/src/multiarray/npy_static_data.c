@@ -92,6 +92,17 @@ intern_strings(void)
     INTERN_STRING(tzinfo, "tzinfo");
     INTERN_STRING(utcoffset, "utcoffset");
     INTERN_STRING(total_seconds, "total_seconds");
+    INTERN_STRING(reduce, "reduce");
+    INTERN_STRING(accumulate, "accumulate");
+
+    static const char *const method_name_strings[] = {
+#define NPY_SCALAR_METHOD_NAME_STRING(name) #name,
+        NPY_SCALAR_METHOD_NAMES(NPY_SCALAR_METHOD_NAME_STRING)
+#undef NPY_SCALAR_METHOD_NAME_STRING
+    };
+    for (int i = 0; i < NPY_SCALAR_METHOD_COUNT; i++) {
+        INTERN_STRING(scalar_method_names[i], method_name_strings[i]);
+    }
     return 0;
 }
 
@@ -219,6 +230,22 @@ initialize_static_globals(void)
 
     static_pydata->wrapit_kwnames_to_scalar = PyTuple_Pack(1, interned_str->to_scalar);
     if (static_pydata->wrapit_kwnames_to_scalar == NULL) {
+        return -1;
+    }
+
+    static_pydata->kwnames_dtype = PyTuple_Pack(1, interned_str->dtype);
+    if (static_pydata->kwnames_dtype == NULL) {
+        return -1;
+    }
+
+    static_pydata->kwnames_out = PyTuple_Pack(1, interned_str->out);
+    if (static_pydata->kwnames_out == NULL) {
+        return -1;
+    }
+
+    static_pydata->kwnames_dtype_out = PyTuple_Pack(
+            2, interned_str->dtype, interned_str->out);
+    if (static_pydata->kwnames_dtype_out == NULL) {
         return -1;
     }
 

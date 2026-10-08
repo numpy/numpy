@@ -18,6 +18,8 @@
 #include "templ_common.h"
 #include "ctors.h"
 
+#include <stdio.h>
+
 
 /*NUMPY_API
  * Removes an axis from iteration. This requires that NPY_ITER_MULTI_INDEX
@@ -2296,7 +2298,7 @@ npyiter_clear_buffers(NpyIter *iter)
         /* Buffer cannot be re-used (not that we should ever try!) */
         op_itflags[iop] &= ~NPY_OP_ITFLAG_BUF_REUSABLE;
 
-        int itemsize = dtypes[iop]->elsize;
+        npy_intp itemsize = dtypes[iop]->elsize;
         if (transferinfo[iop].clear.func(NULL,
                 dtypes[iop], *buffers, NBF_SIZE(bufferdata), itemsize,
                 transferinfo[iop].clear.auxdata) < 0) {

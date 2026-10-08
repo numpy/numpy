@@ -127,6 +127,8 @@ significant changes should be called out. For patch releases the changelog text
 may also be appended, but not for the initial release as it is too long. Check
 previous release notes to see how this is done.
 
+Replace the ``*Unreleased.*`` line below the release notes title with the expected release date, for example ``*Released on 2024-06-15.*``.
+
 
 Test the wheel builds
 ---------------------

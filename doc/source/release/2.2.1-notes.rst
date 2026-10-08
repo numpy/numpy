@@ -4,6 +4,8 @@
 NumPy 2.2.1 Release Notes
 ==========================
 
+*Released on 2024-12-21.*
+
 NumPy 2.2.1 is a patch release following 2.2.0. It fixes bugs found after the
 2.2.0 release and has several maintenance pins to work around upstream changes.
 
