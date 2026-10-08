@@ -327,6 +327,13 @@ def hstack(
     dtype: DTypeLike,
     casting: _CastingKind = "same_kind",
 ) -> Array1D[Any]: ...
+@overload  # <=1d ?
+def hstack(
+    tup: Sequence[_To1D[np.generic] | complex | Sequence[complex]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> Array1D[Any]: ...
 @overload  # ?d
 def hstack[ScalarT: np.generic](
     tup: Sequence[_ArrayLike[ScalarT]],
