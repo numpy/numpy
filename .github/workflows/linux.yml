@@ -129,7 +129,7 @@ jobs:
         set -xe
         sudo apt update
         sudo apt install gfortran libgfortran5
-        python -m pip install -r requirements/ci32_requirements.txt
+        python -m pip install --group openblas32
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
 
@@ -251,7 +251,7 @@ jobs:
     - name: Install gfortran and setup OpenBLAS (sdist build)
       run: |
         set -xe
-        python -m pip install -r requirements/ci_requirements.txt
+        python -m pip install --group openblas64
         mkdir -p ./.openblas
         python -c"import scipy_openblas64 as ob64; print(ob64.get_pkg_config())" > ./.openblas/scipy-openblas.pc
     - name: Build a wheel via an sdist
@@ -444,7 +444,7 @@ jobs:
         python3.12 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip
-        pip install -r requirements/ci32_requirements.txt
+        pip install --group openblas32
         pip install -r requirements/test_requirements.txt
 
         spin config-openblas --with-scipy-openblas=32

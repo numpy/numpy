@@ -70,7 +70,6 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install -r requirements/ci_requirements.txt
         pip install -r requirements/test_requirements.txt
         # xdist captures stdout/stderr, but we want the ASAN output
         pip uninstall -y pytest-xdist
@@ -103,9 +102,9 @@ jobs:
           git submodule update --init --recursive
       - name: Get OpenBLAS version
         run: |
-          version=$(sed -nE 's/^scipy-openblas64==([0-9]+\.[0-9]+\.[0-9]+)\..*$/\1/p' requirements/ci_requirements.txt)
+          version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['dependency-groups']['openblas64'][0].split('==')[1])"
           if [ -z "$version" ]; then
-            echo "Could not parse the scipy-openblas64 pin from requirements/ci_requirements.txt"
+            echo "Could not obtain the scipy-openblas64 pin from pyproject.toml"
             exit 1
           fi
           echo "OPENBLAS_VERSION=v$version"
@@ -218,7 +217,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements/build_requirements.txt
-          pip install -r requirements/ci_requirements.txt
           pip install -r requirements/test_requirements.txt
           # xdist captures stdout/stderr, but we want the ASAN output
           pip uninstall -y pytest-xdist

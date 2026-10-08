@@ -78,7 +78,7 @@ jobs:
             . venv/bin/activate
             pip install --progress-bar=off -r requirements/test_requirements.txt \
                -r requirements/build_requirements.txt \
-               -r requirements/ci_requirements.txt
+               --group openblas64
             # get newer, pre-release versions of critical packages
             pip install --progress-bar=off --pre -r requirements/doc_requirements.txt
             # then install numpy HEAD, which will override the version installed above
