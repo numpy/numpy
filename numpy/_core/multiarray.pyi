@@ -1089,6 +1089,18 @@ def array(
     ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[np.void]: ...
+@overload  # ndarray, dtype=<unknown>
+def array[ShapeT: _Shape](
+    object: np.ndarray[ShapeT],
+    dtype: DTypeLike,
+    *,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: L[0] = 0,
+    ndmax: int = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
 @overload  # 0d, dtype=<known>
 def array[ScalarT: _ScalarNotObject](
     object: complex | str | np.generic,
