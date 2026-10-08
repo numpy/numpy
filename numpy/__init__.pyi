@@ -6531,19 +6531,19 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         axis: None = None,
     ) -> ndarray[tuple[int], _DTypeT_co]: ...
     @overload  # >=1d, axis=<given>
-    def repeat[DTypeT: dtype, ShapeT: tuple[int, *tuple[int, ...]]](
-        self: ndarray[ShapeT, DTypeT],
+    def repeat[ArrayT: ndarray[_AtLeast1D, Any]](
+        self: ArrayT,
         repeats: _ArrayLikeInt_co,
         /,
         axis: SupportsIndex,
-    ) -> ndarray[ShapeT, DTypeT]: ...
+    ) -> ArrayT: ...
     @overload  # 0d, axis=<given>
     def repeat[DTypeT: dtype](
-        self: ndarray[tuple[()], DTypeT],
+        self: ndarray[_0D, DTypeT],
         repeats: _ArrayLikeInt_co,
         /,
         axis: SupportsIndex,
-    ) -> ndarray[tuple[int], DTypeT]: ...
+    ) -> ndarray[_1D, DTypeT]: ...
 
     # keep in sync with `ma.MaskedArray.flatten` and `ma.MaskedArray.ravel`
     def flatten(self, /, order: _OrderKACF = "C") -> ndarray[tuple[int], _DTypeT_co]: ...

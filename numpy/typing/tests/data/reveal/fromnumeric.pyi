@@ -112,6 +112,9 @@ assert_type(np.repeat(f, 1), np.ndarray[tuple[int], np.dtype[Any]])
 assert_type(np.repeat(AR_b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.repeat(AR_f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
 assert_type(np.repeat(AR_f4, 1, axis=0), npt.NDArray[np.float32])
+assert_type(np.repeat(AR_f4_2d, 1, axis=0), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.repeat(AR_i8_0d, 1, axis=0), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(np.repeat(AR_subclass, 1, axis=0), NDArraySubclass)
 
 # TODO: array_bdd tests for np.put()
 

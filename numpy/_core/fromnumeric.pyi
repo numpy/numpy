@@ -621,26 +621,38 @@ def choose[ArrayT: np.ndarray](
     mode: _ModeKind = "raise",
 ) -> ArrayT: ...
 
-# keep in sync with `ma.core.repeat`
-@overload
+#
+@overload  # ?d T, axis=None
 def repeat[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     repeats: _ArrayLikeInt_co,
     axis: None = None,
 ) -> Array1D[ScalarT]: ...
-@overload
+@overload  # >=1d, axis=<given>
+def repeat[ArrayT: np.ndarray[tuple[int, *tuple[int, ...]], Any]](
+    a: ArrayT,
+    repeats: _ArrayLikeInt_co,
+    axis: SupportsIndex,
+) -> ArrayT: ...
+@overload  # 0d, axis=<given>
+def repeat[DTypeT: np.dtype](
+    a: np.ndarray[tuple[()], DTypeT],
+    repeats: _ArrayLikeInt_co,
+    axis: SupportsIndex,
+) -> np.ndarray[tuple[int], DTypeT]: ...
+@overload  # ?d T, axis=<given>
 def repeat[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     repeats: _ArrayLikeInt_co,
     axis: SupportsIndex,
 ) -> NDArray[ScalarT]: ...
-@overload
+@overload  # ?d, axis=None
 def repeat(
     a: ArrayLike,
     repeats: _ArrayLikeInt_co,
     axis: None = None,
 ) -> Array1D[Any]: ...
-@overload
+@overload  # ?d, axis=<given>
 def repeat(
     a: ArrayLike,
     repeats: _ArrayLikeInt_co,
