@@ -1419,6 +1419,16 @@ def concatenate[ShapeT: _Shape](
     dtype: DTypeLike,
     casting: _CastingKind | None = "same_kind",
 ) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # [1d]
+def concatenate(
+    arrays: Sequence[Array1D[Any] | Sequence[complex]],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind | None = "same_kind",
+) -> Array1D[Any]: ...
 @overload  # ?d  (workaround overload)
 def concatenate[ScalarT: np.generic](
     arrays: _ArrayJustND[ScalarT],
