@@ -1,61 +1,3 @@
-.. currentmodule:: numpy
-
-=========================
-NumPy 2.5.4 Release Notes
-=========================
-
-*Released on 2026-10-10.*
-
-NumPy 2.5.4 is a patch release that fixes bugs discovered after the 2.5.3
-release. Highlights are:
-
-- Many typing fixes and improvements,
-- A workaround for the MSVC 19.51 bug, see below.
-
-This release supports Python versions 3.12-3.15.
-
-
-Improvements
-============
-
-- ``numpy.linalg.svd`` and ``numpy.linalg.lstsq`` now raise for inputs containing
-  infinities instead of returning garbage results.
-- Fixed hangs in ``numpy.linalg.svd`` and ``numpy.linalg.lstsq`` for certain inputs
-  containing infinities for recent versions of some LAPACK implementations. 
-- ``numpy.linalg.cond`` now handles non-finite inputs more consistently.
-
-  (`gh-32593 <https://github.com/numpy/numpy/pull/32593>`__)
-
-StringDType hashing with NaN sentinels
---------------------------------------
-``StringDType`` instances with equivalent floating-point NaN sentinels now
-have equal hashes. Previously, distinct NaN objects could produce equal
-dtype instances with different hashes, causing dictionary lookups and set
-deduplication to fail.
-
-(`gh-32563 <https://github.com/numpy/numpy/pull/32563>`__)
-
-
-Changes
-=======
-
-``MaskedArray`` resets a fill_value that cannot be represented in a new dtype
------------------------------------------------------------------------------
-A fill_value copied from a source array is now reset to the default fill_value
-for the new dtype when it cannot be represented in that dtype.  Previously the
-copied value could be stale: ufuncs that change dtype left the result holding a
-fill_value typed for the old dtype, which raised a ``TypeError`` only when
-something later validated it (such as ``.view()``), and a floating point
-fill_value that overflows an integer dtype was kept as an out-of-range value
-together with a ``RuntimeWarning``.  Both now fall back to the default,
-including when a masked array is passed to ``MaskedArray`` with a different
-``dtype``.  A fill_value given explicitly by the user is still validated and
-raises as before.  This can now raise a ``ComplexWarning`` if the fill_value is
-complex and the new dtype is real.
-
-(`gh-32508 <https://github.com/numpy/numpy/pull/32508>`__)
-(`gh-32562 <https://github.com/numpy/numpy/pull/32562>`__)
-
 
 Contributors
 ============
@@ -72,7 +14,6 @@ names contributed a patch for the first time.
 * Nathan Goldbaum
 * Sebastian Berg
 * Yeonho Kim
-
 
 Pull requests merged
 ====================
@@ -96,4 +37,3 @@ A total of 17 pull requests were merged for this release.
 * `#32888 <https://github.com/numpy/numpy/pull/32888>`__: MAINT: Update vendored-meson to match main.
 * `#32904 <https://github.com/numpy/numpy/pull/32904>`__: TYP: Backport a number of typing updates.
 * `#32956 <https://github.com/numpy/numpy/pull/32956>`__: TYP: Various typing fixes and improvements.
-
