@@ -418,6 +418,7 @@ from .fromnumeric import (
     max,
     mean,
     min,
+    minmax,
     ndim,
     nonzero,
     partition,
