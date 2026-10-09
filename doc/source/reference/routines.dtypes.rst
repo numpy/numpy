@@ -71,6 +71,23 @@ Others
 .. attribute:: ObjectDType
                VoidDType
 
+Abstract DTypes
+---------------
+
+These classes cannot be instantiated.  They mirror the numeric part of the
+:ref:`scalar type hierarchy <arrays.scalars>` and the concrete DType classes
+above inherit from them, so that they can be used in ``isinstance`` and
+``issubclass`` checks as well as for the ``kind`` argument of `numpy.isdtype`.
+Note that booleans are not considered numeric here.
+
+.. attribute:: NumberAbstractDType
+               IntegerAbstractDType
+               SignedIntegerAbstractDType
+               UnsignedIntegerAbstractDType
+               InexactAbstractDType
+               FloatingAbstractDType
+               ComplexFloatingAbstractDType
+
 
 Routines for DType authors
 --------------------------
