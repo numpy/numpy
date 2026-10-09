@@ -3,6 +3,22 @@ import numpy as np
 from .common import TYPES1, Benchmark
 
 
+class Repeat(Benchmark):
+    params = [TYPES1 + ["O", "i,O", "T"],
+              [(16, 16), (500, 2), (125000, 1)],
+              [2, 32]]
+    param_names = ["dtype", "shape", "repeat"]
+
+    def setup(self, dtype, shape, repeat):
+        if dtype == "T":
+            self.arr = np.full(shape, "repeat benchmark value", dtype=dtype)
+        else:
+            self.arr = np.ones(shape, dtype=dtype)
+
+    def time_repeat(self, dtype, shape, repeat):
+        self.arr.repeat(repeat, axis=0)
+
+
 class Take(Benchmark):
     params = [
         [(1000, 1), (2, 1000, 1), (1000, 3)],
