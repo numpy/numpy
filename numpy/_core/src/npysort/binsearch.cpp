@@ -102,145 +102,6 @@ binsearch_current(const char *arr, const char *key, char *ret,
 }
 
 template <class Tag, side_t side>
-static NPY_BINSEARCH_NOINLINE void
-binsearch_locality(const char *arr, const char *key, char *ret,
-                   npy_intp arr_len, npy_intp key_len, npy_intp arr_str,
-                   npy_intp key_str, npy_intp ret_str)
-{
-    using T = typename Tag::type;
-    auto cmp = side_to_cmp<Tag, side>::value;
-    auto less = Tag::less;
-
-    constexpr npy_intp LOCALITY_SAMPLES = 16;
-    constexpr npy_intp LOCALITY_LEVELS = 3;
-
-    npy_intp interval_length = arr_len;
-    npy_intp half = interval_length >> 1;
-    interval_length -= half;
-
-    const T mid_val = *(const T *)(arr + half * arr_str);
-    for (npy_intp i = 0; i < key_len; ++i) {
-        const T key_val = *(const T *)(key + i * key_str);
-        *(npy_intp *)(ret + i * ret_str) = cmp(mid_val, key_val) * half;
-    }
-
-    npy_intp completed_levels = 1;
-    while (interval_length > 1 && completed_levels < LOCALITY_LEVELS) {
-        half = interval_length >> 1;
-        interval_length -= half;
-        for (npy_intp i = 0; i < key_len; ++i) {
-            npy_intp &base = *(npy_intp *)(ret + i * ret_str);
-            const T pivot = *(const T *)(arr + (base + half) * arr_str);
-            const T key_val = *(const T *)(key + i * key_str);
-            base += cmp(pivot, key_val) * half;
-        }
-        ++completed_levels;
-    }
-
-    bool reversed = false;
-    int direction = 0;
-    npy_intp prev = *(npy_intp *)ret;
-    const npy_intp last = key_len - 1;
-    for (npy_intp j = 1; j <= LOCALITY_SAMPLES; ++j) {
-        const npy_intp i = (j * last) >> 4;
-        const npy_intp pos = *(npy_intp *)(ret + i * ret_str);
-        if (pos > prev) {
-            if (direction < 0) { reversed = true; break; }
-            direction = 1;
-        }
-        else if (pos < prev) {
-            if (direction > 0) { reversed = true; break; }
-            direction = -1;
-        }
-        prev = pos;
-    }
-
-    if (!reversed && direction >= 0) {
-        /*
-         * Sparse coarse samples can look monotone even when the query sequence
-         * between them is hostile to the locality path. Check the value
-         * immediately preceding each deterministic sample using the dtype's
-         * existing ordering semantics. This keeps the selector O(1) while
-         * rejecting the adversarial patterns found during review validation.
-         */
-        for (npy_intp j = 0; j <= LOCALITY_SAMPLES && !reversed; ++j) {
-            const npy_intp i = (j * last) >> 4;
-            if (i > 0) {
-                const T key_val = *(const T *)(key + i * key_str);
-                const T prev_key_val =
-                        *(const T *)(key + (i - 1) * key_str);
-                if (less(key_val, prev_key_val)) {
-                    reversed = true;
-                }
-            }
-        }
-    }
-
-    if (!reversed && direction >= 0 && interval_length > 1) {
-        npy_intp previous_pos = 0;
-        T last_key_val = *(const T *)key;
-        for (npy_intp i = 0; i < key_len; ++i) {
-            npy_intp &coarse_base = *(npy_intp *)(ret + i * ret_str);
-            const T key_val = *(const T *)(key + i * key_str);
-            npy_intp min_idx = coarse_base;
-            npy_intp max_idx = coarse_base + interval_length;
-            if (max_idx > arr_len) max_idx = arr_len;
-
-            if (i > 0 && !less(key_val, last_key_val) && previous_pos >= min_idx) {
-                min_idx = previous_pos < max_idx ? previous_pos : max_idx;
-                if (min_idx < max_idx && cmp(*(const T *)(arr + min_idx * arr_str), key_val)) {
-                    const npy_intp origin = min_idx;
-                    npy_intp step = 1;
-                    min_idx = origin + 1;
-                    while (true) {
-                        const npy_intp remaining = max_idx - 1 - origin;
-                        if (step > remaining) break;
-                        const npy_intp probe = origin + step;
-                        if (!cmp(*(const T *)(arr + probe * arr_str), key_val)) {
-                            max_idx = probe;
-                            break;
-                        }
-                        min_idx = probe + 1;
-                        if (step > (remaining >> 1)) break;
-                        step <<= 1;
-                    }
-                }
-                else if (min_idx < max_idx) {
-                    max_idx = min_idx;
-                }
-            }
-
-            while (min_idx < max_idx) {
-                const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
-                if (cmp(*(const T *)(arr + mid_idx * arr_str), key_val)) min_idx = mid_idx + 1;
-                else max_idx = mid_idx;
-            }
-            coarse_base = min_idx;
-            previous_pos = min_idx;
-            last_key_val = key_val;
-        }
-        return;
-    }
-
-    while (interval_length > 1) {
-        half = interval_length >> 1;
-        interval_length -= half;
-        for (npy_intp i = 0; i < key_len; ++i) {
-            npy_intp &base = *(npy_intp *)(ret + i * ret_str);
-            const T pivot = *(const T *)(arr + (base + half) * arr_str);
-            const T key_val = *(const T *)(key + i * key_str);
-            base += cmp(pivot, key_val) * half;
-        }
-    }
-
-    for (npy_intp i = 0; i < key_len; ++i) {
-        npy_intp &base = *(npy_intp *)(ret + i * ret_str);
-        const T key_val = *(const T *)(key + i * key_str);
-        base += cmp(*(const T *)(arr + base * arr_str), key_val);
-    }
-}
-
-template <class Tag, side_t side>
 static void
 binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
           npy_intp key_len, npy_intp arr_str, npy_intp key_str,
@@ -249,6 +110,7 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
 {
     using T = typename Tag::type;
 
+    // The original batched search remains the default.
     if (arr_len <= 0) {
         for (npy_intp i = 0; i < key_len; ++i) {
             *(npy_intp *)(ret + i * ret_str) = 0;
@@ -256,40 +118,38 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
         return;
     }
 
-    /*
-     * Keep the historical batched search in a separate non-inlined function
-     * so below-gate execution is isolated from locality-path code layout.
-     *
-     * LOCALITY_MIN_KEYS is a tunable portable default, not an algorithmic or
-     * hardware boundary.  In validation performed on 2026-10-04, the tested
-     * AMD runners tolerated much smaller activation sizes (around Q=64 in the
-     * activation sweep), while the tested Intel runner required substantially
-     * larger batches (around Q=1024 still missed the conservative p95 target).
-     * Production-shaped tests also found non-target regressions at lower
-     * portable gates around Q=131072 and Q=262144.
-     *
-     * We therefore use Q=2^20 as a conservative cross-machine safety bound for
-     * the initial implementation.  Future CPUs, compilers, memory systems, or
-     * execution backends may shift this crossover.  A stronger low-cost
-     * selector may also justify lowering or replacing this fixed Q gate.
-     *
-     * The current choice intentionally favors portability and general-case
-     * safety over capturing every profitable smaller-locality workload.
-     */
-    constexpr npy_intp LOCALITY_MIN_KEYS = 1 << 20;
-    const bool locality_candidate =
-            key_len >= LOCALITY_MIN_KEYS &&
-            key_str == (npy_intp)sizeof(T) &&
-            arr_str == (npy_intp)sizeof(T);
-
-    if (!locality_candidate) {
-        binsearch_current<Tag, side>(arr, key, ret, arr_len, key_len, arr_str,
-                                     key_str, ret_str);
-        return;
+    // A contiguous batch of comparator-equivalent keys needs one search.
+    // Verify the entire batch before sharing the insertion position.
+    if (key_len > 1 && key_str == (npy_intp)sizeof(T)) {
+        const T first = *(const T *)key;
+        const npy_intp middle = key_len >> 1;
+        const T mid = *(const T *)(key + middle * key_str);
+        const T last_value = *(const T *)(key + (key_len - 1) * key_str);
+        const bool anchor_equal =
+                !Tag::less(first, mid) && !Tag::less(mid, first) &&
+                !Tag::less(first, last_value) && !Tag::less(last_value, first);
+        if (anchor_equal) {
+            bool all_equal = true;
+            for (npy_intp i = 1; i < key_len; ++i) {
+                const T val = *(const T *)(key + i * key_str);
+                if (Tag::less(val, first) || Tag::less(first, val)) {
+                    all_equal = false;
+                    break;
+                }
+            }
+            if (all_equal) {
+                binsearch_current<Tag, side>(arr, key, ret, arr_len, 1,
+                                             arr_str, key_str, ret_str);
+                const npy_intp answer = *(npy_intp *)ret;
+                for (npy_intp i = 1; i < key_len; ++i) {
+                    *(npy_intp *)(ret + i * ret_str) = answer;
+                }
+                return;
+            }
+        }
     }
-
-    binsearch_locality<Tag, side>(arr, key, ret, arr_len, key_len, arr_str,
-                                  key_str, ret_str);
+    binsearch_current<Tag, side>(arr, key, ret, arr_len, key_len,
+                                 arr_str, key_str, ret_str);
 }
 
 #undef NPY_BINSEARCH_NOINLINE
