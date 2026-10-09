@@ -176,9 +176,6 @@ cdef class MT19937(BitGenerator):
         self._bitgen.next_uint32 = &mt19937_uint32
         self._bitgen.next_double = &mt19937_double
         self._bitgen.next_raw = &mt19937_raw
-        self._bitgen.fill_uint32 = &mt19937_uint32_fill
-        self._bitgen.fill_uint64 = &mt19937_uint64_fill
-        self._bitgen.fill_double = &mt19937_double_fill
 
     def _legacy_seeding(self, seed):
         """
