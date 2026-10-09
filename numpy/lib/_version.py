@@ -92,6 +92,9 @@ class NumpyVersion:
         else:
             vercmp = -1
 
+        if vercmp == 1:
+            print("hello")
+
         return vercmp
 
     def _compare_pre_release(self, other):
