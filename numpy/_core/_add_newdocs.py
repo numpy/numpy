@@ -3184,6 +3184,17 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
 
     """))
 
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__complex__',
+    """
+    __complex__($self, /)
+    --
+
+    complex(a)
+
+    Returns the array as a complex number. The array must be
+    0-dimensional and have a compatible dtype.
+
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack__',
     """
@@ -3209,6 +3220,29 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack_device__',
 
     """))
 
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__float__',
+    """
+    __float__($self, /)
+    --
+
+    float(a)
+
+    Returns the array as a floating point number. The array must be
+    0-dimensional and have a compatible dtype.
+
+    """))
+
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__int__',
+    """
+    __int__($self, /)
+    --
+
+    int(a)
+
+    Returns the array as an integer number. The array must be
+    0-dimensional and have a compatible dtype.
+
+    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__reduce__',
     """
