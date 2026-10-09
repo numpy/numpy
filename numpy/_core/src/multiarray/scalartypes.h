@@ -32,4 +32,9 @@ _typenum_fromtypeobj(PyObject *type, int user);
 NPY_NO_EXPORT void *
 scalar_value(PyObject *scalar, PyArray_Descr *descr);
 
+extern NPY_NO_EXPORT PyTypeObject PyVBytesArrType_Type;
+
+NPY_NO_EXPORT PyObject *
+new_vbytes(const char *buf, Py_ssize_t size);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_SCALARTYPES_H_ */

@@ -1049,6 +1049,77 @@ array_indexing(PyObject *NPY_UNUSED(self), PyObject *args)
     return NULL;
 }
 
+static PyObject *
+array_from_scalar(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *scalar;
+    PyArray_Descr *descr;
+    if (!PyArg_ParseTuple(args, "OO&", &scalar, PyArray_DescrConverter, &descr)) {
+        return NULL;
+    }
+    return PyArray_FromScalar(scalar, descr);
+}
+
+static PyObject *
+cast_scalar_to_ctype(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *scalar;
+    PyArray_Descr *outdescr;
+    int direct;
+    if (!PyArg_ParseTuple(args, "OO&p", &scalar, PyArray_DescrConverter,
+                         &outdescr, &direct)) {
+        return NULL;
+    }
+    PyArrayObject *out = (PyArrayObject *)PyArray_Zeros(0, NULL, outdescr, 0);
+    if (out == NULL) {
+        return NULL;
+    }
+    int res;
+    if (direct) {
+        PyArray_Descr *indescr = PyArray_DescrFromScalar(scalar);
+        if (indescr == NULL) {
+            Py_DECREF(out);
+            return NULL;
+        }
+        res = PyArray_CastScalarDirect(
+                scalar, indescr, PyArray_DATA(out), PyArray_TYPE(out));
+        Py_DECREF(indescr);
+    }
+    else {
+        res = PyArray_CastScalarToCtype(
+                scalar, PyArray_DATA(out), PyArray_DESCR(out));
+    }
+    if (res < 0) {
+        Py_DECREF(out);
+        return NULL;
+    }
+    return (PyObject *)out;
+}
+
+static PyObject *
+scalar_as_ctype(PyObject *NPY_UNUSED(self), PyObject *scalar)
+{
+    PyArray_Descr *descr = PyArray_DescrFromScalar(scalar);
+    if (descr == NULL) {
+        return NULL;
+    }
+    npy_intp size = PyDataType_ELSIZE(descr);
+    Py_DECREF(descr);
+    if (size < (npy_intp)sizeof(void *)) {
+        size = sizeof(void *);
+    }
+    void *buffer = PyMem_Calloc(1, size);
+    if (buffer == NULL) {
+        return PyErr_NoMemory();
+    }
+    PyArray_ScalarAsCtype(scalar, buffer);
+    PyMem_Free(buffer);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 /*
  * Test C-api PyArray_AsCArray item getter
  */
@@ -2346,6 +2417,15 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_as_c_array",
         test_as_c_array,
         METH_VARARGS, NULL},
+    {"cast_scalar_to_ctype",
+        cast_scalar_to_ctype,
+        METH_VARARGS, NULL},
+    {"array_from_scalar",
+        array_from_scalar,
+        METH_VARARGS, NULL},
+    {"scalar_as_ctype",
+        scalar_as_ctype,
+        METH_O, NULL},
     {"test_nditer_too_large",
         test_nditer_too_large,
         METH_VARARGS, NULL},

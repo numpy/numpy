@@ -9,6 +9,21 @@ This API allows access to the UTF-8 string data stored in NumPy StringDType
 arrays. See :ref:`NEP-55 <NEP55>` for
 more in-depth details into the design of StringDType.
 
+The same storage, allocator, and packed-string machinery backs the
+variable-width bytes DType, ``ByteStringDType``: its descriptors reuse the
+``PyArray_StringDTypeObject`` struct (with a vestigial ``coerce`` field fixed
+at the default), so every ``NpyString_*`` function below works on descriptors
+of either DType. The two DTypes are distinguished by their ``PyArray_DTypeMeta``,
+not by the descriptor struct.
+
+The ``numpy.vbytes`` scalar, in contrast, owns a Python ``bytes`` value rather
+than packed array storage. Use the Python bytes C API to access its bytes, or
+:c:func:`PyArray_FromScalar` to create a zero-dimensional array with an owning
+descriptor. Raw scalar storage access through :c:func:`PyArray_ScalarAsCtype`
+is not supported. :c:func:`PyArray_CastScalarToCtype` supports registered casts;
+when its output is packed ``ByteStringDType`` data, keep the output descriptor
+alive for as long as that data is used.
+
 Examples
 --------
 
@@ -82,7 +97,7 @@ Types
 
 .. c:type:: npy_static_string
 
-    An unpacked string allowing access to the UTF-8 string data.
+    An unpacked string allowing access to UTF-8 string or arbitrary byte data.
 
     .. code-block:: c
 
@@ -97,7 +112,8 @@ Types
 
     .. c:member:: const char *buf
 
-        The string buffer. Holds UTF-8-encoded bytes. Does not currently end in
+        The string buffer. Holds UTF-8-encoded bytes for StringDType or arbitrary
+        bytes for ByteStringDType. Does not currently end in
         a null string but we may decide to add null termination in the
         future, so do not rely on the presence or absence of null-termination.
 
@@ -114,8 +130,8 @@ Types
 
 .. c:type:: PyArray_StringDTypeObject
 
-    The C struct backing instances of StringDType in Python. Attributes store
-    the settings the object was created with, an instance of
+    The C struct backing instances of StringDType and ByteStringDType in Python.
+    Attributes store the settings the object was created with, an instance of
     ``npy_string_allocator`` that manages string allocations for arrays
     associated with the DType instance, and several attributes caching
     information about the missing string object that is commonly needed in cast
@@ -147,7 +163,7 @@ Types
 
     .. c:member:: char coerce
 
-        1 if string coercion is enabled, 0 otherwise.
+        1 if string coercion is enabled, 0 otherwise (StringDType only).
 
     .. c:member:: char has_nan_na
 
@@ -155,16 +171,18 @@ Types
 
     .. c:member:: char has_string_na
 
-        1 if the missing string object (if any) is a string, 0 otherwise.
+        1 if the missing string object (if any) is a string (bytes for
+        ByteStringDType), 0 otherwise.
 
     .. c:member:: char array_owned
 
-        1 if an array owns the StringDType instance, 0 otherwise.
+        1 if an array owns the dtype instance, 0 otherwise.
 
     .. c:member:: npy_static_string default_string
 
         The default string to use in operations. If the missing string object
-        is a string, this will contain the string data for the missing string.
+        is a string (bytes for ByteStringDType), this will contain the string data
+        for the missing string.
 
     .. c:member:: npy_static_string na_name
 
@@ -197,9 +215,9 @@ Functions
 
      Simultaneously acquire the mutexes locking the allocators attached to
      multiple descriptors. Writes a pointer to the associated allocator in the
-     allocators array for each StringDType descriptor in the array. If any of
-     the descriptors are not StringDType instances, write NULL to the allocators
-     array for that entry.
+     allocators array for each StringDType or ByteStringDType descriptor in the
+     array. If any of the descriptors are not instances of either dtype, write
+     NULL to the allocators array for that entry.
 
      ``n_descriptors`` is the number of descriptors in the descrs array that
      should be examined. Any descriptor after ``n_descriptors`` elements is
@@ -268,5 +286,6 @@ Functions
    Copy and pack the first ``size`` entries of the buffer pointed to by ``buf``
    into the ``packed_string``. Returns 0 on success and -1 on failure.
 
-   The ``buf`` pointer must store valid, complete UTF-8. The ``NpyString_pack``
-   function does not validate it.
+   When packing into a ``StringDType`` array, the ``buf`` pointer must store
+   valid, complete UTF-8. The ``NpyString_pack`` function does not validate
+   it. ``ByteStringDType`` arrays store arbitrary bytes.

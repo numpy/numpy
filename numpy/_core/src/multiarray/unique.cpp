@@ -488,6 +488,7 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_STRING, unique_string<npy_byte>},
     {NPY_UNICODE, unique_string<npy_ucs4>},
     {NPY_VSTRING, unique_vstring},
+    {NPY_VBYTES, unique_vstring},
 };
 
 

@@ -77,15 +77,14 @@ npy_mark_tmp_array_if_pyscalar(
 
 
 /*
- * As above for an exact Python str.  Promotion is deliberately unaffected,
- * so there is no abstract DType and the array's DType is not replaced
- * (see NPY_ARRAY_WAS_PYTHON_STR).  str subclasses, including np.str_,
- * are deliberately not marked and convert as before.
+ * As above for an exact Python str or bytes, but with no abstract DType
+ * (see NPY_ARRAY_WAS_PYTHON_STR).  Subclasses, including np.str_ and
+ * np.bytes_, are deliberately not marked and convert as before.
  */
 static inline int
 npy_mark_tmp_array_if_pystr(PyObject *obj, PyArrayObject *arr)
 {
-    if (PyUnicode_CheckExact(obj)) {
+    if (PyUnicode_CheckExact(obj) || PyBytes_CheckExact(obj)) {
         _PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_STR;
         return 1;
     }

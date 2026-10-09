@@ -142,8 +142,8 @@ nulls::
   >>> a[0] == x[0]
   False
 
-If you need to store and round-trip any trailing null bytes, you will need to
-use an unstructured void data type::
+If you need to store and round-trip any trailing null bytes, you can
+use `numpy.dtypes.ByteStringDType` or an unstructured void data type::
 
   >>> a = np.array(x, dtype="V7")
   >>> a

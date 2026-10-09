@@ -151,6 +151,18 @@ array_converter_get_scalar_input(PyArrayArrayConverterObject *self)
 }
 
 
+static PyObject *
+array_converter_get_has_pyscalars(PyArrayArrayConverterObject *self)
+{
+    for (int i = 0; i < self->narrs; i++) {
+        if (self->items[i].descr == NULL) {
+            Py_RETURN_TRUE;
+        }
+    }
+    Py_RETURN_FALSE;
+}
+
+
 static int
 find_wrap(PyArrayArrayConverterObject *self)
 {
@@ -318,6 +330,36 @@ array_converter_wrap(PyArrayArrayConverterObject *self,
 }
 
 
+/* Reject mixed string kinds before promotion erases their distinction.
+ * Unicode and StringDType are both text. Numeric-only promotion is unchanged.
+ */
+static int
+check_string_promotion(int ndtypes, PyArray_DTypeMeta *const dtypes[])
+{
+    int has_bytes = 0, has_text = 0, has_other = 0;
+    for (int i = 0; i < ndtypes; i++) {
+        if (dtypes[i] == &PyArray_BytesDType ||
+                dtypes[i] == &PyArray_ByteStringDType) {
+            has_bytes = 1;
+        }
+        else if (dtypes[i] == &PyArray_UnicodeDType ||
+                 dtypes[i] == &PyArray_StringDType) {
+            has_text = 1;
+        }
+        else {
+            has_other = 1;
+        }
+    }
+    if (has_bytes + has_text + has_other > 1) {
+        PyErr_SetString(_npy_module_state->static_pydata.DTypePromotionError,
+                "Strict string promotion does not allow mixing bytes, text, "
+                "or non-string DTypes. Convert the inputs explicitly.");
+        return -1;
+    }
+    return 0;
+}
+
+
 static PyObject *
 array_converter_result_type(PyArrayArrayConverterObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
@@ -325,6 +367,7 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
     PyArray_Descr *result = NULL;
     npy_dtype_info dt_info = {NULL, NULL};
     npy_bool ensure_inexact = NPY_FALSE;
+    npy_bool strict_strings = NPY_FALSE;
 
     /* Allocate scratch space (could be optimized away) */
     void *DTypes_and_descrs = PyMem_Malloc(
@@ -339,7 +382,8 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("result_type", args, len_args, kwnames,
             {"|extra_dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info},
-            {"|ensure_inexact", &PyArray_BoolConverter, &ensure_inexact}) < 0) {
+            {"|ensure_inexact", &PyArray_BoolConverter, &ensure_inexact},
+            {"$strict_strings", &PyArray_BoolConverter, &strict_strings}) < 0) {
         goto finish;
     }
 
@@ -374,6 +418,10 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
         ndescrs++;
     }
 
+    if (strict_strings && check_string_promotion(nDTypes, DTypes) < 0) {
+        goto finish;
+    }
+
     PyArray_DTypeMeta *common_dtype = PyArray_PromoteDTypeSequence(
             nDTypes, DTypes);
     if (common_dtype == NULL) {
@@ -397,6 +445,10 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
 
 
 static PyGetSetDef array_converter_getsets[] = {
+    {"has_pyscalars",
+        (getter)array_converter_get_has_pyscalars,
+        NULL,
+        NULL, NULL},
     {"scalar_input",
         (getter)array_converter_get_scalar_input,
         NULL,

@@ -5973,7 +5973,7 @@ is_known_scalar(PyObject *obj)
 {
     return (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj)
             || PyComplex_CheckExact(obj) || PyUnicode_CheckExact(obj)
-            || is_anyscalar_exact(obj));
+            || PyBytes_CheckExact(obj) || is_anyscalar_exact(obj));
 }
 
 

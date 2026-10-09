@@ -271,6 +271,11 @@ The following rules apply:
 * NumPy byte strings (``np.bytes_``) can be promoted to unicode strings
   (``np.str_``).  However, casting the bytes to unicode will fail for
   non-ascii characters.
+* The variable-width ``StringDType`` promotes with ``np.str_`` and
+  ``ByteStringDType`` promotes with ``np.bytes_``, to the variable-width
+  dtype in both cases.  ``ByteStringDType`` does not promote with
+  ``np.str_`` or ``StringDType``; bytes and text have to be converted
+  explicitly with ``np.strings.encode`` or ``np.strings.decode``.
 * For some purposes NumPy will promote almost any other datatype to strings.
   This applies to array creation or concatenation.
 * The array constructors like ``np.array()`` will use ``object`` dtype when
