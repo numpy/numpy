@@ -1503,6 +1503,8 @@ py.extension_module('_simd',
 python_sources = [
   '__init__.py',
   '__init__.pyi',
+  '_add_docstring.py',
+  '_add_docstring.pyi',
   '_add_newdocs.py',
   '_add_newdocs.pyi',
   '_add_newdocs_scalars.py',
