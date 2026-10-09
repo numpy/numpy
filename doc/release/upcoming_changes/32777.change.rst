@@ -1,0 +1,6 @@
+``NaT`` now casts to ``NaN`` for floating-point and complex dtypes
+------------------------------------------------------------------
+Casting ``NaT`` from `numpy.datetime64` or `numpy.timedelta64` to a
+floating-point or complex dtype now yields ``NaN``. Previously it was
+cast as the minimum ``int64`` value. Casts to integer and boolean
+dtypes are unchanged.
