@@ -460,15 +460,15 @@ array_converter_clear(PyArrayArrayConverterObject *self)
     return 0;
 }
 
+/*
+ * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
+ * type refcount contention on free-threaded 3.14+.
+ */
 static void
-array_converter_dealloc(PyArrayArrayConverterObject *self)
+array_converter_free(void *self)
 {
-    PyObject_GC_UnTrack(self);
-    array_converter_clear(self);
-
-    PyTypeObject *type = Py_TYPE(self);
-    type->tp_free((PyObject *)self);
-    Py_DECREF(type);
+    array_converter_clear((PyArrayArrayConverterObject *)self);
+    PyObject_GC_Del(self);
 }
 
 
@@ -505,7 +505,7 @@ array_converter_item(PyArrayArrayConverterObject *self, Py_ssize_t item)
 
 static PyType_Slot array_converter_slots[] = {
     {Py_tp_new, array_converter_new},
-    {Py_tp_dealloc, array_converter_dealloc},
+    {Py_tp_free, array_converter_free},
     {Py_tp_traverse, array_converter_traverse},
     {Py_tp_clear, array_converter_clear},
     {Py_tp_getset, array_converter_getsets},
