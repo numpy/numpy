@@ -191,8 +191,6 @@ def ones(shape, dtype=None, order='C', *, device=None, like=None):
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -344,8 +342,6 @@ def full(shape, fill_value, dtype=None, order='C', *, device=None, like=None):
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1869,8 +1865,6 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
         By default, `dtype` is float.
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     fromfunction : any
@@ -2216,8 +2210,6 @@ def identity(n, dtype=None, *, like=None):
     dtype : data-type, optional
         Data-type of the output.  Defaults to ``float``.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
