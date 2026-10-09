@@ -6,6 +6,27 @@
 
 #define Npy_HashDouble _Py_HashDouble
 
+/* Like PyObject_Print(obj, fp, 0), which is not in the Limited API */
+static inline int
+npy_PyObject_Print(PyObject *obj, FILE *fp)
+{
+    if (obj == NULL) {
+        fputs("<nil>", fp);
+        return 0;
+    }
+    PyObject *repr = PyObject_Repr(obj);
+    if (repr == NULL) {
+        return -1;
+    }
+    Py_ssize_t size;
+    const char *str = PyUnicode_AsUTF8AndSize(repr, &size);
+    if (str != NULL) {
+        fwrite(str, 1, (size_t)size, fp);
+    }
+    Py_DECREF(repr);
+    return str == NULL ? -1 : 0;
+}
+
 #ifdef Py_GIL_DISABLED
 // Specialized version of critical section locking to safely use
 // PySequence_Fast APIs without the GIL. For performance, the argument *to*

@@ -17,6 +17,7 @@
 #include "nditer_impl.h"
 #include "templ_common.h"
 #include "ctors.h"
+#include "npy_pycompat.h"
 
 #include <stdio.h>
 
@@ -1474,7 +1475,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     printf("| DTypes: ");
     for (iop = 0; iop < nop; ++iop) {
         if (NIT_DTYPES(iter)[iop] != NULL)
-            PyObject_Print((PyObject*)NIT_DTYPES(iter)[iop], stdout, 0);
+            npy_PyObject_Print((PyObject*)NIT_DTYPES(iter)[iop], stdout);
         else
             printf("(nil) ");
         printf(" ");
@@ -1517,7 +1518,7 @@ NpyIter_DebugPrint(NpyIter *iter)
         if (NIT_OPERANDS(iter)[iop] != NULL) {
             dtype = PyArray_DESCR(NIT_OPERANDS(iter)[iop]);
             if (dtype != NULL)
-                PyObject_Print((PyObject *)dtype, stdout, 0);
+                npy_PyObject_Print((PyObject *)dtype, stdout);
             else
                 printf("(nil) ");
         }
