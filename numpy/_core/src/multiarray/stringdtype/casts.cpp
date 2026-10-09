@@ -27,6 +27,7 @@
 #include "utf8_utils.h"
 
 #include "casts.h"
+#include "npy_pycompat.h"
 
 // Get a c string representation of a type number.
 static const char *

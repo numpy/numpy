@@ -26,6 +26,7 @@
 #include "array_method.h"
 #include "dtypemeta.h"
 #include "dtype_traversal.h"
+#include "npy_pycompat.h"
 
 
 /* Buffer size with the same use case as the one in dtype_transfer.c */

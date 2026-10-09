@@ -21,6 +21,7 @@
 #include "string_ufuncs.h"
 #include "string_fastsearch.h"
 #include "string_buffer.h"
+#include "npy_pycompat.h"
 
 
 /*
