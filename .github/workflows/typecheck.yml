@@ -66,14 +66,14 @@ jobs:
         python-version: ${{ matrix.os_python[1] }}
         activate-environment: true
         cache-dependency-glob: |
-          requirements/build_requirements.txt
+          **/pyproject.toml
           requirements/typing_requirements.txt
     - name: Install dependencies
       # orjson makes mypy faster but the default requirements.txt
       # can't install it because orjson doesn't support 32 bit Linux
       run: >-
         uv pip install
-        -r requirements/build_requirements.txt
+        --group dev-cli
         -r requirements/typing_requirements.txt
         orjson
     - name: Build
