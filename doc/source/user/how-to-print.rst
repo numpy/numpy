@@ -106,7 +106,7 @@ See :func:`numpy.set_printoptions` for more details on supported format keys.
 For example, to format `datetime64` values with a custom function:
 
     >>> arr = np.array([np.datetime64("2025-01-01"), np.datetime64("2024-01-01")])
-    >>> with np.printoptions(formatter={"datetime":lambda x: f"(Year: {x.item().year}, Month: {x.item().month})"}):
+    >>> with np.printoptions(formatter={"datetime":lambda x: f"date={x}"}):
     ...     print(arr)
-    [(Year: 2025, Month: 1) (Year: 2024, Month: 1)]
+    [date=2025-01-01 date=2024-01-01]
 

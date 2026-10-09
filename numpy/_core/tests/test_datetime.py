@@ -736,25 +736,25 @@ class TestDateTime:
 
     def test_days_to_pydate(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('O'),
-                    datetime.date(1599, 1, 1))
+                    np.datetime64('1599-01-01', 'D'))
         assert_equal(np.array('1600', dtype='M8[D]').astype('O'),
-                    datetime.date(1600, 1, 1))
+                    np.datetime64('1600-01-01', 'D'))
         assert_equal(np.array('1601', dtype='M8[D]').astype('O'),
-                    datetime.date(1601, 1, 1))
+                    np.datetime64('1601-01-01', 'D'))
         assert_equal(np.array('1900', dtype='M8[D]').astype('O'),
-                    datetime.date(1900, 1, 1))
+                    np.datetime64('1900-01-01', 'D'))
         assert_equal(np.array('1901', dtype='M8[D]').astype('O'),
-                    datetime.date(1901, 1, 1))
+                    np.datetime64('1901-01-01', 'D'))
         assert_equal(np.array('2000', dtype='M8[D]').astype('O'),
-                    datetime.date(2000, 1, 1))
+                    np.datetime64('2000-01-01', 'D'))
         assert_equal(np.array('2001', dtype='M8[D]').astype('O'),
-                    datetime.date(2001, 1, 1))
+                    np.datetime64('2001-01-01', 'D'))
         assert_equal(np.array('1600-02-29', dtype='M8[D]').astype('O'),
-                    datetime.date(1600, 2, 29))
+                    np.datetime64('1600-02-29', 'D'))
         assert_equal(np.array('1600-03-01', dtype='M8[D]').astype('O'),
-                    datetime.date(1600, 3, 1))
+                    np.datetime64('1600-03-01', 'D'))
         assert_equal(np.array('2001-03-22', dtype='M8[D]').astype('O'),
-                    datetime.date(2001, 3, 22))
+                    np.datetime64('2001-03-22', 'D'))
 
     def test_dtype_comparison(self):
         assert_(not (np.dtype('M8[us]') == np.dtype('M8[ms]')))
@@ -1365,9 +1365,11 @@ class TestDateTime:
         for offset in [1, 2, 100, 1000, 10000]:
             dt64 = np.datetime64(info.min + offset, "D")
             result = dt64.item()
-            # expected integer value
-            assert result == info.min + offset
-            assert isinstance(result, int)
+            assert isinstance(result, np.datetime64)
+            assert result == dt64
+            # gh-31688: str() is now what converts to a datetimestruct, which
+            # is where these values used to overflow.
+            assert np.datetime64(str(dt64), "D") == dt64
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
@@ -1405,6 +1407,50 @@ class TestDateTime:
 
             assert_equal(b.astype(object).astype(unit), b,
                             f"Error roundtripping unit {unit}")
+
+    def test_astype_object_returns_numpy_scalar(self):
+        # gh-12550: astype(object) should always return numpy datetime64/
+        # timedelta64 scalars, never Python datetime or raw ints.
+        for unit in ["Y", "M", "W", "D", "h", "m", "s",
+                     "ms", "us", "ns", "ps", "fs", "as"]:
+            dts = np.array([1000], dtype=f"M8[{unit}]")
+            obj = dts.astype(object)
+            assert isinstance(obj[0], np.datetime64), (
+                f"M8[{unit}] astype(object) returned {type(obj[0])}")
+            assert obj[0] == dts[0]
+
+            tds = dts.view(f"m8[{unit}]")
+            obj_td = tds.astype(object)
+            assert isinstance(obj_td[0], np.timedelta64), (
+                f"m8[{unit}] astype(object) returned {type(obj_td[0])}")
+            assert obj_td[0] == tds[0]
+
+        # NaT should return numpy.datetime64('NaT')
+        nat = np.array(["NaT"], dtype="M8[ns]")
+        assert np.isnat(nat.astype(object)[0])
+
+    def test_item_returns_numpy_scalar(self):
+        # gh-12550: .item() should return numpy datetime64/timedelta64
+        # scalars, not Python datetime or raw ints.
+        for unit in ["Y", "M", "W", "D", "h", "m", "s",
+                     "ms", "us", "ns", "ps", "fs", "as"]:
+            dt = np.datetime64(1000, unit)
+            assert isinstance(dt.item(), np.datetime64)
+
+            td = np.timedelta64(1000, unit)
+            assert isinstance(td.item(), np.timedelta64)
+
+    @pytest.mark.parametrize("cls", [np.datetime64, np.timedelta64])
+    @pytest.mark.parametrize("unit", ["us", "ms", "s", "m", "h", "D"])
+    def test_datetime_timedelta_int_float_raises(self, cls, unit):
+        # gh-12550: these have a datetime.datetime/datetime.timedelta
+        # representation, so int()/float() raise as they do for those types.
+        # The values that do not are deprecated, see test_deprecations.
+        for scalar in [cls(123, unit), cls("NaT", unit)]:
+            with pytest.raises(TypeError):
+                int(scalar)
+            with pytest.raises(TypeError):
+                float(scalar)
 
     def test_month_truncation(self):
         # Make sure that months are truncating correctly
@@ -2122,7 +2168,7 @@ class TestDateTime:
     def test_hours(self):
         t = np.ones(3, dtype='M8[s]')
         t[0] = 60 * 60 * 24 + 60 * 60 * 10
-        assert_(t[0].item().hour == 10)
+        assert_(t[0].item() == np.datetime64('1970-01-02T10:00:00', 's'))
 
     def test_divisor_conversion_year(self):
         assert_(np.dtype('M8[Y/4]') == np.dtype('M8[3M]'))
@@ -3177,9 +3223,8 @@ class TestDateTime:
     def test_datetime_hash_weeks_vs_pydatetime(self, unit):
         dt = np.datetime64(2348, 'W')  # 2015-01-01
         dt2 = np.datetime64(dt, unit)
-        pydt = dt2.astype(datetime.datetime)
-        assert isinstance(pydt, datetime.datetime)
-        _assert_equal_hash(pydt, dt2)
+        pydt = datetime.datetime(2015, 1, 1)
+        assert hash(pydt) == hash(dt2)
 
     @pytest.mark.parametrize('unit', ('Y', 'M', 'W', 'D', 'h', 'm', 's', 'ms', 'us'))
     def test_datetime_hash_big_negative(self, unit):
@@ -3236,9 +3281,8 @@ class TestDateTime:
     def test_timedelta_hash_weeks_vs_pydelta(self, unit):
         td = np.timedelta64(10, 'W')
         td2 = np.timedelta64(td, unit)
-        pytd = td2.astype(datetime.timedelta)
-        assert isinstance(pytd, datetime.timedelta)
-        _assert_equal_hash(pytd, td2)
+        pytd = datetime.timedelta(weeks=10)
+        assert hash(pytd) == hash(td2)
 
     @pytest.mark.parametrize('unit', ('ms', 'us', 'ns', 'ps', 'fs', 'as'))
     def test_timedelta_hash_ms(self, unit):
@@ -3275,7 +3319,7 @@ class TestDateTime:
                     [datetime.timedelta(seconds=20), datetime.timedelta(days=2)],
                     dtype="object",
                 ),
-                np.timedelta64(2, "s"),
+                datetime.timedelta(seconds=2),
                 np.array(
                     [10.0, 24.0 * 60.0 * 60.0],
                     dtype="object",
