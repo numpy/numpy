@@ -1,0 +1,13 @@
+Python scalar promotion in ``append`` will change
+-------------------------------------------------
+
+In a future NumPy version, `numpy.append` will follow the scalar promotion rules
+of `numpy.concatenate`.  For example, appending ``1`` to a ``uint8`` array will
+leave the dtype of the result ``uint8``. Appending ``300`` will raise
+``OverflowError``. Operations that will result in a different dtype or an error
+in the future now generate a ``FutureWarning``.
+
+Use ``np.concatenate((arr, values), axis=None)`` to adopt the future behavior,
+or specify its ``dtype=`` argument to choose the result dtype explicitly. To
+preserve the current behavior of `append`, wrap each Python scalar in a list or
+convert it with `asarray`.
