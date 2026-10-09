@@ -350,6 +350,10 @@ class recarray(ndarray):
     2. Use the `buf` keyword.
     3. Use `np.rec.fromrecords`.
 
+    ``==`` and ``!=`` are defined for record arrays, but other functionality
+    such as `~numpy.ndarray.sum` cannot be applied to multiple fields at once.
+    Use the individual fields instead, e.g. ``arr.x.sum()``.
+
     Examples
     --------
     Create an array with two fields, ``x`` and ``y``:
