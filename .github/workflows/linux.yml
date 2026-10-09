@@ -79,7 +79,9 @@ jobs:
     - name: Build NumPy debug
       run: |
         spin build -- -Dbuildtype=debug -Dallow-noblas=true \
-          -Dpython.allow_limited_api=true
+          -Dpython.allow_limited_api=true \
+          -Dc_args=-DNPY_STRICT_PYOBJECT_CASTS \
+          -Dcpp_args=-DNPY_STRICT_PYOBJECT_CASTS
     - name: Run test suite
       run: |
         spin test -- --timeout=600 --durations=10
