@@ -413,7 +413,7 @@ _infer_descr_from_dtype(PyArray_DTypeMeta *dtype) {
         return PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
     if (dtype->singleton != NULL) {
-        Py_INCREF(dtype->singleton);
+        Py_INCREF((PyObject *)dtype->singleton);
         return dtype->singleton;
     }
     return NPY_DT_CALL_default_descr(dtype);

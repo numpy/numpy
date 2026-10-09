@@ -43,8 +43,8 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
 
     PyObject_GC_UnTrack(self);
 
-    Py_XDECREF(self->scalar_type);
-    Py_XDECREF(self->singleton);
+    Py_XDECREF((PyObject *)self->scalar_type);
+    Py_XDECREF((PyObject *)self->singleton);
     if (dt_slots != NULL) {
         Py_XDECREF(dt_slots->castingimpls);
         PyMem_Free(dt_slots);
@@ -537,7 +537,7 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
                 "use `np.dtype` instead.");
         return NULL;
     }
-    Py_INCREF(self->singleton);
+    Py_INCREF((PyObject *)self->singleton);
     return (PyObject *)self->singleton;
 }
 
@@ -592,7 +592,7 @@ nonparametric_discover_descr_from_pyobject(
 {
     /* If the object is of the correct scalar type return our singleton */
     assert(!NPY_DT_is_parametric(cls));
-    Py_INCREF(cls->singleton);
+    Py_INCREF((PyObject *)cls->singleton);
     return cls->singleton;
 }
 
@@ -678,7 +678,7 @@ discover_datetime_and_timedelta_from_pyobject(
 static PyArray_Descr *
 nonparametric_default_descr(PyArray_DTypeMeta *cls)
 {
-    Py_INCREF(cls->singleton);
+    Py_INCREF((PyObject *)cls->singleton);
     return cls->singleton;
 }
 

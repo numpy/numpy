@@ -37,7 +37,7 @@ complex_to_real_resolve_descriptors(
 {
     Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(dtypes[1]->singleton);
+    Py_INCREF((PyObject *)dtypes[1]->singleton);
     loop_descrs[1] = dtypes[1]->singleton;
 
     if (PyDataType_ISBYTESWAPPED(loop_descrs[0])) {

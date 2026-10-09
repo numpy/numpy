@@ -213,7 +213,7 @@ resolve_descriptors_with_scalars(
      *        to pick a loop that returns always True or False.
      */
     if (value_range == 0) {
-        Py_INCREF(arr_dtype->singleton);
+        Py_INCREF((PyObject *)arr_dtype->singleton);
         loop_descrs[scalar_idx] = arr_dtype->singleton;
     }
     else if (value_range < 0) {
@@ -225,7 +225,7 @@ resolve_descriptors_with_scalars(
             return _NPY_ERROR_OCCURRED_IN_CAST;
         }
     }
-    Py_INCREF(arr_dtype->singleton);
+    Py_INCREF((PyObject *)arr_dtype->singleton);
     loop_descrs[arr_idx] = arr_dtype->singleton;
     loop_descrs[2] = PyArray_DescrFromType(NPY_BOOL);
 

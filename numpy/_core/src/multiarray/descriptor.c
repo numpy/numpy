@@ -1622,7 +1622,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 {
     if (DType->singleton != NULL) {
-        Py_INCREF(DType->singleton);
+        Py_INCREF((PyObject *)DType->singleton);
         return DType->singleton;
     }
     return NPY_DT_CALL_default_descr(DType);
@@ -2637,7 +2637,7 @@ arraydescr_new(PyTypeObject *subtype,
                 PyErr_NoMemory();
                 return NULL;
             }
-            Py_XINCREF(DType->scalar_type);
+            Py_XINCREF((PyObject *)DType->scalar_type);
             descr->typeobj = DType->scalar_type;
             descr->type_num = DType->type_num;
             descr->flags = NPY_USE_GETITEM|NPY_USE_SETITEM;
