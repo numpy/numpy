@@ -81,7 +81,7 @@ Targeting Older CPUs
 ~~~~~~~~~~~~~~~~~~~~
 
 On ``x86-64``, by default the baseline is set to ``min`` which maps to ``X86_V2``.
-This unsuitable for older CPUs (before 2009) or old virtual machines.
+This is unsuitable for older CPUs (before 2009) or old virtual machines.
 To address this, set the baseline to ``none``::
 
   python -m build --wheel -Csetup-args=-Dcpu-baseline="none"
@@ -89,6 +89,15 @@ To address this, set the baseline to ``none``::
 This will create a build that is compatible with all x86 CPUs, but 
 without any manual optimizations or SIMD code paths for the baseline.
 The build will rely only on dispatched code paths for optimization.
+
+.. note::
+  Setting ``cpu-baseline`` to ``none`` does not disable CPU dispatch.
+  With the default ``cpu-dispatch="max"``, optimized code paths are still
+  built for newer CPU features, including ``X86_V2`` since it is no longer
+  part of the baseline, and the best one is selected at runtime.
+  To disable dispatch as well, set ``cpu-dispatch`` to ``none``.
+  Use :func:`numpy.lib.introspect.opt_func_info` to check which code paths
+  are available in a build.
 
 Targeting Newer CPUs
 ~~~~~~~~~~~~~~~~~~~~
