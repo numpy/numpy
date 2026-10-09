@@ -761,7 +761,7 @@ src_umath_doc_h = custom_target('_umath_doc_generated',
 )
 
 src_numpy_api = custom_target('__multiarray_api',
-  output : ['__multiarray_api.c', '__multiarray_api.h'],
+  output : ['__multiarray_api.c', '__multiarray_api.h', '_public_dtype_api_table.h'],
   depend_files: codegen_files,
   command: [py, '-m', 'code_generators.generate_numpy_api', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
   env: codegen_env,
