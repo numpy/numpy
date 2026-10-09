@@ -631,6 +631,41 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
         }
         return arr;
     }
+    if (decimals != 0 && PyArray_CheckExact(a) && PyArray_TYPE(a) == NPY_HALF &&
+            (out == NULL ||
+             (PyArray_TYPE(out) == NPY_HALF && PyArray_SAMESHAPE(out, a)))) {
+        /*
+         * float16 has no arithmetic of its own: every ufunc pass below
+         * converts to float32 and back, and ``x * 10**decimals`` is stored as
+         * float16 (inf above 65504; 10**5 is already inf in float16), see
+         * gh-13699.  Round in float32 and convert back once.
+         */
+        PyArrayObject *a32 = (PyArrayObject *)PyArray_CastToType(
+                a, PyArray_DescrFromType(NPY_FLOAT), PyArray_ISFORTRAN(a));
+        if (a32 == NULL) {
+            return NULL;
+        }
+        PyObject *r32 = PyArray_Round(a32, decimals, NULL);
+        Py_DECREF(a32);
+        if (r32 == NULL) {
+            return NULL;
+        }
+        if (out != NULL) {
+            int res = PyArray_AssignArray(out, (PyArrayObject *)r32,
+                                          NULL, NPY_UNSAFE_CASTING);
+            Py_DECREF(r32);
+            if (res < 0) {
+                return NULL;
+            }
+            Py_INCREF(out);
+            return (PyObject *)out;
+        }
+        ret = PyArray_CastToType((PyArrayObject *)r32,
+                                 PyArray_DescrFromType(NPY_HALF),
+                                 PyArray_ISFORTRAN(a));
+        Py_DECREF(r32);
+        return ret;
+    }
     /* do the most common case first */
     if (decimals >= 0) {
         if (PyArray_ISINTEGER(a)) {
