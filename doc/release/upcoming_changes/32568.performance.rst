@@ -1,9 +1,0 @@
-Faster standard normal sampling
--------------------------------
-`numpy.random.Generator.standard_normal` now applies the sign of each variate
-with a multiplication rather than a branch on a random bit, which the processor
-cannot predict. This reduces the time per variate by roughly 30% to 40% on
-x86-64, for both ``float64`` and ``float32``. aarch64 is unaffected, as
-compilers already emit a conditional select there, and the legacy
-`numpy.random.RandomState` normal variates are unaffected as they use a
-different algorithm. The generated stream is unchanged.

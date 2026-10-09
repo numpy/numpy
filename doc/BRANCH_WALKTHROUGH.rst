@@ -44,13 +44,13 @@ Make a PR branch to prepare ``main`` for further development::
 
 Delete the release note fragments::
 
-    $ git rm doc/release/upcoming_changes/[0-9]*.*.rst
+    $ git rm doc/release/upcoming_changes/[0-9]*.*.md
 
 Create the new release notes skeleton and add to index::
 
-    $ cp doc/source/release/template.rst doc/source/release/2.4.0-notes.rst
-    $ gvim doc/source/release/2.4.0-notes.rst  # put the correct version
-    $ git add doc/source/release/2.4.0-notes.rst
+    $ cp doc/source/release/template.md doc/source/release/2.4.0-notes.md
+    $ gvim doc/source/release/2.4.0-notes.md  # put the correct version
+    $ git add doc/source/release/2.4.0-notes.md
     $ gvim doc/source/release.rst  # add new notes to notes index
     $ git add doc/source/release.rst
 
