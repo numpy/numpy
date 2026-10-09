@@ -330,7 +330,7 @@ from numpy._core.multiarray import (
     flagsobj,
 )
 
-from numpy._core.numeric import (
+from numpy._core.numeric import (  # type: ignore[deprecated]
     zeros_like,
     ones,
     ones_like,
