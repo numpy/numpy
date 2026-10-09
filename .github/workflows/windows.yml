@@ -49,7 +49,7 @@ jobs:
     - name: Install NumPy (Clang-cl)
       run: |
         "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
-        pip install -r requirements/ci_requirements.txt
+        pip install --group openblas32
         spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini
 
     - name: Meson Log
@@ -168,7 +168,7 @@ jobs:
 
       - name: Build and install
         run: |
-          pip install -r requirements/ci_requirements.txt
+          pip install --group openblas${{ matrix.BLAS }}
           spin config-openblas --with-scipy-openblas=${{ matrix.BLAS }}
           $env:PKG_CONFIG_PATH="$pwd/.openblas"
           python -m pip install --no-build-isolation . -v -Csetup-args="--vsenv" -Csetup-args="-Dallow-noblas=false"
