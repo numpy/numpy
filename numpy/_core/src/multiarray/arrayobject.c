@@ -511,7 +511,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
     printf("\n");
 
     printf(" dtype  : ");
-    npy_PyObject_Print((PyObject *)fobj->descr, stdout);
+    arraydescr_debug_print(fobj->descr);
     printf("\n");
     printf(" data   : %p\n", fobj->data);
     printf(" strides:");
