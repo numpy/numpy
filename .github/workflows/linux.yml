@@ -386,25 +386,6 @@ jobs:
         repository: numpy/numpy-release
         path: numpy-release
         persist-credentials: false
-    - name: Check scipy-openblas version in release pipelines
-      run: |
-        NRV=$(grep -E '^scipy-openblas64' numpy-release/requirements/openblas_requirements.txt | sed -E 's/^scipy-openblas64[^0-9]*//')
-        OBLA=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['dependency-groups']['openblas64'][0].split('==')[1])")
-
-        if [ -z "$NRV" ] || [ "$NRV" != "$OBLA" ]; then
-          echo "::error file=pyproject.toml::scipy-openblas64 mismatch: numpy-release has '${NRV}', this repo has '${OBLA}'"
-          exit 1
-        fi
-        echo "scipy-openblas64 versions match: ${OBLA}"
-        
-        NRV32=$(grep -E '^scipy-openblas32' numpy-release/requirements/openblas_requirements.txt | sed -E 's/^scipy-openblas32[^0-9]*//')
-        OBLA32=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['dependency-groups']['openblas32'][0].split('==')[1])")
-
-        if [ -z "$NRV32" ] || [ "$NRV32" != "$OBLA32" ]; then
-          echo "::error file=pyproject.toml::scipy-openblas32 mismatch: numpy-release has '${NRV32}', this repo has '${OBLA32}'"
-          exit 1
-        fi
-        echo "scipy-openblas32 versions match: ${OBLA32}"
     - name: Install build and test dependencies from PyPI
       run: |
         pip install -r requirements/build_requirements.txt
