@@ -1379,6 +1379,38 @@ class TestNanFunctions_Quantile:
         assert np.isnan(out).all()
         assert out.dtype == array.dtype
 
+
+    @pytest.mark.parametrize("method", ["linear", "lower"])
+    def test_allnan_first_slice_dtype(self, method):
+        # gh-32832: dtype must not depend on which slice comes first
+        a = np.array(
+            [[1, 2],
+             [np.nan, np.nan]],
+            dtype=np.float32,
+        )
+        q = np.array([0.3], dtype=np.float64)
+
+        # Test normal order (non-NaN first)
+        with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+            normal = np.nanquantile(a, q, axis=1, method=method)
+
+        # Test reversed order (all-NaN first) - THIS IS THE KEY TEST
+        with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+            reversed_ = np.nanquantile(a[::-1], q, axis=1, method=method)
+
+        expected = np.quantile(a[0], q, method=method)
+
+        # The critical assertion: dtype should be the SAME regardless of order
+        assert normal.dtype == expected.dtype
+        assert reversed_.dtype == expected.dtype
+        assert normal.dtype == reversed_.dtype
+
+        # Verify the actual values are correct
+        assert_array_equal(normal[..., 0], expected)
+        assert_array_equal(reversed_[..., 1], expected)
+        assert np.isnan(normal[..., 1])
+        assert np.isnan(reversed_[..., 0])
+
 @pytest.mark.parametrize("arr, expected", [
     # array of floats with some nans
     (np.array([np.nan, 5.0, np.nan, np.inf]),
