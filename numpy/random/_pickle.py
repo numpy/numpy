@@ -86,3 +86,22 @@ def __randomstate_ctor(bit_generator_name="MT19937",
     if isinstance(bit_generator_name, BitGenerator):
         return RandomState(bit_generator_name)
     return RandomState(bit_generator_ctor(bit_generator_name))
+
+
+def __seed_sequence_ctor(seed_sequence_type, state):
+    """
+    Reconstruct a SeedSequence from its serialized state
+
+    Parameters:
+    ----------
+    seed_sequence_type : type
+        SeedSequence class to instantiate
+    state : dict
+        State passed as keyword arguments to SeedSequence constructor
+
+    Returns:
+    ----------
+    seed_sequence : SeedSequence
+        Reconstructed SeedSequence instance
+    """
+    return seed_sequence_type(**state)

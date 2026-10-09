@@ -316,6 +316,7 @@ cdef class SeedSequence:
                                       np.ndarray)):
             raise TypeError('SeedSequence expects int or sequence of ints for '
                             f'entropy not {entropy}')
+        self._lock = RLock()
         self.entropy = entropy
         self.spawn_key = tuple(spawn_key)
         self.pool_size = pool_size
@@ -347,6 +348,14 @@ cdef class SeedSequence:
                 ['entropy', 'spawn_key', 'pool_size',
                  'n_children_spawned']
                 if getattr(self, k) is not None}
+
+    def __reduce_ex__(self, protocol):
+        from ._pickle import __seed_sequence_ctor
+
+        with self._lock:
+            state = self.state
+
+        return __seed_sequence_ctor, (type(self), state)
 
     cdef mix_entropy(self, np.ndarray[np.npy_uint32, ndim=1] mixer,
                      np.ndarray[np.npy_uint32, ndim=1] entropy_array):
@@ -488,15 +497,17 @@ cdef class SeedSequence:
         if n_children < 0:
             raise ValueError("n_children must be non-negative")
 
-        seqs = []
-        for i in range(self.n_children_spawned,
-                       self.n_children_spawned + n_children):
-            seqs.append(type(self)(
-                self.entropy,
-                spawn_key=self.spawn_key + (i,),
-                pool_size=self.pool_size,
-            ))
-        self.n_children_spawned += n_children
+        with self._lock:
+            seqs = []
+            for i in range(self.n_children_spawned,
+                        self.n_children_spawned + n_children):
+                seqs.append(type(self)(
+                    self.entropy,
+                    spawn_key=self.spawn_key + (i,),
+                    pool_size=self.pool_size,
+                ))
+            self.n_children_spawned += n_children
+
         return seqs
 
 

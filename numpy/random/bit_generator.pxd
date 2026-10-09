@@ -26,6 +26,7 @@ cdef class SeedSequence():
     cdef readonly Py_ssize_t pool_size
     cdef readonly object pool
     cdef readonly uint32_t n_children_spawned
+    cdef object _lock
 
     cdef mix_entropy(self, np.ndarray[np.npy_uint32, ndim=1] mixer,
                      np.ndarray[np.npy_uint32, ndim=1] entropy_array)
