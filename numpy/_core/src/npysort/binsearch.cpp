@@ -56,6 +56,51 @@ struct side_to_generic_cmp<right> {
  **                            NUMERIC SEARCHES                             **
  *****************************************************************************
  */
+#if defined(_MSC_VER)
+#define NPY_BINSEARCH_NOINLINE __declspec(noinline)
+#elif defined(__GNUC__) || defined(__clang__)
+#define NPY_BINSEARCH_NOINLINE __attribute__((noinline))
+#else
+#define NPY_BINSEARCH_NOINLINE
+#endif
+
+template <class Tag, side_t side>
+static NPY_BINSEARCH_NOINLINE void
+binsearch_current(const char *arr, const char *key, char *ret,
+                  npy_intp arr_len, npy_intp key_len, npy_intp arr_str,
+                  npy_intp key_str, npy_intp ret_str)
+{
+    using T = typename Tag::type;
+    auto cmp = side_to_cmp<Tag, side>::value;
+
+    npy_intp interval_length = arr_len;
+    npy_intp half = interval_length >> 1;
+    interval_length -= half;
+
+    const T mid_val = *(const T *)(arr + half * arr_str);
+    for (npy_intp i = 0; i < key_len; ++i) {
+        const T key_val = *(const T *)(key + i * key_str);
+        *(npy_intp *)(ret + i * ret_str) = cmp(mid_val, key_val) * half;
+    }
+
+    while (interval_length > 1) {
+        half = interval_length >> 1;
+        interval_length -= half;
+        for (npy_intp i = 0; i < key_len; ++i) {
+            npy_intp &base = *(npy_intp *)(ret + i * ret_str);
+            const T pivot = *(const T *)(arr + (base + half) * arr_str);
+            const T key_val = *(const T *)(key + i * key_str);
+            base += cmp(pivot, key_val) * half;
+        }
+    }
+
+    for (npy_intp i = 0; i < key_len; ++i) {
+        npy_intp &base = *(npy_intp *)(ret + i * ret_str);
+        const T key_val = *(const T *)(key + i * key_str);
+        base += cmp(*(const T *)(arr + base * arr_str), key_val);
+    }
+}
+
 template <class Tag, side_t side>
 static void
 binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
@@ -64,9 +109,8 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
           PyArray_BinSearchCompareFunc *)
 {
     using T = typename Tag::type;
-    auto cmp = side_to_cmp<Tag, side>::value;
 
-    // If the array length is 0 we return all 0s
+    // The original batched search remains the default.
     if (arr_len <= 0) {
         for (npy_intp i = 0; i < key_len; ++i) {
             *(npy_intp *)(ret + i * ret_str) = 0;
@@ -74,104 +118,41 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
         return;
     }
 
-    /*
-    In this binary search implementation, the candidate insertion indices for
-    the j-th key are in the range [base_j, base_j+length] and on each
-    iteration we pick a pivot at the mid-point of the range to compare against
-    the j-th key. Depending on the comparison result, we adjust the base_j and
-    halve the length of the interval.
-
-    To batch multiple queries, we process all bases with a fixed length. The
-    length is halved on each iteration of an outer loop and all bases are
-    updated in an inner loop. To avoid consuming extra memory, we use the
-    result array to store intermediate values of each base until they become
-    the final result in the last step.
-
-    There are two benefits of this approach:
-
-    1. Cache locallity of pivots. In early iterations each key is compared
-    against the same set of pivots. For example, in the first iteration all
-    keys are compared against the median. In the second iteration, all keys
-    end up being compared against 1st and 3rd quartiles.
-
-    2. Independent calculations for out-of-order execution. In the single-key
-    version, step i+1 depends on computation of step i. Meaning that step i+1
-    must wait for step i to complete before proceeding. When batching multiple
-    keys, we compute each step for all keys before continuing on the next
-    step. All the computations at a given step are independent across
-    different keys. Meaning that the CPU can execute multiple keys
-    out-of-order in parallel.
-
-    Invariant (for every j):
-    - cmp(arr[i], key_val_j) == true  for all i < base_j
-    - cmp(arr[i], key_val_j) == false for all i >= base_j + length
-
-    where cmp(a, b) operator depends on side input:
-    - For side = "left", cmp operator is <
-    - For side = "right", cmp operator is <=
-
-    The insertion index candidates are in range [base, base+length] and
-    on each iteration we shrink the range into either
-        [base, ceil(length / 2)]
-    or
-        [base + floor(length / 2), ceil(length / 2)]
-
-    The outer loop terminates when length = 1. At that point, for each j
-    the insertion order is either base_j or base_j + 1. An additional
-    comparison is required to determine which of the two values.
-    If cmp(arr[base_j], key_val_j) == true, insertion index is base_j + 1.
-    Otherwise the insertion order is base_j.
-
-    Optimization: we unroll the first iteration for the following reasons:
-        1. ret is not initialized with the bases, so we save |keys| writes
-        by not having to initialize it with 0s.
-        2. By assuming the initial base for every key is 0, we also save
-        |keys| reads.
-        3. In the first iteration, all elements are compared against the
-        median. So we can store it in a variable and use it for all keys.
-
-    This initial block replaces the initialization loop that is used for the
-    arr_len==0 case. Note that when arr_len = 1, then half is 0 so the
-    following block initializes the array as with 0s.
-    */
-    npy_intp interval_length = arr_len;
-    npy_intp half = interval_length >> 1;
-    interval_length -= half; // length -> ceil(length / 2)
-
-    npy_intp base = 0;
-    const T mid_val = *(const T *)(arr + (base + half) * arr_str);
-
-    for (npy_intp i = 0; i < key_len; ++i) {
-        const T key_val = *(const T *)(key + i * key_str);
-        *(npy_intp *)(ret + i * ret_str) = cmp(mid_val, key_val) * half;
-    }
-
-    while (interval_length > 1) {
-        npy_intp half = interval_length >> 1;
-        interval_length -= half; // length -> ceil(length / 2)
-
-        for (npy_intp i = 0; i < key_len; ++i) {
-            npy_intp &base = *(npy_intp *)(ret + i * ret_str);
-            const T mid_val = *(const T *)(arr + (base + half) * arr_str);
-            const T key_val = *(const T *)(key + i * key_str);
-            base += cmp(mid_val, key_val) * half;
+    // A contiguous batch of comparator-equivalent keys needs one search.
+    // Verify the entire batch before sharing the insertion position.
+    if (key_len > 1 && key_str == (npy_intp)sizeof(T)) {
+        const T first = *(const T *)key;
+        const npy_intp middle = key_len >> 1;
+        const T mid = *(const T *)(key + middle * key_str);
+        const T last_value = *(const T *)(key + (key_len - 1) * key_str);
+        const bool anchor_equal =
+                !Tag::less(first, mid) && !Tag::less(mid, first) &&
+                !Tag::less(first, last_value) && !Tag::less(last_value, first);
+        if (anchor_equal) {
+            bool all_equal = true;
+            for (npy_intp i = 1; i < key_len; ++i) {
+                const T val = *(const T *)(key + i * key_str);
+                if (Tag::less(val, first) || Tag::less(first, val)) {
+                    all_equal = false;
+                    break;
+                }
+            }
+            if (all_equal) {
+                binsearch_current<Tag, side>(arr, key, ret, arr_len, 1,
+                                             arr_str, key_str, ret_str);
+                const npy_intp answer = *(npy_intp *)ret;
+                for (npy_intp i = 1; i < key_len; ++i) {
+                    *(npy_intp *)(ret + i * ret_str) = answer;
+                }
+                return;
+            }
         }
     }
-
-    /*
-    At this point interval_length == 1, so the candidates are in the 
-    interval [base, base + 1].
-
-    We have two options:
-        If cmp(arr[base], key_val) == true, insertion index is base + 1
-        Otherwise the insertion order is just base
-    */
-    for (npy_intp i = 0; i < key_len; ++i) {
-        npy_intp &base = *(npy_intp *)(ret + i * ret_str);
-        const T key_val = *(const T *)(key + i * key_str);
-        base += cmp(*(const T *)(arr + base * arr_str), key_val);
-    }
+    binsearch_current<Tag, side>(arr, key, ret, arr_len, key_len,
+                                 arr_str, key_str, ret_str);
 }
+
+#undef NPY_BINSEARCH_NOINLINE
 
 template <class Tag, side_t side>
 static int
