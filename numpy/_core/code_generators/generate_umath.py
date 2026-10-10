@@ -409,7 +409,7 @@ defdict = {
           TD(ints, cfunc_alias='divide',
               dispatch=[('loops_arithmetic', 'bBhHiIlLqQ')]),
           TD(flts),
-          [TypeDescription('m', FullTypeDescr, 'mq', 'm', cfunc_alias='divide',
+          [TypeDescription('m', FullTypeDescr, 'mq', 'm',
                            dispatch='loops_arithmetic_timedelta'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
            TypeDescription('m', FullTypeDescr, 'mm', 'q',
