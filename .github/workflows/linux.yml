@@ -232,7 +232,7 @@ jobs:
     # - name: Check docstests
     #   shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
     #   run: |
-    #     pip install -r requirements/doc_requirements.txt -r requirements/test_requirements.txt
+    #     pip install --group doc -r requirements/test_requirements.txt
     #     spin check-docs -v
     #     spin check-tutorials -v
 
