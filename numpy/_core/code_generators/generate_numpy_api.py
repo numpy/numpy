@@ -265,7 +265,8 @@ def do_generate_api(targets, sources):
         index = val[0]
         internal_type = None if len(val) == 1 else val[1]
         multiarray_api_dict[name] = TypeApi(
-            name, index, 'PyTypeObject', api_name, internal_type)
+            name, index, 'PyTypeObject', api_name, internal_type,
+            heap_type=name in numpy_api.multiarray_heap_types)
 
     if len(multiarray_api_dict) != len(multiarray_api_index):
         keys_dict = set(multiarray_api_dict.keys())

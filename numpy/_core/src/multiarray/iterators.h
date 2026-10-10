@@ -10,4 +10,10 @@ iter_ass_subscript(PyArrayIterObject *, PyObject *, PyObject *);
 NPY_NO_EXPORT void
 PyArray_RawIterBaseInit(PyArrayIterObject *it, PyArrayObject *ao);
 
+NPY_NO_EXPORT int
+init_array_iter_type(PyObject *module);
+
+NPY_NO_EXPORT int
+init_array_multiiter_type(PyObject *module);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ITERATORS_H_ */
