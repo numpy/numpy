@@ -18,14 +18,15 @@
 /*
  * Get an object's __array_function__ method in the fastest way possible.
  * Never raises an exception. Returns NULL if the method doesn't exist.
+ * The reference to `ndarray.__array_function__` is borrowed (owned by the
+ * module state); release the result with `release_array_function`.
  */
 static PyObject *
 get_array_function(PyObject *obj)
 {
     multiarray_umath_state *state = _npy_module_state;
-    /* Fast return for ndarray */
+    /* Fast return for ndarray (borrowed) */
     if (PyArray_CheckExact(obj)) {
-        Py_INCREF(state->static_pydata.ndarray_array_function);
         return state->static_pydata.ndarray_array_function;
     }
 
@@ -34,8 +35,28 @@ get_array_function(PyObject *obj)
             obj, state->interned_str.array_function, &array_function) < 0) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
+    if (array_function == state->static_pydata.ndarray_array_function) {
+        /* ndarray subclass without override: borrowed as well */
+        Py_DECREF(array_function);
+    }
 
     return array_function;
+}
+
+
+static inline int
+is_default_array_function(PyObject *obj)
+{
+    return obj == _npy_module_state->static_pydata.ndarray_array_function;
+}
+
+
+static inline void
+release_array_function(PyObject *method)
+{
+    if (!is_default_array_function(method)) {
+        Py_DECREF(method);
+    }
 }
 
 
@@ -91,7 +112,7 @@ get_implementing_args_and_methods(PyObject *relevant_args,
                         "maximum number (%d) of distinct argument types " \
                         "implementing __array_function__ exceeded",
                         NPY_MAXARGS);
-                    Py_DECREF(method);
+                    release_array_function(method);
                     goto fail;
                 }
 
@@ -119,19 +140,9 @@ get_implementing_args_and_methods(PyObject *relevant_args,
 fail:
     for (int j = 0; j < num_implementing_args; j++) {
         Py_DECREF(implementing_args[j]);
-        Py_DECREF(methods[j]);
+        release_array_function(methods[j]);
     }
     return -1;
-}
-
-
-/*
- * Is this object ndarray.__array_function__?
- */
-static int
-is_default_array_function(PyObject *obj)
-{
-    return obj == _npy_module_state->static_pydata.ndarray_array_function;
 }
 
 
@@ -292,9 +303,8 @@ array_implement_c_array_function_creation(
     if (is_default_array_function(method)) {
         /*
          * Return a borrowed reference of Py_NotImplemented to defer back to
-         * the original function.
+         * the original function.  (The default `method` is borrowed.)
          */
-        Py_DECREF(method);
         return Py_NotImplemented;
     }
 
@@ -350,7 +360,7 @@ array_implement_c_array_function_creation(
     }
 
   finish:
-    Py_DECREF(method);
+    release_array_function(method);
     Py_XDECREF(args);
     Py_XDECREF(kwargs);
     Py_XDECREF(dispatch_types);
@@ -403,7 +413,7 @@ array__get_implementing_args(
 cleanup:
     for (int j = 0; j < num_implementing_args; j++) {
         Py_DECREF(implementing_args[j]);
-        Py_DECREF(array_function_methods[j]);
+        release_array_function(array_function_methods[j]);
     }
     Py_DECREF(relevant_args);
     return result;
@@ -770,7 +780,7 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
 cleanup:
     for (int j = 0; j < num_implementing_args; j++) {
         Py_DECREF(implementing_args[j]);
-        Py_DECREF(array_function_methods[j]);
+        release_array_function(array_function_methods[j]);
     }
     Py_XDECREF(packed_args);
     Py_XDECREF(packed_kwargs);

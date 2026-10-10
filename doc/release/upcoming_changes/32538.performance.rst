@@ -1,0 +1,7 @@
+Better multithreaded scaling of array coercion and promotion
+------------------------------------------------------------
+On free-threaded Python, the most common cases of converting scalars to
+arrays (e.g. ``np.asarray(scalar)``, ``arr[i] = value`` for Python floats,
+integers and NumPy scalars), ``np.result_type`` with identical dtypes and
+dispatching through ``__array_function__`` avoid shared reference counts and
+scale much better across threads.
