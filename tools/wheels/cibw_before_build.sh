@@ -58,7 +58,3 @@ EOF
         fi
     fi
 fi
-
-if [[ $RUNNER_OS == "Windows" ]]; then
-    python -m pip install -r $PROJECT_DIR/requirements/delvewheel_requirements.txt
-fi
