@@ -1,7 +1,7 @@
 import pathlib
 import re
 import zipfile
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import IO, Any, Literal, assert_type
 
 import numpy as np
@@ -20,8 +20,7 @@ npz_file: np.lib.npyio.NpzFile
 AR_i8: npt.NDArray[np.int64]
 AR_LIKE_f8: list[float]
 
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+_converters_i: dict[int, Callable[[str], float]]
 
 class BytesWriter:
     def write(self, data: bytes) -> None: ...
@@ -38,7 +37,7 @@ assert_type(npz_file.fid, IO[str] | None)
 assert_type(npz_file.files, list[str])
 assert_type(npz_file.allow_pickle, bool)
 assert_type(npz_file.pickle_kwargs, Mapping[str, Any] | None)
-assert_type(npz_file.f, BagObj[np.lib.npyio.NpzFile])
+assert_type(npz_file.f, BagObj[npt.NDArray[Any]])
 assert_type(npz_file["test"], npt.NDArray[Any])
 assert_type(len(npz_file), int)
 with npz_file as f:
@@ -72,26 +71,28 @@ assert_type(np.loadtxt(str_path, ndmin=1), npt.NDArray[np.float64])
 assert_type(np.loadtxt([""]), npt.NDArray[np.float64])
 assert_type(np.loadtxt(pathlib_path, dtype=np.str_), npt.NDArray[np.str_])
 assert_type(np.loadtxt(str_path, dtype=str, skiprows=2), npt.NDArray[Any])
-assert_type(np.loadtxt(str_path, ndmin=2), _Array2D[np.float64])
-assert_type(np.loadtxt(pathlib_path, dtype=np.str_, ndmin=2), _Array2D[np.str_])
-assert_type(np.loadtxt(str_path, dtype=str, ndmin=2), _Array2D[Any])
+assert_type(np.loadtxt(str_path, ndmin=2), npt.Array2D[np.float64])
+assert_type(np.loadtxt(pathlib_path, dtype=np.str_, ndmin=2), npt.Array2D[np.str_])
+assert_type(np.loadtxt(str_path, dtype=str, ndmin=2), npt.Array2D[Any])
+assert_type(np.loadtxt(str_path, converters=_converters_i), npt.NDArray[np.float64])
 
-assert_type(np.fromregex(bytes_file, "test", np.float64), _Array1D[np.float64])
-assert_type(np.fromregex(str_file, b"test", dtype=float), _Array1D[Any])
-assert_type(np.fromregex(str_path, re.compile("test"), dtype=np.str_, encoding="utf8"), _Array1D[np.str_])
-assert_type(np.fromregex(pathlib_path, "test", np.float64), _Array1D[np.float64])
-assert_type(np.fromregex(bytes_reader, "test", np.float64), _Array1D[np.float64])
+assert_type(np.fromregex(bytes_file, "test", np.float64), npt.Array1D[np.float64])
+assert_type(np.fromregex(str_file, b"test", dtype=float), npt.Array1D[Any])
+assert_type(np.fromregex(str_path, re.compile("test"), dtype=np.str_, encoding="utf8"), npt.Array1D[np.str_])
+assert_type(np.fromregex(pathlib_path, "test", np.float64), npt.Array1D[np.float64])
+assert_type(np.fromregex(bytes_reader, "test", np.float64), npt.Array1D[np.float64])
 
 assert_type(np.genfromtxt(bytes_file), npt.NDArray[np.float64 | Any])
 assert_type(np.genfromtxt(str_path, dtype=None, delimiter="\n"), npt.NDArray[Any])
 assert_type(np.genfromtxt(str_path, dtype=int), npt.NDArray[np.int_ | Any])
 assert_type(np.genfromtxt(str_path, dtype=complex), npt.NDArray[np.complex128 | Any])
 assert_type(np.genfromtxt(str_path, dtype=str, skip_header=2), npt.NDArray[np.str_])
-assert_type(np.genfromtxt(str_path, ndmin=2), _Array2D[np.float64 | Any])
-assert_type(np.genfromtxt(str_path, dtype=np.float32, ndmin=2), _Array2D[np.float32])
-assert_type(np.genfromtxt(str_path, dtype=None, ndmin=2), _Array2D[Any])
+assert_type(np.genfromtxt(str_path, ndmin=2), npt.Array2D[np.float64 | Any])
+assert_type(np.genfromtxt(str_path, dtype=np.float32, ndmin=2), npt.Array2D[np.float32])
+assert_type(np.genfromtxt(str_path, dtype=None, ndmin=2), npt.Array2D[Any])
 assert_type(np.genfromtxt(str_path, ndmin=ndmin), npt.NDArray[np.float64 | Any])
 assert_type(np.genfromtxt(str_path, dtype=np.float32, ndmin=ndmin), npt.NDArray[np.float32])
 assert_type(np.genfromtxt(str_path, dtype=None, ndmin=ndmin), npt.NDArray[Any])
 assert_type(np.genfromtxt(str_path, names=True), npt.NDArray[np.void])
 assert_type(np.genfromtxt(pathlib_path, dtype=np.str_), npt.NDArray[np.str_])
+assert_type(np.genfromtxt(str_path, converters=_converters_i), npt.NDArray[np.float64 | Any])

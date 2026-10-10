@@ -31,17 +31,31 @@ NPY_NO_EXPORT PyObject *arraydescr_protocol_descr_get(
 
 NPY_NO_EXPORT PyObject *array_protocol_descr_get(PyArray_Descr *self);
 
+static inline int
+npy_add_to_descr_size(npy_intp *size, npy_intp increment)
+{
+    if (increment < 0 || *size > NPY_MAX_INTP - increment) {
+        PyErr_SetString(PyExc_ValueError, "structured dtype is too large");
+        return -1;
+    }
+    *size += increment;
+    return 0;
+}
+
 /*
- * offset:    A starting offset.
- * alignment: A power-of-two alignment.
- *
- * This macro returns the smallest value >= 'offset'
- * that is divisible by 'alignment'. Because 'alignment'
- * is a power of two and integers are twos-complement,
- * it is possible to use some simple bit-fiddling to do this.
+ * Round a descriptor size up to the next multiple of a power-of-two
+ * alignment. The bit mask computes the required padding without overflowing
+ * the size; npy_add_to_descr_size checks whether adding it would overflow.
  */
-#define NPY_NEXT_ALIGNED_OFFSET(offset, alignment) \
-                (((offset) + (alignment) - 1) & (-(alignment)))
+static inline int
+npy_align_descr_size(npy_intp *size, npy_intp alignment)
+{
+    if (alignment <= 1) {
+        return 0;
+    }
+    npy_intp padding = (-*size) & (alignment - 1);
+    return npy_add_to_descr_size(size, padding);
+}
 
 NPY_NO_EXPORT PyObject *
 array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args);

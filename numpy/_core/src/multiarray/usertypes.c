@@ -26,6 +26,7 @@ maintainer email:  oliphant.travis@ieee.org
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <stdio.h>
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
@@ -73,7 +74,7 @@ _append_new(int **p_types, int insert)
 static npy_bool
 _default_nonzero(void *ip, void *arr)
 {
-    int elsize = PyArray_ITEMSIZE(arr);
+    npy_intp elsize = PyArray_ITEMSIZE(arr);
     char *ptr = ip;
     while (elsize--) {
         if (*ptr++ != 0) {

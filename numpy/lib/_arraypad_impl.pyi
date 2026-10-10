@@ -1,8 +1,17 @@
+from _typeshed import Unused
 from collections.abc import Sequence
 from typing import Any, Literal as L, Protocol, overload, type_check_only
 
 import numpy as np
-from numpy._typing import ArrayLike, NDArray, _ArrayLike, _ArrayLikeInt, _Shape
+from numpy._typing import (
+    Array1D,
+    Array2D,
+    ArrayLike,
+    NDArray,
+    _ArrayLike,
+    _ArrayLikeInt,
+    _Shape,
+)
 
 __all__ = ["pad"]
 
@@ -10,18 +19,18 @@ __all__ = ["pad"]
 class _ModeFunc(Protocol):
     def __call__(
         self,
-        vector: NDArray[Any],
+        vector: Array1D[Any],
         iaxis_pad_width: tuple[int, int],
         iaxis: int,
         kwargs: dict[str, Any],
         /,
-    ) -> None: ...
+    ) -> Unused: ...
 
 # grouped by the keyword argument they accept
 type _ModeStatLength = L["maximum", "mean", "median", "minimum"]
 type _ModeReflectType = L["reflect", "symmetric"]
-type _ModeNoKwargs = L["edge", "wrap", "empty"] | _ModeFunc
-type _Mode = L["constant", "linear_ramp"] | _ModeStatLength | _ModeReflectType | _ModeNoKwargs
+type _ModeNoKwargs = L["edge", "wrap", "empty"]
+type _Mode = L["constant", "linear_ramp"] | _ModeStatLength | _ModeReflectType | _ModeNoKwargs | _ModeFunc
 
 type _PadWidth = (
     _ArrayLikeInt
@@ -29,9 +38,6 @@ type _PadWidth = (
     | dict[int, tuple[int, int]]
     | dict[int, int | tuple[int, int]]
 )
-
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 ###
 
@@ -74,6 +80,13 @@ def pad[ShapeT: _Shape, DTypeT: np.dtype](
     pad_width: _PadWidth,
     mode: _ModeNoKwargs,
 ) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # Nd, mode=<callable>
+def pad[ShapeT: _Shape, DTypeT: np.dtype](
+    array: np.ndarray[ShapeT, DTypeT],
+    pad_width: _PadWidth,
+    mode: _ModeFunc,
+    **kwargs: Any,
+) -> np.ndarray[ShapeT, DTypeT]: ...
 @overload  # 1d bool
 def pad(
     array: list[bool],
@@ -84,7 +97,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array1D[np.bool]: ...
+) -> Array1D[np.bool]: ...
 @overload  # 1d int
 def pad(
     array: list[int],
@@ -95,7 +108,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array1D[np.int_]: ...
+) -> Array1D[np.int_]: ...
 @overload  # 1d float
 def pad(
     array: list[float],
@@ -106,7 +119,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array1D[np.float64]: ...
+) -> Array1D[np.float64]: ...
 @overload  # 1d complex
 def pad(
     array: list[complex],
@@ -117,7 +130,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array1D[np.complex128]: ...
+) -> Array1D[np.complex128]: ...
 @overload  # 2d bool
 def pad(
     array: Sequence[list[bool]],
@@ -128,7 +141,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array2D[np.bool]: ...
+) -> Array2D[np.bool]: ...
 @overload  # 2d int
 def pad(
     array: Sequence[list[int]],
@@ -139,7 +152,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array2D[np.int_]: ...
+) -> Array2D[np.int_]: ...
 @overload  # 2d float
 def pad(
     array: Sequence[list[float]],
@@ -150,7 +163,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array2D[np.float64]: ...
+) -> Array2D[np.float64]: ...
 @overload  # 2d complex
 def pad(
     array: Sequence[list[complex]],
@@ -161,7 +174,7 @@ def pad(
     constant_values: ArrayLike = 0,
     end_values: ArrayLike = 0,
     reflect_type: L["odd", "even"] = "even",
-) -> _Array2D[np.complex128]: ...
+) -> Array2D[np.complex128]: ...
 @overload  # Nd T, mode="constant"
 def pad[ScalarT: np.generic](
     array: _ArrayLike[ScalarT],
@@ -200,6 +213,13 @@ def pad[ScalarT: np.generic](
     pad_width: _PadWidth,
     mode: _ModeNoKwargs,
 ) -> NDArray[ScalarT]: ...
+@overload  # Nd T, mode=<callable>
+def pad[ScalarT: np.generic](
+    array: _ArrayLike[ScalarT],
+    pad_width: _PadWidth,
+    mode: _ModeFunc,
+    **kwargs: Any,
+) -> NDArray[ScalarT]: ...
 @overload  # fallback, mode="constant"
 def pad(
     array: ArrayLike,
@@ -234,3 +254,5 @@ def pad(
 ) -> NDArray[Any]: ...
 @overload  # fallback, mode=<other>
 def pad(array: ArrayLike, pad_width: _PadWidth, mode: _ModeNoKwargs) -> NDArray[Any]: ...
+@overload  # fallback, mode=<callable>
+def pad(array: ArrayLike, pad_width: _PadWidth, mode: _ModeFunc, **kwargs: Any) -> NDArray[Any]: ...

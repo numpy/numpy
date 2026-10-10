@@ -5,4 +5,3 @@
 -r test_requirements.txt
 -r hypothesis_requirements.txt
 -r typing_requirements.txt
--r ci_requirements.txt

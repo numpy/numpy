@@ -26,7 +26,8 @@ from typing import (
 import numpy as np
 from numpy import _CastingKind, _OrderKACF, ufunc
 
-from ._array_like import ArrayLike, NDArray, _ArrayLikeBool_co, _ArrayLikeInt_co
+from ._array import NDArray
+from ._array_like import ArrayLike, _ArrayLikeBool_co, _ArrayLikeInt_co
 from ._dtype_like import DTypeLike
 from ._scalars import _ScalarLike_co
 from ._shape import _AnyShape, _Shape, _ShapeLike

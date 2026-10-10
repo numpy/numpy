@@ -10,9 +10,7 @@ else:
 
 from ._nbit_base import _32Bit, _64Bit
 from ._nested_sequence import _NestedSequence
-from ._shape import _AnyShape
 
-type NDArray[ScalarT: np.generic] = np.ndarray[_AnyShape, np.dtype[ScalarT]]
 
 # The `_SupportsArray` protocol only cares about the default dtype
 # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned

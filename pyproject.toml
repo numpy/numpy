@@ -102,6 +102,16 @@ download = "https://pypi.org/project/numpy/#files"
 tracker = "https://github.com/numpy/numpy/issues"
 "release notes" = "https://numpy.org/doc/stable/release"
 
+
+[dependency-groups]
+openblas32 = [
+    "scipy-openblas32==0.3.34.106.0",
+]
+openblas64 = [
+    "scipy-openblas64==0.3.34.106.0",
+]
+
+
 [tool.towncrier]
     single_file = false
     filename = "doc/source/release/notes-towncrier.rst"
