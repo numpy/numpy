@@ -364,6 +364,20 @@
     #include <x86intrin.h>
 #endif
 
+/*
+ * VSX2/VSX3/VSX4 all imply the base VSX feature on Power. When NumPy is built
+ * with an empty baseline (cpu-baseline=none) and these levels are enabled only
+ * as dispatch targets, each target is compiled with just its own
+ * @P@HAVE_VSX{2,3,4} macro, not the implied @P@HAVE_VSX. The SIMD headers below
+ * (and the <altivec.h> include) gate on @P@HAVE_VSX as the generic any-VSX
+ * flag; without it, Power code wrongly takes the VX (s390x) branch and the
+ * AltiVec/VSX intrinsics are never declared, breaking the build. Normalize by
+ * defining @P@HAVE_VSX whenever any higher VSX level is present.
+ */
+#if !defined(@P@HAVE_VSX) && (defined(@P@HAVE_VSX2) || defined(@P@HAVE_VSX3) || defined(@P@HAVE_VSX4))
+    #define @P@HAVE_VSX 1
+#endif
+
 #if (defined(@P@HAVE_VSX) || defined(@P@HAVE_VX)) && !defined(__cplusplus) && defined(bool)
     /*
      * "altivec.h" header contains the definitions(bool, vector, pixel),
