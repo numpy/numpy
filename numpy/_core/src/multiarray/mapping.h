@@ -106,7 +106,8 @@ typedef struct {
 
 } PyArrayMapIterObject;
 
-extern NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type;
+NPY_NO_EXPORT int
+init_mapiter_type(PyObject *module);
 
 /*
  * Struct into which indices are parsed.

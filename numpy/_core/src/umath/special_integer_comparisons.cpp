@@ -18,6 +18,7 @@
 #include "ufunc_type_resolution.h"
 
 #include "legacy_array_method.h"  /* For `get_wrapped_legacy_ufunc_loop`. */
+#include "module_state.h"
 #include "special_integer_comparisons.h"
 
 
@@ -353,7 +354,7 @@ patch_cached_int_loop(PyUFuncObject *ufunc, PyArray_DTypeMeta *Int,
     }
     PyArrayMethodObject *method =
             (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
-    assert(PyObject_TypeCheck(method, &PyArrayMethod_Type));
+    assert(PyObject_TypeCheck(method, _npy_module_state->PyArrayMethod_Type));
 
     /* Concrete (Int, Int, Bool) loop: selector matches on type_num. */
     PyArray_Descr *descrs[3] = {

@@ -23,6 +23,7 @@
 #include "item_selection.h"
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
+#include "module_state.h"
 #include "npy_pycompat.h"
 
 #define NEWAXIS_INDEX -1
@@ -1533,7 +1534,6 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
 
 /*========================= Neighborhood iterator ======================*/
 
-static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter);
 
 static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
         PyArrayObject *fill)
@@ -1694,7 +1694,8 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
     int i;
     PyArrayNeighborhoodIterObject *ret;
 
-    ret = PyObject_New(PyArrayNeighborhoodIterObject, &PyArrayNeighborhoodIter_Type);
+    ret = PyObject_New(PyArrayNeighborhoodIterObject,
+                       _npy_module_state->PyArrayNeighborhoodIter_Type);
     if (ret == NULL) {
         return NULL;
     }
@@ -1782,12 +1783,20 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
 clean_x:
     Py_DECREF(ret->_internal_iter);
     array_iter_base_dealloc((PyArrayIterObject*)ret);
+    PyTypeObject *type = Py_TYPE(ret);
     PyObject_Free(ret);
+    Py_DECREF(type);
     return NULL;
 }
 
-static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
+/*
+ * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
+ * type refcount contention on free-threaded 3.14+.
+ */
+static void neighiter_free(void *self)
 {
+    PyArrayNeighborhoodIterObject *iter = (PyArrayNeighborhoodIterObject *)self;
+
     if (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING) {
         if (PyArray_ISOBJECT(iter->_internal_iter->ao)) {
             Py_DECREF(*(PyObject**)iter->constant);
@@ -1797,14 +1806,32 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);
+
     PyObject_Free(iter);
 }
 
-NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.neigh_internal_iter",
-    .tp_basicsize = sizeof(PyArrayNeighborhoodIterObject),
-    .tp_dealloc = (destructor)neighiter_dealloc,
-    .tp_free = PyObject_Free,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
+static PyType_Slot neighiter_slots[] = {
+    {Py_tp_free, neighiter_free},
+    {0, NULL},
 };
+
+/* Only `PyArray_NeighborhoodIterNew` can build one; the cleanup assumes it. */
+static PyType_Spec neighiter_spec = {
+    .name = "numpy.neigh_internal_iter",
+    .basicsize = sizeof(PyArrayNeighborhoodIterObject),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE
+              | Py_TPFLAGS_DISALLOW_INSTANTIATION),
+    .slots = neighiter_slots,
+};
+
+NPY_NO_EXPORT int
+init_neighborhood_iter_type(PyObject *module)
+{
+    PyObject *type = PyType_FromModuleAndSpec(module, &neighiter_spec, NULL);
+    if (type == NULL) {
+        return -1;
+    }
+    get_module_state(module)->PyArrayNeighborhoodIter_Type =
+            (PyTypeObject *)type;
+    return 0;
+}

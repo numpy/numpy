@@ -38,6 +38,7 @@
 #include "dtypemeta.h"
 #include "convert_datatype.h"
 #include "common.h"
+#include "module_state.h"
 #include "numpy/ufuncobject.h"
 #include "dtype_transfer.h"
 
@@ -490,8 +491,11 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         return NULL;
     }
 
+    multiarray_umath_state *state = _npy_module_state;
+
     PyBoundArrayMethodObject *res;
-    res = PyObject_New(PyBoundArrayMethodObject, &PyBoundArrayMethod_Type);
+    res = PyObject_New(
+            PyBoundArrayMethodObject, state->PyBoundArrayMethod_Type);
     if (res == NULL) {
         return NULL;
     }
@@ -508,7 +512,7 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         res->dtypes[i] = spec->dtypes[i];
     }
 
-    res->method = PyObject_New(PyArrayMethodObject, &PyArrayMethod_Type);
+    res->method = PyObject_New(PyArrayMethodObject, state->PyArrayMethod_Type);
     if (res->method == NULL) {
         Py_DECREF(res);
         PyErr_NoMemory();
@@ -544,8 +548,12 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
 }
 
 
+/*
+ * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
+ * type refcount contention on free-threaded 3.14+.
+ */
 static void
-arraymethod_dealloc(PyObject *self)
+arraymethod_free(void *self)
 {
     PyArrayMethodObject *meth;
     meth = ((PyArrayMethodObject *)self);
@@ -561,16 +569,21 @@ arraymethod_dealloc(PyObject *self)
         PyMem_Free(meth->wrapped_dtypes);
     }
 
-    Py_TYPE(self)->tp_free(self);
+    PyObject_Free(self);
 }
 
 
-NPY_NO_EXPORT PyTypeObject PyArrayMethod_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy._ArrayMethod",
-    .tp_basicsize = sizeof(PyArrayMethodObject),
-    .tp_dealloc = arraymethod_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
+static PyType_Slot arraymethod_slots[] = {
+    {Py_tp_free, arraymethod_free},
+    {0, NULL},
+};
+
+static PyType_Spec arraymethod_spec = {
+    .name = "numpy._ArrayMethod",
+    .basicsize = sizeof(PyArrayMethodObject),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE
+              | Py_TPFLAGS_DISALLOW_INSTANTIATION),
+    .slots = arraymethod_slots,
 };
 
 
@@ -591,8 +604,12 @@ boundarraymethod_repr(PyBoundArrayMethodObject *self)
 }
 
 
+/*
+ * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
+ * type refcount contention on free-threaded 3.14+.
+ */
 static void
-boundarraymethod_dealloc(PyObject *self)
+boundarraymethod_free(void *self)
 {
     PyBoundArrayMethodObject *meth;
     meth = ((PyBoundArrayMethodObject *)self);
@@ -605,7 +622,7 @@ boundarraymethod_dealloc(PyObject *self)
 
     Py_XDECREF(meth->method);
 
-    Py_TYPE(self)->tp_free(self);
+    PyObject_Free(self);
 }
 
 
@@ -1082,13 +1099,39 @@ PyGetSetDef boundarraymethods_getters[] = {
 };
 
 
-NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy._BoundArrayMethod",
-    .tp_basicsize = sizeof(PyBoundArrayMethodObject),
-    .tp_dealloc = boundarraymethod_dealloc,
-    .tp_repr = (reprfunc)boundarraymethod_repr,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_methods = boundarraymethod_methods,
-    .tp_getset = boundarraymethods_getters,
+static PyType_Slot boundarraymethod_slots[] = {
+    {Py_tp_free, boundarraymethod_free},
+    {Py_tp_repr, boundarraymethod_repr},
+    {Py_tp_methods, boundarraymethod_methods},
+    {Py_tp_getset, boundarraymethods_getters},
+    {0, NULL},
 };
+
+static PyType_Spec boundarraymethod_spec = {
+    .name = "numpy._BoundArrayMethod",
+    .basicsize = sizeof(PyBoundArrayMethodObject),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE
+              | Py_TPFLAGS_DISALLOW_INSTANTIATION),
+    .slots = boundarraymethod_slots,
+};
+
+
+/* Neither type can be part of a reference cycle, so neither needs GC. */
+NPY_NO_EXPORT int
+init_array_method_types(PyObject *module)
+{
+    multiarray_umath_state *state = get_module_state(module);
+
+    PyObject *type = PyType_FromModuleAndSpec(module, &arraymethod_spec, NULL);
+    if (type == NULL) {
+        return -1;
+    }
+    state->PyArrayMethod_Type = (PyTypeObject *)type;
+
+    type = PyType_FromModuleAndSpec(module, &boundarraymethod_spec, NULL);
+    if (type == NULL) {
+        return -1;
+    }
+    state->PyBoundArrayMethod_Type = (PyTypeObject *)type;
+    return 0;
+}

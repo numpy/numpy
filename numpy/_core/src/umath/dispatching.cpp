@@ -108,7 +108,8 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
         }
     }
     PyObject *meth_or_promoter = PyTuple_GET_ITEM(info, 1);
-    if (!PyObject_TypeCheck(meth_or_promoter, &PyArrayMethod_Type)
+    if (!PyObject_TypeCheck(
+                meth_or_promoter, _npy_module_state->PyArrayMethod_Type)
             && !PyCapsule_IsValid(meth_or_promoter, "numpy._ufunc_promoter")) {
         PyErr_SetString(PyExc_TypeError,
                 "Second argument to info must be an ArrayMethod or promoter");
@@ -418,7 +419,8 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         PyObject *resolver_info = PySequence_Fast_GET_ITEM(loops, res_idx);
 
         if (only_promoters && PyObject_TypeCheck(
-                    PyTuple_GET_ITEM(resolver_info, 1), &PyArrayMethod_Type)) {
+                    PyTuple_GET_ITEM(resolver_info, 1),
+                    _npy_module_state->PyArrayMethod_Type)) {
             continue;
         }
 
@@ -967,7 +969,8 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
             (PyArrayIdentityHash *)ufunc->_dispatch_cache,
             (PyObject **)op_dtypes);
     if (info != NULL && PyObject_TypeCheck(
-            PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
+            PyTuple_GET_ITEM(info, 1),
+            _npy_module_state->PyArrayMethod_Type)) {
         /* Found the ArrayMethod and NOT a promoter: return it */
         return info;
     }
@@ -982,7 +985,8 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
             return NULL;
         }
         if (info != NULL && PyObject_TypeCheck(
-                PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
+                PyTuple_GET_ITEM(info, 1),
+                _npy_module_state->PyArrayMethod_Type)) {
             /*
              * Found the ArrayMethod and NOT promoter.  Before returning it
              * add it to the cache for faster lookup in the future.
