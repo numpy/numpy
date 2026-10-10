@@ -7,20 +7,6 @@ How to contribute to the NumPy documentation
 This guide will help you decide what to contribute and how to submit it to the
 official NumPy documentation.
 
-***************************
-Documentation team meetings
-***************************
-
-The NumPy community has set a firm goal of improving its documentation. We
-hold regular documentation meetings on Zoom (dates are announced on the
-`numpy-discussion mailing list
-<https://mail.python.org/mailman/listinfo/numpy-discussion>`__), and everyone
-is welcome. Reach out if you have questions or need
-someone to guide you through your first steps -- we're happy to help.
-Minutes are taken `on hackmd.io <https://hackmd.io/oB_boakvRqKR-_2jRV-Qjg>`__
-and stored in the `NumPy Archive repository
-<https://github.com/numpy/archive>`__.
-
 *************
 What's needed
 *************

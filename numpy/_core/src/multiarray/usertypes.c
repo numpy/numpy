@@ -26,6 +26,7 @@ maintainer email:  oliphant.travis@ieee.org
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <stdio.h>
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"

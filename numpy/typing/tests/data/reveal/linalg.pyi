@@ -417,6 +417,7 @@ assert_type(np.linalg.svd(complex_list_2d, compute_uv=False), npt.Array1D[np.flo
 assert_type(np.linalg.svd(complex_list_3d, compute_uv=False), npt.Array2D[np.float64])
 # Mypy bug: `Expression is of type "ndarray[Any, Any]", not "ndarray[tuple[Any, ...], dtype[Any]]"`
 assert_type(np.linalg.svd(AR_any, compute_uv=False), npt.NDArray[Any])  # type: ignore[assert-type]
+assert_type(np.linalg.svd(AR_f8, False, False), npt.NDArray[Any])
 
 assert_type(np.linalg.svdvals(AR_b), npt.NDArray[np.float64])
 assert_type(np.linalg.svdvals(AR_i8), npt.NDArray[np.float64])

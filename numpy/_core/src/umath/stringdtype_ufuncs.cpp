@@ -27,6 +27,7 @@
 #include "stringdtype/dtype.h"
 #include "stringdtype/utf8_utils.h"
 
+#include <cstdio>
 #include <vector>
 
 #define LOAD_TWO_INPUT_STRINGS(CONTEXT)                                            \

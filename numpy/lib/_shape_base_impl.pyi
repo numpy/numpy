@@ -103,6 +103,8 @@ type _To3D[ScalarT: np.generic] = (
 
 type _Func1D[ScalarT: np.generic, **Tss, ReturnT] = Callable[Concatenate[Array1D[ScalarT], Tss], ReturnT]
 
+type _IndicesOrSections = _ShapeLike | Array1D[np.integer]
+
 _AnyNumberT = TypeVar(
     "_AnyNumberT",
     np.bool,
@@ -336,7 +338,8 @@ def apply_over_axes[ScalarT: np.generic, ResultT: np.generic](
     axes: _ShapeLike,
 ) -> Array1D[ResultT]: ...
 
-#
+# NOTE: runtime explicitly checks `isinstance(axis, (tuple, list))`, so `axis: _ShapeLike`
+# would be too wide
 @overload  # Nd -> Nd
 def expand_dims[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT],
@@ -345,65 +348,68 @@ def expand_dims[ShapeT: _Shape, DTypeT: np.dtype](
 @overload  # ?d -> ?d  (workaround)
 def expand_dims[DTypeT: np.dtype](
     a: np.ndarray[_JustAnyShape, DTypeT],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | list[int],
 ) -> np.ndarray[_AnyShape, DTypeT]: ...
 @overload  # 0d -> 1d
 def expand_dims[ScalarT: np.generic](
     a: ScalarT | np.ndarray[_0d, np.dtype[ScalarT]],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
 ) -> np.ndarray[_1d, np.dtype[ScalarT]]: ...
 @overload  # 0d -> 2d
 def expand_dims[ScalarT: np.generic](
     a: ScalarT | np.ndarray[_0d, np.dtype[ScalarT]],
-    axis: tuple[int, int],
+    axis: tuple[SupportsIndex, SupportsIndex],
 ) -> np.ndarray[_2d, np.dtype[ScalarT]]: ...
 @overload  # 1d -> 2d
 def expand_dims[DTypeT: np.dtype](
     a: np.ndarray[_1d, DTypeT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
 ) -> np.ndarray[_2d, DTypeT]: ...
 @overload  # 1d -> 3d
 def expand_dims[DTypeT: np.dtype](
     a: np.ndarray[_1d, DTypeT],
-    axis: tuple[int, int],
+    axis: tuple[SupportsIndex, SupportsIndex],
 ) -> np.ndarray[_3d, DTypeT]: ...
 @overload  # 2d -> 3d
 def expand_dims[DTypeT: np.dtype](
     a: np.ndarray[_2d, DTypeT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
 ) -> np.ndarray[_3d, DTypeT]: ...
 @overload  # 2d -> 4d
 def expand_dims[DTypeT: np.dtype](
     a: np.ndarray[_2d, DTypeT],
-    axis: tuple[int, int],
+    axis: tuple[SupportsIndex, SupportsIndex],
 ) -> np.ndarray[_4d, DTypeT]: ...
 @overload  # 3d -> 4d
 def expand_dims[DTypeT: np.dtype](
     a: np.ndarray[_3d, DTypeT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
 ) -> np.ndarray[_4d, DTypeT]: ...
 @overload  # 3d -> 5d
 def expand_dims[DTypeT: np.dtype](
     a: np.ndarray[_3d, DTypeT],
-    axis: tuple[int, int],
+    axis: tuple[SupportsIndex, SupportsIndex],
 ) -> np.ndarray[_5d, DTypeT]: ...
 @overload  # 4d -> 5d
 def expand_dims[DTypeT: np.dtype](
     a: np.ndarray[_4d, DTypeT],
-    axis: int | tuple[int],
+    axis: SupportsIndex | tuple[SupportsIndex],
 ) -> np.ndarray[_5d, DTypeT]: ...
 @overload  # 4d -> 6d
 def expand_dims[DTypeT: np.dtype](
     a: np.ndarray[_4d, DTypeT],
-    axis: tuple[int, int],
+    axis: tuple[SupportsIndex, SupportsIndex],
 ) -> np.ndarray[_6d, DTypeT]: ...
 @overload  # Nd -> ?d
 def expand_dims[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
-    axis: int | tuple[int, ...],
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | list[int],
 ) -> NDArray[ScalarT]: ...
 @overload  # fallback
-def expand_dims(a: ArrayLike, axis: int | tuple[int, ...]) -> NDArray[Any]: ...
+def expand_dims(
+    a: ArrayLike,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | list[int],
+) -> NDArray[Any]: ...
 
 # keep in sync with `numpy.ma.extras.column_stack`
 @overload  # >=2d, known dtype
@@ -431,57 +437,65 @@ def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 @overload
 def array_split[SplitableT: _SupportsSplitOps](
     ary: SplitableT,
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[SplitableT]: ...
 @overload
 def array_split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
 @overload
-def array_split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsIndex = 0) -> list[NDArray[Incomplete]]: ...
+def array_split(
+    ary: ArrayLike,
+    indices_or_sections: _IndicesOrSections,
+    axis: SupportsIndex = 0,
+) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
 def split[SplitableT: _SupportsSplitOps](
     ary: SplitableT,
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[SplitableT]: ...
 @overload
 def split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
 @overload
-def split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsIndex = 0) -> list[NDArray[Incomplete]]: ...
+def split(
+    ary: ArrayLike,
+    indices_or_sections: _IndicesOrSections,
+    axis: SupportsIndex = 0,
+) -> list[NDArray[Incomplete]]: ...
 
 # keep in sync with `numpy.ma.extras.hsplit`
 @overload
-def hsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
+def hsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _IndicesOrSections) -> list[SplitableT]: ...
 @overload
-def hsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+def hsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[NDArray[ScalarT]]: ...
 @overload
-def hsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
+def hsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
-def vsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
+def vsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _IndicesOrSections) -> list[SplitableT]: ...
 @overload
-def vsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+def vsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[NDArray[ScalarT]]: ...
 @overload
-def vsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
+def vsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
-def dsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
+def dsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _IndicesOrSections) -> list[SplitableT]: ...
 @overload
-def dsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+def dsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[NDArray[ScalarT]]: ...
 @overload
-def dsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
+def dsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload  # ?d T, ?d T  (workaround)

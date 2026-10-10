@@ -1,4 +1,5 @@
 #include <Python.h>
+#include <stdio.h>
 #include <string.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -56,8 +57,8 @@ string_comparison_loop(PyArrayMethod_Context *context,
      * however it may be that this should be moved into `auxdata` eventually,
      * which may also be slightly faster/cleaner (but more involved).
      */
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize2 = context->descriptors[1]->elsize;
+    npy_intp elsize1 = context->descriptors[0]->elsize;
+    npy_intp elsize2 = context->descriptors[1]->elsize;
 
     char *in1 = data[0];
     char *in2 = data[1];

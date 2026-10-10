@@ -1,4 +1,4 @@
-from _typeshed import ConvertibleToInt, Incomplete
+from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Any,
@@ -114,8 +114,9 @@ type _SortsToComplex128 = (
     | np.object_
 )
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
+type _Numeric_co = np.number | np.bool | np.timedelta64 | np.object_
 type _InexactDouble = np.float64 | np.longdouble | np.complex128 | np.clongdouble
-type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[np.number | np.bool | np.timedelta64 | np.object_], complex]
+type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[_Numeric_co], complex]
 type _RealDouble = np.float64 | np.longdouble
 type _Time = np.timedelta64 | np.datetime64
 
@@ -211,7 +212,31 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
         cache: bool = False,
         signature: str | None = None,
     ) -> None: ...
-    @overload  # signature=<given>
+    @overload  # ?, signature=<given>
+    def __init__(
+        self: vectorize[Any, Callable[[], object]],
+        /,
+        pyfunc: Callable[..., _ScalarLike_co],
+        otypes: str | Iterable[DTypeLike] | None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        *,
+        signature: str,
+    ) -> None: ...
+    @overload  # (?, ...), signature=<given>
+    def __init__(
+        self: vectorize[Any, Callable[[], tuple[Any, ...]]],
+        /,
+        pyfunc: Callable[..., tuple[Any, ...]],
+        otypes: str | Iterable[DTypeLike] | None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        *,
+        signature: str,
+    ) -> None: ...
+    @overload  # ?, signature=<given>
     def __init__(
         self: vectorize[Any, Callable[[], object]],
         /,
@@ -223,7 +248,29 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
         *,
         signature: str,
     ) -> None: ...
-    @overload  # otypes=<given>
+    @overload  # ?, otypes=<given>
+    def __init__[FuncT: Callable[..., _ScalarLike_co]](
+        self: vectorize[Any, FuncT],
+        /,
+        pyfunc: FuncT,
+        otypes: str | Iterable[DTypeLike],
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        signature: None = None,
+    ) -> None: ...
+    @overload  # (?, ...), otypes=<given>
+    def __init__(
+        self: vectorize[Any, Callable[[], tuple[Any, ...]]],
+        /,
+        pyfunc: Callable[..., tuple[Any, ...]],
+        otypes: str | Iterable[DTypeLike],
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        signature: None = None,
+    ) -> None: ...
+    @overload  # ?, otypes=<given>
     def __init__[FuncT: Callable[..., object]](
         self: vectorize[Any, FuncT],
         /,
@@ -300,6 +347,17 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
         cache: bool = False,
         signature: None = None,
     ) -> None: ...
+    @overload  # (?, ...)
+    def __init__(
+        self: vectorize[Any, Callable[[], tuple[Any, ...]]],
+        /,
+        pyfunc: Callable[..., tuple[Any, ...]],
+        otypes: None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        signature: None = None,
+    ) -> None: ...
     @overload  # ?
     def __init__[FuncT: Callable[..., object]](
         self: vectorize[Any, FuncT],
@@ -313,7 +371,19 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
     ) -> None: ...
 
     #
-    @overload  # decorator
+    @overload  # decorator, ?
+    def __call__[FuncT: Callable[..., _ScalarLike_co]](
+        self: vectorize[Never, _NoValueType],
+        pyfunc: FuncT,
+        /,
+    ) -> vectorize[Any, FuncT]: ...
+    @overload  # decorator, (?, ...)
+    def __call__(
+        self: vectorize[Never, _NoValueType],
+        pyfunc: Callable[..., tuple[Any, ...]],
+        /,
+    ) -> vectorize[Any, Callable[[], tuple[Any, ...]]]: ...
+    @overload  # decorator, ?
     def __call__[FuncT: Callable[..., object]](
         self: vectorize[Never, _NoValueType],
         pyfunc: FuncT,
@@ -419,6 +489,20 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
         /,
         *args: np.ndarray[ShapeT] | _ScalarLike_co,
     ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    @overload  # ?d
+    def __call__(
+        self: vectorize[Any, Callable[..., _ScalarLike_co]],
+        /,
+        *args: object,
+        **kwargs: object,
+    ) -> NDArray[Any]: ...
+    @overload  # tuple
+    def __call__(
+        self: vectorize[Any, Callable[[], tuple[Any, ...]]],
+        /,
+        *args: object,
+        **kwargs: object,
+    ) -> Any: ...
     @overload  # ?d  (fallback)
     def __call__(
         self: vectorize[Any, Callable[..., object]],
@@ -428,11 +512,23 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
     ) -> NDArray[Any]: ...
 
 @overload
-def rot90[ArrayT: np.ndarray](m: ArrayT, k: int = 1, axes: tuple[int, int] = (0, 1)) -> ArrayT: ...
+def rot90[ArrayT: np.ndarray](
+    m: ArrayT,
+    k: SupportsIndex = 1,
+    axes: Sequence[SupportsIndex] = (0, 1),
+) -> ArrayT: ...
 @overload
-def rot90[ScalarT: np.generic](m: _ArrayLike[ScalarT], k: int = 1, axes: tuple[int, int] = (0, 1)) -> NDArray[ScalarT]: ...
+def rot90[ScalarT: np.generic](
+    m: _ArrayLike[ScalarT],
+    k: SupportsIndex = 1,
+    axes: Sequence[SupportsIndex] = (0, 1),
+) -> NDArray[ScalarT]: ...
 @overload
-def rot90(m: ArrayLike, k: int = 1, axes: tuple[int, int] = (0, 1)) -> NDArray[Incomplete]: ...
+def rot90(
+    m: ArrayLike,
+    k: SupportsIndex = 1,
+    axes: Sequence[SupportsIndex] = (0, 1),
+) -> NDArray[Incomplete]: ...
 
 # NOTE: Technically `flip` also accept scalars, but that has no effect and complicates
 # the overloads significantly, so we ignore that case here.
@@ -1080,7 +1176,7 @@ def diff[T](
     append: ArrayLike | _NoValueType = ...,  # = _NoValue
 ) -> T: ...
 @overload  # known array-type
-def diff[ArrayT: NDArray[_ScalarNumeric]](
+def diff[ArrayT: NDArray[_Numeric_co]](
     a: ArrayT,
     n: int = 1,
     axis: SupportsIndex = -1,
@@ -1096,7 +1192,7 @@ def diff[ShapeT: _Shape](
     append: ArrayLike | _NoValueType = ...,
 ) -> _Array[ShapeT, np.timedelta64]: ...
 @overload  # unknown shape, known scalar-type
-def diff[ScalarT: _ScalarNumeric](
+def diff[ScalarT: _Numeric_co](
     a: _ArrayLike[ScalarT],
     n: int = 1,
     axis: SupportsIndex = -1,
@@ -3551,7 +3647,7 @@ def meshgrid(
 ) -> tuple[NDArray[Any], ...]: ...
 
 #
-def place(arr: np.ndarray, mask: ConvertibleToInt | Sequence[ConvertibleToInt], vals: ArrayLike) -> None: ...
+def place(arr: np.ndarray, mask: _ArrayLikeInt_co, vals: ArrayLike) -> None: ...
 
 # keep in sync with `insert`
 @overload  # known scalar-type, axis=None (default)

@@ -76,6 +76,7 @@ assert_type(np.einsum("i,i->i", _py_U_1d, _py_U_1d, dtype=bool, casting="unsafe"
 assert_type(np.einsum([[1, 1], [1, 1]], _py_i_1d, _py_i_1d), Any)
 assert_type(np.einsum(_f64_nd, [0, 1], _f64_nd, [1, 0], [0]), Any)
 assert_type(np.einsum(_c128_nd, [0, 1], _c128_nd, [1, 0], [0]), Any)
+assert_type(np.einsum(_f64_nd, [Ellipsis, 1], [Ellipsis]), Any)
 
 ###
 #  einsum_path
@@ -87,3 +88,4 @@ assert_type(np.einsum_path("i,i->i", _py_c_1d, _py_c_1d), tuple[list[Any], str])
 assert_type(np.einsum_path("i,i->i", _py_b_1d, _py_i_1d), tuple[list[Any], str])
 assert_type(np.einsum_path("i,i,i,i->i", _py_b_1d, _u32_1d_list, _py_i_1d, _py_c_1d), tuple[list[Any], str])
 assert_type(np.einsum_path([[1, 1], [1, 1]], _py_i_1d, _py_i_1d), tuple[list[Any], str])
+assert_type(np.einsum_path(_f64_nd, [Ellipsis, 1], [Ellipsis]), tuple[list[Any], str])

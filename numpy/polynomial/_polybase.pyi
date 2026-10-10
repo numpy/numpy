@@ -62,7 +62,7 @@ class ABCPolyBase(Generic[_NameT_co], abc.ABC):  # noqa: UP046
     def __init__(
         self,
         /,
-        coef: _SeriesLikeCoef_co,
+        coef: _SeriesLikeCoef_co | _CoefLike_co,
         domain: _SeriesLikeCoef_co | None = None,
         window: _SeriesLikeCoef_co | None = None,
         symbol: str = "x",

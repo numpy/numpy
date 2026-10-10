@@ -1913,8 +1913,13 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
         return NULL;
     }
     PyTuple_SET_ITEM(state, 0, PyLong_FromLong(version));
-    PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self,
-                                                      "shape"));
+    obj = PyObject_GetAttrString((PyObject *)self, "shape");
+    if (obj == NULL) {
+        Py_DECREF(ret);
+        Py_DECREF(state);
+        return NULL;
+    }
+    PyTuple_SET_ITEM(state, 1, obj);
     descr = PyArray_DESCR(self);
     Py_INCREF((PyObject *)descr);
     PyTuple_SET_ITEM(state, 2, (PyObject *)descr);
@@ -2184,6 +2189,11 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (!PyList_Check(rawdata)) {
             PyErr_SetString(PyExc_TypeError,
                             "object pickle not returning list");
+            goto end;
+        }
+        if (PyList_GET_SIZE(rawdata) != PyArray_MultiplyList(dimensions, nd)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "list size does not match array size");
             goto end;
         }
     }
@@ -2891,15 +2901,14 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 
     if (PyArray_TYPE(self) == NPY_OBJECT) {
         /* let python try calling __complex__ on the object. */
-        PyObject *args, *res;
-
         Py_DECREF(dtype);
-        args = Py_BuildValue("(O)", *((PyObject**)PyArray_DATA(self)));
-        if (args == NULL) {
+        PyObject *item = PyArray_GETITEM(self, PyArray_DATA(self));
+        if (item == NULL) {
             return NULL;
         }
-        res = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
-        Py_DECREF(args);
+        PyObject *res = PyObject_Vectorcall(
+                (PyObject *)&PyComplex_Type, &item, 1, NULL);
+        Py_DECREF(item);
         return res;
     }
 
@@ -2907,7 +2916,8 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     if (arr == NULL) {
         return NULL;
     }
-    c = PyComplex_FromCComplex(*((Py_complex*)PyArray_DATA(arr)));
+    double *value = (double *)PyArray_DATA(arr);
+    c = PyComplex_FromDoubles(value[0], value[1]);
     Py_DECREF(arr);
     return c;
 }

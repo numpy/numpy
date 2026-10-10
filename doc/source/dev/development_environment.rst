@@ -27,9 +27,8 @@ of this chapter we assume that you have set up your git repo as described in
    environments and deal with incompatible dependencies.
 
    If you have good internet connectivity and want a temporary set-up, it is
-   often faster to work on NumPy in a Codespaces environment. For documentation
-   on how to get started with Codespaces, see
-   `the Codespaces docs <https://docs.github.com/en/codespaces>`__.
+   often faster to work on NumPy in a Codespaces environment. For a
+   step-by-step guide, see :ref:`development_ghcodespaces`.
    When creating a codespace for the ``numpy/numpy`` repository, the default
    2-core machine type works; 4-core will build and work a bit faster (but of
    course at a cost of halving your number of free usage hours). Once your
@@ -58,7 +57,7 @@ once)::
 
 If you installed Python some other way than conda, first install
 `virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named ``numpy-dev`` here), activate it, and install all project 
+virtualenv (named ``numpy-dev`` here), activate it, and install all project
 dependencies with::
 
     $ virtualenv numpy-dev

@@ -81,6 +81,8 @@ _fn1_f: Callable[[float], float]
 _fn1_c: Callable[[float], complex]
 _fn1_U: Callable[[float], str]
 _fn1_O: Callable[[float], Fraction]
+_fn1_Any: Callable[[float], Any]
+_fn1_f_i: Callable[[float], tuple[float, int]]
 _fn2_f: Callable[[float, float], float]
 _fn3_f: Callable[[float, float, float], float]
 
@@ -97,7 +99,11 @@ assert_type(_vf.excluded, set[int | str])
 assert_type(_vf.__doc__, str | None)
 assert_type(np.vectorize(otypes="d"), np.vectorize[Never, _NoValueType])
 assert_type(np.vectorize(_fn1_f, signature="(n)->()"), np.vectorize[Any, Callable[[], object]])
+assert_type(np.vectorize(_fn1_f_i, signature="()->(),()"), np.vectorize[Any, Callable[[], tuple[Any, ...]]])
+assert_type(np.vectorize(_fn1_O, signature="()->()"), np.vectorize[Any, Callable[[], object]])
 assert_type(np.vectorize(_fn1_f, "d"), np.vectorize[Any, Callable[[float], float]])
+assert_type(np.vectorize(_fn1_f_i, "dl"), np.vectorize[Any, Callable[[], tuple[Any, ...]]])
+assert_type(np.vectorize(_fn1_O, "O"), np.vectorize[Any, Callable[[float], Fraction]])
 assert_type(np.vectorize(_fn1_f4), np.vectorize[np.float32, Callable[..., np.float32]])
 assert_type(np.vectorize(_fn1_b), np.vectorize[np.bool, Callable[[float], bool]])
 assert_type(np.vectorize(_fn1_i), np.vectorize[np.int_, Callable[[float], int]])
@@ -108,9 +114,12 @@ assert_type(
 )
 assert_type(np.vectorize(_fn1_c), np.vectorize[np.complex128, Callable[[float], complex]])
 assert_type(np.vectorize(_fn1_U), np.vectorize[np.str_, Callable[[float], str]])
+assert_type(np.vectorize(_fn1_f_i), np.vectorize[Any, Callable[[], tuple[Any, ...]]])
 assert_type(np.vectorize(_fn1_O), np.vectorize[Any, Callable[[float], Fraction]])
 
 assert_type(np.vectorize(otypes="d")(_fn1_f), np.vectorize[Any, Callable[[float], float]])
+assert_type(np.vectorize(otypes="dl")(_fn1_f_i), np.vectorize[Any, Callable[[], tuple[Any, ...]]])
+assert_type(np.vectorize(otypes="O")(_fn1_O), np.vectorize[Any, Callable[[float], Fraction]])
 assert_type(_vf1(1.0), npt.Array0D[np.float64])
 assert_type(_vf1(AR_f8_1d), npt.Array1D[np.float64])
 assert_type(_vf2(1.0, 2.0), npt.Array0D[np.float64])
@@ -127,12 +136,16 @@ assert_type(_vf3(1.0, 2.0, 3.0), npt.Array0D[np.float64])
 assert_type(_vf3(AR_f8_2d, 2.0, AR_f8_2d), npt.Array2D[np.float64])
 assert_type(_vf1(AR_LIKE_f8), npt.NDArray[Any])
 assert_type(_vf1(AR_f8_1d, AR_f8_1d), npt.NDArray[Any])
+assert_type(np.vectorize(_fn1_Any)(AR_LIKE_f8), npt.NDArray[Any])
+assert_type(np.vectorize(_fn1_f_i)(AR_f8_2d), Any)
 assert_type(np.vectorize(_fn1_f, signature="(n)->()")(AR_f8_2d), npt.NDArray[Any])
 
 # rot90
 assert_type(np.rot90(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.rot90(AR_f8, k=2), npt.NDArray[np.float64])
 assert_type(np.rot90(AR_LIKE_f8, axes=(0, 1)), np.ndarray)
+assert_type(np.rot90(AR_f8, 1, [0, 1]), npt.NDArray[np.float64])
+assert_type(np.rot90(AR_f8, np.int_(1)), npt.NDArray[np.float64])
 
 # flip
 assert_type(np.flip(AR_f8_1d), npt.Array1D[np.float64])
@@ -228,6 +241,7 @@ assert_type(np.select([AR_b], [AR_f8]), npt.NDArray[np.float64])
 
 # places
 assert_type(np.place(AR_f8, mask=AR_i8, vals=5.0), None)
+assert_type(np.place(AR_f8_2d, [[True, False], [False, True]], 0), None)
 
 # copy
 assert_type(np.copy(AR_LIKE_f8), np.ndarray)
@@ -276,6 +290,8 @@ assert_type(np.diff(AR_LIKE_f8, prepend=1.5), np.ndarray[tuple[int], np.dtype[np
 assert_type(np.diff(AR_c16), npt.NDArray[np.complex128])
 assert_type(np.diff(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
 assert_type(np.diff(AR_LIKE_c16), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(np.diff(AR_i8_2d), np.ndarray[tuple[int, int], np.dtype[np.int64]])
+assert_type(np.diff(AR_b), npt.NDArray[np.bool])
 
 # interp
 assert_type(np.interp(1, [1], AR_f8), np.float64)

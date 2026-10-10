@@ -1,3 +1,5 @@
+from _typeshed import SupportsGetItem
+from collections.abc import Buffer
 from typing import overload
 
 import numpy as np
@@ -424,25 +426,25 @@ def rpartition(a: T_co, sep: T_co) -> _tuple3[_StringDTypeOrUnicodeArray]: ...
 @overload
 def translate(
     a: U_co,
-    table: str,
+    table: SupportsGetItem[int, str | int | None],
     deletechars: str | None = None,
 ) -> NDArray[np.str_]: ...
 @overload
 def translate(
     a: S_co,
-    table: str,
-    deletechars: str | None = None,
+    table: Buffer | None,
+    deletechars: bytes | None = None,
 ) -> NDArray[np.bytes_]: ...
 @overload
 def translate(
     a: _StringDTypeSupportsArray,
-    table: str,
+    table: SupportsGetItem[int, str | int | None],
     deletechars: str | None = None,
 ) -> _StringDTypeArray: ...
 @overload
 def translate(
     a: T_co,
-    table: str,
+    table: SupportsGetItem[int, str | int | None],
     deletechars: str | None = None,
 ) -> _StringDTypeOrUnicodeArray: ...
 

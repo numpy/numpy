@@ -580,21 +580,21 @@ def filled(a: ArrayLike, fill_value: _ScalarLike_co | None = None) -> NDArray[In
 @overload
 def fix_invalid[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT],
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     copy: bool = True,
     fill_value: _ScalarLike_co | None = None,
 ) -> MaskedArray[ShapeT, DTypeT]: ...
 @overload
 def fix_invalid[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     copy: bool = True,
     fill_value: _ScalarLike_co | None = None,
 ) -> _MaskedArray[ScalarT]: ...
 @overload
 def fix_invalid(
     a: ArrayLike,
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     copy: bool = True,
     fill_value: _ScalarLike_co | None = None,
 ) -> _MaskedArray[Incomplete]: ...
@@ -630,6 +630,8 @@ get_mask = getmask
 def getmaskarray(arr: _ScalarLike_co) -> _MaskArray[tuple[()]]: ...
 @overload
 def getmaskarray[ShapeT: _Shape](arr: np.ndarray[ShapeT, Any]) -> _MaskArray[ShapeT]: ...
+@overload
+def getmaskarray(arr: ArrayLike) -> _MaskArray[_AnyShape]: ...
 
 # It's sufficient for `m` to have dtype with type: `type[np.bool_]`,
 # which isn't necessarily an ndarray. Please open an issue if this causes issues.
@@ -805,18 +807,18 @@ def masked_invalid(a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]:
 # keep in sync with other the `masked_*` functions
 @overload  # array-like of known scalar-type
 def masked_where[ShapeT: _Shape, DTypeT: np.dtype](
-    condition: _ArrayLikeBool_co,
+    condition: _ArrayLikeInt_co,
     a: ndarray[ShapeT, DTypeT],
     copy: bool = True,
 ) -> MaskedArray[ShapeT, DTypeT]: ...
 @overload  # array-like of known scalar-type
 def masked_where[ScalarT: np.generic](
-    condition: _ArrayLikeBool_co,
+    condition: _ArrayLikeInt_co,
     a: _ArrayLike[ScalarT],
     copy: bool = True,
 ) -> _MaskedArray[ScalarT]: ...
 @overload  # unknown array-like
-def masked_where(condition: _ArrayLikeBool_co, a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+def masked_where(condition: _ArrayLikeInt_co, a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
 
 # keep in sync with other the `masked_*` functions
 @overload  # known array with known shape and dtype
@@ -1059,7 +1061,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __new__[ScalarT: np.generic](
         cls,
         data: _ArrayLike[ScalarT],
-        mask: _ArrayLikeBool_co = nomask,
+        mask: _ArrayLikeInt_co = nomask,
         dtype: None = None,
         copy: bool = False,
         subok: bool = True,
@@ -1074,7 +1076,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __new__[ScalarT: np.generic](
         cls,
         data: object,
-        mask: _ArrayLikeBool_co,
+        mask: _ArrayLikeInt_co,
         dtype: _DTypeLike[ScalarT],
         copy: bool = False,
         subok: bool = True,
@@ -1089,7 +1091,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __new__[ScalarT: np.generic](
         cls,
         data: object,
-        mask: _ArrayLikeBool_co = nomask,
+        mask: _ArrayLikeInt_co = nomask,
         *,
         dtype: _DTypeLike[ScalarT],
         copy: bool = False,
@@ -1105,7 +1107,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __new__(
         cls,
         data: object = None,
-        mask: _ArrayLikeBool_co = nomask,
+        mask: _ArrayLikeInt_co = nomask,
         dtype: DTypeLike | None = None,
         copy: bool = False,
         subok: bool = True,
@@ -1195,11 +1197,11 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @shape.setter  # type: ignore[override]
     def shape[ShapeT: _Shape](self: MaskedArray[ShapeT, Any], shape: ShapeT, /) -> None: ...
 
-    def __setmask__(self, mask: _ArrayLikeBool_co, copy: bool = False) -> None: ...
+    def __setmask__(self, mask: _ArrayLikeInt_co, copy: bool = False) -> None: ...
     @property
     def mask(self) -> np.ndarray[_ShapeT_co, np.dtype[MaskType]] | MaskType: ...
     @mask.setter
-    def mask(self, value: _ArrayLikeBool_co, /) -> None: ...
+    def mask(self, value: _ArrayLikeInt_co, /) -> None: ...
     @property
     def recordmask(self) -> np.ndarray[_ShapeT_co, np.dtype[MaskType]] | MaskType: ...
     @recordmask.setter
@@ -2964,7 +2966,7 @@ class mvoid(MaskedArray[_ShapeT_co, _DTypeT_co]):
         cls,
         /,
         data: ArrayLike,
-        mask: _ArrayLikeBool_co = nomask,
+        mask: _ArrayLikeInt_co = nomask,
         dtype: DTypeLike | None = None,
         fill_value: _FillValue = None,
         hardmask: bool = False,
@@ -3023,7 +3025,7 @@ def array[ScalarT: np.generic](
     dtype: None = None,
     copy: bool = False,
     order: _OrderKACF | None = None,
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     fill_value: _ScalarLike_co | None = None,
     keep_mask: bool = True,
     hard_mask: bool = False,
@@ -3037,7 +3039,7 @@ def array[ScalarT: np.generic](
     dtype: _DTypeLike[ScalarT],
     copy: bool = False,
     order: _OrderKACF | None = None,
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     fill_value: _ScalarLike_co | None = None,
     keep_mask: bool = True,
     hard_mask: bool = False,
@@ -3051,7 +3053,7 @@ def array(
     dtype: DTypeLike | None = None,
     copy: bool = False,
     order: _OrderKACF | None = None,
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     fill_value: _ScalarLike_co | None = None,
     keep_mask: bool = True,
     hard_mask: bool = False,

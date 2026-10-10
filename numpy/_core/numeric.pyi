@@ -1,3 +1,4 @@
+import numbers
 from _typeshed import Incomplete
 from builtins import bool as py_bool
 from collections.abc import Callable, Iterable, Sequence
@@ -7,10 +8,10 @@ from typing import (
     Never,
     SupportsAbs,
     SupportsIndex,
-    TypeGuard,
     TypeVar,
     overload,
 )
+from typing_extensions import TypeIs
 
 import numpy as np
 from numpy import (
@@ -832,6 +833,15 @@ def ones[ScalarT: np.generic](
     device: L["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> Array1D[ScalarT]: ...
+@overload  # 1d, bool
+def ones(
+    shape: SupportsIndex,
+    dtype: _DTypeLikeBool,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> Array1D[np.bool]: ...
 @overload  # 1d, unknown dtype
 def ones(
     shape: SupportsIndex,
@@ -868,6 +878,15 @@ def ones[ShapeT: (_0D, _1D, _2D, _3D, _4D), ScalarT: np.generic](
     device: L["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array[ShapeT, ScalarT]: ...
+@overload  # known shape, bool
+def ones[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
+    shape: ShapeT,
+    dtype: _DTypeLikeBool,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array[ShapeT, np.bool]: ...
 @overload  # known shape, unknown dtype
 def ones[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     shape: ShapeT,
@@ -904,6 +923,15 @@ def ones[ScalarT: np.generic](
     device: L["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[ScalarT]: ...
+@overload  # unknown shape, bool
+def ones(
+    shape: _ShapeLike,
+    dtype: _DTypeLikeBool,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[np.bool]: ...
 @overload  # unknown shape, unknown dtype
 def ones(
     shape: _ShapeLike,
@@ -1747,8 +1775,8 @@ def fromfunction[ReturnT](
     **kwargs: object,
 ) -> ReturnT: ...
 
-#
-def isscalar(element: object) -> TypeGuard[generic | complex | str | bytes | memoryview]: ...
+# NOTE: simplifying `int | float | complex` to `complex` causes mypy issues
+def isscalar(element: object) -> TypeIs[generic | int | float | complex | str | bytes | memoryview | numbers.Number]: ...
 
 #
 def binary_repr(num: SupportsIndex, width: int | None = None) -> str: ...

@@ -31,8 +31,8 @@ NPY_NO_EXPORT int
 PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
 {
     npy_intp oldnbytes, newnbytes;
-    npy_intp oldsize, newsize;
-    int new_nd=newshape->len, k, elsize;
+    npy_intp oldsize, newsize, elsize;
+    int new_nd=newshape->len, k;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
     npy_intp *dimptr;
