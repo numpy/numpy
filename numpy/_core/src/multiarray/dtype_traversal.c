@@ -66,7 +66,7 @@ get_clear_function(
         clear_info->func = NULL;
         return -1;
     }
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     clear_info->descr = dtype;
 
     return 0;
@@ -126,7 +126,7 @@ get_zerofill_function(
         return 0;
     }
 
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     zerofill_info->descr = dtype;
 
     return 0;

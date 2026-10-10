@@ -55,7 +55,7 @@ wrapping_method_resolve_descriptors(
             self->wrapped_meth, self->wrapped_dtypes,
             orig_given_descrs, orig_loop_descrs, view_offset);
     for (int i = 0; i < nargs; i++) {
-        Py_XDECREF(orig_given_descrs[i]);
+        Py_XDECREF((PyObject *)orig_given_descrs[i]);
     }
     if (casting < 0) {
         return -1;
@@ -292,7 +292,7 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         goto finish;
     }
 
-    Py_INCREF(bmeth->method);
+    Py_INCREF((PyObject *)bmeth->method);
     meth = bmeth->method;
     Py_SETREF(bmeth, NULL);
 
@@ -302,12 +302,12 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         goto finish;
     }
 
-    Py_INCREF(wrapped_meth);
+    Py_INCREF((PyObject *)wrapped_meth);
     meth->wrapped_meth = wrapped_meth;
     meth->translate_given_descrs = translate_given_descrs;
     meth->translate_loop_descrs = translate_loop_descrs;
     for (int i = 0; i < ufunc->nargs; i++) {
-        Py_XINCREF(wrapped_dtypes[i]);
+        Py_XINCREF((PyObject *)wrapped_dtypes[i]);
         meth->wrapped_dtypes[i] = wrapped_dtypes[i];
     }
 
@@ -328,7 +328,7 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
   finish:
     Py_XDECREF(wrapped_dt_tuple);
     Py_XDECREF(new_dt_tuple);
-    Py_XDECREF(meth);
+    Py_XDECREF((PyObject *)meth);
     Py_XDECREF(existing_info);
     return res;
 }

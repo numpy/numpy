@@ -280,7 +280,7 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
     /* Make 'dates' into an array */
     if (PyArray_Check(dates_in)) {
         dates = (PyArrayObject *)dates_in;
-        Py_INCREF(dates);
+        Py_INCREF((PyObject *)dates);
     }
     else {
         PyArray_Descr *datetime_dtype;
@@ -339,8 +339,8 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
     return 1;
 
 fail:
-    Py_XDECREF(dates);
-    Py_XDECREF(date_dtype);
+    Py_XDECREF((PyObject *)dates);
+    Py_XDECREF((PyObject *)date_dtype);
     return 0;
 }
 
@@ -399,7 +399,7 @@ busdaycalendar_init(NpyBusDayCalendar *self, PyObject *args, PyObject *kwds)
 static int
 busdaycalendar_traverse(NpyBusDayCalendar *self, visitproc visit, void *arg)
 {
-    Py_VISIT(Py_TYPE(self));
+    Py_VISIT(Py_TYPE((PyObject *)self));
     return 0;
 }
 
@@ -415,7 +415,7 @@ busdaycalendar_dealloc(NpyBusDayCalendar *self)
         self->holidays.end = NULL;
     }
 
-    PyTypeObject *type = Py_TYPE(self);
+    PyTypeObject *type = Py_TYPE((PyObject *)self);
     type->tp_free((PyObject *)self);
     Py_DECREF(type);
 }

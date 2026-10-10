@@ -108,7 +108,7 @@ array_converter_new(
         }
         else {
             item->descr = PyArray_DESCR(item->array);
-            Py_INCREF(item->descr);
+            Py_INCREF((PyObject *)item->descr);
 
             if (item->scalar_input) {
                 self->flags &= ~NPY_CH_ALL_PYSCALARS;
@@ -117,7 +117,7 @@ array_converter_new(
                 self->flags &= ~(NPY_CH_ALL_PYSCALARS | NPY_CH_ALL_SCALARS);
             }
         }
-        Py_INCREF(item->DType);
+        Py_INCREF((PyObject *)item->DType);
     }
 
     return (PyObject *)self;
@@ -361,7 +361,7 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
                     "extra_dtype and ensure_inexact are mutually exclusive.");
             goto finish;
         }
-        Py_INCREF(&PyArray_PyFloatDType);
+        Py_INCREF((PyObject *)&PyArray_PyFloatDType);
         dt_info.dtype = &PyArray_PyFloatDType;
     }
 
@@ -389,8 +389,8 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
     Py_DECREF(common_dtype);
 
   finish:
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     PyMem_Free(DTypes_and_descrs);
     return (PyObject *)result;
 }
@@ -427,7 +427,7 @@ static int
 array_converter_traverse(
         PyArrayArrayConverterObject *self, visitproc visit, void *arg)
 {
-    Py_VISIT(Py_TYPE(self));
+    Py_VISIT(Py_TYPE((PyObject *)self));
 
     creation_item *item = self->items;
     for (int i = 0; i < self->narrs; i++, item++) {
@@ -466,7 +466,7 @@ array_converter_dealloc(PyArrayArrayConverterObject *self)
     PyObject_GC_UnTrack(self);
     array_converter_clear(self);
 
-    PyTypeObject *type = Py_TYPE(self);
+    PyTypeObject *type = Py_TYPE((PyObject *)self);
     type->tp_free((PyObject *)self);
     Py_DECREF(type);
 }

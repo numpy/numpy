@@ -202,7 +202,7 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
         /* Stop the collapse new base when the would not be of the same
          * type (i.e. different subclass).
          */
-        if (Py_TYPE(tmp) != Py_TYPE(arr)) {
+        if (Py_TYPE(tmp) != Py_TYPE((PyObject *)arr)) {
             break;
         }
 
@@ -409,7 +409,7 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
              * prevent reaching 0 twice and thus recursing into dealloc.
              * Increasing sys.gettotalrefcount, but path should not be taken.
              */
-            Py_INCREF(self);
+            Py_INCREF((PyObject *)self);
             retval = PyArray_ResolveWritebackIfCopy(self);
             if (write_and_clear_error_if_unraisable(retval, unraisable) < 0) {
                 return -1;
@@ -475,7 +475,7 @@ array_dealloc(PyArrayObject *self)
     if (((PyArrayObject_fields *)self)->weakreflist != NULL) {
         PyObject_ClearWeakRefs((PyObject *)self);
     }
-    Py_TYPE(self)->tp_free((PyObject *)self);
+    Py_TYPE((PyObject *)self)->tp_free((PyObject *)self);
 }
 
 NPY_NO_EXPORT int
@@ -1014,7 +1014,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return NULL;
         }
         PyArrayObject *res = NpyIter_GetOperandArray(iter)[2];
-        Py_INCREF(res);
+        Py_INCREF((PyObject *)res);
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
             Py_DECREF(res);
             return NULL;
@@ -1256,7 +1256,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     return (PyObject *)ret;
 
  fail:
-    Py_XDECREF(descr);
+    Py_XDECREF((PyObject *)descr);
     npy_free_cache_dim_obj(dims);
     npy_free_cache_dim_obj(strides);
     return NULL;

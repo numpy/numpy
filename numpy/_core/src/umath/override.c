@@ -359,7 +359,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         if (override_args == NULL) {
             goto fail;
         }
-        PyTuple_SET_ITEM(override_args, 1, Py_NewRef(ufunc));
+        PyTuple_SET_ITEM(override_args, 1, Py_NewRef((PyObject *)ufunc));
         PyTuple_SET_ITEM(override_args, 2, Py_NewRef(method_name));
         for (int i = 0; i < nin; i++) {
             PyObject *item = in_args[i];

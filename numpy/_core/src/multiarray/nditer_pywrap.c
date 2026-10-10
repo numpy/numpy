@@ -459,7 +459,7 @@ npyiter_convert_dtypes(PyObject *op_dtypes_in,
         if (dtype == NULL) {
             npy_intp i;
             for (i = 0; i < iop; ++i ) {
-                Py_XDECREF(op_dtypes[i]);
+                Py_XDECREF((PyObject *)op_dtypes[i]);
             }
             return 0;
         }
@@ -468,7 +468,7 @@ npyiter_convert_dtypes(PyObject *op_dtypes_in,
         if (PyArray_DescrConverter2(dtype, &op_dtypes[iop]) != 1) {
             npy_intp i;
             for (i = 0; i < iop; ++i ) {
-                Py_XDECREF(op_dtypes[i]);
+                Py_XDECREF((PyObject *)op_dtypes[i]);
             }
             Py_DECREF(dtype);
             PyErr_Clear();
@@ -484,7 +484,7 @@ try_single_dtype:
     if (PyArray_DescrConverter2(op_dtypes_in, &op_dtypes[0]) == 1) {
         for (iop = 1; iop < nop; ++iop) {
             op_dtypes[iop] = op_dtypes[0];
-            Py_XINCREF(op_dtypes[iop]);
+            Py_XINCREF((PyObject *)op_dtypes[iop]);
         }
         return 1;
     }
@@ -832,8 +832,8 @@ cleanup:;
 
   finish:
     for (int iop = 0; iop < nop; ++iop) {
-        Py_XDECREF(op[iop]);
-        Py_XDECREF(op_request_dtypes[iop]);
+        Py_XDECREF((PyObject *)op[iop]);
+        Py_XDECREF((PyObject *)op_request_dtypes[iop]);
     }
     npy_free_workspace(op);
     npy_free_workspace(op_flags);
@@ -1128,9 +1128,9 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
             PyArrayObject **operands = NpyIter_GetOperandArray(iter->iter);
             for (iop = 0; iop < nop; ++iop) {
                 if (op[iop] != operands[iop]) {
-                    Py_XDECREF(op[iop]);
+                    Py_XDECREF((PyObject *)op[iop]);
                     op[iop] = operands[iop];
-                    Py_INCREF(op[iop]);
+                    Py_INCREF((PyObject *)op[iop]);
                 }
 
                 /*
@@ -1155,7 +1155,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
          */
         iter->nested_child =
                 (NewNpyArrayIterObject *)PyTuple_GET_ITEM(ret, inest+1);
-        Py_INCREF(iter->nested_child);
+        Py_INCREF((PyObject *)iter->nested_child);
         /*
          * Need to do a nested reset so all the iterators point
          * at the right data
@@ -1173,9 +1173,9 @@ finish:
     Py_XDECREF(ret);
 
     for (iop = 0; iop < nop; ++iop) {
-        Py_XDECREF(op[iop]);
-        Py_XDECREF(op_request_dtypes[iop]);
-        Py_XDECREF(op_request_dtypes_inner[iop]);
+        Py_XDECREF((PyObject *)op[iop]);
+        Py_XDECREF((PyObject *)op_request_dtypes[iop]);
+        Py_XDECREF((PyObject *)op_request_dtypes_inner[iop]);
     }
 
     npy_free_workspace(op);
@@ -1217,12 +1217,12 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
             PyErr_WriteUnraisable(Py_None);
         }
         self->iter = NULL;
-        Py_XDECREF(self->nested_child);
+        Py_XDECREF((PyObject *)self->nested_child);
         self->nested_child = NULL;
         PyErr_Restore(exc, val, tb);
     }
     PyMem_Free(self->writeflags);
-    Py_TYPE(self)->tp_free((PyObject*)self);
+    Py_TYPE((PyObject *)self)->tp_free((PyObject*)self);
 }
 
 static int
@@ -1968,7 +1968,7 @@ npyiter_dtypes_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
     for (iop = 0; iop < nop; ++iop) {
         PyArray_Descr *dtype = dtypes[iop];
 
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         PyTuple_SET_ITEM(ret, iop, (PyObject *)dtype);
     }
 
@@ -2084,7 +2084,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
         ret_ndim = 0;
     }
 
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     return PyArray_NewFromDescrAndBase(
             &PyArray_Type, dtype,
             ret_ndim, &innerloopsize, &innerstride, dataptr,
@@ -2203,7 +2203,7 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     }
 
     /* TODO - there should be a better way than this... */
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
                                 1, &innerloopsize,
                                 &innerstride, dataptr,
@@ -2376,7 +2376,7 @@ npyiter_enter(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
         PyErr_SetString(PyExc_RuntimeError, "operation on non-initialized iterator");
         return NULL;
     }
-    Py_INCREF(self);
+    Py_INCREF((PyObject *)self);
     return (PyObject *)self;
 }
 
@@ -2390,7 +2390,7 @@ npyiter_close(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
     }
     ret = NpyIter_Deallocate(iter);
     self->iter = NULL;
-    Py_XDECREF(self->nested_child);
+    Py_XDECREF((PyObject *)self->nested_child);
     self->nested_child = NULL;
     if (ret != NPY_SUCCEED) {
         return NULL;

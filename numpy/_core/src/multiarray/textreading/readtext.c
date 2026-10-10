@@ -50,7 +50,7 @@ _readtext_from_stream(stream *s,
      * columns/
      */
     out_dtype = (PyArray_Descr *)dtype;
-    Py_INCREF(out_dtype);
+    Py_INCREF((PyObject *)out_dtype);
 
     Py_ssize_t num_fields = field_types_create(out_dtype, &ft);
     if (num_fields < 0) {
@@ -76,7 +76,7 @@ _readtext_from_stream(stream *s,
     }
 
   finish:
-    Py_XDECREF(out_dtype);
+    Py_XDECREF((PyObject *)out_dtype);
     field_types_xclear(num_fields, ft);
     return (PyObject *)arr;
 }

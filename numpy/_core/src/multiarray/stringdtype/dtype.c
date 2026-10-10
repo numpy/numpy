@@ -299,7 +299,7 @@ common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
          *  We have a cast from unicode, so allow unicode to promote
          *  to PyArray_StringDType
          */
-        Py_INCREF(cls);
+        Py_INCREF((PyObject *)cls);
 	return cls;
     }
     Py_INCREF(Py_NotImplemented);
@@ -653,7 +653,7 @@ argmin(char *data, npy_intp n, npy_intp *min_ind, void *arr)
 static PyArray_StringDTypeObject *
 stringdtype_ensure_canonical(PyArray_StringDTypeObject *self)
 {
-    Py_INCREF(self);
+    Py_INCREF((PyObject *)self);
     return self;
 }
 
@@ -746,7 +746,7 @@ stringdtype_finalize_descr(PyArray_Descr *dtype)
     if (sdtype->array_owned == 0) {
         sdtype->array_owned = 1;
         NpyString_release_allocator(allocator);
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         return dtype;
     }
     NpyString_release_allocator(allocator);
@@ -814,7 +814,7 @@ stringdtype_sort_resolve_descriptors(
     }
     output_descrs[1] = NPY_DT_CALL_ensure_canonical(input_descrs[1]);
     if (NPY_UNLIKELY(output_descrs[1] == NULL)) {
-        Py_XDECREF(output_descrs[0]);
+        Py_XDECREF((PyObject *)output_descrs[0]);
         return -1;
     }
 
@@ -1116,7 +1116,7 @@ init_stringdtype_sorts(void)
         return -1;
     }
     NPY_DT_SLOTS(stringdtype)->sort_meth = sort_method->method;
-    Py_INCREF(sort_method->method);
+    Py_INCREF((PyObject *)sort_method->method);
     Py_DECREF(sort_method);
 
     PyArray_DTypeMeta *argsort_dtypes[2] = {stringdtype, &PyArray_IntpDType};
@@ -1140,7 +1140,7 @@ init_stringdtype_sorts(void)
         return -1;
     }
     NPY_DT_SLOTS(stringdtype)->argsort_meth = argsort_method->method;
-    Py_INCREF(argsort_method->method);
+    Py_INCREF((PyObject *)argsort_method->method);
     Py_DECREF(argsort_method);
     return 0;
 }

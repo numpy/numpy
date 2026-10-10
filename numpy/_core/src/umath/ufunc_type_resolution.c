@@ -409,25 +409,25 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                 if (PyArray_ISSIGNED(operands[0])) {
                     Py_SETREF(out_dtypes[0], PyArray_DescrFromType(NPY_LONGLONG));
                     out_dtypes[1] = PyArray_DescrFromType(NPY_ULONGLONG);
-                    Py_INCREF(out_dtypes[1]);
+                    Py_INCREF((PyObject *)out_dtypes[1]);
                 }
                 else {
                     Py_SETREF(out_dtypes[0], PyArray_DescrFromType(NPY_ULONGLONG));
                     out_dtypes[1] = PyArray_DescrFromType(NPY_LONGLONG);
-                    Py_INCREF(out_dtypes[1]);
+                    Py_INCREF((PyObject *)out_dtypes[1]);
                 }
             }
             else {
                 out_dtypes[1] = out_dtypes[0];
-                Py_INCREF(out_dtypes[1]);
+                Py_INCREF((PyObject *)out_dtypes[1]);
             }
         }
         else {
             /* Not doing anything will lead to a loop no found error. */
             out_dtypes[0] = PyArray_DESCR(operands[0]);
-            Py_INCREF(out_dtypes[0]);
+            Py_INCREF((PyObject *)out_dtypes[0]);
             out_dtypes[1] = PyArray_DESCR(operands[1]);
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
         }
     }
     else {
@@ -597,7 +597,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                  */
                 for (iop = 0; iop < ufunc->nin; iop++) {
                     out_dtypes[iop] = PyArray_DESCR(operands[iop]);
-                    Py_INCREF(out_dtypes[iop]);
+                    Py_INCREF((PyObject *)out_dtypes[iop]);
                 }
                 for (; iop < nop; iop++) {
                     out_dtypes[iop] = NULL;
@@ -670,7 +670,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
     /* All types are the same - copy the first one to the rest */
     for (int iop = 1; iop < nop; iop++) {
         out_dtypes[iop] = out_dtypes[0];
-        Py_INCREF(out_dtypes[iop]);
+        Py_INCREF((PyObject *)out_dtypes[iop]);
     }
 
     /* Check against the casting rules */
@@ -832,9 +832,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         // the loop has the correct implementation itself.
         out_dtypes[0] = PyArray_DescrFromType(type_num1);
         out_dtypes[1] = out_dtypes[0];
-        Py_INCREF(out_dtypes[1]);
+        Py_INCREF((PyObject *)out_dtypes[1]);
         out_dtypes[2] = out_dtypes[0];
-        Py_INCREF(out_dtypes[2]);
+        Py_INCREF((PyObject *)out_dtypes[2]);
     } else if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] + m8[<B>] => m8[gcd(<A>,<B>)] + m8[gcd(<A>,<B>)] */
         if (type_num2 == NPY_TIMEDELTA) {
@@ -844,9 +844,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
         }
         /* m8[<A>] + M8[<B>] => m8[gcd(<A>,<B>)] + M8[gcd(<A>,<B>)] */
         else if (type_num2 == NPY_DATETIME) {
@@ -863,7 +863,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[1];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
         }
         /* m8[<A>] + int => m8[<A>] + m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
@@ -877,9 +877,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num2 = NPY_TIMEDELTA;
         }
@@ -903,7 +903,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
         }
         /* M8[<A>] + int => M8[<A>] + m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
@@ -925,7 +925,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num2 = NPY_TIMEDELTA;
         }
@@ -945,9 +945,9 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num1 = NPY_TIMEDELTA;
         }
@@ -969,7 +969,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[1];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num1 = NPY_TIMEDELTA;
         }
@@ -1046,9 +1046,9 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
         }
         /* m8[<A>] - int => m8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
@@ -1062,9 +1062,9 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num2 = NPY_TIMEDELTA;
         }
@@ -1088,7 +1088,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
         }
         /* M8[<A>] - int => M8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
@@ -1110,7 +1110,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num2 = NPY_TIMEDELTA;
         }
@@ -1128,7 +1128,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
         }
         else {
             return raise_binary_type_reso_error(ufunc, operands);
@@ -1146,9 +1146,9 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num1 = NPY_TIMEDELTA;
         }
@@ -1216,7 +1216,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
             // This is wrong cause of elsize, but only the DType matters
             // here (String or Unicode). The loop has the correct implementation itself.
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[0]);
+            Py_INCREF((PyObject *)out_dtypes[0]);
         }
         else {
             out_dtypes[0] = PyArray_DescrNewFromType(NPY_INT64);
@@ -1232,7 +1232,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
             // This is wrong again because of elsize, but only the DType matters
             // here (String or Unicode).
             out_dtypes[2] = out_dtypes[1];
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
         }
     }
     else if (type_num1 == NPY_TIMEDELTA) {
@@ -1250,7 +1250,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num2 = NPY_LONGLONG;
         }
@@ -1268,7 +1268,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num2 = NPY_DOUBLE;
         }
@@ -1291,7 +1291,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[1];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num1 = NPY_LONGLONG;
         }
@@ -1314,7 +1314,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[1];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num1 = NPY_DOUBLE;
         }
@@ -1378,7 +1378,7 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
 
             /*
              * TODO: split function into truediv and floordiv resolvers
@@ -1411,7 +1411,7 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num2 = NPY_LONGLONG;
         }
@@ -1429,7 +1429,7 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
 
             type_num2 = NPY_DOUBLE;
         }
@@ -1480,9 +1480,9 @@ PyUFunc_RemainderTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
+            Py_INCREF((PyObject *)out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
-            Py_INCREF(out_dtypes[2]);
+            Py_INCREF((PyObject *)out_dtypes[2]);
         }
         else {
             return raise_binary_type_reso_error(ufunc, operands);
@@ -1691,7 +1691,7 @@ ufunc_loop_matches(PyUFuncObject *self,
          */
         if (types[i] == NPY_VOID && dtypes != NULL) {
             tmp = dtypes[i];
-            Py_INCREF(tmp);
+            Py_INCREF((PyObject *)tmp);
         }
         else {
             tmp = PyArray_DescrFromType(types[i]);
@@ -1772,7 +1772,7 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
     for (i = 0; i < nop; ++i) {
         if (dtypes != NULL) {
             out_dtypes[i] = dtypes[i];
-            Py_XINCREF(out_dtypes[i]);
+            Py_XINCREF((PyObject *)out_dtypes[i]);
         /*
          * Copy the dtype from 'op' if the type_num matches,
          * to preserve metadata.
@@ -2344,10 +2344,10 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
             return -1;
         }
         out_dtypes[1] = out_dtypes[0];
-        Py_INCREF(out_dtypes[1]);
+        Py_INCREF((PyObject *)out_dtypes[1]);
         out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
         out_dtypes[3] = out_dtypes[0];
-        Py_INCREF(out_dtypes[3]);
+        Py_INCREF((PyObject *)out_dtypes[3]);
     }
     else {
         return raise_binary_type_reso_error(ufunc, operands);

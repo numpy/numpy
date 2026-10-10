@@ -43,8 +43,8 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
 
     PyObject_GC_UnTrack(self);
 
-    Py_XDECREF(self->scalar_type);
-    Py_XDECREF(self->singleton);
+    Py_XDECREF((PyObject *)self->scalar_type);
+    Py_XDECREF((PyObject *)self->singleton);
     if (dt_slots != NULL) {
         Py_XDECREF(dt_slots->castingimpls);
         PyMem_Free(dt_slots);
@@ -117,8 +117,8 @@ legacy_fallback_setitem(PyArray_Descr *descr, PyObject *value, char *data)
         .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
         .descr = descr,
     };
-    Py_SET_TYPE(&arr_fields, &PyArray_Type);
-    Py_SET_REFCNT(&arr_fields, 1);
+    Py_SET_TYPE((PyObject *)&arr_fields, &PyArray_Type);
+    Py_SET_REFCNT((PyObject *)&arr_fields, 1);
 
     return PyDataType_GetArrFuncs(descr)->setitem(value, data, &arr_fields);
 }
@@ -427,7 +427,7 @@ dtypemeta_initialize_struct_from_spec(
     /*
      * Handle the scalar type mapping.
      */
-    Py_INCREF(spec->typeobj);
+    Py_INCREF((PyObject *)spec->typeobj);
     DType->scalar_type = spec->typeobj;
     if (PyType_GetFlags(spec->typeobj) & Py_TPFLAGS_HEAPTYPE) {
         if (PyObject_SetAttrString((PyObject *)DType->scalar_type,
@@ -537,7 +537,7 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
                 "use `np.dtype` instead.");
         return NULL;
     }
-    Py_INCREF(self->singleton);
+    Py_INCREF((PyObject *)self->singleton);
     return (PyObject *)self->singleton;
 }
 
@@ -592,7 +592,7 @@ nonparametric_discover_descr_from_pyobject(
 {
     /* If the object is of the correct scalar type return our singleton */
     assert(!NPY_DT_is_parametric(cls));
-    Py_INCREF(cls->singleton);
+    Py_INCREF((PyObject *)cls->singleton);
     return cls->singleton;
 }
 
@@ -635,7 +635,7 @@ void_discover_descr_from_pyobject(
 {
     if (PyArray_IsScalar(obj, Void)) {
         PyVoidScalarObject *void_obj = (PyVoidScalarObject *)obj;
-        Py_INCREF(void_obj->descr);
+        Py_INCREF((PyObject *)void_obj->descr);
         return (PyArray_Descr *)void_obj->descr;
     }
     if (PyBytes_Check(obj)) {
@@ -678,7 +678,7 @@ discover_datetime_and_timedelta_from_pyobject(
 static PyArray_Descr *
 nonparametric_default_descr(PyArray_DTypeMeta *cls)
 {
-    Py_INCREF(cls->singleton);
+    Py_INCREF((PyObject *)cls->singleton);
     return cls->singleton;
 }
 
@@ -691,7 +691,7 @@ static PyArray_Descr *
 ensure_native_byteorder(PyArray_Descr *descr)
 {
     if (PyArray_ISNBO(descr->byteorder)) {
-        Py_INCREF(descr);
+        Py_INCREF((PyObject *)descr);
         return descr;
     }
     else {
@@ -763,7 +763,7 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
         if (new_base == self->subarray->base) {
             /* just return self, no need to modify */
             Py_DECREF(new_base);
-            Py_INCREF(self);
+            Py_INCREF((PyObject *)self);
             return (PyArray_Descr *)self;
         }
         PyArray_Descr *new = arraydescr_new_from_subarray(
@@ -860,7 +860,7 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
     }
     else {
         /* unstructured voids are always canonical. */
-        Py_INCREF(self);
+        Py_INCREF((PyObject *)self);
         return (PyArray_Descr *)self;
     }
 }
@@ -879,7 +879,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
                     "shorter value with trailing zero bytes.");
             return NULL;
         }
-        Py_INCREF(descr1);
+        Py_INCREF((PyObject *)descr1);
         return (PyArray_Descr *)descr1;
     }
 
@@ -896,7 +896,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
         if (result == NULL) {
             return NULL;
         }
-        if (!PyObject_TypeCheck(result, Py_TYPE(descr1))) {
+        if (!PyObject_TypeCheck(result, Py_TYPE((PyObject *)descr1))) {
             PyErr_SetString(PyExc_RuntimeError,
                     "Internal NumPy error: `_promote_fields` did not return "
                     "a valid descriptor object.");
@@ -929,7 +929,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
          */
         if (descr1 == descr2 && new_base == descr1->subarray->base) {
             Py_DECREF(new_base);
-            Py_INCREF(descr1);
+            Py_INCREF((PyObject *)descr1);
             return (PyArray_Descr *)descr1;
         }
 
@@ -1039,7 +1039,7 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
          */
         if (other == &PyArray_PyComplexDType) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)) {
-                Py_INCREF(cls);
+                Py_INCREF((PyObject *)cls);
                 return cls;
             }
             else if (cls->type_num == NPY_HALF || cls->type_num == NPY_FLOAT) {
@@ -1055,7 +1055,7 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         else if (other == &PyArray_PyFloatDType) {
             if (PyTypeNum_ISCOMPLEX(cls->type_num)
                     || PyTypeNum_ISFLOAT(cls->type_num)) {
-                Py_INCREF(cls);
+                Py_INCREF((PyObject *)cls);
                 return cls;
             }
         }
@@ -1064,7 +1064,7 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                     || PyTypeNum_ISFLOAT(cls->type_num)
                     || PyTypeNum_ISINTEGER(cls->type_num)
                     || cls->type_num == NPY_TIMEDELTA) {
-                Py_INCREF(cls);
+                Py_INCREF((PyObject *)cls);
                 return cls;
             }
         }
@@ -1109,7 +1109,7 @@ string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
      * Arguably, we should not consider numbers and strings "common", but
      * we currently do.
      */
-    Py_INCREF(cls);
+    Py_INCREF((PyObject *)cls);
     return cls;
 }
 
@@ -1129,7 +1129,7 @@ datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
          *       currently relied on within `np.add(datetime, timedelta)`,
          *       while for concatenation the cast step will fail.
          */
-        Py_INCREF(cls);
+        Py_INCREF((PyObject *)cls);
         return cls;
     }
     return default_builtin_common_dtype(cls, other);
@@ -1148,7 +1148,7 @@ object_common_dtype(
      * does not support scalars so that e.g. `arr1d[0]` returns a 0-D array
      * and `arr.astype(object)` would fail. But object casts are special.
      */
-    Py_INCREF(cls);
+    Py_INCREF((PyObject *)cls);
     return cls;
 }
 
@@ -1172,13 +1172,14 @@ dtypemeta_wrap_legacy_descriptor(
     PyTypeObject *dtype_super_class, const char *name, const char *alias)
 {
     multiarray_umath_state *state = _npy_module_state;
-    int has_type_set = Py_TYPE(descr) == &PyArrayDescr_Type;
+    int has_type_set = Py_TYPE((PyObject *)descr) == &PyArrayDescr_Type;
 
     if (!has_type_set) {
         /* Accept if the type was filled in from an existing builtin dtype */
         for (int i = 0; i < NPY_NTYPES_LEGACY; i++) {
             PyArray_Descr *builtin = PyArray_DescrFromType(i);
-            has_type_set = Py_TYPE(descr) == Py_TYPE(builtin);
+            has_type_set = Py_TYPE((PyObject *)descr) ==
+                    Py_TYPE((PyObject *)builtin);
             Py_DECREF(builtin);
             if (has_type_set) {
                 break;
@@ -1193,7 +1194,7 @@ dtypemeta_wrap_legacy_descriptor(
                 "modified to ensure `Py_TYPE(descr) == &PyArrayDescr_Type` or "
                 "that of an existing dtype (with the assumption it is just "
                 "copied over and can be replaced).",
-                descr->typeobj, Py_TYPE(descr));
+                descr->typeobj, Py_TYPE((PyObject *)descr));
         return NULL;
     }
 
@@ -1241,7 +1242,7 @@ dtypemeta_wrap_legacy_descriptor(
      * type information would need to be set before PyType_Ready().
      */
     dtype_class->singleton = (PyArray_Descr *)descr;
-    Py_INCREF(descr->typeobj);
+    Py_INCREF((PyObject *)descr->typeobj);
     dtype_class->scalar_type = descr->typeobj;
     dtype_class->type_num = descr->type_num;
     dt_slots->f = *arr_funcs;
@@ -1322,7 +1323,7 @@ dtypemeta_wrap_legacy_descriptor(
     }
 
     /* Finally, replace the current class of the descr */
-    Py_SET_TYPE(descr, (PyTypeObject *)dtype_class);
+    Py_SET_TYPE((PyObject *)descr, (PyTypeObject *)dtype_class);
 
     /* And it to the types submodule if it is a builtin dtype */
     if (!PyTypeNum_ISUSERDEF(descr->type_num)) {

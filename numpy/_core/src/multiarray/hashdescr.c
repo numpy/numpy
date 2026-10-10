@@ -221,7 +221,7 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
         return -1;
     }
 
-    Py_INCREF(adescr->base);
+    Py_INCREF((PyObject *)adescr->base);
     st = _array_descr_walk(adescr->base, l);
     Py_DECREF(adescr->base);
 

@@ -694,7 +694,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
 
         if (PyArray_Check(obj)) {
             out_op[i] = (PyArrayObject *)obj;
-            Py_INCREF(out_op[i]);
+            Py_INCREF((PyObject *)out_op[i]);
         }
         else {
             /* Convert the input to an array and check for special cases */
@@ -843,7 +843,7 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
                             || (PyArray_NDIM(op[i]) == 1
                                 && PyArray_DIM(op[i], 0) <= buffersize))) {
                 PyArrayObject *tmp;
-                Py_INCREF(dtypes[i]);
+                Py_INCREF((PyObject *)dtypes[i]);
                 tmp = (PyArrayObject *)PyArray_CastToType(op[i], dtypes[i], 0);
                 if (tmp == NULL) {
                     return -1;
@@ -949,7 +949,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
     }
 
     if (op[nin] == NULL) {
-        Py_INCREF(context->descriptors[nin]);
+        Py_INCREF((PyObject *)context->descriptors[nin]);
         op[nin] = (PyArrayObject *) PyArray_NewFromDescr(&PyArray_Type,
                 context->descriptors[nin], operation_ndim, operation_shape,
                 NULL, NULL, operation_order==NPY_ARRAY_F_CONTIGUOUS, NULL);
@@ -1147,7 +1147,7 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     for (int i = 0; i < nout; ++i) {
         if (op[nin + i] == NULL) {
             op[nin + i] = op_it[nin + i];
-            Py_INCREF(op[nin + i]);
+            Py_INCREF((PyObject *)op[nin + i]);
         }
     }
 
@@ -2045,7 +2045,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
         for (i = nin; i < nop; ++i) {
             if (op[i] == NULL) {
                 op[i] = operands[i];
-                Py_INCREF(op[i]);
+                Py_INCREF((PyObject *)op[i]);
             }
         }
     }
@@ -2422,12 +2422,12 @@ reducelike_promote_and_resolve_multi(PyUFuncObject *ufunc,
     }
     for (int i = 0; i < nout; i++) {
         PyArray_Descr *out_descr = fwd_descrs[nin + i];
-        Py_INCREF(out_descr);
+        Py_INCREF((PyObject *)out_descr);
         out_descrs[i] = out_descr;            /* acc_i */
-        Py_INCREF(out_descr);
+        Py_INCREF((PyObject *)out_descr);
         out_descrs[nout + 1 + i] = out_descr; /* out_i (aliased to acc_i) */
     }
-    Py_INCREF(fwd_descrs[0]);
+    Py_INCREF((PyObject *)fwd_descrs[0]);
     out_descrs[nout] = fwd_descrs[0];         /* stream */
     for (int i = 0; i < fwd_nargs; i++) {
         Py_DECREF(fwd_descrs[i]);
@@ -2573,7 +2573,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * After checking that they are equivalent, we enforce the use of the out
      * one (which the user should have defined).  (Needed by string dtype)
      */
-    Py_INCREF(out_descrs[2]);
+    Py_INCREF((PyObject *)out_descrs[2]);
     Py_SETREF(out_descrs[0], out_descrs[2]);
 
     /* TODO: This really should _not_ be unsafe casting (same above)! */
@@ -2752,7 +2752,7 @@ try_reduce_contiguous(
     PyArrayObject *result[NPY_MAXARGS];
     char *accum[NPY_MAXARGS];
     for (int i = 0; i < nout; i++) {
-        Py_INCREF(descrs[i]);
+        Py_INCREF((PyObject *)descrs[i]);
         result[i] = (PyArrayObject *)PyArray_NewFromDescr(
                 &PyArray_Type, descrs[i], 0, NULL, NULL, NULL, 0, NULL);
         if (result[i] == NULL) {
@@ -2965,14 +2965,14 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     }
 
     /* Take a reference to out for later returning */
-    Py_XINCREF(out);
+    Py_XINCREF((PyObject *)out);
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
             arr, &out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
             "accumulate");
     if (ufuncimpl == NULL) {
-        Py_XDECREF(out);
+        Py_XDECREF((PyObject *)out);
         return NULL;
     }
 
@@ -3071,11 +3071,11 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     if (out == NULL) {
         if (iter) {
             op[0] = out = NpyIter_GetOperandArray(iter)[0];
-            Py_INCREF(out);
+            Py_INCREF((PyObject *)out);
         }
         else {
             PyArray_Descr *dtype = descrs[0];
-            Py_INCREF(dtype);
+            Py_INCREF((PyObject *)dtype);
             op[0] = out = (PyArrayObject *)PyArray_NewFromDescr_int(
                                     &PyArray_Type, dtype,
                                     ndim, PyArray_DIMS(op[1]), NULL, NULL,
@@ -3301,14 +3301,14 @@ finish:
     return (PyObject *)out;
 
 fail:
-    Py_XDECREF(out);
+    Py_XDECREF((PyObject *)out);
 
     NPY_AUXDATA_FREE(auxdata);
     NPY_cast_info_xfree(&copy_info);
 
-    Py_XDECREF(descrs[0]);
-    Py_XDECREF(descrs[1]);
-    Py_XDECREF(descrs[2]);
+    Py_XDECREF((PyObject *)descrs[0]);
+    Py_XDECREF((PyObject *)descrs[1]);
+    Py_XDECREF((PyObject *)descrs[2]);
 
     NpyIter_Deallocate(iter);
 
@@ -3395,14 +3395,14 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
     /* Take a reference to out for later returning */
-    Py_XINCREF(out);
+    Py_XINCREF((PyObject *)out);
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
             arr, &out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
             "reduceat");
     if (ufuncimpl == NULL) {
-        Py_XDECREF(out);
+        Py_XDECREF((PyObject *)out);
         return NULL;
     }
 
@@ -3509,7 +3509,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
         if (out == NULL) {
             out = op[0];
-            Py_INCREF(out);
+            Py_INCREF((PyObject *)out);
         }
     }
     else {
@@ -3518,7 +3518,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
          * use the outer_iteration path when `out` is passed.
          */
         assert(out == NULL);
-        Py_INCREF(descrs[0]);
+        Py_INCREF((PyObject *)descrs[0]);
         op[0] = out = (PyArrayObject *)PyArray_NewFromDescr(
                                     &PyArray_Type, descrs[0],
                                     1, &ind_size, NULL, NULL,
@@ -3726,12 +3726,12 @@ finish:
     return (PyObject *)out;
 
 fail:
-    Py_XDECREF(out);
+    Py_XDECREF((PyObject *)out);
 
     NPY_AUXDATA_FREE(auxdata);
-    Py_XDECREF(descrs[0]);
-    Py_XDECREF(descrs[1]);
-    Py_XDECREF(descrs[2]);
+    Py_XDECREF((PyObject *)descrs[0]);
+    Py_XDECREF((PyObject *)descrs[1]);
+    Py_XDECREF((PyObject *)descrs[2]);
 
     NpyIter_Deallocate(iter);
 
@@ -4118,7 +4118,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     }
 
     for (int i = 0; i < ufunc->nout; i++) {
-        Py_XDECREF(out[i]);
+        Py_XDECREF((PyObject *)out[i]);
     }
 
     Py_DECREF(mp);
@@ -4178,12 +4178,12 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
 
 fail:
     for (int i = 0; i < ufunc->nout; i++) {
-        Py_XDECREF(out[i]);
+        Py_XDECREF((PyObject *)out[i]);
     }
 
-    Py_XDECREF(mp);
-    Py_XDECREF(wheremask);
-    Py_XDECREF(indices);
+    Py_XDECREF((PyObject *)mp);
+    Py_XDECREF((PyObject *)wheremask);
+    Py_XDECREF((PyObject *)indices);
     multi_XDECREF(ufunc_input, nin_args);
     multi_XDECREF(ufunc_output, nout_args);
     return NULL;
@@ -4474,7 +4474,7 @@ resolve_descriptors(int nop,
             else {
                 /* For abstract DTypes, we might want to change what this is */
                 original_descrs[i] = PyArray_DTYPE(operands[i]);
-                Py_INCREF(original_descrs[i]);
+                Py_INCREF((PyObject *)original_descrs[i]);
             }
             /*
              * Check whether something is a scalar of the given type.
@@ -4644,7 +4644,7 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
         /* subok=False ignores input wrapping (but not output) */
         Py_INCREF(Py_None);
         wrap = Py_None;
-        Py_INCREF(&PyArray_Type);
+        Py_INCREF((PyObject *)&PyArray_Type);
         wrap_type = (PyObject *)&PyArray_Type;
     }
     else if (npy_find_array_wrap(
@@ -4787,7 +4787,7 @@ try_trivial_scalar_call(
     }
     // Get method, bailing if not an arraymethod (e.g., a promotor).
     PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
-    if (!PyObject_TypeCheck(method, &PyArrayMethod_Type)) {
+    if (!PyObject_TypeCheck((PyObject *)method, &PyArrayMethod_Type)) {
         goto bail;
     }
     // Get loop, requiring that the output and input dtype are the same.
@@ -5168,7 +5168,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      * Clear all variables which are not needed any further.
      * (From here on, we cannot `goto fail` any more.)
      */
-    Py_XDECREF(wheremask);
+    Py_XDECREF((PyObject *)wheremask);
     for (int i = 0; i < nop; i++) {
         Py_DECREF(operation_descrs[i]);
         if (i < nin) {
@@ -5195,10 +5195,10 @@ fail:
         multi_XDECREF(ufunc_input, nin);
     }
     multi_XDECREF(ufunc_output, nout_args);
-    Py_XDECREF(wheremask);
+    Py_XDECREF((PyObject *)wheremask);
     for (int i = 0; i < ufunc->nargs; i++) {
-        Py_XDECREF(operands[i]);
-        Py_XDECREF(operation_descrs[i]);
+        Py_XDECREF((PyObject *)operands[i]);
+        Py_XDECREF((PyObject *)operation_descrs[i]);
     }
     npy_free_workspace(scratch_objs);
     return NULL;
@@ -5643,13 +5643,13 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
                 else if (arg_dtypes != NULL) {
                     for (i = 0; i < ufunc->nargs; i++) {
                         current->arg_dtypes[i] = arg_dtypes[i];
-                        Py_INCREF(current->arg_dtypes[i]);
+                        Py_INCREF((PyObject *)current->arg_dtypes[i]);
                     }
                 }
                 else {
                     for (i = 0; i < ufunc->nargs; i++) {
                         current->arg_dtypes[i] = user_dtype;
-                        Py_INCREF(current->arg_dtypes[i]);
+                        Py_INCREF((PyObject *)current->arg_dtypes[i]);
                     }
                 }
                 current->nargs = ufunc->nargs;
@@ -5784,7 +5784,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     }
     PyArrayMethodObject *registered_method =
             (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
-    assert(PyObject_TypeCheck(registered_method, &PyArrayMethod_Type));
+    assert(PyObject_TypeCheck((PyObject *)registered_method,
+                              &PyArrayMethod_Type));
     /* Clearing sets it to NULL for the error paths */
     Py_CLEAR(signature_tuple);
 
@@ -6073,7 +6074,7 @@ prepare_input_arguments_for_outer(
                 "discouraged). "
                 "To work around this issue, please convert the inputs to "
                 "numpy arrays.",
-                ufunc->name, Py_TYPE(ap_new)->tp_name);
+                ufunc->name, Py_TYPE((PyObject *)ap_new)->tp_name);
         Py_DECREF(ap_new);
         goto fail;
     }
@@ -6086,8 +6087,8 @@ prepare_input_arguments_for_outer(
     return 0;
 
  fail:
-    Py_XDECREF(ap1);
-    Py_XDECREF(ap2);
+    Py_XDECREF((PyObject *)ap1);
+    Py_XDECREF((PyObject *)ap2);
     return -1;
 }
 
@@ -6121,7 +6122,8 @@ static inline PyArrayObject *
 new_array_op(PyArrayObject *op_array, char *data)
 {
     npy_intp dims[1] = {1};
-    Py_INCREF(PyArray_DESCR(op_array));  /* NewFromDescr steals a reference */
+    /* NewFromDescr steals a reference */
+    Py_INCREF((PyObject *)PyArray_DESCR(op_array));
     PyObject *r = PyArray_NewFromDescr(&PyArray_Type, PyArray_DESCR(op_array),
                                        1, dims, NULL, data,
                                        NPY_ARRAY_WRITEABLE, NULL);
@@ -6342,7 +6344,7 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     if (iter_buffer == NULL) {
         /* will fail only on memory allocation errors */
         for (int i = 0; i < 3; i++) {
-            Py_XDECREF(array_operands[i]);
+            Py_XDECREF((PyObject *)array_operands[i]);
         }
         return -1;
     }
@@ -6352,7 +6354,7 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
         /* can not really happen, iter_buffer creation is tightly controlled */
         NpyIter_Deallocate(iter_buffer);
         for (int i = 0; i < 3; i++) {
-            Py_XDECREF(array_operands[i]);
+            Py_XDECREF((PyObject *)array_operands[i]);
         }
         return -1;
     }
@@ -6431,7 +6433,7 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     }
     NpyIter_Deallocate(iter_buffer);
     for (int i = 0; i < 3; i++) {
-        Py_XDECREF(array_operands[i]);
+        Py_XDECREF((PyObject *)array_operands[i]);
     }
     return res;
 }
@@ -6559,7 +6561,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         if (op2_array != NULL) {
             /* Owned: `resolve_descriptors` may replace it for Python scalars */
             tmp_operands[1] = op2_array;
-            Py_INCREF(tmp_operands[1]);
+            Py_INCREF((PyObject *)tmp_operands[1]);
             operand_DTypes[1] = NPY_DTYPE(PyArray_DESCR(op2_array));
             multiarray_umath_state *state = _npy_module_state;
             if (mark_pyscalar_operand(
@@ -6713,8 +6715,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 fail:
     NPY_AUXDATA_FREE(auxdata);
 
-    Py_XDECREF(op2_array);
-    Py_XDECREF(iter2);
+    Py_XDECREF((PyObject *)op2_array);
+    Py_XDECREF((PyObject *)iter2);
     multi_XDECREF((PyObject *const *)operation_descrs, nop);
 
     /*
@@ -6729,11 +6731,11 @@ fail:
         }
         // iter might own the last reference to op1_array,
         // so it must be decref'd second
-        Py_XDECREF(iter);
+        Py_XDECREF((PyObject *)iter);
         return NULL;
     }
     else {
-        Py_XDECREF(iter);
+        Py_XDECREF((PyObject *)iter);
         Py_RETURN_NONE;
     }
 }
@@ -6856,7 +6858,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
 
         if (PyArray_DescrCheck(descr_obj)) {
             descr = (PyArray_Descr *)descr_obj;
-            Py_INCREF(descr);
+            Py_INCREF((PyObject *)descr);
             dummy_arrays[i] = (PyArrayObject *)PyArray_NewFromDescr_int(
                     &PyArray_Type, descr, 0, NULL, NULL, NULL,
                     0, NULL, NULL, _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
@@ -7000,13 +7002,13 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
 
     PyArrayMethod_Context *context = call_info->context;
 
-    Py_INCREF(ufunc);
+    Py_INCREF((PyObject *)ufunc);
     context->caller = (PyObject *)ufunc;
-    Py_INCREF(ufuncimpl);
+    Py_INCREF((PyObject *)ufuncimpl);
     context->method = ufuncimpl;
     context->descriptors = call_info->_descrs;
     for (int i=0; i < ufunc->nargs; i++) {
-        Py_INCREF(operation_descrs[i]);
+        Py_INCREF((PyObject *)operation_descrs[i]);
         ((PyArray_Descr **)context->descriptors)[i] = operation_descrs[i];
     }
 
@@ -7018,8 +7020,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
   finish:
     Py_XDECREF(result_dtype_tuple);
     for (int i = 0; i < ufunc->nargs; i++) {
-        Py_XDECREF(dummy_arrays[i]);
-        Py_XDECREF(operation_descrs[i]);
+        Py_XDECREF((PyObject *)dummy_arrays[i]);
+        Py_XDECREF((PyObject *)operation_descrs[i]);
     }
 
     return result;

@@ -97,7 +97,7 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
             // Instead, warn if the refcount is exactly 2 that this might be a
             // false positive
             if (!PyUnstable_Object_IsUniquelyReferenced((PyObject *)self)) {
-                if (Py_REFCNT(self) == 2) {
+                if (Py_REFCNT((PyObject *)self) == 2) {
                     PyErr_SetString(
                             PyExc_ValueError,
                             "cannot resize an array that may be referenced "
@@ -108,7 +108,7 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
                     return -1;
                 }
 #else
-            if (Py_REFCNT(self) > 2) {
+            if (Py_REFCNT((PyObject *)self) > 2) {
 #endif
                 PyErr_SetString(PyExc_ValueError, msg);
                 return -1;
@@ -284,7 +284,7 @@ _reshape_with_copy_arg(PyArrayObject *array, PyArray_Dims *newdims,
          * because we can't just reuse the buffer with the
          * data in the order it is in.
          */
-        Py_INCREF(array);
+        Py_INCREF((PyObject *)array);
         if (((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(array)) ||
                 (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(array)))) {
             int success = 0;
@@ -325,9 +325,9 @@ _reshape_with_copy_arg(PyArrayObject *array, PyArray_Dims *newdims,
         }
     }
 
-    Py_INCREF(PyArray_DESCR(array));
+    Py_INCREF((PyObject *)PyArray_DESCR(array));
     ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-            Py_TYPE(array), PyArray_DESCR(array),
+            Py_TYPE((PyObject *)array), PyArray_DESCR(array),
             ndim, dimensions, strides, PyArray_DATA(array),
             flags, (PyObject *)array, (PyObject *)array,
             _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
@@ -560,7 +560,7 @@ PyArray_Squeeze(PyArrayObject *self)
 
     /* If there were no ones to squeeze out, return the same array */
     if (!any_ones) {
-        Py_INCREF(self);
+        Py_INCREF((PyObject *)self);
         return (PyObject *)self;
     }
 
@@ -575,7 +575,7 @@ PyArray_Squeeze(PyArrayObject *self)
      * If self isn't not a base class ndarray, call its
      * __array_wrap__ method
      */
-    if (Py_TYPE(self) != &PyArray_Type) {
+    if (Py_TYPE((PyObject *)self) != &PyArray_Type) {
         PyObject *wrapped = npy_apply_wrap_simple(self, ret);
         Py_DECREF(ret);
         return wrapped;
@@ -616,7 +616,7 @@ PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags)
 
     /* If there were no axes to squeeze out, return the same array */
     if (!any_ones) {
-        Py_INCREF(self);
+        Py_INCREF((PyObject *)self);
         return (PyObject *)self;
     }
 
@@ -631,7 +631,7 @@ PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags)
      * If self isn't not a base class ndarray, call its
      * __array_wrap__ method
      */
-    if (Py_TYPE(self) != &PyArray_Type) {
+    if (Py_TYPE((PyObject *)self) != &PyArray_Type) {
         PyObject *wrapped = npy_apply_wrap_simple(self, ret);
         Py_DECREF(ret);
         return wrapped;
@@ -722,9 +722,9 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
      * this allocates memory for dimensions and strides (but fills them
      * incorrectly), sets up descr, and points data at PyArray_DATA(ap).
      */
-    Py_INCREF(PyArray_DESCR(ap));
+    Py_INCREF((PyObject *)PyArray_DESCR(ap));
     ret = (PyArrayObject *) PyArray_NewFromDescrAndBase(
-            Py_TYPE(ap), PyArray_DESCR(ap),
+            Py_TYPE((PyObject *)ap), PyArray_DESCR(ap),
             n, PyArray_DIMS(ap), NULL, PyArray_DATA(ap),
             flags, (PyObject *)ap, (PyObject *)ap);
     if (ret == NULL) {
@@ -967,9 +967,9 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
             stride = PyArray_ITEMSIZE(arr);
             val[0] = PyArray_SIZE(arr);
 
-            Py_INCREF(PyArray_DESCR(arr));
+            Py_INCREF((PyObject *)PyArray_DESCR(arr));
             return PyArray_NewFromDescrAndBase(
-                    Py_TYPE(arr), PyArray_DESCR(arr),
+                    Py_TYPE((PyObject *)arr), PyArray_DESCR(arr),
                     1, val, &stride, PyArray_BYTES(arr),
                     PyArray_FLAGS(arr), (PyObject *)arr, (PyObject *)arr);
         }
@@ -992,8 +992,8 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
     }
 
     size = PyArray_SIZE(a);
-    Py_INCREF(PyArray_DESCR(a));
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(a),
+    Py_INCREF((PyObject *)PyArray_DESCR(a));
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE((PyObject *)a),
                                PyArray_DESCR(a),
                                1, &size,
                                NULL,
