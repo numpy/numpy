@@ -1673,8 +1673,9 @@ def _nanquantile_1d(
     arr1d, weights, overwrite_input = _remove_nan_1d(arr1d,
         second_arr1d=weights, overwrite_input=overwrite_input)
     if arr1d.size == 0:
-        # convert to scalar
-        return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
+        # Use the quantile implementation to preserve its output dtype.
+        arr1d = np.full(1, np.nan, dtype=arr1d.dtype)
+        weights = None
 
     return fnb._quantile_unchecked(
         arr1d,
