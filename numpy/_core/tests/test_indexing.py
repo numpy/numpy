@@ -1445,6 +1445,77 @@ class TestMultipleEllipsisError:
         assert_raises(IndexError, a.__getitem__, ((Ellipsis,) * 3,))
 
 
+class TestInvalidIndexErrorMessage:
+    """The invalid index error should point at the indexing object (gh-26115).
+
+    """
+    def test_list_of_slices(self):
+        a = np.zeros((5, 5))
+        # A list of slices converts to an object array, so the message
+        # reports the converted array's dtype, consistent with indexing
+        # with a raw object array (gh-26115 follow-up).
+        with pytest.raises(IndexError,
+                           match=r"the array dtype was object"):
+            a[[slice(None), slice(None)]]
+
+    def test_tuple_of_non_indexables(self):
+        # For a tuple of indices the error must point at the current
+        # element that fails, not at the tuple itself (gh-26115).
+        a = np.zeros((5, 5))
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            a["1", "2"]
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            a["1"]
+
+    def test_tuple_mixed_good_bad(self):
+        # The good element is consumed first; the error points at the
+        # element that actually fails.
+        a = np.zeros((5, 5))
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            a[0, "1"]
+
+    def test_fancy_index_error_shows_array_dtype(self):
+        # Indexing with a non-integer array must mention the array's
+        # actual dtype, so the message is actionable (gh-26115 follow-up).
+        a = np.zeros(10)
+        for idx, dtype_str in [
+            (np.array([1.5, 2.5]), "float64"),
+            (np.array([1.5, 2.5], dtype=np.float32), "float32"),
+            (np.array([1.5 + 0j]), "complex128"),
+        ]:
+            with pytest.raises(
+                    IndexError,
+                    match=(r"arrays used as indices must be of integer "
+                           r"\(or boolean\) type, but the array dtype was "
+                           r"(" + dtype_str + r")")):
+                a[idx]
+
+    def test_fancy_index_error_list_shows_content_dtype(self):
+        # A list is a valid index container, so the message must point at
+        # its non-integer content (dtype), not the list type (gh-26115
+        # follow-up, review feedback on the list path).
+        a = np.zeros(10)
+        for idx, dtype_str in [
+            ([1.5, 2.5], "float64"),
+            ([1, 2, 3.5], "float64"),
+            (["a", "b"], r"<U1"),
+        ]:
+            with pytest.raises(
+                    IndexError,
+                    match=(r"arrays used as indices must be of integer "
+                           r"\(or boolean\) type, but the array dtype was "
+                           r"(" + dtype_str + r")")):
+                a[idx]
+        # A non-sequence element (e.g. str) keeps the element-type message.
+        b = np.zeros((5, 5))
+        with pytest.raises(IndexError,
+                           match=r"cannot index with <class 'str'>"):
+            b[0, "1"]
+
+
 class TestCApiAccess:
     def test_getitem(self):
         subscript = functools.partial(array_indexing, 0)
@@ -1551,9 +1622,7 @@ class TestFlatiterIndexing:
     def test_flatiter_indexing_not_supported_newaxis_mutlidimensional_float(self):
         a = np.arange(9).reshape((3, 3))
         with pytest.raises(IndexError,
-                           match=r"only integers, slices \(`:`\), "
-                                 r"ellipsis \(`\.\.\.`\) and "
-                                 r"integer or boolean arrays are valid indices"):
+                           match=r"cannot index with <class 'NoneType'>"):
             a.flat[None]
 
         with pytest.raises(IndexError,
@@ -1676,9 +1745,7 @@ class TestFlatiterIndexing:
     def test_flatiter_indexing_not_supported_newaxis_mutlid_float_assign(self):
         a = np.arange(9).reshape((3, 3))
         with pytest.raises(IndexError,
-                           match=r"only integers, slices \(`:`\), "
-                                 r"ellipsis \(`\.\.\.`\) and "
-                                 r"integer or boolean arrays are valid indices"):
+                           match=r"cannot index with <class 'NoneType'>"):
             a.flat[None] = 10
 
         a.flat[[1, 2]] = 10
@@ -1708,8 +1775,7 @@ class TestFlatiterIndexing:
         a = np.arange(9).reshape((3, 3))
         b = np.array(["a"], dtype="S")
         with pytest.raises(IndexError,
-                match=r"only integers, slices \(`:`\), ellipsis \(`\.\.\.`\) "
-                      r"and integer or boolean arrays are valid indices"):
+                match=r"cannot index with <class 'numpy.flatiter'>"):
             a.flat[b.flat]
 
 
