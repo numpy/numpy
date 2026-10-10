@@ -226,6 +226,30 @@ def test_non_spawnable():
         rng.bit_generator.spawn(5)
 
 
+@pytest.mark.parametrize(
+    "bit_generator_cls", [MT19937, PCG64, PCG64DXSM, SFC64, Philox]
+)
+def test_failed_reinitialization_preserves_state(bit_generator_cls):
+    bit_generator = bit_generator_cls(1234)
+    expected = bit_generator_cls(1234).random_raw(10)
+
+    with pytest.raises(ValueError):
+        bit_generator.__init__(("",))
+
+    assert_array_equal(bit_generator.random_raw(10), expected)
+
+
+@pytest.mark.parametrize("kwargs", [{"counter": "invalid"}, {"key": "invalid"}])
+def test_philox_failed_reinitialization_preserves_state(kwargs):
+    bit_generator = Philox(1234)
+    expected = Philox(1234).random_raw(10)
+
+    with pytest.raises(ValueError):
+        bit_generator.__init__(**kwargs)
+
+    assert_array_equal(bit_generator.random_raw(10), expected)
+
+
 class Base:
     dtype = np.uint64
     data2 = data1 = {}
