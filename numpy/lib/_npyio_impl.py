@@ -388,7 +388,14 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     - If the file is a ``.npy`` file, then a single array is returned.
     - If the file is a ``.npz`` file, then a dictionary-like object is
       returned, containing ``{filename: array}`` key-value pairs, one for
-      each file in the archive.
+      each file in the archive:
+
+    - In ``.npz`` files, arrays are loaded lazily on access, not when
+        calling `load`.
+    - For ``.npz`` files, each array is read in full (as a whole) when
+             accessed; partial row-wise loading is not supported.
+    - If the underlying ``.npz`` file is modified after `load` returns,
+        later array access on the returned `NpzFile` may fail.
     - If the file is a ``.npz`` file, the returned value supports the
       context manager protocol in a similar fashion to the open function::
 
@@ -632,6 +639,11 @@ def savez(file, *args, allow_pickle=True, **kwds):
     for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
+    `NpzFile` loads arrays lazily on access. If you need in-memory snapshots
+    that are independent from future file changes, materialize the arrays
+    immediately after loading and then close the `NpzFile` (for example using
+     a context manager) to release any associated file resources.
+
     Keys passed in `kwds` are used as filenames inside the ZIP archive.
     Therefore, keys should be valid filenames; e.g., avoid keys that begin with
     ``/`` or contain ``.``.
@@ -736,6 +748,10 @@ def savez_compressed(file, *args, allow_pickle=True, **kwds):
     object is returned. This is a dictionary-like object which can be queried
     for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
+
+    `NpzFile` loads arrays lazily on access. If you need in-memory snapshots
+    that are independent from future file changes, materialize the arrays
+    immediately after loading.
 
     Examples
     --------
