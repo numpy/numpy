@@ -47,6 +47,9 @@ npy_free_cache_dim_array(PyArrayObject * arr)
 extern PyDataMem_Handler default_handler;
 
 NPY_NO_EXPORT PyObject *
+_clear_internal_caches(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args));
+
+NPY_NO_EXPORT PyObject *
 get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj);
 NPY_NO_EXPORT PyObject *
 get_handler_version(PyObject *NPY_UNUSED(self), PyObject *obj);
