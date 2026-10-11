@@ -44,7 +44,8 @@ def test_lazy_modules_not_imported():
         import sys
         before = set(sys.modules)
         import numpy as np
-        lazy = {"platform", "numpy.polynomial.legendre", "numpy.lib._npyio_impl"}
+        # (not `platform`: a distributor's _distributor_init_local may import it)
+        lazy = {"numpy.polynomial.legendre", "numpy.lib._npyio_impl"}
         if sys.platform != "darwin":  # the macOS Accelerate check calls polyfit
             lazy.add("numpy.linalg")
         loaded = lazy & (set(sys.modules) - before)
