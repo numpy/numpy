@@ -11,32 +11,31 @@ other public modules and are useful to have in the main name-space.
 # Public submodules
 # Note: recfunctions is public, but not imported
 # Lazy on Python 3.15+ (PEP 810).
-__lazy_modules__ = ["numpy.lib"] + [
-    f"numpy.lib.{name}" for name in (
-        "_arraypad_impl",
-        "_arraysetops_impl",
-        "_arrayterator_impl",
-        "_function_base_impl",
-        "_histograms_impl",
-        "_index_tricks_impl",
-        "_nanfunctions_impl",
-        "_npyio_impl",
-        "_polynomial_impl",
-        "_shape_base_impl",
-        "_stride_tricks_impl",
-        "_twodim_base_impl",
-        "_type_check_impl",
-        "_ufunclike_impl",
-        "_utils_impl",
-        "_version",
-        "array_utils",
-        "format",
-        "introspect",
-        "mixins",
-        "npyio",
-        "scimath",
-        "stride_tricks",
-    )
+__lazy_modules__ = [
+    "numpy.lib",
+    "numpy.lib._arraypad_impl",
+    "numpy.lib._arraysetops_impl",
+    "numpy.lib._arrayterator_impl",
+    "numpy.lib._function_base_impl",
+    "numpy.lib._histograms_impl",
+    "numpy.lib._index_tricks_impl",
+    "numpy.lib._nanfunctions_impl",
+    "numpy.lib._npyio_impl",
+    "numpy.lib._polynomial_impl",
+    "numpy.lib._shape_base_impl",
+    "numpy.lib._stride_tricks_impl",
+    "numpy.lib._twodim_base_impl",
+    "numpy.lib._type_check_impl",
+    "numpy.lib._ufunclike_impl",
+    "numpy.lib._utils_impl",
+    "numpy.lib._version",
+    "numpy.lib.array_utils",
+    "numpy.lib.format",
+    "numpy.lib.introspect",
+    "numpy.lib.mixins",
+    "numpy.lib.npyio",
+    "numpy.lib.scimath",
+    "numpy.lib.stride_tricks",
 ]
 
 from numpy._core._add_docstring import add_newdoc

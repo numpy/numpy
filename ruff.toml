@@ -95,9 +95,42 @@ ignore = [
 "__init__.pyi" = ["F401"]
 "numpy/_core/umath.py" = ["F401"]
 "numpy/matlib.pyi" = ["F811"]
+# lazily imported themselves; only `numpy.linalg` and `platform` are lazy here
+"numpy/lib/_polynomial_impl.py" = ["TID254"]
+"numpy/lib/_utils_impl.py" = ["TID254"]
+"numpy/matrixlib/defmatrix.py" = ["TID254"]
 
 [lint.flake8-builtins]
 builtins-allowed-modules = ["random", "typing"]
+
+# PEP 810 lazy imports: in the modules with a (literal) `__lazy_modules__` list
+# every import must be lazy, except for the modules excluded here.
+[lint.flake8-tidy-imports.require-lazy]
+include = "all"
+exclude = [
+    # stdlib, imported by everything anyway
+    "copyreg", "os", "sys", "warnings",
+    # used at module level
+    "numpy._globals", "numpy._pytesttester", "numpy.version",
+    # loaded with numpy._core anyway
+    "numpy._core._add_docstring", "numpy._core._multiarray_umath",
+    "numpy._core.multiarray", "numpy._core.numerictypes", "numpy._core.umath",
+    # must never be lazy, see `ban-lazy`
+    "numpy._core._add_newdocs", "numpy._core._add_newdocs_scalars",
+    "numpy._core.memmap", "numpy._distributor_init", "numpy.exceptions",
+]
+
+[lint.flake8-tidy-imports]
+ban-lazy = [
+    # executed for their side effects
+    "numpy._core._add_newdocs", "numpy._core._add_newdocs_scalars",
+    "numpy._distributor_init",
+    # the class shares the name of its module
+    "numpy._core.memmap",
+    # already bound as a submodule attribute of numpy when numpy/__init__.py
+    # runs; a lazy rebinding recurses through numpy.__getattr__
+    "numpy.exceptions",
+]
 
 [lint.flake8-import-conventions.extend-aliases]
 "numpy" = "np"

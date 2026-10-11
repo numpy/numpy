@@ -115,8 +115,15 @@ Misc
 
 """
 # Lazy on Python 3.15+ (PEP 810): only the series that is used gets loaded.
-__lazy_modules__ = ["numpy.polynomial"] + [f"numpy.polynomial.{name}" for name in (
-    "chebyshev", "hermite", "hermite_e", "laguerre", "legendre", "polynomial")]
+__lazy_modules__ = [
+    "numpy.polynomial",
+    "numpy.polynomial.chebyshev",
+    "numpy.polynomial.hermite",
+    "numpy.polynomial.hermite_e",
+    "numpy.polynomial.laguerre",
+    "numpy.polynomial.legendre",
+    "numpy.polynomial.polynomial",
+]
 from . import chebyshev, hermite, hermite_e, laguerre, legendre, polynomial, polyutils
 from .chebyshev import Chebyshev
 from .hermite import Hermite

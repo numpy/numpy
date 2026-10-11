@@ -361,7 +361,7 @@ else:
         maximum,
         may_share_memory,
         mean,
-        memmap,
+        memmap,  # noqa: TID254  # the class, not the module
         min,
         min_scalar_type,
         minimum,
@@ -849,14 +849,14 @@ else:
             pass
 
     if sys.platform == "darwin":
-        import numpy.exceptions as exceptions
+        from numpy.exceptions import RankWarning as _RankWarning
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
             # Throw runtime error, if the test failed
             # Check for warning and report the error_message
             if len(w) > 0:
                 for _wn in w:
-                    if _wn.category is exceptions.RankWarning:
+                    if _wn.category is _RankWarning:
                         # Ignore other warnings, they may not be relevant (see gh-25433)
                         error_message = (
                             f"{_wn.category.__name__}: {_wn.message}"
@@ -871,6 +871,7 @@ else:
                         raise RuntimeError(msg)
                 del _wn
             del w
+        del _RankWarning
     del _mac_os_check
 
     def blas_fpe_check():
