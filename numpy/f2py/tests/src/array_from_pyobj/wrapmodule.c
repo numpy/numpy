@@ -169,7 +169,10 @@ static struct PyModuleDef moduledef = {
 PyMODINIT_FUNC PyInit_test_array_from_pyobj_ext(void) {
   PyObject *m,*d, *s;
   m = wrap_module = PyModule_Create(&moduledef);
-  Py_SET_TYPE(&PyFortran_Type, &PyType_Type);
+  if (F2Py_InitializePyFortranType() < 0) {
+    Py_DECREF(m);
+    return NULL;
+  }
   import_array();
   if (PyErr_Occurred())
     Py_FatalError("can't initialize module wrap (failed to import numpy)");
