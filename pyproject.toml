@@ -2,7 +2,7 @@
 build-backend = "mesonpy"
 requires = [
     "meson-python>=0.20.0",
-    "Cython>=3.1.0",  # keep in sync with version check in meson.build
+    "Cython>=3.1.0",  # keep in sync with version check in meson.build, and the `build` dependency group below
 ]
 
 [project]
@@ -102,15 +102,73 @@ download = "https://pypi.org/project/numpy/#files"
 tracker = "https://github.com/numpy/numpy/issues"
 "release notes" = "https://numpy.org/doc/stable/release"
 
-
+###########################################################
 [dependency-groups]
+build = [
+    "meson-python>=0.20.0",
+    "Cython>=3.1.0",
+    "ninja",
+]
+
+dev-cli = [
+    { include-group = "build" },
+    "spin",
+    "build"
+]
+
 openblas32 = [
     "scipy-openblas32==0.3.34.106.0",
-]
-openblas64 = [
-    "scipy-openblas64==0.3.34.106.0",
+    'pkgconf==2.5.1.post1; sys_platform == "win32"',
+
 ]
 
+openblas64 = [
+    "scipy-openblas64==0.3.34.106.0",
+    'pkgconf==2.5.1.post1; sys_platform == "win32"',
+]
+
+linter = [
+    "cython-lint",
+    "ruff==0.16.10",
+    "GitPython==3.2.0",
+    "spin",
+]
+
+doc = [
+    # doxygen required, use apt-get or dnf
+    "sphinx==8.2.3",
+    "numpydoc==1.11.0",
+    "pydata-sphinx-theme",
+    "sphinx-copybutton",
+    "sphinx-design",
+    "scipy",
+    "matplotlib",
+    "pandas",
+    "breathe",
+    "ipython",
+    # Needed for ipython>=8.17
+    # https://github.com/ipython/ipython/issues/14237
+    "pickleshare",
+
+    # needed to build release notes
+    "towncrier",
+    "toml",
+
+    "scipy-doctest",
+
+    # interactive documentation utilities
+    # see https://github.com/jupyterlite/pyodide-kernel#compatibility
+    "jupyterlite-sphinx",
+    # Works with Pyodide 0.27.1
+    "jupyterlite-pyodide-kernel==0.5.2",
+]
+
+bench = [
+    "asv<0.6.5",
+    "virtualenv",
+    "packaging",
+]
+###########################################################
 
 [tool.towncrier]
     single_file = false

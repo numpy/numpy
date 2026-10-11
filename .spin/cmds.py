@@ -372,7 +372,7 @@ def lint(ctx, fix):
         linter = _get_numpy_tools(pathlib.Path('linter.py'))
     except ModuleNotFoundError as e:
         raise click.ClickException(
-            f"{e.msg}. Install using requirements/linter_requirements.txt"
+            f"{e.msg}. Install using 'pip install --group linter'"
         )
 
     linter.DiffLinter().run_lint(fix)

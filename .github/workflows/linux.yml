@@ -74,7 +74,7 @@ jobs:
       run: |
         python --version
         pip install -U pip
-        pip install -r requirements/build_requirements.txt
+        pip install --group dev-cli
         pip install -r requirements/test_requirements.txt
     - name: Build NumPy debug
       run: |
@@ -121,7 +121,7 @@ jobs:
         python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
-        pip install -r requirements/build_requirements.txt
+        pip install --group dev-cli
         pip install -r requirements/test_requirements.txt -r requirements/hypothesis_requirements.txt
     - name: Install gfortran and setup OpenBLAS 32 bits
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
@@ -178,7 +178,8 @@ jobs:
             cd /numpy &&
             python -m venv venv &&
             source venv/bin/activate &&
-            python -m pip install -r /numpy/requirements/build_requirements.txt &&
+            python -m pip install --upgrade pip &&
+            python -m pip install --group dev-cli &&
             python -m pip install -r /numpy/requirements/test_requirements.txt &&
             spin build
           '"
@@ -213,7 +214,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libopenblas-dev ninja-build
-        pip install "asv<0.6.5" virtualenv packaging -r requirements/build_requirements.txt
+        pip install --group dev-cli --group bench
     - name: Install NumPy
       run: |
         spin build -- -Dcpu-dispatch=none
@@ -231,7 +232,7 @@ jobs:
     # - name: Check docstests
     #   shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
     #   run: |
-    #     pip install -r requirements/doc_requirements.txt -r requirements/test_requirements.txt
+    #     pip install --group doc -r requirements/test_requirements.txt
     #     spin check-docs -v
     #     spin check-tutorials -v
 
@@ -301,7 +302,7 @@ jobs:
         python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
-        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install --group dev-cli
         python -m pip install -r requirements/test_requirements.txt
         python -m pip install -r array-api-tests/requirements.txt
     - name: Build and install NumPy
@@ -344,7 +345,7 @@ jobs:
     - name: Install build and test dependencies from PyPI
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install --group dev-cli
         python -m pip install -r requirements/test_requirements.txt
         python -m pip install --upgrade scikit-build-core cmake wheel
     - name: Build and install NumPy
@@ -388,7 +389,7 @@ jobs:
         persist-credentials: false
     - name: Install build and test dependencies from PyPI
       run: |
-        pip install -r requirements/build_requirements.txt
+        pip install --group dev-cli
         pip install -r requirements/test_requirements.txt
         pip install "vulture!=2.15"
     - name: Build and install NumPy
@@ -441,8 +442,7 @@ jobs:
         python3.12 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip
-        pip install -r requirements/build_requirements.txt
-        pip install --group openblas32
+        pip install --group openblas32 --group dev-cli
         pip install -r requirements/test_requirements.txt
 
         spin config-openblas --with-scipy-openblas=32
