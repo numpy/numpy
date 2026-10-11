@@ -13,6 +13,7 @@ from . import util
 pytestmark = pytest.mark.slow
 
 wrap = None
+built_limited_api = None
 
 # Extend core typeinfo with CHARACTER to test dtype('c')
 c_names_dict = dict(
@@ -25,18 +26,24 @@ def get_testdir():
     testroot = Path(__file__).resolve().parent / "src"
     return testroot / "array_from_pyobj"
 
-def setup_module():
+@pytest.fixture(scope="module", autouse=True)
+def setup_module_fixture(f2py_limited_api_module):
     """
     Build the required testing extension module
 
     """
     global wrap
+    global built_limited_api
 
-    if wrap is None:
+    if wrap is None or built_limited_api != f2py_limited_api_module:
         src = [
             get_testdir() / "wrapmodule.c",
         ]
-        wrap = util.build_meson(src, module_name="test_array_from_pyobj_ext")
+        wrap = util.build_meson(
+            src, module_name="test_array_from_pyobj_ext",
+            limited_api=f2py_limited_api_module)
+        built_limited_api = f2py_limited_api_module
+    yield
 
 
 def flags_info(arr):

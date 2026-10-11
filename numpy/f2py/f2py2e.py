@@ -562,11 +562,21 @@ def get_newer_options(iline):
         ipaths = []
     return ipaths, args.ftcompat, remain
 
+def _validate_limited_api(limited_api_str):
+    match = re.match(r'^\d+[.]\d+$', limited_api_str)
+    if not match:
+        err = "Limited API must be a decimal number be the form '3.14'"
+        print(err)
+        raise ValueError(err)
+    return limited_api_str
+
 def make_f2py_compile_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--dep", action="append", dest="dependencies")
     parser.add_argument("--backend", choices=['meson', 'distutils'], default='distutils')
     parser.add_argument("-m", dest="module_name")
+    # Not currently expected to work; Will become "limited-api" when it does.
+    parser.add_argument("--experimental-limited-api", dest="limited_api", default=None, type=_validate_limited_api)
     return parser
 
 def preparse_sysargv():
@@ -587,6 +597,7 @@ def preparse_sysargv():
         "dependencies": args.dependencies or [],
         "backend": backend_key,
         "modulename": args.module_name,
+        "limited_api": args.limited_api
     }
 
 def run_compile():
@@ -602,6 +613,7 @@ def run_compile():
         modulename = 'untitled'
     dependencies = argy["dependencies"]
     backend_key = argy["backend"]
+    limited_api = argy["limited_api"]
     build_backend = f2py_build_generator(backend_key)
 
     i = sys.argv.index('-c')
@@ -729,6 +741,7 @@ def run_compile():
         setup_flags,
         remove_build_dir,
         {"dependencies": dependencies},
+        limited_api=limited_api,
     )
 
     builder.compile()
