@@ -381,7 +381,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     # StringDType (timsort does fewer comparisons). If returning indices
     # for a complex array with NaNs, stable sorts preserve order between NaNs.
     stable = (
-        (ar.dtype.kind in "biu" and ar.dtype.itemsize <= 2) or
+        ar.dtype.type in (np.bool, np.int8, np.uint8, np.int16, np.uint16) or
         (optional_indices and ar.dtype.kind == "T") or
         (return_index and ar.dtype.kind == "c" and np.isnan(ar).any())
     )
