@@ -90,7 +90,7 @@ jobs:
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
-        key: container-${{ runner.os }}-${{ matrix.BUILD_PROP[1] }}-${{ matrix.BUILD_PROP[2] }}
+        key: container-${{ runner.os }}-${{ matrix.BUILD_PROP[1] }}-${{ matrix.BUILD_PROP[2] }}-${{ hashFiles('pyproject.toml') }}
 
     - name: Creates new container
       if: steps.container-cache.outputs.cache-hit != 'true'
