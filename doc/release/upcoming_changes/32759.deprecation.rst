@@ -1,0 +1,13 @@
+``np.dot`` and ``np.inner`` with ``a.ndim >= 2`` and ``b.ndim > 2`` are deprecated
+------------------------------------------------------------------------------------
+
+When the first argument has 2 or more dimensions and the second argument has
+more than 2 dimensions, `numpy.dot`, `numpy.ndarray.dot` and `numpy.inner`
+place the leading dimensions of the second argument in the middle of the
+result. This behavior is confusing and rarely intended, and is now deprecated.
+Use ``numpy.tensordot(a, b, axes=[-1, -2])`` (for ``dot``) or
+``numpy.tensordot(a, b, axes=[-1, -1])`` (for ``inner``) for the same result,
+or ``numpy.matmul`` / ``@`` for standard batched matrix multiplication.
+
+The C-API functions ``PyArray_MatrixProduct``, ``PyArray_MatrixProduct2`` and
+``PyArray_InnerProduct`` emit the same `DeprecationWarning` for these inputs.

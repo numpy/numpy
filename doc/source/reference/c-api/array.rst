@@ -2927,11 +2927,19 @@ Array Functions
     Compute a product-sum over the last dimensions of *obj1* and
     *obj2*. Neither array is conjugated.
 
+    .. deprecated:: 2.6
+        Passing *obj1* with 2 or more dimensions and *obj2* with more than
+        2 dimensions is deprecated and will eventually raise an error.
+
 .. c:function:: PyObject* PyArray_MatrixProduct(PyObject* obj1, PyObject* obj)
 
     Compute a product-sum over the last dimension of *obj1* and the
     second-to-last dimension of *obj2*. For 2-d arrays this is a
     matrix-product. Neither array is conjugated.
+
+    .. deprecated:: 2.6
+        Passing *obj1* with 2 or more dimensions and *obj* with more than
+        2 dimensions is deprecated and will eventually raise an error.
 
 .. c:function:: PyObject* PyArray_MatrixProduct2( \
         PyObject* obj1, PyObject* obj, PyArrayObject* out)
@@ -2939,6 +2947,10 @@ Array Functions
     Same as PyArray_MatrixProduct, but store the result in *out*.  The
     output array must have the correct shape, type, and be
     C-contiguous, or an exception is raised.
+
+    .. deprecated:: 2.6
+        Passing *obj1* with 2 or more dimensions and *obj* with more than
+        2 dimensions is deprecated and will eventually raise an error.
 
 .. c:function:: PyArrayObject* PyArray_EinsteinSum( \
         char* subscripts, npy_intp nop, PyArrayObject** op_in, \
