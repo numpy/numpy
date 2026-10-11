@@ -214,7 +214,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libopenblas-dev ninja-build
-        pip install --group dev-cli "asv<0.6.5" virtualenv packaging
+        pip install --group dev-cli --group bench
     - name: Install NumPy
       run: |
         spin build -- -Dcpu-dispatch=none
