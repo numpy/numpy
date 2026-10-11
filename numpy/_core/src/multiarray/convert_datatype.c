@@ -1694,8 +1694,14 @@ PyArray_ResultType(
         npy_intp ndtypes, PyArray_Descr *descrs[])
 {
     PyArray_Descr *result = NULL;
+    /*
+     * `common_dtype` is borrowed: from `all_DTypes`, from `promoted`, or
+     * from `tmp_descr` (a descriptor keeps its DType alive).  Only the
+     * latter two are owned and released at the end.
+     */
     PyArray_DTypeMeta *common_dtype = NULL;
-    npy_bool own_common_dtype = NPY_FALSE;
+    PyArray_DTypeMeta *promoted = NULL;
+    PyArray_Descr *tmp_descr = NULL;
 
     if (narrs + ndtypes <= 1) {
         /* If the input is a single value, skip promotion. */
@@ -1759,27 +1765,20 @@ PyArray_ResultType(
         }
     }
     if (common_dtype == NULL || NPY_DT_is_abstract(common_dtype)) {
-        common_dtype = PyArray_PromoteDTypeSequence(
-                narrs+ndtypes, all_DTypes);
-        if (common_dtype == NULL) {
+        promoted = PyArray_PromoteDTypeSequence(narrs+ndtypes, all_DTypes);
+        if (promoted == NULL) {
             goto error;
         }
-        own_common_dtype = NPY_TRUE;
+        common_dtype = promoted;
     }
 
     if (NPY_DT_is_abstract(common_dtype)) {
         /* (ab)use default descriptor to define a default */
-        PyArray_Descr *tmp_descr = NPY_DT_CALL_default_descr(common_dtype);
+        tmp_descr = NPY_DT_CALL_default_descr(common_dtype);
         if (tmp_descr == NULL) {
             goto error;
         }
-        Py_INCREF(NPY_DTYPE(tmp_descr));
-        if (own_common_dtype) {
-            Py_DECREF(common_dtype);
-        }
         common_dtype = NPY_DTYPE(tmp_descr);
-        own_common_dtype = NPY_TRUE;
-        Py_DECREF(tmp_descr);
     }
 
     /*
@@ -1818,17 +1817,15 @@ PyArray_ResultType(
         }
     }
 
-    if (own_common_dtype) {
-        Py_DECREF(common_dtype);
-    }
+    Py_XDECREF(promoted);
+    Py_XDECREF(tmp_descr);
     npy_free_workspace(workspace);
     return result;
 
   error:
     Py_XDECREF(result);
-    if (own_common_dtype) {
-        Py_DECREF(common_dtype);
-    }
+    Py_XDECREF(promoted);
+    Py_XDECREF(tmp_descr);
     npy_free_workspace(workspace);
     return NULL;
 }
