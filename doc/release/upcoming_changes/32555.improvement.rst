@@ -1,1 +1,0 @@
-* Added support for dividing ``timedelta64`` by ``bool``.

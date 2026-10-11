@@ -261,7 +261,7 @@ When you feel your work is finished, you can create a pull request (PR).
 If your changes involve modifications to the API or addition/modification of a
 function, add a release note to the ``doc/release/upcoming_changes/``
 directory, following the instructions and format in the
-``doc/release/upcoming_changes/README.rst`` file.
+``doc/release/upcoming_changes/README.md`` file.
 
 Use the same prefix convention for your pull request title as for commit
 messages (e.g., ``BUG:``, ``ENH:``, ``DOC:``). This enables automated labeling

@@ -115,13 +115,13 @@ Finish the release notes
 
 If there are any release notes snippets in ``doc/release/upcoming_changes/``,
 run ``spin notes``, which will incorporate the snippets into the
-``doc/source/release/notes-towncrier.rst`` file and delete the snippets::
+``doc/source/release/notes-towncrier.md`` file and delete the snippets::
 
     $ spin notes
-    $ gvim doc/source/release/notes-towncrier.rst doc/source/release/2.4.0-notes.rst
+    $ gvim doc/source/release/notes-towncrier.md doc/source/release/2.4.0-notes.md
     
 Once the ``notes-towncrier`` contents have been incorporated into release notes
-the ``.. include:: notes-towncrier.rst`` directive can be removed.  The notes
+the ``{include} notes-towncrier.md`` directive can be removed.  The notes
 will always need some fixups, the introduction will need to be written, and
 significant changes should be called out. For patch releases the changelog text
 may also be appended, but not for the initial release as it is too long. Check
@@ -201,26 +201,24 @@ trigger the upload.
 Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v2.4.0``
 tag, click on it and hit the edit button for that tag and update the title to
 "v2.4.0 (<date>)". There are two ways to add files, using an editable text
-window and as binary uploads. The text window needs markdown, so translate the
-release notes from rst to md::
+window and as binary uploads. The text window needs GitHub markdown, so
+translate the release notes::
 
     $ python tools/write_release.py 2.4.0
 
 this will create a ``release/README.md`` file that you can edit. Check the
-result to see that it looks correct. Things that may need fixing: wrapped lines
-that need unwrapping and links that should be changed to monospaced text. Then
+result to see that it looks correct. Wrapped lines may need unwrapping. Then
 copy the contents to the clipboard and paste them into the text window. It may
 take several tries to get it look right. Then
 
 - Download the sdist (``numpy-2.4.0.tar.gz``) from PyPI and upload it to GitHub
   as a binary file. You cannot do this using pip.
-- Upload ``release/README.rst`` as a binary file.
 - Upload ``doc/changelog/2.4.0-changelog.rst`` as a binary file.
 - Check the pre-release button if this is a pre-releases.
 - Hit the ``Publish release`` button at the bottom.
 
 .. note::
-   Please ensure that all 3 files are uploaded are present and the
+   Please ensure that both files are uploaded and the
    release text is complete. Releases are configured to be immutable, so
    mistakes can't (easily) be fixed anymore.
 
@@ -290,9 +288,9 @@ Create release notes for next release and edit them to set the version. These
 notes will be a skeleton and have little content::
 
     $ git checkout -b begin-2.4.1 maintenance/2.4.x
-    $ cp doc/source/release/template.rst doc/source/release/2.4.1-notes.rst
-    $ gvim doc/source/release/2.4.1-notes.rst
-    $ git add doc/source/release/2.4.1-notes.rst
+    $ cp doc/source/release/template.md doc/source/release/2.4.1-notes.md
+    $ gvim doc/source/release/2.4.1-notes.md
+    $ git add doc/source/release/2.4.1-notes.md
 
 Add a link to the new release notes::
 

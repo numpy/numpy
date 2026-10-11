@@ -11,28 +11,40 @@ Needs to be run from the root of the repository and assumes
 that the output is in `release` and wheels and sdist in
 `release/installers`.
 
-Translation from rst to md markdown requires Pandoc, you
-will need to rely on your distribution to provide that.
-
 """
 import argparse
-import os
-import subprocess
+import re
 from pathlib import Path
 
 # Name of the notes directory
 NOTES_DIR = "doc/source/release"
 # Name of the output directory
 OUTPUT_DIR = "release"
-# Output base name, `.rst` or `.md` will be appended
-OUTPUT_FILE = "README"
+# Name of the output file
+OUTPUT_FILE = "README.md"
+
+def myst_to_gfm(text):
+    """
+    Translate MyST markdown to GitHub flavored markdown.
+
+    Drops the front matter and directives without content, and renders
+    roles such as {func}`numpy.sum` as code.
+    """
+    text = re.sub(r"\A---\n.*?\n---\n", "", text, flags=re.DOTALL)
+    text = re.sub(r"^```\{[\w:-]+\}.*\n```\n", "", text, flags=re.MULTILINE)
+
+    def role(match):
+        name, content = match.groups()
+        content = re.sub(r"^(.*?)\s*<.*>$", r"\1", content).lstrip("~!")
+        return content if name in ("ref", "doc") else f"`{content}`"
+
+    return re.sub(r"(?<!`)\{([\w:]+)\}`([^`\n]+)`", role, text).lstrip()
+
 
 def write_release(version):
     """
-    Copy the <version>-notes.rst file to the OUTPUT_DIR and use
-    pandoc to translate it to markdown. That results in both
-    README.rst and README.md files that can be used for on
-    github for the release.
+    Write the <version>-notes.md file to OUTPUT_DIR as GitHub
+    flavored markdown, which can be used on github for the release.
 
     Parameters
     ----------
@@ -44,18 +56,10 @@ def write_release(version):
     None.
 
     """
-    notes = Path(NOTES_DIR) / f"{version}-notes.rst"
+    notes = Path(NOTES_DIR) / f"{version}-notes.md"
     outdir = Path(OUTPUT_DIR)
     outdir.mkdir(exist_ok=True)
-    target_md = outdir / f"{OUTPUT_FILE}.md"
-    target_rst = outdir / f"{OUTPUT_FILE}.rst"
-
-    # translate README.rst to md for posting on GitHub
-    os.system(f"cp {notes} {target_rst}")
-    subprocess.run(
-        ["pandoc", "-s", "-o", str(target_md), str(target_rst), "--wrap=preserve"],
-        check=True,
-    )
+    (outdir / OUTPUT_FILE).write_text(myst_to_gfm(notes.read_text()))
 
 
 if __name__ == '__main__':

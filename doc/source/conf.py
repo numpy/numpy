@@ -111,6 +111,7 @@ extensions = [
     'sphinx_design',
     'sphinx.ext.imgconverter',
     'jupyterlite_sphinx',
+    'myst_parser',
 ]
 
 skippable_extensions = [
@@ -127,7 +128,10 @@ for ext, warn in skippable_extensions:
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = {'.rst': 'restructuredtext'}
+source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
+
+# Included by the release notes; not a page of its own.
+exclude_patterns = ['release/notes-towncrier.md']
 
 # General substitutions.
 project = 'NumPy'
@@ -226,6 +230,17 @@ def setup(app):
     app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
     app.add_lexer('NumPyC', NumPyLexer)
     app.add_directive("legacy", LegacyDirective)
+    app.connect('missing-reference', resolve_np_alias)
+
+
+def resolve_np_alias(app, env, node, contnode):
+    """Resolve Python cross-references such as `np.sum` as `numpy.sum`."""
+    target = node.get('reftarget', '')
+    if node.get('refdomain') != 'py' or not target.startswith('np.'):
+        return None
+    return env.domains['py'].resolve_xref(
+        env, node['refdoc'], app.builder, node['reftype'],
+        'numpy.' + target.removeprefix('np.'), node, contnode)
 
 
 # While these objects do have type `module`, the names are aliases for modules

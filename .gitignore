@@ -112,7 +112,7 @@ Thumbs.db
 #############################
 doc/source/savefig/
 doc/source/**/generated/
-doc/source/release/notes-towncrier.rst
+doc/source/release/notes-towncrier.md
 doc/source/.jupyterlite.doit.db
 doc/source/_contents
 
