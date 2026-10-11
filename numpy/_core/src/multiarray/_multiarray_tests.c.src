@@ -507,6 +507,39 @@ fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
 }
 
 
+static PyObject *
+matrixproduct_c_api(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyObject *a, *b;
+    if (!PyArg_ParseTuple(args, "OO", &a, &b)) {
+        return NULL;
+    }
+    return PyArray_MatrixProduct(a, b);
+}
+
+
+static PyObject *
+matrixproduct2_c_api(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyObject *a, *b;
+    if (!PyArg_ParseTuple(args, "OO", &a, &b)) {
+        return NULL;
+    }
+    return PyArray_MatrixProduct2(a, b, NULL);
+}
+
+
+static PyObject *
+innerproduct_c_api(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyObject *a, *b;
+    if (!PyArg_ParseTuple(args, "OO", &a, &b)) {
+        return NULL;
+    }
+    return PyArray_InnerProduct(a, b);
+}
+
+
 /*
  * Create a custom field dtype from an existing void one (and test some errors).
  * The dtypes created by this function may be not be usable (or even crash
@@ -2295,6 +2328,15 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"fromstring_null_term_c_api",
         fromstring_null_term_c_api,
         METH_O, NULL},
+    {"matrixproduct_c_api",
+        matrixproduct_c_api,
+        METH_VARARGS, NULL},
+    {"matrixproduct2_c_api",
+        matrixproduct2_c_api,
+        METH_VARARGS, NULL},
+    {"innerproduct_c_api",
+        innerproduct_c_api,
+        METH_VARARGS, NULL},
     {"create_custom_field_dtype",
         create_custom_field_dtype,
         METH_VARARGS, NULL},

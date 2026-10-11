@@ -2564,8 +2564,8 @@ array_dot(PyArrayObject *self,
         }
     }
     
-    /* Call internal impl with warn_on_interleave=1 for ndarray.dot */
-    ret = (PyArrayObject *)PyArray_MatrixProduct_int(a, b, (PyArrayObject *)o, 1);
+    ret = (PyArrayObject *)PyArray_MatrixProduct_int(
+            a, b, (PyArrayObject *)o, "numpy.dot", NPY_DOT_REPLACEMENT);
     if (ret == NULL) {
         return NULL;
     }

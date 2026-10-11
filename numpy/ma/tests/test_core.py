@@ -1684,8 +1684,9 @@ class TestMaskedArrayArithmetic:
         y = y.reshape(2, 3, 4)
         assert_equal(np.transpose(y, (2, 0, 1)), transpose(x, (2, 0, 1)))
         assert_equal(np.take(y, (2, 0, 1), 1), take(x, (2, 0, 1), 1))
-        assert_equal(np.inner(filled(x, 0), filled(y, 0)),
-                     inner(x, y))
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            assert_equal(np.inner(filled(x, 0), filled(y, 0)),
+                         inner(x, y))
         assert_equal(np.outer(filled(x, 0), filled(y, 0)),
                      outer(x, y))
         y = array(['abc', 1, 'def', 2, 3], object)

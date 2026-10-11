@@ -890,11 +890,9 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
 
 /* Could perhaps be redone to not make contiguous arrays */
 
-/*NUMPY_API
- * Numeric.innerproduct(a,v)
- */
-NPY_NO_EXPORT PyObject *
-PyArray_InnerProduct(PyObject *op1, PyObject *op2)
+/* Internal inner product; warns as `funcname` when a.ndim >= 2 and b.ndim > 2. */
+static PyObject *
+PyArray_InnerProduct_int(PyObject *op1, PyObject *op2, const char *funcname)
 {
     PyArrayObject *ap1 = NULL;
     PyArrayObject *ap2 = NULL;
@@ -951,7 +949,8 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         Py_INCREF(ap2);
     }
 
-    ret = PyArray_MatrixProduct2((PyObject *)ap1, ap2t, NULL);
+    ret = PyArray_MatrixProduct_int((PyObject *)ap1, ap2t, NULL, funcname,
+                                    NPY_INNER_REPLACEMENT);
     if (ret == NULL) {
         goto fail;
     }
@@ -973,19 +972,29 @@ fail:
 }
 
 /*NUMPY_API
+ * Numeric.innerproduct(a,v)
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_InnerProduct(PyObject *op1, PyObject *op2)
+{
+    return PyArray_InnerProduct_int(op1, op2, "PyArray_InnerProduct");
+}
+
+/*NUMPY_API
  * Numeric.matrixproduct(a,v)
  * just like inner product but does the swapaxes stuff on the fly
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 {
-    return PyArray_MatrixProduct_int(op1, op2, NULL, 0);
+    return PyArray_MatrixProduct_int(op1, op2, NULL, "PyArray_MatrixProduct",
+                                     NPY_DOT_REPLACEMENT);
 }
 
-/* Internal matrix product; warns on dimension interleaving if warn_on_interleave. */
+/* Internal matrix product; warns as `funcname` when a.ndim >= 2 and b.ndim > 2. */
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
-                    int warn_on_interleave)
+                    const char *funcname, const char *replacement)
 {
     PyArrayObject *ap1, *ap2, *out_buf = NULL, *result = NULL;
     PyArrayIterObject *it1, *it2;
@@ -1060,13 +1069,13 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
     }
 
     /* Deprecated NumPy 2.6: warn when a.ndim >= 2 and b.ndim > 2 */
-    if (warn_on_interleave && PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
-        if (DEPRECATE(
-                "numpy.dot received arrays with a.ndim >= 2 and b.ndim > 2. "
-                "The current dimension-interleaving behavior is deprecated "
-                "and will eventually raise an error. "
-                "Use numpy.tensordot(a, b, axes=[-1, -2]) instead. "
-                "(Deprecated NumPy 2.6)") < 0) {
+    if (PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
+        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
+                "%s received arrays with a.ndim >= 2 and b.ndim > 2. "
+                "This places the leading dimensions of b in the middle of "
+                "the result, which is deprecated and will eventually raise "
+                "an error. Use %s instead. "
+                "(Deprecated NumPy 2.6)", funcname, replacement) < 0) {
             goto fail;
         }
     }
@@ -1167,8 +1176,8 @@ fail:
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 {
-    /* Public API: no deprecation warning (used by np.inner and C extensions) */
-    return PyArray_MatrixProduct_int(op1, op2, out, 0);
+    return PyArray_MatrixProduct_int(op1, op2, out, "PyArray_MatrixProduct2",
+                                     NPY_DOT_REPLACEMENT);
 }
 
 
@@ -2594,7 +2603,8 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_
     return NULL;
     }
 
-    return PyArray_Return((PyArrayObject *)PyArray_InnerProduct(a0, b0));
+    return PyArray_Return((PyArrayObject *)PyArray_InnerProduct_int(
+            a0, b0, "numpy.inner"));
 }
 
 static PyObject *
@@ -2621,8 +2631,8 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy),
         }
     }
     
-    /* Call internal impl with warn_on_interleave=1 for np.dot */
-    ret = (PyArrayObject *)PyArray_MatrixProduct_int(a, v, (PyArrayObject *)o, 1);
+    ret = (PyArrayObject *)PyArray_MatrixProduct_int(
+            a, v, (PyArrayObject *)o, "numpy.dot", NPY_DOT_REPLACEMENT);
     if (ret == NULL) {
         return NULL;
     }

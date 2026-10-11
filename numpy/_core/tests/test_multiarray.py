@@ -8975,8 +8975,10 @@ class TestInner:
                   [[2198, 2542, 2886],
                    [3230, 3574, 3918]]]]
             ).astype(dt)
-            assert_equal(np.inner(a, b), desired)
-            assert_equal(np.inner(b, a).transpose(2, 3, 0, 1), desired)
+            with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+                assert_equal(np.inner(a, b), desired)
+            with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+                assert_equal(np.inner(b, a).transpose(2, 3, 0, 1), desired)
 
 
 class TestChoose:

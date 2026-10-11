@@ -318,6 +318,12 @@ def inner(a, b, /):
     Ordinary inner product of vectors for 1-D arrays (without complex
     conjugation), in higher dimensions a sum product over the last axes.
 
+    .. deprecated:: 2.6
+        Calling `inner` when `a` has 2 or more dimensions and `b` has more
+        than 2 dimensions is deprecated and will eventually raise an error,
+        because the leading dimensions of `b` end up in the middle of the
+        result. Use ``tensordot(a, b, axes=[-1, -1])`` instead.
+
     Parameters
     ----------
     a, b : array_like
@@ -774,9 +780,10 @@ def dot(a, b, out=None):
         dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
 
       .. deprecated:: 2.6
-          When `a` has 2 or more dimensions and `b` has more than 2 dimensions,
-          the dimension-interleaving behavior is deprecated and will eventually
-          raise an error. Use ``tensordot(a, b, axes=[-1, -2])`` instead.
+          Calling `dot` when `a` has 2 or more dimensions and `b` has more
+          than 2 dimensions is deprecated and will eventually raise an error,
+          because the leading dimensions of `b` end up in the middle of the
+          result. Use ``tensordot(a, b, axes=[-1, -2])`` instead.
 
     It uses an optimized BLAS library when possible (see `numpy.linalg`).
 

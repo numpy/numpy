@@ -32,10 +32,13 @@ typedef struct npy_global_state_struct {
 NPY_NO_EXPORT int
 get_legacy_print_mode(void);
 
-/* Internal matrix product; warns on dimension interleaving if warn_on_interleave. */
+#define NPY_DOT_REPLACEMENT "numpy.tensordot(a, b, axes=[-1, -2])"
+#define NPY_INNER_REPLACEMENT "numpy.tensordot(a, b, axes=[-1, -1])"
+
+/* Internal matrix product; warns as `funcname` when a.ndim >= 2 and b.ndim > 2. */
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject *out,
-                    int warn_on_interleave);
+                    const char *funcname, const char *replacement);
 
 #ifdef __cplusplus
 }
