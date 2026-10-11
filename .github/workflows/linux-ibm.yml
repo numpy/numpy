@@ -74,7 +74,7 @@ jobs:
         sudo apt install -y python3.12 python3-pip python3-dev ninja-build gfortran \
                             build-essential libopenblas-dev liblapack-dev pkg-config
         pip install --upgrade pip
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli -r requirements/test_requirements.txt
         echo "/home/runner/.local/bin" >> $GITHUB_PATH
 
     - name: Install clang

@@ -77,7 +77,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli -r requirements/test_requirements.txt
         python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas32
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
@@ -124,7 +124,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --upgrade pip
+        pip install --group dev-cli -r requirements/test_requirements.txt
 
     - name: Build (LP64)
       run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
@@ -159,7 +160,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --upgrade pip
+        pip install --group dev-cli -r requirements/test_requirements.txt
 
     - name: Build
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
@@ -193,7 +195,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
@@ -222,7 +224,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
@@ -255,7 +257,7 @@ jobs:
 
     - name: Install PyPI dependencies
       run: |
-        pip install --break-system-packages -r requirements/build_requirements.txt
+        pip install --break-system-packages --group dev-cli
 
     - name: Build
       run: |
@@ -285,8 +287,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli -r requirements/test_requirements.txt
         pip install mkl mkl-devel
 
     - name: Repair MKL pkg-config files and symlinks
@@ -351,8 +352,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
@@ -389,8 +389,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 

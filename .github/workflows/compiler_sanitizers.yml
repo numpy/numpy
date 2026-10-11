@@ -69,7 +69,7 @@ jobs:
         pyenv global 3.14
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
+        pip install --group dev-cli
         pip install -r requirements/test_requirements.txt
         # xdist captures stdout/stderr, but we want the ASAN output
         pip uninstall -y pytest-xdist
@@ -224,7 +224,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements/build_requirements.txt
+          pip install --group dev-cli
           pip install -r requirements/test_requirements.txt
           # xdist captures stdout/stderr, but we want the ASAN output
           pip uninstall -y pytest-xdist
