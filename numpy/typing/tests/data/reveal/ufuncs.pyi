@@ -1627,7 +1627,14 @@ assert_type(np.divide(_obj_1d, _c64_1d), npt.NDArray[np.object_])
 assert_type(np.divide(_obj_1d, _c128_1d), npt.NDArray[np.object_])
 assert_type(np.divide(_obj_1d, _obj_1d), npt.NDArray[np.object_])
 
-# divide.outer is equivalent to __call__
+# divide.outer is equivalent to __call__, except for 1d x 1d
+assert_type(np.divide.outer(_i64_1d, _i64_1d), npt.Array2D[np.float64])
+assert_type(np.divide.outer(_i64_1d, _i64_nd), npt.NDArray[np.float64])
+assert_type(np.divide.outer(_i64_nd, _i64_1d), npt.NDArray[np.float64])
+assert_type(np.divide.outer(_f64_1d, _f64_1d), npt.Array2D[np.float64])
+assert_type(np.divide.outer(_f64_1d, _f64_nd), npt.NDArray[np.float64])
+assert_type(np.divide.outer(_f64_nd, _f64_1d), npt.NDArray[np.float64])
+assert_type(np.divide.outer(_c64_1d, _c64_1d), npt.Array2D[np.complex64])
 
 assert_type(np.divide.at(_bool_1d, 1, _py_f_1d), None)
 assert_type(np.divide.at(_i16_1d, 1, _py_f_1d), None)
