@@ -160,6 +160,16 @@ _IdT_co = TypeVar("_IdT_co", covariant=True, default=None)
 _ScalarT_contra = TypeVar("_ScalarT_contra", bound=np.generic, contravariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, covariant=True)
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
+    np.bool,
+    np.int8, np.int16, np.int32, np.int64,
+    np.uint8, np.uint16, np.uint32, np.uint64,
+    np.float16, np.float32, np.float64, np.longdouble,
+    np.complex64, np.complex128, np.clongdouble,
+    np.object_,
+)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 
@@ -21187,8 +21197,10 @@ class _gufunc_21_matvec_vecmat(_gufunc_21):  # type: ignore[misc]
 # (n?,k),(k,m?)->(n?,m?) and (n),(n)->()  (i.e. output is 0d for both 1d input, otherwise >0d)
 #
 # Only the i64/i32/i8/u8 int promotion rules are implemented
+#
+# The `_ShapeT_co` param is the output shape for 2d x 2d.
 @type_check_only
-class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
+class _gufunc_21_matmul_vecdot(_gufunc_21, Generic[_ShapeT_co]):  # type: ignore[misc]  # noqa: UP046
     @overload  # ?d ?, ?d|1d ?  (workaround)
     def __call__(
         self,
@@ -21215,6 +21227,71 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
         axis: int = ...,
         **kwargs: Unpack[_Kwargs21G],
     ) -> Incomplete: ...
+    @overload  # ?d T, 2d T  (workaround)
+    def __call__(
+        self,
+        x1: _ArrayJustND[_AnyScalarT],
+        x2: Array2D[_AnyScalarT],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[_AnyScalarT]: ...
+    @overload  # 2d T, ?d T  (workaround)
+    def __call__(
+        self,
+        x1: Array2D[_AnyScalarT],
+        x2: _ArrayJustND[_AnyScalarT],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> npt.NDArray[_AnyScalarT]: ...
+    @overload  # 1d T, 2d T
+    def __call__(
+        self,
+        x1: Array1D[_AnyScalarT] | Sequence[_AnyScalarT | bool],
+        x2: Array2D[_AnyScalarT],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> Array1D[_AnyScalarT]: ...
+    @overload  # 2d T, 1d T
+    def __call__(
+        self,
+        x1: Array2D[_AnyScalarT],
+        x2: Array1D[_AnyScalarT] | Sequence[_AnyScalarT | bool],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> Array1D[_AnyScalarT]: ...
+    @overload  # 2d T, 2d T
+    def __call__(
+        self,
+        x1: Array2D[_AnyScalarT],
+        x2: Array2D[_AnyScalarT],
+        /,
+        *,
+        out: None = None,
+        dtype: None = None,
+        keepdims: Literal[False] = False,
+        axis: int = ...,
+        **kwargs: Unpack[_Kwargs21G],
+    ) -> _Array[_ShapeT_co, _AnyScalarT]: ...
     @overload  # 1d ~bool, 1d ~bool
     def __call__(
         self,
@@ -22025,8 +22102,8 @@ class _gufunc_21_matmul_vecdot(_gufunc_21):  # type: ignore[misc]
 matvec: Final[_gufunc_21_matvec_vecmat] = ...
 vecmat: Final[_gufunc_21_matvec_vecmat] = ...
 
-matmul: Final[_gufunc_21_matmul_vecdot] = ...
-vecdot: Final[_gufunc_21_matmul_vecdot] = ...
+matmul: Final[_gufunc_21_matmul_vecdot[_2D]] = ...
+vecdot: Final[_gufunc_21_matmul_vecdot[_1D]] = ...
 
 ###
 # re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`
