@@ -186,6 +186,7 @@ _AnyNumberT = TypeVar(
     np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
     np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
 )
+_AnyFloatT = TypeVar("_AnyFloatT", np.float64, np.longdouble, np.float32, np.float16)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 
@@ -4935,6 +4936,39 @@ class _ufunc_21_ldexp(_ufunc_21[None]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.float16: ...
+    @overload  # ?d T, Nd  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[_AnyFloatT],
+        x2: npt.NDArray[_to_integer],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyFloatT]: ...
+    @overload  # Nd T, ?d  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[_AnyFloatT],
+        x2: _ArrayJustND[_to_integer],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyFloatT]: ...
+    @overload  # 1d T, 1d
+    def outer(
+        self,
+        x1: Array1D[_AnyFloatT],
+        x2: Array1D[_to_integer],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_2D, _AnyFloatT]: ...
     @overload  # >0d T@floating, >=0d
     def outer[ScalarT: np.floating](
         self,
@@ -6700,6 +6734,39 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> FloatT: ...
+    @overload  # ?d T, Nd T  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[_AnyFloatT],
+        x2: npt.NDArray[_AnyFloatT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyFloatT]: ...
+    @overload  # Nd T, ?d T  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[_AnyFloatT],
+        x2: _ArrayJustND[_AnyFloatT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyFloatT]: ...
+    @overload  # 1d T, 1d T
+    def outer(
+        self,
+        x1: Array1D[_AnyFloatT],
+        x2: Array1D[_AnyFloatT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_2D, _AnyFloatT]: ...
     @overload  # ?d ~f64, ?d +f64
     def outer(
         self,

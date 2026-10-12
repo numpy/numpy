@@ -979,6 +979,9 @@ assert_type(np.ldexp.outer(_f32_0d, _py_i_0d), np.float32)
 assert_type(np.ldexp.outer(_f32_1d, _py_i_0d), npt.NDArray[np.float32])
 assert_type(np.ldexp.outer(_f32_0d, _py_i_1d), npt.NDArray[np.float32])
 assert_type(np.ldexp.outer(_f32_1d, _py_i_1d), npt.NDArray[np.float32])
+assert_type(np.ldexp.outer(_f32_1d, _i32_1d), npt.Array2D[np.float32])
+assert_type(np.ldexp.outer(_f32_1d, _i32_nd), npt.NDArray[np.float32])
+assert_type(np.ldexp.outer(_f32_nd, _i32_1d), npt.NDArray[np.float32])
 
 assert_type(np.ldexp.at(_f32_2d, 1, _py_i_1d), None)
 
@@ -1365,6 +1368,9 @@ assert_type(np.copysign.outer(_f80_0d, _f80_0d), np.longdouble)
 assert_type(np.copysign.outer(_f80_0d, _f80_nd), npt.NDArray[np.longdouble])
 assert_type(np.copysign.outer(_f80_nd, _f80_0d), npt.NDArray[np.longdouble])
 assert_type(np.copysign.outer(_f80_nd, _f80_nd), npt.NDArray[np.longdouble])
+assert_type(np.copysign.outer(_f80_1d, _f80_1d), npt.Array2D[np.longdouble])
+assert_type(np.copysign.outer(_f80_1d, _f80_nd), npt.NDArray[np.longdouble])
+assert_type(np.copysign.outer(_f80_nd, _f80_1d), npt.NDArray[np.longdouble])
 
 assert_type(np.copysign.at(_f32_1d, 1, _py_f_1d), None)
 
