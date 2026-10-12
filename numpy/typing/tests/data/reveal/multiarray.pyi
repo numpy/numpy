@@ -265,7 +265,8 @@ assert_type(np.packbits(AR_b_2d, axis=1), npt.Array2D[np.uint8])
 assert_type(np.packbits(AR_i8, axis=1), npt.NDArray[np.uint8])
 assert_type(np.packbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
-assert_type(np.unpackbits(AR_u1), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.unpackbits(AR_u1), npt.Array1D[np.uint8])
+assert_type(np.unpackbits(AR_u1_2d, axis=1), npt.Array2D[np.uint8])
 assert_type(np.unpackbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
 assert_type(np.shares_memory(1, 2), bool)

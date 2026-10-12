@@ -47,7 +47,6 @@ from numpy import (
     signedinteger,
     timedelta64,
     ufunc,
-    uint8,
     unsignedinteger,
     vecdot,
 )
@@ -1888,22 +1887,30 @@ def packbits(a: _ArrayLikeInt_co, /, axis: None = None, bitorder: _BitOrder = "b
 def packbits(a: _ArrayLikeInt_co, /, axis: SupportsIndex, bitorder: _BitOrder = "big") -> NDArray[np.uint8]: ...
 
 #
-@overload
-def unpackbits(
-    a: _ArrayLike[uint8],
-    /,
-    axis: None = None,
-    count: SupportsIndex | None = None,
-    bitorder: _BitOrder = "big",
-) -> Array1D[uint8]: ...
-@overload
-def unpackbits(
-    a: _ArrayLike[uint8],
+@overload  # >=1d, axis=<given>
+def unpackbits[ShapeT: _AtLeast1D](
+    a: _Array[ShapeT, np.uint8],
     /,
     axis: SupportsIndex,
     count: SupportsIndex | None = None,
     bitorder: _BitOrder = "big",
-) -> NDArray[uint8]: ...
+) -> _Array[ShapeT, np.uint8]: ...
+@overload  # ?d, axis=None (default)
+def unpackbits(
+    a: _ArrayLike[np.uint8],
+    /,
+    axis: None = None,
+    count: SupportsIndex | None = None,
+    bitorder: _BitOrder = "big",
+) -> Array1D[np.uint8]: ...
+@overload  # ?d, axis=<given>
+def unpackbits(
+    a: _ArrayLike[np.uint8],
+    /,
+    axis: SupportsIndex,
+    count: SupportsIndex | None = None,
+    bitorder: _BitOrder = "big",
+) -> NDArray[np.uint8]: ...
 
 # any two python objects will be accepted, not just `ndarray`s
 def shares_memory(a: object, b: object, /, max_work: int | None = -1) -> bool: ...
