@@ -38,7 +38,7 @@ from itertools import cycle
 import re
 from secrets import randbits
 
-from threading import RLock
+from threading import Lock, RLock
 
 from cpython.pycapsule cimport PyCapsule_New
 
@@ -316,7 +316,7 @@ cdef class SeedSequence:
                                       np.ndarray)):
             raise TypeError('SeedSequence expects int or sequence of ints for '
                             f'entropy not {entropy}')
-        self._lock = RLock()
+        self._lock = Lock()
         self.entropy = entropy
         self.spawn_key = tuple(spawn_key)
         self.pool_size = pool_size
