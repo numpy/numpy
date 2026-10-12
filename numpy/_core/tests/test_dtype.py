@@ -2449,3 +2449,32 @@ def test_gh_31308_loadtxt():
     kind_dtype = np.dtype(kind)
     arr = np.loadtxt(c, dtype=kind_dtype)
     assert arr.itemsize == 2 ** 28 * 8 + 8
+
+
+@pytest.mark.parametrize("dtype", [
+    "V2",
+    "V2147483649",
+    ])
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+@requires_memory(free_bytes=1e10)
+@pytest.mark.slow
+def test_gh_32830_void(dtype):
+    a = np.zeros(2, dtype)
+    a.view(np.uint8)[-1] = 1
+    assert a.view(np.uint8)[0] == 0
+    assert a.view(np.uint8)[-1] == 1
+    assert a[0] != a[1]
+
+
+@pytest.mark.parametrize("dtype", [
+    "V16",
+    "V2147483649",
+    ])
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+@requires_memory(free_bytes=5e9)
+def test_int_to_large_void_roundtrip(dtype):
+    src = np.array([7, 9], dtype=np.int64)
+    v = src.astype(dtype)
+    raw = v.view(np.uint8).reshape(2, -1)
+    assert_array_equal(raw[:, -1], [0, 0])
+    assert_array_equal(raw[:, :8].copy().view(np.int64).ravel(), src)

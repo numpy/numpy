@@ -43,7 +43,10 @@ jobs:
         shell: bash
         run: |
           cd numpy_to_test
-          MYPY_VERSION=$(grep mypy== requirements/typing_requirements.txt | sed -n 's/mypy==\([^;]*\).*/\1/p')
+          
+          # figure out the mypy pin
+          python -m pip install dependency-groups
+          MYPY_VERSION=$(dependency-groups typing | grep -E '^mypy *[=<>!~]' | sed -E 's/^mypy *==?//; s/ *;.*//')
 
           echo "new commit"
           git checkout $GITHUB_SHA

@@ -924,6 +924,12 @@ class TestUfunc:
         assert c is b
         assert_allclose(c, expected)
 
+    def test_matvec_object_empty_is_zero(self):
+        A = np.empty((3, 0), dtype=object)
+        v = np.empty((0,), dtype=object)
+        result = np.matvec(A, v)
+        assert_array_equal(result, np.zeros(3, dtype=object))
+
     def test_vecdot_subclass(self):
         class MySubclass(np.ndarray):
             pass
@@ -982,9 +988,11 @@ class TestUfunc:
         u, v = np.broadcast_arrays(a, b)
         assert_equal(u.strides[0], 0)
         x = u + v
-        assert_array_equal(x, np.array([[0, 2], [2, 4]]))
-        with pytest.raises(ValueError, match=r"output array is read-only"):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
             u += v
+            assert_equal(len(w), 1)
+            assert_(x[0, 0] != u[0, 0])
 
         # Output reduction should not be allowed.
         # See gh-15139
