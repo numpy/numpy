@@ -1852,7 +1852,11 @@ assert_type(np.gcd(_obj_nd, _i64_0d), npt.NDArray[np.object_[int]])
 assert_type(np.gcd(_obj_nd, _i64_nd), npt.NDArray[np.object_[int]])
 assert_type(np.gcd(_obj_nd, _obj_nd), npt.NDArray[np.object_[int]])
 
-# gcd.outer is equivalent to __call__
+# gcd.outer is equivalent to __call__, except for 1d x 1d
+assert_type(np.gcd.outer(_i16_1d, _i16_1d), npt.Array2D[np.int16])
+assert_type(np.gcd.outer(_i64_1d, _i64_1d), npt.Array2D[np.int64])
+assert_type(np.gcd.outer(_i64_1d, _i64_nd), npt.NDArray[np.int64])
+assert_type(np.gcd.outer(_i64_nd, _i64_1d), npt.NDArray[np.int64])
 
 assert_type(np.gcd.at(_i16_1d, 1, _py_i_1d), None)
 assert_type(np.gcd.at(_obj_1d, 1, _py_i_1d), None)

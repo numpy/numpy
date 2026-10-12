@@ -175,6 +175,7 @@ _AnyRealT = TypeVar(
     np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
     np.float64, np.longdouble, np.float32, np.float16,
 )
+_AnyIntT = TypeVar("_AnyIntT", np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 
@@ -9182,6 +9183,39 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         dtype: None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> IntT: ...
+    @overload  # ?d T, Nd T  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[_AnyIntT],
+        x2: npt.NDArray[_AnyIntT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyIntT]: ...
+    @overload  # Nd T, ?d T  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[_AnyIntT],
+        x2: _ArrayJustND[_AnyIntT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyIntT]: ...
+    @overload  # 1d T, 1d T
+    def outer(
+        self,
+        x1: Array1D[_AnyIntT],
+        x2: Array1D[_AnyIntT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.Array2D[_AnyIntT]: ...
     @overload  # ?d +bool, ?d +bool  (only if `bool` in domain)
     def outer(
         self: _ufunc_21_bio[Any, np.bool],
