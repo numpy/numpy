@@ -259,8 +259,9 @@ assert_type(np.copyto(AR_f8, [1., 1.5, 1.6]), None)
 
 assert_type(np.putmask(AR_f8, [True, True, False], 1.5), None)
 
-assert_type(np.packbits(AR_i8),  np.ndarray[tuple[int], np.dtype[np.uint8]])
-assert_type(np.packbits(AR_u1),  np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.packbits(AR_i8),  npt.Array1D[np.uint8])
+assert_type(np.packbits(AR_u1),  npt.Array1D[np.uint8])
+assert_type(np.packbits(AR_b_2d, axis=1), npt.Array2D[np.uint8])
 assert_type(np.packbits(AR_i8, axis=1), npt.NDArray[np.uint8])
 assert_type(np.packbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
