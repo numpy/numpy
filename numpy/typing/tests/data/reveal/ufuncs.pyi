@@ -3700,7 +3700,11 @@ assert_type(np.fmax(_obj_1d, _obj_nd), npt.NDArray[np.object_])
 
 assert_type(np.fmax(_dt_ns_1d, _dt_ns_1d), npt.NDArray[np.datetime64[int]])
 
-# fmax.outer is equivalent to __call__
+# fmax.outer is equivalent to __call__, except for 1d x 1d
+assert_type(np.fmax.outer(_i16_1d, _i16_1d), npt.Array2D[np.int16])
+assert_type(np.fmax.outer(_f64_1d, _f64_1d), npt.Array2D[np.float64])
+assert_type(np.fmax.outer(_f64_1d, _f64_nd), npt.NDArray[np.float64])
+assert_type(np.fmax.outer(_f64_nd, _f64_1d), npt.NDArray[np.float64])
 
 assert_type(np.fmax.at(_bool_1d, 1, _py_b_1d), None)
 assert_type(np.fmax.at(_i16_1d, 1, _py_i_1d), None)
