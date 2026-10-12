@@ -372,6 +372,13 @@ assert_type(np.ma.allclose(AR_f4, MAR_f4), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, masked_equal=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)
 
+assert_type(np.ma.append(MAR_f4, MAR_f4), np.ma.MaskedArray[tuple[int], np.dtype[np.float32]])
+assert_type(np.ma.append(MAR_f4, MAR_i8), np.ma.MaskedArray[tuple[int], np.dtype[Any]])
+assert_type(np.ma.append(MAR_2d_f4, AR_2d_f4, axis=0), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.ma.append(MAR_1d_f4, AR_LIKE_f, axis=0), np.ma.MaskedArray[tuple[int], np.dtype[Any]])
+assert_type(np.ma.append(AR_LIKE_u, AR_LIKE_u, axis=0), np.ma.MaskedArray[tuple[int], np.dtype[np.uint32]])
+assert_type(np.ma.append(AR_LIKE_f, AR_LIKE_i, axis=0), MaskedArray[Any])
+
 assert_type(MAR_2d_f4.ravel(), np.ma.MaskedArray[tuple[int], np.dtype[np.float32]])
 assert_type(MAR_1d.ravel(order="A"), np.ma.MaskedArray[tuple[int], np.dtype[Any]])
 

@@ -89,6 +89,13 @@ __all__ = [
 
 _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, default=Any, covariant=True)
 _PyFuncT_co = TypeVar("_PyFuncT_co", bound=Callable[..., object] | _NoValueType, default=Callable[..., Any], covariant=True)
+_Shape1T = TypeVar("_Shape1T", bound=tuple[int, *tuple[int, ...]])
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64, np.datetime64, np.str_, np.bytes_, np.void, np.object_,
+)
 
 type _ArrayLike1D[ScalarT: np.generic] = _SupportsArray[np.dtype[ScalarT]] | Sequence[ScalarT]
 
@@ -3674,22 +3681,36 @@ def insert(arr: ArrayLike, obj: _IndexLike, values: ArrayLike, axis: None = None
 def insert(arr: ArrayLike, obj: _IndexLike, values: ArrayLike, axis: SupportsIndex) -> NDArray[Any]: ...
 
 # keep in sync with `ma.core.append`
-@overload  # known array type, axis specified
-def append[ArrayT: np.ndarray](arr: ArrayT, values: ArrayT, axis: SupportsIndex) -> ArrayT: ...
-@overload  # 1d, known scalar type, axis specified
-def append[ScalarT: np.generic](arr: _Seq1D[ScalarT], values: _Seq1D[ScalarT], axis: SupportsIndex) -> Array1D[ScalarT]: ...
-@overload  # 2d, known scalar type, axis specified
-def append[ScalarT: np.generic](arr: _Seq2D[ScalarT], values: _Seq2D[ScalarT], axis: SupportsIndex) -> Array2D[ScalarT]: ...
-@overload  # 3d, known scalar type, axis specified
-def append[ScalarT: np.generic](arr: _Seq3D[ScalarT], values: _Seq3D[ScalarT], axis: SupportsIndex) -> Array3D[ScalarT]: ...
-@overload  # ?d, known scalar type, axis specified
-def append[ScalarT: np.generic](arr: _SeqND[ScalarT], values: _SeqND[ScalarT], axis: SupportsIndex) -> NDArray[ScalarT]: ...
-@overload  # ?d, unknown scalar type, axis specified
-def append(arr: np.ndarray | _SeqND[_ScalarLike_co], values: _SeqND[_ScalarLike_co], axis: SupportsIndex) -> np.ndarray: ...
-@overload  # known scalar type, axis=None
-def append[ScalarT: np.generic](arr: _ArrayLike[ScalarT], values: _ArrayLike[ScalarT], axis: None = None) -> Array1D[ScalarT]: ...
-@overload  # unknown scalar type, axis=None
+@overload  # ?d T, axis=None (default)
+def append(  # noqa: UP047
+    arr: _ArrayLike[_AnyScalarT],
+    values: _ArrayLike[_AnyScalarT],
+    axis: None = None,
+) -> Array1D[_AnyScalarT]: ...
+@overload  # >=1d T, axis=<given>
+def append(  # noqa: UP047
+    arr: _Array[_Shape1T, _AnyScalarT],
+    values: _ArrayLike[_AnyScalarT],
+    axis: SupportsIndex,
+) -> _Array[_Shape1T, _AnyScalarT]: ...
+@overload  # >=1d ?, axis=<given>
+def append[ShapeT: tuple[int, *tuple[int, ...]]](
+    arr: np.ndarray[ShapeT, Any],
+    values: ArrayLike,
+    axis: SupportsIndex,
+) -> np.ndarray[ShapeT]: ...
+@overload  # 1d T, axis=<given>
+def append(arr: _Seq1D[_AnyScalarT], values: _Seq1D[_AnyScalarT], axis: SupportsIndex) -> Array1D[_AnyScalarT]: ...  # noqa: UP047
+@overload  # 2d T, axis=<given>
+def append(arr: _Seq2D[_AnyScalarT], values: _Seq2D[_AnyScalarT], axis: SupportsIndex) -> Array2D[_AnyScalarT]: ...  # noqa: UP047
+@overload  # 3d T, axis=<given>
+def append(arr: _Seq3D[_AnyScalarT], values: _Seq3D[_AnyScalarT], axis: SupportsIndex) -> Array3D[_AnyScalarT]: ...  # noqa: UP047
+@overload  # ?d T, axis=<given>
+def append(arr: _SeqND[_AnyScalarT], values: _SeqND[_AnyScalarT], axis: SupportsIndex) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
+@overload  # ?d ?, axis=None (default)
 def append(arr: ArrayLike, values: ArrayLike, axis: None = None) -> Array1D[Any]: ...
+@overload  # ?d ?, axis=<given>
+def append(arr: ArrayLike, values: ArrayLike, axis: SupportsIndex) -> NDArray[Any]: ...
 
 #
 @overload
