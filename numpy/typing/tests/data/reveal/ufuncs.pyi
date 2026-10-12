@@ -1211,7 +1211,13 @@ assert_type(np.float_power(_c160_0d, _c160_1d), npt.NDArray[np.clongdouble])
 assert_type(np.float_power(_c160_1d, _c160_0d), npt.NDArray[np.clongdouble])
 assert_type(np.float_power(_c160_1d, _c160_1d), npt.NDArray[np.clongdouble])
 
-# float_power.outer is equivalent to __call__
+# float_power.outer is equivalent to __call__, except for 1d x 1d
+assert_type(np.float_power.outer(_i64_1d, _f32_1d), npt.Array2D[np.float64])
+assert_type(np.float_power.outer(_i64_1d, _f32_nd), npt.NDArray[np.float64])
+assert_type(np.float_power.outer(_i64_nd, _f32_1d), npt.NDArray[np.float64])
+assert_type(np.float_power.outer(_c64_1d, _c64_1d), npt.Array2D[np.complex128])
+assert_type(np.float_power.outer(_c64_1d, _c64_nd), npt.NDArray[np.complex128])
+assert_type(np.float_power.outer(_c64_nd, _c64_1d), npt.NDArray[np.complex128])
 
 assert_type(np.float_power.at(_f32_1d, 1, _py_f_1d), None)
 assert_type(np.float_power.at(_c160_1d, 1, _py_c_1d), None)
