@@ -185,6 +185,11 @@ typedef enum {
 static int
 pyscalar_mode_conv(PyObject *obj, scalar_policy *policy)
 {
+    if (!PyUnicode_Check(obj)) {
+        PyErr_Format(PyExc_TypeError,
+                "invalid pyscalar mode %.100R, must be a string", obj);
+        return 0;
+    }
     npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     PyObject *strings[3] = {
             interned_str->convert, interned_str->preserve,

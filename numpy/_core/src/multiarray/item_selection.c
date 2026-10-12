@@ -409,8 +409,11 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         return NULL;
     }
 
-    indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
-                                                         NPY_INTP, 0, 0);
+    indices = (PyArrayObject *)PyArray_FromAny(indices0,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 0,
+            NPY_ARRAY_SAME_KIND_CASTING | NPY_ARRAY_DEFAULT,
+            NULL);
     if (indices == NULL) {
         goto fail;
     }
@@ -905,8 +908,14 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     char *new_data, *old_data;
     NPY_cast_info cast_info;
     NPY_ARRAYMETHOD_FLAGS flags;
+    NPY_BEGIN_THREADS_DEF;
 
-    repeats = (PyArrayObject *)PyArray_ContiguousFromAny(op, NPY_INTP, 0, 1);
+    repeats = (PyArrayObject *)PyArray_FromAny(op,
+            PyArray_DescrFromType(NPY_INTP),
+            0, 1,
+            NPY_ARRAY_SAME_KIND_CASTING | NPY_ARRAY_DEFAULT,
+            NULL);
+
     if (repeats == NULL) {
         return NULL;
     }
@@ -995,8 +1004,14 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
         }
     }
 
-    if (npy_fastrepeat(n_outer, n, nel, chunk, broadcast, counts, new_data,
-                       old_data, elsize, &cast_info, needs_custom_copy) < 0) {
+    if (!needs_custom_copy || !(flags & NPY_METH_REQUIRES_PYAPI)) {
+        NPY_BEGIN_THREADS_THRESHOLDED(PyArray_SIZE(ret));
+    }
+    int status = npy_fastrepeat(
+        n_outer, n, nel, chunk, broadcast, counts, new_data,
+        old_data, elsize, &cast_info, needs_custom_copy);
+    NPY_END_THREADS;
+    if (status < 0) {
         goto fail;
     }
 
@@ -1022,7 +1037,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
 {
     PyArrayObject *obj = NULL;
     PyArray_Descr *dtype;
-    int n, elsize;
+    int n;
+    npy_intp elsize;
     npy_intp i;
     char *ret_data;
     PyArrayObject **mps, *ap;
@@ -1933,8 +1949,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     npy_intp astride, rstride, *iptr;
     int nd;
     int needcopy = 0;
-    int elsize;
-    int maxelsize;
+    npy_intp elsize;
+    npy_intp maxelsize;
     int object = 0;
     PyArray_ArgSortFunc *argsort;
     NPY_BEGIN_THREADS_DEF;

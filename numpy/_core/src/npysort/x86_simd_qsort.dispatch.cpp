@@ -1,18 +1,17 @@
 #include "x86_simd_qsort.hpp"
 #ifndef __CYGWIN__
 
-#include <cassert>
 #include "x86-simd-sort/src/x86simdsort-static-incl.h"
 
+// hasnan is unknown up front, so always true; nans_last defaults to true.
 #define DISPATCH_SORT_METHODS(TYPE) \
-template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(TYPE *arr, npy_intp num, npy_intp kth) \
+template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(TYPE *arr, npy_intp num, npy_intp kth, bool reverse) \
 { \
-    x86simdsortStatic::qselect(arr, kth, num, true); \
+    x86simdsortStatic::qselect(arr, kth, num, true, reverse); \
 } \
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(TYPE *arr, npy_intp num, bool reverse) \
 { \
-    assert(!reverse); (void)reverse; \
-    x86simdsortStatic::qsort(arr, num, true); \
+    x86simdsortStatic::qsort(arr, num, true, reverse); \
 } \
 
 namespace np { namespace qsort_simd {

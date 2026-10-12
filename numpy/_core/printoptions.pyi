@@ -10,11 +10,11 @@ __all__ = ["format_options"]
 
 class _FormatOptionsDict(TypedDict):
     edgeitems: int
-    threshold: int
+    threshold: float
     floatmode: str
     precision: int
     suppress: bool
-    linewidth: int
+    linewidth: float
     nanstr: str
     infstr: str
     sign: str
