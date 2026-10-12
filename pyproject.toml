@@ -361,7 +361,13 @@ repair-wheel-command = ""
 select = ["*-android*", "*-ios*", "*-pyodide*"]
 # Note: hypothesis is deliberately omitted here, as are Cython and Meson
 # - we use them in regular CI only.
-before-test = "pip install --group test-core"
+before-test = ""
+
+test-requires = [
+    "pytest==9.1.1",
+    "tzdata",
+    "pytest-xdist",
+]
 
 # Mobile and WASM platforms can't run the cibw_test_command shell script, so they must
 # run Python directly.
