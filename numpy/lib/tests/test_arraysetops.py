@@ -1284,12 +1284,6 @@ class TestUnique:
         assert len(u) == len(values) - 1
 
     def test_unique_return_index_first_occurrence_object(self):
-        # 1, 1.0 and True compare equal but are distinguishable objects
-        # (arr[4] is True, arr[13] is 1.0). With more than 16 elements
-        # quicksort does not fall back to insertion sort and reorders ties,
-        # so return_index=True must still report the first occurrence (4).
-        # The returned value is checked by identity (arr[13]) and by equality
-        # with the first occurrence (arr[4]).
         arr = np.array(
             [4, 3, 3, 2, True, 2, 2, 1, 2, 4, 3, 4, 3, 1.0, 1.0, 4, 1.0],
             dtype=object)
@@ -1299,9 +1293,6 @@ class TestUnique:
         assert u[0] == arr[4]
 
     def test_unique_return_inverse_equal_distinguishable_object(self):
-        # Same array as above with return_inverse=True instead of
-        # return_index: there is no index to agree with, so the returned
-        # value is checked by identity (arr[13]) and by equality (arr[4]).
         arr = np.array(
             [4, 3, 3, 2, True, 2, 2, 1, 2, 4, 3, 4, 3, 1.0, 1.0, 4, 1.0],
             dtype=object)
@@ -1310,9 +1301,6 @@ class TestUnique:
         assert u[0] == arr[4]
 
     def test_unique_equal_distinguishable_object(self):
-        # Same array as above with no optional outputs requested: the
-        # returned value is checked by identity (arr[13]) and by equality
-        # (arr[4]).
         arr = np.array(
             [4, 3, 3, 2, True, 2, 2, 1, 2, 4, 3, 4, 3, 1.0, 1.0, 4, 1.0],
             dtype=object)
@@ -1321,10 +1309,6 @@ class TestUnique:
         assert u[0] == arr[4]
 
     def test_unique_return_index_first_occurrence_signed_zero(self):
-        # Same idea with signed zeros: -0.0 == 0.0 but they are distinguishable,
-        # and the first zero (arr[4]) is the only -0.0. return_index=True must
-        # report the first occurrence (4). The returned value is checked by
-        # identity (arr[7], a +0.0) and by equality with arr[4].
         arr = np.array(
             [3, 2, 2, 1, -0.0, 1, 1, 0.0, 1, 3, 2, 3, 2, 0.0, 0.0, 3, 0.0],
             dtype=object)
@@ -1334,8 +1318,6 @@ class TestUnique:
         assert u[0] == arr[4]
 
     def test_unique_return_inverse_signed_zero(self):
-        # Signed zeros as above with return_inverse=True: the returned zero
-        # is checked by identity (arr[7]) and by equality (arr[4]).
         arr = np.array(
             [3, 2, 2, 1, -0.0, 1, 1, 0.0, 1, 3, 2, 3, 2, 0.0, 0.0, 3, 0.0],
             dtype=object)
@@ -1344,9 +1326,6 @@ class TestUnique:
         assert u[0] == arr[4]
 
     def test_unique_equal_signed_zero(self):
-        # Signed zeros as above with no optional outputs requested: the
-        # returned zero is checked by identity (arr[7]) and by equality
-        # (arr[4]).
         arr = np.array(
             [3, 2, 2, 1, -0.0, 1, 1, 0.0, 1, 3, 2, 3, 2, 0.0, 0.0, 3, 0.0],
             dtype=object)
