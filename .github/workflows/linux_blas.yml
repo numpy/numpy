@@ -265,9 +265,9 @@ jobs:
 
     - name: Test
       run: |
-        # do not use the test-extending group, it will install coveragel, which requires
+        # do not use the test-extending group, it will install coverage, which requires
         # sqlite3, which is not available on OpenSUSE python
-        pip install --break-system-packages pytest pytest-xdist pytest-timeout
+        pip install --break-system-packages --group test-core
         spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
