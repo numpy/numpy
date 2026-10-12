@@ -8,7 +8,6 @@
 #include "numpy/ufuncobject.h"
 #include "common.h"
 
-#include "public_dtype_api.h"
 #include "array_method.h"
 #include "dtypemeta.h"
 #include "array_coercion.h"

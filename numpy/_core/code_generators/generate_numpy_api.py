@@ -205,7 +205,7 @@ void *PyArray_API[] = {
 };
 
 /* DType addresses are only available after DType initialization. */
-NPY_NO_EXPORT void
+static void
 _fill_dtype_api(void *api_table[])
 {
 %s
