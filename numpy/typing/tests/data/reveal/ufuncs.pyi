@@ -3264,7 +3264,11 @@ assert_type(np.multiply(_T_1d, _u8_nd), np.ndarray[tuple[Any, ...], np.dtypes.St
 assert_type(np.multiply(_T_1d, _i32_nd), np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
 assert_type(np.multiply(_T_1d, _i64_nd), np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
 
-# pow.outer is equivalent to __call__
+# multiply.outer is equivalent to __call__, except for 1d x 1d
+assert_type(np.multiply.outer(_i16_1d, _i16_1d), npt.Array2D[np.int16])
+assert_type(np.multiply.outer(_f64_1d, _f64_1d), npt.Array2D[np.float64])
+assert_type(np.multiply.outer(_f64_1d, _f64_nd), npt.NDArray[np.float64])
+assert_type(np.multiply.outer(_f64_nd, _f64_1d), npt.NDArray[np.float64])
 
 assert_type(np.multiply.at(_bool_1d, 1, _py_b_1d), None)
 assert_type(np.multiply.at(_i16_1d, 1, _py_i_1d), None)
