@@ -181,6 +181,11 @@ _AnyNumericT = TypeVar(
     np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
     np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
 )
+_AnyNumberT = TypeVar(
+    "_AnyNumberT",
+    np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 
@@ -12665,6 +12670,39 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> Any: ...
+    @overload  # ?d T, Nd T  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[_AnyNumberT],
+        x2: npt.NDArray[_AnyNumberT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyNumberT]: ...
+    @overload  # Nd T, ?d T  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[_AnyNumberT],
+        x2: _ArrayJustND[_AnyNumberT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyNumberT]: ...
+    @overload  # 1d T, 1d T
+    def outer(
+        self,
+        x1: Array1D[_AnyNumberT],
+        x2: Array1D[_AnyNumberT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_2D, _AnyNumberT]: ...
     @overload  # ?d +i8, ?d +i8
     def outer(
         self,
