@@ -3680,7 +3680,7 @@ def insert(arr: ArrayLike, obj: _IndexLike, values: ArrayLike, axis: None = None
 @overload  # unknown scalar-type, axis specified
 def insert(arr: ArrayLike, obj: _IndexLike, values: ArrayLike, axis: SupportsIndex) -> NDArray[Any]: ...
 
-#
+# keep in sync with `ma.core.append`
 @overload  # ?d T, axis=None (default)
 def append(  # noqa: UP047
     arr: _ArrayLike[_AnyScalarT],
@@ -3707,9 +3707,9 @@ def append(arr: _Seq2D[_AnyScalarT], values: _Seq2D[_AnyScalarT], axis: Supports
 def append(arr: _Seq3D[_AnyScalarT], values: _Seq3D[_AnyScalarT], axis: SupportsIndex) -> Array3D[_AnyScalarT]: ...  # noqa: UP047
 @overload  # ?d T, axis=<given>
 def append(arr: _SeqND[_AnyScalarT], values: _SeqND[_AnyScalarT], axis: SupportsIndex) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
-@overload  # ?d T, axis=None (default)
+@overload  # ?d ?, axis=None (default)
 def append(arr: ArrayLike, values: ArrayLike, axis: None = None) -> Array1D[Any]: ...
-@overload  # ?d, unknown scalar type, axis=<given>
+@overload  # ?d ?, axis=<given>
 def append(arr: ArrayLike, values: ArrayLike, axis: SupportsIndex) -> NDArray[Any]: ...
 
 #
