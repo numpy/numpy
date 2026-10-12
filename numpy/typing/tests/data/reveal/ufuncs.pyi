@@ -2868,7 +2868,11 @@ assert_type(np.subtract(_dt_ns_1d, _td_ns_1d), npt.NDArray[np.datetime64])
 assert_type(np.subtract(_dt_ns_0d, _dt_ns_0d), np.timedelta64)
 assert_type(np.subtract(_dt_ns_1d, _dt_ns_1d), npt.NDArray[np.timedelta64])
 
-# subtract.outer is equivalent to __call__
+# subtract.outer is equivalent to __call__, except for 1d x 1d
+assert_type(np.subtract.outer(_i16_1d, _i16_1d), npt.Array2D[np.int16])
+assert_type(np.subtract.outer(_f64_1d, _f64_1d), npt.Array2D[np.float64])
+assert_type(np.subtract.outer(_f64_1d, _f64_nd), npt.NDArray[np.float64])
+assert_type(np.subtract.outer(_f64_nd, _f64_1d), npt.NDArray[np.float64])
 
 assert_type(np.subtract.at(_td_ns_1d, 1, _py_b_1d), None)
 assert_type(np.subtract.at(_td_ns_1d, 1, _py_i_1d), None)
