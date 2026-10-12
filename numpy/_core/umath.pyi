@@ -7221,8 +7221,52 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
 
     #
     @override
+    @overload  # Nd
+    def reduceat[ShapeT: _Shape, FloatT: np.floating](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, FloatT],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, FloatT]: ...
+    @overload  # Nd ~f64
+    def reduceat[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _as_f64],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, np.float64]: ...
+    @overload  # Nd ~f32
+    def reduceat[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _as_f32],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, np.float32]: ...
+    @overload  # Nd ~f16
+    def reduceat[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _as_f16],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, np.float16]: ...
     @overload  # T@floating
-    def reduceat[FloatT: np.floating](  # pyrefly:ignore[bad-override]
+    def reduceat[FloatT: np.floating](
         self,
         array: _ArrayLike[FloatT],
         /,
@@ -7323,8 +7367,48 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
 
     #
     @override
+    @overload  # Nd
+    def accumulate[ShapeT: _Shape, FloatT: np.floating](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, FloatT],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, FloatT]: ...
+    @overload  # Nd ~f64
+    def accumulate[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _as_f64],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, np.float64]: ...
+    @overload  # Nd ~f32
+    def accumulate[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _as_f32],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, np.float32]: ...
+    @overload  # Nd ~f16
+    def accumulate[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _as_f16],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, np.float16]: ...
     @overload  # T@floating
-    def accumulate[FloatT: np.floating](  # pyrefly:ignore[bad-override]
+    def accumulate[FloatT: np.floating](
         self,
         array: _ArrayLike[FloatT],
         /,
