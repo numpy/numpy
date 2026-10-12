@@ -4861,8 +4861,8 @@ assert_type(np.matvec(_obj_2d, _c128_nd), npt.NDArray[np.object_])
 assert_type(np.matvec(_obj_2d, _obj_nd), npt.NDArray[np.object_])
 
 ###
-# _gufunc_21_matmul_vecdot
-# (matmul, vecdot)
+# _gufunc_21_matmul_vecdot[_2D]
+# (matmul)
 
 assert_type(np.matmul(_py_b_1d, _py_b_1d), np.bool)
 assert_type(np.matmul(_py_b_1d, _py_i_1d), np.int_)
@@ -4877,6 +4877,7 @@ assert_type(np.matmul(_py_b_1d, _f64_1d), np.float64)
 assert_type(np.matmul(_py_b_1d, _c64_1d), np.complex64)
 assert_type(np.matmul(_py_b_1d, _c128_1d), np.complex128)
 assert_type(np.matmul(_py_b_1d, _obj_1d), Any)
+assert_type(np.matmul(_py_b_1d, _f64_2d), npt.Array1D[np.float64])
 
 assert_type(np.matmul(_py_i_1d, _py_b_1d), np.int_)
 assert_type(np.matmul(_py_i_1d, _py_i_1d), np.int_)
@@ -5003,6 +5004,7 @@ assert_type(np.matmul(_f64_1d, _f64_1d), np.float64)
 assert_type(np.matmul(_f64_1d, _c64_1d), np.complex128)
 assert_type(np.matmul(_f64_1d, _c128_1d), np.complex128)
 assert_type(np.matmul(_f64_1d, _obj_1d), Any)
+assert_type(np.matmul(_f64_1d, _f64_2d), npt.Array1D[np.float64])
 
 assert_type(np.matmul(_c64_1d, _py_b_1d), np.complex64)
 assert_type(np.matmul(_c64_1d, _py_i_1d), Any)
@@ -5186,6 +5188,11 @@ assert_type(np.matmul(_f64_2d, _c64_nd), npt.NDArray[np.complex128])
 assert_type(np.matmul(_f64_2d, _c128_nd), npt.NDArray[np.complex128])
 assert_type(np.matmul(_f64_2d, _obj_nd), npt.NDArray[np.object_])
 
+assert_type(np.matmul(_f64_2d, _py_b_1d), npt.Array1D[np.float64])
+assert_type(np.matmul(_f64_2d, _f64_1d), npt.Array1D[np.float64])
+assert_type(np.matmul(_f64_2d, _f64_2d), npt.Array2D[np.float64])
+assert_type(np.matmul(_f64_nd, _f64_2d), npt.NDArray[np.float64])
+
 assert_type(np.matmul(_c64_2d, _py_b_2d), npt.NDArray[np.complex64])
 assert_type(np.matmul(_c64_2d, _py_i_2d), npt.NDArray[Any])
 assert_type(np.matmul(_c64_2d, _py_f_2d), npt.NDArray[Any])
@@ -5227,3 +5234,10 @@ assert_type(np.matmul(_obj_2d, _f64_nd), npt.NDArray[np.object_])
 assert_type(np.matmul(_obj_2d, _c64_nd), npt.NDArray[np.object_])
 assert_type(np.matmul(_obj_2d, _c128_nd), npt.NDArray[np.object_])
 assert_type(np.matmul(_obj_2d, _obj_nd), npt.NDArray[np.object_])
+
+###
+# _gufunc_21_matmul_vecdot[_1D]
+# (vecdot)
+# same as `matmul` above, except that 2d x 2d returns 1d
+
+assert_type(np.vecdot(_f64_2d, _f64_2d), npt.Array1D[np.float64])
