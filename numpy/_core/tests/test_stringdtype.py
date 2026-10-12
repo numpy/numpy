@@ -2065,6 +2065,12 @@ def test_take(string_list):
     assert res is out
     assert_array_equal(sarr, res)
 
+    # Fail after copying a long string: index validation now runs while
+    # allocator locks are held, and failure must release those locks.
+    with pytest.raises(IndexError, match="out of bounds"):
+        sarr.take([2, len(sarr)])
+    assert_array_equal(sarr.copy(), string_list)
+
 
 @pytest.mark.parametrize("use_out", [True, False])
 @pytest.mark.parametrize(
@@ -2984,11 +2990,13 @@ def test_mixed_instance_string_na_matches_common_instance(op):
             assert_array_equal(r, e)
 
 
-def test_repeat(string_array):
-    res = string_array.repeat(1000)
+# repeat(0) skips copying; repeat(1) must still use StringDType's allocator.
+@pytest.mark.parametrize("repeats", [0, 1, 1000])
+def test_repeat(string_array, repeats):
+    res = string_array.repeat(repeats)
     # Create an empty array with expanded dimension, and fill it.  Then,
     # reshape it to the expected result.
-    expected = np.empty_like(string_array, shape=string_array.shape + (1000,))
+    expected = np.empty_like(string_array, shape=string_array.shape + (repeats,))
     expected[...] = string_array[:, np.newaxis]
     expected = expected.reshape(-1)
 
@@ -3271,6 +3279,15 @@ def test_put_distinct_allocators(mode):
     np.put(d[::2], np.arange(50), b[:50], mode=mode)
     np.put(d_obj[::2], np.arange(50), b_obj[:50], mode=mode)
     assert_array_equal(d, d_obj)
+
+    if mode == "raise":
+        # Use >500 indices to release the GIL before taking both allocator
+        # locks. An error must release them and preserve completed writes.
+        with pytest.raises(IndexError, match="out of bounds"):
+            np.put(a, [0] * 600 + [len(a)], b[:1])
+        a_obj[0] = b_obj[0]
+        assert_array_equal(a.copy(), a_obj)
+        assert_array_equal(b.copy(), b_obj)
 
 
 def test_putmask_distinct_allocators():
