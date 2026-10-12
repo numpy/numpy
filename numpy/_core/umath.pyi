@@ -3812,6 +3812,39 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.bool: ...
+    @overload  # ?d, Nd  (workaround)
+    def outer(
+        self,
+        x1: np.ndarray[_JustND, _DTypeNonObject],
+        x2: np.ndarray[Any, _DTypeNonObject],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # Nd, ?d  (workaround)
+    def outer(
+        self,
+        x1: np.ndarray[Any, _DTypeNonObject],
+        x2: np.ndarray[_JustND, _DTypeNonObject],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # 1d, 1d
+    def outer(
+        self,
+        x1: np.ndarray[_1D, _DTypeNonObject],
+        x2: np.ndarray[_1D, _DTypeNonObject],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_2D, np.bool]: ...
     @overload  # >0d, >=0d
     def outer(
         self,
@@ -4333,6 +4366,39 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> np.bool: ...
+    @overload  # ?d, Nd  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[Any],
+        x2: np.ndarray,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # Nd, ?d  (workaround)
+    def outer(
+        self,
+        x1: np.ndarray,
+        x2: _ArrayJustND[Any],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # 1d, 1d
+    def outer(
+        self,
+        x1: np.ndarray[_1D],
+        x2: np.ndarray[_1D],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_2D, np.bool]: ...
     @overload  # >0d, >=0d
     def outer(
         self,
