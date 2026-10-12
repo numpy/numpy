@@ -827,8 +827,10 @@ assert_type(np.logical_or(_py_i_2d, _py_i_2d, out=_f32_2d), npt.Array2D[np.float
 
 assert_type(np.logical_or.outer(_f32_0d, _c64_0d), np.bool)
 assert_type(np.logical_or.outer(_f32_1d, _c64_0d), npt.NDArray[np.bool])
+assert_type(np.logical_or.outer(_f32_1d, _c64_nd), npt.NDArray[np.bool])
 assert_type(np.logical_or.outer(_f32_0d, _c64_1d), npt.NDArray[np.bool])
-assert_type(np.logical_or.outer(_f32_1d, _c64_1d), npt.NDArray[np.bool])
+assert_type(np.logical_or.outer(_f32_1d, _c64_1d), npt.Array2D[np.bool])
+assert_type(np.logical_or.outer(_f32_nd, _c64_1d), npt.NDArray[np.bool])
 assert_type(np.logical_or.outer(_obj_1d, _obj_1d), npt.NDArray[np.object_[int]])
 assert_type(np.logical_or.outer(_obj_2d, _obj_1d), npt.NDArray[np.object_[int]])
 assert_type(np.logical_or.outer(_obj_1d, _obj_2d), npt.NDArray[np.object_[int]])
@@ -914,6 +916,9 @@ assert_type(np.less.outer(_py_c_0d, _py_c_0d), np.bool)
 assert_type(np.less.outer(_py_c_1d, _py_c_0d), npt.NDArray[np.bool])
 assert_type(np.less.outer(_py_c_0d, _py_c_1d), npt.NDArray[np.bool])
 assert_type(np.less.outer(_py_c_1d, _py_c_1d), npt.NDArray[np.bool])
+assert_type(np.less.outer(_f32_1d, _f32_1d), npt.Array2D[np.bool])
+assert_type(np.less.outer(_f32_1d, _f32_nd), npt.NDArray[np.bool])
+assert_type(np.less.outer(_f32_nd, _f32_1d), npt.NDArray[np.bool])
 
 assert_type(np.less.at(_c64_1d, 1, _py_c_1d), None)
 
@@ -4861,8 +4866,8 @@ assert_type(np.matvec(_obj_2d, _c128_nd), npt.NDArray[np.object_])
 assert_type(np.matvec(_obj_2d, _obj_nd), npt.NDArray[np.object_])
 
 ###
-# _gufunc_21_matmul_vecdot
-# (matmul, vecdot)
+# _gufunc_21_matmul_vecdot[_2D]
+# (matmul)
 
 assert_type(np.matmul(_py_b_1d, _py_b_1d), np.bool)
 assert_type(np.matmul(_py_b_1d, _py_i_1d), np.int_)
@@ -4877,6 +4882,7 @@ assert_type(np.matmul(_py_b_1d, _f64_1d), np.float64)
 assert_type(np.matmul(_py_b_1d, _c64_1d), np.complex64)
 assert_type(np.matmul(_py_b_1d, _c128_1d), np.complex128)
 assert_type(np.matmul(_py_b_1d, _obj_1d), Any)
+assert_type(np.matmul(_py_b_1d, _f64_2d), npt.Array1D[np.float64])
 
 assert_type(np.matmul(_py_i_1d, _py_b_1d), np.int_)
 assert_type(np.matmul(_py_i_1d, _py_i_1d), np.int_)
@@ -5003,6 +5009,7 @@ assert_type(np.matmul(_f64_1d, _f64_1d), np.float64)
 assert_type(np.matmul(_f64_1d, _c64_1d), np.complex128)
 assert_type(np.matmul(_f64_1d, _c128_1d), np.complex128)
 assert_type(np.matmul(_f64_1d, _obj_1d), Any)
+assert_type(np.matmul(_f64_1d, _f64_2d), npt.Array1D[np.float64])
 
 assert_type(np.matmul(_c64_1d, _py_b_1d), np.complex64)
 assert_type(np.matmul(_c64_1d, _py_i_1d), Any)
@@ -5186,6 +5193,11 @@ assert_type(np.matmul(_f64_2d, _c64_nd), npt.NDArray[np.complex128])
 assert_type(np.matmul(_f64_2d, _c128_nd), npt.NDArray[np.complex128])
 assert_type(np.matmul(_f64_2d, _obj_nd), npt.NDArray[np.object_])
 
+assert_type(np.matmul(_f64_2d, _py_b_1d), npt.Array1D[np.float64])
+assert_type(np.matmul(_f64_2d, _f64_1d), npt.Array1D[np.float64])
+assert_type(np.matmul(_f64_2d, _f64_2d), npt.Array2D[np.float64])
+assert_type(np.matmul(_f64_nd, _f64_2d), npt.NDArray[np.float64])
+
 assert_type(np.matmul(_c64_2d, _py_b_2d), npt.NDArray[np.complex64])
 assert_type(np.matmul(_c64_2d, _py_i_2d), npt.NDArray[Any])
 assert_type(np.matmul(_c64_2d, _py_f_2d), npt.NDArray[Any])
@@ -5227,3 +5239,10 @@ assert_type(np.matmul(_obj_2d, _f64_nd), npt.NDArray[np.object_])
 assert_type(np.matmul(_obj_2d, _c64_nd), npt.NDArray[np.object_])
 assert_type(np.matmul(_obj_2d, _c128_nd), npt.NDArray[np.object_])
 assert_type(np.matmul(_obj_2d, _obj_nd), npt.NDArray[np.object_])
+
+###
+# _gufunc_21_matmul_vecdot[_1D]
+# (vecdot)
+# same as `matmul` above, except that 2d x 2d returns 1d
+
+assert_type(np.vecdot(_f64_2d, _f64_2d), npt.Array1D[np.float64])

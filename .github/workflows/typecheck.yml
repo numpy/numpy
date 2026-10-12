@@ -67,15 +67,11 @@ jobs:
         activate-environment: true
         cache-dependency-glob: |
           **/pyproject.toml
-          requirements/typing_requirements.txt
     - name: Install dependencies
-      # orjson makes mypy faster but the default requirements.txt
+      # orjson makes mypy faster but the default typing group
       # can't install it because orjson doesn't support 32 bit Linux
       run: >-
-        uv pip install
-        --group dev-cli
-        -r requirements/typing_requirements.txt
-        orjson
+        uv pip install --group dev-cli --group typing orjson
     - name: Build
       run: |
         spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
@@ -96,7 +92,6 @@ jobs:
         activate-environment: true
     - name: Install dependencies
       run: >-
-        uv pip install
-        -r requirements/typing_requirements.txt
+        uv pip install --group typing
     - name: Run pyrefly
       run: pyrefly check

@@ -70,7 +70,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --group dev-cli
-        pip install -r requirements/test_requirements.txt
+        pip install --group test-extending
         # xdist captures stdout/stderr, but we want the ASAN output
         pip uninstall -y pytest-xdist
     - name: Build
@@ -224,8 +224,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --group dev-cli
-          pip install -r requirements/test_requirements.txt
+          pip install --group dev-cli --group test-extending
           # xdist captures stdout/stderr, but we want the ASAN output
           pip uninstall -y pytest-xdist
 
