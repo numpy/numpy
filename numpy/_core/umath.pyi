@@ -187,6 +187,9 @@ _AnyNumberT = TypeVar(
     np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
 )
 _AnyFloatT = TypeVar("_AnyFloatT", np.float64, np.longdouble, np.float32, np.float16)
+_AnyInexactT = TypeVar(
+    "_AnyInexactT", np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64
+)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 
@@ -8060,6 +8063,72 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> Any: ...
+    @overload  # ?d T, Nd T  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[_AnyInexactT],
+        x2: npt.NDArray[_AnyInexactT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyInexactT]: ...
+    @overload  # Nd T, ?d T  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[_AnyInexactT],
+        x2: _ArrayJustND[_AnyInexactT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyInexactT]: ...
+    @overload  # 1d T, 1d T
+    def outer(
+        self,
+        x1: Array1D[_AnyInexactT],
+        x2: Array1D[_AnyInexactT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_2D, _AnyInexactT]: ...
+    @overload  # ?d +integer, Nd +integer  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[np.integer | np.bool],
+        x2: npt.NDArray[np.integer | np.bool],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # Nd +integer, ?d +integer  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[np.integer | np.bool],
+        x2: _ArrayJustND[np.integer | np.bool],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # 1d +integer, 1d +integer
+    def outer(
+        self,
+        x1: Array1D[np.integer | np.bool],
+        x2: Array1D[np.integer | np.bool],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_2D, np.float64]: ...
     @overload  # ?d +float | +integer, ?d +float | +integer
     def outer(
         self,
