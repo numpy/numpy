@@ -47,7 +47,6 @@ from numpy import (
     signedinteger,
     timedelta64,
     ufunc,
-    uint8,
     unsignedinteger,
     vecdot,
 )
@@ -1874,27 +1873,44 @@ def bincount(x: _ArrayLikeInt_co, /, weights: _ArrayLikeFloat_co, minlength: Sup
 def copyto(dst: ndarray, src: ArrayLike, casting: _CastingKind = "same_kind", where: object = True) -> None: ...
 def putmask(a: ndarray, /, mask: _ArrayLikeBool_co, values: ArrayLike) -> None: ...
 
-@overload
-def packbits(a: _ArrayLikeInt_co, /, axis: None = None, bitorder: _BitOrder = "big") -> Array1D[uint8]: ...
-@overload
-def packbits(a: _ArrayLikeInt_co, /, axis: SupportsIndex, bitorder: _BitOrder = "big") -> NDArray[uint8]: ...
-
-@overload
-def unpackbits(
-    a: _ArrayLike[uint8],
+#
+@overload  # >=1d, axis=<given>
+def packbits[ShapeT: _AtLeast1D](
+    a: _Array[ShapeT, np.integer | np.bool],
     /,
-    axis: None = None,
-    count: SupportsIndex | None = None,
+    axis: SupportsIndex,
     bitorder: _BitOrder = "big",
-) -> Array1D[uint8]: ...
-@overload
-def unpackbits(
-    a: _ArrayLike[uint8],
+) -> _Array[ShapeT, np.uint8]: ...
+@overload  # ?d, axis=None (default)
+def packbits(a: _ArrayLikeInt_co, /, axis: None = None, bitorder: _BitOrder = "big") -> Array1D[np.uint8]: ...
+@overload  # ?d, axis=<given>
+def packbits(a: _ArrayLikeInt_co, /, axis: SupportsIndex, bitorder: _BitOrder = "big") -> NDArray[np.uint8]: ...
+
+#
+@overload  # >=1d, axis=<given>
+def unpackbits[ShapeT: _AtLeast1D](
+    a: _Array[ShapeT, np.uint8],
     /,
     axis: SupportsIndex,
     count: SupportsIndex | None = None,
     bitorder: _BitOrder = "big",
-) -> NDArray[uint8]: ...
+) -> _Array[ShapeT, np.uint8]: ...
+@overload  # ?d, axis=None (default)
+def unpackbits(
+    a: _ArrayLike[np.uint8],
+    /,
+    axis: None = None,
+    count: SupportsIndex | None = None,
+    bitorder: _BitOrder = "big",
+) -> Array1D[np.uint8]: ...
+@overload  # ?d, axis=<given>
+def unpackbits(
+    a: _ArrayLike[np.uint8],
+    /,
+    axis: SupportsIndex,
+    count: SupportsIndex | None = None,
+    bitorder: _BitOrder = "big",
+) -> NDArray[np.uint8]: ...
 
 # any two python objects will be accepted, not just `ndarray`s
 def shares_memory(a: object, b: object, /, max_work: int | None = -1) -> bool: ...
