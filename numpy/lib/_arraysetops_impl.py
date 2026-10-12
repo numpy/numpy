@@ -378,11 +378,13 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             return (conv.wrap(hash_unique),)
 
     # Stable sort is faster for bools and small integers (radixsort) and
-    # StringDType (timsort does fewer comparisons). If returning indices
-    # for a complex array with NaNs, stable sorts preserve order between NaNs.
-    # Quicksort's SIMD argsort is skipped for float with NaNs, so
-    # it has no advantage over a stable sort there.
+    # StringDType (timsort does fewer comparisons), if returning indices
+    # for a complex array with NaNs, stable sorts preserve order between NaNs,
+    # for float with NaNs as QuickSort skips SIMD,
+    # for small arrays, picking the first index of each group
+    # costs more than a stable sort saves.
     stable = (
+        (return_index and ar.size < 1000) or
         ar.dtype.type in (np.bool, np.int8, np.uint8, np.int16, np.uint16) or
         (optional_indices and ar.dtype.kind == "T") or
         (return_index and ar.dtype.kind == "c" and np.isnan(ar).any()) or
