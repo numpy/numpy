@@ -6122,8 +6122,41 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
 
     #
     @override
+    @overload  # Nd
+    def reduceat[ShapeT: _Shape, ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # Nd +f64
+    def reduceat[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _to_f64],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, np.float64]: ...
+    @overload  # Nd ~c128
+    def reduceat[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, np.complex64],
+        /,
+        indices: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, np.complex128]: ...
     @overload  # known scalar type
-    def reduceat[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](  # pyrefly:ignore[bad-override]
+    def reduceat[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6202,8 +6235,38 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
 
     #
     @override
+    @overload  # Nd
+    def accumulate[ShapeT: _Shape, ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # Nd +f64
+    def accumulate[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _to_f64],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, np.float64]: ...
+    @overload  # Nd ~c128
+    def accumulate[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, np.complex64],
+        /,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+    ) -> _Array[ShapeT, np.complex128]: ...
     @overload  # known scalar type
-    def accumulate[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](  # pyrefly:ignore[bad-override]
+    def accumulate[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
         self,
         array: _ArrayLike[ScalarT],
         /,

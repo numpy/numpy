@@ -1243,21 +1243,21 @@ assert_type(np.float_power.reduce(_c160_1d, keepdims=True), npt.NDArray[np.clong
 
 assert_type(np.float_power.reduceat(_py_f_1d, (1,)), npt.NDArray[np.float64])
 assert_type(np.float_power.reduceat(_py_c_1d, (1,)), npt.NDArray[np.complex128])
-assert_type(np.float_power.reduceat(_f32_1d, (1,)), npt.NDArray[np.float64])
-assert_type(np.float_power.reduceat(_f64_1d, (1,)), npt.NDArray[np.float64])
-assert_type(np.float_power.reduceat(_f80_1d, (1,)), npt.NDArray[np.longdouble])
-assert_type(np.float_power.reduceat(_c64_1d, (1,)), npt.NDArray[np.complex128])
-assert_type(np.float_power.reduceat(_c128_1d, (1,)), npt.NDArray[np.complex128])
-assert_type(np.float_power.reduceat(_c160_1d, (1,)), npt.NDArray[np.clongdouble])
+assert_type(np.float_power.reduceat(_f32_1d, (1,)), npt.Array1D[np.float64])
+assert_type(np.float_power.reduceat(_f64_1d, (1,)), npt.Array1D[np.float64])
+assert_type(np.float_power.reduceat(_f80_1d, (1,)), npt.Array1D[np.longdouble])
+assert_type(np.float_power.reduceat(_c64_1d, (1,)), npt.Array1D[np.complex128])
+assert_type(np.float_power.reduceat(_c128_1d, (1,)), npt.Array1D[np.complex128])
+assert_type(np.float_power.reduceat(_c160_1d, (1,)), npt.Array1D[np.clongdouble])
 
 assert_type(np.float_power.accumulate(_py_f_1d), npt.NDArray[np.float64])
 assert_type(np.float_power.accumulate(_py_c_1d), npt.NDArray[np.complex128])
-assert_type(np.float_power.accumulate(_f32_1d), npt.NDArray[np.float64])
-assert_type(np.float_power.accumulate(_f64_1d), npt.NDArray[np.float64])
-assert_type(np.float_power.accumulate(_f80_1d), npt.NDArray[np.longdouble])
-assert_type(np.float_power.accumulate(_c64_1d), npt.NDArray[np.complex128])
-assert_type(np.float_power.accumulate(_c128_1d), npt.NDArray[np.complex128])
-assert_type(np.float_power.accumulate(_c160_1d), npt.NDArray[np.clongdouble])
+assert_type(np.float_power.accumulate(_f32_1d), npt.Array1D[np.float64])
+assert_type(np.float_power.accumulate(_f64_1d), npt.Array1D[np.float64])
+assert_type(np.float_power.accumulate(_f80_1d), npt.Array1D[np.longdouble])
+assert_type(np.float_power.accumulate(_c64_1d), npt.Array1D[np.complex128])
+assert_type(np.float_power.accumulate(_c128_1d), npt.Array1D[np.complex128])
+assert_type(np.float_power.accumulate(_c160_1d), npt.Array1D[np.clongdouble])
 
 ###
 # _ufunc_21_f
