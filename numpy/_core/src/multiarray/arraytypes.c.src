@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <float.h>
 #include <assert.h>
+#include <errno.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -476,7 +477,7 @@ NPY_NO_EXPORT int
              * Unlike most numeric conversion functions PyComplex_AsCComplex
              * does not handle strings, so we have to use its constructor.
              */
-            PyObject *pycomplex, *args;
+            PyObject *pycomplex;
             if (PyBytes_Check(op)) {
                 /* The complex constructor expects unicode */
                 PyObject *unicode;
@@ -484,17 +485,14 @@ NPY_NO_EXPORT int
                 if (unicode == NULL) {
                     return -1;
                 }
-                args = PyTuple_Pack(1, unicode);
+                pycomplex = PyObject_Vectorcall(
+                        (PyObject *)&PyComplex_Type, &unicode, 1, NULL);
                 Py_DECREF(unicode);
             }
             else {
-                args = PyTuple_Pack(1, op);
+                pycomplex = PyObject_Vectorcall(
+                        (PyObject *)&PyComplex_Type, &op, 1, NULL);
             }
-            if (args == NULL) {
-                return -1;
-            }
-            pycomplex = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
-            Py_DECREF(args);
             if (pycomplex == NULL) {
                 return -1;
             }
@@ -1050,7 +1048,7 @@ static int
 VOID_setitem(PyArray_Descr *descr_, PyObject *op, char *ip)
 {
     _PyArray_LegacyDescr *descr = (_PyArray_LegacyDescr *)descr_;
-    int itemsize = descr->elsize;
+    npy_intp itemsize = descr->elsize;
     int res;
 
     if (PyDataType_HASFIELDS(descr)) {
@@ -1168,9 +1166,9 @@ VOID_setitem(PyArray_Descr *descr_, PyObject *op, char *ip)
         if (PyObject_GetBuffer(op, &view, PyBUF_SIMPLE) < 0) {
             return -1;
         }
-        memcpy(ip, view.buf, PyArray_MIN(view.len, itemsize));
+        memcpy(ip, view.buf, (size_t)PyArray_MIN(view.len, itemsize));
         if (itemsize > view.len) {
-            memset(ip + view.len, 0, itemsize - view.len);
+            memset(ip + view.len, 0, (size_t)(itemsize - view.len));
         }
         PyBuffer_Release(&view);
     }
@@ -1606,7 +1604,7 @@ static void
     npy_intp i;
     PyObject *temp = NULL;
     int skip = 1;
-    int oskip = PyArray_ITEMSIZE(aop);
+    npy_intp oskip = PyArray_ITEMSIZE(aop);
     for (i = 0; i < n; i++, ip += skip, op += oskip) {
         temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
@@ -1941,7 +1939,7 @@ static int
 
 static inline void
 _basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
-             npy_intp n, int elsize) {
+             npy_intp n, npy_intp elsize) {
     if (src == NULL) {
         return;
     }
@@ -1955,7 +1953,7 @@ _basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
 }
 
 static inline void
-_basic_copy(void *dst, void *src, int elsize) {
+_basic_copy(void *dst, void *src, npy_intp elsize) {
     if (src == NULL) {
         return;
     }
@@ -2383,7 +2381,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         PyArray_Descr *new;
         npy_intp num;
         npy_intp i;
-        int subitemsize;
+        npy_intp subitemsize;
         char *dstptr, *srcptr;
         /*
          * In certain cases subarray copy can be optimized. This is when
@@ -2480,7 +2478,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
     if (descr->subarray != NULL) {
         PyArray_Descr *new;
         npy_intp num;
-        int subitemsize;
+        npy_intp subitemsize;
         /*
          * In certain cases subarray copy can be optimized. This is when
          * swapping is unnecessary and the subarrays data type can certainly
@@ -2665,7 +2663,7 @@ count_nonzero_trivial_@name@(npy_intp count, const char *data, npy_int stride)
 /**end repeat**/
 
 NPY_NO_EXPORT npy_intp
-count_nonzero_trivial_dispatcher(npy_intp count, const char* data, npy_intp stride, int dtype_num) { 
+count_nonzero_trivial_dispatcher(npy_intp count, const char* data, npy_intp stride, int dtype_num) {
     switch(dtype_num) {
         /**begin repeat
          *
@@ -2779,8 +2777,8 @@ OBJECT_nonzero (PyObject **ip, PyArrayObject *ap)
 static npy_bool
 VOID_nonzero (char *ip, PyArrayObject *ap)
 {
-    int i;
-    int len;
+    npy_intp i;
+    npy_intp len;
     npy_bool nonz = NPY_FALSE;
 
     if (PyArray_HASFIELDS(ap)) {
@@ -3768,6 +3766,14 @@ OBJECT_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp 
     if (PyErr_Occurred()) {
         return;
     }
+    if (n == 0) {
+        PyObject *zero = PyLong_FromLong(0);
+        if (zero == NULL) {
+            return;
+        }
+        Py_XSETREF(*((PyObject **)op), zero);
+        return;
+    }
     for (i = 0; i < n; i++, ip1 += is1, ip2 += is2) {
         if ((*((PyObject **)ip1) == NULL) || (*((PyObject **)ip2) == NULL)) {
             tmp1 = Py_False;
@@ -4463,8 +4469,8 @@ static int
 }
 /**end repeat**/
 
-/* 
-Keeping Half macros consistent with standard C 
+/*
+Keeping Half macros consistent with standard C
 Reference: https://en.cppreference.com/w/c/types/limits.html
 */
 #define HALF_MAX 31743       /* Bit pattern for 65504.0 */

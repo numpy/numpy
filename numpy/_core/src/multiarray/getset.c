@@ -192,7 +192,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
     }
 
     /* numbytes == 0 is special here, but the 0-size array case always works */
-    if (!PyArray_CheckStrides(PyArray_ITEMSIZE(self), PyArray_NDIM(self),
+    if (!npy_check_strides(PyArray_ITEMSIZE(self), PyArray_NDIM(self),
                               numbytes, offset,
                               PyArray_DIMS(self), newstrides.ptr)) {
         PyErr_SetString(PyExc_ValueError, "strides is not "\
@@ -321,7 +321,7 @@ array_data_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 array_itemsize_get(PyArrayObject *self, void* NPY_UNUSED(ignored))
 {
-    return PyLong_FromLong((long) PyArray_ITEMSIZE(self));
+    return PyArray_PyIntFromIntp(PyArray_ITEMSIZE(self));
 }
 
 static PyObject *

@@ -42,8 +42,8 @@ Similarly for bytestrings:
    >>> np.array([b"hello", b"world"])
    array([b'hello', b'world'], dtype='|S5')
 
-Since this is a one-byte encoding, the byteorder is `'|'` (not
-applicable), and the data type detected is a maximum 5 character
+Since this stores individual bytes, the byteorder is `'|'` (not
+applicable), and the data type detected is a maximum 5-byte
 bytestring.
 
 You can also use `numpy.void` to represent bytestrings:
@@ -91,9 +91,9 @@ live in the same array without needing to reserve storage for padding bytes in
 the short strings.
 
 Also note that unlike fixed-width strings and most other NumPy data
-types, ``StringDType`` does not store the string data in the "main"
-``ndarray`` data buffer. Instead, the array buffer is used to store
-metadata about where the string data are stored in memory. This
+types, ``StringDType`` does not always store the string data in the "main"
+``ndarray`` data buffer. Instead, the array buffer can store short strings or
+metadata about where longer string data are stored in memory. This
 difference means that code expecting the array buffer to contain
 string data will not function correctly, and will need to be updated
 to support ``StringDType``.
@@ -169,14 +169,14 @@ Other Sentinels
 
 Other objects, such as ``None`` are also supported as missing data
 sentinels. If any missing data are present in an array using such a
-sentinel, then string operations will raise an error:
+sentinel, then operations such as sorting will raise an error:
 
   >>> dt = StringDType(na_object=None)
-  >>> arr = np.array(["this array has", None, "as an entry"])
+  >>> arr = np.array(["this array has", None, "as an entry"], dtype=dt)
   >>> np.sort(arr)
   Traceback (most recent call last):
   ...
-  TypeError: '<' not supported between instances of 'NoneType' and 'str'
+  ValueError: Cannot compare null that is not a nan-like value
 
 Coercing Non-strings
 --------------------

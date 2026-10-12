@@ -191,27 +191,24 @@ Why use ``__new__`` rather than just the usual ``__init__``?  Because
 in some cases, as for ndarray, we want to be able to return an object
 of some other class.  Consider the following:
 
-.. testcode::
-
-  class D(C):
-      def __new__(cls, *args):
-          print('D cls is:', cls)
-          print('D args in __new__:', args)
-          return C.__new__(C, *args)
-
-      def __init__(self, *args):
-          # we never get here
-          print('In D __init__')
+>>> class D(C):
+...     def __new__(cls, *args):
+...         print('D cls is:', cls)
+...         print('D args in __new__:', args)
+...         return C.__new__(C, *args)
+...     def __init__(self, *args):
+...         # we never get here
+...         print('In D __init__')
 
 meaning that:
 
 >>> obj = D('hello')
-D cls is: <class 'D'>
+D cls is: <class '__main__.D'>
 D args in __new__: ('hello',)
-Cls in __new__: <class 'C'>
+Cls in __new__: <class '__main__.C'>
 Args in __new__: ('hello',)
 >>> type(obj)
-<class 'C'>
+<class '__main__.C'>
 
 The definition of ``C`` is the same as before, but for ``D``, the
 ``__new__`` method returns an instance of class ``C`` rather than
@@ -273,46 +270,41 @@ methods of instance creation above.
 
 The following code allows us to look at the call sequences and arguments:
 
-.. testcode::
-
-   import numpy as np
-
-   class C(np.ndarray):
-       def __new__(cls, *args, **kwargs):
-           print('In __new__ with class %s' % cls)
-           return super().__new__(cls, *args, **kwargs)
-
-       def __init__(self, *args, **kwargs):
-           # in practice you probably will not need or want an __init__
-           # method for your subclass
-           print('In __init__ with class %s' % self.__class__)
-
-       def __array_finalize__(self, obj):
-           print('In array_finalize:')
-           print('   self type is %s' % type(self))
-           print('   obj type is %s' % type(obj))
+>>> import numpy as np
+>>> class C(np.ndarray):
+...     def __new__(cls, *args, **kwargs):
+...         print('In __new__ with class %s' % cls)
+...         return super().__new__(cls, *args, **kwargs)
+...     def __init__(self, *args, **kwargs):
+...         # in practice you probably will not need or want an __init__
+...         # method for your subclass
+...         print('In __init__ with class %s' % self.__class__)
+...     def __array_finalize__(self, obj):
+...         print('In array_finalize:')
+...         print('   self type is %s' % type(self))
+...         print('   obj type is %s' % type(obj))
 
 
 Now:
 
 >>> # Explicit constructor
 >>> c = C((10,))
-In __new__ with class <class 'C'>
+In __new__ with class <class '__main__.C'>
 In array_finalize:
-   self type is <class 'C'>
-   obj type is <type 'NoneType'>
-In __init__ with class <class 'C'>
+   self type is <class '__main__.C'>
+   obj type is <class 'NoneType'>
+In __init__ with class <class '__main__.C'>
 >>> # View casting
 >>> a = np.arange(10)
 >>> cast_a = a.view(C)
 In array_finalize:
-   self type is <class 'C'>
-   obj type is <type 'numpy.ndarray'>
+   self type is <class '__main__.C'>
+   obj type is <class 'numpy.ndarray'>
 >>> # Slicing (example of new-from-template)
 >>> cv = c[:1]
 In array_finalize:
-   self type is <class 'C'>
-   obj type is <class 'C'>
+   self type is <class '__main__.C'>
+   obj type is <class '__main__.C'>
 
 The signature of ``__array_finalize__`` is::
 
@@ -340,58 +332,53 @@ This may be clearer with an example.
 Simple example - adding an extra attribute to ndarray
 =====================================================
 
-.. testcode::
-
-  import numpy as np
-
-  class InfoArray(np.ndarray):
-
-      def __new__(subtype, shape, dtype=np.float64, buffer=None, offset=0,
-                  strides=None, order=None, info=None):
-          # Create the ndarray instance of our type, given the usual
-          # ndarray input arguments.  This will call the standard
-          # ndarray constructor, but return an object of our type.
-          # It also triggers a call to InfoArray.__array_finalize__
-          obj = super().__new__(subtype, shape, dtype,
-                                buffer, offset, strides, order)
-          # set the new 'info' attribute to the value passed
-          obj.info = info
-          # Finally, we must return the newly created object:
-          return obj
-
-      def __array_finalize__(self, obj):
-          # ``self`` is a new object resulting from
-          # ndarray.__new__(InfoArray, ...), therefore it only has
-          # attributes that the ndarray.__new__ constructor gave it -
-          # i.e. those of a standard ndarray.
-          #
-          # We could have got to the ndarray.__new__ call in 3 ways:
-          # From an explicit constructor - e.g. InfoArray():
-          #    obj is None
-          #    (we're in the middle of the InfoArray.__new__
-          #    constructor, and self.info will be set when we return to
-          #    InfoArray.__new__)
-          if obj is None: return
-          # From view casting - e.g arr.view(InfoArray):
-          #    obj is arr
-          #    (type(obj) can be InfoArray)
-          # From new-from-template - e.g infoarr[:3]
-          #    type(obj) is InfoArray
-          #
-          # Note that it is here, rather than in the __new__ method,
-          # that we set the default value for 'info', because this
-          # method sees all creation of default objects - with the
-          # InfoArray.__new__ constructor, but also with
-          # arr.view(InfoArray).
-          self.info = getattr(obj, 'info', None)
-          # We do not need to return anything
+>>> import numpy as np
+>>> class InfoArray(np.ndarray):
+...     def __new__(subtype, shape, dtype=np.float64, buffer=None, offset=0,
+...                 strides=None, order=None, info=None):
+...         # Create the ndarray instance of our type, given the usual
+...         # ndarray input arguments.  This will call the standard
+...         # ndarray constructor, but return an object of our type.
+...         # It also triggers a call to InfoArray.__array_finalize__
+...         obj = super().__new__(subtype, shape, dtype,
+...                               buffer, offset, strides, order)
+...         # set the new 'info' attribute to the value passed
+...         obj.info = info
+...         # Finally, we must return the newly created object:
+...         return obj
+...     def __array_finalize__(self, obj):
+...         # ``self`` is a new object resulting from
+...         # ndarray.__new__(InfoArray, ...), therefore it only has
+...         # attributes that the ndarray.__new__ constructor gave it -
+...         # i.e. those of a standard ndarray.
+...         #
+...         # We could have got to the ndarray.__new__ call in 3 ways:
+...         # From an explicit constructor - e.g. InfoArray():
+...         #    obj is None
+...         #    (we're in the middle of the InfoArray.__new__
+...         #    constructor, and self.info will be set when we return to
+...         #    InfoArray.__new__)
+...         if obj is None: return
+...         # From view casting - e.g arr.view(InfoArray):
+...         #    obj is arr
+...         #    (type(obj) can be InfoArray)
+...         # From new-from-template - e.g infoarr[:3]
+...         #    type(obj) is InfoArray
+...         #
+...         # Note that it is here, rather than in the __new__ method,
+...         # that we set the default value for 'info', because this
+...         # method sees all creation of default objects - with the
+...         # InfoArray.__new__ constructor, but also with
+...         # arr.view(InfoArray).
+...         self.info = getattr(obj, 'info', None)
+...         # We do not need to return anything
 
 
 Using the object looks like this:
 
   >>> obj = InfoArray(shape=(3,)) # explicit constructor
   >>> type(obj)
-  <class 'InfoArray'>
+  <class '__main__.InfoArray'>
   >>> obj.info is None
   True
   >>> obj = InfoArray(shape=(3,), info='information')
@@ -399,13 +386,13 @@ Using the object looks like this:
   'information'
   >>> v = obj[1:] # new-from-template - here - slicing
   >>> type(v)
-  <class 'InfoArray'>
+  <class '__main__.InfoArray'>
   >>> v.info
   'information'
   >>> arr = np.arange(10)
   >>> cast_arr = arr.view(InfoArray) # view casting
   >>> type(cast_arr)
-  <class 'InfoArray'>
+  <class '__main__.InfoArray'>
   >>> cast_arr.info is None
   True
 
@@ -421,25 +408,20 @@ Slightly more realistic example - attribute added to existing array
 Here is a class that takes a standard ndarray that already exists, casts
 as our type, and adds an extra attribute.
 
-.. testcode::
-
-  import numpy as np
-
-  class RealisticInfoArray(np.ndarray):
-
-      def __new__(cls, input_array, info=None):
-          # Input array is an already formed ndarray instance
-          # We first cast to be our class type
-          obj = np.asarray(input_array).view(cls)
-          # add the new attribute to the created instance
-          obj.info = info
-          # Finally, we must return the newly created object:
-          return obj
-
-      def __array_finalize__(self, obj):
-          # see InfoArray.__array_finalize__ for comments
-          if obj is None: return
-          self.info = getattr(obj, 'info', None)
+>>> import numpy as np
+>>> class RealisticInfoArray(np.ndarray):
+...     def __new__(cls, input_array, info=None):
+...         # Input array is an already formed ndarray instance
+...         # We first cast to be our class type
+...         obj = np.asarray(input_array).view(cls)
+...         # add the new attribute to the created instance
+...         obj.info = info
+...         # Finally, we must return the newly created object:
+...         return obj
+...     def __array_finalize__(self, obj):
+...         # see InfoArray.__array_finalize__ for comments
+...         if obj is None: return
+...         self.info = getattr(obj, 'info', None)
 
 
 So:
@@ -447,12 +429,12 @@ So:
   >>> arr = np.arange(5)
   >>> obj = RealisticInfoArray(arr, info='information')
   >>> type(obj)
-  <class 'RealisticInfoArray'>
+  <class '__main__.RealisticInfoArray'>
   >>> obj.info
   'information'
   >>> v = obj[1:]
   >>> type(v)
-  <class 'RealisticInfoArray'>
+  <class '__main__.RealisticInfoArray'>
   >>> v.info
   'information'
 
@@ -488,60 +470,50 @@ back-conversion. An example, taken from the test case
 ``test_ufunc_override_with_super`` in ``_core/tests/test_umath.py``, is the
 following.
 
-.. testcode::
-
-    input numpy as np
-
-    class A(np.ndarray):
-        def __array_ufunc__(self, ufunc, method, *inputs, out=None, **kwargs):
-            args = []
-            in_no = []
-            for i, input_ in enumerate(inputs):
-                if isinstance(input_, A):
-                    in_no.append(i)
-                    args.append(input_.view(np.ndarray))
-                else:
-                    args.append(input_)
-
-            outputs = out
-            out_no = []
-            if outputs:
-                out_args = []
-                for j, output in enumerate(outputs):
-                    if isinstance(output, A):
-                        out_no.append(j)
-                        out_args.append(output.view(np.ndarray))
-                    else:
-                        out_args.append(output)
-                kwargs['out'] = tuple(out_args)
-            else:
-                outputs = (None,) * ufunc.nout
-
-            info = {}
-            if in_no:
-                info['inputs'] = in_no
-            if out_no:
-                info['outputs'] = out_no
-
-            results = super().__array_ufunc__(ufunc, method, *args, **kwargs)
-            if results is NotImplemented:
-                return NotImplemented
-
-            if method == 'at':
-                if isinstance(inputs[0], A):
-                    inputs[0].info = info
-                return
-
-            if ufunc.nout == 1:
-                results = (results,)
-
-            results = tuple((np.asarray(result).view(A)
-                             if output is None else output)
-                            for result, output in zip(results, outputs))
-            if results and isinstance(results[0], A):
-                results[0].info = info
-
-            return results[0] if len(results) == 1 else results
+>>> import numpy as np
+>>> class A(np.ndarray):
+...     def __array_ufunc__(self, ufunc, method, *inputs, out=None, **kwargs):
+...         args = []
+...         in_no = []
+...         for i, input_ in enumerate(inputs):
+...             if isinstance(input_, A):
+...                 in_no.append(i)
+...                 args.append(input_.view(np.ndarray))
+...             else:
+...                 args.append(input_)
+...         outputs = out
+...         out_no = []
+...         if outputs:
+...             out_args = []
+...             for j, output in enumerate(outputs):
+...                 if isinstance(output, A):
+...                     out_no.append(j)
+...                     out_args.append(output.view(np.ndarray))
+...                 else:
+...                     out_args.append(output)
+...             kwargs['out'] = tuple(out_args)
+...         else:
+...             outputs = (None,) * ufunc.nout
+...         info = {}
+...         if in_no:
+...             info['inputs'] = in_no
+...         if out_no:
+...             info['outputs'] = out_no
+...         results = super().__array_ufunc__(ufunc, method, *args, **kwargs)
+...         if results is NotImplemented:
+...             return NotImplemented
+...         if method == 'at':
+...             if isinstance(inputs[0], A):
+...                 inputs[0].info = info
+...             return
+...         if ufunc.nout == 1:
+...             results = (results,)
+...         results = tuple((np.asarray(result).view(A)
+...                          if output is None else output)
+...                         for result, output in zip(results, outputs))
+...         if results and isinstance(results[0], A):
+...             results[0].info = info
+...         return results[0] if len(results) == 1 else results
 
 So, this class does not actually do anything interesting: it just
 converts any instances of its own to regular ndarray (otherwise, we'd
@@ -613,30 +585,24 @@ attributes and metadata.  Let's show how this works with an example.  First
 we return to the simpler example subclass, but with a different name and
 some print statements:
 
-.. testcode::
-
-  import numpy as np
-
-  class MySubClass(np.ndarray):
-
-      def __new__(cls, input_array, info=None):
-          obj = np.asarray(input_array).view(cls)
-          obj.info = info
-          return obj
-
-      def __array_finalize__(self, obj):
-          print('In __array_finalize__:')
-          print('   self is %s' % repr(self))
-          print('   obj is %s' % repr(obj))
-          if obj is None: return
-          self.info = getattr(obj, 'info', None)
-
-      def __array_wrap__(self, out_arr, context=None, return_scalar=False):
-          print('In __array_wrap__:')
-          print('   self is %s' % repr(self))
-          print('   arr is %s' % repr(out_arr))
-          # then just call the parent
-          return super().__array_wrap__(self, out_arr, context, return_scalar)
+>>> import numpy as np
+>>> class MySubClass(np.ndarray):
+...     def __new__(cls, input_array, info=None):
+...         obj = np.asarray(input_array).view(cls)
+...         obj.info = info
+...         return obj
+...     def __array_finalize__(self, obj):
+...         print('In __array_finalize__:')
+...         print('   self is %s' % repr(self))
+...         print('   obj is %s' % repr(obj))
+...         if obj is None: return
+...         self.info = getattr(obj, 'info', None)
+...     def __array_wrap__(self, out_arr, context=None, return_scalar=False):
+...         print('In __array_wrap__:')
+...         print('   self is %s' % repr(self))
+...         print('   arr is %s' % repr(out_arr))
+...         # then just call the parent
+...         return super().__array_wrap__(out_arr, context, return_scalar)
 
 We run a ufunc on an instance of our new array:
 
@@ -666,12 +632,9 @@ attribute.  This has all happened at the C level.
 
 But, we could do anything we wanted:
 
-.. testcode::
-
-  class SillySubClass(np.ndarray):
-
-      def __array_wrap__(self, arr, context=None, return_scalar=False):
-          return 'I lost your data'
+>>> class SillySubClass(np.ndarray):
+...     def __array_wrap__(self, arr, context=None, return_scalar=False):
+...         return 'I lost your data'
 
 >>> arr1 = np.arange(5)
 >>> obj = arr1.view(SillySubClass)
@@ -746,10 +709,10 @@ For example, if you want your sub-class or duck-type to be compatible with
 numpy's ``sum`` function, the method signature for this object's ``sum`` method
 should be the following:
 
-.. testcode::
+.. code-block:: python
 
     def sum(self, axis=None, dtype=None, out=None, keepdims=False):
-    ...
+        ...
 
 This is the exact same method signature for ``np.sum``, so now if a user calls
 ``np.sum`` on this object, numpy will call the object's own ``sum`` method and
@@ -758,10 +721,10 @@ be raised because the signatures are completely compatible with each other.
 
 If, however, you decide to deviate from this signature and do something like this:
 
-.. testcode::
+.. code-block:: python
 
-   def sum(self, axis=None, dtype=None):
-   ...
+    def sum(self, axis=None, dtype=None):
+        ...
 
 This object is no longer compatible with ``np.sum`` because if you call ``np.sum``,
 it will pass in unexpected arguments ``out`` and ``keepdims``, causing a TypeError
@@ -771,10 +734,10 @@ If you wish to maintain compatibility with numpy and its subsequent versions (wh
 might add new keyword arguments) but do not want to surface all of numpy's arguments,
 your function's signature should accept ``**kwargs``. For example:
 
-.. testcode::
+.. code-block:: python
 
-   def sum(self, axis=None, dtype=None, **unused_kwargs):
-   ...
+    def sum(self, axis=None, dtype=None, **unused_kwargs):
+        ...
 
 This object is now compatible with ``np.sum`` again because any extraneous arguments
 (i.e. keywords that are not ``axis`` or ``dtype``) will be hidden away in the

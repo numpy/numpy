@@ -12,6 +12,7 @@ AR_f8: npt.NDArray[np.float64]
 AR_M: npt.NDArray[np.datetime64]
 
 M: np.datetime64
+timedelta_seq: list[dt.timedelta]
 
 AR_LIKE_f: list[float]
 
@@ -40,7 +41,7 @@ np.arange(stop=10)  # type: ignore[call-overload]
 
 np.datetime_data(int)  # type: ignore[arg-type]
 
-np.busday_offset("2012", 10)  # type: ignore[call-overload]
+np.busday_offset(M, timedelta_seq)  # type: ignore[arg-type]
 
 np.datetime_as_string("2012")  # type: ignore[arg-type]
 np.datetime_as_string(dt.date.today())  # type: ignore[call-overload]
