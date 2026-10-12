@@ -224,7 +224,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install --group dev-cli- -group test-extending
+        pip install --group dev-cli --group test-extending
         sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
