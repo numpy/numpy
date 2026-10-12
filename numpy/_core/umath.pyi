@@ -5770,6 +5770,72 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         dtype: type[complex] | str | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> Any: ...
+    @overload  # ?d +f64, Nd +f64  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[_to_f64],
+        x2: npt.NDArray[_to_f64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # Nd +f64, ?d +f64  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[_to_f64],
+        x2: _ArrayJustND[_to_f64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # 1d +f64, 1d +f64
+    def outer(
+        self,
+        x1: Array1D[_to_f64],
+        x2: Array1D[_to_f64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_2D, np.float64]: ...
+    @overload  # ?d ~c128, Nd ~c128  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[np.complex128 | np.complex64],
+        x2: npt.NDArray[np.complex128 | np.complex64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # Nd ~c128, ?d ~c128  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[np.complex128 | np.complex64],
+        x2: _ArrayJustND[np.complex128 | np.complex64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # 1d ~c128, 1d ~c128
+    def outer(
+        self,
+        x1: Array1D[np.complex128 | np.complex64],
+        x2: Array1D[np.complex128 | np.complex64],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_2D, np.complex128]: ...
     @overload  # ?d +f64, ?d +f64
     def outer(
         self,
