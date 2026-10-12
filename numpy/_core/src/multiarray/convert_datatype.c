@@ -1764,13 +1764,22 @@ PyArray_ResultType(
             break;
         }
     }
-    if (common_dtype == NULL || NPY_DT_is_abstract(common_dtype)) {
+    if (common_dtype == NULL) {
         promoted = PyArray_PromoteDTypeSequence(narrs+ndtypes, all_DTypes);
         if (promoted == NULL) {
             goto error;
         }
         common_dtype = promoted;
     }
+#ifndef NDEBUG
+    else {
+        /* Promoting identical DTypes (abstract or not) is the identity. */
+        PyArray_DTypeMeta *check = PyArray_PromoteDTypeSequence(
+                narrs+ndtypes, all_DTypes);
+        assert(check == common_dtype);
+        Py_XDECREF(check);
+    }
+#endif
 
     if (NPY_DT_is_abstract(common_dtype)) {
         /* (ab)use default descriptor to define a default */
