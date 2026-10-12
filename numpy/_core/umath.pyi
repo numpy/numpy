@@ -170,6 +170,11 @@ _AnyScalarT = TypeVar(
     np.complex64, np.complex128, np.clongdouble,
     np.object_,
 )
+_AnyRealT = TypeVar(
+    "_AnyRealT",
+    np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16,
+)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 
@@ -10618,6 +10623,39 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> Any: ...
+    @overload  # ?d T, Nd T  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[_AnyRealT],
+        x2: npt.NDArray[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyRealT]: ...
+    @overload  # Nd T, ?d T  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[_AnyRealT],
+        x2: _ArrayJustND[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyRealT]: ...
+    @overload  # 1d T, 1d T
+    def outer(
+        self,
+        x1: Array1D[_AnyRealT],
+        x2: Array1D[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_2D, _AnyRealT]: ...
     @overload  # ?d +i8, ?d +i8
     def outer(
         self,
@@ -20578,6 +20616,39 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs22],
     ) -> _tuple2[Any]: ...
+    @overload  # ?d T, Nd T  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[_AnyRealT],
+        x2: npt.NDArray[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[_AnyRealT]]: ...
+    @overload  # Nd T, ?d T  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[_AnyRealT],
+        x2: _ArrayJustND[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[_AnyRealT]]: ...
+    @overload  # 1d T, 1d T
+    def outer(
+        self,
+        x1: Array1D[_AnyRealT],
+        x2: Array1D[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[_Array[_2D, _AnyRealT]]: ...
     @overload  # ?d +i8, ?d +i8
     def outer(
         self,
