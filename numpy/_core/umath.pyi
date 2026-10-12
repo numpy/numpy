@@ -20616,6 +20616,39 @@ class _ufunc_22_divmod(_ufunc_22):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs22],
     ) -> _tuple2[Any]: ...
+    @overload  # ?d T, Nd T  (workaround)
+    def outer(
+        self,
+        x1: _ArrayJustND[_AnyRealT],
+        x2: npt.NDArray[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[_AnyRealT]]: ...
+    @overload  # Nd T, ?d T  (workaround)
+    def outer(
+        self,
+        x1: npt.NDArray[_AnyRealT],
+        x2: _ArrayJustND[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[npt.NDArray[_AnyRealT]]: ...
+    @overload  # 1d T, 1d T
+    def outer(
+        self,
+        x1: Array1D[_AnyRealT],
+        x2: Array1D[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | _tuple2[None] = (None, None),
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs22],
+    ) -> _tuple2[_Array[_2D, _AnyRealT]]: ...
     @overload  # ?d +i8, ?d +i8
     def outer(
         self,

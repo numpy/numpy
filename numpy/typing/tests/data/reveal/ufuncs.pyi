@@ -4681,7 +4681,11 @@ assert_type(np.divmod(_td_ns_0d, _td_ns_1d), tuple[npt.NDArray[np.int64], npt.ND
 assert_type(np.divmod(_td_ns_1d, _td_ns_0d), tuple[npt.NDArray[np.int64], npt.NDArray[np.timedelta64[int]]])
 assert_type(np.divmod(_td_ns_1d, _td_ns_1d), tuple[npt.NDArray[np.int64], npt.NDArray[np.timedelta64[int]]])
 
-# divmod.outer is equivalent to __call__
+# divmod.outer is equivalent to __call__, except for 1d x 1d
+assert_type(np.divmod.outer(_i16_1d, _i16_1d), tuple[npt.Array2D[np.int16], npt.Array2D[np.int16]])
+assert_type(np.divmod.outer(_f64_1d, _f64_1d), tuple[npt.Array2D[np.float64], npt.Array2D[np.float64]])
+assert_type(np.divmod.outer(_f64_1d, _f64_nd), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
+assert_type(np.divmod.outer(_f64_nd, _f64_1d), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 
 ###
 # _gufunc_21_matvec_vecmat
