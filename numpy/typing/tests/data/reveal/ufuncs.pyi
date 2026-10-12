@@ -827,8 +827,10 @@ assert_type(np.logical_or(_py_i_2d, _py_i_2d, out=_f32_2d), npt.Array2D[np.float
 
 assert_type(np.logical_or.outer(_f32_0d, _c64_0d), np.bool)
 assert_type(np.logical_or.outer(_f32_1d, _c64_0d), npt.NDArray[np.bool])
+assert_type(np.logical_or.outer(_f32_1d, _c64_nd), npt.NDArray[np.bool])
 assert_type(np.logical_or.outer(_f32_0d, _c64_1d), npt.NDArray[np.bool])
-assert_type(np.logical_or.outer(_f32_1d, _c64_1d), npt.NDArray[np.bool])
+assert_type(np.logical_or.outer(_f32_1d, _c64_1d), npt.Array2D[np.bool])
+assert_type(np.logical_or.outer(_f32_nd, _c64_1d), npt.NDArray[np.bool])
 assert_type(np.logical_or.outer(_obj_1d, _obj_1d), npt.NDArray[np.object_[int]])
 assert_type(np.logical_or.outer(_obj_2d, _obj_1d), npt.NDArray[np.object_[int]])
 assert_type(np.logical_or.outer(_obj_1d, _obj_2d), npt.NDArray[np.object_[int]])
@@ -914,6 +916,9 @@ assert_type(np.less.outer(_py_c_0d, _py_c_0d), np.bool)
 assert_type(np.less.outer(_py_c_1d, _py_c_0d), npt.NDArray[np.bool])
 assert_type(np.less.outer(_py_c_0d, _py_c_1d), npt.NDArray[np.bool])
 assert_type(np.less.outer(_py_c_1d, _py_c_1d), npt.NDArray[np.bool])
+assert_type(np.less.outer(_f32_1d, _f32_1d), npt.Array2D[np.bool])
+assert_type(np.less.outer(_f32_1d, _f32_nd), npt.NDArray[np.bool])
+assert_type(np.less.outer(_f32_nd, _f32_1d), npt.NDArray[np.bool])
 
 assert_type(np.less.at(_c64_1d, 1, _py_c_1d), None)
 
