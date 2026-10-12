@@ -129,10 +129,8 @@ jobs:
 
           # Install build requirements, apart from ninja.
           # The host ninja is used for the build
-          echo ninja > exclude.txt && uv pip install --group /numpy/pyproject.toml:dev-cli --excludes exclude.txt &&
+          echo ninja > exclude.txt && uv pip install --group /numpy/pyproject.toml:dev-cli --group test-extending --excludes exclude.txt &&
 
-          grep -v ninja /numpy/requirements/test_requirements.txt > /tmp/test_requirements.txt &&
-          uv pip install -r /tmp/test_requirements.txt
           rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "
         docker commit the_container the_container
@@ -246,10 +244,8 @@ jobs:
 
           # Install build requirements, apart from ninja.
           # The host ninja is used for the build
-          echo ninja > exclude.txt && uv pip install --group /numpy/pyproject.toml:dev-cli --excludes exclude.txt &&
+          echo ninja > exclude.txt && uv pip install --group /numpy/pyproject.toml:dev-cli --group test-extending --excludes exclude.txt &&
 
-          grep -v ninja /numpy/requirements/test_requirements.txt > /tmp/test_requirements.txt &&
-          uv pip install -r /tmp/test_requirements.txt
           rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "
         docker commit the_container the_container
