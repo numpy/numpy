@@ -2300,7 +2300,11 @@ assert_type(np.fmod(_f80_0d, _f80_nd), npt.NDArray[np.longdouble])
 assert_type(np.fmod(_f80_nd, _f80_0d), npt.NDArray[np.longdouble])
 assert_type(np.fmod(_f80_nd, _f80_nd), npt.NDArray[np.longdouble])
 
-# fmod.outer is equivalent to __call__
+# fmod.outer is equivalent to __call__, except for 1d x 1d
+assert_type(np.fmod.outer(_i16_1d, _i16_1d), npt.Array2D[np.int16])
+assert_type(np.fmod.outer(_f64_1d, _f64_1d), npt.Array2D[np.float64])
+assert_type(np.fmod.outer(_f64_1d, _f64_nd), npt.NDArray[np.float64])
+assert_type(np.fmod.outer(_f64_nd, _f64_1d), npt.NDArray[np.float64])
 
 assert_type(np.fmod.at(_i16_1d, 1, _py_i_1d), None)
 assert_type(np.fmod.at(_f32_1d, 1, _py_f_1d), None)
