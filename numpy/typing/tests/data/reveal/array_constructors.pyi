@@ -31,6 +31,7 @@ _f32_2d: npt.Array2D[np.float32]
 _f32_3d: npt.Array3D[np.float32]
 _f32_4d_list: list[npt.Array4D[np.float32]]
 _f64_0d: npt.Array0D[np.float64]
+_f64_1d: npt.Array1D[np.float64]
 _obj_str_1d: npt.Array1D[np.object_[str]]
 
 _py_b_1d: list[bool]
@@ -470,6 +471,10 @@ assert_type(np.linspace(0, 10), npt.Array1D[np.float64])
 assert_type(np.linspace(0, 10j), npt.Array1D[np.complex128 | Any])
 assert_type(np.linspace(0, 10, dtype=np.int64), npt.Array1D[np.int64])
 assert_type(np.linspace(0, 10, dtype=int), npt.NDArray[Any])
+assert_type(np.linspace(A, 10), npt.NDArray[np.float64])
+assert_type(np.linspace(0, A), npt.NDArray[np.float64])
+assert_type(np.linspace(_f64_1d, _f64_1d), npt.Array2D[np.float64])
+assert_type(np.linspace(0, _py_f_1d), npt.Array2D[np.float64])
 assert_type(np.linspace(0, 10, retstep=True), tuple[npt.Array1D[np.float64], np.float64])
 assert_type(np.linspace(0j, 10, retstep=True), tuple[npt.Array1D[np.complex128 | Any], np.complex128 | Any])
 assert_type(np.linspace(0, 10, retstep=True, dtype=np.int64), tuple[npt.Array1D[np.int64], np.int64])
