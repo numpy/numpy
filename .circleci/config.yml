@@ -77,7 +77,7 @@ jobs:
             python3.12 -m venv venv
             . venv/bin/activate
             python -m pip install --upgrade pip
-            pip install --progress-bar=off -r requirements/test_requirements.txt \
+            pip install --progress-bar=off --group test-extending \
                --group dev-cli \
                --group openblas64
             # get newer, pre-release versions of critical packages

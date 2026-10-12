@@ -77,7 +77,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install --group dev-cli -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas32
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
@@ -125,7 +125,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install --group dev-cli -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
 
     - name: Build (LP64)
       run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
@@ -161,7 +161,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install --group dev-cli -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
 
     - name: Build
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
@@ -195,7 +195,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install --group dev-cli -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
@@ -224,7 +224,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install --group dev-cli -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
@@ -265,9 +265,9 @@ jobs:
 
     - name: Test
       run: |
-        # do not use test_requirements.txt, it includes coverage which requires
+        # do not use the test-extending group, it will install coverage, which requires
         # sqlite3, which is not available on OpenSUSE python
-        pip install --break-system-packages pytest pytest-xdist pytest-timeout
+        pip install --break-system-packages --group test-core
         spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
@@ -287,7 +287,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install --group dev-cli -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         pip install mkl mkl-devel
 
     - name: Repair MKL pkg-config files and symlinks
@@ -352,7 +352,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install --group dev-cli -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
@@ -389,7 +389,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install --group dev-cli -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 
