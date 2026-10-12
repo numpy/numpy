@@ -120,9 +120,10 @@ assert_type(np.dtype(dt_inexact), np.dtype[np.inexact])
 
 # Parameterized dtypes
 assert_type(np.dtype("S8"), np.dtype)
+assert_type(np.dtype(("U", 10)), np.dtype[np.str_])
+assert_type(np.dtype((bytes, 5)), np.dtype[np.bytes_])
 
 # Void
-assert_type(np.dtype(("U", 10)), np.dtype[np.void])
 assert_type(np.dtype({"formats": (int, "u8"), "names": ("n", "B")}), np.dtype[np.void])
 
 # StringDType

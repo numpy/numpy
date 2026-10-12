@@ -2364,7 +2364,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     /* binary mode, condition copied from PyArray_FromString */
     if (sep == NULL || strlen(sep) == 0) {
         PyErr_SetString(PyExc_ValueError,
-            "The binary mode of fromstring is removed, use frombuffer instead");
+            "fromstring() requires a non-empty 'sep' argument.");
         Py_XDECREF(descr);
         return NULL;
     }

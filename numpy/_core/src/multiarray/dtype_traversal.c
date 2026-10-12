@@ -17,6 +17,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <string.h>
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/arrayobject.h"
@@ -343,11 +344,11 @@ get_fields_traverse_function(
 
     single_field_traverse_data *field = data->fields;
     for (i = 0; i < field_count; ++i) {
-        int offset;
+        npy_intp offset;
 
         key = PyTuple_GET_ITEM(names, i);
         tup = PyDict_GetItem(dtype->fields, key); // noqa: borrowed-ref OK
-        if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &offset, &title)) {
+        if (!PyArg_ParseTuple(tup, "On|O", &fld_dtype, &offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return -1;
         }

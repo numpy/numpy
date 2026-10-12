@@ -13,8 +13,7 @@ import pytest
 try:
     import hypothesis
 except ImportError:
-    # hypothesis is an optional test dependency (see
-    # requirements/hypothesis_requirements.txt); the property-based tests that
+    # hypothesis is an optional test dependency; the property-based tests that
     # use it are skipped when it is not installed.
     hypothesis = None
 
@@ -244,7 +243,6 @@ if HAVE_SCPDT:
         'c-info.reduction-loop-tutorial.rst': '',
         'basics.interoperability.rst': 'needs pandas',
         'basics.dispatch.rst': 'errors out in /testing/overrides.py',
-        'basics.subclassing.rst': '.. testcode:: admonitions not understood',
         'misc.rst': 'manipulates warnings',
     }
 

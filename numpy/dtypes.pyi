@@ -62,9 +62,10 @@ _NaObjectT_co = TypeVar("_NaObjectT_co", default=Never, covariant=True)
 
 @type_check_only
 class _SimpleDType[ScalarT: np.generic](np.dtype[ScalarT]):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
-    names: None  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
     def __new__(cls, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> NoReturn: ...
+    @property  # type: ignore[misc]
+    def names(self) -> None: ...  # pyrefly: ignore[bad-override]  # pyright: ignore[reportIncompatibleMethodOverride]
     @property
     def base(self) -> np.dtype[ScalarT]: ...
     @property
