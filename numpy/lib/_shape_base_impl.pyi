@@ -120,6 +120,7 @@ _AnyScalarT = TypeVar(
     np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
     np.timedelta64, np.datetime64, np.str_, np.bytes_, np.void, np.object_,
 )  # fmt: skip
+_Shape2T = TypeVar("_Shape2T", bound=_Min2D)
 _Shape3T = TypeVar("_Shape3T", bound=_Min3D)
 
 ###
@@ -420,13 +421,17 @@ def expand_dims(
 
 # keep in sync with `numpy.ma.extras.column_stack`
 @overload  # >=2d, known dtype
-def column_stack[ShapeT: _Min2D, DTypeT: np.dtype](
-    tup: Sequence[np.ndarray[ShapeT, DTypeT]],
-) -> np.ndarray[ShapeT, DTypeT]: ...
+def column_stack(  # noqa: UP047
+    tup: Sequence[np.ndarray[_Shape2T, np.dtype[_AnyScalarT]]],
+) -> np.ndarray[_Shape2T, np.dtype[_AnyScalarT]]: ...
+@overload  # >=2d ~str
+def column_stack[ShapeT: _Min2D](
+    tup: Sequence[np.ndarray[ShapeT, np.dtypes.StringDType]],
+) -> np.ndarray[ShapeT, np.dtypes.StringDType]: ...
 @overload  # <=2d, known dtype
-def column_stack[ScalarT: np.generic](tup: Sequence[_To2D[ScalarT]]) -> Array2D[ScalarT]: ...
+def column_stack(tup: Sequence[_To2D[_AnyScalarT]]) -> Array2D[_AnyScalarT]: ...  # noqa: UP047
 @overload  # ?d, known dtype
-def column_stack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDArray[ScalarT]: ...
+def column_stack(tup: Sequence[_ArrayLike[_AnyScalarT]]) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
 @overload  # fallback
 def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
