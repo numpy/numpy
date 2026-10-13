@@ -3008,6 +3008,27 @@ def ascontiguousarray[ScalarT: np.generic](
     *,
     like: _SupportsArrayFunc | None = None,
 ) -> Array1D[ScalarT]: ...
+@overload  # [?d T]  (workaround)
+def ascontiguousarray[DTypeT: np.dtype](
+    a: Sequence[np.ndarray[_JustND, DTypeT]],
+    dtype: None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[_AnyShape, DTypeT]: ...
+@overload  # [1d T]
+def ascontiguousarray[DTypeT: np.dtype](
+    a: Sequence[np.ndarray[_1D, DTypeT]],
+    dtype: None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[_2D, DTypeT]: ...
+@overload  # [2d T]
+def ascontiguousarray[DTypeT: np.dtype](
+    a: Sequence[np.ndarray[_2D, DTypeT]],
+    dtype: None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[_3D, DTypeT]: ...
 @overload  # Nd T
 def ascontiguousarray[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
