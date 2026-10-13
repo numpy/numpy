@@ -37,6 +37,7 @@ _T_1d_list: list[np.ndarray[tuple[int], np.dtypes.StringDType]]
 _f64_0d: npt.Array0D[np.float64]
 _f64_1d: npt.Array1D[np.float64]
 _obj_str_1d: npt.Array1D[np.object_[str]]
+_T_1d: np.ndarray[tuple[int], np.dtypes.StringDType]
 
 _py_b_1d: list[bool]
 _py_b_2d: list[list[bool]]
@@ -171,12 +172,15 @@ assert_type(np.empty(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.concatenate(A), npt.NDArray[np.float64])
 assert_type(np.concatenate([A, A]), npt.NDArray[np.float64])
+assert_type(np.concatenate([_T_1d, _T_1d]), np.ndarray[tuple[int], np.dtypes.StringDType])
 assert_type(np.concatenate([[1], A]), npt.Array1D[Any])
 assert_type(np.concatenate([[1], [1]]), npt.Array1D[Any])
 assert_type(np.concatenate((A, A)), npt.NDArray[np.float64])
 assert_type(np.concatenate(([1], [1])), npt.Array1D[Any])
 assert_type(np.concatenate((_f32_1d, [0.0])), npt.Array1D[Any])
+assert_type(np.concatenate((_f32_1d, _f64_1d)), npt.Array1D[Any])
 assert_type(np.concatenate((_f32_1d, _f32_1d), axis=None), npt.Array1D[np.float32])
+assert_type(np.concatenate((_f32_1d, _f64_1d), axis=None), npt.Array1D[Any])
 assert_type(np.concatenate([1, 1.0]), npt.NDArray[Any])
 assert_type(np.concatenate(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.concatenate(A, dtype="c16"), npt.NDArray[Any])
