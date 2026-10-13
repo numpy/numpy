@@ -17,6 +17,7 @@ _2d: tuple[int, int]
 _i64: np.int64
 
 _i64_1d: npt.Array1D[np.int64]
+_i64_2d: npt.Array2D[np.int64]
 _f64_1d: npt.Array1D[np.float64]
 _f64_2d: npt.Array2D[np.float64]
 _tuple_f64: tuple[np.float64, ...]
@@ -666,8 +667,11 @@ assert_type(def_gen.hypergeometric(20, 20, 10, size=_2d), npt.Array2D[np.int64])
 assert_type(def_gen.hypergeometric(20, 20, 10, 1), npt.Array1D[np.int64])
 assert_type(def_gen.hypergeometric(20, 20, 10, _1d), npt.Array1D[np.int64])
 assert_type(def_gen.hypergeometric(20, 20, 10, _2d), npt.Array2D[np.int64])
-assert_type(def_gen.hypergeometric(I_arr_20, 20, 10), npt.NDArray[np.int64] | Any)
-assert_type(def_gen.hypergeometric(20, I_arr_20, 10), npt.NDArray[np.int64] | Any)
+assert_type(def_gen.hypergeometric(_i64_1d, 20, 10), npt.Array1D[np.int64])
+assert_type(def_gen.hypergeometric(I_arr_20, 20, 10), npt.NDArray[np.int64])
+assert_type(def_gen.hypergeometric(20, 20, _i64_1d), npt.Array1D[np.int64])
+assert_type(def_gen.hypergeometric(20, _i64_2d, 10), npt.Array2D[np.int64])
+assert_type(def_gen.hypergeometric(20, I_arr_20, 10), npt.NDArray[np.int64])
 assert_type(def_gen.hypergeometric(I_arr_20, 20, I_arr_like_10, size=1), npt.Array1D[np.int64])
 assert_type(def_gen.hypergeometric(20, I_arr_20, 10, size=1), npt.Array1D[np.int64])
 assert_type(def_gen.hypergeometric(I_arr_like_20, 20, I_arr_10), npt.NDArray[np.int64] | Any)

@@ -1172,6 +1172,18 @@ class Generator:
     #
     @overload  # 0d, 0d, 0d
     def hypergeometric(self, /, ngood: int, nbad: int, nsample: int, size: None = None) -> int: ...
+    @overload  # Nd, 0d, 0d
+    def hypergeometric[ShapeT: _Shape](
+        self, /, ngood: _ArrayInt[ShapeT], nbad: _IntLike_co, nsample: _IntLike_co, size: None = None
+    ) -> _ArrayI64[ShapeT]: ...
+    @overload  # 0d, Nd, 0d
+    def hypergeometric[ShapeT: _Shape](
+        self, /, ngood: _IntLike_co, nbad: _ArrayInt[ShapeT], nsample: _IntLike_co, size: None = None
+    ) -> _ArrayI64[ShapeT]: ...
+    @overload  # 0d, 0d, Nd
+    def hypergeometric[ShapeT: _Shape](
+        self, /, ngood: _IntLike_co, nbad: _IntLike_co, nsample: _ArrayInt[ShapeT], size: None = None
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # >=0d, >=0d, >0d
     def hypergeometric(
         self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _NDArrayLikeInt, size: None = None
