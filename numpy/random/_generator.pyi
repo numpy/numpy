@@ -736,6 +736,18 @@ class Generator:
     #
     @overload  # 0d (default), 0d (default)
     def logistic(self, /, loc: _FloatLike_co = 0.0, scale: _FloatLike_co = 1.0, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def logistic[ShapeT: _Shape](
+        self, /, loc: _ArrayFloat[ShapeT], scale: _FloatLike_co = 1.0, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd (positional)
+    def logistic[ShapeT: _Shape](
+        self, /, loc: _FloatLike_co, scale: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd (keyword)
+    def logistic[ShapeT: _Shape](
+        self, /, loc: _FloatLike_co = 0.0, *, scale: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >0d, >=0d
     def logistic(self, /, loc: _NDArrayLikeFloat, scale: _ArrayLikeFloat_co = 1.0, size: None = None) -> _ArrayF64: ...
     @overload  # >=0d, >0d (positional)
