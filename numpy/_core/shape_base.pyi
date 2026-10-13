@@ -308,12 +308,19 @@ def vstack(
 
 # keep in sync with `vstack` and `numpy.ma.extras.hstack`
 @overload  # >=2d
-def hstack[ShapeT: _AtLeast2D, DTypeT: np.dtype](
-    tup: Sequence[np.ndarray[ShapeT, DTypeT]],
+def hstack(  # noqa: UP047
+    tup: Sequence[np.ndarray[_Shape2T, np.dtype[_AnyScalarT]]],
     *,
     dtype: None = None,
     casting: _CastingKind = "same_kind",
-) -> np.ndarray[ShapeT, DTypeT]: ...
+) -> np.ndarray[_Shape2T, np.dtype[_AnyScalarT]]: ...
+@overload  # >=2d ~str
+def hstack[ShapeT: _AtLeast2D](
+    tup: Sequence[np.ndarray[ShapeT, np.dtypes.StringDType]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> np.ndarray[ShapeT, np.dtypes.StringDType]: ...
 @overload  # >=2d, dtype=<known>
 def hstack[ShapeT: _AtLeast2D, ScalarT: np.generic](
     tup: Sequence[np.ndarray[ShapeT]],
@@ -325,16 +332,16 @@ def hstack[ShapeT: _AtLeast2D, ScalarT: np.generic](
 def hstack[ShapeT: _AtLeast2D](
     tup: Sequence[np.ndarray[ShapeT]],
     *,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = None,
     casting: _CastingKind = "same_kind",
 ) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
 @overload  # <=1d
-def hstack[ScalarT: np.generic](
-    tup: Sequence[_To1D[ScalarT]],
+def hstack(  # noqa: UP047
+    tup: Sequence[_To1D[_AnyScalarT]],
     *,
     dtype: None = None,
     casting: _CastingKind = "same_kind",
-) -> Array1D[ScalarT]: ...
+) -> Array1D[_AnyScalarT]: ...
 @overload  # <=1d, dtype=<known>
 def hstack[ScalarT: np.generic](
     tup: Sequence[_To1D[np.generic]],
@@ -357,12 +364,12 @@ def hstack(
     casting: _CastingKind = "same_kind",
 ) -> Array1D[Any]: ...
 @overload  # ?d
-def hstack[ScalarT: np.generic](
-    tup: Sequence[_ArrayLike[ScalarT]],
+def hstack(  # noqa: UP047
+    tup: Sequence[_ArrayLike[_AnyScalarT]],
     *,
     dtype: None = None,
     casting: _CastingKind = "same_kind",
-) -> NDArray[ScalarT]: ...
+) -> NDArray[_AnyScalarT]: ...
 @overload  # ?d, dtype=<known>
 def hstack[ScalarT: np.generic](
     tup: Sequence[ArrayLike],
