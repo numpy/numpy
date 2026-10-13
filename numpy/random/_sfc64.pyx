@@ -111,7 +111,9 @@ cdef class SFC64(BitGenerator):
         -------
         state : dict
             Dictionary containing the information required to describe the
-            state of the PRNG
+            state of the PRNG. The returned dictionary is independent of the
+            underlying bit generator state and will not be modified when the
+            bit generator state changes.
         """
         cdef np.ndarray state_vec
         cdef int has_uint32

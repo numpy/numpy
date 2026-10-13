@@ -142,16 +142,16 @@ def _coerce_to_uint32_array(x):
     else:
         if len(x) == 0:
             return np.array([], dtype=np.uint32)
-        
+
         # Should be a sequence of interpretable-as-ints. Convert each one to
         # a uint32 array and concatenate.
         subseqs = []
         for v in x:
             if hasattr(v, '__len__') and not isinstance(v, str):
                 raise TypeError("SeedSequence does not accept nested sequences.")
-            
+
             subseqs.append(_coerce_to_uint32_array(v))
-            
+
         return np.concatenate(subseqs)
 
 
@@ -583,7 +583,9 @@ cdef class BitGenerator:
         -------
         state : dict
             Dictionary containing the information required to describe the
-            state of the PRNG
+            state of the PRNG. The returned dictionary must be independent of
+            the underlying bit generator state and must not be modified when
+            the bit generator state changes.
         """
         raise NotImplementedError('Not implemented in base BitGenerator')
 

@@ -210,7 +210,9 @@ cdef class Philox(BitGenerator):
         -------
         state : dict
             Dictionary containing the information required to describe the
-            state of the PRNG
+            state of the PRNG. The returned dictionary is independent of the
+            underlying bit generator state and will not be modified when the
+            bit generator state changes.
         """
         ctr = np.empty(4, dtype=np.uint64)
         key = np.empty(2, dtype=np.uint64)

@@ -263,7 +263,9 @@ cdef class MT19937(BitGenerator):
         -------
         state : dict
             Dictionary containing the information required to describe the
-            state of the PRNG
+            state of the PRNG. The returned dictionary is independent of the
+            underlying bit generator state and will not be modified when the
+            bit generator state changes.
         """
         key = np.zeros(624, dtype=np.uint32)
         with self.lock:
