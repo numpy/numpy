@@ -2062,14 +2062,14 @@ def cross(  # noqa: UP047
 @overload  # ?d ~i64, ?d +i64
 def cross(
     x1: _ArrayLike1ND2[np.int64, int],
-    x2: _ArrayLike1ND2[np.integer, int],
+    x2: _ArrayLike1ND2[_to_int64, int],
     /,
     *,
     axis: SupportsIndex = -1,
 ) -> NDArray[np.int64]: ...
 @overload  # ?d +i64, ?d ~i64
 def cross(
-    x1: _ArrayLike1ND[np.integer],
+    x1: _ArrayLike1ND[_to_int64],
     x2: _ArrayLike1ND[np.int64],
     /,
     *,
@@ -2124,13 +2124,13 @@ def cross(
     axis: SupportsIndex = -1,
 ) -> NDArray[np.object_]: ...
 @overload  # fallback
-def cross[ScalarT: np.number](
-    x1: _ArrayLike1ND[ScalarT],
-    x2: _ArrayLike1ND[ScalarT],
+def cross(
+    x1: _ToArrayComplex_1nd,
+    x2: _ToArrayComplex_1nd,
     /,
     *,
     axis: SupportsIndex = -1,
-) -> NDArray[ScalarT]: ...
+) -> NDArray[Any]: ...
 
 # These overloads can be grouped into four parts:
 # - 18 overloads as workaround for microsoft/pyright#10232
