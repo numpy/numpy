@@ -230,6 +230,8 @@ type _to_f64 = np.float64 | np.float32 | np.float16 | _to_integer
 type _to_c64 = np.complex64 | _to_f32
 type _to_c128 = np.complex128 | np.complex64 | _to_f64
 
+type _from_f64 = np.float64 | np.complex128 | np.longdouble | np.clongdouble
+
 type _NumericLike_co = _NumberLike_co | np.timedelta64
 type _NumTimeLike_co = _NumericLike_co | np.datetime64
 
@@ -5556,7 +5558,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> np.complex128 | Any: ...
     @overload  # 0d _, 0d _, dtype=<known>
-    def __call__[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def __call__[ScalarT: _from_f64](
         self,
         x1: _NumberLike_co,
         x2: _NumberLike_co,
@@ -5677,7 +5679,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.clongdouble]: ...
     @overload  # ?d _, ?d _, dtype=<known>
-    def __call__[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def __call__[ScalarT: _from_f64](
         self,
         x1: _NativeArrayLikeNumber_co,
         x2: _NativeArrayLikeNumber_co,
@@ -5856,7 +5858,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> np.complex128 | Any: ...
     @overload  # 0d _, 0d _, dtype=<known>
-    def outer[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def outer[ScalarT: _from_f64](
         self,
         x1: _NumberLike_co,
         x2: _NumberLike_co,
@@ -6043,7 +6045,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.clongdouble]: ...
     @overload  # ?d _, ?d _, dtype=<known>
-    def outer[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def outer[ScalarT: _from_f64](
         self,
         x1: _NativeArrayLikeNumber_co,
         x2: _NativeArrayLikeNumber_co,
@@ -6120,8 +6122,60 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
 
     #
     @override
+    @overload  # ?d T  (workaround)
+    def reduce[ScalarT: _from_f64](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[_JustND, ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | Any: ...
+    @overload  # 1d T
+    def reduce[ScalarT: _from_f64](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: _from_f64](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: _from_f64](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # known scalar type
-    def reduce[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: _from_f64](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6134,7 +6188,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT] | Any: ...
     @overload  # known scalar type, axis=None
-    def reduce[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def reduce[ScalarT: _from_f64](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6147,7 +6201,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # known scalar type, keepdims=True
-    def reduce[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def reduce[ScalarT: _from_f64](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6238,7 +6292,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def reduce[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def reduce[ScalarT: _from_f64](
         self,
         array: _ArrayLikeNumber_co,
         /,
@@ -6293,7 +6347,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     #
     @override
     @overload  # Nd
-    def reduceat[ShapeT: _Shape, ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](  # pyrefly:ignore[bad-override]
+    def reduceat[ShapeT: _Shape, ScalarT: _from_f64](  # pyrefly:ignore[bad-override]
         self,
         array: _Array[ShapeT, ScalarT],
         /,
@@ -6326,7 +6380,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         out: None = None,
     ) -> _Array[ShapeT, np.complex128]: ...
     @overload  # known scalar type
-    def reduceat[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def reduceat[ScalarT: _from_f64](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6359,7 +6413,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def reduceat[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def reduceat[ScalarT: _from_f64](
         self,
         array: _ArrayLikeNumber_co,
         /,
@@ -6406,7 +6460,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     #
     @override
     @overload  # Nd
-    def accumulate[ShapeT: _Shape, ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](  # pyrefly:ignore[bad-override]
+    def accumulate[ShapeT: _Shape, ScalarT: _from_f64](  # pyrefly:ignore[bad-override]
         self,
         array: _Array[ShapeT, ScalarT],
         /,
@@ -6436,7 +6490,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         out: None = None,
     ) -> _Array[ShapeT, np.complex128]: ...
     @overload  # known scalar type
-    def accumulate[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def accumulate[ScalarT: _from_f64](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6466,7 +6520,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def accumulate[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def accumulate[ScalarT: _from_f64](
         self,
         array: _ArrayLikeNumber_co,
         /,
