@@ -500,6 +500,14 @@ class Generator:
     #
     @overload  # 0d, 0d
     def noncentral_chisquare(self, /, df: _FloatLike_co, nonc: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def noncentral_chisquare[ShapeT: _Shape](
+        self, /, df: _ArrayFloat[ShapeT], nonc: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def noncentral_chisquare[ShapeT: _Shape](
+        self, /, df: _FloatLike_co, nonc: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >0d
     def noncentral_chisquare(self, /, df: _ArrayLikeFloat_co, nonc: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >0d, >=0d
