@@ -411,6 +411,76 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _`match test names using python operators`: https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests
 .. _`Python Style Guide`: https://www.python.org/dev/peps/pep-0008/
 
+Debugging from VS Code on macOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can use VS Code with the
+`CodeLLDB extension <https://github.com/vadimcn/codelldb>`_
+to set breakpoints and step through NumPy's C code. The following setup
+uses a virtual environment named ``.venv`` in the repository root.
+
+First, build NumPy with debug symbols as described above. Open the
+repository root as your VS Code workspace and install CodeLLDB.
+
+Find the Python executable and the import path for the built NumPy::
+
+    spin python -- -c "import sys, os; print(sys.executable); print(os.environ['PYTHONPATH'])"
+
+Create ``debug_numpy.py`` in the repository root:
+
+.. code-block:: python
+
+    import numpy as np
+
+    print("NumPy loaded from:", np.__file__)
+    x = np.arange(5)
+    result = np.empty_like(x)
+    print("Result shape:", result.shape)
+
+Create a directory named ``.vscode`` in the repository root. Inside it,
+create ``launch.json`` with the following configuration:
+
+.. code-block:: json
+
+    {
+      "version": "0.2.0",
+      "configurations": [
+        {
+          "name": "Debug NumPy C code",
+          "type": "lldb",
+          "request": "launch",
+          "program": "${workspaceFolder}/.venv/bin/python",
+          "args": ["-P", "${workspaceFolder}/debug_numpy.py"],
+          "cwd": "${workspaceFolder}",
+          "env": {
+            "PYTHONPATH": "<PYTHONPATH printed by spin>"
+          },
+          "preRunCommands": [
+            "breakpoint set --name array_empty_like"
+          ]
+        }
+      ]
+    }
+
+Replace the ``PYTHONPATH`` placeholder with the path printed by
+``spin python``. If your virtual environment is elsewhere, also update
+``program`` to use the printed Python executable. The ``-P`` argument
+prevents Python from prepending the script directory to its import
+search path, so it loads the built NumPy instead of the source tree.
+
+In VS Code's **Run and Debug** panel, select **Debug NumPy C code** and
+start debugging. The function breakpoint may initially be reported as
+pending because NumPy's compiled module has not loaded yet.
+
+On macOS, the debugger may first stop at ``_dyld_start`` with the stop
+reason ``exec``. Select **Continue** to proceed. When the script calls
+``np.empty_like``, the debugger should stop in ``array_empty_like`` in
+``numpy/_core/src/multiarray/multiarraymodule.c``. Use **Step Over** to
+advance through the C statements.
+
+Check the script's printed NumPy path to confirm that the session uses
+the development build.
+
 Understanding the code & getting started
 ----------------------------------------
 
