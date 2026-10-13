@@ -3998,8 +3998,60 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
 
     #
     @override
-    @overload  # unknown shape, not object_
+    @overload  # ?d  (workaround)
     def reduce(  # pyrefly:ignore[bad-override]
+        self,
+        array: np.ndarray[_JustND, _DTypeNonObject],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.bool] | Any: ...
+    @overload  # 1d
+    def reduce(
+        self,
+        array: np.ndarray[_1D, _DTypeNonObject],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.bool: ...
+    @overload  # 2d
+    def reduce(
+        self,
+        array: np.ndarray[_2D, _DTypeNonObject],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[np.bool]: ...
+    @overload  # Nd, keepdims=True
+    def reduce[ShapeT: _Shape](
+        self,
+        array: np.ndarray[ShapeT, _DTypeNonObject],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[True],
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, np.bool]: ...
+    @overload  # unknown shape, not object_
+    def reduce(
         self,
         array: _ArrayUnlikeObject,
         /,
