@@ -352,9 +352,7 @@ cdef class SeedSequence:
     def __reduce_ex__(self, protocol):
         from ._pickle import __seed_sequence_ctor
 
-        with self._lock:
-            state = self.state
-
+        state = self.state
         return __seed_sequence_ctor, (type(self), state)
 
     cdef mix_entropy(self, np.ndarray[np.npy_uint32, ndim=1] mixer,
