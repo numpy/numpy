@@ -498,15 +498,17 @@ cdef class SeedSequence:
             raise ValueError("n_children must be non-negative")
 
         with self._lock:
-            seqs = []
-            for i in range(self.n_children_spawned,
-                        self.n_children_spawned + n_children):
-                seqs.append(type(self)(
-                    self.entropy,
-                    spawn_key=self.spawn_key + (i,),
-                    pool_size=self.pool_size,
-                ))
+            start = self.n_children_spawned
             self.n_children_spawned += n_children
+            
+            
+        seqs = []
+        for i in range(start, start + n_children):
+            seqs.append(type(self)(
+                self.entropy,
+                spawn_key=self.spawn_key + (i,),
+                pool_size=self.pool_size,
+            ))
 
         return seqs
 
