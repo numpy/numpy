@@ -32,6 +32,7 @@ _AnyScalarT = TypeVar(
     np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
     np.timedelta64, np.datetime64, np.str_, np.bytes_, np.void, np.object_,
 )  # fmt: skip
+_Shape2T = TypeVar("_Shape2T", bound=_AtLeast2D)
 
 # input only
 type _AtLeast1D = tuple[int, *tuple[Any, ...]]
@@ -228,12 +229,19 @@ def _arrays_for_stack_dispatcher[T](arrays: Sequence[T]) -> tuple[T, ...]: ...
 
 # keep in sync with `hstack` and `numpy.ma.extras.vstack`
 @overload  # >=2d
-def vstack[ShapeT: _AtLeast2D, DTypeT: np.dtype](
-    tup: Sequence[np.ndarray[ShapeT, DTypeT]],
+def vstack(  # noqa: UP047
+    tup: Sequence[np.ndarray[_Shape2T, np.dtype[_AnyScalarT]]],
     *,
     dtype: None = None,
     casting: _CastingKind = "same_kind",
-) -> np.ndarray[ShapeT, DTypeT]: ...
+) -> np.ndarray[_Shape2T, np.dtype[_AnyScalarT]]: ...
+@overload  # >=2d ~str
+def vstack[ShapeT: _AtLeast2D](
+    tup: Sequence[np.ndarray[ShapeT, np.dtypes.StringDType]],
+    *,
+    dtype: None = None,
+    casting: _CastingKind = "same_kind",
+) -> np.ndarray[ShapeT, np.dtypes.StringDType]: ...
 @overload  # >=2d, dtype=<known>
 def vstack[ShapeT: _AtLeast2D, ScalarT: np.generic](
     tup: Sequence[np.ndarray[ShapeT]],
@@ -245,16 +253,16 @@ def vstack[ShapeT: _AtLeast2D, ScalarT: np.generic](
 def vstack[ShapeT: _AtLeast2D](
     tup: Sequence[np.ndarray[ShapeT]],
     *,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = None,
     casting: _CastingKind = "same_kind",
 ) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
 @overload  # <=2d
-def vstack[ScalarT: np.generic](
-    tup: Sequence[_To2D[ScalarT]],
+def vstack(  # noqa: UP047
+    tup: Sequence[_To2D[_AnyScalarT]],
     *,
     dtype: None = None,
     casting: _CastingKind = "same_kind",
-) -> Array2D[ScalarT]: ...
+) -> Array2D[_AnyScalarT]: ...
 @overload  # <=2d, dtype=<known>
 def vstack[ScalarT: np.generic](
     tup: Sequence[_To2D[np.generic]],
@@ -277,12 +285,12 @@ def vstack(
     casting: _CastingKind = "same_kind",
 ) -> Array2D[Any]: ...
 @overload  # ?d
-def vstack[ScalarT: np.generic](
-    tup: Sequence[_ArrayLike[ScalarT]],
+def vstack(  # noqa: UP047
+    tup: Sequence[_ArrayLike[_AnyScalarT]],
     *,
     dtype: None = None,
     casting: _CastingKind = "same_kind",
-) -> NDArray[ScalarT]: ...
+) -> NDArray[_AnyScalarT]: ...
 @overload  # ?d, dtype=<known>
 def vstack[ScalarT: np.generic](
     tup: Sequence[ArrayLike],

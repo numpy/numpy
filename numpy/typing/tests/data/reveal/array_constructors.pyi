@@ -38,6 +38,7 @@ _f64_0d: npt.Array0D[np.float64]
 _f64_1d: npt.Array1D[np.float64]
 _obj_str_1d: npt.Array1D[np.object_[str]]
 _T_1d: np.ndarray[tuple[int], np.dtypes.StringDType]
+_T_2d: np.ndarray[tuple[int, int], np.dtypes.StringDType]
 
 _py_b_1d: list[bool]
 _py_b_2d: list[list[bool]]
@@ -735,9 +736,11 @@ assert_type(np.vstack([A, C]), npt.Array2D[Any])
 assert_type(np.vstack([C, C]), npt.Array2D[Any])
 assert_type(np.vstack([_f32_0d, _f32_0d]), npt.Array2D[np.float32])
 assert_type(np.vstack([_f32_1d, _f32_1d]), npt.Array2D[np.float32])
+assert_type(np.vstack([_f32_1d, _f64_1d]), npt.Array2D[Any])
 assert_type(np.vstack((C, _f32_1d)), npt.Array2D[Any])
 assert_type(np.vstack([_f32_2d, _f32_2d]), npt.Array2D[np.float32])
 assert_type(np.vstack([_f32_3d, _f32_3d]), npt.Array3D[np.float32])
+assert_type(np.vstack([_T_2d, _T_2d]), np.ndarray[tuple[int, int], np.dtypes.StringDType])
 assert_type(np.vstack([_f32_3d, _f32_3d], dtype=np.int8), npt.Array3D[np.int8])
 
 assert_type(np.hstack([A, A]), npt.NDArray[np.float64])
