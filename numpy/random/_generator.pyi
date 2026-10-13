@@ -874,6 +874,62 @@ class Generator:
     def integers(
         self, low: int, high: int | None = None, size: None = None, dtype: DTypeLike | None = ..., endpoint: bool = False
     ) -> Any: ...
+    @overload  # Nd, 0d, dtype=<known>
+    def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
+        self,
+        low: _ArrayInt[ShapeT],
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    @overload  # 0d, Nd, dtype=<known>
+    def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
+        self,
+        low: int,
+        high: _ArrayInt[ShapeT],
+        size: None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+    @overload  # Nd, 0d
+    def integers[ShapeT: _Shape](
+        self,
+        low: _ArrayInt[ShapeT],
+        high: int | None = None,
+        size: None = None,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
+    ) -> _ArrayI64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def integers[ShapeT: _Shape](
+        self,
+        low: int,
+        high: _ArrayInt[ShapeT],
+        size: None = None,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
+    ) -> _ArrayI64[ShapeT]: ...
+    @overload  # Nd, 0d, dtype=<unknown>
+    def integers[ShapeT: _Shape](
+        self,
+        low: _ArrayInt[ShapeT],
+        high: int | None = None,
+        size: None = None,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT]: ...
+    @overload  # 0d, Nd, dtype=<unknown>
+    def integers[ShapeT: _Shape](
+        self,
+        low: int,
+        high: _ArrayInt[ShapeT],
+        size: None = None,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
+    ) -> np.ndarray[ShapeT]: ...
     @overload  # integer dtype, size=<1d> (positional)
     def integers[ScalarT: np.integer | np.bool](
         self,
