@@ -1144,6 +1144,14 @@ class Generator:
     #
     @overload  # 0d, 0d
     def negative_binomial(self, /, n: _FloatLike_co, p: _FloatLike_co, size: None = None) -> int: ...
+    @overload  # Nd, 0d
+    def negative_binomial[ShapeT: _Shape](
+        self, /, n: _ArrayFloat[ShapeT], p: _FloatLike_co, size: None = None
+    ) -> _ArrayI64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def negative_binomial[ShapeT: _Shape](
+        self, /, n: _FloatLike_co, p: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # >=0d, >0d
     def negative_binomial(self, /, n: _ArrayLikeFloat_co, p: _NDArrayLikeFloat, size: None = None) -> NDArray[np.int64]: ...
     @overload  # >0d, >=0d
