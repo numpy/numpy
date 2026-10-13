@@ -2118,6 +2118,36 @@ def asarray[ShapeT: _Shape, DTypeT: np.dtype](
     copy: bool | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # [?d T]  (workaround)
+def asarray[DTypeT: np.dtype](
+    a: Sequence[np.ndarray[_JustND, DTypeT]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[_AnyShape, DTypeT]: ...
+@overload  # [1d T]
+def asarray[DTypeT: np.dtype](
+    a: Sequence[np.ndarray[_1D, DTypeT]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[_2D, DTypeT]: ...
+@overload  # [2d T]
+def asarray[DTypeT: np.dtype](
+    a: Sequence[np.ndarray[_2D, DTypeT]],
+    dtype: None = None,
+    order: _OrderKACF = None,
+    *,
+    device: L["cpu"] | None = None,
+    copy: bool | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> np.ndarray[_3D, DTypeT]: ...
 @overload  # known array-like (unknown shape)
 def asarray[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
