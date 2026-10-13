@@ -1430,9 +1430,25 @@ class Generator:
     ) -> NDArray[np.float64]: ...
 
     #
-    @overload  # 0d n, size=None (default)
-    def multinomial(self, /, n: _IntLike_co, pvals: _ArrayLikeFloat_co, size: None = None) -> Array1D[np.int64]: ...
-    @overload  # >=0d n, size=None (default)
+    @overload  # 0d, Nd, size=None (default)
+    def multinomial[ShapeT: _Shape](
+        self, /, n: _IntLike_co, pvals: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayI64[ShapeT]: ...
+    @overload  # 0d, 1d, size=None (default)
+    def multinomial(self, /, n: _IntLike_co, pvals: Sequence[_FloatLike_co], size: None = None) -> Array1D[np.int64]: ...
+    @overload  # ?d, >=0d, size=None (default)  (workaround)
+    def multinomial(
+        self, /, n: _ArrayJustND[np.generic[int]], pvals: _ArrayLikeFloat_co, size: None = None
+    ) -> NDArray[np.int64]: ...
+    @overload  # 1d, ?d, size=None (default)  (workaround)
+    def multinomial(
+        self, /, n: _ArrayInt[_1D], pvals: _ArrayJustND[np.generic[float]], size: None = None
+    ) -> NDArray[np.int64]: ...
+    @overload  # 1d, <=2d, size=None (default)
+    def multinomial(
+        self, /, n: _ArrayInt[_1D], pvals: _ArrayFloat[_1D | _2D] | Sequence[_FloatLike_co], size: None = None
+    ) -> Array2D[np.int64]: ...
+    @overload  # >=0d, >=0d, size=None (default)
     def multinomial(
         self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: None = None
     ) -> NDArray[np.int64]: ...
