@@ -1425,6 +1425,36 @@ class TestPickling:
             assert roundtrip_dt == dt
             assert hash(roundtrip_dt) == pre_pickle_hash
 
+    @pytest.mark.parametrize("rat_cls", [rational, rational2])
+    def test_unpickled_user_dtype_is_not_singleton(self, rat_cls):
+        # Legacy user-defined dtypes are process-wide singletons like the
+        # builtin ones.  `dtype.__reduce__` requests `copy=True` and
+        # unpickling then calls `__setstate__` on the result, so the copy
+        # must be honoured; otherwise `__setstate__` mutates the shared
+        # singleton (a data race on free-threaded builds).
+        singleton = np.dtype(rat_cls)
+        assert np.dtype(rat_cls) is singleton
+        state = (singleton.byteorder, singleton.itemsize,
+                 singleton.alignment, singleton.flags)
+
+        assert np.dtype(rat_cls, copy=True) is not singleton
+
+        arr = np.array([rat_cls(1, 2), rat_cls(3, 4)])
+        assert arr.dtype is singleton
+        for proto in range(pickle.HIGHEST_PROTOCOL + 1):
+            roundtrip_dt = pickle.loads(pickle.dumps(singleton, proto))
+            assert roundtrip_dt == singleton
+            assert roundtrip_dt is not singleton
+
+            roundtrip_arr = pickle.loads(pickle.dumps(arr, proto))
+            assert_array_equal(roundtrip_arr, arr)
+            assert roundtrip_arr.dtype == singleton
+            assert roundtrip_arr.dtype is not singleton
+
+        # The singleton itself must be left untouched.
+        assert (singleton.byteorder, singleton.itemsize,
+                singleton.alignment, singleton.flags) == state
+
     @pytest.mark.parametrize('dt', [
         np.dtype([('a', 'i4'), ('b', 'f8')]),
         np.dtype('i4, i1', align=True),

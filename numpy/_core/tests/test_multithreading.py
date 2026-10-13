@@ -1,5 +1,6 @@
 import concurrent.futures
 import inspect
+import pickle
 import random
 import subprocess
 import sys
@@ -398,6 +399,23 @@ def test_legacy_usertype_cast_init_thread_safety(rat_cls):
         np.full((10, 10), 1, rat_cls)
 
     run_threaded(closure, 250, pass_barrier=True)
+
+
+@pytest.mark.parametrize("rat_cls", [
+    _rational_tests.rational, _rational_tests.rational2])
+def test_legacy_usertype_unpickle_thread_safety(rat_cls):
+    # Unpickling a legacy user dtype must operate on a private copy of the
+    # descriptor; `dtype.__setstate__` on the shared singleton would race with
+    # every other thread reading it (e.g. the buffer export in pickle.dumps).
+    payload = pickle.dumps(np.full(128, rat_cls(1, 2)))
+
+    def closure(b):
+        b.wait()
+        for _ in range(100):
+            arr = pickle.loads(payload)
+            pickle.dumps(arr, protocol=5)
+
+    run_threaded(closure, pass_barrier=True)
 
 @pytest.mark.parametrize("dtype", [bool, int, float])
 def test_nonzero(dtype):

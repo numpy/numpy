@@ -2710,8 +2710,16 @@ arraydescr_new(PyTypeObject *subtype,
         return NULL;
     }
 
-    /* Get a new copy of it unless it's already a copy */
-    if (copy && PyDataType_FIELDS(conv) == Py_None) {
+    /*
+     * Get a new copy of it unless it's already a copy.  Builtin singletons
+     * have `fields == Py_None`.  Legacy user-defined dtypes are singletons
+     * too, but with `fields == NULL`, so check for them explicitly.
+     * Pickling relies on this: `__reduce__` asks for a copy and
+     * `__setstate__` then writes to the result, which must not be the
+     * shared singleton (otherwise a data race on free-threaded builds).
+     */
+    if (copy && (PyDataType_FIELDS(conv) == Py_None
+                 || PyTypeNum_ISUSERDEF(conv->type_num))) {
         PyArray_DESCR_REPLACE(conv);
         if (conv == NULL) {
             return NULL;
