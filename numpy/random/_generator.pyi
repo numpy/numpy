@@ -824,6 +824,18 @@ class Generator:
     #
     @overload  # 0d (default), 0d (default)
     def lognormal(self, /, mean: _FloatLike_co = 0.0, sigma: _FloatLike_co = 1.0, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def lognormal[ShapeT: _Shape](
+        self, /, mean: _ArrayFloat[ShapeT], sigma: _FloatLike_co = 1.0, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd (positional)
+    def lognormal[ShapeT: _Shape](
+        self, /, mean: _FloatLike_co, sigma: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd (keyword)
+    def lognormal[ShapeT: _Shape](
+        self, /, mean: _FloatLike_co = 0.0, *, sigma: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >0d, >=0d
     def lognormal(self, /, mean: _NDArrayLikeFloat, sigma: _ArrayLikeFloat_co = 1.0, size: None = None) -> _ArrayF64: ...
     @overload  # >=0d, >0d (positional)
