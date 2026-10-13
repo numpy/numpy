@@ -554,6 +554,14 @@ class Generator:
     #
     @overload  # 0d, 0d
     def wald(self, /, mean: _FloatLike_co, scale: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def wald[ShapeT: _Shape](
+        self, /, mean: _ArrayFloat[ShapeT], scale: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def wald[ShapeT: _Shape](
+        self, /, mean: _FloatLike_co, scale: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >0d
     def wald(self, /, mean: _ArrayLikeFloat_co, scale: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >0d, >=0d
