@@ -536,6 +536,14 @@ class Generator:
     #
     @overload  # 0d, 0d
     def vonmises(self, /, mu: _FloatLike_co, kappa: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def vonmises[ShapeT: _Shape](
+        self, /, mu: _ArrayFloat[ShapeT], kappa: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def vonmises[ShapeT: _Shape](
+        self, /, mu: _FloatLike_co, kappa: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >0d
     def vonmises(self, /, mu: _ArrayLikeFloat_co, kappa: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >0d, >=0d
