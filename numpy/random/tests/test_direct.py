@@ -1,6 +1,5 @@
 import os
 import sys
-import threading
 from os.path import join
 
 import pytest
@@ -25,6 +24,7 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
 )
+from numpy.testing._private.utils import run_threaded
 
 try:
     import cffi  # noqa: F401
@@ -172,26 +172,21 @@ def test_seedsequence_spawn_thread_safe():
     children_per_thread = 500
 
     seed_seq = SeedSequence(100)
-    barrier = threading.Barrier(num_threads)
     results = [None] * num_threads
 
-    def spawn_children(index):
+    def spawn_children(index, barrier):
         barrier.wait()
         results[index] = seed_seq.spawn(children_per_thread)
-
-    threads = [
-        threading.Thread(target=spawn_children, args=(i,))
-        for i in range(num_threads)
-    ]
 
     old_switch_interval = sys.getswitchinterval()
     sys.setswitchinterval(1e-5)
     try:
-        for thread in threads:
-            thread.start()
-
-        for thread in threads:
-            thread.join()
+        run_threaded(
+            spawn_children,
+            max_workers=num_threads,
+            pass_count=True,
+            pass_barrier=True,
+        )
     finally:
         sys.setswitchinterval(old_switch_interval)
 
