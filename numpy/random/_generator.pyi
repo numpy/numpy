@@ -908,6 +908,18 @@ class Generator:
     #
     @overload  # 0d, 0d, 0d
     def triangular(self, /, left: _FloatLike_co, mode: _FloatLike_co, right: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d, 0d
+    def triangular[ShapeT: _Shape](
+        self, /, left: _ArrayFloat[ShapeT], mode: _FloatLike_co, right: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd, 0d
+    def triangular[ShapeT: _Shape](
+        self, /, left: _FloatLike_co, mode: _ArrayFloat[ShapeT], right: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, 0d, Nd
+    def triangular[ShapeT: _Shape](
+        self, /, left: _FloatLike_co, mode: _FloatLike_co, right: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >=0d, >0d
     def triangular(
         self, /, left: _ArrayLikeFloat_co, mode: _ArrayLikeFloat_co, right: _NDArrayLikeFloat, size: None = None
