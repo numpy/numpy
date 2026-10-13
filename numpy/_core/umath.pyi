@@ -6125,7 +6125,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     @overload  # ?d T  (workaround)
     def reduce[ScalarT: _from_f64](  # pyrefly:ignore[bad-override]
         self,
-        array: _Array[_JustND, ScalarT],
+        array: _ArrayJustND[ScalarT],
         /,
         axis: int | tuple[int, ...] = 0,
         dtype: None = None,
@@ -7245,8 +7245,60 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
 
     #
     @override
-    @overload  # T@floating
+    @overload  # ?d T  (workaround)
     def reduce[FloatT: np.floating](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[FloatT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: float | FloatT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[FloatT] | FloatT: ...
+    @overload  # 1d T
+    def reduce[FloatT: np.floating](
+        self,
+        array: Array1D[FloatT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: float | FloatT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> FloatT: ...
+    @overload  # 2d T
+    def reduce[FloatT: np.floating](
+        self,
+        array: Array2D[FloatT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: float | FloatT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[FloatT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, FloatT: np.floating](
+        self,
+        array: _Array[ShapeT, FloatT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: float | FloatT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, FloatT]: ...
+    @overload  # T@floating
+    def reduce[FloatT: np.floating](
         self,
         array: _ArrayLike[FloatT],
         /,
