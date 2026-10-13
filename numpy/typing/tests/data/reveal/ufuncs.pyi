@@ -3810,6 +3810,7 @@ assert_type(np.fmax.reduceat(_u8_nd, (1,)), npt.NDArray[np.uint8])
 assert_type(np.fmax.reduceat(_i32_nd, (1,)), npt.NDArray[np.int32])
 assert_type(np.fmax.reduceat(_i64_nd, (1,)), npt.NDArray[np.int64])
 assert_type(np.fmax.reduceat(_f32_nd, (1,)), npt.NDArray[np.float32])
+assert_type(np.fmax.reduceat(_f64_1d, (1,)), npt.Array1D[np.float64])
 assert_type(np.fmax.reduceat(_f64_nd, (1,)), npt.NDArray[np.float64])
 assert_type(np.fmax.reduceat(_c64_nd, (1,)), npt.NDArray[np.complex64])
 assert_type(np.fmax.reduceat(_c128_nd, (1,)), npt.NDArray[np.complex128])
@@ -3828,6 +3829,7 @@ assert_type(np.fmax.accumulate(_u8_nd), npt.NDArray[np.uint8])
 assert_type(np.fmax.accumulate(_i32_nd), npt.NDArray[np.int32])
 assert_type(np.fmax.accumulate(_i64_nd), npt.NDArray[np.int64])
 assert_type(np.fmax.accumulate(_f32_nd), npt.NDArray[np.float32])
+assert_type(np.fmax.accumulate(_f64_2d), npt.Array2D[np.float64])
 assert_type(np.fmax.accumulate(_f64_nd), npt.NDArray[np.float64])
 assert_type(np.fmax.accumulate(_c64_nd), npt.NDArray[np.complex64])
 assert_type(np.fmax.accumulate(_c128_nd), npt.NDArray[np.complex128])
@@ -3852,7 +3854,7 @@ assert_type(np.maximum.reduce(_T_1d, keepdims=True), np.ndarray[tuple[Any, ...],
 
 assert_type(np.maximum.reduceat(_T_1d, (1,)), np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
 
-assert_type(np.maximum.accumulate(_T_1d), np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+assert_type(np.maximum.accumulate(_T_1d), np.ndarray[tuple[int], np.dtypes.StringDType])
 
 ###
 # _ufunc_21_add
