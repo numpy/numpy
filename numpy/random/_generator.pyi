@@ -616,6 +616,18 @@ class Generator:
     #
     @overload  # 0d (default), 0d (default)
     def uniform(self, /, low: _FloatLike_co = 0.0, high: _FloatLike_co = 1.0, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def uniform[ShapeT: _Shape](
+        self, /, low: _ArrayFloat[ShapeT], high: _FloatLike_co = 1.0, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd (positional)
+    def uniform[ShapeT: _Shape](
+        self, /, low: _FloatLike_co, high: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd (keyword)
+    def uniform[ShapeT: _Shape](
+        self, /, low: _FloatLike_co = 0.0, *, high: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >0d, >=0d
     def uniform(self, /, low: _NDArrayLikeFloat, high: _ArrayLikeFloat_co = 1.0, size: None = None) -> _ArrayF64: ...
     @overload  # >=0d, >0d (positional)
