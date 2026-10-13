@@ -78,7 +78,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "stringdtype/dtype.h"
 
 #include "get_attr_string.h"
-#include "public_dtype_api.h"  /* _fill_dtype_api */
 #include "textreading/readtext.h"  /* _readtext_from_file_object */
 
 #include "npy_dlpack.h"
@@ -5641,7 +5640,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
      * Export the API tables
      */
     c_api = PyCapsule_New((void *)PyArray_API, NULL, NULL);
-    /* The dtype API is not auto-filled/generated via Python scripts: */
+    /* Fill the DType slots at runtime, after DType initialization. */
     _fill_dtype_api(PyArray_API);
     if (c_api == NULL) {
         return -1;
