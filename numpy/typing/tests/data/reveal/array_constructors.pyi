@@ -29,7 +29,11 @@ _f32_0d: np.float32
 _f32_1d: npt.Array1D[np.float32]
 _f32_2d: npt.Array2D[np.float32]
 _f32_3d: npt.Array3D[np.float32]
+_f32_1d_list: list[npt.Array1D[np.float32]]
+_f32_2d_list: list[npt.Array2D[np.float32]]
 _f32_4d_list: list[npt.Array4D[np.float32]]
+_f32_nd_list: list[npt.NDArray[np.float32]]
+_T_1d_list: list[np.ndarray[tuple[int], np.dtypes.StringDType]]
 _f64_0d: npt.Array0D[np.float64]
 _f64_1d: npt.Array1D[np.float64]
 _obj_str_1d: npt.Array1D[np.object_[str]]
@@ -103,6 +107,10 @@ assert_type(np.array(_py_i_3d, dtype="f"), npt.Array3D[Any])
 assert_type(np.array(_f32_0d), npt.Array0D[np.float32])
 assert_type(np.array(_f32_1d), npt.Array1D[np.float32])
 assert_type(np.array(_f32_2d), npt.Array2D[np.float32])
+assert_type(np.array(_f32_1d_list), npt.Array2D[np.float32])
+assert_type(np.array(_f32_2d_list), npt.Array3D[np.float32])
+assert_type(np.array(_f32_nd_list), npt.NDArray[np.float32])
+assert_type(np.array(_T_1d_list), np.ndarray[tuple[int, int], np.dtypes.StringDType])
 assert_type(np.array(_f32_1d, dtype="f8"), npt.Array1D[Any])
 assert_type(np.array(A), npt.NDArray[np.float64])
 assert_type(np.array(B), npt.NDArray[np.float64])
