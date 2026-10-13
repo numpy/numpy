@@ -8828,8 +8828,60 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
 
     #
     @override
-    @overload  # T@inexact
+    @overload  # ?d T  (workaround)
     def reduce[ScalarT: np.inexact](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: complex | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | ScalarT: ...
+    @overload  # 1d T
+    def reduce[ScalarT: np.inexact](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: complex | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: np.inexact](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: complex | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: np.inexact](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: complex | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # T@inexact
+    def reduce[ScalarT: np.inexact](
         self,
         array: _ArrayLike[ScalarT],
         /,
