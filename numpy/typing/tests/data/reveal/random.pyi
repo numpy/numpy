@@ -16,6 +16,7 @@ _2d: tuple[int, int]
 
 _i64: np.int64
 
+_i64_1d: npt.Array1D[np.int64]
 _f64_1d: npt.Array1D[np.float64]
 _f64_2d: npt.Array2D[np.float64]
 _tuple_f64: tuple[np.float64, ...]
@@ -623,7 +624,9 @@ assert_type(def_gen.binomial(10, 0.5, size=_2d), npt.Array2D[np.int64])
 assert_type(def_gen.binomial(10, 0.5, 1), npt.Array1D[np.int64])
 assert_type(def_gen.binomial(10, 0.5, _1d), npt.Array1D[np.int64])
 assert_type(def_gen.binomial(10, 0.5, _2d), npt.Array2D[np.int64])
+assert_type(def_gen.binomial(_i64_1d, 0.5), npt.Array1D[np.int64])
 assert_type(def_gen.binomial(I_arr_10, 0.5), npt.NDArray[np.int64])
+assert_type(def_gen.binomial(10, _f64_2d), npt.Array2D[np.int64])
 assert_type(def_gen.binomial(10, D_arr_0p5), npt.NDArray[np.int64])
 assert_type(def_gen.binomial(I_arr_10, 0.5, size=1), npt.Array1D[np.int64])
 assert_type(def_gen.binomial(10, D_arr_0p5, size=1), npt.Array1D[np.int64])

@@ -57,6 +57,10 @@ type _DTypeLikeFloat = type[float] | _DTypeLike[np.float32 | np.float64] | str
 type _NDArrayLikeInt = NDArray[np.generic[int]] | _NestedSequence[int]
 type _NDArrayLikeFloat = NDArray[np.generic[float]] | _NestedSequence[float]
 
+type _ArrayInt[ShapeT: _Shape] = np.ndarray[ShapeT, np.dtype[np.generic[int]]]
+type _ArrayFloat[ShapeT: _Shape] = np.ndarray[ShapeT, np.dtype[np.generic[float]]]
+type _ArrayI64[ShapeT: _Shape] = np.ndarray[ShapeT, np.dtype[np.int64]]
+
 type _MethodExp = Literal["zig", "inv"]
 type _MethodMVN = Literal["svd", "eigh", "cholesky"]
 type _CheckValid = Literal["warn", "raise", "ignore"]
@@ -945,7 +949,7 @@ class Generator:
         size: ShapeT,
         dtype: _DTypeLikeI64 = ...,
         endpoint: bool = False,
-    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # int64 (default), size=<known> (keyword)
     def integers[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
@@ -955,7 +959,7 @@ class Generator:
         size: ShapeT,
         dtype: _DTypeLikeI64 = ...,
         endpoint: bool = False,
-    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # int64 (default), size=<unknown>
     def integers(
         self,
@@ -1055,7 +1059,7 @@ class Generator:
     @overload  # size=<known>
     def zipf[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, a: _ArrayLikeFloat_co, size: ShapeT
-    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # size=<unknown>
     def zipf(self, /, a: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.int64]: ...
 
@@ -1071,7 +1075,7 @@ class Generator:
     @overload  # size=<known>
     def geometric[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, p: _ArrayLikeFloat_co, size: ShapeT
-    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # size=<unknown>
     def geometric(self, /, p: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.int64]: ...
 
@@ -1087,7 +1091,7 @@ class Generator:
     @overload  # size=<known>
     def logseries[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, p: _ArrayLikeFloat_co, size: ShapeT
-    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # size=<unknown>
     def logseries(self, /, p: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.int64]: ...
 
@@ -1105,11 +1109,11 @@ class Generator:
     @overload  # size=<known> (positional)
     def poisson[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, lam: _ArrayLikeFloat_co, size: ShapeT
-    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # size=<known> (keyword)
     def poisson[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, lam: _ArrayLikeFloat_co = 1.0, *, size: ShapeT
-    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # size=<unknown> (positional)
     def poisson(self, /, lam: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.int64]: ...
     @overload  # size=<unknown> (keyword)
@@ -1118,6 +1122,10 @@ class Generator:
     #
     @overload  # 0d, 0d
     def binomial(self, /, n: int, p: _FloatLike_co, size: None = None) -> int: ...
+    @overload  # Nd, 0d
+    def binomial[ShapeT: _Shape](self, /, n: _ArrayInt[ShapeT], p: _FloatLike_co, size: None = None) -> _ArrayI64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def binomial[ShapeT: _Shape](self, /, n: _IntLike_co, p: _ArrayFloat[ShapeT], size: None = None) -> _ArrayI64[ShapeT]: ...
     @overload  # >=0d, >0d
     def binomial(self, /, n: _ArrayLikeInt_co, p: _NDArrayLikeFloat, size: None = None) -> NDArray[np.int64]: ...
     @overload  # >0d, >=0d
@@ -1129,7 +1137,7 @@ class Generator:
     @overload  # size=<known>
     def binomial[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, n: _ArrayLikeInt_co, p: _ArrayLikeFloat_co, size: ShapeT
-    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # size=<unknown>
     def binomial(self, /, n: _ArrayLikeInt_co, p: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.int64]: ...
 
@@ -1149,7 +1157,7 @@ class Generator:
     @overload  # size=<known>
     def negative_binomial[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, n: _ArrayLikeFloat_co, p: _ArrayLikeFloat_co, size: ShapeT
-    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # size=<unknown>
     def negative_binomial(self, /, n: _ArrayLikeFloat_co, p: _ArrayLikeFloat_co, size: _ShapeLike) -> NDArray[np.int64]: ...
 
@@ -1179,7 +1187,7 @@ class Generator:
     @overload  # size=<known>
     def hypergeometric[ShapeT: (_0D, _1D, _2D, _3D)](
         self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _ArrayLikeInt_co, size: ShapeT
-    ) -> np.ndarray[ShapeT, np.dtype[np.int64]]: ...
+    ) -> _ArrayI64[ShapeT]: ...
     @overload  # size=<unknown>
     def hypergeometric(
         self, /, ngood: _ArrayLikeInt_co, nbad: _ArrayLikeInt_co, nsample: _ArrayLikeInt_co, size: _ShapeLike
