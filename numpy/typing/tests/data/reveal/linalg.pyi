@@ -1004,6 +1004,7 @@ assert_type(np.linalg.vecdot(AR_c8_3d, AR_c8_3d), npt.Array2D[np.complex64])
 assert_type(np.linalg.vecdot(AR_c16_3d, AR_c16_3d), npt.Array2D[np.complex128])
 
 assert_type(np.linalg.vecdot(AR_i8, AR_i8), npt.NDArray[np.int64] | Any)
+assert_type(np.linalg.vecdot(AR_i8, AR_u8), Any)
 assert_type(np.linalg.vecdot(AR_f4, AR_f4), npt.NDArray[np.float32] | Any)
 assert_type(np.linalg.vecdot(AR_f8, AR_f8), npt.NDArray[np.float64] | Any)
 assert_type(np.linalg.vecdot(AR_c8, AR_c8), npt.NDArray[np.complex64] | Any)
