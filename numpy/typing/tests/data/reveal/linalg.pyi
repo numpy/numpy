@@ -34,6 +34,7 @@ AR_any: np.ndarray
 AR_f_: npt.NDArray[np.floating]
 AR_c_: npt.NDArray[np.complexfloating]
 AR_i8: npt.NDArray[np.int64]
+AR_u8: npt.NDArray[np.uint64]
 AR_f2: npt.NDArray[np.float16]
 AR_f4: npt.NDArray[np.float32]
 AR_f8: npt.NDArray[np.float64]
@@ -782,6 +783,9 @@ assert_type(np.linalg.outer(int_list_1d, int_list_1d), npt.Array2D[np.int64])
 assert_type(np.linalg.outer(float_list_1d, float_list_1d), npt.Array2D[np.float64])
 assert_type(np.linalg.outer(complex_list_1d, complex_list_1d), npt.Array2D[np.complex128])
 assert_type(np.linalg.outer(AR_i8, AR_i8), npt.Array2D[np.int64])
+assert_type(np.linalg.outer(AR_i8, AR_u8), npt.Array2D[Any])
+assert_type(np.linalg.outer(AR_f4, AR_f2), npt.Array2D[Any])
+assert_type(np.linalg.outer(AR_f4, AR_f4), npt.Array2D[np.float32])
 assert_type(np.linalg.outer(AR_f8, AR_f8), npt.Array2D[np.float64])
 assert_type(np.linalg.outer(AR_c16, AR_c16), npt.Array2D[np.complex128])
 assert_type(np.linalg.outer(AR_b, AR_b), npt.Array2D[np.bool])
