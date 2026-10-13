@@ -11804,8 +11804,60 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
 
     #
     @override
-    @overload  # known scalar type
+    @overload  # ?d T  (workaround)
     def reduce[ScalarT: np.floating | np.integer](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _FloatLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | Any: ...
+    @overload  # 1d T
+    def reduce[ScalarT: np.floating | np.integer](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _FloatLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: np.floating | np.integer](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _FloatLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: np.floating | np.integer](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _FloatLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # known scalar type
+    def reduce[ScalarT: np.floating | np.integer](
         self,
         array: _ArrayLike[ScalarT],
         /,
