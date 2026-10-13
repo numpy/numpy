@@ -18649,17 +18649,6 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         *,
         out: None = None,
     ) -> npt.NDArray[ScalarT]: ...
-    @overload  # ~str
-    def reduceat(
-        self: _ufunc_21_extremum[str],
-        array: np.ndarray[Any, np.dtypes.StringDType],
-        /,
-        indices: _ArrayLikeInt,
-        axis: int = 0,
-        dtype: None = None,
-        *,
-        out: None = None,
-    ) -> np.ndarray[tuple[Any, ...], np.dtypes.StringDType]: ...
     @overload  # ~bool
     def reduceat(
         self,
@@ -20909,7 +20898,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         out: None = None,
     ) -> _Array[ShapeT, np.uint]: ...
     @overload  # known scalar type
-    def reduceat[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](
+    def reduceat[ScalarT: np.inexact | np.timedelta64 | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -20963,32 +20952,10 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ~str
-    def reduceat(
-        self,
-        array: _NestedSequence[str],
-        /,
-        indices: _ArrayLikeInt,
-        axis: int = 0,
-        dtype: None = None,
-        *,
-        out: None = None,
-    ) -> npt.NDArray[np.str_]: ...
-    @overload  # ~bytes
-    def reduceat(
-        self,
-        array: _NestedSequence[bytes],
-        /,
-        indices: _ArrayLikeInt,
-        axis: int = 0,
-        dtype: None = None,
-        *,
-        out: None = None,
-    ) -> npt.NDArray[np.bytes_]: ...
     @overload  # dtype=<known>
     def reduceat[ScalarT: np.generic](
         self,
-        array: npt.ArrayLike,
+        array: _ArrayLikeNumericObj_co,
         /,
         indices: _ArrayLikeInt,
         axis: int = 0,
@@ -20999,7 +20966,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # dtype=<unknown>
     def reduceat(
         self,
-        array: npt.ArrayLike,
+        array: _ArrayLikeNumericObj_co,
         /,
         indices: _ArrayLikeInt,
         axis: int = 0,
@@ -21063,7 +21030,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         out: None = None,
     ) -> _Array[ShapeT, np.uint]: ...
     @overload  # known scalar type
-    def accumulate[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](
+    def accumulate[ScalarT: np.inexact | np.timedelta64 | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -21112,30 +21079,20 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         *,
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
-    @overload  # ~str
-    def accumulate(
+    @overload  # Nd ~str
+    def accumulate[ShapeT: _Shape](
         self,
-        array: _NestedSequence[str],
+        array: np.ndarray[ShapeT, np.dtypes.StringDType],
         /,
         axis: int = 0,
         dtype: None = None,
         *,
         out: None = None,
-    ) -> npt.NDArray[np.str_]: ...
-    @overload  # ~bytes
-    def accumulate(
-        self,
-        array: _NestedSequence[bytes],
-        /,
-        axis: int = 0,
-        dtype: None = None,
-        *,
-        out: None = None,
-    ) -> npt.NDArray[np.bytes_]: ...
+    ) -> np.ndarray[ShapeT, np.dtypes.StringDType]: ...
     @overload  # dtype=<known>
     def accumulate[ScalarT: np.generic](
         self,
-        array: npt.ArrayLike,
+        array: _ArrayLikeNumericObj_co,
         /,
         axis: int = 0,
         *,
@@ -21145,7 +21102,7 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
     @overload  # dtype=<unknown>
     def accumulate(
         self,
-        array: npt.ArrayLike,
+        array: _ArrayLikeNumericObj_co,
         /,
         axis: int = 0,
         dtype: npt.DTypeLike | None = None,
