@@ -288,6 +288,17 @@ if __name__ == "__main__":
         self._run()
 
     @pytest.mark.skipif(
+        not __cpu_dispatch__ or "AVX512F" in __cpu_dispatch__,
+        reason="AVX512F is still a dispatched feature in this build",
+    )
+    def test_legacy_feature_name_warning_is_visible(self):
+        """Legacy feature names that are no longer dispatched are visible."""
+        self.env['NPY_DISABLE_CPU_FEATURES'] = "AVX512F"
+        out = self._run()
+        assert "UserWarning" in out.stderr
+        assert "AVX512F" in out.stderr
+
+    @pytest.mark.skipif(
         not __cpu_dispatch__,
         reason=(
             "NPY_*_CPU_FEATURES only parsed if "
