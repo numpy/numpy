@@ -230,6 +230,8 @@ type _to_f64 = np.float64 | np.float32 | np.float16 | _to_integer
 type _to_c64 = np.complex64 | _to_f32
 type _to_c128 = np.complex128 | np.complex64 | _to_f64
 
+type _from_f64 = np.float64 | np.complex128 | np.longdouble | np.clongdouble
+
 type _NumericLike_co = _NumberLike_co | np.timedelta64
 type _NumTimeLike_co = _NumericLike_co | np.datetime64
 
@@ -3998,8 +4000,60 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
 
     #
     @override
-    @overload  # unknown shape, not object_
+    @overload  # ?d  (workaround)
     def reduce(  # pyrefly:ignore[bad-override]
+        self,
+        array: np.ndarray[_JustND, _DTypeNonObject],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.bool] | Any: ...
+    @overload  # 1d
+    def reduce(
+        self,
+        array: np.ndarray[_1D, _DTypeNonObject],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.bool: ...
+    @overload  # 2d
+    def reduce(
+        self,
+        array: np.ndarray[_2D, _DTypeNonObject],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[np.bool]: ...
+    @overload  # Nd, keepdims=True
+    def reduce[ShapeT: _Shape](
+        self,
+        array: np.ndarray[ShapeT, _DTypeNonObject],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[True],
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, np.bool]: ...
+    @overload  # unknown shape, not object_
+    def reduce(
         self,
         array: _ArrayUnlikeObject,
         /,
@@ -4508,8 +4562,60 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
 
     #
     @override
-    @overload  # unknown shape
+    @overload  # ?d  (workaround)
     def reduce(  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[_JustND, np.bool],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[np.bool] | np.bool: ...
+    @overload  # 1d
+    def reduce(
+        self,
+        array: Array1D[np.bool],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.bool: ...
+    @overload  # 2d
+    def reduce(
+        self,
+        array: Array2D[np.bool],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[np.bool]: ...
+    @overload  # Nd, keepdims=True
+    def reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, np.bool],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[True],
+        initial: _IntLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, np.bool]: ...
+    @overload  # unknown shape
+    def reduce(
         self,
         array: _ArrayLikeBool_co,
         /,
@@ -5452,7 +5558,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> np.complex128 | Any: ...
     @overload  # 0d _, 0d _, dtype=<known>
-    def __call__[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def __call__[ScalarT: _from_f64](
         self,
         x1: _NumberLike_co,
         x2: _NumberLike_co,
@@ -5573,7 +5679,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.clongdouble]: ...
     @overload  # ?d _, ?d _, dtype=<known>
-    def __call__[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def __call__[ScalarT: _from_f64](
         self,
         x1: _NativeArrayLikeNumber_co,
         x2: _NativeArrayLikeNumber_co,
@@ -5752,7 +5858,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> np.complex128 | Any: ...
     @overload  # 0d _, 0d _, dtype=<known>
-    def outer[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def outer[ScalarT: _from_f64](
         self,
         x1: _NumberLike_co,
         x2: _NumberLike_co,
@@ -5939,7 +6045,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         **kwargs: Unpack[_Kwargs21],
     ) -> npt.NDArray[np.clongdouble]: ...
     @overload  # ?d _, ?d _, dtype=<known>
-    def outer[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def outer[ScalarT: _from_f64](
         self,
         x1: _NativeArrayLikeNumber_co,
         x2: _NativeArrayLikeNumber_co,
@@ -6016,8 +6122,60 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
 
     #
     @override
+    @overload  # ?d T  (workaround)
+    def reduce[ScalarT: _from_f64](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | Any: ...
+    @overload  # 1d T
+    def reduce[ScalarT: _from_f64](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: _from_f64](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: _from_f64](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # known scalar type
-    def reduce[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: _from_f64](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6030,7 +6188,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[ScalarT] | Any: ...
     @overload  # known scalar type, axis=None
-    def reduce[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def reduce[ScalarT: _from_f64](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6043,7 +6201,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> ScalarT: ...
     @overload  # known scalar type, keepdims=True
-    def reduce[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def reduce[ScalarT: _from_f64](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6134,7 +6292,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         where: _ArrayLikeBool_co = True,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def reduce[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def reduce[ScalarT: _from_f64](
         self,
         array: _ArrayLikeNumber_co,
         /,
@@ -6189,7 +6347,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     #
     @override
     @overload  # Nd
-    def reduceat[ShapeT: _Shape, ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](  # pyrefly:ignore[bad-override]
+    def reduceat[ShapeT: _Shape, ScalarT: _from_f64](  # pyrefly:ignore[bad-override]
         self,
         array: _Array[ShapeT, ScalarT],
         /,
@@ -6222,7 +6380,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         out: None = None,
     ) -> _Array[ShapeT, np.complex128]: ...
     @overload  # known scalar type
-    def reduceat[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def reduceat[ScalarT: _from_f64](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6255,7 +6413,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def reduceat[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def reduceat[ScalarT: _from_f64](
         self,
         array: _ArrayLikeNumber_co,
         /,
@@ -6302,7 +6460,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     #
     @override
     @overload  # Nd
-    def accumulate[ShapeT: _Shape, ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](  # pyrefly:ignore[bad-override]
+    def accumulate[ShapeT: _Shape, ScalarT: _from_f64](  # pyrefly:ignore[bad-override]
         self,
         array: _Array[ShapeT, ScalarT],
         /,
@@ -6332,7 +6490,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         out: None = None,
     ) -> _Array[ShapeT, np.complex128]: ...
     @overload  # known scalar type
-    def accumulate[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def accumulate[ScalarT: _from_f64](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -6362,7 +6520,7 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
         out: None = None,
     ) -> npt.NDArray[np.complex128]: ...
     @overload  # dtype=<known>
-    def accumulate[ScalarT: np.float64 | np.complex128 | np.longdouble | np.clongdouble](
+    def accumulate[ScalarT: _from_f64](
         self,
         array: _ArrayLikeNumber_co,
         /,
@@ -7087,8 +7245,60 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
 
     #
     @override
-    @overload  # T@floating
+    @overload  # ?d T  (workaround)
     def reduce[FloatT: np.floating](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[FloatT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: float | FloatT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[FloatT] | FloatT: ...
+    @overload  # 1d T
+    def reduce[FloatT: np.floating](
+        self,
+        array: Array1D[FloatT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: float | FloatT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> FloatT: ...
+    @overload  # 2d T
+    def reduce[FloatT: np.floating](
+        self,
+        array: Array2D[FloatT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: float | FloatT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[FloatT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, FloatT: np.floating](
+        self,
+        array: _Array[ShapeT, FloatT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: float | FloatT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, FloatT]: ...
+    @overload  # T@floating
+    def reduce[FloatT: np.floating](
         self,
         array: _ArrayLike[FloatT],
         /,
@@ -8618,8 +8828,60 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
 
     #
     @override
-    @overload  # T@inexact
+    @overload  # ?d T  (workaround)
     def reduce[ScalarT: np.inexact](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: complex | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | ScalarT: ...
+    @overload  # 1d T
+    def reduce[ScalarT: np.inexact](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: complex | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: np.inexact](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: complex | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: np.inexact](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: complex | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # T@inexact
+    def reduce[ScalarT: np.inexact](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -9857,8 +10119,60 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
 
     #
     @override
-    @overload  # known scalar type
+    @overload  # ?d T  (workaround)
     def reduce[ScalarT: np.integer](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: int | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | Any: ...
+    @overload  # 1d T
+    def reduce[ScalarT: np.integer](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: int | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: np.integer](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: int | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: np.integer](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: int | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # known scalar type
+    def reduce[ScalarT: np.integer](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -11490,8 +11804,60 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
 
     #
     @override
-    @overload  # known scalar type
+    @overload  # ?d T  (workaround)
     def reduce[ScalarT: np.floating | np.integer](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _FloatLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | Any: ...
+    @overload  # 1d T
+    def reduce[ScalarT: np.floating | np.integer](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _FloatLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: np.floating | np.integer](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _FloatLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: np.floating | np.integer](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _FloatLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # known scalar type
+    def reduce[ScalarT: np.floating | np.integer](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -13605,8 +13971,60 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
 
     #
     @override
-    @overload  # known scalar type
+    @overload  # ?d T  (workaround)
     def reduce[ScalarT: np.number](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | Any: ...
+    @overload  # 1d T
+    def reduce[ScalarT: np.number](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: np.number](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: np.number](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # known scalar type
+    def reduce[ScalarT: np.number](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -15719,8 +16137,60 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
 
     #
     @override
+    @overload  # ?d T  (workaround)
+    def reduce[ScalarT: np.inexact](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumericLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | Any: ...
+    @overload  # 1d T
+    def reduce[ScalarT: np.inexact](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumericLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: np.inexact](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumericLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: np.inexact](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _NumericLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # known scalar type
-    def reduce[ScalarT: np.inexact | np.object_](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: np.inexact | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -17803,8 +18273,60 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
 
     #
     @override
+    @overload  # ?d T  (workaround)
+    def reduce[ScalarT: _to_numeric | np.datetime64](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumTimeLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | Any: ...
+    @overload  # 1d T
+    def reduce[ScalarT: _to_numeric | np.datetime64](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumTimeLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: _to_numeric | np.datetime64](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumTimeLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: _to_numeric | np.datetime64](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _NumTimeLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # known scalar type
-    def reduce[ScalarT: _to_numeric | np.datetime64 | np.object_](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: _to_numeric | np.datetime64 | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
@@ -19960,8 +20482,60 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
 
     #
     @override
+    @overload  # ?d T  (workaround)
+    def reduce[ScalarT: np.inexact | np.timedelta64](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumericLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | Any: ...
+    @overload  # 1d T
+    def reduce[ScalarT: np.inexact | np.timedelta64](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumericLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: np.inexact | np.timedelta64](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: _NumericLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: np.inexact | np.timedelta64](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: _NumericLike_co = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
     @overload  # known scalar type
-    def reduce[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](  # pyrefly:ignore[bad-override]
+    def reduce[ScalarT: np.inexact | np.timedelta64 | np.character | np.object_](
         self,
         array: _ArrayLike[ScalarT],
         /,
