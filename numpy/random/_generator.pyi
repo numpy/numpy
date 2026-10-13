@@ -952,6 +952,18 @@ class Generator:
     #
     @overload  # 0d, 0d, 0d
     def noncentral_f(self, /, dfnum: _FloatLike_co, dfden: _FloatLike_co, nonc: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d, 0d
+    def noncentral_f[ShapeT: _Shape](
+        self, /, dfnum: _ArrayFloat[ShapeT], dfden: _FloatLike_co, nonc: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd, 0d
+    def noncentral_f[ShapeT: _Shape](
+        self, /, dfnum: _FloatLike_co, dfden: _ArrayFloat[ShapeT], nonc: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, 0d, Nd
+    def noncentral_f[ShapeT: _Shape](
+        self, /, dfnum: _FloatLike_co, dfden: _FloatLike_co, nonc: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >=0d, >0d
     def noncentral_f(
         self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, nonc: _NDArrayLikeFloat, size: None = None
