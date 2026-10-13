@@ -31,7 +31,6 @@ from numpy import (
     _OrderKACF,
     _SupportsFileMethods,
     broadcast,
-    complexfloating,
     correlate,
     count_nonzero,
     datetime64,
@@ -44,10 +43,8 @@ from numpy import (
     intp,
     matmul,
     ndarray,
-    signedinteger,
     timedelta64,
     ufunc,
-    unsignedinteger,
     vecdot,
 )
 from numpy._typing import (
@@ -72,7 +69,6 @@ from numpy._typing import (
     _ArrayLikeObject_co,
     _ArrayLikeStr_co,
     _ArrayLikeTD64_co,
-    _ArrayLikeUInt_co,
     _DT64Codes,
     _DTypeLike,
     _DTypeLikeBool,
@@ -199,6 +195,12 @@ _AnyScalarT = TypeVar(
     np.timedelta64, np.datetime64,
     np.bytes_, np.str_, np.void, np.object_,
 )  # fmt: skip
+_AnyNumericT = TypeVar(
+    "_AnyNumericT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64,
+)  # fmt: skip
 _InexactT = TypeVar("_InexactT", bound=np.inexact)
 _IntegerT = TypeVar("_IntegerT", bound=np.integer)
 
@@ -225,6 +227,7 @@ type _JustND = tuple[Never, Never, Never, Never]
 type _ArrayJustND[ScalarT: np.generic] = ndarray[_JustND, dtype[ScalarT]]
 
 type _ToArray1D[ScalarT: np.generic] = Array1D[ScalarT] | Sequence[ScalarT]
+type _NestedList[T] = _NestedSequence[list[T]] | list[T]
 type _ToArray2D[ScalarT: np.generic] = Array2D[ScalarT] | Sequence[Sequence[ScalarT]]
 type _ToArray3D[ScalarT: np.generic] = Array3D[ScalarT] | Sequence[Sequence[Sequence[ScalarT]]]
 
@@ -1883,22 +1886,23 @@ def can_cast(from_: ArrayLike | DTypeLike, to: DTypeLike, casting: _CastingKind 
 def min_scalar_type(a: ArrayLike, /) -> dtype: ...
 def result_type(*arrays_and_dtypes: ArrayLike | DTypeLike | None) -> dtype: ...
 
-@overload
-def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> np.bool: ...
-@overload
-def vdot(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co, /) -> unsignedinteger: ...
-@overload
-def vdot(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, /) -> signedinteger: ...
-@overload
-def vdot(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, /) -> floating: ...
-@overload
-def vdot(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, /) -> complexfloating: ...
-@overload
-def vdot(a: _ArrayLikeTD64_co, b: _ArrayLikeTD64_co, /) -> timedelta64: ...
-@overload
+#
+@overload  # T, T
+def vdot(a: _ArrayLike[_AnyNumericT], b: _ArrayLike[_AnyNumericT], /) -> _AnyNumericT: ...  # noqa: UP047
+@overload  # ~O, _
 def vdot(a: _ArrayLikeObject_co, b: object, /) -> Any: ...
-@overload
+@overload  # _, ~O
 def vdot(a: object, b: _ArrayLikeObject_co, /) -> Any: ...
+@overload  # bool, bool
+def vdot(a: _NestedList[bool], b: _NestedSequence[bool], /) -> np.bool: ...
+@overload  # ~int, +int
+def vdot(a: _NestedList[int], b: _NestedSequence[int], /) -> np.int_: ...
+@overload  # ~float, +float
+def vdot(a: _NestedList[float], b: _NestedSequence[float], /) -> np.float64: ...
+@overload  # ~complex, +complex
+def vdot(a: _NestedList[complex], b: _NestedSequence[complex], /) -> np.complex128: ...
+@overload  # fallback
+def vdot(a: _ArrayLikeComplex_co | _ArrayLikeTD64_co, b: _ArrayLikeComplex_co | _ArrayLikeTD64_co, /) -> Any: ...
 
 #
 @overload
