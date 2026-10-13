@@ -19,9 +19,11 @@ AR_i8_4d: npt.Array4D[np.int64]
 AR_i8_5d: _Array5D[np.int64]
 AR_i8_nd: np.ndarray[tuple[int, *tuple[int, ...]], np.dtype[np.int64]]
 AR_f8: npt.NDArray[np.float64]
+AR_f8_2d: npt.Array2D[np.float64]
 AR_O: npt.NDArray[np.object_]
 AR_O_int_1d: npt.Array1D[np.object_[int]]
 AR_T_1d: np.ndarray[tuple[int], np.dtypes.StringDType]
+AR_T_3d: np.ndarray[tuple[int, int, int], np.dtypes.StringDType]
 
 AR_LIKE_b: list[bool]
 AR_LIKE_f8: list[float]
@@ -93,7 +95,9 @@ assert_type(np.column_stack([AR_i8_3d, AR_i8_3d]), npt.Array3D[np.int64])
 
 assert_type(np.dstack([AR_i8]), npt.NDArray[np.int64])
 assert_type(np.dstack([AR_i8_2d]), npt.Array3D[np.int64])
+assert_type(np.dstack([AR_i8_2d, AR_f8_2d]), npt.NDArray[Any])
 assert_type(np.dstack([AR_i8_4d]), npt.Array4D[np.int64])
+assert_type(np.dstack([AR_T_3d]), np.ndarray[tuple[int, int, int], np.dtypes.StringDType])
 assert_type(np.dstack([AR_LIKE_f8]), npt.NDArray[Any])
 
 assert_type(np.array_split(AR_i8, [3, 5, 6, 10]), list[npt.NDArray[np.int64]])
