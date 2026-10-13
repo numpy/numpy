@@ -492,7 +492,7 @@ cdef class SeedSequence:
             Equivalent method on the generator and bit generator.
 
         """
-        cdef uint32_t i
+        cdef uint32_t i, start
 
         if n_children < 0:
             raise ValueError("n_children must be non-negative")
@@ -500,8 +500,7 @@ cdef class SeedSequence:
         with self._lock:
             start = self.n_children_spawned
             self.n_children_spawned += n_children
-            
-            
+
         seqs = []
         for i in range(start, start + n_children):
             seqs.append(type(self)(
