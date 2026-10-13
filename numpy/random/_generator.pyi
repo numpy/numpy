@@ -312,6 +312,14 @@ class Generator:
     def standard_gamma(
         self, shape: _FloatLike_co, size: None = None, dtype: _DTypeLikeFloat = ..., out: None = None
     ) -> float: ...
+    @overload  # Nd, dtype=f64 (default)
+    def standard_gamma[ShapeT: _Shape](
+        self, shape: _ArrayFloat[ShapeT], size: None = None, dtype: _DTypeLikeF64 = ..., out: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # Nd, dtype=f32 (keyword)
+    def standard_gamma[ShapeT: _Shape](
+        self, shape: _ArrayFloat[ShapeT], size: None = None, *, dtype: _DTypeLikeF32, out: None = None
+    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
     @overload  # >0d, dtype=f64 (default)
     def standard_gamma(
         self, shape: _NDArrayLikeFloat, size: None = None, dtype: _DTypeLikeF64 = ..., out: None = None
