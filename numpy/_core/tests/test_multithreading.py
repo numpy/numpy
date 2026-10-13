@@ -404,9 +404,10 @@ def test_legacy_usertype_cast_init_thread_safety(rat_cls):
 @pytest.mark.parametrize("rat_cls", [
     _rational_tests.rational, _rational_tests.rational2])
 def test_legacy_usertype_unpickle_thread_safety(rat_cls):
-    # Unpickling a legacy user dtype must operate on a private copy of the
-    # descriptor; `dtype.__setstate__` on the shared singleton would race with
-    # every other thread reading it (e.g. the buffer export in pickle.dumps).
+    # Unpickling requests dtype(..., copy=True) and then writes to the result
+    # via __setstate__.  For user dtypes that has to be a real copy, not the
+    # shared singleton, or it races with other threads reading the dtype
+    # (here the buffer export in pickle.dumps).  Only meaningful under TSan.
     payload = pickle.dumps(np.full(128, rat_cls(1, 2)))
 
     def closure(b):
