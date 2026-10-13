@@ -10119,8 +10119,60 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
 
     #
     @override
-    @overload  # known scalar type
+    @overload  # ?d T  (workaround)
     def reduce[ScalarT: np.integer](  # pyrefly:ignore[bad-override]
+        self,
+        array: _ArrayJustND[ScalarT],
+        /,
+        axis: int | tuple[int, ...] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: int | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> npt.NDArray[ScalarT] | Any: ...
+    @overload  # 1d T
+    def reduce[ScalarT: np.integer](
+        self,
+        array: Array1D[ScalarT],
+        /,
+        axis: int | tuple[int] | None = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        keepdims: Literal[False] = False,
+        initial: int | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> ScalarT: ...
+    @overload  # 2d T
+    def reduce[ScalarT: np.integer](
+        self,
+        array: Array2D[ScalarT],
+        /,
+        axis: int | tuple[int] = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[False] = False,
+        initial: int | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> Array1D[ScalarT]: ...
+    @overload  # Nd T, keepdims=True
+    def reduce[ShapeT: _Shape, ScalarT: np.integer](
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        axis: int | tuple[int, ...] | None = 0,
+        dtype: None = None,
+        *,
+        out: EllipsisType | None = None,
+        keepdims: Literal[True],
+        initial: int | ScalarT = ...,
+        where: _ArrayLikeBool_co = True,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # known scalar type
+    def reduce[ScalarT: np.integer](
         self,
         array: _ArrayLike[ScalarT],
         /,
