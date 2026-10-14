@@ -542,6 +542,9 @@ assert_type(np.ma.masked_where(0, AR_LIKE_f), MaskedArray[Any])
 
 assert_type(np.ma.masked_all((2, 2)), MaskedArray[np.float64])
 
+assert_type(np.ma.mask_rowcols(MAR_2d_f4), _MArray2D[np.float32])
+assert_type(np.ma.mask_rowcols([[1.0, 2.0]]), _MArray2D[Any])
+
 assert_type(np.ma.fix_invalid(AR_f4, mask=AR_i8), MaskedArray[np.float32])
 assert_type(np.ma.fix_invalid(AR_LIKE_u, mask=[0, 1]), MaskedArray[np.uint32])
 assert_type(np.ma.fix_invalid(AR_LIKE_f, mask=0), MaskedArray[Any])
