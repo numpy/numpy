@@ -601,8 +601,15 @@ assert_type(
         np.ndarray[tuple[int, int, int], np.dtype[np.complex128]],
     ],
 )
-assert_type(np.meshgrid(AR_f8, AR_f8, AR_f8, AR_f8), tuple[npt.NDArray[np.float64], ...])
-assert_type(np.meshgrid(AR_f8, AR_f8, AR_f8, AR_LIKE_f8), tuple[np.ndarray, ...])
+assert_type(
+    np.meshgrid(AR_f8, AR_f8, AR_f8, AR_f8),
+    tuple[npt.Array4D[np.float64], npt.Array4D[np.float64], npt.Array4D[np.float64], npt.Array4D[np.float64]],
+)
+assert_type(
+    np.meshgrid(AR_f8, AR_f8, AR_f8, AR_LIKE_f8),
+    tuple[npt.Array4D[Any], npt.Array4D[Any], npt.Array4D[Any], npt.Array4D[Any]],
+)
+assert_type(np.meshgrid(AR_f8, AR_f8, AR_f8, AR_f8, AR_f8), tuple[npt.NDArray[np.float64], ...])
 assert_type(np.meshgrid(*AR_LIKE_f8), tuple[np.ndarray, ...])
 
 # delete
