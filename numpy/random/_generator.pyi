@@ -1021,25 +1021,47 @@ class Generator:
     #
     @overload  # 0d bool | int
     def integers[AnyIntT: (bool, int)](
-        self, low: int, high: int | None = None, size: None = None, *, dtype: type[AnyIntT], endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        *,
+        dtype: type[AnyIntT],
+        endpoint: bool = False,
     ) -> AnyIntT: ...
     @overload  # 0d integer dtype
     def integers[ScalarT: np.integer | np.bool](
-        self, low: int, high: int | None = None, size: None = None, *, dtype: _DTypeLike[ScalarT], endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
     ) -> ScalarT: ...
     @overload  # 0d int64 (default)
     def integers(
-        self, low: int, high: int | None = None, size: None = None, dtype: _DTypeLikeI64 = ..., endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
     ) -> np.int64: ...
     @overload  # 0d unknown
     def integers(
-        self, low: int, high: int | None = None, size: None = None, dtype: DTypeLike | None = ..., endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
     ) -> Any: ...
     @overload  # Nd, 0d, dtype=<known>
     def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
         self,
         low: _ArrayInt[ShapeT],
-        high: int | None = None,
+        high: _IntLike_co | None = None,
         size: None = None,
         *,
         dtype: _DTypeLike[ScalarT],
@@ -1048,7 +1070,7 @@ class Generator:
     @overload  # 0d, Nd, dtype=<known>
     def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
         self,
-        low: int,
+        low: _IntLike_co,
         high: _ArrayInt[ShapeT],
         size: None = None,
         *,
@@ -1059,7 +1081,7 @@ class Generator:
     def integers[ShapeT: _Shape](
         self,
         low: _ArrayInt[ShapeT],
-        high: int | None = None,
+        high: _IntLike_co | None = None,
         size: None = None,
         dtype: _DTypeLikeI64 = ...,
         endpoint: bool = False,
@@ -1067,7 +1089,7 @@ class Generator:
     @overload  # 0d, Nd
     def integers[ShapeT: _Shape](
         self,
-        low: int,
+        low: _IntLike_co,
         high: _ArrayInt[ShapeT],
         size: None = None,
         dtype: _DTypeLikeI64 = ...,
@@ -1077,7 +1099,7 @@ class Generator:
     def integers[ShapeT: _Shape](
         self,
         low: _ArrayInt[ShapeT],
-        high: int | None = None,
+        high: _IntLike_co | None = None,
         size: None = None,
         dtype: DTypeLike | None = ...,
         endpoint: bool = False,
@@ -1085,7 +1107,7 @@ class Generator:
     @overload  # 0d, Nd, dtype=<unknown>
     def integers[ShapeT: _Shape](
         self,
-        low: int,
+        low: _IntLike_co,
         high: _ArrayInt[ShapeT],
         size: None = None,
         dtype: DTypeLike | None = ...,
@@ -1346,7 +1368,7 @@ class Generator:
 
     #
     @overload  # 0d, 0d
-    def binomial(self, /, n: int, p: _FloatLike_co, size: None = None) -> int: ...
+    def binomial(self, /, n: _IntLike_co, p: _FloatLike_co, size: None = None) -> int: ...
     @overload  # Nd, 0d
     def binomial[ShapeT: _Shape](self, /, n: _ArrayInt[ShapeT], p: _FloatLike_co, size: None = None) -> _ArrayI64[ShapeT]: ...
     @overload  # 0d, Nd
@@ -1396,7 +1418,7 @@ class Generator:
 
     #
     @overload  # 0d, 0d, 0d
-    def hypergeometric(self, /, ngood: int, nbad: int, nsample: int, size: None = None) -> int: ...
+    def hypergeometric(self, /, ngood: _IntLike_co, nbad: _IntLike_co, nsample: _IntLike_co, size: None = None) -> int: ...
     @overload  # Nd, 0d, 0d
     def hypergeometric[ShapeT: _Shape](
         self, /, ngood: _ArrayInt[ShapeT], nbad: _IntLike_co, nsample: _IntLike_co, size: None = None
@@ -1652,7 +1674,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: int,
+        a: _IntLike_co,
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1828,7 +1850,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: int | list[int],
+        a: _IntLike_co | list[int],
         size: int,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1839,7 +1861,7 @@ class Generator:
     def choice[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         /,
-        a: int | list[int],
+        a: _IntLike_co | list[int],
         size: ShapeT,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1850,7 +1872,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: int | _NestedList[int],
+        a: _IntLike_co | _NestedList[int],
         size: _ShapeLike,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
