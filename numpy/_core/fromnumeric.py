@@ -4138,6 +4138,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     where : array_like of bool, optional
         Elements to include in the standard deviation.
         See `~numpy.ufunc.reduce` for details.
+
     mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
         a shape as if it was calculated with ``keepdims=True``.
