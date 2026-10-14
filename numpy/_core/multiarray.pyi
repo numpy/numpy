@@ -228,10 +228,15 @@ type _JustAnyShape = tuple[Never, Never, Never, Never, Never]
 type _JustND = tuple[Never, Never, Never, Never]
 type _ArrayJustND[ScalarT: np.generic] = ndarray[_JustND, dtype[ScalarT]]
 
-type _ToArray1D[ScalarT: np.generic] = Array1D[ScalarT] | Sequence[ScalarT]
+type _ToArray1D2[ScalarT: np.generic, T] = Array1D[ScalarT] | Sequence[T]
+type _ToArray2D2[ScalarT: np.generic, T] = Array2D[ScalarT] | Sequence[Sequence[T]]
+type _ToArray3D2[ScalarT: np.generic, T] = Array3D[ScalarT] | Sequence[Sequence[Sequence[T]]]
+
+type _ToArray1D[ScalarT: np.generic] = _ToArray1D2[ScalarT, ScalarT]
+type _ToArray2D[ScalarT: np.generic] = _ToArray2D2[ScalarT, ScalarT]
+type _ToArray3D[ScalarT: np.generic] = _ToArray3D2[ScalarT, ScalarT]
+
 type _NestedList[T] = _NestedSequence[list[T]] | list[T]
-type _ToArray2D[ScalarT: np.generic] = Array2D[ScalarT] | Sequence[Sequence[ScalarT]]
-type _ToArray3D[ScalarT: np.generic] = Array3D[ScalarT] | Sequence[Sequence[Sequence[ScalarT]]]
 
 type _ToIndex1D = Array1D[np.integer | np.bool] | Sequence[_IntLike_co]
 type _ToIndex2D = Array2D[np.integer | np.bool] | Sequence[_ToIndex1D]
@@ -1725,28 +1730,28 @@ def where(
 ) -> tuple[Array1D[np.intp], ...]: ...
 @overload  # 1d, None, None
 def where(
-    condition: _ToArray1D[Any],
+    condition: _ToArray1D2[np.generic, np.generic | complex],
     x: None = None,
     y: None = None,
     /,
 ) -> tuple[Array1D[np.intp]]: ...
 @overload  # 2d, None, None
 def where(
-    condition: _ToArray2D[Any],
+    condition: _ToArray2D2[np.generic, np.generic | complex],
     x: None = None,
     y: None = None,
     /,
 ) -> tuple[Array1D[np.intp], Array1D[np.intp]]: ...
 @overload  # 3d, None, None
 def where(
-    condition: _ToArray3D[Any],
+    condition: _ToArray3D2[np.generic, np.generic | complex],
     x: None = None,
     y: None = None,
     /,
 ) -> tuple[Array1D[np.intp], Array1D[np.intp], Array1D[np.intp]]: ...
 @overload  # Nd, None, None  (fallback)
 def where(
-    condition: _ArrayLike[Any],
+    condition: _ArrayLike[Any] | Sequence[Any],
     x: None = None,
     y: None = None,
     /,

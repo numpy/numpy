@@ -38,6 +38,10 @@ AR_LIKE_i: list[int]
 AR_LIKE_f: list[float]
 AR_LIKE_c: list[complex]
 
+_py_b_2d: list[list[bool]]
+_py_b_3d: list[list[list[bool]]]
+_py_str_1d: list[str]
+
 m: np.timedelta64
 M: np.datetime64
 
@@ -210,6 +214,9 @@ assert_type(np.where(AR_f4_1d), tuple[npt.Array1D[np.intp]])
 assert_type(np.where(AR_f4_2d), tuple[npt.Array1D[np.intp], npt.Array1D[np.intp]])
 assert_type(np.where(AR_f4_3d), tuple[npt.Array1D[np.intp], npt.Array1D[np.intp], npt.Array1D[np.intp]])
 assert_type(np.where(AR_f4_nd), tuple[npt.Array1D[np.intp], ...])
+assert_type(np.where(_py_b_2d), tuple[npt.Array1D[np.intp], npt.Array1D[np.intp]])
+assert_type(np.where(_py_b_3d), tuple[npt.Array1D[np.intp], npt.Array1D[np.intp], npt.Array1D[np.intp]])
+assert_type(np.where(_py_str_1d), tuple[npt.Array1D[np.intp], ...])
 assert_type(np.where(AR_b_2d, AR_f4_2d, AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(np.where(AR_b_2d, AR_f4_2d, 0.5), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(np.where(AR_b_2d, 0.5, AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
