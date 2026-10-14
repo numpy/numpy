@@ -404,10 +404,9 @@ def test_legacy_usertype_cast_init_thread_safety(rat_cls):
 @pytest.mark.parametrize("rat_cls", [
     _rational_tests.rational, _rational_tests.rational2])
 def test_legacy_usertype_unpickle_thread_safety(rat_cls):
-    # Unpickling requests dtype(..., copy=True) and then writes to the result
-    # via __setstate__.  For user dtypes that has to be a real copy, not the
-    # shared singleton, or it races with other threads reading the dtype
-    # (here the buffer export in pickle.dumps).  Only meaningful under TSan.
+    # gh-33018: unpickling writes to dtype(..., copy=True) via __setstate__,
+    # so that has to be a private copy rather than the user dtype singleton.
+    # Only TSan can catch the race, there is nothing to assert here.
     payload = pickle.dumps(np.full(128, rat_cls(1, 2)))
 
     def closure(b):
@@ -417,6 +416,7 @@ def test_legacy_usertype_unpickle_thread_safety(rat_cls):
             pickle.dumps(arr, protocol=5)
 
     run_threaded(closure, pass_barrier=True)
+
 
 @pytest.mark.parametrize("dtype", [bool, int, float])
 def test_nonzero(dtype):

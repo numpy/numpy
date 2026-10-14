@@ -1418,9 +1418,11 @@ class TestPickling:
         [np.dtype(rational), np.dtype(rational2)])
     def test_pickle_dtype(self, dt):
         # Check that dtype instances roundtrip when pickling and that pickling
-        # doesn't change the hash value.  Unpickling has to give back a copy,
-        # also for user dtypes: __setstate__ is called on the result.
+        # doesn't change the hash value
         pre_pickle_hash = hash(dt)
+        # __reduce__ asks for copy=True and __setstate__ then writes to the
+        # result, so this must never be the shared singleton (gh-33018).
+        assert np.dtype(dt, copy=True) is not dt
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             roundtrip_dt = pickle.loads(pickle.dumps(dt, proto))
             assert roundtrip_dt == dt
@@ -1631,6 +1633,13 @@ def test_rational_dtype(rat_cls):
     # test that dtype detection finds user-defined types
     x = rat_cls(1)
     assert np.array([x, x]).dtype.type is rat_cls
+
+    # Only the shared singleton gets copied with copy=True; other instances
+    # come back as they are (test_pickle_dtype covers the copy itself).
+    dt = np.dtype(rat_cls)
+    assert np.dtype(dt) is dt
+    swapped = dt.newbyteorder()
+    assert np.dtype(swapped, copy=True) is swapped
 
 
 def test_dtypes_are_true():

@@ -128,6 +128,12 @@ def test_dtype_creation():
     hashes.add(hash(dt))
     assert len(hashes) == 4
 
+    # np.dtype() hands StringDType instances back as they are, even with
+    # copy=True, and refuses to attach metadata to them.
+    assert np.dtype(dt, copy=True) is dt
+    with pytest.raises(TypeError, match="cannot attach metadata"):
+        np.dtype(dt, metadata={"foo": "bar"})
+
 
 @pytest.mark.parametrize("kwargs, expected", [
     ({}, (False, False, False)),
