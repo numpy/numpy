@@ -124,6 +124,7 @@ py.install_sources(
 py.install_sources(
   [
     'tests/__init__.py',
+    'tests/test_bulk.py',
     'tests/test_direct.py',
     'tests/test_extending.py',
     'tests/test_generator_mt19937.py',

@@ -24,6 +24,26 @@ class Random(Benchmark):
         self.func(*self.params)
 
 
+class RandomUniform(Benchmark):
+    param_names = ["rng", "dtype", "size"]
+    params = [
+        ["PCG64", "MT19937", "Philox", "SFC64", "numpy"],
+        ["float32", "float64"],
+        [10, 100, 1_000, 10_000, 100_000, 1_000_000],
+    ]
+
+    def setup(self, rng, dtype, size):
+        if rng == "numpy":
+            self.rg = np.random.default_rng(12345)
+        else:
+            self.rg = Generator(getattr(np.random, rng)(12345))
+        self.dtype = np.dtype(dtype)
+        self.out = np.empty(size, dtype=self.dtype)
+
+    def time_uniform(self, rng, dtype, size):
+        self.rg.random(dtype=self.dtype, out=self.out)
+
+
 class Shuffle(Benchmark):
     def setup(self):
         self.a = np.arange(100000)

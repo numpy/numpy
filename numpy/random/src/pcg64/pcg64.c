@@ -49,6 +49,71 @@
 
 #include "pcg64.h"
 
+void pcg64_fill_uint32(pcg64_state *state, size_t count, uint32_t *out) {
+  size_t i;
+  uint64_t next = 0;
+  pcg64_random_t rng;
+
+  if (count == 0) {
+    return;
+  }
+
+  if (state->has_uint32) {
+    out[0] = state->uinteger;
+    out++;
+    state->has_uint32 = 0;
+    count--;
+    if (count == 0) {
+      return;
+    }
+  }
+
+  rng = *state->pcg_state;
+  for (i = 0; i < count / 2; i++) {
+    next = pcg64_random_r(&rng);
+    out[2 * i] = (uint32_t)(next & 0xffffffff);
+    out[2 * i + 1] = (uint32_t)(next >> 32);
+  }
+
+  if (count & 1) {
+    next = pcg64_random_r(&rng);
+    out[count - 1] = (uint32_t)(next & 0xffffffff);
+    state->has_uint32 = 1;
+  }
+
+  state->uinteger = (uint32_t)(next >> 32);
+  state->pcg_state->state = rng.state;
+}
+
+void pcg64_fill_uint64(pcg64_state *state, size_t count, uint64_t *out) {
+  size_t i;
+  pcg64_random_t rng;
+
+  if (count == 0) {
+    return;
+  }
+  rng = *state->pcg_state;
+  for (i = 0; i < count; i++) {
+    out[i] = pcg64_random_r(&rng);
+  }
+  state->pcg_state->state = rng.state;
+}
+
+void pcg64_fill_double(pcg64_state *state, size_t count, double *out) {
+  size_t i;
+  pcg64_random_t rng;
+
+  if (count == 0) {
+    return;
+  }
+  rng = *state->pcg_state;
+  for (i = 0; i < count; i++) {
+    out[i] = (pcg64_random_r(&rng) >> 11) *
+             (1.0 / 9007199254740992.0);
+  }
+  state->pcg_state->state = rng.state;
+}
+
 extern inline void pcg_setseq_128_step_r(pcg_state_setseq_128 *rng);
 extern inline uint64_t pcg_output_xsl_rr_128_64(pcg128_t state);
 extern inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
