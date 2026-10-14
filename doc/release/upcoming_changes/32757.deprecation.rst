@@ -1,0 +1,9 @@
+Implicit argument conversion in `numpy.strings`
+-----------------------------------------------
+Implicit coercion of bytes to strings, strings to bytes, or non-string arguments
+to strings or bytes in `numpy.strings` and `numpy.char` padding, replacement,
+and partitioning functions is now deprecated. Use text arguments with text
+input and bytes arguments with bytes input, or convert the arguments explicitly.
+
+The ``fillchar`` default for ``center``, ``ljust``, and ``rjust`` is now
+``None``, which selects a space of the same string kind as the first argument.

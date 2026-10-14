@@ -18,7 +18,8 @@ use cases are:
 
 For the first use case, NumPy provides the fixed-width `numpy.void`,
 `numpy.str_` and `numpy.bytes_` data types. For the second use case,
-numpy provides `numpy.dtypes.StringDType`. Below we describe how to
+numpy provides `numpy.dtypes.StringDType` for text and
+`numpy.dtypes.ByteStringDType` for bytes. Below we describe how to
 work with both fixed-width and variable-width string arrays, how to
 convert between the two representations, and provide some advice for
 most efficiently working with string data in NumPy.
@@ -45,6 +46,12 @@ Similarly for bytestrings:
 Since this stores individual bytes, the byteorder is `'|'` (not
 applicable), and the data type detected is a maximum 5-byte
 bytestring.
+
+Fixed-width bytestrings are padded with NUL bytes up to the itemsize,
+and trailing NUL bytes are stripped when retrieving a scalar:
+
+   >>> np.array([b"x\x00"], dtype="S2")
+   array([b'x'], dtype='|S2')
 
 You can also use `numpy.void` to represent bytestrings:
 
@@ -248,3 +255,101 @@ Conversions in the other direction, from a fixed-width string array to
 ``StringDType`` are ``"safe"`` casts. The bytes stored in a
 `numpy.bytes_` array must be valid UTF-8, and a ``UnicodeDecodeError``
 is raised during the cast if they are not.
+
+.. _bytestringdtype:
+
+Variable-width bytestrings
+==========================
+
+.. versionadded:: 2.6
+
+`numpy.dtypes.ByteStringDType` is the bytes counterpart of
+``StringDType``. It stores variable-width byte sequences exactly as
+given and returns nonmissing values as `numpy.vbytes` scalars, a `bytes`
+subclass, so values may contain or end in NUL bytes and may hold data that is not
+valid text:
+
+  >>> from numpy.dtypes import ByteStringDType
+  >>> arr = np.array([b"x\x00", b"\xff\xfe", b""], dtype=ByteStringDType())
+  >>> arr
+  array([b'x\x00', b'\xff\xfe', b''], dtype=ByteStringDType())
+  >>> arr[0]
+  np.vbytes(b'x\x00')
+  >>> arr.tolist()
+  [b'x\x00', b'\xff\xfe', b'']
+  >>> np.strings.str_len(arr)
+  array([2, 2, 0])
+
+For ordinary Python bytes, the dtype has to be requested explicitly;
+``np.array`` still infers the fixed-width `numpy.bytes_` dtype for such data.
+Only `bytes` and its subclasses such as `numpy.bytes_` are accepted as
+nonmissing values; text is not encoded implicitly:
+
+  >>> np.array(["x"], dtype=ByteStringDType())
+  Traceback (most recent call last):
+  ...
+  TypeError: ByteStringDType only allows bytes data, got an instance of 'str'; convert text to bytes explicitly with str.encode(encoding)
+
+Missing data works as for ``StringDType``, by passing ``na_object`` to
+the constructor. There is no ``coerce`` option:
+
+  >>> np.array([b"a", None], dtype=ByteStringDType(na_object=None))
+  array([b'a', None], dtype=ByteStringDType(na_object=None))
+
+``ByteStringDType`` promotes with `numpy.bytes_` but not with
+`numpy.str_` or ``StringDType``. Array comparisons with ``==`` and ``!=``
+follow Python: a bytestring never equals a string. Ordering the two, or
+passing both to comparison ufuncs such as `numpy.equal`, raises
+``TypeError``. The `numpy.strings` functions that support
+``ByteStringDType`` operate on bytes in the same way as the
+corresponding `bytes` methods, see :ref:`routines.strings` for the
+list:
+
+  >>> arr + np.array([b"1", b"2", b"3"], dtype="S1")
+  array([b'x\x001', b'\xff\xfe2', b'3'], dtype=ByteStringDType())
+
+Casting to and from fixed-width bytes
+-------------------------------------
+
+``ByteStringDType`` casts to and from `numpy.bytes_` and `numpy.void`
+with no encoding validation. The cast from `numpy.bytes_` is safe;
+since the fixed-width value is NUL-padded, its trailing NUL bytes are
+not part of the result. Casting an array to an unsized `numpy.bytes_`
+or `numpy.void` dtype infers the width from the widest entry, counted
+in bytes; an explicit smaller width truncates:
+
+  >>> arr = np.array([b"ab", b"\xff"], dtype=ByteStringDType())
+  >>> arr.astype("S")
+  array([b'ab', b'\xff'], dtype='|S2')
+  >>> arr.astype("S1")
+  array([b'a', b'\xff'], dtype='|S1')
+  >>> np.array([b"x\x00"], dtype="S4").astype(ByteStringDType())
+  array([b'x'], dtype=ByteStringDType())
+
+`numpy.void` stores the bytes as given, and casting back keeps the
+padding:
+
+  >>> arr.astype("V3").astype(ByteStringDType())
+  array([b'ab\x00', b'\xff\x00\x00'], dtype=ByteStringDType())
+
+There are no casts between ``ByteStringDType`` and `numpy.str_`,
+``StringDType``, or numeric types.
+
+Converting between text and bytes
+---------------------------------
+
+Use `numpy.strings.encode` and `numpy.strings.decode` to convert
+between ``StringDType`` and ``ByteStringDType``. For these conversions only
+the UTF-8 encoding with ``errors="strict"`` is supported, and NUL bytes
+are preserved:
+
+  >>> text = np.array(["x\x00", "é"], dtype=StringDType())
+  >>> data = np.strings.encode(text, "utf-8", dtype=ByteStringDType())
+  >>> data
+  array([b'x\x00', b'\xc3\xa9'], dtype=ByteStringDType())
+  >>> np.strings.decode(data, "utf-8")
+  array(['x\x00', 'é'], dtype=StringDType())
+
+Called without ``dtype`` on ``StringDType`` input,
+`numpy.strings.encode` returns the fixed-width `numpy.bytes_` result
+and warns that the default will change to ``ByteStringDType``.

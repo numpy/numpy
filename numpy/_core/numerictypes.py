@@ -81,7 +81,7 @@ import numbers
 from numpy._utils import set_module
 
 from . import multiarray as ma
-from ._multiarray_umath import StringDType
+from ._multiarray_umath import ByteStringDType, StringDType, vbytes
 from .multiarray import (
     busday_count,
     busday_offset,
@@ -321,6 +321,8 @@ def _preprocess_dtype(dtype):
             # a NumPy scalar type, so use the DType class to identify it.
             # if we ever fix gh-28165, this should be deleted
             return StringDType
+        if orig_dtype is ByteStringDType:
+            return vbytes
         raise _PreprocessDTypeError
     return dtype
 
