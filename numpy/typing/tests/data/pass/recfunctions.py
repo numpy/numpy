@@ -54,7 +54,7 @@ def test_merge_arrays() -> None:
             np.ones((2,), np.int_),
             np.ones((3,), np.float64),
         )),
-        np.recarray[tuple[int], np.dtype[np.void]],
+        npt.Array1D[np.void],
     )
 
 
