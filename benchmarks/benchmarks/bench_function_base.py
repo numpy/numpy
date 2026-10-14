@@ -73,6 +73,23 @@ class Mean(Benchmark):
         np.mean(self.array, axis=1)
 
 
+class Cov(Benchmark):
+    # (variables, observations): few variables, many observations
+    param_names = ['shape', 'dtype']
+    params = [[(16, 2_000_000), (4, 10_000_000), (256, 200_000)],
+              ['float64', 'float32', 'uint8']]
+
+    def setup(self, shape, dtype):
+        rng = np.random.default_rng(1)
+        self.x = rng.integers(0, 255, shape).astype(dtype)
+
+    def time_cov(self, shape, dtype):
+        np.cov(self.x)
+
+    def peakmem_cov(self, shape, dtype):
+        np.cov(self.x)
+
+
 class Median(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)

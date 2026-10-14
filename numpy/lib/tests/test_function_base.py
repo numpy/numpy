@@ -2996,6 +2996,185 @@ class TestCov:
         actual = np.cov(x.T, ddof=0, rowvar=False)
         assert_allclose(actual, expected, strict=True)
 
+    @pytest.fixture
+    def column_blocks(self, monkeypatch):
+        # Make cov work in blocks of a few columns on small inputs.
+        monkeypatch.setattr(nfb, "_COV_BLOCK_BYTES", 1, raising=False)
+
+    @pytest.mark.parametrize("dtype", [np.int64, np.float16, np.float32,
+                                       np.float64, np.complex128,
+                                       np.longdouble])
+    @pytest.mark.parametrize("rowvar", [True, False])
+    @pytest.mark.parametrize("order", "CF")
+    @pytest.mark.parametrize("kwargs", [{}, {"ddof": 0}, {"bias": True},
+                                        {"ddof": 3}, {"dtype": np.float32},
+                                        {"bias": True, "ddof": 2},
+                                        {"fweights": np.arange(1, 1002) % 3},
+                                        {"aweights": np.arange(1, 1002) % 4}])
+    def test_cov_blocked_matches_unblocked(self, dtype, rowvar, order,
+                                           kwargs, monkeypatch):
+        if dtype is np.complex128 and "dtype" in kwargs:
+            pytest.skip("complex input cannot be cast to a real dtype")
+        rng = np.random.default_rng(1234)
+        x = (rng.standard_normal((3, 1001)) * 50 + 7).astype(dtype)
+        if dtype is np.complex128:
+            x = x + 1j * rng.standard_normal((3, 1001))
+        x = np.asarray(x.T if not rowvar else x, order=order)
+        expected = cov(x, rowvar=rowvar, **kwargs)
+        with monkeypatch.context() as mp:
+            mp.setattr(nfb, "_COV_BLOCK_BYTES", 1, raising=False)
+            actual = cov(x, rowvar=rowvar, **kwargs)
+        assert actual.dtype == expected.dtype
+        rtol = 1e-4 if kwargs.get("dtype") is np.float32 else 1e-12
+        assert_allclose(actual, expected, rtol=rtol, atol=0)
+
+    def test_cov_blocked_with_y(self, column_blocks):
+        rng = np.random.default_rng(1)
+        x, y = rng.standard_normal((2, 101))
+        assert_allclose(cov(x, y), cov(np.stack([x, y])), rtol=1e-12)
+
+    @pytest.mark.parametrize("writeable", [True, False])
+    def test_cov_blocked_leaves_input_alone(self, column_blocks, writeable):
+        x = np.random.default_rng(2).standard_normal((3, 1001)) + 5
+        orig = x.copy()
+        x.flags.writeable = writeable
+        cov(x)
+        assert_array_equal(x, orig)
+
+    def test_cov_blocked_accuracy(self, column_blocks):
+        # The mean is 1e8 times the standard deviation.
+        rng = np.random.default_rng(3)
+        x = rng.standard_normal((2, 1001)) + 1e8
+        n = x.shape[1]
+        cols = [[Fraction(v) for v in row] for row in x]
+        mean = [sum(c) / n for c in cols]
+        exact = [[sum((a - mean[i]) * (b - mean[j])
+                      for a, b in zip(cols[i], cols[j])) / (n - 1)
+                  for j in range(2)] for i in range(2)]
+        exact = np.array([[float(v) for v in r] for r in exact])
+        assert_allclose(cov(x), exact, rtol=1e-11, atol=0)
+
+    def test_cov_blocked_nonfinite(self, column_blocks, monkeypatch):
+        x = np.random.default_rng(4).standard_normal((3, 1001))
+        x[0, 50] = np.nan
+        x[1, 60] = np.inf
+        with np.errstate(invalid="ignore"):
+            actual = cov(x)
+            monkeypatch.setattr(nfb, "_COV_BLOCK_BYTES", 1 << 30,
+                                raising=False)
+            expected = cov(x)
+        assert_array_equal(np.isnan(actual), np.isnan(expected))
+        assert_array_equal(np.isnan(actual[2, 2]), False)
+
+    def test_cov_blocked_ddof_too_large(self, column_blocks):
+        x = np.random.default_rng(5).standard_normal((3, 1001))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always', RuntimeWarning)
+            actual = cov(x, ddof=1001)
+        assert any("Degrees of freedom" in str(i.message) for i in w)
+        assert not np.isfinite(actual).any()
+
+    @pytest.mark.skipif(IS_WASM, reason="no tracemalloc")
+    @pytest.mark.thread_unsafe(reason="tracemalloc is process-global")
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.uint8])
+    def test_cov_peak_memory(self, dtype, monkeypatch):
+        # cov used to centre a full float64 copy of its input (64 MiB here).
+        import tracemalloc
+        n = 1 << 21
+        x = np.random.default_rng(6).integers(0, 255, (4, n)).astype(dtype)
+        cov(x[:, :8])  # warm up imports and caches
+        tracemalloc.start()
+        try:
+            actual = cov(x)
+            peak = tracemalloc.get_traced_memory()[1]
+        finally:
+            tracemalloc.stop()
+        assert peak < 4 * 2**20
+        monkeypatch.setattr(nfb, "_COV_BLOCK_BYTES", 1 << 40, raising=False)
+        assert_allclose(actual, cov(x), rtol=1e-10, atol=1e-8)
+
+    @staticmethod
+    def _exact_cov(x):
+        # The covariance of the rows of `x`, computed exactly and then rounded.
+        n = x.shape[1]
+        cols = [[Fraction(v) for v in row] for row in x]
+        mean = [sum(c) / n for c in cols]
+        return np.array([[float(sum((a - mean[i]) * (b - mean[j])
+                                    for a, b in zip(cols[i], cols[j])) / (n - 1))
+                          for j in range(len(cols))] for i in range(len(cols))])
+
+    @staticmethod
+    def _assert_close(actual, expected):
+        # Entries near 0 are only accurate relative to the variances.
+        diag = np.diag(np.atleast_2d(expected))
+        scale = np.max(np.where(np.isfinite(diag), diag, 0))
+        assert_allclose(actual, expected, rtol=1e-12, atol=1e-12 * scale,
+                        equal_nan=True)
+
+    @pytest.fixture
+    def count_blocked(self, monkeypatch):
+        # A list that gets an item for each call of the blocked algorithm.
+        calls = []
+        blocked = nfb._cov_blocked
+        monkeypatch.setattr(nfb, "_cov_blocked",
+                            lambda *args: calls.append(1) or blocked(*args))
+        return calls
+
+    @pytest.mark.parametrize("nvars, is_blocked", [(128, True), (129, False)])
+    def test_cov_blocked_variable_limit(self, column_blocks, count_blocked,
+                                        monkeypatch, nvars, is_blocked):
+        # With 1 byte blocks a block is 16 * nvars columns: use exactly two.
+        x = np.random.default_rng(8).standard_normal((nvars, 32 * nvars)) + 3
+        actual = cov(x)
+        assert bool(count_blocked) == is_blocked
+        monkeypatch.setattr(nfb, "_COV_BLOCK_BYTES", 1 << 40)
+        self._assert_close(actual, cov(x))
+
+    @pytest.mark.parametrize("n, is_blocked", [
+        (0, False), (1, False), (2, False), (47, False), (95, False),
+        (96, True), (97, True), (143, True)])
+    def test_cov_blocked_observation_limit(self, column_blocks, count_blocked,
+                                           monkeypatch, n, is_blocked):
+        # With 3 variables a block is 48 columns, and cov needs two blocks.
+        x = np.random.default_rng(9).standard_normal((3, n)) + 5
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            actual = cov(x)
+            monkeypatch.setattr(nfb, "_COV_BLOCK_BYTES", 1 << 40)
+            expected = cov(x)
+        assert bool(count_blocked) == is_blocked
+        self._assert_close(actual, expected)
+
+    @pytest.mark.parametrize("index", [np.s_[:, ::2], np.s_[:, ::-1],
+                                       np.s_[::2], np.s_[::-2, 1::3]])
+    def test_cov_blocked_strided(self, column_blocks, count_blocked,
+                                 monkeypatch, index):
+        base = np.random.default_rng(10).standard_normal((6, 3003)) + 3
+        x = base[index]
+        assert not x.flags.c_contiguous
+        actual = cov(x)
+        assert count_blocked
+        monkeypatch.setattr(nfb, "_COV_BLOCK_BYTES", 1 << 40)
+        self._assert_close(actual, cov(x))
+
+    @pytest.mark.parametrize("dtype", [np.int8, np.uint8, np.float16,
+                                       np.complex64])
+    def test_cov_blocked_small_dtypes(self, column_blocks, count_blocked,
+                                      monkeypatch, dtype):
+        re, im = np.random.default_rng(11).integers(0, 100, (2, 3, 1001))
+        x = (re + 1j * im if dtype is np.complex64 else re).astype(dtype)
+        actual = cov(x)
+        assert count_blocked
+        assert actual.dtype == np.result_type(dtype, np.float64)
+        monkeypatch.setattr(nfb, "_COV_BLOCK_BYTES", 1 << 40)
+        self._assert_close(actual, cov(x))
+
+    @pytest.mark.parametrize("offset", [1e12, 1e15])
+    def test_cov_blocked_large_offset(self, column_blocks, offset):
+        # The mean is 1e12 to 1e15 times the standard deviation.
+        x = np.random.default_rng(12).standard_normal((3, 1001)) + offset
+        assert_allclose(cov(x), self._exact_cov(x), rtol=1e-11, atol=0)
+
 
 class Test_I0:
 

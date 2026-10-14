@@ -2707,6 +2707,49 @@ class vectorize:
         return outputs[0] if nout == 1 else outputs
 
 
+# Target size in bytes of the temporary that `cov` makes per block of columns,
+# about the size of a core's L2 cache.
+_COV_BLOCK_BYTES = 512 * 2**10
+
+
+def _cov_block_cols(shape, dtype):
+    """Columns per block for `cov`, or 0 when `cov` should copy and centre."""
+    dtype = np.dtype(dtype)
+    if dtype.kind not in "fc" or dtype.itemsize < 4:
+        return 0
+    nrows, ncols = shape
+    if nrows > 128:
+        # the matrix product dominates and is faster in one piece
+        return 0
+    # fewer than 16 * nrows columns is too thin for the matrix product
+    block = max(_COV_BLOCK_BYTES // (nrows * dtype.itemsize), 16 * nrows)
+    return block if ncols >= 2 * block else 0
+
+
+def _cov_blocked(X, dtype, block):
+    """``dot(Xc, Xc.T.conj())`` for ``Xc = X - X.mean(axis=1)``.
+
+    Only `block` columns of `X` are converted to `dtype` and centred at a
+    time, so no copy of all of `X` is made.
+    """
+    n = X.shape[1]
+    avg = np.zeros(X.shape[0], dtype=dtype)
+    for i in range(0, n, block):
+        avg += X[:, i:i + block].sum(axis=1, dtype=dtype)
+    avg /= n
+    avg = avg[:, None]
+
+    gram = 0
+    resid = 0
+    for i in range(0, n, block):
+        Y = X[:, i:i + block].astype(dtype)
+        Y -= avg
+        gram = gram + dot(Y, Y.T.conj())
+        resid = resid + Y.sum(axis=1)
+    # the centred columns sum to roundoff, not exactly 0: corrected two-pass
+    return gram - np.outer(resid, resid.conj()) / n
+
+
 def _cov_dispatcher(m, y=None, rowvar=None, bias=None, ddof=None,
                     fweights=None, aweights=None, *, dtype=None):
     return (m, y, fweights, aweights)
@@ -2852,11 +2895,16 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         else:
             dtype = np.result_type(m, y, np.float64)
 
-    X = array(m, ndmin=2, dtype=dtype)
+    X = array(m, copy=None, ndmin=2)
     if not rowvar and m.ndim != 1:
         X = X.T
     if X.shape[0] == 0:
         return np.array([]).reshape(0, 0)
+    block = 0
+    if y is None and fweights is None and aweights is None:
+        block = _cov_block_cols(X.shape, dtype)
+    if not block:
+        X = X.astype(dtype)  # a copy: it is centred in place below
     if y is not None:
         y = array(y, copy=None, ndmin=2, dtype=dtype)
         if not rowvar and y.shape[0] != 1:
@@ -2902,8 +2950,9 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         else:
             w *= aweights
 
-    avg, w_sum = average(X, axis=1, weights=w, returned=True)
-    w_sum = w_sum[0]
+    if not block:
+        avg, w_sum = average(X, axis=1, weights=w, returned=True)
+        w_sum = w_sum[0]
 
     # Determine the normalization
     if w is None:
@@ -2920,12 +2969,15 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
                       RuntimeWarning, stacklevel=2)
         fact = 0.0
 
-    X -= avg[:, None]
-    if w is None:
-        X_T = X.T
+    if block:
+        c = _cov_blocked(X, dtype, block)
     else:
-        X_T = (X * w).T
-    c = dot(X, X_T.conj())
+        X -= avg[:, None]
+        if w is None:
+            X_T = X.T
+        else:
+            X_T = (X * w).T
+        c = dot(X, X_T.conj())
     c *= np.true_divide(1, fact)
     return c.squeeze()
 
