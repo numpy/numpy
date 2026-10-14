@@ -2726,28 +2726,48 @@ def _cov_block_cols(shape, dtype):
     return block if ncols >= 2 * block else 0
 
 
-def _cov_blocked(X, dtype, block):
-    """``dot(Xc, Xc.T.conj())`` for ``Xc = X - X.mean(axis=1)``.
+def _cov_gram(X, dtype, block, shift):
+    """``dot(Y, Y.T.conj())`` for ``Y = X - shift``, and whether it is accurate.
 
-    Only `block` columns of `X` are converted to `dtype` and centred at a
-    time, so no copy of all of `X` is made.
+    Only `block` columns of `X` are converted to `dtype` and shifted at a
+    time, so no copy of all of `X` is made. The residual of the sum of the
+    columns of `Y` is removed at the end, which makes the result exact for
+    any `shift`, and the result is accurate when `shift` is close to the mean.
     """
     n = X.shape[1]
-    avg = np.zeros(X.shape[0], dtype=dtype)
-    for i in range(0, n, block):
-        avg += X[:, i:i + block].sum(axis=1, dtype=dtype)
-    avg /= n
-    avg = avg[:, None]
-
     gram = 0
     resid = 0
     for i in range(0, n, block):
-        Y = X[:, i:i + block].astype(dtype)
-        Y -= avg
+        Y = X[:, i:i + block]
+        if Y.dtype == dtype:
+            Y = Y - shift
+        else:
+            Y = Y.astype(dtype)
+            Y -= shift
         gram = gram + dot(Y, Y.T.conj())
         resid = resid + Y.sum(axis=1)
-    # the centred columns sum to roundoff, not exactly 0: corrected two-pass
-    return gram - np.outer(resid, resid.conj()) / n
+    diag = gram.diagonal().real.copy()
+    gram -= np.outer(resid, resid.conj()) / n
+    # Each entry of `gram` has an error of at most gamma_n * sqrt(G_ii G_jj)
+    # (Higham, Accuracy and Stability of Numerical Algorithms, 2nd ed., sec.
+    # 3.1), with G_ii the diagonal before the residual was removed. That is
+    # within a factor of 4 of the best possible if the variance is at least
+    # a quarter of G_ii. NaN and infinity fail the comparison.
+    return gram, bool(np.all(4 * gram.diagonal().real >= diag))
+
+
+def _cov_blocked(X, dtype, block):
+    """``dot(Xc, Xc.T.conj())`` for ``Xc = X - X.mean(axis=1)``."""
+    # The mean of the first block is nearly always close enough to the mean.
+    shift = X[:, :block].sum(axis=1, dtype=dtype)[:, None] / block
+    gram, accurate = _cov_gram(X, dtype, block, shift)
+    if accurate:
+        return gram
+    # The first block is not like the rest: shift by the mean of all of X.
+    shift = np.zeros_like(shift)
+    for i in range(0, X.shape[1], block):
+        shift += X[:, i:i + block].sum(axis=1, dtype=dtype)[:, None]
+    return _cov_gram(X, dtype, block, shift / X.shape[1])[0]
 
 
 def _cov_dispatcher(m, y=None, rowvar=None, bias=None, ddof=None,

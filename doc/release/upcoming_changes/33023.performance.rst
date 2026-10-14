@@ -5,5 +5,5 @@ For an input of a few megabytes or more with at most 128 variables,
 centres that copy. It converts and centres a few hundred kilobytes of columns
 at a time, so the extra memory is about a megabyte instead of the size of the
 input as ``float64`` (eight times the input for ``uint8`` data), and the call
-is up to twice as fast. The result can differ from the previous one in the
+is about twice as fast. The result can differ from the previous one in the
 last few bits. Calls with ``y``, ``fweights`` or ``aweights`` are unchanged.

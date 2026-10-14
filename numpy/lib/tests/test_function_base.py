@@ -3054,6 +3054,42 @@ class TestCov:
         exact = np.array([[float(v) for v in r] for r in exact])
         assert_allclose(cov(x), exact, rtol=1e-11, atol=0)
 
+    @pytest.mark.parametrize("first, passes", [(0, 1), (1e4, 2)])
+    def test_cov_blocked_first_block(self, column_blocks, monkeypatch,
+                                     first, passes):
+        # The first block gives the shift. It is good enough unless the
+        # first block is far from the rest, which then costs a second pass.
+        x = np.random.default_rng(7).standard_normal((3, 1001)) + 1e6
+        x[:, :48] += first
+        calls = []
+        gram = nfb._cov_gram
+        monkeypatch.setattr(nfb, "_cov_gram",
+                            lambda *args: calls.append(1) or gram(*args),
+                            raising=False)
+        actual = cov(x)
+        assert len(calls) == passes
+        monkeypatch.setattr(nfb, "_COV_BLOCK_BYTES", 1 << 40, raising=False)
+        assert_allclose(actual, cov(x), rtol=1e-9)
+
+    def test_cov_blocked_far_first_block_accuracy(self, column_blocks):
+        # The first block is far from the rest, so cov shifts a second time.
+        x = np.random.default_rng(13).standard_normal((3, 1001)) + 1e6
+        x[:, :48] += 1e4
+        assert_allclose(cov(x), self._exact_cov(x), rtol=1e-11, atol=0)
+
+    @pytest.mark.parametrize("bad", [np.nan, np.inf, -np.inf])
+    def test_cov_blocked_nonfinite_first_block(self, column_blocks,
+                                               monkeypatch, bad):
+        x = np.random.default_rng(14).standard_normal((3, 1001))
+        x[0, 5] = bad
+        with np.errstate(all="ignore"):
+            actual = cov(x)
+            monkeypatch.setattr(nfb, "_COV_BLOCK_BYTES", 1 << 40)
+            expected = cov(x)
+        assert_array_equal(np.isfinite(actual), np.isfinite(expected))
+        assert_array_equal(np.isnan(actual), np.isnan(expected))
+        assert np.isfinite(actual[1:, 1:]).all()
+
     def test_cov_blocked_nonfinite(self, column_blocks, monkeypatch):
         x = np.random.default_rng(4).standard_normal((3, 1001))
         x[0, 50] = np.nan
