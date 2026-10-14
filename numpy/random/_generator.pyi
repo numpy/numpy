@@ -1021,25 +1021,47 @@ class Generator:
     #
     @overload  # 0d bool | int
     def integers[AnyIntT: (bool, int)](
-        self, low: int, high: int | None = None, size: None = None, *, dtype: type[AnyIntT], endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        *,
+        dtype: type[AnyIntT],
+        endpoint: bool = False,
     ) -> AnyIntT: ...
     @overload  # 0d integer dtype
     def integers[ScalarT: np.integer | np.bool](
-        self, low: int, high: int | None = None, size: None = None, *, dtype: _DTypeLike[ScalarT], endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
     ) -> ScalarT: ...
     @overload  # 0d int64 (default)
     def integers(
-        self, low: int, high: int | None = None, size: None = None, dtype: _DTypeLikeI64 = ..., endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
     ) -> np.int64: ...
     @overload  # 0d unknown
     def integers(
-        self, low: int, high: int | None = None, size: None = None, dtype: DTypeLike | None = ..., endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
     ) -> Any: ...
     @overload  # Nd, 0d, dtype=<known>
     def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
         self,
         low: _ArrayInt[ShapeT],
-        high: int | None = None,
+        high: _IntLike_co | None = None,
         size: None = None,
         *,
         dtype: _DTypeLike[ScalarT],
@@ -1048,7 +1070,7 @@ class Generator:
     @overload  # 0d, Nd, dtype=<known>
     def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
         self,
-        low: int,
+        low: _IntLike_co,
         high: _ArrayInt[ShapeT],
         size: None = None,
         *,
@@ -1059,7 +1081,7 @@ class Generator:
     def integers[ShapeT: _Shape](
         self,
         low: _ArrayInt[ShapeT],
-        high: int | None = None,
+        high: _IntLike_co | None = None,
         size: None = None,
         dtype: _DTypeLikeI64 = ...,
         endpoint: bool = False,
@@ -1067,7 +1089,7 @@ class Generator:
     @overload  # 0d, Nd
     def integers[ShapeT: _Shape](
         self,
-        low: int,
+        low: _IntLike_co,
         high: _ArrayInt[ShapeT],
         size: None = None,
         dtype: _DTypeLikeI64 = ...,
@@ -1077,7 +1099,7 @@ class Generator:
     def integers[ShapeT: _Shape](
         self,
         low: _ArrayInt[ShapeT],
-        high: int | None = None,
+        high: _IntLike_co | None = None,
         size: None = None,
         dtype: DTypeLike | None = ...,
         endpoint: bool = False,
@@ -1085,7 +1107,7 @@ class Generator:
     @overload  # 0d, Nd, dtype=<unknown>
     def integers[ShapeT: _Shape](
         self,
-        low: int,
+        low: _IntLike_co,
         high: _ArrayInt[ShapeT],
         size: None = None,
         dtype: DTypeLike | None = ...,
