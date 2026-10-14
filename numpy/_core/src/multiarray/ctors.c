@@ -2227,7 +2227,9 @@ PyArray_FromInterface(PyObject *origin)
     }
     if (result == 0) {
         /* Shape must be specified when 'data' is specified */
-        int result = PyDict_ContainsString(iface, "data");
+        PyObject *data_obj;
+        int result = PyDict_GetItemStringRef(iface, "data", &data_obj);
+        Py_XDECREF(data_obj);
         if (result < 0) {
             return NULL;
         }

@@ -1,9 +1,10 @@
 import ast
 import sys
+import threading
 import types
 import unittest
 import warnings
-from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath
+from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath, Unused
 from collections.abc import Callable, Iterable, Sequence
 from contextlib import _GeneratorContextManager
 from pathlib import Path
@@ -11,6 +12,7 @@ from re import Pattern
 from typing import (
     Any,
     ClassVar,
+    Concatenate,
     Final,
     Generic,
     Literal as L,
@@ -32,6 +34,7 @@ from numpy._typing import (
     _ArrayLikeNumber_co,
     _ArrayLikeObject_co,
     _ArrayLikeTD64_co,
+    _FloatLike_co,
 )
 
 __all__ = [
@@ -321,8 +324,8 @@ def assert_raises_regex[**Tss](
 def assert_allclose(
     actual: _ArrayLikeTD64_co,
     desired: _ArrayLikeTD64_co,
-    rtol: float = 1e-7,
-    atol: float | np.timedelta64 = 0,
+    rtol: _FloatLike_co = 1e-7,
+    atol: _FloatLike_co | np.timedelta64 = 0,
     equal_nan: bool = True,
     err_msg: object = "",
     verbose: bool = True,
@@ -333,8 +336,8 @@ def assert_allclose(
 def assert_allclose(
     actual: _NumericArrayLike,
     desired: _NumericArrayLike,
-    rtol: float = 1e-7,
-    atol: float = 0,
+    rtol: _FloatLike_co = 1e-7,
+    atol: _FloatLike_co = 0,
     equal_nan: bool = True,
     err_msg: object = "",
     verbose: bool = True,
@@ -346,14 +349,14 @@ def assert_allclose(
 def assert_array_almost_equal_nulp(
     x: _ArrayLikeNumber_co,
     y: _ArrayLikeNumber_co,
-    nulp: float = 1,
+    nulp: _FloatLike_co = 1,
 ) -> None: ...
 
 #
 def assert_array_max_ulp(
     a: _ArrayLikeNumber_co,
     b: _ArrayLikeNumber_co,
-    maxulp: float = 1,
+    maxulp: _FloatLike_co = 1,
     dtype: DTypeLike | None = None,
 ) -> NDArray[Any]: ...
 
@@ -469,33 +472,64 @@ def decorate_methods(
 ) -> None: ...
 
 #
-@overload
+@overload  # default
 def run_threaded(
-    func: Callable[[], None],
+    func: Callable[[], Unused],
     max_workers: int = 8,
-    pass_count: bool = False,
-    pass_barrier: bool = False,
+    pass_count: L[False] = False,
+    pass_barrier: L[False] = False,
     outer_iterations: int = 1,
     prepare_args: None = None,
 ) -> None: ...
-@overload
-def run_threaded[*Ts](
-    func: Callable[[*Ts], None],
-    max_workers: int,
-    pass_count: bool,
-    pass_barrier: bool,
-    outer_iterations: int,
-    prepare_args: tuple[*Ts],
-) -> None: ...
-@overload
-def run_threaded[*Ts](
-    func: Callable[[*Ts], None],
+@overload  # prepare_args=<given>
+def run_threaded(
+    func: Callable[..., Unused],
     max_workers: int = 8,
-    pass_count: bool = False,
+    pass_count: L[False] = False,
     pass_barrier: bool = False,
     outer_iterations: int = 1,
     *,
-    prepare_args: tuple[*Ts],
+    prepare_args: Callable[[], list[Any]],
+) -> None: ...
+@overload  # pass_count=True
+def run_threaded(
+    func: Callable[[int], Unused],
+    max_workers: int = 8,
+    *,
+    pass_count: L[True],
+    pass_barrier: L[False] = False,
+    outer_iterations: int = 1,
+    prepare_args: None = None,
+) -> None: ...
+@overload  # pass_count=True, prepare_args=<given>
+def run_threaded(
+    func: Callable[Concatenate[int, ...], Unused],
+    max_workers: int = 8,
+    *,
+    pass_count: L[True],
+    pass_barrier: bool = False,
+    outer_iterations: int = 1,
+    prepare_args: Callable[[], list[Any]],
+) -> None: ...
+@overload  # pass_barrier=True
+def run_threaded(
+    func: Callable[[threading.Barrier], Unused],
+    max_workers: int = 8,
+    pass_count: L[False] = False,
+    *,
+    pass_barrier: L[True],
+    outer_iterations: int = 1,
+    prepare_args: None = None,
+) -> None: ...
+@overload  # pass_count=True, pass_barrier=True
+def run_threaded(
+    func: Callable[[int, threading.Barrier], Unused],
+    max_workers: int = 8,
+    *,
+    pass_count: L[True],
+    pass_barrier: L[True],
+    outer_iterations: int = 1,
+    prepare_args: None = None,
 ) -> None: ...
 
 #

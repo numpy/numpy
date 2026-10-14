@@ -1209,8 +1209,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         .. versionadded:: 1.23.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1852,8 +1850,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
         .. versionadded:: 1.23.0
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
