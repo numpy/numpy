@@ -466,6 +466,12 @@ def array_split[ScalarT: np.generic](
 ) -> list[NDArray[ScalarT]]: ...
 @overload
 def array_split(
+    ary: Sequence[complex],
+    indices_or_sections: _IndicesOrSections,
+    axis: SupportsIndex = 0,
+) -> list[Array1D[Any]]: ...
+@overload
+def array_split(
     ary: ArrayLike,
     indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
@@ -484,6 +490,12 @@ def split[ScalarT: np.generic](
     indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
+@overload
+def split(
+    ary: Sequence[complex],
+    indices_or_sections: _IndicesOrSections,
+    axis: SupportsIndex = 0,
+) -> list[Array1D[Any]]: ...
 @overload
 def split(
     ary: ArrayLike,
