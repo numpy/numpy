@@ -47,7 +47,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     # Scalars
     _CharLike_co,
     _BoolLike_co,
-    _UIntLike_co,
     _IntLike_co,
     _FloatLike_co,
     _TD64Like_co,
@@ -93,7 +92,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _ULongLongCodes,
     _LongDoubleCodes,
     _CLongDoubleCodes,
-    _TD64Codes,
     _StrCodes,
     _BytesCodes,
     _VoidCodes,
@@ -139,7 +137,6 @@ from typing import (
     Literal as L,
     LiteralString,
     Never,
-    NoReturn,
     Protocol,
     Self,
     SupportsAbs,
