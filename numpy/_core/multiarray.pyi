@@ -203,6 +203,12 @@ _AnyNumericT = TypeVar(
     np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
     np.timedelta64,
 )  # fmt: skip
+_AnyNumericObjectT = TypeVar(
+    "_AnyNumericObjectT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64, np.object_,
+)  # fmt: skip
 _InexactT = TypeVar("_InexactT", bound=np.inexact)
 _IntegerT = TypeVar("_IntegerT", bound=np.integer)
 
@@ -1671,7 +1677,7 @@ def dot(a: _ArrayJustND[_DotScalar | np.object_], b: _ArrayLike[_DotScalar | np.
 @overload  # (Nd _, ?d _) -> 0d|Nd _  (workaround)
 def dot(a: _ArrayLike[_DotScalar | np.object_], b: _ArrayJustND[_DotScalar | np.object_], out: None = None) -> Any: ...
 @overload  # (1d T, 1d T) -> 0d T
-def dot[ScalarT: _DotScalar](a: _ToArray1D[ScalarT], b: _ToArray1D[ScalarT], out: None = None) -> ScalarT: ...
+def dot(a: _ToArray1D[_AnyNumericT], b: _ToArray1D[_AnyNumericT], out: None = None) -> _AnyNumericT: ...  # noqa: UP047
 @overload  # (1d object_, 1d _) -> 0d object
 def dot(a: Array1D[np.object_], b: Array1D[np.object_] | _ToArray1D[_DotScalar], out: None = None) -> Any: ...
 @overload  # (1d _, 1d object_) -> 0d object
@@ -1691,25 +1697,25 @@ def dot(a: list[complex], b: Sequence[complex], out: None = None) -> np.complex1
 @overload  # (1d +complex, 1d ~complex) -> complex128
 def dot(a: Sequence[complex], b: list[complex], out: None = None) -> np.complex128: ...
 @overload  # (1d T, 2d T) -> 1d T
-def dot[ScalarT: _DotScalar | np.object_](
-    a: _ToArray1D[ScalarT], b: _ToArray2D[ScalarT], out: None = None
-) -> Array1D[ScalarT]: ...
+def dot(  # noqa: UP047
+    a: _ToArray1D[_AnyNumericObjectT], b: _ToArray2D[_AnyNumericObjectT], out: None = None
+) -> Array1D[_AnyNumericObjectT]: ...
 @overload  # (2d T, 1d T) -> 1d T
-def dot[ScalarT: _DotScalar | np.object_](
-    a: _ToArray2D[ScalarT], b: _ToArray1D[ScalarT], out: None = None
-) -> Array1D[ScalarT]: ...
+def dot(  # noqa: UP047
+    a: _ToArray2D[_AnyNumericObjectT], b: _ToArray1D[_AnyNumericObjectT], out: None = None
+) -> Array1D[_AnyNumericObjectT]: ...
 @overload  # (2d T, 2d T) -> 2d T
-def dot[ScalarT: _DotScalar | np.object_](
-    a: _ToArray2D[ScalarT], b: _ToArray2D[ScalarT], out: None = None
-) -> Array2D[ScalarT]: ...
+def dot(  # noqa: UP047
+    a: _ToArray2D[_AnyNumericObjectT], b: _ToArray2D[_AnyNumericObjectT], out: None = None
+) -> Array2D[_AnyNumericObjectT]: ...
 @overload  # (2d T, ?d T) -> >=1d T
-def dot[ScalarT: _DotScalar | np.object_](
-    a: _ToArray2D[ScalarT], b: _ArrayLike[ScalarT], out: None = None
-) -> NDArray[ScalarT]: ...
+def dot(  # noqa: UP047
+    a: _ToArray2D[_AnyNumericObjectT], b: _ArrayLike[_AnyNumericObjectT], out: None = None
+) -> NDArray[_AnyNumericObjectT]: ...
 @overload  # (?d T, 2d T) -> >=1d T
-def dot[ScalarT: _DotScalar | np.object_](
-    a: _ArrayLike[ScalarT], b: _ToArray2D[ScalarT], out: None = None
-) -> NDArray[ScalarT]: ...
+def dot(  # noqa: UP047
+    a: _ArrayLike[_AnyNumericObjectT], b: _ToArray2D[_AnyNumericObjectT], out: None = None
+) -> NDArray[_AnyNumericObjectT]: ...
 @overload
 def dot(a: ArrayLike, b: ArrayLike, out: None = None) -> Incomplete: ...
 @overload
