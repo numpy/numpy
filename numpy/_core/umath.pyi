@@ -295,7 +295,7 @@ type _Signature3 = tuple[str | None, str | None, str | None, str | None] | str
 @type_check_only
 class _JustFloat(Protocol):
     @property
-    def __class__(self, /) -> type[float]: ...
+    def __class__(self, /) -> type[float]: ...  # pyrefly:ignore[bad-override]
     @__class__.setter
     def __class__(self, t: type[float], /) -> None: ...
 
