@@ -184,6 +184,8 @@ __all__ = [
 ]
 
 _ArrayT_co = TypeVar("_ArrayT_co", bound=np.ndarray, default=np.ndarray, covariant=True)
+_ShapeT = TypeVar("_ShapeT", bound=_Shape)
+
 _AnyRankT = TypeVar("_AnyRankT", _0D, _1D, _2D, _3D, _4D)
 _AnyScalarT = TypeVar(
     "_AnyScalarT",
@@ -1429,15 +1431,25 @@ def normalize_axis_index(axis: int, ndim: int, msg_prefix: str | None = None) ->
 
 #
 @overload  # [Nd]
-def concatenate[ShapeT: _Shape, DTypeT: np.dtype](
-    arrays: Sequence[np.ndarray[ShapeT, DTypeT]],
+def concatenate(  # noqa: UP047
+    arrays: Sequence[np.ndarray[_ShapeT, np.dtype[_AnyScalarT]]],
     /,
     axis: SupportsIndex = 0,
     out: None = None,
     *,
     dtype: None = None,
     casting: _CastingKind | None = "same_kind",
-) -> np.ndarray[ShapeT, DTypeT]: ...
+) -> np.ndarray[_ShapeT, np.dtype[_AnyScalarT]]: ...
+@overload  # [Nd ~str]
+def concatenate[ShapeT: _Shape](
+    arrays: Sequence[np.ndarray[ShapeT, np.dtypes.StringDType]],
+    /,
+    axis: SupportsIndex = 0,
+    out: None = None,
+    *,
+    dtype: None = None,
+    casting: _CastingKind | None = "same_kind",
+) -> np.ndarray[ShapeT, np.dtypes.StringDType]: ...
 @overload  # [Nd], dtype=<known>
 def concatenate[ShapeT: _Shape, ScalarT: np.generic](
     arrays: Sequence[np.ndarray[ShapeT]],
@@ -1549,15 +1561,15 @@ def concatenate(
     casting: _CastingKind | None = "same_kind",
 ) -> Array2D[Any]: ...
 @overload  # ?d, axis=None
-def concatenate[ScalarT: np.generic](
-    arrays: SupportsLenAndGetItem[_ArrayLike[ScalarT]],
+def concatenate(  # noqa: UP047
+    arrays: SupportsLenAndGetItem[_ArrayLike[_AnyScalarT]],
     /,
     axis: None,
     out: None = None,
     *,
     dtype: None = None,
     casting: _CastingKind | None = "same_kind",
-) -> Array1D[ScalarT]: ...
+) -> Array1D[_AnyScalarT]: ...
 @overload  # ?d, axis=None, dtype=<known>
 def concatenate[ScalarT: np.generic](
     arrays: SupportsLenAndGetItem[ArrayLike],
