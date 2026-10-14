@@ -89,8 +89,8 @@ assert_type(sfc64.lock, threading.Lock)
 assert_type(seed_seq.pool, npt.NDArray[np.uint32])
 assert_type(seed_seq.entropy, int | Sequence[int] | None)
 assert_type(seed_seq.spawn(1), list[np.random.SeedSequence])
-assert_type(seed_seq.generate_state(8, "uint32"), npt.NDArray[np.uint32 | np.uint64])
-assert_type(seed_seq.generate_state(8, "uint64"), npt.NDArray[np.uint32 | np.uint64])
+assert_type(seed_seq.generate_state(8, "uint32"), npt.Array1D[np.uint32])
+assert_type(seed_seq.generate_state(8, "uint64"), npt.Array1D[np.uint64])
 
 def_gen: np.random.Generator = np.random.default_rng()
 
