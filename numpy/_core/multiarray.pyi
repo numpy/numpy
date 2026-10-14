@@ -25,8 +25,6 @@ from numpy import (
     _CastingKind,
     _CopyMode,
     _ModeKind,
-    _NDIterFlagsKind,
-    _NDIterFlagsOp,
     _OrderCF,
     _OrderKACF,
     _SupportsFileMethods,
@@ -263,6 +261,38 @@ type _RollKind = L[
     "preceding",
     "modifiedfollowing",
     "modifiedpreceding",
+]
+type _NDIterFlagsKind = L[
+    "buffered",
+    "c_index",
+    "copy_if_overlap",
+    "common_dtype",
+    "delay_bufalloc",
+    "external_loop",
+    "f_index",
+    "grow_inner", "growinner",
+    "multi_index",
+    "ranged",
+    "refs_ok",
+    "reduce_ok",
+    "zerosize_ok",
+]
+type _NDIterFlagsOp = L[
+    "aligned",
+    "allocate",
+    "arraymask",
+    "copy",
+    "config",
+    "nbo",
+    "no_subtype",
+    "no_broadcast",
+    "overlap_assume_elementwise",
+    "readonly",
+    "readwrite",
+    "updateifcopy",
+    "virtual",
+    "writeonly",
+    "writemasked",
 ]
 
 type _ArangeScalar = np.integer | np.floating | np.datetime64 | np.timedelta64
