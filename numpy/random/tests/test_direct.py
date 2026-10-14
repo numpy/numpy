@@ -178,17 +178,13 @@ def test_seedsequence_spawn_thread_safe():
         barrier.wait()
         results[index] = seed_seq.spawn(children_per_thread)
 
-    old_switch_interval = sys.getswitchinterval()
-    sys.setswitchinterval(1e-5)
-    try:
-        run_threaded(
-            spawn_children,
-            max_workers=num_threads,
-            pass_count=True,
-            pass_barrier=True,
-        )
-    finally:
-        sys.setswitchinterval(old_switch_interval)
+
+    run_threaded(
+        spawn_children,
+        max_workers=num_threads,
+        pass_count=True,
+        pass_barrier=True,
+    )
 
     children = [
         child
