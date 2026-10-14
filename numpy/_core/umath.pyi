@@ -10839,6 +10839,83 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: npt.DTypeLike | None = None,
         **kwargs: Unpack[_Kwargs21],
     ) -> Any: ...
+    @overload  # ?d T, Nd T  (workaround)
+    def __call__(
+        self,
+        x1: _ArrayJustND[_AnyRealT],
+        x2: npt.NDArray[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyRealT]: ...
+    @overload  # Nd T, ?d T  (workaround)
+    def __call__(
+        self,
+        x1: npt.NDArray[_AnyRealT],
+        x2: _ArrayJustND[_AnyRealT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> npt.NDArray[_AnyRealT]: ...
+    @overload  # Nd T, Nd T
+    def __call__(
+        self,
+        x1: _Array[_AnyShapeT, _AnyRealT],
+        x2: _Array[_AnyShapeT, _AnyRealT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[_AnyShapeT, _AnyRealT]: ...
+    @overload  # Nd T@integer, 0d int
+    def __call__[ShapeT: _Shape, IntT: np.integer](
+        self,
+        x1: _Array[ShapeT, IntT],
+        x2: int,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[ShapeT, IntT]: ...
+    @overload  # 0d int, Nd T@integer
+    def __call__[ShapeT: _Shape, IntT: np.integer](
+        self,
+        x1: int,
+        x2: _Array[ShapeT, IntT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[ShapeT, IntT]: ...
+    @overload  # Nd T@floating, 0d float
+    def __call__[ShapeT: _Shape, FloatT: np.floating](
+        self,
+        x1: _Array[ShapeT, FloatT],
+        x2: _JustFloat | int,
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[ShapeT, FloatT]: ...
+    @overload  # 0d float, Nd T@floating
+    def __call__[ShapeT: _Shape, FloatT: np.floating](
+        self,
+        x1: _JustFloat | int,
+        x2: _Array[ShapeT, FloatT],
+        /,
+        *,
+        out: EllipsisType | None = None,
+        dtype: None = None,
+        **kwargs: Unpack[_Kwargs21],
+    ) -> _Array[ShapeT, FloatT]: ...
     @overload  # ?d +i8, ?d +i8
     def __call__(
         self,
