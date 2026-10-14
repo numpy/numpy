@@ -886,8 +886,8 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
      */
     for (int i = 0; i < nargs; i++) {
         if (signature[i] != NULL && signature[i] != operation_DTypes[i]) {
-            Py_INCREF(operation_DTypes[i]);
-            Py_SETREF(signature[i], operation_DTypes[i]);
+            /* borrowed, legacy DTypes are effectively immortal */
+            signature[i] = operation_DTypes[i];
             *out_cacheable = 0;
         }
     }
@@ -1113,10 +1113,12 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
  * @param ops The array operands (used only for the fallback).
  * @param signature As input, the DType signature fixed explicitly by the user.
  *        The signature is *filled* in with the operation signature we end up
- *        using.
+ *        using.  Entries are borrowed (owned by the append-only
+ *        `ufunc->_loops`).
  * @param op_dtypes The operand DTypes (without casting) which are specified
  *        either by the `signature` or by an `operand`.
  *        (outputs and the second input can be NULL for reductions).
+ *        Entries are borrowed (kept alive by the operands).
  *        NOTE: In some cases, the promotion machinery may currently modify
  *        these including clearing the output.
  * @param force_legacy_promotion If set, we have to use the old type resolution
@@ -1158,8 +1160,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
              * ignore the operand input, we cannot overwrite signature yet
              * since it is fixed (cannot be promoted!)
              */
-            Py_INCREF(signature[i]);
-            Py_XSETREF(op_dtypes[i], signature[i]);
+            op_dtypes[i] = signature[i];
             assert(i >= ufunc->nin || !NPY_DT_is_abstract(signature[i]));
         }
         else if (i >= nin) {
@@ -1169,7 +1170,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
              * loops which include the cast).
              * (See also comment in resolve_implementation_info.)
              */
-            Py_CLEAR(op_dtypes[i]);
+            op_dtypes[i] = NULL;
         }
         /*
          * If the op_dtype ends up being a non-legacy one, then we cannot use
@@ -1205,7 +1206,6 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     if (ensure_reduce_compatible && signature[0] == NULL &&
             PyTuple_GET_ITEM(all_dtypes, 0) != PyTuple_GET_ITEM(all_dtypes, 2)) {
         signature[0] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(all_dtypes, 2);
-        Py_INCREF(signature[0]);
         return promote_and_get_ufuncimpl(ufunc,
                 ops, signature, op_dtypes,
                 force_legacy_promotion,
@@ -1215,7 +1215,6 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     for (int i = 0; i < nargs; i++) {
         if (signature[i] == NULL) {
             signature[i] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(all_dtypes, i);
-            Py_INCREF(signature[i]);
         }
         else if ((PyObject *)signature[i] != PyTuple_GET_ITEM(all_dtypes, i)) {
             /*

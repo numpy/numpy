@@ -39,7 +39,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install linter requirements
-        run: python -m pip install -r requirements/linter_requirements.txt
+        run: python -m pip install --group linter
       - name: Run linter on PR
         env:
           BASE_REF: ${{ github.base_ref }}

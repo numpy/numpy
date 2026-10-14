@@ -40,7 +40,7 @@ jobs:
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
           - [macos-15-intel, macosx_x86_64, openblas]
-          - [macos-14, macosx_arm64, openblas]
+          - [macos-15, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
           - [windows-11-arm, win_arm64, ""]
           # GitHub Actions doesn’t currently support the Android emulator on any ARM
@@ -112,7 +112,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae  # v4.2.1
         with:
           only: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 

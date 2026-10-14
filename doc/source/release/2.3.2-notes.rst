@@ -4,6 +4,8 @@
 NumPy 2.3.2 Release Notes
 =========================
 
+*Released on 2025-07-24.*
+
 The NumPy 2.3.2 release is a patch release with a number of bug fixes and
 maintenance updates.  The highlights are:
 

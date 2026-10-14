@@ -78,7 +78,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "stringdtype/dtype.h"
 
 #include "get_attr_string.h"
-#include "public_dtype_api.h"  /* _fill_dtype_api */
 #include "textreading/readtext.h"  /* _readtext_from_file_object */
 
 #include "npy_dlpack.h"
@@ -1992,8 +1991,8 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
     if (src == NULL) {
         goto fail;
     }
+    /* borrowed, `src` keeps it alive */
     PyArray_DTypeMeta *DType = NPY_DTYPE(PyArray_DESCR(src));
-    Py_INCREF(DType);
     int is_pyscalar = npy_mark_tmp_array_if_pyscalar(src_obj, src, &DType);
     if (is_pyscalar || npy_mark_tmp_array_if_pystr(src_obj, src)) {
         PyArray_Descr *descr;
@@ -2009,7 +2008,6 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
             descr = npy_find_descr_for_scalar(src_obj, PyArray_DESCR(src), DType,
                                               dst_DType);
         }
-        Py_DECREF(DType);
         if (descr == NULL) {
             goto fail;
         }
@@ -2018,9 +2016,6 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         if (res < 0) {
             goto fail;
         }
-    }
-    else {
-        Py_DECREF(DType);
     }
 
     if (wheremask_in != NULL) {
@@ -2368,7 +2363,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     /* binary mode, condition copied from PyArray_FromString */
     if (sep == NULL || strlen(sep) == 0) {
         PyErr_SetString(PyExc_ValueError,
-            "The binary mode of fromstring is removed, use frombuffer instead");
+            "fromstring() requires a non-empty 'sep' argument.");
         Py_XDECREF(descr);
         return NULL;
     }
@@ -4913,8 +4908,6 @@ static struct PyMethodDef array_module_methods[] = {
         "indicated by mask."},
     {"bincount", (PyCFunction)arr_bincount,
         METH_FASTCALL | METH_KEYWORDS, NULL},
-    {"_monotonicity", (PyCFunction)arr__monotonicity,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp", (PyCFunction)arr_interp,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"interp_complex", (PyCFunction)arr_interp_complex,
@@ -5647,7 +5640,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
      * Export the API tables
      */
     c_api = PyCapsule_New((void *)PyArray_API, NULL, NULL);
-    /* The dtype API is not auto-filled/generated via Python scripts: */
+    /* Fill the DType slots at runtime, after DType initialization. */
     _fill_dtype_api(PyArray_API);
     if (c_api == NULL) {
         return -1;

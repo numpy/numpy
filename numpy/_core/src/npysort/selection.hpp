@@ -27,7 +27,7 @@
 #include <utility>
 #include "x86_simd_qsort.hpp"
 
-template<typename Tag, typename T>
+template<typename Tag, bool reverse, typename T>
 inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
 {
 #ifndef __CYGWIN__
@@ -43,7 +43,7 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
             || sizeof(T) == sizeof(uint32_t)
             || sizeof(T) == sizeof(uint64_t))) {
         using TF = typename np::meta::FixedWidth<T>::Type;
-        void (*dispfunc)(TF*, npy_intp, npy_intp) = nullptr;
+        void (*dispfunc)(TF*, npy_intp, npy_intp, bool) = nullptr;
         if constexpr (sizeof(T) == sizeof(uint16_t)) {
             #include "x86_simd_qsort_16bit.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
@@ -53,7 +53,7 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
         }
         if (dispfunc) {
-            (*dispfunc)(reinterpret_cast<TF*>(v), num, kth);
+            (*dispfunc)(reinterpret_cast<TF*>(v), num, kth, reverse);
             return true;
         }
     }
@@ -62,7 +62,7 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
     return false;
 }
 
-template<typename Tag, typename T>
+template<typename Tag, bool reverse, typename T>
 inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp kth)
 {
 #ifndef __CYGWIN__
@@ -75,10 +75,10 @@ inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp 
         (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t))) {
         using TF = typename np::meta::FixedWidth<T>::Type;
         #include "x86_simd_argsort.dispatch.h"
-        void (*dispfunc)(TF*, npy_intp*, npy_intp, npy_intp) = nullptr;
+        void (*dispfunc)(TF*, npy_intp*, npy_intp, npy_intp, bool) = nullptr;
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSelect, <TF>);
         if (dispfunc) {
-            (*dispfunc)(reinterpret_cast<TF*>(v), arg, num, kth);
+            (*dispfunc)(reinterpret_cast<TF*>(v), arg, num, kth, reverse);
             return true;
         }
     }
@@ -458,10 +458,8 @@ introselect_noarg(void *v, npy_intp num, npy_intp kth, npy_intp *pivots,
                   npy_intp *npiv, npy_intp nkth, void *)
 {
     using T = typename std::conditional<std::is_same_v<Tag, npy::half_tag>, np::Half, typename Tag::type>::type;
-    if constexpr (!reverse) {
-        if ((nkth == 1) && (quickselect_dispatch<Tag>((T *)v, num, kth))) {
-            return 0;
-        }
+    if ((nkth == 1) && (quickselect_dispatch<Tag, reverse>((T *)v, num, kth))) {
+        return 0;
     }
     return introselect_<Tag, false, reverse>((typename Tag::type *)v, nullptr, num, kth,
                                              pivots, npiv);
@@ -473,10 +471,8 @@ introselect_arg(void *v, npy_intp *tosort, npy_intp num, npy_intp kth,
                 npy_intp *pivots, npy_intp *npiv, npy_intp nkth, void *)
 {
     using T = typename Tag::type;
-    if constexpr (!reverse) {
-        if ((nkth == 1) && (argquickselect_dispatch<Tag>((T *)v, tosort, num, kth))) {
-            return 0;
-        }
+    if ((nkth == 1) && (argquickselect_dispatch<Tag, reverse>((T *)v, tosort, num, kth))) {
+        return 0;
     }
     return introselect_<Tag, true, reverse>((typename Tag::type *)v, tosort, num, kth,
                                             pivots, npiv);

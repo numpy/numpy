@@ -680,6 +680,22 @@ class TestDivision:
             y = 0.0 / x
             assert_(np.isnan(y)[0])
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.parametrize(
+        "dt",
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code == "G" else [])
+            for code in np.typecodes["Complex"]
+        ],
+    )
+    def test_reciprocal_zero_complex(self, dt):
+        x = np.array([0j, complex(-0.0, 0.0), complex(0.0, -0.0)], dtype=dt)
+        with np.errstate(invalid="ignore", divide="raise"):
+            with pytest.raises(FloatingPointError, match="divide by zero"):
+                np.reciprocal(x)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            assert_equal(np.reciprocal(x), 1.0 / x)
+
     def test_floor_division_complex(self):
         # check that floor division, divmod and remainder raises type errors
         x = np.array(
@@ -1399,7 +1415,7 @@ class TestExp2:
             assert_almost_equal(np.exp2(yf), xf)
 
 
-class TestLogAddExp2(_FilterInvalids):
+class TestLogAddExp2:
     # Need test for intermediate precisions
     def test_logaddexp2_values(self):
         x = [1, 2, 3, 4, 5]
@@ -1433,12 +1449,18 @@ class TestLogAddExp2(_FilterInvalids):
                 logzf = np.array(z, dtype=dt)
                 assert_equal(np.logaddexp2(logxf, logyf), logzf)
 
-    def test_nan(self):
-        assert_(np.isnan(np.logaddexp2(np.nan, np.inf)))
-        assert_(np.isnan(np.logaddexp2(np.inf, np.nan)))
-        assert_(np.isnan(np.logaddexp2(np.nan, 0)))
-        assert_(np.isnan(np.logaddexp2(0, np.nan)))
-        assert_(np.isnan(np.logaddexp2(np.nan, np.nan)))
+    @pytest.mark.parametrize("dtype", ['f', 'd', 'g'])
+    @pytest.mark.parametrize("x, y", [
+        (np.nan, np.inf),
+        (np.inf, np.nan),
+        (np.nan, 0),
+        (0, np.nan),
+        (np.nan, np.nan),
+    ])
+    def test_nan(self, dtype, x, y):
+        x, y = np.array([x, y], dtype=dtype)
+        with np.errstate(invalid='raise'):
+            assert np.isnan(np.logaddexp2(x, y))
 
     def test_reduce(self):
         assert_equal(np.logaddexp2.identity, -np.inf)
@@ -1966,16 +1988,10 @@ class TestSpecialFloats:
             return
         # FIXME: NAN raises FP invalid exception:
         #  - ceil/float16 on MSVC:32-bit
-        #  - spacing/float16 on almost all platforms
-        #  - spacing/float32,float64 on Windows MSVC with VS2022
         #  - arccos/float16,float32 on Android
-        if ufunc in (np.spacing, np.ceil) and dtype == 'e':
+        if ufunc is np.ceil and dtype == 'e':
             return
-        # Skip spacing tests with NaN on Windows MSVC (all dtypes)
-        import platform
-        if ((ufunc, platform.system()) in [
-                (np.spacing, 'Windows'), (np.arccos, 'Android')
-            ] and
+        if (ufunc is np.arccos and platform.system() == 'Android' and
             any(np.isnan(d) if isinstance(d, (int, float)) else False for d in data)):
             pytest.skip(f"{ufunc} with NaN generates warnings on this platform")
         array = np.array(data, dtype=dtype)
@@ -2272,7 +2288,7 @@ class TestAVXFloat32Transcendental:
                 assert_array_almost_equal_nulp(np.sin(x_large), sin_true[::jj], nulp=2)
                 assert_array_almost_equal_nulp(np.cos(x_large), cos_true[::jj], nulp=2)
 
-class TestLogAddExp(_FilterInvalids):
+class TestLogAddExp:
     def test_logaddexp_values(self):
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
@@ -2305,12 +2321,18 @@ class TestLogAddExp(_FilterInvalids):
                 logzf = np.array(z, dtype=dt)
                 assert_equal(np.logaddexp(logxf, logyf), logzf)
 
-    def test_nan(self):
-        assert_(np.isnan(np.logaddexp(np.nan, np.inf)))
-        assert_(np.isnan(np.logaddexp(np.inf, np.nan)))
-        assert_(np.isnan(np.logaddexp(np.nan, 0)))
-        assert_(np.isnan(np.logaddexp(0, np.nan)))
-        assert_(np.isnan(np.logaddexp(np.nan, np.nan)))
+    @pytest.mark.parametrize("dtype", ['f', 'd', 'g'])
+    @pytest.mark.parametrize("x, y", [
+        (np.nan, np.inf),
+        (np.inf, np.nan),
+        (np.nan, 0),
+        (0, np.nan),
+        (np.nan, np.nan),
+    ])
+    def test_nan(self, dtype, x, y):
+        x, y = np.array([x, y], dtype=dtype)
+        with np.errstate(invalid='raise'):
+            assert np.isnan(np.logaddexp(x, y))
 
     def test_reduce(self):
         assert_equal(np.logaddexp.identity, -np.inf)
@@ -5112,6 +5134,24 @@ def test_spacingf():
                     reason="IBM double double")
 def test_spacingl():
     return _test_spacing(np.longdouble)
+
+@pytest.mark.parametrize(
+    "dtype", [np.float16, np.float32, np.float64, np.longdouble]
+)
+@pytest.mark.parametrize("value", [np.nan, -np.nan, np.inf, -np.inf])
+def test_spacing_special_values(dtype, value):
+    input_value = np.array(value, dtype=dtype)
+    with np.errstate(all="raise"):
+        result = np.spacing(input_value)
+
+    assert np.isnan(result)
+
+    if np.isnan(input_value):
+        assert_equal(np.signbit(result), np.signbit(input_value))
+        # Long doubles may have padding bytes which need not be preserved.
+        if dtype != np.longdouble:
+            assert result.tobytes() == input_value.tobytes()
+
 
 def test_spacing_gfortran():
     # Reference from this fortran file, built with gfortran 4.3.3 on linux

@@ -42,7 +42,7 @@ NPY_VISIBILITY_HIDDEN mem_overlap_t
 solve_may_have_internal_overlap(PyArrayObject *a, Py_ssize_t max_work);
 
 NPY_VISIBILITY_HIDDEN void
-offset_bounds_from_strides(const int itemsize, const int nd,
+offset_bounds_from_strides(const npy_intp itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
                            npy_intp *lower_offset, npy_intp *upper_offset);
 

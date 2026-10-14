@@ -22,7 +22,9 @@
 #ifdef __cplusplus
 #include <cmath>
 using std::isgreater;
+using std::isgreaterequal;
 using std::isless;
+using std::islessequal;
 #else
 #include <math.h>
 #endif

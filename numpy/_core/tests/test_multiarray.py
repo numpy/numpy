@@ -30,6 +30,7 @@ import pytest
 
 import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.tests._locales import CommaDecimalPointLocale
@@ -3521,6 +3522,18 @@ class TestMethods:
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1, 0, 1, 2, 3])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[4, 0, -1, 2, 3])
 
+    @pytest.mark.parametrize("array_type, sorter_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_searchsorted_sorter_integer_dtypes(self, array_type, sorter_type):
+        a = np.array([5, 2, 1, 3, 4], dtype=array_type)
+        sorter = np.array([2, 1, 3, 4, 0], dtype=sorter_type)
+        out = a.searchsorted([1, 3, 5], sorter=sorter)
+        assert_equal(out, [0, 2, 4])
+
     def test_searchsorted_with_sorter(self):
         a = np.random.rand(300)
         s = a.argsort()
@@ -5567,6 +5580,29 @@ class TestPickling:
 
         assert_equal(original.dtype, new.dtype)
 
+    @pytest.mark.parametrize("shape, items", [
+        ((4,), [1, 2, 3]), ((2,), [1, 2, 3]), ((), []), ((0,), [1])])
+    def test_setstate_object_list_size_mismatch(self, shape, items):
+        a = np.array([1, 2], dtype=object)
+        with pytest.raises(ValueError, match="list size does not match"):
+            a.__setstate__((1, shape, np.dtype(object), False, items))
+        assert_equal(a, np.array([1, 2], dtype=object))
+
+    def test_setstate_structured_object_list_size_mismatch(self):
+        dt = np.dtype([('a', object), ('b', int)])
+        with pytest.raises(ValueError, match="list size does not match"):
+            np.zeros(1, dt).__setstate__((1, (4,), dt, False, [(1, 1)]))
+
+    def test_reduce_shape_error(self):
+        class MyArr(np.ndarray):
+            @property
+            def shape(self):
+                raise RuntimeError("shape lookup failed")
+
+        a = np.arange(3).view(MyArr)
+        with pytest.raises(RuntimeError, match="shape lookup failed"):
+            a.__reduce__()
+
 
 class TestFancyIndexing:
     def test_list(self):
@@ -6502,6 +6538,9 @@ class TestTake:
         assert_array_equal(x.take([2], axis=0, mode='wrap')[0], x[0])
         assert_array_equal(x.take([3], axis=0, mode='wrap')[0], x[1])
 
+        empty = np.empty((0, 0))
+        assert_equal(empty.take([-1, 0, 1], axis=0, mode="wrap").shape, (3, 0))
+
     @pytest.mark.parametrize('dtype', ('>i4', '<i4'))
     def test_byteorder(self, dtype):
         x = np.array([1, 2, 3], dtype)
@@ -6531,6 +6570,16 @@ class TestTake:
 
 
 class TestLexsort:
+    @pytest.mark.slow
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=21.5e9)
+    def test_large_structured_dtype(self):
+        # gh-32809
+        np.lexsort([np.zeros(3, [("x", "u1", 2**31 + 2)])[::2]])
+        np.lexsort([np.zeros(3, "V2147483650")[::2]])
+        np.lexsort([np.zeros(3, [("x", "u1", 2**32 + 1)])[::2]])
+        np.lexsort([np.zeros(3, "V4294967297")[::2]])
+
     @pytest.mark.parametrize('dtype', [
         np.uint8, np.uint16, np.uint32, np.uint64,
         np.int8, np.int16, np.int32, np.int64,
@@ -7268,6 +7317,23 @@ class TestFlat:
 
 class TestResize:
 
+    @pytest.mark.parametrize("dtype", [
+        ("x", "u1", 5),
+        ("x", "u1", 2**32 + 1),
+        ("x", "u1", 2**31 + 1),
+        ])
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=21.5e9)
+    @pytest.mark.slow
+    def test_gh_32830(self, dtype):
+        a = np.zeros(2, [dtype])
+        a.resize(3, refcheck=False)
+        # regardless of the width of the dtype,
+        # the final column should contain 3 zeros:
+        actual = a["x"][:, -1]
+        expected = np.zeros(3, dtype=np.uint8)
+        assert_array_equal(actual, expected, strict=True)
+
     @_no_tracing
     def test_basic(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
@@ -7993,6 +8059,13 @@ class TestVdot:
                          np.vdot(a.flatten(), b.flatten()))
             assert_equal(np.vdot(a, b.copy('F')),
                          np.vdot(a.flatten(), b.flatten()))
+
+    def test_vdot_object_empty_is_zero(self):
+        x = np.empty((0,), dtype=object)
+        assert np.vdot(x, x) == 0
+
+        x2 = np.empty((1, 0), dtype=object)
+        assert_array_equal(np.vdot(x2, x2), np.array([0], dtype=object))
 
 
 class TestDot:
@@ -8915,6 +8988,19 @@ class TestChoose:
         ind = [0, 0, 1]
         return x, y, x2, y2, ind
 
+    @pytest.mark.parametrize("dtype", [
+        ("x", "u1", 3),
+        ("x", "u1", 2**32 + 1),
+        ("x", "u1", 2**31 + 2),
+        ])
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=14e9)
+    def test_gh_32830(self, dtype):
+        a = np.zeros(2, [dtype])
+        a["x"][1, -1] = 2
+        actual = np.choose([1], a)["x"]
+        assert actual[:, -1] == 2
+
     def test_basic(self):
         x, y, _, _, ind = self._create_data()
         A = np.choose(ind, (x, y))
@@ -8946,6 +9032,21 @@ class TestChoose:
             np.choose([0], (scalar, arr))
         with pytest.raises(OverflowError):
             np.choose([1], (arr, scalar))
+
+    @pytest.mark.parametrize("array_type, indices_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_choose_integer_dtypes(self, array_type, indices_type):
+        choices = (np.array([1, 2, 3], dtype=array_type),
+                   np.array([4, 5, 6], dtype=array_type))
+        indices = np.array([0, 1, 0], dtype=indices_type)
+        tgt = np.array([1, 5, 3], dtype=array_type)
+        out = np.choose(indices, choices)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
 
     def test_dimension_and_args_limit(self):
         # Maxdims for the legacy iterator is 32, but the maximum number
@@ -9004,6 +9105,20 @@ class TestRepeat:
         A = np.repeat(m_rect, 2, axis=1)
         assert_equal(A, [[1, 1, 2, 2, 3, 3],
                          [4, 4, 5, 5, 6, 6]])
+
+    @pytest.mark.parametrize("array_type, repeats_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_repeat_integer_dtypes(self, array_type, repeats_type):
+        x = np.array([1, 2, 3, 4, 5], dtype=array_type)
+        repeats = np.array([1, 0, 2, 2, 3], dtype=repeats_type)
+        tgt = np.array([1, 3, 3, 4, 4, 5, 5, 5], dtype=array_type)
+        out = np.repeat(x, repeats)
+        assert_equal(out, tgt)
+        assert_equal(out.dtype, tgt.dtype)
 
 
 # TODO: test for multidimensional
@@ -9792,11 +9907,10 @@ class TestNewBufferProtocol:
         f.a = 3
         assert_equal(arr['a'], 3)
 
-    @pytest.mark.parametrize("obj", [np.ones(3), np.ones(1, dtype="i,i")[()]])
-    @pytest.mark.thread_unsafe(
-        reason="_multiarray_tests used memoryview, which is thread-unsafe",
-    )
-    def test_error_if_stored_buffer_info_is_corrupted(self, obj):
+    @pytest.mark.parametrize(
+        "structured_scalar", [False, True], ids=["array", "void_scalar"])
+    def test_error_if_stored_buffer_info_is_corrupted(self,
+                                                      structured_scalar):
         """
         If a user extends a NumPy array before 1.20 and then runs it
         on NumPy 1.20+. A C-subclassed array might in theory modify
@@ -9805,6 +9919,10 @@ class TestNewBufferProtocol:
         This is a sanity check to help users transition to safe code, it
         may be deleted at any point.
         """
+        if structured_scalar:
+            obj = np.ones(1, dtype="i,i")[()]
+        else:
+            obj = np.ones(3)
         # corrupt buffer info:
         _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
         name = type(obj)
@@ -12120,3 +12238,26 @@ class TestSubinterpreterTeardown:
             assert "does not support loading in subinterpreters" in msg, msg
         finally:
             interp.close()
+
+
+class TestArrayConverter:
+    def test_pyscalars_self_referencing_array_raises(self):
+        # gh-32700
+        obj_array = np.empty(2, dtype=object)
+        obj_array[0] = obj_array
+        obj_array[1] = [obj_array, obj_array]
+
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(TypeError, match="must be a string"):
+            conv.as_arrays(pyscalars=obj_array)
+
+    @pytest.mark.parametrize("mode", [123, [], None])
+    def test_pyscalars_invalid_mode_type(self, mode):
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(TypeError, match="must be a string"):
+            conv.as_arrays(pyscalars=mode)
+
+    def test_pyscalars_invalid_mode_string(self):
+        conv = _array_converter([1, 2, 3])
+        with pytest.raises(ValueError, match="invalid pyscalar mode"):
+            conv.as_arrays(pyscalars="invalid")

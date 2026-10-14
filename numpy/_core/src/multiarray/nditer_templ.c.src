@@ -181,7 +181,10 @@ npyiter_buffered_reduce_iternext_iters@tag_nop@(NpyIter *iter)
         return 1;
     }
 
-    /* Save the previously used data pointers in the user pointers */
+    /*
+     * Save the previously used data pointers in the user pointers. Re-use is safe:
+     * buffer copies never cross a core boundary, see `npyiter_find_buffering_setup`.
+     */
     memcpy(ptrs, NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
 
     /* Write back to the arrays */
@@ -220,6 +223,7 @@ npyiter_buffered_iternext(NpyIter *iter)
     int nop = NIT_NOP(iter);
 
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
+    char **ptrs = NIT_USERPTRS(iter);
 
     /*
      * If the iterator handles the inner loop, need to increment all
@@ -230,10 +234,8 @@ npyiter_buffered_iternext(NpyIter *iter)
         if (++NIT_ITERINDEX(iter) < NBF_BUFITEREND(bufferdata)) {
             int iop;
             npy_intp *strides;
-            char **ptrs;
 
             strides = NBF_STRIDES(bufferdata);
-            ptrs = NIT_USERPTRS(iter);
             for (iop = 0; iop < nop; ++iop) {
                 ptrs[iop] += strides[iop];
             }
@@ -243,6 +245,12 @@ npyiter_buffered_iternext(NpyIter *iter)
     else {
         NIT_ITERINDEX(iter) += NBF_SIZE(bufferdata);
     }
+
+    /*
+     * Save the previously used data pointers in the user pointers. Re-use is safe:
+     * buffer copies never cross a core boundary, see `npyiter_find_buffering_setup`.
+     */
+    memcpy(ptrs, NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
 
     /* Write back to the arrays */
     if (npyiter_copy_from_buffers(iter) < 0) {
@@ -261,7 +269,7 @@ npyiter_buffered_iternext(NpyIter *iter)
     }
 
     /* Prepare the next buffers and set iterend/size */
-    if (npyiter_copy_to_buffers(iter, NULL) < 0) {
+    if (npyiter_copy_to_buffers(iter, ptrs) < 0) {
         npyiter_clear_buffers(iter);
         return 0;
     }
