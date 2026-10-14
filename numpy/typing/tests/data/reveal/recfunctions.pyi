@@ -1,4 +1,4 @@
-from typing import assert_type
+from typing import Any, assert_type, type_check_only
 
 import numpy as np
 import numpy.lib.recfunctions as rfn
@@ -8,9 +8,15 @@ import numpy.typing as npt
 
 _i64_1d: npt.Array1D[np.int64]
 _f64_1d: npt.Array1D[np.float64]
+_void_1d: npt.Array1D[np.void]
+
+@type_check_only
+def _func_f64(a: npt.NDArray[Any], /, *, axis: int) -> npt.Array1D[np.float64]: ...
 
 ###
 
 assert_type(rfn.merge_arrays((_i64_1d, _f64_1d), -1, False, False, True), np.recarray[tuple[int], np.dtype[np.record]])
 assert_type(rfn.merge_arrays((_i64_1d, _f64_1d), asrecarray=True), np.recarray[tuple[int], np.dtype[np.record]])
 assert_type(rfn.merge_arrays((_i64_1d, _f64_1d), usemask=True), npt.Array1D[np.void])
+
+assert_type(rfn.apply_along_fields(_func_f64, _void_1d), npt.Array1D[np.float64])

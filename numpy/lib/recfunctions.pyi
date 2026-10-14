@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
-from collections.abc import Callable, Iterable, Mapping, Sequence
-from typing import Any, Literal, overload
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any, Literal, Protocol, overload, type_check_only
 
 import numpy as np
 import numpy.typing as npt
@@ -42,6 +42,10 @@ type _NonVoidDType = np.dtype[_NonVoid] | np.dtypes.StringDType
 type _JoinType = Literal["inner", "outer", "leftouter"]
 
 type _ToMerge = Sequence[npt.ArrayLike] | np.ndarray | np.void
+
+@type_check_only
+class _FieldsFunc[ReturnT](Protocol):
+    def __call__(self, a: npt.NDArray[Any], /, *, axis: int) -> ReturnT: ...
 
 ###
 
@@ -291,10 +295,7 @@ def unstructured_to_structured(
 ) -> npt.NDArray[np.void]: ...
 
 #
-def apply_along_fields[ShapeT: _Shape](
-    func: Callable[[np.ndarray[ShapeT]], np.ndarray],
-    arr: np.ndarray[ShapeT, np.dtype[np.void]],
-) -> np.ndarray[ShapeT, np.dtype[np.void]]: ...
+def apply_along_fields[ReturnT](func: _FieldsFunc[ReturnT], arr: npt.NDArray[np.void]) -> ReturnT: ...
 
 #
 def assign_fields_by_name(dst: npt.NDArray[np.void], src: npt.NDArray[np.void], zero_unassigned: bool = True) -> None: ...
