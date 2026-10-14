@@ -1674,7 +1674,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: int,
+        a: _IntLike_co,
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1850,7 +1850,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: int | list[int],
+        a: _IntLike_co | list[int],
         size: int,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1861,7 +1861,7 @@ class Generator:
     def choice[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         /,
-        a: int | list[int],
+        a: _IntLike_co | list[int],
         size: ShapeT,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1872,7 +1872,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: int | _NestedList[int],
+        a: _IntLike_co | _NestedList[int],
         size: _ShapeLike,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
