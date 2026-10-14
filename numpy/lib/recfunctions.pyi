@@ -231,12 +231,12 @@ def rec_drop_fields[ShapeT: _Shape](
 ) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
 
 #
-def rec_append_fields[ShapeT: _Shape](
-    base: np.ndarray[ShapeT, np.dtype[np.void]],
+def rec_append_fields(
+    base: npt.NDArray[np.void],
     names: _OneOrMany[str],
     data: _OneOrMany[npt.NDArray[Any]],
-    dtypes: _BuiltinSequence[np.dtype] | None = None,
-) -> np.ma.MaskedArray[ShapeT, np.dtype[np.void]]: ...
+    dtypes: npt.DTypeLike | _BuiltinSequence[npt.DTypeLike] | None = None,
+) -> np.recarray[tuple[int], np.dtype[np.record]]: ...
 
 # TODO(jorenham): Stop passing `void` directly once structured dtypes are implemented,
 # e.g. using a `TypeVar` with constraints.
