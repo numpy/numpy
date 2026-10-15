@@ -12,7 +12,7 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import TypeIs, TypeVar
+from typing_extensions import TypeIs, TypeVar, deprecated
 
 import numpy as np
 from numpy import _OrderKACF
@@ -3714,6 +3714,34 @@ def append(  # noqa: UP047
     values: _ArrayLike[_AnyScalarT],
     axis: None = None,
 ) -> Array1D[_AnyScalarT]: ...
+@overload  # ?d i8|i16|i32|uint, 0d +int
+@deprecated("np.append will stop converting Python scalars to arrays before promoting, which can change the result dtype or raise")
+def append(
+    arr: _ArrayLike[np.int8 | np.int16 | np.int32 | np.unsignedinteger],
+    values: int,
+    axis: None = None,
+) -> Array1D[Any]: ...
+@overload  # 0d +int, ?d i8|i16|i32|uint
+@deprecated("np.append will stop converting Python scalars to arrays before promoting, which can change the result dtype or raise")
+def append(
+    arr: int,
+    values: _ArrayLike[np.int8 | np.int16 | np.int32 | np.unsignedinteger],
+    axis: None = None,
+) -> Array1D[Any]: ...
+@overload  # ?d f16|f32|c64|str|bytes, 0d +complex
+@deprecated("np.append will stop converting Python scalars to arrays before promoting, which can change the result dtype or raise")
+def append(
+    arr: _ArrayLike[np.float16 | np.float32 | np.complex64 | np.character],
+    values: complex,
+    axis: None = None,
+) -> Array1D[Any]: ...
+@overload  # 0d +complex, ?d f16|f32|c64|str|bytes
+@deprecated("np.append will stop converting Python scalars to arrays before promoting, which can change the result dtype or raise")
+def append(
+    arr: complex,
+    values: _ArrayLike[np.float16 | np.float32 | np.complex64 | np.character],
+    axis: None = None,
+) -> Array1D[Any]: ...
 @overload  # >=1d T, axis=<given>
 def append(  # noqa: UP047
     arr: _Array[_Shape1T, _AnyScalarT],
