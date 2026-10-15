@@ -27,7 +27,7 @@ class Random(Benchmark):
 class RandomUniform(Benchmark):
     param_names = ["rng", "dtype", "size"]
     params = [
-        ["PCG64", "MT19937", "Philox", "SFC64", "numpy"],
+        ["PCG64", "PCG64DXSM", "MT19937", "Philox", "SFC64", "numpy"],
         ["float32", "float64"],
         [10, 100, 1_000, 10_000, 100_000, 1_000_000],
     ]
@@ -109,7 +109,7 @@ nom_size = 100000
 
 class RNG(Benchmark):
     param_names = ['rng']
-    params = ['PCG64', 'MT19937', 'Philox', 'SFC64', 'numpy']
+    params = ['PCG64', 'PCG64DXSM', 'MT19937', 'Philox', 'SFC64', 'numpy']
 
     def setup(self, bitgen):
         if bitgen == 'numpy':
@@ -153,7 +153,7 @@ class Bounded(Benchmark):
     u32 = np.uint32
     u64 = np.uint64
     param_names = ['rng', 'dt_max']
-    params = [['PCG64', 'MT19937', 'Philox', 'SFC64', 'numpy'],
+    params = [['PCG64', 'PCG64DXSM', 'MT19937', 'Philox', 'SFC64', 'numpy'],
               [[u8,    95],
                [u8,    64],  # Worst case for legacy
                [u8,   127],  # Best case for legacy

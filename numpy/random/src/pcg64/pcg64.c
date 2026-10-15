@@ -188,6 +188,60 @@ extern inline uint32_t pcg64_next32(pcg64_state *state);
 extern inline uint64_t pcg64_cm_next64(pcg64_state *state);
 extern inline uint32_t pcg64_cm_next32(pcg64_state *state);
 
+void pcg64_cm_fill_uint32(pcg64_state *state, size_t count, uint32_t *out) {
+  uint64_t next = 0;
+  pcg_state_setseq_128 rng;
+
+  if (count == 0) {
+    return;
+  }
+  if (state->has_uint32) {
+    out[0] = state->uinteger;
+    state->has_uint32 = 0;
+    out++;
+    if (--count == 0) {
+      return;
+    }
+  }
+
+  rng = *state->pcg_state;
+
+  for (size_t i = 0; i < count / 2; i++) {
+    next = pcg_cm_random_r(&rng);
+    out[2 * i] = (uint32_t)(next & 0xffffffff);
+    out[2 * i + 1] = (uint32_t)(next >> 32);
+  }
+
+  if (count & 1) {
+    next = pcg_cm_random_r(&rng);
+    out[count - 1] = (uint32_t)(next & 0xffffffff);
+    state->has_uint32 = 1;
+  }
+  state->uinteger = (uint32_t)(next >> 32);
+  state->pcg_state->state = rng.state;
+}
+
+void pcg64_cm_fill_uint64(pcg64_state *state, size_t count, uint64_t *out) {
+
+  pcg_state_setseq_128 rng = *state->pcg_state;
+
+  for (size_t i = 0; i < count; i++) {
+    out[i] = pcg_cm_random_r(&rng);
+  }
+  state->pcg_state->state = rng.state;
+}
+
+void pcg64_cm_fill_double(pcg64_state *state, size_t count, double *out) {
+
+  pcg_state_setseq_128 rng = *state->pcg_state;
+
+  for (size_t i = 0; i < count; i++) {
+    out[i] = (pcg_cm_random_r(&rng) >> 11) *
+             (1.0 / 9007199254740992.0);
+  }
+  state->pcg_state->state = rng.state;
+}
+
 extern void pcg64_advance(pcg64_state *state, uint64_t *step) {
   pcg128_t delta;
 #ifndef PCG_EMULATED_128BIT_MATH

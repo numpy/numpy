@@ -427,4 +427,8 @@ void pcg64_get_state(pcg64_state *state, uint64_t *state_arr, int *has_uint32,
 void pcg64_set_state(pcg64_state *state, uint64_t *state_arr, int has_uint32,
                      uint32_t uinteger);
 
+void pcg64_cm_fill_uint32(pcg64_state *state, size_t count, uint32_t *out);
+void pcg64_cm_fill_uint64(pcg64_state *state, size_t count, uint64_t *out);
+void pcg64_cm_fill_double(pcg64_state *state, size_t count, double *out);
+
 #endif /* PCG64_H_INCLUDED */

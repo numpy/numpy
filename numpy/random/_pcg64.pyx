@@ -37,6 +37,9 @@ cdef extern from "src/pcg64/pcg64.h":
 
     uint64_t pcg64_cm_next64(pcg64_state *state)  noexcept nogil
     uint32_t pcg64_cm_next32(pcg64_state *state)  noexcept nogil
+    void pcg64_cm_fill_uint32(pcg64_state *state, size_t count, uint32_t *out) nogil
+    void pcg64_cm_fill_uint64(pcg64_state *state, size_t count, uint64_t *out) nogil
+    void pcg64_cm_fill_double(pcg64_state *state, size_t count, double *out) nogil
     void pcg64_cm_advance(pcg64_state *state, uint64_t *step)
 
 cdef uint64_t pcg64_uint64(void* st) noexcept nogil:
@@ -79,6 +82,29 @@ cdef uint32_t pcg64_cm_uint32(void *st) noexcept nogil:
 
 cdef double pcg64_cm_double(void* st) noexcept nogil:
     return uint64_to_double(pcg64_cm_next64(<pcg64_state *>st))
+
+cdef void pcg64_cm_uint32_fill(void *state, size_t count, uint32_t *out) noexcept nogil:
+    pcg64_cm_fill_uint32(<pcg64_state *>state, count, out)
+
+cdef void pcg64_cm_uint64_fill(void *state, size_t count, uint64_t *out) noexcept nogil:
+    pcg64_cm_fill_uint64(<pcg64_state *>state, count, out)
+
+cdef void pcg64_cm_double_fill(void *state, size_t count, double *out) noexcept nogil:
+    pcg64_cm_fill_double(<pcg64_state *>state, count, out)
+
+cdef bitgen_bulk_v1 _pcg64_dxsm_bulk_v1
+_pcg64_dxsm_bulk_v1.abi_version = BITGEN_BULK_ABI_VERSION
+_pcg64_dxsm_bulk_v1.struct_size = sizeof(bitgen_bulk_v1)
+_pcg64_dxsm_bulk_v1.capabilities = (
+    BITGEN_BULK_UINT32 | BITGEN_BULK_UINT64 | BITGEN_BULK_DOUBLE
+)
+_pcg64_dxsm_bulk_v1.fill_uint32 = &pcg64_cm_uint32_fill
+_pcg64_dxsm_bulk_v1.fill_uint64 = &pcg64_cm_uint64_fill
+_pcg64_dxsm_bulk_v1.fill_double = &pcg64_cm_double_fill
+
+cdef object _pcg64_dxsm_bulk_capsule = PyCapsule_New(
+    <void *>&_pcg64_dxsm_bulk_v1, "BitGeneratorBulkV1", NULL
+)
 
 cdef class PCG64(BitGenerator):
     # the first line is used to populate `__text_signature__`
@@ -394,6 +420,11 @@ cdef class PCG64DXSM(BitGenerator):
     """
     cdef pcg64_state rng_state
     cdef pcg64_random_t pcg64_random_state
+
+    @property
+    def bulk_capsule(self):
+        """Optional bulk-generation C interface."""
+        return _pcg64_dxsm_bulk_capsule
 
     def __init__(self, seed=None):
         BitGenerator.__init__(self, seed)
