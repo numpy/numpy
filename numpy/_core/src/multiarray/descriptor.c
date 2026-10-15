@@ -2710,8 +2710,21 @@ arraydescr_new(PyTypeObject *subtype,
         return NULL;
     }
 
-    /* Get a new copy of it unless it's already a copy */
-    if (copy && PyDataType_FIELDS(conv) == Py_None) {
+    if (!PyDataType_ISLEGACY(conv)) {
+        if (metadata != NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "cannot attach metadata to new style DType");
+            Py_DECREF(conv);
+            return NULL;
+        }
+        return (PyObject *)conv;
+    }
+
+    /*
+     * Copy shared legacy singletons when requested.  Unpickling restores
+     * state with __setstate__, which must not modify the shared descriptor.
+     */
+    if (copy && conv == NPY_DTYPE(conv)->singleton) {
         PyArray_DESCR_REPLACE(conv);
         if (conv == NULL) {
             return NULL;
@@ -2720,12 +2733,6 @@ arraydescr_new(PyTypeObject *subtype,
     }
 
     if ((metadata != NULL)) {
-        if (!PyDataType_ISLEGACY(conv)) {
-            PyErr_SetString(PyExc_TypeError,
-                    "cannot attach metadata to new style DType");
-            Py_DECREF(conv);
-            return NULL;
-        }
         /*
          * We need to be sure to make a new copy of the data-type and any
          * underlying dictionary
