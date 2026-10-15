@@ -12,7 +12,7 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import TypeIs, TypeVar
+from typing_extensions import TypeIs, TypeVar, deprecated
 
 import numpy as np
 from numpy import _OrderKACF
@@ -3714,6 +3714,20 @@ def append(  # noqa: UP047
     values: _ArrayLike[_AnyScalarT],
     axis: None = None,
 ) -> Array1D[_AnyScalarT]: ...
+@overload  # ?d i8|i16|i32|uint|str|bytes, 0d +int
+@deprecated("np.append will stop converting Python scalars to arrays before promoting, which can change the result dtype or raise")
+def append(
+    arr: _ArrayLike[np.int8 | np.int16 | np.int32 | np.unsignedinteger | np.character] | str | bytes,
+    values: int,
+    axis: None = None,
+) -> Array1D[Any]: ...
+@overload  # 0d +int, ?d i8|i16|i32|uint|str|bytes
+@deprecated("np.append will stop converting Python scalars to arrays before promoting, which can change the result dtype or raise")
+def append(
+    arr: int,
+    values: _ArrayLike[np.int8 | np.int16 | np.int32 | np.unsignedinteger | np.character] | str | bytes,
+    axis: None = None,
+) -> Array1D[Any]: ...
 @overload  # >=1d T, axis=<given>
 def append(  # noqa: UP047
     arr: _Array[_Shape1T, _AnyScalarT],
