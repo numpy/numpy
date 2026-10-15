@@ -7451,7 +7451,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __radd__[ShapeT: _Shape](  # type: ignore[misc]
+    def __radd__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -7827,7 +7827,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rsub__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -8213,7 +8213,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rmul__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmul__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -8653,7 +8653,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rpow__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rpow__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         mod: None = None,
@@ -9355,7 +9355,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rfloordiv__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rfloordiv__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -9657,7 +9657,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -9963,7 +9963,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> _2Tuple[ndarray[ShapeT, _dtype[Any]]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rdivmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         lhs: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -12200,18 +12200,31 @@ class unsignedinteger(integer[_NBitT]):
     @overload
     def __ror__(self, other: signedinteger, /) -> signedinteger: ...
 
-uint8 = unsignedinteger[_8Bit]
-uint16 = unsignedinteger[_16Bit]
-uint32 = unsignedinteger[_32Bit]
-uint64 = unsignedinteger[_64Bit]
+@disjoint_base
+class uint8(unsignedinteger[_8Bit]): ...
 
-ubyte = unsignedinteger[_NBitByte]
-ushort = unsignedinteger[_NBitShort]
-uintc = unsignedinteger[_NBitIntC]
-uintp = unsignedinteger[_NBitIntP]
+@disjoint_base
+class uint16(unsignedinteger[_16Bit]): ...
+
+@disjoint_base
+class uint32(unsignedinteger[_32Bit]): ...
+
+@disjoint_base
+class uint64(unsignedinteger[_64Bit]): ...
+
+ubyte = uint8
+ushort = uint16
+uintc = uint32
+uintp = uint64  # NOTE: assumes a 64-bit platform
 uint = uintp
-ulong = unsignedinteger[_NBitLong]
-ulonglong = unsignedinteger[_NBitLongLong]
+
+# NOTE: the `!=` works around a pyright bug with conditionally defined aliases
+if sys.platform != "win32":
+    ulong = uint64
+else:
+    ulong = uint32
+
+ulonglong = uint64
 
 class inexact(number[_NBitT, _InexactItemT_co], Generic[_NBitT, _InexactItemT_co]):
     @abstractmethod
