@@ -150,6 +150,12 @@ assert_type(np.isscalar(i8), bool)
 assert_type(np.isscalar(AR_i8), bool)
 assert_type(np.isscalar(_to_1d_int), bool)
 
+def _f(x: float | npt.NDArray[np.float64]) -> None:
+    if np.isscalar(x):
+        assert_type(x, float)
+    else:
+        assert_type(x, npt.NDArray[np.float64])
+
 assert_type(np.roll(AR_i8, 1), npt.NDArray[np.int64])
 assert_type(np.roll(AR_i8, (1, 2)), npt.NDArray[np.int64])
 assert_type(np.roll(_to_1d_int, 1), npt.NDArray[Any])

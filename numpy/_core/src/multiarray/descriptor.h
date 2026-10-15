@@ -31,6 +31,9 @@ NPY_NO_EXPORT PyObject *arraydescr_protocol_descr_get(
 
 NPY_NO_EXPORT PyObject *array_protocol_descr_get(PyArray_Descr *self);
 
+NPY_NO_EXPORT void
+arraydescr_debug_print(PyArray_Descr *descr);
+
 static inline int
 npy_add_to_descr_size(npy_intp *size, npy_intp increment)
 {
