@@ -3658,6 +3658,32 @@ arraydescr_str(PyArray_Descr *dtype)
     return res;
 }
 
+/*
+ * Print the repr of a dtype to stdout, for the debug print functions.
+ */
+NPY_NO_EXPORT void
+arraydescr_debug_print(PyArray_Descr *descr)
+{
+    if (descr == NULL) {
+        printf("<nil>");
+        return;
+    }
+    Py_ssize_t size = 0;
+    const char *str = NULL;
+    PyObject *repr = PyObject_Repr((PyObject *)descr);
+    if (repr != NULL) {
+        str = PyUnicode_AsUTF8AndSize(repr, &size);
+    }
+    if (str == NULL) {
+        PyErr_Clear();
+        printf("<error during print>");
+    }
+    else {
+        fwrite(str, 1, (size_t)size, stdout);
+    }
+    Py_XDECREF(repr);
+}
+
 static PyObject *
 arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 {

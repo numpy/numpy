@@ -944,8 +944,6 @@ add_newdoc('numpy._core.multiarray', 'array',
         .. versionadded:: 2.4.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1071,8 +1069,6 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1168,8 +1164,6 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
 
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray or an ndarray subclass
@@ -1218,8 +1212,6 @@ add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
     dtype : str or dtype object, optional
         Data-type of returned array.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1283,8 +1275,6 @@ add_newdoc('numpy._core.multiarray', 'asfortranarray',
     dtype : str or dtype object, optional
         By default, the data-type is inferred from the input data.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1358,8 +1348,6 @@ add_newdoc('numpy._core.multiarray', 'empty',
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1435,8 +1423,6 @@ add_newdoc('numpy._core.multiarray', 'zeros',
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1511,8 +1497,6 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
             raw bytes, was removed. Use `frombuffer` instead to read raw bytes.
 
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1604,8 +1588,6 @@ add_newdoc('numpy._core.multiarray', 'fromiter',
         which means all data is read.
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1675,8 +1657,6 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
         Only permitted for binary files.
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     See also
     --------
     load, save
@@ -1745,8 +1725,6 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
     offset : int, optional
         Start reading the buffer from this offset (in bytes); default: 0.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1893,8 +1871,6 @@ add_newdoc('numpy._core.multiarray', 'arange',
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------

@@ -74,8 +74,7 @@ jobs:
       run: |
         python --version
         pip install -U pip
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
     - name: Build NumPy debug
       run: |
         spin build -- -Dbuildtype=debug -Dallow-noblas=true \
@@ -121,8 +120,7 @@ jobs:
         python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/test_requirements.txt -r requirements/hypothesis_requirements.txt
+        pip install --group dev-cli --group test    # includes hypothesis
     - name: Install gfortran and setup OpenBLAS 32 bits
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
@@ -178,8 +176,9 @@ jobs:
             cd /numpy &&
             python -m venv venv &&
             source venv/bin/activate &&
-            python -m pip install -r /numpy/requirements/build_requirements.txt &&
-            python -m pip install -r /numpy/requirements/test_requirements.txt &&
+            python -m pip install --upgrade pip &&
+            python -m pip install --group dev-cli &&
+            python -m pip install --group test-extending &&
             spin build
           '"
 
@@ -213,7 +212,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libopenblas-dev ninja-build
-        pip install "asv<0.6.5" virtualenv packaging -r requirements/build_requirements.txt
+        pip install --group dev-cli --group bench
     - name: Install NumPy
       run: |
         spin build -- -Dcpu-dispatch=none
@@ -231,7 +230,7 @@ jobs:
     # - name: Check docstests
     #   shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
     #   run: |
-    #     pip install -r requirements/doc_requirements.txt -r requirements/test_requirements.txt
+    #     pip install --group doc --group test-extending
     #     spin check-docs -v
     #     spin check-tutorials -v
 
@@ -263,7 +262,7 @@ jobs:
         pip install dist/numpy*.whl
     - name: Install test dependencies
       run: |
-        pip install -r requirements/test_requirements.txt
+        pip install --group test-extending
     - name: Run test suite
       run: |
         cd tools
@@ -301,8 +300,8 @@ jobs:
         python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
-        python -m pip install -r requirements/build_requirements.txt
-        python -m pip install -r requirements/test_requirements.txt
+        python -m pip install --group dev-cli
+        python -m pip install --group test-extending
         python -m pip install -r array-api-tests/requirements.txt
     - name: Build and install NumPy
       run: |
@@ -344,8 +343,8 @@ jobs:
     - name: Install build and test dependencies from PyPI
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -r requirements/build_requirements.txt
-        python -m pip install -r requirements/test_requirements.txt
+        python -m pip install --group dev-cli
+        python -m pip install --group test-extending
         python -m pip install --upgrade scikit-build-core cmake wheel
     - name: Build and install NumPy
       run: |
@@ -388,8 +387,8 @@ jobs:
         persist-credentials: false
     - name: Install build and test dependencies from PyPI
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/test_requirements.txt
+        pip install --group dev-cli
+        pip install --group test-extending
         pip install "vulture!=2.15"
     - name: Build and install NumPy
       run: |
@@ -441,9 +440,8 @@ jobs:
         python3.12 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip
-        pip install -r requirements/build_requirements.txt
-        pip install --group openblas32
-        pip install -r requirements/test_requirements.txt
+        pip install --group openblas32 --group dev-cli
+        pip install --group test-extending
 
         spin config-openblas --with-scipy-openblas=32
         export PKG_CONFIG_PATH=$(pwd)/.openblas

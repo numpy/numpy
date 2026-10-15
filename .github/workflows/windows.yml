@@ -39,7 +39,7 @@ jobs:
 
     - name: Install build dependencies from PyPI
       run: |
-        pip install -r requirements/build_requirements.txt
+        pip install --group dev-cli
 
     - name: Install pkg-config
       run: |
@@ -60,7 +60,7 @@ jobs:
 
     - name: Install test dependencies
       run: |
-        python -m pip install -r requirements/test_requirements.txt -r requirements/hypothesis_requirements.txt
+        python -m pip install --group test
         python -m pip install threadpoolctl
 
     - name: Run test suite
@@ -120,7 +120,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          python -m pip install -r requirements/test_requirements.txt
+          python -m pip install --group test-extending
 
       - name: Run test suite (full)
         run: |
@@ -163,8 +163,8 @@ jobs:
 
       - name: Dependencies
         run: |
-          python -m pip install -r requirements/test_requirements.txt -r requirements/hypothesis_requirements.txt
-          python -m pip install -r requirements/build_requirements.txt
+          python -m pip install --group test
+          python -m pip install --group dev-cli
 
       - name: Build and install
         run: |

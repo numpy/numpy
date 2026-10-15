@@ -6541,6 +6541,9 @@ class TestTake:
         assert_array_equal(x.take([2], axis=0, mode='wrap')[0], x[0])
         assert_array_equal(x.take([3], axis=0, mode='wrap')[0], x[1])
 
+        empty = np.empty((0, 0))
+        assert_equal(empty.take([-1, 0, 1], axis=0, mode="wrap").shape, (3, 0))
+
     @pytest.mark.parametrize('dtype', ('>i4', '<i4'))
     def test_byteorder(self, dtype):
         x = np.array([1, 2, 3], dtype)

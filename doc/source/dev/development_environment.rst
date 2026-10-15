@@ -62,7 +62,7 @@ dependencies with::
 
     $ virtualenv numpy-dev
     $ source numpy-dev/bin/activate # activate virtual environment
-    $ python -m pip install -r requirements/all_requirements.txt
+    $ python -m pip install --group all
 
 Now, whenever you want to switch to the virtual environment, you can use the
 command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
@@ -80,7 +80,7 @@ Testing builds
 
 Before running the tests, first install the test dependencies::
 
-    $ python -m pip install -r requirements/test_requirements.txt
+    $ python -m pip install --group test-extending
     $ python -m pip install asv # only for running benchmarks
 
 To build the development version of NumPy and run tests, spawn
@@ -201,7 +201,7 @@ Lint checks can be performed on newly added lines of Python code.
 
 Install all dependent packages using pip::
 
-    $ python -m pip install -r requirements/linter_requirements.txt
+    $ python -m pip install --group linter
 
 To run lint checks before committing new code, run::
 

@@ -305,6 +305,25 @@ _AnyNumericScalarT = TypeVar(
     np.timedelta64,
     np.object_,
 )  # fmt: skip
+_Shape1T = TypeVar("_Shape1T", bound=tuple[int, *tuple[int, ...]])
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64, np.datetime64, np.str_, np.bytes_, np.void, np.object_,
+)  # fmt: skip
+_AnyNumericT = TypeVar(
+    "_AnyNumericT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64,
+)  # fmt: skip
+_AnyNumericObjectT = TypeVar(
+    "_AnyNumericObjectT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64, np.object_,
+)  # fmt: skip
 
 type _RealNumber = np.floating | np.integer
 type _InnerScalar = np.number | np.bool | np.timedelta64
@@ -4219,11 +4238,15 @@ def round_[ArrayT: np.ndarray](a: ArrayLike, decimals: int = 0, *, out: ArrayT) 
 
 # keep in sync with `_core.multiarray.inner`
 @overload  # (?d T, Nd T) -> 0d|Nd T  (workaround)
-def inner[ScalarT: _InnerScalar | np.object_](a: _ArrayNoD[ScalarT], b: _ArrayLike[ScalarT]) -> _MaskedArray[ScalarT] | Any: ...
+def inner(  # noqa: UP047
+    a: _ArrayNoD[_AnyNumericObjectT], b: _ArrayLike[_AnyNumericObjectT]
+) -> _MaskedArray[_AnyNumericObjectT] | Any: ...
 @overload  # (Nd T, ?d T) -> 0d|Nd T  (workaround)
-def inner[ScalarT: _InnerScalar | np.object_](a: _ArrayLike[ScalarT], b: _ArrayNoD[ScalarT]) -> _MaskedArray[ScalarT] | Any: ...
+def inner(  # noqa: UP047
+    a: _ArrayLike[_AnyNumericObjectT], b: _ArrayNoD[_AnyNumericObjectT]
+) -> _MaskedArray[_AnyNumericObjectT] | Any: ...
 @overload  # (1d T, 1d T) -> 0d T
-def inner[ScalarT: _InnerScalar](a: _ToArray1D[ScalarT], b: _ToArray1D[ScalarT]) -> ScalarT: ...
+def inner(a: _ToArray1D[_AnyNumericT], b: _ToArray1D[_AnyNumericT]) -> _AnyNumericT: ...  # noqa: UP047
 @overload  # (1d object_, 1d _) -> 0d object
 def inner(a: Array1D[np.object_], b: Array1D[np.object_] | _ToArray1D[_InnerScalar]) -> Any: ...
 @overload  # (1d _, 1d object_) -> 0d object
@@ -4243,11 +4266,11 @@ def inner(a: list[complex], b: Sequence[complex]) -> np.complex128: ...
 @overload  # (1d +complex, 1d ~complex) -> complex128
 def inner(a: Sequence[complex], b: list[complex]) -> np.complex128: ...
 @overload  # (1d T, 2d T) -> 1d T
-def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray1D[ScalarT], b: Array2D[ScalarT]) -> _Masked1D[ScalarT]: ...
+def inner(a: _ToArray1D[_AnyNumericObjectT], b: Array2D[_AnyNumericObjectT]) -> _Masked1D[_AnyNumericObjectT]: ...  # noqa: UP047
 @overload  # (2d T, 1d T) -> 1d T
-def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray2D[ScalarT], b: Array1D[ScalarT]) -> _Masked1D[ScalarT]: ...
+def inner(a: _ToArray2D[_AnyNumericObjectT], b: Array1D[_AnyNumericObjectT]) -> _Masked1D[_AnyNumericObjectT]: ...  # noqa: UP047
 @overload  # (2d T, 2d T) -> 2d _Masked1D
-def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray2D[ScalarT], b: Array2D[ScalarT]) -> _Masked2D[ScalarT]: ...
+def inner(a: _ToArray2D[_AnyNumericObjectT], b: Array2D[_AnyNumericObjectT]) -> _Masked2D[_AnyNumericObjectT]: ...  # noqa: UP047
 @overload  # fallback
 def inner(a: ArrayLike, b: ArrayLike) -> Any: ...
 
@@ -4367,54 +4390,60 @@ def allclose(a: ArrayLike, b: ArrayLike, masked_equal: bool = True, rtol: float 
 def fromflex[ShapeT: _Shape](fxarray: np.ndarray[ShapeT, np.dtype[np.void]]) -> MaskedArray[ShapeT, np.dtype[Incomplete]]: ...
 
 # keep in sync with `lib._function_base_impl.append`
-@overload  # known array type, axis specified
-def append[MArrayT: MaskedArray](
-    a: MArrayT,
-    b: MArrayT,
-    axis: SupportsIndex,
-) -> MArrayT: ...
-@overload  # 1d, known scalar type, axis specified
-def append[ScalarT: np.generic](
-    a: Sequence[ScalarT],
-    b: Sequence[ScalarT],
-    axis: SupportsIndex,
-) -> _Masked1D[ScalarT]: ...
-@overload  # 2d, known scalar type, axis specified
-def append[ScalarT: np.generic](
-    a: _Seq2D[ScalarT],
-    b: _Seq2D[ScalarT],
-    axis: SupportsIndex,
-) -> _Masked2D[ScalarT]: ...
-@overload  # 3d, known scalar type, axis specified
-def append[ScalarT: np.generic](
-    a: _Seq3D[ScalarT],
-    b: _Seq3D[ScalarT],
-    axis: SupportsIndex,
-) -> _Masked3D[ScalarT]: ...
-@overload  # ?d, known scalar type, axis specified
-def append[ScalarT: np.generic](
-    a: _NestedSequence[ScalarT],
-    b: _NestedSequence[ScalarT],
-    axis: SupportsIndex,
-) -> _MaskedArray[ScalarT]: ...
-@overload  # ?d, unknown scalar type, axis specified
-def append(
-    a: np.ndarray | _NestedSequence[_ScalarLike_co],
-    b: _NestedSequence[_ScalarLike_co],
-    axis: SupportsIndex,
-) -> _MaskedArray[Incomplete]: ...
-@overload  # known scalar type, axis=None
-def append[ScalarT: np.generic](
-    a: _ArrayLike[ScalarT],
-    b: _ArrayLike[ScalarT],
+@overload  # ?d T, axis=None (default)
+def append(  # noqa: UP047
+    a: _ArrayLike[_AnyScalarT],
+    b: _ArrayLike[_AnyScalarT],
     axis: None = None,
-) -> _Masked1D[ScalarT]: ...
-@overload  # unknown scalar type, axis=None
+) -> _Masked1D[_AnyScalarT]: ...
+@overload  # >=1d T, axis=<given>
+def append(  # noqa: UP047
+    a: np.ndarray[_Shape1T, np.dtype[_AnyScalarT]],
+    b: _ArrayLike[_AnyScalarT],
+    axis: SupportsIndex,
+) -> MaskedArray[_Shape1T, np.dtype[_AnyScalarT]]: ...
+@overload  # >=1d ?, axis=<given>
+def append[ShapeT: tuple[int, *tuple[int, ...]]](
+    a: np.ndarray[ShapeT, Any],
+    b: ArrayLike,
+    axis: SupportsIndex,
+) -> MaskedArray[ShapeT]: ...
+@overload  # 1d T, axis=<given>
+def append(  # noqa: UP047
+    a: Sequence[_AnyScalarT],
+    b: Sequence[_AnyScalarT],
+    axis: SupportsIndex,
+) -> _Masked1D[_AnyScalarT]: ...
+@overload  # 2d T, axis=<given>
+def append(  # noqa: UP047
+    a: _Seq2D[_AnyScalarT],
+    b: _Seq2D[_AnyScalarT],
+    axis: SupportsIndex,
+) -> _Masked2D[_AnyScalarT]: ...
+@overload  # 3d T, axis=<given>
+def append(  # noqa: UP047
+    a: _Seq3D[_AnyScalarT],
+    b: _Seq3D[_AnyScalarT],
+    axis: SupportsIndex,
+) -> _Masked3D[_AnyScalarT]: ...
+@overload  # ?d T, axis=<given>
+def append(  # noqa: UP047
+    a: _NestedSequence[_AnyScalarT],
+    b: _NestedSequence[_AnyScalarT],
+    axis: SupportsIndex,
+) -> _MaskedArray[_AnyScalarT]: ...
+@overload  # ?d ?, axis=None (default)
 def append(
     a: ArrayLike,
     b: ArrayLike,
     axis: None = None,
 ) -> _Masked1D[Incomplete]: ...
+@overload  # ?d ?, axis=<given>
+def append(
+    a: ArrayLike,
+    b: ArrayLike,
+    axis: SupportsIndex,
+) -> _MaskedArray[Incomplete]: ...
 
 # keep in sync with `_core.multiarray.dot`
 @overload
