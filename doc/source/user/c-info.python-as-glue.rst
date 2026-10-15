@@ -853,6 +853,59 @@ eliminate the difficulty in extending Python and distributing the
 extension using ctypes.
 
 
+Building with the Python limited API (abi3)
+===========================================
+
+.. index::
+   single: limited API
+
+Extensions that use the NumPy C-API can target CPython's stable ABI
+(abi3), so that one wheel built against the minimum-supported Python
+works on newer Python versions in the same 3.x series. NumPy supports
+abi3 builds from NumPy 2.0 on. See :ref:`for-downstream-package-authors`
+for versioning guidance and the `cibuildwheel docs
+<https://cibuildwheel.pypa.io/en/stable/faq/#abi3>`__ for wheel builds.
+
+Define ``Py_LIMITED_API`` to the minimum Python version before
+including ``Python.h``, and define ``NPY_TARGET_VERSION`` to the
+minimum NumPy API version before including any NumPy headers. If
+``NPY_TARGET_VERSION`` is left undefined, NumPy defaults to
+``NPY_1_25_API_VERSION`` (see ``numpy/numpyconfig.h``):
+
+.. code-block:: c
+
+    #define Py_LIMITED_API 0x03090000
+    #define NPY_TARGET_VERSION NPY_2_0_API_VERSION
+    #include <Python.h>
+    #include <numpy/arrayobject.h>
+
+With Meson, pass the same targets via the ``limited_api`` keyword and
+compiler flags (see ``numpy/_core/tests/examples/limited_api/meson.build``
+for a full C and Cython example built across several Python/NumPy
+target combinations):
+
+.. code-block:: meson
+
+    py.extension_module(
+      'my_module',
+      'my_module.c',
+      c_args: [
+        '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
+      ],
+      include_directories: [npy_include_path],
+      limited_api: '3.9',
+    )
+
+The free-threading-compatible stable ABI (abi3t, Python 3.15+) also
+requires NumPy 2.5 or later (``NPY_TARGET_VERSION >=
+NPY_2_5_API_VERSION``), ``-DPy_TARGET_ABI3T=0x030F0000``, and
+``limited_api: '3.15'``. abi3t modules use a ``PyModExport_``
+entry point with slots instead of ``PyInit_`` (see
+``numpy/_core/tests/examples/limited_api/limited_api.c``). Some
+structures are opaque there, so use accessor APIs rather than direct
+struct access; see :ref:`c-api`.
+
+
 Additional tools you may find useful
 ====================================
 

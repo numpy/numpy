@@ -120,6 +120,24 @@ For a longer introduction to building Cython extensions that use NumPy, see
 `Cython's Working with NumPy tutorial
 <https://cython.readthedocs.io/en/latest/src/userguide/numpy_tutorial.html>`__.
 
+Limited API (stable ABI) notes
+==============================
+
+When targeting the Python stable ABI, some types and structures are
+opaque or unavailable, so extensions must use accessor APIs rather than
+direct struct access:
+
+* Under ``Py_LIMITED_API``, ``PyArray_DTypeMeta`` is opaque, and
+  ``PyUnicodeScalarObject`` plus ``PyArrayScalar_VAL`` /
+  ``PyArrayScalar_ASSIGN`` are unavailable (use
+  ``PyArray_ScalarAsCtype`` instead).
+* Under ``Py_TARGET_ABI3T`` (Python 3.15+, requires
+  ``NPY_TARGET_VERSION >= NPY_2_5_API_VERSION``), ``PyArray_Descr``,
+  legacy descriptors, and ``PyArray_StringDTypeObject`` are opaque.
+  Use ``PyArray_DESCR``, ``PyDataType_FLAGS``,
+  ``PyDataType_C_METADATA``, ``PyArray_DATA``, and the ``NpyString_*``
+  allocator API, passing the descriptor object pointer.
+
 .. currentmodule:: numpy-c-api
 
 .. toctree::
