@@ -1,0 +1,4 @@
+``numpy.generic.astype`` does not copy for immutables when data types are equivalent 
+------------------------------------------------------------------------------------
+``numpy.generic.astype`` previously used to copy for immutables even when ``copy`` was set to ``False``.
+Now, it does not copy for immutables when ``dtype`` is equivalent to the data type of the object.
