@@ -60,12 +60,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _32Bit,
     _16Bit,
     _8Bit,
-    _NBitByte,
-    _NBitShort,
-    _NBitIntC,
-    _NBitIntP,
-    _NBitLong,
-    _NBitLongLong,
     _NBitLongDouble,
     # Character codes
     _BoolCodes,
@@ -7463,7 +7457,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __radd__[ShapeT: _Shape](  # type: ignore[misc]
+    def __radd__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -7839,7 +7833,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rsub__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -8225,7 +8219,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rmul__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmul__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -8667,7 +8661,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rpow__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rpow__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         mod: None = None,
@@ -9367,7 +9361,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rfloordiv__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rfloordiv__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -9669,7 +9663,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -9975,7 +9969,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> _2Tuple[ndarray[ShapeT, _dtype[uint64]]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rdivmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         lhs: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -11942,18 +11936,31 @@ class signedinteger(integer[_NBitT]):
     @overload
     def __ror__(self, other: integer, /) -> signedinteger: ...
 
-int8 = signedinteger[_8Bit]
-int16 = signedinteger[_16Bit]
-int32 = signedinteger[_32Bit]
-int64 = signedinteger[_64Bit]
+@disjoint_base
+class int8(signedinteger[_8Bit]): ...
 
-byte = signedinteger[_NBitByte]
-short = signedinteger[_NBitShort]
-intc = signedinteger[_NBitIntC]
-intp = signedinteger[_NBitIntP]
+@disjoint_base
+class int16(signedinteger[_16Bit]): ...
+
+@disjoint_base
+class int32(signedinteger[_32Bit]): ...
+
+@disjoint_base
+class int64(signedinteger[_64Bit]): ...
+
+byte = int8
+short = int16
+intc = int32
+intp = int64  # NOTE: assumes a 64-bit platform
 int_ = intp
-long = signedinteger[_NBitLong]
-longlong = signedinteger[_NBitLongLong]
+
+# NOTE: the `!=` works around a pyright bug with conditionally defined aliases
+if sys.platform != "win32":
+    long = int64
+else:
+    long = int32
+
+longlong = int64
 
 class unsignedinteger(integer[_NBitT]):
     def __new__(cls, value: _ConvertibleToInt = 0, /) -> Self: ...
