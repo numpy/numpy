@@ -166,16 +166,30 @@ class finfo:
 
     __class_getitem__ = classmethod(types.GenericAlias)
 
+    @classmethod
+    def _lookup_finfo_cache(cls, key, dtype):
+        try:
+            obj = cls._finfo_cache.get(key)
+            if obj is not None:
+                return obj
+            # Fallback for third-party dtypes (like ml_dtypes) that populate
+            # _finfo_cache directly using dtype as key:
+            obj = cls._finfo_cache.get(dtype)
+            if obj is not None:
+                cls._finfo_cache[key] = obj
+                return obj
+        except TypeError:
+            pass
+        return None
+
     def __new__(cls, dtype):
         if dtype is None:
             raise TypeError("dtype must not be None")
 
-        try:
-            obj = cls._finfo_cache.get(dtype)  # most common path
-            if obj is not None:
-                return obj
-        except TypeError:
-            pass
+        key = (type(dtype), dtype)
+        obj = cls._lookup_finfo_cache(key, dtype)
+        if obj is not None:
+            return obj
 
         try:
             dtype = numeric.dtype(dtype)
@@ -183,7 +197,8 @@ class finfo:
             # In case a float instance was given
             dtype = numeric.dtype(type(dtype))
 
-        obj = cls._finfo_cache.get(dtype)
+        key = (type(dtype), dtype)
+        obj = cls._lookup_finfo_cache(key, dtype)
         if obj is not None:
             return obj
         dtypes = [dtype]
@@ -193,8 +208,11 @@ class finfo:
             dtypes.append(newdtype)
             dtype = newdtype
 
-        obj = cls._finfo_cache.get(dtype)
+        key = (type(dtype), dtype)
+        obj = cls._lookup_finfo_cache(key, dtype)
         if obj is not None:
+            for dt in dtypes:
+                cls._finfo_cache[(type(dt), dt)] = obj
             return obj
 
         sctype = newdtype.type
@@ -205,17 +223,19 @@ class finfo:
                 dtypes.append(newdtype)
                 dtype = newdtype
 
-                obj = cls._finfo_cache.get(dtype, None)
+                key = (type(dtype), dtype)
+                obj = cls._lookup_finfo_cache(key, dtype)
                 if obj is not None:
                     # the original dtype was not in the cache, but the new
                     # dtype is in the cache. we add the original dtypes to
                     # the cache and return the result
                     for dt in dtypes:
-                        cls._finfo_cache[dt] = obj
+                        cls._finfo_cache[(type(dt), dt)] = obj
                     return obj
+
         obj = object.__new__(cls)._init(dtype)
         for dt in dtypes:
-            cls._finfo_cache[dt] = obj
+            cls._finfo_cache[(type(dt), dt)] = obj
         return obj
 
     def _init(self, dtype):
