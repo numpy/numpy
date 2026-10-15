@@ -18,34 +18,32 @@
 
 /*
  * This file defines all logic necessary for generic "common dtype"
- * operations.  This is unfortunately surprisingly complicated to get right
- * due to the value based logic NumPy uses and the fact that NumPy has
- * no clear (non-transitive) type promotion hierarchy.
- * Unlike most languages `int32 + float32 -> float64` instead of `float32`.
- * The other complicated thing is value-based-promotion, which means that
- * in many cases a Python 1, may end up as an `int8` or `uint8`.
+ * operations on DType classes.  Promotion is not generally associative:
+ * for example, combining int8 and uint8 first gives int16, which promotes
+ * with float16 to float32. Promoting float16 with either integer separately
+ * leaves float16 unchanged.
  *
  * This file implements the necessary logic so that `np.result_type(...)`
- * can give the correct result for any order of inputs and can further
- * generalize to user DTypes.
+ * can resolve such cases consistently across input orders, including user
+ * DTypes.
  */
 
 
 /*NUMPY_API
  * This function defines the common DType operator.
  *
- * Note that the common DType will not be "object" (unless one of the dtypes
- * is object), even though object can technically represent all values
- * correctly. Similar to `np.result_type`, but works on the classes and not
- * instances.
+ * Similar to np.result_type, but works on DType classes rather than dtype
+ * instances.  Object is not used as an automatic fallback for incompatible
+ * inputs, even though it can represent all values.
  *
- *
- * TODO: Before exposure, we should review the return value (e.g. no error
- *       when no common DType is found).
+ * Identical inputs are returned directly.  Otherwise, call dtype1's
+ * common_dtype slot first, then dtype2's if the first returns NotImplemented.
+ * If both defer, raise DTypePromotionError.  Errors raised by either slot
+ * are propagated.
  *
  * @param dtype1 DType class to find the common type for.
  * @param dtype2 Second DType class.
- * @return The common DType or NULL with an error set
+ * @return New reference to the common DType, or NULL with an error set
  */
 NPY_NO_EXPORT PyArray_DTypeMeta *
 PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
@@ -78,130 +76,99 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
 
 
 /**
- * This function takes a list of dtypes and "reduces" them (in a sense,
- * it finds the maximal dtype). Note that "maximum" here is defined by
- * knowledge (or category or domain). A user DType must always "know"
- * about all NumPy dtypes, floats "know" about integers, integers "know"
- * about unsigned integers.
+ * Select and remove the most knowledgeable input DType. "Knowledge" describes
+ * which DType implements promotion for a pair.
+ * While doing so, `dtypes` are removed if it is clear that they cannot affect
+ * the result anymore (because the promotion returned the candidate unchanged).
  *
- *           c
- *          / \
- *         a   \    <-- The actual promote(a, b) may be c or unknown.
- *        / \   \
- *       a   b   c
+ * Starting with the first DType as the candidate, call its common_dtype slot
+ * with each remaining input. Only NotImplemented replaces the candidate;
+ * intermediate promotion results are discarded.
+ * At the end `selected` is the "most knowledgeable" which must promote with
+ * all others (if there is no promotion error).
  *
- * The reduction is done "pairwise". In the above `a.__common_dtype__(b)`
- * has a result (so `a` knows more) and `a.__common_dtype__(c)` returns
- * NotImplemented (so `c` knows more).  You may notice that the result
- * `res = a.__common_dtype__(b)` is not important.  We could try to use it
- * to remove the whole branch if `res is c` or by checking if
- * `c.__common_dtype__(res) is c`.
- * Right now, we only clear initial elements in the most simple case where
- * `a.__common_dtype__(b) is a` (and thus `b` cannot alter the end-result).
- * Clearing means, we do not have to worry about them later.
+ * Abstract DTypes participate in the same selection as concrete DTypes.
+ * Their promotion priorities are implemented by the common_dtype slots;
+ * see also default_builtin_common_dtype.
  *
- * Abstract dtypes are not handled specially here.  In a first
- * version they were but this version also tried to be able to do value-based
- * behavior.
- * There may be some advantage to special casing the abstract ones (e.g.
- * so that the concrete ones do not have to deal with it), but this would
- * require more complex handling later on. See the logic in
- * default_builtin_common_dtype
- *
- * @param length Number of DTypes
- * @param dtypes List of DTypes to be reduced
+ * @param length Number of DTypes, must be at least 1
+ * @param dtypes Borrowed DType pointers; survivors are compacted in place
+ * @param selected Output: borrowed reference to the selected input on success
+ * @return Number of surviving inputs, excluding the selected input, or -1
+ *         with an error set.  On success, the surviving inputs occupy that
+ *         many entries at the front of dtypes; later entries are ignored.
  */
-static PyArray_DTypeMeta *
-reduce_dtypes_to_most_knowledgeable(
-        npy_intp length, PyArray_DTypeMeta **dtypes)
+static npy_intp
+select_most_knowledgeable_dtype(
+        npy_intp length, PyArray_DTypeMeta **dtypes, PyArray_DTypeMeta **selected)
 {
-    assert(length >= 2);
-    npy_intp half = length / 2;
-
-    PyArray_DTypeMeta *res = NULL;
-
-    for (npy_intp low = 0; low < half; low++) {
-        npy_intp high = length - 1 - low;
-        if (dtypes[high] == dtypes[low]) {
+    assert(length >= 1);
+    PyArray_DTypeMeta *candidate = dtypes[0];
+    npy_intp remaining = 0;
+    for (npy_intp i = 1; i < length; i++) {
+        PyArray_DTypeMeta *other = dtypes[i];
+        if (other == candidate) {
             /* Fast path for identical dtypes: do not call common_dtype */
-            Py_INCREF(dtypes[low]);
-            Py_XSETREF(res, dtypes[low]);
+            continue;
         }
-        else {
-            Py_XSETREF(res, NPY_DT_CALL_common_dtype(dtypes[low], dtypes[high]));
-            if (res == NULL) {
-                return NULL;
-            }
+        PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(
+                candidate, other);
+        if (res == NULL) {
+            return -1;
         }
 
         if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
             /* guess at other being more "knowledgeable" */
-            PyArray_DTypeMeta *tmp = dtypes[low];
-            dtypes[low] = dtypes[high];
-            dtypes[high] = tmp;
+            dtypes[remaining++] = candidate;
+            candidate = other;
         }
-        else if (res == dtypes[low]) {
-            /* `dtypes[high]` cannot influence result: clear */
-            dtypes[high] = NULL;
+        else if (res != candidate) {
+            /* The input may still affect the result: retain it. */
+            dtypes[remaining++] = other;
         }
+        Py_DECREF(res);
     }
 
-    if (length == 2) {
-        return res;
-    }
-    Py_DECREF(res);
-    return reduce_dtypes_to_most_knowledgeable(length - half, dtypes);
+    *selected = candidate;
+    return remaining;
 }
 
 
 /*NUMPY_API
- * Promotes a list of DTypes with each other in a way that should guarantee
- * stable results even when changing the order.  This function is smarter and
- * can often return successful and unambiguous results when
- * `common_dtype(common_dtype(dt1, dt2), dt3)` would depend on the operation
- * order or fail.  Nevertheless, DTypes should aim to ensure that their
- * common-dtype implementation is associative and commutative!  (Mainly,
- * unsigned and signed integers are not.)
+ * Promote a nonempty list of concrete or abstract DType classes.  The input
+ * array is not modified.  A single input is returned unchanged, and two
+ * inputs use PyArray_CommonDType directly.
  *
- * For guaranteed consistent results DTypes must implement common-Dtype
- * "transitively".  If A promotes B and B promotes C, than A must generally
- * also promote C; where "promotes" means implements the promotion.  (There
- * are some exceptions for abstract DTypes)
+ * For longer lists, repeatedly select an original input by promotion
+ * knowledge while discarding any inputs that clearly cannot affect the result
+ * anymore (see `select_most_knowledgeable_dtype`).
+ * These repeatedly selected dtypes are then promoted together.
  *
- * In general this approach always works as long as the most generic dtype
- * is either strictly larger, or compatible with all other dtypes.
- * For example promoting float16 with any other float, integer, or unsigned
- * integer again gives a floating point number. And any floating point number
- * promotes in the "same way" as `float16`.
- * If a user inserts more than one type into the NumPy type hierarchy, this
- * can break. Given:
- *     uint24 + int32 -> int48  # Promotes to a *new* dtype!
+ * This is necessary to ensure promotion is not sensitive to the input order.
+ * For example when promoting `int4, uint8, float16` we have:
+ *   int4 + float16 -> float16
+ *   uint8 + float16 -> float16
+ *   ((int4 + uint8) -> int16) + float16 -> float32
  *
- * The following becomes problematic (order does not matter):
- *         uint24 +      int16  +           uint32  -> int64
- *    <==      (uint24 + int16) + (uint24 + uint32) -> int64
- *    <==                int32  +           uint32  -> int64
+ * But the above approach ensures we order them as `int4` (most knowledgeable)
+ * first and then `float16` second.
+ * This order independence relies on consistent promotion priorities and
+ * promotion rules.
  *
- * It is impossible to achieve an `int48` result in the above.
+ * Each selection is linear. Repeated selection is theoretically quadratic when
+ * inputs cannot be eliminated early. In practice, this should be rare and we do
+ * not expect many distinct dtypes.
  *
- * This is probably only resolvable by asking `uint24` to take over the
- * whole reduction step; which we currently do not do.
- * (It may be possible to notice the last up-cast and implement use something
- * like: `uint24.nextafter(int32).__common_dtype__(uint32)`, but that seems
- * even harder to grasp.)
+ * Note that this process does have limitations when trying to interleave
+ * unsigned and signed custom integers with NumPy ones. If we defined the
+ * `uint24` and `int48` with `uint24 + int32 -> int48`, then:
+ * (uint24 + uint32) + int16 -> uint32 + int16 -> int64
+ * Although int48 could represent all inputs, choosing it for the remaining
+ * int16 + uint32 pair would require changing NumPy's builtin promotion rules.
  *
- * Note that a case where two dtypes are mixed (and know nothing about each
- * other) will always generate an error:
- *     uint24 + int48 + int64 -> Error
- *
- * Even though `int64` is a safe solution, since `uint24 + int64 -> int64` and
- * `int48 + int64 -> int64` and `int64` and there cannot be a smaller solution.
- *
- * //TODO: Maybe this function should allow not setting an error?
- *
- * @param length Number of dtypes (and values) must be at least 1
- * @param dtypes The concrete or abstract DTypes to promote
- * @return NULL or the promoted DType.
+ * @param length Number of DType classes, must be at least 1
+ * @param dtypes_in The concrete or abstract DType classes to promote
+ * @return New reference to the promoted DType, or NULL with an error set
  */
 NPY_NO_EXPORT PyArray_DTypeMeta *
 PyArray_PromoteDTypeSequence(
@@ -211,100 +178,38 @@ PyArray_PromoteDTypeSequence(
         Py_INCREF(dtypes_in[0]);
         return dtypes_in[0];
     }
+    if (length == 2) {
+        return PyArray_CommonDType(dtypes_in[0], dtypes_in[1]);
+    }
     PyArray_DTypeMeta *result = NULL;
 
-    /* Copy dtypes so that we can reorder them (only allocate when many) */
     NPY_ALLOC_WORKSPACE(dtypes, PyArray_DTypeMeta *, 16, length);
     if (dtypes == NULL) {
         return NULL;
     }
     memcpy(dtypes, dtypes_in, length * sizeof(PyObject *));
 
-    /*
-     * `result` is the last promotion result, which can usually be reused if
-     * it is not NotImplemneted.
-     * The passed in dtypes are partially sorted (and cleared, when clearly
-     * not relevant anymore).
-     * `dtypes[0]` will be the most knowledgeable (highest category) which
-     * we consider the "main_dtype" here.
-     */
-    result = reduce_dtypes_to_most_knowledgeable(length, dtypes);
-    if (result == NULL) {
-        goto finish;
-    }
-    PyArray_DTypeMeta *main_dtype = dtypes[0];
-
-    npy_intp reduce_start = 1;
-    if (result == (PyArray_DTypeMeta *)Py_NotImplemented) {
-        Py_SETREF(result, NULL);
-    }
-    else {
-        /* (new) first value is already taken care of in `result` */
-        reduce_start = 2;
-    }
-    /*
-     * At this point, we have only looked at every DType at most once.
-     * The `main_dtype` must know all others (or it will be a failure) and
-     * all dtypes returned by its `common_dtype` must be guaranteed to succeed
-     * promotion with one another.
-     * It is the job of the "main DType" to ensure that at this point order
-     * is irrelevant.
-     * If this turns out to be a limitation, this "reduction" will have to
-     * become a default version and we have to allow DTypes to override it.
-     */
-    PyArray_DTypeMeta *prev = NULL;
-    for (npy_intp i = reduce_start; i < length; i++) {
-        if (dtypes[i] == NULL || dtypes[i] == prev) {
-            continue;
-        }
-        /*
-         * "Promote" the current dtype with the main one (which should be
-         * a higher category). We assume that the result is not in a lower
-         * category.
-         */
-        PyArray_DTypeMeta *promotion = NPY_DT_CALL_common_dtype(
-                main_dtype, dtypes[i]);
-        if (promotion == NULL) {
-            Py_XSETREF(result, NULL);
-            goto finish;
-        }
-        else if ((PyObject *)promotion == Py_NotImplemented) {
-            Py_DECREF(Py_NotImplemented);
-            Py_XSETREF(result, NULL);
-            PyObject *dtypes_in_tuple = PyTuple_New(length);
-            if (dtypes_in_tuple == NULL) {
-                goto finish;
-            }
-            for (npy_intp l=0; l < length; l++) {
-                Py_INCREF(dtypes_in[l]);
-                PyTuple_SET_ITEM(dtypes_in_tuple, l, (PyObject *)dtypes_in[l]);
-            }
-            PyErr_Format(_npy_module_state->static_pydata.DTypePromotionError,
-                    "The DType %S could not be promoted by %S. This means that "
-                    "no common DType exists for the given inputs. "
-                    "For example they cannot be stored in a single array unless "
-                    "the dtype is `object`. The full list of DTypes is: %S",
-                    dtypes[i], main_dtype, dtypes_in_tuple);
-            Py_DECREF(dtypes_in_tuple);
-            goto finish;
+    while (length > 0) {
+        /* Select most knowledgeable (may remove some DTypes in the process). */
+        PyArray_DTypeMeta *selected;
+        length = select_most_knowledgeable_dtype(length, dtypes, &selected);
+        if (length < 0) {
+            Py_CLEAR(result);
+            break;
         }
         if (result == NULL) {
-            result = promotion;
-            continue;
+            result = selected;
+            Py_INCREF(result);
         }
-
-        /*
-         * The above promoted, now "reduce" with the current result; note that
-         * in the typical cases we expect this step to be a no-op.
-         */
-        Py_SETREF(result, PyArray_CommonDType(result, promotion));
-        Py_DECREF(promotion);
-        if (result == NULL) {
-            goto finish;
+        else {
+            /* Combine the selected DType with the accumulated result. */
+            Py_SETREF(result, PyArray_CommonDType(result, selected));
+            if (result == NULL) {
+                break;
+            }
         }
     }
 
-  finish:
     npy_free_workspace(dtypes);
     return result;
 }
