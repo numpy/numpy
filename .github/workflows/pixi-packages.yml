@@ -38,7 +38,7 @@ jobs:
         fetch-tags: true
         persist-credentials: false
 
-    - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
+    - uses: prefix-dev/setup-pixi@9dabb60412d3d2d967a8d682f7ce01317af40514 # v0.11.0
       with:
         pixi-version: v0.73.0
         run-install: false

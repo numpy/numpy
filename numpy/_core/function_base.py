@@ -473,13 +473,15 @@ def _needs_add_docstring(obj):
 
     This function errs on the side of being overly conservative.
     """
-    Py_TPFLAGS_HEAPTYPE = 1 << 9
+    Py_TPFLAGS_IMMUTABLETYPE = 1 << 8
 
     if isinstance(obj, (types.FunctionType, types.MethodType, property)):
         return False
 
-    if isinstance(obj, type) and obj.__flags__ & Py_TPFLAGS_HEAPTYPE:
-        return False
+    if isinstance(obj, type):
+        # ``__doc__`` is read-only exactly on immutable types: static
+        # types, plus heap types that set ``Py_TPFLAGS_IMMUTABLETYPE``.
+        return bool(obj.__flags__ & Py_TPFLAGS_IMMUTABLETYPE)
 
     return True
 

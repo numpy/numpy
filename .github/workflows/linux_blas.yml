@@ -77,7 +77,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas32
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
@@ -94,10 +94,10 @@ jobs:
     - name: Check installed test and stub files
       run: python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
 
-    - name: Ensure scipy-openblas
+    - name: Ensure scipy-openblas minimum version
       run: |
         set -ex
-        spin python tools/check_openblas_version.py -- --min-version 0.3.30
+        python -c "import scipy_openblas32 as sob; assert sob.__version__>'0.3.30'"
 
     - name: Test
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
@@ -124,7 +124,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --upgrade pip
+        pip install --group dev-cli --group test-extending
 
     - name: Build (LP64)
       run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
@@ -159,7 +160,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --upgrade pip
+        pip install --group dev-cli --group test-extending
 
     - name: Build
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
@@ -193,7 +195,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
@@ -222,7 +224,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
@@ -255,7 +257,7 @@ jobs:
 
     - name: Install PyPI dependencies
       run: |
-        pip install --break-system-packages -r requirements/build_requirements.txt
+        pip install --break-system-packages --group dev-cli
 
     - name: Build
       run: |
@@ -263,9 +265,9 @@ jobs:
 
     - name: Test
       run: |
-        # do not use test_requirements.txt, it includes coverage which requires
+        # do not use the test-extending group, it will install coverage, which requires
         # sqlite3, which is not available on OpenSUSE python
-        pip install --break-system-packages pytest pytest-xdist pytest-timeout
+        pip install --break-system-packages --group test-core
         spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
@@ -285,8 +287,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         pip install mkl mkl-devel
 
     - name: Repair MKL pkg-config files and symlinks
@@ -351,8 +352,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
@@ -389,8 +389,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
         sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 

@@ -618,13 +618,20 @@ static PyObject *
 incref_elide(PyObject *dummy, PyObject *args)
 {
     PyObject *arg = NULL, *res, *tup;
-    if (!PyArg_ParseTuple(args, "O", &arg)) {
+    if (!PyArg_ParseTuple(args, "O!", &PyArray_Type, &arg)) {
         return NULL;
     }
 
     /* refcount 1 array but should not be elided */
     arg = PyArray_NewCopy((PyArrayObject*)arg, NPY_KEEPORDER);
+    if (arg == NULL) {
+        return NULL;
+    }
     res = PyNumber_Add(arg, arg);
+    if (res == NULL) {
+        Py_DECREF(arg);
+        return NULL;
+    }
 
     /* return original copy, should be equal to input */
     tup = PyTuple_Pack(2, arg, res);
@@ -638,12 +645,15 @@ static PyObject *
 incref_elide_l(PyObject *dummy, PyObject *args)
 {
     PyObject *arg = NULL, *r, *res;
-    if (!PyArg_ParseTuple(args, "O", &arg)) {
+    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &arg)) {
         return NULL;
     }
     /* get item without increasing refcount, item may still be on the python
      * stack but above the inaccessible top */
     r = PyList_GetItem(arg, 4); // noqa: borrowed-ref OK
+    if (r == NULL) {
+        return NULL;
+    }
     res = PyNumber_Add(r, r);
 
     return res;

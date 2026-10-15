@@ -1,0 +1,5 @@
+``numpy.reciprocal`` of complex zero now matches division
+---------------------------------------------------------
+`numpy.reciprocal` of a complex zero now returns ``inf+nanj`` and sets the
+divide-by-zero floating point flag, matching ``1 / x``. It previously returned
+``nan+nanj``.

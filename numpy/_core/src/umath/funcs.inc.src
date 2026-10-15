@@ -58,7 +58,7 @@ npy_ObjectPower(PyObject *x, PyObject *y)
  * #Kind = Max, Min#
  * #OP = Py_GE, Py_LE#
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 npy_Object@Kind@(PyObject *i1, PyObject *i2)
 {
     PyObject *result;
@@ -150,20 +150,20 @@ npy_ObjectLogicalNot(PyObject *i1)
 
 static PyObject *
 npy_ObjectFloor(PyObject *obj) {
-    return PyObject_CallOneArg(
-            _npy_module_state->static_pydata.math_floor_func, obj);
+    return PyObject_Vectorcall(
+            _npy_module_state->static_pydata.math_floor_func, &obj, 1, NULL);
 }
 
 static PyObject *
 npy_ObjectCeil(PyObject *obj) {
-    return PyObject_CallOneArg(
-            _npy_module_state->static_pydata.math_ceil_func, obj);
+    return PyObject_Vectorcall(
+            _npy_module_state->static_pydata.math_ceil_func, &obj, 1, NULL);
 }
 
 static PyObject *
 npy_ObjectTrunc(PyObject *obj) {
-    return PyObject_CallOneArg(
-            _npy_module_state->static_pydata.math_trunc_func, obj);
+    return PyObject_Vectorcall(
+            _npy_module_state->static_pydata.math_trunc_func, &obj, 1, NULL);
 }
 
 static PyObject *

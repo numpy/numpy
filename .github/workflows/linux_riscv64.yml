@@ -58,7 +58,7 @@ jobs:
             ccache-wheels-manylinux_riscv64-${{ matrix.python }}-
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
+        uses: pypa/cibuildwheel@adba99c781d3746d38b3a09b1cf797965bcb7fe6  # v4.3.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-manylinux_riscv64
           CIBW_BEFORE_ALL_LINUX: |
@@ -80,7 +80,7 @@ jobs:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-wheels-manylinux_riscv64-${{ matrix.python }}-${{ github.run_id }}
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.python }}-manylinux_riscv64-
           path: ./wheelhouse/*.whl

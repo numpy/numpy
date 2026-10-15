@@ -312,7 +312,7 @@ PyArrayDescr_Type and PyArray_Descr
        interface typestring notation). A 'b' represents Boolean, a 'i'
        represents signed integer, a 'u' represents unsigned integer, 'f'
        represents floating point, 'c' represents complex floating point, 'S'
-       represents 8-bit zero-terminated bytes, 'U' represents 32-bit/character
+       represents 8-bit null-padded bytes, 'U' represents 32-bit/character
        unicode string, and 'V' represents arbitrary.
 
    .. c:member:: char type

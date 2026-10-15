@@ -4,6 +4,8 @@
 NumPy 2.5.0 Release Notes
 ==========================
 
+*Released on 2026-06-21.*
+
 Numpy 2.5.0 is a transitional release. It drops support for Python 3.11,
 marking the end of distutils, and expires a large number of deprecations made
 in the 2.0.x release. It also improves free threading and brings sorting into

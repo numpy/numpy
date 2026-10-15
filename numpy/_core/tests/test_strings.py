@@ -988,6 +988,13 @@ class TestMethods:
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
 
+    def test_partition_sep_not_truncated(self, dt):
+        buf = np.array(["a"], dtype=dt)
+        act1, act2, act3 = np.strings.partition(buf, "ab")
+        assert_array_equal(act1, np.array(["a"], dtype=dt))
+        assert_array_equal(act2, np.array([""], dtype=dt))
+        assert_array_equal(act3, np.array([""], dtype=dt))
+
     @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
         ("this is the partition method", "ti", "this is the parti",
             "ti", "on method"),
@@ -1014,6 +1021,13 @@ class TestMethods:
         assert_array_equal(act2, res2)
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
+
+    def test_rpartition_sep_not_truncated(self, dt):
+        buf = np.array(["a"], dtype=dt)
+        act1, act2, act3 = np.strings.rpartition(buf, "ab")
+        assert_array_equal(act1, np.array([""], dtype=dt))
+        assert_array_equal(act2, np.array([""], dtype=dt))
+        assert_array_equal(act3, np.array(["a"], dtype=dt))
 
     @pytest.mark.parametrize("args", [
         (None,),
@@ -1470,6 +1484,13 @@ class TestReplaceOnArrays:
         assert_array_equal(r5, np.array(
             ["01234ABCDE6789" * i for i in range(3)]
             + ["01234ABCDE6789" + "0123456789" * 2], dtype=dt))
+
+    def test_replace_old_new_not_truncated(self, dt):
+        a = np.array(["a"], dtype=dt)
+        r1 = np.strings.replace(a, "ab", "X")
+        assert_array_equal(r1, np.array(["a"], dtype=dt))
+        r2 = np.strings.replace(a, "a", "XY")
+        assert_array_equal(r2, np.array(["XY"], dtype=dt))
 
     def test_replace_broadcasting(self, dt):
         a = np.array("0,0,0", dtype=dt)

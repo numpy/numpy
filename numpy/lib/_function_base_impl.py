@@ -1,6 +1,7 @@
 import builtins
 import collections.abc
 import functools
+import math
 import operator
 import re
 import warnings
@@ -11,7 +12,6 @@ from numpy._core import overrides, transpose
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import any, mean, nonzero, partition, ravel, sum
 from numpy._core.multiarray import (
-    _monotonicity,
     _place,
     bincount,
     interp as compiled_interp,
@@ -3905,7 +3905,7 @@ def _ureduce(a, func, keepdims=False, **kwargs):
                 # move axis that should not be reduced to front
                 a = np.moveaxis(a, keep, range(nkeep))
                 # merge reduced axis
-                return a.reshape(a.shape[:nkeep] + (-1,))
+                return a.reshape(a.shape[:nkeep] + (math.prod(a.shape[nkeep:]),))
 
             a = reshape_arr(a)
 
@@ -5655,6 +5655,15 @@ def append(arr, values, axis=None):
     insert : Insert elements into an array.
     delete : Delete elements from an array.
 
+    Notes
+    -----
+    .. deprecated:: 2.6
+        When ``axis=None``, Python numeric scalars currently promote as if
+        converted to arrays. A future release will use the scalar promotion
+        rules of ``np.concatenate((arr, values), axis=None)``. Call
+        `concatenate` directly to use the future behavior, or pass its
+        ``dtype=`` argument to choose the result dtype explicitly.
+
     Examples
     --------
     >>> import numpy as np
@@ -5686,13 +5695,34 @@ def append(arr, values, axis=None):
     `float64` when appended with dtype `int64`
 
     """
-    arr = asanyarray(arr)
-    if axis is None:
-        if arr.ndim != 1:
-            arr = arr.ravel()
-        values = ravel(values)
-        axis = arr.ndim - 1
-    return concatenate((arr, values), axis=axis)
+    if axis is not None:
+        return concatenate((arr, values), axis=axis)
+    conv = _array_converter(arr, values)
+    arrays = conv.as_arrays(pyscalars="convert")
+    if conv.has_pyscalars:
+        # DEPRECATED 2026-09-15, NumPy 2.6
+        result = concatenate(arrays, axis=None)
+        try:
+            future_dtype = conv.result_type()
+        except np.exceptions.DTypePromotionError:
+            change = "these inputs have no common dtype and will raise an error"
+        else:
+            if future_dtype == result.dtype:
+                return result
+            change = (
+                f"these inputs will use dtype {future_dtype}, which may "
+                "round values differently or raise an error")
+        warnings.warn(
+            "np.append converted Python numeric scalars to arrays before "
+            f"choosing the result dtype, producing dtype {result.dtype}. "
+            "This behavior will change in a future release, "
+            f"{change}. Use np.concatenate((arr, values), axis=None) for the "
+            f"future behavior; add dtype={str(result.dtype)!r} to that call to "
+            "keep the current result.", FutureWarning, stacklevel=2)
+        return result
+    inputs = tuple(obj if scalar else a for obj, scalar, a in
+                   zip((arr, values), conv.scalar_input, arrays))
+    return concatenate(inputs, axis=None)
 
 
 def _digitize_dispatcher(x, bins, right=None):
@@ -5797,9 +5827,15 @@ def digitize(x, bins, right=False):
     # here for compatibility, searchsorted below is happy to take this
     if np.issubdtype(x.dtype, _nx.complexfloating):
         raise TypeError("x may not be complex")
-
-    mono = _monotonicity(bins)
-    if mono == 0:
+    if np.issubdtype(bins.dtype, _nx.complexfloating):
+        raise TypeError("bins may not be complex")
+    if bins.ndim != 1:
+        raise ValueError("bins must be one-dimensional")
+    if (bins[1:] >= bins[:-1]).all():
+        mono = 1
+    elif (bins[1:] <= bins[:-1]).all():
+        mono = -1
+    else:
         raise ValueError("bins must be monotonically increasing or decreasing")
 
     # this is backwards because the arguments below are swapped

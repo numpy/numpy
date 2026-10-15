@@ -27,57 +27,6 @@ typedef enum {
     PACK_ORDER_BIG
 } PACK_ORDER;
 
-/*
- * Returns -1 if the array is monotonic decreasing,
- * +1 if the array is monotonic increasing,
- * and 0 if the array is not monotonic.
- */
-static int
-check_array_monotonic(const double *a, npy_intp lena)
-{
-    npy_intp i;
-    double next;
-    double last;
-
-    if (lena == 0) {
-        /* all bin edges hold the same value */
-        return 1;
-    }
-    last = a[0];
-
-    /* Skip repeated values at the beginning of the array */
-    for (i = 1; (i < lena) && (a[i] == last); i++);
-
-    if (i == lena) {
-        /* all bin edges hold the same value */
-        return 1;
-    }
-
-    next = a[i];
-    if (last < next) {
-        /* Possibly monotonic increasing */
-        for (i += 1; i < lena; i++) {
-            last = next;
-            next = a[i];
-            if (last > next) {
-                return 0;
-            }
-        }
-        return 1;
-    }
-    else {
-        /* last > next, possibly monotonic decreasing */
-        for (i += 1; i < lena; i++) {
-            last = next;
-            next = a[i];
-            if (last < next) {
-                return 0;
-            }
-        }
-        return -1;
-    }
-}
-
 /* Find the minimum and maximum of an integer array */
 static void
 minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
@@ -270,43 +219,6 @@ fail:
     Py_XDECREF(wts);
     Py_XDECREF(ans);
     return NULL;
-}
-
-/* Internal function to expose check_array_monotonic to python */
-NPY_NO_EXPORT PyObject *
-arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
-{
-    static char *kwlist[] = {"x", NULL};
-    PyObject *obj_x = NULL;
-    PyArrayObject *arr_x = NULL;
-    long monotonic;
-    npy_intp len_x;
-    NPY_BEGIN_THREADS_DEF;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:_monotonicity", kwlist,
-                                     &obj_x)) {
-        return NULL;
-    }
-
-    /*
-     * TODO:
-     *  `x` could be strided, needs change to check_array_monotonic
-     *  `x` is forced to double for this check
-     */
-    arr_x = (PyArrayObject *)PyArray_FROMANY(
-        obj_x, NPY_DOUBLE, 1, 1, NPY_ARRAY_CARRAY_RO);
-    if (arr_x == NULL) {
-        return NULL;
-    }
-
-    len_x = PyArray_SIZE(arr_x);
-    NPY_BEGIN_THREADS_THRESHOLDED(len_x)
-    monotonic = check_array_monotonic(
-        (const double *)PyArray_DATA(arr_x), len_x);
-    NPY_END_THREADS
-    Py_DECREF(arr_x);
-
-    return PyLong_FromLong(monotonic);
 }
 
 /*
@@ -1509,6 +1421,8 @@ arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
     PyObject *str;
     const char *docstr;
     static const char msg[] = "already has a different docstring";
+    /* CPython's separator between a docstring's signature line and its body */
+    static const char SIGNATURE_END[] = "\n--\n\n";
 
     /* Don't add docstrings */
 #if PY_VERSION_HEX > 0x030b0000
@@ -1536,7 +1450,7 @@ arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
         return NULL;
     }
 
-    docstr = PyUnicode_AsUTF8(str);
+    docstr = PyUnicode_AsUTF8AndSize(str, NULL);
     if (docstr == NULL) {
         return NULL;
     }
@@ -1557,21 +1471,36 @@ arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
     }
     else if (PyObject_TypeCheck(obj, &PyType_Type)) {
         /*
-         * We add it to both `tp_doc` and `__doc__` here.  Note that in theory
-         * `tp_doc` extracts the signature line, but we currently do not use
-         * it.  It may make sense to only add it as `__doc__` and
-         * `__text_signature__` to the dict in the future.
-         * The dictionary path is only necessary for heaptypes (currently not
-         * used) and metaclasses.
-         * If `__doc__` as stored in `tp_dict` is None, we assume this was
-         * filled in by `PyType_Ready()` and should also be replaced.
+         * We add it to both `tp_doc` and `__doc__` here.  `tp_doc` keeps the
+         * leading signature line, which is where `__text_signature__` comes
+         * from.  `__doc__` in `tp_dict` is what a heap type reports, so it
+         * gets the docstring with that line removed, matching what a static
+         * type reports from `tp_doc`.
+         * The dictionary path is only necessary for heaptypes and
+         * metaclasses.  If `__doc__` as stored in `tp_dict` is None, we
+         * assume this was filled in by `PyType_Ready()` and should also be
+         * replaced.
          */
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
         if (new->tp_dict != NULL && PyDict_CheckExact(new->tp_dict) &&
                 PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) { // noqa: borrowed-ref - manual fix needed
+            PyObject *body;
+            const char *after_signature = strstr(docstr, SIGNATURE_END);
+            if (after_signature == NULL) {
+                body = Py_NewRef(str);
+            }
+            else {
+                body = PyUnicode_FromString(
+                        after_signature + strlen(SIGNATURE_END));
+                if (body == NULL) {
+                    return NULL;
+                }
+            }
             /* Warning: Modifying `tp_dict` is not generally safe! */
-            if (PyDict_SetItemString(new->tp_dict, "__doc__", str) < 0) {
+            int ret = PyDict_SetItemString(new->tp_dict, "__doc__", body);
+            Py_DECREF(body);
+            if (ret < 0) {
                 return NULL;
             }
         }

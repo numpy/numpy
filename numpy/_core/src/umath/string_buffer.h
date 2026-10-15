@@ -25,6 +25,13 @@ enum class ENCODING {
     ASCII, UTF32, UTF8
 };
 
+// Fixed-width strings are NUL-padded; variable-width strings store a length.
+constexpr bool
+has_null_padding(ENCODING enc)
+{
+    return enc == ENCODING::ASCII || enc == ENCODING::UTF32;
+}
+
 enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISALPHA,
     ISDECIMAL,
@@ -646,7 +653,7 @@ struct Buffer {
         tmp--;
         while (tmp >= *this && (
                 NumPyOS_ascii_isspace(*tmp) ||
-                (enc != ENCODING::UTF8 && *tmp == '\0'))) {
+                (has_null_padding(enc) && *tmp == '\0'))) {
             tmp--;
         }
         tmp++;
@@ -1167,7 +1174,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE strip_type
 {
     size_t len = buf.num_codepoints();
     if (len == 0) {
-        if (enc != ENCODING::UTF8) {
+        if (has_null_padding(enc)) {
             out.buffer_fill_with_zeros_after_index(0);
         }
         return 0;
@@ -1200,7 +1207,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE strip_type
     if (strip_type != STRIPTYPE::LEFTSTRIP) {
         while (new_stop > new_start) {
             if (!traverse_buf.first_character_isspace() &&
-                    (enc == ENCODING::UTF8 || *traverse_buf != 0)) {
+                    (!has_null_padding(enc) || *traverse_buf != 0)) {
                 break;
             }
 
@@ -1215,7 +1222,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE strip_type
     }
 
     Buffer offset_buf = buf + new_start;
-    if (enc == ENCODING::UTF8) {
+    if (!has_null_padding(enc)) {
         offset_buf.buffer_memcpy(out, num_bytes);
         return num_bytes;
     }
@@ -1231,7 +1238,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
 {
     size_t len1 = buf1.num_codepoints();
     if (len1 == 0) {
-        if (enc != ENCODING::UTF8) {
+        if (has_null_padding(enc)) {
             out.buffer_fill_with_zeros_after_index(0);
         }
         return 0;
@@ -1342,7 +1349,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
     }
 
     Buffer offset_buf = buf1 + new_start;
-    if (enc == ENCODING::UTF8) {
+    if (!has_null_padding(enc)) {
         offset_buf.buffer_memcpy(out, num_bytes);
         return num_bytes;
     }
@@ -1377,7 +1384,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     size_t len3 = buf3.num_codepoints();
     char *start;
     size_t length = len1;
-    if (enc == ENCODING::UTF8) {
+    if (!has_null_padding(enc)) {
         start = buf1.after;
         length = 0;
     }
@@ -1483,7 +1490,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
 copy_rest:
     buf1.buffer_memcpy(out, end1 - buf1);
     ret += end1 - buf1;
-    if (enc == ENCODING::UTF8) {
+    if (!has_null_padding(enc)) {
         return ret;
     }
     out.buffer_fill_with_zeros_after_index(end1 - buf1);

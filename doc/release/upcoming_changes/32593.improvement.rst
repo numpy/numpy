@@ -1,0 +1,3 @@
+* `numpy.linalg.svd` and `numpy.linalg.lstsq` now raise for inputs containing infinities instead of returning garbage results.
+* Fixed hangs in `numpy.linalg.svd` and `numpy.linalg.lstsq` for certain inputs containing infinities for recent versions of some LAPACK implementations. 
+* `numpy.linalg.cond` now handles non-finite inputs more consistently.
