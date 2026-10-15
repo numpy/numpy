@@ -25,7 +25,7 @@ assert_type(c8.imag, np.float32)
 assert_type(c8.real.real, np.float32)
 assert_type(c8.real.imag, np.float32)
 
-assert_type(c8.itemsize, int)
+assert_type(c8.itemsize, Literal[8])
 assert_type(c8.shape, tuple[()])
 assert_type(c8.strides, tuple[()])
 
