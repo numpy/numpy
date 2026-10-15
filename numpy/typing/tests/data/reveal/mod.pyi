@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Literal as L, assert_type
+from typing import Any, Literal as L, assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -111,18 +111,18 @@ assert_type(divmod(AR_b, b_), tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]])
 
 assert_type(i8 % b, np.int64)
 assert_type(i8 % i8, np.int64)
-assert_type(i8 % f, np.float64)
+assert_type(i8 % f, np.float64 | Any)
 assert_type(i8 % f8, np.float64)
-assert_type(i4 % i8, np.signedinteger)
+assert_type(i4 % i8, np.int64)
 assert_type(i4 % f8, np.float64)
 assert_type(i4 % i4, np.int32)
 assert_type(i4 % f4, np.float64)
 assert_type(i8 % AR_b, npt.NDArray[np.int64])
 
 assert_type(divmod(i8, b), tuple[np.int64, np.int64])
-assert_type(divmod(i8, i4), tuple[np.signedinteger, np.signedinteger])
+assert_type(divmod(i8, i4), tuple[np.int64, np.int64])
 assert_type(divmod(i8, i8), tuple[np.int64, np.int64])
-assert_type(i8.__divmod__(f), tuple[np.float64, np.float64])
+assert_type(i8.__divmod__(f), tuple[np.float64 | Any, np.float64 | Any])
 assert_type(i8.__divmod__(f8), tuple[np.float64, np.float64])
 assert_type(divmod(i8, f4), tuple[np.float64, np.float64])
 assert_type(divmod(i4, i4), tuple[np.int32, np.int32])
@@ -130,20 +130,20 @@ assert_type(divmod(i4, f4), tuple[np.float64, np.float64])
 assert_type(divmod(i8, AR_b), tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]])
 
 assert_type(b % i8, np.int64)
-assert_type(f % i8, np.float64)
+assert_type(f % i8, np.float64 | Any)
 assert_type(i8 % i8, np.int64)
 assert_type(f8 % i8, np.float64)
-assert_type(i8 % i4, np.signedinteger)
+assert_type(i8 % i4, np.int64)
 assert_type(f8 % i4, np.float64)
 assert_type(i4 % i4, np.int32)
 assert_type(f4 % i4, np.float64)
 assert_type(AR_b % i8, npt.NDArray[np.int64])
 
 assert_type(divmod(b, i8), tuple[np.int64, np.int64])
-assert_type(divmod(f, i8), tuple[np.float64, np.float64])
+assert_type(divmod(f, i8), tuple[np.float64 | Any, np.float64 | Any])
 assert_type(divmod(i8, i8), tuple[np.int64, np.int64])
 assert_type(divmod(f8, i8), tuple[np.float64, np.float64])
-assert_type(divmod(i4, i8), tuple[np.signedinteger, np.signedinteger])
+assert_type(divmod(i4, i8), tuple[np.int64, np.int64])
 assert_type(divmod(i4, i4), tuple[np.int32, np.int32])
 assert_type(f4.__divmod__(i8), tuple[np.float64, np.float64])
 assert_type(f4.__divmod__(i4), tuple[np.float64, np.float64])
