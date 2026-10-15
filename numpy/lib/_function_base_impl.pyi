@@ -12,7 +12,7 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import TypeIs, TypeVar
+from typing_extensions import TypeIs, TypeVar, deprecated
 
 import numpy as np
 from numpy import _OrderKACF
@@ -126,6 +126,14 @@ type _InexactDouble = np.float64 | np.longdouble | np.complex128 | np.clongdoubl
 type _ArrayLikeNumeric_co = _DualArrayLike[np.dtype[_Numeric_co], complex]
 type _RealDouble = np.float64 | np.longdouble
 type _Time = np.timedelta64 | np.datetime64
+# array-likes whose `append` result dtype will change for a Python `int` operand
+type _ToIntAppendChanges = (
+    _SupportsArray[
+        np.dtype[np.int8 | np.int16 | np.uint8 | np.uint16 | np.uint32 | np.float16 | np.float32 | np.complex64 | np.character]
+    ]
+    | str
+    | bytes
+)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = np.ndarray[ShapeT, np.dtype[ScalarT]]
 type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
@@ -3714,6 +3722,32 @@ def append(  # noqa: UP047
     values: _ArrayLike[_AnyScalarT],
     axis: None = None,
 ) -> Array1D[_AnyScalarT]: ...
+@overload  # ?d <i64|char, 0d bool
+def append(
+    arr: _ToIntAppendChanges,
+    values: bool,
+    axis: None = None,
+) -> Array1D[Any]: ...
+@overload  # 0d bool, ?d <i64|char
+def append(
+    arr: bool,
+    values: _ToIntAppendChanges,
+    axis: None = None,
+) -> Array1D[Any]: ...
+@overload  # ?d <i64|char, 0d +int
+@deprecated("np.append will stop converting Python scalars to arrays before promoting, which can change the result dtype or raise")
+def append(
+    arr: _ToIntAppendChanges,
+    values: int,
+    axis: None = None,
+) -> Array1D[Any]: ...
+@overload  # 0d +int, ?d <i64|char
+@deprecated("np.append will stop converting Python scalars to arrays before promoting, which can change the result dtype or raise")
+def append(
+    arr: int,
+    values: _ToIntAppendChanges,
+    axis: None = None,
+) -> Array1D[Any]: ...
 @overload  # >=1d T, axis=<given>
 def append(  # noqa: UP047
     arr: _Array[_Shape1T, _AnyScalarT],
