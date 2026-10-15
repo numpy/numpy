@@ -67,6 +67,17 @@ sfloat_discover_from_pyobject(PyArray_DTypeMeta *cls, PyObject *NPY_UNUSED(obj))
 static PyArray_DTypeMeta *
 sfloat_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
+    /*
+     * Deliberately act like a small integer for test_sfloat_promotion_order:
+     * uint8 requires int16, but float16 can absorb both original inputs.
+     * Promoting uint8 first must not force the final result to float32.
+     */
+    if (other == &PyArray_UInt8DType) {
+        return NPY_DT_NewRef(&PyArray_Int16DType);
+    }
+    if (other == &PyArray_HalfDType) {
+        return NPY_DT_NewRef(other);
+    }
     if (NPY_DT_is_legacy(other) && other->type_num == NPY_DOUBLE) {
         Py_INCREF(cls);
         return cls;
