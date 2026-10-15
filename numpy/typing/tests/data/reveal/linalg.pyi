@@ -331,7 +331,7 @@ assert_type(np.linalg.eig(AR_f8), EigResult[np.complex128])
 assert_type(np.linalg.eig(AR_c8), EigResult[np.complex64])
 assert_type(np.linalg.eig(AR_c16), EigResult[np.complex128])
 # Mypy bug: `Expression is of type "EigResult[Any]", not "EigResult[Any]"`
-assert_type(np.linalg.eig(AR_f_), EigResult[Any])  # type: ignore[assert-type]
+assert_type(np.linalg.eig(AR_f_), EigResult[Any])
 assert_type(np.linalg.eig(AR_c_), EigResult[Any])  # type: ignore[assert-type]
 assert_type(np.linalg.eig(AR_any), EigResult[Any])  # type: ignore[assert-type]
 

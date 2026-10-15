@@ -7469,7 +7469,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __radd__[ShapeT: _Shape](  # type: ignore[misc]
+    def __radd__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -7845,7 +7845,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rsub__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -8231,7 +8231,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rmul__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmul__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -8675,7 +8675,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rpow__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rpow__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         mod: None = None,
@@ -9037,7 +9037,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rtruediv__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rtruediv__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -9373,7 +9373,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rfloordiv__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rfloordiv__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -9675,7 +9675,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -9981,7 +9981,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> _2Tuple[ndarray[ShapeT, _dtype[int64]]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rdivmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         lhs: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -12386,12 +12386,15 @@ class floating(_RealMixin, _RoundMixin, inexact[_NBitT, float]):
     @overload
     def __rdivmod__(self, other: float, /) -> _2Tuple[Self]: ...
 
-    # NOTE: `is_integer` and `as_integer_ratio` are technically defined in the concrete subtypes
+@disjoint_base
+class float16(floating[_16Bit]):
     def is_integer(self, /) -> py_bool: ...
     def as_integer_ratio(self, /) -> tuple[int, int]: ...
 
-float16 = floating[_16Bit]
-float32 = floating[_32Bit]
+@disjoint_base
+class float32(floating[_32Bit]):
+    def is_integer(self, /) -> py_bool: ...
+    def as_integer_ratio(self, /) -> tuple[int, int]: ...
 
 # either a C `double`, `float`, or `longdouble`
 @disjoint_base
@@ -12533,13 +12536,16 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     def __divmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...
     def __rdivmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[misc]
 
-float96 = floating[_96Bit]
-float128 = floating[_128Bit]
+@disjoint_base
+class longdouble(floating[_NBitLongDouble]):
+    def is_integer(self, /) -> py_bool: ...
+    def as_integer_ratio(self, /) -> tuple[int, int]: ...
 
 half = float16
 single = float32
 double = float64
-longdouble = floating[_NBitLongDouble]
+float96 = longdouble
+float128 = longdouble
 
 # The main reason for `complexfloating` having two typevars is cosmetic.
 # It is used to clarify why `complex128`s precision is `_64Bit`, the latter
