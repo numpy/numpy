@@ -1,9 +1,12 @@
 #ifndef NUMPY_CORE_SRC_NPYSORT_NPYSORT_COMMON_H_
 #define NUMPY_CORE_SRC_NPYSORT_NPYSORT_COMMON_H_
 
+#include <Python.h>
+
+#include "dtypemeta.h"
+
 #include <numpy/ndarraytypes.h>
 #include <string.h>
-#include "dtypemeta.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,7 +20,12 @@ extern "C" {
  */
 
 /* Argsort works on indices, swap macro for npy_intp. */
-#define INTP_SWAP(a, b) {npy_intp tmp = (b); (b) = (a); (a) = tmp;}
+#define INTP_SWAP(a, b)     \
+    {                       \
+        npy_intp tmp = (b); \
+        (b) = (a);          \
+        (a) = tmp;          \
+    }
 
 static inline void
 get_sort_data_from_array(void *varr, npy_intp *elsize, PyArray_CompareFunc **cmp)
@@ -48,4 +56,4 @@ GENERIC_SWAP(char *a, char *b, size_t len)
 }
 #endif
 
-#endif  /* NUMPY_CORE_SRC_NPYSORT_NPYSORT_COMMON_H_ */
+#endif /* NUMPY_CORE_SRC_NPYSORT_NPYSORT_COMMON_H_ */
