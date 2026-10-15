@@ -3,6 +3,25 @@ import numpy as np
 from .common import Benchmark
 
 
+class TransposedCopy(Benchmark):
+    """F->C and C->F copies across the cache-size boundary (gh-32453)."""
+
+    params = [[2**18, 2**22, 2**26]]
+    param_names = ["nbytes"]
+
+    def setup(self, nbytes):
+        rows = nbytes // (128 * 8)
+        self.a = np.ones((rows, 128))
+        self.out_t = np.empty((128, rows))
+        self.out_f = np.empty((rows, 128), order="F")
+
+    def time_f_to_c(self, nbytes):
+        self.out_t[...] = self.a.T
+
+    def time_c_to_f(self, nbytes):
+        self.out_f[...] = self.a
+
+
 class Core(Benchmark):
     def setup(self):
         self.l100 = range(100)
