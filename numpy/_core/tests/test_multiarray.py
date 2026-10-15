@@ -6538,6 +6538,9 @@ class TestTake:
         assert_array_equal(x.take([2], axis=0, mode='wrap')[0], x[0])
         assert_array_equal(x.take([3], axis=0, mode='wrap')[0], x[1])
 
+        empty = np.empty((0, 0))
+        assert_equal(empty.take([-1, 0, 1], axis=0, mode="wrap").shape, (3, 0))
+
     @pytest.mark.parametrize('dtype', ('>i4', '<i4'))
     def test_byteorder(self, dtype):
         x = np.array([1, 2, 3], dtype)
@@ -8056,6 +8059,13 @@ class TestVdot:
                          np.vdot(a.flatten(), b.flatten()))
             assert_equal(np.vdot(a, b.copy('F')),
                          np.vdot(a.flatten(), b.flatten()))
+
+    def test_vdot_object_empty_is_zero(self):
+        x = np.empty((0,), dtype=object)
+        assert np.vdot(x, x) == 0
+
+        x2 = np.empty((1, 0), dtype=object)
+        assert_array_equal(np.vdot(x2, x2), np.array([0], dtype=object))
 
 
 class TestDot:

@@ -114,6 +114,7 @@ assert_type(np.nan_to_num(AR_LIKE_b_2d), npt.Array2D[np.bool])
 assert_type(np.nan_to_num(AR_LIKE_i_2d), npt.Array2D[np.int_])
 assert_type(np.nan_to_num(AR_LIKE_f_2d), npt.Array2D[np.float64])
 assert_type(np.nan_to_num(AR_LIKE_c_2d), npt.Array2D[np.complex128])
+assert_type(np.nan_to_num(AR_f8_1d, nan=AR_f8_1d), npt.Array1D[np.float64])
 
 assert_type(np.real_if_close(AR_f8_2d), npt.Array2D[np.float64])
 assert_type(np.real_if_close([np.float64(1)]), npt.Array1D[np.float64])

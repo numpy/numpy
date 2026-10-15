@@ -21,6 +21,7 @@ AR_i8_5d: np.ndarray[tuple[int, int, int, int, int], np.dtype[np.int64]]
 AR_f4: npt.NDArray[np.float32]
 AR_O: npt.NDArray[np.object_]
 AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
+AR_b_1d: np.ndarray[tuple[int], np.dtype[np.bool]]
 
 _i64: np.int64
 
@@ -105,10 +106,11 @@ assert_type(np.r_[AR_i8_2d, AR_i8_2d], npt.Array2D[np.int64])
 assert_type(np.r_[AR_i8, AR_i8], npt.NDArray[np.int64])
 assert_type(np.r_[AR_i8_1d], npt.Array1D[np.int64])
 assert_type(np.r_[AR_i8_1d, AR_i8_1d], npt.Array1D[np.int64])
-assert_type(np.r_[0, AR_i8_1d, 1], npt.Array1D[np.int_])
-assert_type(np.r_[AR_i8_1d, [1, 2]], npt.Array1D[np.int_])
-assert_type(np.r_[0:1], npt.Array1D[np.int_])
-assert_type(np.r_[[1, 2], 3], npt.Array1D[np.int_])
+assert_type(np.r_[True, AR_b_1d], npt.Array1D[np.bool])
+assert_type(np.r_[0, AR_i8_1d, 1], npt.Array1D[np.int_ | Any])
+assert_type(np.r_[AR_i8_1d, [1, 2]], npt.Array1D[np.int_ | Any])
+assert_type(np.r_[0:1], npt.Array1D[np.int_ | Any])
+assert_type(np.r_[[1, 2], 3], npt.Array1D[np.int_ | Any])
 assert_type(np.r_[AR_i8_1d, 1.5], npt.Array1D[np.float64 | Any])
 assert_type(np.r_[AR_f4_1d, 0:1], npt.Array1D[np.float64 | Any])
 assert_type(np.r_[0:1:5j], npt.Array1D[np.float64 | Any])
@@ -122,9 +124,10 @@ assert_type(np.c_[AR_i8_3d, AR_i8_3d], npt.Array3D[np.int64])
 assert_type(np.c_[AR_i8, AR_i8], npt.NDArray[np.int64])
 assert_type(np.c_[AR_i8_1d], npt.Array2D[np.int64])
 assert_type(np.c_[AR_i8_2d, AR_i8_1d], npt.Array2D[np.int64])
-assert_type(np.c_[AR_i8_1d, [1, 2]], npt.Array2D[np.int_])
-assert_type(np.c_[0:1], npt.Array2D[np.int_])
-assert_type(np.c_[1, 2], npt.Array2D[np.int_])
+assert_type(np.c_[AR_b_1d, AR_LIKE_b], npt.Array2D[np.bool])
+assert_type(np.c_[AR_i8_1d, [1, 2]], npt.Array2D[np.int_ | Any])
+assert_type(np.c_[0:1], npt.Array2D[np.int_ | Any])
+assert_type(np.c_[1, 2], npt.Array2D[np.int_ | Any])
 assert_type(np.c_[AR_f4_1d, 0:1], npt.Array2D[np.float64 | Any])
 assert_type(np.c_[0:1:5j], npt.Array2D[np.float64 | Any])
 assert_type(np.c_[1j, 0.5], npt.Array2D[np.complex128 | Any])

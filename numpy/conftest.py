@@ -13,8 +13,7 @@ import pytest
 try:
     import hypothesis
 except ImportError:
-    # hypothesis is an optional test dependency (see
-    # requirements/hypothesis_requirements.txt); the property-based tests that
+    # hypothesis is an optional test dependency; the property-based tests that
     # use it are skipped when it is not installed.
     hypothesis = None
 

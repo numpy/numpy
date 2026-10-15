@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
-from collections.abc import Callable, Iterable, Mapping, Sequence
-from typing import Any, Literal, overload
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any, Literal, Protocol, overload, type_check_only
 
 import numpy as np
 import numpy.typing as npt
@@ -41,6 +41,12 @@ type _NonVoidDType = np.dtype[_NonVoid] | np.dtypes.StringDType
 
 type _JoinType = Literal["inner", "outer", "leftouter"]
 
+type _ToMerge = Sequence[npt.ArrayLike] | np.ndarray | np.void
+
+@type_check_only
+class _FieldsFunc[ReturnT](Protocol):
+    def __call__(self, a: npt.NDArray[Any], /, *, axis: int) -> ReturnT: ...
+
 ###
 
 def recursive_fill_fields[VoidArrayT: npt.NDArray[np.void]](input: npt.NDArray[np.void], output: VoidArrayT) -> VoidArrayT: ...
@@ -53,7 +59,7 @@ def get_names_flat(adtype: np.dtype[np.void]) -> tuple[str, ...]: ...
 @overload
 def flatten_descr[NonVoidDTypeT: _NonVoidDType](ndtype: NonVoidDTypeT) -> tuple[tuple[Literal[""], NonVoidDTypeT]]: ...
 @overload
-def flatten_descr(ndtype: np.dtype[np.void]) -> tuple[tuple[str, np.dtype]]: ...
+def flatten_descr(ndtype: np.dtype[np.void]) -> tuple[tuple[str, np.dtype], ...]: ...
 
 #
 def get_fieldstructure(
@@ -63,22 +69,39 @@ def get_fieldstructure(
 ) -> dict[str, list[str]]: ...
 
 #
-@overload
-def merge_arrays[ShapeT: _Shape](
-    seqarrays: Sequence[np.ndarray[ShapeT, np.dtype]] | np.ndarray[ShapeT, np.dtype],
-    fill_value: float = -1,
-    flatten: bool = False,
-    usemask: bool = False,
-    asrecarray: bool = False,
-) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
-@overload
+@overload  # usemask=False (default), asrecarray=False (default)
 def merge_arrays(
-    seqarrays: Sequence[npt.ArrayLike] | np.void,
+    seqarrays: _ToMerge,
+    fill_value: float = -1,
+    flatten: bool = False,
+    usemask: Literal[False] = False,
+    asrecarray: Literal[False] = False,
+) -> npt.Array1D[np.void]: ...
+@overload  # usemask=False, asrecarray=True (positional)
+def merge_arrays(
+    seqarrays: _ToMerge,
+    fill_value: float,
+    flatten: bool,
+    usemask: Literal[False],
+    asrecarray: Literal[True],
+) -> np.recarray[tuple[int], np.dtype[np.record]]: ...
+@overload  # usemask=False (default), asrecarray=True (keyword)
+def merge_arrays(
+    seqarrays: _ToMerge,
+    fill_value: float = -1,
+    flatten: bool = False,
+    usemask: Literal[False] = False,
+    *,
+    asrecarray: Literal[True],
+) -> np.recarray[tuple[int], np.dtype[np.record]]: ...
+@overload  # fallback
+def merge_arrays(
+    seqarrays: _ToMerge,
     fill_value: float = -1,
     flatten: bool = False,
     usemask: bool = False,
     asrecarray: bool = False,
-) -> np.recarray[_AnyShape, np.dtype[np.void]]: ...
+) -> npt.Array1D[np.void]: ...
 
 #
 @overload
@@ -208,12 +231,12 @@ def rec_drop_fields[ShapeT: _Shape](
 ) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
 
 #
-def rec_append_fields[ShapeT: _Shape](
-    base: np.ndarray[ShapeT, np.dtype[np.void]],
+def rec_append_fields(
+    base: npt.NDArray[np.void],
     names: _OneOrMany[str],
     data: _OneOrMany[npt.NDArray[Any]],
-    dtypes: _BuiltinSequence[np.dtype] | None = None,
-) -> np.ma.MaskedArray[ShapeT, np.dtype[np.void]]: ...
+    dtypes: npt.DTypeLike | _BuiltinSequence[npt.DTypeLike] | None = None,
+) -> np.recarray[tuple[int], np.dtype[np.record]]: ...
 
 # TODO(jorenham): Stop passing `void` directly once structured dtypes are implemented,
 # e.g. using a `TypeVar` with constraints.
@@ -272,10 +295,7 @@ def unstructured_to_structured(
 ) -> npt.NDArray[np.void]: ...
 
 #
-def apply_along_fields[ShapeT: _Shape](
-    func: Callable[[np.ndarray[ShapeT]], np.ndarray],
-    arr: np.ndarray[ShapeT, np.dtype[np.void]],
-) -> np.ndarray[ShapeT, np.dtype[np.void]]: ...
+def apply_along_fields[ReturnT](func: _FieldsFunc[ReturnT], arr: npt.NDArray[np.void]) -> ReturnT: ...
 
 #
 def assign_fields_by_name(dst: npt.NDArray[np.void], src: npt.NDArray[np.void], zero_unassigned: bool = True) -> None: ...

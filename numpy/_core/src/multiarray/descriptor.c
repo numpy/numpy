@@ -2710,8 +2710,21 @@ arraydescr_new(PyTypeObject *subtype,
         return NULL;
     }
 
-    /* Get a new copy of it unless it's already a copy */
-    if (copy && PyDataType_FIELDS(conv) == Py_None) {
+    if (!PyDataType_ISLEGACY(conv)) {
+        if (metadata != NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "cannot attach metadata to new style DType");
+            Py_DECREF(conv);
+            return NULL;
+        }
+        return (PyObject *)conv;
+    }
+
+    /*
+     * Copy shared legacy singletons when requested.  Unpickling restores
+     * state with __setstate__, which must not modify the shared descriptor.
+     */
+    if (copy && conv == NPY_DTYPE(conv)->singleton) {
         PyArray_DESCR_REPLACE(conv);
         if (conv == NULL) {
             return NULL;
@@ -2720,12 +2733,6 @@ arraydescr_new(PyTypeObject *subtype,
     }
 
     if ((metadata != NULL)) {
-        if (!PyDataType_ISLEGACY(conv)) {
-            PyErr_SetString(PyExc_TypeError,
-                    "cannot attach metadata to new style DType");
-            Py_DECREF(conv);
-            return NULL;
-        }
         /*
          * We need to be sure to make a new copy of the data-type and any
          * underlying dictionary
@@ -3656,6 +3663,32 @@ arraydescr_str(PyArray_Descr *dtype)
     res = PyObject_CallMethod(_numpy_dtype, "__str__", "O", dtype);
     Py_DECREF(_numpy_dtype);
     return res;
+}
+
+/*
+ * Print the repr of a dtype to stdout, for the debug print functions.
+ */
+NPY_NO_EXPORT void
+arraydescr_debug_print(PyArray_Descr *descr)
+{
+    if (descr == NULL) {
+        printf("<nil>");
+        return;
+    }
+    Py_ssize_t size = 0;
+    const char *str = NULL;
+    PyObject *repr = PyObject_Repr((PyObject *)descr);
+    if (repr != NULL) {
+        str = PyUnicode_AsUTF8AndSize(repr, &size);
+    }
+    if (str == NULL) {
+        PyErr_Clear();
+        printf("<error during print>");
+    }
+    else {
+        fwrite(str, 1, (size_t)size, stdout);
+    }
+    Py_XDECREF(repr);
 }
 
 static PyObject *
