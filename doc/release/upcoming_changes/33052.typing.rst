@@ -4,7 +4,7 @@ The sized scalar types, such as ``uint8``, ``int64``, ``float32``, and ``complex
 are now concrete subclasses instead of aliases of generic types.
 This matches their runtime definitions, and allows them to be used in ``isinstance``
 checks. Their arithmetic and bitwise operators also follow NumPy's scalar promotion
-rules more closely (NEP 50).
+rules more closely.
 
 .. code-block:: python
 
