@@ -412,7 +412,7 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _`Python Style Guide`: https://www.python.org/dev/peps/pep-0008/
 
 Debugging from VS Code on macOS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can use VS Code with the
 `CodeLLDB extension <https://github.com/vadimcn/codelldb>`_
