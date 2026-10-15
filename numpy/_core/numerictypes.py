@@ -511,12 +511,6 @@ def issubdtype(arg1, arg2):
     >>> np.issubdtype('i4', np.signedinteger)
     True
 
-    Abstract DType classes from :mod:`numpy.dtypes` are also accepted, in
-    which case the DType class hierarchy is consulted directly:
-
-    >>> np.issubdtype(np.dtype('int64'), np.dtypes.IntegerAbstractDType)
-    True
-
     """
     if not issubclass_(arg1, generic):
         arg1 = dtype(arg1).type
