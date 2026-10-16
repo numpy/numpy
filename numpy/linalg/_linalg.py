@@ -2347,15 +2347,16 @@ def slogdet(a):
 
 
 
+import math
+import numpy as np
+
+
 def _det_2x2_kahan(a):
     """
     Robust 2x2 determinant using William Kahan's FMA compensated algorithm.
-    Guarantees error <= 1.5 ulps with zero scaling overhead on standard matrices,
-    and exact power-of-2 sequential rescaling on extreme dynamic ranges.
+    Accurate to <= 1.5 ulps with power-of-2 scaling to protect against
+    intermediate underflow/overflow.
     """
-    import math
-    import numpy as np
-
     a11 = a[..., 0, 0]
     a12 = a[..., 0, 1]
     a21 = a[..., 1, 0]
@@ -2369,26 +2370,19 @@ def _det_2x2_kahan(a):
         val22 = float(a22)
 
         max_val = max(abs(val11), abs(val12), abs(val21), abs(val22))
-
-        # Handle non-finite (NaN, Inf) or zero inputs directly
         if max_val == 0.0 or not math.isfinite(max_val):
             return (val11 * val22) - (val12 * val21)
 
-        # Scale only when entries risk overflow (> 1e150) or underflow (< 1e-150)
-        if max_val > 1e150 or max_val < 1e-150:
-            _, exp = math.frexp(max_val)
-            s11 = math.ldexp(val11, -exp)
-            s12 = math.ldexp(val12, -exp)
-            s21 = math.ldexp(val21, -exp)
-            s22 = math.ldexp(val22, -exp)
+        # Scale by exact power of 2
+        _, exp = math.frexp(max_val)
+        s11 = math.ldexp(val11, -exp)
+        s12 = math.ldexp(val12, -exp)
+        s21 = math.ldexp(val21, -exp)
+        s22 = math.ldexp(val22, -exp)
 
-            w = -s12 * s21
-            det_s = math.fma(s11, s22, w) - math.fma(s12, s21, w)
-            return math.ldexp(math.ldexp(det_s, exp), exp)
-
-        # Standard range: direct hardware FMA with no scaling overhead
-        w = -val12 * val21
-        return math.fma(val11, val22, w) - math.fma(val12, val21, w)
+        w = -s12 * s21
+        det_s = math.fma(s11, s22, w) - math.fma(s12, s21, w)
+        return math.ldexp(det_s, 2 * exp)
 
     # --- Batched Path (shape: (..., 2, 2)) ---
     max_val = np.maximum(
@@ -2418,7 +2412,7 @@ def _det_2x2_kahan(a):
     ]
 
     det_s = np.asarray(det_flat, dtype=np.float64).reshape(a.shape[:-2])
-    return np.ldexp(np.ldexp(det_s, exp), exp)
+    return np.ldexp(det_s, 2 * exp)
 
 
 @array_function_dispatch(_unary_dispatcher)
@@ -2433,14 +2427,12 @@ def det(a):
     # Accurate, compensated path for real 2x2 matrices
     if a.shape[-2:] == (2, 2) and not isComplexType(t):
         r = _det_2x2_kahan(a.astype(result_t, copy=False))
-        # Use asarray(r, dtype=result_t) to handle both scalar float and ndarray
         return asarray(r, dtype=result_t)[()]
 
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
     r = r.astype(result_t, copy=False)
     return r
-
 # Linear Least Squares
 
 def _lstsq_dispatcher(a, b, rcond=None):
