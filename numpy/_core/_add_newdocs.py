@@ -1671,6 +1671,11 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
     saved.  Data can be stored in the platform independent ``.npy`` format
     using `save` and `load` instead.
 
+    When passing a file object, it must have a real OS-level file descriptor
+    (i.e., ``fileno()`` must return a valid descriptor). Objects like
+    ``zipfile.Path`` or ``io.BytesIO`` do not work; use `frombuffer` with
+    the bytes content instead (e.g., ``np.frombuffer(path.read_bytes(), ...)``).
+
     Examples
     --------
     Construct an ndarray:

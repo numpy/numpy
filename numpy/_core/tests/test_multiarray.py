@@ -6675,6 +6675,18 @@ class TestIO:
         d = np.ones(7)
         assert_raises(OSError, lambda x: x.tofile(b), d)
 
+    def test_fromfile_zipfile_path_raises_typeerror(self, tmp_path):
+        import zipfile
+        bin_file = tmp_path / "data.bin"
+        zip_file = tmp_path / "archive.zip"
+        np.array([1.0, 2.0, 3.0]).tofile(bin_file)
+        with zipfile.ZipFile(zip_file, mode='w') as z:
+            z.write(bin_file, "data.bin")
+        with zipfile.ZipFile(zip_file) as z:
+            zpath = zipfile.Path(z, "data.bin")
+            with pytest.raises(TypeError, match="fileno"):
+                np.fromfile(zpath, dtype=np.float64)
+
     def test_bool_fromstring(self):
         v = np.array([True, False, True, False], dtype=np.bool)
         y = np.fromstring('1 0 -2.3 0.0', sep=' ', dtype=np.bool)

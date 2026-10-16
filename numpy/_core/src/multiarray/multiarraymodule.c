@@ -2424,6 +2424,16 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     else {
         own = 0;
+        if (!PyObject_HasAttrString(file, "flush")) {
+            PyErr_Format(PyExc_TypeError,
+                "fromfile() requires a file with a fileno() method. "
+                "'%.100s' does not. "
+                "Use np.frombuffer(obj.read_bytes(), dtype=...) instead.",
+                Py_TYPE(file)->tp_name);
+            Py_DECREF(file);
+            Py_XDECREF(type);
+            return NULL;
+        }
     }
     fp = npy_PyFile_Dup2(file, "rb", &orig_pos);
     if (fp == NULL) {
