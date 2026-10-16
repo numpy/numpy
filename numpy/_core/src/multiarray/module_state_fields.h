@@ -270,8 +270,7 @@ extern "C" {
 
 #define NPY_MODULE_STATE_OBJECT_FIELDS(F) \
     F(typeDict)        \
-    F(current_handler) \
-    F(global_pytype_to_type_dict)
+    F(current_handler)
 
 /*
  * Heap types created with PyType_FromModuleAndSpec during module execution.
