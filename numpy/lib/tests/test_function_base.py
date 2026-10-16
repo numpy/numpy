@@ -1541,6 +1541,50 @@ class TestTrimZeros:
         data, expected = self.construct_input_output(rng, shape, axis, trim)
         assert_array_equal(trim_zeros(data, axis=axis, trim=trim), expected)
 
+    @pytest.mark.parametrize("seq", ([[0, 1], [0, 0]], ((0, 1), (0, 0))))
+    def test_nested_sequence(self, seq):
+        res = trim_zeros(seq)
+        assert isinstance(res, np.ndarray)
+        assert_array_equal(res, [[1]])
+
+        res = trim_zeros(seq, axis=0)
+        assert_array_equal(res, [[0, 1]])
+
+        res = trim_zeros(seq, axis=1)
+        assert_array_equal(res, [[1], [0]])
+
+    def test_nested_sequence_all_zero(self):
+        res = trim_zeros([[0, 0], [0, 0]])
+        assert_array_equal(res, np.zeros((0, 0)))
+
+    def test_subclass(self):
+        # ndarray subclasses are sliced directly, so the type is preserved
+        # (and so is the mask for masked arrays)
+        arr = np.ma.array([[0, 0, 0, 0], [0, 1, 0, 3], [0, 0, 0, 0]],
+                          mask=[[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0]])
+        res = trim_zeros(arr)
+        assert isinstance(res, np.ma.MaskedArray)
+        assert_array_equal(res.data, [[1, 0, 3]])
+        assert_array_equal(res.mask, [[False, True, False]])
+
+    def test_duck_array(self):
+        # gh-32394: an array-like that is not an ndarray is converted to an
+        # array and the result is passed through its ``__array_wrap__``
+        class DuckArray:
+            def __init__(self, arr):
+                self.arr = np.asarray(arr)
+
+            def __array__(self, dtype=None, copy=None):
+                return np.array(self.arr, dtype=dtype, copy=copy)
+
+            def __array_wrap__(self, arr, context=None, return_scalar=False):
+                return DuckArray(arr)
+
+        duck = DuckArray([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+        res = trim_zeros(duck)
+        assert isinstance(res, DuckArray)
+        assert_array_equal(res.arr, [[1]])
+
 
 class TestExtins:
 
