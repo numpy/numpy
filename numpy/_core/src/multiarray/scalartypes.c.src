@@ -783,7 +783,7 @@ unicodetype_@form@(PyObject *self)
         return NULL;
     }
     for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
-    new = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ip, len);
+    new = npy_PyUnicode_FromUCS4(ip, len);
     if (new == NULL) {
         PyMem_Free(ip);
         return NULL;
