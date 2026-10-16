@@ -720,3 +720,37 @@ def test___qualname___and___module___attribute():
 
     if incorrect_entries:
         assert len(incorrect_entries) == 0, incorrect_entries
+
+
+def test_all_lists():
+    # numpy.__all__ and numpy._core.__all__ are derived from the names bound in
+    # those modules; check that they match what the submodules export.
+    from numpy import _core, lib, matrixlib
+    from numpy._core import einsumfunc, function_base, getlimits, numeric, shape_base
+
+    expected_core = {
+        "abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2",
+        "bitwise_invert", "bitwise_left_shift", "bitwise_right_shift", "concat",
+        "pow", "permute_dims", "memmap", "sctypeDict", "record", "recarray",
+        *numeric.__all__, *function_base.__all__, *getlimits.__all__,
+        *shape_base.__all__, *einsumfunc.__all__,
+    }
+    assert len(_core.__all__) == len(set(_core.__all__))
+    assert set(_core.__all__) == expected_core
+
+    lib_modules = [
+        lib._histograms_impl, lib._nanfunctions_impl, lib._function_base_impl,
+        lib._twodim_base_impl, lib._shape_base_impl, lib._type_check_impl,
+        lib._arraysetops_impl, lib._ufunclike_impl, lib._arraypad_impl,
+        lib._utils_impl, lib._stride_tricks_impl, lib._polynomial_impl,
+        lib._npyio_impl, lib._index_tricks_impl,
+    ]
+    expected = set(np.__numpy_submodules__) | set(_core.__all__)
+    expected |= set(matrixlib.__all__)
+    for module in lib_modules:
+        expected |= set(module.__all__)
+    expected |= {"emath", "show_config", "__version__", "__array_namespace_info__"}
+    assert len(np.__all__) == len(set(np.__all__))
+    assert set(np.__all__) == expected
+    for name in np.__all__:
+        assert hasattr(np, name), name

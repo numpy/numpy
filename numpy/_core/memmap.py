@@ -4,7 +4,8 @@ from contextlib import nullcontext
 import numpy as np
 from numpy._utils import set_module
 
-from .numeric import dtype, ndarray, uint8
+from .multiarray import dtype, ndarray
+from .numerictypes import uint8
 
 __all__ = ['memmap']
 
