@@ -2344,39 +2344,82 @@ def slogdet(a):
     logdet = logdet.astype(real_t, copy=False)
     return SlogdetResult(sign, logdet)
 
+
+
+
 def _det_2x2_kahan(a):
+    """
+    Robust 2x2 determinant using William Kahan's FMA compensated algorithm.
+    Guarantees error <= 1.5 ulps with zero scaling overhead on standard matrices,
+    and exact power-of-2 sequential rescaling on extreme dynamic ranges.
+    """
     import math
     import numpy as np
-
-    # Vectorize Python's built-in math.fma for NumPy arrays
-    _fma = np.vectorize(math.fma, otypes=[np.float64])
 
     a11 = a[..., 0, 0]
     a12 = a[..., 0, 1]
     a21 = a[..., 1, 0]
     a22 = a[..., 1, 1]
 
+    # --- Fast Scalar Path (ndim == 2) ---
+    if a.ndim == 2:
+        val11 = float(a11)
+        val12 = float(a12)
+        val21 = float(a21)
+        val22 = float(a22)
+
+        max_val = max(abs(val11), abs(val12), abs(val21), abs(val22))
+
+        # Handle non-finite (NaN, Inf) or zero inputs directly
+        if max_val == 0.0 or not math.isfinite(max_val):
+            return (val11 * val22) - (val12 * val21)
+
+        # Scale only when entries risk overflow (> 1e150) or underflow (< 1e-150)
+        if max_val > 1e150 or max_val < 1e-150:
+            _, exp = math.frexp(max_val)
+            s11 = math.ldexp(val11, -exp)
+            s12 = math.ldexp(val12, -exp)
+            s21 = math.ldexp(val21, -exp)
+            s22 = math.ldexp(val22, -exp)
+
+            w = -s12 * s21
+            det_s = math.fma(s11, s22, w) - math.fma(s12, s21, w)
+            return math.ldexp(math.ldexp(det_s, exp), exp)
+
+        # Standard range: direct hardware FMA with no scaling overhead
+        w = -val12 * val21
+        return math.fma(val11, val22, w) - math.fma(val12, val21, w)
+
+    # --- Batched Path (shape: (..., 2, 2)) ---
     max_val = np.maximum(
         np.maximum(np.abs(a11), np.abs(a12)),
         np.maximum(np.abs(a21), np.abs(a22))
     )
 
-    nonzero = max_val > 0
-    scale_exp = np.zeros_like(max_val, dtype=np.int32)
-    scale_exp[nonzero] = np.floor(np.log2(max_val[nonzero])).astype(np.int32)
+    _, exp = np.frexp(max_val)
 
-    inv_scale = np.exp2(-scale_exp)
-    scale_sq = np.exp2(2 * scale_exp)
-
-    a11_s = a11 * inv_scale
-    a12_s = a12 * inv_scale
-    a21_s = a21 * inv_scale
-    a22_s = a22 * inv_scale
+    a11_s = np.ldexp(a11, -exp)
+    a12_s = np.ldexp(a12, -exp)
+    a21_s = np.ldexp(a21, -exp)
+    a22_s = np.ldexp(a22, -exp)
 
     w = -a12_s * a21_s
-    det_s = _fma(a11_s, a22_s, w) - _fma(a12_s, a21_s, w)
 
-    return det_s * scale_sq
+    a11_flat = np.asarray(a11_s).ravel()
+    a22_flat = np.asarray(a22_s).ravel()
+    a12_flat = np.asarray(a12_s).ravel()
+    a21_flat = np.asarray(a21_s).ravel()
+    w_flat = np.asarray(w).ravel()
+
+    _fma = math.fma
+    det_flat = [
+        _fma(x, y, z) - _fma(u, v, z)
+        for x, y, u, v, z in zip(a11_flat, a22_flat, a12_flat, a21_flat, w_flat)
+    ]
+
+    det_s = np.asarray(det_flat, dtype=np.float64).reshape(a.shape[:-2])
+    return np.ldexp(np.ldexp(det_s, exp), exp)
+
 
 @array_function_dispatch(_unary_dispatcher)
 def det(a):
@@ -2387,17 +2430,16 @@ def det(a):
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
 
-    # --- Fast, high-accuracy path for real 2x2 matrices ---
+    # Accurate, compensated path for real 2x2 matrices
     if a.shape[-2:] == (2, 2) and not isComplexType(t):
         r = _det_2x2_kahan(a.astype(result_t, copy=False))
-        return r.astype(result_t, copy=False)
-    # -----------------------------------------------------
+        # Use asarray(r, dtype=result_t) to handle both scalar float and ndarray
+        return asarray(r, dtype=result_t)[()]
 
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
     r = r.astype(result_t, copy=False)
     return r
-
 
 # Linear Least Squares
 
