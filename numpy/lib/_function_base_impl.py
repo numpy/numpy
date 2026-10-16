@@ -3126,10 +3126,9 @@ def blackman(M):
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> np.blackman(12)
-    array([-1.38777878e-17,   3.26064346e-02,   1.59903635e-01, # may vary
-            4.14397981e-01,   7.36045180e-01,   9.67046769e-01,
-            9.67046769e-01,   7.36045180e-01,   4.14397981e-01,
-            1.59903635e-01,   3.26064346e-02,  -1.38777878e-17])
+    array([0.        , 0.03260643, 0.15990363, 0.41439798, 0.73604518,
+           0.96704677, 0.96704677, 0.73604518, 0.41439798, 0.15990363,
+           0.03260643, 0.        ])
 
     Plot the window and the frequency response.
 
@@ -3170,7 +3169,11 @@ def blackman(M):
     if M == 1:
         return ones(1, dtype=values.dtype)
     n = arange(1 - M, M, 2)
-    return 0.42 + 0.5 * cos(pi * n / (M - 1)) + 0.08 * cos(2.0 * pi * n / (M - 1))
+    x = pi * n / (M - 1)
+    res = 0.42 + 0.5 * cos(x) + 0.08 * cos(2.0 * x)
+    res[0] = 0
+    res[-1] = 0
+    return res
 
 
 @set_module('numpy')
