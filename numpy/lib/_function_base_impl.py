@@ -4808,13 +4808,17 @@ def _quantile(
             # No interpolation needed, take the points along axis
             if supports_nans:
                 # may contain nan, which would sort to the end
-                arr.partition(
-                    concatenate((virtual_indexes.ravel(), [-1])), axis=0,
-                )
-                slices_having_nans = np.isnan(arr[-1, ...])
+                kth = concatenate((virtual_indexes.ravel(), [-1]))
             else:
                 # cannot contain nan
-                arr.partition(virtual_indexes.ravel(), axis=0)
+                kth = virtual_indexes.ravel()
+            if kth.size * 3 >= values_count:
+                arr.sort(axis=0)
+            else:
+                arr.partition(kth, axis=0)
+            if supports_nans:
+                slices_having_nans = np.isnan(arr[-1, ...])
+            else:
                 slices_having_nans = np.array(False, dtype=bool)
             result = take(arr, virtual_indexes, axis=0, out=out)
         else:
@@ -4822,12 +4826,16 @@ def _quantile(
                                                           virtual_indexes,
                                                           values_count)
             # --- Sorting
-            arr.partition(
-                np.unique(np.concatenate(([0, -1],
-                                          previous_indexes.ravel(),
-                                          next_indexes.ravel(),
-                                          ))),
-                axis=0)
+            kth = np.unique(np.concatenate(([0, -1],
+                                            previous_indexes.ravel(),
+                                            next_indexes.ravel(),
+                                            )))
+            if kth.size * 3 >= values_count:
+                # Selecting a dense set of order statistics: a full sort is
+                # cheaper than partitioning at many kth values (gh-32187).
+                arr.sort(axis=0)
+            else:
+                arr.partition(kth, axis=0)
             if supports_nans:
                 slices_having_nans = np.isnan(arr[-1, ...])
             else:
