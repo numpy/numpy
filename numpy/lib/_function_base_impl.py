@@ -493,6 +493,8 @@ def average(a, axis=None, weights=None, returned=False, *,
         *Note:* `keepdims` will not work with instances of `numpy.matrix`
         or other classes whose methods do not support `keepdims`.
 
+        .. versionadded:: 1.23.0
+
     Returns
     -------
     retval, [sum_of_weights] : array_type or double
