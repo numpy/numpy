@@ -1404,7 +1404,6 @@ class TestNanFunctions_Quantile:
         assert np.isnan(normal[..., 1])
         assert np.isnan(reversed_[..., 0])
 
-
     def test_complex(self):
         arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
