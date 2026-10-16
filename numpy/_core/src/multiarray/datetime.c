@@ -2623,6 +2623,8 @@ NPY_NO_EXPORT int
 convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                                 NPY_CASTING casting, npy_timedelta *out)
 {
+    multiarray_umath_state *state = _npy_module_state;
+
     if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
         PyObject *utf8 = NULL;
         int succeeded = 0;
@@ -2774,50 +2776,60 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
     }
     /* Convert from a Python timedelta object */
-    else if (PyObject_HasAttrString(obj, "days") &&
-                PyObject_HasAttrString(obj, "seconds") &&
-                PyObject_HasAttrString(obj, "microseconds")) {
-        PyObject *tmp;
+    else if (PyDelta_CheckExact(obj) ||
+                (PyObject_HasAttr(obj, state->interned_str.days) &&
+                 PyObject_HasAttr(obj, state->interned_str.seconds) &&
+                 PyObject_HasAttr(obj, state->interned_str.microseconds))) {
         PyArray_DatetimeMetaData us_meta;
         npy_timedelta td;
         npy_int64 days;
         int seconds = 0, useconds = 0;
 
-        /* Get the days */
-        tmp = PyObject_GetAttrString(obj, "days");
-        if (tmp == NULL) {
-            return -1;
+        if (PyDelta_CheckExact(obj)) {
+            /* Reads from the C struct. */
+            days =PyDateTime_DELTA_GET_DAYS(obj);
+            seconds = PyDateTime_DELTA_GET_SECONDS(obj);
+            useconds = PyDateTime_DELTA_GET_MICROSECONDS(obj);
         }
-        days = PyLong_AsLongLong(tmp);
-        if (error_converting(days)) {
-            Py_DECREF(tmp);
-            return -1;
-        }
-        Py_DECREF(tmp);
+        else {
+            PyObject *tmp;
 
-        /* Get the seconds */
-        tmp = PyObject_GetAttrString(obj, "seconds");
-        if (tmp == NULL) {
-            return -1;
-        }
-        seconds = PyLong_AsLong(tmp);
-        if (error_converting(seconds)) {
+            /* Get the days */
+            tmp = PyObject_GetAttr(obj, state->interned_str.days);
+            if (tmp == NULL) {
+                return -1;
+            }
+            days = PyLong_AsLongLong(tmp);
+            if (error_converting(days)) {
+                Py_DECREF(tmp);
+                return -1;
+            }
             Py_DECREF(tmp);
-            return -1;
-        }
-        Py_DECREF(tmp);
 
-        /* Get the microseconds */
-        tmp = PyObject_GetAttrString(obj, "microseconds");
-        if (tmp == NULL) {
-            return -1;
-        }
-        useconds = PyLong_AsLong(tmp);
-        if (error_converting(useconds)) {
+            /* Get the seconds */
+            tmp = PyObject_GetAttr(obj, state->interned_str.seconds);
+            if (tmp == NULL) {
+                return -1;
+            }
+            seconds = PyLong_AsLong(tmp);
+            if (error_converting(seconds)) {
+                Py_DECREF(tmp);
+                return -1;
+            }
             Py_DECREF(tmp);
-            return -1;
+
+            /* Get the microseconds */
+            tmp = PyObject_GetAttr(obj, state->interned_str.microseconds);
+            if (tmp == NULL) {
+                return -1;
+            }
+            useconds = PyLong_AsLong(tmp);
+            if (error_converting(useconds)) {
+                Py_DECREF(tmp);
+                return -1;
+            }
+            Py_DECREF(tmp);
         }
-        Py_DECREF(tmp);
 
         td = days*(24*60*60*1000000LL) + seconds*1000000LL + useconds;
 
