@@ -17,6 +17,7 @@
 #include "npy_pycompat.h"
 
 #include "arraytypes.h"
+#include "array_coercion.h"
 #include "npy_config.h"
 #include "mapping.h"
 #include "ctors.h"
@@ -3565,6 +3566,47 @@ scalar_new_parse_posargs(PyObject *args, PyObject *kwds, const char *format,
                                        arg0) ? 0 : -1;
 }
 
+static int
+scalar_as_longdouble(PyObject *obj, npy_longdouble *value)
+{
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_LONGDOUBLE);
+    if (descr == NULL) {
+        return -1;
+    }
+
+    int res = PyArray_Pack(descr, value, obj);
+    Py_DECREF(descr);
+    if (res < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+
+static PyObject *
+clongdouble_from_real_imag(PyObject *real_obj, PyObject *imag_obj)
+{
+    /*
+     * Construct a clongdouble from its individual longdouble components rather
+     * than via complex which would narrow to double.
+     */
+
+    npy_longdouble real, imag;
+    if (scalar_as_longdouble(real_obj, &real) < 0 ||
+            scalar_as_longdouble(imag_obj, &imag) < 0) {
+        return NULL;
+    }
+
+    npy_clongdouble value = npy_cpackl(real, imag);
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_CLONGDOUBLE);
+    if (descr == NULL) {
+        return NULL;
+    }
+    PyObject *scalar = PyArray_Scalar(&value, descr, NULL);
+    Py_DECREF(descr);
+    return scalar;
+}
+
 
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
@@ -3610,7 +3652,7 @@ static PyObject *
 
     /* TODO: include type name in error message, which is not @name@ */
     PyObject *obj = NULL;
-#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
+#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT) || defined(_@TYPE@_IS_CLONGDOUBLE)
     static char *kwnames[] = {"", "", NULL};  /* positional-only */
     static char *parse_error = "Could not convert arguments into a complex scalar. '%R' given.";
     PyObject *real_obj = NULL;
@@ -3620,7 +3662,9 @@ static PyObject *
     }
     if (!((imag_obj == NULL) ||
           ((PyNumber_Check(real_obj) && PyNumber_Check(imag_obj)) &&
-           !(PyComplex_Check(real_obj) || PyComplex_Check(imag_obj))))) {
+           !(PyComplex_Check(real_obj) || PyComplex_Check(imag_obj) ||
+             PyArray_IsScalar(real_obj, ComplexFloating) ||
+             PyArray_IsScalar(imag_obj, ComplexFloating))))) {
         PyErr_Format(PyExc_TypeError, parse_error, args);
         return NULL;
     }
@@ -3629,7 +3673,11 @@ static PyObject *
         Py_XINCREF(obj);
     }
     else {
+#if defined(_@TYPE@_IS_CLONGDOUBLE)
+        obj = clongdouble_from_real_imag(real_obj, imag_obj);
+#else
         obj = PyObject_CallObject((PyObject *)&PyComplex_Type, args);
+#endif
         if (obj == NULL) {
             return NULL;
         }
@@ -3658,7 +3706,7 @@ static PyObject *
     Py_INCREF(typecode);
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(
             obj, typecode, 0, 0, NPY_ARRAY_FORCECAST, NULL);
-#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
+#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT) || defined(_@TYPE@_IS_CLONGDOUBLE)
     Py_DECREF(obj);
 #endif
     if (arr == NULL) {
