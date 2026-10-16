@@ -18,11 +18,13 @@ from numpy.random import (
 )
 from numpy.random._common import interface
 from numpy.testing import (
+    IS_WASM,
     assert_allclose,
     assert_array_equal,
     assert_equal,
     assert_raises,
 )
+from numpy.testing._private.utils import run_threaded
 
 try:
     import cffi  # noqa: F401
@@ -159,6 +161,43 @@ def test_seedsequence():
     dummy = SeedlessSeedSequence()
     assert_raises(NotImplementedError, dummy.generate_state, 10)
     assert len(dummy.spawn(10)) == 10
+
+
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
+@pytest.mark.thread_unsafe(
+    reason="modifies the global thread switch interval"
+)
+def test_seedsequence_spawn_thread_safe():
+    num_threads = 4
+    children_per_thread = 500
+
+    seed_seq = SeedSequence(100)
+    results = [None] * num_threads
+
+    def spawn_children(index, barrier):
+        barrier.wait()
+        results[index] = seed_seq.spawn(children_per_thread)
+
+
+    run_threaded(
+        spawn_children,
+        max_workers=num_threads,
+        pass_count=True,
+        pass_barrier=True,
+    )
+
+    children = [
+        child
+        for thread_result in results
+        for child in thread_result
+    ]
+    spawn_keys = [child.spawn_key for child in children]
+
+    expected_count = num_threads * children_per_thread
+
+    assert len(spawn_keys) == expected_count
+    assert len(set(spawn_keys)) == expected_count
+    assert seed_seq.n_children_spawned == expected_count
 
 
 def test_generator_spawning():

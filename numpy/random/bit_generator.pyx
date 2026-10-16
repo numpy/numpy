@@ -38,7 +38,7 @@ from itertools import cycle
 import re
 from secrets import randbits
 
-from threading import RLock
+from threading import Lock, RLock
 
 from cpython.pycapsule cimport PyCapsule_New
 
@@ -316,6 +316,7 @@ cdef class SeedSequence:
                                       np.ndarray)):
             raise TypeError('SeedSequence expects int or sequence of ints for '
                             f'entropy not {entropy}')
+        self._lock = Lock()
         self.entropy = entropy
         self.spawn_key = tuple(spawn_key)
         self.pool_size = pool_size
@@ -347,6 +348,12 @@ cdef class SeedSequence:
                 ['entropy', 'spawn_key', 'pool_size',
                  'n_children_spawned']
                 if getattr(self, k) is not None}
+
+    def __reduce_ex__(self, protocol):
+        from ._pickle import __seed_sequence_ctor
+
+        state = self.state
+        return __seed_sequence_ctor, (type(self), state)
 
     cdef mix_entropy(self, np.ndarray[np.npy_uint32, ndim=1] mixer,
                      np.ndarray[np.npy_uint32, ndim=1] entropy_array):
@@ -483,20 +490,23 @@ cdef class SeedSequence:
             Equivalent method on the generator and bit generator.
 
         """
-        cdef uint32_t i
+        cdef uint32_t i, start
 
         if n_children < 0:
             raise ValueError("n_children must be non-negative")
 
+        with self._lock:
+            start = self.n_children_spawned
+            self.n_children_spawned += n_children
+
         seqs = []
-        for i in range(self.n_children_spawned,
-                       self.n_children_spawned + n_children):
+        for i in range(start, start + n_children):
             seqs.append(type(self)(
                 self.entropy,
                 spawn_key=self.spawn_key + (i,),
                 pool_size=self.pool_size,
             ))
-        self.n_children_spawned += n_children
+
         return seqs
 
 
