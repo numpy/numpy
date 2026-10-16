@@ -583,10 +583,10 @@ cdef class BitGenerator:
         -------
         state : dict
             Dictionary containing the information required to describe the
-             state of the PRNG. The returned dictionary must be a new object,
-             not a view of the generator's internal state: later changes to
-             the generator must not affect it, and modifying it must not
-             affect the generator.
+            state of the PRNG. The returned dictionary must be a new object,
+            not a view of the generator's internal state: later changes to
+            the generator must not affect it, and modifying it must not
+            affect the generator.
         """
         raise NotImplementedError('Not implemented in base BitGenerator')
 
