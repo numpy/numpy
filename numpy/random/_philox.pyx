@@ -214,7 +214,7 @@ cdef class Philox(BitGenerator):
             view of the generator's internal state: later changes to the
             generator do not affect it, and modifying it does not affect the
             generator, so it can be stored and passed back to the setter
-            without copying.     
+            without copying.
         """
         ctr = np.empty(4, dtype=np.uint64)
         key = np.empty(2, dtype=np.uint64)
