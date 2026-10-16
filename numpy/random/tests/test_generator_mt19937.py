@@ -50,6 +50,57 @@ def endpoint(request):
     return request.param
 
 
+class _NoBulkBitGenerator:
+    """Proxy exposing only the original BitGenerator interface."""
+
+    def __init__(self, bit_generator):
+        self._bit_generator = bit_generator
+        self.capsule = bit_generator.capsule
+        self.lock = bit_generator.lock
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("size", [1, 31, 32, 311, 312, 313, 624, 625, 1000])
+def test_bulk_random_matches_fallback(dtype, size):
+    bulk_bitgen = MT19937(987654321)
+    fallback_bitgen = MT19937(987654321)
+    bulk = Generator(bulk_bitgen)
+    fallback = Generator(_NoBulkBitGenerator(fallback_bitgen))
+
+    assert_array_equal(
+        bulk.random(size=size, dtype=dtype),
+        fallback.random(size=size, dtype=dtype),
+    )
+    assert_equal(bulk_bitgen.state, fallback_bitgen.state)
+
+
+@pytest.mark.parametrize(
+    "dtype, low, high",
+    [
+        (np.uint32, 0, 2**32),
+        (np.uint32, 17, 1009),
+        (np.uint64, 0, 2**64),
+        (np.uint64, 17, 1009),
+        (np.int32, -(2**31), 2**31),
+        (np.int32, -503, 509),
+        (np.int64, -(2**63), 2**63),
+        (np.int64, -503, 509),
+    ],
+)
+@pytest.mark.parametrize("size", [1, 31, 32, 311, 312, 313, 624, 625, 1000])
+def test_bulk_integers_matches_fallback(dtype, low, high, size):
+    bulk_bitgen = MT19937(987654321)
+    fallback_bitgen = MT19937(987654321)
+    bulk = Generator(bulk_bitgen)
+    fallback = Generator(_NoBulkBitGenerator(fallback_bitgen))
+
+    assert_array_equal(
+        bulk.integers(low, high, size=size, dtype=dtype),
+        fallback.integers(low, high, size=size, dtype=dtype),
+    )
+    assert_equal(bulk_bitgen.state, fallback_bitgen.state)
+
+
 class TestSeed:
     def test_scalar(self):
         s = Generator(MT19937(0))
