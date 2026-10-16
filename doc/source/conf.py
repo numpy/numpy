@@ -279,7 +279,10 @@ html_theme_options = {
     "show_version_warning_banner": True,
     "analytics": {
         "plausible_analytics_domain": "numpy.org/doc/stable/",
-        "plausible_analytics_url": ("https://views.scientific-python.org/js/script.js"),
+        "plausible_analytics_url": (
+           "https://views.scientific-python.org/js/"
+           "script.file-downloads.hash.outbound-links.js"
+       ),
     },
 }
 
