@@ -39,7 +39,7 @@ You can test an installed NumPy by `numpy.test`, for example,
 To run NumPy's full test suite, use the following::
 
   >>> import numpy
-  >>> numpy.test(label='slow')
+  >>> numpy.test(label='full')
 
 The test method may take two or more arguments; the first ``label`` is a
 string specifying what should be tested and the second ``verbose`` is an
@@ -224,15 +224,15 @@ can label it with ``pytest.mark.slow``::
   import pytest
 
   @pytest.mark.slow
-  def test_big(self):
+  def test_big():
       print('Big, slow test')
 
 Similarly for methods::
 
-  class test_zzz:
+  class TestZzz:
       @pytest.mark.slow
       def test_simple(self):
-          assert_(zzz() == 'Hello from zzz')
+          assert zzz() == 'Hello from zzz'
 
 Setup and teardown methods
 --------------------------
