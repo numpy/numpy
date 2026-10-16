@@ -130,10 +130,34 @@ class TestArrayFromScalar:
             t(None, 1)
         with pytest.raises(TypeError):
             t(np.array([1, 2]), 1)
+
+    @pytest.mark.parametrize('t', [np.csingle, np.cdouble])
+    def test_complex_two_arg_numpy_complex(self, t):
+        assert t(np.complex64(1 + 2j), 1) == 1 + 3j
+
+    @pytest.mark.parametrize('value', [
+        np.array(1 + 2j), np.complex64(1 + 2j),
+        np.timedelta64(2, "D"), np.datetime64("2020-01-01"),
+        np.array([1, 2]),
+    ])
+    def test_clongdouble_two_arg_requires_real_components(self, value):
         with pytest.raises(TypeError):
-            t(np.complex64(1 + 2j), 1)
+            np.clongdouble(value, 1)
         with pytest.raises(TypeError):
-            t(1, np.clongdouble(1 + 2j))
+            np.clongdouble(1, value)
+
+    @pytest.mark.parametrize('value', [
+        np.array(True), np.array(1, dtype=np.int64),
+        np.array(np.longdouble(1)),
+    ])
+    def test_clongdouble_two_arg_0d_real_array(self, value):
+        result = np.clongdouble(value, value)
+        assert result.real == value[()]
+        assert result.imag == value[()]
+
+    def test_clongdouble_two_arg_python_bool(self):
+        assert np.clongdouble(True, 2) == 1 + 2j
+        assert np.clongdouble(2, False) == 2
 
     def test_clongdouble_constructor_preserves_precision(self):
         real = np.nextafter(np.longdouble(1), np.longdouble(2))

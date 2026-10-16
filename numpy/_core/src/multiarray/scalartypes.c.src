@@ -3578,32 +3578,87 @@ scalar_as_longdouble(PyObject *obj, npy_longdouble *value)
     if (res < 0) {
         return -1;
     }
+
+    return 0;
+}
+
+
+static int
+clongdouble_component_as_longdouble(PyObject *obj, npy_longdouble *value)
+{
+    if (PyArray_IsScalar(obj, Bool) ||
+            (PyArray_IsScalar(obj, Integer) &&
+             !PyArray_IsScalar(obj, Timedelta)) ||
+            PyArray_IsScalar(obj, Floating)) {
+        return scalar_as_longdouble(obj, value);
+    }
+
+    if (PyArray_CheckExact(obj) &&
+            PyArray_NDIM((PyArrayObject *)obj) == 0) {
+        PyArray_Descr *dtype = PyArray_DESCR((PyArrayObject *)obj);
+        if (PyDataType_ISBOOL(dtype) || PyDataType_ISINTEGER(dtype) ||
+                PyDataType_ISFLOAT(dtype)) {
+            /* Accept exact 0-D ndarrays with a real numeric dtype. */
+            return scalar_as_longdouble(obj, value);
+        }
+    }
+
+    if (PyArray_IsScalar(obj, Generic) || PyArray_Check(obj)) {
+        /*
+         * Reject other NumPy scalars and arrays before generic numeric
+         * conversion.  PyFloat_AsDouble(np.complex64(...)) would otherwise
+         * drop the imaginary part.
+         */
+        PyErr_SetString(PyExc_TypeError,
+                "clongdouble real and imaginary components must be real numbers");
+        return -1;
+    }
+
+    if (PyLong_Check(obj) && !PyBool_Check(obj)) {
+        /*
+         * npy_longdouble_from_PyLong converts through a string, which cannot
+         * represent a Python bool.  PyFloat_AsDouble handles bool instead.
+        */
+        *value = npy_longdouble_from_PyLong(obj);
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return 0;
+    }
+
+    double double_value = PyFloat_AsDouble(obj);
+    if (double_value == -1.0 && PyErr_Occurred()) {
+        return -1;
+    }
+    *value = double_value;
     return 0;
 }
 
 
 static PyObject *
-clongdouble_from_real_imag(PyObject *real_obj, PyObject *imag_obj)
+clongdouble_from_real_imag(PyTypeObject *type, PyObject *real_obj,
+        PyObject *imag_obj)
 {
     /*
-     * Construct a clongdouble from its individual longdouble components rather
-     * than via complex which would narrow to double.
+     * Unlike the corresponding cdouble/cfloat paths, we do not construct
+     * through PyComplex_Type. The PyComplex_Type approach accepts
+     * complex-valued components, e.g. np.cdouble(np.complex64(1 + 2j), 1),
+     * which is behavior that may be deprecated in the future.
+     * It also converts components through double, losing longdouble and
+     * large-integer precision.
      */
-
     npy_longdouble real, imag;
-    if (scalar_as_longdouble(real_obj, &real) < 0 ||
-            scalar_as_longdouble(imag_obj, &imag) < 0) {
+    if (clongdouble_component_as_longdouble(real_obj, &real) < 0 ||
+            clongdouble_component_as_longdouble(imag_obj, &imag) < 0) {
         return NULL;
     }
 
-    npy_clongdouble value = npy_cpackl(real, imag);
-    PyArray_Descr *descr = PyArray_DescrFromType(NPY_CLONGDOUBLE);
-    if (descr == NULL) {
+    PyObject *result = type->tp_alloc(type, 0);
+    if (result == NULL) {
         return NULL;
     }
-    PyObject *scalar = PyArray_Scalar(&value, descr, NULL);
-    Py_DECREF(descr);
-    return scalar;
+    PyArrayScalar_VAL(result, CLongDouble) = npy_cpackl(real, imag);
+    return result;
 }
 
 
@@ -3651,7 +3706,7 @@ static PyObject *
 
     /* TODO: include type name in error message, which is not @name@ */
     PyObject *obj = NULL;
-#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT) || defined(_@TYPE@_IS_CLONGDOUBLE)
+#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
     static char *kwnames[] = {"", "", NULL};  /* positional-only */
     static char *parse_error = "Could not convert arguments into a complex scalar. '%R' given.";
     PyObject *real_obj = NULL;
@@ -3661,9 +3716,7 @@ static PyObject *
     }
     if (!((imag_obj == NULL) ||
           ((PyNumber_Check(real_obj) && PyNumber_Check(imag_obj)) &&
-           !(PyComplex_Check(real_obj) || PyComplex_Check(imag_obj) ||
-             PyArray_IsScalar(real_obj, ComplexFloating) ||
-             PyArray_IsScalar(imag_obj, ComplexFloating))))) {
+           !(PyComplex_Check(real_obj) || PyComplex_Check(imag_obj))))) {
         PyErr_Format(PyExc_TypeError, parse_error, args);
         return NULL;
     }
@@ -3672,14 +3725,27 @@ static PyObject *
         Py_XINCREF(obj);
     }
     else {
-#if defined(_@TYPE@_IS_CLONGDOUBLE)
-        obj = clongdouble_from_real_imag(real_obj, imag_obj);
-#else
         obj = PyObject_CallObject((PyObject *)&PyComplex_Type, args);
-#endif
         if (obj == NULL) {
             return NULL;
         }
+    }
+#elif defined(_@TYPE@_IS_CLONGDOUBLE)
+    if (PyTuple_GET_SIZE(args) <= 1) {
+        static char *kwnames[] = {"", NULL};  /* positional-only */
+        if (scalar_new_parse_posargs(args, kwds, "|O", kwnames, &obj) < 0) {
+            return NULL;
+        }
+    }
+    else {
+        static char *kwnames[] = {"", "", NULL};  /* positional-only */
+        PyObject *real_obj;
+        PyObject *imag_obj;
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwnames,
+                &real_obj, &imag_obj)) {
+            return NULL;
+        }
+        return clongdouble_from_real_imag(type, real_obj, imag_obj);
     }
 #else
     static char *kwnames[] = {"", NULL};  /* positional-only */
@@ -3705,7 +3771,7 @@ static PyObject *
     Py_INCREF(typecode);
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(
             obj, typecode, 0, 0, NPY_ARRAY_FORCECAST, NULL);
-#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT) || defined(_@TYPE@_IS_CLONGDOUBLE)
+#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
     Py_DECREF(obj);
 #endif
     if (arr == NULL) {
