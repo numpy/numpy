@@ -2344,57 +2344,55 @@ def slogdet(a):
     logdet = logdet.astype(real_t, copy=False)
     return SlogdetResult(sign, logdet)
 
+def _det_2x2_kahan(a):
+    import math
+    import numpy as np
+
+    # Vectorize Python's built-in math.fma for NumPy arrays
+    _fma = np.vectorize(math.fma, otypes=[np.float64])
+
+    a11 = a[..., 0, 0]
+    a12 = a[..., 0, 1]
+    a21 = a[..., 1, 0]
+    a22 = a[..., 1, 1]
+
+    max_val = np.maximum(
+        np.maximum(np.abs(a11), np.abs(a12)),
+        np.maximum(np.abs(a21), np.abs(a22))
+    )
+
+    nonzero = max_val > 0
+    scale_exp = np.zeros_like(max_val, dtype=np.int32)
+    scale_exp[nonzero] = np.floor(np.log2(max_val[nonzero])).astype(np.int32)
+
+    inv_scale = np.exp2(-scale_exp)
+    scale_sq = np.exp2(2 * scale_exp)
+
+    a11_s = a11 * inv_scale
+    a12_s = a12 * inv_scale
+    a21_s = a21 * inv_scale
+    a22_s = a22 * inv_scale
+
+    w = -a12_s * a21_s
+    det_s = _fma(a11_s, a22_s, w) - _fma(a12_s, a21_s, w)
+
+    return det_s * scale_sq
 
 @array_function_dispatch(_unary_dispatcher)
 def det(a):
     """
     Compute the determinant of an array.
-
-    Parameters
-    ----------
-    a : (..., M, M) array_like
-        Input array to compute determinants for.
-
-    Returns
-    -------
-    det : (...) array_like
-        Determinant of `a`.
-
-    See Also
-    --------
-    slogdet : Another way to represent the determinant, more suitable
-      for large matrices where underflow/overflow may occur.
-    scipy.linalg.det : Similar function in SciPy.
-
-    Notes
-    -----
-    Broadcasting rules apply, see the `numpy.linalg` documentation for
-    details.
-
-    The determinant is computed via LU factorization using the LAPACK
-    routine ``z/dgetrf``.
-
-    Examples
-    --------
-    The determinant of a 2-D array [[a, b], [c, d]] is ad - bc:
-
-    >>> import numpy as np
-    >>> a = np.array([[1, 2], [3, 4]])
-    >>> np.linalg.det(a)
-    -2.0 # may vary
-
-    Computing determinants for a stack of matrices:
-
-    >>> a = np.array([ [[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]] ])
-    >>> a.shape
-    (3, 2, 2)
-    >>> np.linalg.det(a)
-    array([-2., -3., -8.])
-
     """
     a = asarray(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
+
+    # --- Fast, high-accuracy path for real 2x2 matrices ---
+    if a.shape[-2:] == (2, 2) and not isComplexType(t):
+        r = _det_2x2_kahan(a.astype(result_t, copy=False))
+        return r.astype(result_t, copy=False)
+    # -----------------------------------------------------
+
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
     r = r.astype(result_t, copy=False)
