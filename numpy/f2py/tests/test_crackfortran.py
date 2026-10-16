@@ -357,6 +357,37 @@ class TestFortranGroupCounters(util.F2PyTest):
         except Exception as exc:
             assert False, f"'crackfortran.crackfortran' raised an exception {exc}"
 
+    def test_module_in_f77(self):
+        #gh-32360
+        fpaths = [
+            util.getpath("tests", "src", "crackfortran", "module_in_f77_main.f"),
+            util.getpath("tests", "src", "crackfortran", "module_in_f77_mod_a.f"),
+            util.getpath("tests", "src", "crackfortran", "module_in_f77_mod_b.f"),
+            util.getpath("tests", "src", "crackfortran", "module_in_f77_sub_c.f"),
+        ]
+
+        mod = crackfortran.crackfortran([str(f) for f in fpaths])
+        byname = {m["name"]: m["block"] for m in mod}
+        assert byname["side_a_mod"] == "module"
+        assert byname["side_b_mod"] == "module"
+        assert byname["addthree"] == "subroutine"
+
+
+@pytest.mark.slow
+class TestFortranGroupCountersBuild(util.F2PyTest):
+    #gh-32360
+    sources = [
+        util.getpath("tests", "src", "crackfortran", "module_in_f77_main.f"),
+        util.getpath("tests", "src", "crackfortran", "module_in_f77_mod_a.f"),
+        util.getpath("tests", "src", "crackfortran", "module_in_f77_mod_b.f"),
+        util.getpath("tests", "src", "crackfortran", "module_in_f77_sub_c.f"),
+    ]
+
+    def test_build_and_call(self):
+        assert self.module.side_a_mod.addone(1.0) == 2.0
+        assert self.module.side_b_mod.addtwo(2.0) == 4.0
+        assert self.module.addthree(3) == 6
+
 
 class TestF77CommonBlockReader:
     def test_gh22648(self, tmp_path):
