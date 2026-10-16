@@ -19,7 +19,7 @@ sort_resolve_descriptors(PyArrayMethodObject *method, PyArray_DTypeMeta *const *
     if (NPY_UNLIKELY(output_descrs[0] == NULL)) {
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
-    Py_INCREF(output_descrs[0]);
+    Py_INCREF((PyObject *)output_descrs[0]);
     output_descrs[1] = output_descrs[0];
 
     return method->casting;
@@ -42,7 +42,7 @@ argsort_resolve_descriptors(PyArrayMethodObject *method,
         output_descrs[1] = NPY_DT_CALL_ensure_canonical(input_descrs[1]);
     }
     if (NPY_UNLIKELY(output_descrs[1] == NULL)) {
-        Py_XDECREF(output_descrs[0]);
+        Py_XDECREF((PyObject *)output_descrs[0]);
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
@@ -254,7 +254,7 @@ make_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
         return -1;
     }
     NPY_DT_SLOTS(dtypemeta)->sort_meth = sort_method->method;
-    Py_INCREF(sort_method->method);
+    Py_INCREF((PyObject *)sort_method->method);
     Py_DECREF(sort_method);
 
     std::string argsort_name = std::string(name) + "_argsort";
@@ -279,7 +279,7 @@ make_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
         return -1;
     }
     NPY_DT_SLOTS(dtypemeta)->argsort_meth = argsort_method->method;
-    Py_INCREF(argsort_method->method);
+    Py_INCREF((PyObject *)argsort_method->method);
     Py_DECREF(argsort_method);
 
     return 0;
@@ -313,7 +313,7 @@ make_string_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
         return -1;
     }
     NPY_DT_SLOTS(dtypemeta)->sort_meth = sort_method->method;
-    Py_INCREF(sort_method->method);
+    Py_INCREF((PyObject *)sort_method->method);
     Py_DECREF(sort_method);
 
     std::string argsort_name = std::string(name) + "_argsort";
@@ -339,7 +339,7 @@ make_string_sorts_(PyArray_DTypeMeta *dtypemeta, const char *name)
         return -1;
     }
     NPY_DT_SLOTS(dtypemeta)->argsort_meth = argsort_method->method;
-    Py_INCREF(argsort_method->method);
+    Py_INCREF((PyObject *)argsort_method->method);
     Py_DECREF(argsort_method);
 
     return 0;

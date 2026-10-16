@@ -100,7 +100,7 @@ PyArray_RawIterBaseInit(PyArrayIterObject *it, PyArrayObject *ao)
 static void
 array_iter_base_dealloc(PyArrayIterObject *it)
 {
-    Py_XDECREF(it->ao);
+    Py_XDECREF((PyObject *)it->ao);
 }
 
 /*NUMPY_API
@@ -133,7 +133,7 @@ PyArray_IterNew(PyObject *obj)
         return NULL;
     }
 
-    Py_INCREF(ao);  /* PyArray_RawIterBaseInit steals a reference */
+    Py_INCREF((PyObject *)ao);  /* PyArray_RawIterBaseInit steals a reference */
     PyArray_RawIterBaseInit(it, ao);
     return (PyObject *)it;
 }
@@ -177,7 +177,7 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     else {
         it->contiguous = 0;
     }
-    Py_INCREF(ao);
+    Py_INCREF((PyObject *)ao);
     it->ao = ao;
     it->size = PyArray_MultiplyList(dims, nd);
     it->nd_m1 = nd - 1;
@@ -380,8 +380,8 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                                 PyArray_DIMS(ind), PyArray_STRIDES(ind));
     itemsize = PyArray_ITEMSIZE(self->ao);
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
-    Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self->ao),
+    Py_INCREF((PyObject *)dtype);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE((PyObject *)self->ao),
                              dtype, 1, &count,
                              NULL, NULL,
                              0, (PyObject *)self->ao);
@@ -452,8 +452,8 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind,
     }
 
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
-    Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self->ao),
+    Py_INCREF((PyObject *)dtype);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE((PyObject *)self->ao),
                              dtype,
                              PyArray_NDIM(ind),
                              PyArray_DIMS(ind),
@@ -566,8 +566,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         }
         else { /* empty array */
             npy_intp ii = 0;
-            Py_INCREF(dtype);
-            ret = PyArray_NewFromDescr(Py_TYPE(self->ao),
+            Py_INCREF((PyObject *)dtype);
+            ret = PyArray_NewFromDescr(Py_TYPE((PyObject *)self->ao),
                                        dtype,
                                        1, &ii,
                                        NULL, NULL, 0,
@@ -598,8 +598,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         }
 
         PyArray_ITER_GOTO1D(self, start);
-        Py_INCREF(dtype);
-        ret = PyArray_NewFromDescr(Py_TYPE(self->ao),
+        Py_INCREF((PyObject *)dtype);
+        ret = PyArray_NewFromDescr(Py_TYPE((PyObject *)self->ao),
                                  dtype,
                                  1, &n_steps,
                                  NULL, NULL,
@@ -857,7 +857,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         goto finish;
     }
 
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     arrval = (PyArrayObject *)PyArray_FromAny(val, dtype, 0, 0,
                                               NPY_ARRAY_FORCECAST, NULL);
     if (arrval == NULL) {
@@ -936,8 +936,8 @@ finish:
     for (int i = 0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
-    Py_XDECREF(val_it);
-    Py_XDECREF(arrval);
+    Py_XDECREF((PyObject *)val_it);
+    Py_XDECREF((PyObject *)arrval);
     return ret;
 }
 
@@ -979,7 +979,7 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(args), PyObject *NPY_UNUS
     npy_intp size;
 
     size = PyArray_SIZE(it->ao);
-    Py_INCREF(PyArray_DESCR(it->ao));
+    Py_INCREF((PyObject *)PyArray_DESCR(it->ao));
 
     if (PyArray_ISCONTIGUOUS(it->ao)) {
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
@@ -1423,9 +1423,9 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
     int i;
 
     for (i = 0; i < multi->numiter; i++) {
-        Py_XDECREF(multi->iters[i]);
+        Py_XDECREF((PyObject *)multi->iters[i]);
     }
-    Py_TYPE(multi)->tp_free((PyObject *)multi);
+    Py_TYPE((PyObject *)multi)->tp_free((PyObject *)multi);
 }
 
 static PyObject *
@@ -1458,7 +1458,7 @@ arraymultiter_iters_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
         return res;
     }
     for (i = 0; i < n; i++) {
-        Py_INCREF(self->iters[i]);
+        Py_INCREF((PyObject *)self->iters[i]);
         PyTuple_SET_ITEM(res, i, (PyObject *)self->iters[i]);
     }
     return res;
@@ -1699,9 +1699,10 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
         return NULL;
     }
 
-    Py_INCREF(x->ao);  /* PyArray_RawIterBaseInit steals a reference */
+    /* PyArray_RawIterBaseInit steals a reference */
+    Py_INCREF((PyObject *)x->ao);
     PyArray_RawIterBaseInit((PyArrayIterObject*)ret, x->ao);
-    Py_INCREF(x);
+    Py_INCREF((PyObject *)x);
     ret->_internal_iter = x;
 
     ret->nd = PyArray_NDIM(x->ao);

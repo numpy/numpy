@@ -52,7 +52,7 @@ sfloat_is_known_scalar_type(PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *ty
 static PyArray_Descr *
 sfloat_default_descr(PyArray_DTypeMeta *NPY_UNUSED(cls))
 {
-    Py_INCREF(&SFloatSingleton);
+    Py_INCREF((PyObject *)&SFloatSingleton);
     return (PyArray_Descr *)&SFloatSingleton;
 }
 
@@ -68,7 +68,7 @@ static PyArray_DTypeMeta *
 sfloat_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     if (NPY_DT_is_legacy(other) && other->type_num == NPY_DOUBLE) {
-        Py_INCREF(cls);
+        Py_INCREF((PyObject *)cls);
         return cls;
     }
     Py_INCREF(Py_NotImplemented);
@@ -83,10 +83,10 @@ sfloat_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     PyArray_SFloatDescr *sf2 = (PyArray_SFloatDescr *)descr2;
     /* We make the choice of using the larger scaling */
     if (sf1->scaling >= sf2->scaling) {
-        Py_INCREF(descr1);
+        Py_INCREF((PyObject *)descr1);
         return descr1;
     }
-    Py_INCREF(descr2);
+    Py_INCREF((PyObject *)descr2);
     return descr2;
 }
 
@@ -192,7 +192,7 @@ sfloat_get_scaling(PyArray_SFloatDescr *self, PyObject *NPY_UNUSED(args))
 static PyObject *
 sfloat___reduce__(PyArray_SFloatDescr *self)
 {
-    return Py_BuildValue("(O(d))", Py_TYPE(self), self->scaling);
+    return Py_BuildValue("(O(d))", Py_TYPE((PyObject *)self), self->scaling);
 }
 
 PyMethodDef sfloat_methods[] = {
@@ -219,7 +219,7 @@ sfloat_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwds)
         return NULL;
     }
     if (scaling == 1.) {
-        Py_INCREF(&SFloatSingleton);
+        Py_INCREF((PyObject *)&SFloatSingleton);
         return (PyObject *)&SFloatSingleton;
     }
     return (PyObject *)sfloat_scaled_copy(&SFloatSingleton, scaling);
@@ -336,7 +336,7 @@ sfloat_to_sfloat_resolve_descriptors(
             npy_intp *view_offset)
 {
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(loop_descrs[0]);
+    Py_INCREF((PyObject *)loop_descrs[0]);
 
     if (given_descrs[1] == NULL) {
         loop_descrs[1] = given_descrs[0];
@@ -344,7 +344,7 @@ sfloat_to_sfloat_resolve_descriptors(
     else {
         loop_descrs[1] = given_descrs[1];
     }
-    Py_INCREF(loop_descrs[1]);
+    Py_INCREF((PyObject *)loop_descrs[1]);
 
     if (((PyArray_SFloatDescr *)loop_descrs[0])->scaling
             == ((PyArray_SFloatDescr *)loop_descrs[1])->scaling) {
@@ -436,7 +436,7 @@ sfloat_to_bool_resolve_descriptors(
         PyArray_Descr *loop_descrs[2],
         npy_intp *NPY_UNUSED(view_offset))
 {
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
     if (loop_descrs[0] == NULL) {
         return -1;
@@ -564,9 +564,9 @@ multiply_sfloats_resolve_descriptors(
     if (loop_descrs[2] == 0) {
         return -1;
     }
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
     return NPY_NO_CASTING;
 }
@@ -628,12 +628,12 @@ add_sfloats_resolve_descriptors(
         }
     }
     else {
-        Py_INCREF(given_descrs[2]);
+        Py_INCREF((PyObject *)given_descrs[2]);
         loop_descrs[2] = given_descrs[2];
     }
-    Py_INCREF(given_descrs[0]);
+    Py_INCREF((PyObject *)given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[1]);
+    Py_INCREF((PyObject *)given_descrs[1]);
     loop_descrs[1] = given_descrs[1];
 
     /* If the factors mismatch, we do implicit casting inside the ufunc! */
@@ -686,9 +686,9 @@ translate_loop_descrs(
     if (loop_descrs[0] == 0) {
         return -1;
     }
-    Py_INCREF(loop_descrs[0]);
+    Py_INCREF((PyObject *)loop_descrs[0]);
     loop_descrs[1] = loop_descrs[0];
-    Py_INCREF(loop_descrs[0]);
+    Py_INCREF((PyObject *)loop_descrs[0]);
     loop_descrs[2] = loop_descrs[0];
     return 0;
 }
@@ -771,7 +771,7 @@ promote_to_sfloat(PyUFuncObject *NPY_UNUSED(ufunc),
         if (signature[i] != NULL) {
             new = signature[i];
         }
-        Py_INCREF(new);
+        Py_INCREF((PyObject *)new);
         new_dtypes[i] = new;
     }
     return 0;
@@ -857,9 +857,9 @@ sfloat_sort_resolve_descriptors(
     assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
 
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(loop_descrs[0]);
+    Py_INCREF((PyObject *)loop_descrs[0]);
     loop_descrs[1] = loop_descrs[0];
-    Py_INCREF(loop_descrs[1]);
+    Py_INCREF((PyObject *)loop_descrs[1]);
 
     return NPY_NO_CASTING;
 }
@@ -904,7 +904,7 @@ sfloat_argsort_resolve_descriptors(
     assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
 
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(loop_descrs[0]);
+    Py_INCREF((PyObject *)loop_descrs[0]);
     loop_descrs[1] = PyArray_DescrFromType(NPY_INTP);
     if (loop_descrs[1] == NULL) {
         return -1;
@@ -964,12 +964,12 @@ sfloat_partition_resolve_descriptors(
     assert(given_descrs[1]->type_num == NPY_INTP);
 
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(loop_descrs[0]);
+    Py_INCREF((PyObject *)loop_descrs[0]);
 
     loop_descrs[1] = PyArray_DescrFromType(NPY_INTP);
 
     loop_descrs[2] = loop_descrs[0];
-    Py_INCREF(loop_descrs[2]);
+    Py_INCREF((PyObject *)loop_descrs[2]);
 
     return NPY_NO_CASTING;
 }
@@ -1027,7 +1027,7 @@ sfloat_argpartition_resolve_descriptors(
     assert(given_descrs[2] == NULL || given_descrs[2]->type_num == NPY_INTP);
 
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(loop_descrs[0]);
+    Py_INCREF((PyObject *)loop_descrs[0]);
 
     loop_descrs[1] = PyArray_DescrFromType(NPY_INTP);
 
@@ -1199,7 +1199,7 @@ get_sfloat_dtype(PyObject *mod, PyObject *NPY_UNUSED(args))
 {
     multiarray_umath_state *state = get_module_state(mod);
     if (state->global_state.get_sfloat_dtype_initialized) {
-        Py_INCREF(&PyArray_SFloatDType);
+        Py_INCREF((PyObject *)&PyArray_SFloatDType);
         return (PyObject *)&PyArray_SFloatDType;
     }
 

@@ -148,7 +148,7 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
 
     if (!out) {
         rp = (PyArrayObject *)PyArray_NewFromDescr(
-                Py_TYPE(ap), PyArray_DescrFromType(NPY_INTP),
+                Py_TYPE((PyObject *)ap), PyArray_DescrFromType(NPY_INTP),
                 out_ndim, out_shape, NULL, NULL,
                 0, (PyObject *)ap);
         if (rp == NULL) {
@@ -187,13 +187,13 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
         PyArray_ResolveWritebackIfCopy(rp);
         Py_DECREF(rp);
         rp = out;
-        Py_INCREF(rp);
+        Py_INCREF((PyObject *)rp);
     }
     return (PyObject *)rp;
 
  fail:
     Py_DECREF(ap);
-    Py_XDECREF(rp);
+    Py_XDECREF((PyObject *)rp);
     return NULL;
 }
 
@@ -303,7 +303,7 @@ PyArray_Ptp(PyArrayObject *ap, int axis, PyArrayObject *out)
     return ret;
 
  fail:
-    Py_XDECREF(arr);
+    Py_XDECREF((PyObject *)arr);
     Py_XDECREF(obj1);
     Py_XDECREF(obj2);
     return NULL;
@@ -382,7 +382,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     }
     else {
         obj3 = (PyObject *)arr1;
-        Py_INCREF(arr1);
+        Py_INCREF((PyObject *)arr1);
     }
     if (obj3 == NULL) {
         Py_DECREF(arrnew);
@@ -413,7 +413,7 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     }
     else {
         obj3 = (PyObject *)arr2;
-        Py_INCREF(arr2);
+        Py_INCREF((PyObject *)arr2);
     }
     if (obj3 == NULL) {
         Py_DECREF(arrnew);
@@ -455,14 +455,15 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     if (PyArray_CheckExact(self)) {
         goto finish;
     }
-    if (PyArray_Check(self) && Py_TYPE(self) == Py_TYPE(ret)) {
+    if (PyArray_Check((PyObject *)self) &&
+            Py_TYPE((PyObject *)self) == Py_TYPE(ret)) {
         goto finish;
     }
     arr1 = (PyArrayObject *)PyArray_EnsureArray(ret);
     if (arr1 == NULL) {
         return NULL;
     }
-    ret = PyArray_View(arr1, NULL, Py_TYPE(self));
+    ret = PyArray_View(arr1, NULL, Py_TYPE((PyObject *)self));
     Py_DECREF(arr1);
 
 finish:
@@ -473,7 +474,7 @@ finish:
             return NULL;
         }
         Py_DECREF(ret);
-        Py_INCREF(out);
+        Py_INCREF((PyObject *)out);
         return (PyObject *)out;
     }
     return ret;
@@ -639,7 +640,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
                             NULL, NPY_DEFAULT_ASSIGN_CASTING) < 0) {
                     return NULL;
                 }
-                Py_INCREF(out);
+                Py_INCREF((PyObject *)out);
                 return (PyObject *)out;
             }
             else {
@@ -676,7 +677,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
             my_descr = PyArray_DescrFromType(NPY_DOUBLE);
         }
         else {
-            Py_INCREF(PyArray_DESCR(a));
+            Py_INCREF((PyObject *)PyArray_DESCR(a));
             my_descr = PyArray_DESCR(a);
         }
         out = (PyArrayObject *)PyArray_Empty(PyArray_NDIM(a), PyArray_DIMS(a),
@@ -687,7 +688,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
         }
     }
     else {
-        Py_INCREF(out);
+        Py_INCREF((PyObject *)out);
     }
     f = PyFloat_FromDouble(power_of_ten(decimals));
     if (f == NULL) {
@@ -719,7 +720,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
     Py_DECREF(f);
     Py_DECREF(out);
     if (ret_int && ret != NULL) {
-        Py_INCREF(PyArray_DESCR(a));
+        Py_INCREF((PyObject *)PyArray_DESCR(a));
         tmp = PyArray_CastToType((PyArrayObject *)ret,
                                  PyArray_DESCR(a), PyArray_ISFORTRAN(a));
         Py_DECREF(ret);
@@ -883,7 +884,7 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
         else {
             ret = self;
         }
-        Py_INCREF(ret);
+        Py_INCREF((PyObject *)ret);
         return (PyObject *)ret;
     }
 }

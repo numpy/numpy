@@ -182,7 +182,7 @@ read_rows(stream *s,
 
     bool data_array_allocated = data_array == NULL;
     /* Make sure we own `data_array` for the purpose of error handling */
-    Py_XINCREF(data_array);
+    Py_XINCREF((PyObject *)data_array);
     size_t rows_per_block = 1;  /* will be increased depending on row size */
     npy_intp data_allocated_rows = 0;
 
@@ -276,7 +276,7 @@ read_rows(stream *s,
                     data_allocated_rows = max_rows;
                 }
                 result_shape[0] = data_allocated_rows;
-                Py_INCREF(out_descr);
+                Py_INCREF((PyObject *)out_descr);
                 /*
                  * We do not use Empty, as it would fill with None
                  * and requiring decref'ing if we shrink again.
@@ -433,7 +433,7 @@ read_rows(stream *s,
         else {
             result_shape[1] = actual_num_fields;
         }
-        Py_INCREF(out_descr);
+        Py_INCREF((PyObject *)out_descr);
         data_array = (PyArrayObject *)PyArray_Empty(
                 ndim, result_shape, out_descr, 0);
     }
@@ -465,6 +465,6 @@ read_rows(stream *s,
         PyMem_FREE(conv_funcs);
     }
     npy_tokenizer_clear(&ts);
-    Py_XDECREF(data_array);
+    Py_XDECREF((PyObject *)data_array);
     return NULL;
 }

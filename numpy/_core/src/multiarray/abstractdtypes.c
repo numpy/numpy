@@ -304,7 +304,7 @@ initialize_abstract_dtypes(multiarray_umath_state *state)
         *dtype_slots = *pyscalar_specs[i].slots;
         dt->dt_slots = dtype_slots;
         dt->type_num = -1;
-        Py_INCREF(pyscalar_specs[i].scalar_type);
+        Py_INCREF((PyObject *)pyscalar_specs[i].scalar_type);
         dt->scalar_type = pyscalar_specs[i].scalar_type;
         dt->singleton = NULL;
         dt->flags = NPY_DT_NUMERIC;
@@ -412,7 +412,7 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         }
     }
     else if (other == &PyArray_PyLongDType) {
-        Py_INCREF(cls);
+        Py_INCREF((PyObject *)cls);
         return cls;
     }
     else if (NPY_DT_is_legacy(other)) {
@@ -469,7 +469,7 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     }
     else if (other == &PyArray_PyLongDType ||
              other == &PyArray_PyFloatDType) {
-        Py_INCREF(cls);
+        Py_INCREF((PyObject *)cls);
         return cls;
     }
     Py_INCREF(Py_NotImplemented);
@@ -535,7 +535,7 @@ npy_update_operand_for_scalar(
         return -1;
     }
 
-    Py_INCREF(descr);
+    Py_INCREF((PyObject *)descr);
     PyArrayObject *new = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, descr, 0, NULL, NULL, NULL, 0, NULL);
     if (new == NULL) {
@@ -607,7 +607,7 @@ npy_find_descr_for_scalar(
     PyArray_Descr *res;
     /* There is a good chance, descriptors already match... */
     if (NPY_DTYPE(original_descr) == op_DT) {
-        Py_INCREF(original_descr);
+        Py_INCREF((PyObject *)original_descr);
         return original_descr;
     }
 
@@ -615,13 +615,13 @@ npy_find_descr_for_scalar(
     if (common == NULL) {
         PyErr_Clear();
         /* This is fine.  We simply assume the original descr is viable. */
-        Py_INCREF(original_descr);
+        Py_INCREF((PyObject *)original_descr);
         return original_descr;
     }
     /* A very likely case is that there is nothing to do: */
     if (NPY_DTYPE(original_descr) == common) {
         Py_DECREF(common);
-        Py_INCREF(original_descr);
+        Py_INCREF((PyObject *)original_descr);
         return original_descr;
     }
     if (!NPY_DT_is_parametric(common) ||
@@ -631,7 +631,7 @@ npy_find_descr_for_scalar(
             !NPY_DT_CALL_is_known_scalar_type(common, Py_TYPE(scalar))) {
         if (common->singleton != NULL) {
             res = common->singleton;
-            Py_INCREF(res);
+            Py_INCREF((PyObject *)res);
         }
         else {
             res = NPY_DT_CALL_default_descr(common);

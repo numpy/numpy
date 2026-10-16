@@ -153,7 +153,7 @@ _PyArray_LegacyDescrNewFromPrototype(
     PyObject_INIT(descr, descr_type);
 
     /* Copy all fields by name from the user-provided legacy prototype. */
-    Py_XINCREF(descr_proto->typeobj);
+    Py_XINCREF((PyObject *)descr_proto->typeobj);
     descr->typeobj = descr_proto->typeobj;
     descr->kind = descr_proto->kind;
     descr->type = descr_proto->type;
@@ -316,7 +316,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
      * in order to allow different layout between the two.
      */
     _PyArray_LegacyDescr *descr = _PyArray_LegacyDescrNewFromPrototype(
-            Py_TYPE(descr_proto), descr_proto, 1);
+            Py_TYPE((PyObject *)descr_proto), descr_proto, 1);
     if (descr == NULL) {
         PyMem_FREE(name);
         return -1;
@@ -334,7 +334,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;
         /* Override the type, it might be wrong and then decref crashes */
-        Py_SET_TYPE(descr, &PyArrayDescr_Type);
+        Py_SET_TYPE((PyObject *)descr, &PyArrayDescr_Type);
         Py_DECREF(descr);
         return -1;
     }
@@ -542,11 +542,11 @@ legacy_userdtype_common_dtype_function(
 
     /* Check whether casting is possible from one type to the other */
     if (PyArray_CanCastSafely(cls->type_num, other->type_num)) {
-        Py_INCREF(other);
+        Py_INCREF((PyObject *)other);
         return other;
     }
     if (PyArray_CanCastSafely(other->type_num, cls->type_num)) {
-        Py_INCREF(cls);
+        Py_INCREF((PyObject *)cls);
         return cls;
     }
 

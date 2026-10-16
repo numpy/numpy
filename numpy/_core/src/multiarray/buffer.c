@@ -541,7 +541,7 @@ _buffer_info_new(PyObject *obj, int flags)
             }
         }
         descr = PyArray_DESCR(arr);
-        Py_INCREF(descr);
+        Py_INCREF((PyObject *)descr);
     }
 
     /* Fill in format */
@@ -838,7 +838,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
     view->obj = (PyObject*)self;
 
-    Py_INCREF(self);
+    Py_INCREF((PyObject *)self);
     return 0;
 
 fail:
