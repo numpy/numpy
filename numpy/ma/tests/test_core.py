@@ -1684,8 +1684,9 @@ class TestMaskedArrayArithmetic:
         y = y.reshape(2, 3, 4)
         assert_equal(np.transpose(y, (2, 0, 1)), transpose(x, (2, 0, 1)))
         assert_equal(np.take(y, (2, 0, 1), 1), take(x, (2, 0, 1), 1))
-        assert_equal(np.inner(filled(x, 0), filled(y, 0)),
-                     inner(x, y))
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            assert_equal(np.inner(filled(x, 0), filled(y, 0)),
+                         inner(x, y))
         assert_equal(np.outer(filled(x, 0), filled(y, 0)),
                      outer(x, y))
         y = array(['abc', 1, 'def', 2, 3], object)
@@ -4407,10 +4408,14 @@ class TestMaskedArrayMathMethods:
 
         mYY = mXX.swapaxes(-1, -2)
         fXX, fYY = mXX.filled(0), mYY.filled(0)
-        r = mXX.dot(mYY)
-        assert_almost_equal(r.filled(0), fXX.dot(fYY))
+        # 4D dot triggers deprecation warning (gh-31725)
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            r = mXX.dot(mYY)
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            assert_almost_equal(r.filled(0), fXX.dot(fYY))
         r1 = empty_like(r)
-        mXX.dot(mYY, out=r1)
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            mXX.dot(mYY, out=r1)
         assert_almost_equal(r, r1)
 
     def test_dot_shape_mismatch(self):
