@@ -1628,13 +1628,15 @@ def ravel(a: ArrayLike, order: _OrderKACF = "C") -> np.ndarray[_1D]: ...
 @overload  # ?d  (workaround)
 def nonzero(a: _ArrayJustND[Any]) -> tuple[Array1D[np.intp], ...]: ...
 @overload  # 1d
-def nonzero(a: _ToArray1D[Any]) -> tuple[Array1D[np.intp]]: ...
+def nonzero(a: _ToArray1D2[np.generic, np.generic | complex]) -> tuple[Array1D[np.intp]]: ...
 @overload  # 2d
-def nonzero(a: _ToArray2D[Any]) -> tuple[Array1D[np.intp], Array1D[np.intp]]: ...
+def nonzero(a: _ToArray2D2[np.generic, np.generic | complex]) -> tuple[Array1D[np.intp], Array1D[np.intp]]: ...
 @overload  # 3d
-def nonzero(a: _ToArray3D[Any]) -> tuple[Array1D[np.intp], Array1D[np.intp], Array1D[np.intp]]: ...
+def nonzero(
+    a: _ToArray3D2[np.generic, np.generic | complex],
+) -> tuple[Array1D[np.intp], Array1D[np.intp], Array1D[np.intp]]: ...
 @overload  # Nd  (fallback)
-def nonzero(a: _ArrayLike[Any]) ->  tuple[Array1D[np.intp], ...]: ...
+def nonzero(a: _ArrayLike[Any] | Sequence[Any]) -> tuple[Array1D[np.intp], ...]: ...
 
 # `collections.abc.Sequence` can't be used here because `bytes` and `str` are
 # subtypes of it, which would make the return types incompatible.
@@ -1905,7 +1907,7 @@ def all(
 ) -> NDArray[np.bool] | Any: ...
 @overload  # 1d, axis=<single>
 def all(
-    a: _ToArray1D[Any],
+    a: _ToArray1D2[np.generic, np.generic | complex],
     axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -1914,7 +1916,7 @@ def all(
 ) -> np.bool: ...
 @overload  # 2d, axis=<single>
 def all(
-    a: _ToArray2D[Any],
+    a: _ToArray2D2[np.generic, np.generic | complex],
     axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -1923,7 +1925,7 @@ def all(
 ) -> Array1D[np.bool]: ...
 @overload  # 3d, axis=<single>
 def all(
-    a: _ToArray3D[Any],
+    a: _ToArray3D2[np.generic, np.generic | complex],
     axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -1997,7 +1999,7 @@ def any(
 ) -> NDArray[np.bool] | Any: ...
 @overload  # 1d, axis=<single>
 def any(
-    a: _ToArray1D[Any],
+    a: _ToArray1D2[np.generic, np.generic | complex],
     axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -2006,7 +2008,7 @@ def any(
 ) -> np.bool: ...
 @overload  # 2d, axis=<single>
 def any(
-    a: _ToArray2D[Any],
+    a: _ToArray2D2[np.generic, np.generic | complex],
     axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,
@@ -2015,7 +2017,7 @@ def any(
 ) -> Array1D[np.bool]: ...
 @overload  # 3d, axis=<single>
 def any(
-    a: _ToArray3D[Any],
+    a: _ToArray3D2[np.generic, np.generic | complex],
     axis: SupportsIndex | tuple[SupportsIndex],
     out: None = None,
     keepdims: Literal[False] | _NoValueType = ...,

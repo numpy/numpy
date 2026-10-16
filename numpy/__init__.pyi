@@ -47,7 +47,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     # Scalars
     _CharLike_co,
     _BoolLike_co,
-    _UIntLike_co,
     _IntLike_co,
     _FloatLike_co,
     _TD64Like_co,
@@ -93,7 +92,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _ULongLongCodes,
     _LongDoubleCodes,
     _CLongDoubleCodes,
-    _TD64Codes,
     _StrCodes,
     _BytesCodes,
     _VoidCodes,
@@ -139,7 +137,6 @@ from typing import (
     Literal as L,
     LiteralString,
     Never,
-    NoReturn,
     Protocol,
     Self,
     SupportsAbs,
@@ -810,7 +807,6 @@ __all__ = [
 
 ### Type parameters (with defaults); for internal use only
 
-_ArrayT_co = TypeVar("_ArrayT_co", bound=ndarray, default=ndarray, covariant=True)
 _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, default=dtype, covariant=True)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, default=Any, covariant=True)
@@ -856,7 +852,6 @@ type _ArrayInt_co = NDArray[integer | bool_]
 type _ArrayFloat64_co = NDArray[floating[_64Bit] | _to_float32]
 type _ArrayFloat_co = NDArray[floating | integer | bool_]
 type _ArrayComplex128_co = NDArray[number[_64Bit] | number[_32Bit] | float16 | integer | bool_]
-type _ArrayComplex_co = NDArray[inexact | integer | bool_]
 type _ArrayNumber_co = NDArray[number | bool_]
 type _ArrayTD64_co = NDArray[timedelta64 | integer | bool_]
 
@@ -1039,39 +1034,6 @@ type _ConvertibleToFloat = SupportsFloat | SupportsIndex | _CharLike_co
 type _ConvertibleToComplex = SupportsComplex | SupportsFloat | SupportsIndex | _CharLike_co
 type _ConvertibleToTD64 = dt.timedelta | int | _CharLike_co | character | number | timedelta64 | bool_ | None
 type _ConvertibleToDT64 = dt.date | int | _CharLike_co | character | number | datetime64 | bool_ | None
-
-type _NDIterFlagsKind = L[
-    "buffered",
-    "c_index",
-    "copy_if_overlap",
-    "common_dtype",
-    "delay_bufalloc",
-    "external_loop",
-    "f_index",
-    "grow_inner", "growinner",
-    "multi_index",
-    "ranged",
-    "refs_ok",
-    "reduce_ok",
-    "zerosize_ok",
-]
-type _NDIterFlagsOp = L[
-    "aligned",
-    "allocate",
-    "arraymask",
-    "copy",
-    "config",
-    "nbo",
-    "no_subtype",
-    "no_broadcast",
-    "overlap_assume_elementwise",
-    "readonly",
-    "readwrite",
-    "updateifcopy",
-    "virtual",
-    "writeonly",
-    "writemasked",
-]
 
 type _DT64Item = dt.date | int | None
 type _TD64Item = dt.timedelta | int | None
@@ -1800,7 +1762,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     @property
     def char(self) -> _DTypeChar: ...
     @property
-    def descr(self) -> list[tuple[LiteralString, LiteralString] | tuple[LiteralString, LiteralString, _Shape]]: ...
+    def descr(self) -> list[tuple[Any, ...]]: ...
     @property
     def fields(self,) -> MappingProxyType[LiteralString, tuple[dtype, int] | tuple[dtype, int, Any]] | None: ...
     @property

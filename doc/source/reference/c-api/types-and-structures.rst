@@ -280,7 +280,7 @@ PyArrayDescr_Type and PyArray_Descr
           char byteorder;
           char _former_flags;  // unused field
           int type_num;
-          /* 
+          /*
            * Definitions after this one must be accessed through accessor
            * functions (see below) when compiling with NumPy 1.x support.
            */
@@ -928,16 +928,33 @@ for example the common dtype operation and implementing promotion with them
 may be necessary.
 
 Further, the following abstract DTypes are defined which cover both the
-builtin NumPy ones and the python ones, and users can in principle subclass
-from them (this does not inherit any DType specific functionality):
-* ``PyArray_IntAbstractDType``
-* ``PyArray_FloatAbstractDType``
-* ``PyArray_ComplexAbstractDType``
+builtin NumPy ones and the python ones, and users can subclass from them
+(this does not inherit any DType specific functionality):
 
-.. warning::
-    As of NumPy 2.0, the *only* valid use for these DTypes is registering a
-    promoter conveniently to e.g. match "any integers" (and subclass checks).
-    Because of this, they are not exposed to Python.
+* ``PyArray_NumberAbstractDType``
+* ``PyArray_IntAbstractDType`` (``IntegerAbstractDType`` in Python)
+* ``PyArray_SignedIntegerAbstractDType``
+* ``PyArray_UnsignedIntegerAbstractDType``
+* ``PyArray_InexactAbstractDType``
+* ``PyArray_FloatAbstractDType``  (``FloatingAbstractDType`` in Python)
+* ``PyArray_ComplexAbstractDType`` (``ComplexFloatingAbstractDType`` in Python)
+
+
+The abstract DTypes can be used for promoter registration to for example match
+"any integer" broadly.
+
+A DType that sets the ``NPY_DT_NUMERIC`` flag without subclassing also
+passes the ``PyArray_NumberAbstractDType`` check, but subclassing is
+preferred and the flag is set automatically when you do.
+
+
+.. versionadded:: NumPy 2.6
+    ``PyArray_NumberAbstractDType``,
+    ``PyArray_SignedIntegerAbstractDType``,
+    ``PyArray_UnsignedIntegerAbstractDType``, and
+    ``PyArray_InexactAbstractDType`` are only available when
+    ``NPY_TARGET_VERSION`` is at least ``NPY_2_6_API_VERSION``.
+
 
 
 PyUFunc_Type and PyUFuncObject

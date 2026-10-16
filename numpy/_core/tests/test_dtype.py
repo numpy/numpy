@@ -1420,9 +1420,13 @@ class TestPickling:
         # Check that dtype instances roundtrip when pickling and that pickling
         # doesn't change the hash value
         pre_pickle_hash = hash(dt)
+        # __reduce__ asks for copy=True and __setstate__ then writes to the
+        # result, so this must never be the shared singleton (gh-33018).
+        assert np.dtype(dt, copy=True) is not dt
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             roundtrip_dt = pickle.loads(pickle.dumps(dt, proto))
             assert roundtrip_dt == dt
+            assert roundtrip_dt is not dt
             assert hash(roundtrip_dt) == pre_pickle_hash
 
     @pytest.mark.parametrize('dt', [
@@ -1630,6 +1634,13 @@ def test_rational_dtype(rat_cls):
     x = rat_cls(1)
     assert np.array([x, x]).dtype.type is rat_cls
 
+    # Only the shared singleton gets copied with copy=True; other instances
+    # come back as they are (test_pickle_dtype covers the copy itself).
+    dt = np.dtype(rat_cls)
+    assert np.dtype(dt) is dt
+    swapped = dt.newbyteorder()
+    assert np.dtype(swapped, copy=True) is swapped
+
 
 def test_dtypes_are_true():
     # test for gh-6294
@@ -1782,6 +1793,8 @@ class TestDTypeClasses:
         assert np.dtype._abstract
 
     def test_is_numeric(self):
+        # NOTE: bool is included here, but deliberately is not a
+        # `NumberAbstractDType` (see `test_isdtype_bool_is_not_numeric`).
         all_codes = set(np.typecodes['All'])
         numeric_codes = set(np.typecodes['AllInteger'] +
                             np.typecodes['AllFloat'] + '?')
@@ -1824,6 +1837,59 @@ class TestDTypeClasses:
             else:
                 with pytest.raises(TypeError):
                     np._core.multiarray.scalar(dt)
+
+
+class TestAbstractDTypes:
+    abstract_names = [
+        "NumberAbstractDType",
+        "IntegerAbstractDType",
+        "SignedIntegerAbstractDType",
+        "UnsignedIntegerAbstractDType",
+        "InexactAbstractDType",
+        "FloatingAbstractDType",
+        "ComplexFloatingAbstractDType",
+    ]
+
+    @pytest.mark.parametrize("name", abstract_names)
+    def test_exposed(self, name):
+        assert name in np.dtypes.__all__
+        abstract = getattr(np.dtypes, name)
+        assert abstract.__name__ == name
+        assert abstract.__module__ == "numpy.dtypes"
+        assert abstract._abstract
+        with pytest.raises(TypeError):
+            abstract()
+
+    @pytest.mark.parametrize(["dtype", "kinds"], [
+        ("int64", ["SignedInteger", "Integer", "Number"]),
+        ("uint8", ["UnsignedInteger", "Integer", "Number"]),
+        ("float32", ["Floating", "Inexact", "Number"]),
+        ("longdouble", ["Floating", "Inexact", "Number"]),
+        ("complex128", ["ComplexFloating", "Inexact", "Number"]),
+        ("bool", []),
+        ("S8", []),
+        ("U8", []),
+        ("O", []),
+        ("m8[s]", []),
+        ("M8[s]", []),
+    ])
+    def test_hierarchy(self, dtype, kinds):
+        dtype = np.dtype(dtype)
+        for name in self.abstract_names:
+            abstract = getattr(np.dtypes, name)
+            expected = name.removesuffix("AbstractDType") in kinds
+            assert issubclass(type(dtype), abstract) == expected
+            # `isinstance()` must agree with `issubclass()`:
+            assert isinstance(dtype, abstract) == expected
+
+    def test_stringdtype(self):
+        # StringDType is not legacy, so it exercises the flag based path:
+        for name in self.abstract_names:
+            assert not issubclass(np.dtypes.StringDType, getattr(np.dtypes, name))
+
+    def test_subclasscheck_requires_class(self):
+        with pytest.raises(TypeError, match="arg 1 must be a class"):
+            issubclass(np.dtype("int64"), np.dtypes.IntegerAbstractDType)
 
 
 class TestFromCTypes:
@@ -2199,6 +2265,12 @@ class TestDTypeSignatures:
                 # `np._NoValue` default, which isn't supported by `inspect.signature`,
                 # so `**kwargs` is used instead.
                 params_expect = {"coerce", "kwargs"}
+            case name if name.endswith("abstract"):
+                # The abstract DTypes cannot be instantiated at all, so their
+                # (inherited) signature is not meaningful.
+                with pytest.raises(TypeError):
+                    dtype_type()
+                params_expect = set(sig.parameters)
             case _:
                 params_expect = set()
 
