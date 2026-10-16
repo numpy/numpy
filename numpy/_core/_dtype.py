@@ -328,7 +328,7 @@ def _name_includes_bit_suffix(dtype):
         return False
     elif dtype.type is None:
         return True
-    elif np.issubdtype(dtype, np.flexible) and _isunsized(dtype):
+    elif issubclass(dtype.type, np.flexible) and _isunsized(dtype):
         # unspecified
         return False
     else:

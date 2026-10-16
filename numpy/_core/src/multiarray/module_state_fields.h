@@ -211,6 +211,7 @@ extern "C" {
     F(_getfield_is_safe)                \
     F(internal_gcd_func)                \
     F(_mean)                            \
+    F(_name_get)                        \
     F(NO_NEP50_WARNING)                 \
     F(npy_ctypes_check)                 \
     F(numpy_matrix)                     \

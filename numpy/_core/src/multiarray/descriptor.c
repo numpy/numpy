@@ -2265,15 +2265,14 @@ static PyObject *
 arraydescr_name_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     /* let python handle this */
-    PyObject *_numpy_dtype;
-    PyObject *res;
-    _numpy_dtype = PyImport_ImportModule("numpy._core._dtype");
-    if (_numpy_dtype == NULL) {
+    multiarray_umath_state *state = _npy_module_state;
+    if (npy_cache_import_runtime(
+            "numpy._core._dtype", "_name_get",
+            &state->runtime_imports._name_get) == -1) {
         return NULL;
     }
-    res = PyObject_CallMethod(_numpy_dtype, "_name_get", "O", self);
-    Py_DECREF(_numpy_dtype);
-    return res;
+    return PyObject_CallOneArg(
+            state->runtime_imports._name_get, (PyObject *)self);
 }
 
 static PyObject *
