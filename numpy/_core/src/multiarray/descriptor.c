@@ -2266,13 +2266,13 @@ arraydescr_name_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
     /* let python handle this */
     multiarray_umath_state *state = _npy_module_state;
+    PyObject *arg = (PyObject *)self;
     if (npy_cache_import_runtime(
             "numpy._core._dtype", "_name_get",
             &state->runtime_imports._name_get) == -1) {
         return NULL;
     }
-    return PyObject_CallOneArg(
-            state->runtime_imports._name_get, (PyObject *)self);
+    return PyObject_Vectorcall(state->runtime_imports._name_get, &arg, 1, NULL);
 }
 
 static PyObject *
