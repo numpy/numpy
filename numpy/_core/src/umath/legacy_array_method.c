@@ -24,6 +24,7 @@
 
 #include "ufunc_object.h"
 #include "ufunc_type_resolution.h"
+#include "npy_pycompat.h"
 
 
 /*

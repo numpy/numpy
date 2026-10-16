@@ -33,6 +33,7 @@
 #endif
 
 #include "npy_config.h"
+#include "npy_pycompat.h"
 
 #include "numpy/npy_common.h"
 #include "numpy/ndarraytypes.h"
