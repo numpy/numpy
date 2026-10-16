@@ -4,7 +4,10 @@ operations.
 """
 
 import functools
+import os
+import reprlib
 import sys
+import warnings
 
 import numpy as np
 from numpy import (
@@ -17,6 +20,7 @@ from numpy import (
     multiply as _multiply_ufunc,
     not_equal,
 )
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core.multiarray import _vec_string
 from numpy._core.overrides import array_function_dispatch, set_module
 from numpy._core.umath import (
@@ -56,6 +60,7 @@ from numpy._core.umath import (
     startswith as _startswith_ufunc,
     str_len,
 )
+from numpy._utils import _get_warn_skip_file_prefixes
 
 
 def _override___module__():
@@ -91,6 +96,10 @@ __all__ = [
 
 
 MAX = np.iinfo(np.int64).max
+
+_STRING_WARNING_SKIP_PREFIXES = _get_warn_skip_file_prefixes(
+    __file__, os.path.join(os.path.dirname(__file__), "defchararray.py"),
+)
 
 array_function_dispatch = functools.partial(
     array_function_dispatch, module='numpy.strings')
@@ -684,13 +693,43 @@ def expandtabs(a, tabsize=8):
     return _expandtabs(a, tabsize, out=out)
 
 
+def _cast_string_arg(arg, dtype):
+    """Preserve implicit string conversions during their deprecation period."""
+    result = arg.astype(dtype, copy=False)
+    # DEPRECATED 2026-09-22, NumPy 2.6
+    # After the deprecation, resolve strictly before casting and stop warning.
+    try:
+        _array_converter(arg).result_type(
+            extra_dtype=result.dtype, strict_strings=True)
+    except np.exceptions.DTypePromotionError as exc:
+        arg_repr = reprlib.Repr(maxstring=50, maxother=50).repr(
+            arg.item() if arg.ndim == 0 else arg)
+        warnings.warn(
+            f"Implicit conversion of {arg_repr} to dtype {result.dtype} is "
+            f"deprecated and will raise TypeError in a future release. {exc}",
+            DeprecationWarning,
+            skip_file_prefixes=_STRING_WARNING_SKIP_PREFIXES,
+        )
+    return result
+
+
 def _just_dispatcher(a, width, fillchar=None):
     return (a,)
 
 
+def _get_fillchar(a, fillchar):
+    if fillchar is None:
+        fillchar = b" " if a.dtype.kind == "S" else " "
+    fillchar = np.asanyarray(fillchar)
+    if np.any(str_len(fillchar) != 1):
+        raise TypeError(
+            "The fill character must be exactly one character long")
+    return fillchar
+
+
 @set_module("numpy.strings")
 @array_function_dispatch(_just_dispatcher)
-def center(a, width, fillchar=' '):
+def center(a, width, fillchar=None):
     """
     Return a copy of `a` with its elements centered in a string of
     length `width`.
@@ -701,8 +740,9 @@ def center(a, width, fillchar=' '):
 
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
-        Optional padding character to use (default is space).
+    fillchar : array-like or None, optional
+        Padding character with ``StringDType``, ``bytes_``, or ``str_`` dtype.
+        If ``None`` (the default), use a space of the same string kind as `a`.
 
     Returns
     -------
@@ -716,9 +756,9 @@ def center(a, width, fillchar=' '):
 
     Notes
     -----
-    While it is possible for ``a`` and ``fillchar`` to have different dtypes,
-    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S"
-    is not allowed, and a ``ValueError`` is raised.
+    Passing text as ``fillchar`` for bytes input, or bytes for text input,
+    is deprecated. Use the same string kind as ``a``. The default space
+    already has the same kind as ``a``.
 
     Examples
     --------
@@ -739,16 +779,12 @@ def center(a, width, fillchar=' '):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
     a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
-
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
+    fillchar = _get_fillchar(a, fillchar)
 
     if np.result_type(a, fillchar).char == "T":
         return _center(a, width, fillchar)
 
-    fillchar = fillchar.astype(a.dtype, copy=False)
+    fillchar = _cast_string_arg(fillchar, a.dtype)
     width = np.maximum(str_len(a), width)
     out_dtype = f"{a.dtype.char}{width.max()}"
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
@@ -759,7 +795,7 @@ def center(a, width, fillchar=' '):
 
 @set_module("numpy.strings")
 @array_function_dispatch(_just_dispatcher)
-def ljust(a, width, fillchar=' '):
+def ljust(a, width, fillchar=None):
     """
     Return an array with the elements of `a` left-justified in a
     string of length `width`.
@@ -770,8 +806,9 @@ def ljust(a, width, fillchar=' '):
 
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
-        Optional character to use for padding (default is space).
+    fillchar : array-like or None, optional
+        Padding character with ``StringDType``, ``bytes_``, or ``str_`` dtype.
+        If ``None`` (the default), use a space of the same string kind as `a`.
 
     Returns
     -------
@@ -785,9 +822,9 @@ def ljust(a, width, fillchar=' '):
 
     Notes
     -----
-    While it is possible for ``a`` and ``fillchar`` to have different dtypes,
-    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S"
-    is not allowed, and a ``ValueError`` is raised.
+    Passing text as ``fillchar`` for bytes input, or bytes for text input,
+    is deprecated. Use the same string kind as ``a``. The default space
+    already has the same kind as ``a``.
 
     Examples
     --------
@@ -804,16 +841,12 @@ def ljust(a, width, fillchar=' '):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
     a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
-
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
+    fillchar = _get_fillchar(a, fillchar)
 
     if np.result_type(a, fillchar).char == "T":
         return _ljust(a, width, fillchar)
 
-    fillchar = fillchar.astype(a.dtype, copy=False)
+    fillchar = _cast_string_arg(fillchar, a.dtype)
     width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
@@ -824,7 +857,7 @@ def ljust(a, width, fillchar=' '):
 
 @set_module("numpy.strings")
 @array_function_dispatch(_just_dispatcher)
-def rjust(a, width, fillchar=' '):
+def rjust(a, width, fillchar=None):
     """
     Return an array with the elements of `a` right-justified in a
     string of length `width`.
@@ -835,8 +868,9 @@ def rjust(a, width, fillchar=' '):
 
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
-    fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
-        Optional padding character to use (default is space).
+    fillchar : array-like or None, optional
+        Padding character with ``StringDType``, ``bytes_``, or ``str_`` dtype.
+        If ``None`` (the default), use a space of the same string kind as `a`.
 
     Returns
     -------
@@ -850,9 +884,9 @@ def rjust(a, width, fillchar=' '):
 
     Notes
     -----
-    While it is possible for ``a`` and ``fillchar`` to have different dtypes,
-    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S"
-    is not allowed, and a ``ValueError`` is raised.
+    Passing text as ``fillchar`` for bytes input, or bytes for text input,
+    is deprecated. Use the same string kind as ``a``. The default space
+    already has the same kind as ``a``.
 
     Examples
     --------
@@ -869,16 +903,12 @@ def rjust(a, width, fillchar=' '):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
     a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
-
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
+    fillchar = _get_fillchar(a, fillchar)
 
     if np.result_type(a, fillchar).char == "T":
         return _rjust(a, width, fillchar)
 
-    fillchar = fillchar.astype(a.dtype, copy=False)
+    fillchar = _cast_string_arg(fillchar, a.dtype)
     width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
@@ -1342,9 +1372,8 @@ def replace(a, old, new, count=-1):
         new = new if type(new) is str else new_arr
         return _replace(a, old, new, count)
 
-    a_dt = arr.dtype
-    old = old_arr.astype(old_dtype or a_dt.char, copy=False)
-    new = new_arr.astype(new_dtype or a_dt.char, copy=False)
+    old = _cast_string_arg(old_arr, old_dtype or arr.dtype.char)
+    new = _cast_string_arg(new_arr, new_dtype or arr.dtype.char)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
@@ -1591,7 +1620,7 @@ def partition(a, sep):
         return _partition(a, sep)
 
     a = a_arr
-    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
+    sep = _cast_string_arg(sep_arr, a_arr.dtype.char)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1664,7 +1693,7 @@ def rpartition(a, sep):
         return _rpartition(a, sep)
 
     a = a_arr
-    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
+    sep = _cast_string_arg(sep_arr, a_arr.dtype.char)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
