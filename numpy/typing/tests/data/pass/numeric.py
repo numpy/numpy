@@ -24,8 +24,8 @@ np.count_nonzero(B)
 np.count_nonzero(A, keepdims=True)
 np.count_nonzero(A, axis=0)
 
-np.isfortran(i8)
-np.isfortran(A)
+np.isfortran(i8)  # type: ignore[deprecated]
+np.isfortran(A)  # type: ignore[deprecated]
 
 np.argwhere(i8)
 np.argwhere(A)
