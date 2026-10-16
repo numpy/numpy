@@ -304,7 +304,7 @@ initialize_abstract_dtypes(multiarray_umath_state *state)
         *dtype_slots = *pyscalar_specs[i].slots;
         dt->dt_slots = dtype_slots;
         dt->type_num = -1;
-        Py_INCREF(pyscalar_specs[i].scalar_type);
+        Py_INCREF((PyObject *)pyscalar_specs[i].scalar_type);
         dt->scalar_type = pyscalar_specs[i].scalar_type;
         dt->singleton = NULL;
         dt->flags = NPY_DT_NUMERIC;
