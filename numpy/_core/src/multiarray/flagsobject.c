@@ -11,6 +11,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
+#include "npy_pycompat.h"
 
 
 #include "array_assign.h"
@@ -482,7 +483,7 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
     char const *key = NULL;
     Py_ssize_t n;
     if (PyUnicode_Check(ind)) {
-        if (!PyUnicode_IS_ASCII(ind)) {
+        if (!npy_PyUnicode_IsASCII(ind)) {
             goto fail;
         }
         key = PyUnicode_AsUTF8AndSize(ind, &n);
@@ -594,7 +595,7 @@ arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
     char const *key;
     Py_ssize_t n;
     if (PyUnicode_Check(ind)) {
-        if (!PyUnicode_IS_ASCII(ind)) {
+        if (!npy_PyUnicode_IsASCII(ind)) {
             goto fail;
         }
         key = PyUnicode_AsUTF8AndSize(ind, &n);

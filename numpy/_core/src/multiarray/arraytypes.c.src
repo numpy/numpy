@@ -668,7 +668,7 @@ UNICODE_getitem(void *ip, void *vap)
     while (ucs4len > 0 && src[ucs4len - 1] == 0) {
         ucs4len--;
     }
-    PyObject *ret = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, src, ucs4len);
+    PyObject *ret = npy_PyUnicode_FromUCS4(src, ucs4len);
     PyMem_RawFree(buf);
     return ret;
 }

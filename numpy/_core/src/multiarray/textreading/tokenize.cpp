@@ -341,6 +341,10 @@ npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
             }
         }
         int status;
+#ifdef Py_LIMITED_API
+        /* The streams only provide UCS4 data under the Limited API */
+        status = tokenizer_core<Py_UCS4>(ts, config);
+#else
         if (ts->unicode_kind == PyUnicode_1BYTE_KIND) {
             status = tokenizer_core<Py_UCS1>(ts, config);
         }
@@ -351,6 +355,7 @@ npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
             assert(ts->unicode_kind == PyUnicode_4BYTE_KIND);
             status = tokenizer_core<Py_UCS4>(ts, config);
         }
+#endif
         if (status < 0) {
             return -1;
         }
