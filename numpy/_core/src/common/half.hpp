@@ -42,6 +42,9 @@ class Half final {
     #elif defined(__ARM_FP16_FORMAT_IEEE)
         __fp16 f16 = __fp16(f);
         bits_ = BitCast<uint16_t>(f16);
+    #elif defined(__riscv_zfh)
+        _Float16 f16 = _Float16(f);
+        bits_ = BitCast<uint16_t>(f16);
     #else
         bits_ = half_private::FromFloatBits(BitCast<uint32_t>(f));
     #endif
@@ -59,6 +62,9 @@ class Half final {
         __asm__ __volatile__ ("xscvdphp %x0,%x1" : "=wa" (bits_) : "wa" (f));
     #elif defined(__ARM_FP16_FORMAT_IEEE)
         __fp16 f16 = __fp16(f);
+        bits_ = BitCast<uint16_t>(f16);
+    #elif defined(__riscv_zfh)
+        _Float16 f16 = _Float16(f);
         bits_ = BitCast<uint16_t>(f16);
     #else
         bits_ = half_private::FromDoubleBits(BitCast<uint64_t>(f));
@@ -82,6 +88,8 @@ class Half final {
         return vec_extract(vf32, 0);
     #elif defined(__ARM_FP16_FORMAT_IEEE)
         return float(BitCast<__fp16>(bits_));
+    #elif defined(__riscv_zfh)
+        return float(BitCast<_Float16>(bits_));
     #else
         return BitCast<float>(half_private::ToFloatBits(bits_));
     #endif
@@ -102,6 +110,8 @@ class Half final {
         return f64;
     #elif defined(__ARM_FP16_FORMAT_IEEE)
         return double(BitCast<__fp16>(bits_));
+    #elif defined(__riscv_zfh)
+        return double(BitCast<_Float16>(bits_));
     #else
         return BitCast<double>(half_private::ToDoubleBits(bits_));
     #endif
