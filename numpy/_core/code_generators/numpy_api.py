@@ -150,7 +150,8 @@ multiarray_dtype_api = {
     'PyArray_ComplexAbstractDType': (368, 'PyArray_DTypeMeta', MinVersion("2.0")),
     'PyArray_NumberAbstractDType': (379, 'PyArray_DTypeMeta', MinVersion("2.6")),
     'PyArray_SignedIntegerAbstractDType': (380, 'PyArray_DTypeMeta', MinVersion("2.6")),
-    'PyArray_UnsignedIntegerAbstractDType': (381, 'PyArray_DTypeMeta', MinVersion("2.6")),
+    'PyArray_UnsignedIntegerAbstractDType':
+        (381, 'PyArray_DTypeMeta', MinVersion("2.6")),
     'PyArray_InexactAbstractDType': (382, 'PyArray_DTypeMeta', MinVersion("2.6")),
 }
 
