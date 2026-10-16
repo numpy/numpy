@@ -308,8 +308,6 @@ add_newdoc('numpy._core.numerictypes', "integer", ('is_integer',
 
     Return ``True`` if the number is finite with integral value.
 
-    .. versionadded:: 1.22
-
     Examples
     --------
     >>> import numpy as np
@@ -349,8 +347,6 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
 
         Return ``True`` if the floating point number is finite with integral
         value, and ``False`` otherwise.
-
-        .. versionadded:: 1.22
 
         Examples
         --------
