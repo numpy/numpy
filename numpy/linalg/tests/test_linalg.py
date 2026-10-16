@@ -1061,6 +1061,26 @@ class TestDet(DetCases):
         assert_(res[0].dtype.type is np.float64)
         assert_(res[1].dtype.type is np.float64)
 
+    def test_2x2_accuracy_and_extreme_ranges(self):
+        # 1. Catastrophic cancellation cases (true determinant is exactly -1.0)
+        assert_almost_equal(linalg.det([[1e9 + 1, 1e9], [1e9, 1e9 - 1]]), -1.0)
+        assert_almost_equal(linalg.det([[1e12 + 1, 1e12], [1e12, 1e12 - 1]]), -1.0)
+        assert_almost_equal(linalg.det([[1e15 + 1, 1e15], [1e15, 1e15 - 1]]), -1.0)
+
+        # 2. Unbalanced diagonal scaling (reviewer's test cases)
+        assert_allclose(linalg.det([[1e300, 0.0], [0.0, 1e-300]]), 1.0)
+        assert_almost_equal(linalg.det([[1e300, 0.0], [0.0, 1.0]]), 1e300)
+
+        # 3. Non-finite input propagation
+        assert_(np.isnan(linalg.det([[np.nan, 1.0], [2.0, 3.0]])))
+        assert_(np.isinf(linalg.det([[np.inf, 1.0], [2.0, 3.0]])))
+
+        # 4. Batched array verification
+        batch = np.array([
+            [[1e9 + 1, 1e9], [1e9, 1e9 - 1]],
+            [[1e300, 0.0], [0.0, 1e-300]],
+        ])
+        assert_allclose(linalg.det(batch), [-1.0, 1.0])
 
 class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
 

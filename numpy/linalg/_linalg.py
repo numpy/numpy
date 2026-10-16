@@ -2354,8 +2354,8 @@ import numpy as np
 def _det_2x2_kahan(a):
     """
     Robust 2x2 determinant using William Kahan's FMA compensated algorithm.
-    Accurate to <= 1.5 ulps with power-of-2 scaling to protect against
-    intermediate underflow/overflow.
+    Accurate to <= 1.5 ulps with independent row-exponent scaling to protect
+    against premature underflow and overflow on wildly unbalanced inputs.
     """
     a11 = a[..., 0, 0]
     a12 = a[..., 0, 1]
@@ -2369,33 +2369,36 @@ def _det_2x2_kahan(a):
         val21 = float(a21)
         val22 = float(a22)
 
-        max_val = max(abs(val11), abs(val12), abs(val21), abs(val22))
-        if max_val == 0.0 or not math.isfinite(max_val):
+        max1 = max(abs(val11), abs(val12))
+        max2 = max(abs(val21), abs(val22))
+
+        # Handle non-finite or zero rows directly
+        if max1 == 0.0 or max2 == 0.0 or not (math.isfinite(max1) and math.isfinite(max2)):
             return (val11 * val22) - (val12 * val21)
 
-        # Scale by exact power of 2
-        _, exp = math.frexp(max_val)
-        s11 = math.ldexp(val11, -exp)
-        s12 = math.ldexp(val12, -exp)
-        s21 = math.ldexp(val21, -exp)
-        s22 = math.ldexp(val22, -exp)
+        _, exp1 = math.frexp(max1)
+        _, exp2 = math.frexp(max2)
+
+        s11 = math.ldexp(val11, -exp1)
+        s12 = math.ldexp(val12, -exp1)
+        s21 = math.ldexp(val21, -exp2)
+        s22 = math.ldexp(val22, -exp2)
 
         w = -s12 * s21
         det_s = math.fma(s11, s22, w) - math.fma(s12, s21, w)
-        return math.ldexp(det_s, 2 * exp)
+        return math.ldexp(det_s, exp1 + exp2)
 
     # --- Batched Path (shape: (..., 2, 2)) ---
-    max_val = np.maximum(
-        np.maximum(np.abs(a11), np.abs(a12)),
-        np.maximum(np.abs(a21), np.abs(a22))
-    )
+    max1 = np.maximum(np.abs(a11), np.abs(a12))
+    max2 = np.maximum(np.abs(a21), np.abs(a22))
 
-    _, exp = np.frexp(max_val)
+    _, exp1 = np.frexp(max1)
+    _, exp2 = np.frexp(max2)
 
-    a11_s = np.ldexp(a11, -exp)
-    a12_s = np.ldexp(a12, -exp)
-    a21_s = np.ldexp(a21, -exp)
-    a22_s = np.ldexp(a22, -exp)
+    a11_s = np.ldexp(a11, -exp1)
+    a12_s = np.ldexp(a12, -exp1)
+    a21_s = np.ldexp(a21, -exp2)
+    a22_s = np.ldexp(a22, -exp2)
 
     w = -a12_s * a21_s
 
@@ -2412,7 +2415,7 @@ def _det_2x2_kahan(a):
     ]
 
     det_s = np.asarray(det_flat, dtype=np.float64).reshape(a.shape[:-2])
-    return np.ldexp(det_s, 2 * exp)
+    return np.ldexp(det_s, exp1 + exp2)
 
 
 @array_function_dispatch(_unary_dispatcher)
