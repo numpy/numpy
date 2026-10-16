@@ -168,8 +168,12 @@ frequently, (b) use a large part of NumPy's API surface, and (c) is
 worried that changes in NumPy may break your code, you can set an
 upper bound of ``<MAJOR.MINOR + N`` with N no less than 3, and
 ``MAJOR.MINOR`` being the current release of NumPy.\ [#N]_ If you use the NumPy
-C-API (directly or via Cython), you can also pin the current major
-version to prevent ABI breakage. Note that setting an upper bound on
+C-API (directly or via Cython), you can instead set an upper bound which
+excludes the next major version, for example ``numpy<3``, while NumPy
+2.x is current, since a new major release is expected to require
+recompilation (see :ref:`numpy-2-abi-handling`). This does not require
+raising your lower bound as modules built against NumPy 2.x can still
+support NumPy 1.x. Note that setting an upper bound on
 NumPy may `affect the ability of your library to be installed
 alongside other, newer packages
 <https://iscinumpy.dev/post/bound-version-constraints/>`__.
