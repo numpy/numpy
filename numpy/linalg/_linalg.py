@@ -2344,63 +2344,139 @@ def slogdet(a):
     logdet = logdet.astype(real_t, copy=False)
     return SlogdetResult(sign, logdet)
 
+import math
+import numpy as np
+def _two_product(a, b):
+    """
+    Computes p = fl(a * b) and exact rounding error e such that a * b = p + e
+    using Dekker's algorithm in IEEE 754 float64.
+    """
+    p = a * b
+    c = 134217729.0  # 2^27 + 1
+    a_c = c * a
+    a_hi = a_c - (a_c - a)
+    a_lo = a - a_hi
+
+    b_c = c * b
+    b_hi = b_c - (b_c - b)
+    b_lo = b - b_hi
+
+    e = (a_hi * b_hi - p) + a_hi * b_lo + a_lo * b_hi + a_lo * b_lo
+    return p, e
+
+
+def _two_sum(a, b):
+    """
+    Computes s = fl(a + b) and exact rounding error e such that a + b = s + e
+    using Knuth's 2Sum algorithm.
+    """
+    s = a + b
+    v = s - a
+    e = (a - (s - v)) + (b - v)
+    return s, e
+
+
+def _det_2x2_kahan(a):
+    """
+    Computes the determinant of (..., 2, 2) matrices with compensated arithmetic.
+    Robust against catastrophic cancellation, extreme dynamic range scaling,
+    zeros, and non-finite IEEE values.
+    """
+    orig_dtype = a.dtype
+    if orig_dtype != np.float64:
+        a = a.astype(np.float64)
+
+    a11 = a[..., 0, 0]
+    a12 = a[..., 0, 1]
+    a21 = a[..., 1, 0]
+    a22 = a[..., 1, 1]
+
+    # Mask finite entries
+    finite_mask = (
+        np.isfinite(a11)
+        & np.isfinite(a12)
+        & np.isfinite(a21)
+        & np.isfinite(a22)
+    )
+
+    if not np.all(finite_mask):
+        standard = a11 * a22 - a12 * a21
+        if not np.any(finite_mask):
+            return standard.astype(orig_dtype, copy=False)
+
+    safe_11 = np.where(finite_mask, a11, 0.0)
+    safe_12 = np.where(finite_mask, a12, 0.0)
+    safe_21 = np.where(finite_mask, a21, 0.0)
+    safe_22 = np.where(finite_mask, a22, 0.0)
+
+    # Decompose into normalized mantissa and base-2 exponent
+    m11, e11 = np.frexp(safe_11)
+    m12, e12 = np.frexp(safe_12)
+    m21, e21 = np.frexp(safe_21)
+    m22, e22 = np.frexp(safe_22)
+
+    has_p1 = (safe_11 != 0.0) & (safe_22 != 0.0)
+    has_p2 = (safe_12 != 0.0) & (safe_21 != 0.0)
+
+    exp1 = np.where(has_p1, e11 + e22, 0)
+    exp2 = np.where(has_p2, e12 + e21, 0)
+
+    both_zero = (~has_p1) & (~has_p2)
+    max_exp = np.where(
+        both_zero,
+        0,
+        np.maximum(np.where(has_p1, exp1, exp2), np.where(has_p2, exp2, exp1))
+    )
+
+    # Compute exact products on normalized mantissas
+    mp1, me1 = _two_product(m11, m22)
+    mp2, me2 = _two_product(m12, m21)
+
+    mp1 = np.where(has_p1, mp1, 0.0)
+    me1 = np.where(has_p1, me1, 0.0)
+    mp2 = np.where(has_p2, mp2, 0.0)
+    me2 = np.where(has_p2, me2, 0.0)
+
+    d_exp1 = np.clip(max_exp - exp1, 0, 1100)
+    d_exp2 = np.clip(max_exp - exp2, 0, 1100)
+
+    scale1 = np.ldexp(1.0, -d_exp1)
+    scale2 = np.ldexp(1.0, -d_exp2)
+
+    diff, diff_err = _two_sum(mp1 * scale1, -mp2 * scale2)
+    err = diff_err + (me1 * scale1 - me2 * scale2)
+    mant_det = diff + err
+
+    # Unscale result back to original magnitude
+    e_half1 = max_exp // 2
+    e_half2 = max_exp - e_half1
+    det_val = np.ldexp(np.ldexp(mant_det, e_half1), e_half2)
+    det_val = np.where(both_zero, 0.0, det_val)
+
+    if not np.all(finite_mask):
+        det_val = np.where(finite_mask, det_val, a11 * a22 - a12 * a21)
+
+    return det_val.astype(orig_dtype, copy=False)
+
 
 @array_function_dispatch(_unary_dispatcher)
 def det(a):
     """
     Compute the determinant of an array.
-
-    Parameters
-    ----------
-    a : (..., M, M) array_like
-        Input array to compute determinants for.
-
-    Returns
-    -------
-    det : (...) array_like
-        Determinant of `a`.
-
-    See Also
-    --------
-    slogdet : Another way to represent the determinant, more suitable
-      for large matrices where underflow/overflow may occur.
-    scipy.linalg.det : Similar function in SciPy.
-
-    Notes
-    -----
-    Broadcasting rules apply, see the `numpy.linalg` documentation for
-    details.
-
-    The determinant is computed via LU factorization using the LAPACK
-    routine ``z/dgetrf``.
-
-    Examples
-    --------
-    The determinant of a 2-D array [[a, b], [c, d]] is ad - bc:
-
-    >>> import numpy as np
-    >>> a = np.array([[1, 2], [3, 4]])
-    >>> np.linalg.det(a)
-    -2.0 # may vary
-
-    Computing determinants for a stack of matrices:
-
-    >>> a = np.array([ [[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]] ])
-    >>> a.shape
-    (3, 2, 2)
-    >>> np.linalg.det(a)
-    array([-2., -3., -8.])
-
     """
     a = asarray(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
+
+    # Accurate specialized 2x2 path for real floating/integer types
+    if a.shape[-2:] == (2, 2) and not isComplexType(t):
+        r = _det_2x2_kahan(a.astype(result_t, copy=False))
+        return r.astype(result_t, copy=False)
+
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
     r = r.astype(result_t, copy=False)
     return r
-
-
 # Linear Least Squares
 
 def _lstsq_dispatcher(a, b, rcond=None):

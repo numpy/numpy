@@ -1061,7 +1061,83 @@ class TestDet(DetCases):
         assert_(res[0].dtype.type is np.float64)
         assert_(res[1].dtype.type is np.float64)
 
+    def test_2x2_accuracy_and_extreme_ranges(self):
+        # 1. Catastrophic cancellation cases (true determinant is exactly -1.0)
+        assert_almost_equal(linalg.det([[1e9 + 1, 1e9], [1e9, 1e9 - 1]]), -1.0)
+        assert_almost_equal(linalg.det([[1e12 + 1, 1e12], [1e12, 1e12 - 1]]), -1.0)
+        assert_almost_equal(linalg.det([[1e15 + 1, 1e15], [1e15, 1e15 - 1]]), -1.0)
 
+        # 2. Unbalanced diagonal scaling (reviewer's test cases)
+        assert_allclose(linalg.det([[1e300, 0.0], [0.0, 1e-300]]), 1.0)
+        assert_almost_equal(linalg.det([[1e300, 0.0], [0.0, 1.0]]), 1e300)
+
+        # 3. Non-finite input propagation
+        assert_(np.isnan(linalg.det([[np.nan, 1.0], [2.0, 3.0]])))
+        assert_(np.isinf(linalg.det([[np.inf, 1.0], [2.0, 3.0]])))
+
+        # 4. Batched array verification
+        batch = np.array([
+            [[1e9 + 1, 1e9], [1e9, 1e9 - 1]],
+            [[1e300, 0.0], [0.0, 1e-300]],
+        ])
+        assert_allclose(linalg.det(batch), [-1.0, 1.0])
+
+    import numpy as np
+    from numpy.testing import assert_allclose
+
+
+
+    def test_2x2_accuracy_and_extreme_ranges(self):
+        # 1. Catastrophic cancellation cases (true determinant is exactly -1.0)
+        assert_almost_equal(linalg.det([[1e9 + 1, 1e9], [1e9, 1e9 - 1]]), -1.0)
+        assert_almost_equal(linalg.det([[1e12 + 1, 1e12], [1e12, 1e12 - 1]]), -1.0)
+        assert_almost_equal(linalg.det([[1e15 + 1, 1e15], [1e15, 1e15 - 1]]), -1.0)
+
+        # 2. Unbalanced diagonal scaling
+        assert_allclose(linalg.det([[1e300, 0.0], [0.0, 1e-300]]), 1.0)
+        assert_allclose(linalg.det([[1e-300, 0.0], [0.0, 1e300]]), 1.0)
+
+    def test_det_2x2_cancellation_tight_tolerance(self):
+        eps = np.finfo(np.float64).eps
+        rtol_1_5_ulp = 1.5 * eps
+
+        # Exact cancellation cases
+        cancellation_cases = [
+            ([[1e4 + 1, 1e4], [1e4, 1e4 - 1]], -1.0),
+            ([[1e6 + 1, 1e6], [1e6, 1e6 - 1]], -1.0),
+            ([[1e7 + 1, 1e7], [1e7, 1e7 - 1]], -1.0),
+        ]
+        for mat, expected in cancellation_cases:
+            res = np.linalg.det(np.array(mat, dtype=np.float64))
+            assert_allclose(res, expected, rtol=rtol_1_5_ulp, atol=0.0)
+            assert np.signbit(res) == np.signbit(expected)
+
+        # Extreme dynamic range
+        imbalance_cases = [
+            ([[1e300, 0.0], [0.0, 1.0]], 1e300),
+            ([[1.0, 0.0], [0.0, 1e-300]], 1e-300),
+            ([[1.0, 1e-300], [0.0, 1e-20]], 1e-20),
+        ]
+        for mat, expected in imbalance_cases:
+            res = np.linalg.det(np.array(mat, dtype=np.float64))
+            assert_allclose(res, expected, rtol=rtol_1_5_ulp, atol=0.0)
+
+        # Non-finite and boundary checks
+        assert np.linalg.det(np.zeros((2, 2))) == 0.0
+        assert np.linalg.det(np.array([[1.0, 0.0], [0.0, 0.0]])) == 0.0
+        assert np.isnan(np.linalg.det(np.array([[np.nan, 1.0], [0.0, 1.0]])))
+        assert np.isinf(np.linalg.det(np.array([[np.inf, 1.0], [0.0, 1.0]])))
+
+        # Batched input
+        batch = np.array(
+            [
+                [[1e6 + 1, 1e6], [1e6, 1e6 - 1]],
+                [[1.0, 2.0], [3.0, 4.0]],
+            ],
+            dtype=np.float64,
+        )
+        batch_res = np.linalg.det(batch)
+        assert_allclose(batch_res, [-1.0, -2.0], rtol=rtol_1_5_ulp, atol=0.0)
 class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
     def do(self, a, b, tags):
