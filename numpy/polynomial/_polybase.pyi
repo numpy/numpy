@@ -1,5 +1,5 @@
 import abc
-import decimal
+from _typeshed import Incomplete
 from collections.abc import Iterator, Sequence
 from typing import Any, ClassVar, Generic, Literal, Self, SupportsIndex, overload
 from typing_extensions import TypeIs, TypeVar
@@ -10,12 +10,13 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
     _FloatLike_co,
+    _NestedSequence,
     _NumberLike_co,
+    _Shape,
 )
 
 from ._polytypes import (
     _AnyInt,
-    _Array2,
     _ArrayLikeCoef_co,
     _ArrayLikeCoefObject_co,
     _CoefLike_co,
@@ -48,10 +49,10 @@ class ABCPolyBase(Generic[_NameT_co], abc.ABC):  # noqa: UP046
     def symbol(self, /) -> str: ...
     @property
     @abc.abstractmethod
-    def domain(self) -> _Array2[np.float64 | Any]: ...
+    def domain(self) -> np.ndarray[tuple[int], np.dtype[np.float64 | Any]]: ...
     @property
     @abc.abstractmethod
-    def window(self) -> _Array2[np.float64 | Any]: ...
+    def window(self) -> np.ndarray[tuple[int], np.dtype[np.float64 | Any]]: ...
     @property
     @abc.abstractmethod
     def basis_name(self) -> _NameT_co: ...
@@ -61,25 +62,49 @@ class ABCPolyBase(Generic[_NameT_co], abc.ABC):  # noqa: UP046
     def __init__(
         self,
         /,
-        coef: _SeriesLikeCoef_co,
+        coef: _SeriesLikeCoef_co | _CoefLike_co,
         domain: _SeriesLikeCoef_co | None = None,
         window: _SeriesLikeCoef_co | None = None,
         symbol: str = "x",
     ) -> None: ...
 
     #
-    @overload
+    @overload  # T
     def __call__[PolyT: ABCPolyBase](self, /, arg: PolyT) -> PolyT: ...
-    @overload
-    def __call__(self, /, arg: _FloatLike_co | decimal.Decimal) -> np.float64 | Any: ...
-    @overload
-    def __call__(self, /, arg: _NumberLike_co) -> np.complex128 | Any: ...
-    @overload
-    def __call__(self, /, arg: _ArrayLikeFloat_co) -> npt.NDArray[np.float64 | Any]: ...
-    @overload
-    def __call__(self, /, arg: _ArrayLikeComplex_co) -> npt.NDArray[np.complex128 | Any]: ...
-    @overload
+    @overload  # Nd +f64
+    def __call__[ShapeT: _Shape](
+        self,
+        /,
+        arg: np.ndarray[ShapeT, np.dtype[np.floating | np.integer | np.bool]],
+    ) -> np.ndarray[ShapeT, np.dtype[np.float64 | Incomplete]]: ...
+    @overload  # Nd +c128
+    def __call__[ShapeT: _Shape](
+        self,
+        /,
+        arg: np.ndarray[ShapeT, np.dtype[np.complexfloating]],
+    ) -> np.ndarray[ShapeT, np.dtype[np.complex128 | Incomplete]]: ...
+    @overload  # Nd ~object_
+    def __call__[ShapeT: _Shape](
+        self,
+        /,
+        arg: np.ndarray[ShapeT, np.dtype[np.object_]],
+    ) -> np.ndarray[ShapeT, np.dtype[np.object_]]: ...
+    @overload  # 0d +f64
+    def __call__(self, /, arg: _FloatLike_co) -> np.float64 | Incomplete: ...
+    @overload  # 0d +c128
+    def __call__(self, /, arg: _NumberLike_co) -> np.complex128 | Incomplete: ...
+    @overload  # 1d +f64
+    def __call__(self, /, arg: Sequence[_FloatLike_co]) -> _Series[np.float64 | Incomplete]: ...
+    @overload  # 1d +c128
+    def __call__(self, /, arg: Sequence[_NumberLike_co]) -> _Series[np.complex128 | Incomplete]: ...
+    @overload  # ?d +f64
+    def __call__(self, /, arg: _NestedSequence[_ArrayLikeFloat_co]) -> npt.NDArray[np.float64 | Incomplete]: ...
+    @overload  # ?d +c128
+    def __call__(self, /, arg: _NestedSequence[_ArrayLikeComplex_co]) -> npt.NDArray[np.complex128 | Incomplete]: ...
+    @overload  # ?d ~object_
     def __call__(self, /, arg: _ArrayLikeCoefObject_co) -> npt.NDArray[np.object_]: ...
+    @overload  # ?d  (fallback)
+    def __call__(self, /, arg: _ArrayLikeComplex_co) -> npt.NDArray[Any] | Any: ...
 
     # unary ops
     def __neg__(self, /) -> Self: ...

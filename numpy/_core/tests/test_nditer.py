@@ -3886,6 +3886,21 @@ def test_debug_print(capfd):
         assert res_line.startswith(expected_line.strip())
 
 
+@pytest.mark.thread_unsafe(reason="capfd is thread-unsafe")
+def test_debug_print_dtype_repr_error(capfd):
+    # A dtype whose repr fails must not leave an exception set
+    class BadRepr:
+        def __repr__(self):
+            raise RuntimeError
+
+    dt = np.dtype({"names": ["a"], "formats": ["i4"], "titles": [BadRepr()]})
+    it = np.nditer(np.zeros(2, dtype=dt))
+    it.debug_print()
+    res = capfd.readouterr().out
+    assert "| DTypes: <error during print>" in res
+    assert "| Operand DTypes: <error during print>" in res
+
+
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
 def test_signature_constructor():
     sig = inspect.signature(np.nditer)

@@ -1,0 +1,8 @@
+`numpy.polynomial` shape-typing and dtype inference
+---------------------------------------------------
+The `numpy.polynomial` series classes and functions now use the shape-types of their
+input(s) to infer the shape-type of the returned array. Due to limitations of Python's
+type system, this usually only applies to low-rank array-likes.
+
+The functions' dtypes and scalar return types are also more precise, e.g. ``float64``
+instead of ``floating``.

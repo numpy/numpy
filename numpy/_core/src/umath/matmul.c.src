@@ -734,7 +734,7 @@ OBJECT_dotc(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp
         if (obj2 == NULL) {
             obj2 = Py_None;  /* raise at multiply (unless obj1 handles None) */
         }
-        PyObject *obj1_conj = PyObject_CallMethodNoArgs(obj1, conjugate);
+        PyObject *obj1_conj = PyObject_VectorcallMethod(conjugate, &obj1, 1, NULL);
         if (obj1_conj == NULL) {
             goto fail;
         }

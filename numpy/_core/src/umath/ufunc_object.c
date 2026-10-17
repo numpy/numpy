@@ -3160,7 +3160,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
 
-        int itemsize = loop_descrs[0]->elsize;
+        npy_intp itemsize = loop_descrs[0]->elsize;
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -3206,7 +3206,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                 }
             }
             else {
-                memmove(dataptr_copy[2], dataptr_copy[1], itemsize);
+                memmove(dataptr_copy[2], dataptr_copy[1], (size_t)itemsize);
             }
 
             if (count_m1 > 0) {
@@ -3225,7 +3225,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     else if (iter == NULL) {
         char *dataptr_copy[3];
 
-        int itemsize = loop_descrs[0]->elsize;
+        npy_intp itemsize = loop_descrs[0]->elsize;
 
         /* Execute the loop with no iterators */
         npy_intp count = PyArray_DIM(op[1], axis);
@@ -3256,7 +3256,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             }
         }
         else {
-            memmove(dataptr_copy[2], dataptr_copy[1], itemsize);
+            memmove(dataptr_copy[2], dataptr_copy[1], (size_t)itemsize);
         }
 
         if (count > 1) {
@@ -3571,7 +3571,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         npy_intp stride0, stride1;
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
 
-        int itemsize = descrs[0]->elsize;
+        npy_intp itemsize = descrs[0]->elsize;
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -3624,7 +3624,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                                         *(PyObject **)dataptr_copy[1];
                 }
                 else {
-                    memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
+                    memmove(dataptr_copy[0], dataptr_copy[1], (size_t)itemsize);
                 }
 
                 if (count > 1) {
@@ -3644,7 +3644,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     else if (iter == NULL) {
         char *dataptr_copy[3];
 
-        int itemsize = descrs[0]->elsize;
+        npy_intp itemsize = descrs[0]->elsize;
 
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
         npy_intp stride1 = PyArray_STRIDE(op[1], axis);
@@ -3683,7 +3683,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                                     *(PyObject **)dataptr_copy[1];
             }
             else {
-                memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
+                memmove(dataptr_copy[0], dataptr_copy[1], (size_t)itemsize);
             }
 
             if (count > 1) {
@@ -4453,7 +4453,8 @@ resolve_descriptors(int nop,
 {
     int retval = -1;
     NPY_CASTING safety;
-    int n_cleanup = 0;  /* number of original_descrs filled (to XDECREF) */
+    /* number of original_descrs entries to clean up, including NULLs */
+    int n_cleanup = 0;
     PyArray_Descr *original_descrs[NPY_MAXARGS];
 
     NPY_UF_DBG_PRINT("Resolving the descriptors\n");
@@ -4562,7 +4563,7 @@ resolve_descriptors(int nop,
         if (original_descrs[i] == NULL) {
             goto finish;
         }
-        n_cleanup += 1;
+        n_cleanup = i + 1;
     }
 
     if (ufuncimpl->resolve_descriptors != &wrapped_legacy_resolve_descriptors) {
@@ -6475,7 +6476,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
 
-    if (ufunc->nin > 2) {
+    if (ufunc->nin < 1 || ufunc->nin > 2) {
         PyErr_SetString(PyExc_ValueError,
             "Only unary and binary ufuncs supported at this time");
         return NULL;
@@ -7372,7 +7373,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_call = &PyVectorcall_Call,
     .tp_str = (reprfunc)ufunc_repr,
     .tp_flags = Py_TPFLAGS_DEFAULT |
-        _Py_TPFLAGS_HAVE_VECTORCALL |
+        Py_TPFLAGS_HAVE_VECTORCALL |
         Py_TPFLAGS_HAVE_GC,
     .tp_traverse = (traverseproc)ufunc_traverse,
     .tp_methods = ufunc_methods,
