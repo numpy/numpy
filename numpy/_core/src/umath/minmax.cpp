@@ -17,6 +17,7 @@
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 
+#include "abstractdtypes.h"
 #include "array_method.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
@@ -98,6 +99,99 @@ minimummaximum_get_reduction_loop(
 }
 
 
+/*
+ * Promotes to the common DType of the inputs.
+ * A dtype without a `minimummaximum` loop reports no loop,
+ * instead of reaching a loop of another dtype by casting.
+ */
+static int
+minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *const op_dtypes[],
+        PyArray_DTypeMeta *const signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    /* A fixed output DType fixes the operation DType. */
+    PyArray_DTypeMeta *common = signature[2] != NULL ? signature[2] : signature[3];
+    if (common != NULL) {
+        Py_INCREF(common);
+    }
+    else {
+        common = PyArray_PromoteDTypeSequence(2, (PyArray_DTypeMeta **)op_dtypes);
+        if (common == NULL) {
+            return -1;
+        }
+        if (common == &PyArray_PyLongDType
+                || common == &PyArray_PyFloatDType
+                || common == &PyArray_PyComplexDType) {
+            /* Only Python scalars were passed, use their default DType */
+            PyArray_Descr *descr = NPY_DT_CALL_default_descr(common);
+            Py_DECREF(common);
+            if (descr == NULL) {
+                return -1;
+            }
+            common = NPY_DTYPE(descr);
+            Py_INCREF(common);
+            Py_DECREF(descr);
+        }
+    }
+
+    for (int i = 0; i < 4; i++) {
+        PyArray_DTypeMeta *dt = signature[i] != NULL ? signature[i] : common;
+        Py_INCREF(dt);
+        new_op_dtypes[i] = dt;
+    }
+    Py_DECREF(common);
+    return 0;
+}
+
+
+static int
+register_minimummaximum_promoter(PyObject *ufunc)
+{
+    PyObject *none_tuple = PyTuple_Pack(4, Py_None, Py_None, Py_None, Py_None);
+    if (none_tuple == NULL) {
+        return -1;
+    }
+    PyObject *promoter = PyCapsule_New(
+            (void *)&minimummaximum_promoter, "numpy._ufunc_promoter", NULL);
+    if (promoter == NULL) {
+        Py_DECREF(none_tuple);
+        return -1;
+    }
+    int res = PyUFunc_AddPromoter(ufunc, none_tuple, promoter);
+    Py_DECREF(none_tuple);
+    Py_DECREF(promoter);
+    return res;
+}
+
+
+/*
+ * `resolve_descriptors` for the datetime and timedelta loops that resolves
+ * to the common unit of the inputs.
+ * The other loops are not parametric and use the default legacy resolution.
+ */
+static NPY_CASTING
+minimummaximum_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[]),
+        PyArray_Descr *const given_descrs[],
+        PyArray_Descr *loop_descrs[],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    PyArray_Descr *common = PyArray_PromoteTypes(given_descrs[0], given_descrs[1]);
+    if (common == NULL) {
+        return (NPY_CASTING)-1;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        Py_INCREF(common);
+        loop_descrs[i] = common;
+    }
+    Py_DECREF(common);
+    return NPY_NO_CASTING;
+}
+
+
 NPY_NO_EXPORT int
 init_minimummaximum(PyObject *umath)
 {
@@ -146,6 +240,13 @@ init_minimummaximum(PyObject *umath)
         meth->flags = (NPY_ARRAYMETHOD_FLAGS)(
                 meth->flags | NPY_METH_IS_REORDERABLE);
         meth->get_reduction_loop = &minimummaximum_get_reduction_loop;
+        if (typenums[k] == NPY_DATETIME || typenums[k] == NPY_TIMEDELTA) {
+            meth->resolve_descriptors = &minimummaximum_resolve_descriptors;
+        }
+    }
+
+    if (register_minimummaximum_promoter(ufunc) < 0) {
+        goto fail;
     }
 
     Py_DECREF(ufunc);
