@@ -45,7 +45,6 @@ classifiers = [
 #     (b) wheels on PyPI - most wheels include vendored libraries with additional licenses:
 #         - libopenblas : BSD-3-Clause AND BSD-3-Clause-Attribution (all except arm64 macOS>=14)
 #         - libgfortran : GPL-3.0-with-GCC-exception                (all except arm64 macOS>=14)
-#         - libquadmath : LGPL-2.1-or-later                         (all except arm64 macOS>=14 and Windows)
 #         The licenses for these vendored components are dynamically included
 #         in the build process for PyPI wheels.
 license = 'BSD-3-Clause AND 0BSD AND MIT AND CC0-1.0'
