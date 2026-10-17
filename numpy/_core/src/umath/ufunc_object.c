@@ -4788,7 +4788,7 @@ try_trivial_scalar_call(
     }
     // Get method, bailing if not an arraymethod (e.g., a promotor).
     PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
-    if (!PyObject_TypeCheck(method, &PyArrayMethod_Type)) {
+    if (!PyObject_TypeCheck(method, _npy_module_state->PyArrayMethod_Type)) {
         goto bail;
     }
     // Get loop, requiring that the output and input dtype are the same.
@@ -5281,7 +5281,8 @@ PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
             }
             if (found == 1) {
                 PyObject *method_obj = PyTuple_GET_ITEM(item, 1);
-                if (PyObject_TypeCheck(method_obj, &PyArrayMethod_Type)) {
+                if (PyObject_TypeCheck(
+                        method_obj, _npy_module_state->PyArrayMethod_Type)) {
                     /* borrowed, but kept alive by ``func->_loops`` */
                     method = (PyArrayMethodObject *)method_obj;
                 }
@@ -5746,7 +5747,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     if (existing_item != NULL) {
         PyObject *registered = PyTuple_GET_ITEM(existing_item, 1);
         int not_compatible = (
-            !PyObject_TypeCheck(registered, &PyArrayMethod_Type) ||
+            !PyObject_TypeCheck(
+                    registered, _npy_module_state->PyArrayMethod_Type) ||
             (((PyArrayMethodObject *)registered)->get_strided_loop !=
                     &get_wrapped_legacy_ufunc_loop
                 && ((PyArrayMethodObject *)registered)->cached_loop == NULL));
@@ -5785,7 +5787,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     }
     PyArrayMethodObject *registered_method =
             (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
-    assert(PyObject_TypeCheck(registered_method, &PyArrayMethod_Type));
+    assert(PyObject_TypeCheck(
+            registered_method, _npy_module_state->PyArrayMethod_Type));
     /* Clearing sets it to NULL for the error paths */
     Py_CLEAR(signature_tuple);
 
