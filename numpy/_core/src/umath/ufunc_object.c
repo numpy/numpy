@@ -3103,25 +3103,18 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
     op_flags[nout] = NPY_ITER_READONLY;
     op[nout] = arr;
 
-    need_outer_iterator = (ndim > 1);
+    /* Multiple outputs may overlap each other, the iterator copies them */
+    need_outer_iterator = (ndim > 1 || nout > 1);
     /* We can't buffer, so must do UPDATEIFCOPY */
-    if (!PyArray_ISALIGNED(arr) ||
-            !PyArray_EquivTypes(descrs[nout], PyArray_DESCR(arr))) {
+    if (!PyArray_ISALIGNED(arr) || (out[0] && !PyArray_ISALIGNED(out[0])) ||
+            !PyArray_EquivTypes(descrs[nout], PyArray_DESCR(arr)) ||
+            (out[0] &&
+             !PyArray_EquivTypes(descrs[0], PyArray_DESCR(out[0])))) {
         need_outer_iterator = 1;
     }
-    for (int i = 0; i < nout; i++) {
-        if (out[i] != NULL && (!PyArray_ISALIGNED(out[i]) ||
-                !PyArray_EquivTypes(descrs[i], PyArray_DESCR(out[i])))) {
-            need_outer_iterator = 1;
-        }
-        /*
-         * If input and output overlap in memory, use iterator to figure
-         * it out
-         */
-        else if (out[i] != NULL && solve_may_share_memory(
-                out[i], arr, NPY_MAY_SHARE_BOUNDS) != 0) {
-            need_outer_iterator = 1;
-        }
+    /* If input and output overlap in memory, use iterator to figure it out */
+    else if (out[0] != NULL && solve_may_share_memory(out[0], arr, NPY_MAY_SHARE_BOUNDS) != 0) {
+        need_outer_iterator = 1;
     }
 
     if (need_outer_iterator) {
