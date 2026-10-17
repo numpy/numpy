@@ -2344,78 +2344,119 @@ def slogdet(a):
     logdet = logdet.astype(real_t, copy=False)
     return SlogdetResult(sign, logdet)
 
-
-
-
 import math
 import numpy as np
+def _two_product(a, b):
+    """
+    Computes p = fl(a * b) and exact rounding error e such that a * b = p + e
+    using Dekker's algorithm in IEEE 754 float64.
+    """
+    p = a * b
+    c = 134217729.0  # 2^27 + 1
+    a_c = c * a
+    a_hi = a_c - (a_c - a)
+    a_lo = a - a_hi
+
+    b_c = c * b
+    b_hi = b_c - (b_c - b)
+    b_lo = b - b_hi
+
+    e = (a_hi * b_hi - p) + a_hi * b_lo + a_lo * b_hi + a_lo * b_lo
+    return p, e
+
+
+def _two_sum(a, b):
+    """
+    Computes s = fl(a + b) and exact rounding error e such that a + b = s + e
+    using Knuth's 2Sum algorithm.
+    """
+    s = a + b
+    v = s - a
+    e = (a - (s - v)) + (b - v)
+    return s, e
 
 
 def _det_2x2_kahan(a):
     """
-    Robust 2x2 determinant using William Kahan's FMA compensated algorithm.
-    Accurate to <= 1.5 ulps with independent row-exponent scaling to protect
-    against premature underflow and overflow on wildly unbalanced inputs.
+    Computes the determinant of (..., 2, 2) matrices with compensated arithmetic.
+    Robust against catastrophic cancellation, extreme dynamic range scaling,
+    zeros, and non-finite IEEE values.
     """
+    orig_dtype = a.dtype
+    if orig_dtype != np.float64:
+        a = a.astype(np.float64)
+
     a11 = a[..., 0, 0]
     a12 = a[..., 0, 1]
     a21 = a[..., 1, 0]
     a22 = a[..., 1, 1]
 
-    # --- Fast Scalar Path (ndim == 2) ---
-    if a.ndim == 2:
-        val11 = float(a11)
-        val12 = float(a12)
-        val21 = float(a21)
-        val22 = float(a22)
+    # Mask finite entries
+    finite_mask = (
+        np.isfinite(a11)
+        & np.isfinite(a12)
+        & np.isfinite(a21)
+        & np.isfinite(a22)
+    )
 
-        max1 = max(abs(val11), abs(val12))
-        max2 = max(abs(val21), abs(val22))
+    if not np.all(finite_mask):
+        standard = a11 * a22 - a12 * a21
+        if not np.any(finite_mask):
+            return standard.astype(orig_dtype, copy=False)
 
-        # Handle non-finite or zero rows directly
-        if max1 == 0.0 or max2 == 0.0 or not (math.isfinite(max1) and math.isfinite(max2)):
-            return (val11 * val22) - (val12 * val21)
+    safe_11 = np.where(finite_mask, a11, 0.0)
+    safe_12 = np.where(finite_mask, a12, 0.0)
+    safe_21 = np.where(finite_mask, a21, 0.0)
+    safe_22 = np.where(finite_mask, a22, 0.0)
 
-        _, exp1 = math.frexp(max1)
-        _, exp2 = math.frexp(max2)
+    # Decompose into normalized mantissa and base-2 exponent
+    m11, e11 = np.frexp(safe_11)
+    m12, e12 = np.frexp(safe_12)
+    m21, e21 = np.frexp(safe_21)
+    m22, e22 = np.frexp(safe_22)
 
-        s11 = math.ldexp(val11, -exp1)
-        s12 = math.ldexp(val12, -exp1)
-        s21 = math.ldexp(val21, -exp2)
-        s22 = math.ldexp(val22, -exp2)
+    has_p1 = (safe_11 != 0.0) & (safe_22 != 0.0)
+    has_p2 = (safe_12 != 0.0) & (safe_21 != 0.0)
 
-        w = -s12 * s21
-        det_s = math.fma(s11, s22, w) - math.fma(s12, s21, w)
-        return math.ldexp(det_s, exp1 + exp2)
+    exp1 = np.where(has_p1, e11 + e22, 0)
+    exp2 = np.where(has_p2, e12 + e21, 0)
 
-    # --- Batched Path (shape: (..., 2, 2)) ---
-    max1 = np.maximum(np.abs(a11), np.abs(a12))
-    max2 = np.maximum(np.abs(a21), np.abs(a22))
+    both_zero = (~has_p1) & (~has_p2)
+    max_exp = np.where(
+        both_zero,
+        0,
+        np.maximum(np.where(has_p1, exp1, exp2), np.where(has_p2, exp2, exp1))
+    )
 
-    _, exp1 = np.frexp(max1)
-    _, exp2 = np.frexp(max2)
+    # Compute exact products on normalized mantissas
+    mp1, me1 = _two_product(m11, m22)
+    mp2, me2 = _two_product(m12, m21)
 
-    a11_s = np.ldexp(a11, -exp1)
-    a12_s = np.ldexp(a12, -exp1)
-    a21_s = np.ldexp(a21, -exp2)
-    a22_s = np.ldexp(a22, -exp2)
+    mp1 = np.where(has_p1, mp1, 0.0)
+    me1 = np.where(has_p1, me1, 0.0)
+    mp2 = np.where(has_p2, mp2, 0.0)
+    me2 = np.where(has_p2, me2, 0.0)
 
-    w = -a12_s * a21_s
+    d_exp1 = np.clip(max_exp - exp1, 0, 1100)
+    d_exp2 = np.clip(max_exp - exp2, 0, 1100)
 
-    a11_flat = np.asarray(a11_s).ravel()
-    a22_flat = np.asarray(a22_s).ravel()
-    a12_flat = np.asarray(a12_s).ravel()
-    a21_flat = np.asarray(a21_s).ravel()
-    w_flat = np.asarray(w).ravel()
+    scale1 = np.ldexp(1.0, -d_exp1)
+    scale2 = np.ldexp(1.0, -d_exp2)
 
-    _fma = math.fma
-    det_flat = [
-        _fma(x, y, z) - _fma(u, v, z)
-        for x, y, u, v, z in zip(a11_flat, a22_flat, a12_flat, a21_flat, w_flat)
-    ]
+    diff, diff_err = _two_sum(mp1 * scale1, -mp2 * scale2)
+    err = diff_err + (me1 * scale1 - me2 * scale2)
+    mant_det = diff + err
 
-    det_s = np.asarray(det_flat, dtype=np.float64).reshape(a.shape[:-2])
-    return np.ldexp(det_s, exp1 + exp2)
+    # Unscale result back to original magnitude
+    e_half1 = max_exp // 2
+    e_half2 = max_exp - e_half1
+    det_val = np.ldexp(np.ldexp(mant_det, e_half1), e_half2)
+    det_val = np.where(both_zero, 0.0, det_val)
+
+    if not np.all(finite_mask):
+        det_val = np.where(finite_mask, det_val, a11 * a22 - a12 * a21)
+
+    return det_val.astype(orig_dtype, copy=False)
 
 
 @array_function_dispatch(_unary_dispatcher)
@@ -2427,10 +2468,10 @@ def det(a):
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
 
-    # Accurate, compensated path for real 2x2 matrices
+    # Accurate specialized 2x2 path for real floating/integer types
     if a.shape[-2:] == (2, 2) and not isComplexType(t):
         r = _det_2x2_kahan(a.astype(result_t, copy=False))
-        return asarray(r, dtype=result_t)[()]
+        return r.astype(result_t, copy=False)
 
     signature = 'D->D' if isComplexType(t) else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
