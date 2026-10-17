@@ -1598,6 +1598,17 @@ M   33  21.99
                            dtype=[('A', '|S4'), ('C', int), ('D', float)])
         assert_equal(test, control)
 
+    @pytest.mark.parametrize("usecols", [(2, 0), (0, 2)])
+    def test_converters_by_name_with_usecols_and_explicit_names(self, usecols):
+        # The converter must be tested on the first value of its own column
+        data = TextIO("1,foo,2023-01-05\n2,bar,2023-02-07\n")
+        test = np.genfromtxt(data, delimiter=",", dtype=None, encoding=None,
+                             names=["a", "b", "c"], usecols=usecols,
+                             converters={"c": lambda s: np.datetime64(s.strip())})
+        assert_equal(test.dtype["c"], np.dtype("datetime64[D]"))
+        assert_equal(test["c"], np.array(["2023-01-05", "2023-02-07"],
+                                         dtype="datetime64[D]"))
+
     def test_converters_cornercases(self):
         # Test the conversion to datetime.
         converter = {

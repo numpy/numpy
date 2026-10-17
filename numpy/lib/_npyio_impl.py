@@ -2199,10 +2199,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             # use the index instead
             if _is_string_like(j):
                 try:
-                    j = names.index(j)
-                    i = j
+                    i = names.index(j)
                 except ValueError:
                     continue
+                j = usecols[i] if usecols else i
             elif usecols:
                 try:
                     i = usecols.index(j)
