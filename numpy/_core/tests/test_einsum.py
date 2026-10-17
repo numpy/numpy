@@ -100,16 +100,15 @@ class TestEinsum:
     def test_einsum_unsupported_user_dtype(self, dtype, subscripts, shapes,
                                            out_shape):
         # gh-32671: user DTypes have no einsum kernel, and new-style ones
-        # (type_num -1) indexed the kernel tables out of bounds.  With `out=`
-        # the 1-d cases use the general loop, which returned with the
-        # exception still set.
+        # (type_num -1) indexed the kernel tables out of bounds.
         ops = [np.zeros(shape, dtype=dtype) for shape in shapes]
         with pytest.raises(TypeError, match="invalid data type"):
             np.einsum(subscripts, *ops)
 
-        out = np.zeros(out_shape, dtype=dtype)
+        out = np.ones(out_shape, dtype=bool).astype(dtype)
         with pytest.raises(TypeError, match="invalid data type"):
             np.einsum(subscripts, *ops, out=out)
+        assert_array_equal(out.astype(np.float64), 1)
 
     def test_einsum_unsupported_new_style_dtype(self):
         # gh-30793: new-style DTypes have type_num -1.  The kernel tables were

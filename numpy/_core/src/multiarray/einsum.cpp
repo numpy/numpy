@@ -816,6 +816,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     NpyIter *iter = NULL;
     sum_of_products_fn sop;
     npy_intp *stride;
+    int type_num;
 
     /* nop+1 (+1 is for the output) must fit in NPY_MAXARGS */
     if (nop >= NPY_MAXARGS) {
@@ -1052,6 +1053,14 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                                op_dtypes, ndim_iter, op_axes, NULL, 0);
 
     if (iter == NULL) {
+        goto fail;
+    }
+
+    /* No einsum loops for other dtypes, check before zeroing `out` */
+    type_num = NpyIter_GetDescrArray(iter)[0]->type_num;
+    if (!PyTypeNum_ISNUMBER(type_num) && !PyTypeNum_ISOBJECT(type_num)) {
+        PyErr_SetString(PyExc_TypeError,
+                    "invalid data type for einsum");
         goto fail;
     }
 
