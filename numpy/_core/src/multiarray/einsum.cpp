@@ -1125,6 +1125,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     if (sop == NULL) {
         PyErr_SetString(PyExc_TypeError,
                     "invalid data type for einsum");
+        goto fail;
     }
     else if (NpyIter_GetIterSize(iter) != 0) {
         NpyIter_IterNextFunc *iternext;
