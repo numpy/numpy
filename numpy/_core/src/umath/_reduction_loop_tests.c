@@ -7,6 +7,8 @@
  * loop plus a 3-in/2-out reduction loop, so `.reduce(a)` returns
  * (min, max). `minimummaximum_with_identity` additionally registers
  * NPY_METH_get_multi_reduction_initials (+inf/-inf).
+ * `minimum_intp_maximum` and `minimum_object_maximum` return the maximum as
+ * intp or object, so their reductions cast the float64 input into it.
  */
 
 #define PY_SSIZE_T_CLEAN
@@ -219,6 +221,145 @@ object_minimummaximum_get_reduction_loop(
 }
 
 
+/*
+ * Mixed-dtype variants: (f8, f8) -> (f8, intp) and (f8, f8) -> (f8, object).
+ * The second output is the maximum converted to its dtype, so reduce and
+ * reduceat seed it by casting the first float64 element of the reduction.
+ */
+static int
+double_minimum_intp_maximum_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *in1 = data[0], *in2 = data[1];
+    char *out1 = data[2], *out2 = data[3];
+
+    for (npy_intp i = 0; i < n; i++) {
+        double a = *(double *)in1;
+        double b = *(double *)in2;
+        *(double *)out1 = nan_min(a, b);
+        *(npy_intp *)out2 = (npy_intp)nan_max(a, b);
+        in1 += strides[0]; in2 += strides[1];
+        out1 += strides[2]; out2 += strides[3];
+    }
+    return 0;
+}
+
+
+static int
+double_minimum_intp_maximum_reduce_loop(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+
+    for (npy_intp i = 0; i < n; i++) {
+        double val = *(double *)x;
+        npy_intp ival = (npy_intp)val;
+        npy_intp cur_max = *(npy_intp *)acc_max;
+        *(double *)out_min = nan_min(*(double *)acc_min, val);
+        *(npy_intp *)out_max = cur_max >= ival ? cur_max : ival;
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
+
+
+static int
+minimum_intp_maximum_get_reduction_loop(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        int NPY_UNUSED(aligned), int NPY_UNUSED(move_references),
+        const npy_intp *NPY_UNUSED(strides),
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    *out_loop = &double_minimum_intp_maximum_reduce_loop;
+    *out_transferdata = NULL;
+    *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    return 0;
+}
+
+
+static int
+double_minimum_object_maximum_loop(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *in1 = data[0], *in2 = data[1];
+    char *out1 = data[2], *out2 = data[3];
+
+    for (npy_intp i = 0; i < n; i++) {
+        double a = *(double *)in1;
+        double b = *(double *)in2;
+        PyObject *hi = PyFloat_FromDouble(nan_max(a, b));
+        if (hi == NULL) {
+            return -1;
+        }
+        *(double *)out1 = nan_min(a, b);
+        PyObject *old = *(PyObject **)out2;
+        *(PyObject **)out2 = hi;
+        Py_XDECREF(old);
+        in1 += strides[0]; in2 += strides[1];
+        out1 += strides[2]; out2 += strides[3];
+    }
+    return 0;
+}
+
+
+static int
+double_minimum_object_maximum_reduce_loop(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp n = dimensions[0];
+    char *acc_min = data[0], *acc_max = data[1], *x = data[2];
+    char *out_min = data[3], *out_max = data[4];
+
+    for (npy_intp i = 0; i < n; i++) {
+        double val = *(double *)x;
+        double cur_max = PyFloat_AsDouble(*(PyObject **)acc_max);
+        if (cur_max == -1.0 && PyErr_Occurred()) {
+            return -1;
+        }
+        PyObject *hi = PyFloat_FromDouble(nan_max(cur_max, val));
+        if (hi == NULL) {
+            return -1;
+        }
+        *(double *)out_min = nan_min(*(double *)acc_min, val);
+        PyObject *old = *(PyObject **)out_max;
+        *(PyObject **)out_max = hi;
+        Py_XDECREF(old);
+        acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
+        out_min += strides[3]; out_max += strides[4];
+    }
+    return 0;
+}
+
+
+static int
+minimum_object_maximum_get_reduction_loop(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        int NPY_UNUSED(aligned), int NPY_UNUSED(move_references),
+        const npy_intp *NPY_UNUSED(strides),
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    *out_loop = &double_minimum_object_maximum_reduce_loop;
+    *out_transferdata = NULL;
+    *flags = NPY_METH_REQUIRES_PYAPI;
+    return 0;
+}
+
+
 static int
 minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const NPY_UNUSED(op_dtypes[]),
@@ -345,6 +486,56 @@ add_minimummaximum(PyObject *module, const char *name, int with_identity)
 }
 
 
+static int
+add_mixed_minimummaximum(PyObject *module, const char *name,
+        int max_typenum, PyArrayMethod_StridedLoop *loop,
+        PyArrayMethod_GetLoop *get_reduction_loop,
+        NPY_ARRAYMETHOD_FLAGS flags)
+{
+    PyObject *ufunc = PyUFunc_FromFuncAndData(
+            NULL, NULL, NULL, 0, 2, 2, PyUFunc_None, name, NULL, 0);
+    if (ufunc == NULL) {
+        return -1;
+    }
+
+    PyArray_Descr *double_descr = PyArray_DescrFromType(NPY_DOUBLE);
+    PyArray_Descr *max_descr = PyArray_DescrFromType(max_typenum);
+    if (double_descr == NULL || max_descr == NULL) {
+        Py_XDECREF((PyObject *)double_descr);
+        Py_XDECREF((PyObject *)max_descr);
+        Py_DECREF(ufunc);
+        return -1;
+    }
+    PyArray_DTypeMeta *dt = NPY_DTYPE(double_descr);
+    PyArray_DTypeMeta *dtypes[4] = {dt, dt, dt, NPY_DTYPE(max_descr)};
+
+    PyType_Slot slots[] = {
+        {NPY_METH_strided_loop, (void *)loop},
+        {NPY_METH_get_reduction_loop, (void *)get_reduction_loop},
+        {0, NULL},
+    };
+
+    PyArrayMethod_Spec spec = {
+        .name = name,
+        .nin = 2,
+        .nout = 2,
+        .casting = NPY_NO_CASTING,
+        .flags = NPY_METH_IS_REORDERABLE | flags,
+        .dtypes = dtypes,
+        .slots = slots,
+    };
+
+    int res = PyUFunc_AddLoopFromSpec(ufunc, &spec);
+    Py_DECREF(double_descr);
+    Py_DECREF(max_descr);
+    if (res == 0) {
+        res = PyModule_AddObjectRef(module, name, ufunc);
+    }
+    Py_DECREF(ufunc);
+    return res;
+}
+
+
 static PyMethodDef ReductionLoopTestsMethods[] = {
     {NULL, NULL, 0, NULL}
 };
@@ -364,6 +555,18 @@ _reduction_loop_tests_exec(PyObject *m)
         return -1;
     }
     if (add_minimummaximum(m, "minimummaximum_with_identity", 1) < 0) {
+        return -1;
+    }
+    if (add_mixed_minimummaximum(m, "minimum_intp_maximum", NPY_INTP,
+            &double_minimum_intp_maximum_loop,
+            &minimum_intp_maximum_get_reduction_loop,
+            NPY_METH_NO_FLOATINGPOINT_ERRORS) < 0) {
+        return -1;
+    }
+    if (add_mixed_minimummaximum(m, "minimum_object_maximum", NPY_OBJECT,
+            &double_minimum_object_maximum_loop,
+            &minimum_object_maximum_get_reduction_loop,
+            NPY_METH_REQUIRES_PYAPI) < 0) {
         return -1;
     }
 
