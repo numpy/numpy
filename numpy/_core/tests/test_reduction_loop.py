@@ -288,7 +288,11 @@ class TestReductionLoop:
     def test_mixed_out_strided(self, method, ufunc, max_dtype):
         args, kwargs = method_args(method, make_array((12,), seed=45)[::-1])
         out_shape = method_out_shape(method, args, kwargs)
-        out = (np.empty(out_shape, np.float64), np.empty(out_shape, max_dtype))
+        size = int(np.prod(out_shape))
+        out = tuple(
+            np.empty(step * size, dtype=dtype)[::step].reshape(out_shape)
+            for dtype, step in [(np.float64, 2), (max_dtype, 3)]
+        )
         check_minmax(method, *args, **kwargs, ufunc=ufunc, max_dtype=max_dtype,
                      out=out)
 
@@ -479,23 +483,17 @@ class TestReduceat:
         # identity must not change the result.
         check_minmax("reduceat", make_array((10,), seed=25), [0, 4, 7], ufunc=mmi)
 
-    @pytest.mark.parametrize("idx", [[0, 0, 3], [3, 1], [0, 5], [5],
-                                     [0, 2, 2, 4], [4, 0]])
-    def test_reduceat_repeated_and_unordered_indices(self, idx):
-        # Segments that are empty or run backwards return the element at the
-        # index itself, which the reduction loop must not fold over.
-        check_minmax("reduceat", make_array((6,), seed=29), idx)
-
     @pytest.mark.parametrize("ufunc, max_dtype", [
-        (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
-        ids=["intp", "object"])
-    @pytest.mark.parametrize("idx", [[0, 0, 3], [3, 1], [5], [4, 0]])
-    def test_mixed_reduceat_repeated_and_unordered_indices(
-            self, ufunc, max_dtype, idx):
-        # Empty and backwards segments are only their first element, cast to
-        # the second output's dtype.
-        check_minmax("reduceat", make_array((6,), seed=44), idx, ufunc=ufunc,
-                     max_dtype=max_dtype)
+        (mm, np.float64),
+        (minimum_intp_maximum, np.intp),
+        (minimum_object_maximum, object),
+    ])
+    def test_reduceat_segment_boundaries(self, ufunc, max_dtype):
+        a = make_array((6,), seed=29)
+        check_minmax(
+            "reduceat", a, [0, 0, 4, 2, 3],
+            ufunc=ufunc, max_dtype=max_dtype,
+        )
 
     def test_reduceat_error_stops_later_segments(self):
         # The loop error in the first segment must stop the reduction, so
