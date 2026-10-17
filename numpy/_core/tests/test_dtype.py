@@ -2096,6 +2096,29 @@ class TestFromCTypes:
         ], align=True)
         self.check(PaddedStruct, expected)
 
+    @pytest.mark.parametrize("pack", [None, 1])
+    def test_subclassed_structure(self, pack):
+        class Base(ctypes.Structure):
+            _fields_ = [('a', ctypes.c_int32), ('b', ctypes.c_int32)]
+
+        attrs = {'_fields_': [('c', ctypes.c_int64)]}
+        if pack is not None:
+            attrs['_pack_'] = pack
+        Sub = type('Sub', (Base,), attrs)
+
+        expected = np.dtype({
+            "names": ['a', 'b', 'c'],
+            "formats": [np.int32, np.int32, np.int64],
+            "offsets": [0, 4, 8],
+            "itemsize": 16})
+        self.check(Sub, expected)
+
+        arr = (Sub * 2)()
+        for rec, c in zip(arr, (3, 4)):
+            rec.a, rec.b, rec.c = 1, 2, c
+        res = np.frombuffer(bytes(arr), dtype=Sub)
+        assert res.tolist() == [(1, 2, 3), (1, 2, 4)]
+
     def test_simple_endian_types(self):
         self.check(ctypes.c_uint16.__ctype_le__, np.dtype('<u2'))
         self.check(ctypes.c_uint16.__ctype_be__, np.dtype('>u2'))
