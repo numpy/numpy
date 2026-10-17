@@ -22,6 +22,7 @@
  *              NPY_CPU_LOONGARCH
  *              NPY_CPU_SW_64
  *              NPY_CPU_WASM
+ *              NPY_CPU_E2K
  */
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_CPU_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_NPY_CPU_H_
@@ -118,6 +119,8 @@
     /* __EMSCRIPTEN__ is defined by emscripten: an LLVM-to-Web compiler */
     /* __wasm__ is defined by clang when targeting wasm */
     #define NPY_CPU_WASM
+#elif defined(__e2k__)
+    #define NPY_CPU_E2K
 #else
     #error Unknown CPU, please report this to numpy maintainers with \
     information about your platform (OS, CPU and compiler)
