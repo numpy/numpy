@@ -54,7 +54,8 @@ The default number of fractional digits displayed is 8. You can change this numb
 
 
 The ``floatmode`` option determines how the ``precision`` setting is interpreted. 
-By default, ``floatmode=maxprec`` prints at most ``precision`` fractional digits, but uses fewer for any element that can be uniquely represented with fewer digits.
+By default, ``floatmode=maxprec`` prints at most ``precision`` fractional digits, but
+uses fewer for any element that can be uniquely represented with fewer digits.
 ``floatmode=maxprec_equal`` does the same, but uses the same number of digits for every element.
 If you want to show exactly the same number of digits specified by ``precision``, use ``floatmode=fixed``:
 
