@@ -358,8 +358,9 @@ class ABCPolyBase(abc.ABC):
 
         off, scale = self.mapparms()
 
+        multiplication_symbol = '·' if self._use_unicode else ' '
         scaled_symbol, needs_parens = self._format_term(pu.format_float,
-                                                        off, scale)
+                                            multiplication_symbol, off, scale)
         if needs_parens:
             scaled_symbol = '(' + scaled_symbol + ')'
 
@@ -433,7 +434,8 @@ class ABCPolyBase(abc.ABC):
         # exponents in this function
         return fr'\text{{{pu.format_float(x, parens=parens)}}}'
 
-    def _format_term(self, scalar_format: Callable, off: float, scale: float):
+    def _format_term(self, scalar_format: Callable, multiplication_symbol: str,
+                     off: float, scale: float):
         """ Format a single term in the expansion """
         if off == 0 and scale == 1:
             term = self.symbol
@@ -442,12 +444,13 @@ class ABCPolyBase(abc.ABC):
             term = f"{scalar_format(off)} + {self.symbol}"
             needs_parens = True
         elif off == 0:
-            term = f"{scalar_format(scale)}{self.symbol}"
+            term = (f"{scalar_format(scale)}"
+                    f"{multiplication_symbol}{self.symbol}")
             needs_parens = True
         else:
             term = (
                 f"{scalar_format(off)} + "
-                f"{scalar_format(scale)}{self.symbol}"
+                f"{scalar_format(scale)}{multiplication_symbol}{self.symbol}"
             )
             needs_parens = True
         return term, needs_parens
@@ -456,7 +459,7 @@ class ABCPolyBase(abc.ABC):
         # get the scaled argument string to the basis functions
         off, scale = self.mapparms()
         term, needs_parens = self._format_term(self._repr_latex_scalar,
-                                               off, scale)
+                                               r'\,', off, scale)
 
         mute = r"\color{{LightGray}}{{{}}}".format
 
