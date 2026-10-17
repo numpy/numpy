@@ -601,8 +601,15 @@ assert_type(
         np.ndarray[tuple[int, int, int], np.dtype[np.complex128]],
     ],
 )
-assert_type(np.meshgrid(AR_f8, AR_f8, AR_f8, AR_f8), tuple[npt.NDArray[np.float64], ...])
-assert_type(np.meshgrid(AR_f8, AR_f8, AR_f8, AR_LIKE_f8), tuple[np.ndarray, ...])
+assert_type(
+    np.meshgrid(AR_f8, AR_f8, AR_f8, AR_f8),
+    tuple[npt.Array4D[np.float64], npt.Array4D[np.float64], npt.Array4D[np.float64], npt.Array4D[np.float64]],
+)
+assert_type(
+    np.meshgrid(AR_f8, AR_f8, AR_f8, AR_LIKE_f8),
+    tuple[npt.Array4D[Any], npt.Array4D[Any], npt.Array4D[Any], npt.Array4D[Any]],
+)
+assert_type(np.meshgrid(AR_f8, AR_f8, AR_f8, AR_f8, AR_f8), tuple[npt.NDArray[np.float64], ...])
 assert_type(np.meshgrid(*AR_LIKE_f8), tuple[np.ndarray, ...])
 
 # delete
@@ -614,10 +621,15 @@ assert_type(np.insert(AR_f8, np.s_[:5], 5), np.ndarray[tuple[int], np.dtype[np.f
 assert_type(np.insert(AR_LIKE_f8, [0, 4, 9], [0.5, 9.2, 7], axis=0), np.ndarray)
 
 # append
-assert_type(np.append(f8, f8), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.append(AR_f8, AR_f8), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.append(AR_LIKE_f8, AR_LIKE_c16, axis=0), np.ndarray)
-assert_type(np.append(AR_f8, AR_LIKE_f8, axis=0), np.ndarray)
+assert_type(np.append(f8, f8), npt.Array1D[np.float64])
+assert_type(np.append(AR_f8, AR_i8), npt.Array1D[Any])
+assert_type(np.append(AR_f8, AR_f8), npt.Array1D[np.float64])
+assert_type(np.append(AR_f8, AR_LIKE_f8, axis=0), npt.NDArray[Any])
+assert_type(np.append(AR_f8_2d, AR_i8_2d, axis=0), npt.Array2D[Any])
+assert_type(np.append(AR_f8_2d, AR_f8_2d, axis=0), npt.Array2D[np.float64])
+assert_type(np.append(AR_f8_2d, AR_LIKE_f8_2d, axis=0), npt.Array2D[Any])
+assert_type(np.append(AR_LIKE_f8, AR_LIKE_c16, axis=0), npt.NDArray[Any])
+assert_type(np.append(AR_LIKE_f8_2d, AR_f8_2d, axis=0), npt.NDArray[Any])
 
 # digitize
 assert_type(np.digitize(4.5, [1]), np.intp)

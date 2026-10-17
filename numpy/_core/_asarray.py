@@ -47,8 +47,6 @@ def require(a, dtype=None, requirements=None, *, like=None):
        * 'ENSUREARRAY', ('E') - ensure a base array, instead of a subclass
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray

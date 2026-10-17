@@ -22,7 +22,7 @@ np.where(AR_b, 1)  # type: ignore[call-overload]
 
 np.can_cast(AR_f8, 1)  # type: ignore[arg-type]
 
-np.vdot(AR_M, AR_M)  # type: ignore[arg-type]
+np.vdot(AR_M, AR_M)  # type: ignore[type-var]
 
 np.copyto(AR_LIKE_f, AR_f8)  # type: ignore[arg-type]
 
