@@ -93,7 +93,7 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.13", "3.14", "3.15-dev", "3.15t-dev"]
+        version: ["3.13", "3.14", "3.15-dev", "3.15t-dev", 'pypy3.12']
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:

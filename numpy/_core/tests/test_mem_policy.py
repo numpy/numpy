@@ -9,7 +9,11 @@ import pytest
 
 import numpy as np
 from numpy._core.multiarray import get_handler_name
-from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, extbuild
+from numpy.testing import (
+    HAS_SUBPROCESSES,
+    IS_EDITABLE,
+    extbuild,
+)
 
 
 @pytest.fixture
