@@ -18,6 +18,7 @@
 #include "dtypemeta.h"
 
 #include "legacy_dtype_implementation.h"
+#include "npy_pycompat.h"
 
 
 /*

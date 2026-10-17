@@ -10,6 +10,7 @@
 #include "dtypemeta.h"
 
 #include "npy_config.h"
+#include "npy_pycompat.h"
 
 
 

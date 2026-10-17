@@ -22,6 +22,7 @@
 #include "multiarraymodule.h"
 #include "module_state.h"
 #include "npy_sort.h"
+#include "npy_pycompat.h"
 
 /*
  * Internal helper to create new instances
