@@ -3020,7 +3020,7 @@ accumulate_along_axis(PyArrayMethod_Context *context,
         }
         else {
             memmove(dataptr[i], dataptr[nout],
-                    context->descriptors[nout + 1 + i]->elsize);
+                    (size_t)context->descriptors[nout + 1 + i]->elsize);
         }
     }
 
