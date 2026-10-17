@@ -540,6 +540,14 @@ class TestAccumulate:
     def test_accumulate_empty(self):
         check_minmax("accumulate", np.array([], np.float64))
 
+    def test_accumulate_outputs_overlap_each_other(self):
+        # buf[1:3] is shared, but the elements only one output owns must be
+        # right, so the outputs need a writeback copy.
+        a = np.array([3.0, 1.0, 2.0])
+        buf = np.zeros(4)
+        lo, hi = mm.accumulate(a, out=(buf[:3], buf[1:]))
+        assert lo[0] == 3.0 and hi[-1] == 3.0
+
     def test_accumulate_error_stops_later_rows(self):
         # The loop error in the first row must stop the accumulation, so
         # the second row of `out` is never written.
