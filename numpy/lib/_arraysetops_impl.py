@@ -415,15 +415,19 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     else:
         mask[1:] = aux[1:] != aux[:-1]
 
-    ret = (aux[mask],)
+    ret = ()
+    if optional_indices and not stable:
+        unique_pos = np.flatnonzero(mask)
+        # If sort was unstable, the group is in arbitrary order, so pick it
+        # smallest original position.
+        first_indexes = np.minimum.reduceat(perm, unique_pos)
+        ret += (ar[first_indexes],)
+    else:
+        ret += (aux[mask],)
+
     if return_index:
-        if stable:
-            ret += (perm[mask],)
-        else:
-            unique_pos = np.flatnonzero(mask)
-            # If sort was unstable, the group is in arbitrary order, so pick it
-            # smallest original position.
-            ret += (np.minimum.reduceat(perm, unique_pos),)
+        ret += (perm[mask] if stable else first_indexes,)
+
     if return_inverse:
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)

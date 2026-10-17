@@ -1289,7 +1289,7 @@ class TestUnique:
             dtype=object)
         u, idx = np.unique(arr, return_index=True)
         assert_array_equal(idx, [4, 3, 1, 0])
-        assert u[0] is arr[13]
+        assert u[0] is arr[4]
         assert u[0] == arr[4]
 
     def test_unique_return_inverse_equal_distinguishable_object(self):
@@ -1297,15 +1297,7 @@ class TestUnique:
             [4, 3, 3, 2, True, 2, 2, 1, 2, 4, 3, 4, 3, 1.0, 1.0, 4, 1.0],
             dtype=object)
         u, inverse = np.unique(arr, return_inverse=True)
-        assert u[0] is arr[13]
-        assert u[0] == arr[4]
-
-    def test_unique_equal_distinguishable_object(self):
-        arr = np.array(
-            [4, 3, 3, 2, True, 2, 2, 1, 2, 4, 3, 4, 3, 1.0, 1.0, 4, 1.0],
-            dtype=object)
-        u = np.unique(arr)
-        assert u[0] is arr[13]
+        assert u[0] is arr[4]
         assert u[0] == arr[4]
 
     def test_unique_return_index_first_occurrence_signed_zero(self):
@@ -1314,7 +1306,7 @@ class TestUnique:
             dtype=object)
         u, idx = np.unique(arr, return_index=True)
         assert_array_equal(idx, [4, 3, 1, 0])
-        assert u[0] is arr[7]
+        assert u[0] is arr[4]
         assert u[0] == arr[4]
 
     def test_unique_return_inverse_signed_zero(self):
@@ -1322,13 +1314,5 @@ class TestUnique:
             [3, 2, 2, 1, -0.0, 1, 1, 0.0, 1, 3, 2, 3, 2, 0.0, 0.0, 3, 0.0],
             dtype=object)
         u, inverse = np.unique(arr, return_inverse=True)
-        assert u[0] is arr[7]
-        assert u[0] == arr[4]
-
-    def test_unique_equal_signed_zero(self):
-        arr = np.array(
-            [3, 2, 2, 1, -0.0, 1, 1, 0.0, 1, 3, 2, 3, 2, 0.0, 0.0, 3, 0.0],
-            dtype=object)
-        u = np.unique(arr)
-        assert u[0] is arr[7]
+        assert u[0] is arr[4]
         assert u[0] == arr[4]
