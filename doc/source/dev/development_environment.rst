@@ -27,9 +27,8 @@ of this chapter we assume that you have set up your git repo as described in
    environments and deal with incompatible dependencies.
 
    If you have good internet connectivity and want a temporary set-up, it is
-   often faster to work on NumPy in a Codespaces environment. For documentation
-   on how to get started with Codespaces, see
-   `the Codespaces docs <https://docs.github.com/en/codespaces>`__.
+   often faster to work on NumPy in a Codespaces environment. For a
+   step-by-step guide, see :ref:`development_ghcodespaces`.
    When creating a codespace for the ``numpy/numpy`` repository, the default
    2-core machine type works; 4-core will build and work a bit faster (but of
    course at a cost of halving your number of free usage hours). Once your
@@ -58,12 +57,12 @@ once)::
 
 If you installed Python some other way than conda, first install
 `virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named ``numpy-dev`` here), activate it, and install all project 
+virtualenv (named ``numpy-dev`` here), activate it, and install all project
 dependencies with::
 
     $ virtualenv numpy-dev
     $ source numpy-dev/bin/activate # activate virtual environment
-    $ python -m pip install -r requirements/all_requirements.txt
+    $ python -m pip install --group all
 
 Now, whenever you want to switch to the virtual environment, you can use the
 command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
@@ -81,7 +80,7 @@ Testing builds
 
 Before running the tests, first install the test dependencies::
 
-    $ python -m pip install -r requirements/test_requirements.txt
+    $ python -m pip install --group test-extending
     $ python -m pip install asv # only for running benchmarks
 
 To build the development version of NumPy and run tests, spawn
@@ -116,7 +115,7 @@ argument to pytest::
     $ spin test -v -t numpy/_core/tests/test_multiarray.py -- -k "MatMul and not vector"
 
 To run "doctests" -- to check that the code examples in the documentation is correct --
-use the `check-docs` spin command. It relies on the `scipy-docs` package, which
+use the `check-docs` spin command. It relies on the `scipy-doctest` package, which
 provides several additional features on top of the standard library ``doctest``
 package. Install ``scipy-doctest`` and run one of::
 
@@ -202,7 +201,7 @@ Lint checks can be performed on newly added lines of Python code.
 
 Install all dependent packages using pip::
 
-    $ python -m pip install -r requirements/linter_requirements.txt
+    $ python -m pip install --group linter
 
 To run lint checks before committing new code, run::
 

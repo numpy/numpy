@@ -680,6 +680,22 @@ class TestDivision:
             y = 0.0 / x
             assert_(np.isnan(y)[0])
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.parametrize(
+        "dt",
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code == "G" else [])
+            for code in np.typecodes["Complex"]
+        ],
+    )
+    def test_reciprocal_zero_complex(self, dt):
+        x = np.array([0j, complex(-0.0, 0.0), complex(0.0, -0.0)], dtype=dt)
+        with np.errstate(invalid="ignore", divide="raise"):
+            with pytest.raises(FloatingPointError, match="divide by zero"):
+                np.reciprocal(x)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            assert_equal(np.reciprocal(x), 1.0 / x)
+
     def test_floor_division_complex(self):
         # check that floor division, divmod and remainder raises type errors
         x = np.array(
@@ -1399,7 +1415,7 @@ class TestExp2:
             assert_almost_equal(np.exp2(yf), xf)
 
 
-class TestLogAddExp2(_FilterInvalids):
+class TestLogAddExp2:
     # Need test for intermediate precisions
     def test_logaddexp2_values(self):
         x = [1, 2, 3, 4, 5]
@@ -1433,12 +1449,18 @@ class TestLogAddExp2(_FilterInvalids):
                 logzf = np.array(z, dtype=dt)
                 assert_equal(np.logaddexp2(logxf, logyf), logzf)
 
-    def test_nan(self):
-        assert_(np.isnan(np.logaddexp2(np.nan, np.inf)))
-        assert_(np.isnan(np.logaddexp2(np.inf, np.nan)))
-        assert_(np.isnan(np.logaddexp2(np.nan, 0)))
-        assert_(np.isnan(np.logaddexp2(0, np.nan)))
-        assert_(np.isnan(np.logaddexp2(np.nan, np.nan)))
+    @pytest.mark.parametrize("dtype", ['f', 'd', 'g'])
+    @pytest.mark.parametrize("x, y", [
+        (np.nan, np.inf),
+        (np.inf, np.nan),
+        (np.nan, 0),
+        (0, np.nan),
+        (np.nan, np.nan),
+    ])
+    def test_nan(self, dtype, x, y):
+        x, y = np.array([x, y], dtype=dtype)
+        with np.errstate(invalid='raise'):
+            assert np.isnan(np.logaddexp2(x, y))
 
     def test_reduce(self):
         assert_equal(np.logaddexp2.identity, -np.inf)
@@ -2266,7 +2288,7 @@ class TestAVXFloat32Transcendental:
                 assert_array_almost_equal_nulp(np.sin(x_large), sin_true[::jj], nulp=2)
                 assert_array_almost_equal_nulp(np.cos(x_large), cos_true[::jj], nulp=2)
 
-class TestLogAddExp(_FilterInvalids):
+class TestLogAddExp:
     def test_logaddexp_values(self):
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
@@ -2299,12 +2321,18 @@ class TestLogAddExp(_FilterInvalids):
                 logzf = np.array(z, dtype=dt)
                 assert_equal(np.logaddexp(logxf, logyf), logzf)
 
-    def test_nan(self):
-        assert_(np.isnan(np.logaddexp(np.nan, np.inf)))
-        assert_(np.isnan(np.logaddexp(np.inf, np.nan)))
-        assert_(np.isnan(np.logaddexp(np.nan, 0)))
-        assert_(np.isnan(np.logaddexp(0, np.nan)))
-        assert_(np.isnan(np.logaddexp(np.nan, np.nan)))
+    @pytest.mark.parametrize("dtype", ['f', 'd', 'g'])
+    @pytest.mark.parametrize("x, y", [
+        (np.nan, np.inf),
+        (np.inf, np.nan),
+        (np.nan, 0),
+        (0, np.nan),
+        (np.nan, np.nan),
+    ])
+    def test_nan(self, dtype, x, y):
+        x, y = np.array([x, y], dtype=dtype)
+        with np.errstate(invalid='raise'):
+            assert np.isnan(np.logaddexp(x, y))
 
     def test_reduce(self):
         assert_equal(np.logaddexp.identity, -np.inf)

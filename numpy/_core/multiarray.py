@@ -19,7 +19,6 @@ from ._multiarray_umath import (  # noqa: F401
     _flagdict,
     _get_madvise_hugepage,
     _get_ndarray_c_version,
-    _monotonicity,
     _place,
     _reconstruct,
     _set_madvise_hugepage,
@@ -33,7 +32,7 @@ __all__ = [
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
     'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP',
     '_flagdict', 'from_dlpack', '_place', '_reconstruct', '_vec_string',
-    '_monotonicity', 'add_docstring', 'arange', 'array', 'asarray',
+    'add_docstring', 'arange', 'array', 'asarray',
     'asanyarray', 'ascontiguousarray', 'asfortranarray', 'bincount',
     'broadcast', 'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
     'compare_chararrays', 'concatenate', 'copyto', 'correlate', 'correlate2',
@@ -229,13 +228,9 @@ def concatenate(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
         If provided, the destination array will have this dtype. Cannot be
         provided together with `out`.
 
-        .. versionadded:: 1.20.0
-
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
         For a description of the options, please see :term:`casting`.
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------

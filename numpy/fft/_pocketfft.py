@@ -143,9 +143,6 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype.
@@ -257,10 +254,6 @@ def ifft(a, n=None, axis=-1, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype.
@@ -346,10 +339,6 @@ def rfft(a, n=None, axis=-1, norm=None, out=None):
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
-
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
@@ -453,10 +442,6 @@ def irfft(a, n=None, axis=-1, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype.
@@ -550,10 +535,6 @@ def hfft(a, n=None, axis=-1, norm=None, out=None):
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
-
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
 
     out : ndarray, optional
         If provided, the result will be placed in this array. It should be
@@ -651,10 +632,6 @@ def ihfft(a, n=None, axis=-1, norm=None, out=None):
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
-
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
@@ -806,10 +783,6 @@ def fftn(a, s=None, axes=None, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
@@ -947,10 +920,6 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
@@ -1070,10 +1039,6 @@ def fft2(a, s=None, axes=(-2, -1), norm=None, out=None):
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
-
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
@@ -1203,10 +1168,6 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
@@ -1318,10 +1279,6 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for all axes (and hence is
@@ -1430,10 +1387,6 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for the last inverse transform.
@@ -1533,10 +1486,6 @@ def irfftn(a, s=None, axes=None, norm=None, out=None):
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
-
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
 
     out : ndarray, optional
         If provided, the result will be placed in this array. It should be
@@ -1649,10 +1598,6 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
-
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
 
     out : ndarray, optional
         If provided, the result will be placed in this array. It should be

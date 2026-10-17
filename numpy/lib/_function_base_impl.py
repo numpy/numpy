@@ -12,7 +12,6 @@ from numpy._core import overrides, transpose
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import any, mean, nonzero, partition, ravel, sum
 from numpy._core.multiarray import (
-    _monotonicity,
     _place,
     bincount,
     interp as compiled_interp,
@@ -1806,8 +1805,6 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         Size of the range over which the input wraps. By default, it is
         ``2 pi``.
 
-        .. versionadded:: 1.21.0
-
     Returns
     -------
     out : ndarray
@@ -2764,8 +2761,6 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
 
-        .. versionadded:: 1.20
-
     Returns
     -------
     out : ndarray
@@ -2968,8 +2963,6 @@ def corrcoef(x, y=None, rowvar=True, *,
     dtype : data-type, optional
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
-
-        .. versionadded:: 1.20
 
     Returns
     -------
@@ -4148,10 +4141,6 @@ def percentile(a,
         * 'midpoint'
         * 'nearest'
 
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
-
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -4349,10 +4338,6 @@ def quantile(a,
         * 'nearest'
 
         See Notes for details.
-
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
@@ -5258,11 +5243,7 @@ def delete(arr, obj, axis=None):
         Input array.
     obj : slice, int, array-like of ints or bools
         Indicate indices of sub-arrays to remove along the specified axis.
-
-        .. versionchanged:: 1.19.0
-            Boolean indices are now treated as a mask of elements to remove,
-            rather than being cast to the integers 0 and 1.
-
+        Boolean arrays are treated as a mask of elements to remove.
     axis : int, optional
         The axis along which to delete the subarray defined by `obj`.
         If `axis` is None, `obj` is applied to the flattened array.
@@ -5656,6 +5637,15 @@ def append(arr, values, axis=None):
     insert : Insert elements into an array.
     delete : Delete elements from an array.
 
+    Notes
+    -----
+    .. deprecated:: 2.6
+        When ``axis=None``, Python numeric scalars currently promote as if
+        converted to arrays. A future release will use the scalar promotion
+        rules of ``np.concatenate((arr, values), axis=None)``. Call
+        `concatenate` directly to use the future behavior, or pass its
+        ``dtype=`` argument to choose the result dtype explicitly.
+
     Examples
     --------
     >>> import numpy as np
@@ -5687,13 +5677,34 @@ def append(arr, values, axis=None):
     `float64` when appended with dtype `int64`
 
     """
-    arr = asanyarray(arr)
-    if axis is None:
-        if arr.ndim != 1:
-            arr = arr.ravel()
-        values = ravel(values)
-        axis = arr.ndim - 1
-    return concatenate((arr, values), axis=axis)
+    if axis is not None:
+        return concatenate((arr, values), axis=axis)
+    conv = _array_converter(arr, values)
+    arrays = conv.as_arrays(pyscalars="convert")
+    if conv.has_pyscalars:
+        # DEPRECATED 2026-09-15, NumPy 2.6
+        result = concatenate(arrays, axis=None)
+        try:
+            future_dtype = conv.result_type()
+        except np.exceptions.DTypePromotionError:
+            change = "these inputs have no common dtype and will raise an error"
+        else:
+            if future_dtype == result.dtype:
+                return result
+            change = (
+                f"these inputs will use dtype {future_dtype}, which may "
+                "round values differently or raise an error")
+        warnings.warn(
+            "np.append converted Python numeric scalars to arrays before "
+            f"choosing the result dtype, producing dtype {result.dtype}. "
+            "This behavior will change in a future release, "
+            f"{change}. Use np.concatenate((arr, values), axis=None) for the "
+            f"future behavior; add dtype={str(result.dtype)!r} to that call to "
+            "keep the current result.", FutureWarning, stacklevel=2)
+        return result
+    inputs = tuple(obj if scalar else a for obj, scalar, a in
+                   zip((arr, values), conv.scalar_input, arrays))
+    return concatenate(inputs, axis=None)
 
 
 def _digitize_dispatcher(x, bins, right=None):
@@ -5753,8 +5764,6 @@ def digitize(x, bins, right=False):
     attempting to index `bins` with the indices that `digitize` returns
     will result in an IndexError.
 
-    .. versionadded:: 1.10.0
-
     `numpy.digitize` is  implemented in terms of `numpy.searchsorted`.
     This means that a binary search is used to bin the values, which scales
     much better for larger number of bins than the previous linear search.
@@ -5798,9 +5807,15 @@ def digitize(x, bins, right=False):
     # here for compatibility, searchsorted below is happy to take this
     if np.issubdtype(x.dtype, _nx.complexfloating):
         raise TypeError("x may not be complex")
-
-    mono = _monotonicity(bins)
-    if mono == 0:
+    if np.issubdtype(bins.dtype, _nx.complexfloating):
+        raise TypeError("bins may not be complex")
+    if bins.ndim != 1:
+        raise ValueError("bins must be one-dimensional")
+    if (bins[1:] >= bins[:-1]).all():
+        mono = 1
+    elif (bins[1:] <= bins[:-1]).all():
+        mono = -1
+    else:
         raise ValueError("bins must be monotonically increasing or decreasing")
 
     # this is backwards because the arguments below are swapped

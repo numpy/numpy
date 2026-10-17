@@ -78,7 +78,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "stringdtype/dtype.h"
 
 #include "get_attr_string.h"
-#include "public_dtype_api.h"  /* _fill_dtype_api */
 #include "textreading/readtext.h"  /* _readtext_from_file_object */
 
 #include "npy_dlpack.h"
@@ -2364,7 +2363,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     /* binary mode, condition copied from PyArray_FromString */
     if (sep == NULL || strlen(sep) == 0) {
         PyErr_SetString(PyExc_ValueError,
-            "The binary mode of fromstring is removed, use frombuffer instead");
+            "fromstring() requires a non-empty 'sep' argument.");
         Py_XDECREF(descr);
         return NULL;
     }
@@ -4909,8 +4908,6 @@ static struct PyMethodDef array_module_methods[] = {
         "indicated by mask."},
     {"bincount", (PyCFunction)arr_bincount,
         METH_FASTCALL | METH_KEYWORDS, NULL},
-    {"_monotonicity", (PyCFunction)arr__monotonicity,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp", (PyCFunction)arr_interp,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"interp_complex", (PyCFunction)arr_interp_complex,
@@ -5493,8 +5490,12 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
         return -1;
     }
 
-    /* Create all abstract DType classes */
-    if (initialize_abstract_dtypes() < 0) {
+    /*
+     * Create the abstract DType classes and expose them on ``numpy.dtypes``.
+     * Must run before ``set_typeinfo`` so the legacy concrete DType classes
+     * can use them as ``tp_base`` directly.
+     */
+    if (initialize_abstract_dtypes(state) < 0) {
         return -1;
     }
 
@@ -5502,22 +5503,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     if (set_typeinfo(d) != 0) {
         return -1;
     }
-
-    /*
-     * Map ``str``/``bytes``/``bool`` to the matching legacy DTypes.  Done
-     * after ``set_typeinfo`` since that is what wraps those DTypes.
-     */
-    PyArray_DTypeMeta *dt;
-    dt = typenum_to_dtypemeta(NPY_UNICODE);
-    if (_PyArray_MapPyTypeToDType(dt, &PyUnicode_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-    dt = typenum_to_dtypemeta(NPY_STRING);
-    if (_PyArray_MapPyTypeToDType(dt, &PyBytes_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-    dt = typenum_to_dtypemeta(NPY_BOOL);
-    if (_PyArray_MapPyTypeToDType(dt, &PyBool_Type, NPY_FALSE) < 0) {
+    if (map_legacy_pytypes_to_dtypes() < 0) {
         return -1;
     }
 
@@ -5643,7 +5629,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
      * Export the API tables
      */
     c_api = PyCapsule_New((void *)PyArray_API, NULL, NULL);
-    /* The dtype API is not auto-filled/generated via Python scripts: */
+    /* Fill the DType slots at runtime, after DType initialization. */
     _fill_dtype_api(PyArray_API);
     if (c_api == NULL) {
         return -1;

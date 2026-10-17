@@ -14,8 +14,11 @@
 #if defined(HAVE_STRTOLD_L) && !defined(_GNU_SOURCE)
 # define _GNU_SOURCE
 #endif
+#include <ctype.h>
+#include <errno.h>
 #include <locale.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_STRTOLD_L
 #include <stdlib.h>
