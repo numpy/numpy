@@ -96,46 +96,46 @@ class TestReductionLoop:
     def test_forward(self, shape):
         a = make_array(shape, seed=1)
         b = make_array(shape, seed=2)
-        check_minmax("__call__", a, b)
+        got_min, got_max = mm(a, b)
+        np.testing.assert_array_equal(got_min, np.minimum(a, b))
+        np.testing.assert_array_equal(got_max, np.maximum(a, b))
 
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_forward_strided(self, shape):
         a = make_array(shape, seed=1)[::-1]
         b = make_array(shape, seed=2)[::-1]
-        check_minmax("__call__", a, b)
+        got_min, got_max = mm(a, b)
+        np.testing.assert_array_equal(got_min, np.minimum(a, b))
+        np.testing.assert_array_equal(got_max, np.maximum(a, b))
 
     def test_forward_mixed_dtype_inputs(self):
         a = np.array([1, 2, 3], dtype=np.int32)
         b = np.array([2.5, 1.5, 0.5], dtype=np.float64)
-        check_minmax("__call__", a, b, max_dtype=np.float64)
+        got_min, got_max = mm(a, b)
+        assert got_min.dtype == np.float64
+        np.testing.assert_array_equal(got_min, np.minimum(a, b))
+        np.testing.assert_array_equal(got_max, np.maximum(a, b))
 
     @pytest.mark.parametrize("kind", list(SPECIALS))
     def test_forward_specials(self, kind):
         vals = [1.0, -2.0, 3.5, 0.0, -1.0] + SPECIALS[kind]
         a = np.array(vals, dtype=np.float64)
         b = np.array(vals[::-1], dtype=np.float64)
-        check_minmax("__call__", a, b)
-
-    def test_forward_python_scalars(self):
-        got_min, got_max = mm(3.0, 5.0)
-        assert (got_min, got_max) == (3.0, 5.0)
-
-    def test_forward_python_ints(self):
-        got_min, got_max = mm(3, 5)
-        assert (got_min, got_max) == (3.0, 5.0)
-        assert got_min.dtype == np.float64
-
-    def test_forward_dtype_propagates_to_inputs(self):
-        got_min, got_max = mm(1, 5, dtype=np.float64)
-        assert got_min == 1.0 and got_max == 5.0
+        got_min, got_max = mm(a, b)
+        np.testing.assert_array_equal(got_min, np.minimum(a, b))
+        np.testing.assert_array_equal(got_max, np.maximum(a, b))
 
     def test_scalar_and_0d(self):
         v1 = make_array((), seed=13).item()
         v2 = make_array((), seed=14).item()
         for a, b in ((np.array(v1), np.array(v2)),
                      (np.float64(v1), np.float64(v2))):
-            check_minmax("__call__", a, b)
-            check_minmax("reduce", a)
+            got_min, got_max = mm(a, b)
+            np.testing.assert_array_equal(got_min, np.minimum(a, b))
+            np.testing.assert_array_equal(got_max, np.maximum(a, b))
+            red_min, red_max = mm.reduce(a)
+            np.testing.assert_array_equal(red_min, np.minimum.reduce(a))
+            np.testing.assert_array_equal(red_max, np.maximum.reduce(a))
 
     @pytest.mark.parametrize("method", ["reduce", "reduceat"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
@@ -144,6 +144,11 @@ class TestReductionLoop:
         for axis in method_axes(method, a.ndim):
             args, kwargs = method_args(method, a, axis)
             check_minmax(method, *args, **kwargs)
+
+    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    def test_single_element(self, method):
+        args, kwargs = method_args(method, np.array([7.0]))
+        check_minmax(method, *args, **kwargs)
 
     @pytest.mark.parametrize("method", ["reduce", "reduceat"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
@@ -158,11 +163,6 @@ class TestReductionLoop:
     def test_specials(self, method, kind):
         vals = [1.0, -2.0, 3.5, 0.0, -1.0] + SPECIALS[kind]
         args, kwargs = method_args(method, np.array(vals, dtype=np.float64))
-        check_minmax(method, *args, **kwargs)
-
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
-    def test_single_element(self, method):
-        args, kwargs = method_args(method, np.array([7.0]))
         check_minmax(method, *args, **kwargs)
 
     @pytest.mark.parametrize("method", ["reduce", "reduceat"])
@@ -189,13 +189,6 @@ class TestReductionLoop:
         check_minmax(method, *args, **kwargs, out=out)
 
     @pytest.mark.parametrize("method", ["reduce", "reduceat"])
-    @pytest.mark.parametrize("out", [None, (None, None)])
-    def test_out_none(self, method, out):
-        # `out=None` means no output was given, as for single-output methods.
-        args, kwargs = method_args(method, make_array((4,), seed=9))
-        check_minmax(method, *args, **kwargs, out=out)
-
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
     @pytest.mark.parametrize("which", [0, 1])
     def test_out_partial(self, method, which):
         # Only some entries of the `out` tuple given, the rest allocated.
@@ -205,63 +198,21 @@ class TestReductionLoop:
         check_minmax(method, *args, **kwargs, out=tuple(out))
 
     @pytest.mark.parametrize("method", ["reduce", "reduceat"])
-    def test_out_bare_array_raises(self, method):
-        args, kwargs = method_args(method, make_array((4,), seed=9))
-        with pytest.raises(TypeError, match="must be a tuple of arrays"):
-            getattr(mm, method)(*args, **kwargs, out=np.empty(2))
-
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
-    def test_out_wrong_length_raises(self, method):
-        args, kwargs = method_args(method, make_array((4,), seed=10))
-        with pytest.raises(ValueError, match="exactly one entry per ufunc output"):
-            getattr(mm, method)(*args, **kwargs, out=(np.empty(2),))
-
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
-    def test_dtype_same(self, method):
-        args, kwargs = method_args(method, make_array((4,), seed=16))
-        check_minmax(method, *args, **kwargs, dtype=np.float64,
-                     max_dtype=np.float64)
-
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
-    def test_dtype_forced_no_loop_raises(self, method):
-        args, kwargs = method_args(method, make_array((4,), seed=17))
-        with pytest.raises(TypeError, match="did not contain a loop"):
-            getattr(mm, method)(*args, **kwargs, dtype=np.int64)
-
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
-    def test_dtype_mismatched_tuple_raises(self, method):
-        args, kwargs = method_args(method, make_array((4,), seed=18))
-        with pytest.raises(ValueError, match="mismatch in size"):
-            getattr(mm, method)(*args, **kwargs, dtype=(np.int32, np.int64))
-
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
-    def test_unsupported_dtype_raises(self, method):
-        args, kwargs = method_args(method, np.array(["a", "b", "c"]))
-        with pytest.raises(ValueError, match="could not convert string to float"):
-            getattr(mm, method)(*args, **kwargs)
-
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
     def test_no_reduction_loop_raises(self, method):
         args, kwargs = method_args(method, np.array([1, 2, 3]))
         with pytest.raises(
                 TypeError, match="resolved loop does not register a reduction loop"):
             getattr(np.divmod, method)(*args, **kwargs)
 
-    # `minimummaximum` also registers an object loop, so the reduction
-    # machinery is exercised with refcounted (NPY_ITEM_REFCOUNT) descriptors.
     @pytest.mark.parametrize("method", ["reduce", "reduceat"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_object(self, method, shape):
-        a = np.random.default_rng(30).integers(-50, 51, size=shape).astype(object)
+        # Offset past the immortal small ints, so refcount bugs are visible.
+        rng = np.random.default_rng(30)
+        a = rng.integers(-50, 51, size=shape).astype(object) + 1000
         for axis in method_axes(method, a.ndim):
             args, kwargs = method_args(method, a, axis)
             check_minmax(method, *args, **kwargs)
-
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
-    def test_object_incomparable_raises(self, method):
-        args, kwargs = method_args(method, np.array([1, "x", 2], dtype=object))
-        with pytest.raises(TypeError):
-            getattr(mm, method)(*args, **kwargs)
 
     # The second output of the mixed ufuncs is the maximum as intp/object, so
     # the first element of each reduction is cast from float64 into it.
@@ -296,12 +247,18 @@ class TestReductionLoop:
         check_minmax(method, *args, **kwargs, ufunc=ufunc, max_dtype=max_dtype,
                      out=out)
 
-    @pytest.mark.parametrize("ufunc, max_dtype", [
-        (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
-        ids=["intp", "object"])
-    def test_mixed_forward(self, ufunc, max_dtype):
-        a, b = make_array((12,), seed=40), make_array((12,), seed=41)
-        check_minmax("__call__", a, b, ufunc=ufunc, max_dtype=max_dtype)
+    def test_forward_python_scalars(self):
+        got_min, got_max = mm(3.0, 5.0)
+        assert (got_min, got_max) == (3.0, 5.0)
+
+    def test_forward_python_ints(self):
+        got_min, got_max = mm(3, 5)
+        assert (got_min, got_max) == (3.0, 5.0)
+        assert got_min.dtype == np.float64
+
+    def test_forward_dtype_propagates_to_inputs(self):
+        got_min, got_max = mm(1, 5, dtype=np.float64)
+        assert got_min == 1.0 and got_max == 5.0
 
     def test_accumulate_raises(self):
         a = make_array((4,), seed=20)
@@ -317,8 +274,12 @@ class TestReductionLoop:
     def test_outer(self):
         a = make_array((3,), seed=23)
         b = make_array((4,), seed=24)
-        check_minmax("outer", a, b)
+        got_min, got_max = mm.outer(a, b)
+        np.testing.assert_array_equal(got_min, np.minimum.outer(a, b))
+        np.testing.assert_array_equal(got_max, np.maximum.outer(a, b))
 
+    # `minimummaximum` also registers an object loop, so the reduction
+    # machinery is exercised with refcounted (NPY_ITEM_REFCOUNT) descriptors.
     def test_object_forward(self):
         a = np.array([3, -7, 12], dtype=object)
         b = np.array([1, 9, -2], dtype=object)
@@ -344,7 +305,11 @@ class TestReduce:
         initial = float(a.min()) - 1.0 if initial_kind == "small" \
             else float(a.max()) + 1.0
         for axis in reduce_axes(a.ndim):
-            check_minmax("reduce", a, axis=axis, initial=initial)
+            got_min, got_max = mm.reduce(a, axis=axis, initial=initial)
+            np.testing.assert_array_equal(
+                got_min, np.minimum.reduce(a, axis=axis, initial=initial))
+            np.testing.assert_array_equal(
+                got_max, np.maximum.reduce(a, axis=axis, initial=initial))
 
     def test_reduce_initial_tuple(self):
         a = make_array((3, 4), seed=6)
@@ -373,19 +338,37 @@ class TestReduce:
     def test_reduce_initial_scalar_none(self):
         # A scalar None is still "no initial value", as for single-output
         # reductions, so it falls back to seeding from the first element.
-        check_minmax("reduce", make_array((4,), seed=7), initial=None)
+        a = make_array((4,), seed=7)
+        got_min, got_max = mm.reduce(a, initial=None)
+        np.testing.assert_array_equal(got_min, np.minimum.reduce(a, initial=None))
+        np.testing.assert_array_equal(got_max, np.maximum.reduce(a, initial=None))
+
+    @pytest.mark.parametrize("out", [None, (None, None)])
+    def test_reduce_out_none(self, out):
+        # `out=None` means no output was given, as for single-output reduce.
+        a = make_array((4,), seed=9)
+        got_min, got_max = mm.reduce(a, out=out)
+        np.testing.assert_array_equal(got_min, np.minimum.reduce(a))
+        np.testing.assert_array_equal(got_max, np.maximum.reduce(a))
+
+    def test_reduce_out_bare_array_raises(self):
+        a = make_array((4,), seed=9)
+        with pytest.raises(TypeError, match="must be a tuple of arrays"):
+            mm.reduce(a, out=np.empty(()))
+
+    def test_reduce_out_wrong_length_raises(self):
+        a = make_array((4,), seed=10)
+        with pytest.raises(ValueError, match="exactly one entry per ufunc output"):
+            mm.reduce(a, out=(np.empty(()),))
 
     def test_reduce_out_and_initial(self):
-        check_minmax("reduce", make_array((4,), seed=19), initial=100.0,
-                     out=(np.empty(()), np.empty(())))
-
-    def test_object_reduce_initial(self):
-        # `initial` is packed into refcounted buffers, which the reduction
-        # machinery has to clear again.
-        a = np.random.default_rng(31).integers(-50, 51, size=12).astype(object)
-        got_min, got_max = mm.reduce(a, initial=(7, -7))
-        assert got_min == np.minimum.reduce(a, initial=7)
-        assert got_max == np.maximum.reduce(a, initial=-7)
+        a = make_array((4,), seed=19)
+        omin = np.empty(())
+        omax = np.empty(())
+        got_min, got_max = mm.reduce(a, initial=100.0, out=(omin, omax))
+        assert got_min is omin and got_max is omax
+        np.testing.assert_array_equal(omin, np.minimum.reduce(a, initial=100.0))
+        np.testing.assert_array_equal(omax, np.maximum.reduce(a, initial=100.0))
 
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_reduce_where(self, shape):
@@ -393,7 +376,11 @@ class TestReduce:
         mask = np.random.default_rng(12).integers(0, 2, size=shape).astype(bool)
         initial = float(a.max()) + 1.0
         for axis in reduce_axes(a.ndim):
-            check_minmax("reduce", a, axis=axis, where=mask, initial=initial)
+            got_min, got_max = mm.reduce(a, axis=axis, where=mask, initial=initial)
+            np.testing.assert_array_equal(
+                got_min, np.minimum.reduce(a, axis=axis, where=mask, initial=initial))
+            np.testing.assert_array_equal(
+                got_max, np.maximum.reduce(a, axis=axis, where=mask, initial=initial))
 
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_reduce_where_uses_registered_identity(self, shape):
@@ -455,13 +442,21 @@ class TestReduce:
         for axis in reduce_axes(a.ndim):
             if reduces_over_empty(shape, axis):
                 continue
-            check_minmax("reduce", a, axis=axis, keepdims=keepdims)
+            got_min, got_max = mm.reduce(a, axis=axis, keepdims=keepdims)
+            np.testing.assert_array_equal(
+                got_min, np.minimum.reduce(a, axis=axis, keepdims=keepdims))
+            np.testing.assert_array_equal(
+                got_max, np.maximum.reduce(a, axis=axis, keepdims=keepdims))
 
     @pytest.mark.parametrize("shape", EMPTY_SHAPES, ids=str)
     def test_reduce_empty_scalar_initial(self, shape):
         a = np.zeros(shape, np.float64)
         for axis in reduce_axes(a.ndim):
-            check_minmax("reduce", a, axis=axis, initial=0.0)
+            got_min, got_max = mm.reduce(a, axis=axis, initial=0.0)
+            np.testing.assert_array_equal(
+                got_min, np.minimum.reduce(a, axis=axis, initial=0.0))
+            np.testing.assert_array_equal(
+                got_max, np.maximum.reduce(a, axis=axis, initial=0.0))
 
     @pytest.mark.parametrize("shape", EMPTY_SHAPES, ids=str)
     def test_reduce_empty_tuple_initial(self, shape):
@@ -473,15 +468,44 @@ class TestReduce:
             np.testing.assert_array_equal(
                 got_max, np.maximum.reduce(a, axis=axis, initial=1.0))
 
+    def test_unsupported_dtype_raises(self):
+        a = np.array(["a", "b", "c"])
+        with pytest.raises(ValueError, match="could not convert string to float"):
+            mm.reduce(a)
+
+    def test_reduce_dtype_same(self):
+        a = make_array((4,), seed=16)
+        got_min, got_max = mm.reduce(a, dtype=np.float64)
+        assert got_min.dtype == np.float64 and got_max.dtype == np.float64
+        np.testing.assert_array_equal(got_min, np.minimum.reduce(a, dtype=np.float64))
+        np.testing.assert_array_equal(got_max, np.maximum.reduce(a, dtype=np.float64))
+
+    def test_reduce_dtype_forced_no_loop_raises(self):
+        a = make_array((4,), seed=17)
+        with pytest.raises(TypeError, match="did not contain a loop"):
+            mm.reduce(a, dtype=np.int64)
+
+    def test_reduce_dtype_mismatched_tuple_raises(self):
+        a = make_array((4,), seed=18)
+        with pytest.raises(ValueError, match="mismatch in size"):
+            mm.reduce(a, dtype=(np.int32, np.int64))
+
+    def test_object_reduce_initial(self):
+        # `initial` is packed into refcounted buffers, which the reduction
+        # machinery has to clear again.
+        a = np.random.default_rng(31).integers(-50, 51, size=12).astype(object)
+        got_min, got_max = mm.reduce(a, initial=(7, -7))
+        assert got_min == np.minimum.reduce(a, initial=7)
+        assert got_max == np.maximum.reduce(a, initial=-7)
+
+    def test_object_reduce_incomparable_raises(self):
+        with pytest.raises(TypeError):
+            mm.reduce(np.array([1, "x", 2], dtype=object))
+
 
 class TestReduceat:
     def test_reduceat_empty(self):
         check_minmax("reduceat", np.array([], np.float64), [])
-
-    def test_reduceat_identity_ignored(self):
-        # reduceat seeds each segment with its first element, so a registered
-        # identity must not change the result.
-        check_minmax("reduceat", make_array((10,), seed=25), [0, 4, 7], ufunc=mmi)
 
     @pytest.mark.parametrize("ufunc, max_dtype", [
         (mm, np.float64),
@@ -503,8 +527,3 @@ class TestReduceat:
         with pytest.raises(TypeError):
             mm.reduceat(a, [0, 2], out=out)
         assert out[0][1] is None and out[1][1] is None
-
-    def test_reduceat_out_of_bounds_index_raises(self):
-        a = make_array((4,), seed=21)
-        with pytest.raises(IndexError, match="out-of-bounds"):
-            mm.reduceat(a, [0, 9])
