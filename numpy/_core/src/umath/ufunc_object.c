@@ -3367,7 +3367,7 @@ reduceat_segments(PyArrayMethod_Context *context,
             }
             else {
                 memmove(out_j, x0,
-                        context->descriptors[nout + 1 + j]->elsize);
+                        (size_t)context->descriptors[nout + 1 + j]->elsize);
             }
         }
         dataptr_copy[nout] = x0;
