@@ -655,18 +655,13 @@ But, we could do anything we wanted:
 >>> ret
 'I lost your data'
 
-So, by defining a specific ``__array_wrap__`` method for our subclass,
-we can tweak the output from ufuncs. The ``__array_wrap__`` method
-requires ``self``, then an argument - which is the result of the ufunc 
-or another NumPy function - and an optional parameter *context*.
-This parameter is passed by ufuncs as a 3-element tuple:
-(name of the ufunc, arguments of the ufunc, domain of the ufunc),
-but is not passed by other numpy functions. Though,
-as seen above, it is possible to do otherwise, ``__array_wrap__`` should
-return an instance of its containing class.  See the masked array
-subclass for an implementation.
-``__array_wrap__`` is always passed a NumPy array which may or may not be
-a subclass (usually of the caller).
+By defining a specific ``__array_wrap__`` method for our subclass,
+we can tweak the output from ufuncs. Though, as seen above, it is
+possible to do otherwise, ``__array_wrap__`` should return an instance of
+its containing class.  See the masked array subclass for an
+implementation.  The full signature, including what ufuncs pass as
+*context*, is documented in the reference entry for
+:obj:`~numpy.class.__array_wrap__`.
 
 Which ``__array_wrap__`` gets called when a ufunc receives inputs of
 several different subclasses is decided by the
