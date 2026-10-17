@@ -1,0 +1,7 @@
+Mixed integer and floating-point comparisons are now exact
+----------------------------------------------------------
+Comparisons between integer and real floating-point values no longer convert
+the integer to a floating-point dtype when that conversion would lose
+precision.  This makes comparisons such as ``np.int64(2**53 + 1) ==
+np.float64(2**53)`` return ``False``, matching Python and preserving the rule
+that values which compare equal must have equal hashes.
