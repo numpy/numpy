@@ -4,6 +4,7 @@ import warnings
 import pytest
 
 import numpy as np
+from numpy._core._multiarray_umath import _get_sfloat_dtype
 from numpy._core._rational_tests import rational
 from numpy._utils import _pep440
 from numpy.testing import (
@@ -15,6 +16,8 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+
+SF = _get_sfloat_dtype()
 
 # Setup for optimize einsum
 chars = 'abcdefghij'
@@ -86,7 +89,8 @@ class TestEinsum:
             # einsum_path does not yet accept kwarg 'casting'
             np.einsum('ij->j', [a, a], casting='same_value')
 
-    @pytest.mark.parametrize("dtype", [rational], ids=["rational"])
+    @pytest.mark.parametrize("dtype", [rational, SF(1.)],
+                             ids=["rational", "sfloat"])
     @pytest.mark.parametrize("subscripts,shapes,out_shape", [
         ("i->", [(3,)], ()),
         ("i,i->", [(3,), (3,)], ()),
