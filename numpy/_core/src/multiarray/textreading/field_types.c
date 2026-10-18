@@ -8,6 +8,7 @@
 #include "alloc.h"
 
 #include "textreading/growth.h"
+#include "npy_pycompat.h"
 
 
 NPY_NO_EXPORT void
