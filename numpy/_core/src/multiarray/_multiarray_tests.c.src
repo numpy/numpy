@@ -2213,6 +2213,16 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 }
 
 static PyObject *
+can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    int fromtype, totype;
+    if (!PyArg_ParseTuple(args, "ii", &fromtype, &totype)) {
+        return NULL;
+    }
+    return PyBool_FromLong(PyArray_CanCastSafely(fromtype, totype));
+}
+
+static PyObject *
 run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 {
     PyArray_Dims dims = {NULL, -1};
@@ -2450,6 +2460,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"run_casting_converter",
         run_casting_converter,
+        METH_VARARGS, NULL},
+    {"can_cast_safely",
+        can_cast_safely,
         METH_VARARGS, NULL},
     {"run_scalar_intp_converter",
         run_scalar_intp_converter,

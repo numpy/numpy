@@ -1201,6 +1201,7 @@ class TestTypes:
         self.check_promotion_cases(np.result_type)
         assert_(np.result_type(None) == np.dtype(None))
 
+    @pytest.mark.filterwarnings("ignore:Promoting strings and bytes:DeprecationWarning")
     def test_promote_types_endian(self):
         # promote_types should always return native-endian types
         assert_equal(np.promote_types('<i8', '<i8'), np.dtype('i8'))
@@ -1342,6 +1343,7 @@ class TestTypes:
         "dtype2",
         [*np.typecodes["All"], "i,i", "S3", "S100", "U3", "U100", rational, rational2],
     )
+    @pytest.mark.filterwarnings("ignore:Promoting strings and bytes:DeprecationWarning")
     def test_promote_types_metadata(self, dtype1, dtype2):
         """Metadata handling in promotion does not appear formalized
         right now in NumPy. This test should thus be considered to

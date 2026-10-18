@@ -846,6 +846,8 @@ class TestUnsizedCastMissingValues:
 
 
 class TestStringDTypeNditer:
+    @pytest.mark.filterwarnings(
+        "ignore:Casting between strings and bytes:DeprecationWarning")
     def test_infer_width_for_existing_operand(self):
         arr = np.array(["abc", "defgh"], dtype="T")
         for kind, expected in [("S", "S5"), ("U", "U5"), ("V", "V5")]:

@@ -20,9 +20,10 @@ COMPARISONS = [
 MAX = np.iinfo(np.int64).max
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
-def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
+@pytest.mark.parametrize("text_dtype", ["U", "T"])
+def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym, text_dtype):
     arr_string = np.array(["a", "b"], dtype="S")
-    arr_unicode = np.array(["a", "c"], dtype="U")
+    arr_unicode = np.array(["a", "c"], dtype=text_dtype)
 
     with pytest.raises(TypeError, match="did not contain a loop"):
         ufunc(arr_string, arr_unicode)
@@ -908,8 +909,11 @@ class TestMethods:
     ])
     def test_center(self, buf, width, fillchar, res, dt):
         buf = np.array(buf, dtype=dt)
-        fillchar = np.array(fillchar, dtype=dt)
         res = np.array(res, dtype=dt)
+        if fillchar == " ":
+            assert_array_equal(np.strings.center(buf, width), res)
+            assert_array_equal(np.strings.center(buf, width, None), res)
+        fillchar = np.array(fillchar, dtype=dt)
         assert_array_equal(np.strings.center(buf, width, fillchar), res)
 
     @pytest.mark.parametrize("buf,width,fillchar,res", [
@@ -922,8 +926,11 @@ class TestMethods:
     ])
     def test_ljust(self, buf, width, fillchar, res, dt):
         buf = np.array(buf, dtype=dt)
-        fillchar = np.array(fillchar, dtype=dt)
         res = np.array(res, dtype=dt)
+        if fillchar == " ":
+            assert_array_equal(np.strings.ljust(buf, width), res)
+            assert_array_equal(np.strings.ljust(buf, width, None), res)
+        fillchar = np.array(fillchar, dtype=dt)
         assert_array_equal(np.strings.ljust(buf, width, fillchar), res)
 
     @pytest.mark.parametrize("buf,width,fillchar,res", [
@@ -936,8 +943,11 @@ class TestMethods:
     ])
     def test_rjust(self, buf, width, fillchar, res, dt):
         buf = np.array(buf, dtype=dt)
-        fillchar = np.array(fillchar, dtype=dt)
         res = np.array(res, dtype=dt)
+        if fillchar == " ":
+            assert_array_equal(np.strings.rjust(buf, width), res)
+            assert_array_equal(np.strings.rjust(buf, width, None), res)
+        fillchar = np.array(fillchar, dtype=dt)
         assert_array_equal(np.strings.rjust(buf, width, fillchar), res)
 
     @pytest.mark.parametrize("buf,width,res", [
@@ -1392,9 +1402,7 @@ class TestMethodsWithUnicode:
         assert_array_equal(act, res)
 
 
-@pytest.mark.filterwarnings(
-    "ignore:Implicit conversion:DeprecationWarning"
-)
+@pytest.mark.filterwarnings("ignore:Mixing strings and bytes:DeprecationWarning")
 class TestMixedTypeMethods:
     def test_center(self):
         buf = np.array("😊", dtype="U")

@@ -92,6 +92,10 @@ extern "C" {
      */                                                                         \
     F(npy_extobj_contextvar)                                                    \
                                                                                 \
+    /* Import-time coercion policy and its error type. */                       \
+    F(coercion_is_strict)                                                       \
+    F(CoercionPolicyError)                                                      \
+                                                                                \
     /*                                                                          \
      * A reference to ndarray's implementations for __array_*__ special methods \
      */                                                                         \

@@ -192,6 +192,11 @@ initialize_static_globals(void)
     IMPORT_GLOBAL("numpy._core._exceptions", "_UFuncOutputCastingError",
                   static_pydata->_UFuncOutputCastingError);
 
+    IMPORT_GLOBAL("numpy._core._coercion_policy", "_STRICT",
+                  static_pydata->coercion_is_strict);
+    IMPORT_GLOBAL("numpy._core._exceptions", "_CoercionPolicyError",
+                  static_pydata->CoercionPolicyError);
+
     IMPORT_GLOBAL("numpy._core.printoptions", "format_options",
                   static_pydata->format_options);
 
