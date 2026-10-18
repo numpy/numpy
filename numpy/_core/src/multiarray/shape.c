@@ -141,7 +141,7 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
         }
         ((PyArrayObject_fields *)self)->data = new_data;
 
-        if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
+        if (newnbytes > oldnbytes) {
             /* Fill new memory with zeros (PyLong zero for object arrays) */
             npy_intp stride = elsize;
             npy_intp size = newsize - oldsize;

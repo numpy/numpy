@@ -7429,6 +7429,15 @@ class TestResize:
         assert_array_equal(a['k'][-5:], 0)
         assert_array_equal(a['k'][:-5], 1)
 
+    @_no_tracing
+    @pytest.mark.parametrize("dtype", [np.int64, object])
+    def test_zeros_appended_readonly(self, dtype):
+        # gh-33082
+        a = np.array([1, 2], dtype=dtype)
+        a.flags.writeable = False
+        a.resize(8)
+        assert_array_equal(a, [1, 2, 0, 0, 0, 0, 0, 0])
+
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     @pytest.mark.parametrize("dtype", ["O", "O,O"])
     def test_obj_obj_shrinking(self, dtype):
