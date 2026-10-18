@@ -6,7 +6,7 @@ import functools
 import itertools
 import operator
 
-from numpy._core.multiarray import c_einsum, matmul
+from numpy._core.multiarray import c_einsum, copyto, matmul
 from numpy._core.numeric import asanyarray, reshape
 from numpy._core.overrides import array_function_dispatch
 from numpy._core.umath import multiply
@@ -1222,8 +1222,11 @@ def bmm_einsum(eq, a, b, out=None, **kwargs):
 
     if (out is not None) and (not matmul_out_compatible):
         # handle case where out is specified, but we also needed
-        # to reshape / transpose ``ab`` after the matmul
-        out[...] = ab
+        # to reshape / transpose ``ab`` after the matmul.
+        # Use copyto so the user's ``casting`` rule is honoured, rather than
+        # a plain assignment which always casts unsafely (gh-33071).
+        casting = kwargs.get("casting", "safe")
+        copyto(out, ab, casting=casting)
         ab = out
     elif output_order is not None:
         ab = asanyarray(ab, order=output_order)
@@ -1657,3 +1660,4 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
         return out
     else:
         return operands[0]
+
