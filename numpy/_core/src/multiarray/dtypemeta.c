@@ -52,6 +52,7 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
     PyType_Type.tp_dealloc((PyObject *) self);
 }
 
+
 static PyArray_DTypeMeta *
 dtype_does_not_promote(
         PyArray_DTypeMeta *NPY_UNUSED(self), PyArray_DTypeMeta *NPY_UNUSED(other))
@@ -191,6 +192,13 @@ dtypemeta_initialize_struct_from_spec(
     }
 
     DType->flags = spec->flags;
+    if (PyType_IsSubtype((PyTypeObject *)DType,
+                         (PyTypeObject *)&PyArray_NumberAbstractDType)) {
+        DType->flags |= NPY_DT_NUMERIC;
+        // TODO(seberg): Eventually remove opposite, setting the flag but not
+        // subclassing explicitly. (Then maybe even remove __subclasscheck__)
+    }
+
     DType->dt_slots = PyMem_Calloc(1, sizeof(NPY_DType_Slots));
     if (DType->dt_slots == NULL) {
         PyErr_NoMemory();
@@ -510,9 +518,16 @@ dtypemeta_is_gc(PyObject *dtype_class)
 static int
 dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
 {
-    Py_VISIT(type->singleton);
-    Py_VISIT(type->scalar_type);
-    Py_VISIT(NPY_DT_SLOTS(type)->castingimpls);
+    /*
+     * ``dt_slots`` may still be NULL: a DType class created via
+     * ``PyType_FromMetaclass`` is tracked by the GC before we get a chance
+     * to fill it in.
+     */
+    if (type->dt_slots != NULL) {
+        Py_VISIT(NPY_DT_SLOTS(type)->castingimpls);
+    }
+    Py_VISIT((PyObject *)type->singleton);
+    Py_VISIT((PyObject *)type->scalar_type);
     return PyType_Type.tp_traverse((PyObject *)type, visit, arg);
 }
 
@@ -766,11 +781,9 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
             Py_INCREF(self);
             return (PyArray_Descr *)self;
         }
-        PyArray_Descr *new = PyArray_DescrNew((PyArray_Descr *)self);
-        if (new == NULL) {
-            return NULL;
-        }
-        Py_SETREF(((_PyArray_LegacyDescr *)new)->subarray->base, new_base);
+        PyArray_Descr *new = arraydescr_new_from_subarray(
+                new_base, self->subarray->shape);
+        Py_DECREF(new_base);
         return new;
     }
     else if (self->names != NULL) {
@@ -799,8 +812,8 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
         int aligned = PyDataType_FLAGCHK((PyArray_Descr *)new, NPY_ALIGNED_STRUCT);
         new->flags = new->flags & ~NPY_FROM_FIELDS;
         new->flags |= NPY_NEEDS_PYAPI;  /* always needed for field access */
-        int totalsize = 0;
-        int maxalign = 1;
+        npy_intp totalsize = 0;
+        npy_intp maxalign = 1;
         for (Py_ssize_t i = 0; i < field_num; i++) {
             PyObject *name = PyTuple_GET_ITEM(self->names, i);
             PyObject *tuple = PyDict_GetItem(self->fields, name); // noqa: borrowed-ref OK
@@ -816,11 +829,14 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
             PyTuple_SET_ITEM(new_tuple, 0, (PyObject *)field_descr);
 
             if (aligned) {
-                totalsize = NPY_NEXT_ALIGNED_OFFSET(
-                        totalsize, field_descr->alignment);
+                if (npy_align_descr_size(&totalsize, field_descr->alignment) < 0) {
+                    Py_DECREF(new_tuple);
+                    Py_DECREF(new);
+                    return NULL;
+                }
                 maxalign = PyArray_MAX(maxalign, field_descr->alignment);
             }
-            PyObject *offset_obj = PyLong_FromLong(totalsize);
+            PyObject *offset_obj = PyLong_FromSsize_t(totalsize);
             if (offset_obj == NULL) {
                 Py_DECREF(new_tuple);
                 Py_DECREF(new);
@@ -844,9 +860,15 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
                 return NULL;
             }
             Py_DECREF(new_tuple);  /* Reference now owned by PyDataType_FIELDS(new) */
-            totalsize += field_descr->elsize;
+            if (npy_add_to_descr_size(&totalsize, field_descr->elsize) < 0) {
+                Py_DECREF(new);
+                return NULL;
+            }
         }
-        totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
+        if (npy_align_descr_size(&totalsize, maxalign) < 0) {
+            Py_DECREF(new);
+            return NULL;
+        }
         new->elsize = totalsize;
         new->alignment = maxalign;
         return (PyArray_Descr *)new;
@@ -926,12 +948,9 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
             return (PyArray_Descr *)descr1;
         }
 
-        PyArray_Descr *new_descr = PyArray_DescrNew((PyArray_Descr *)descr1);
-        if (new_descr == NULL) {
-            Py_DECREF(new_base);
-            return NULL;
-        }
-        Py_SETREF(((_PyArray_LegacyDescr *)new_descr)->subarray->base, new_base);
+        PyArray_Descr *new_descr = arraydescr_new_from_subarray(
+                new_base, descr1->subarray->shape);
+        Py_DECREF(new_base);
         return new_descr;
     }
 
@@ -1323,6 +1342,12 @@ dtypemeta_wrap_legacy_descriptor(
         }
     }
 
+    /*
+     * NOTE: ``PyTypeNum_ISNUMBER`` includes bool, so ``NPY_DT_NUMERIC``
+     * disagrees with ``NumberAbstractDType`` for it.
+     * TODO(seberg): Consider aligning the flag to exclude bool. Having an `_`
+     * in Python hopefully means downstream doesn't really rely on it.
+     */
     if (PyTypeNum_ISNUMBER(descr->type_num)) {
         dtype_class->flags |= NPY_DT_NUMERIC;
     }
@@ -1364,6 +1389,60 @@ dtypemeta_wrap_legacy_descriptor(
 
 
 static PyObject *
+dtypemeta_subclasscheck(PyArray_DTypeMeta *self, PyObject *arg)
+{
+    if (!PyType_Check(arg)) {
+        PyErr_SetString(PyExc_TypeError, "issubclass() arg 1 must be a class");
+        return NULL;
+    }
+    /*
+     * Real C-level inheritance check first.  This handles all non-abstract
+     * DTypes and the common case for abstracts (``arg`` is a real subtype).
+     */
+    if (PyType_IsSubtype((PyTypeObject *)arg, (PyTypeObject *)self)) {
+        Py_RETURN_TRUE;
+    }
+    if (!NPY_DT_is_abstract(self)) {
+        Py_RETURN_FALSE;
+    }
+    /*
+     * For abstracts, ``arg`` must itself be a DType class to qualify as a
+     * (virtual) subclass.
+     */
+    if (!PyType_IsSubtype((PyTypeObject *)arg, &PyArrayDescr_Type)) {
+        Py_RETURN_FALSE;
+    }
+    /*
+     * NumberAbstractDType: a DType may opt in via the ``NPY_DT_NUMERIC`` flag
+     * rather than subclassing.  This is an escape hatch for DTypes written
+     * before the abstract hierarchy existed.  ``bool`` sets the flag but is
+     * not a "number" here (matching ``np.number`` and the array API
+     * "numeric" kind).
+     * TODO(seberg): Eventually force downstream to subclass.
+     */
+    if (self == &PyArray_NumberAbstractDType
+            && arg != (PyObject *)&PyArray_BoolDType
+            && NPY_DT_is_numeric((PyArray_DTypeMeta *)arg)) {
+        Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
+}
+
+
+static PyObject *
+dtypemeta_instancecheck(PyArray_DTypeMeta *self, PyObject *arg)
+{
+    /*
+     * Defer to ``__subclasscheck__`` so that ``isinstance()`` also honors the
+     * DTypes that are only virtual subclasses of an abstract DType.  The
+     * default ``type.__instancecheck__`` only consults the C-level
+     * ``tp_base`` chain.
+     */
+    return dtypemeta_subclasscheck(self, (PyObject *)Py_TYPE(arg));
+}
+
+
+static PyObject *
 dtypemeta_get_abstract(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_abstract(self));
 }
@@ -1399,6 +1478,18 @@ static PyMemberDef dtypemeta_members[] = {
         T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY,
         "scalar type corresponding to the DType."},
     {NULL, 0, 0, 0, NULL},
+};
+
+static PyMethodDef dtypemeta_methods[] = {
+    {"__subclasscheck__",
+            (PyCFunction)(void *)dtypemeta_subclasscheck,
+            METH_O,
+            "Return whether another dtype type is considered a subclass."},
+    {"__instancecheck__",
+            (PyCFunction)(void *)dtypemeta_instancecheck,
+            METH_O,
+            "Return whether the argument is an instance of this dtype type."},
+    {NULL, NULL, 0, NULL}
 };
 
 NPY_NO_EXPORT void
@@ -1458,6 +1549,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     .tp_traverse = (traverseproc)dtypemeta_traverse,
     .tp_members = dtypemeta_members,
     .tp_getset = dtypemeta_getset,
+    .tp_methods = dtypemeta_methods,
     .tp_base = NULL,  /* set to PyType_Type at import time */
     .tp_is_gc = dtypemeta_is_gc,
 };

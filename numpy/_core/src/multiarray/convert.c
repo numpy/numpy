@@ -4,6 +4,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <errno.h>
 
 #include "npy_config.h"
 #include "npy_pycompat.h"  // PyObject_GetOptionalAttr
@@ -758,8 +759,9 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         /*
          * Path 2: subclass lives in future but needs to set dtype itself.
          */
-        PyObject *res = PyObject_CallMethodOneArg(
-                ret, state->interned_str._set_dtype, (PyObject *)type);
+        PyObject *args[2] = {ret, (PyObject *)type};
+        PyObject *res = PyObject_VectorcallMethod(
+                state->interned_str._set_dtype, args, 2, NULL);
         if (res == NULL) {
             Py_CLEAR(ret);
             goto finish;

@@ -231,6 +231,15 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
             np.dtype(dtype_code)
 
 
+class TestIsDTypeDTypeInstanceKind(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-06
+    message = r"isdtype\(\) with a dtype instance as second argument"
+
+    def test_deprecated(self):
+        self.assert_deprecated(
+                lambda: np.isdtype(np.dtype(">f8"), np.dtype("<f8")))
+
+
 class TestDeprecatedArrayWrap(_DeprecationTestCase):
     message = "__array_wrap__.*"
 
@@ -748,3 +757,48 @@ def test_coercion_policy_invalid():
     )
     run_subprocess([sys.executable, "-c", code],
                    env={**os.environ, "NPY_COERCION_POLICY": "invalid"})
+
+
+class TestAppendScalarPromotion(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-09
+    warning_cls = FutureWarning
+    message = "np.append converted Python numeric scalars to arrays"
+
+    @pytest.mark.parametrize("dtype, scalar", [
+        ("int8", 1), ("uint8", 300), ("uint8", -1), ("int64", 2**100),
+        ("float32", 1.0 + 2**-30), ("complex64", 1j), ("U1", 1),
+    ])
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_deprecated(self, dtype, scalar, reverse):
+        a = np.array([1], dtype=dtype)
+        args = (scalar, a) if reverse else (a, scalar)
+        explicit_args = tuple(np.asarray(x) for x in args)
+        expected = np.concatenate(explicit_args, axis=None)
+        if dtype == "U1":
+            change = "these inputs have no common dtype and will raise an error"
+        else:
+            change = f"use dtype {dtype}, which may round values differently"
+        self.message += (
+            rf".*producing dtype {re.escape(str(expected.dtype))}.*"
+            rf"{re.escape(change)}.*np\.concatenate.*"
+            rf"dtype={re.escape(repr(str(expected.dtype)))}")
+
+        def append(*args):
+            assert_array_equal(np.append(*args), expected, strict=True)
+
+        self.assert_deprecated(append, args=args)
+        self.assert_not_deprecated(append, args=explicit_args)
+        list_args = ([scalar], a) if reverse else (a, [scalar])
+        self.assert_not_deprecated(append, args=list_args)
+        assert_array_equal(
+            np.concatenate(args, axis=None, dtype=str(expected.dtype)),
+            expected, strict=True)
+
+    @pytest.mark.parametrize("dtype, scalar", [
+        (np.intp, 1), (np.float64, 1.5), (np.complex128, 1j),
+    ])
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_unchanged_scalar_promotion(self, dtype, scalar, reverse):
+        a = np.array([1], dtype=dtype)
+        args = (scalar, a) if reverse else (a, scalar)
+        self.assert_not_deprecated(np.append, args=args)

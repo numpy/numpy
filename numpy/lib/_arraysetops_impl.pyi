@@ -5,6 +5,10 @@ from typing_extensions import TypeVar
 
 import numpy as np
 from numpy._typing import (
+    Array0D,
+    Array1D,
+    Array2D,
+    Array3D,
     ArrayLike,
     NDArray,
     _AnyShape,
@@ -51,30 +55,25 @@ _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=Tr
 
 type _NumericScalar = np.number | np.timedelta64 | np.object_
 
-type _Array0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]]
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
-type _Array3D[ScalarT: np.generic] = np.ndarray[tuple[int, int, int], np.dtype[ScalarT]]
-
 type _IntND = NDArray[np.intp]
-type _Int1D = _Array1D[np.intp]
+type _Int1D = Array1D[np.intp]
 
-type _IntersectResult[ScalarT: np.generic] = tuple[_Array1D[ScalarT], _Int1D, _Int1D]
+type _IntersectResult[ScalarT: np.generic] = tuple[Array1D[ScalarT], _Int1D, _Int1D]
 
 ###
 
 class UniqueAllResult(NamedTuple, Generic[_ScalarT_co, _ShapeT_co]):
-    values: _Array1D[_ScalarT_co]
-    indices: _Array1D[np.intp]
+    values: Array1D[_ScalarT_co]
+    indices: Array1D[np.intp]
     inverse_indices: np.ndarray[_ShapeT_co, np.dtype[np.intp]]
-    counts: _Array1D[np.intp]
+    counts: Array1D[np.intp]
 
 class UniqueCountsResult(NamedTuple, Generic[_ScalarT_co]):
-    values: _Array1D[_ScalarT_co]
-    counts: _Array1D[np.intp]
+    values: Array1D[_ScalarT_co]
+    counts: Array1D[np.intp]
 
 class UniqueInverseResult(NamedTuple, Generic[_ScalarT_co, _ShapeT_co]):
-    values: _Array1D[_ScalarT_co]
+    values: Array1D[_ScalarT_co]
     inverse_indices: np.ndarray[_ShapeT_co, np.dtype[np.intp]]
 
 # keep in sync with `ma.extras.ediff1d`
@@ -83,25 +82,25 @@ def ediff1d(
     ary: _ArrayLikeBool_co,
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> _Array1D[np.int8]: ...
+) -> Array1D[np.int8]: ...
 @overload
 def ediff1d[NumericT: _NumericScalar](
     ary: _ArrayLike[NumericT],
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> _Array1D[NumericT]: ...
+) -> Array1D[NumericT]: ...
 @overload
 def ediff1d(
     ary: _ArrayLike[np.datetime64[Any]],
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> _Array1D[np.timedelta64]: ...
+) -> Array1D[np.timedelta64]: ...
 @overload
 def ediff1d(
     ary: _ArrayLikeNumber_co,
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> _Array1D[Incomplete]: ...
+) -> Array1D[Incomplete]: ...
 
 #
 @overload  # known array, FFF, axis=<given>
@@ -125,7 +124,7 @@ def unique[ScalarT: np.generic](
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> _Array1D[ScalarT]: ...
+) -> Array1D[ScalarT]: ...
 @overload  # known scalar-type, FFF, axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -147,7 +146,7 @@ def unique(
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> _Array1D[Any]: ...
+) -> Array1D[Any]: ...
 @overload  # unknown scalar-type, FFF, axis=<given>
 def unique(
     ar: ArrayLike,
@@ -180,7 +179,7 @@ def unique[ScalarT: np.generic](
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _Int1D]: ...
+) -> tuple[Array1D[ScalarT], _Int1D]: ...
 @overload  # known scalar-type, TFF, axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -202,7 +201,7 @@ def unique(
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _Int1D]: ...
+) -> tuple[Array1D[Any], _Int1D]: ...
 @overload  # unknown scalar-type, TFF, axis=<given>
 def unique(
     ar: ArrayLike,
@@ -246,7 +245,7 @@ def unique[ScalarT: np.generic](
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _IntND]: ...
+) -> tuple[Array1D[ScalarT], _IntND]: ...
 @overload  # known scalar-type, FTF (positional), axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -268,7 +267,7 @@ def unique(
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _IntND]: ...
+) -> tuple[Array1D[Any], _IntND]: ...
 @overload  # unknown scalar-type, FTF (positional), axis=<given>
 def unique(
     ar: ArrayLike,
@@ -312,7 +311,7 @@ def unique[ScalarT: np.generic](
     axis: None = None,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _IntND]: ...
+) -> tuple[Array1D[ScalarT], _IntND]: ...
 @overload  # known scalar-type, FTF (keyword), axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -334,7 +333,7 @@ def unique(
     axis: None = None,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _IntND]: ...
+) -> tuple[Array1D[Any], _IntND]: ...
 @overload  # unknown scalar-type, FTF (keyword), axis=<given>
 def unique(
     ar: ArrayLike,
@@ -367,7 +366,7 @@ def unique[ScalarT: np.generic](
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _Int1D]: ...
+) -> tuple[Array1D[ScalarT], _Int1D]: ...
 @overload  # known scalar-type, FFT (positional), axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -389,7 +388,7 @@ def unique(
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _Int1D]: ...
+) -> tuple[Array1D[Any], _Int1D]: ...
 @overload  # unknown scalar-type, FFT (positional), axis=<given>
 def unique(
     ar: ArrayLike,
@@ -422,7 +421,7 @@ def unique[ScalarT: np.generic](
     axis: None = None,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _Int1D]: ...
+) -> tuple[Array1D[ScalarT], _Int1D]: ...
 @overload  # known scalar-type, FFT (keyword), axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -444,7 +443,7 @@ def unique(
     axis: None = None,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _Int1D]: ...
+) -> tuple[Array1D[Any], _Int1D]: ...
 @overload  # unknown scalar-type, FFT (keyword), axis=<given>
 def unique(
     ar: ArrayLike,
@@ -488,7 +487,7 @@ def unique[ScalarT: np.generic](
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _Int1D, _IntND]: ...
+) -> tuple[Array1D[ScalarT], _Int1D, _IntND]: ...
 @overload  # known scalar-type, TTF, axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -510,7 +509,7 @@ def unique(
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _Int1D, _IntND]: ...
+) -> tuple[Array1D[Any], _Int1D, _IntND]: ...
 @overload  # unknown scalar-type, TTF, axis=<given>
 def unique(
     ar: ArrayLike,
@@ -543,7 +542,7 @@ def unique[ScalarT: np.generic](
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _Int1D, _Int1D]: ...
+) -> tuple[Array1D[ScalarT], _Int1D, _Int1D]: ...
 @overload  # known scalar-type, TFT (positional), axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -565,7 +564,7 @@ def unique(
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _Int1D, _Int1D]: ...
+) -> tuple[Array1D[Any], _Int1D, _Int1D]: ...
 @overload  # unknown scalar-type, TFT (positional), axis=<given>
 def unique(
     ar: ArrayLike,
@@ -598,7 +597,7 @@ def unique[ScalarT: np.generic](
     axis: None = None,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _Int1D, _Int1D]: ...
+) -> tuple[Array1D[ScalarT], _Int1D, _Int1D]: ...
 @overload  # known scalar-type, TFT (keyword), axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -620,7 +619,7 @@ def unique(
     axis: None = None,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _Int1D, _Int1D]: ...
+) -> tuple[Array1D[Any], _Int1D, _Int1D]: ...
 @overload  # unknown scalar-type, TFT (keyword), axis=<given>
 def unique(
     ar: ArrayLike,
@@ -664,7 +663,7 @@ def unique[ScalarT: np.generic](
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _IntND, _Int1D]: ...
+) -> tuple[Array1D[ScalarT], _IntND, _Int1D]: ...
 @overload  # known scalar-type, FTT (positional), axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -686,7 +685,7 @@ def unique(
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _IntND, _Int1D]: ...
+) -> tuple[Array1D[Any], _IntND, _Int1D]: ...
 @overload  # unknown scalar-type, FTT (positional), axis=<given>
 def unique(
     ar: ArrayLike,
@@ -730,7 +729,7 @@ def unique[ScalarT: np.generic](
     axis: None = None,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _IntND, _Int1D]: ...
+) -> tuple[Array1D[ScalarT], _IntND, _Int1D]: ...
 @overload  # known scalar-type, FTT (keyword), axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -752,7 +751,7 @@ def unique(
     axis: None = None,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _IntND, _Int1D]: ...
+) -> tuple[Array1D[Any], _IntND, _Int1D]: ...
 @overload  # unknown scalar-type, FTT (keyword), axis=<given>
 def unique(
     ar: ArrayLike,
@@ -796,7 +795,7 @@ def unique[ScalarT: np.generic](
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[ScalarT], _Int1D, _IntND, _Int1D]: ...
+) -> tuple[Array1D[ScalarT], _Int1D, _IntND, _Int1D]: ...
 @overload  # known scalar-type, TTT, axis=<given>
 def unique[ScalarT: np.generic](
     ar: _ArrayLike[ScalarT],
@@ -818,7 +817,7 @@ def unique(
     *,
     equal_nan: bool = True,
     sorted: bool = True,
-) -> tuple[_Array1D[Any], _Int1D, _IntND, _Int1D]: ...
+) -> tuple[Array1D[Any], _Int1D, _IntND, _Int1D]: ...
 @overload  # unknown scalar-type, TTT, axis=<given>
 def unique(
     ar: ArrayLike,
@@ -859,9 +858,9 @@ def unique_inverse(x: ArrayLike) -> UniqueInverseResult[Any, _AnyShape]: ...
 
 #
 @overload
-def unique_values[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> _Array1D[ScalarT]: ...
+def unique_values[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> Array1D[ScalarT]: ...
 @overload
-def unique_values(x: ArrayLike) -> _Array1D[Incomplete]: ...
+def unique_values(x: ArrayLike) -> Array1D[Incomplete]: ...
 
 # NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
 
@@ -872,7 +871,7 @@ def intersect1d(  # noqa: UP047
     ar2: _ArrayLike[_AnyScalarT],
     assume_unique: bool = False,
     return_indices: L[False] = False,
-) -> _Array1D[_AnyScalarT]: ...
+) -> Array1D[_AnyScalarT]: ...
 @overload  # known scalar-type, return_indices=True (positional)
 def intersect1d(  # noqa: UP047
     ar1: _ArrayLike[_AnyScalarT],
@@ -894,7 +893,7 @@ def intersect1d(
     ar2: ArrayLike,
     assume_unique: bool = False,
     return_indices: L[False] = False,
-) -> _Array1D[Incomplete]: ...
+) -> Array1D[Incomplete]: ...
 @overload  # unknown scalar-type, return_indices=True (positional)
 def intersect1d(
     ar1: ArrayLike,
@@ -915,23 +914,23 @@ def intersect1d(
 @overload
 def setxor1d(  # noqa: UP047
     ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
-) -> _Array1D[_AnyScalarT]: ...
+) -> Array1D[_AnyScalarT]: ...
 @overload
-def setxor1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _Array1D[Incomplete]: ...
+def setxor1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> Array1D[Incomplete]: ...
 
 #
 @overload
-def union1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT]) -> _Array1D[_AnyScalarT]: ...  # noqa: UP047
+def union1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT]) -> Array1D[_AnyScalarT]: ...  # noqa: UP047
 @overload
-def union1d(ar1: ArrayLike, ar2: ArrayLike) -> _Array1D[Incomplete]: ...
+def union1d(ar1: ArrayLike, ar2: ArrayLike) -> Array1D[Incomplete]: ...
 
 #
 @overload
 def setdiff1d(  # noqa: UP047
     ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
-) -> _Array1D[_AnyScalarT]: ...
+) -> Array1D[_AnyScalarT]: ...
 @overload
-def setdiff1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _Array1D[Incomplete]: ...
+def setdiff1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> Array1D[Incomplete]: ...
 
 #
 @overload  # known shape
@@ -951,7 +950,7 @@ def isin[ShapeT: _Shape](
     invert: bool = False,
     *,
     kind: L["sort", "table"] | None = None,
-) -> _Array0D[np.bool]: ...
+) -> Array0D[np.bool]: ...
 @overload  # 1d
 def isin[ShapeT: _Shape](
     element: Sequence[complex | np.generic],
@@ -960,7 +959,7 @@ def isin[ShapeT: _Shape](
     invert: bool = False,
     *,
     kind: L["sort", "table"] | None = None,
-) -> _Array1D[np.bool]: ...
+) -> Array1D[np.bool]: ...
 @overload  # 2d
 def isin[ShapeT: _Shape](
     element: Sequence[Sequence[complex | np.generic]],
@@ -969,7 +968,7 @@ def isin[ShapeT: _Shape](
     invert: bool = False,
     *,
     kind: L["sort", "table"] | None = None,
-) -> _Array2D[np.bool]: ...
+) -> Array2D[np.bool]: ...
 @overload  # 3d
 def isin[ShapeT: _Shape](
     element: Sequence[Sequence[Sequence[complex | np.generic]]],
@@ -978,7 +977,7 @@ def isin[ShapeT: _Shape](
     invert: bool = False,
     *,
     kind: L["sort", "table"] | None = None,
-) -> _Array3D[np.bool]: ...
+) -> Array3D[np.bool]: ...
 @overload  # fallback
 def isin(
     element: ArrayLike,

@@ -63,7 +63,7 @@ set_zero_divide(void) {
 
 static inline npy_int32
 safe_neg(npy_int32 x) {
-    if (x==(npy_int32)1<<31) {
+    if (x == NPY_MIN_INT32) {
         set_overflow();
     }
     return -x;

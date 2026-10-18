@@ -890,7 +890,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
         elif isvstring(x) and isvstring(y):
             dt = x.dtype
-            if equal_nan and dt == y.dtype and hasattr(dt, 'na_object'):
+            if equal_nan and dt == y.dtype and dt._has_nan_na:
                 # Let the dtype determine which values are NaN-like.
                 flagged = func_assert_same_pos(
                     x, y, func=isnan, hasval=dt.na_object)

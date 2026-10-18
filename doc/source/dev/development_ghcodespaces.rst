@@ -14,7 +14,7 @@ This section of the documentation will guide you through:
 GitHub Codespaces
 -----------------
 
-`GitHub Codespaces`_ is a service that provides cloud based 
+`GitHub Codespaces`_ is a service that provides cloud based
 development environments so that you don't have to install anything
 on your local machine or worry about configuration.
 
@@ -36,9 +36,9 @@ The best way to work on the NumPy codebase as a contributor is by making a fork
 of the repository first.
 
 #. Browse to the `NumPy repository on GitHub`_ and `create your own fork`_.
-#. Browse to your fork. Your fork will have a URL like 
+#. Browse to your fork. Your fork will have a URL like
    https://github.com/inessapawson/numpy, except with your GitHub username in place of ``inessapawson``.
-     
+
 Starting GitHub Codespaces
 --------------------------
 
@@ -50,10 +50,11 @@ Quick workspace tour
 
 You can develop code in a codespace using your choice of tool:
 
-* a command shell, via an SSH connection initiated using GitHub CLI._
-* one of the JetBrains IDEs, via the JetBrains Gateway._
-* the Visual Studio Code desktop application._
-* a browser-based version of Visual Studio Code._
+* a `browser-based version of Visual Studio Code`_ (the default -- nothing to
+  install),
+* the `Visual Studio Code desktop application`_,
+* a command shell, via an `SSH connection using GitHub CLI`_
+  (``gh codespace ssh``).
 
 In this quickstart, we will be using the VSCode desktop application as the
 editor.  If you have not used it before, see the Getting started `VSCode docs`_
@@ -94,11 +95,10 @@ affecting its running processes. You may stop and restart a codespace without
 losing changes that you have made to your project.
 
 .. _GitHub Codespaces: https://github.com/features/codespaces
-.. _NumPy repository on GitHub: https://github.com/NumPy/NumPy
-.. _create your own fork: https://help.github.com/en/articles/fork-a-repo
+.. _NumPy repository on GitHub: https://github.com/numpy/numpy
+.. _create your own fork: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo
 .. _open: https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=908607
 .. _VSCode docs: https://code.visualstudio.com/docs/getstarted/tips-and-tricks
-.. _command shell, via an SSH connection initiated using GitHub CLI: https://docs.github.com/en/authentication/connecting-to-github-with-ssh
-.. _one of the JetBrains IDEs, via the JetBrains Gateway: https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-your-jetbrains-ide
-.. _the Visual Studio Code desktop application: https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-visual-studio-code
-.. _a browser-based version of Visual Studio Code: https://docs.github.com/en/codespaces/developing-in-codespaces/developing-in-a-codespace
+.. _browser-based version of Visual Studio Code: https://docs.github.com/en/codespaces/developing-in-a-codespace/developing-in-a-codespace
+.. _Visual Studio Code desktop application: https://docs.github.com/en/codespaces/developing-in-a-codespace/using-github-codespaces-in-visual-studio-code
+.. _SSH connection using GitHub CLI: https://docs.github.com/en/codespaces/developing-in-a-codespace/using-github-codespaces-with-github-cli
