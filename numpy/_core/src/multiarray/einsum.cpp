@@ -17,10 +17,9 @@
 #include <numpy/npy_common.h>
 #include <numpy/arrayobject.h>
 
-#include <array_assign.h>   //PyArray_AssignRawScalar
-
 #include <ctype.h>
 extern "C" {
+#include "array_assign.h"   //PyArray_AssignRawScalar
 #include "convert.h"
 #include "common.h"
 #include "ctors.h"
@@ -28,6 +27,10 @@ extern "C" {
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"
 }
+#include "array_method.h"
+#include "dtypemeta.h"
+#include "dispatching.h"
+#include "module_state.h"
 
 /*
  * Parses the subscripts for one operand into an output of 'ndim'
@@ -750,6 +753,211 @@ unbuffered_loop_nop2_ndim3(NpyIter *iter)
     return 0;
 }
 
+/*
+ * DTypes without einsum kernels use their `multiply` and `add` ufunc loops.
+ * Loop `i < nop - 1` multiplies operand `i + 1` into the running product,
+ * kept in one half of `buffer`, and the last loop adds it into the output.
+ */
+typedef struct {
+    npy_intp nop;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    PyArrayMethod_Context context[NPY_MAXARGS];
+    PyArray_Descr *descrs[NPY_MAXARGS][3];
+    PyArrayMethod_StridedLoop *loop[NPY_MAXARGS];
+    NpyAuxData *auxdata[NPY_MAXARGS];
+    char *buffer;
+    npy_intp buffer_half;
+} ufunc_loops;
+
+static void
+free_ufunc_loops(ufunc_loops *loops)
+{
+    if (loops == NULL) {
+        return;
+    }
+    for (npy_intp i = 0; i < loops->nop; i++) {
+        NPY_AUXDATA_FREE(loops->auxdata[i]);
+        for (int j = 0; j < 3; j++) {
+            Py_XDECREF(loops->descrs[i][j]);
+        }
+    }
+    PyMem_Free(loops->buffer);
+    PyMem_Free(loops);
+}
+
+static ufunc_loops *
+get_ufunc_loops(NpyIter *iter, npy_intp nop)
+{
+    PyArray_Descr **iter_descrs = NpyIter_GetDescrArray(iter);
+    PyArrayObject **iter_ops = NpyIter_GetOperandArray(iter);
+    PyArray_DTypeMeta *DType = NPY_DTYPE(iter_descrs[0]);
+    npy_intp fixed_strides[NPY_MAXARGS];
+    npy_intp itemsize = 0;
+
+    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+
+    ufunc_loops *loops = (ufunc_loops *)PyMem_Calloc(1, sizeof(ufunc_loops));
+    if (loops == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    loops->nop = nop;
+
+    PyArray_Descr *prod = iter_descrs[0];
+    npy_intp prod_stride = fixed_strides[0];
+    for (npy_intp i = 0; i < nop; i++) {
+        PyObject *ufunc;
+        PyArray_Descr *given[3];
+        npy_intp strides[3];
+
+        if (i == nop - 1) {
+            ufunc = _npy_module_state->n_ops.add;
+            given[0] = given[2] = iter_descrs[nop];
+            given[1] = prod;
+            strides[0] = strides[2] = fixed_strides[nop];
+            strides[1] = prod_stride;
+        }
+        else {
+            ufunc = _npy_module_state->n_ops.multiply;
+            given[0] = prod;
+            given[1] = iter_descrs[i + 1];
+            given[2] = NULL;
+            strides[0] = prod_stride;
+            strides[1] = fixed_strides[i + 1];
+        }
+
+        /* Like the einsum kernels, compute in the operands' DType */
+        PyArray_DTypeMeta *signature[3] = {DType, DType, DType};
+        PyArray_DTypeMeta *op_dtypes[3] = {DType, DType, DType};
+        PyArrayObject *ops[3] = {iter_ops[0], iter_ops[0], NULL};
+        PyArrayMethodObject *method = promote_and_get_ufuncimpl(
+                (PyUFuncObject *)ufunc, ops, signature, op_dtypes,
+                NPY_FALSE, NPY_FALSE, NPY_FALSE);
+        if (method == NULL) {
+            goto fail;
+        }
+        npy_intp view_offset = NPY_MIN_INTP;
+        if (method->resolve_descriptors(method, signature, given,
+                    loops->descrs[i], &view_offset) < 0) {
+            goto fail;
+        }
+        /* The operands and the product buffer are passed without a cast */
+        for (int j = 0; j < 3; j++) {
+            if (given[j] != NULL &&
+                    !PyArray_EquivTypes(given[j], loops->descrs[i][j])) {
+                PyErr_Format(PyExc_TypeError,
+                        "invalid data type for einsum: the %s loop needs "
+                        "a cast of %S", ((PyUFuncObject *)ufunc)->name,
+                        given[j]);
+                goto fail;
+            }
+        }
+        if (i < nop - 1) {
+            prod = loops->descrs[i][2];
+            if (PyDataType_REFCHK(prod)) {
+                PyErr_Format(PyExc_TypeError,
+                        "invalid data type for einsum: %S holds references",
+                        prod);
+                goto fail;
+            }
+            prod_stride = strides[2] = prod->elsize;
+            itemsize = PyArray_MAX(itemsize, prod->elsize);
+        }
+
+        loops->context[i].caller = ufunc;
+        loops->context[i].method = method;
+        loops->context[i].descriptors = loops->descrs[i];
+        NPY_ARRAYMETHOD_FLAGS flags = (NPY_ARRAYMETHOD_FLAGS)0;
+        if (method->get_strided_loop(&loops->context[i], 1, 0, strides,
+                    &loops->loop[i], &loops->auxdata[i], &flags) < 0) {
+            goto fail;
+        }
+        loops->flags = PyArrayMethod_COMBINED_FLAGS(loops->flags, flags);
+    }
+
+    /* Without GROWINNER, an inner loop is at most the buffer size */
+    if (nop > 1) {
+        loops->buffer_half = NpyIter_GetBufferSize(iter) * itemsize;
+        loops->buffer = (char *)PyMem_Calloc(2, loops->buffer_half);
+        if (loops->buffer == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
+    }
+    return loops;
+
+fail:
+    free_ufunc_loops(loops);
+    return NULL;
+}
+
+static int
+ufunc_loops_sum_of_products(NpyIter *iter, npy_intp nop, ufunc_loops *loops)
+{
+    int res = 0;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
+        return -1;
+    }
+    if (NpyIter_GetIterSize(iter) == 0) {
+        return 0;
+    }
+    NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
+    if (iternext == NULL) {
+        return -1;
+    }
+    char **dataptr = NpyIter_GetDataPtrArray(iter);
+    npy_intp *stride = NpyIter_GetInnerStrideArray(iter);
+    npy_intp *countptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    NPY_ARRAYMETHOD_FLAGS flags = PyArrayMethod_COMBINED_FLAGS(
+            loops->flags, NpyIter_GetTransferFlags(iter));
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    if (!needs_api) {
+        NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
+    }
+
+    NPY_EINSUM_DBG_PRINT("Einsum ufunc loop\n");
+    do {
+        char *prod = dataptr[0];
+        npy_intp prod_stride = stride[0];
+
+        for (npy_intp i = 0; res == 0 && i < nop; i++) {
+            char *args[3];
+            npy_intp strides[3];
+
+            if (i == nop - 1) {
+                args[0] = args[2] = dataptr[nop];
+                strides[0] = strides[2] = stride[nop];
+                args[1] = prod;
+                strides[1] = prod_stride;
+            }
+            else {
+                args[0] = prod;
+                strides[0] = prod_stride;
+                args[1] = dataptr[i + 1];
+                strides[1] = stride[i + 1];
+                args[2] = loops->buffer + (i % 2) * loops->buffer_half;
+                strides[2] = loops->descrs[i][2]->elsize;
+            }
+            res = loops->loop[i](&loops->context[i], args, countptr,
+                                 strides, loops->auxdata[i]);
+            if (needs_api && PyErr_Occurred()) {
+                res = -1;
+            }
+            prod = args[2];
+            prod_stride = strides[2];
+        }
+    } while (res == 0 && iternext(iter));
+    NPY_END_THREADS;
+
+    if (res < 0 || PyErr_Occurred()) {
+        return -1;
+    }
+    return 0;
+}
+
 
 /*NUMPY_API
  * This function provides summation of array elements according to
@@ -817,6 +1025,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     sum_of_products_fn sop;
     npy_intp *stride;
     int type_num;
+    ufunc_loops *loops = NULL;
 
     /* nop+1 (+1 is for the output) must fit in NPY_MAXARGS */
     if (nop >= NPY_MAXARGS) {
@@ -1047,6 +1256,17 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     if (dtype == NULL) {
         iter_flags |= NPY_ITER_COMMON_DTYPE;
     }
+    /*
+     * A user DType's `add` may not be reorderable, so keep the order of
+     * summation as reductions do (`dtype` is checked last).
+     */
+    for (iop = 0; iop <= nop; ++iop) {
+        PyArray_Descr *descr = (iop < nop) ? PyArray_DESCR(op[iop]) : dtype;
+        if (descr != NULL && !PyTypeNum_ISNUMBER(descr->type_num) &&
+                !PyTypeNum_ISOBJECT(descr->type_num)) {
+            iter_flags |= NPY_ITER_DONT_NEGATE_STRIDES;
+        }
+    }
 
     /* Allocate the iterator */
     iter = NpyIter_AdvancedNew(nop+1, op, iter_flags, order, casting, op_flags,
@@ -1056,16 +1276,50 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         goto fail;
     }
 
-    /* No einsum loops for other dtypes, check before zeroing `out` */
+    /*
+     * User DTypes have no einsum kernels and use their ufunc loops.  Check
+     * for those before zeroing `out`, so that an error leaves it untouched.
+     */
     type_num = NpyIter_GetDescrArray(iter)[0]->type_num;
     if (!PyTypeNum_ISNUMBER(type_num) && !PyTypeNum_ISOBJECT(type_num)) {
-        PyErr_SetString(PyExc_TypeError,
-                    "invalid data type for einsum");
-        goto fail;
+        if (!PyTypeNum_ISUSERDEF(type_num) && !NPY_DT_is_numeric(
+                    NPY_DTYPE(NpyIter_GetDescrArray(iter)[0]))) {
+            PyErr_SetString(PyExc_TypeError,
+                        "invalid data type for einsum");
+            goto fail;
+        }
+        loops = get_ufunc_loops(iter, nop);
+        if (loops == NULL) {
+            goto fail;
+        }
+        /* Summing more than one label may reorder the additions */
+        if (ndim_iter - ndim_output > 1 && !(
+                loops->context[nop - 1].method->flags &
+                NPY_METH_IS_REORDERABLE)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "einsum 'add' is not reorderable for this dtype, "
+                    "so at most one label may be summed");
+            goto fail;
+        }
     }
 
     /* Initialize the output to all zeros or None*/
     ret = NpyIter_GetOperandArray(iter)[nop];
+    if (loops != NULL) {
+        /*
+         * A parametric DType's bool cast may give another instance, which
+         * is not a safe cast, but zero is exact in any instance.
+         */
+        PyArray_Descr *bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+        npy_bool zero = 0;
+        int res = PyArray_AssignRawScalar(ret, bool_dtype, (char *)&zero,
+                                          NULL, NPY_UNSAFE_CASTING);
+        Py_DECREF(bool_dtype);
+        if (res < 0 || ufunc_loops_sum_of_products(iter, nop, loops) < 0) {
+            goto fail;
+        }
+        goto finish;
+    }
     if (PyArray_AssignZero(ret, NULL) < 0) {
         goto fail;
     }
@@ -1172,7 +1426,11 @@ finish:
     }
     Py_INCREF(ret);
 
-    NpyIter_Deallocate(iter);
+    free_ufunc_loops(loops);
+    /* Writing back a copy of `out` happens here and can fail */
+    if (!NpyIter_Deallocate(iter)) {
+        Py_CLEAR(ret);
+    }
     for (iop = 0; iop < nop; ++iop) {
         Py_DECREF(op[iop]);
     }
@@ -1180,6 +1438,7 @@ finish:
     return ret;
 
 fail:
+    free_ufunc_loops(loops);
     NpyIter_Deallocate(iter);
     for (iop = 0; iop < nop; ++iop) {
         Py_XDECREF(op[iop]);
