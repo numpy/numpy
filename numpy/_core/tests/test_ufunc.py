@@ -2489,6 +2489,16 @@ class TestUfunc:
         with pytest.raises(ValueError):
             np.add.at(arr, [0, 1], [1, 2, 3])
 
+    @pytest.mark.parametrize("nin, nout, match", [
+        (0, 1, "unary and binary"),
+        (3, 1, "unary and binary"),
+        (1, 0, "single output"),
+    ])
+    def test_at_bad_nin_nout(self, nin, nout, match):
+        f = np.frompyfunc(lambda *args: 0, nin, nout)
+        with pytest.raises(ValueError, match=match):
+            f.at(np.arange(3), [0])
+
     def test_reduce_arguments(self):
         f = np.add.reduce
         d = np.ones((5, 2), dtype=int)

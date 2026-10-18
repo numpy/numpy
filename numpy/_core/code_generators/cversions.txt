@@ -93,3 +93,6 @@
 # Version 22 (NumPy 2.6.0) No API change; include DType
 # exports in the checksum.
 0x00000016 = 8c561f67177611bc05bfa4670966870a
+
+# Version 23 (NumPy 2.6.0) New abstract DTypes
+0x00000017 = de1ab894bb2da2c14f51f382edb438ea
