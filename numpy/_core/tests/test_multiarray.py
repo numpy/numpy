@@ -9120,6 +9120,15 @@ class TestRepeat:
         assert_equal(out, tgt)
         assert_equal(out.dtype, tgt.dtype)
 
+    @pytest.mark.parametrize("repeats", [
+        np.iinfo(np.intp).max // 2,
+        [np.iinfo(np.intp).max // 2] * 3,
+    ])
+    def test_size_overflow(self, repeats):
+        # gh-33080
+        with pytest.raises(ValueError, match="array is too big"):
+            np.repeat(np.arange(3), repeats)
+
 
 # TODO: test for multidimensional
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}
