@@ -496,12 +496,12 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
      * Remove these branches once text/bytes casts are classified as unsafe;
      * see void_to_void_resolve_descriptors_with_flags.
      */
-    if (cast_flags != NULL && castingimpl->resolve_descriptors ==
+    if (castingimpl->resolve_descriptors ==
             &void_to_void_resolve_descriptors) {
         casting = void_to_void_resolve_descriptors_with_flags(
                 castingimpl, dtypes, descrs, out_descrs, view_offset, cast_flags);
     }
-    else if (cast_flags != NULL && castingimpl->resolve_descriptors ==
+    else if (castingimpl->resolve_descriptors ==
             &other_to_void_resolve_descriptors) {
         casting = other_to_void_resolve_descriptors_with_flags(
                 castingimpl, dtypes, descrs, out_descrs, view_offset, cast_flags);
