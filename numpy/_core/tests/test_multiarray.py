@@ -7428,6 +7428,18 @@ class TestResize:
         with pytest.raises(ValueError):
             x.resize((5, 5))
 
+    def test_readonly_raises(self):
+        # gh-33082: resize on read-only arrays must raise for grow, shrink,
+        # or same size.
+        x = np.array([1, 2, 3])
+        x.setflags(write=False)
+        with pytest.raises(ValueError, match="read-only"):
+            x.resize((5,), refcheck=False)
+        with pytest.raises(ValueError, match="read-only"):
+            x.resize((2,), refcheck=False)
+        with pytest.raises(ValueError, match="read-only"):
+            x.resize((3,), refcheck=False)
+
     @_no_tracing
     def test_int_shape(self):
         x = np.eye(3)
@@ -7471,6 +7483,11 @@ class TestResize:
         x.resize(2, 3, 3)
         assert_array_equal(x[0], np.eye(3))
         assert_array_equal(x[1], np.zeros((3, 3)))
+
+        # gh-33082: object array zero-filling on resize
+        o = np.array([1, 2], dtype=object)
+        o.resize((4,), refcheck=False)
+        assert o[2] == 0 and o[3] == 0
 
     @_no_tracing
     def test_obj_obj(self):
