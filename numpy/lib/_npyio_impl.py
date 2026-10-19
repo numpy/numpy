@@ -126,9 +126,10 @@ class NpzFile(Mapping):
 
     The arrays and bytes are lazily loaded on either
     getitem access using ``obj['key']`` or attribute lookup using
-    ``obj.f.key``. A list of all file names, with the ``.npy`` suffix removed
-    where present, can be obtained with ``obj.files`` and the ZipFile object
-    itself using ``obj.zip``.
+    ``obj.f.key``. Full file names, including the ``.npy`` suffix, can also
+    be used for getitem access and membership tests. A list of all file names,
+    with the ``.npy`` suffix removed where present, can be obtained with
+    ``obj.files`` and the ZipFile object itself using ``obj.zip``.
 
     Attributes
     ----------
@@ -181,6 +182,10 @@ class NpzFile(Mapping):
     ['x', 'y']
     >>> npz['x']  # getitem access
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> npz['x.npy']  # full file name
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> 'x.npy' in npz
+    True
     >>> npz.f.x  # attribute lookup
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
