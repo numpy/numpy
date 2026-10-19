@@ -1,3 +1,10 @@
+from numpy._core import numeric
+
+# these must import without warning or error from numpy.core.numeric to
+# support old pickle files
+for item in ['_frombuffer']:
+    globals()[item] = getattr(numeric, item)
+
 def __getattr__(attr_name):
     from numpy._core import numeric
 
