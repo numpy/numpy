@@ -2776,14 +2776,11 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
     }
     /* Convert from a Python timedelta object */
-    else if (PyDelta_CheckExact(obj) ||
-                (PyObject_HasAttr(obj, state->interned_str.days) &&
-                 PyObject_HasAttr(obj, state->interned_str.seconds) &&
-                 PyObject_HasAttr(obj, state->interned_str.microseconds))) {
+    else {
         PyArray_DatetimeMetaData us_meta;
         npy_timedelta td;
         npy_int64 days;
-        int seconds = 0, useconds = 0;
+        long seconds = 0, useconds = 0;
 
         if (PyDelta_CheckExact(obj)) {
             /* Reads from the C struct. */
@@ -2803,10 +2800,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                     return -1;
                 }
                 if (found == 0) {
-                    /* The attribute vanished after the check above. */
-                    PyErr_SetString(PyExc_ValueError,
-                            "Could not convert object to NumPy timedelta");
-                    return -1;
+                    goto not_a_timedelta;
                 }
             }
             days = vals[0];
@@ -2868,6 +2862,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
     }
 
+not_a_timedelta:
     /*
      * With unsafe casting, convert unrecognized objects into NaT
      * and with same_kind casting, convert None into NaT
