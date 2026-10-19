@@ -116,7 +116,7 @@ minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
         Py_INCREF(common);
     }
     else {
-        common = PyArray_PromoteDTypeSequence(2, (PyArray_DTypeMeta **)op_dtypes);
+        common = PyArray_CommonDType(op_dtypes[0], op_dtypes[1]);
         if (common == NULL) {
             return -1;
         }
