@@ -889,9 +889,11 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
 
 /* Could perhaps be redone to not make contiguous arrays */
 
-/* Internal inner product; warns as `funcname` when a.ndim >= 2 and b.ndim > 2. */
-static PyObject *
-PyArray_InnerProduct_int(PyObject *op1, PyObject *op2, const char *funcname)
+/*NUMPY_API
+ * Numeric.innerproduct(a,v)
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 {
     PyArrayObject *ap1 = NULL;
     PyArrayObject *ap2 = NULL;
@@ -948,8 +950,7 @@ PyArray_InnerProduct_int(PyObject *op1, PyObject *op2, const char *funcname)
         Py_INCREF(ap2);
     }
 
-    ret = PyArray_MatrixProduct_int((PyObject *)ap1, ap2t, NULL, funcname,
-                                    NPY_INNER_REPLACEMENT);
+    ret = PyArray_MatrixProduct_int((PyObject *)ap1, ap2t, NULL, NULL);
     if (ret == NULL) {
         goto fail;
     }
@@ -971,29 +972,20 @@ fail:
 }
 
 /*NUMPY_API
- * Numeric.innerproduct(a,v)
- */
-NPY_NO_EXPORT PyObject *
-PyArray_InnerProduct(PyObject *op1, PyObject *op2)
-{
-    return PyArray_InnerProduct_int(op1, op2, "PyArray_InnerProduct");
-}
-
-/*NUMPY_API
  * Numeric.matrixproduct(a,v)
  * just like inner product but does the swapaxes stuff on the fly
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 {
-    return PyArray_MatrixProduct_int(op1, op2, NULL, "PyArray_MatrixProduct",
-                                     NPY_DOT_REPLACEMENT);
+    return PyArray_MatrixProduct_int(op1, op2, NULL, "PyArray_MatrixProduct");
 }
 
-/* Internal matrix product; warns as `funcname` when a.ndim >= 2 and b.ndim > 2. */
+/* Internal matrix product; warns as `funcname` when a.ndim >= 2 and b.ndim > 2.
+ * Pass funcname=NULL to skip the warning (used by np.inner). */
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
-                    const char *funcname, const char *replacement)
+                          const char *funcname)
 {
     PyArrayObject *ap1, *ap2, *out_buf = NULL, *result = NULL;
     PyArrayIterObject *it1, *it2;
@@ -1068,13 +1060,13 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
     }
 
     /* Deprecated NumPy 2.6: warn when a.ndim >= 2 and b.ndim > 2 */
-    if (PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
+    if (funcname != NULL && PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                 "%s received arrays with a.ndim >= 2 and b.ndim > 2. "
                 "This places the leading dimensions of b in the middle of "
                 "the result, which is deprecated and will eventually raise "
-                "an error. Use %s instead. "
-                "(Deprecated NumPy 2.6)", funcname, replacement) < 0) {
+                "an error. Use numpy.tensordot(a, b, axes=[-1, -2]) instead. "
+                "(Deprecated NumPy 2.6)", funcname) < 0) {
             goto fail;
         }
     }
@@ -1175,8 +1167,7 @@ fail:
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 {
-    return PyArray_MatrixProduct_int(op1, op2, out, "PyArray_MatrixProduct2",
-                                     NPY_DOT_REPLACEMENT);
+    return PyArray_MatrixProduct_int(op1, op2, out, "PyArray_MatrixProduct2");
 }
 
 
@@ -2602,8 +2593,7 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_
     return NULL;
     }
 
-    return PyArray_Return((PyArrayObject *)PyArray_InnerProduct_int(
-            a0, b0, "numpy.inner"));
+    return PyArray_Return((PyArrayObject *)PyArray_InnerProduct(a0, b0));
 }
 
 static PyObject *
@@ -2629,12 +2619,8 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy),
             return NULL;
         }
     }
-    
     ret = (PyArrayObject *)PyArray_MatrixProduct_int(
-            a, v, (PyArrayObject *)o, "numpy.dot", NPY_DOT_REPLACEMENT);
-    if (ret == NULL) {
-        return NULL;
-    }
+            a, v, (PyArrayObject *)o, "numpy.dot");
     return PyArray_Return(ret);
 }
 

@@ -2927,10 +2927,6 @@ Array Functions
     Compute a product-sum over the last dimensions of *obj1* and
     *obj2*. Neither array is conjugated.
 
-    .. deprecated:: 2.6
-        Passing *obj1* with 2 or more dimensions and *obj2* with more than
-        2 dimensions is deprecated and will eventually raise an error.
-
 .. c:function:: PyObject* PyArray_MatrixProduct(PyObject* obj1, PyObject* obj)
 
     Compute a product-sum over the last dimension of *obj1* and the

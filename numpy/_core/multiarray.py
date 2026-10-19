@@ -314,12 +314,6 @@ def inner(a, b, /):
     Ordinary inner product of vectors for 1-D arrays (without complex
     conjugation), in higher dimensions a sum product over the last axes.
 
-    .. deprecated:: 2.6
-        Calling `inner` when `a` has 2 or more dimensions and `b` has more
-        than 2 dimensions is deprecated and will eventually raise an error,
-        because the leading dimensions of `b` end up in the middle of the
-        result. Use ``tensordot(a, b, axes=[-1, -1])`` instead.
-
     Parameters
     ----------
     a, b : array_like

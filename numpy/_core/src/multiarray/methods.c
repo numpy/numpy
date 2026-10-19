@@ -2563,12 +2563,8 @@ array_dot(PyArrayObject *self,
             return NULL;
         }
     }
-    
     ret = (PyArrayObject *)PyArray_MatrixProduct_int(
-            a, b, (PyArrayObject *)o, "numpy.dot", NPY_DOT_REPLACEMENT);
-    if (ret == NULL) {
-        return NULL;
-    }
+            a, b, (PyArrayObject *)o, "numpy.dot");
     return PyArray_Return(ret);
 }
 
