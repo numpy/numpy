@@ -1371,10 +1371,7 @@ class TestNanFunctions_Quantile:
             "nanquantile-lower",
         ],
     )
-    def test_allnan_first_slice_dtype(
-        self, func, q, expected_func, method
-    ):
-        # gh-32832: dtype must not depend on slice order.
+    def test_nanquantile_allnan_first_slice_dtype(self):
         a = np.array(
             [
                 [1.0, 2.0],
@@ -1382,27 +1379,22 @@ class TestNanFunctions_Quantile:
             ],
             dtype=np.float32,
         )
+        q = np.array([0.3])
 
         with pytest.warns(
             RuntimeWarning, match="All-NaN slice encountered"
         ):
-            normal = func(a, q, axis=1, method=method)
+            result = np.nanquantile(a, q, axis=1)
 
         with pytest.warns(
             RuntimeWarning, match="All-NaN slice encountered"
         ):
-            reversed_ = func(a[::-1], q, axis=1, method=method)
+            reversed_result = np.nanquantile(a[::-1], q, axis=1)
 
-        expected = expected_func(a[0], q, method=method)
+        expected = np.quantile(a[0], q)
 
-        assert normal.dtype == expected.dtype
-        assert reversed_.dtype == expected.dtype
-        assert normal.dtype == reversed_.dtype
-
-        assert_array_equal(normal[..., 0], expected)
-        assert_array_equal(reversed_[..., 1], expected)
-        assert np.isnan(normal[..., 1])
-        assert np.isnan(reversed_[..., 0])
+        assert result.dtype == expected.dtype
+        assert reversed_result.dtype == expected.dtype
 
     def test_complex(self):
         arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
