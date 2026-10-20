@@ -31,15 +31,15 @@ extern "C" {
  * a very lightweight "object").
  */
 typedef struct _stream {
-    int (*stream_nextbuf)(void *sdata, char **start, char **end, int *kind);
+    int (*stream_nextbuf)(void *sdata, char **start, char **end);
     // Note that the first argument to stream_close is the stream pointer
     // itself, not the stream_data pointer.
     int (*stream_close)(struct _stream *strm);
 } stream;
 
 
-#define stream_nextbuf(s, start, end, kind)  \
-        ((s)->stream_nextbuf((s), start, end, kind))
+#define stream_nextbuf(s, start, end)  \
+        ((s)->stream_nextbuf((s), start, end))
 #define stream_close(s)    ((s)->stream_close((s)))
 
 #ifdef __cplusplus

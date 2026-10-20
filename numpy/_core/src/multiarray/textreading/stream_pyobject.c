@@ -31,10 +31,8 @@ typedef struct {
 
     /* Python str object holding the line most recently read from the file. */
     PyObject *chunk;
-#ifdef Py_LIMITED_API
-    /* UCS4 copy of `chunk`, see `buffer_info_from_unicode` */
+    /* UCS4 copy of `chunk`, which the tokenizer reads */
     Py_UCS4 *chunk_ucs4;
-#endif
 
     /* Encoding compatible with Python's `PyUnicode_Encode` (may be NULL) */
     const char *encoding;
@@ -68,14 +66,13 @@ process_stringlike(PyObject *str, const char *encoding)
 }
 
 
-#ifdef Py_LIMITED_API
 /*
- * The data of a `str` cannot be accessed under the Limited API, so the
- * tokenizer gets a UCS4 copy, which the stream owns through `*ucs4`.
+ * The tokenizer reads a UCS4 copy of `str`.  The stream owns it through
+ * `*ucs4` and frees it on the next read.
  */
 static inline int
-buffer_info_from_unicode(PyObject *str, Py_UCS4 **ucs4,
-        char **start, char **end, int *kind)
+buffer_info_from_unicode(
+        PyObject *str, Py_UCS4 **ucs4, char **start, char **end)
 {
     Py_ssize_t length = PyUnicode_GetLength(str);
 
@@ -84,36 +81,14 @@ buffer_info_from_unicode(PyObject *str, Py_UCS4 **ucs4,
     if (*ucs4 == NULL) {
         return -1;
     }
-    *kind = (int)sizeof(Py_UCS4);
     *start = (char *)*ucs4;
     *end = *start + length * sizeof(Py_UCS4);
     return 0;
 }
-#else
-static inline void
-buffer_info_from_unicode(PyObject *str, char **start, char **end, int *kind)
-{
-    Py_ssize_t length = PyUnicode_GET_LENGTH(str);
-    *kind = PyUnicode_KIND(str);
-
-    if (*kind == PyUnicode_1BYTE_KIND) {
-        *start = (char *)PyUnicode_1BYTE_DATA(str);
-    }
-    else if (*kind == PyUnicode_2BYTE_KIND) {
-        *start = (char *)PyUnicode_2BYTE_DATA(str);
-        length *= sizeof(Py_UCS2);
-    }
-    else if (*kind == PyUnicode_4BYTE_KIND) {
-        *start = (char *)PyUnicode_4BYTE_DATA(str);
-        length *= sizeof(Py_UCS4);
-    }
-    *end = *start + length;
-}
-#endif
 
 
 static int
-fb_nextbuf(python_chunks_from_file *fb, char **start, char **end, int *kind)
+fb_nextbuf(python_chunks_from_file *fb, char **start, char **end)
 {
     Py_XDECREF(fb->chunk);
     fb->chunk = NULL;
@@ -126,14 +101,10 @@ fb_nextbuf(python_chunks_from_file *fb, char **start, char **end, int *kind)
     if (fb->chunk == NULL) {
         return -1;
     }
-#ifdef Py_LIMITED_API
     if (buffer_info_from_unicode(
-            fb->chunk, &fb->chunk_ucs4, start, end, kind) < 0) {
+            fb->chunk, &fb->chunk_ucs4, start, end) < 0) {
         return -1;
     }
-#else
-    buffer_info_from_unicode(fb->chunk, start, end, kind);
-#endif
     if (*start == *end) {
         return BUFFER_IS_FILEEND;
     }
@@ -150,9 +121,7 @@ fb_del(stream *strm)
     Py_XDECREF(fb->read);
     Py_XDECREF(fb->chunksize);
     Py_XDECREF(fb->chunk);
-#ifdef Py_LIMITED_API
     PyMem_Free(fb->chunk_ucs4);
-#endif
 
     PyMem_FREE(strm);
 
@@ -205,10 +174,8 @@ typedef struct {
 
     /* Python str object holding the line most recently fetched */
     PyObject *line;
-#ifdef Py_LIMITED_API
-    /* UCS4 copy of `line`, see `buffer_info_from_unicode` */
+    /* UCS4 copy of `line`, which the tokenizer reads */
     Py_UCS4 *line_ucs4;
-#endif
 
     /* Encoding compatible with Python's `PyUnicode_Encode` (may be NULL) */
     const char *encoding;
@@ -222,9 +189,7 @@ it_del(stream *strm)
 
     Py_XDECREF(it->iterator);
     Py_XDECREF(it->line);
-#ifdef Py_LIMITED_API
     PyMem_Free(it->line_ucs4);
-#endif
 
     PyMem_FREE(strm);
     return 0;
@@ -232,7 +197,7 @@ it_del(stream *strm)
 
 
 static int
-it_nextbuf(python_lines_from_iterator *it, char **start, char **end, int *kind)
+it_nextbuf(python_lines_from_iterator *it, char **start, char **end)
 {
     Py_XDECREF(it->line);
     it->line = NULL;
@@ -251,14 +216,10 @@ it_nextbuf(python_lines_from_iterator *it, char **start, char **end, int *kind)
         return -1;
     }
 
-#ifdef Py_LIMITED_API
     if (buffer_info_from_unicode(
-            it->line, &it->line_ucs4, start, end, kind) < 0) {
+            it->line, &it->line_ucs4, start, end) < 0) {
         return -1;
     }
-#else
-    buffer_info_from_unicode(it->line, start, end, kind);
-#endif
     return BUFFER_IS_LINEND;
 }
 

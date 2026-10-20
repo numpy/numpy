@@ -39,10 +39,9 @@
 */
 
 
-template <typename UCS>
 static inline int
 copy_to_field_buffer(tokenizer_state *ts,
-        const UCS *chunk_start, const UCS *chunk_end)
+        const Py_UCS4 *chunk_start, const Py_UCS4 *chunk_end)
 {
     npy_intp chunk_length = chunk_end - chunk_start;
     /* Space for length +1 termination, +2 additional padding for add_field */
@@ -110,13 +109,12 @@ add_field(tokenizer_state *ts)
 }
 
 
-template <typename UCS>
 static inline int
 tokenizer_core(tokenizer_state *ts, parser_config *const config)
 {
-    UCS *pos = (UCS *)ts->pos;
-    UCS *stop = (UCS *)ts->end;
-    UCS *chunk_start;
+    Py_UCS4 *pos = (Py_UCS4 *)ts->pos;
+    Py_UCS4 *stop = (Py_UCS4 *)ts->end;
+    Py_UCS4 *chunk_start;
 
     if (ts->state == TOKENIZE_CHECK_QUOTED) {
         /* before we can check for quotes, strip leading whitespace */
@@ -283,8 +281,7 @@ tokenizer_core(tokenizer_state *ts, parser_config *const config)
  * field whether the buffer is large enough.
  * Different choices are possible, this one seems to work well, though.
  *
- * The core (main part) of the tokenizer is specialized for the three Python
- * unicode flavors UCS1, UCS2, and UCS4 as a worthwhile optimization.
+ * The streams provide the text as UCS4 characters.
  */
 NPY_NO_EXPORT int
 npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
@@ -324,8 +321,7 @@ npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
                 break;
             }
             /* fetch new data */
-            ts->buf_state = stream_nextbuf(s,
-                    &ts->pos, &ts->end, &ts->unicode_kind);
+            ts->buf_state = stream_nextbuf(s, &ts->pos, &ts->end);
             if (ts->buf_state < 0) {
                 return -1;
             }
@@ -340,22 +336,7 @@ npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
                 break;
             }
         }
-        int status;
-#ifdef Py_LIMITED_API
-        /* The streams only provide UCS4 data under the Limited API */
-        status = tokenizer_core<Py_UCS4>(ts, config);
-#else
-        if (ts->unicode_kind == PyUnicode_1BYTE_KIND) {
-            status = tokenizer_core<Py_UCS1>(ts, config);
-        }
-        else if (ts->unicode_kind == PyUnicode_2BYTE_KIND) {
-            status = tokenizer_core<Py_UCS2>(ts, config);
-        }
-        else {
-            assert(ts->unicode_kind == PyUnicode_4BYTE_KIND);
-            status = tokenizer_core<Py_UCS4>(ts, config);
-        }
-#endif
+        int status = tokenizer_core(ts, config);
         if (status < 0) {
             return -1;
         }
