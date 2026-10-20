@@ -3,6 +3,7 @@
 """
 import subprocess
 import sys
+import textwrap
 import types
 import warnings
 
@@ -108,19 +109,21 @@ class TestFinfo:
         # finfo must not alias or overwrite them in _finfo_cache.
         # Use a fresh subprocess with a cold cache so that calling
         # finfo(longdouble) first reliably exercises the bug.
-        code = (
-            "import numpy as np; "
-            "f_ld = np.finfo(np.longdouble); "
-            "f_64 = np.finfo(np.float64); "
-            "assert f_ld is not f_64; "
-            "assert type(f_64.eps) is np.float64; "
-            "assert type(f_ld.eps) is np.longdouble; "
-            "f_cld = np.finfo(np.clongdouble); "
-            "f_c128 = np.finfo(np.complex128); "
-            "assert f_cld is not f_c128; "
-            "assert type(f_c128.eps) is np.float64; "
-            "assert type(f_cld.eps) is np.longdouble"
-        )
+        code = textwrap.dedent("""
+            import numpy as np
+
+            f_ld = np.finfo(np.longdouble)
+            f_64 = np.finfo(np.float64)
+            assert f_ld is not f_64
+            assert type(f_64.eps) is np.float64
+            assert type(f_ld.eps) is np.longdouble
+
+            f_cld = np.finfo(np.clongdouble)
+            f_c128 = np.finfo(np.complex128)
+            assert f_cld is not f_c128
+            assert type(f_c128.eps) is np.float64
+            assert type(f_cld.eps) is np.longdouble
+        """)
         subprocess.check_call([sys.executable, "-c", code])
 
     def test_no_none_sense(self):
