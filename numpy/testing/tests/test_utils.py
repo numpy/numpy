@@ -1650,6 +1650,7 @@ class TestArrayAlmostEqualNulp:
         with pytest.raises(AssertionError, match=r"1 ULP \(max is "):
             assert_array_almost_equal_nulp(x, y, nulp=1)
 
+
 class TestULP:
 
     def test_equal(self):
