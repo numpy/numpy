@@ -1538,15 +1538,34 @@ class TestPromotion:
         res = np.minimum(np.ones(3, dtype=other), complex_scalar).dtype
         assert res == expected
 
-    @pytest.mark.parametrize("rat_cls", [rational, rational2])
-    def test_complex_pyscalar_promote_rational(self, rat_cls):
+    def test_complex_pyscalar_promote_rational(self):
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
-            np.result_type(1j, rat_cls)
+            np.result_type(1j, rational)
 
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
-            np.result_type(1j, rat_cls(1, 2))
+            np.result_type(rational, 1j)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(1j, rational(1, 2))
+
+    def test_complex_pyscalar_promote_rational2(self):
+        # rational2 CommonDType is always called here and gives a custom error
+        # to indicate that. The abstract DType returns NotImplemented.
+        assert np.result_type(rational2, np.complex128) == np.dtype(rational2)
+        with pytest.raises(TypeError,
+                match="rational2 refuses Python complex promotion"):
+            np.result_type(1j, rational2)
+
+        with pytest.raises(TypeError,
+                match="rational2 refuses Python complex promotion"):
+            np.result_type(rational2, 1j)
+
+        with pytest.raises(TypeError,
+                match="rational2 refuses Python complex promotion"):
+            np.result_type(1j, rational2(1, 2))
 
     @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2 * 100])
     def test_python_integer_promotion(self, val):
@@ -1565,6 +1584,22 @@ class TestPromotion:
         # inconsistent here).  The new promotion fixed this (partially?)
         assert np.result_type(other, rational) == expected
         assert np.result_type(other, rational(1, 2)) == expected
+
+    @pytest.mark.parametrize("other", [1, 1.])
+    def test_float_int_pyscalar_promote_rational2(self, other):
+        # Currently rational2 does not handle this explicitly so it fails
+        # (If CommonDType is implemented, it must handle these promotions).
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(other, rational2)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(rational2, other)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(other, rational2(1, 2))
 
     @pytest.mark.parametrize("shape",
             # The empty case makes basically no sense, but it creates a ()
@@ -1613,15 +1648,6 @@ class TestPromotion:
         # type, which would then promote to a larger than necessary float.
         for perm in permutations(dtypes):
             assert np.result_type(*perm) == expected
-
-
-def test_rational2_uses_new_dtype_api():
-    # ``rational2`` provides its own ``common_dtype`` slot (which the
-    # legacy ``rational`` cannot), and that slot rejects floats.
-    assert np.result_type(rational, 1.0) == np.float64
-    with pytest.raises(TypeError,
-            match=r".* no common DType exists for the given inputs"):
-        np.result_type(rational2, 1.0)
 
 
 @pytest.mark.parametrize("rat_cls", [rational, rational2])
