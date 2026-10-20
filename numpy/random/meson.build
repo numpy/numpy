@@ -3,6 +3,7 @@
 npyrandom_sources = [
   'src/distributions/logfactorial.c',
   'src/distributions/distributions.c',
+  'src/distributions/distributions_bulk.c',
   'src/distributions/random_mvhg_count.c',
   'src/distributions/random_mvhg_marginals.c',
   'src/distributions/random_hypergeometric.c',
