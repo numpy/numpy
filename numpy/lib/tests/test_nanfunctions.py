@@ -1343,34 +1343,6 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 1), 3.5)
         assert_equal(np.nanquantile(x, 0.5), 1.75)
 
-    @pytest.mark.parametrize(
-        "func, q, expected_func, method",
-        [
-            (
-                np.nanpercentile,
-                np.array([30.0], dtype=np.float64),
-                np.percentile,
-                "linear",
-            ),
-            (
-                np.nanquantile,
-                np.array([0.3], dtype=np.float64),
-                np.quantile,
-                "linear",
-            ),
-            (
-                np.nanquantile,
-                np.array([0.3], dtype=np.float64),
-                np.quantile,
-                "lower",
-            ),
-        ],
-        ids=[
-            "nanpercentile",
-            "nanquantile-linear",
-            "nanquantile-lower",
-        ],
-    )
     def test_nanquantile_allnan_first_slice_dtype(self):
         a = np.array(
             [
