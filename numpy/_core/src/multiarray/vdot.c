@@ -147,6 +147,15 @@ OBJECT_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp
     PyObject *tmp0, *tmp1, *tmp2, *tmp = NULL;
     PyObject **tmp3;
     PyObject *conjugate = _npy_module_state->interned_str.conjugate;
+
+    if (n == 0) {
+        PyObject *zero = PyLong_FromLong(0);
+        if (zero == NULL) {
+            return;
+        }
+        Py_XSETREF(*((PyObject **)op), zero);
+        return;
+    }
     for (i = 0; i < n; i++, ip1 += is1, ip2 += is2) {
         if ((*((PyObject **)ip1) == NULL) || (*((PyObject **)ip2) == NULL)) {
             tmp1 = Py_NewRef(Py_False);

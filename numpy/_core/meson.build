@@ -52,7 +52,8 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000014 - 2.3.x
 # 0x00000015 - 2.4.x
 # 0x00000016 - 2.5.x
-C_API_VERSION = '0x00000016'
+# 0x00000017 - 2.6.x
+C_API_VERSION = '0x00000017'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -761,7 +762,7 @@ src_umath_doc_h = custom_target('_umath_doc_generated',
 )
 
 src_numpy_api = custom_target('__multiarray_api',
-  output : ['__multiarray_api.c', '__multiarray_api.h'],
+  output : ['__multiarray_api.c', '__multiarray_api.h', '_public_dtype_api_table.h'],
   depend_files: codegen_files,
   command: [py, '-m', 'code_generators.generate_numpy_api', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
   env: codegen_env,

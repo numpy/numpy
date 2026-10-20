@@ -2,6 +2,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <stdatomic.h>
+#include <string.h>
 #include "structmember.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION

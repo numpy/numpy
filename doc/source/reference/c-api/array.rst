@@ -16,6 +16,13 @@ Array API
    pair: ndarray; C-API
    pair: C-API; array
 
+.. note::
+
+   Unless stated otherwise, the functions and macros on this page are made
+   available by including ``numpy/arrayobject.h``. See
+   :ref:`including-the-c-api` for which headers to include and how to
+   import the API with ``import_array()`` before using it.
+
 
 Array structure and data access
 -------------------------------
@@ -529,8 +536,8 @@ From other objects
 
     Return an ndarray object from a Python object that exposes the
     :obj:`~numpy.class.__array__` method. The third-party implementations of
-    :obj:`~numpy.class.__array__` must take ``dtype`` and ``copy`` keyword
-    arguments. ``context`` is unused.
+    :obj:`~numpy.class.__array__` must accept ``dtype`` positionally and
+    ``copy`` as a keyword argument. ``context`` is unused.
 
 .. c:function:: PyObject* PyArray_ContiguousFromAny( \
         PyObject* op, int typenum, int min_depth, int max_depth)
@@ -4229,7 +4236,7 @@ which uses the NumPy API must import NumPy using one of the functions
 ``PyArray_ImportNumPyAPI()`` or ``import_array()``.
 In some places, functionality which requires ``import_array()`` is not
 needed, because you only need type definitions.  In this case, it is
-sufficient to include ``numpy/ndarratypes.h``.
+sufficient to include ``numpy/ndarraytypes.h``.
 
 For the typical Python project, multiple C or C++ files will be compiled into
 a single shared object (the Python C-module) and ``PyArray_ImportNumPyAPI()``
