@@ -137,7 +137,6 @@ test-core = [
 test-extending = [            # includes tests that build extensions / f2py
     { include-group = "test-core" },
     { include-group = "build" },
-    'ninja; sys_platform != "emscripten"',
     "charset-normalizer",
     "pytest-cov==7.1.0",
     'numpy_quaddtype; python_version < "3.15" and sys_platform == "darwin"',
