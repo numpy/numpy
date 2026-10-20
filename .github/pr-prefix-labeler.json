@@ -9,6 +9,7 @@
   "DOC": "04 - Documentation",
   "ENH": "01 - Enhancement",
   "MAINT": "03 - Maintenance",
+  "MNT": "03 - Maintenance",
   "NEP": "component: NEP",
   "REL": "14 - Release",
   "REV": "34 - Reversion",
