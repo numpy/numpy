@@ -1,4 +1,4 @@
 * Legacy user DTypes that use the new API and register a ``NPY_DT_common_dtype``
   will now have to promote correctly with the abstract DTypes ``PyArray_PyLongDType``,
   ``PyArray_PyFloatDType``, ``PyArray_PyComplexDType``.
-  On older version a fallback is activate which may guess wrong for narrow DTypes.
+  On older versions, a fallback is activated which may guess wrong for narrow DTypes.

@@ -1000,7 +1000,7 @@ rational2_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         return NULL;
     }
     if (other == &PyArray_CDoubleDType) {
-        /* PyArray_PyComplexDType must not reach here via it's fallback. */
+        /* PyArray_PyComplexDType must not reach here via its fallback. */
         PyErr_SetString(PyExc_TypeError,
                 "Tests should not hit cdouble promotion");
         return NULL;
