@@ -23,4 +23,4 @@ def __getattr__(attr_name):
     return ret
 
 
-del multiarray, item
+del multiarray
