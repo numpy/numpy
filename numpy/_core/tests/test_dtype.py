@@ -1554,7 +1554,6 @@ class TestPromotion:
     def test_complex_pyscalar_promote_rational2(self):
         # rational2 CommonDType is always called here and gives a custom error
         # to indicate that. The abstract DType returns NotImplemented.
-        assert np.result_type(rational2, np.complex128) == np.dtype(rational2)
         with pytest.raises(TypeError,
                 match="rational2 refuses Python complex promotion"):
             np.result_type(1j, rational2)

@@ -999,7 +999,13 @@ rational2_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
                 "rational2 refuses Python complex promotion");
         return NULL;
     }
-    if (cls == other || other == &PyArray_CDoubleDType) {
+    if (other == &PyArray_CDoubleDType) {
+        /* PyArray_PyComplexDType must not reach here via it's fallback. */
+        PyErr_SetString(PyExc_TypeError,
+                "Tests should not hit cdouble promotion");
+        return NULL;
+    }
+    if (cls == other) {
         Py_INCREF((PyObject *)cls);
         return cls;
     }
