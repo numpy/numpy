@@ -1,3 +1,4 @@
+from itertools import permutations
 from tempfile import NamedTemporaryFile
 
 import pytest
@@ -208,6 +209,19 @@ class TestSFloat:
         # Test an undefined promotion:
         with pytest.raises(TypeError):
             np.result_type(SF(1.), np.int64)
+
+    def test_sfloat_promotion_order(self):
+        # SF deliberately mimics int4 for these pairs: uint8 needs int16,
+        # while float16 can absorb SF and uint8 separately.  Selecting
+        # float16 before committing the int16 intermediate avoids float32.
+        sf = SF(1.)
+        for other, expected in [(np.uint8, np.int16), (np.float16, np.float16)]:
+            assert np.result_type(sf, other) == expected
+            assert np.result_type(other, sf) == expected
+
+        operands = [sf, np.dtype(np.uint8), np.dtype(np.float16)]
+        for order in permutations(operands):
+            assert np.result_type(*order) == np.float16
 
     def test_basic_multiply(self):
         a = self._get_array(2.)

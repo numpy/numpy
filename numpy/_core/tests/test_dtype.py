@@ -1540,12 +1540,12 @@ class TestPromotion:
 
     @pytest.mark.parametrize("rat_cls", [rational, rational2])
     def test_complex_pyscalar_promote_rational(self, rat_cls):
-        with pytest.raises(TypeError,
-                match=r".* no common DType exists for the given inputs"):
+        with pytest.raises(np.exceptions.DTypePromotionError,
+                match="do not have a common DType"):
             np.result_type(1j, rat_cls)
 
-        with pytest.raises(TypeError,
-                match=r".* no common DType exists for the given inputs"):
+        with pytest.raises(np.exceptions.DTypePromotionError,
+                match="do not have a common DType"):
             np.result_type(1j, rat_cls(1, 2))
 
     @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2 * 100])
@@ -1597,6 +1597,9 @@ class TestPromotion:
              ([np.uint16, np.int16, np.float16], np.float32),
              ([np.uint16, np.int8, np.float16], np.float32),
              ([np.uint8, np.int16, np.float16], np.float32),
+             ([np.uint8, np.int8, np.bool, np.float16], np.float16),
+             ([np.uint16, np.int16, np.float16, np.float32], np.float32),
+             ([np.uint64, np.int8, np.float32, np.bool], np.float64),
              # The following promotions are not ambiguous, but cover code
              # paths of abstract promotion (no particular logic being tested)
              ([1, 1, np.float64], np.float64),
@@ -1614,13 +1617,43 @@ class TestPromotion:
         for perm in permutations(dtypes):
             assert np.result_type(*perm) == expected
 
+    @pytest.mark.parametrize("dtype1", list("?bhilqBHILQefdgFDGSU"))
+    @pytest.mark.parametrize("dtype2", ["V3", "M8[ns]", "m8[ns]"])
+    @pytest.mark.parametrize("arrays", [False, True])
+    def test_object_promotion_with_incompatible_inputs(self, dtype1, dtype2,
+                                                     arrays):
+        # Object must lead the reduction even when the other inputs cannot
+        # promote each other (e.g. bool and datetime).
+        operands = [np.dtype(dtype1), np.dtype(dtype2), np.dtype(object)]
+        if arrays:
+            operands = [np.ones(1, dtype=dtype) for dtype in operands]
+        for order in permutations(operands):
+            assert np.result_type(*order) == np.dtype(object)
+            if arrays:
+                assert np.concatenate(order).dtype == np.dtype(object)
+
+    @pytest.mark.parametrize("float_dtype", [np.float16, np.float32])
+    @pytest.mark.parametrize("arrays", [False, True])
+    def test_many_input_promotions_with_absorption(self, float_dtype, arrays):
+        # Exercise repeated selection, compaction, and the allocated workspace.
+        operands = [np.dtype(t) for t in [np.int8, np.uint8, np.bool] * 7]
+        floating = np.dtype(float_dtype)
+        if arrays:
+            operands = [np.ones(1, dtype=dtype) for dtype in operands]
+            floating = np.ones(1, dtype=floating)
+        for i in range(len(operands) + 1):
+            args = operands[:i] + [floating] + operands[i:]
+            assert np.result_type(*args) == np.dtype(float_dtype)
+            if arrays:
+                assert np.concatenate(args).dtype == np.dtype(float_dtype)
+
 
 def test_rational2_uses_new_dtype_api():
     # ``rational2`` provides its own ``common_dtype`` slot (which the
     # legacy ``rational`` cannot), and that slot rejects floats.
     assert np.result_type(rational, 1.0) == np.float64
-    with pytest.raises(TypeError,
-            match=r".* no common DType exists for the given inputs"):
+    with pytest.raises(np.exceptions.DTypePromotionError,
+            match="do not have a common DType"):
         np.result_type(rational2, 1.0)
 
 
