@@ -5434,7 +5434,8 @@ class TestPickling:
         x = np.arange(12, dtype='uint8').reshape(3, 4)[:, :2]
         assert_equal(x, pickle.loads(no_contiguous_dumped))
 
-    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL < 5, reason="requires pickle protocol 5")
+    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL < 5,
+                        reason="requires pickle protocol 5")
     def test_load_numpy1_pkl_protocol5(self):
         # numpy 1.x dumps contiguous arrays with protocol 5 via
         # numpy.core.numeric._frombuffer, which must be loadable without
