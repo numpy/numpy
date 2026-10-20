@@ -5434,6 +5434,19 @@ class TestPickling:
         x = np.arange(12, dtype='uint8').reshape(3, 4)[:, :2]
         assert_equal(x, pickle.loads(no_contiguous_dumped))
 
+    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL < 5,
+                        reason="requires pickle protocol 5")
+    def test_load_numpy1_pkl_protocol5(self):
+        # numpy 1.x dumps contiguous arrays with protocol 5 via
+        # numpy.core.numeric._frombuffer, which must be loadable without
+        # warning despite np.core being deprecated in numpy 2.0.
+        c_contiguous_dumped = b'\x80\x05\x95\x8f\x00\x00\x00\x00\x00\x00\x00\x8c\x12numpy.core.numeric\x94\x8c\x0b_frombuffer\x94\x93\x94(\x96\x18\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x94\x8c\x05numpy\x94\x8c\x05dtype\x94\x93\x94\x8c\x02u1\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01|\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94bK\x03K\x04K\x02\x87\x94\x8c\x01C\x94t\x94R\x94.'  # noqa: E501
+        f_contiguous_dumped = b'\x80\x05\x95\x8f\x00\x00\x00\x00\x00\x00\x00\x8c\x12numpy.core.numeric\x94\x8c\x0b_frombuffer\x94\x93\x94(\x96\x18\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x94\x8c\x05numpy\x94\x8c\x05dtype\x94\x93\x94\x8c\x02u1\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01|\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94bK\x03K\x04K\x02\x87\x94\x8c\x01F\x94t\x94R\x94.'  # noqa: E501
+        x = np.arange(24, dtype='uint8').reshape(3, 4, 2)
+        assert_equal(x, pickle.loads(c_contiguous_dumped))
+        x = np.arange(24, dtype='uint8').reshape(3, 4, 2, order='F')
+        assert_equal(x, pickle.loads(f_contiguous_dumped))
+
     def test_non_contiguous_array(self):
         non_contiguous_array = np.arange(12).reshape(3, 4)[:, :2]
         assert not non_contiguous_array.flags.c_contiguous
