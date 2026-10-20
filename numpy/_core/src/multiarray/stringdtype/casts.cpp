@@ -2324,6 +2324,11 @@ get_casts() {
     PyArray_DTypeMeta **s2bytes_dtypes = get_dtypes(
             &PyArray_StringDType, &PyArray_BytesDType);
 
+    /*
+     * Deprecated NumPy 2.6, 2026-10-13: S <-> T casts under
+     * "safe" and "same_kind". After this deprecation expires, make both
+     * casts below unsafe, including their descriptor resolvers.
+     */
     PyArrayMethod_Spec *StringToBytesCastSpec = get_cast_spec(
         make_s2type_name(NPY_STRING),
         NPY_SAME_KIND_CASTING,

@@ -611,6 +611,16 @@ npy_find_descr_for_scalar(
         return original_descr;
     }
 
+    /*
+     * The destination DType is already known. Keep the scalar's descriptor
+     * and let the casting checks enforce text/bytes restrictions, without
+     * triggering the promotion deprecation here.
+     */
+    if (NPY_DT_is_text_bytes_cast(in_DT, op_DT)) {
+        Py_INCREF(original_descr);
+        return original_descr;
+    }
+
     PyArray_DTypeMeta *common = PyArray_CommonDType(in_DT, op_DT);
     if (common == NULL) {
         PyErr_Clear();

@@ -1401,6 +1401,7 @@ class TestRegression:
         b = a.reshape(3, 43)[:-1, :-1]
         assert_raises(UnicodeEncodeError, np.array, b, 'S')
 
+    @pytest.mark.filterwarnings("ignore:Promoting strings and bytes:DeprecationWarning")
     def test_mixed_string_byte_array_creation(self):
         a = np.array(['1234', b'123'])
         assert_(a.itemsize == 16)
