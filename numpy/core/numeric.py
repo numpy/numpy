@@ -17,3 +17,6 @@ def __getattr__(attr_name):
             f"module 'numpy.core.numeric' has no attribute {attr_name}")
     _raise_warning(attr_name, "numeric")
     return ret
+
+
+del numeric, item
