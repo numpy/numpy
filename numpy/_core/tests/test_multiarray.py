@@ -4062,12 +4062,6 @@ class TestMethods:
         ):
             np.top_k(a, 2, mode="invalid")
 
-        with pytest.raises(
-            ValueError,
-            match=r"axis=None is not supported. Please provide a valid axis."
-        ):
-            np.top_k(a, 2, axis=None)
-
         y = (
             np.array([[], [], []], dtype=np.int8),
             np.array([[], [], []], dtype=np.intp)
@@ -4095,6 +4089,12 @@ class TestMethods:
         )
         self.assert_top_k(a, 2, -1, y, mode="smallest", sorted=sorted)
         self.assert_top_k(a, 2, 1, y, mode="smallest", sorted=sorted)
+
+        y = (
+            np.array([[5, 5]], dtype=np.int8),
+            np.array([[4, 5]], dtype=np.intp)
+        )
+        self.assert_top_k(a, 2, None, y, sorted=sorted)
 
     @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
     def test_top_k_floating_nan(self, dtype):
