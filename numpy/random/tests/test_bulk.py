@@ -1,7 +1,7 @@
 import pytest
 
 import numpy as np
-from numpy.random import MT19937, PCG64, PCG64DXSM, SFC64, Generator
+from numpy.random import MT19937, PCG64, PCG64DXSM, SFC64, Generator, Philox
 from numpy.testing import assert_array_equal, assert_equal
 
 
@@ -14,7 +14,7 @@ class _NoBulkBitGenerator:
         self.lock = bit_generator.lock
 
 
-@pytest.mark.parametrize("bit_generator", [MT19937, PCG64, PCG64DXSM, SFC64])
+@pytest.mark.parametrize("bit_generator", [MT19937, PCG64, PCG64DXSM, SFC64, Philox])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("size", [None, 0, 1, 31, 32, 311, 312, 313, 624, 625, 1000])
 def test_bulk_random_matches_fallback(bit_generator, dtype, size):
@@ -29,7 +29,7 @@ def test_bulk_random_matches_fallback(bit_generator, dtype, size):
     assert_equal(bulk_bitgen.state, fallback_bitgen.state)
 
 
-@pytest.mark.parametrize("bit_generator", [MT19937, PCG64, PCG64DXSM, SFC64])
+@pytest.mark.parametrize("bit_generator", [MT19937, PCG64, PCG64DXSM, SFC64, Philox])
 @pytest.mark.parametrize(
     "dtype, low, high",
     [
@@ -56,8 +56,8 @@ def test_bulk_integers_matches_fallback(bit_generator, size, dtype, low, high):
     assert_equal(bulk_bitgen.state, fallback_bitgen.state)
 
 
-@pytest.mark.parametrize("bit_generator", [PCG64, PCG64DXSM, SFC64])
-def test_pcg64s_bulk_cached_state(bit_generator):
+@pytest.mark.parametrize("bit_generator", [PCG64, PCG64DXSM, SFC64, Philox])
+def test_bulk_cached_state(bit_generator):
     bulk_bitgen = bit_generator(987654321)
     fallback_bitgen = bit_generator(987654321)
     bulk = Generator(bulk_bitgen)
