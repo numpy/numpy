@@ -1857,9 +1857,7 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
             msg = f"Arrays are not equal to {nulp} ULP"
         else:
             dtype = np.dtype(np.common_type(np.asarray(x), np.asarray(y)))
-            if dtype in (np.dtype(np.float16),
-                        np.dtype(np.float32),
-                        np.dtype(np.float64)):
+            if dtype in (np.float16, np.float32, np.float64):
                 max_nulp = np.max(nulp_diff(x, y))
                 msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
             else:
