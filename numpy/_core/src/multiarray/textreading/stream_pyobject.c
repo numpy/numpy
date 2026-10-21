@@ -31,7 +31,7 @@ typedef struct {
 
     /* Python str object holding the line most recently read from the file. */
     PyObject *chunk;
-    /* UCS4 copy of `chunk`, which the tokenizer reads */
+    /* UCS4 copy of `chunk`, if it is not ASCII */
     Py_UCS4 *chunk_ucs4;
 
     /* Encoding compatible with Python's `PyUnicode_Encode` (may be NULL) */
@@ -67,20 +67,30 @@ process_stringlike(PyObject *str, const char *encoding)
 
 
 /*
- * The tokenizer reads a UCS4 copy of `str`.  The stream owns it through
- * `*ucs4` and frees it on the next read.
+ * ASCII text is read in place, as its UTF-8 has one byte per character.  Other
+ * text is read from a UCS4 copy, which the stream owns through `*ucs4`.
  */
 static inline int
-buffer_info_from_unicode(
-        PyObject *str, Py_UCS4 **ucs4, char **start, char **end)
+buffer_info_from_unicode(PyObject *str, Py_UCS4 **ucs4,
+        char **start, char **end, int *kind)
 {
     Py_ssize_t length = PyUnicode_GetLength(str);
+    Py_ssize_t size;
+    const char *utf8 = PyUnicode_AsUTF8AndSize(str, &size);
+    if (utf8 != NULL && size == length) {
+        *kind = (int)sizeof(Py_UCS1);
+        *start = (char *)utf8;
+        *end = *start + length;
+        return 0;
+    }
+    PyErr_Clear();
 
     PyMem_Free(*ucs4);
     *ucs4 = PyUnicode_AsUCS4Copy(str);
     if (*ucs4 == NULL) {
         return -1;
     }
+    *kind = (int)sizeof(Py_UCS4);
     *start = (char *)*ucs4;
     *end = *start + length * sizeof(Py_UCS4);
     return 0;
@@ -88,7 +98,7 @@ buffer_info_from_unicode(
 
 
 static int
-fb_nextbuf(python_chunks_from_file *fb, char **start, char **end)
+fb_nextbuf(python_chunks_from_file *fb, char **start, char **end, int *kind)
 {
     Py_XDECREF(fb->chunk);
     fb->chunk = NULL;
@@ -102,7 +112,7 @@ fb_nextbuf(python_chunks_from_file *fb, char **start, char **end)
         return -1;
     }
     if (buffer_info_from_unicode(
-            fb->chunk, &fb->chunk_ucs4, start, end) < 0) {
+            fb->chunk, &fb->chunk_ucs4, start, end, kind) < 0) {
         return -1;
     }
     if (*start == *end) {
@@ -174,7 +184,7 @@ typedef struct {
 
     /* Python str object holding the line most recently fetched */
     PyObject *line;
-    /* UCS4 copy of `line`, which the tokenizer reads */
+    /* UCS4 copy of `line`, if it is not ASCII */
     Py_UCS4 *line_ucs4;
 
     /* Encoding compatible with Python's `PyUnicode_Encode` (may be NULL) */
@@ -197,7 +207,7 @@ it_del(stream *strm)
 
 
 static int
-it_nextbuf(python_lines_from_iterator *it, char **start, char **end)
+it_nextbuf(python_lines_from_iterator *it, char **start, char **end, int *kind)
 {
     Py_XDECREF(it->line);
     it->line = NULL;
@@ -217,7 +227,7 @@ it_nextbuf(python_lines_from_iterator *it, char **start, char **end)
     }
 
     if (buffer_info_from_unicode(
-            it->line, &it->line_ucs4, start, end) < 0) {
+            it->line, &it->line_ucs4, start, end, kind) < 0) {
         return -1;
     }
     return BUFFER_IS_LINEND;

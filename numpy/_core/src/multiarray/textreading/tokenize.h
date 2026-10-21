@@ -40,6 +40,7 @@ typedef struct {
     tokenizer_parsing_state state;
     /* Either TOKENIZE_UNQUOTED or TOKENIZE_UNQUOTED_WHITESPACE: */
     tokenizer_parsing_state unquoted_state;
+    int unicode_kind;
     int buf_state;
     /* the buffer we are currently working on */
     char *pos;
