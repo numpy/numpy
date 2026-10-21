@@ -422,6 +422,32 @@ class TestCpow:
         for i in lx:
             assert_almost_equal(n_r[i], p_r[i], err_msg=f'Loop {i}\n')
 
+
+class TestCdiv:
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("numerator, denominator", [
+        # Case 1
+        (1 + 1j, complex(np.nan, 1)),
+        (1 + 1j, complex(1, np.nan)),
+        (1 + 1j, complex(np.nan, np.nan)),
+        # Case 2
+        (complex(np.nan, np.inf), 1),
+        (complex(np.inf, np.nan), 1),
+        (complex(np.nan, 1), complex(np.inf, np.inf)),
+        # Case 3
+        (complex(np.nan, 0), 0j),
+        (complex(0, np.nan), 0j),
+        (complex(np.nan, np.nan), 0j),
+    ])
+    def test_nan_components(self, dtype, numerator, denominator):
+        numerator = np.array(numerator, dtype=dtype)
+        denominator = np.array(denominator, dtype=dtype)
+        with np.errstate(invalid="raise", divide="raise"):
+            result = np.divide(numerator, denominator)
+        assert np.isnan(result.real)
+        assert np.isnan(result.imag)
+
+
 class TestCabs:
     def setup_method(self):
         self.olderr = np.seterr(invalid='ignore')
