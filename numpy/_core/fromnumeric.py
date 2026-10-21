@@ -209,9 +209,9 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
         The number of largest/smallest elements to return. ``k`` must
         be a non-negative integer and within indexable range specified by
         ``axis``.
-    axis: int, optional
-        Axis along which to find the largest/smallest elements.
-        The default is -1 (the last axis).
+    axis: int or None, optional
+        Axis along which to find the largest/smallest elements. If None,
+        the flattened array is used. The default is -1 (the last axis).
     mode: {"largest", "smallest"}, optional
         If "largest", the largest elements are returned. If "smallest",
         the smallest elements are returned. The default is "largest".
@@ -268,13 +268,14 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     """
     if k < 0:
         raise ValueError(f'k(={k}) provided must be a non-negative integer.')
-    if axis is None:
-        raise ValueError('axis=None is not supported. Please provide a valid axis.')
     if mode not in ["largest", "smallest"]:
         raise ValueError(f'mode(="{mode}") must be either "largest" or "smallest".')
     largest = mode == "largest"
 
     arr = np.asanyarray(a)
+    if axis is None:
+        arr = arr.ravel()
+        axis = 0
     axis = normalize_axis_index(axis, arr.ndim)
 
     kth = k - 1 if k > 0 else np.array([], dtype=np.intp)
