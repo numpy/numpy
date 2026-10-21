@@ -618,8 +618,8 @@ def isfortran(a):
     False
 
     """
-   # Deprecated in NumPy 2.6, 2026-10-14
-   warnings.warn(
+    # Deprecated in NumPy 2.6, 2026-10-14
+    warnings.warn(
         "numpy.isfortran is deprecated. Use a.flags.fnc instead.",
         DeprecationWarning,
         stacklevel=2,
