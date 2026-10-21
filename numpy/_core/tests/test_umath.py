@@ -5087,7 +5087,7 @@ def test_nextafterf():
     return _test_nextafter(np.float32)
 
 
-@pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+@pytest.mark.skipif(np.dtype(np.double) == np.dtype(np.longdouble),
                     reason="long double is same as double")
 @pytest.mark.xfail(condition=LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                     reason="IBM double double")
@@ -5148,7 +5148,7 @@ def test_spacingf():
     return _test_spacing(np.float32)
 
 
-@pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+@pytest.mark.skipif(np.dtype(np.double) == np.dtype(np.longdouble),
                     reason="long double is same as double")
 @pytest.mark.xfail(condition=LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                     reason="IBM double double")
