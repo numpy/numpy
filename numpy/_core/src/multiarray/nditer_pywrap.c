@@ -20,6 +20,7 @@
 #include "common.h"
 #include "conversion_utils.h"
 #include "ctors.h"
+#include "module_state.h"
 #include "npy_pycompat.h"
 
 /* Functions not part of the public NumPy C API */
@@ -1078,7 +1079,8 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
         */
 
         /* Allocate the iterator */
-        iter = (NewNpyArrayIterObject *)npyiter_new(&NpyIter_Type, NULL, NULL);
+        iter = (NewNpyArrayIterObject *)npyiter_new(
+                _npy_module_state->nditer_type, NULL, NULL);
         if (iter == NULL) {
             goto finish;
         }
@@ -1222,7 +1224,10 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
         PyErr_Restore(exc, val, tb);
     }
     PyMem_Free(self->writeflags);
-    Py_TYPE(self)->tp_free((PyObject*)self);
+
+    PyTypeObject *type = Py_TYPE(self);
+    type->tp_free((PyObject *)self);
+    Py_DECREF(type);
 }
 
 static int
@@ -1296,7 +1301,8 @@ npyiter_copy(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
     }
 
     /* Allocate the iterator */
-    iter = (NewNpyArrayIterObject *)npyiter_new(&NpyIter_Type, NULL, NULL);
+    iter = (NewNpyArrayIterObject *)npyiter_new(
+            _npy_module_state->nditer_type, NULL, NULL);
     if (iter == NULL) {
         return NULL;
     }
@@ -2503,37 +2509,38 @@ static PyGetSetDef npyiter_getsets[] = {
     {NULL, NULL, NULL, NULL, NULL}
 };
 
-NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
-    (lenfunc)npyiter_seq_length,            /*sq_length*/
-    (binaryfunc)NULL,                       /*sq_concat*/
-    (ssizeargfunc)NULL,                     /*sq_repeat*/
-    (ssizeargfunc)npyiter_seq_item,         /*sq_item*/
-    (ssizessizeargfunc)NULL,                /*sq_slice*/
-    (ssizeobjargproc)npyiter_seq_ass_item,  /*sq_ass_item*/
-    (ssizessizeobjargproc)NULL,             /*sq_ass_slice*/
-    (objobjproc)NULL,                       /*sq_contains */
-    (binaryfunc)NULL,                       /*sq_inplace_concat */
-    (ssizeargfunc)NULL,                     /*sq_inplace_repeat */
+static PyType_Slot npyiter_slots[] = {
+    {Py_tp_dealloc, npyiter_dealloc},
+    {Py_sq_length, npyiter_seq_length},
+    {Py_sq_item, npyiter_seq_item},
+    {Py_sq_ass_item, npyiter_seq_ass_item},
+    {Py_mp_length, npyiter_seq_length},
+    {Py_mp_subscript, npyiter_subscript},
+    {Py_mp_ass_subscript, npyiter_ass_subscript},
+    {Py_tp_iter, PyObject_SelfIter},
+    {Py_tp_iternext, npyiter_next},
+    {Py_tp_methods, npyiter_methods},
+    {Py_tp_members, npyiter_members},
+    {Py_tp_getset, npyiter_getsets},
+    {Py_tp_init, npyiter_init},
+    {Py_tp_new, npyiter_new},
+    {0, NULL},
 };
 
-NPY_NO_EXPORT PyMappingMethods npyiter_as_mapping = {
-    (lenfunc)npyiter_seq_length,          /*mp_length*/
-    (binaryfunc)npyiter_subscript,        /*mp_subscript*/
-    (objobjargproc)npyiter_ass_subscript, /*mp_ass_subscript*/
+static PyType_Spec npyiter_spec = {
+    .name = "numpy.nditer",
+    .basicsize = sizeof(NewNpyArrayIterObject),
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
+    .slots = npyiter_slots,
 };
 
-NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.nditer",
-    .tp_basicsize = sizeof(NewNpyArrayIterObject),
-    .tp_dealloc = (destructor)npyiter_dealloc,
-    .tp_as_sequence = &npyiter_as_sequence,
-    .tp_as_mapping = &npyiter_as_mapping,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_iternext = (iternextfunc)npyiter_next,
-    .tp_methods = npyiter_methods,
-    .tp_members = npyiter_members,
-    .tp_getset = npyiter_getsets,
-    .tp_init = (initproc)npyiter_init,
-    .tp_new = npyiter_new,
-};
+NPY_NO_EXPORT int
+init_nditer_type(PyObject *module)
+{
+    PyObject *type = PyType_FromModuleAndSpec(module, &npyiter_spec, NULL);
+    if (type == NULL) {
+        return -1;
+    }
+    get_module_state(module)->nditer_type = (PyTypeObject *)type;
+    return 0;
+}
