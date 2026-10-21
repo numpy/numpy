@@ -119,7 +119,7 @@ jobs:
         build_runner:
           - [ macos-15-intel, "macos_x86_64" ]
           - [ macos-15, "macos_arm64" ]
-        version: ["3.12", "3.15t-dev"]
+        version: ["3.12", "3.15t"]
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

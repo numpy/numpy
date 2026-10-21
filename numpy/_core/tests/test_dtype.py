@@ -1538,15 +1538,33 @@ class TestPromotion:
         res = np.minimum(np.ones(3, dtype=other), complex_scalar).dtype
         assert res == expected
 
-    @pytest.mark.parametrize("rat_cls", [rational, rational2])
-    def test_complex_pyscalar_promote_rational(self, rat_cls):
+    def test_complex_pyscalar_promote_rational(self):
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
-            np.result_type(1j, rat_cls)
+            np.result_type(1j, rational)
 
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
-            np.result_type(1j, rat_cls(1, 2))
+            np.result_type(rational, 1j)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(1j, rational(1, 2))
+
+    def test_complex_pyscalar_promote_rational2(self):
+        # rational2 CommonDType is always called here and gives a custom error
+        # to indicate that. The abstract DType returns NotImplemented.
+        with pytest.raises(TypeError,
+                match="rational2 refuses Python complex promotion"):
+            np.result_type(1j, rational2)
+
+        with pytest.raises(TypeError,
+                match="rational2 refuses Python complex promotion"):
+            np.result_type(rational2, 1j)
+
+        with pytest.raises(TypeError,
+                match="rational2 refuses Python complex promotion"):
+            np.result_type(1j, rational2(1, 2))
 
     @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2 * 100])
     def test_python_integer_promotion(self, val):
@@ -1565,6 +1583,22 @@ class TestPromotion:
         # inconsistent here).  The new promotion fixed this (partially?)
         assert np.result_type(other, rational) == expected
         assert np.result_type(other, rational(1, 2)) == expected
+
+    @pytest.mark.parametrize("other", [1, 1.])
+    def test_float_int_pyscalar_promote_rational2(self, other):
+        # Currently rational2 does not handle this explicitly so it fails
+        # (If CommonDType is implemented, it must handle these promotions).
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(other, rational2)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(rational2, other)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(other, rational2(1, 2))
 
     @pytest.mark.parametrize("shape",
             # The empty case makes basically no sense, but it creates a ()
@@ -1613,15 +1647,6 @@ class TestPromotion:
         # type, which would then promote to a larger than necessary float.
         for perm in permutations(dtypes):
             assert np.result_type(*perm) == expected
-
-
-def test_rational2_uses_new_dtype_api():
-    # ``rational2`` provides its own ``common_dtype`` slot (which the
-    # legacy ``rational`` cannot), and that slot rejects floats.
-    assert np.result_type(rational, 1.0) == np.float64
-    with pytest.raises(TypeError,
-            match=r".* no common DType exists for the given inputs"):
-        np.result_type(rational2, 1.0)
 
 
 @pytest.mark.parametrize("rat_cls", [rational, rational2])
@@ -1793,6 +1818,8 @@ class TestDTypeClasses:
         assert np.dtype._abstract
 
     def test_is_numeric(self):
+        # NOTE: bool is included here, but deliberately is not a
+        # `NumberAbstractDType` (see `test_isdtype_bool_is_not_numeric`).
         all_codes = set(np.typecodes['All'])
         numeric_codes = set(np.typecodes['AllInteger'] +
                             np.typecodes['AllFloat'] + '?')
@@ -1835,6 +1862,59 @@ class TestDTypeClasses:
             else:
                 with pytest.raises(TypeError):
                     np._core.multiarray.scalar(dt)
+
+
+class TestAbstractDTypes:
+    abstract_names = [
+        "NumberAbstractDType",
+        "IntegerAbstractDType",
+        "SignedIntegerAbstractDType",
+        "UnsignedIntegerAbstractDType",
+        "InexactAbstractDType",
+        "FloatingAbstractDType",
+        "ComplexFloatingAbstractDType",
+    ]
+
+    @pytest.mark.parametrize("name", abstract_names)
+    def test_exposed(self, name):
+        assert name in np.dtypes.__all__
+        abstract = getattr(np.dtypes, name)
+        assert abstract.__name__ == name
+        assert abstract.__module__ == "numpy.dtypes"
+        assert abstract._abstract
+        with pytest.raises(TypeError):
+            abstract()
+
+    @pytest.mark.parametrize(["dtype", "kinds"], [
+        ("int64", ["SignedInteger", "Integer", "Number"]),
+        ("uint8", ["UnsignedInteger", "Integer", "Number"]),
+        ("float32", ["Floating", "Inexact", "Number"]),
+        ("longdouble", ["Floating", "Inexact", "Number"]),
+        ("complex128", ["ComplexFloating", "Inexact", "Number"]),
+        ("bool", []),
+        ("S8", []),
+        ("U8", []),
+        ("O", []),
+        ("m8[s]", []),
+        ("M8[s]", []),
+    ])
+    def test_hierarchy(self, dtype, kinds):
+        dtype = np.dtype(dtype)
+        for name in self.abstract_names:
+            abstract = getattr(np.dtypes, name)
+            expected = name.removesuffix("AbstractDType") in kinds
+            assert issubclass(type(dtype), abstract) == expected
+            # `isinstance()` must agree with `issubclass()`:
+            assert isinstance(dtype, abstract) == expected
+
+    def test_stringdtype(self):
+        # StringDType is not legacy, so it exercises the flag based path:
+        for name in self.abstract_names:
+            assert not issubclass(np.dtypes.StringDType, getattr(np.dtypes, name))
+
+    def test_subclasscheck_requires_class(self):
+        with pytest.raises(TypeError, match="arg 1 must be a class"):
+            issubclass(np.dtype("int64"), np.dtypes.IntegerAbstractDType)
 
 
 class TestFromCTypes:
@@ -2210,6 +2290,12 @@ class TestDTypeSignatures:
                 # `np._NoValue` default, which isn't supported by `inspect.signature`,
                 # so `**kwargs` is used instead.
                 params_expect = {"coerce", "kwargs"}
+            case name if name.endswith("abstract"):
+                # The abstract DTypes cannot be instantiated at all, so their
+                # (inherited) signature is not meaningful.
+                with pytest.raises(TypeError):
+                    dtype_type()
+                params_expect = set(sig.parameters)
             case _:
                 params_expect = set()
 

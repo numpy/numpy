@@ -1805,8 +1805,6 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         Size of the range over which the input wraps. By default, it is
         ``2 pi``.
 
-        .. versionadded:: 1.21.0
-
     Returns
     -------
     out : ndarray
@@ -2763,8 +2761,6 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
 
-        .. versionadded:: 1.20
-
     Returns
     -------
     out : ndarray
@@ -2967,8 +2963,6 @@ def corrcoef(x, y=None, rowvar=True, *,
     dtype : data-type, optional
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
-
-        .. versionadded:: 1.20
 
     Returns
     -------
@@ -4147,10 +4141,6 @@ def percentile(a,
         * 'midpoint'
         * 'nearest'
 
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
-
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -4348,10 +4338,6 @@ def quantile(a,
         * 'nearest'
 
         See Notes for details.
-
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
@@ -5257,11 +5243,7 @@ def delete(arr, obj, axis=None):
         Input array.
     obj : slice, int, array-like of ints or bools
         Indicate indices of sub-arrays to remove along the specified axis.
-
-        .. versionchanged:: 1.19.0
-            Boolean indices are now treated as a mask of elements to remove,
-            rather than being cast to the integers 0 and 1.
-
+        Boolean arrays are treated as a mask of elements to remove.
     axis : int, optional
         The axis along which to delete the subarray defined by `obj`.
         If `axis` is None, `obj` is applied to the flattened array.
@@ -5781,8 +5763,6 @@ def digitize(x, bins, right=False):
     If values in `x` are such that they fall outside the bin range,
     attempting to index `bins` with the indices that `digitize` returns
     will result in an IndexError.
-
-    .. versionadded:: 1.10.0
 
     `numpy.digitize` is  implemented in terms of `numpy.searchsorted`.
     This means that a binary search is used to bin the values, which scales
