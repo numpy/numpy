@@ -186,6 +186,14 @@ class finfo:
         obj = cls._finfo_cache.get((type(dtype), dtype))
         if obj is not None:
             return obj
+
+        # Fallback for third-party dtypes (like ml_dtypes) that populate
+        # _finfo_cache directly using bare dtype as key:
+        obj = cls._finfo_cache.get(dtype)
+        if obj is not None:
+            cls._finfo_cache[(type(dtype), dtype)] = obj
+            return obj
+
         dtypes = [dtype]
         # Call result_type to normalize to e.g. native byte-order:
         newdtype = numeric.result_type(dtype)
