@@ -550,7 +550,7 @@ def decode(a, encoding=None, errors=None):
        The name of an encoding
 
     errors : str, optional
-       Specifies how to handle encoding errors
+       Specifies how to handle decoding errors
 
     Returns
     -------
@@ -584,7 +584,7 @@ def decode(a, encoding=None, errors=None):
 @set_module("numpy.strings")
 @array_function_dispatch(_code_dispatcher)
 def encode(a, encoding=None, errors=None):
-    """
+    r"""
     Calls :meth:`str.encode` element-wise.
 
     The set of available codecs comes from the Python standard library,

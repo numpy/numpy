@@ -1,5 +1,6 @@
 from collections.abc import Sequence
-from typing import Any, Literal, overload
+from types import EllipsisType
+from typing import Any, Literal, SupportsIndex, overload
 
 import numpy as np
 from numpy import _OrderKACF
@@ -7,9 +8,10 @@ from numpy._typing import (
     NDArray,
     _ArrayLike,
     _ArrayLikeComplex_co,
-    _ArrayLikeObject_co,
     _DTypeLikeComplex_co,
     _DTypeLikeObject,
+    _NestedSequence,
+    _SupportsArray,
 )
 
 __all__ = ["einsum", "einsum_path"]
@@ -17,6 +19,9 @@ __all__ = ["einsum", "einsum_path"]
 type _OptimizeKind = bool | Literal["greedy", "optimal"] | Sequence[Any] | None
 type _CastingSafe = Literal["no", "equiv", "safe", "same_kind"]
 type _CastingUnsafe = Literal["unsafe"]
+
+type _ToEinsumArray = _SupportsArray[np.dtype[np.bool | np.number | np.object_]]
+type _ToEinsumOperand = complex | _ToEinsumArray | _NestedSequence[complex | _ToEinsumArray | SupportsIndex | EllipsisType]
 
 # These literals are the 112 most frequent subscript values (per output rank) from an
 # AST survey of `einsum` call sites in 167 downstream projects (23_735 call sites,
@@ -228,7 +233,7 @@ def einsum[ScalarT: np.bool | np.number | np.object_](
 def einsum(
     subscripts: str | _ArrayLikeComplex_co,
     /,
-    *operands: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    *operands: _ToEinsumOperand,
     out: None = None,
     dtype: _DTypeLikeComplex_co | _DTypeLikeObject | None = None,
     order: _OrderKACF = "K",
@@ -250,7 +255,7 @@ def einsum(
 def einsum[OutT: NDArray[np.bool | np.number | np.object_]](
     subscripts: str | _ArrayLikeComplex_co,
     /,
-    *operands: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    *operands: _ToEinsumOperand,
     out: OutT,
     dtype: _DTypeLikeComplex_co | _DTypeLikeObject | None = None,
     order: _OrderKACF = "K",
@@ -274,7 +279,7 @@ def einsum[OutT: NDArray[np.bool | np.number | np.object_]](
 def einsum_path(
     subscripts: str | _ArrayLikeComplex_co,
     /,
-    *operands: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    *operands: _ToEinsumOperand,
     optimize: _OptimizeKind = "greedy",
     einsum_call: Literal[False] = False,
 ) -> tuple[list[Any], str]: ...

@@ -1394,8 +1394,6 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
 
-        .. versionadded:: 1.22.0
-
     Returns
     -------
     index_array : ndarray of ints
@@ -1493,8 +1491,6 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -2636,8 +2632,6 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
         Elements to include in checking for any `True` values.
         See `~numpy.ufunc.reduce` for details.
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     any : bool or ndarray
@@ -2748,8 +2742,6 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     where : array_like of bool, optional
         Elements to include in checking for all `True` values.
         See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -3541,8 +3533,22 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                               keepdims, initial, where)
     except np._core._exceptions._UFuncNoLoopError:
         out_min, out_max = out if out is not None else (None, None)
-        initial_min, initial_max = (initial if type(initial) is tuple
+        initial_min, initial_max = (initial if isinstance(initial, tuple)
                                     else (initial, initial))
+        if out_min is not None:
+            # the minimum is written before the maximum's operands are read
+            # check for aliasing and copy if needed
+            a = np.asanyarray(a)
+            if np.may_share_memory(a, out_min):
+                a = a.copy()
+            if where is not np._NoValue:
+                if not isinstance(where, np.ndarray):
+                    where = np.asarray(where, dtype=bool)
+                if np.may_share_memory(where, out_min):
+                    where = where.copy()
+            if (initial_max is not np._NoValue
+                    and np.may_share_memory(initial_max, out_min)):
+                initial_max = np.asanyarray(initial_max, copy=True)
         return (min(a, axis=axis, out=out_min, keepdims=keepdims,
                     initial=initial_min, where=where),
                 max(a, axis=axis, out=out_max, keepdims=keepdims,
@@ -4015,8 +4021,6 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
     where : array_like of bool, optional
         Elements to include in the mean. See `~numpy.ufunc.reduce` for details.
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     m : ndarray, see dtype parameter above
@@ -4148,8 +4152,6 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     where : array_like of bool, optional
         Elements to include in the standard deviation.
         See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.20.0
 
     mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
@@ -4352,8 +4354,6 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     where : array_like of bool, optional
         Elements to include in the variance. See `~numpy.ufunc.reduce` for
         details.
-
-        .. versionadded:: 1.20.0
 
     mean : array like, optional
         Provide the mean to prevent its recalculation. The mean should have

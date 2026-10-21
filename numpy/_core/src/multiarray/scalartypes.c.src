@@ -2,6 +2,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <ctype.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #ifndef _MULTIARRAYMODULE
@@ -16,6 +17,7 @@
 #include "npy_pycompat.h"
 
 #include "arraytypes.h"
+#include "array_coercion.h"
 #include "npy_config.h"
 #include "mapping.h"
 #include "ctors.h"
@@ -81,31 +83,6 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     .tp_basicsize = sizeof(PyObject),
 };
 /**end repeat**/
-
-static PyObject *
-gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
-{
-    PyObject *obj;
-    const size_t size = _PyObject_VAR_SIZE(type, nitems + 1);
-
-    obj = (PyObject *)PyObject_Malloc(size);
-    if (obj == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    /*
-     * If we don't need to zero memory, we could use
-     * PyObject_{New, NewVar} for this whole function.
-     */
-    memset(obj, 0, size);
-    if (type->tp_itemsize == 0) {
-        PyObject_Init(obj, type);
-    }
-    else {
-        (void) PyObject_InitVar((PyVarObject *)obj, type, nitems);
-    }
-    return obj;
-}
 
 static void
 gentype_dealloc(PyObject *v)
@@ -279,7 +256,8 @@ find_binary_operation_path(
      * Retrying then succeeds. So if (and only if) `self.item()` returns a new
      * type, we can safely attempt the operation (again) with that.
      */
-    PyObject *self_item = PyObject_CallMethodNoArgs(self, state->interned_str.item);
+    PyObject *self_item = PyObject_VectorcallMethod(
+            state->interned_str.item, &self, 1, NULL);
     if (self_item == NULL) {
         return -1;
     }
@@ -846,9 +824,8 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
              const char *schars, const char *bprefix, const char *echars)
 {
     PyObject *retval;
-    int extrachars, slen;
+    Py_ssize_t i, j, extrachars, slen;
     char *retbuf;
-    Py_ssize_t i, j;
     char const *hexdigits = "0123456789ABCDEF";
 
     extrachars = strlen(schars) + strlen(echars);
@@ -1727,11 +1704,11 @@ gentype_itemsize_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     PyArray_Descr *typecode;
     PyObject *ret;
-    int elsize;
+    npy_intp elsize;
 
     typecode = PyArray_DescrFromScalar(self);
     elsize = typecode->elsize;
-    ret = PyLong_FromLong((long) elsize);
+    ret = PyArray_PyIntFromIntp(elsize);
     Py_DECREF(typecode);
     return ret;
 }
@@ -1983,7 +1960,7 @@ gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
     }
     else {
         char *temp;
-        int elsize;
+        npy_intp elsize;
         typecode = PyArray_DescrFromScalar(self);
         elsize = typecode->elsize;
         temp = npy_alloc_cache_zero(1, elsize);
@@ -3302,7 +3279,7 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
                 self);
         return -1;
     }
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+    if ((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
@@ -3356,7 +3333,7 @@ static PyBufferProcs gentype_arrtype_as_buffer = {
 static int
 @name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+    if ((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
@@ -3396,7 +3373,7 @@ static PyBufferProcs @name@_arrtype_as_buffer = {
 static int
 unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+    if ((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
@@ -3465,7 +3442,7 @@ static PyBufferProcs unicode_arrtype_as_buffer = {
 static int
 @name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+    if ((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
@@ -3548,7 +3525,7 @@ object_arrtype_alloc(PyTypeObject *type, Py_ssize_t items)
             "this will raise a TypeError in the future.", 1) < 0) {
         return NULL;
     }
-    return gentype_alloc(type, items);
+    return PyType_GenericAlloc(type, items);
 }
 
 
@@ -3587,6 +3564,102 @@ scalar_new_parse_posargs(PyObject *args, PyObject *kwds, const char *format,
     /* Always an error; the generic parser phrases it. */
     return PyArg_ParseTupleAndKeywords(args, kwds, format, kwnames,
                                        arg0) ? 0 : -1;
+}
+
+static int
+scalar_as_longdouble(PyObject *obj, npy_longdouble *value)
+{
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_LONGDOUBLE);
+    if (descr == NULL) {
+        return -1;
+    }
+
+    int res = PyArray_Pack(descr, value, obj);
+    Py_DECREF(descr);
+    if (res < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
+static int
+clongdouble_component_as_longdouble(PyObject *obj, npy_longdouble *value)
+{
+    if (PyArray_IsScalar(obj, Bool) ||
+            (PyArray_IsScalar(obj, Integer) &&
+             !PyArray_IsScalar(obj, Timedelta)) ||
+            PyArray_IsScalar(obj, Floating)) {
+        return scalar_as_longdouble(obj, value);
+    }
+
+    if (PyArray_CheckExact(obj) &&
+            PyArray_NDIM((PyArrayObject *)obj) == 0) {
+        PyArray_Descr *dtype = PyArray_DESCR((PyArrayObject *)obj);
+        if (PyDataType_ISBOOL(dtype) || PyDataType_ISINTEGER(dtype) ||
+                PyDataType_ISFLOAT(dtype)) {
+            /* Accept exact 0-D ndarrays with a real numeric dtype. */
+            return scalar_as_longdouble(obj, value);
+        }
+    }
+
+    if (PyArray_IsScalar(obj, Generic) || PyArray_Check(obj)) {
+        /*
+         * Reject other NumPy scalars and arrays before generic numeric
+         * conversion.  PyFloat_AsDouble(np.complex64(...)) would otherwise
+         * drop the imaginary part.
+         */
+        PyErr_SetString(PyExc_TypeError,
+                "clongdouble real and imaginary components must be real numbers");
+        return -1;
+    }
+
+    if (PyLong_Check(obj) && !PyBool_Check(obj)) {
+        /*
+         * npy_longdouble_from_PyLong converts through a string, which cannot
+         * represent a Python bool.  PyFloat_AsDouble handles bool instead.
+        */
+        *value = npy_longdouble_from_PyLong(obj);
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return 0;
+    }
+
+    double double_value = PyFloat_AsDouble(obj);
+    if (double_value == -1.0 && PyErr_Occurred()) {
+        return -1;
+    }
+    *value = double_value;
+    return 0;
+}
+
+
+static PyObject *
+clongdouble_from_real_imag(PyTypeObject *type, PyObject *real_obj,
+        PyObject *imag_obj)
+{
+    /*
+     * Unlike the corresponding cdouble/cfloat paths, we do not construct
+     * through PyComplex_Type. The PyComplex_Type approach accepts
+     * complex-valued components, e.g. np.cdouble(np.complex64(1 + 2j), 1),
+     * which is behavior that may be deprecated in the future.
+     * It also converts components through double, losing longdouble and
+     * large-integer precision.
+     */
+    npy_longdouble real, imag;
+    if (clongdouble_component_as_longdouble(real_obj, &real) < 0 ||
+            clongdouble_component_as_longdouble(imag_obj, &imag) < 0) {
+        return NULL;
+    }
+
+    PyObject *result = type->tp_alloc(type, 0);
+    if (result == NULL) {
+        return NULL;
+    }
+    PyArrayScalar_VAL(result, CLongDouble) = npy_cpackl(real, imag);
+    return result;
 }
 
 
@@ -3657,6 +3730,23 @@ static PyObject *
         if (obj == NULL) {
             return NULL;
         }
+    }
+#elif defined(_@TYPE@_IS_CLONGDOUBLE)
+    if (PyTuple_GET_SIZE(args) <= 1) {
+        static char *kwnames[] = {"", NULL};  /* positional-only */
+        if (scalar_new_parse_posargs(args, kwds, "|O", kwnames, &obj) < 0) {
+            return NULL;
+        }
+    }
+    else {
+        static char *kwnames[] = {"", "", NULL};  /* positional-only */
+        PyObject *real_obj;
+        PyObject *imag_obj;
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwnames,
+                &real_obj, &imag_obj)) {
+            return NULL;
+        }
+        return clongdouble_from_real_imag(type, real_obj, imag_obj);
     }
 #else
     static char *kwnames[] = {"", NULL};  /* positional-only */
@@ -4584,7 +4674,7 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_methods = gentype_methods;
     PyGenericArrType_Type.tp_getset = gentype_getsets;
     PyGenericArrType_Type.tp_new = NULL;
-    PyGenericArrType_Type.tp_alloc = gentype_alloc;
+    PyGenericArrType_Type.tp_alloc = PyType_GenericAlloc;
     PyGenericArrType_Type.tp_free = (freefunc)gentype_free;
     PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
     PyGenericArrType_Type.tp_as_buffer = &gentype_arrtype_as_buffer;
