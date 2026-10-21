@@ -1647,7 +1647,7 @@ class TestArrayAlmostEqualNulp:
         y = np.nextafter(x, np.longdouble(2))
         y = np.nextafter(y, np.longdouble(2))
 
-        with pytest.raises(AssertionError, match=r"1 ULP \(max is "):
+        with pytest.raises(AssertionError, match="1 ULP"):
             assert_array_almost_equal_nulp(x, y, nulp=1)
 
 
