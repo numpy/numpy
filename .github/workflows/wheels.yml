@@ -112,7 +112,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@b3395e271a35f73dad77f21802abe9b986dfe299  # v4.3.1
+        uses: pypa/cibuildwheel@8c2dcd2e96041a619f5ff03c9638d7941e2553a4 # v4.3.3
         with:
           only: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
