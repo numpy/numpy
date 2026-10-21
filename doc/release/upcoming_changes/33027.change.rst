@@ -1,0 +1,6 @@
+Warnings for unconsumed CPU features in environment variables are now UserWarning
+---------------------------------------------------------------------------------
+When non-dispatched or unrecognized CPU features are specified in
+``NPY_ENABLE_CPU_FEATURES`` or ``NPY_DISABLE_CPU_FEATURES``, NumPy now emits a
+visible ``UserWarning`` instead of an ``ImportWarning`` (which is ignored by
+Python by default).
