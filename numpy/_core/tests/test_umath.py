@@ -5210,6 +5210,68 @@ def test_nextafter_vs_spacing():
             f = t(_f)
             f1 = t(_f + 1)
             assert_(np.nextafter(f, f1) - f == np.spacing(f))
+            assert_(np.nextafter(-f, -(f1)) - (-f) == np.spacing(-f))
+
+
+@pytest.mark.parametrize(
+    "dtype", [np.float16, np.float32, np.float64, np.longdouble]
+)
+def test_spacing_semantics(dtype):
+    if dtype == np.longdouble and LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE:
+        pytest.xfail("IBM double double not supported for spacing")
+
+    # 1. Signed zeros
+    pos_zero = dtype(0.0)
+    neg_zero = dtype(-0.0)
+    sp_pos_zero = np.spacing(pos_zero)
+    sp_neg_zero = np.spacing(neg_zero)
+
+    assert not np.signbit(sp_pos_zero)
+    assert np.signbit(sp_neg_zero)
+    assert_equal(sp_neg_zero, -sp_pos_zero)
+    assert sp_pos_zero > 0
+    assert sp_neg_zero < 0
+
+    # 2. Values: powers of 2, subnormals, normal values
+    finfo = np.finfo(dtype)
+    test_vals = [
+        finfo.smallest_subnormal,
+        finfo.smallest_normal,
+        dtype(0.25),
+        dtype(0.5),
+        dtype(1.0),
+        dtype(2.0),
+        dtype(3.5),
+        dtype(100.0),
+        dtype(1e4),
+    ]
+
+    pinf = dtype(np.inf)
+    ninf = dtype(-np.inf)
+
+    for val in test_vals:
+        sp_pos = np.spacing(val)
+        sp_neg = np.spacing(-val)
+
+        # sign of output matches sign of input
+        assert not np.signbit(sp_pos)
+        assert np.signbit(sp_neg)
+
+        # measured toward +inf for positive, -inf for negative
+        assert_equal(sp_pos, np.nextafter(val, pinf) - val)
+        assert_equal(sp_neg, np.nextafter(-val, ninf) - (-val))
+
+        # symmetry
+        assert_equal(sp_neg, -sp_pos)
+
+    # 3. Maximum finite values overflow
+    with np.errstate(all="ignore"):
+        sp_max = np.spacing(finfo.max)
+        sp_nmax = np.spacing(-finfo.max)
+    assert_equal(sp_max, pinf)
+    assert_equal(sp_nmax, ninf)
+    assert not np.signbit(sp_max)
+    assert np.signbit(sp_nmax)
 
 def test_pos_nan():
     """Check np.nan is a positive nan."""
