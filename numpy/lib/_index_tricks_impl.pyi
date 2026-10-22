@@ -300,12 +300,18 @@ class RClass(AxisConcatenator[L[0], L[False], L[1], L[-1]]):
         key: _ItemOrTuple[_To1D[ScalarT]],
         /,
     ) -> Array1D[ScalarT]: ...
+    @overload  # 1d bool
+    def __getitem__(
+        self,
+        key: _ItemOrTuple[_To1D[np.bool] | bool | Sequence[bool]],
+        /,
+    ) -> Array1D[np.bool]: ...
     @overload  # 1d +int
     def __getitem__(
         self,
         key: _ItemOrTuple[_To1D[np.integer | np.bool] | _ToPy1D[int, int]],
         /,
-    ) -> Array1D[np.int_]: ...
+    ) -> Array1D[np.int_ | Any]: ...
     @overload  # 1d +f64
     def __getitem__(
         self,
@@ -352,12 +358,18 @@ class CClass(AxisConcatenator[L[-1], L[False], L[2], L[0]]):
         key: _ItemOrTuple[_To2D[ScalarT]],
         /,
     ) -> Array2D[ScalarT]: ...
+    @overload  # 2d bool
+    def __getitem__(
+        self,
+        key: _ItemOrTuple[_To2D[np.bool] | bool | Sequence[bool]],
+        /,
+    ) -> Array2D[np.bool]: ...
     @overload  # 2d +int
     def __getitem__(
         self,
         key: _ItemOrTuple[_To2D[np.integer | np.bool] | _ToPy1D[int, int]],
         /,
-    ) -> Array2D[np.int_]: ...
+    ) -> Array2D[np.int_ | Any]: ...
     @overload  # 2d +f64
     def __getitem__(
         self,

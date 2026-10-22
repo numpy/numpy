@@ -3138,8 +3138,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
 
     Return a parametrized wrapper around the `~numpy.ndarray` type.
 
-    .. versionadded:: 1.22
-
     Returns
     -------
     alias : types.GenericAlias
@@ -6604,8 +6602,6 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('__class_getitem__',
 
     Return a parametrized wrapper around the `~numpy.dtype` type.
 
-    .. versionadded:: 1.22
-
     Returns
     -------
     alias : types.GenericAlias
@@ -6936,8 +6932,6 @@ add_newdoc('numpy._core.numerictypes', 'number', ('__class_getitem__',
     number.__class_getitem__(item, /)
 
     Return a parametrized wrapper around the `~numpy.number` type.
-
-    .. versionadded:: 1.22
 
     Returns
     -------

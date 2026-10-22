@@ -312,6 +312,14 @@ class Generator:
     def standard_gamma(
         self, shape: _FloatLike_co, size: None = None, dtype: _DTypeLikeFloat = ..., out: None = None
     ) -> float: ...
+    @overload  # Nd, dtype=f64 (default)
+    def standard_gamma[ShapeT: _Shape](
+        self, shape: _ArrayFloat[ShapeT], size: None = None, dtype: _DTypeLikeF64 = ..., out: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # Nd, dtype=f32 (keyword)
+    def standard_gamma[ShapeT: _Shape](
+        self, shape: _ArrayFloat[ShapeT], size: None = None, *, dtype: _DTypeLikeF32, out: None = None
+    ) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
     @overload  # >0d, dtype=f64 (default)
     def standard_gamma(
         self, shape: _NDArrayLikeFloat, size: None = None, dtype: _DTypeLikeF64 = ..., out: None = None
@@ -372,6 +380,8 @@ class Generator:
     #
     @overload  # 0d
     def power(self, /, a: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd
+    def power[ShapeT: _Shape](self, /, a: _ArrayFloat[ShapeT], size: None = None) -> _ArrayF64[ShapeT]: ...
     @overload  # >0d
     def power(self, /, a: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >=0d
@@ -388,6 +398,8 @@ class Generator:
     #
     @overload  # 0d
     def pareto(self, /, a: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd
+    def pareto[ShapeT: _Shape](self, /, a: _ArrayFloat[ShapeT], size: None = None) -> _ArrayF64[ShapeT]: ...
     @overload  # >0d
     def pareto(self, /, a: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >=0d
@@ -404,6 +416,8 @@ class Generator:
     #
     @overload  # 0d
     def weibull(self, /, a: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd
+    def weibull[ShapeT: _Shape](self, /, a: _ArrayFloat[ShapeT], size: None = None) -> _ArrayF64[ShapeT]: ...
     @overload  # >0d
     def weibull(self, /, a: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >=0d
@@ -420,6 +434,8 @@ class Generator:
     #
     @overload  # 0d
     def standard_t(self, /, df: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd
+    def standard_t[ShapeT: _Shape](self, /, df: _ArrayFloat[ShapeT], size: None = None) -> _ArrayF64[ShapeT]: ...
     @overload  # >0d
     def standard_t(self, /, df: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >=0d
@@ -436,6 +452,8 @@ class Generator:
     #
     @overload  # 0d
     def chisquare(self, /, df: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd
+    def chisquare[ShapeT: _Shape](self, /, df: _ArrayFloat[ShapeT], size: None = None) -> _ArrayF64[ShapeT]: ...
     @overload  # >0d
     def chisquare(self, /, df: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >=0d
@@ -452,6 +470,8 @@ class Generator:
     #
     @overload  # 0d (default)
     def exponential(self, /, scale: _FloatLike_co = 1.0, size: None = None) -> float: ...
+    @overload  # Nd
+    def exponential[ShapeT: _Shape](self, /, scale: _ArrayFloat[ShapeT], size: None = None) -> _ArrayF64[ShapeT]: ...
     @overload  # >0d
     def exponential(self, /, scale: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >=0d
@@ -476,6 +496,8 @@ class Generator:
     #
     @overload  # 0d (default)
     def rayleigh(self, /, scale: _FloatLike_co = 1.0, size: None = None) -> float: ...
+    @overload  # Nd
+    def rayleigh[ShapeT: _Shape](self, /, scale: _ArrayFloat[ShapeT], size: None = None) -> _ArrayF64[ShapeT]: ...
     @overload  # >0d
     def rayleigh(self, /, scale: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >=0d
@@ -500,6 +522,14 @@ class Generator:
     #
     @overload  # 0d, 0d
     def noncentral_chisquare(self, /, df: _FloatLike_co, nonc: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def noncentral_chisquare[ShapeT: _Shape](
+        self, /, df: _ArrayFloat[ShapeT], nonc: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def noncentral_chisquare[ShapeT: _Shape](
+        self, /, df: _FloatLike_co, nonc: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >0d
     def noncentral_chisquare(self, /, df: _ArrayLikeFloat_co, nonc: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >0d, >=0d
@@ -518,6 +548,10 @@ class Generator:
     #
     @overload  # 0d, 0d
     def f(self, /, dfnum: _FloatLike_co, dfden: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def f[ShapeT: _Shape](self, /, dfnum: _ArrayFloat[ShapeT], dfden: _FloatLike_co, size: None = None) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def f[ShapeT: _Shape](self, /, dfnum: _FloatLike_co, dfden: _ArrayFloat[ShapeT], size: None = None) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >0d
     def f(self, /, dfnum: _ArrayLikeFloat_co, dfden: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >0d, >=0d
@@ -536,6 +570,14 @@ class Generator:
     #
     @overload  # 0d, 0d
     def vonmises(self, /, mu: _FloatLike_co, kappa: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def vonmises[ShapeT: _Shape](
+        self, /, mu: _ArrayFloat[ShapeT], kappa: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def vonmises[ShapeT: _Shape](
+        self, /, mu: _FloatLike_co, kappa: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >0d
     def vonmises(self, /, mu: _ArrayLikeFloat_co, kappa: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >0d, >=0d
@@ -554,6 +596,14 @@ class Generator:
     #
     @overload  # 0d, 0d
     def wald(self, /, mean: _FloatLike_co, scale: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def wald[ShapeT: _Shape](
+        self, /, mean: _ArrayFloat[ShapeT], scale: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def wald[ShapeT: _Shape](
+        self, /, mean: _FloatLike_co, scale: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >0d
     def wald(self, /, mean: _ArrayLikeFloat_co, scale: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >0d, >=0d
@@ -572,6 +622,10 @@ class Generator:
     #
     @overload  # 0d, 0d
     def beta(self, /, a: _FloatLike_co, b: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def beta[ShapeT: _Shape](self, /, a: _ArrayFloat[ShapeT], b: _FloatLike_co, size: None = None) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def beta[ShapeT: _Shape](self, /, a: _FloatLike_co, b: _ArrayFloat[ShapeT], size: None = None) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >0d
     def beta(self, /, a: _ArrayLikeFloat_co, b: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >0d, >=0d
@@ -590,6 +644,14 @@ class Generator:
     #
     @overload  # 0d, 0d (default)
     def gamma(self, /, shape: _FloatLike_co, scale: _FloatLike_co = 1.0, size: None = None) -> float: ...
+    @overload  # Nd, 0d
+    def gamma[ShapeT: _Shape](
+        self, /, shape: _ArrayFloat[ShapeT], scale: _FloatLike_co = 1.0, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd
+    def gamma[ShapeT: _Shape](
+        self, /, shape: _FloatLike_co, scale: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >0d
     def gamma(self, /, shape: _ArrayLikeFloat_co, scale: _NDArrayLikeFloat, size: None = None) -> _ArrayF64: ...
     @overload  # >0d, >=0d
@@ -868,6 +930,18 @@ class Generator:
     #
     @overload  # 0d, 0d, 0d
     def triangular(self, /, left: _FloatLike_co, mode: _FloatLike_co, right: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d, 0d
+    def triangular[ShapeT: _Shape](
+        self, /, left: _ArrayFloat[ShapeT], mode: _FloatLike_co, right: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd, 0d
+    def triangular[ShapeT: _Shape](
+        self, /, left: _FloatLike_co, mode: _ArrayFloat[ShapeT], right: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, 0d, Nd
+    def triangular[ShapeT: _Shape](
+        self, /, left: _FloatLike_co, mode: _FloatLike_co, right: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >=0d, >0d
     def triangular(
         self, /, left: _ArrayLikeFloat_co, mode: _ArrayLikeFloat_co, right: _NDArrayLikeFloat, size: None = None
@@ -900,6 +974,18 @@ class Generator:
     #
     @overload  # 0d, 0d, 0d
     def noncentral_f(self, /, dfnum: _FloatLike_co, dfden: _FloatLike_co, nonc: _FloatLike_co, size: None = None) -> float: ...
+    @overload  # Nd, 0d, 0d
+    def noncentral_f[ShapeT: _Shape](
+        self, /, dfnum: _ArrayFloat[ShapeT], dfden: _FloatLike_co, nonc: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, Nd, 0d
+    def noncentral_f[ShapeT: _Shape](
+        self, /, dfnum: _FloatLike_co, dfden: _ArrayFloat[ShapeT], nonc: _FloatLike_co, size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
+    @overload  # 0d, 0d, Nd
+    def noncentral_f[ShapeT: _Shape](
+        self, /, dfnum: _FloatLike_co, dfden: _FloatLike_co, nonc: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayF64[ShapeT]: ...
     @overload  # >=0d, >=0d, >0d
     def noncentral_f(
         self, /, dfnum: _ArrayLikeFloat_co, dfden: _ArrayLikeFloat_co, nonc: _NDArrayLikeFloat, size: None = None
@@ -935,25 +1021,47 @@ class Generator:
     #
     @overload  # 0d bool | int
     def integers[AnyIntT: (bool, int)](
-        self, low: int, high: int | None = None, size: None = None, *, dtype: type[AnyIntT], endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        *,
+        dtype: type[AnyIntT],
+        endpoint: bool = False,
     ) -> AnyIntT: ...
     @overload  # 0d integer dtype
     def integers[ScalarT: np.integer | np.bool](
-        self, low: int, high: int | None = None, size: None = None, *, dtype: _DTypeLike[ScalarT], endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        endpoint: bool = False,
     ) -> ScalarT: ...
     @overload  # 0d int64 (default)
     def integers(
-        self, low: int, high: int | None = None, size: None = None, dtype: _DTypeLikeI64 = ..., endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        dtype: _DTypeLikeI64 = ...,
+        endpoint: bool = False,
     ) -> np.int64: ...
     @overload  # 0d unknown
     def integers(
-        self, low: int, high: int | None = None, size: None = None, dtype: DTypeLike | None = ..., endpoint: bool = False
+        self,
+        low: _IntLike_co,
+        high: _IntLike_co | None = None,
+        size: None = None,
+        dtype: DTypeLike | None = ...,
+        endpoint: bool = False,
     ) -> Any: ...
     @overload  # Nd, 0d, dtype=<known>
     def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
         self,
         low: _ArrayInt[ShapeT],
-        high: int | None = None,
+        high: _IntLike_co | None = None,
         size: None = None,
         *,
         dtype: _DTypeLike[ScalarT],
@@ -962,7 +1070,7 @@ class Generator:
     @overload  # 0d, Nd, dtype=<known>
     def integers[ScalarT: np.integer | np.bool, ShapeT: _Shape](
         self,
-        low: int,
+        low: _IntLike_co,
         high: _ArrayInt[ShapeT],
         size: None = None,
         *,
@@ -973,7 +1081,7 @@ class Generator:
     def integers[ShapeT: _Shape](
         self,
         low: _ArrayInt[ShapeT],
-        high: int | None = None,
+        high: _IntLike_co | None = None,
         size: None = None,
         dtype: _DTypeLikeI64 = ...,
         endpoint: bool = False,
@@ -981,7 +1089,7 @@ class Generator:
     @overload  # 0d, Nd
     def integers[ShapeT: _Shape](
         self,
-        low: int,
+        low: _IntLike_co,
         high: _ArrayInt[ShapeT],
         size: None = None,
         dtype: _DTypeLikeI64 = ...,
@@ -991,7 +1099,7 @@ class Generator:
     def integers[ShapeT: _Shape](
         self,
         low: _ArrayInt[ShapeT],
-        high: int | None = None,
+        high: _IntLike_co | None = None,
         size: None = None,
         dtype: DTypeLike | None = ...,
         endpoint: bool = False,
@@ -999,7 +1107,7 @@ class Generator:
     @overload  # 0d, Nd, dtype=<unknown>
     def integers[ShapeT: _Shape](
         self,
-        low: int,
+        low: _IntLike_co,
         high: _ArrayInt[ShapeT],
         size: None = None,
         dtype: DTypeLike | None = ...,
@@ -1260,7 +1368,7 @@ class Generator:
 
     #
     @overload  # 0d, 0d
-    def binomial(self, /, n: int, p: _FloatLike_co, size: None = None) -> int: ...
+    def binomial(self, /, n: _IntLike_co, p: _FloatLike_co, size: None = None) -> int: ...
     @overload  # Nd, 0d
     def binomial[ShapeT: _Shape](self, /, n: _ArrayInt[ShapeT], p: _FloatLike_co, size: None = None) -> _ArrayI64[ShapeT]: ...
     @overload  # 0d, Nd
@@ -1310,7 +1418,7 @@ class Generator:
 
     #
     @overload  # 0d, 0d, 0d
-    def hypergeometric(self, /, ngood: int, nbad: int, nsample: int, size: None = None) -> int: ...
+    def hypergeometric(self, /, ngood: _IntLike_co, nbad: _IntLike_co, nsample: _IntLike_co, size: None = None) -> int: ...
     @overload  # Nd, 0d, 0d
     def hypergeometric[ShapeT: _Shape](
         self, /, ngood: _ArrayInt[ShapeT], nbad: _IntLike_co, nsample: _IntLike_co, size: None = None
@@ -1430,9 +1538,25 @@ class Generator:
     ) -> NDArray[np.float64]: ...
 
     #
-    @overload  # 0d n, size=None (default)
-    def multinomial(self, /, n: _IntLike_co, pvals: _ArrayLikeFloat_co, size: None = None) -> Array1D[np.int64]: ...
-    @overload  # >=0d n, size=None (default)
+    @overload  # 0d, Nd, size=None (default)
+    def multinomial[ShapeT: _Shape](
+        self, /, n: _IntLike_co, pvals: _ArrayFloat[ShapeT], size: None = None
+    ) -> _ArrayI64[ShapeT]: ...
+    @overload  # 0d, 1d, size=None (default)
+    def multinomial(self, /, n: _IntLike_co, pvals: Sequence[_FloatLike_co], size: None = None) -> Array1D[np.int64]: ...
+    @overload  # ?d, >=0d, size=None (default)  (workaround)
+    def multinomial(
+        self, /, n: _ArrayJustND[np.generic[int]], pvals: _ArrayLikeFloat_co, size: None = None
+    ) -> NDArray[np.int64]: ...
+    @overload  # 1d, ?d, size=None (default)  (workaround)
+    def multinomial(
+        self, /, n: _ArrayInt[_1D], pvals: _ArrayJustND[np.generic[float]], size: None = None
+    ) -> NDArray[np.int64]: ...
+    @overload  # 1d, <=2d, size=None (default)
+    def multinomial(
+        self, /, n: _ArrayInt[_1D], pvals: _ArrayFloat[_1D | _2D] | Sequence[_FloatLike_co], size: None = None
+    ) -> Array2D[np.int64]: ...
+    @overload  # >=0d, >=0d, size=None (default)
     def multinomial(
         self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: None = None
     ) -> NDArray[np.int64]: ...
@@ -1550,7 +1674,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: int,
+        a: _IntLike_co,
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1726,7 +1850,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: int | list[int],
+        a: _IntLike_co | list[int],
         size: int,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1737,7 +1861,7 @@ class Generator:
     def choice[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
         /,
-        a: int | list[int],
+        a: _IntLike_co | list[int],
         size: ShapeT,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1748,7 +1872,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: int | _NestedList[int],
+        a: _IntLike_co | _NestedList[int],
         size: _ShapeLike,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,

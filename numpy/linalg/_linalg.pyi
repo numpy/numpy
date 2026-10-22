@@ -1302,7 +1302,6 @@ def lstsq(
     a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, rcond: float | None = None
 ) -> _LstSqResult[_AnyShape, np.complex128 | Any, np.float64 | Any]: ...
 
-# NOTE: This assumes that `axis` is only passed if `x` is >1d, and that `keepdims` is never passed positionally.
 # keep in sync with `vector_norm`
 @overload  # +inexact64 (unsafe casting), axis=None, keepdims=False
 def norm(
@@ -1326,6 +1325,21 @@ def norm(
     axis: SupportsIndex,
     keepdims: L[False] = False,
 ) -> NDArray[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 1d, axis=<int> (positional), keepdims=False
+def norm(
+    x: _ArrayLike1D[_to_inexact64_unsafe] | Sequence[complex],
+    ord: _OrderKind | None,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> np.float64: ...
+@overload  # +inexact64 (unsafe casting), 1d, axis=<int> (keyword), keepdims=False
+def norm(
+    x: _ArrayLike1D[_to_inexact64_unsafe] | Sequence[complex],
+    ord: _OrderKind | None = None,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+) -> np.float64: ...
 @overload  # +inexact64 (unsafe casting), 2d, axis=<int> (positional), keepdims=False
 def norm(
     x: _ArrayLike2D[_to_inexact64_unsafe] | _Sequence2D[complex],
@@ -1640,6 +1654,15 @@ def vector_norm(
     keepdims: L[False] = False,
     ord: float | None = 2,
 ) -> NDArray[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), 1d, axis=<int>, keepdims=False
+def vector_norm(
+    x: _ArrayLike1D[_to_inexact64_unsafe] | Sequence[complex],
+    /,
+    *,
+    axis: SupportsIndex,
+    keepdims: L[False] = False,
+    ord: float | None = 2,
+) -> np.float64: ...
 @overload  # +inexact64 (unsafe casting), 2d, axis=<int>, keepdims=False
 def vector_norm(
     x: _ArrayLike2D[_to_inexact64_unsafe] | _Sequence2D[complex],

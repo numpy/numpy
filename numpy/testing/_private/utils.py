@@ -1848,13 +1848,21 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     import numpy as np
     ax = np.abs(x)
     ay = np.abs(y)
-    ref = nulp * np.spacing(np.where(ax > ay, ax, ay))
-    if not np.all(np.abs(x - y) <= ref):
+    spacing = np.spacing(np.where(ax > ay, ax, ay))
+    ref = nulp * spacing
+    diff = np.abs(x - y)
+
+    if not np.all(diff <= ref):
         if np.iscomplexobj(x) or np.iscomplexobj(y):
             msg = f"Arrays are not equal to {nulp} ULP"
         else:
-            max_nulp = np.max(nulp_diff(x, y))
-            msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
+            dtype = np.dtype(np.common_type(np.asarray(x), np.asarray(y)))
+            if dtype in (np.float16, np.float32, np.float64):
+                max_nulp = np.max(nulp_diff(x, y))
+                msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
+            else:
+                msg = f"Arrays are not equal to {nulp} ULP"
+
         raise AssertionError(msg)
 
 

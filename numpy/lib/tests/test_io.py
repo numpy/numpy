@@ -348,6 +348,33 @@ class TestSavezLoad(RoundtripTest):
             data.close()
             assert_(fp.closed)
 
+    @pytest.mark.thread_unsafe(reason="monkeypatches open in _npyio_impl")
+    def test_closing_fid_on_bad_zipfile(self, monkeypatch):
+        # The file opened by np.load should be closed when it looks like a
+        # zip file but cannot be read as one, instead of being left open
+        # until the traceback is garbage collected.
+        opened = []
+
+        def tracking_open(*args, **kwargs):
+            f = open(*args, **kwargs)
+            opened.append(f)
+            return f
+
+        with temppath(suffix='.npz') as tmp:
+            np.savez(tmp, a=np.arange(100))
+            with open(tmp, 'rb') as f:
+                content = f.read()
+            with open(tmp, 'wb') as f:
+                f.write(content[:len(content) // 2])  # truncated archive
+
+            monkeypatch.setattr(_npyio_impl, "open", tracking_open,
+                                raising=False)
+            with pytest.raises(zipfile.BadZipFile):
+                np.load(tmp)
+
+            assert len(opened) == 1
+            assert opened[0].closed
+
     @pytest.mark.parametrize("count, expected_repr", [
         (1, "NpzFile {fname!r} with keys: arr_0"),
         (5, "NpzFile {fname!r} with keys: arr_0, arr_1, arr_2, arr_3, arr_4"),

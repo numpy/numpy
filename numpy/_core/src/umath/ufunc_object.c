@@ -4453,7 +4453,8 @@ resolve_descriptors(int nop,
 {
     int retval = -1;
     NPY_CASTING safety;
-    int n_cleanup = 0;  /* number of original_descrs filled (to XDECREF) */
+    /* number of original_descrs entries to clean up, including NULLs */
+    int n_cleanup = 0;
     PyArray_Descr *original_descrs[NPY_MAXARGS];
 
     NPY_UF_DBG_PRINT("Resolving the descriptors\n");
@@ -4562,7 +4563,7 @@ resolve_descriptors(int nop,
         if (original_descrs[i] == NULL) {
             goto finish;
         }
-        n_cleanup += 1;
+        n_cleanup = i + 1;
     }
 
     if (ufuncimpl->resolve_descriptors != &wrapped_legacy_resolve_descriptors) {
@@ -4572,6 +4573,12 @@ resolve_descriptors(int nop,
         safety = ufuncimpl->resolve_descriptors(ufuncimpl,
                 signature, original_descrs, dtypes, &view_offset);
         goto check_safety;
+    }
+    else if (ufunc->type_resolver == NULL) {
+        PyErr_Format(PyExc_TypeError,
+                "ufunc '%s' has no type resolver to resolve the descriptors "
+                "of this legacy loop", ufunc_get_name_cstr(ufunc));
+        goto finish;
     }
     else {
         /*
@@ -6475,7 +6482,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
 
-    if (ufunc->nin > 2) {
+    if (ufunc->nin < 1 || ufunc->nin > 2) {
         PyErr_SetString(PyExc_ValueError,
             "Only unary and binary ufuncs supported at this time");
         return NULL;
