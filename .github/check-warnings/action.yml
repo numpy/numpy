@@ -17,17 +17,21 @@ runs:
   steps:
     - name: Extract warnings
       shell: bash
+      env:
+        LOG_FILE: ${{ inputs.log-file }}
+        WARNING_REGEX: ${{ inputs['warning-regex'] }}
+        ALLOWLIST: ${{ inputs.allowlist }}
       run: |
-        echo "Extracting warnings from ${{ inputs.log-file }} using regex: ${{ inputs['warning-regex'] }}"
-        grep -E "${{ inputs['warning-regex'] }}" "${{ inputs.log-file }}" | tee warnings.log || true
+        echo "Extracting warnings from $LOG_FILE using regex: $WARNING_REGEX"
+        grep -E "$WARNING_REGEX" "$LOG_FILE" | tee warnings.log || true
 
         if [ ! -s warnings.log ]; then
           echo "No warnings found."
           exit 0
         fi
 
-        echo "Filtering against allowlist ${{ inputs.allowlist }}"
-        grep -v -F -f "${{ inputs.allowlist }}" warnings.log | tee disallowed.log || true
+        echo "Filtering against allowlist $ALLOWLIST"
+        grep -v -F -f "$ALLOWLIST" warnings.log | tee disallowed.log || true
 
         if [ -s disallowed.log ]; then
           echo "::error::Disallowed warnings detected:"

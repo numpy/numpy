@@ -67,6 +67,45 @@ class PhysicalQuantity(float):
 class PhysicalQuantity2(ndarray):
     __array_priority__ = 10
 
+    def __array_ufunc__(self, ufunc, method, *args, **kwargs):
+        out = kwargs.get("out")
+        if out is not None:
+            new_out = []
+            for o in out:
+                if o is None:
+                    new_out.append(None)
+                elif isinstance(o, PhysicalQuantity2):
+                    new_out.append(o.view(np.ndarray))
+                else:
+                    return NotImplemented
+            kwargs["out"] = tuple(new_out)
+        args = [np.asarray(a) for a in args]
+
+        res = super().__array_ufunc__(ufunc, method, *args, **kwargs)
+        if ((dtype := getattr(res, "dtype", None)) is not None
+            and dtype.kind != "b"):
+            res = res[...].view(PhysicalQuantity2)
+        return res
+
+    def __getitem__(self, item):
+        res = super().__getitem__(item)
+        if not isinstance(res, PhysicalQuantity2):
+            res = res[...].view(PhysicalQuantity2)
+        return res
+
+    def __str__(self):
+        return super().__str__(self.view(np.ndarray))
+
+    def __repr__(self):
+        prefixstr = self.__class__.__name__ + "("
+        arrstr = np.array2string(
+            self.view(np.ndarray), separator=", ", prefix=prefixstr
+        )
+        return f"{prefixstr}{arrstr})"
+
+    def __array_wrap__(self, arr, *args, **kwargs):
+        return arr.view(PhysicalQuantity2)
+
 
 class TestLogspace:
 
@@ -393,13 +432,17 @@ class TestLinspace:
 
     def test_subclass(self):
         a = array(0).view(PhysicalQuantity2)
-        b = array(1).view(PhysicalQuantity2)
+        b = array(np.arange(3)).view(PhysicalQuantity2)
         ls = linspace(a, b)
         assert type(ls) is PhysicalQuantity2
-        assert_equal(ls, linspace(0.0, 1.0))
-        ls = linspace(a, b, 1)
+        assert_equal(ls, linspace(0.0, np.arange(3.0)))
+        # Also test mixes of subclass and something else.
+        ls = linspace(a, 1.0)
         assert type(ls) is PhysicalQuantity2
-        assert_equal(ls, linspace(0.0, 1.0, 1))
+        assert_equal(ls, linspace(0.0, 1.0))
+        ls = linspace(np.array(0.0), b, 1)
+        assert type(ls) is PhysicalQuantity2
+        assert_equal(ls, linspace(0.0, np.arange(3.0), 1))
 
     def test_array_interface(self):
         # Regression test for https://github.com/numpy/numpy/pull/6659

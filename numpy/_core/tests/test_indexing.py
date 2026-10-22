@@ -104,6 +104,17 @@ class TestIndexing:
         assert_equal(s[()], s)
         assert_equal(type(s[...]), np.ndarray)
 
+    def test_void_scalar_ellipsis_tuple(self):
+        # gh-32742
+        v = np.void((3,), dtype=[('x', np.int8)])
+        assert_equal(type(v[...]), np.ndarray)
+        assert_equal(type(v[...,]), np.ndarray)
+        assert_equal(v[...,], v[...])
+        assert_equal(type(v[()]), np.void)
+        # field selection still yields a scalar
+        assert_equal(type(v['x']), np.int8)
+        assert_equal(type(v[['x']]), np.void)
+
     def test_same_kind_index_casting(self):
         # Indexes should be cast with same-kind and not safe, even if that
         # is somewhat unsafe. So test various different code paths.
@@ -776,6 +787,17 @@ class TestFancyIndexingCast:
         pytest.warns(ComplexWarning,
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
+
+    def test_fancy_assign_buffered_cast_error(self):
+        # gh-31974: a cast failure while refilling the iterator buffer
+        # (only possible when the array exceeds one buffer chunk) ended
+        # iteration silently, leaving the error set but unraised.
+        N = 20000
+        dst = np.zeros(N, dtype=int)
+        vals = np.arange(N, dtype=object)
+        vals[9000] = None
+        with pytest.raises(TypeError):
+            dst[np.arange(N)] = vals
 
 
 class TestFancyIndexingEquivalence:

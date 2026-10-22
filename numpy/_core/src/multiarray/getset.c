@@ -30,6 +30,7 @@
 #include "npy_buffer.h"
 #include "shape.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 #include "array_api_standard.h"
 
 /*******************  array attribute get and set routines ******************/
@@ -191,7 +192,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
     }
 
     /* numbytes == 0 is special here, but the 0-size array case always works */
-    if (!PyArray_CheckStrides(PyArray_ITEMSIZE(self), PyArray_NDIM(self),
+    if (!npy_check_strides(PyArray_ITEMSIZE(self), PyArray_NDIM(self),
                               numbytes, offset,
                               PyArray_DIMS(self), newstrides.ptr)) {
         PyErr_SetString(PyExc_ValueError, "strides is not "\
@@ -320,7 +321,7 @@ array_data_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 array_itemsize_get(PyArrayObject *self, void* NPY_UNUSED(ignored))
 {
-    return PyLong_FromLong((long) PyArray_ITEMSIZE(self));
+    return PyArray_PyIntFromIntp(PyArray_ITEMSIZE(self));
 }
 
 static PyObject *
@@ -408,7 +409,7 @@ array_struct_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
     PyArrayInterface *inter;
 
-    inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
+    inter = (PyArrayInterface *)PyMem_RawMalloc(sizeof(PyArrayInterface));
     if (inter==NULL) {
         return PyErr_NoMemory();
     }
@@ -430,9 +431,9 @@ array_struct_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
      *when the array is "reshaped".
      */
     if (PyArray_NDIM(self) > 0) {
-        inter->shape = (npy_intp *)PyArray_malloc(2*sizeof(npy_intp)*PyArray_NDIM(self));
+        inter->shape = (npy_intp *)PyMem_RawMalloc(2*sizeof(npy_intp)*PyArray_NDIM(self));
         if (inter->shape == NULL) {
-            PyArray_free(inter);
+            PyMem_RawFree(inter);
             return PyErr_NoMemory();
         }
         inter->strides = inter->shape + PyArray_NDIM(self);
@@ -537,7 +538,7 @@ array_real_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
         return Py_NewRef((PyObject *)self);
     }
 
-    return _get_part(self, n_ops.real, meth, /* need_view */ 0);
+    return _get_part(self, _npy_module_state->n_ops.real, meth, /* need_view */ 0);
 }
 
 static int
@@ -559,7 +560,7 @@ array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     }
     else {
         part = (PyArrayObject *)_get_part(
-            self, n_ops.real, meth, /* need_view */ 1);
+            self, _npy_module_state->n_ops.real, meth, /* need_view */ 1);
         if (part == NULL) {
             if (!PyErr_Occurred()) {
                 PyErr_SetString(PyExc_TypeError,
@@ -598,7 +599,7 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
         return ret;
     }
 
-    return _get_part(self, n_ops.imag, meth, /* need_view */ 0);
+    return _get_part(self, _npy_module_state->n_ops.imag, meth, /* need_view */ 0);
 }
 
 static int
@@ -619,7 +620,7 @@ array_imag_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     }
 
     part = (PyArrayObject *)_get_part(
-        self, n_ops.imag, meth, /* need_view */ 1);
+        self, _npy_module_state->n_ops.imag, meth, /* need_view */ 1);
     if (part == NULL) {
         if (!PyErr_Occurred()) {
             PyErr_SetString(PyExc_TypeError,
@@ -713,6 +714,11 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     swap = PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(arr);
     while(selfit->index < selfit->size) {
         copyswap(selfit->dataptr, arrit->dataptr, swap, self);
+        if (PyErr_Occurred()) {
+            /* e.g. a structured dtype field that does not support copyswap;
+               stop writing as soon as the error is visible */
+            goto exit;
+        }
         PyArray_ITER_NEXT(selfit);
         PyArray_ITER_NEXT(arrit);
         if (arrit->index == arrit->size) {

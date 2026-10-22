@@ -1,0 +1,6 @@
+``DataSource`` accepts path-like local paths
+--------------------------------------------
+``numpy.lib._datasource.DataSource`` and ``Repository`` now accept
+``os.PathLike`` local paths in the same places that accepted string paths.
+This includes ``open``, ``exists``, and ``abspath`` methods, as well as the
+module-level ``numpy.lib._datasource.open`` helper.

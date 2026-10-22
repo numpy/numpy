@@ -1,3 +1,4 @@
+from _typeshed import SupportsGetItem
 from collections.abc import Buffer
 from typing import Any, Literal as L, Self, SupportsIndex, SupportsInt, overload
 from typing_extensions import TypeVar, deprecated
@@ -30,6 +31,7 @@ from .strings import (
     istitle,
     isupper,
     str_len,
+    translate,
 )
 
 __all__ = [
@@ -144,15 +146,15 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
 
     #
     @overload  # type: ignore[override]
-    def __eq__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __eq__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
-    def __eq__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...
+    def __eq__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __ne__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __ne__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
-    def __ne__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...
+    def __ne__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
@@ -323,9 +325,17 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
 
     #
     @overload
-    def translate(self: _CharArray[str_], table: U_co, deletechars: U_co | None = None) -> _CharArray[str_]: ...
+    def translate(
+        self: _CharArray[str_],
+        table: SupportsGetItem[int, str | int | None],
+        deletechars: str | None = None,
+    ) -> _CharArray[str_]: ...
     @overload
-    def translate(self: _CharArray[bytes_], table: S_co, deletechars: S_co | None = None) -> _CharArray[bytes_]: ...
+    def translate(
+        self: _CharArray[bytes_],
+        table: Buffer | None,
+        deletechars: bytes | None = None,
+    ) -> _CharArray[bytes_]: ...
 
     #
     def zfill(self, width: i_co) -> Self: ...
@@ -570,15 +580,6 @@ def title(a: S_co) -> NDArray[bytes_]: ...
 def title(a: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
 @overload
 def title(a: T_co) -> _StringDTypeOrUnicodeArray: ...
-
-@overload
-def translate(a: U_co, table: str, deletechars: str | None = None) -> NDArray[str_]: ...
-@overload
-def translate(a: S_co, table: str, deletechars: str | None = None) -> NDArray[bytes_]: ...
-@overload
-def translate(a: _StringDTypeSupportsArray, table: str, deletechars: str | None = None) -> _StringDTypeArray: ...
-@overload
-def translate(a: T_co, table: str, deletechars: str | None = None) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
 def upper(a: U_co) -> NDArray[str_]: ...

@@ -19,7 +19,6 @@ from ._multiarray_umath import (  # noqa: F401
     _flagdict,
     _get_madvise_hugepage,
     _get_ndarray_c_version,
-    _monotonicity,
     _place,
     _reconstruct,
     _set_madvise_hugepage,
@@ -33,7 +32,7 @@ __all__ = [
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
     'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP',
     '_flagdict', 'from_dlpack', '_place', '_reconstruct', '_vec_string',
-    '_monotonicity', 'add_docstring', 'arange', 'array', 'asarray',
+    'add_docstring', 'arange', 'array', 'asarray',
     'asanyarray', 'ascontiguousarray', 'asfortranarray', 'bincount',
     'broadcast', 'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
     'compare_chararrays', 'concatenate', 'copyto', 'correlate', 'correlate2',
@@ -229,13 +228,9 @@ def concatenate(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
         If provided, the destination array will have this dtype. Cannot be
         provided together with `out`.
 
-        .. versionadded:: 1.20.0
-
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
         For a description of the options, please see :term:`casting`.
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -774,6 +769,12 @@ def dot(a, b, out=None):
 
         dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
 
+      .. deprecated:: 2.6
+          Calling `dot` when `a` has 2 or more dimensions and `b` has more
+          than 2 dimensions is deprecated and will eventually raise an error,
+          because the leading dimensions of `b` end up in the middle of the
+          result. Use ``tensordot(a, b, axes=[-1, -2])`` instead.
+
     It uses an optimized BLAS library when possible (see `numpy.linalg`).
 
     Parameters
@@ -831,13 +832,6 @@ def dot(a, b, out=None):
     >>> np.dot(a, b)
     array([[4, 1],
            [2, 2]])
-
-    >>> a = np.arange(3*4*5*6).reshape((3,4,5,6))
-    >>> b = np.arange(3*4*5*6)[::-1].reshape((5,4,6,3))
-    >>> np.dot(a, b)[2,3,2,1,2,2]
-    499128
-    >>> sum(a[2,3,2,:] * b[1,2,:,2])
-    499128
 
     """
     return (a, b, out)

@@ -22,15 +22,26 @@
 #include <cstdio>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include <type_traits>
 #include <utility>
 
 
 static const char* umath_linalg_version_string = "0.1.5";
 
+/*
+ * PyMutex is not in the Limited API at any version, so a limited API build
+ * uses the PyThread_type_lock fallback that Python < 3.13 uses.
+ */
+#if PY_VERSION_HEX >= 0x30d00b3 && !defined(Py_LIMITED_API)
+    #define UMATH_LINALG_USE_PYMUTEX 1
+#else
+    #define UMATH_LINALG_USE_PYMUTEX 0
+#endif
+
 // global lock to serialize calls into lapack_lite
 #if !HAVE_EXTERNAL_LAPACK
-#if PY_VERSION_HEX < 0x30d00b3
+#if !UMATH_LINALG_USE_PYMUTEX
 static PyThread_type_lock lapack_lite_lock;
 #else
 static PyMutex lapack_lite_lock = {0};
@@ -414,7 +425,7 @@ FNAME(zgemm)(char *transa, char *transb,
     #define LOCK_LAPACK_LITE
     #define UNLOCK_LAPACK_LITE
 #else
-#if PY_VERSION_HEX < 0x30d00b3
+#if !UMATH_LINALG_USE_PYMUTEX
     #define LOCK_LAPACK_LITE PyThread_acquire_lock(lapack_lite_lock, WAIT_LOCK)
     #define UNLOCK_LAPACK_LITE PyThread_release_lock(lapack_lite_lock)
 #else
@@ -988,6 +999,28 @@ zero_matrix(typ *dst, const linearize_data* data)
         }
         dst += data->row_strides/sizeof(typ);
     }
+}
+
+/*
+ * The LAPACK SVD drivers loop forever on some inputs containing inf, and
+ * return garbage for the rest of them, so their callers check the input with
+ * this first.  See https://github.com/numpy/numpy/issues/32591 and the
+ * upstream report https://github.com/Reference-LAPACK/lapack/issues/1409.
+ */
+template<typename typ>
+static inline bool
+all_finite(const typ *a, size_t count)
+{
+    using basetyp = basetype_t<typ>;
+    /* complex values are stored as (real, imag) pairs */
+    const basetyp *p = (const basetyp *)a;
+    size_t len = count * (sizeof(typ) / sizeof(basetyp));
+    /* counting instead of returning early keeps the loop vectorizable */
+    size_t nonfinite = 0;
+    for (size_t i = 0; i < len; i++) {
+        nonfinite += !std::isfinite(p[i]);
+    }
+    return nonfinite == 0;
 }
 
                /* identity square matrix generation */
@@ -3050,7 +3083,8 @@ dispatch_scalar<typ>())) {
             int not_ok;
             /* copy the matrix in */
             linearize_matrix((typ*)params.A, (typ*)args[0], &a_in);
-            not_ok = call_gesdd(&params);
+            not_ok = !all_finite((typ*)params.A, (size_t)params.M * params.N)
+                     || call_gesdd(&params);
             if (!not_ok) {
                 if ('N' == params.JOBZ) {
                     delinearize_matrix((basetyp*)args[1], (basetyp*)params.S, &s_out);
@@ -4151,7 +4185,8 @@ using basetyp = basetype_t<typ>;
             linearize_matrix((typ*)params.A, (typ*)args[0], &a_in);
             linearize_matrix((typ*)params.B, (typ*)args[1], &b_in);
             params.RCOND = (basetyp*)args[2];
-            not_ok = call_gelsd(&params);
+            not_ok = !all_finite((typ*)params.A, (size_t)m * n)
+                     || call_gelsd(&params);
             if (!not_ok) {
                 delinearize_matrix((typ*)args[3], (typ*)params.B, &x_out);
                 *(npy_int*) args[5] = params.RANK;
@@ -4681,7 +4716,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
 };
 
 static int
-addUfuncs(PyObject *dictionary) {
+addUfuncs(PyObject *module) {
     PyUFuncObject *f;
     int i;
     const int gufunc_count = sizeof(gufunc_descriptors)/
@@ -4707,7 +4742,7 @@ addUfuncs(PyObject *dictionary) {
 #if _UMATH_LINALG_DEBUG
         dump_ufunc_object((PyUFuncObject*) f);
 #endif
-        int ret = PyDict_SetItemString(dictionary, d->name, (PyObject *)f);
+        int ret = PyModule_AddObjectRef(module, d->name, (PyObject *)f);
         Py_DECREF(f);
         if (ret < 0) {
             return -1;
@@ -4730,7 +4765,6 @@ static int module_loaded = 0;
 static int
 _umath_linalg_exec(PyObject *m)
 {
-    PyObject *d;
     PyObject *version;
 
     // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
@@ -4748,27 +4782,22 @@ _umath_linalg_exec(PyObject *m)
         return -1;
     }
 
-    d = PyModule_GetDict(m);
-    if (d == NULL) {
-        return -1;
-    }
-
     version = PyUnicode_FromString(umath_linalg_version_string);
     if (version == NULL) {
         return -1;
     }
-    int ret = PyDict_SetItemString(d, "__version__", version);
+    int ret = PyModule_AddObjectRef(m, "__version__", version);
     Py_DECREF(version);
     if (ret < 0) {
         return -1;
     }
 
     /* Load the ufunc operators into the module's namespace */
-    if (addUfuncs(d) < 0) {
+    if (addUfuncs(m) < 0) {
         return -1;
     }
 
-#if PY_VERSION_HEX < 0x30d00b3 && !HAVE_EXTERNAL_LAPACK
+#if !UMATH_LINALG_USE_PYMUTEX && !HAVE_EXTERNAL_LAPACK
     lapack_lite_lock = PyThread_allocate_lock();
     if (lapack_lite_lock == NULL) {
         PyErr_NoMemory();
@@ -4777,9 +4806,13 @@ _umath_linalg_exec(PyObject *m)
 #endif
 
 #ifdef HAVE_BLAS_ILP64
-    PyDict_SetItemString(d, "_ilp64", Py_True);
+    if (PyModule_AddObjectRef(m, "_ilp64", Py_True) < 0) {
+        return -1;
+    }
 #else
-    PyDict_SetItemString(d, "_ilp64", Py_False);
+    if (PyModule_AddObjectRef(m, "_ilp64", Py_False) < 0) {
+        return -1;
+    }
 #endif
 
     return 0;

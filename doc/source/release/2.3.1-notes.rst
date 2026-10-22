@@ -4,6 +4,8 @@
 NumPy 2.3.1 Release Notes
 =========================
 
+*Released on 2025-06-21.*
+
 The NumPy 2.3.1 release is a patch release with several bug fixes, annotation
 improvements, and better support for OpenBSD. Highlights are:
 

@@ -392,32 +392,24 @@ struct NpyAuxData_tag {
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
 
 /*
-* Macros to define how array, and dimension/strides data is
-* allocated. These should be made private
-*/
+ * These are soft-deprecated but are left for backward compatibility.
+ * Use PyMem_Raw APIs directly instead.
+ */
 
 #define NPY_USE_PYMEM 1
 
-
-#if NPY_USE_PYMEM == 1
-/* use the Raw versions which are safe to call with the GIL released */
 #define PyArray_malloc PyMem_RawMalloc
 #define PyArray_free PyMem_RawFree
 #define PyArray_realloc PyMem_RawRealloc
-#else
-#define PyArray_malloc malloc
-#define PyArray_free free
-#define PyArray_realloc realloc
-#endif
 
 /* Dimensions and strides */
 #define PyDimMem_NEW(size)                                         \
-    ((npy_intp *)PyArray_malloc(size*sizeof(npy_intp)))
+    ((npy_intp *)PyMem_RawMalloc(size*sizeof(npy_intp)))
 
-#define PyDimMem_FREE(ptr) PyArray_free(ptr)
+#define PyDimMem_FREE(ptr) PyMem_RawFree(ptr)
 
 #define PyDimMem_RENEW(ptr,size)                                   \
-        ((npy_intp *)PyArray_realloc(ptr,size*sizeof(npy_intp)))
+        ((npy_intp *)PyMem_RawRealloc(ptr,size*sizeof(npy_intp)))
 
 /* forward declaration */
 struct _PyArray_Descr;
@@ -632,7 +624,7 @@ typedef struct _PyArray_Descr_fields {
          * be two type_numbers with the same type
          * object.
          */
-        PyTypeObject *typeobj;
+        _NPY_OPAQUE_FIRST_FIELD PyTypeObject *typeobj;
         /* kind for this type */
         char kind;
         /* unique-character representing this type */
@@ -664,7 +656,7 @@ typedef struct _PyArray_Descr_fields {
 
 typedef struct _PyArray_Descr {
         PyObject_HEAD
-        PyTypeObject *typeobj;
+        _NPY_OPAQUE_FIRST_FIELD PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -675,7 +667,7 @@ typedef struct _PyArray_Descr {
 /* To access modified fields, define the full 2.0 struct: */
 typedef struct {
         PyObject_HEAD
-        PyTypeObject *typeobj;
+        _NPY_OPAQUE_FIRST_FIELD PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -702,7 +694,7 @@ typedef struct {
 #ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
-        PyTypeObject *typeobj;
+        _NPY_OPAQUE_FIRST_FIELD PyTypeObject *typeobj;
         char kind;
         char type;
         char byteorder;
@@ -797,7 +789,7 @@ typedef struct tagPyArrayObject_fields {
     PyObject_HEAD
 #endif
     /* Pointer to the raw data buffer */
-    char *data;
+    _NPY_OPAQUE_FIRST_FIELD char *data;
     /* The number of dimensions, also called 'ndim' */
     int nd;
     /* The size in each dimension, also called 'shape' */
@@ -1224,7 +1216,7 @@ typedef struct PyArrayIterObject_fields {
 #ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
-        int               nd_m1;            /* number of dimensions - 1 */
+        _NPY_OPAQUE_FIRST_FIELD int nd_m1;      /* number of dimensions - 1 */
         npy_intp          index, size;
         npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
         npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
@@ -1250,7 +1242,7 @@ typedef struct {
 #ifndef Py_TARGET_ABI3T
         PyObject_HEAD
 #endif
-        int                  numiter;                 /* number of iters */
+        _NPY_OPAQUE_FIRST_FIELD int numiter;              /* number of iters */
         npy_intp             size;                    /* broadcasted size */
         npy_intp             index;                   /* current index */
         int                  nd;                      /* number of dims */
@@ -1297,7 +1289,7 @@ typedef struct {
     /*
      * PyArrayIterObject part: keep this in this exact order
      */
-    int               nd_m1;            /* number of dimensions - 1 */
+    _NPY_OPAQUE_FIRST_FIELD int nd_m1;      /* number of dimensions - 1 */
     npy_intp          index, size;
     npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
     npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
@@ -1444,6 +1436,7 @@ typedef struct npy_unpacked_static_string {
  */
 typedef struct npy_string_allocator npy_string_allocator;
 
+#ifndef Py_TARGET_ABI3T
 typedef struct {
     PyArray_Descr_fields base;
     // The object representing a null value
@@ -1466,6 +1459,15 @@ typedef struct {
     // no longer needed
     npy_string_allocator *allocator;
 } PyArray_StringDTypeObject;
+#else
+/*
+ * Accessing StringDType instance fields is not supported under the abi3t
+ * stable ABI. The NpyString allocator API still works with the opaque
+ * struct: pass the descriptor object pointer, i.e.
+ * NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr).
+ */
+typedef struct PyArray_StringDTypeObject PyArray_StringDTypeObject;
+#endif
 
 /*
  * PyArray_DTypeMeta related definitions.
@@ -1481,6 +1483,8 @@ typedef struct {
      */
     /* TODO: Make this definition public in the API, as soon as its settled */
     NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
+
+#ifndef Py_LIMITED_API
 
     /*
      * While NumPy DTypes would not need to be heap types the plan is to
@@ -1521,6 +1525,17 @@ typedef struct {
         void *dt_slots;
         void *reserved[3];
     } PyArray_DTypeMeta;
+
+#else
+
+    /*
+     * PyHeapTypeObject is not part of the Limited API, so the fields above
+     * are not accessible there.  This is the same opaque form dtype_api.h
+     * already uses for downstream Limited API builds.
+     */
+    typedef PyTypeObject PyArray_DTypeMeta;
+
+#endif /* Py_LIMITED_API */
 
 #endif  /* NPY_INTERNAL_BUILD */
 

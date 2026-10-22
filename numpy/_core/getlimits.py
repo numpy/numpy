@@ -63,11 +63,11 @@ class finfo:
         Returns the dtype for which `finfo` returns information. For complex
         input, the returned dtype is the associated ``float*`` dtype for its
         real and complex components.
-    eps : float
+    eps : floating point number of the appropriate type
         The difference between 1.0 and the next smallest representable float
         larger than 1.0. For example, for 64-bit binary floats in the IEEE-754
         standard, ``eps = 2**-52``, approximately 2.22e-16.
-    epsneg : float
+    epsneg : floating point number of the appropriate type
         The difference between 1.0 and the next smallest representable float
         less than 1.0. For example, for 64-bit binary floats in the IEEE-754
         standard, ``epsneg = 2**-53``, approximately 1.11e-16.
@@ -100,12 +100,12 @@ class finfo:
     resolution : floating point number of the appropriate type
         The approximate decimal resolution of this type, i.e.,
         ``10**-precision``.
-    tiny : float
+    tiny : floating point number of the appropriate type
         An alias for `smallest_normal`, kept for backwards compatibility.
-    smallest_normal : float
+    smallest_normal : floating point number of the appropriate type
         The smallest positive floating point number with 1 as leading bit in
         the mantissa following IEEE-754 (see Notes).
-    smallest_subnormal : float
+    smallest_subnormal : floating point number of the appropriate type
         The smallest positive floating point number with 0 as leading bit in
         the mantissa following IEEE-754.
 
@@ -171,7 +171,7 @@ class finfo:
             raise TypeError("dtype must not be None")
 
         try:
-            obj = cls._finfo_cache.get(dtype)  # most common path
+            obj = cls._finfo_cache.get((type(dtype), dtype))
             if obj is not None:
                 return obj
         except TypeError:
@@ -183,9 +183,17 @@ class finfo:
             # In case a float instance was given
             dtype = numeric.dtype(type(dtype))
 
-        obj = cls._finfo_cache.get(dtype)
+        obj = cls._finfo_cache.get((type(dtype), dtype))
         if obj is not None:
             return obj
+
+        # Fallback for third-party dtypes (like ml_dtypes) that populate
+        # _finfo_cache directly using bare dtype as key:
+        obj = cls._finfo_cache.get(dtype)
+        if obj is not None:
+            cls._finfo_cache[(type(dtype), dtype)] = obj
+            return obj
+
         dtypes = [dtype]
         # Call result_type to normalize to e.g. native byte-order:
         newdtype = numeric.result_type(dtype)
@@ -193,8 +201,10 @@ class finfo:
             dtypes.append(newdtype)
             dtype = newdtype
 
-        obj = cls._finfo_cache.get(dtype)
+        obj = cls._finfo_cache.get((type(dtype), dtype))
         if obj is not None:
+            for dt in dtypes:
+                cls._finfo_cache[(type(dt), dt)] = obj
             return obj
 
         sctype = newdtype.type
@@ -205,17 +215,18 @@ class finfo:
                 dtypes.append(newdtype)
                 dtype = newdtype
 
-                obj = cls._finfo_cache.get(dtype, None)
+                obj = cls._finfo_cache.get((type(dtype), dtype))
                 if obj is not None:
                     # the original dtype was not in the cache, but the new
                     # dtype is in the cache. we add the original dtypes to
                     # the cache and return the result
                     for dt in dtypes:
-                        cls._finfo_cache[dt] = obj
+                        cls._finfo_cache[(type(dt), dt)] = obj
                     return obj
+
         obj = object.__new__(cls)._init(dtype)
         for dt in dtypes:
-            cls._finfo_cache[dt] = obj
+            cls._finfo_cache[(type(dt), dt)] = obj
         return obj
 
     def _init(self, dtype):
@@ -326,7 +337,7 @@ class finfo:
 
         Returns
         -------
-        tiny : float
+        tiny : floating point number of the appropriate type
             Value for the smallest normal, alias of smallest_normal.
 
         Warns

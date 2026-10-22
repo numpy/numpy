@@ -39,7 +39,7 @@ You can test an installed NumPy by `numpy.test`, for example,
 To run NumPy's full test suite, use the following::
 
   >>> import numpy
-  >>> numpy.test(label='slow')
+  >>> numpy.test(label='full')
 
 The test method may take two or more arguments; the first ``label`` is a
 string specifying what should be tested and the second ``verbose`` is an
@@ -224,15 +224,15 @@ can label it with ``pytest.mark.slow``::
   import pytest
 
   @pytest.mark.slow
-  def test_big(self):
+  def test_big():
       print('Big, slow test')
 
 Similarly for methods::
 
-  class test_zzz:
+  class TestZzz:
       @pytest.mark.slow
       def test_simple(self):
-          assert_(zzz() == 'Hello from zzz')
+          assert zzz() == 'Hello from zzz'
 
 Setup and teardown methods
 --------------------------
@@ -416,6 +416,15 @@ provides a very concise and powerful way to describe data (including
 The advantages over random generation include tools to replay and share
 failures without requiring a fixed seed, reporting *minimal* examples for
 each failure, and better-than-naive-random techniques for triggering bugs.
+
+Note that ``hypothesis`` is an *optional* test dependency: it is not required to
+run the test suite, and Hypothesis-based tests are skipped when it is not
+installed. When adding a new Hypothesis-based test, import the ``given``,
+``settings`` and strategy helpers from
+``numpy.testing._private.hypothesis_helpers`` instead of ``hypothesis``
+directly, and mark the test with
+``@pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")``
+so it is skipped rather than failing to collect when Hypothesis is absent.
 
 Writing thread-safe tests
 -------------------------

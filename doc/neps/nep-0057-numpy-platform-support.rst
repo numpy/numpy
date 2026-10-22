@@ -237,6 +237,12 @@ Tier 3 platforms:
 | RISC-V             | Runs on RISE-provided self-hosted      | Ludovic Henry, Bruno Verachten   |
 |                    | runners, see gh-30216_                 |                                  |
 +--------------------+----------------------------------------+----------------------------------+
+| iOS                | Runs on regular macOS arm64 runners,   | Russell Keith-Magee              |
+|                    | cibuildwheel cross-compiles            |                                  |
++--------------------+----------------------------------------+----------------------------------+
+| Android            | Runs on regular Linux x86-64 runners,  | Malcolm Smith                    |
+|                    | cibuildwheel cross-compiles            |                                  |
++--------------------+----------------------------------------+----------------------------------+
 
 Unsupported platforms
 ~~~~~~~~~~~~~~~~~~~~~
@@ -274,10 +280,6 @@ Unsupported platforms (known interest in moving to a higher tier):
 +----------+------------------+
 | Platform | Notes            |
 +==========+==================+
-| iOS      | See gh-28759_    |
-+----------+------------------+
-| Android  | See gh-30412_    |
-+----------+------------------+
 | WASI     | See gh-25859_    |
 +----------+------------------+
 

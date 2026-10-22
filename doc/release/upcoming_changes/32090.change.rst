@@ -1,0 +1,7 @@
+``ufunc.outer`` now follows NEP 50 promotion
+--------------------------------------------
+Python scalars passed to ``ufunc.outer`` were converted to arrays and thus
+treated as strongly typed, unlike for a normal ufunc call.  They are now weak,
+so that e.g. ``np.add.outer(1., np.zeros(3, dtype="float32"))`` returns a
+``float32`` rather than a ``float64`` array.  As a consequence, huge Python
+integers now raise an ``OverflowError`` here as they do for ``ufunc.__call__``.
