@@ -1317,9 +1317,6 @@ def roll(a, shift, axis=None):
         if broadcasted.ndim > 1:
             raise ValueError(
                 "'shift' and 'axis' should be scalars or 1D sequences")
-        if len(axis) == 0:
-            return a
-
         shifts = dict.fromkeys(range(a.ndim), 0)
         for sh, ax in broadcasted:
             shifts[ax] += int(sh)
