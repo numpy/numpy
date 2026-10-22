@@ -163,6 +163,40 @@ def test_seedsequence():
     assert len(dummy.spawn(10)) == 10
 
 
+def test_seedsequence_legacy_pickle():
+    import gzip
+    import pickle
+
+    base_path = os.path.split(os.path.abspath(__file__))[0]
+    pkl_file = os.path.join(
+        base_path, "data", "seedsequence_cython.pkl.gz"
+    )
+
+    with gzip.open(pkl_file, "rb") as file:
+        seed_seq = pickle.load(file)
+
+    expected_state = {
+        "entropy": 100,
+        "spawn_key": (),
+        "pool_size": 4,
+        "n_children_spawned": 3,
+    }
+    expected_pool = [
+        2869590331,
+        2885936238,
+        11696060,
+        2270166390,
+    ]
+
+    assert isinstance(seed_seq, SeedSequence)
+    assert_equal(seed_seq.state, expected_state)
+    assert_array_equal(seed_seq.pool, expected_pool)
+
+    child = seed_seq.spawn(1)[0]
+    assert child.spawn_key == (3,)
+    assert seed_seq.n_children_spawned == 4
+
+
 @pytest.mark.skipif(IS_WASM, reason="can't start thread")
 @pytest.mark.thread_unsafe(
     reason="modifies the global thread switch interval"
