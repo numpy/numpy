@@ -1,0 +1,4 @@
+* With a NaN-like ``na_object`` such as ``np.nan``, casting to ``StringDType``
+  and item assignment now store the missing value for a NaN of any real or
+  complex floating point type.  Missing entries now cast to floating point and complex
+  dtypes as NaN instead of raising an error, so NaN values round-trip.

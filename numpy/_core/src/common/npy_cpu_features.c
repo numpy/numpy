@@ -3,6 +3,9 @@
 #include "numpy/npy_common.h"
 #include "numpy/npy_cpu.h" // To guarantee the CPU definitions are in scope.
 
+#include <stdlib.h> 
+#include <string.h> 
+
 /******************** Private Definitions *********************/
 
 // This is initialized during module initialization and thereafter immutable.
@@ -163,7 +166,10 @@ npy_cpu_features_dict(void)
         Py_DECREF(LIST); \
         return NULL; \
     } \
-    PyList_SET_ITEM(LIST, index++, item);
+    if (PyList_SetItem(LIST, index++, item) < 0) { \
+        Py_DECREF(LIST); \
+        return NULL; \
+    }
 
 NPY_VISIBILITY_HIDDEN PyObject *
 npy_cpu_baseline_list(void)
@@ -274,8 +280,8 @@ npy__cpu_check_env(int disable, const char *env) {
     size_t var_len = strlen(env) + 1;
     if (var_len > NPY__MAX_VAR_LEN) {
         PyErr_Format(PyExc_RuntimeError,
-            "Length of environment variable '%s' is %d, only %d accepted",
-            env_name, var_len, NPY__MAX_VAR_LEN
+            "Length of environment variable '%s' is %zu, only %zu accepted",
+            env_name, var_len, (size_t)NPY__MAX_VAR_LEN
         );
         return -1;
     }
@@ -285,7 +291,7 @@ npy__cpu_check_env(int disable, const char *env) {
     char nexist[NPY__MAX_VAR_LEN];
     char *nexist_cur = &nexist[0];
 
-    char notsupp[sizeof(NPY_WITH_CPU_DISPATCH) + 1];
+    char notsupp[NPY__MAX_VAR_LEN];
     char *notsupp_cur = &notsupp[0];
 
     //comma and space including (htab, vtab, CR, LF, FF)
@@ -308,15 +314,21 @@ npy__cpu_check_env(int disable, const char *env) {
         int feature_id = npy__cpu_dispatch_fid(feature);
         if (feature_id == 0) {
             int flen = strlen(feature);
+            if (nexist_cur != nexist) {
+                *nexist_cur++ = ' ';
+            }
             memcpy(nexist_cur, feature, flen);
-            nexist_cur[flen] = ' '; nexist_cur += flen + 1;
+            nexist_cur += flen;
             goto next;
         }
         // check if the feature supported by the running machine
         if (!npy__cpu_have[feature_id]) {
             int flen = strlen(feature);
+            if (notsupp_cur != notsupp) {
+                *notsupp_cur++ = ' ';
+            }
             memcpy(notsupp_cur, feature, flen);
-            notsupp_cur[flen] = ' '; notsupp_cur += flen + 1;
+            notsupp_cur += flen;
             goto next;
         }
         // Finally we can disable or mark for enabling
@@ -335,7 +347,6 @@ npy__cpu_check_env(int disable, const char *env) {
 
     *nexist_cur = '\0';
     if (nexist[0] != '\0') {
-        *(nexist_cur-1) = '\0'; // trim the last space
         if (PyErr_WarnFormat(PyExc_ImportWarning, 1,
             "%sYou cannot %s CPU features (%s), since "
             "they are not part of the dispatched optimizations\n"
@@ -354,7 +365,6 @@ npy__cpu_check_env(int disable, const char *env) {
 
     *notsupp_cur = '\0';
     if (notsupp[0] != '\0') {
-        *(notsupp_cur-1) = '\0'; // trim the last space
         if (!disable){
             PyErr_Format(PyExc_RuntimeError, NOTSUPP_BODY);
             return -1;

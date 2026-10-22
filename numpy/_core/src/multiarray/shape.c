@@ -14,6 +14,7 @@
 #include "ctors.h"
 #include "shape.h"
 #include "npy_static_data.h" /* for interned strings */
+#include "module_state.h"
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "common.h" /* for convert_shape_to_string */
 #include "alloc.h"
@@ -30,8 +31,8 @@ NPY_NO_EXPORT int
 PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
 {
     npy_intp oldnbytes, newnbytes;
-    npy_intp oldsize, newsize;
-    int new_nd=newshape->len, k, elsize;
+    npy_intp oldsize, newsize, elsize;
+    int new_nd=newshape->len, k;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
     npy_intp *dimptr;
@@ -650,10 +651,11 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
     int n = PyArray_NDIM(ap);
     int i;
 
-    if (check_and_adjust_axis_msg(&a1, n, npy_interned_str.axis1) < 0) {
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
+    if (check_and_adjust_axis_msg(&a1, n, interned_str->axis1) < 0) {
         return NULL;
     }
-    if (check_and_adjust_axis_msg(&a2, n, npy_interned_str.axis2) < 0) {
+    if (check_and_adjust_axis_msg(&a2, n, interned_str->axis2) < 0) {
         return NULL;
     }
 

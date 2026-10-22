@@ -43,6 +43,7 @@
 
 #include "templ_common.h"
 #include <stdatomic.h>
+#include <string.h>
 
 // It is defined here instead of header to avoid flexible array member warning in C++.
 struct buckets {

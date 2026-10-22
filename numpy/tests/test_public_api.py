@@ -11,7 +11,7 @@ import pytest
 
 import numpy
 import numpy as np
-from numpy.testing import IS_WASM
+from numpy.testing import HAS_SUBPROCESSES
 from numpy.testing._private.utils import run_subprocess
 
 try:
@@ -46,7 +46,7 @@ def test_numpy_namespace():
     assert bad_results == allowlist
 
 
-@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.parametrize('name', ['testing'])
 def test_import_lazy_import(name):
     """Make sure we can actually use the modules we lazy load.
@@ -138,7 +138,6 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "testing",
     "testing.overrides",
     "typing",
-    "typing.mypy_plugin",
     "version",
 ]]
 
@@ -465,6 +464,22 @@ def test_core_shims_coherence():
 
         else:
             assert member is getattr(core, member_name)
+
+
+def test_core_shims_no_leaked_names():
+    """
+    Check that helper names used to set up the `numpy.core` shims are not
+    left behind, so they cannot be accessed without a deprecation warning.
+    """
+    import numpy.core.multiarray as core_multiarray
+    import numpy.core.numeric as core_numeric
+
+    for module, names in [
+        (core_multiarray, ["multiarray", "item"]),
+        (core_numeric, ["numeric", "item"]),
+    ]:
+        for name in names:
+            assert name not in vars(module), f"{module.__name__}.{name}"
 
 
 @pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")

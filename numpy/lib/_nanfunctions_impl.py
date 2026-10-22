@@ -229,6 +229,11 @@ def _divide_by_count(a, b, out=None):
     with np.errstate(invalid='ignore', divide='ignore'):
         if isinstance(a, np.ndarray):
             if out is None:
+                # `a` is normally a temporary we can divide into, but
+                # some reductions return a read-only result (gh-29117).
+                # Allocate then, keeping the dtype the in-place divide gives.
+                if not a.flags.writeable:
+                    return np.divide(a, b, dtype=a.dtype, casting='unsafe')
                 return np.divide(a, b, out=a, casting='unsafe')
             else:
                 return np.divide(a, b, out=out, casting='unsafe')
@@ -282,13 +287,9 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     initial : scalar, optional
         The maximum value of an output element. Must be present to allow
         computation on empty slice. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
     where : array_like of bool, optional
         Elements to compare for the minimum. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -411,13 +412,9 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     initial : scalar, optional
         The minimum value of an output element. Must be present to allow
         computation on empty slice. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
     where : array_like of bool, optional
         Elements to compare for the maximum. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -523,14 +520,10 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype.
-
-        .. versionadded:: 1.22.0
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -585,14 +578,10 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype.
-
-        .. versionadded:: 1.22.0
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -673,12 +662,8 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         does not implement `keepdims` any exceptions will be raised.
     initial : scalar, optional
         Starting value for the sum. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
     where : array_like of bool, optional
         Elements to include in the sum. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -769,13 +754,9 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     initial : scalar, optional
         The starting value for this product. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.22.0
     where : array_like of bool, optional
         Elements to include in the product. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -989,8 +970,6 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         does not implement `keepdims` any exceptions will be raised.
     where : array_like of bool, optional
         Elements to include in the mean. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -1285,10 +1264,6 @@ def nanpercentile(
         * 'midpoint'
         * 'nearest'
 
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
-
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -1460,10 +1435,6 @@ def nanquantile(
         * 'higher',
         * 'midpoint'
         * 'nearest'
-
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
@@ -1668,8 +1639,9 @@ def _nanquantile_1d(
     arr1d, weights, overwrite_input = _remove_nan_1d(arr1d,
         second_arr1d=weights, overwrite_input=overwrite_input)
     if arr1d.size == 0:
-        # convert to scalar
-        return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
+        # Use the quantile implementation to preserve its output dtype.
+        arr1d = np.full(1, np.nan, dtype=arr1d.dtype)
+        weights = None
 
     return fnb._quantile_unchecked(
         arr1d,
@@ -1727,9 +1699,6 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     where : array_like of bool, optional
         Elements to include in the variance. See `~numpy.ufunc.reduce` for
         details.
-
-        .. versionadded:: 1.22.0
-
     mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
         a shape as if it was calculated with ``keepdims=True``.
@@ -1924,9 +1893,6 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     where : array_like of bool, optional
         Elements to include in the standard deviation.
         See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
-
     mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
         a shape as if it was calculated with ``keepdims=True``.
@@ -1995,7 +1961,9 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
                  keepdims=keepdims, where=where, mean=mean,
                  correction=correction)
     if isinstance(var, np.ndarray):
-        std = np.sqrt(var, out=var)
+        # Take the square root in place, unless `var` came back read-only
+        # (gh-29117), in which case we have to allocate.
+        std = np.sqrt(var, out=var if var.flags.writeable else None)
     elif hasattr(var, 'dtype'):
         std = var.dtype.type(np.sqrt(var))
     else:

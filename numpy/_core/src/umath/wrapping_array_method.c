@@ -203,8 +203,9 @@ wrapping_method_get_identity_function(
             nin, nout, dtypes, context->descriptors, orig_descrs) < 0) {
         return -1;
     }
-    int res = context->method->wrapped_meth->get_reduction_initial(
-            &orig_context, reduction_is_empty, item);
+    void *initials[1] = {item};
+    int res = reduction_get_initial(
+            &orig_context, reduction_is_empty, initials);
     for (int i = 0; i < nin + nout; i++) {
         Py_DECREF(orig_descrs[i]);
     }

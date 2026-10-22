@@ -16,7 +16,8 @@ __all__ = [
     'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols', 'mask_rows',
     'masked_all', 'masked_all_like', 'median', 'mr_', 'ndenumerate',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
-    'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
+    'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'unwrap', 'vander',
+    'vstack',
     ]
 
 import functools
@@ -349,7 +350,36 @@ def flatten_inplace(seq):
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
-    (This docstring should be overwritten)
+    Apply a function to 1-D slices of a masked array along an axis.
+
+    This function is the equivalent of `numpy.apply_along_axis` that returns
+    a masked array.  See `numpy.apply_along_axis` for the full documentation.
+
+    See Also
+    --------
+    numpy.apply_along_axis : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    Sum each column, skipping masked values:
+
+    >>> a = np.ma.array([[1, 2, 3],
+    ...                  [4, 5, 6]], mask=[[0, 1, 0],
+    ...                                    [0, 0, 1]])
+    >>> np.ma.apply_along_axis(np.ma.sum, 0, a)
+    masked_array(data=[5, 5, 3],
+                 mask=False,
+           fill_value=999999)
+
+    Compute the mean of each row, ignoring masked values:
+
+    >>> np.ma.apply_along_axis(np.ma.mean, 1, a)
+    masked_array(data=[2. , 4.5],
+                 mask=False,
+           fill_value=1e+20)
+
     """
     arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
@@ -427,9 +457,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         result = asarray(outarr, dtype=max_dtypes)
         result.fill_value = ma.default_fill_value(result)
     return result
-
-
-apply_along_axis.__doc__ = np.apply_along_axis.__doc__
 
 
 def apply_over_axes(func, a, axes):
@@ -1221,6 +1248,121 @@ def mask_cols(a, axis=np._NoValue):
             "The axis argument has always been ignored, in future passing it "
             "will raise TypeError", DeprecationWarning, stacklevel=2)
     return mask_rowcols(a, 1)
+
+
+def unwrap(p, discont=None, axis=-1, *, period=2 * np.pi):
+    r"""
+    Unwrap by taking the complement of large deltas with respect to the period.
+
+    This unwraps a signal `p` by changing elements which have an absolute
+    difference from their predecessor of more than ``max(discont, period/2)``
+    to their `period`-complementary values. Masked elements are skipped over,
+    so the predecessor of an element is the closest preceding unmasked one,
+    and the mask is preserved in the output.
+
+    For the default case where `period` is :math:`2\pi` and `discont` is
+    :math:`\pi`, this unwraps a radian phase `p` such that adjacent differences
+    are never greater than :math:`\pi` by adding :math:`2k\pi` for some
+    integer :math:`k`.
+
+    Parameters
+    ----------
+    p : array_like
+        Input array.
+        Masked entries are not taken into account in the computation.
+    discont : float, optional
+        Maximum discontinuity between values, default is ``period/2``.
+        Values below ``period/2`` are treated as if they were ``period/2``.
+        To have an effect different from the default, `discont` should be
+        larger than ``period/2``.
+    axis : int, optional
+        Axis along which unwrap will operate, default is the last axis.
+    period : float or int, optional
+        Size of the range over which the input wraps. By default, it is
+        ``2 pi``.
+
+    Returns
+    -------
+    out : MaskedArray
+        Output array, carrying the mask of `p`. Its dtype is
+        ``numpy.result_type(p, period)``. In particular an integer array
+        unwrapped with an integer `period` keeps its integer dtype, while any
+        float `period` (including the default ``2 pi``) produces a
+        floating-point result. The data underlying the masked elements is
+        unspecified.
+
+    See Also
+    --------
+    numpy.unwrap : Equivalent function for ndarrays
+
+    Notes
+    -----
+    If the discontinuity in `p` is smaller than ``period/2``,
+    but larger than `discont`, no unwrapping is done because taking
+    the complement would only make the discontinuity larger.
+
+    Unwrapping assumes that the change between an element and its predecessor
+    is less than half a period. Across a masked gap that assumption cannot be
+    checked, so a gap hiding more than half a period of change is not
+    recovered and leaves the elements after it offset by a multiple of
+    `period`.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    >>> phase = np.ma.masked_array([0., 1., 2., 2 + 2 * np.pi, 3 + 2 * np.pi],
+    ...                            mask=[0, 0, 1, 0, 0])
+    >>> np.ma.unwrap(phase)
+    masked_array(data=[0.0, 1.0, --, 2.0, 3.0],
+                 mask=[False, False,  True, False, False],
+           fill_value=1e+20)
+
+    The masked element is skipped over, so the fourth element is unwrapped
+    against the second one.
+
+    >>> phase_deg = np.ma.masked_array([0., 170., 340., 150.],
+    ...                                mask=[0, 1, 0, 0])
+    >>> np.ma.unwrap(phase_deg, period=360)
+    masked_array(data=[0.0, --, -20.0, 150.0],
+                 mask=[False,  True, False, False],
+           fill_value=1e+20)
+
+    """
+    p = ma.asanyarray(p)
+    mask = getmask(p)
+    if mask is nomask:
+        result = masked_array(np.unwrap(getdata(p), discont, axis,
+                                        period=period))
+    else:
+        axis = normalize_axis_index(axis, p.ndim)
+        if p.ndim == 1:
+            # a single line has no neighbours to keep the unmasked elements
+            # apart from, so they can be plucked out and put back directly
+            unwrapped = np.unwrap(p.compressed(), discont, period=period)
+            out = np.zeros(p.shape, dtype=unwrapped.dtype)
+            out[~mask] = unwrapped
+        else:
+            # carry the last unmasked value of every line forward over the
+            # masked ones: the deltas inside a masked run are then zero and
+            # the one ending it is against the true predecessor. the leading
+            # masked elements have none, so point them at the first unmasked
+            # element instead. their own data is arbitrary, so drop it
+            notmask = ~mask
+            n = p.shape[axis]
+            shape = [1] * p.ndim
+            shape[axis] = n
+            held = np.where(notmask, np.arange(n).reshape(shape), -1)
+            np.maximum.accumulate(held, axis=axis, out=held)
+            if n:
+                np.copyto(held, notmask.argmax(axis=axis, keepdims=True),
+                          where=held < 0)
+            out = np.unwrap(np.take_along_axis(p.filled(0), held, axis=axis),
+                            discont, axis, period=period)
+            np.copyto(out, 0, where=mask)
+        result = masked_array(out, mask=mask.copy())
+    result._update_from(p)
+    return result.view(get_masked_subclass(p))
 
 
 #####--------------------------------------------------------------------------
@@ -2216,7 +2358,26 @@ def clump_masked(a):
 
 def vander(x, n=None):
     """
+    Generate a Vandermonde matrix.
+
     Masked values in the input array result in rows of zeros.
+
+    Parameters
+    ----------
+    x : array_like
+        1-D input array.
+    n : int, optional
+        Number of columns in the output. If `n` is not specified, a square
+        array is returned.
+
+    Returns
+    -------
+    out : ndarray
+        Vandermonde matrix.
+
+    See Also
+    --------
+    numpy.vander : Equivalent function for ndarrays.
 
     """
     _vander = np.vander(x, n)
@@ -2226,12 +2387,44 @@ def vander(x, n=None):
     return _vander
 
 
-vander.__doc__ = ma.doc_note(np.vander.__doc__, vander.__doc__)
-
-
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
-    Any masked values in x is propagated in y, and vice-versa.
+    Least squares polynomial fit to data with possible masked values.
+
+    This function is the equivalent of `numpy.polyfit` that takes masked
+    values into account, see `numpy.polyfit` for details.
+
+    Notes
+    -----
+    Any masked values in `x` are propagated to `y`, and vice-versa.
+    A data point is excluded from the fit if either coordinate is masked.
+
+    See Also
+    --------
+    numpy.polyfit : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    Fit a line to data with a masked outlier in ``y``:
+
+    >>> x = np.ma.array([0., 1., 2., 3., 4.])
+    >>> y = np.ma.array([1., 3., 5., 7., 999.], mask=[0, 0, 0, 0, 1])
+    >>> np.ma.polyfit(x, y, 1)
+    array([2., 1.])
+
+    Masking a value in ``x`` also excludes the corresponding ``y`` point:
+
+    >>> x = np.ma.array([0., 1., 999., 3., 4.], mask=[0, 0, 1, 0, 0])
+    >>> y = np.ma.array([1., 3., 5., 7., 9.])
+    >>> np.ma.polyfit(x, y, 1)
+    array([2., 1.])
+
+    Without masking, an outlier distorts the fit significantly:
+
+    >>> np.polyfit([0., 1., 2., 3., 4.], [1., 3., 5., 7., 999.], 1)
+    array([ 200., -197.])
 
     """
     x = asarray(x)
@@ -2262,6 +2455,3 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         return np.polyfit(x[not_m], y[not_m], deg, rcond, full, w, cov)
     else:
         return np.polyfit(x, y, deg, rcond, full, w, cov)
-
-
-polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)

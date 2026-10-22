@@ -350,6 +350,10 @@ class recarray(ndarray):
     2. Use the `buf` keyword.
     3. Use `np.rec.fromrecords`.
 
+    ``==`` and ``!=`` are defined for record arrays, but other functionality
+    such as `~numpy.ndarray.sum` cannot be applied to multiple fields at once.
+    Use the individual fields instead, e.g. ``arr.x.sum()``.
+
     Examples
     --------
     Create an array with two fields, ``x`` and ``y``:
@@ -814,6 +818,12 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     else:
         descr = format_parser(formats, names, titles, aligned, byteorder).dtype
 
+    if descr.hasobject:
+        raise ValueError(
+            f"Cannot create record array for dtype {descr}. "
+             "Arrays containing references are not supported."
+        )
+
     itemsize = descr.itemsize
 
     # NumPy 1.19.0, 2020-01-01
@@ -911,6 +921,12 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
             descr = format_parser(
                 formats, names, titles, aligned, byteorder
             ).dtype
+
+        if descr.hasobject:
+            raise ValueError(
+                f"Cannot create record array for dtype {descr}. "
+                "Arrays containing references are not supported."
+            )
 
         itemsize = descr.itemsize
 

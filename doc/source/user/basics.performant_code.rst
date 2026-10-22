@@ -101,7 +101,7 @@ If you encounter pickling-related issues, consider the following strategies:
 * Consider third-party libraries such as `joblib <https://github.com/joblib/joblib>`__.
   ``joblib``'s default backend ``loky`` relies on `cloudpickle <https://github.com/cloudpipe/cloudpickle>`__
   for serialization and can handle a wider range of Python objects than the standard ``pickle`` module.
-  See the ``joblib`` documentaion on `Serialization of un-picklable objects <https://joblib.readthedocs.io/en/latest/auto_examples/serialization_and_wrappers.html>`__ for more details.
+  See the ``joblib`` documentation on `Serialization of un-picklable objects <https://joblib.readthedocs.io/en/latest/auto_examples/serialization_and_wrappers.html>`__ for more details.
 
 
 
@@ -209,7 +209,7 @@ To achieve better load balancing, consider the following strategies:
 Determine the correct number of cpus
 +++++++++++++++++++++++++++++++++++++
 
-Pythons provides `os.cpu_count` and `os.process_cpu_count <https://docs.python.org/3/library/os.html#os.process_cpu_count>`__
+Python provides `os.cpu_count` and `os.process_cpu_count <https://docs.python.org/3/library/os.html#os.process_cpu_count>`__
 functions to get the number of CPUs in the system and the current process, respectively.
 However, in some environments (e.g., Docker containers or HPC clusters),
 this may not reflect the actual number of CPUs available to the process.
@@ -433,12 +433,12 @@ than using Python's standard libraries.
 Dask
 ----
 
-Dask is an open-source library that provides parallel compuing features
+Dask is an open-source library that provides parallel computing features
 not only for a single machine but also for a cluster of machines.
 It also provides ``DaskArray`` which has a similar API to NumPy's ``ndarray``. 
 If you are familiar with NumPy, you can easily get started with ``DaskArray``.
 
-* Dask Documentaion: https://docs.dask.org/en/stable/
+* Dask Documentation: https://docs.dask.org/en/stable/
 * Dask GitHub Repository: https://github.com/dask/dask
 
 

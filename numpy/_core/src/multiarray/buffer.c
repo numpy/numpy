@@ -625,7 +625,7 @@ _buffer_info_untag(
     if (NPY_UNLIKELY(((uintptr_t)tagged_buffer_info & 0x7) != 3)) {
         PyErr_Format(PyExc_RuntimeError,
                 "Object of type %S appears to be C subclassed NumPy array, "
-                "void scalar, or allocated in a non-standard way."
+                "void scalar, or allocated in a non-standard way. "
                 "NumPy reserves the right to change the size of these "
                 "structures. Projects are required to take this into account "
                 "by either recompiling against a specific NumPy version or "
@@ -781,7 +781,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
         PyErr_SetString(PyExc_ValueError, "ndarray is not C-contiguous");
         goto fail;
     }
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+    if ((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) {
         if (PyArray_FailUnlessWriteable(self, "buffer source array") < 0) {
             goto fail;
         }
