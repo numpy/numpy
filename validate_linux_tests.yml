@@ -1,16 +1,6 @@
-name: Validate Linux Tests
-on: [push, pull_request]
+# 1. Combine the last 2 commits into one history log
+git reset --soft HEAD~2
+git commit -m "ci: add non-interactive headless validation workflow"
 
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-    - run: pip install numpy
-    - name: Run Clean Validation
-      run: |
-        echo "import numpy as np; print(np.ones(5))" > test.py
-        python test.py
+# 2. Force-update your GitHub fork
+git push origin main --force
