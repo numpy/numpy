@@ -178,7 +178,6 @@ def test_seedsequence_spawn_thread_safe():
         barrier.wait()
         results[index] = seed_seq.spawn(children_per_thread)
 
-
     run_threaded(
         spawn_children,
         max_workers=num_threads,
