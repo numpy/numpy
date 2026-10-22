@@ -1581,13 +1581,13 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     }
 
     ret = NpyIter_GetOperandArray(iter)[1];
-    Py_INCREF(ret);
+    Py_INCREF((PyObject *)ret);
 
     Py_XDECREF(timezone_obj);
-    Py_XDECREF(op[0]);
-    Py_XDECREF(op[1]);
-    Py_XDECREF(op_dtypes[0]);
-    Py_XDECREF(op_dtypes[1]);
+    Py_XDECREF((PyObject *)op[0]);
+    Py_XDECREF((PyObject *)op[1]);
+    Py_XDECREF((PyObject *)op_dtypes[0]);
+    Py_XDECREF((PyObject *)op_dtypes[1]);
     if (iter != NULL) {
         NpyIter_Deallocate(iter);
     }
@@ -1596,10 +1596,10 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
 
 fail:
     Py_XDECREF(timezone_obj);
-    Py_XDECREF(op[0]);
-    Py_XDECREF(op[1]);
-    Py_XDECREF(op_dtypes[0]);
-    Py_XDECREF(op_dtypes[1]);
+    Py_XDECREF((PyObject *)op[0]);
+    Py_XDECREF((PyObject *)op[1]);
+    Py_XDECREF((PyObject *)op_dtypes[0]);
+    Py_XDECREF((PyObject *)op_dtypes[1]);
     if (iter != NULL) {
         NpyIter_Deallocate(iter);
     }

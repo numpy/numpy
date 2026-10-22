@@ -189,7 +189,7 @@ set_static_method(PyArrayMethod_Spec *spec) {
     }
 
     if constexpr (!bound) {
-        Py_INCREF(meth->method);
+        Py_INCREF((PyObject *)meth->method);
         NPY_DT_SLOTS(dtype)->*slot = meth->method;
         Py_DECREF(meth);
     }
@@ -717,7 +717,7 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *info,
         /* Reduction special path */
         new_op_dtypes[0] = NPY_DT_NewRef(op_dtypes[1]);
         new_op_dtypes[1] = NPY_DT_NewRef(op_dtypes[1]);
-        Py_XINCREF(op_dtypes[2]);
+        Py_XINCREF((PyObject *)op_dtypes[2]);
         new_op_dtypes[2] = op_dtypes[2];
     }
 
@@ -736,7 +736,7 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *info,
 
   finish:
     for (int i = 0; i < nargs; i++) {
-        Py_XDECREF(new_op_dtypes[i]);
+        Py_XDECREF((PyObject *)new_op_dtypes[i]);
     }
     return resolved_info;
 }
@@ -876,7 +876,7 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
 
     for (int i = 0; i < nargs; i++) {
         Py_XSETREF(operation_DTypes[i], NPY_DTYPE(out_descrs[i]));
-        Py_INCREF(operation_DTypes[i]);
+        Py_INCREF((PyObject *)operation_DTypes[i]);
         Py_DECREF(out_descrs[i]);
     }
     /*
@@ -1076,7 +1076,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     for (int i = 0; i < ufunc->nargs; i++) {
-        Py_XDECREF(new_op_dtypes[i]);
+        Py_XDECREF((PyObject *)new_op_dtypes[i]);
     }
 
     if (info == NULL) {
@@ -1264,11 +1264,11 @@ default_ufunc_promoter(PyObject *ufunc,
     assert(ufunc_obj->nin > 1);
     if (op_dtypes[0] == NULL) {
         assert(ufunc_obj->nin == 2 && ufunc_obj->nout == 1);  /* must be reduction */
-        Py_INCREF(op_dtypes[1]);
+        Py_INCREF((PyObject *)op_dtypes[1]);
         new_op_dtypes[0] = op_dtypes[1];
-        Py_INCREF(op_dtypes[1]);
+        Py_INCREF((PyObject *)op_dtypes[1]);
         new_op_dtypes[1] = op_dtypes[1];
-        Py_INCREF(op_dtypes[1]);
+        Py_INCREF((PyObject *)op_dtypes[1]);
         new_op_dtypes[2] = op_dtypes[1];
         return 0;
     }
@@ -1281,7 +1281,7 @@ default_ufunc_promoter(PyObject *ufunc,
     for (int i = ufunc_obj->nin; i < ufunc_obj->nargs; i++) {
         if (signature[i] != NULL) {
             if (common == NULL) {
-                Py_INCREF(signature[i]);
+                Py_INCREF((PyObject *)signature[i]);
                 common = signature[i];
             }
             else if (common != signature[i]) {
@@ -1306,11 +1306,11 @@ default_ufunc_promoter(PyObject *ufunc,
         if (signature[i]) {
             tmp = signature[i];  /* never replace a fixed one. */
         }
-        Py_INCREF(tmp);
+        Py_INCREF((PyObject *)tmp);
         new_op_dtypes[i] = tmp;
     }
     for (int i = ufunc_obj->nin; i < ufunc_obj->nargs; i++) {
-        Py_XINCREF(op_dtypes[i]);
+        Py_XINCREF((PyObject *)op_dtypes[i]);
         new_op_dtypes[i] = op_dtypes[i];
     }
 
@@ -1339,7 +1339,7 @@ object_only_ufunc_promoter(PyObject *ufunc,
 
     for (int i = 0; i < ((PyUFuncObject *)ufunc)->nargs; i++) {
         if (signature[i] == NULL) {
-            Py_INCREF(object_DType);
+            Py_INCREF((PyObject *)object_DType);
             new_op_dtypes[i] = object_DType;
         }
     }
@@ -1369,7 +1369,7 @@ logical_ufunc_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *item;
         if (signature[i] != NULL) {
             item = signature[i];
-            Py_INCREF(item);
+            Py_INCREF((PyObject *)item);
             if (item->type_num == NPY_OBJECT) {
                 force_object = 1;
             }
@@ -1377,7 +1377,7 @@ logical_ufunc_promoter(PyObject *NPY_UNUSED(ufunc),
         else {
             /* Always override to boolean */
             item = &PyArray_BoolDType;
-            Py_INCREF(item);
+            Py_INCREF((PyObject *)item);
             if (op_dtypes[i] != NULL && op_dtypes[i]->type_num == NPY_OBJECT) {
                 force_object = 1;
             }
@@ -1452,7 +1452,7 @@ get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
         return NULL;
     }
     for (int i=0; i < ndtypes; i++) {
-        Py_INCREF(op_dtype);
+        Py_INCREF((PyObject *)op_dtype);
         PyTuple_SET_ITEM(t_dtypes, i, (PyObject *)op_dtype);
     }
     PyObject *info;

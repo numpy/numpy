@@ -163,7 +163,7 @@ _UpdateContiguousFlags(PyArrayObject *ap)
 static int
 arrayflags_traverse(PyArrayFlagsObject *self, visitproc visit, void *arg)
 {
-    Py_VISIT(Py_TYPE(self));
+    Py_VISIT(Py_TYPE((PyObject *)self));
     Py_VISIT(self->arr);
     return 0;
 }
@@ -180,7 +180,7 @@ arrayflags_dealloc(PyArrayFlagsObject *self)
 {
     PyObject_GC_UnTrack(self);
     Py_XDECREF(self->arr);
-    PyTypeObject *type = Py_TYPE(self);
+    PyTypeObject *type = Py_TYPE((PyObject *)self);
     type->tp_free((PyObject *)self);
     Py_DECREF(type);
 }

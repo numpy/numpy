@@ -26,14 +26,14 @@ partition_resolve_descriptors(PyArrayMethodObject *method, PyArray_DTypeMeta *co
     }
 
     if (NPY_UNLIKELY(output_descrs[1] == NULL)) {
-        Py_XDECREF(output_descrs[0]);
+        Py_XDECREF((PyObject *)output_descrs[0]);
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
     /* We reuse the input descriptor for the output as PyArray_Partition uses
        the same descriptor for both input and output. This can work because
        partitioning is in-place. */
-    Py_INCREF(output_descrs[0]);
+    Py_INCREF((PyObject *)output_descrs[0]);
     output_descrs[2] = output_descrs[0];
 
     return method->casting;
@@ -59,8 +59,8 @@ argpartition_resolve_descriptors(PyArrayMethodObject *method,
             output_descrs[i] = NPY_DT_CALL_ensure_canonical(input_descrs[i]);
         }
         if (NPY_UNLIKELY(output_descrs[i] == NULL)) {
-            Py_XDECREF(output_descrs[0]);
-            Py_XDECREF(output_descrs[1]);
+            Py_XDECREF((PyObject *)output_descrs[0]);
+            Py_XDECREF((PyObject *)output_descrs[1]);
             return _NPY_ERROR_OCCURRED_IN_CAST;
         }
     }
@@ -172,7 +172,7 @@ make_partitions_(PyArray_DTypeMeta *dtypemeta, const char *name)
         return -1;
     }
     NPY_DT_SLOTS(dtypemeta)->part_meth = part_method->method;
-    Py_INCREF(part_method->method);
+    Py_INCREF((PyObject *)part_method->method);
     Py_DECREF(part_method);
 
     std::string argpartition_name = std::string(name) + "_argpartition";
@@ -197,7 +197,7 @@ make_partitions_(PyArray_DTypeMeta *dtypemeta, const char *name)
         return -1;
     }
     NPY_DT_SLOTS(dtypemeta)->argpart_meth = argpart_method->method;
-    Py_INCREF(argpart_method->method);
+    Py_INCREF((PyObject *)argpart_method->method);
     Py_DECREF(argpart_method);
 
     return 0;

@@ -118,7 +118,7 @@ PyArray_CopyInitialReduceValues(
     }
 
     PyArray_Descr *descr = PyArray_DESCR(operand);
-    Py_INCREF(descr);
+    Py_INCREF((PyObject *)descr);
     op_view = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, descr, idim_out, shape, strides,
             PyArray_DATA(operand), 0, NULL);
@@ -520,7 +520,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         result = out[0];
     }
     if (nout == 1) {
-        Py_INCREF(result);
+        Py_INCREF((PyObject *)result);
         ret = (PyObject *)result;
     }
     else {
@@ -531,7 +531,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         for (int i = 0; i < nout; i++) {
             /* iterator operand may be a writeback temporary (COPY_IF_OVERLAP) */
             PyArrayObject *res_i = out[i] != NULL ? out[i] : NpyIter_GetOperandArray(iter)[i];
-            Py_INCREF(res_i);
+            Py_INCREF((PyObject *)res_i);
             PyTuple_SET_ITEM(ret, i, (PyObject *)res_i);
         }
     }

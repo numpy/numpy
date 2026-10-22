@@ -69,7 +69,7 @@ npy_find_array_wrap(
                     /* Prefer subclasses `__array_wrap__`: */
                     || (curr_priority == NPY_PRIORITY && wrap == Py_None)) {
                 Py_XSETREF(wrap, new_wrap);
-                Py_XSETREF(wrap_type, Py_NewRef(Py_TYPE(obj)));
+                Py_XSETREF(wrap_type, Py_NewRef((PyObject *)Py_TYPE(obj)));
                 priority = curr_priority;
             }
             else {
@@ -82,7 +82,7 @@ npy_find_array_wrap(
         wrap = Py_NewRef(Py_None);
     }
     if (wrap_type == NULL) {
-        wrap_type = Py_NewRef(&PyArray_Type);
+        wrap_type = Py_NewRef((PyObject *)&PyArray_Type);
     }
 
     *out_wrap = wrap;
@@ -303,7 +303,7 @@ npy_apply_wrap(
 
   finish:
     Py_XDECREF(py_context);
-    Py_XDECREF(arr);
+    Py_XDECREF((PyObject *)arr);
     Py_XDECREF(new_wrap);
     return res;
 }

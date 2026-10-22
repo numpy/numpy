@@ -290,7 +290,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
     if ((nd < 1) || (nd > 3)) {
         PyErr_SetString(PyExc_ValueError,
                         "C arrays of only 1-3 dimensions available");
-        Py_XDECREF(typedescr);
+        Py_XDECREF((PyObject *)typedescr);
         return -1;
     }
     if ((ap = (PyArrayObject*)PyArray_FromAny(*op, typedescr, nd, nd,
@@ -368,11 +368,11 @@ PyArray_GetSubType(int narrays, PyArrayObject **arrays) {
 
     /* Get the priority subtype for the array */
     for (i = 0; i < narrays; ++i) {
-        if (Py_TYPE(arrays[i]) != subtype) {
+        if (Py_TYPE((PyObject *)arrays[i]) != subtype) {
             double pr = PyArray_GetPriority((PyObject *)(arrays[i]), 0.0);
             if (pr > priority) {
                 priority = pr;
-                subtype = Py_TYPE(arrays[i]);
+                subtype = Py_TYPE((PyObject *)arrays[i]);
             }
         }
     }
@@ -462,7 +462,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
                             "Output array is the wrong shape");
             return NULL;
         }
-        Py_INCREF(ret);
+        Py_INCREF((PyObject *)ret);
     }
     else {
         npy_intp s, strides[NPY_MAXDIMS];
@@ -577,7 +577,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
                             "Output array is the wrong size");
             return NULL;
         }
-        Py_INCREF(ret);
+        Py_INCREF((PyObject *)ret);
     }
     else {
         npy_intp stride;
@@ -908,7 +908,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         return NULL;
     }
     if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
-        Py_XDECREF(typec);
+        Py_XDECREF((PyObject *)typec);
         return NULL;
     }
 
@@ -917,7 +917,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     }
     Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
 
-    Py_INCREF(typec);
+    Py_INCREF((PyObject *)typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
                                            NPY_ARRAY_ALIGNED, NULL);
     if (ap1 == NULL) {
@@ -925,7 +925,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         goto fail;
     }
 
-    Py_INCREF(typec);
+    Py_INCREF((PyObject *)typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                            NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
@@ -947,7 +947,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     }
     else {
         ap2t = (PyObject *)ap2;
-        Py_INCREF(ap2);
+        Py_INCREF((PyObject *)ap2);
     }
 
     ret = PyArray_MatrixProduct_int((PyObject *)ap1, ap2t, NULL, NULL);
@@ -963,11 +963,11 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     return ret;
 
 fail:
-    Py_XDECREF(ap1);
-    Py_XDECREF(ap2);
+    Py_XDECREF((PyObject *)ap1);
+    Py_XDECREF((PyObject *)ap2);
     Py_XDECREF(ap2t);
     Py_XDECREF(ret);
-    Py_XDECREF(typec);
+    Py_XDECREF((PyObject *)typec);
     return NULL;
 }
 
@@ -1002,7 +1002,7 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
         return NULL;
     }
     if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
-        Py_XDECREF(typec);
+        Py_XDECREF((PyObject *)typec);
         return NULL;
     }
 
@@ -1011,7 +1011,7 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
     }
     Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
 
-    Py_INCREF(typec);
+    Py_INCREF((PyObject *)typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap1 == NULL) {
@@ -1019,7 +1019,7 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
         return NULL;
     }
 
-    Py_INCREF(typec);
+    Py_INCREF((PyObject *)typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
@@ -1151,11 +1151,11 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
     return (PyObject *)result;
 
 fail:
-    Py_XDECREF(ap1);
-    Py_XDECREF(ap2);
-    Py_XDECREF(out_buf);
-    Py_XDECREF(result);
-    Py_XDECREF(typec);
+    Py_XDECREF((PyObject *)ap1);
+    Py_XDECREF((PyObject *)ap2);
+    Py_XDECREF((PyObject *)out_buf);
+    Py_XDECREF((PyObject *)result);
+    Py_XDECREF((PyObject *)typec);
     return NULL;
 }
 
@@ -1366,7 +1366,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
         return NULL;
     }
     if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
-        Py_XDECREF(typec);
+        Py_XDECREF((PyObject *)typec);
         return NULL;
     }
 
@@ -1375,7 +1375,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
     }
     Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
 
-    Py_INCREF(typec);
+    Py_INCREF((PyObject *)typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
                                         NPY_ARRAY_DEFAULT, NULL);
     if (ap1 == NULL) {
@@ -1383,7 +1383,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
         return NULL;
     }
 
-    Py_INCREF(typec);
+    Py_INCREF((PyObject *)typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
                                         NPY_ARRAY_DEFAULT, NULL);
     if (ap2 == NULL) {
@@ -1446,7 +1446,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         return NULL;
     }
     if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
-        Py_XDECREF(typec);
+        Py_XDECREF((PyObject *)typec);
         return NULL;
     }
 
@@ -1455,7 +1455,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
     }
     Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
 
-    Py_INCREF(typec);
+    Py_INCREF((PyObject *)typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
                                             NPY_ARRAY_DEFAULT, NULL);
     if (ap1 == NULL) {
@@ -1463,7 +1463,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         return NULL;
     }
 
-    Py_INCREF(typec);
+    Py_INCREF((PyObject *)typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
                                            NPY_ARRAY_DEFAULT, NULL);
     if (ap2 == NULL) {
@@ -1480,10 +1480,10 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
     return (PyObject *)ret;
 
 fail:
-    Py_XDECREF(ap1);
-    Py_XDECREF(ap2);
-    Py_XDECREF(ret);
-    Py_XDECREF(typec);
+    Py_XDECREF((PyObject *)ap1);
+    Py_XDECREF((PyObject *)ap2);
+    Py_XDECREF((PyObject *)ret);
+    Py_XDECREF((PyObject *)typec);
     return NULL;
 }
 
@@ -1590,9 +1590,9 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
         newstrides[i] = PyArray_STRIDES(arr)[k];
     }
     dtype = PyArray_DESCR(arr);
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     ret = PyArray_NewFromDescrAndBase(
-            Py_TYPE(arr), dtype,
+            Py_TYPE((PyObject *)arr), dtype,
             ndmin, newdims, newstrides, PyArray_DATA(arr),
             PyArray_FLAGS(arr), (PyObject *)arr, (PyObject *)arr);
     Py_DECREF(arr);
@@ -1617,7 +1617,7 @@ _array_fromobject_generic(
     int nd, flags = 0;
 
     /* Hold on to `in_descr` as `dtype`, since we may also set it below. */
-    Py_XINCREF(in_descr);
+    Py_XINCREF((PyObject *)in_descr);
     PyArray_Descr *dtype = in_descr;
 
     if (ndmin > ndmax) {
@@ -1636,7 +1636,7 @@ _array_fromobject_generic(
              */
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 ret = oparr;
-                Py_INCREF(ret);
+                Py_INCREF((PyObject *)ret);
                 goto finish;
             }
             else {
@@ -1676,7 +1676,7 @@ _array_fromobject_generic(
                     /* Create a new PyArrayObject from the caller's
                      * PyArray_Descr. Use the reference `op` as the base
                      * object. */
-                    Py_INCREF(dtype);
+                    Py_INCREF((PyObject *)dtype);
                     ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                             Py_TYPE(op),
                             dtype,
@@ -1701,7 +1701,7 @@ _array_fromobject_generic(
                 if (oldtype == dtype || ret == NULL) {
                     goto finish;
                 }
-                Py_INCREF(oldtype);
+                Py_INCREF((PyObject *)oldtype);
                 Py_DECREF(PyArray_DESCR(ret));
                 ((PyArrayObject_fields *)ret)->descr = oldtype;
                 goto finish;
@@ -1734,7 +1734,7 @@ _array_fromobject_generic(
             op, dtype, in_DType, 0, ndmax, flags);
 
 finish:
-    Py_XDECREF(dtype);
+    Py_XDECREF((PyObject *)dtype);
 
     if (ret == NULL) {
         return NULL;
@@ -1778,16 +1778,16 @@ array_array(PyObject *NPY_UNUSED(ignored),
                 {"$ndmin", &PyArray_PythonPyIntFromInt, &ndmin},
                 {"$ndmax", &PyArray_PythonPyIntFromInt, &ndmax},
                 {"$like", NULL, &like}) < 0) {
-            Py_XDECREF(dt_info.descr);
-            Py_XDECREF(dt_info.dtype);
+            Py_XDECREF((PyObject *)dt_info.descr);
+            Py_XDECREF((PyObject *)dt_info.dtype);
             return NULL;
         }
         if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "array", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
-                Py_XDECREF(dt_info.descr);
-                Py_XDECREF(dt_info.dtype);
+                Py_XDECREF((PyObject *)dt_info.descr);
+                Py_XDECREF((PyObject *)dt_info.dtype);
                 return deferred;
             }
         }
@@ -1799,15 +1799,15 @@ array_array(PyObject *NPY_UNUSED(ignored),
 
     if (ndmax > NPY_MAXDIMS || ndmax < 0) {
         PyErr_Format(PyExc_ValueError, "ndmax must be in the range [0, NPY_MAXDIMS (%d)] ", NPY_MAXDIMS);
-        Py_XDECREF(dt_info.descr);
-        Py_XDECREF(dt_info.dtype);
+        Py_XDECREF((PyObject *)dt_info.descr);
+        Py_XDECREF((PyObject *)dt_info.dtype);
         return NULL;
     }
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin, ndmax);
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     return res;
 }
 
@@ -1831,16 +1831,16 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
                 {"$device", &PyArray_DeviceConverterOptional, &device},
                 {"$copy", &PyArray_CopyConverter, &copy},
                 {"$like", NULL, &like}) < 0) {
-            Py_XDECREF(dt_info.descr);
-            Py_XDECREF(dt_info.dtype);
+            Py_XDECREF((PyObject *)dt_info.descr);
+            Py_XDECREF((PyObject *)dt_info.dtype);
             return NULL;
         }
         if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
-                Py_XDECREF(dt_info.descr);
-                Py_XDECREF(dt_info.dtype);
+                Py_XDECREF((PyObject *)dt_info.descr);
+                Py_XDECREF((PyObject *)dt_info.dtype);
                 return deferred;
             }
         }
@@ -1851,8 +1851,8 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, copy, order, NPY_FALSE, 0, NPY_MAXDIMS);
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     return res;
 }
 
@@ -1876,16 +1876,16 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
                 {"$device", &PyArray_DeviceConverterOptional, &device},
                 {"$copy", &PyArray_CopyConverter, &copy},
                 {"$like", NULL, &like}) < 0) {
-            Py_XDECREF(dt_info.descr);
-            Py_XDECREF(dt_info.dtype);
+            Py_XDECREF((PyObject *)dt_info.descr);
+            Py_XDECREF((PyObject *)dt_info.dtype);
             return NULL;
         }
         if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asanyarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
-                Py_XDECREF(dt_info.descr);
-                Py_XDECREF(dt_info.dtype);
+                Py_XDECREF((PyObject *)dt_info.descr);
+                Py_XDECREF((PyObject *)dt_info.dtype);
                 return deferred;
             }
         }
@@ -1896,8 +1896,8 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, copy, order, NPY_TRUE, 0, NPY_MAXDIMS);
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     return res;
 }
 
@@ -1916,16 +1916,16 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
                 {"a", NULL, &op},
                 {"|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info},
                 {"$like", NULL, &like}) < 0) {
-            Py_XDECREF(dt_info.descr);
-            Py_XDECREF(dt_info.dtype);
+            Py_XDECREF((PyObject *)dt_info.descr);
+            Py_XDECREF((PyObject *)dt_info.dtype);
             return NULL;
         }
         if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "ascontiguousarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
-                Py_XDECREF(dt_info.descr);
-                Py_XDECREF(dt_info.dtype);
+                Py_XDECREF((PyObject *)dt_info.descr);
+                Py_XDECREF((PyObject *)dt_info.dtype);
                 return deferred;
             }
         }
@@ -1937,8 +1937,8 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_CORDER, NPY_FALSE,
             1, NPY_MAXDIMS);
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     return res;
 }
 
@@ -1957,16 +1957,16 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
                 {"a", NULL, &op},
                 {"|dtype", &PyArray_DTypeOrDescrConverterOptional, &dt_info},
                 {"$like", NULL, &like}) < 0) {
-            Py_XDECREF(dt_info.descr);
-            Py_XDECREF(dt_info.dtype);
+            Py_XDECREF((PyObject *)dt_info.descr);
+            Py_XDECREF((PyObject *)dt_info.dtype);
             return NULL;
         }
         if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asfortranarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
-                Py_XDECREF(dt_info.descr);
-                Py_XDECREF(dt_info.dtype);
+                Py_XDECREF((PyObject *)dt_info.descr);
+                Py_XDECREF((PyObject *)dt_info.dtype);
                 return deferred;
             }
         }
@@ -1978,8 +1978,8 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_FORTRANORDER,
             NPY_FALSE, 1, NPY_MAXDIMS);
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     return res;
 }
 
@@ -2024,7 +2024,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
                 (dst_DType->type_num == NPY_TIMEDELTA ||
                  dst_DType->type_num == NPY_DATETIME)) {
             descr = PyArray_DESCR(dst);
-            Py_INCREF(descr);
+            Py_INCREF((PyObject *)descr);
         }
         else {
             descr = npy_find_descr_for_scalar(src_obj, PyArray_DESCR(src), DType,
@@ -2057,14 +2057,14 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
         goto fail;
     }
 
-    Py_XDECREF(src);
-    Py_XDECREF(wheremask);
+    Py_XDECREF((PyObject *)src);
+    Py_XDECREF((PyObject *)wheremask);
 
     Py_RETURN_NONE;
 
 fail:
-    Py_XDECREF(src);
-    Py_XDECREF(wheremask);
+    Py_XDECREF((PyObject *)src);
+    Py_XDECREF((PyObject *)wheremask);
     return NULL;
 }
 
@@ -2094,8 +2094,8 @@ array_empty(PyObject *NPY_UNUSED(ignored),
         PyObject *deferred = array_implement_c_array_function_creation(
                 "empty", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {
-            Py_XDECREF(dt_info.descr);
-            Py_XDECREF(dt_info.dtype);
+            Py_XDECREF((PyObject *)dt_info.descr);
+            Py_XDECREF((PyObject *)dt_info.dtype);
             npy_free_cache_dim_obj(shape);
             return deferred;
         }
@@ -2118,8 +2118,8 @@ array_empty(PyObject *NPY_UNUSED(ignored),
         shape.len, shape.ptr, dt_info.descr, dt_info.dtype, is_f_order);
 
 fail:
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     npy_free_cache_dim_obj(shape);
     return (PyObject *)ret;
 }
@@ -2150,7 +2150,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored),
     }
     /* steals the reference to dt_info.descr if it's not NULL */
     if (dt_info.descr != NULL) {
-        Py_INCREF(dt_info.descr);
+        Py_INCREF((PyObject *)dt_info.descr);
     }
     ret = (PyArrayObject *)PyArray_NewLikeArrayWithShape(
             prototype, order, dt_info.descr, dt_info.dtype,
@@ -2158,9 +2158,9 @@ array_empty_like(PyObject *NPY_UNUSED(ignored),
     npy_free_cache_dim_obj(shape);
 
 fail:
-    Py_XDECREF(prototype);
-    Py_XDECREF(dt_info.dtype);
-    Py_XDECREF(dt_info.descr);
+    Py_XDECREF((PyObject *)prototype);
+    Py_XDECREF((PyObject *)dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
     return (PyObject *)ret;
 }
 
@@ -2298,8 +2298,8 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
         PyObject *deferred = array_implement_c_array_function_creation(
                 "zeros", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {
-            Py_XDECREF(dt_info.descr);
-            Py_XDECREF(dt_info.dtype);
+            Py_XDECREF((PyObject *)dt_info.descr);
+            Py_XDECREF((PyObject *)dt_info.dtype);
             npy_free_cache_dim_obj(shape);
             return deferred;
         }
@@ -2323,8 +2323,8 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
 
 finish:
     npy_free_cache_dim_obj(shape);
-    Py_XDECREF(dt_info.descr);
-    Py_XDECREF(dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
     return (PyObject *)ret;
 }
 
@@ -2370,14 +2370,14 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
                 "s#|O&" NPY_SSIZE_T_PYFMT "s$O:fromstring", kwlist,
                 &data, &s, PyArray_DescrConverter, &descr, &nin, &sep, &like)) {
-        Py_XDECREF(descr);
+        Py_XDECREF((PyObject *)descr);
         return NULL;
     }
     if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "fromstring", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
-            Py_XDECREF(descr);
+            Py_XDECREF((PyObject *)descr);
             return deferred;
         }
     }
@@ -2386,7 +2386,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     if (sep == NULL || strlen(sep) == 0) {
         PyErr_SetString(PyExc_ValueError,
             "fromstring() requires a non-empty 'sep' argument.");
-        Py_XDECREF(descr);
+        Py_XDECREF((PyObject *)descr);
         return NULL;
     }
     return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
@@ -2411,7 +2411,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
                 "O|O&" NPY_SSIZE_T_PYFMT "s" NPY_OFF_T_PYFMT "$O:fromfile", kwlist,
                 &file, PyArray_DescrConverter, &type, &nin, &sep, &offset, &like)) {
-        Py_XDECREF(type);
+        Py_XDECREF((PyObject *)type);
         return NULL;
     }
 
@@ -2419,27 +2419,27 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         PyObject *deferred = array_implement_c_array_function_creation(
                 "fromfile", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
-            Py_XDECREF(type);
+            Py_XDECREF((PyObject *)type);
             return deferred;
         }
     }
 
     file = NpyPath_PathlikeToFspath(file);
     if (file == NULL) {
-        Py_XDECREF(type);
+        Py_XDECREF((PyObject *)type);
         return NULL;
     }
 
     if (offset != 0 && strcmp(sep, "") != 0) {
         PyErr_SetString(PyExc_TypeError, "'offset' argument only permitted for binary files");
-        Py_XDECREF(type);
+        Py_XDECREF((PyObject *)type);
         Py_DECREF(file);
         return NULL;
     }
     if (PyBytes_Check(file) || PyUnicode_Check(file)) {
         Py_SETREF(file, npy_PyFile_OpenFile(file, "rb"));
         if (file == NULL) {
-            Py_XDECREF(type);
+            Py_XDECREF((PyObject *)type);
             return NULL;
         }
         own = 1;
@@ -2450,12 +2450,12 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     fp = npy_PyFile_Dup2(file, "rb", &orig_pos);
     if (fp == NULL) {
         Py_DECREF(file);
-        Py_XDECREF(type);
+        Py_XDECREF((PyObject *)type);
         return NULL;
     }
     if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
         PyErr_SetFromErrno(PyExc_OSError);
-        Py_XDECREF(type);
+        Py_XDECREF((PyObject *)type);
         goto cleanup;
     }
     if (type == NULL) {
@@ -2499,14 +2499,14 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
                 "OO&|" NPY_SSIZE_T_PYFMT "$O:fromiter", kwlist,
                 &iter, PyArray_DescrConverter, &descr, &nin, &like)) {
-        Py_XDECREF(descr);
+        Py_XDECREF((PyObject *)descr);
         return NULL;
     }
     if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "fromiter", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
-            Py_XDECREF(descr);
+            Py_XDECREF((PyObject *)descr);
             return deferred;
         }
     }
@@ -2526,7 +2526,7 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
                 "O|O&" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT "$O:frombuffer", kwlist,
                 &obj, PyArray_DescrConverter, &type, &nin, &offset, &like)) {
-        Py_XDECREF(type);
+        Py_XDECREF((PyObject *)type);
         return NULL;
     }
 
@@ -2534,7 +2534,7 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         PyObject *deferred = array_implement_c_array_function_creation(
                 "frombuffer", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
-            Py_XDECREF(type);
+            Py_XDECREF((PyObject *)type);
             return deferred;
         }
     }
@@ -2571,13 +2571,13 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
         }
         else if (!PyArray_Check(out)) {
             PyErr_SetString(PyExc_TypeError, "'out' must be an array");
-            Py_XDECREF(dtype);
+            Py_XDECREF((PyObject *)dtype);
             return NULL;
         }
     }
     res = PyArray_ConcatenateInto(a0, axis, (PyArrayObject *)out, dtype,
             casting);
-    Py_XDECREF(dtype);
+    Py_XDECREF((PyObject *)dtype);
     return res;
 }
 
@@ -2653,7 +2653,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
         return NULL;
     }
     if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &type) < 0) {
-        Py_XDECREF(type);
+        Py_XDECREF((PyObject *)type);
         return NULL;
     }
 
@@ -2662,7 +2662,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     }
    Py_SETREF(type, NPY_DT_CALL_ensure_canonical(type));
 
-    Py_INCREF(type);
+    Py_INCREF((PyObject *)type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
     if (ap1 == NULL) {
         Py_DECREF(type);
@@ -2677,7 +2677,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     Py_DECREF(ap1);
     ap1 = (PyArrayObject *)op1;
 
-    Py_INCREF(type);
+    Py_INCREF((PyObject *)type);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, type, 0, 0, 0, NULL);
     if (ap2 == NULL) {
         goto fail;
@@ -2739,15 +2739,15 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
         NPY_END_THREADS_DESCR(type);
     }
 
-    Py_XDECREF(ap1);
-    Py_XDECREF(ap2);
-    Py_XDECREF(type);
+    Py_XDECREF((PyObject *)ap1);
+    Py_XDECREF((PyObject *)ap2);
+    Py_XDECREF((PyObject *)type);
     return PyArray_Return(ret);
 fail:
-    Py_XDECREF(ap1);
-    Py_XDECREF(ap2);
-    Py_XDECREF(ret);
-    Py_XDECREF(type);
+    Py_XDECREF((PyObject *)ap1);
+    Py_XDECREF((PyObject *)ap2);
+    Py_XDECREF((PyObject *)ret);
+    Py_XDECREF((PyObject *)type);
     return NULL;
 }
 
@@ -2804,7 +2804,7 @@ einsum_sub_op_from_str(
 
 fail:
     for (Py_ssize_t i = 0; i < nop; ++i) {
-        Py_XDECREF(op[i]);
+        Py_XDECREF((PyObject *)op[i]);
         op[i] = NULL;
     }
 
@@ -2981,7 +2981,7 @@ einsum_sub_op_from_lists(Py_ssize_t nargs, PyObject *const *args,
 
 fail:
     for (Py_ssize_t i = 0; i < nop; ++i) {
-        Py_XDECREF(op[i]);
+        Py_XDECREF((PyObject *)op[i]);
         op[i] = NULL;
     }
 
@@ -3056,9 +3056,9 @@ array_einsum(PyObject *NPY_UNUSED(dummy),
 
 finish:
     for (Py_ssize_t i = 0; i < nop; ++i) {
-        Py_XDECREF(op[i]);
+        Py_XDECREF((PyObject *)op[i]);
     }
-    Py_XDECREF(dtype);
+    Py_XDECREF((PyObject *)dtype);
     Py_XDECREF(str_obj);
     Py_XDECREF(str_key_obj);
     /* out is a borrowed reference */
@@ -3118,14 +3118,14 @@ array_arange(PyObject *NPY_UNUSED(ignored),
             {"|dtype", &PyArray_DescrConverter2, &typecode},
             {"$device", &PyArray_DeviceConverterOptional, &device},
             {"$like", NULL, &like}) < 0) {
-        Py_XDECREF(typecode);
+        Py_XDECREF((PyObject *)typecode);
         return NULL;
     }
     if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "arange", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {
-            Py_XDECREF(typecode);
+            Py_XDECREF((PyObject *)typecode);
             return deferred;
         }
     }
@@ -3134,7 +3134,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
         if (len_args == 0){
             PyErr_SetString(PyExc_TypeError,
                 "arange() requires stop to be specified.");
-            Py_XDECREF(typecode);
+            Py_XDECREF((PyObject *)typecode);
             return NULL;
         }
     }
@@ -3144,7 +3144,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
     }
 
     range = PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
-    Py_XDECREF(typecode);
+    Py_XDECREF((PyObject *)typecode);
 
     return range;
 }
@@ -3229,7 +3229,7 @@ array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 fail:
     evil_global_disable_warn_O4O8_flag = 0;
 
-    Py_XDECREF(dtype);
+    Py_XDECREF((PyObject *)dtype);
     npy_free_cache_dim_obj(shape);
     return NULL;
 }
@@ -3489,9 +3489,9 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
 fail:
     NPY_END_THREADS;
     Py_DECREF(arr);
-    Py_XDECREF(ax);
-    Py_XDECREF(ay);
-    Py_XDECREF(common_dt);
+    Py_XDECREF((PyObject *)ax);
+    Py_XDECREF((PyObject *)ay);
+    Py_XDECREF((PyObject *)common_dt);
     NPY_cast_info_xfree(&x_cast_info);
     NPY_cast_info_xfree(&y_cast_info);
     if (iter != NULL) {
@@ -3602,8 +3602,8 @@ array_can_cast_safely(PyObject *self,
     Py_INCREF(retobj);
 
  finish:
-    Py_XDECREF(d1);
-    Py_XDECREF(d2);
+    Py_XDECREF((PyObject *)d1);
+    Py_XDECREF((PyObject *)d2);
     return retobj;
 }
 
@@ -3630,8 +3630,8 @@ array_promote_types(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize
     ret = (PyObject *)PyArray_PromoteTypes(d1, d2);
 
  finish:
-    Py_XDECREF(d1);
-    Py_XDECREF(d2);
+    Py_XDECREF((PyObject *)d1);
+    Py_XDECREF((PyObject *)d2);
     return ret;
 }
 
@@ -4091,9 +4091,9 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
     return (PyObject*)result;
 
  err:
-    Py_XDECREF(in_iter);
-    Py_XDECREF(out_iter);
-    Py_XDECREF(result);
+    Py_XDECREF((PyObject *)in_iter);
+    Py_XDECREF((PyObject *)out_iter);
+    Py_XDECREF((PyObject *)result);
 
     return 0;
 }
@@ -4160,9 +4160,9 @@ _vec_string_no_args(PyArrayObject* char_array,
     return (PyObject*)result;
 
  err:
-    Py_XDECREF(in_iter);
-    Py_XDECREF(out_iter);
-    Py_XDECREF(result);
+    Py_XDECREF((PyObject *)in_iter);
+    Py_XDECREF((PyObject *)out_iter);
+    Py_XDECREF((PyObject *)result);
 
     return 0;
 }
@@ -4231,7 +4231,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     return (PyObject*)result;
 
  err:
-    Py_XDECREF(char_array);
+    Py_XDECREF((PyObject *)char_array);
     Py_XDECREF(method);
 
     return 0;
@@ -4262,7 +4262,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
 
     if (PyArray_Check(self_obj)) {
         self = (PyArrayObject*)self_obj;
-        Py_INCREF(self);
+        Py_INCREF((PyObject *)self);
     }
     else {
         /* Use FromAny to enable checking overlap for objects exposing array
@@ -4275,7 +4275,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
 
     if (PyArray_Check(other_obj)) {
         other = (PyArrayObject*)other_obj;
-        Py_INCREF(other);
+        Py_INCREF((PyObject *)other);
     }
     else {
         other = (PyArrayObject*)PyArray_FROM_O(other_obj);
@@ -4307,8 +4307,8 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     result = solve_may_share_memory(self, other, max_work);
     NPY_END_THREADS;
 
-    Py_XDECREF(self);
-    Py_XDECREF(other);
+    Py_XDECREF((PyObject *)self);
+    Py_XDECREF((PyObject *)other);
 
     if (result == MEM_OVERLAP_NO) {
         Py_RETURN_FALSE;
@@ -4346,8 +4346,8 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
 
 fail:
-    Py_XDECREF(self);
-    Py_XDECREF(other);
+    Py_XDECREF((PyObject *)self);
+    Py_XDECREF((PyObject *)other);
     return NULL;
 }
 
@@ -4472,9 +4472,9 @@ _finfo_get_realdtype(PyObject *NPY_UNUSED(self), PyObject *descr_obj)
     }
 
   finish:
-    Py_XINCREF(ret);
-    Py_XDECREF(real_descr);
-    Py_XDECREF(imag_descr);
+    Py_XINCREF((PyObject *)ret);
+    Py_XDECREF((PyObject *)real_descr);
+    Py_XDECREF((PyObject *)imag_descr);
     return (PyObject *)ret;
 }
 
@@ -4492,7 +4492,7 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
     PyArray_Descr *descr = (PyArray_Descr *)PyTuple_GetItem(args, 1);
-    if (!PyArray_DescrCheck(descr)) {
+    if (!PyArray_DescrCheck((PyObject *)descr)) {
         PyErr_SetString(PyExc_TypeError, "Second argument must be a dtype");
         return NULL;
     }
@@ -4526,7 +4526,7 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
     char *buffer_data = NULL;
     npy_intp dims[1] = {n_float_constants};
 
-    Py_INCREF(descr);
+    Py_INCREF((PyObject *)descr);
     buffer_array = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
             descr, 1, dims, NULL, NULL, 0, NULL);
     if (buffer_array == NULL) {
@@ -4579,7 +4579,7 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
     Py_DECREF(buffer_array);
     Py_RETURN_NONE;
   fail:
-    Py_XDECREF(buffer_array);
+    Py_XDECREF((PyObject *)buffer_array);
     return NULL;
 }
 
@@ -5368,7 +5368,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
-    Py_SET_TYPE(&PyArrayDescr_Type, &PyArrayDTypeMeta_Type);
+    Py_SET_TYPE((PyObject *)&PyArrayDescr_Type, &PyArrayDTypeMeta_Type);
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
         return -1;
     }
