@@ -1,0 +1,7 @@
+Faster transposed copies of arrays larger than the cache
+--------------------------------------------------------
+Copies of numeric arrays that change memory order, such as
+``np.ascontiguousarray(a.T)``, ``np.asfortranarray(a)``, and assignments
+between C- and Fortran-ordered arrays, now visit the strided axis in
+cache-sized chunks. The speedup is roughly 3x at 64 MiB on Apple silicon; small
+arrays are unaffected.
