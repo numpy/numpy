@@ -86,6 +86,39 @@ import os
 import sys
 import warnings
 
+# Lazy on Python 3.15+ (PEP 810); ignored by older Pythons.
+__lazy_modules__ = [
+    "numpy",
+    "numpy._core",
+    "numpy.lib",
+    "numpy.matrixlib",
+    "numpy._array_api_info",
+    "numpy._expired_attrs_2_0",
+    "numpy.lib._arraypad_impl",
+    "numpy.lib._arraysetops_impl",
+    "numpy.lib._arrayterator_impl",
+    "numpy.lib._function_base_impl",
+    "numpy.lib._histograms_impl",
+    "numpy.lib._index_tricks_impl",
+    "numpy.lib._nanfunctions_impl",
+    "numpy.lib._npyio_impl",
+    "numpy.lib._polynomial_impl",
+    "numpy.lib._shape_base_impl",
+    "numpy.lib._stride_tricks_impl",
+    "numpy.lib._twodim_base_impl",
+    "numpy.lib._type_check_impl",
+    "numpy.lib._ufunclike_impl",
+    "numpy.lib._utils_impl",
+    "numpy.lib._version",
+    "numpy.lib.array_utils",
+    "numpy.lib.format",
+    "numpy.lib.introspect",
+    "numpy.lib.mixins",
+    "numpy.lib.npyio",
+    "numpy.lib.scimath",
+    "numpy.lib.stride_tricks",
+]
+
 # If a version with git hash was stored, use that instead
 from . import version
 from ._expired_attrs_2_0 import __expired_attributes__
@@ -103,7 +136,7 @@ if __NUMPY_SETUP__:
     sys.stderr.write('Running from numpy source directory.\n')
 else:
     # Allow distributors to run custom init code before importing numpy._core
-    from . import _distributor_init
+    import numpy._distributor_init as _distributor_init
 
     try:
         from numpy.__config__ import show_config
@@ -328,7 +361,7 @@ else:
         maximum,
         may_share_memory,
         mean,
-        memmap,
+        memmap,  # noqa: TID254  # the class, not the module
         min,
         min_scalar_type,
         minimum,
@@ -673,26 +706,17 @@ else:
 
     from ._array_api_info import __array_namespace_info__
 
-    __all__ = list(
-        __numpy_submodules__ |
-        set(_core.__all__) |
-        set(_mat.__all__) |
-        set(lib._histograms_impl.__all__) |
-        set(lib._nanfunctions_impl.__all__) |
-        set(lib._function_base_impl.__all__) |
-        set(lib._twodim_base_impl.__all__) |
-        set(lib._shape_base_impl.__all__) |
-        set(lib._type_check_impl.__all__) |
-        set(lib._arraysetops_impl.__all__) |
-        set(lib._ufunclike_impl.__all__) |
-        set(lib._arraypad_impl.__all__) |
-        set(lib._utils_impl.__all__) |
-        set(lib._stride_tricks_impl.__all__) |
-        set(lib._polynomial_impl.__all__) |
-        set(lib._npyio_impl.__all__) |
-        set(lib._index_tricks_impl.__all__) |
-        {"emath", "show_config", "__version__", "__array_namespace_info__"}
+    # The public names bound above (only names are inspected, nothing is imported);
+    # checked against the submodules in numpy/tests/test_public_api.py.
+    _not_exported = {"os", "sys", "warnings", "version", "matrixlib"}
+    _exported = (
+        {name for name in globals() if not name.startswith("_")}
+        - _not_exported
+        | __numpy_submodules__
+        | {"__version__", "__array_namespace_info__"}
     )
+    __all__ = sorted(_exported)  # noqa: PLE0605 (computed, but a plain list)
+    del _exported, _not_exported
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
@@ -797,7 +821,7 @@ else:
 
         """
         try:
-            x = ones(2, dtype=float32)
+            x = array([1, 1], dtype=float32)
             if not abs(x.dot(x) - float32(2.0)) < 1e-5:
                 raise AssertionError
         except AssertionError:
@@ -825,14 +849,14 @@ else:
             pass
 
     if sys.platform == "darwin":
-        from . import exceptions
+        from numpy.exceptions import RankWarning as _RankWarning
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
             # Throw runtime error, if the test failed
             # Check for warning and report the error_message
             if len(w) > 0:
                 for _wn in w:
-                    if _wn.category is exceptions.RankWarning:
+                    if _wn.category is _RankWarning:
                         # Ignore other warnings, they may not be relevant (see gh-25433)
                         error_message = (
                             f"{_wn.category.__name__}: {_wn.message}"
@@ -847,6 +871,7 @@ else:
                         raise RuntimeError(msg)
                 del _wn
             del w
+        del _RankWarning
     del _mac_os_check
 
     def blas_fpe_check():

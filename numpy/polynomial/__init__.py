@@ -114,6 +114,17 @@ Misc
 - ``p.truncate(size)`` -- Truncate ``p`` to given size
 
 """
+# Lazy on Python 3.15+ (PEP 810): only the series that is used gets loaded.
+__lazy_modules__ = [
+    "numpy.polynomial",
+    "numpy.polynomial.chebyshev",
+    "numpy.polynomial.hermite",
+    "numpy.polynomial.hermite_e",
+    "numpy.polynomial.laguerre",
+    "numpy.polynomial.legendre",
+    "numpy.polynomial.polynomial",
+]
+from . import chebyshev, hermite, hermite_e, laguerre, legendre, polynomial, polyutils
 from .chebyshev import Chebyshev
 from .hermite import Hermite
 from .hermite_e import HermiteE
@@ -121,7 +132,7 @@ from .laguerre import Laguerre
 from .legendre import Legendre
 from .polynomial import Polynomial
 
-__all__ = [  # noqa: F822
+__all__ = [
     "set_default_printstyle",
     "polynomial", "Polynomial",
     "chebyshev", "Chebyshev",

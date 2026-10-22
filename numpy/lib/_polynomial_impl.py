@@ -5,6 +5,9 @@ Functions to operate on polynomials.
 __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
            'polyfit']
+# Lazy on Python 3.15+ (PEP 810).
+__lazy_modules__ = ["numpy.linalg"]
+
 import functools
 import re
 import warnings
