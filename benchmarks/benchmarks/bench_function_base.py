@@ -92,6 +92,27 @@ class Insert(Benchmark):
         np.insert(self.arr, self.empty_indices, 9, axis=axis)
 
 
+class InsertSmall(Benchmark):
+    # Non-empty and small cases that should not regress from the
+    # empty-index fast path.
+    params = [
+        [(10,), (1000,)],
+        [[0], [0, 1], [0, 2, 4]],
+    ]
+    param_names = ["shape", "indices"]
+
+    def setup(self, shape, indices):
+        self.arr = np.arange(np.prod(shape))
+        self.indices = indices
+        self.indices_arr = np.array(indices, dtype=np.intp)
+
+    def time_insert_list(self, shape, indices):
+        np.insert(self.arr, self.indices, 9)
+
+    def time_insert_array(self, shape, indices):
+        np.insert(self.arr, self.indices_arr, 9)
+
+
 class Median(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
