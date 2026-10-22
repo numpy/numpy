@@ -355,6 +355,21 @@ cdef class SeedSequence:
         state = self.state
         return __seed_sequence_ctor, (type(self), state)
 
+    def __setstate__(self, state):
+        from pickle import UnpicklingError
+
+        if not isinstance(state, tuple) or len(state) != 5:
+            raise UnpicklingError(
+                "invalid state for a pickled SeedSequence"
+            )
+
+        self.entropy = state[0]
+        self.n_children_spawned = state[1]
+        self.pool = state[2]
+        self.pool_size = state[3]
+        self.spawn_key = state[4]
+        self._lock = Lock()
+
     cdef mix_entropy(self, np.ndarray[np.npy_uint32, ndim=1] mixer,
                      np.ndarray[np.npy_uint32, ndim=1] entropy_array):
         """ Mix in the given entropy to mixer.
@@ -508,6 +523,19 @@ cdef class SeedSequence:
             ))
 
         return seqs
+
+
+def __pyx_unpickle_SeedSequence(
+    seed_sequence_type,
+    _checksum,
+    state,
+):
+    # `_checksum` is retained for compatibility with Cython-generated
+    # SeedSequence pickles.
+    result = SeedSequence.__new__(seed_sequence_type)
+    if state is not None:
+        result.__setstate__(state)
+    return result
 
 
 ISpawnableSeedSequence.register(SeedSequence)
