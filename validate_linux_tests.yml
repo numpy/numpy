@@ -10,7 +10,7 @@ jobs:
       with:
         python-version: '3.10'
     - run: pip install numpy
-    - name: Create and Run Non-Interactive Test
+    - name: Run Clean Validation
       run: |
-        echo "import numpy as np; print('NumPy Version:', np.__version__)" > run_test.py
-        python run_test.py
+        echo "import numpy as np; print(np.ones(5))" > test.py
+        python test.py
