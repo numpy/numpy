@@ -1,6 +1,9 @@
 """ Test functions for limits module.
 
 """
+import subprocess
+import sys
+import textwrap
 import types
 import warnings
 
@@ -10,7 +13,7 @@ import numpy as np
 from numpy import double, half, longdouble, single
 from numpy._core import finfo, iinfo
 from numpy._core._rational_tests import rational
-from numpy.testing import assert_, assert_equal, assert_raises
+from numpy.testing import IS_WASM, assert_, assert_equal, assert_raises
 
 ##################################################
 
@@ -96,6 +99,25 @@ class TestFinfo:
 
         x = NonHashableWithDtype()
         assert np.finfo(x) == np.finfo(x.dtype)
+
+    @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+    def test_regression_gh32947(self):
+        # On Windows and other platforms where long double and double have the
+        # same bit width, np.dtype(np.longdouble) == np.dtype(np.float64).
+        # finfo(float64) is pre-warmed at import time so that calling
+        # finfo(longdouble) first cannot alias or overwrite float64 in _finfo_cache.
+        code = textwrap.dedent("""
+            import numpy as np
+            f_ld = np.finfo(np.longdouble)
+            f_64 = np.finfo(np.float64)
+            assert type(f_64.dtype) is np.dtypes.Float64DType
+            assert type(f_64.eps) is np.float64
+            f_cld = np.finfo(np.clongdouble)
+            f_c128 = np.finfo(np.complex128)
+            assert type(f_c128.dtype) is np.dtypes.Float64DType
+            assert type(f_c128.eps) is np.float64
+        """)
+        subprocess.check_call([sys.executable, "-c", code])
 
     def test_no_none_sense(self):
         assert_raises(TypeError, finfo, None)

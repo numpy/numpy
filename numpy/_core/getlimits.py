@@ -447,3 +447,9 @@ class iinfo:
     def __repr__(self):
         name = self.__class__.__name__
         return f'{name}(min={self.min}, max={self.max}, dtype={self.dtype})'
+
+
+# Pre-populate float64 in cache so that calling finfo(longdouble) first
+# cannot alias or overwrite it on platforms where sizeof(longdouble) == sizeof(double)
+# (see gh-32947):
+finfo(numeric.float64)
