@@ -201,6 +201,40 @@ def test_in_place_multiply_no_overflow(dt):
 
 
 @pytest.mark.parametrize("dt", ["S", "U", "T"])
+def test_string_function_array_likes_converted_once(dt):
+    class ArrayLike:
+        def __init__(self, value):
+            self.value = value
+            self.array_calls = 0
+
+        def __array__(self, dtype=None, copy=None):
+            self.array_calls += 1
+            arr = np.array(self.value, dtype=dt)
+            if dtype is not None:
+                arr = arr.astype(dtype, copy=False)
+            return arr
+
+        def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+            raise NotImplementedError
+
+    for func in [np.strings.partition, np.strings.rpartition]:
+        a = ArrayLike(["a-b"])
+        sep = ArrayLike("-")
+        result = func(a, sep)
+        for actual, expected in zip(result, [["a"], ["-"], ["b"]]):
+            assert_array_equal(
+                actual, np.array(expected, dtype=dt), strict=True)
+        assert a.array_calls == sep.array_calls == 1
+
+    a = ArrayLike(["a-b"])
+    old = ArrayLike("-")
+    new = ArrayLike("+")
+    result = np.strings.replace(a, old, new)
+    assert_array_equal(result, np.array(["a+b"], dtype=dt), strict=True)
+    assert a.array_calls == old.array_calls == new.array_calls == 1
+
+
+@pytest.mark.parametrize("dt", ["S", "U", "T"])
 class TestMethods:
 
     @pytest.mark.parametrize("in1,in2,out", [
@@ -954,6 +988,13 @@ class TestMethods:
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
 
+    def test_partition_sep_not_truncated(self, dt):
+        buf = np.array(["a"], dtype=dt)
+        act1, act2, act3 = np.strings.partition(buf, "ab")
+        assert_array_equal(act1, np.array(["a"], dtype=dt))
+        assert_array_equal(act2, np.array([""], dtype=dt))
+        assert_array_equal(act3, np.array([""], dtype=dt))
+
     @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
         ("this is the partition method", "ti", "this is the parti",
             "ti", "on method"),
@@ -980,6 +1021,13 @@ class TestMethods:
         assert_array_equal(act2, res2)
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
+
+    def test_rpartition_sep_not_truncated(self, dt):
+        buf = np.array(["a"], dtype=dt)
+        act1, act2, act3 = np.strings.rpartition(buf, "ab")
+        assert_array_equal(act1, np.array([""], dtype=dt))
+        assert_array_equal(act2, np.array([""], dtype=dt))
+        assert_array_equal(act3, np.array(["a"], dtype=dt))
 
     @pytest.mark.parametrize("args", [
         (None,),
@@ -1041,6 +1089,18 @@ class TestMethods:
                         for s, arg in zip(buf, zip(*bcast_args))],
                        dtype=dt)
         assert_array_equal(act, res)
+
+    def test_slice_extreme_step(self, dt):
+        buf = np.array(["abcd"], dtype=dt)
+        imax, imin = np.iinfo(np.intp).max, np.iinfo(np.intp).min
+        for step, expected in [(imax, "a"), (-imax, "d"), (imin, "d")]:
+            assert_array_equal(np.strings.slice(buf, None, None, step),
+                               np.array([expected], dtype=dt))
+
+    def test_slice_zero_step_raises(self, dt):
+        from numpy._core.umath import _slice
+        with pytest.raises(ValueError, match="slice step cannot be zero"):
+            _slice(np.array(["abcd"], dtype=dt), 0, 4, 0)
 
     def test_slice_unsupported(self, dt):
         with pytest.raises(TypeError, match="did not contain a loop"):
@@ -1424,6 +1484,13 @@ class TestReplaceOnArrays:
         assert_array_equal(r5, np.array(
             ["01234ABCDE6789" * i for i in range(3)]
             + ["01234ABCDE6789" + "0123456789" * 2], dtype=dt))
+
+    def test_replace_old_new_not_truncated(self, dt):
+        a = np.array(["a"], dtype=dt)
+        r1 = np.strings.replace(a, "ab", "X")
+        assert_array_equal(r1, np.array(["a"], dtype=dt))
+        r2 = np.strings.replace(a, "a", "XY")
+        assert_array_equal(r2, np.array(["XY"], dtype=dt))
 
     def test_replace_broadcasting(self, dt):
         a = np.array("0,0,0", dtype=dt)

@@ -12,6 +12,7 @@
 
 #include "npy_static_data.h"
 #include "npy_import.h"
+#include "module_state.h"
 #include <limits.h>
 #include <string.h>
 
@@ -21,6 +22,28 @@ extern "C" {
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
+NPY_NO_EXPORT npy_bool
+npy_check_strides(npy_intp elsize, int nd, npy_intp numbytes,
+                  npy_intp offset, const npy_intp *dims,
+                  const npy_intp *newstrides);
+
+static inline void
+multi_DECREF(PyObject *const *objects, npy_intp n)
+{
+    assert(n == 0 || objects != NULL);
+    for (npy_intp i = 0; i < n; i++) {
+        Py_DECREF(objects[i]);
+    }
+}
+
+static inline void
+multi_XDECREF(PyObject *const *objects, npy_intp n)
+{
+    assert(n == 0 || objects != NULL);
+    for (npy_intp i = 0; i < n; i++) {
+        Py_XDECREF(objects[i]);
+    }
+}
 
 NPY_NO_EXPORT PyObject *
 build_array_interface(PyObject *dataptr, PyObject *descr, PyObject *strides,
@@ -58,6 +81,27 @@ _array_find_python_scalar_type(PyObject *op);
 
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
+
+/*
+ * Check whether a missing legacy copyswap/copyswapn slot can be replaced for
+ * a dtype (for example one written using the new DType API).  A dtype whose
+ * byteorder is NPY_IGNORE ('|') declares that byte order does not apply to it,
+ * so copyswap degenerates to a plain copy.  The fallback is allowed when that
+ * copy is one numpy can make on its own:
+ *
+ *   - `inplace_swap` (the caller passes src == NULL): there is no data to
+ *     copy at all, so the fallback does nothing.
+ *   - otherwise the dtype must be trivially copyable, i.e. its value is
+ *     exactly its bytes, so copying them is the whole operation.
+ *
+ * Anything else raises: a dtype with a real byte order gave numpy no way to
+ * swap it, and one that owns references cannot be copied by moving bytes.
+ * Callers that can copy some other way -- np.place and `.flat` assignment
+ * go through the casting machinery -- should do that instead of asking here.
+ * Returns 1 when the fallback is safe; otherwise sets TypeError and returns 0.
+ */
+NPY_NO_EXPORT int
+can_substitute_copyswap(PyArray_Descr *dtype, int inplace_swap);
 
 NPY_NO_EXPORT PyObject *
 convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
@@ -179,13 +223,14 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
     /* Check that index is valid, taking into account negative indices */
     if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
         /* Invoke the AxisError constructor */
+        multiarray_umath_state *state = _npy_module_state;
         PyObject *exc = PyObject_CallFunction(
-                npy_static_pydata.AxisError, "iiO", *axis, ndim,
+                state->static_pydata.AxisError, "iiO", *axis, ndim,
                 msg_prefix);
         if (exc == NULL) {
             return -1;
         }
-        PyErr_SetObject(npy_static_pydata.AxisError, exc);
+        PyErr_SetObject(state->static_pydata.AxisError, exc);
         Py_DECREF(exc);
 
         return -1;
@@ -245,7 +290,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
 static inline npy_uintp
-npy_uint_alignment(int itemsize)
+npy_uint_alignment(npy_intp itemsize)
 {
     npy_uintp alignment = 0; /* return value of 0 means unaligned */
 
@@ -349,7 +394,14 @@ PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
             tmp = Py_None;
         }
         Py_INCREF(tmp);
+#if defined(Py_LIMITED_API)
+        if (PyTuple_SetItem(tuple, i, tmp) < 0) {
+            Py_DECREF(tuple);
+            return NULL;
+        }
+#else
         PyTuple_SET_ITEM(tuple, i, tmp);
+#endif
     }
     return tuple;
 }

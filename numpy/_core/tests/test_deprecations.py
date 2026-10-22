@@ -13,8 +13,12 @@ from collections.abc import Callable
 import pytest
 
 import numpy as np
-from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import IS_WASM, assert_raises
+from numpy._core._multiarray_tests import (
+    fromstring_null_term_c_api,  # noqa: F401
+    matrixproduct2_c_api,
+    matrixproduct_c_api,
+)
+from numpy.testing import HAS_SUBPROCESSES, assert_array_equal, assert_raises
 from numpy.testing._private.utils import run_subprocess
 
 
@@ -227,6 +231,15 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
         # Deprecated in 2.0, removed in 2.5, 2025-12
         with pytest.raises(TypeError):
             np.dtype(dtype_code)
+
+
+class TestIsDTypeDTypeInstanceKind(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-06
+    message = r"isdtype\(\) with a dtype instance as second argument"
+
+    def test_deprecated(self):
+        self.assert_deprecated(
+                lambda: np.isdtype(np.dtype(">f8"), np.dtype("<f8")))
 
 
 class TestDeprecatedArrayWrap(_DeprecationTestCase):
@@ -522,7 +535,9 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
         self.assert_deprecated(np.add, num=None, args=(a, b))
         self.assert_deprecated(np.add, num=None, args=(b, c))
 
-    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for subprocess")
+    @pytest.mark.skipif(
+        not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
+    )
     def test_first_call_warns_once(self):
         # The legacy type resolver used to also warn when invoked to populate
         # the ufunc promotion cache, so the first call in a process emitted
@@ -581,3 +596,102 @@ class TestTakeOutDtype(_DeprecationTestCase):
         different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
 
         self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
+
+
+_DOT_CALLERS = [
+    pytest.param(np.dot, "numpy.dot", id="np.dot"),
+    pytest.param(np.ndarray.dot, "numpy.dot", id="ndarray.dot"),
+    pytest.param(matrixproduct_c_api, "PyArray_MatrixProduct",
+                 id="PyArray_MatrixProduct"),
+    pytest.param(matrixproduct2_c_api, "PyArray_MatrixProduct2",
+                 id="PyArray_MatrixProduct2"),
+]
+
+
+class TestDotDimensionInterleaving(_DeprecationTestCase):
+    # Deprecated NumPy 2.6, 2026-09
+    # See https://github.com/numpy/numpy/issues/31725
+
+    @pytest.mark.parametrize("func, name", _DOT_CALLERS)
+    @pytest.mark.parametrize("a_shape, b_shape", [
+        ((2, 3), (4, 3, 5)),
+        ((2, 2, 3), (4, 3, 5)),
+        ((2, 3), (2, 4, 3, 5)),
+        ((5, 2, 2, 3), (4, 3, 5)),
+    ], ids=str)
+    def test_warns(self, func, name, a_shape, b_shape):
+        self.message = (
+            f"{re.escape(name)} received arrays with a.ndim >= 2 and b.ndim > 2"
+        )
+        a, b = np.ones(a_shape), np.ones(b_shape)
+        self.assert_deprecated(lambda: func(a, b))
+
+    @pytest.mark.parametrize("func, name", _DOT_CALLERS)
+    @pytest.mark.parametrize("a_shape, b_shape", [
+        ((), (4, 3, 5)),
+        ((3,), (4, 3, 5)),
+        ((3,), (2, 4, 3, 5)),
+        ((2, 3), (3,)),
+        ((2, 3), (3, 5)),
+        ((2, 2, 3), (3,)),
+        ((2, 2, 3), (3, 5)),
+    ], ids=str)
+    def test_no_warning(self, func, name, a_shape, b_shape):
+        a, b = np.ones(a_shape), np.ones(b_shape)
+        self.assert_not_deprecated(lambda: func(a, b))
+
+    @pytest.mark.parametrize("func, name", _DOT_CALLERS)
+    def test_shape_mismatch_raises_valueerror_not_deprecation(self, func, name):
+        a, b = np.ones((2, 3)), np.ones((4, 6, 5))
+        with pytest.raises(ValueError, match="shapes.*not aligned"):
+            func(a, b)
+
+    @pytest.mark.parametrize("b_shape", [(4, 5, 3), (2, 4, 5, 3)], ids=str)
+    def test_inner_not_deprecated(self, b_shape):
+        a, b = np.ones((2, 3)), np.ones(b_shape)
+        self.assert_not_deprecated(lambda: np.inner(a, b))
+
+
+class TestAppendScalarPromotion(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-09
+    warning_cls = FutureWarning
+    message = "np.append converted Python numeric scalars to arrays"
+
+    @pytest.mark.parametrize("dtype, scalar", [
+        ("int8", 1), ("uint8", 300), ("uint8", -1), ("int64", 2**100),
+        ("float32", 1.0 + 2**-30), ("complex64", 1j), ("U1", 1),
+    ])
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_deprecated(self, dtype, scalar, reverse):
+        a = np.array([1], dtype=dtype)
+        args = (scalar, a) if reverse else (a, scalar)
+        explicit_args = tuple(np.asarray(x) for x in args)
+        expected = np.concatenate(explicit_args, axis=None)
+        if dtype == "U1":
+            change = "these inputs have no common dtype and will raise an error"
+        else:
+            change = f"use dtype {dtype}, which may round values differently"
+        self.message += (
+            rf".*producing dtype {re.escape(str(expected.dtype))}.*"
+            rf"{re.escape(change)}.*np\.concatenate.*"
+            rf"dtype={re.escape(repr(str(expected.dtype)))}")
+
+        def append(*args):
+            assert_array_equal(np.append(*args), expected, strict=True)
+
+        self.assert_deprecated(append, args=args)
+        self.assert_not_deprecated(append, args=explicit_args)
+        list_args = ([scalar], a) if reverse else (a, [scalar])
+        self.assert_not_deprecated(append, args=list_args)
+        assert_array_equal(
+            np.concatenate(args, axis=None, dtype=str(expected.dtype)),
+            expected, strict=True)
+
+    @pytest.mark.parametrize("dtype, scalar", [
+        (np.intp, 1), (np.float64, 1.5), (np.complex128, 1j),
+    ])
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_unchanged_scalar_promotion(self, dtype, scalar, reverse):
+        a = np.array([1], dtype=dtype)
+        args = (scalar, a) if reverse else (a, scalar)
+        self.assert_not_deprecated(np.append, args=args)

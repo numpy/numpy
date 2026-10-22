@@ -1,0 +1,18 @@
+`numpy.linalg` shape-typing
+---------------------------
+The `numpy.linalg` functions now use the shape-types of their input(s) to infer the
+shape-type of the returned array(s). Due to limitations of Python's type system, this
+usually only applies to low-rank array-likes.
+
+.. code-block:: python
+
+    A = np.array([[1.1, 1.2], [2.1, 2.2]])
+    b = np.array([1.0, 2.0])
+    reveal_type(np.linalg.solve(A, b))
+    # before: ndarray[tuple[Any, ...], dtype[float64]]
+    # after:  ndarray[tuple[int], dtype[float64]]
+
+    stacked = np.array([[[1.0, 0.0], [0.0, 1.0]]])
+    reveal_type(np.linalg.inv(stacked))
+    # before: ndarray[tuple[Any, ...], dtype[Any]]
+    # after:  ndarray[tuple[int, int, int], dtype[float64]]

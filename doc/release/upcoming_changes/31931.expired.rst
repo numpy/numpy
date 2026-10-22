@@ -1,0 +1,3 @@
+* The ``numpy.typing.mypy_plugin`` mypy plugin (deprecated since NumPy 2.3) did not
+  affect type-safety and has been removed in favor of platform- and
+  type-checker-agnostic static typing.

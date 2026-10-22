@@ -31,34 +31,10 @@ concurrency:
 permissions:
   contents: read # to fetch code (actions/checkout)
 
+env:
+  APT_TIMEOUT_MINUTES: 15
+
 jobs:
-  lint:
-    # To enable this job and subsequent jobs on a fork, comment out:
-    if: github.repository == 'numpy/numpy' && github.event_name != 'push'
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      with:
-        submodules: recursive
-        fetch-depth: 0
-        persist-credentials: false
-    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
-      with:
-        python-version: '3.12'
-    - name: Install linter requirements
-      run:
-        python -m pip install -r requirements/linter_requirements.txt
-    - name: Run linter on PR
-      env:
-        BASE_REF: ${{ github.base_ref }}
-      run:
-        spin lint
-    - name: Check Python.h is first file included
-      run: |
-        python tools/check_python_h_first.py
-
-
   smoke_test:
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
@@ -69,12 +45,12 @@ jobs:
       matrix:
         version: ["3.12", "3.14t"]
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: ${{ matrix.version }}
     - uses: ./.github/meson_actions
@@ -84,7 +60,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -98,11 +74,11 @@ jobs:
       run: |
         python --version
         pip install -U pip
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-extending
     - name: Build NumPy debug
       run: |
-        spin build -- -Dbuildtype=debug -Dallow-noblas=true
+        spin build -- -Dbuildtype=debug -Dallow-noblas=true \
+          -Dpython.allow_limited_api=true
     - name: Run test suite
       run: |
         spin test -- --timeout=600 --durations=10
@@ -117,14 +93,14 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.13", "3.14", "3.15-dev", "3.15t-dev"]
+        version: ["3.13", "3.14", "3.15", "3.15t"]
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: ${{ matrix.version }}
     - uses: ./.github/meson_actions
@@ -134,24 +110,24 @@ jobs:
     needs: [smoke_test]
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/test_requirements.txt
-    - name: Install gfortran and setup OpenBLAS (MacPython build)
+        pip install --group dev-cli --group test    # includes hypothesis
+    - name: Install gfortran and setup OpenBLAS 32 bits
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         set -xe
         sudo apt update
         sudo apt install gfortran libgfortran5
-        python -m pip install -r requirements/ci32_requirements.txt
+        python -m pip install --group openblas32
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
 
@@ -176,13 +152,14 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-24.04-arm
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
 
     - name: Creates new container
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         docker run --name the_container --interactive \
           -v $(pwd):/numpy arm32v7/ubuntu:24.04 /bin/linux32 /bin/bash -c "
@@ -199,8 +176,9 @@ jobs:
             cd /numpy &&
             python -m venv venv &&
             source venv/bin/activate &&
-            python -m pip install -r /numpy/requirements/build_requirements.txt &&
-            python -m pip install -r /numpy/requirements/test_requirements.txt &&
+            python -m pip install --upgrade pip &&
+            python -m pip install --group dev-cli &&
+            python -m pip install --group test-extending &&
             spin build
           '"
 
@@ -221,19 +199,20 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.12'
     - name: Install build and benchmarking dependencies
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         sudo apt-get update
         sudo apt-get install libopenblas-dev ninja-build
-        pip install "asv<0.6.5" virtualenv packaging -r requirements/build_requirements.txt
+        pip install --group dev-cli --group bench
     - name: Install NumPy
       run: |
         spin build -- -Dcpu-dispatch=none
@@ -251,7 +230,7 @@ jobs:
     # - name: Check docstests
     #   shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
     #   run: |
-    #     pip install -r requirements/doc_requirements.txt -r requirements/test_requirements.txt
+    #     pip install --group doc --group test-extending
     #     spin check-docs -v
     #     spin check-tutorials -v
 
@@ -260,18 +239,18 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.12'
     - name: Install gfortran and setup OpenBLAS (sdist build)
       run: |
         set -xe
-        python -m pip install -r requirements/ci_requirements.txt
+        python -m pip install --group openblas64
         mkdir -p ./.openblas
         python -c"import scipy_openblas64 as ob64; print(ob64.get_pkg_config())" > ./.openblas/scipy-openblas.pc
     - name: Build a wheel via an sdist
@@ -283,12 +262,13 @@ jobs:
         pip install dist/numpy*.whl
     - name: Install test dependencies
       run: |
-        pip install -r requirements/test_requirements.txt
+        pip install --group test-extending
     - name: Run test suite
       run: |
         cd tools
         pytest --pyargs numpy -m "not slow"
     - name: Test SWIG binding
+      timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
         sudo apt update
         sudo apt install make swig
@@ -301,13 +281,13 @@ jobs:
     if: github.event_name != 'push'
     steps:
     - name: Checkout NumPy
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - name: Checkout array-api-tests
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: data-apis/array-api-tests
         ref: '41379d15d26d67a1e66c840e775d41a8a7fb1516'  # v2026.02.26
@@ -315,13 +295,13 @@ jobs:
         path: 'array-api-tests'
         persist-credentials: false
     - name: Set up Python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
-        python -m pip install -r requirements/build_requirements.txt
-        python -m pip install -r requirements/test_requirements.txt
+        python -m pip install --group dev-cli
+        python -m pip install --group test-extending
         python -m pip install -r array-api-tests/requirements.txt
     - name: Build and install NumPy
       run: |
@@ -342,29 +322,29 @@ jobs:
     if: github.event_name != 'push'
     steps:
     - name: Checkout NumPy
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - name: Checkout ml_dtypes
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: jax-ml/ml_dtypes
         # Current ml_dtypes main, should be updated occasionally:
-        ref: '9b8b2471a5ec5fd4c223693f677fcc2416847970'  # main as of 2026-05-11
+        ref: 'b793a6e2864ce20b6680df2fd480a5cd2a75fa82'  # main as of 2026-08-21
         submodules: 'true'
         path: 'ml_dtypes'
         persist-credentials: false
     - name: Set up Python
-      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -r requirements/build_requirements.txt
-        python -m pip install -r requirements/test_requirements.txt
+        python -m pip install --group dev-cli
+        python -m pip install --group test-extending
         python -m pip install --upgrade scikit-build-core cmake wheel
     - name: Build and install NumPy
       run: |
@@ -392,26 +372,23 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.12'
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: numpy/numpy-release
         path: numpy-release
         persist-credentials: false
-    - name: Check scipy-openblas version in release pipelines
-      run: |
-        python tools/check_openblas_version.py --req-files numpy-release/requirements/openblas_requirements.txt
     - name: Install build and test dependencies from PyPI
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/test_requirements.txt
+        pip install --group dev-cli
+        pip install --group test-extending
         pip install "vulture!=2.15"
     - name: Build and install NumPy
       run: |
@@ -440,7 +417,7 @@ jobs:
     container:
        # There are few options for i686 images at https://quay.io/organization/pypa,
        # use the glibc2.28 one
-      image: quay.io/pypa/manylinux_2_28_i686
+      image: quay.io/pypa/manylinux_2_28_i686 # zizmor: ignore[unpinned-images]
 
     steps:
     - name: Checkout and initialize submodules
@@ -463,8 +440,8 @@ jobs:
         python3.12 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip
-        pip install -r requirements/ci32_requirements.txt
-        pip install -r requirements/test_requirements.txt
+        pip install --group openblas32 --group dev-cli
+        pip install --group test-extending
 
         spin config-openblas --with-scipy-openblas=32
         export PKG_CONFIG_PATH=$(pwd)/.openblas

@@ -417,6 +417,42 @@ class TestParamEval:
         pytest.raises(ValueError, crackfortran.param_eval, v, g_params, params,
                       dimspec=dimspec)
 
+
+class TestParamParseNestedParens:
+    # issue gh-28095: grouping parens in a dimension expression such as
+    # (mx_supply_curves + mx_intl_curves) must fold to a concrete size,
+    # not be mistaken for pa(index) array-parameter indexing.
+    def test_grouping_parens_fold(self):
+        params = {"mx_supply_curves": 14, "mx_intl_curves": 12}
+        out = crackfortran.param_parse(
+            "(mx_supply_curves + mx_intl_curves)", params)
+        assert out.replace(" ", "") == "(14+12)"
+
+    def test_grouping_parens_with_trailing_factor(self):
+        # A grouping paren need not span the whole token; the factor
+        # outside the parentheses must survive substitution.
+        params = {"n": 3, "m": 1800}
+        out = crackfortran.param_parse("(n + 1)*m", params)
+        assert out.replace(" ", "") == "(3+1)*1800"
+
+    def test_array_index_still_works(self):
+        params = {"pa": {1: 3, 2: 5}}
+        assert crackfortran.param_parse("pa(1)", params) == "3"
+        assert crackfortran.param_parse("pa(2)", params) == "5"
+
+    def test_nested_array_index(self):
+        params = {"dim": 2, "nested": {1: 1, 2: 2, 3: 3},
+                  "myparamarray": {1: 10, 2: 20, 3: 30}}
+        assert crackfortran.param_parse(
+            "myparamarray(nested(dim))", params) == "20"
+
+    def test_dimension_substituted_in_module(self):
+        fpath = util.getpath("tests", "src", "crackfortran", "gh28095.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        vs = mod[0]["vars"]["cmm_cl_btus"]
+        assert vs["dimension"] == ["26", "1800"]
+
+
 @pytest.mark.slow
 class TestLowerF2PYDirective(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh27697.f90")]

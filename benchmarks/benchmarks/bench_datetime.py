@@ -65,6 +65,30 @@ class DatetimeToObject(Benchmark):
         self.arr.astype(object)
 
 
+class TimedeltaDivide(Benchmark):
+    """Timedelta division by an invariant scalar divisor.
+
+    Exercises the two ufunc loops:
+      - np.divide(m8, int)      -> TIMEDELTA_mq_m_divide       (truncation)
+      - np.floor_divide(m8, m8) -> TIMEDELTA_mm_q_floor_divide (floor)
+    """
+    params = [[1_000_000], [3, 7, -4, 999983]]
+    param_names = ['size', 'divisor']
+
+    def setup(self, size, divisor):
+        rng = np.random.default_rng(0xD47E)
+        self.arr = rng.integers(-(1 << 40), 1 << 40,
+                                size=size).astype('timedelta64[s]')
+        self.int_div = divisor
+        self.td_div = np.timedelta64(divisor, 's')
+
+    def time_divide_scalar(self, size, divisor):
+        np.divide(self.arr, self.int_div)
+
+    def time_floor_divide_scalar(self, size, divisor):
+        np.floor_divide(self.arr, self.td_div)
+
+
 class DatetimeWideRange(Benchmark):
     """Same as DatetimeAsString but spanning a wider date range
     (~+-2700 years from epoch) to stress the leap-cycle code paths.

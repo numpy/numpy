@@ -23,21 +23,20 @@ contain any new features or deprecations.
 
 It is important to know that NumPy, like Python itself and most other
 well known scientific Python projects, does **not** use semantic versioning.
-Instead, backwards incompatible API changes require deprecation warnings for at
+Instead, backward incompatible API changes require deprecation warnings for at
 least two releases. For more details, see :ref:`NEP23`.
 
 NumPy provides both a Python API and a C-API. The C-API can be accessed
 directly or through tools like Cython or f2py. If your package uses the
-C-API, it's important to understand NumPy's application binary interface
-(ABI) compatibility: NumPy's ABI is forward compatible but not backward
-compatible. This means that binaries compiled against an older version of
-NumPy will still work with newer versions, but binaries compiled against a
-newer version will not necessarily work with older ones.
+NumPy C-API, it will generally be backward compatible with all relevant older
+NumPy versions and forward compatible within the same major NumPy version.
+For more details, for example if you wish to use API added in newer NumPy
+versions, see :ref:`depending_on_numpy`.
 
 Modules can also be safely built against NumPy 2.0 or later in
 :ref:`CPython's abi3 mode <python:stable-abi>`, which allows
 building against a single (minimum-supported) version of Python but be
-forward compatible higher versions in the same series (e.g., ``3.x``).
+forward compatible with higher versions in the same series (e.g., ``3.x``).
 This can greatly reduce the number of wheels that need to be built and
 distributed. For more information and examples, see the
 `cibuildwheel docs <https://cibuildwheel.pypa.io/en/stable/faq/#abi3>`__.
@@ -79,7 +78,7 @@ Build-time dependency
 
 .. note::
 
-    Before NumPy 1.25, the NumPy C-API was *not* exposed in a backwards
+    Before NumPy 1.25, the NumPy C-API was *not* exposed in a backward
     compatible way by default. This means that when compiling with a NumPy
     version earlier than 1.25 you have to compile with the oldest version you
     wish to support. This can be done by using
@@ -100,7 +99,8 @@ NumPy 1.25 will, when using defaults, expose a C-API compatible with NumPy
 1.19. (the exact version is set within NumPy-internal header files).
 
 NumPy is also forward compatible for all minor releases, but a major release
-will require recompilation (see NumPy 2.0-specific advice further down).
+is expected to require recompilation (see :ref:`numpy-2-abi-handling` further down).\
+[#major-transition]_
 
 The default behavior can be customized for example by adding::
 
@@ -109,7 +109,7 @@ The default behavior can be customized for example by adding::
 before including any NumPy headers (or the equivalent ``-D`` compiler flag) in
 every extension module that requires the NumPy C-API.
 This is mainly useful if you need to use newly added API at the cost of not
-being compatible with older versions.
+being compatible with older versions.\ [#future-api]_
 
 If for some reason you wish to compile for the currently installed NumPy
 version by default you can add::
@@ -132,6 +132,23 @@ For conda-forge packages, please see
 for instructions on how to declare a dependency on ``numpy`` when using the C
 API.
 
+.. [#major-transition] Improving on the NumPy 2 transition, if a NumPy 3.0
+    release happens, we may release NumPy 2.x versions that can compile
+    modules that are compatible with NumPy 3.0 when deprecated APIs are
+    disabled.
+
+.. [#future-api] We do not provide a mechanism to compile a single extension
+    module that is compatible with old NumPy versions but uses new NumPy API
+    when running with a newer NumPy version.
+    This can be achieved via ``PyArray_RUNTIME_VERSION`` and manually
+    backported API, although you may not receive fixes from NumPy headers when
+    using a backport. We recommend only backporting when
+    ``NPY_FEATURE_VERSION`` is lower than the version at which the API was
+    introduced. That way you pick up official header definitions and fixes
+    once they are available. Even without bugs, future NumPy versions could
+    introduce incompatible changes eventually.
+
+
 
 Runtime dependency & version ranges
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -150,19 +167,19 @@ That said, if you are (a) a project that is guaranteed to release
 frequently, (b) use a large part of NumPy's API surface, and (c) is
 worried that changes in NumPy may break your code, you can set an
 upper bound of ``<MAJOR.MINOR + N`` with N no less than 3, and
-``MAJOR.MINOR`` being the current release of NumPy [*]_. If you use the NumPy
+``MAJOR.MINOR`` being the current release of NumPy.\ [#N]_ If you use the NumPy
 C-API (directly or via Cython), you can also pin the current major
 version to prevent ABI breakage. Note that setting an upper bound on
 NumPy may `affect the ability of your library to be installed
 alongside other, newer packages
 <https://iscinumpy.dev/post/bound-version-constraints/>`__.
 
-.. [*] The reason for setting ``N=3`` is that NumPy will, on the
-       rare occasion where it makes breaking changes, raise warnings
-       for at least two releases. (NumPy releases about once every six
-       months, so this translates to a window of at least a year;
-       hence the subsequent requirement that your project releases at
-       least on that cadence.)
+.. [#N] The reason for setting ``N=3`` is that NumPy will, on the
+    rare occasion where it makes breaking changes, raise warnings
+    for at least two releases. (NumPy releases about once every six
+    months, so this translates to a window of at least a year;
+    hence the subsequent requirement that your project releases at
+    least on that cadence.)
 
 .. note::
 
@@ -178,68 +195,33 @@ alongside other, newer packages
 
 .. _numpy-2-abi-handling:
 
-NumPy 2.0-specific advice
-~~~~~~~~~~~~~~~~~~~~~~~~~
+NumPy 2.0 ABI handling
+~~~~~~~~~~~~~~~~~~~~~~
 
-NumPy 2.0 is an ABI-breaking release, however it does contain support for
-building wheels that work on both 2.0 and 1.xx releases. It's important to understand that:
+NumPy 2.0 changed the C ABI. The important rule for binary wheels is:
 
-1. When you build wheels for your package using a NumPy 1.xx version at build
-   time, those **will not work** with NumPy 2.0.
-2. When you build wheels for your package using a NumPy 2.x version at build
-   time, those **will work** with NumPy 1.xx.
+1. Wheels built against NumPy 1.xx **will not work** with NumPy 2.0 or later.
+2. Wheels built against NumPy 2.x **will work** with NumPy 1.xx at runtime.
+   How old NumPy versions are supported can be customized with ``NPY_TARGET_VERSION``,
+   see :ref:`depending_on_numpy`.
 
-The first time the NumPy ABI for 2.0 is guaranteed to be stable will be the
-release of the first release candidate for 2.0 (i.e., 2.0.0rc1). Our advice for
-handling your dependency on NumPy is as follows:
+If your package uses the NumPy C-API (directly or via Cython), you need to
+rebuild and release wheels compiled against NumPy 2.x. Pure Python packages
+may also need code updates; see :ref:`numpy-2-migration-guide`.
 
-1. In the main (development) branch of your package, do not add any constraints.
-2. If you rely on the NumPy C-API (e.g. via direct use in C/C++, or via Cython
-   code that uses NumPy), add a ``numpy<2.0`` requirement in your
-   package's dependency metadata for releases / in release branches. Do this
-   until numpy ``2.0.0rc1`` is released and you can target that.
-   *Rationale: the NumPy C ABI will change in 2.0, so any compiled extension
-   modules that rely on NumPy will break; they need to be recompiled.*
-3. If you rely on a large API surface from NumPy's Python API, also consider
-   adding the same ``numpy<2.0`` requirement to your metadata until you are
-   sure your code is updated for changes in 2.0 (i.e., when you've tested
-   things work against ``2.0.0rc1``).
-   *Rationale: we will do a significant API cleanup, with many aliases and
-   deprecated/non-recommended objects being removed (see, e.g.,*
-   :ref:`numpy-2-migration-guide` *and* :ref:`NEP52`), *so unless you only use
-   modern/recommended functions and objects, your code is likely to require at
-   least some adjustments.*
-4. Plan to do a release of your own packages which depend on ``numpy`` shortly
-   after the first NumPy 2.0 release candidate is released (probably around 1
-   Feb 2024).
-   *Rationale: at that point, you can release packages that will work with both
-   2.0 and 1.X, and hence your own end users will not be seeing much/any
-   disruption (you want* ``pip install mypackage`` *to continue working on the
-   day NumPy 2.0 is released).*
-5. Once ``2.0.0rc1`` is available, you can adjust your metadata in
-   ``pyproject.toml`` in the way outlined below.
+There are two common cases:
 
-There are two cases: you need to keep compatibility with numpy 1.xx while also
-supporting 2.0, or you are able to drop numpy 1.xx support for new releases of
-your package and support >=2.0 only. The latter is simpler, but may be more
-restrictive for your users. In that case, simply add ``numpy>=2.0`` (or
-``numpy>=2.0.0rc1``) to your build and runtime requirements and you're good to
-go. We'll focus on the "keep compatibility with 1.xx and 2.x" now, which is a
-little more involved.
+**Keep compatibility with NumPy 1.xx and 2.x**
 
-*Example for a package using the NumPy C-API (via C/Cython/etc.) which wants to support
-NumPy 1.23.5 and up*:
+Build against NumPy 2.x, but keep a lower runtime bound. For example, to
+support NumPy 1.23.5 and up:
 
 .. code:: ini
 
     [build-system]
     build-backend = ...
     requires = [
-        # Note for packagers: this constraint is specific to wheels
-        # for PyPI; it is also supported to build against 1.xx still.
-        # If you do so, please ensure to include a `numpy<2.0`
-        # runtime requirement for those binary packages.
-        "numpy>=2.0.0rc1",
+        "numpy>=2.0",
         ...
     ]
 
@@ -248,22 +230,38 @@ NumPy 1.23.5 and up*:
         "numpy>=1.23.5",
     ]
 
-We recommend that you have at least one CI job which builds/installs via a wheel,
-and then runs tests against the oldest numpy version that the package supports.
-For example:
+**Support NumPy 2.x only**
+
+This is simpler, but more restrictive for your users:
+
+.. code:: ini
+
+    [build-system]
+    build-backend = ...
+    requires = [
+        "numpy>=2.0",
+        ...
+    ]
+
+    [project]
+    dependencies = [
+        "numpy>=2.0",
+    ]
+
+We recommend at least one CI job that builds a wheel and then tests it against
+the oldest NumPy version you support. For example:
 
 .. code:: yaml
 
-    - name: Build wheel via wheel, then install it
+    - name: Build wheel, then install it
       run: |
-        python -m build  # This will pull in numpy 2.0 in an isolated env
+        python -m build
         python -m pip install dist/*.whl
 
-    - name: Test against oldest supported numpy version
+    - name: Test against oldest supported NumPy version
       run: |
         python -m pip install numpy==1.23.5
         # now run test suite
 
-The above only works once NumPy 2.0 is available on PyPI. If you want to test
-against a NumPy 2.0-dev wheel, you have to use a numpy nightly build (see
-:ref:`this section <testing-prereleases>` higher up) or build numpy from source.
+To test against unreleased NumPy versions, use a nightly build (see
+:ref:`this section <testing-prereleases>`) or build NumPy from source.

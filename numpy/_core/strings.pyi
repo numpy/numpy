@@ -1,3 +1,5 @@
+from _typeshed import SupportsGetItem
+from collections.abc import Buffer
 from typing import overload
 
 import numpy as np
@@ -401,46 +403,48 @@ def replace(
     count: i_co = -1,
 ) -> _StringDTypeOrUnicodeArray: ...
 
-@overload
-def partition(a: U_co, sep: U_co) -> NDArray[np.str_]: ...
-@overload
-def partition(a: S_co, sep: S_co) -> NDArray[np.bytes_]: ...
-@overload
-def partition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
-@overload
-def partition(a: T_co, sep: T_co) -> _StringDTypeOrUnicodeArray: ...
+type _tuple3[T] = tuple[T, T, T]
 
 @overload
-def rpartition(a: U_co, sep: U_co) -> NDArray[np.str_]: ...
+def partition(a: U_co, sep: U_co) -> _tuple3[NDArray[np.str_]]: ...
 @overload
-def rpartition(a: S_co, sep: S_co) -> NDArray[np.bytes_]: ...
+def partition(a: S_co, sep: S_co) -> _tuple3[NDArray[np.bytes_]]: ...
 @overload
-def rpartition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
+def partition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> _tuple3[_StringDTypeArray]: ...
 @overload
-def rpartition(a: T_co, sep: T_co) -> _StringDTypeOrUnicodeArray: ...
+def partition(a: T_co, sep: T_co) -> _tuple3[_StringDTypeOrUnicodeArray]: ...
+
+@overload
+def rpartition(a: U_co, sep: U_co) -> _tuple3[NDArray[np.str_]]: ...
+@overload
+def rpartition(a: S_co, sep: S_co) -> _tuple3[NDArray[np.bytes_]]: ...
+@overload
+def rpartition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> _tuple3[_StringDTypeArray]: ...
+@overload
+def rpartition(a: T_co, sep: T_co) -> _tuple3[_StringDTypeOrUnicodeArray]: ...
 
 @overload
 def translate(
     a: U_co,
-    table: str,
+    table: SupportsGetItem[int, str | int | None],
     deletechars: str | None = None,
 ) -> NDArray[np.str_]: ...
 @overload
 def translate(
     a: S_co,
-    table: str,
-    deletechars: str | None = None,
+    table: Buffer | None,
+    deletechars: bytes | None = None,
 ) -> NDArray[np.bytes_]: ...
 @overload
 def translate(
     a: _StringDTypeSupportsArray,
-    table: str,
+    table: SupportsGetItem[int, str | int | None],
     deletechars: str | None = None,
 ) -> _StringDTypeArray: ...
 @overload
 def translate(
     a: T_co,
-    table: str,
+    table: SupportsGetItem[int, str | int | None],
     deletechars: str | None = None,
 ) -> _StringDTypeOrUnicodeArray: ...
 

@@ -52,7 +52,8 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000014 - 2.3.x
 # 0x00000015 - 2.4.x
 # 0x00000016 - 2.5.x
-C_API_VERSION = '0x00000016'
+# 0x00000017 - 2.6.x
+C_API_VERSION = '0x00000017'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -123,6 +124,7 @@ if use_highway
   )
 else
   highway_lib = []
+  add_project_arguments(['-DNPY_DISABLE_HIGHWAY'], language: ['cpp'])
 endif
 
 use_intel_sort = not get_option('disable-intel-sort') and cpu_family in ['x86', 'x86_64']
@@ -504,7 +506,35 @@ endforeach
 # as well as https://github.com/mesonbuild/meson/issues/11068
 longdouble_format = meson.get_external_property('longdouble_format', 'UNKNOWN')
 if longdouble_format == 'UNKNOWN'
-  longdouble_format = meson.get_compiler('c').run(
+  # We can't run the auto-detection program when cross-compiling, so we need to specify
+  # what format each system uses.
+  if host_machine.system() == 'android'
+    # Android defines `long double` as 128-bit quad precision on 64-bit platforms, and
+    # 64-bit double precision on 32-bit platforms. This is true even on x86 and x86_64,
+    # where `long double` is usually 80 bits padded to 96 or 128:
+    #  * https://developer.android.com/ndk/guides/abis
+    #  * https://gitlab.com/x86-psABIs/x86-64-ABI
+    if host_machine.cpu_family().contains('64')
+      longdouble_format = 'IEEE_QUAD_LE'
+    else
+      longdouble_format = 'IEEE_DOUBLE_LE'
+    endif
+  elif host_machine.system() == 'ios'
+    if host_machine.cpu_family() == 'x86_64'
+      # The x86_64 iOS simulator runs on x86_64 macOS hosts. Apple's x86-64
+      # calling conventions defer to the System V AMD64 psABI, which defines
+      # `long double` as the 80-bit x87 extended-precision format stored in
+      # 16 bytes (unlike arm64, where `long double` == `double`):
+      #  * https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/LowLevelABI/140-x86-64_Function_Calling_Conventions/x86_64.html
+      #  * https://gitlab.com/x86-psABIs/x86-64-ABI
+      longdouble_format = 'INTEL_EXTENDED_16_BYTES_LE'
+    else
+      # On arm64 iOS, long double is identical to the double type:
+      # https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms#Handle-data-types-and-data-alignment-properly
+      longdouble_format = 'IEEE_DOUBLE_LE'
+    endif
+  else
+    longdouble_format = meson.get_compiler('c').run(
 '''
 #include <stdio.h>
 #include <string.h>
@@ -584,6 +614,7 @@ int main(void) {
   }
 }
   ''').stdout()
+  endif
 endif
 if longdouble_format == 'UNKNOWN' or longdouble_format == 'UNDEFINED'
   error('Unknown long double format of size: ' + cc.sizeof('long double').to_string())
@@ -656,6 +687,9 @@ npymath_sources = [
   'src/npymath/halffloat.cpp',
   'src/npymath/npy_math.c',
 ]
+if host_machine.system() == 'emscripten'
+  npymath_sources += 'src/common/npy_fenv.c'
+endif
 npymath_lib = static_library('npymath',
   npymath_sources,
   c_args: staticlib_cflags,
@@ -728,7 +762,7 @@ src_umath_doc_h = custom_target('_umath_doc_generated',
 )
 
 src_numpy_api = custom_target('__multiarray_api',
-  output : ['__multiarray_api.c', '__multiarray_api.h'],
+  output : ['__multiarray_api.c', '__multiarray_api.h', '_public_dtype_api_table.h'],
   depend_files: codegen_files,
   command: [py, '-m', 'code_generators.generate_numpy_api', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
   env: codegen_env,
@@ -829,8 +863,17 @@ py.extension_module('_multiarray_tests',
   gnu_symbol_visibility: 'default',
   install: true,
   subdir: 'numpy/_core',
+  limited_api: py_limited_api,
   install_tag: 'tests'
 )
+
+# `limited_api:` only reaches an extension module's own sources, so a static
+# library linked into one is still built against the unrestricted API and must
+# be passed these args too. Drop this once
+# https://github.com/mesonbuild/meson/issues/13824 is resolved.
+py_limited_api_args = (get_option('python.allow_limited_api')
+                       and py_limited_api_hex != '') \
+  ? ['-DPy_LIMITED_API=' + py_limited_api_hex] : []
 
 _umath_tests_mtargets = mod_features.multi_targets(
   '_umath_tests.dispatch.h',
@@ -843,19 +886,23 @@ _umath_tests_mtargets = mod_features.multi_targets(
   ],
   baseline: CPU_BASELINE,
   prefix: 'NPY_',
-  dependencies: [py_dep, np_core_dep]
+  dependencies: [py_dep, np_core_dep],
+  c_args: py_limited_api_args,
 )
 
+# [module name, sources, libraries to link with, limited API version ('' to
+# build against the full API)]
 test_modules_src = [
   ['_umath_tests', [
       src_file.process('src/umath/_umath_tests.c.src'),
       'src/common/npy_cpu_features.c',
     ],
-    _umath_tests_mtargets.static_lib('_umath_tests_mtargets')
+    _umath_tests_mtargets.static_lib('_umath_tests_mtargets'), py_limited_api
   ],
-  ['_rational_tests', 'src/umath/_rational_tests.c', []],
-  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', []],
-  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', []],
+  ['_rational_tests', 'src/umath/_rational_tests.c', [], py_limited_api],
+  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c', [], py_limited_api],
+  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c', [], py_limited_api],
+  ['_reduction_loop_tests', 'src/umath/_reduction_loop_tests.c', [], py_limited_api],
 ]
 foreach gen: test_modules_src
   py.extension_module(gen[0],
@@ -866,6 +913,7 @@ foreach gen: test_modules_src
     install: true,
     subdir: 'numpy/_core',
     link_with: gen[2],
+    limited_api: gen[3],
     install_tag: 'tests'
   )
 endforeach
@@ -996,6 +1044,17 @@ foreach gen_mtargets : [
   [
     'loops_arithmetic.dispatch.h',
     src_file.process('src/umath/loops_arithmetic.dispatch.c.src'),
+    [
+      X86_V4, X86_V3, X86_V2,
+      NEON,
+      VSX4, VSX2,
+      VX,
+      LSX,
+    ]
+  ],
+  [
+    'loops_arithmetic_timedelta.dispatch.h',
+    'src/umath/loops_arithmetic_timedelta.dispatch.cpp',
     [
       X86_V4, X86_V3, X86_V2,
       NEON,
@@ -1258,7 +1317,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/npysort/heapsort.cpp',
   'src/npysort/npysort_methods.cpp',
   'src/common/npy_partition.h',
-  'src/npysort/selection.cpp',
+  'src/npysort/selection_methods.cpp',
   'src/common/npy_binsearch.h',
   'src/npysort/binsearch.cpp',
   'src/multiarray/textreading/conversions.c',
@@ -1280,6 +1339,8 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/loops.c.src'),
   src_file.process('src/umath/matmul.c.src'),
   src_file.process('src/umath/matmul.h.src'),
+  'src/umath/unwrap.cpp',
+  'src/umath/unwrap.h',
   'src/umath/ufunc_type_resolution.c',
   'src/umath/clip.cpp',
   'src/umath/clip.h',
@@ -1291,6 +1352,8 @@ src_umath = umath_gen_headers + [
   src_file.process('src/umath/scalarmath.c.src'),
   'src/umath/ufunc_object.c',
   'src/umath/umathmodule.c',
+  'src/umath/minmax.cpp',
+  'src/umath/minmax.h',
   'src/umath/real_imag_ufuncs.cpp',
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
@@ -1419,7 +1482,7 @@ _simd_mtargets = mod_features.multi_targets(
   prefix: 'NPY_',
   dependencies: [py_dep, np_core_dep],
   include_directories: ['src/_simd', 'src/npymath'],
-  c_args: c_args_common,
+  c_args: c_args_common + py_limited_api_args,
   cpp_args: cpp_args_common,
 )
 
@@ -1435,6 +1498,7 @@ py.extension_module('_simd',
   install: true,
   subdir: 'numpy/_core',
   install_tag: 'tests',
+  limited_api: py_limited_api,
 )
 
 python_sources = [

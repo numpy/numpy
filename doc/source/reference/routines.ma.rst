@@ -437,4 +437,5 @@ Miscellanea
    ma.right_shift
    ma.round_
    ma.take
+   ma.unwrap
    ma.where

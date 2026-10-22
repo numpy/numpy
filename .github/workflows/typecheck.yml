@@ -20,7 +20,7 @@ on:
     paths-ignore:
       - '**.md'
       - '**.rst'
-      - '.circlecl/**'
+      - '.circleci/**'
       - '.devcontainer/**'
       - '.spin/LICENSE'
       - 'benchmarks/**'
@@ -56,26 +56,22 @@ jobs:
           - [ubuntu-latest, '3.13']
           - [windows-2022, '3.12']
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+    - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
       with:
         python-version: ${{ matrix.os_python[1] }}
         activate-environment: true
         cache-dependency-glob: |
-          requirements/build_requirements.txt
-          requirements/typing_requirements.txt
+          **/pyproject.toml
     - name: Install dependencies
-      # orjson makes mypy faster but the default requirements.txt
+      # orjson makes mypy faster but the default typing group
       # can't install it because orjson doesn't support 32 bit Linux
       run: >-
-        uv pip install
-        -r requirements/build_requirements.txt
-        -r requirements/typing_requirements.txt
-        orjson
+        uv pip install --group dev-cli --group typing orjson
     - name: Build
       run: |
         spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
@@ -88,13 +84,14 @@ jobs:
   pyrefly:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-    - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
       with:
         activate-environment: true
     - name: Install dependencies
       run: >-
-        uv pip install
-        -r requirements/typing_requirements.txt
+        uv pip install --group typing
     - name: Run pyrefly
       run: pyrefly check

@@ -176,3 +176,15 @@ class TestPut:
         # Allowing empty values like this is weird...
         np.put(arr, [1, 2, 3], [])
         assert_array_equal(arr, arr_copy)
+
+    @pytest.mark.parametrize("array_type, indices_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_put_integer_dtypes(self, array_type, indices_type):
+        x = np.zeros(5, dtype=array_type)
+        indices = np.array([0, 2, 4], dtype=indices_type)
+        np.put(x, indices, [1, 2, 3])
+        assert_array_equal(x, np.array([1, 0, 2, 0, 3], dtype=array_type))

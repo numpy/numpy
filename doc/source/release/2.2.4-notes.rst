@@ -4,6 +4,8 @@
 NumPy 2.2.4 Release Notes
 ==========================
 
+*Released on 2025-03-16.*
+
 NumPy 2.2.4 is a patch release that fixes bugs found after the 2.2.3 release.
 There are a large number of typing improvements, the rest of the changes are
 the usual mix of bug fixes and platform maintenance.

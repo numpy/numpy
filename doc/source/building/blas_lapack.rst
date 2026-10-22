@@ -45,7 +45,7 @@ that ``pkg-config`` expects). For example, to select plain ``libblas`` and
 be dynamically switched between implementations on conda-forge), use::
 
     $ # for a development build
-    $ spin build -C-Dblas=blas -C-Dlapack=lapack
+    $ spin build -- -Dblas=blas -Dlapack=lapack
 
     $ # to build and install a wheel
     $ python -m build -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack

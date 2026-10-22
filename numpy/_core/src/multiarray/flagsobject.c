@@ -17,6 +17,7 @@
 
 #include "common.h"
 #include "flagsobject.h"
+#include "module_state.h"
 
 
 static void
@@ -46,7 +47,7 @@ PyArray_NewFlagsObject(PyObject *obj)
 
         flags = PyArray_FLAGS((PyArrayObject *)obj);
     }
-    flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
+    flagobj = PyType_GenericAlloc(_npy_module_state->PyArrayFlags_Type, 0);
     if (flagobj == NULL) {
         return NULL;
     }
@@ -159,11 +160,29 @@ _UpdateContiguousFlags(PyArrayObject *ap)
     return;
 }
 
+static int
+arrayflags_traverse(PyArrayFlagsObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(Py_TYPE(self));
+    Py_VISIT(self->arr);
+    return 0;
+}
+
+static int
+arrayflags_clear(PyArrayFlagsObject *self)
+{
+    Py_CLEAR(self->arr);
+    return 0;
+}
+
 static void
 arrayflags_dealloc(PyArrayFlagsObject *self)
 {
+    PyObject_GC_UnTrack(self);
     Py_XDECREF(self->arr);
-    Py_TYPE(self)->tp_free((PyObject *)self);
+    PyTypeObject *type = Py_TYPE(self);
+    type->tp_free((PyObject *)self);
+    Py_DECREF(type);
 }
 
 
@@ -460,24 +479,16 @@ static PyGetSetDef arrayflags_getsets[] = {
 static PyObject *
 arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
 {
-    char *key = NULL;
-    char buf[16];
-    int n;
+    char const *key = NULL;
+    Py_ssize_t n;
     if (PyUnicode_Check(ind)) {
-        PyObject *tmp_str;
-        tmp_str = PyUnicode_AsASCIIString(ind);
-        if (tmp_str == NULL) {
-            return NULL;
-        }
-        key = PyBytes_AS_STRING(tmp_str);
-        n = PyBytes_GET_SIZE(tmp_str);
-        if (n > 16) {
-            Py_DECREF(tmp_str);
+        if (!PyUnicode_IS_ASCII(ind)) {
             goto fail;
         }
-        memcpy(buf, key, n);
-        Py_DECREF(tmp_str);
-        key = buf;
+        key = PyUnicode_AsUTF8AndSize(ind, &n);
+        if (key == NULL) {
+            return NULL;
+        }
     }
     else if (PyBytes_Check(ind)) {
         key = PyBytes_AS_STRING(ind);
@@ -580,21 +591,16 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
 static int
 arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
 {
-    char *key;
-    char buf[16];
-    int n;
+    char const *key;
+    Py_ssize_t n;
     if (PyUnicode_Check(ind)) {
-        PyObject *tmp_str;
-        tmp_str = PyUnicode_AsASCIIString(ind);
-        if (tmp_str == NULL) {
+        if (!PyUnicode_IS_ASCII(ind)) {
             goto fail;
         }
-        key = PyBytes_AS_STRING(tmp_str);
-        n = PyBytes_GET_SIZE(tmp_str);
-        if (n > 16) n = 16;
-        memcpy(buf, key, n);
-        Py_DECREF(tmp_str);
-        key = buf;
+        key = PyUnicode_AsUTF8AndSize(ind, &n);
+        if (key == NULL) {
+            return -1;
+        }
     }
     else if (PyBytes_Check(ind)) {
         key = PyBytes_AS_STRING(ind);
@@ -658,7 +664,7 @@ arrayflags_print(PyArrayFlagsObject *self)
 static PyObject*
 arrayflags_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
-    if (!PyObject_TypeCheck(other, &PyArrayFlags_Type)) {
+    if (!Py_IS_TYPE(other, Py_TYPE(self))) {
         Py_RETURN_NOTIMPLEMENTED;
     }
 
@@ -676,13 +682,6 @@ arrayflags_richcompare(PyObject *self, PyObject *other, int cmp_op)
     }
 }
 
-static PyMappingMethods arrayflags_as_mapping = {
-    (lenfunc)NULL,                       /*mp_length*/
-    (binaryfunc)arrayflags_getitem,      /*mp_subscript*/
-    (objobjargproc)arrayflags_setitem,   /*mp_ass_subscript*/
-};
-
-
 static PyObject *
 arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
@@ -698,16 +697,35 @@ arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNU
     }
 }
 
-NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy._core.multiarray.flagsobj",
-    .tp_basicsize = sizeof(PyArrayFlagsObject),
-    .tp_dealloc = (destructor)arrayflags_dealloc,
-    .tp_repr = (reprfunc)arrayflags_print,
-    .tp_as_mapping = &arrayflags_as_mapping,
-    .tp_str = (reprfunc)arrayflags_print,
-    .tp_flags =Py_TPFLAGS_DEFAULT,
-    .tp_richcompare = arrayflags_richcompare,
-    .tp_getset = arrayflags_getsets,
-    .tp_new = arrayflags_new,
+static PyType_Slot arrayflags_slots[] = {
+    {Py_tp_dealloc, arrayflags_dealloc},
+    {Py_tp_traverse, arrayflags_traverse},
+    {Py_tp_clear, arrayflags_clear},
+    {Py_tp_repr, arrayflags_print},
+    {Py_tp_str, arrayflags_print},
+    {Py_mp_subscript, arrayflags_getitem},
+    {Py_mp_ass_subscript, arrayflags_setitem},
+    {Py_tp_richcompare, arrayflags_richcompare},
+    {Py_tp_getset, arrayflags_getsets},
+    {Py_tp_new, arrayflags_new},
+    {0, NULL},
 };
+
+static PyType_Spec arrayflags_spec = {
+    .name = "numpy._core.multiarray.flagsobj",
+    .basicsize = sizeof(PyArrayFlagsObject),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC
+              | Py_TPFLAGS_IMMUTABLETYPE),
+    .slots = arrayflags_slots,
+};
+
+NPY_NO_EXPORT int
+init_arrayflags_type(PyObject *module)
+{
+    PyObject *type = PyType_FromModuleAndSpec(module, &arrayflags_spec, NULL);
+    if (type == NULL) {
+        return -1;
+    }
+    get_module_state(module)->PyArrayFlags_Type = (PyTypeObject *)type;
+    return 0;
+}

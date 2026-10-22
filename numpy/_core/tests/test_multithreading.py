@@ -1,5 +1,7 @@
 import concurrent.futures
 import inspect
+import pickle
+import random
 import subprocess
 import sys
 import textwrap
@@ -10,7 +12,7 @@ import pytest
 import numpy as np
 from numpy._core import _rational_tests
 from numpy._core.tests.test_stringdtype import random_unicode_string_list
-from numpy.testing import IS_64BIT, IS_WASM
+from numpy.testing import HAS_SUBPROCESSES, IS_64BIT, IS_WASM
 from numpy.testing._private.utils import run_subprocess, run_threaded
 
 if IS_WASM:
@@ -39,6 +41,48 @@ def test_parallel_randomstate():
         rng.set_state(state)
 
     run_threaded(func, 8, pass_count=True)
+
+def test_parallel_seed_get_state():
+    seeds = [12345, 67890]
+    rng = np.random.RandomState()
+    expected = []
+    for seed in seeds:
+        rng.seed(seed)
+        expected.append(rng.get_state()[1])
+
+    def func(i, barrier):
+        rnd = random.Random(i)
+        barrier.wait()
+        for _ in range(100):
+            if rnd.randrange(2):
+                rng.seed(rnd.choice(seeds))
+            else:
+                key = rng.get_state()[1]
+                assert any((key == exp).all() for exp in expected)
+
+    run_threaded(func, pass_count=True, pass_barrier=True)
+
+@pytest.mark.parametrize(
+    "bitgen_name", ["MT19937", "PCG64", "PCG64DXSM", "Philox", "SFC64"])
+def test_parallel_bit_generator_state_access(bitgen_name):
+    bg = getattr(np.random, bitgen_name)(12345)
+    gen = np.random.Generator(bg)
+
+    def func(i, barrier):
+        rnd = random.Random(i)
+        barrier.wait()
+        for _ in range(100):
+            branch = rnd.randrange(3)
+            if branch == 0:
+                bg.state = bg.state
+            elif branch == 1:
+                gen.random(10)
+            elif hasattr(bg, "advance"):
+                bg.advance(10)
+            else:
+                _ = bg.state
+
+    run_threaded(func, pass_count=True, pass_barrier=True)
 
 def test_parallel_ufunc_execution():
     # if the loop data cache or dispatch cache are not thread-safe
@@ -356,6 +400,24 @@ def test_legacy_usertype_cast_init_thread_safety(rat_cls):
 
     run_threaded(closure, 250, pass_barrier=True)
 
+
+@pytest.mark.parametrize("rat_cls", [
+    _rational_tests.rational, _rational_tests.rational2])
+def test_legacy_usertype_unpickle_thread_safety(rat_cls):
+    # gh-33018: unpickling writes to dtype(..., copy=True) via __setstate__,
+    # so that has to be a private copy rather than the user dtype singleton.
+    # Only TSan can catch the race, there is nothing to assert here.
+    payload = pickle.dumps(np.full(128, rat_cls(1, 2)))
+
+    def closure(b):
+        b.wait()
+        for _ in range(100):
+            arr = pickle.loads(payload)
+            pickle.dumps(arr, protocol=5)
+
+    run_threaded(closure, pass_barrier=True)
+
+
 @pytest.mark.parametrize("dtype", [bool, int, float])
 def test_nonzero(dtype):
     # See: gh-28361
@@ -495,6 +557,9 @@ def assert_no_deadlock(workload, *, args=(), helpers=(), timeout=30,
     ``reason`` if the child is killed.
 
     """
+    if not HAS_SUBPROCESSES:
+        pytest.skip("platform cannot start subprocesses")
+
     source = "\n".join(
         textwrap.dedent(inspect.getsource(helper)) for helper in helpers
     )
@@ -514,7 +579,8 @@ def assert_no_deadlock(workload, *, args=(), helpers=(), timeout=30,
         ) from None
 
 
-def threaded_deadlock_reproducer(operation, nworkers, niters, stall):
+def threaded_deadlock_reproducer(operation, nworkers, niters, stall,
+                                 time_budget_secs=2.0):
     import faulthandler
     import os
     import sys
@@ -528,9 +594,12 @@ def threaded_deadlock_reproducer(operation, nworkers, niters, stall):
     def worker(idx):
         try:
             barrier.wait()
+            deadline = time.monotonic() + time_budget_secs
             for _ in range(niters):
                 operation(idx)
                 progress[idx] += 1
+                if time.monotonic() > deadline:
+                    break
         except BaseException as exc:
             errors.append(exc)
             raise
