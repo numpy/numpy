@@ -701,7 +701,9 @@ class TestInsert:
         with pytest.raises(IndexError):
             np.insert([0, 1, 2], np.array([], dtype=float), [])
 
-    @pytest.mark.parametrize("indexer", [[], np.array([], dtype=np.intp)])
+    @pytest.mark.parametrize("indexer", [
+        [], np.array([], dtype=np.intp), np.array([], dtype=np.uint8),
+    ])
     def test_empty_integer_index_returns_copy(self, indexer):
         a = np.arange(6).reshape(2, 3)
         res = insert(a, indexer, 9, axis=1)

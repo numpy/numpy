@@ -1,3 +1,5 @@
 ``np.insert`` is faster for empty indices
 -----------------------------------------
-``np.insert`` now skips the general insertion machinery when the index array is empty, reducing overhead for no-op inserts.
+``np.insert`` now skips the general insertion machinery when the index array is
+empty, reducing overhead for no-op inserts. As a side effect, an empty unsigned
+integer index array no longer raises a ``UFuncTypeError``.
