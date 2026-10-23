@@ -3,6 +3,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
+AR_u1: npt.NDArray[np.uint8]
 AR_f8: npt.NDArray[np.float64]
 AR_c16: npt.NDArray[np.complex128]
 AR_m: npt.NDArray[np.timedelta64]
@@ -60,3 +61,8 @@ np.meshgrid(AR_f8, AR_f8, indexing="bob")  # type: ignore[call-overload]
 np.delete(AR_f8, AR_f8)  # type: ignore[arg-type]
 np.insert(AR_f8, AR_f8, 1.5)  # type: ignore[arg-type]
 np.digitize(AR_f8, 1j)  # type: ignore[call-overload]
+
+np.append(AR_u1, 1)  # type: ignore[deprecated]
+np.append(1, AR_u1)  # type: ignore[deprecated]
+np.append("a", 1)  # type: ignore[deprecated]
+np.append(1, "a")  # type: ignore[deprecated]
