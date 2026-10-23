@@ -789,6 +789,36 @@ npy__cpu_init_features_arm8(void)
     npy__cpu_have[NPY_CPU_FEATURE_ASIMD]      = 1;
 }
 
+#if defined(__APPLE__) && defined(__aarch64__)
+#include <sys/sysctl.h>
+
+static int
+npy__cpu_have_darwin_sysctl(const char *name)
+{
+    int value = 0;
+    size_t size = sizeof(value);
+    if (sysctlbyname(name, &value, &size, NULL, 0) != 0 ||
+            size != sizeof(value)) {
+        return -1;
+    }
+    return value != 0;
+}
+
+static void
+npy__cpu_init_features_darwin(void)
+{
+    int have_fhm = npy__cpu_have_darwin_sysctl(
+        "hw.optional.arm.FEAT_FHM"
+    );
+    if (have_fhm < 0) {
+        have_fhm = npy__cpu_have_darwin_sysctl(
+            "hw.optional.armv8_2_fhm"
+        );
+    }
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM] = have_fhm > 0;
+}
+#endif
+
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 /*
  * we aren't sure of what kind kernel or clib we deal with
@@ -930,6 +960,9 @@ npy__cpu_init_features(void)
     #if defined(NPY_HAVE_NEON_VFPV4) || defined(__ARM_FEATURE_FMA)
         npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = npy__cpu_have[NPY_CPU_FEATURE_NEON];
     #endif
+#endif
+#if defined(__APPLE__) && defined(__aarch64__)
+    npy__cpu_init_features_darwin();
 #endif
 }
 
