@@ -1255,6 +1255,11 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
         return len1;
     }
 
+    // gh-33125 the single-byte search below scans bytes, so bound it by the
+    // byte length, len2 (code-point count) is too small when chars are
+    // multibyte
+    size_t len2_bytes = (size_t)(buf2.after - buf2.buf);
+
     size_t new_start = 0;
 
     size_t num_bytes = (buf1.after - buf1.buf);
@@ -1274,8 +1279,8 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 case ENCODING::UTF8:
                 {
                     if (current_point_bytes == 1) {
-                        CheckedIndexer<char> ind(buf2.buf, len2);
-                        res = find_char<char>(ind, len2, *traverse_buf);
+                        CheckedIndexer<char> ind(buf2.buf, len2_bytes);
+                        res = find_char<char>(ind, len2_bytes, *traverse_buf);
                     } else {
                         res = fastsearch(buf2.buf, buf2.after - buf2.buf,
                                 traverse_buf.buf, current_point_bytes,
@@ -1320,8 +1325,8 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 case ENCODING::UTF8:
                 {
                     if (current_point_bytes == 1) {
-                        CheckedIndexer<char> ind(buf2.buf, len2);
-                        res = find_char<char>(ind, len2, *traverse_buf);
+                        CheckedIndexer<char> ind(buf2.buf, len2_bytes);
+                        res = find_char<char>(ind, len2_bytes, *traverse_buf);
                     } else {
                         res = fastsearch(buf2.buf, buf2.after - buf2.buf,
                                 traverse_buf.buf, current_point_bytes,

@@ -665,6 +665,25 @@ class TestMethods:
         out = np.array(out, dtype=dt)
         assert_array_equal(np.strings.strip(a, chars), out)
 
+    @pytest.mark.parametrize("a,chars,left,right,both", [
+        # gh-33125: single-byte characters sitting after a multibyte character
+        # in chars get missed because the single-byte search used a code-point
+        # count instead of byte length
+        ("a", "éa", "", "", ""),
+        ("a", "aé", "", "", ""),       # this one already worked
+        ("a", "中a", "", "", ""),       # 3-byte lead char
+        ("a", "😀a", "", "", ""),       # 4-byte lead char
+        ("aaaé", "éx", "aaaé", "aaa", "aaa"),  # asymmetric, must not over-strip
+    ])
+    def test_strip_multibyte_chars(self, a, chars, left, right, both, dt):
+        if dt == "S":
+            pytest.skip("Bytes dtype does not support non-ascii input")
+        a = np.array([a], dtype=dt)
+        chars = np.array([chars], dtype=dt)
+        assert_array_equal(np.strings.lstrip(a, chars), np.array([left], dtype=dt))
+        assert_array_equal(np.strings.rstrip(a, chars), np.array([right], dtype=dt))
+        assert_array_equal(np.strings.strip(a, chars), np.array([both], dtype=dt))
+
     @pytest.mark.parametrize("buf,old,new,count,res", [
         ("", "", "", -1, ""),
         ("", "", "A", -1, "A"),
