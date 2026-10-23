@@ -11321,6 +11321,27 @@ class TestArange:
                 match=rf"arange\(\) not supported for inputs .* {DType_name}"):
             np.arange("a", "b")
 
+    @pytest.mark.parametrize("args", [
+        (0, 4 + 4j),               # complex stop, nonzero imag
+        (0, 4 + 0j),               # complex stop, zero imag
+        (4 + 4j,),                 # single arg -> start side
+        (2 + 1j, 10),              # complex start, real stop
+        (np.complex128(4 + 4j),),  # numpy complex scalar
+    ])
+    def test_complex_without_step_raises(self, args):
+        # gh-10332: with complex start/stop and no step, there is no
+        # well-defined way to count steps, so raise an error instead of
+        # returning an empty/incorrect result
+        with pytest.raises(ValueError, match="step must be specified"):
+            np.arange(*args)
+
+    def test_complex_with_real_values_still_works(self):
+        # real/float inputs are unaffected, even with a complex dtype
+        assert_array_equal(np.arange(0, 5, dtype=complex),
+                           np.array([0, 1, 2, 3, 4], dtype=complex))
+        assert_array_equal(np.arange(2.0, 10.0),
+                           np.array([2., 3., 4., 5., 6., 7., 8., 9.]))
+
     def test_byteswapped(self):
         res_be = np.arange(1, 1000, dtype=">i4")
         res_le = np.arange(1, 1000, dtype="<i4")

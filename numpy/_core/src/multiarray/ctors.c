@@ -3377,6 +3377,21 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         goto fail;
     }
 
+    /*
+     * gh-10332: with complex start/stop and no step, there is no
+     * well-defined way to count steps, so raise an error instead of
+     * returning an empty/incorrect result
+     */
+    if ((!step || step == Py_None) &&
+            ((start != NULL && PyComplex_Check(start)) ||
+             (stop != NULL && PyComplex_Check(stop)))) {
+        PyErr_SetString(PyExc_ValueError,
+                "arange: step must be specified when start or stop is "
+                "complex; use numpy.linspace to generate evenly spaced "
+                "complex values.");
+        goto fail;
+    }
+
     if (!step || step == Py_None) {
         Py_XSETREF(step, PyLong_FromLong(1));
         if (step == NULL) {
