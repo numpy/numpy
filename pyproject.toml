@@ -162,7 +162,7 @@ typing = [
 linter = [
     "cython-lint",
     "ruff==0.16.10",
-    "GitPython==3.2.0",
+    "GitPython==3.2.1",
     "spin",
 ]
 
