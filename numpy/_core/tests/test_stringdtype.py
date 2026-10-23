@@ -3759,6 +3759,29 @@ def test_nditer_distinct_allocators():
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("op", ["_expandtabs", "_center", "_ljust", "_rjust",
+                               "_zfill", "_strip_chars"])
+def test_text_nullable_ufunc_out_cast(op):
+    dt = StringDType(na_object=np.nan)
+    arr = np.array([np.nan, " a\t"], dtype=dt)
+    if op == "_expandtabs":
+        # expandtabs rejects actual nulls, but its nullable descriptor must
+        # still obey the same output cast rules as the other operations.
+        arr[0] = "x"
+    func = getattr(np._core.umath, op)
+    args = (arr, np.int64(8))
+    if op in ("_center", "_ljust", "_rjust"):
+        args += (np.array(" ", dtype=dt),)
+    elif op == "_strip_chars":
+        args = (arr, np.array(" a", dtype=dt))
+    expected = func(*args).astype(StringDType(), casting="unsafe")
+    out = np.empty(2, dtype=StringDType())
+    with pytest.raises(TypeError):
+        func(*args, out=out, casting="safe")
+    assert func(*args, out=out, casting="unsafe") is out
+    assert_array_equal(out, expected)
+
+
 @pytest.fixture(params=[np.dtypes.StringDType, np.dtypes.ByteStringDType],
                 ids=["StringDType", "ByteStringDType"])
 def any_vstring_class(request):
@@ -3793,6 +3816,91 @@ def vstring_dtype2(na_object2, coerce2, any_vstring_class):
 
 
 class TestVariableWidthShared:
+    @pytest.mark.parametrize("op", ["add", "minimum", "maximum", "multiply",
+                                   "rmultiply", "_strip_whitespace", "_replace"])
+    @pytest.mark.parametrize("casting", ["no", "equiv", "safe", "same_kind",
+                                        "unsafe"])
+    @pytest.mark.parametrize("na", [np.nan, pd_NA])
+    def test_nullable_ufunc_out_cast(self, any_vstring_class, native,
+                                    op, casting, na):
+        dt = any_vstring_class(na_object=na)
+        arr = np.array([na, native(" a\0 "), native("x" * 40)], dtype=dt)
+        if op == "rmultiply":
+            func, args = np.multiply, (np.int64(2), arr)
+        elif op == "multiply":
+            func, args = np.multiply, (arr, np.int64(2))
+        elif op == "_strip_whitespace":
+            func, args = np._core.umath._strip_whitespace, (arr,)
+        elif op == "_replace":
+            func = np._core.umath._replace
+            args = (arr, np.array(native("a"), dtype=dt),
+                    np.array(native("b"), dtype=dt), np.int64(-1))
+        else:
+            func, args = getattr(np, op), (arr, arr)
+        expected = func(*args).astype(any_vstring_class(), casting="unsafe")
+        # A strided, masked output also exercises buffered output casts.
+        storage = np.full(6, native("unchanged"), dtype=any_vstring_class())
+        out = storage[::2]
+        where = [True, False, True]
+        if casting != "unsafe":
+            with pytest.raises(TypeError):
+                func(*args, out=out, where=where, casting=casting)
+            assert storage.tolist() == [native("unchanged")] * 6
+        else:
+            assert func(*args, out=out, where=where, casting=casting) is out
+            expected[1] = native("unchanged")
+            assert_array_equal(out, expected)
+            assert storage[1::2].tolist() == [native("unchanged")] * 3
+
+    @pytest.mark.parametrize("op", [np.minimum, np.maximum])
+    @pytest.mark.parametrize("reverse", [False, True])
+    @pytest.mark.parametrize("method", ["reduce", "accumulate"])
+    def test_nullable_reduction_out_cast(self, any_vstring_class, native, op,
+                                         reverse, method):
+        arr = np.array([native("x"), np.nan],
+                       dtype=any_vstring_class(na_object=np.nan))
+        if reverse:
+            arr = arr[::-1]
+        func = getattr(op, method)
+        expected = np.asarray(func(arr), dtype=arr.dtype).astype(
+            any_vstring_class(), casting="unsafe")
+        out = np.empty(expected.shape, dtype=any_vstring_class())
+        # Reduction methods have no casting keyword; the output cast is unsafe.
+        assert func(arr, out=out) is out
+        assert_array_equal(out, expected)
+
+    def test_nullable_minmax_out_cast(self, any_vstring_class, native):
+        arr = np.array([np.nan, native("x")],
+                       dtype=any_vstring_class(na_object=np.nan))
+        expected = [np.asarray(value, dtype=arr.dtype).astype(any_vstring_class())
+                    for value in np.minmax(arr)]
+        out = tuple(np.empty((), dtype=any_vstring_class()) for _ in range(2))
+        result = np.minmax(arr, out=out)
+        for actual, target, value in zip(result, out, expected):
+            assert actual is target
+            assert_array_equal(actual, value)
+
+    @pytest.mark.parametrize("casting", ["no", "safe", "unsafe"])
+    @pytest.mark.parametrize("na", [None, np.nan, "NA"])
+    def test_codec_nullable_out_cast(self, any_vstring_class, native,
+                                     casting, na):
+        if na == "NA":
+            na = native(na)
+        arr = np.array([native("x\0"), na],
+                       dtype=any_vstring_class(na_object=na))
+        if any_vstring_class is StringDType:
+            func, target = np._core.umath._encode, np.dtypes.ByteStringDType()
+        else:
+            func, target = np._core.umath._decode, StringDType()
+        expected = func(arr).astype(target, casting="unsafe")
+        out = np.empty(2, dtype=target)
+        if casting != "unsafe":
+            with pytest.raises(TypeError):
+                func(arr, out=out, casting=casting)
+        else:
+            assert func(arr, out=out, casting=casting) is out
+            assert_array_equal(out, expected)
+
     def test_scalar_value_paths_preserve_nulls(self, any_vstring_class, native):
         dt = any_vstring_class()
         scalar = native("x\0")

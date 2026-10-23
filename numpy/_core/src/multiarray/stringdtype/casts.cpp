@@ -1930,7 +1930,8 @@ string_to_void_resolve_descriptors(PyObject *NPY_UNUSED(self),
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
-    return NPY_UNSAFE_CASTING;
+    return given_descrs[0]->type_num == NPY_VBYTES
+            ? NPY_SAME_KIND_CASTING : NPY_UNSAFE_CASTING;
 }
 
 // void to string and bytes to string
@@ -2026,8 +2027,25 @@ static PyType_Slot v2s_slots[] = {
     {0, NULL}
 };
 
+static NPY_CASTING
+void_to_bytestring_resolve_descriptors(
+        PyObject *self, PyArray_DTypeMeta *dtypes[2],
+        PyArray_Descr *given_descrs[2], PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
+{
+    if (PyDataType_HASFIELDS(given_descrs[0]) ||
+            PyDataType_HASSUBARRAY(given_descrs[0])) {
+        PyErr_SetString(PyExc_TypeError,
+                "Casting from a structured or subarray dtype to "
+                "ByteStringDType is not supported.");
+        return (NPY_CASTING)-1;
+    }
+    return any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>(
+            self, dtypes, given_descrs, loop_descrs, view_offset);
+}
+
 static PyType_Slot v2r_slots[] = {
-    {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>},
+    {NPY_METH_resolve_descriptors, (void *)&void_to_bytestring_resolve_descriptors},
     {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string<false, false>},
     {0, NULL}
 };
@@ -2517,10 +2535,12 @@ get_bytestringdtype_casts(void)
     casts[cast_i++] = bytestring_cast_spec(name, "string", NPY_SAME_KIND_CASTING,
             &PyArray_ByteStringDType, &PyArray_BytesDType, r2bytes_slots);
 
-    casts[cast_i++] = bytestring_cast_spec(name, "void", NPY_SAME_KIND_CASTING,
+    // These casts may be unavailable, depending on the void descriptor.
+    // Always resolve descriptors, including for can_cast queries.
+    casts[cast_i++] = bytestring_cast_spec(name, "void", (NPY_CASTING)-1,
             &PyArray_ByteStringDType, &PyArray_VoidDType, s2v_slots);
 
-    casts[cast_i++] = bytestring_cast_spec("void", name, NPY_SAME_KIND_CASTING,
+    casts[cast_i++] = bytestring_cast_spec("void", name, (NPY_CASTING)-1,
             &PyArray_VoidDType, &PyArray_ByteStringDType, v2r_slots);
 
     casts[cast_i++] = bytestring_cast_spec(name, "bool", NPY_SAME_KIND_CASTING,

@@ -485,6 +485,41 @@ class TestCasts:
         assert v.astype(dtype).tolist() == [
             b"ab\x00\x00", b"\xff\x00\x00\x00", b"\x00\x00\x00\x00"]
 
+    @pytest.mark.parametrize("record_dtype", [
+        [("payload", "S2")], [("x", ">u4"), ("y", "S2")],
+        [("value", object)], [("nested", [("value", "i4")])],
+        [("values", "S2", (2,))],
+    ])
+    @pytest.mark.parametrize("casting", ["no", "equiv", "safe", "same_kind",
+                                        "unsafe"])
+    def test_structured_void_cast_rejected(self, record_dtype, casting):
+        record = np.zeros(2, dtype=record_dtype)
+        raw = np.array([b"ab", b"cd"], dtype=ByteStringDType())
+        for src, dst in [(record, raw), (raw, record)]:
+            assert not np.can_cast(src.dtype, dst.dtype, casting=casting)
+            with pytest.raises(TypeError):
+                src.astype(dst.dtype, casting=casting)
+            with pytest.raises(TypeError):
+                np.copyto(dst, src, casting=casting)
+            with pytest.raises(TypeError):
+                np.array(src, dtype=dst.dtype)
+
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_subarray_void_cast_query_rejected(self, reverse):
+        pair = (np.dtype(("S2", (2,))), ByteStringDType())
+        if reverse:
+            pair = pair[::-1]
+        assert not np.can_cast(*pair, casting="unsafe")
+
+    @pytest.mark.parametrize("casting", ["same_kind", "unsafe"])
+    def test_unstructured_void_casts(self, casting):
+        assert np.can_cast("V4", "R", casting=casting)
+        assert np.can_cast("R", "V4", casting=casting)
+        arr = np.array([b"x\x00", b"\xff"], dtype=ByteStringDType())
+        fixed = arr.astype("V4", casting=casting)
+        assert fixed.tolist() == [b"x\x00\x00\x00", b"\xff\x00\x00\x00"]
+        assert fixed.astype("R", casting=casting).tolist() == fixed.tolist()
+
     def test_bool_casts(self, dtype):
         arr = np.array([b"x", b"", b"\x00"], dtype=dtype)
         assert arr.astype(bool).tolist() == [True, False, True]

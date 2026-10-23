@@ -51,6 +51,24 @@ new_stringlike_instance_like(PyArray_Descr *like, PyObject *na_object, int coerc
     return (PyArray_Descr *)new_stringlike_instance_of(NPY_DTYPE(like), na_object, coerce);
 }
 
+static PyArray_Descr *
+stringlike_output_descr(PyArray_DTypeMeta *dtype, PyObject *na_object,
+                        int coerce, PyArray_Descr *given)
+{
+    if (given != NULL && (na_object == NULL ||
+            ((PyArray_StringDTypeObject *)given)->na_object != NULL)) {
+        Py_INCREF(given);
+        return given;
+    }
+    /*
+     * Keep nulls in the loop's result even when out has no sentinel. The
+     * iterator must enforce the output casting rule and, for unsafe casts,
+     * convert nulls using the normal string-to-string cast. Packing a null
+     * directly into a nonnullable out would silently turn it into "".
+     */
+    return (PyArray_Descr *)new_stringlike_instance_of(dtype, na_object, coerce);
+}
+
 // every promoter registration row pins exactly one string-like family
 static PyArray_DTypeMeta *
 stringlike_in(PyArray_DTypeMeta *const op_dtypes[], int n)
@@ -81,15 +99,11 @@ multiply_resolve_descriptors(
         odescr = (PyArray_StringDTypeObject *)rdescr;
     }
 
-    if (given_descrs[2] == NULL) {
-        out_descr = new_stringlike_instance_like((PyArray_Descr *)odescr, odescr->na_object, odescr->coerce);
-        if (out_descr == NULL) {
-            return (NPY_CASTING)-1;
-        }
-    }
-    else {
-        Py_INCREF(given_descrs[2]);
-        out_descr = given_descrs[2];
+    out_descr = stringlike_output_descr(
+            NPY_DTYPE((PyArray_Descr *)odescr),
+            odescr->na_object, odescr->coerce, given_descrs[2]);
+    if (out_descr == NULL) {
+        return (NPY_CASTING)-1;
     }
 
     Py_INCREF(ldescr);
@@ -293,16 +307,10 @@ binary_resolve_descriptors(struct PyArrayMethodObject_tag *method,
 
     PyArray_Descr *out_descr = NULL;
 
-    if (given_descrs[2] == NULL) {
-        out_descr = new_stringlike_instance_like(given_descrs[0], out_na_object, out_coerce);
-
-        if (out_descr == NULL) {
-            return (NPY_CASTING)-1;
-        }
-    }
-    else {
-        Py_INCREF(given_descrs[2]);
-        out_descr = given_descrs[2];
+    out_descr = stringlike_output_descr(
+            NPY_DTYPE(given_descrs[0]), out_na_object, out_coerce, given_descrs[2]);
+    if (out_descr == NULL) {
+        return (NPY_CASTING)-1;
     }
 
     loop_descrs[2] = out_descr;
@@ -1208,18 +1216,12 @@ strip_whitespace_resolve_descriptors(
 
     PyArray_Descr *out_descr = NULL;
 
-    if (given_descrs[1] == NULL) {
-        out_descr = new_stringlike_instance_like(given_descrs[0],
-                ((PyArray_StringDTypeObject *)given_descrs[0])->na_object,
-                ((PyArray_StringDTypeObject *)given_descrs[0])->coerce);
-
-        if (out_descr == NULL) {
-            return (NPY_CASTING)-1;
-        }
-    }
-    else {
-        Py_INCREF(given_descrs[1]);
-        out_descr = given_descrs[1];
+    out_descr = stringlike_output_descr(
+            NPY_DTYPE(given_descrs[0]),
+            ((PyArray_StringDTypeObject *)given_descrs[0])->na_object,
+            ((PyArray_StringDTypeObject *)given_descrs[0])->coerce, given_descrs[1]);
+    if (out_descr == NULL) {
+        return (NPY_CASTING)-1;
     }
 
     loop_descrs[1] = out_descr;
@@ -1365,16 +1367,10 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *method,
 
     PyArray_Descr *out_descr = NULL;
 
-    if (given_descrs[4] == NULL) {
-        out_descr = new_stringlike_instance_like(given_descrs[0], out_na_object, out_coerce);
-
-        if (out_descr == NULL) {
-            return (NPY_CASTING)-1;
-        }
-    }
-    else {
-        Py_INCREF(given_descrs[4]);
-        out_descr = given_descrs[4];
+    out_descr = stringlike_output_descr(
+            NPY_DTYPE(given_descrs[0]), out_na_object, out_coerce, given_descrs[4]);
+    if (out_descr == NULL) {
+        return (NPY_CASTING)-1;
     }
 
     loop_descrs[4] = out_descr;
@@ -1560,16 +1556,10 @@ static NPY_CASTING expandtabs_resolve_descriptors(
     PyArray_StringDTypeObject *idescr =
             (PyArray_StringDTypeObject *)given_descrs[0];
 
-    if (given_descrs[2] == NULL) {
-        out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                idescr->na_object, idescr->coerce);
-        if (out_descr == NULL) {
-            return (NPY_CASTING)-1;
-        }
-    }
-    else {
-        Py_INCREF(given_descrs[2]);
-        out_descr = given_descrs[2];
+    out_descr = stringlike_output_descr(
+            NPY_DTYPE(given_descrs[0]), idescr->na_object, idescr->coerce, given_descrs[2]);
+    if (out_descr == NULL) {
+        return (NPY_CASTING)-1;
     }
     loop_descrs[2] = out_descr;
     return NPY_NO_CASTING;
@@ -1702,17 +1692,10 @@ center_ljust_rjust_resolve_descriptors(
 
     PyArray_Descr *out_descr = NULL;
 
-    if (given_descrs[3] == NULL) {
-        out_descr = (PyArray_Descr *)new_stringdtype_instance(
-                out_na_object, out_coerce);
-
-        if (out_descr == NULL) {
-            return (NPY_CASTING)-1;
-        }
-    }
-    else {
-        Py_INCREF(given_descrs[3]);
-        out_descr = given_descrs[3];
+    out_descr = stringlike_output_descr(
+            NPY_DTYPE(given_descrs[0]), out_na_object, out_coerce, given_descrs[3]);
+    if (out_descr == NULL) {
+        return (NPY_CASTING)-1;
     }
 
     loop_descrs[3] = out_descr;
@@ -3261,7 +3244,8 @@ encode_decode_resolve_descriptors(struct PyArrayMethodObject_tag *NPY_UNUSED(met
 {
     PyArray_StringDTypeObject *idescr = (PyArray_StringDTypeObject *)given_descrs[0];
 
-    if (given_descrs[1] == NULL) {
+    if (given_descrs[1] == NULL || (idescr->na_object != NULL &&
+            ((PyArray_StringDTypeObject *)given_descrs[1])->na_object == NULL)) {
         // a string-like na sentinel is itself encoded or decoded (strict) so it stays string-like on the other side
         PyObject *out_na_object = idescr->na_object;
         PyObject *translated_na = NULL;
