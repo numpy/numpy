@@ -5,6 +5,7 @@ Coverage shared with StringDType lives in test_stringdtype.py
 """
 
 import copy
+import os
 import pickle
 import subprocess
 import sys
@@ -19,11 +20,88 @@ from numpy._core.tests._natype import pd_NA
 from numpy._core.tests.test_stringdtype import INVALID_UTF8
 from numpy.dtypes import ByteStringDType, StringDType
 from numpy.testing import assert_array_equal
-from numpy.testing._private.utils import HAS_SUBPROCESSES
+from numpy.testing._private.utils import HAS_SUBPROCESSES, run_subprocess
 
 
 def R(*values):
     return np.array(list(values), dtype=ByteStringDType())
+
+
+def _check_bytes_coercion_policy(strict):
+    # Called in a fresh interpreter: the policy is fixed at import time.
+    fixed = np.array([b"x"], dtype="S1")
+    expect = (pytest.raises(TypeError) if strict
+              else pytest.warns(DeprecationWarning))
+    with expect:
+        fixed.astype("T", casting="safe")
+
+    dt = ByteStringDType(na_object=None)
+    arr = np.array([b"x\x00", None], dtype=dt)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        # Fixed and variable bytes still mix without text/bytes warnings.
+        assert np.can_cast("S1", dt, casting="safe")
+        assert np.can_cast(dt, "S2", casting="same_kind")
+        assert np.result_type(arr, fixed) == dt
+        assert fixed.astype(dt, casting="safe").tolist() == [b"x"]
+        copied = np.empty(1, dtype=dt)
+        np.copyto(copied, fixed, casting="safe")
+        assert copied.tolist() == [b"x"]
+        assert np.concatenate((arr, b"z\x00"), axis=None).tolist() == [
+            b"x\x00", None, b"z\x00"]
+        # Non-string, non-NaN nulls retain the StringDType restriction.
+        with pytest.raises(ValueError, match="Only string or NaN-like"):
+            np.strings.replace(arr, b"x", b"y")
+        nullable = np.array([b"x\x00", np.nan],
+                            dtype=ByteStringDType(na_object=np.nan))
+        assert_array_equal(np.strings.replace(nullable, b"x", b"y"),
+                           np.array([b"y\x00", np.nan], dtype=nullable.dtype))
+        with pytest.raises(ValueError, match="Null values are not supported"):
+            np.strings.partition(nullable, b"\x00")
+        parts = np.strings.partition(nullable[:1], b"\x00")
+        for part, value in zip(parts, [b"x", b"\x00", b""]):
+            assert_array_equal(part,
+                               np.array([value], dtype=nullable.dtype))
+
+        # The policy must not grant ByteStringDType an implicit encoding,
+        # even when the caller requests an unsafe cast.
+        for text_dtype in ("U2", StringDType(na_object=None)):
+            text = np.array(["x", "y"], dtype=text_dtype)
+            for source, target in ((arr, text), (text, arr)):
+                with pytest.raises(np.exceptions.DTypePromotionError):
+                    np.result_type(source, target)
+                with pytest.raises(TypeError):
+                    np.strings.add(source, target)
+                with pytest.raises(TypeError):
+                    np.strings.replace(source, target, target)
+                for casting in ("safe", "same_kind", "unsafe"):
+                    assert not np.can_cast(
+                        source.dtype, target.dtype, casting=casting)
+                    with pytest.raises(TypeError):
+                        source.astype(target.dtype, casting=casting)
+                    with pytest.raises(TypeError):
+                        np.copyto(np.empty_like(target), source, casting=casting)
+
+        # Encoding/decoding explicitly still round-trips data and nulls.
+        decoded = np.strings.decode(arr)
+        assert decoded.tolist() == ["x\x00", None]
+        encoded = np.strings.encode(decoded, dtype=ByteStringDType())
+        assert encoded.tolist() == arr.tolist()
+
+
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="requires subprocesses")
+@pytest.mark.parametrize("strict", [False, True], ids=["default", "strict"])
+def test_bytes_coercion_policy_environment(strict):
+    env = dict(os.environ)
+    env.pop("NPY_COERCION_POLICY", None)
+    if strict:
+        env["NPY_COERCION_POLICY"] = "strict"
+    code = (
+        "from numpy._core.tests import test_bytestringdtype as tests\n"
+        f"tests._check_bytes_coercion_policy({strict!r})"
+    )
+    run_subprocess(
+        [sys.executable, "-Werror::DeprecationWarning", "-c", code], env=env)
 
 
 NUL_AND_HIGH_BYTE_VALUES = [
@@ -102,39 +180,26 @@ class TestConstruction:
 
 
 class TestStrictBytesInput:
-    @pytest.mark.parametrize("other", ["S4", "R", "U4", "T", "O", "i8"])
+    @pytest.mark.parametrize("other", ["S4", "R", "U4", "T", "i8"])
     @pytest.mark.parametrize("reverse", [False, True])
-    def test_strict_string_promotion(self, dtype, other, reverse):
-        from numpy._core._multiarray_umath import _array_converter
-
+    def test_promotion(self, dtype, other, reverse):
         arr = np.array([b"x\x00"], dtype=dtype)
         other_arr = np.array([1], dtype=other) if other == "i8" else np.array(
             ["x" if other in ("U4", "T") else b"x"], dtype=other)
         inputs = (other_arr, arr) if reverse else (arr, other_arr)
-        converter = _array_converter(*inputs)
         if other in ("S4", "R"):
-            assert converter.result_type(strict_strings=True) == dtype
+            assert np.result_type(*inputs) == dtype
         else:
-            with pytest.raises(np.exceptions.DTypePromotionError,
-                               match="Strict string promotion"):
-                converter.result_type(strict_strings=True)
+            with pytest.raises(np.exceptions.DTypePromotionError):
+                np.result_type(*inputs)
 
     @pytest.mark.parametrize("source,target", [("S4", "R"), ("R", "S4")])
-    def test_strict_string_extra_dtype(self, source, target):
-        from numpy._core._multiarray_umath import _array_converter
+    def test_fixed_bytes_promotion(self, source, target):
+        assert np.promote_types(source, target) == ByteStringDType()
 
-        converter = _array_converter(np.array([b"x"], dtype=source))
-        assert converter.result_type(extra_dtype=np.dtype(target),
-                                     strict_strings=True) == ByteStringDType()
-
-    def test_strict_string_scalar_conversion(self, dtype):
-        from numpy._core._multiarray_umath import _array_converter
-
+    def test_scalar_conversion(self, dtype):
         arr = np.array([b"y"], dtype=dtype)
-        converter = _array_converter(arr, b"x\x00")
-        resolved = converter.result_type(strict_strings=True)
-        assert resolved == dtype
-        result = np.concatenate((arr, b"x\x00"), axis=None, dtype=resolved)
+        result = np.concatenate((arr, b"x\x00"), axis=None, dtype=dtype)
         assert result.tolist() == [b"y", b"x\x00"]
 
     @pytest.mark.parametrize("value", [
@@ -242,6 +307,34 @@ class TestSetGet:
 
 
 class TestSortingAndSelection:
+    @pytest.mark.parametrize("na", [b"NA", np.nan])
+    @pytest.mark.parametrize("axis", [None, 0, 1])
+    @pytest.mark.parametrize("use_out", [False, True])
+    def test_minmax_fallback(self, na, axis, use_out):
+        dt = ByteStringDType(na_object=na)
+        arr = np.array([[b"x\x00", b"a", b"z" * 30],
+                        [b"b", na, b"a\x00"]], dtype=dt)[:, ::-1]
+        if axis is None:
+            # String reductions support only one axis at a time.
+            arr = arr.ravel()[::-1]
+        expected = (np.min(arr, axis=axis), np.max(arr, axis=axis))
+        out = None
+        if use_out:
+            shape = np.shape(expected[0])
+            out = (np.empty(shape, dtype=dt), np.empty(shape, dtype=dt))
+        result = np.minmax(arr, axis=axis, out=out)
+        for i in range(2):
+            assert_array_equal(np.asarray(result[i], dtype=dt),
+                               np.asarray(expected[i], dtype=dt))
+            if use_out:
+                assert result[i] is out[i]
+                assert result[i].dtype == dt
+
+    def test_minmax_non_orderable_null(self):
+        arr = np.array([b"a", None], dtype=ByteStringDType(na_object=None))
+        with pytest.raises(ValueError, match="Cannot compare null"):
+            np.minmax(arr)
+
     def test_sort_high_bytes(self, dtype):
         # bytewise, not codepoint, ordering
         arr = np.array([b"\xff", b"a", b"\x80"], dtype=dtype)
