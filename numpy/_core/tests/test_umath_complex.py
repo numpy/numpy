@@ -311,6 +311,22 @@ class TestCsqrt:
 
         check_complex_value(f, 1, 1, ref.real, ref.imag, False)
 
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+    def test_large_imaginary_input(self, dtype):
+        # gh-33122: fallback csqrt must rescale both result components.
+        real_dtype = np.empty((), dtype=dtype).real.dtype
+        max_value = np.finfo(real_dtype).max
+
+        value = np.array(1j * max_value, dtype=dtype)
+        result = np.sqrt(value)
+
+        expected = np.asarray(np.sqrt(np.float64(max_value) / 2),
+                              dtype=real_dtype)
+
+        assert_equal(result.real, result.imag)
+        assert_array_max_ulp(result.real, expected, nulp=1)
+        assert_array_max_ulp(result.imag, expected, nulp=1)
+
     #def test_branch_cut(self):
     #    _check_branch_cut(f, -1, 0, 1, -1)
 
