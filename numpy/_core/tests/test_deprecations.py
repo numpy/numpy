@@ -773,6 +773,19 @@ def _check_coercion_policy(mode, size):
         np.strings.partition(a, "-")
     assert_array_equal(a.astype("U1"), ["a"] * size)
     assert_array_equal(np.array([b"a", "b"], dtype="U1"), ["a", "b"])
+    # Fixed and variable bytes still mix under either policy, without warnings.
+    raw = np.array([b"x\x00"], dtype="R")
+    assert np.result_type(a, raw) == np.dtype("R")
+    assert a.astype("R", casting="safe").tolist() == [b"a"] * size
+    combined = np.concatenate([a, raw])
+    assert combined.dtype == np.dtype("R")
+    assert combined.tolist() == [b"a"] * size + [b"x\x00"]
+    # Neither policy gives ByteStringDType an implicit text encoding.
+    for text_dtype in ("U1", "T"):
+        with pytest.raises(np.exceptions.DTypePromotionError):
+            np.result_type(raw, np.dtype(text_dtype))
+        assert not np.can_cast("R", text_dtype, casting="unsafe")
+        assert not np.can_cast(text_dtype, "R", casting="unsafe")
     for source, target in [
         ([('x', 'S1')], [('x', 'U1')]),
         ([('x', [('y', 'S1', (2,))])], [('x', [('y', 'U1', (2,))])]),

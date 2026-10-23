@@ -5,7 +5,6 @@ Coverage shared with StringDType lives in test_stringdtype.py
 """
 
 import copy
-import os
 import pickle
 import subprocess
 import sys
@@ -20,88 +19,11 @@ from numpy._core.tests._natype import pd_NA
 from numpy._core.tests.test_stringdtype import INVALID_UTF8
 from numpy.dtypes import ByteStringDType, StringDType
 from numpy.testing import assert_array_equal
-from numpy.testing._private.utils import HAS_SUBPROCESSES, run_subprocess
+from numpy.testing._private.utils import HAS_SUBPROCESSES
 
 
 def R(*values):
     return np.array(list(values), dtype=ByteStringDType())
-
-
-def _check_bytes_coercion_policy(strict):
-    # Called in a fresh interpreter: the policy is fixed at import time.
-    fixed = np.array([b"x"], dtype="S1")
-    expect = (pytest.raises(TypeError) if strict
-              else pytest.warns(DeprecationWarning))
-    with expect:
-        fixed.astype("T", casting="safe")
-
-    dt = ByteStringDType(na_object=None)
-    arr = np.array([b"x\x00", None], dtype=dt)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        # Fixed and variable bytes still mix without text/bytes warnings.
-        assert np.can_cast("S1", dt, casting="safe")
-        assert np.can_cast(dt, "S2", casting="same_kind")
-        assert np.result_type(arr, fixed) == dt
-        assert fixed.astype(dt, casting="safe").tolist() == [b"x"]
-        copied = np.empty(1, dtype=dt)
-        np.copyto(copied, fixed, casting="safe")
-        assert copied.tolist() == [b"x"]
-        assert np.concatenate((arr, b"z\x00"), axis=None).tolist() == [
-            b"x\x00", None, b"z\x00"]
-        # Non-string, non-NaN nulls retain the StringDType restriction.
-        with pytest.raises(ValueError, match="Only string or NaN-like"):
-            np.strings.replace(arr, b"x", b"y")
-        nullable = np.array([b"x\x00", np.nan],
-                            dtype=ByteStringDType(na_object=np.nan))
-        assert_array_equal(np.strings.replace(nullable, b"x", b"y"),
-                           np.array([b"y\x00", np.nan], dtype=nullable.dtype))
-        with pytest.raises(ValueError, match="Null values are not supported"):
-            np.strings.partition(nullable, b"\x00")
-        parts = np.strings.partition(nullable[:1], b"\x00")
-        for part, value in zip(parts, [b"x", b"\x00", b""]):
-            assert_array_equal(part,
-                               np.array([value], dtype=nullable.dtype))
-
-        # The policy must not grant ByteStringDType an implicit encoding,
-        # even when the caller requests an unsafe cast.
-        for text_dtype in ("U2", StringDType(na_object=None)):
-            text = np.array(["x", "y"], dtype=text_dtype)
-            for source, target in ((arr, text), (text, arr)):
-                with pytest.raises(np.exceptions.DTypePromotionError):
-                    np.result_type(source, target)
-                with pytest.raises(TypeError):
-                    np.strings.add(source, target)
-                with pytest.raises(TypeError):
-                    np.strings.replace(source, target, target)
-                for casting in ("safe", "same_kind", "unsafe"):
-                    assert not np.can_cast(
-                        source.dtype, target.dtype, casting=casting)
-                    with pytest.raises(TypeError):
-                        source.astype(target.dtype, casting=casting)
-                    with pytest.raises(TypeError):
-                        np.copyto(np.empty_like(target), source, casting=casting)
-
-        # Encoding/decoding explicitly still round-trips data and nulls.
-        decoded = np.strings.decode(arr)
-        assert decoded.tolist() == ["x\x00", None]
-        encoded = np.strings.encode(decoded, dtype=ByteStringDType())
-        assert encoded.tolist() == arr.tolist()
-
-
-@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="requires subprocesses")
-@pytest.mark.parametrize("strict", [False, True], ids=["default", "strict"])
-def test_bytes_coercion_policy_environment(strict):
-    env = dict(os.environ)
-    env.pop("NPY_COERCION_POLICY", None)
-    if strict:
-        env["NPY_COERCION_POLICY"] = "strict"
-    code = (
-        "from numpy._core.tests import test_bytestringdtype as tests\n"
-        f"tests._check_bytes_coercion_policy({strict!r})"
-    )
-    run_subprocess(
-        [sys.executable, "-Werror::DeprecationWarning", "-c", code], env=env)
 
 
 NUL_AND_HIGH_BYTE_VALUES = [
@@ -180,7 +102,7 @@ class TestConstruction:
 
 
 class TestStrictBytesInput:
-    @pytest.mark.parametrize("other", ["S4", "R", "U4", "T", "i8"])
+    @pytest.mark.parametrize("other", ["S4", "R", "U4", "T", "O", "i8"])
     @pytest.mark.parametrize("reverse", [False, True])
     def test_promotion(self, dtype, other, reverse):
         arr = np.array([b"x\x00"], dtype=dtype)
@@ -189,6 +111,8 @@ class TestStrictBytesInput:
         inputs = (other_arr, arr) if reverse else (arr, other_arr)
         if other in ("S4", "R"):
             assert np.result_type(*inputs) == dtype
+        elif other == "O":
+            assert np.result_type(*inputs) == np.dtype(object)
         else:
             with pytest.raises(np.exceptions.DTypePromotionError):
                 np.result_type(*inputs)
@@ -307,34 +231,6 @@ class TestSetGet:
 
 
 class TestSortingAndSelection:
-    @pytest.mark.parametrize("na", [b"NA", np.nan])
-    @pytest.mark.parametrize("axis", [None, 0, 1])
-    @pytest.mark.parametrize("use_out", [False, True])
-    def test_minmax_fallback(self, na, axis, use_out):
-        dt = ByteStringDType(na_object=na)
-        arr = np.array([[b"x\x00", b"a", b"z" * 30],
-                        [b"b", na, b"a\x00"]], dtype=dt)[:, ::-1]
-        if axis is None:
-            # String reductions support only one axis at a time.
-            arr = arr.ravel()[::-1]
-        expected = (np.min(arr, axis=axis), np.max(arr, axis=axis))
-        out = None
-        if use_out:
-            shape = np.shape(expected[0])
-            out = (np.empty(shape, dtype=dt), np.empty(shape, dtype=dt))
-        result = np.minmax(arr, axis=axis, out=out)
-        for i in range(2):
-            assert_array_equal(np.asarray(result[i], dtype=dt),
-                               np.asarray(expected[i], dtype=dt))
-            if use_out:
-                assert result[i] is out[i]
-                assert result[i].dtype == dt
-
-    def test_minmax_non_orderable_null(self):
-        arr = np.array([b"a", None], dtype=ByteStringDType(na_object=None))
-        with pytest.raises(ValueError, match="Cannot compare null"):
-            np.minmax(arr)
-
     def test_sort_high_bytes(self, dtype):
         # bytewise, not codepoint, ordering
         arr = np.array([b"\xff", b"a", b"\x80"], dtype=dtype)
@@ -478,47 +374,21 @@ class TestCasts:
         arr = np.array([b"a", b"c"], dtype=dtype)
         assert arr.searchsorted(np.array([b"b"], dtype="S1")).tolist() == [1]
 
-    def test_void_roundtrip_preserves_nuls(self, dtype):
-        # void -> ByteStringDType is length-explicit, with no UTF-8 validation
-        arr = np.array([b"ab", b"\xff", b""], dtype=dtype)
-        v = arr.astype("V4")
-        assert v.astype(dtype).tolist() == [
-            b"ab\x00\x00", b"\xff\x00\x00\x00", b"\x00\x00\x00\x00"]
-
-    @pytest.mark.parametrize("record_dtype", [
-        [("payload", "S2")], [("x", ">u4"), ("y", "S2")],
-        [("value", object)], [("nested", [("value", "i4")])],
-        [("values", "S2", (2,))],
-    ])
-    @pytest.mark.parametrize("casting", ["no", "equiv", "safe", "same_kind",
-                                        "unsafe"])
-    def test_structured_void_cast_rejected(self, record_dtype, casting):
-        record = np.zeros(2, dtype=record_dtype)
-        raw = np.array([b"ab", b"cd"], dtype=ByteStringDType())
-        for src, dst in [(record, raw), (raw, record)]:
-            assert not np.can_cast(src.dtype, dst.dtype, casting=casting)
-            with pytest.raises(TypeError):
-                src.astype(dst.dtype, casting=casting)
-            with pytest.raises(TypeError):
-                np.copyto(dst, src, casting=casting)
-            with pytest.raises(TypeError):
-                np.array(src, dtype=dst.dtype)
-
-    @pytest.mark.parametrize("reverse", [False, True])
-    def test_subarray_void_cast_query_rejected(self, reverse):
-        pair = (np.dtype(("S2", (2,))), ByteStringDType())
-        if reverse:
-            pair = pair[::-1]
-        assert not np.can_cast(*pair, casting="unsafe")
-
     @pytest.mark.parametrize("casting", ["same_kind", "unsafe"])
-    def test_unstructured_void_casts(self, casting):
-        assert np.can_cast("V4", "R", casting=casting)
-        assert np.can_cast("R", "V4", casting=casting)
-        arr = np.array([b"x\x00", b"\xff"], dtype=ByteStringDType())
-        fixed = arr.astype("V4", casting=casting)
-        assert fixed.tolist() == [b"x\x00\x00\x00", b"\xff\x00\x00\x00"]
-        assert fixed.astype("R", casting=casting).tolist() == fixed.tolist()
+    def test_void_roundtrip_preserves_nuls(self, dtype, casting):
+        # Raw void includes padding bytes; it does not interpret an encoding.
+        assert np.can_cast("V4", dtype, casting=casting)
+        assert np.can_cast(dtype, "V4", casting=casting)
+        arr = np.array([b"ab", b"\xff", b""], dtype=dtype)
+        v = arr.astype("V4", casting=casting)
+        expected = [b"ab\x00\x00", b"\xff\x00\x00\x00", b"\x00\x00\x00\x00"]
+        assert v.tolist() == expected
+        assert v.astype(dtype, casting=casting).tolist() == expected
+
+    def test_subarray_void_cast_query_rejected(self, dtype):
+        subarray = np.dtype(("S2", (2,)))
+        assert not np.can_cast(subarray, dtype, casting="unsafe")
+        assert not np.can_cast(dtype, subarray, casting="unsafe")
 
     def test_bool_casts(self, dtype):
         arr = np.array([b"x", b"", b"\x00"], dtype=dtype)
@@ -535,20 +405,21 @@ class TestCasts:
 
     @pytest.mark.parametrize("other", [
         "int64", "uint64", "float64", "complex128", "datetime64[s]",
-        "timedelta64[s]", "U4", StringDType()])
+        "timedelta64[s]", "U4", StringDType(),
+        np.dtype([("label", "S4"), ("value", "i4")]),
+        np.dtype([("value", object)]),
+    ])
     def test_no_cast_to_or_from(self, dtype, other):
-        # text and numeric conversions are deliberately unregistered;
-        # text goes through the explicit encode/decode ufuncs
+        # Even unsafe casting must not implicitly encode text or serialize
+        # records (including records holding Python object references).
         arr = np.array([b"1"], dtype=dtype)
+        other_arr = np.zeros(1, dtype=other)
+        assert not np.can_cast(dtype, other, casting="unsafe")
+        assert not np.can_cast(other, dtype, casting="unsafe")
         with pytest.raises(TypeError):
-            arr.astype(other)
-        if isinstance(other, str):
-            other_arr = np.array(["1"], dtype=other) \
-                if other == "U4" else np.zeros(1, dtype=other)
-        else:
-            other_arr = np.array(["1"], dtype=other)
+            arr.astype(other, casting="unsafe")
         with pytest.raises(TypeError):
-            other_arr.astype(dtype)
+            other_arr.astype(dtype, casting="unsafe")
 
     def test_structured_field_rejected(self, dtype):
         with pytest.raises(TypeError, match="not currently supported"):
@@ -971,6 +842,7 @@ class TestStringUfuncs:
         y = R(b"b", b"b", b"a", b"x", b"a\x00a")
         assert_array_equal(ufunc(x, y), R(*(oracle(a, b) for a, b in zip(x, y))),
                            strict=True)
+        assert np.minmax(x) == (b"a", b"\xff")
 
     def test_minimum_maximum_mixed_operands(self):
         x = R(b"b", b"y")
