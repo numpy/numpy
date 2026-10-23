@@ -1244,7 +1244,13 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
         return 0;
     }
 
+    // The single-byte search paths below scan the chars buffer with a
+    // byte-indexed CheckedIndexer, so their bound must be the byte length;
+    // a codepoint count stops short whenever chars contains multibyte
+    // characters (gh-33125). UTF32 elements are fixed-size, so its codepoint
+    // count already equals its element count.
     size_t len2 = buf2.num_codepoints();
+    size_t search_len2 = (enc == ENCODING::UTF32) ? len2 : (buf2.after - buf2.buf);
     if (len2 == 0) {
         if (enc == ENCODING::UTF8) {
             buf1.buffer_memcpy(out, (buf1.after - buf1.buf));
@@ -1267,15 +1273,15 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
             switch (enc) {
                 case ENCODING::ASCII:
                 {
-                    CheckedIndexer<char> ind(buf2.buf, len2);
-                    res = find_char<char>(ind, len2, *traverse_buf);
+                    CheckedIndexer<char> ind(buf2.buf, search_len2);
+                    res = find_char<char>(ind, search_len2, *traverse_buf);
                     break;
                 }
                 case ENCODING::UTF8:
                 {
                     if (current_point_bytes == 1) {
-                        CheckedIndexer<char> ind(buf2.buf, len2);
-                        res = find_char<char>(ind, len2, *traverse_buf);
+                        CheckedIndexer<char> ind(buf2.buf, search_len2);
+                        res = find_char<char>(ind, search_len2, *traverse_buf);
                     } else {
                         res = fastsearch(buf2.buf, buf2.after - buf2.buf,
                                 traverse_buf.buf, current_point_bytes,
@@ -1285,8 +1291,8 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 }
                 case ENCODING::UTF32:
                 {
-                    CheckedIndexer<npy_ucs4> ind((npy_ucs4 *)buf2.buf, len2);
-                    res = find_char<npy_ucs4>(ind, len2, *traverse_buf);
+                    CheckedIndexer<npy_ucs4> ind((npy_ucs4 *)buf2.buf, search_len2);
+                    res = find_char<npy_ucs4>(ind, search_len2, *traverse_buf);
                     break;
                 }
             }
@@ -1313,15 +1319,15 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
             switch (enc) {
                 case ENCODING::ASCII:
                 {
-                    CheckedIndexer<char> ind(buf2.buf, len2);
-                    res = find_char<char>(ind, len2, *traverse_buf);
+                    CheckedIndexer<char> ind(buf2.buf, search_len2);
+                    res = find_char<char>(ind, search_len2, *traverse_buf);
                     break;
                 }
                 case ENCODING::UTF8:
                 {
                     if (current_point_bytes == 1) {
-                        CheckedIndexer<char> ind(buf2.buf, len2);
-                        res = find_char<char>(ind, len2, *traverse_buf);
+                        CheckedIndexer<char> ind(buf2.buf, search_len2);
+                        res = find_char<char>(ind, search_len2, *traverse_buf);
                     } else {
                         res = fastsearch(buf2.buf, buf2.after - buf2.buf,
                                 traverse_buf.buf, current_point_bytes,
@@ -1331,8 +1337,8 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 }
                 case ENCODING::UTF32:
                 {
-                    CheckedIndexer<npy_ucs4> ind((npy_ucs4 *)buf2.buf, len2);
-                    res = find_char<npy_ucs4>(ind, len2, *traverse_buf);
+                    CheckedIndexer<npy_ucs4> ind((npy_ucs4 *)buf2.buf, search_len2);
+                    res = find_char<npy_ucs4>(ind, search_len2, *traverse_buf);
                     break;
                 }
             }

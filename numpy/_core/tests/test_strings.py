@@ -602,8 +602,15 @@ class TestMethods:
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["helloxyzzy", "hello"]),
         (["ba", "ac", "baa", "bba"], "b", ["a", "ac", "aa", "a"]),
+        # gh-33125: a multibyte char before an ASCII char in chars must not
+        # shorten the byte range scanned when stripping single-byte chars
+        ("éa", "éa", ""),
+        ("a", "éa", ""),
+        ("xéy", "xéy", ""),
     ])
     def test_lstrip(self, a, chars, out, dt):
+        if any("\u00e9" in part for part in (a, chars) if isinstance(part, str)) and dt == "S":
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         out = np.array(out, dtype=dt)
         if chars is not None:
@@ -631,8 +638,14 @@ class TestMethods:
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["xyzzyhello", "hello"]),
         (["ab", "ac", "aab", "abb"], "b", ["a", "ac", "aa", "a"]),
+        # gh-33125: same byte-length scan bug from the right side
+        ("éa", "éa", ""),
+        ("a", "éa", ""),
+        ("xéy", "xéy", ""),
     ])
     def test_rstrip(self, a, chars, out, dt):
+        if any("\u00e9" in part for part in (a, chars) if isinstance(part, str)) and dt == "S":
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         out = np.array(out, dtype=dt)
         if chars is not None:
@@ -657,8 +670,14 @@ class TestMethods:
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["hello", "hello"]),
         (["bab", "ac", "baab", "bbabb"], "b", ["a", "ac", "aa", "a"]),
+        # gh-33125: both-sided variant
+        ("éa", "éa", ""),
+        ("a", "éa", ""),
+        ("xéy", "xéy", ""),
     ])
     def test_strip(self, a, chars, out, dt):
+        if any("\u00e9" in part for part in (a, chars) if isinstance(part, str)) and dt == "S":
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         if chars is not None:
             chars = np.array(chars, dtype=dt)
