@@ -29,7 +29,7 @@ jobs:
           fetch-tags: true
           persist-credentials: false
       - name: Install Cygwin
-        uses: egor-tensin/setup-cygwin@fca9069f92361187d4abfaa5d8a7490e435d8349 # v4
+        uses: egor-tensin/setup-cygwin@fca9069f92361187d4abfaa5d8a7490e435d8349 # v4.0.2
         with:
           platform: x86_64
           install-dir: 'C:\tools\cygwin'
@@ -38,7 +38,7 @@ jobs:
             python-setuptools-wheel liblapack-devel liblapack0 gcc-fortran
             gcc-g++ git dash cmake ninja
       - name: Set Windows PATH
-        uses: egor-tensin/cleanup-path@3974efd722fa10f283df76342125776a352072dd # v5.0.2
+        uses: egor-tensin/cleanup-path@8c820fb27cb295c07f554daa81a10ab35a8c5bf3 # v5.0.3
         with:
           dirs: 'C:\tools\cygwin\bin;C:\tools\cygwin\lib\lapack'
       - name: Verify that bash is Cygwin bash

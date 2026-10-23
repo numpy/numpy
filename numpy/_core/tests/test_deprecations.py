@@ -13,7 +13,11 @@ from collections.abc import Callable
 import pytest
 
 import numpy as np
-from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
+from numpy._core._multiarray_tests import (
+    fromstring_null_term_c_api,  # noqa: F401
+    matrixproduct2_c_api,
+    matrixproduct_c_api,
+)
 from numpy.testing import HAS_SUBPROCESSES, assert_array_equal, assert_raises
 from numpy.testing._private.utils import run_subprocess
 
@@ -227,6 +231,15 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
         # Deprecated in 2.0, removed in 2.5, 2025-12
         with pytest.raises(TypeError):
             np.dtype(dtype_code)
+
+
+class TestIsDTypeDTypeInstanceKind(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-06
+    message = r"isdtype\(\) with a dtype instance as second argument"
+
+    def test_deprecated(self):
+        self.assert_deprecated(
+                lambda: np.isdtype(np.dtype(">f8"), np.dtype("<f8")))
 
 
 class TestDeprecatedArrayWrap(_DeprecationTestCase):
@@ -583,6 +596,60 @@ class TestTakeOutDtype(_DeprecationTestCase):
         different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
 
         self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
+
+
+_DOT_CALLERS = [
+    pytest.param(np.dot, "numpy.dot", id="np.dot"),
+    pytest.param(np.ndarray.dot, "numpy.dot", id="ndarray.dot"),
+    pytest.param(matrixproduct_c_api, "PyArray_MatrixProduct",
+                 id="PyArray_MatrixProduct"),
+    pytest.param(matrixproduct2_c_api, "PyArray_MatrixProduct2",
+                 id="PyArray_MatrixProduct2"),
+]
+
+
+class TestDotDimensionInterleaving(_DeprecationTestCase):
+    # Deprecated NumPy 2.6, 2026-09
+    # See https://github.com/numpy/numpy/issues/31725
+
+    @pytest.mark.parametrize("func, name", _DOT_CALLERS)
+    @pytest.mark.parametrize("a_shape, b_shape", [
+        ((2, 3), (4, 3, 5)),
+        ((2, 2, 3), (4, 3, 5)),
+        ((2, 3), (2, 4, 3, 5)),
+        ((5, 2, 2, 3), (4, 3, 5)),
+    ], ids=str)
+    def test_warns(self, func, name, a_shape, b_shape):
+        self.message = (
+            f"{re.escape(name)} received arrays with a.ndim >= 2 and b.ndim > 2"
+        )
+        a, b = np.ones(a_shape), np.ones(b_shape)
+        self.assert_deprecated(lambda: func(a, b))
+
+    @pytest.mark.parametrize("func, name", _DOT_CALLERS)
+    @pytest.mark.parametrize("a_shape, b_shape", [
+        ((), (4, 3, 5)),
+        ((3,), (4, 3, 5)),
+        ((3,), (2, 4, 3, 5)),
+        ((2, 3), (3,)),
+        ((2, 3), (3, 5)),
+        ((2, 2, 3), (3,)),
+        ((2, 2, 3), (3, 5)),
+    ], ids=str)
+    def test_no_warning(self, func, name, a_shape, b_shape):
+        a, b = np.ones(a_shape), np.ones(b_shape)
+        self.assert_not_deprecated(lambda: func(a, b))
+
+    @pytest.mark.parametrize("func, name", _DOT_CALLERS)
+    def test_shape_mismatch_raises_valueerror_not_deprecation(self, func, name):
+        a, b = np.ones((2, 3)), np.ones((4, 6, 5))
+        with pytest.raises(ValueError, match="shapes.*not aligned"):
+            func(a, b)
+
+    @pytest.mark.parametrize("b_shape", [(4, 5, 3), (2, 4, 5, 3)], ids=str)
+    def test_inner_not_deprecated(self, b_shape):
+        a, b = np.ones((2, 3)), np.ones(b_shape)
+        self.assert_not_deprecated(lambda: np.inner(a, b))
 
 
 class TestAppendScalarPromotion(_DeprecationTestCase):

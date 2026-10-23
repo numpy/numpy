@@ -54,18 +54,10 @@ from numpy._typing import (  # type: ignore[deprecated]
     _ScalarLike_co,
     # `number` precision
     NBitBase,
-    _128Bit,
-    _96Bit,
     _64Bit,
     _32Bit,
     _16Bit,
     _8Bit,
-    _NBitByte,
-    _NBitShort,
-    _NBitIntC,
-    _NBitIntP,
-    _NBitLong,
-    _NBitLongLong,
     _NBitLongDouble,
     # Character codes
     _BoolCodes,
@@ -1125,6 +1117,18 @@ class _HasTypeWithRealAndImag[RealT, ImagT](Protocol):
 class _HasDTypeWithRealAndImag[RealT, ImagT](Protocol):
     @property
     def dtype(self, /) -> _HasTypeWithRealAndImag[RealT, ImagT]: ...
+
+@type_check_only
+class _HasTypeWithAbs[AbsT](Protocol):
+    @property  # the `Callable` is a workaround for Pyright that'll otherwise reject `dtype[Any]`
+    def type(self, /) -> py_type[SupportsAbs[AbsT]] | Callable[[], SupportsAbs[AbsT]]: ...
+
+@type_check_only
+class _HasShapeAndDTypeWithAbs[ShapeT: _Shape, AbsT](Protocol):
+    @property
+    def shape(self, /) -> ShapeT: ...
+    @property
+    def dtype(self, /) -> _HasTypeWithAbs[AbsT]: ...
 
 @type_check_only
 class _HasDateAttributes(Protocol):
@@ -7003,22 +7007,16 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     # Unary ops
 
-    # TODO: Uncomment once https://github.com/python/mypy/issues/14070 is fixed
-    # @overload
-    # def __abs__[ShapeT: _Shape](self: ndarray[ShapeT, dtypes.Complex64DType], /) -> ndarray[ShapeT, dtypes.Float32DType]: ...
-    # @overload
-    # def __abs__[ShapeT: _Shape](self: ndarray[ShapeT, dtypes.Complex128DType], /) -> ndarray[ShapeT, dtypes.Float64DType]: ...
-    # @overload
-    # def __abs__[ShapeT: _Shape](self: ndarray[ShapeT, dtypes.CLongDoubleDType], /) -> ndarray[ShapeT, dtypes.LongDoubleDType]: ...
-    # @overload
-    # def __abs__[ShapeT: _Shape](self: ndarray[ShapeT, dtype[complex128]], /) -> ndarray[ShapeT, dtype[float64]]: ...
     @overload
-    def __abs__[ShapeT: _Shape, NBitT: NBitBase](
-        self: ndarray[ShapeT, _dtype[complexfloating[NBitT]]], /
-    ) -> ndarray[ShapeT, _dtype[floating[NBitT]]]: ...
+    def __abs__[ArrayT: NDArray[bool_ | integer | floating | timedelta64 | object_]](
+        self: ArrayT, /
+    ) -> ArrayT: ...
     @overload
-    def __abs__[ArrayT: NDArray[bool_ | integer | floating | timedelta64 | object_]](self: ArrayT, /) -> ArrayT: ...
+    def __abs__[ShapeT: _Shape, ScalarT: generic](
+        self: _HasShapeAndDTypeWithAbs[ShapeT, ScalarT], /
+    ) -> ndarray[ShapeT, _dtype[ScalarT]]: ...
 
+    #
     def __invert__[ArrayT: NDArray[bool_ | integer | object_]](self: ArrayT, /) -> ArrayT: ...
     def __neg__[ArrayT: _ArrayNumeric](self: ArrayT, /) -> ArrayT: ...
     def __pos__[ArrayT: NDArray[bool_ | number | timedelta64 | object_]](self: ArrayT, /) -> ArrayT: ...
@@ -7451,7 +7449,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __radd__[ShapeT: _Shape](  # type: ignore[misc]
+    def __radd__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -7463,7 +7461,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __radd__[ShapeT: _Shape](  # type: ignore[misc]
+    def __radd__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -7475,7 +7473,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __radd__[ShapeT: _Shape](  # type: ignore[misc]
+    def __radd__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -7487,7 +7485,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[float64]]: ...
     @overload  # Nd c128, Nd +c128
-    def __radd__[ShapeT: _Shape](  # type: ignore[misc]
+    def __radd__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[complex128]],
         other: ndarray[ShapeT, _dtype[_to_complex64]],
         /,
@@ -7827,7 +7825,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rsub__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -7839,7 +7837,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rsub__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -7851,7 +7849,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rsub__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -7863,7 +7861,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[float64]]: ...
     @overload  # Nd c128, Nd +c128
-    def __rsub__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rsub__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[complex128]],
         other: ndarray[ShapeT, _dtype[_to_complex64]],
         /,
@@ -8213,7 +8211,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rmul__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmul__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -8225,7 +8223,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rmul__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmul__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -8237,7 +8235,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rmul__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmul__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -8249,7 +8247,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[float64]]: ...
     @overload  # Nd c128, Nd +c128
-    def __rmul__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmul__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[complex128]],
         other: ndarray[ShapeT, _dtype[_to_complex64]],
         /,
@@ -8653,7 +8651,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rpow__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rpow__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         mod: None = None,
@@ -8667,7 +8665,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rpow__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rpow__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         mod: None = None,
@@ -8681,7 +8679,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rpow__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rpow__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         mod: None = None,
@@ -8695,7 +8693,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[float64]]: ...
     @overload  # Nd c128, Nd +c128
-    def __rpow__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rpow__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[complex128]],
         other: ndarray[ShapeT, _dtype[_to_complex64]],
         mod: None = None,
@@ -9043,7 +9041,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rtruediv__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rtruediv__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -9055,7 +9053,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[float64]]: ...
     @overload  # Nd c128, Nd +c128
-    def __rtruediv__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rtruediv__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[complex128]],
         other: ndarray[ShapeT, _dtype[_to_complex64]],
         /,
@@ -9355,7 +9353,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rfloordiv__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rfloordiv__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -9367,7 +9365,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rfloordiv__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rfloordiv__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -9379,7 +9377,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rfloordiv__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rfloordiv__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -9657,7 +9655,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[Any]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         other: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -9669,7 +9667,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[uint64]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         other: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -9681,7 +9679,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[int64]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         other: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -9963,7 +9961,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> _2Tuple[ndarray[ShapeT, _dtype[Any]]]: ...
     @overload  # Nd u64, Nd +u64
-    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rdivmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[uint64]],
         lhs: ndarray[ShapeT, _dtype[_to_uint32]],
         /,
@@ -9975,7 +9973,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> _2Tuple[ndarray[ShapeT, _dtype[uint64]]]: ...
     @overload  # Nd i64, Nd +i64
-    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rdivmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[int64]],
         lhs: ndarray[ShapeT, _dtype[_to_int32]],
         /,
@@ -9987,7 +9985,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> _2Tuple[ndarray[ShapeT, _dtype[int64]]]: ...
     @overload  # Nd f64, Nd +f64
-    def __rdivmod__[ShapeT: _Shape](  # type: ignore[misc]
+    def __rdivmod__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[float64]],
         lhs: ndarray[ShapeT, _dtype[_to_float32]],
         /,
@@ -11942,18 +11940,1123 @@ class signedinteger(integer[_NBitT]):
     @overload
     def __ror__(self, other: integer, /) -> signedinteger: ...
 
-int8 = signedinteger[_8Bit]
-int16 = signedinteger[_16Bit]
-int32 = signedinteger[_32Bit]
-int64 = signedinteger[_64Bit]
+@disjoint_base
+class int8(signedinteger[_8Bit]):
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: int | int8 | bool_, /) -> Self: ...
+    @overload
+    def __add__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __add__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __add__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __add__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __add__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __add__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __add__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-byte = signedinteger[_NBitByte]
-short = signedinteger[_NBitShort]
-intc = signedinteger[_NBitIntC]
-intp = signedinteger[_NBitIntP]
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __radd__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __radd__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __radd__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __radd__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __radd__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __radd__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: int | int8 | bool_, /) -> Self: ...
+    @overload
+    def __sub__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __sub__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __sub__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __sub__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __sub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __sub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rsub__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __rsub__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rsub__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rsub__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rsub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rsub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: int | int8 | bool_, /) -> Self: ...
+    @overload
+    def __mul__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __mul__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __mul__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __mul__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __mul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __mul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rmul__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __rmul__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rmul__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rmul__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rmul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rmul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: int | int8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: uint8, mod: None = None, /) -> int16: ...
+    @overload
+    def __pow__(self, other: uint16, mod: None = None, /) -> int32: ...
+    @overload
+    def __pow__(self, other: uint32, mod: None = None, /) -> int64: ...
+    @overload
+    def __pow__(self, other: float64 | uint64, mod: None = None, /) -> float64: ...
+    @overload
+    def __pow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __pow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: int | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: uint8, mod: None = None, /) -> int16: ...
+    @overload
+    def __rpow__(self, other: uint16, mod: None = None, /) -> int32: ...
+    @overload
+    def __rpow__(self, other: uint32, mod: None = None, /) -> int64: ...
+    @overload
+    def __rpow__(self, other: float64 | uint64, mod: None = None, /) -> float64: ...
+    @overload
+    def __rpow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __rpow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __floordiv__(self, other: int | int8 | bool_, /) -> Self: ...
+    @overload
+    def __floordiv__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __floordiv__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __floordiv__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __floordiv__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __floordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rfloordiv__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rfloordiv__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __rfloordiv__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rfloordiv__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rfloordiv__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rfloordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mod__(self, other: int | int8 | bool_, /) -> Self: ...
+    @overload
+    def __mod__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __mod__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __mod__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __mod__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __mod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmod__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rmod__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __rmod__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rmod__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rmod__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rmod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __divmod__(self, other: int | int8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __divmod__(self, other: uint8, /) -> _2Tuple[int16]: ...
+    @overload
+    def __divmod__(self, other: uint16, /) -> _2Tuple[int32]: ...
+    @overload
+    def __divmod__(self, other: uint32, /) -> _2Tuple[int64]: ...
+    @overload
+    def __divmod__(self, other: float64 | uint64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __divmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rdivmod__(self, other: int | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __rdivmod__(self, other: uint8, /) -> _2Tuple[int16]: ...
+    @overload
+    def __rdivmod__(self, other: uint16, /) -> _2Tuple[int32]: ...
+    @overload
+    def __rdivmod__(self, other: uint32, /) -> _2Tuple[int64]: ...
+    @overload
+    def __rdivmod__(self, other: float64 | uint64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __rdivmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __lshift__(self, other: int | int8 | bool_, /) -> Self: ...
+    @overload
+    def __lshift__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __lshift__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __lshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rlshift__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rlshift__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __rlshift__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rlshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rshift__(self, other: int | int8 | bool_, /) -> Self: ...
+    @overload
+    def __rshift__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __rshift__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rrshift__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rrshift__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __rrshift__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rrshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __and__(self, other: int | int8 | bool_, /) -> Self: ...
+    @overload
+    def __and__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __and__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __and__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rand__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rand__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __rand__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rand__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __xor__(self, other: int | int8 | bool_, /) -> Self: ...
+    @overload
+    def __xor__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __xor__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __xor__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rxor__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rxor__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __rxor__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rxor__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __or__(self, other: int | int8 | bool_, /) -> Self: ...
+    @overload
+    def __or__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __or__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __or__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __ror__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __ror__(self, other: uint8, /) -> int16: ...
+    @overload
+    def __ror__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __ror__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+@disjoint_base
+class int16(signedinteger[_16Bit]):
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: int | int16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __add__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __add__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __add__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __add__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __add__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __add__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: int | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __radd__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __radd__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __radd__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __radd__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __radd__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: int | int16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __sub__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __sub__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __sub__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __sub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __sub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: int | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rsub__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rsub__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rsub__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rsub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rsub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: int | int16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mul__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __mul__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __mul__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __mul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __mul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: int | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmul__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rmul__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rmul__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rmul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rmul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: int | int16 | int8 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: uint16, mod: None = None, /) -> int32: ...
+    @overload
+    def __pow__(self, other: uint32, mod: None = None, /) -> int64: ...
+    @overload
+    def __pow__(self, other: float64 | uint64, mod: None = None, /) -> float64: ...
+    @overload
+    def __pow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __pow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: int | int8 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: uint16, mod: None = None, /) -> int32: ...
+    @overload
+    def __rpow__(self, other: uint32, mod: None = None, /) -> int64: ...
+    @overload
+    def __rpow__(self, other: float64 | uint64, mod: None = None, /) -> float64: ...
+    @overload
+    def __rpow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __rpow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __floordiv__(self, other: int | int16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __floordiv__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __floordiv__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __floordiv__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __floordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rfloordiv__(self, other: int | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rfloordiv__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rfloordiv__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rfloordiv__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rfloordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mod__(self, other: int | int16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mod__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __mod__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __mod__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __mod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmod__(self, other: int | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmod__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rmod__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rmod__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rmod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __divmod__(self, other: int | int16 | int8 | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __divmod__(self, other: uint16, /) -> _2Tuple[int32]: ...
+    @overload
+    def __divmod__(self, other: uint32, /) -> _2Tuple[int64]: ...
+    @overload
+    def __divmod__(self, other: float64 | uint64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __divmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rdivmod__(self, other: int | int8 | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __rdivmod__(self, other: uint16, /) -> _2Tuple[int32]: ...
+    @overload
+    def __rdivmod__(self, other: uint32, /) -> _2Tuple[int64]: ...
+    @overload
+    def __rdivmod__(self, other: float64 | uint64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __rdivmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __lshift__(self, other: int | int16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __lshift__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __lshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rlshift__(self, other: int | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rlshift__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rlshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rshift__(self, other: int | int16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rshift__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rrshift__(self, other: int | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rrshift__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rrshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __and__(self, other: int | int16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __and__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __and__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rand__(self, other: int | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rand__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rand__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __xor__(self, other: int | int16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __xor__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __xor__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rxor__(self, other: int | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rxor__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __rxor__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __or__(self, other: int | int16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __or__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __or__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __ror__(self, other: int | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __ror__(self, other: uint16, /) -> int32: ...
+    @overload
+    def __ror__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+@disjoint_base
+class int32(signedinteger[_32Bit]):
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __add__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __add__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __add__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __add__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __add__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __radd__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __radd__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __radd__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __sub__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __sub__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __sub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __sub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rsub__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rsub__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rsub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mul__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __mul__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __mul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __mul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmul__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rmul__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rmul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: uint32, mod: None = None, /) -> int64: ...
+    @overload
+    def __pow__(self, other: float64 | uint64, mod: None = None, /) -> float64: ...
+    @overload
+    def __pow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: uint32, mod: None = None, /) -> int64: ...
+    @overload
+    def __rpow__(self, other: float64 | uint64, mod: None = None, /) -> float64: ...
+    @overload
+    def __rpow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __floordiv__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __floordiv__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __floordiv__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __floordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rfloordiv__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rfloordiv__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rfloordiv__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rfloordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mod__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mod__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __mod__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __mod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmod__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmod__(self, other: uint32, /) -> int64: ...
+    @overload
+    def __rmod__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rmod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __divmod__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __divmod__(self, other: uint32, /) -> _2Tuple[int64]: ...
+    @overload
+    def __divmod__(self, other: float64 | uint64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __divmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rdivmod__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __rdivmod__(self, other: uint32, /) -> _2Tuple[int64]: ...
+    @overload
+    def __rdivmod__(self, other: float64 | uint64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __rdivmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __lshift__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __lshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rlshift__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rlshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rshift__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rrshift__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rrshift__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __and__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __and__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rand__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rand__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __xor__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __xor__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rxor__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rxor__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __or__(self, other: int | int32 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __or__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __ror__(self, other: int | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __ror__(self, other: uint32, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+@disjoint_base
+class int64(signedinteger[_64Bit]):
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __add__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __add__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __add__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __add__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __radd__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __radd__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __sub__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __sub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __sub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rsub__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rsub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mul__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __mul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __mul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmul__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rmul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: float64 | uint64, mod: None = None, /) -> float64: ...
+    @overload
+    def __pow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: float64 | uint64, mod: None = None, /) -> float64: ...
+    @overload
+    def __rpow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __floordiv__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __floordiv__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __floordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rfloordiv__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rfloordiv__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rfloordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mod__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mod__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __mod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmod__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmod__(self, other: float64 | uint64, /) -> float64: ...
+    @overload
+    def __rmod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __divmod__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __divmod__(self, other: float64 | uint64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __divmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rdivmod__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __rdivmod__(self, other: float64 | uint64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __rdivmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
+    def __lshift__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __rlshift__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
+    def __rshift__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __rrshift__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
+    def __and__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __rand__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
+    def __xor__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __rxor__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
+    def __or__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __ror__(self, other: int | signedinteger | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+byte = int8
+short = int16
+intc = int32
+intp = int64  # NOTE: assumes a 64-bit platform
 int_ = intp
-long = signedinteger[_NBitLong]
-longlong = signedinteger[_NBitLongLong]
+
+# NOTE: the `!=` works around a pyright bug with conditionally defined aliases
+if sys.platform != "win32":
+    long = int64
+else:
+    long = int32
+
+longlong = int64
 
 class unsignedinteger(integer[_NBitT]):
     def __new__(cls, value: _ConvertibleToInt = 0, /) -> Self: ...
@@ -12122,7 +13225,7 @@ class unsignedinteger(integer[_NBitT]):
 
     @override  # type: ignore[override]
     @overload
-    def __lshift__(self, other: int | int8 | bool_ | Self, /) -> Self: ...
+    def __lshift__(self, other: int | uint8 | bool_ | Self, /) -> Self: ...
     @overload
     def __lshift__(self, other: unsignedinteger, /) -> unsignedinteger: ...
     @overload
@@ -12130,7 +13233,7 @@ class unsignedinteger(integer[_NBitT]):
 
     @override  # type: ignore[override]
     @overload
-    def __rlshift__(self, other: int | int8 | bool_, /) -> Self: ...
+    def __rlshift__(self, other: int | uint8 | bool_, /) -> Self: ...
     @overload
     def __rlshift__(self, other: unsignedinteger, /) -> unsignedinteger: ...
     @overload
@@ -12138,7 +13241,7 @@ class unsignedinteger(integer[_NBitT]):
 
     @override  # type: ignore[override]
     @overload
-    def __rshift__(self, other: int | int8 | bool_ | Self, /) -> Self: ...
+    def __rshift__(self, other: int | uint8 | bool_ | Self, /) -> Self: ...
     @overload
     def __rshift__(self, other: unsignedinteger, /) -> unsignedinteger: ...
     @overload
@@ -12146,7 +13249,7 @@ class unsignedinteger(integer[_NBitT]):
 
     @override  # type: ignore[override]
     @overload
-    def __rrshift__(self, other: int | int8 | bool_, /) -> Self: ...
+    def __rrshift__(self, other: int | uint8 | bool_, /) -> Self: ...
     @overload
     def __rrshift__(self, other: unsignedinteger, /) -> unsignedinteger: ...
     @overload
@@ -12154,7 +13257,7 @@ class unsignedinteger(integer[_NBitT]):
 
     @override  # type: ignore[override]
     @overload
-    def __and__(self, other: int | int8 | bool_ | Self, /) -> Self: ...
+    def __and__(self, other: int | uint8 | bool_ | Self, /) -> Self: ...
     @overload
     def __and__(self, other: unsignedinteger, /) -> unsignedinteger: ...
     @overload
@@ -12162,7 +13265,7 @@ class unsignedinteger(integer[_NBitT]):
 
     @override  # type: ignore[override]
     @overload
-    def __rand__(self, other: int | int8 | bool_, /) -> Self: ...
+    def __rand__(self, other: int | uint8 | bool_, /) -> Self: ...
     @overload
     def __rand__(self, other: unsignedinteger, /) -> unsignedinteger: ...
     @overload
@@ -12170,7 +13273,7 @@ class unsignedinteger(integer[_NBitT]):
 
     @override  # type: ignore[override]
     @overload
-    def __xor__(self, other: int | int8 | bool_ | Self, /) -> Self: ...
+    def __xor__(self, other: int | uint8 | bool_ | Self, /) -> Self: ...
     @overload
     def __xor__(self, other: unsignedinteger, /) -> unsignedinteger: ...
     @overload
@@ -12178,7 +13281,7 @@ class unsignedinteger(integer[_NBitT]):
 
     @override  # type: ignore[override]
     @overload
-    def __rxor__(self, other: int | int8 | bool_, /) -> Self: ...
+    def __rxor__(self, other: int | uint8 | bool_, /) -> Self: ...
     @overload
     def __rxor__(self, other: unsignedinteger, /) -> unsignedinteger: ...
     @overload
@@ -12186,7 +13289,7 @@ class unsignedinteger(integer[_NBitT]):
 
     @override  # type: ignore[override]
     @overload
-    def __or__(self, other: int | int8 | bool_ | Self, /) -> Self: ...
+    def __or__(self, other: int | uint8 | bool_ | Self, /) -> Self: ...
     @overload
     def __or__(self, other: unsignedinteger, /) -> unsignedinteger: ...
     @overload
@@ -12194,24 +13297,985 @@ class unsignedinteger(integer[_NBitT]):
 
     @override  # type: ignore[override]
     @overload
-    def __ror__(self, other: int | int8 | bool_, /) -> Self: ...
+    def __ror__(self, other: int | uint8 | bool_, /) -> Self: ...
     @overload
     def __ror__(self, other: unsignedinteger, /) -> unsignedinteger: ...
     @overload
     def __ror__(self, other: signedinteger, /) -> signedinteger: ...
 
-uint8 = unsignedinteger[_8Bit]
-uint16 = unsignedinteger[_16Bit]
-uint32 = unsignedinteger[_32Bit]
-uint64 = unsignedinteger[_64Bit]
+@disjoint_base
+class uint8(unsignedinteger[_8Bit]):
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __add__(self, other: int8, /) -> int16: ...
+    @overload
+    def __add__(self, other: float64, /) -> float64: ...
+    @overload
+    def __add__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __add__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __add__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-ubyte = unsignedinteger[_NBitByte]
-ushort = unsignedinteger[_NBitShort]
-uintc = unsignedinteger[_NBitIntC]
-uintp = unsignedinteger[_NBitIntP]
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __radd__(self, other: int8, /) -> int16: ...
+    @overload
+    def __radd__(self, other: float64, /) -> float64: ...
+    @overload
+    def __radd__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __radd__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __sub__(self, other: int8, /) -> int16: ...
+    @overload
+    def __sub__(self, other: float64, /) -> float64: ...
+    @overload
+    def __sub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __sub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rsub__(self, other: int8, /) -> int16: ...
+    @overload
+    def __rsub__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rsub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rsub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mul__(self, other: int8, /) -> int16: ...
+    @overload
+    def __mul__(self, other: float64, /) -> float64: ...
+    @overload
+    def __mul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __mul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rmul__(self, other: int8, /) -> int16: ...
+    @overload
+    def __rmul__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rmul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rmul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: int | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: int8, mod: None = None, /) -> int16: ...
+    @overload
+    def __pow__(self, other: float64, mod: None = None, /) -> float64: ...
+    @overload
+    def __pow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __pow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: int | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: int8, mod: None = None, /) -> int16: ...
+    @overload
+    def __rpow__(self, other: float64, mod: None = None, /) -> float64: ...
+    @overload
+    def __rpow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __rpow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __floordiv__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __floordiv__(self, other: int8, /) -> int16: ...
+    @overload
+    def __floordiv__(self, other: float64, /) -> float64: ...
+    @overload
+    def __floordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rfloordiv__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rfloordiv__(self, other: int8, /) -> int16: ...
+    @overload
+    def __rfloordiv__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rfloordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mod__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mod__(self, other: int8, /) -> int16: ...
+    @overload
+    def __mod__(self, other: float64, /) -> float64: ...
+    @overload
+    def __mod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmod__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rmod__(self, other: int8, /) -> int16: ...
+    @overload
+    def __rmod__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rmod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __divmod__(self, other: int | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __divmod__(self, other: int8, /) -> _2Tuple[int16]: ...
+    @overload
+    def __divmod__(self, other: float64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __divmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rdivmod__(self, other: int | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __rdivmod__(self, other: int8, /) -> _2Tuple[int16]: ...
+    @overload
+    def __rdivmod__(self, other: float64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __rdivmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __lshift__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __lshift__(self, other: int8, /) -> int16: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rlshift__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rlshift__(self, other: int8, /) -> int16: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rshift__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rshift__(self, other: int8, /) -> int16: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rrshift__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rrshift__(self, other: int8, /) -> int16: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __and__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __and__(self, other: int8, /) -> int16: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rand__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rand__(self, other: int8, /) -> int16: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __xor__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __xor__(self, other: int8, /) -> int16: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rxor__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __rxor__(self, other: int8, /) -> int16: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __or__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __or__(self, other: int8, /) -> int16: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __ror__(self, other: int | bool_, /) -> Self: ...
+    @overload
+    def __ror__(self, other: int8, /) -> int16: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+@disjoint_base
+class uint16(unsignedinteger[_16Bit]):
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __add__(self, other: int16 | int8, /) -> int32: ...
+    @overload
+    def __add__(self, other: float64, /) -> float64: ...
+    @overload
+    def __add__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __add__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __add__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __radd__(self, other: int16 | int8, /) -> int32: ...
+    @overload
+    def __radd__(self, other: float64, /) -> float64: ...
+    @overload
+    def __radd__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __radd__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __sub__(self, other: int16 | int8, /) -> int32: ...
+    @overload
+    def __sub__(self, other: float64, /) -> float64: ...
+    @overload
+    def __sub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __sub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rsub__(self, other: int16 | int8, /) -> int32: ...
+    @overload
+    def __rsub__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rsub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rsub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mul__(self, other: int16 | int8, /) -> int32: ...
+    @overload
+    def __mul__(self, other: float64, /) -> float64: ...
+    @overload
+    def __mul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __mul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmul__(self, other: int16 | int8, /) -> int32: ...
+    @overload
+    def __rmul__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rmul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rmul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: int | uint16 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: int16 | int8, mod: None = None, /) -> int32: ...
+    @overload
+    def __pow__(self, other: float64, mod: None = None, /) -> float64: ...
+    @overload
+    def __pow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __pow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: int | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: int16 | int8, mod: None = None, /) -> int32: ...
+    @overload
+    def __rpow__(self, other: float64, mod: None = None, /) -> float64: ...
+    @overload
+    def __rpow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __rpow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __floordiv__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __floordiv__(self, other: int16 | int8, /) -> int32: ...
+    @overload
+    def __floordiv__(self, other: float64, /) -> float64: ...
+    @overload
+    def __floordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rfloordiv__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rfloordiv__(self, other: int16 | int8, /) -> int32: ...
+    @overload
+    def __rfloordiv__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rfloordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mod__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mod__(self, other: int16 | int8, /) -> int32: ...
+    @overload
+    def __mod__(self, other: float64, /) -> float64: ...
+    @overload
+    def __mod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmod__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmod__(self, other: int16 | int8, /) -> int32: ...
+    @overload
+    def __rmod__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rmod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __divmod__(self, other: int | uint16 | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __divmod__(self, other: int16 | int8, /) -> _2Tuple[int32]: ...
+    @overload
+    def __divmod__(self, other: float64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __divmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rdivmod__(self, other: int | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __rdivmod__(self, other: int16 | int8, /) -> _2Tuple[int32]: ...
+    @overload
+    def __rdivmod__(self, other: float64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __rdivmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __lshift__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __lshift__(self, other: int16 | int8, /) -> int32: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rlshift__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rlshift__(self, other: int16 | int8, /) -> int32: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rshift__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rshift__(self, other: int16 | int8, /) -> int32: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rrshift__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rrshift__(self, other: int16 | int8, /) -> int32: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __and__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __and__(self, other: int16 | int8, /) -> int32: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rand__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rand__(self, other: int16 | int8, /) -> int32: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __xor__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __xor__(self, other: int16 | int8, /) -> int32: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rxor__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rxor__(self, other: int16 | int8, /) -> int32: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __or__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __or__(self, other: int16 | int8, /) -> int32: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __ror__(self, other: int | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __ror__(self, other: int16 | int8, /) -> int32: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+@disjoint_base
+class uint32(unsignedinteger[_32Bit]):
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __add__(self, other: int32 | int16 | int8, /) -> int64: ...
+    @overload
+    def __add__(self, other: float64, /) -> float64: ...
+    @overload
+    def __add__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __add__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __add__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __radd__(self, other: int32 | int16 | int8, /) -> int64: ...
+    @overload
+    def __radd__(self, other: float64, /) -> float64: ...
+    @overload
+    def __radd__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __radd__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __sub__(self, other: int32 | int16 | int8, /) -> int64: ...
+    @overload
+    def __sub__(self, other: float64, /) -> float64: ...
+    @overload
+    def __sub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __sub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rsub__(self, other: int32 | int16 | int8, /) -> int64: ...
+    @overload
+    def __rsub__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rsub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rsub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mul__(self, other: int32 | int16 | int8, /) -> int64: ...
+    @overload
+    def __mul__(self, other: float64, /) -> float64: ...
+    @overload
+    def __mul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __mul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmul__(self, other: int32 | int16 | int8, /) -> int64: ...
+    @overload
+    def __rmul__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rmul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rmul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: int | uint32 | uint16 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: int32 | int16 | int8, mod: None = None, /) -> int64: ...
+    @overload
+    def __pow__(self, other: float64, mod: None = None, /) -> float64: ...
+    @overload
+    def __pow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __pow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: int | uint16 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: int32 | int16 | int8, mod: None = None, /) -> int64: ...
+    @overload
+    def __rpow__(self, other: float64, mod: None = None, /) -> float64: ...
+    @overload
+    def __rpow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __rpow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __floordiv__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __floordiv__(self, other: int32 | int16 | int8, /) -> int64: ...
+    @overload
+    def __floordiv__(self, other: float64, /) -> float64: ...
+    @overload
+    def __floordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rfloordiv__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rfloordiv__(self, other: int32 | int16 | int8, /) -> int64: ...
+    @overload
+    def __rfloordiv__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rfloordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mod__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mod__(self, other: int32 | int16 | int8, /) -> int64: ...
+    @overload
+    def __mod__(self, other: float64, /) -> float64: ...
+    @overload
+    def __mod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmod__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmod__(self, other: int32 | int16 | int8, /) -> int64: ...
+    @overload
+    def __rmod__(self, other: float64, /) -> float64: ...
+    @overload
+    def __rmod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __divmod__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __divmod__(self, other: int32 | int16 | int8, /) -> _2Tuple[int64]: ...
+    @overload
+    def __divmod__(self, other: float64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __divmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rdivmod__(self, other: int | uint16 | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __rdivmod__(self, other: int32 | int16 | int8, /) -> _2Tuple[int64]: ...
+    @overload
+    def __rdivmod__(self, other: float64, /) -> _2Tuple[float64]: ...
+    @overload
+    def __rdivmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __lshift__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __lshift__(self, other: int32 | int16 | int8, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rlshift__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rlshift__(self, other: int32 | int16 | int8, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rshift__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rshift__(self, other: int32 | int16 | int8, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rrshift__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rrshift__(self, other: int32 | int16 | int8, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __and__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __and__(self, other: int32 | int16 | int8, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rand__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rand__(self, other: int32 | int16 | int8, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __xor__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __xor__(self, other: int32 | int16 | int8, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rxor__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rxor__(self, other: int32 | int16 | int8, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __or__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __or__(self, other: int32 | int16 | int8, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __ror__(self, other: int | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __ror__(self, other: int32 | int16 | int8, /) -> int64: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+@disjoint_base
+class uint64(unsignedinteger[_64Bit]):
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: int | unsignedinteger | bool_, /) -> Self: ...
+    @overload
+    def __add__(self, other: float64 | signedinteger, /) -> float64: ...
+    @overload
+    def __add__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __add__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __add__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __radd__(self, other: float64 | signedinteger, /) -> float64: ...
+    @overload
+    def __radd__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __radd__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: int | unsignedinteger | bool_, /) -> Self: ...
+    @overload
+    def __sub__(self, other: float64 | signedinteger, /) -> float64: ...
+    @overload
+    def __sub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __sub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rsub__(self, other: float64 | signedinteger, /) -> float64: ...
+    @overload
+    def __rsub__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rsub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: int | unsignedinteger | bool_, /) -> Self: ...
+    @overload
+    def __mul__(self, other: float64 | signedinteger, /) -> float64: ...
+    @overload
+    def __mul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __mul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmul__(self, other: float64 | signedinteger, /) -> float64: ...
+    @overload
+    def __rmul__(self, other: float, /) -> float64 | Any: ...
+    @overload
+    def __rmul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: int | unsignedinteger | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: float64 | signedinteger, mod: None = None, /) -> float64: ...
+    @overload
+    def __pow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __pow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: int | uint32 | uint16 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: float64 | signedinteger, mod: None = None, /) -> float64: ...
+    @overload
+    def __rpow__(self, other: float, mod: None = None, /) -> float64 | Any: ...
+    @overload
+    def __rpow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __floordiv__(self, other: int | unsignedinteger | bool_, /) -> Self: ...
+    @overload
+    def __floordiv__(self, other: float64 | signedinteger, /) -> float64: ...
+    @overload
+    def __floordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rfloordiv__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rfloordiv__(self, other: float64 | signedinteger, /) -> float64: ...
+    @overload
+    def __rfloordiv__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mod__(self, other: int | unsignedinteger | bool_, /) -> Self: ...
+    @overload
+    def __mod__(self, other: float64 | signedinteger, /) -> float64: ...
+    @overload
+    def __mod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmod__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmod__(self, other: float64 | signedinteger, /) -> float64: ...
+    @overload
+    def __rmod__(self, other: float, /) -> float64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __divmod__(self, other: int | unsignedinteger | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __divmod__(self, other: float64 | signedinteger, /) -> _2Tuple[float64]: ...
+    @overload
+    def __divmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rdivmod__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> _2Tuple[Self]: ...
+    @overload
+    def __rdivmod__(self, other: float64 | signedinteger, /) -> _2Tuple[float64]: ...
+    @overload
+    def __rdivmod__(self, other: float, /) -> _2Tuple[float64 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
+    def __lshift__(self, other: int | unsignedinteger | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __rlshift__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
+    def __rshift__(self, other: int | unsignedinteger | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __rrshift__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
+    def __and__(self, other: int | unsignedinteger | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __rand__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
+    def __xor__(self, other: int | unsignedinteger | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __rxor__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
+    def __or__(self, other: int | unsignedinteger | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    @override
+    def __ror__(self, other: int | uint32 | uint16 | uint8 | bool_, /) -> Self: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+ubyte = uint8
+ushort = uint16
+uintc = uint32
+uintp = uint64  # NOTE: assumes a 64-bit platform
 uint = uintp
-ulong = unsignedinteger[_NBitLong]
-ulonglong = unsignedinteger[_NBitLongLong]
+
+# NOTE: the `!=` works around a pyright bug with conditionally defined aliases
+if sys.platform != "win32":
+    ulong = uint64
+else:
+    ulong = uint32
+
+ulonglong = uint64
 
 class inexact(number[_NBitT, _InexactItemT_co], Generic[_NBitT, _InexactItemT_co]):
     @abstractmethod
@@ -12366,12 +14430,427 @@ class floating(_RealMixin, _RoundMixin, inexact[_NBitT, float]):
     @overload
     def __rdivmod__(self, other: float, /) -> _2Tuple[Self]: ...
 
-    # NOTE: `is_integer` and `as_integer_ratio` are technically defined in the concrete subtypes
+@disjoint_base
+class float16(floating[_16Bit]):
+    @property
+    def itemsize(self) -> L[2]: ...
+    @property
+    def nbytes(self) -> L[2]: ...
+
+    #
     def is_integer(self, /) -> py_bool: ...
     def as_integer_ratio(self, /) -> tuple[int, int]: ...
 
-float16 = floating[_16Bit]
-float32 = floating[_32Bit]
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: int | float16 | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __add__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __add__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __add__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __add__(self, other: float, /) -> float16 | Any: ...
+    @overload
+    def __add__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: int | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __radd__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __radd__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __radd__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: float, /) -> float16 | Any: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: int | float16 | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __sub__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __sub__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __sub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: float, /) -> float16 | Any: ...
+    @overload
+    def __sub__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: int | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __rsub__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __rsub__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __rsub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: float, /) -> float16 | Any: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: int | float16 | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __mul__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __mul__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __mul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: float, /) -> float16 | Any: ...
+    @overload
+    def __mul__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: int | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __rmul__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __rmul__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __rmul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: float, /) -> float16 | Any: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __truediv__(self, other: int | float16 | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __truediv__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __truediv__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __truediv__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __truediv__(self, other: float, /) -> float16 | Any: ...
+    @overload
+    def __truediv__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rtruediv__(self, other: int | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __rtruediv__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __rtruediv__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __rtruediv__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rtruediv__(self, other: float, /) -> float16 | Any: ...
+    @overload
+    def __rtruediv__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: int | float16 | int8 | uint8 | bool_, mod: None = None, /) -> float16: ...
+    @overload
+    def __pow__(self, other: int16 | uint16, mod: None = None, /) -> float32: ...
+    @overload
+    def __pow__(self, other: float64 | int64 | uint64 | int32 | uint32, mod: None = None, /) -> float64: ...
+    @overload
+    def __pow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: float, mod: None = None, /) -> float16 | Any: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: int | int8 | uint8 | bool_, mod: None = None, /) -> float16: ...
+    @overload
+    def __rpow__(self, other: int16 | uint16, mod: None = None, /) -> float32: ...
+    @overload
+    def __rpow__(self, other: float64 | int64 | uint64 | int32 | uint32, mod: None = None, /) -> float64: ...
+    @overload
+    def __rpow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: float, mod: None = None, /) -> float16 | Any: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __floordiv__(self, other: int | float16 | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __floordiv__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __floordiv__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __floordiv__(self, other: float, /) -> float16 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rfloordiv__(self, other: int | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __rfloordiv__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __rfloordiv__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __rfloordiv__(self, other: float, /) -> float16 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mod__(self, other: int | float16 | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __mod__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __mod__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __mod__(self, other: float, /) -> float16 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmod__(self, other: int | int8 | uint8 | bool_, /) -> float16: ...
+    @overload
+    def __rmod__(self, other: int16 | uint16, /) -> float32: ...
+    @overload
+    def __rmod__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __rmod__(self, other: float, /) -> float16 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __divmod__(self, other: int | float16 | int8 | uint8 | bool_, /) -> _2Tuple[float16]: ...
+    @overload
+    def __divmod__(self, other: int16 | uint16, /) -> _2Tuple[float32]: ...
+    @overload
+    def __divmod__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> _2Tuple[float64]: ...
+    @overload
+    def __divmod__(self, other: float, /) -> _2Tuple[float16 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rdivmod__(self, other: int | int8 | uint8 | bool_, /) -> _2Tuple[float16]: ...
+    @overload
+    def __rdivmod__(self, other: int16 | uint16, /) -> _2Tuple[float32]: ...
+    @overload
+    def __rdivmod__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> _2Tuple[float64]: ...
+    @overload
+    def __rdivmod__(self, other: float, /) -> _2Tuple[float16 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+@disjoint_base
+class float32(floating[_32Bit]):
+    @property
+    def itemsize(self) -> L[4]: ...
+    @property
+    def nbytes(self) -> L[4]: ...
+
+    #
+    def is_integer(self, /) -> py_bool: ...
+    def as_integer_ratio(self, /) -> tuple[int, int]: ...
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __add__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __add__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __add__(self, other: float, /) -> float32 | Any: ...
+    @overload
+    def __add__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: int | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __radd__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __radd__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: float, /) -> float32 | Any: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __sub__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __sub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: float, /) -> float32 | Any: ...
+    @overload
+    def __sub__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: int | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __rsub__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __rsub__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: float, /) -> float32 | Any: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __mul__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __mul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: float, /) -> float32 | Any: ...
+    @overload
+    def __mul__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: int | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __rmul__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __rmul__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: float, /) -> float32 | Any: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __truediv__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __truediv__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __truediv__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __truediv__(self, other: float, /) -> float32 | Any: ...
+    @overload
+    def __truediv__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rtruediv__(self, other: int | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __rtruediv__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __rtruediv__(self, other: complex128, /) -> complex128: ...
+    @overload
+    def __rtruediv__(self, other: float, /) -> float32 | Any: ...
+    @overload
+    def __rtruediv__(self, other: complex, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, mod: None = None, /) -> float32: ...
+    @overload
+    def __pow__(self, other: float64 | int64 | uint64 | int32 | uint32, mod: None = None, /) -> float64: ...
+    @overload
+    def __pow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: float, mod: None = None, /) -> float32 | Any: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: int | float16 | int16 | uint16 | int8 | uint8 | bool_, mod: None = None, /) -> float32: ...
+    @overload
+    def __rpow__(self, other: float64 | int64 | uint64 | int32 | uint32, mod: None = None, /) -> float64: ...
+    @overload
+    def __rpow__(self, other: complex128, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: float, mod: None = None, /) -> float32 | Any: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex64 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __floordiv__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __floordiv__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __floordiv__(self, other: float, /) -> float32 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rfloordiv__(self, other: int | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __rfloordiv__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __rfloordiv__(self, other: float, /) -> float32 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mod__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __mod__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __mod__(self, other: float, /) -> float32 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmod__(self, other: int | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> float32: ...
+    @overload
+    def __rmod__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> float64: ...
+    @overload
+    def __rmod__(self, other: float, /) -> float32 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __divmod__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> _2Tuple[float32]: ...
+    @overload
+    def __divmod__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> _2Tuple[float64]: ...
+    @overload
+    def __divmod__(self, other: float, /) -> _2Tuple[float32 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rdivmod__(self, other: int | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> _2Tuple[float32]: ...
+    @overload
+    def __rdivmod__(self, other: float64 | int64 | uint64 | int32 | uint32, /) -> _2Tuple[float64]: ...
+    @overload
+    def __rdivmod__(self, other: float, /) -> _2Tuple[float32 | Any]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
 # either a C `double`, `float`, or `longdouble`
 @disjoint_base
@@ -12393,133 +14872,215 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     def __getformat__(cls, typestr: L["double", "float"], /) -> str: ...  # undocumented
 
     # float64-specific operator overrides
-    # NOTE: Mypy reports [misc] errors about "unsafely overlapping signatures" for the
-    # reflected methods. But since they are identical to the non-reflected versions,
-    # these errors appear to be false positives.
 
     @overload  # type: ignore[override]
     def __add__(self, other: _Float64_co, /) -> float64: ...
     @overload
-    def __add__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
+    def __add__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __add__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
+    def __add__(self, other: complex64, /) -> complex128: ...
     @overload
-    def __add__(self, other: complex, /) -> float64 | complex128: ...
+    def __add__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
+    #
+    @overload
     def __radd__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
     @overload
-    def __radd__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...  # type: ignore[misc]
+    def __radd__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __radd__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
+    def __radd__(self, other: complex64, /) -> complex128: ...  # type: ignore[misc]
     @overload
-    def __radd__(self, other: complex, /) -> float64 | complex128: ...
+    def __radd__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
+    #
     @overload  # type: ignore[override]
     def __sub__(self, other: _Float64_co, /) -> float64: ...
     @overload
-    def __sub__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
+    def __sub__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __sub__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
+    def __sub__(self, other: complex64, /) -> complex128: ...
     @overload
-    def __sub__(self, other: complex, /) -> float64 | complex128: ...
+    def __sub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
+    #
+    @overload
     def __rsub__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
     @overload
-    def __rsub__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...  # type: ignore[misc]
+    def __rsub__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __rsub__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
+    def __rsub__(self, other: complex64, /) -> complex128: ...  # type: ignore[misc]
     @overload
-    def __rsub__(self, other: complex, /) -> float64 | complex128: ...
+    def __rsub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
+    #
     @overload  # type: ignore[override]
     def __mul__(self, other: _Float64_co, /) -> float64: ...
     @overload
-    def __mul__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
+    def __mul__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __mul__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
+    def __mul__(self, other: complex64, /) -> complex128: ...
     @overload
-    def __mul__(self, other: complex, /) -> float64 | complex128: ...
+    def __mul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
+    #
+    @overload
     def __rmul__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
     @overload
-    def __rmul__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...  # type: ignore[misc]
+    def __rmul__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __rmul__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
+    def __rmul__(self, other: complex64, /) -> complex128: ...  # type: ignore[misc]
     @overload
-    def __rmul__(self, other: complex, /) -> float64 | complex128: ...
+    def __rmul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
+    #
     @overload  # type: ignore[override]
     def __truediv__(self, other: _Float64_co, /) -> float64: ...
     @overload
-    def __truediv__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
+    def __truediv__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __truediv__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
+    def __truediv__(self, other: complex64, /) -> complex128: ...
     @overload
-    def __truediv__(self, other: complex, /) -> float64 | complex128: ...
+    def __truediv__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
+    #
+    @overload
     def __rtruediv__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
     @overload
-    def __rtruediv__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...  # type: ignore[misc]
+    def __rtruediv__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __rtruediv__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
+    def __rtruediv__(self, other: complex64, /) -> complex128: ...  # type: ignore[misc]
     @overload
-    def __rtruediv__(self, other: complex, /) -> float64 | complex128: ...
+    def __rtruediv__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
+    #
     def __floordiv__(self, other: _Float64_co, /) -> float64: ...
-    @overload
-    def __floordiv__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
-    @overload
-    def __floordiv__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
-    @overload
-    def __floordiv__(self, other: complex, /) -> float64 | complex128: ...
-
-    @overload
     def __rfloordiv__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
-    @overload
-    def __rfloordiv__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
-    @overload
-    def __rfloordiv__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
-    @overload
-    def __rfloordiv__(self, other: complex, /) -> float64 | complex128: ...
 
+    #
     @overload  # type: ignore[override]
     def __pow__(self, other: _Float64_co, mod: None = None, /) -> float64: ...
     @overload
-    def __pow__(self, other: complexfloating[_64Bit, _64Bit], mod: None = None, /) -> complex128: ...
+    def __pow__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, mod: None = None, /) -> ScalarT: ...
     @overload
-    def __pow__[NBitT: NBitBase](self, other: complexfloating[NBitT], mod: None = None, /) -> complexfloating[NBitT | _64Bit]: ...
+    def __pow__(self, other: complex64, mod: None = None, /) -> complex128: ...
     @overload
-    def __pow__(self, other: complex, mod: None = None, /) -> float64 | complex128: ...
+    def __pow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
+    #
+    @overload
     def __rpow__(self, other: _Float64_co, mod: None = None, /) -> float64: ...  # type: ignore[misc]
     @overload
-    def __rpow__(self, other: complexfloating[_64Bit, _64Bit], mod: None = None, /) -> complex128: ...  # type: ignore[misc]
+    def __rpow__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, mod: None = None, /) -> ScalarT: ...
     @overload
-    def __rpow__[NBitT: NBitBase](
-        self, other: complexfloating[NBitT], mod: None = None, /
-    ) -> complexfloating[NBitT | _64Bit]: ...
+    def __rpow__(self, other: complex64, mod: None = None, /) -> complex128: ...  # type: ignore[misc]
     @overload
-    def __rpow__(self, other: complex, mod: None = None, /) -> float64 | complex128: ...
+    def __rpow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
+    #
     def __mod__(self, other: _Float64_co, /) -> float64: ...
     def __rmod__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
 
     def __divmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...
     def __rdivmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[misc]
 
-float96 = floating[_96Bit]
-float128 = floating[_128Bit]
+@disjoint_base
+class longdouble(floating[_NBitLongDouble]):
+    def is_integer(self, /) -> py_bool: ...
+    def as_integer_ratio(self, /) -> tuple[int, int]: ...
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __add__(self, other: _FloatLike_co, /) -> Self: ...
+    @overload
+    def __add__(self, other: complex | complexfloating, /) -> clongdouble: ...  # pyright: ignore[reportOverlappingOverload]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __radd__(self, other: _FloatLike_co, /) -> Self: ...
+    @overload
+    def __radd__(self, other: complex | complexfloating, /) -> clongdouble: ...  # pyright: ignore[reportOverlappingOverload]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __sub__(self, other: _FloatLike_co, /) -> Self: ...
+    @overload
+    def __sub__(self, other: complex | complexfloating, /) -> clongdouble: ...  # pyright: ignore[reportOverlappingOverload]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rsub__(self, other: _FloatLike_co, /) -> Self: ...
+    @overload
+    def __rsub__(self, other: complex | complexfloating, /) -> clongdouble: ...  # pyright: ignore[reportOverlappingOverload]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __mul__(self, other: _FloatLike_co, /) -> Self: ...
+    @overload
+    def __mul__(self, other: complex | complexfloating, /) -> clongdouble: ...  # pyright: ignore[reportOverlappingOverload]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rmul__(self, other: _FloatLike_co, /) -> Self: ...
+    @overload
+    def __rmul__(self, other: complex | complexfloating, /) -> clongdouble: ...  # pyright: ignore[reportOverlappingOverload]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __truediv__(self, other: _FloatLike_co, /) -> Self: ...
+    @overload
+    def __truediv__(self, other: complex | complexfloating, /) -> clongdouble: ...  # pyright: ignore[reportOverlappingOverload]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rtruediv__(self, other: _FloatLike_co, /) -> Self: ...
+    @overload
+    def __rtruediv__(self, other: complex | complexfloating, /) -> clongdouble: ...  # pyright: ignore[reportOverlappingOverload]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __pow__(self, other: _FloatLike_co, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: complex | complexfloating, mod: None = None, /) -> clongdouble: ...  # pyright: ignore[reportOverlappingOverload]
+
+    #
+    @override  # type: ignore[override]
+    @overload
+    def __rpow__(self, other: _FloatLike_co, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: complex | complexfloating, mod: None = None, /) -> clongdouble: ...  # pyright: ignore[reportOverlappingOverload]
+
+    #
+    @override
+    def __floordiv__(self, other: _FloatLike_co, /) -> Self: ...
+    @override
+    def __rfloordiv__(self, other: _FloatLike_co, /) -> Self: ...
+
+    #
+    @override
+    def __mod__(self, other: _FloatLike_co, /) -> Self: ...
+    @override
+    def __rmod__(self, other: _FloatLike_co, /) -> Self: ...
+
+    #
+    @override
+    def __divmod__(self, other: _FloatLike_co, /) -> _2Tuple[Self]: ...
+    @override
+    def __rdivmod__(self, other: _FloatLike_co, /) -> _2Tuple[Self]: ...
 
 half = float16
 single = float32
 double = float64
-longdouble = floating[_NBitLongDouble]
+float96 = longdouble
+float128 = longdouble
 
 # The main reason for `complexfloating` having two typevars is cosmetic.
 # It is used to clarify why `complex128`s precision is `_64Bit`, the latter
@@ -12541,97 +15102,208 @@ class complexfloating(inexact[_NBitT1, complex], Generic[_NBitT1, _NBitT2]):
     @property
     def imag(self) -> floating[_NBitT2]: ...
 
-    # NOTE: `__complex__` is technically defined in the concrete subtypes
-    def __complex__(self, /) -> complex: ...
+    #
     def __abs__(self, /) -> floating[_NBitT1 | _NBitT2]: ...  # type: ignore[override]
 
-    @overload  # type: ignore[override]
-    def __add__(self, other: _Complex64_co, /) -> complexfloating[_NBitT1, _NBitT2]: ...
-    @overload
-    def __add__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBitT1, _NBitT2] | complex128: ...
-    @overload
-    def __add__[NBitT: NBitBase](self, other: number[NBitT], /) -> complexfloating[_NBitT1, _NBitT2] | complexfloating[NBitT]: ...
+    # NOTE: `__complex__` is technically defined in the concrete subtypes
+    def __complex__(self, /) -> complex: ...
 
-    @overload  # type: ignore[override]
-    def __radd__(self, other: _Complex64_co, /) -> complexfloating[_NBitT1, _NBitT2]: ...
+    #
     @overload
-    def __radd__(self, other: complex, /) -> complexfloating[_NBitT1, _NBitT2] | complex128: ...
+    def __add__(self, other: _Complex64_co | Self, /) -> Self: ...
     @overload
-    def __radd__[NBitT: NBitBase](
-        self, other: number[NBitT], /
-    ) -> complexfloating[_NBitT1, _NBitT2] | complexfloating[NBitT]: ...
+    def __add__(self, other: longdouble | clongdouble, /) -> clongdouble: ...
+    @overload
+    def __add__(self, other: complex | number, /) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
-    def __sub__(self, other: _Complex64_co, /) -> complexfloating[_NBitT1, _NBitT2]: ...
+    #
     @overload
-    def __sub__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBitT1, _NBitT2] | complex128: ...
+    def __radd__(self, other: _Complex64_co, /) -> Self: ...
     @overload
-    def __sub__[NBitT: NBitBase](self, other: number[NBitT], /) -> complexfloating[_NBitT1, _NBitT2] | complexfloating[NBitT]: ...
+    def __radd__(self, other: longdouble | clongdouble, /) -> clongdouble: ...
+    @overload
+    def __radd__(self, other: complex | number, /) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
-    def __rsub__(self, other: _Complex64_co, /) -> complexfloating[_NBitT1, _NBitT2]: ...
+    #
     @overload
-    def __rsub__(self, other: complex, /) -> complexfloating[_NBitT1, _NBitT2] | complex128: ...
+    def __sub__(self, other: _Complex64_co | Self, /) -> Self: ...
     @overload
-    def __rsub__[NBitT: NBitBase](
-        self, other: number[NBitT], /
-    ) -> complexfloating[_NBitT1, _NBitT2] | complexfloating[NBitT]: ...
+    def __sub__(self, other: longdouble | clongdouble, /) -> clongdouble: ...
+    @overload
+    def __sub__(self, other: complex | number, /) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
-    def __mul__(self, other: _Complex64_co, /) -> complexfloating[_NBitT1, _NBitT2]: ...
+    #
     @overload
-    def __mul__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBitT1, _NBitT2] | complex128: ...
+    def __rsub__(self, other: _Complex64_co, /) -> Self: ...
     @overload
-    def __mul__[NBitT: NBitBase](self, other: number[NBitT], /) -> complexfloating[_NBitT1, _NBitT2] | complexfloating[NBitT]: ...
+    def __rsub__(self, other: longdouble | clongdouble, /) -> clongdouble: ...
+    @overload
+    def __rsub__(self, other: complex | number, /) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
-    def __rmul__(self, other: _Complex64_co, /) -> complexfloating[_NBitT1, _NBitT2]: ...
+    #
     @overload
-    def __rmul__(self, other: complex, /) -> complexfloating[_NBitT1, _NBitT2] | complex128: ...
+    def __mul__(self, other: _Complex64_co | Self, /) -> Self: ...
     @overload
-    def __rmul__[NBitT: NBitBase](
-        self, other: number[NBitT], /
-    ) -> complexfloating[_NBitT1, _NBitT2] | complexfloating[NBitT]: ...
+    def __mul__(self, other: longdouble | clongdouble, /) -> clongdouble: ...
+    @overload
+    def __mul__(self, other: complex | number, /) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
-    def __truediv__(self, other: _Complex64_co, /) -> complexfloating[_NBitT1, _NBitT2]: ...
+    #
     @overload
-    def __truediv__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBitT1, _NBitT2] | complex128: ...
+    def __rmul__(self, other: _Complex64_co, /) -> Self: ...
     @overload
-    def __truediv__[NBitT: NBitBase](
-        self, other: number[NBitT], /
-    ) -> complexfloating[_NBitT1, _NBitT2] | complexfloating[NBitT]: ...
+    def __rmul__(self, other: longdouble | clongdouble, /) -> clongdouble: ...
+    @overload
+    def __rmul__(self, other: complex | number, /) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
-    def __rtruediv__(self, other: _Complex64_co, /) -> complexfloating[_NBitT1, _NBitT2]: ...
+    #
     @overload
-    def __rtruediv__(self, other: complex, /) -> complexfloating[_NBitT1, _NBitT2] | complex128: ...
+    def __truediv__(self, other: _Complex64_co | Self, /) -> Self: ...
     @overload
-    def __rtruediv__[NBitT: NBitBase](
-        self, other: number[NBitT], /
-    ) -> complexfloating[_NBitT1, _NBitT2] | complexfloating[NBitT]: ...
+    def __truediv__(self, other: longdouble | clongdouble, /) -> clongdouble: ...
+    @overload
+    def __truediv__(self, other: complex | number, /) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
-    def __pow__(self, other: _Complex64_co, mod: None = None, /) -> complexfloating[_NBitT1, _NBitT2]: ...
+    #
     @overload
-    def __pow__(
-        self, other: complex | float64 | complex128, mod: None = None, /
-    ) -> complexfloating[_NBitT1, _NBitT2] | complex128: ...
+    def __rtruediv__(self, other: _Complex64_co, /) -> Self: ...
     @overload
-    def __pow__[NBitT: NBitBase](
-        self, other: number[NBitT], mod: None = None, /
-    ) -> complexfloating[_NBitT1, _NBitT2] | complexfloating[NBitT]: ...
+    def __rtruediv__(self, other: longdouble | clongdouble, /) -> clongdouble: ...
+    @overload
+    def __rtruediv__(self, other: complex | number, /) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
-    def __rpow__(self, other: _Complex64_co, mod: None = None, /) -> complexfloating[_NBitT1, _NBitT2]: ...
+    #
     @overload
-    def __rpow__(self, other: complex, mod: None = None, /) -> complexfloating[_NBitT1, _NBitT2] | complex128: ...
+    def __pow__(self, other: _Complex64_co | Self, mod: None = None, /) -> Self: ...
     @overload
-    def __rpow__[NBitT: NBitBase](
-        self, other: number[NBitT], mod: None = None, /
-    ) -> complexfloating[_NBitT1, _NBitT2] | complexfloating[NBitT]: ...
+    def __pow__(self, other: longdouble | clongdouble, mod: None = None, /) -> clongdouble: ...
+    @overload
+    def __pow__(self, other: complex | number, mod: None = None, /) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-complex64 = complexfloating[_32Bit]
+    #
+    @overload
+    def __rpow__(self, other: _Complex64_co, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: longdouble | clongdouble, mod: None = None, /) -> clongdouble: ...
+    @overload
+    def __rpow__(self, other: complex | number, mod: None = None, /) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+@disjoint_base
+class complex64(complexfloating[_32Bit, _32Bit]):
+    @property
+    def itemsize(self) -> L[8]: ...
+    @property
+    def nbytes(self) -> L[8]: ...
+
+    #
+    @property
+    @override
+    def real(self) -> float32: ...
+    @property
+    @override
+    def imag(self) -> float32: ...
+    @override
+    def __abs__(self) -> float32: ...  # type: ignore[override]
+
+    #
+    @overload  # type: ignore[override]
+    def __add__(self, other: int | complex64 | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __add__(self, other: complex128 | float64 | int64 | uint64 | int32 | uint32, /) -> complex128: ...
+    @overload
+    def __add__(self, other: longdouble, /) -> clongdouble: ...
+    @overload
+    def __add__(self, other: complex, /) -> Self | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __radd__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __radd__(self, other: complex128 | float64 | int64 | uint64 | int32 | uint32, /) -> complex128: ...
+    @overload
+    def __radd__(self, other: longdouble, /) -> clongdouble: ...
+    @overload
+    def __radd__(self, other: complex, /) -> Self | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __sub__(self, other: int | complex64 | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __sub__(self, other: complex128 | float64 | int64 | uint64 | int32 | uint32, /) -> complex128: ...
+    @overload
+    def __sub__(self, other: longdouble, /) -> clongdouble: ...
+    @overload
+    def __sub__(self, other: complex, /) -> Self | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __rsub__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rsub__(self, other: complex128 | float64 | int64 | uint64 | int32 | uint32, /) -> complex128: ...
+    @overload
+    def __rsub__(self, other: longdouble, /) -> clongdouble: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> Self | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __mul__(self, other: int | complex64 | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __mul__(self, other: complex128 | float64 | int64 | uint64 | int32 | uint32, /) -> complex128: ...
+    @overload
+    def __mul__(self, other: longdouble, /) -> clongdouble: ...
+    @overload
+    def __mul__(self, other: complex, /) -> Self | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __rmul__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rmul__(self, other: complex128 | float64 | int64 | uint64 | int32 | uint32, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: longdouble, /) -> clongdouble: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> Self | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __truediv__(self, other: int | complex64 | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __truediv__(self, other: complex128 | float64 | int64 | uint64 | int32 | uint32, /) -> complex128: ...
+    @overload
+    def __truediv__(self, other: longdouble, /) -> clongdouble: ...
+    @overload
+    def __truediv__(self, other: complex, /) -> Self | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __rtruediv__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, /) -> Self: ...
+    @overload
+    def __rtruediv__(self, other: complex128 | float64 | int64 | uint64 | int32 | uint32, /) -> complex128: ...
+    @overload
+    def __rtruediv__(self, other: longdouble, /) -> clongdouble: ...
+    @overload
+    def __rtruediv__(self, other: complex, /) -> Self | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __pow__(self, other: int | complex64 | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: complex128 | float64 | int64 | uint64 | int32 | uint32, mod: None = None, /) -> complex128: ...
+    @overload
+    def __pow__(self, other: longdouble, mod: None = None, /) -> clongdouble: ...
+    @overload
+    def __pow__(self, other: complex, mod: None = None, /) -> Self | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __rpow__(self, other: int | float32 | float16 | int16 | uint16 | int8 | uint8 | bool_, mod: None = None, /) -> Self: ...
+    @overload
+    def __rpow__(self, other: complex128 | float64 | int64 | uint64 | int32 | uint32, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: longdouble, mod: None = None, /) -> clongdouble: ...
+    @overload
+    def __rpow__(self, other: complex, mod: None = None, /) -> Self | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
 @disjoint_base
 class complex128(complexfloating[_64Bit, _64Bit], complex):
@@ -12650,42 +15322,111 @@ class complex128(complexfloating[_64Bit, _64Bit], complex):
     def __getnewargs__(self, /) -> tuple[float, float]: ...
 
     # complex128-specific operator overrides
-    @overload  # type: ignore[override]
-    def __add__(self, other: _Complex128_co, /) -> complex128: ...
-    @overload
-    def __add__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
-    def __radd__(self, other: _Complex128_co, /) -> complex128: ...  # type: ignore[override]
 
     @overload  # type: ignore[override]
-    def __sub__(self, other: _Complex128_co, /) -> complex128: ...
+    def __add__(self, other: _Complex128_co, /) -> Self: ...
     @overload
-    def __sub__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
-    def __rsub__(self, other: _Complex128_co, /) -> complex128: ...  # type: ignore[override]
+    def __add__(self, other: longdouble, /) -> clongdouble: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
+    #
     @overload  # type: ignore[override]
-    def __mul__(self, other: _Complex128_co, /) -> complex128: ...
+    def __radd__(self, other: _Complex128_co, /) -> complex128: ...
     @overload
-    def __mul__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
-    def __rmul__(self, other: _Complex128_co, /) -> complex128: ...  # type: ignore[override]
+    def __radd__(self, other: longdouble, /) -> clongdouble: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
+    #
     @overload  # type: ignore[override]
-    def __truediv__(self, other: _Complex128_co, /) -> complex128: ...
+    def __sub__(self, other: _Complex128_co, /) -> Self: ...
     @overload
-    def __truediv__[NBitT: NBitBase](self, other: complexfloating[NBitT], /) -> complexfloating[NBitT | _64Bit]: ...
-    def __rtruediv__(self, other: _Complex128_co, /) -> complex128: ...  # type: ignore[override]
+    def __sub__(self, other: longdouble, /) -> clongdouble: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
+    #
     @overload  # type: ignore[override]
-    def __pow__(self, other: _Complex128_co, mod: None = None, /) -> complex128: ...
+    def __rsub__(self, other: _Complex128_co, /) -> complex128: ...
     @overload
-    def __pow__[NBitT: NBitBase](self, other: complexfloating[NBitT], mod: None = None, /) -> complexfloating[NBitT | _64Bit]: ...
-    def __rpow__(self, other: _Complex128_co, mod: None = None, /) -> complex128: ...  # type: ignore[override]
+    def __rsub__(self, other: longdouble, /) -> clongdouble: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-complex192 = complexfloating[_96Bit]
-complex256 = complexfloating[_128Bit]
+    #
+    @overload  # type: ignore[override]
+    def __mul__(self, other: _Complex128_co, /) -> Self: ...
+    @overload
+    def __mul__(self, other: longdouble, /) -> clongdouble: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __rmul__(self, other: _Complex128_co, /) -> complex128: ...
+    @overload
+    def __rmul__(self, other: longdouble, /) -> clongdouble: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __truediv__(self, other: _Complex128_co, /) -> Self: ...
+    @overload
+    def __truediv__(self, other: longdouble, /) -> clongdouble: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __rtruediv__(self, other: _Complex128_co, /) -> complex128: ...
+    @overload
+    def __rtruediv__(self, other: longdouble, /) -> clongdouble: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __pow__(self, other: _Complex128_co, mod: None = None, /) -> Self: ...
+    @overload
+    def __pow__(self, other: longdouble, mod: None = None, /) -> clongdouble: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __rpow__(self, other: _Complex128_co, mod: None = None, /) -> complex128: ...
+    @overload
+    def __rpow__(self, other: longdouble, mod: None = None, /) -> clongdouble: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+@disjoint_base
+class clongdouble(complexfloating[_NBitLongDouble, _NBitLongDouble]):
+    @property
+    @override
+    def real(self) -> longdouble: ...
+    @property
+    @override
+    def imag(self) -> longdouble: ...
+    @override
+    def __abs__(self) -> longdouble: ...  # type: ignore[override]
+
+    #
+    @override
+    def __add__(self, other: _NumberLike_co, /) -> Self: ...
+    @override
+    def __radd__(self, other: _NumberLike_co, /) -> Self: ...
+
+    #
+    @override
+    def __sub__(self, other: _NumberLike_co, /) -> Self: ...
+    @override
+    def __rsub__(self, other: _NumberLike_co, /) -> Self: ...
+
+    #
+    @override
+    def __mul__(self, other: _NumberLike_co, /) -> Self: ...
+    @override
+    def __rmul__(self, other: _NumberLike_co, /) -> Self: ...
+
+    #
+    @override
+    def __truediv__(self, other: _NumberLike_co, /) -> Self: ...
+    @override
+    def __rtruediv__(self, other: _NumberLike_co, /) -> Self: ...
+
+    #
+    @override
+    def __pow__(self, other: _NumberLike_co, mod: None = None, /) -> Self: ...
+    @override
+    def __rpow__(self, other: _NumberLike_co, mod: None = None, /) -> Self: ...
 
 csingle = complex64
 cdouble = complex128
-clongdouble = complexfloating[_NBitLongDouble]
+complex192 = clongdouble
+complex256 = clongdouble
 
 @disjoint_base
 class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]):

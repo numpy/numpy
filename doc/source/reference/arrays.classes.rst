@@ -277,6 +277,13 @@ NumPy provides several hooks that classes can customize:
    into an instance of the subclass and update metadata before
    returning the array to the user.
 
+   *array* is always a base-class :class:`ndarray` or a subclass of it
+   (usually of the object the method is called on). Ufuncs pass
+   *context* as a 3-tuple ``(ufunc, args, output_index)``: the ufunc
+   object, a tuple of the input arguments (followed by the output
+   arguments if ``out`` was given), and the integer index of the output
+   being wrapped.
+
    NumPy may also call this function without a context from non-ufuncs to
    allow preserving subclass information.
 
