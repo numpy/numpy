@@ -3,6 +3,7 @@
 npyrandom_sources = [
   'src/distributions/logfactorial.c',
   'src/distributions/distributions.c',
+  'src/distributions/distributions_bulk.c',
   'src/distributions/random_mvhg_count.c',
   'src/distributions/random_mvhg_marginals.c',
   'src/distributions/random_hypergeometric.c',
@@ -24,6 +25,7 @@ npyrandom_lib = static_library('npyrandom',
 _cython_tree_random = [
   fs.copyfile('__init__.py'),
   fs.copyfile('__init__.pxd'),
+  fs.copyfile('_bitgen_bulk.pxd'),
   fs.copyfile('_common.pxd'),
   fs.copyfile('bit_generator.pxd'),
   fs.copyfile('c_distributions.pxd'),
@@ -101,6 +103,7 @@ py.install_sources(
     '__init__.py',
     '__init__.pyi',
     '_bounded_integers.pyi',
+    '_bitgen_bulk.pxd',
     '_common.pxd',
     '_common.pyi',
     '_generator.pyi',
@@ -122,6 +125,7 @@ py.install_sources(
 py.install_sources(
   [
     'tests/__init__.py',
+    'tests/test_bulk.py',
     'tests/test_direct.py',
     'tests/test_extending.py',
     'tests/test_generator_mt19937.py',

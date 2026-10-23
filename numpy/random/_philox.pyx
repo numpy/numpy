@@ -4,8 +4,12 @@ import numpy as np
 cimport numpy as np
 
 from libc.stdint cimport uint32_t, uint64_t
+from cpython.pycapsule cimport PyCapsule_New
 from ._common cimport uint64_to_double, int_to_array, wrap_int
-from numpy.random cimport BitGenerator
+from numpy.random cimport (
+    BITGEN_BULK_ABI_VERSION, BITGEN_BULK_DOUBLE, BITGEN_BULK_UINT32,
+    BITGEN_BULK_UINT64, BitGenerator, bitgen_bulk_v1,
+)
 
 __all__ = ['Philox']
 
@@ -38,6 +42,9 @@ cdef extern from 'src/philox/philox.h':
 
     uint64_t philox_next64(philox_state *state)  noexcept nogil
     uint32_t philox_next32(philox_state *state)  noexcept nogil
+    void philox_fill_uint32(philox_state *state, size_t count, uint32_t *out) nogil
+    void philox_fill_uint64(philox_state *state, size_t count, uint64_t *out) nogil
+    void philox_fill_double(philox_state *state, size_t count, double *out) nogil
     void philox_jump(philox_state *state)
     void philox_advance(uint64_t *step, philox_state *state)
 
@@ -50,6 +57,31 @@ cdef uint32_t philox_uint32(void *st) noexcept nogil:
 
 cdef double philox_double(void*st) noexcept nogil:
     return uint64_to_double(philox_next64(<philox_state *> st))
+
+
+cdef void philox_uint32_fill(void *state, size_t count, uint32_t *out) noexcept nogil:
+    philox_fill_uint32(<philox_state *>state, count, out)
+
+cdef void philox_uint64_fill(void *state, size_t count, uint64_t *out) noexcept nogil:
+    philox_fill_uint64(<philox_state *>state, count, out)
+
+cdef void philox_double_fill(void *state, size_t count, double *out) noexcept nogil:
+    philox_fill_double(<philox_state *>state, count, out)
+
+cdef bitgen_bulk_v1 _philox_bulk_v1
+_philox_bulk_v1.abi_version = BITGEN_BULK_ABI_VERSION
+_philox_bulk_v1.struct_size = sizeof(bitgen_bulk_v1)
+_philox_bulk_v1.capabilities = (
+    BITGEN_BULK_UINT32 | BITGEN_BULK_UINT64 | BITGEN_BULK_DOUBLE
+)
+_philox_bulk_v1.fill_uint32 = &philox_uint32_fill
+_philox_bulk_v1.fill_uint64 = &philox_uint64_fill
+_philox_bulk_v1.fill_double = &philox_double_fill
+
+cdef object _philox_bulk_capsule = PyCapsule_New(
+    <void *>&_philox_bulk_v1, "BitGeneratorBulkV1", NULL
+)
+
 
 cdef class Philox(BitGenerator):
     # the first line is used to populate `__text_signature__`
@@ -162,6 +194,11 @@ cdef class Philox(BitGenerator):
     cdef philox_state rng_state
     cdef philox4x64_key_t philox_key
     cdef philox4x64_ctr_t philox_ctr
+
+    @property
+    def bulk_capsule(self):
+        """Optional bulk-generation C interface."""
+        return _philox_bulk_capsule
 
     def __init__(self, seed=None, counter=None, key=None):
         if seed is not None and key is not None:

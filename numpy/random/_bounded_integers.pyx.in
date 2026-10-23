@@ -52,6 +52,17 @@ cdef extern from "numpy/random/distributions.h":
                                   np.npy_bool *out) nogil
 
 
+
+cdef extern from "src/distributions/distributions_bulk.h":
+    void random_bounded_uint64_fill_with_bulk(
+        bitgen_t *bitgen_state, const bitgen_bulk_v1 *bulk,
+        uint64_t off, uint64_t rng, np.npy_intp cnt, bint use_masked,
+        uint64_t *out) noexcept nogil
+    void random_bounded_uint32_fill_with_bulk(
+        bitgen_t *bitgen_state, const bitgen_bulk_v1 *bulk,
+        uint32_t off, uint32_t rng, np.npy_intp cnt, bint use_masked,
+        uint32_t *out) noexcept nogil
+
 cdef object format_bounds_error(bint closed, object low):
     # Special case low == 0 to provide a better exception for users
     # since low = 0 is the default single-argument case.
@@ -276,9 +287,10 @@ type_info = (('uint64', 'uint64', '0x0ULL', '0xFFFFFFFFFFFFFFFFULL'),
 )}}
 {{for  nptype, utype, lb, ub in type_info}}
 {{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
-cdef object _rand_{{nptype}}(object low, object high, object size,
-                             bint use_masked, bint closed,
-                             bitgen_t *state, object lock):
+cdef object _rand_{{nptype}}_bulk(object low, object high, object size,
+                                  bint use_masked, bint closed,
+                                  bitgen_t *state,
+                                  const bitgen_bulk_v1 *bulk, object lock):
     """
     _rand_{{nptype}}(low, high, size, use_masked, *state, lock)
 
@@ -363,7 +375,19 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
             cnt = np.PyArray_SIZE(out_arr)
             out_data = <{{utype}}_t *>np.PyArray_DATA(out_arr)
             with lock, nogil:
-                random_bounded_{{utype}}_fill(state, off, rng, cnt, use_masked, out_data)
+{{if utype in ("uint32", "uint64")}}
+                random_bounded_{{utype}}_fill_with_bulk(
+                    state, bulk, off, rng, cnt, use_masked, out_data)
+{{else}}
+                random_bounded_{{utype}}_fill(
+                    state, off, rng, cnt, use_masked, out_data)
+{{endif}}
             return out_arr
     return _rand_{{nptype}}_broadcast(low_arr, high_arr, size, use_masked, closed, state, lock)
+
+cdef object _rand_{{nptype}}(object low, object high, object size,
+                             bint use_masked, bint closed,
+                             bitgen_t *state, object lock):
+    return _rand_{{nptype}}_bulk(
+        low, high, size, use_masked, closed, state, NULL, lock)
 {{endfor}}
