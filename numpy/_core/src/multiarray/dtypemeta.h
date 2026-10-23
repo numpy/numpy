@@ -129,6 +129,18 @@ static inline int NPY_DT_is_parametric(PyArray_DTypeMeta *dtype) {
 static inline int NPY_DT_is_numeric(PyArray_DTypeMeta *dtype) {
     return (dtype->flags & NPY_DT_NUMERIC) != 0;
 }
+/* Text and bytes categories, independent of fixed/variable-width storage. */
+static inline int NPY_DT_is_text(PyArray_DTypeMeta *dtype) {
+    return dtype->type_num == NPY_UNICODE || dtype->type_num == NPY_VSTRING;
+}
+static inline int NPY_DT_is_bytes(PyArray_DTypeMeta *dtype) {
+    return dtype->type_num == NPY_STRING || dtype->type_num == NPY_VBYTES;
+}
+static inline int
+NPY_DT_is_text_bytes_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to) {
+    return (NPY_DT_is_text(from) && NPY_DT_is_bytes(to)) ||
+           (NPY_DT_is_bytes(from) && NPY_DT_is_text(to));
+}
 static inline int NPY_DT_is_user_defined(PyArray_DTypeMeta *dtype) {
     // New-style user defined dtypes have a type_num of -1 also on DType
     return dtype->type_num == -1;
