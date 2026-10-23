@@ -1,3 +1,3 @@
 from typing import Final
 
-_STRICT: Final[bool]
+_STRICT: Final[bool] = ...
