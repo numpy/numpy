@@ -963,28 +963,6 @@ static PyType_Spec rational2_dtype_spec = {
 static PyArray_DTypeMeta *NPY_Rational2DType = NULL;
 
 /*
- * Within-DType identity cast (memcpy).  Required by
- * `PyArrayInitDTypeMeta_FromSpec` since it rejects a NULL `casts`; for
- * full legacy registrations this is otherwise built lazily from `copyswap`.
- */
-static int
-rational2_within_dtype_loop(
-        PyArrayMethod_Context *NPY_UNUSED(context),
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
-{
-    char *src = data[0], *dst = data[1];
-    npy_intp src_stride = strides[0], dst_stride = strides[1];
-    npy_intp N = dimensions[0];
-    for (npy_intp i = 0; i < N; i++) {
-        memcpy(dst, src, sizeof(rational));
-        src += src_stride;
-        dst += dst_stride;
-    }
-    return 0;
-}
-
-/*
  * `common_dtype` slot offered only by the new DType API.  Promotes
  * `rational2` with itself or any integer dtype to `rational2`.  Deliberately
  * treat Python complex and complex128 differently to test that abstract
@@ -1447,25 +1425,7 @@ _rational_tests_exec(PyObject *m)
             {0, NULL},
         };
 
-        /* Within-DType identity cast (NULL `dtypes` slots are filled in
-         * by `PyArrayInitDTypeMeta_FromSpec`). */
-        static PyType_Slot within_dtype_slots[] = {
-            {NPY_METH_strided_loop, rational2_within_dtype_loop},
-            {NPY_METH_unaligned_strided_loop, rational2_within_dtype_loop},
-            {0, NULL},
-        };
-        static PyArray_DTypeMeta *within_dtype_dtypes[2] = {NULL, NULL};
-        static PyArrayMethod_Spec within_dtype_cast = {
-            .name = "cast_rational2_within_dtype",
-            .nin = 1,
-            .nout = 1,
-            .casting = NPY_NO_CASTING,
-            .flags = NPY_METH_SUPPORTS_UNALIGNED,
-            .dtypes = within_dtype_dtypes,
-            .slots = within_dtype_slots,
-        };
-        static PyArrayMethod_Spec *casts[] = {&within_dtype_cast, NULL};
-
+        static PyArrayMethod_Spec *casts[] = {NULL};
         PyArrayDTypeMeta_Spec dtype_spec = {
             .typeobj = (PyTypeObject *)PyRational2_Type,
             .flags = 0,

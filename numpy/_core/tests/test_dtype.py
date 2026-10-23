@@ -1665,6 +1665,11 @@ def test_rational_dtype(rat_cls):
     assert np.dtype(dt) is dt
     swapped = dt.newbyteorder()
     assert np.dtype(swapped, copy=True) is swapped
+    assert swapped == dt.newbyteorder()
+    assert not np.can_cast(dt, swapped, casting="no")
+    assert np.can_cast(dt, swapped, casting="equiv")
+    arr = np.array([rat_cls(1, 2)], dtype=dt)
+    assert arr.astype(swapped).tobytes() == arr.view("i4").byteswap().tobytes()
 
 
 def test_dtypes_are_true():
