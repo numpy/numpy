@@ -842,6 +842,14 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
             if (i < nin && (PyArray_NDIM(op[i]) == 0
                             || (PyArray_NDIM(op[i]) == 1
                                 && PyArray_DIM(op[i], 0) <= buffersize))) {
+                /* CastToType uses unsafe casting, so warn before copying. */
+                if (!force_cast_input) {
+                    int can_cast = PyArray_CanCastArrayTo_int(
+                            op[i], dtypes[i], casting);
+                    if (can_cast <= 0) {
+                        return can_cast;
+                    }
+                }
                 PyArrayObject *tmp;
                 Py_INCREF(dtypes[i]);
                 tmp = (PyArrayObject *)PyArray_CastToType(op[i], dtypes[i], 0);
@@ -5980,7 +5988,7 @@ is_known_scalar(PyObject *obj)
 {
     return (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj)
             || PyComplex_CheckExact(obj) || PyUnicode_CheckExact(obj)
-            || is_anyscalar_exact(obj));
+            || PyBytes_CheckExact(obj) || is_anyscalar_exact(obj));
 }
 
 

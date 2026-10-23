@@ -12,7 +12,7 @@ convenient in applications that don't need to be concerned with all
 the ways data can be represented in a computer.  For scientific
 computing, however, more control is often needed.
 
-In NumPy, there are 24 new fundamental Python types to describe
+In NumPy, there are 25 new fundamental Python types to describe
 different types of scalars. These type descriptors are mostly based on
 the types available in the C language that CPython is written in, with
 several additional types compatible with Python's types.
@@ -45,7 +45,7 @@ of the flexible itemsize array types (:class:`str_`,
    links to the classes and is a vector graphic. Unfortunately it looks worse
    and the html <map> element providing the linked regions is misaligned.
 
-   .. inheritance-diagram:: byte short intc int_ longlong ubyte ushort uintc uint ulonglong half single double longdouble csingle cdouble clongdouble bool_ datetime64 timedelta64 object_ bytes_ str_ void
+   .. inheritance-diagram:: byte short intc int_ longlong ubyte ushort uintc uint ulonglong half single double longdouble csingle cdouble clongdouble bool_ datetime64 timedelta64 object_ bytes_ str_ void vbytes
 
 .. [#] However, array scalars are immutable, so none of the array
        scalar attributes are settable.
@@ -72,6 +72,7 @@ Array scalar type     Related Python type          Inherits?
 :class:`double`       :class:`float`               yes
 :class:`cdouble`      :class:`complex`             yes
 :class:`bytes_`       :class:`bytes`               yes
+:class:`vbytes`       :class:`bytes`               yes
 :class:`str_`         :class:`str`                 yes
 :class:`bool_`        :class:`bool`                no
 :class:`datetime64`   :class:`datetime.datetime`   no
@@ -296,6 +297,10 @@ Other types
    :class:`object_` items does not return an :class:`object_` object
    on item access, but instead returns the actual object that
    the array item refers to.
+
+.. autoclass:: numpy.vbytes
+   :members: __init__
+   :exclude-members: __init__
 
 .. index:: flexible
 

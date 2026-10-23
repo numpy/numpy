@@ -1,0 +1,27 @@
+A new variable-width bytes data type
+------------------------------------
+
+`numpy.dtypes.ByteStringDType` lets each array element hold a `bytes` value of
+any length. It preserves all bytes, including NUL bytes (``b"\x00"``) at the end
+of a value, and accepts data that is not valid text::
+
+    >>> import numpy as np
+    >>>
+    >>> data = np.array([b"hello", b"x\x00", b"\xff"],
+    ...                 dtype=np.dtypes.ByteStringDType())
+    >>> data.tolist()
+    [b'hello', b'x\x00', b'\xff']
+
+Specify ``ByteStringDType`` explicitly; creating an array from Python bytes
+without ``dtype=`` still produces a fixed-width bytes array. Individual values
+are returned as `numpy.vbytes`, a `bytes` subclass.
+
+Just like ``StringDType``, ``ByteStringDType`` has built-in support for missing
+data, with a sentinel that can be an arbitrary Python object. For example, use
+``ByteStringDType(na_object=None)`` to allow ``None`` for missing entries.
+
+Text is not converted to bytes automatically. Use `numpy.strings.encode` and
+`numpy.strings.decode` to convert between ``StringDType`` text arrays and
+``ByteStringDType`` bytes arrays. These conversions currently support only
+UTF-8 and raise an error for invalid data. See :ref:`bytestringdtype` for
+examples, supported string operations, and limitations.

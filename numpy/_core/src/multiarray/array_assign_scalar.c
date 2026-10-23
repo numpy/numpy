@@ -254,7 +254,12 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
     }
 
     /* Check the casting rule */
-    if (!PyArray_CanCastTypeTo(src_dtype, PyArray_DESCR(dst), casting)) {
+    int can_cast = PyArray_CanCastTypeTo_int(
+            src_dtype, PyArray_DESCR(dst), casting);
+    if (can_cast < 0) {
+        return -1;
+    }
+    if (can_cast == 0) {
         npy_set_invalid_cast_error(
                 src_dtype, PyArray_DESCR(dst), casting, NPY_TRUE);
         return -1;

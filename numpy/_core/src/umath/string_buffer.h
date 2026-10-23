@@ -22,7 +22,7 @@
 #endif
 
 enum class ENCODING {
-    ASCII, UTF32, UTF8
+    ASCII, UTF32, UTF8, BYTES
 };
 
 // Fixed-width strings are NUL-padded; variable-width strings store a length.
@@ -30,6 +30,13 @@ constexpr bool
 has_null_padding(ENCODING enc)
 {
     return enc == ENCODING::ASCII || enc == ENCODING::UTF32;
+}
+
+// BYTES steps and classifies characters exactly like ASCII; remap so the ASCII specializations serve both
+constexpr ENCODING
+byte_enc(ENCODING enc)
+{
+    return enc == ENCODING::BYTES ? ENCODING::ASCII : enc;
 }
 
 enum class IMPLEMENTED_UNARY_FUNCTIONS {
@@ -302,6 +309,12 @@ struct Buffer {
             case ENCODING::UTF8:
             {
                 num_codepoints_for_utf8_bytes((unsigned char *)buf, &num_codepoints, (size_t)(after - buf));
+                break;
+            }
+            case ENCODING::BYTES:
+            {
+                num_codepoints = (size_t)(after - buf);
+                break;
             }
         }
         return num_codepoints;
@@ -313,6 +326,7 @@ struct Buffer {
         switch (enc) {
             case ENCODING::ASCII:
             case ENCODING::UTF8:
+            case ENCODING::BYTES:
                 return after - buf;
             case ENCODING::UTF32:
                 return (after - buf) / sizeof(npy_ucs4);
@@ -324,6 +338,7 @@ struct Buffer {
     {
         switch (enc) {
         case ENCODING::ASCII:
+        case ENCODING::BYTES:
             buf += rhs;
             break;
         case ENCODING::UTF32:
@@ -344,6 +359,7 @@ struct Buffer {
     {
         switch (enc) {
         case ENCODING::ASCII:
+        case ENCODING::BYTES:
             buf -= rhs;
             break;
         case ENCODING::UTF32:
@@ -389,7 +405,7 @@ struct Buffer {
     operator*()
     {
         int bytes;
-        return getchar<enc>((unsigned char *) buf, &bytes);
+        return getchar<byte_enc(enc)>((unsigned char *) buf, &bytes);
     }
 
     inline int
@@ -401,7 +417,8 @@ struct Buffer {
         switch (enc) {
             case ENCODING::ASCII:
             case ENCODING::UTF8:
-                // note that len is in bytes for ASCII and UTF8 but
+            case ENCODING::BYTES:
+                // note that len is in bytes for ASCII, UTF8, and BYTES but
                 // characters for UTF32
                 return memcmp(buf, other.buf, len);
             case ENCODING::UTF32:
@@ -418,7 +435,8 @@ struct Buffer {
         switch (enc) {
             case ENCODING::ASCII:
             case ENCODING::UTF8:
-                // for UTF8 we treat n_chars as number of bytes
+            case ENCODING::BYTES:
+                // for UTF8 and BYTES we treat n_chars as number of bytes
                 memcpy(other.buf, buf, len);
                 break;
             case ENCODING::UTF32:
@@ -435,6 +453,7 @@ struct Buffer {
         }
         switch (enc) {
             case ENCODING::ASCII:
+            case ENCODING::BYTES:
                 memset(this->buf, fill_char, n_chars);
                 return n_chars;
             case ENCODING::UTF32:
@@ -474,6 +493,7 @@ struct Buffer {
         switch (enc) {
             case ENCODING::ASCII:
             case ENCODING::UTF32:
+            case ENCODING::BYTES:
                 *this += n;
                 break;
             case ENCODING::UTF8:
@@ -486,6 +506,7 @@ struct Buffer {
     num_bytes_next_character() {
         switch (enc) {
             case ENCODING::ASCII:
+            case ENCODING::BYTES:
                 return 1;
             case ENCODING::UTF32:
                 return 4;
@@ -544,6 +565,7 @@ struct Buffer {
     {
         switch (enc) {
             case ENCODING::ASCII:
+            case ENCODING::BYTES:
                 return NumPyOS_ascii_isspace(**this);
             case ENCODING::UTF32:
             case ENCODING::UTF8:
@@ -706,13 +728,13 @@ struct call_buffer_member_function {
     T operator()(Buffer<enc> buf) {
         switch (f) {
             case IMPLEMENTED_UNARY_FUNCTIONS::ISALPHA:
-                return codepoint_isalpha<enc>(*buf);
+                return codepoint_isalpha<byte_enc(enc)>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT:
-                return codepoint_isdigit<enc>(*buf);
+                return codepoint_isdigit<byte_enc(enc)>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE:
-                return codepoint_isspace<enc>(*buf);
+                return codepoint_isspace<byte_enc(enc)>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM:
-                return codepoint_isalnum<enc>(*buf);
+                return codepoint_isalnum<byte_enc(enc)>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC:
                 return codepoint_isnumeric(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL:
@@ -727,6 +749,7 @@ operator+(Buffer<enc> lhs, npy_int64 rhs)
 {
     switch (enc) {
         case ENCODING::ASCII:
+        case ENCODING::BYTES:
             return Buffer<enc>(lhs.buf + rhs, lhs.after - lhs.buf - rhs);
         case ENCODING::UTF32:
             return Buffer<enc>(lhs.buf + rhs * (npy_int64)sizeof(npy_ucs4),
@@ -749,6 +772,7 @@ operator-(Buffer<enc> lhs, Buffer<enc> rhs)
     switch (enc) {
     case ENCODING::ASCII:
     case ENCODING::UTF8:
+    case ENCODING::BYTES:
         // note for UTF8 strings this is nonsense unless we're comparing
         // two points in the same string
         return lhs.buf - rhs.buf;
@@ -764,6 +788,7 @@ operator-(Buffer<enc> lhs, npy_int64 rhs)
 {
     switch (enc) {
         case ENCODING::ASCII:
+        case ENCODING::BYTES:
             return Buffer<enc>(lhs.buf - rhs, lhs.after - lhs.buf + rhs);
         case ENCODING::UTF32:
             return Buffer<enc>(lhs.buf - rhs * (npy_int64)sizeof(npy_ucs4),
@@ -890,6 +915,7 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
                 // fall through to the ASCII case because this is a one-byte character
             }
             case ENCODING::ASCII:
+            case ENCODING::BYTES:
             {
                 char ch = *buf2;
                 CheckedIndexer<char> ind(start_loc, end_loc - start_loc);
@@ -931,6 +957,7 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
             }
             break;
         case ENCODING::ASCII:
+        case ENCODING::BYTES:
             pos = fastsearch(start_loc, end - start, buf2.buf, len2, -1, FAST_SEARCH);
             break;
         case ENCODING::UTF32:
@@ -996,6 +1023,7 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
                 // fall through to the ASCII case because this is a one-byte character
             }
             case ENCODING::ASCII:
+            case ENCODING::BYTES:
             {
                 char ch = *buf2;
                 CheckedIndexer<char> ind(start_loc, end_loc - start_loc);
@@ -1037,6 +1065,7 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
             }
             break;
         case ENCODING::ASCII:
+        case ENCODING::BYTES:
             pos = (npy_intp) fastsearch(start_loc, end - start, buf2.buf, len2, -1, FAST_RSEARCH);
             break;
         case ENCODING::UTF32:
@@ -1103,6 +1132,7 @@ string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
                                FAST_COUNT);
             break;
         case ENCODING::ASCII:
+        case ENCODING::BYTES:
             count = (npy_intp) fastsearch(start_loc, end - start, buf2.buf, len2,
                                           PY_SSIZE_T_MAX, FAST_COUNT);
             break;
@@ -1236,6 +1266,9 @@ template <ENCODING enc>
 static inline size_t
 string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPTYPE strip_type)
 {
+    // without this a BYTES instantiation would leave `res` at 0 and strip every character
+    static_assert(enc != ENCODING::BYTES, "add BYTES arms to the switches before instantiating");
+
     size_t len1 = buf1.num_codepoints();
     if (len1 == 0) {
         if (has_null_padding(enc)) {
@@ -1407,6 +1440,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
             break;
         }
         case ENCODING::UTF8:
+        case ENCODING::BYTES:
         {
             span2 = buf2.after - buf2.buf;
             span3 = buf3.after - buf3.buf;
@@ -1431,6 +1465,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
             switch (enc) {
                 case ENCODING::ASCII:
                 case ENCODING::UTF8:
+                case ENCODING::BYTES:
                 {
                     CheckedIndexer<char> ind1(buf1.buf, end1 - buf1);
                     CheckedIndexer<char> ind2(buf2.buf, span2);
@@ -1473,6 +1508,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
             switch (enc) {
                 case ENCODING::ASCII:
                 case ENCODING::UTF32:
+                case ENCODING::BYTES:
                     buf1.buffer_memcpy(out, 1);
                     ret += 1;
                     break;

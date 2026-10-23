@@ -859,8 +859,12 @@ array_astype(PyArrayObject *self,
         }
     }
 
-    if (!PyArray_CanCastArrayTo(self, dtype, casting)) {
-        PyErr_Clear();
+    int can_cast = PyArray_CanCastArrayTo_int(self, dtype, casting);
+    if (can_cast < 0) {
+        Py_DECREF(dtype);
+        return NULL;
+    }
+    if (can_cast == 0) {
         npy_set_invalid_cast_error(
                 PyArray_DESCR(self), dtype, casting, PyArray_NDIM(self) == 0);
         Py_DECREF(dtype);

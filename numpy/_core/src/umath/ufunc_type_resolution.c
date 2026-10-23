@@ -250,13 +250,22 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
 
     for (i = 0; i < nop; ++i) {
         if (i < nin) {
-            if (!PyArray_CanCastArrayTo(operands[i], dtypes[i], casting)) {
+            int can_cast = PyArray_CanCastArrayTo_int(
+                    operands[i], dtypes[i], casting);
+            if (can_cast < 0) {
+                return -1;
+            }
+            if (can_cast == 0) {
                 return raise_input_casting_error(
                     ufunc, casting, PyArray_DESCR(operands[i]), dtypes[i], i);
             }
         } else if (operands[i] != NULL) {
-            if (!PyArray_CanCastTypeTo(dtypes[i],
-                                    PyArray_DESCR(operands[i]), casting)) {
+            int can_cast = PyArray_CanCastTypeTo_int(
+                    dtypes[i], PyArray_DESCR(operands[i]), casting);
+            if (can_cast < 0) {
+                return -1;
+            }
+            if (can_cast == 0) {
                 return raise_output_casting_error(
                     ufunc, casting, dtypes[i], PyArray_DESCR(operands[i]), i);
             }
@@ -280,8 +289,12 @@ PyUFunc_ValidateOutCasting(PyUFuncObject *ufunc,
         if (operands[i] == NULL) {
             continue;
         }
-        if (!PyArray_CanCastTypeTo(dtypes[i],
-                PyArray_DESCR(operands[i]), casting)) {
+        int can_cast = PyArray_CanCastTypeTo_int(
+                dtypes[i], PyArray_DESCR(operands[i]), casting);
+        if (can_cast < 0) {
+            return -1;
+        }
+        if (can_cast == 0) {
             return raise_output_casting_error(
                     ufunc, casting, dtypes[i], PyArray_DESCR(operands[i]), i);
         }

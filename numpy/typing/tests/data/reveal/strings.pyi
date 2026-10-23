@@ -10,6 +10,9 @@ type AR_TU_alias = AR_T_alias | npt.NDArray[np.str_]
 AR_U: npt.NDArray[np.str_]
 AR_S: npt.NDArray[np.bytes_]
 AR_T: AR_T_alias
+AR_R: npt.NDArray[np.vbytes]
+
+assert_type(np.vbytes(b"x").item(), bytes)
 
 assert_type(np.strings.equal(AR_U, AR_U), npt.NDArray[np.bool])
 assert_type(np.strings.equal(AR_S, AR_S), npt.NDArray[np.bool])
@@ -57,7 +60,24 @@ assert_type(np.strings.center(AR_T, 5), AR_T_alias)
 
 assert_type(np.strings.encode(AR_U), npt.NDArray[np.bytes_])
 assert_type(np.strings.encode(AR_T), npt.NDArray[np.bytes_])
+assert_type(np.strings.encode(AR_T, dtype=np.dtypes.ByteStringDType()), npt.NDArray[np.vbytes])
+assert_type(np.strings.encode(AR_T, dtype=np.vbytes), npt.NDArray[np.vbytes])
+assert_type(np.strings.encode(AR_T, dtype=np.dtypes.ByteStringDType), npt.NDArray[np.vbytes])
+assert_type(np.strings.encode(AR_T, dtype=np.dtype(np.bytes_)), npt.NDArray[np.bytes_])
+assert_type(np.strings.encode(AR_T, dtype=np.dtypes.BytesDType), npt.NDArray[np.bytes_])
 assert_type(np.strings.decode(AR_S), npt.NDArray[np.str_])
+assert_type(np.strings.decode(AR_R), AR_T_alias)
+
+assert_type(np.strings.multiply(AR_R, 5), npt.NDArray[np.vbytes])
+assert_type(np.strings.find(AR_R, AR_R, start=[1, 2, 3]), npt.NDArray[np.int_])
+assert_type(np.strings.count(AR_R, [b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
+assert_type(np.strings.lstrip(AR_R), npt.NDArray[np.vbytes])
+assert_type(np.strings.rstrip(AR_R), npt.NDArray[np.vbytes])
+assert_type(np.strings.strip(AR_R), npt.NDArray[np.vbytes])
+assert_type(np.strings.partition(AR_R, [b"a", b"b", b"c"]), _tuple3[npt.NDArray[np.vbytes]])
+assert_type(np.strings.rpartition(AR_R, AR_R), _tuple3[npt.NDArray[np.vbytes]])
+assert_type(np.strings.replace(AR_R, b"_", b"-"), npt.NDArray[np.vbytes])
+assert_type(np.strings.slice(AR_R, 1, 5, 2), npt.NDArray[np.vbytes])
 
 assert_type(np.strings.expandtabs(AR_U), npt.NDArray[np.str_])
 assert_type(np.strings.expandtabs(AR_S, tabsize=4), npt.NDArray[np.bytes_])
