@@ -3439,15 +3439,9 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
 #undef HAS_0D_BOOL
 
 
-/*
- * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
- * type refcount contention on free-threaded 3.14+.
- */
 static void
-arraymapiter_free(void *self)
+arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
-    PyArrayMapIterObject *mit = (PyArrayMapIterObject *)self;
-
     PyArray_ResolveWritebackIfCopy(mit->array);
     Py_XDECREF(mit->array);
     Py_XDECREF(mit->subspace);
@@ -3462,7 +3456,9 @@ arraymapiter_free(void *self)
         NpyIter_Deallocate(mit->extra_op_iter);
     }
 
+    PyTypeObject *type = Py_TYPE(mit);
     PyObject_Free(mit);
+    Py_DECREF(type);
 }
 
 /*
@@ -3477,7 +3473,7 @@ arraymapiter_free(void *self)
  * to a[indexobj].flat but the latter gets to use slice syntax.
  */
 static PyType_Slot arraymapiter_slots[] = {
-    {Py_tp_free, arraymapiter_free},
+    {Py_tp_dealloc, arraymapiter_dealloc},
     {Py_tp_iter, PyObject_SelfIter},
     {0, NULL},
 };

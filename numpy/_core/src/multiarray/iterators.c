@@ -1534,6 +1534,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
 
 /*========================= Neighborhood iterator ======================*/
 
+static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter);
 
 static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
         PyArrayObject *fill)
@@ -1789,14 +1790,8 @@ clean_x:
     return NULL;
 }
 
-/*
- * No tp_dealloc so that CPython's subtype_dealloc is used, which avoids
- * type refcount contention on free-threaded 3.14+.
- */
-static void neighiter_free(void *self)
+static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
 {
-    PyArrayNeighborhoodIterObject *iter = (PyArrayNeighborhoodIterObject *)self;
-
     if (iter->mode == NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING) {
         if (PyArray_ISOBJECT(iter->_internal_iter->ao)) {
             Py_DECREF(*(PyObject**)iter->constant);
@@ -1807,15 +1802,17 @@ static void neighiter_free(void *self)
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);
 
+    PyTypeObject *type = Py_TYPE(iter);
     PyObject_Free(iter);
+    Py_DECREF(type);
 }
 
 static PyType_Slot neighiter_slots[] = {
-    {Py_tp_free, neighiter_free},
+    {Py_tp_dealloc, neighiter_dealloc},
     {0, NULL},
 };
 
-/* Only `PyArray_NeighborhoodIterNew` can build one; the cleanup assumes it. */
+/* Only `PyArray_NeighborhoodIterNew` can build one; the dealloc assumes it. */
 static PyType_Spec neighiter_spec = {
     .name = "numpy.neigh_internal_iter",
     .basicsize = sizeof(PyArrayNeighborhoodIterObject),
