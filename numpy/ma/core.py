@@ -3834,12 +3834,30 @@ class MaskedArray(ndarray):
     @property
     def fill_value(self):
         """
-        The filling value of the masked array is a scalar. When setting, None
-        will set to a default based on the data type.
+        The default value used to replace masked entries when filling the array.
+
+        This scalar is used by `filled` when no explicit replacement value
+        is provided. Setting ``fill_value`` does not change the underlying
+        data or the mask. Setting it to ``None`` restores the default value
+        for the array's data type.
+
+        See Also
+        --------
+        filled : Return an ndarray with masked entries replaced.
+        set_fill_value : Set the filling value of a masked array.
 
         Examples
         --------
         >>> import numpy as np
+        >>> x = np.ma.array([10, 20, 30], mask=[False, True, False],
+        ...                 fill_value=-999)
+        >>> x.filled()
+        array([  10, -999,   30])
+        >>> x.filled(0)
+        array([10,  0, 30])
+        >>> x.data
+        array([10, 20, 30])
+
         >>> for dt in [np.int32, np.int64, np.float64, np.complex128]:
         ...     np.ma.array([0, 1], dtype=dt).get_fill_value()
         ...
@@ -3853,7 +3871,7 @@ class MaskedArray(ndarray):
         np.float64(-inf)
         >>> x.fill_value = np.pi
         >>> x.fill_value
-        np.float64(3.1415926535897931)
+        np.float64(3.141592653589793)
 
         Reset to default:
 
