@@ -186,6 +186,9 @@ Complex number type composed of two single-precision floating-point numbers.
 add_newdoc_for_scalar_type('cdouble', '(real=0, imag=0, /)', """
 Complex number type composed of two double-precision floating-point numbers,
 compatible with Python :class:`complex`.
+
+Unlike Python :class:`complex`, ``real`` and ``imag`` must be passed
+positionally; keyword arguments are not accepted.
 """)
 
 add_newdoc_for_scalar_type('clongdouble', '(real=0, imag=0, /)', """
@@ -315,8 +318,6 @@ add_newdoc('numpy._core.numerictypes', "integer", ('is_integer',
 
     Return ``True`` if the number is finite with integral value.
 
-    .. versionadded:: 1.22
-
     Examples
     --------
     >>> import numpy as np
@@ -356,8 +357,6 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
 
         Return ``True`` if the floating point number is finite with integral
         value, and ``False`` otherwise.
-
-        .. versionadded:: 1.22
 
         Examples
         --------

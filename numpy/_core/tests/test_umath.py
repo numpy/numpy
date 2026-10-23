@@ -680,6 +680,22 @@ class TestDivision:
             y = 0.0 / x
             assert_(np.isnan(y)[0])
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    @pytest.mark.parametrize(
+        "dt",
+        [
+            pytest.param(code, marks=[longdouble_fpe_mark] if code == "G" else [])
+            for code in np.typecodes["Complex"]
+        ],
+    )
+    def test_reciprocal_zero_complex(self, dt):
+        x = np.array([0j, complex(-0.0, 0.0), complex(0.0, -0.0)], dtype=dt)
+        with np.errstate(invalid="ignore", divide="raise"):
+            with pytest.raises(FloatingPointError, match="divide by zero"):
+                np.reciprocal(x)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            assert_equal(np.reciprocal(x), 1.0 / x)
+
     def test_floor_division_complex(self):
         # check that floor division, divmod and remainder raises type errors
         x = np.array(
@@ -2795,6 +2811,26 @@ class TestMinimumMaximum(_FilterInvalids):
             a[3] = 'NaT'
             self.check(a, b)
             self.check_reduce(a)
+
+    def test_datetime_mixed_units(self):
+        for kind in 'mM':
+            a = np.arange(3).astype(f'{kind}8[D]')
+            b = a[::-1].astype(f'{kind}8[s]')
+            self.check(a, b)
+            lo, hi = ncu.minimummaximum(a, b)
+            assert lo.dtype == hi.dtype == np.dtype(f'{kind}8[s]')
+
+    def test_mixed_dtypes(self):
+        a = np.array([1, 5, 3], dtype=np.int8)
+        b = np.array([2., 4., 0.5], dtype=np.float32)
+        self.check(a, b)
+        self.check(a, 3)
+        self.check(a, 3.)
+        self.check(1, 2.)
+        self.check(True, 2)
+        assert ncu.minimummaximum(a, b)[0].dtype == np.float32
+        assert ncu.minimummaximum(a, 3)[0].dtype == np.int8
+        assert ncu.minimummaximum(1, 2.)[0].dtype == np.float64
 
     def test_strided_array(self):
         arr1 = np.array([-4.0, 1.0, 10.0, 0.0, np.nan, -np.nan, np.inf, -np.inf])
@@ -5051,7 +5087,7 @@ def test_nextafterf():
     return _test_nextafter(np.float32)
 
 
-@pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+@pytest.mark.skipif(np.dtype(np.double) == np.dtype(np.longdouble),
                     reason="long double is same as double")
 @pytest.mark.xfail(condition=LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                     reason="IBM double double")
@@ -5112,7 +5148,7 @@ def test_spacingf():
     return _test_spacing(np.float32)
 
 
-@pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+@pytest.mark.skipif(np.dtype(np.double) == np.dtype(np.longdouble),
                     reason="long double is same as double")
 @pytest.mark.xfail(condition=LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                     reason="IBM double double")

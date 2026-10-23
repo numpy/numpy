@@ -4,6 +4,8 @@ from typing_extensions import deprecated
 
 import numpy as np
 from numpy._typing import (
+    Array1D,
+    Array2D,
     NDArray,
     _ArrayLikeFloat_co,
     _ArrayLikeObject_co,
@@ -11,9 +13,6 @@ from numpy._typing import (
     _NestedSequence,
     _Shape,
 )
-
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 ###
 
@@ -41,9 +40,9 @@ def isposinf[ShapeT: _Shape](
     out: None = None,
 ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
 @overload  # 1d
-def isposinf(x: Sequence[_FloatLike_co], out: None = None) -> _Array1D[np.bool]: ...
+def isposinf(x: Sequence[_FloatLike_co], out: None = None) -> Array1D[np.bool]: ...
 @overload  # 2d
-def isposinf(x: Sequence[Sequence[_FloatLike_co]], out: None = None) -> _Array2D[np.bool]: ...
+def isposinf(x: Sequence[Sequence[_FloatLike_co]], out: None = None) -> Array2D[np.bool]: ...
 @overload  # Nd
 def isposinf(x: _NestedSequence[_ArrayLikeFloat_co], out: None = None) -> NDArray[np.bool]: ...
 @overload  # ?d  (fallback)
@@ -60,9 +59,9 @@ def isneginf[ShapeT: _Shape](
     out: None = None,
 ) -> np.ndarray[ShapeT, np.dtype[np.bool]]: ...
 @overload  # 1d
-def isneginf(x: Sequence[_FloatLike_co], out: None = None) -> _Array1D[np.bool]: ...
+def isneginf(x: Sequence[_FloatLike_co], out: None = None) -> Array1D[np.bool]: ...
 @overload  # 2d
-def isneginf(x: Sequence[Sequence[_FloatLike_co]], out: None = None) -> _Array2D[np.bool]: ...
+def isneginf(x: Sequence[Sequence[_FloatLike_co]], out: None = None) -> Array2D[np.bool]: ...
 @overload  # Nd
 def isneginf(x: _NestedSequence[_ArrayLikeFloat_co], out: None = None) -> NDArray[np.bool]: ...
 @overload  # ?d  (fallback)

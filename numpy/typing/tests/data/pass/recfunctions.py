@@ -37,7 +37,7 @@ def test_get_names_flat() -> None:
 
 def test_flatten_descr() -> None:
     ndtype = np.dtype([("a", "<i4"), ("b", [("b_a", "<f8"), ("b_b", "<i4")])])
-    assert_type(rfn.flatten_descr(ndtype), tuple[tuple[str, np.dtype]])
+    assert_type(rfn.flatten_descr(ndtype), tuple[tuple[str, np.dtype], ...])
 
 
 def test_get_fieldstructure() -> None:
@@ -54,7 +54,7 @@ def test_merge_arrays() -> None:
             np.ones((2,), np.int_),
             np.ones((3,), np.float64),
         )),
-        np.recarray[tuple[int], np.dtype[np.void]],
+        npt.Array1D[np.void],
     )
 
 
@@ -112,7 +112,7 @@ def test_apply_along_fields() -> None:
     b = np.ones(4, dtype=[("x", "i4"), ("y", "f4"), ("z", "f8")])
     assert_type(
         rfn.apply_along_fields(np.mean, b),
-        np.ndarray[tuple[int], np.dtype[np.void]],
+        npt.NDArray[np.float64] | Any,
     )
 
 
@@ -120,7 +120,7 @@ def test_assign_fields_by_name() -> None:
     b = np.ones(4, dtype=[("x", "i4"), ("y", "f4"), ("z", "f8")])
     assert_type(
         rfn.apply_along_fields(np.mean, b),
-        np.ndarray[tuple[int], np.dtype[np.void]],
+        npt.NDArray[np.float64] | Any,
     )
 
 

@@ -14,7 +14,7 @@ on:
       - ".github/workflows/stubtest.yml"
       - "numpy/**"
       - "!numpy/**/tests/**"
-      - "requirements/typing_requirements.txt"
+      - "**/pyproject.toml"
       - "tools/stubtest/**"
   workflow_dispatch:
 
@@ -43,19 +43,16 @@ jobs:
           fetch-tags: true
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: ${{ matrix.py }}
           activate-environment: true
           cache-dependency-glob: |
-            requirements/build_requirements.txt
-            requirements/typing_requirements.txt
+            **/pyproject.toml
 
       - name: uv pip install
         run: >-
-          uv pip install
-          -r requirements/build_requirements.txt
-          -r requirements/typing_requirements.txt
+          uv pip install --group dev-cli --group typing
 
       - name: spin build
         run: spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
