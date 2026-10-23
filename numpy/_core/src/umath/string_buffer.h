@@ -1156,6 +1156,12 @@ tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 
     Buffer start_buf = (buf1 + offset);
     Buffer end_buf = start_buf + end_sub;
+    if (enc == ENCODING::UTF8) {
+        size_t size1 = (end_buf.buf - start_buf.buf) + end_buf.num_bytes_next_character();
+        if (size1 != size2) {
+            return 0;
+        }
+    }
     if (*start_buf == *buf2 && *end_buf == *(buf2 + end_sub)) {
         return !start_buf.buffer_memcmp(buf2, size2);
     }
@@ -1518,8 +1524,7 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
         }
         else {
             line_pos += 1;
-            size_t n_bytes = tmp.num_bytes_next_character();
-            new_len += n_bytes;
+            new_len += enc == ENCODING::UTF8 ? tmp.num_bytes_next_character() : 1;
             if (ch == '\n' || ch == '\r') {
                 line_pos = 0;
             }
