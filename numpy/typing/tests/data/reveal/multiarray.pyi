@@ -13,6 +13,7 @@ AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
 AR_f4_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
 AR_f4_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
 AR_f8: npt.NDArray[np.float64]
+AR_f8_1d: npt.Array1D[np.float64]
 AR_c16: npt.NDArray[np.complex128]
 AR_i8: npt.NDArray[np.int64]
 AR_b_nd: npt.NDArray[np.bool]
@@ -37,6 +38,10 @@ AR_LIKE_b: list[bool]
 AR_LIKE_i: list[int]
 AR_LIKE_f: list[float]
 AR_LIKE_c: list[complex]
+
+_py_b_2d: list[list[bool]]
+_py_b_3d: list[list[list[bool]]]
+_py_str_1d: list[str]
 
 m: np.timedelta64
 M: np.datetime64
@@ -110,15 +115,21 @@ assert_type(np.inner(AR_f4_nd, AR_f4_1d), npt.NDArray[np.float32] | Any)
 assert_type(np.inner(AR_f4_nd, AR_f4_2d), npt.NDArray[np.float32] | Any)
 assert_type(np.inner(AR_f4_nd, AR_f4_nd), npt.NDArray[np.float32] | Any)
 
+assert_type(np.inner(AR_f4_1d, AR_f8_1d), Any)
+assert_type(np.inner(AR_f4_1d, AR_u1_2d), Any)
+assert_type(np.inner(AR_u1_2d, AR_f4_1d), Any)
+assert_type(np.inner(AR_f4_2d, AR_u1_2d), Any)
+assert_type(np.inner(AR_f4_nd, AR_f8), Any)
+
 assert_type(np.inner(AR_O_1d, AR_O_1d), Any)
-assert_type(np.inner(AR_O_1d, AR_O_2d), np.ndarray[tuple[int], np.dtype[np.object_[int]]])
-assert_type(np.inner(AR_O_1d, AR_O_nd), npt.NDArray[np.object_[int]] | Any)
-assert_type(np.inner(AR_O_2d, AR_O_1d), np.ndarray[tuple[int], np.dtype[np.object_[int]]])
-assert_type(np.inner(AR_O_2d, AR_O_2d), np.ndarray[tuple[int, int], np.dtype[np.object_[int]]])
-assert_type(np.inner(AR_O_2d, AR_O_nd), npt.NDArray[np.object_[int]] | Any)
-assert_type(np.inner(AR_O_nd, AR_O_1d), npt.NDArray[np.object_[int]] | Any)
-assert_type(np.inner(AR_O_nd, AR_O_2d), npt.NDArray[np.object_[int]] | Any)
-assert_type(np.inner(AR_O_nd, AR_O_nd), npt.NDArray[np.object_[int]] | Any)
+assert_type(np.inner(AR_O_1d, AR_O_2d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.inner(AR_O_1d, AR_O_nd), npt.NDArray[np.object_] | Any)
+assert_type(np.inner(AR_O_2d, AR_O_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.inner(AR_O_2d, AR_O_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.inner(AR_O_2d, AR_O_nd), npt.NDArray[np.object_] | Any)
+assert_type(np.inner(AR_O_nd, AR_O_1d), npt.NDArray[np.object_] | Any)
+assert_type(np.inner(AR_O_nd, AR_O_2d), npt.NDArray[np.object_] | Any)
+assert_type(np.inner(AR_O_nd, AR_O_nd), npt.NDArray[np.object_] | Any)
 
 assert_type(np.inner(AR_u1, AR_u1), npt.NDArray[np.uint8] | Any)
 assert_type(np.inner(AR_i8, AR_i8), npt.NDArray[np.int64] | Any)
@@ -154,11 +165,16 @@ assert_type(np.dot(AR_f4_nd, AR_f4_1d), Any)
 assert_type(np.dot(AR_f4_nd, AR_f4_2d), Any)
 assert_type(np.dot(AR_f4_nd, AR_f4_nd), Any)
 
+assert_type(np.dot(AR_f4_1d, AR_f8_1d), Any)
+assert_type(np.dot(AR_f4_1d, AR_u1_2d), Any)
+assert_type(np.dot(AR_u1_2d, AR_f4_1d), Any)
+assert_type(np.dot(AR_f4_2d, AR_u1_2d), Any)
+
 assert_type(np.dot(AR_O_1d, AR_O_1d), Any)
-assert_type(np.dot(AR_O_1d, AR_O_2d), np.ndarray[tuple[int], np.dtype[np.object_[int]]])
+assert_type(np.dot(AR_O_1d, AR_O_2d), np.ndarray[tuple[int], np.dtype[np.object_]])
 assert_type(np.dot(AR_O_1d, AR_O_nd), Any)
-assert_type(np.dot(AR_O_2d, AR_O_1d), np.ndarray[tuple[int], np.dtype[np.object_[int]]])
-assert_type(np.dot(AR_O_2d, AR_O_2d), np.ndarray[tuple[int, int], np.dtype[np.object_[int]]])
+assert_type(np.dot(AR_O_2d, AR_O_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.dot(AR_O_2d, AR_O_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
 assert_type(np.dot(AR_O_2d, AR_O_nd), Any)
 assert_type(np.dot(AR_O_nd, AR_O_1d), Any)
 assert_type(np.dot(AR_O_nd, AR_O_2d), Any)
@@ -194,10 +210,10 @@ assert_type(np.dot(AR_f4_nd, AR_f4_2d), Any)
 assert_type(np.dot(AR_f4_nd, AR_f4_nd), Any)
 
 assert_type(np.dot(AR_O_1d, AR_O_1d), Any)
-assert_type(np.dot(AR_O_1d, AR_O_2d), np.ndarray[tuple[int], np.dtype[np.object_[int]]])
+assert_type(np.dot(AR_O_1d, AR_O_2d), np.ndarray[tuple[int], np.dtype[np.object_]])
 assert_type(np.dot(AR_O_1d, AR_O_nd), Any)
-assert_type(np.dot(AR_O_2d, AR_O_1d), np.ndarray[tuple[int], np.dtype[np.object_[int]]])
-assert_type(np.dot(AR_O_2d, AR_O_2d), np.ndarray[tuple[int, int], np.dtype[np.object_[int]]])
+assert_type(np.dot(AR_O_2d, AR_O_1d), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(np.dot(AR_O_2d, AR_O_2d), np.ndarray[tuple[int, int], np.dtype[np.object_]])
 assert_type(np.dot(AR_O_2d, AR_O_nd), Any)
 assert_type(np.dot(AR_O_nd, AR_O_1d), Any)
 assert_type(np.dot(AR_O_nd, AR_O_2d), Any)
@@ -210,6 +226,9 @@ assert_type(np.where(AR_f4_1d), tuple[npt.Array1D[np.intp]])
 assert_type(np.where(AR_f4_2d), tuple[npt.Array1D[np.intp], npt.Array1D[np.intp]])
 assert_type(np.where(AR_f4_3d), tuple[npt.Array1D[np.intp], npt.Array1D[np.intp], npt.Array1D[np.intp]])
 assert_type(np.where(AR_f4_nd), tuple[npt.Array1D[np.intp], ...])
+assert_type(np.where(_py_b_2d), tuple[npt.Array1D[np.intp], npt.Array1D[np.intp]])
+assert_type(np.where(_py_b_3d), tuple[npt.Array1D[np.intp], npt.Array1D[np.intp], npt.Array1D[np.intp]])
+assert_type(np.where(_py_str_1d), tuple[npt.Array1D[np.intp], ...])
 assert_type(np.where(AR_b_2d, AR_f4_2d, AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(np.where(AR_b_2d, AR_f4_2d, 0.5), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 assert_type(np.where(AR_b_2d, 0.5, AR_f4_2d), np.ndarray[tuple[int, int], np.dtype[np.float32]])

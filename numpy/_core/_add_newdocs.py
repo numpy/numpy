@@ -3143,8 +3143,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
 
     Return a parametrized wrapper around the `~numpy.ndarray` type.
 
-    .. versionadded:: 1.22
-
     Returns
     -------
     alias : types.GenericAlias
@@ -4166,7 +4164,8 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Raises
     ------
     ValueError
-        If `a` does not own its own data or references or views to may exist.
+        If `a` is read-only, does not own its data, or references or views
+        to it may exist.
 
     See Also
     --------
@@ -6609,8 +6608,6 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('__class_getitem__',
 
     Return a parametrized wrapper around the `~numpy.dtype` type.
 
-    .. versionadded:: 1.22
-
     Returns
     -------
     alias : types.GenericAlias
@@ -6941,8 +6938,6 @@ add_newdoc('numpy._core.numerictypes', 'number', ('__class_getitem__',
     number.__class_getitem__(item, /)
 
     Return a parametrized wrapper around the `~numpy.number` type.
-
-    .. versionadded:: 1.22
 
     Returns
     -------

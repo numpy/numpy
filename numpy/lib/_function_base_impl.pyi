@@ -154,6 +154,9 @@ type _Mesh2[ScalarT: np.generic, ScalarT1: np.generic] = tuple[Array2D[ScalarT],
 type _Mesh3[ScalarT: np.generic, ScalarT1: np.generic, ScalarT2: np.generic] = tuple[
     Array3D[ScalarT], Array3D[ScalarT1], Array3D[ScalarT2]
 ]
+type _Mesh4[ScalarT: np.generic, ScalarT1: np.generic, ScalarT2: np.generic, ScalarT3: np.generic] = tuple[
+    Array4D[ScalarT], Array4D[ScalarT1], Array4D[ScalarT2], Array4D[ScalarT3]
+]
 
 type _IndexLike = slice | _ArrayLikeInt_co
 
@@ -3638,6 +3641,30 @@ def meshgrid(
     sparse: bool = False,
     indexing: _Indexing = "xy",
 ) -> _Mesh3[Any, Any, Any]: ...
+@overload  # 4d, known scalar-types
+def meshgrid[ScalarT1: np.generic, ScalarT2: np.generic, ScalarT3: np.generic, ScalarT4: np.generic](
+    x1: _ArrayLike[ScalarT1],
+    x2: _ArrayLike[ScalarT2],
+    x3: _ArrayLike[ScalarT3],
+    x4: _ArrayLike[ScalarT4],
+    /,
+    *,
+    copy: bool = True,
+    sparse: bool = False,
+    indexing: _Indexing = "xy",
+) -> _Mesh4[ScalarT1, ScalarT2, ScalarT3, ScalarT4]: ...
+@overload  # 4d, unknown scalar-types
+def meshgrid(
+    x1: ArrayLike,
+    x2: ArrayLike,
+    x3: ArrayLike,
+    x4: ArrayLike,
+    /,
+    *,
+    copy: bool = True,
+    sparse: bool = False,
+    indexing: _Indexing = "xy",
+) -> _Mesh4[Any, Any, Any, Any]: ...
 @overload  # ?d, known scalar-types
 def meshgrid[ScalarT: np.generic](
     *xi: _ArrayLike[ScalarT],

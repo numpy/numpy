@@ -4407,10 +4407,14 @@ class TestMaskedArrayMathMethods:
 
         mYY = mXX.swapaxes(-1, -2)
         fXX, fYY = mXX.filled(0), mYY.filled(0)
-        r = mXX.dot(mYY)
-        assert_almost_equal(r.filled(0), fXX.dot(fYY))
+        # 4D dot triggers deprecation warning (gh-31725)
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            r = mXX.dot(mYY)
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            assert_almost_equal(r.filled(0), fXX.dot(fYY))
         r1 = empty_like(r)
-        mXX.dot(mYY, out=r1)
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            mXX.dot(mYY, out=r1)
         assert_almost_equal(r, r1)
 
     def test_dot_shape_mismatch(self):

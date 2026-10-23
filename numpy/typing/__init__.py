@@ -3,8 +3,6 @@
 Typing (:mod:`numpy.typing`)
 ============================
 
-.. versionadded:: 1.20
-
 Large parts of the NumPy API have :pep:`484`-style type annotations. In
 addition a number of type aliases are available to users, most prominently
 the two below:
