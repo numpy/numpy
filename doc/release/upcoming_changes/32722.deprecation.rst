@@ -1,0 +1,7 @@
+``numpy.isfortran`` is deprecated
+----------------------------------
+
+`numpy.isfortran` has been deprecated. Use ``a.flags.fnc`` to check if
+an array is Fortran contiguous but not C contiguous. If you only want 
+to check if an array is Fortran contiguous use ``a.flags.f_contiguous`` 
+instead.
