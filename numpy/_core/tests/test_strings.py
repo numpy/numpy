@@ -666,9 +666,6 @@ class TestMethods:
         assert_array_equal(np.strings.strip(a, chars), out)
 
     @pytest.mark.parametrize("a,chars,left,right,both", [
-        # gh-33125: single-byte characters sitting after a multibyte character
-        # in chars get missed because the single-byte search used a code-point
-        # count instead of byte length
         ("a", "éa", "", "", ""),
         ("a", "aé", "", "", ""),       # this one already worked
         ("a", "中a", "", "", ""),       # 3-byte lead char
