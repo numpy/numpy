@@ -278,10 +278,14 @@ extern "C" {
  * The names match the static types they replaced.
  */
 #define NPY_MODULE_STATE_TYPE_FIELDS(F) \
-    F(PyArrayFlags_Type)              \
-    F(PyArrayArrayConverter_Type)     \
-    F(PyArrayFunctionDispatcher_Type) \
-    F(NpyBusDayCalendar_Type)
+    F(PyArrayFlags_Type)               \
+    F(PyArrayArrayConverter_Type)      \
+    F(PyArrayFunctionDispatcher_Type)  \
+    F(NpyBusDayCalendar_Type)          \
+    F(PyArrayMethod_Type)              \
+    F(PyBoundArrayMethod_Type)         \
+    F(PyArrayNeighborhoodIter_Type)    \
+    F(PyArrayMapIter_Type)
 
 /*
  * Expand a field list into the PyObject * members it names, so the structs
