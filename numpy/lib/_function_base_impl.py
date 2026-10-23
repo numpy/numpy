@@ -5363,8 +5363,11 @@ def delete(arr, obj, axis=None):
         obj = np.asarray(obj)
         # `size == 0` to allow empty lists similar to indexing, but (as there)
         # is really too generic:
-        if obj.size == 0 and not isinstance(_obj, np.ndarray):
-            obj = obj.astype(intp)
+        if obj.size == 0:
+            if not isinstance(_obj, np.ndarray):
+                obj = obj.astype(intp)
+            if obj.dtype.kind in "ui":
+                return conv.wrap(arr.copy(order=arrorder), to_scalar=False)
         elif obj.size == 1 and obj.dtype.kind in "ui":
             # For a size 1 integer array we can use the single-value path
             # (most dtypes, except boolean, should just fail later).
