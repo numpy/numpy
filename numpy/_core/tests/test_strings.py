@@ -541,8 +541,12 @@ class TestMethods:
         ("hello", "", -3, -3, True),
         ("hello", "lo", -9, None, False),
         (["hello", ""], ["he", ""], [0, 0], None, [True, True]),
+        ("a" * 64, "a" + "😀" * 62 + "a", 0, None, False),
+        ("éa😀a中", "a😀a", 1, 4, True),
     ])
     def test_startswith(self, a, prefix, start, end, out, dt):
+        if dt == "S" and "😀" in prefix:
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         prefix = np.array(prefix, dtype=dt)
         assert_array_equal(np.strings.startswith(a, prefix, start, end), out)
@@ -580,8 +584,12 @@ class TestMethods:
         ("helloworld", "lowo", -8, -2, False),
         (["hello", "helloworld"], ["lo", "worl"], [0, -6], None,
          [True, False]),
+        ("a" * 64, "a" + "😀" * 62 + "a", 0, None, False),
+        ("éa😀a中", "a😀a", 1, 4, True),
     ])
     def test_endswith(self, a, suffix, start, end, out, dt):
+        if dt == "S" and "😀" in suffix:
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         suffix = np.array(suffix, dtype=dt)
         assert_array_equal(np.strings.endswith(a, suffix, start, end), out)
@@ -853,11 +861,18 @@ class TestMethods:
         ("abc\r\nab\tdef\ng\thi", 4, "abc\r\nab  def\ng   hi"),
         ("abc\r\nab\r\ndef\ng\r\nhi", 4, "abc\r\nab\r\ndef\ng\r\nhi"),
         (" \ta\n\tb", 1, "  a\n b"),
+        ("é\t中😀", 4, "é   中😀"),
     ])
     def test_expandtabs(self, buf, tabsize, res, dt):
+        if dt == "S" and "😀" in buf:
+            pytest.skip("Bytes dtype does not support non-ascii input")
         buf = np.array(buf, dtype=dt)
         res = np.array(res, dtype=dt)
-        assert_array_equal(np.strings.expandtabs(buf, tabsize), res)
+        result = np.strings.expandtabs(buf, tabsize)
+        assert_array_equal(result, res)
+        if dt != "T":
+            # StringDType has `str` scalars with no `dtype` attribute
+            assert result.dtype == res.dtype
 
     def test_expandtabs_raises_overflow(self, dt):
         with pytest.raises(OverflowError, match="new string is too long"):
