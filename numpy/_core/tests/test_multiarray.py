@@ -7369,6 +7369,39 @@ class TestFlat:
 
 class TestResize:
 
+    @pytest.mark.parametrize("shape", [(8,), (1,), (2,), (1, 2), (0,)])
+    @pytest.mark.parametrize("refcheck", [False, True])
+    def test_readonly(self, shape, refcheck):
+        # gh-33082: reject before reallocating or changing the shape.
+        a = np.array([1, 2])
+        a.flags.writeable = False
+        with pytest.raises(ValueError, match="read-only"):
+            a.resize(shape, refcheck=refcheck)
+        assert_array_equal(a, [1, 2])
+        assert a.shape == (2,)
+        assert not a.flags.writeable
+
+    @pytest.mark.skipif(
+        not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
+    )
+    def test_readonly_object(self):
+        # Isolate growth: an unfixed resize leaves invalid object pointers.
+        code = textwrap.dedent("""
+            import numpy as np
+            import pytest
+
+            for shape in [(8,), (1,), (2,), (1, 2), (0,)]:
+                a = np.array([1, 2], dtype=object)
+                a.flags.writeable = False
+                with pytest.raises(ValueError, match="read-only"):
+                    a.resize(shape, refcheck=False)
+                np.testing.assert_array_equal(a, [1, 2])
+                assert a.shape == (2,)
+                assert not a.flags.writeable
+        """)
+        subprocess.check_output([sys.executable, "-c", code],
+                                stderr=subprocess.STDOUT, text=True)
+
     @pytest.mark.parametrize("dtype", [
         ("x", "u1", 5),
         ("x", "u1", 2**32 + 1),

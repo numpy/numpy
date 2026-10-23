@@ -1,0 +1,6 @@
+Resizing read-only arrays raises an error
+----------------------------------------
+`ndarray.resize` now raises `ValueError` for read-only arrays, including
+when shrinking or only changing the shape. Previously, growing a read-only
+array could leave new elements uninitialized and cause crashes for object
+arrays. Copy the array before resizing it if a writeable array is needed.

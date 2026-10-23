@@ -38,6 +38,10 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
     npy_intp *dimptr;
     char *new_data;
 
+    if (PyArray_FailUnlessWriteable(self, "resize array") < 0) {
+        return -1;
+    }
+
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_ValueError,
                 "resize only works on single-segment arrays");
@@ -186,9 +190,9 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
 
 /*NUMPY_API
  * Resize (reallocate data).  Only works if nothing else is referencing this
- * array and it is contiguous.  If refcheck is 0, then the reference count is
- * not checked and assumed to be 1.  You still must own this data and have no
- * weak-references and no base object.
+ * array and it is writeable and contiguous.  If refcheck is 0, the reference
+ * count is not checked and assumed to be 1.  You still must own this data and
+ * have no weak-references and no base object.
  *
  * On Python 3.13 and older, the check allows objects with exactly one
  * reference to be reallocated in-place. On Python 3.14 and newer, the array
