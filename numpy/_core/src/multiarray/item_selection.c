@@ -2283,7 +2283,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
              * promotion failure (e.g. datetime64 vs. string); mirror that
              * so these pairings behave exactly as before.
              */
-            if (PyErr_ExceptionMatches(npy_static_pydata.DTypePromotionError)) {
+            if (PyErr_ExceptionMatches(_npy_module_state->static_pydata.DTypePromotionError)) {
                 PyErr_Clear();
                 dtype = PyArray_DescrFromType(NPY_OBJECT);
             }
