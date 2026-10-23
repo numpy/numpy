@@ -1,0 +1,5 @@
+``np.roll`` is faster for no-op shifts
+--------------------------------------
+``np.roll`` now skips unnecessary work when every requested shift is zero
+(or ``axis=()``), reducing overhead for no-op roll cases. The result is still
+a copy.
