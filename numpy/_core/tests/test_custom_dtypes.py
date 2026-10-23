@@ -190,6 +190,15 @@ class TestSFloat:
         a2 = a.astype(SF(2.))
         assert_array_equal(2 * a2.view(np.float64), a.view(np.float64))
 
+    @pytest.mark.parametrize("scaling", [1., -1., 2.])
+    def test_sfloat_from_bool(self, scaling):
+        a = np.array([True, False]).astype(SF(scaling))
+        assert_array_equal(scaling * a.view(np.float64), [1., 0.])
+
+        # Only scaling 1 is defined, others go through the sfloat cast
+        safe = np.can_cast(np.bool, SF(scaling), casting="safe")
+        assert safe == (abs(scaling) == 1.)
+
     @pytest.mark.parametrize("aligned", [True, False])
     def test_sfloat_cast_internal_errors(self, aligned):
         a = self._get_array(2e300, aligned)
