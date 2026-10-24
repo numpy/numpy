@@ -5520,4 +5520,3 @@ class TestHypotErrorMessages:
     def test_hypot_error_message_multiple_args(self):
         with pytest.raises(TypeError, match="hypot\\(\\) takes .* but 4 were given"):
             np.hypot(1, 2, 3, 4)
-
