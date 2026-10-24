@@ -38,11 +38,21 @@ _next(double x, int p)
     if (((ix >= 0x7ff00000) && ((ix - 0x7ff00000) | lx) != 0)) /* x is nan */
         return x;
     if ((ix | lx) == 0) { /* x == 0 */
-        if (p >= 0) {
-            INSERT_WORDS(x, 0x0, 1); /* return +minsubnormal */
+        if (hx < 0) {
+            if (p >= 0) {
+                INSERT_WORDS(x, 0x80000000, 1); /* return -minsubnormal */
+            }
+            else {
+                INSERT_WORDS(x, 0x0, 1); /* return +minsubnormal */
+            }
         }
         else {
-            INSERT_WORDS(x, 0x80000000, 1); /* return -minsubnormal */
+            if (p >= 0) {
+                INSERT_WORDS(x, 0x0, 1); /* return +minsubnormal */
+            }
+            else {
+                INSERT_WORDS(x, 0x80000000, 1); /* return -minsubnormal */
+            }
         }
         t = x * x;
         if (t == x)
@@ -86,11 +96,21 @@ _next(float x, int p)
     if ((ix > 0x7f800000)) /* x is nan */
         return x;
     if (ix == 0) { /* x == 0 */
-        if (p >= 0) {
-            SET_FLOAT_WORD(x, 0x0 | 1); /* return +minsubnormal */
+        if (hx < 0) {
+            if (p >= 0) {
+                SET_FLOAT_WORD(x, 0x80000000 | 1); /* return -minsubnormal */
+            }
+            else {
+                SET_FLOAT_WORD(x, 0x0 | 1); /* return +minsubnormal */
+            }
         }
         else {
-            SET_FLOAT_WORD(x, 0x80000000 | 1); /* return -minsubnormal */
+            if (p >= 0) {
+                SET_FLOAT_WORD(x, 0x0 | 1); /* return +minsubnormal */
+            }
+            else {
+                SET_FLOAT_WORD(x, 0x80000000 | 1); /* return -minsubnormal */
+            }
         }
         t = x * x;
         if (t == x)
@@ -266,11 +286,21 @@ _next(long double x, int p)
     if (ux.e == 0.0) {
         SET_LDOUBLE_MANH(ux, 0); /* return +-minsubnormal */
         SET_LDOUBLE_MANL(ux, 1);
-        if (p >= 0) {
-            SET_LDOUBLE_SIGN(ux, 0);
+        if (GET_LDOUBLE_SIGN(ux)) {
+            if (p >= 0) {
+                SET_LDOUBLE_SIGN(ux, 1);
+            }
+            else {
+                SET_LDOUBLE_SIGN(ux, 0);
+            }
         }
         else {
-            SET_LDOUBLE_SIGN(ux, 1);
+            if (p >= 0) {
+                SET_LDOUBLE_SIGN(ux, 0);
+            }
+            else {
+                SET_LDOUBLE_SIGN(ux, 1);
+            }
         }
         t = ux.e * ux.e;
         if (t == ux.e) {
@@ -301,7 +331,7 @@ _next(long double x, int p)
         }
     }
     if (GET_LDOUBLE_EXP(ux) == 0x7fff) {
-        return ux.e + ux.e; /* overflow  */
+        return x + x; /* overflow  */
     }
     if (GET_LDOUBLE_EXP(ux) == 0) { /* underflow */
         if (LDBL_NBIT) {
@@ -345,6 +375,9 @@ static type
 _npy_spacing(type x)
 {
     /* XXX: npy isnan/isinf may be optimized by bit twiddling */
+    if (npy_isnan(x)) {
+        return x;
+    }
     if (npy_isinf(x)) {
         return numeric_limits<type>::nan;
     }
@@ -369,7 +402,11 @@ npy_spacing(npy_double x)
 npy_longdouble
 npy_spacingl(npy_longdouble x)
 {
+#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+    return (npy_longdouble)_npy_spacing((npy_double)x);
+#else
     return _npy_spacing(x);
+#endif
 }
 }
 

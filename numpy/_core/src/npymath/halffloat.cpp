@@ -63,6 +63,9 @@ npy_half npy_half_spacing(npy_half h)
     npy_half ret;
     npy_uint16 h_exp = h&0x7c00u;
     npy_uint16 h_sig = h&0x03ffu;
+    npy_uint16 h_sign = h&0x8000u;
+    npy_uint16 h_abs = h&0x7fffu;
+
     if (h_exp == 0x7c00u) {
         /* NaN passes through quietly; infinities return NaN. */
         if (h_sig == 0) {
@@ -70,25 +73,17 @@ npy_half npy_half_spacing(npy_half h)
         } else {
             ret = h;
         }
-    } else if (h == 0x7bffu) {
+    } else if (h_abs == 0x7bffu) {
 #if NPY_HALF_GENERATE_OVERFLOW
         npy_set_floatstatus_overflow();
 #endif
-        ret = NPY_HALF_PINF;
-    } else if ((h&0x8000u) && h_sig == 0) { /* Negative boundary case */
-        if (h_exp > 0x2c00u) { /* If result is normalized */
-            ret = h_exp - 0x2c00u;
-        } else if(h_exp > 0x0400u) { /* The result is a subnormal, but not the smallest */
-            ret = 1 << ((h_exp >> 10) - 2);
-        } else {
-            ret = 0x0001u; /* Smallest subnormal half */
-        }
+        ret = NPY_HALF_PINF | h_sign;
     } else if (h_exp > 0x2800u) { /* If result is still normalized */
-        ret = h_exp - 0x2800u;
+        ret = (h_exp - 0x2800u) | h_sign;
     } else if (h_exp > 0x0400u) { /* The result is a subnormal, but not the smallest */
-        ret = 1 << ((h_exp >> 10) - 1);
+        ret = (1 << ((h_exp >> 10) - 1)) | h_sign;
     } else {
-        ret = 0x0001u;
+        ret = 0x0001u | h_sign;
     }
 
     return ret;
