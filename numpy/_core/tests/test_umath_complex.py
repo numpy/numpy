@@ -303,6 +303,23 @@ class TestCsqrt:
         # sqrt(-1)
         check_complex_value(np.sqrt, -1, 0, 0, 1)
 
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+    @pytest.mark.parametrize("sign", [1, -1])
+    def test_large_imag_rescale(self, dtype, sign):
+        # gh-33122: npy_csqrt rescaled only the real part when the argument
+        # magnitude was near the overflow threshold, halving the imaginary
+        # part. sqrt(i*y) = sqrt(y/2) * (1 + i), so both parts must match.
+        real_dtype = np.empty((), dtype=dtype).real.dtype
+        max_value = np.finfo(real_dtype).max
+
+        value = np.array([complex(0, sign * max_value)], dtype=dtype)
+        result = np.sqrt(value)
+        expected = np.sqrt(max_value / 2)
+
+        rtol = 1e-6 if dtype == np.complex64 else 1e-14
+        np.testing.assert_allclose(result.real, expected, rtol=rtol)
+        np.testing.assert_allclose(result.imag, sign * expected, rtol=rtol)
+
     def test_simple_conjugate(self):
         ref = np.conj(np.sqrt(complex(1, 1)))
 
