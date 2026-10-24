@@ -1,0 +1,15 @@
+`numpy.strings` shape-typing
+----------------------------
+The `numpy.strings` functions now use the shape-types of their input(s) to infer the
+shape-type of the returned array(s). For scalar inputs, individual outputs are typed as
+NumPy scalars or 0-d arrays, matching the runtime.
+
+.. code-block:: python
+
+    reveal_type(np.strings.replace(["a-b", "c-d"], "-", "_"))
+    # before: ndarray[tuple[Any, ...], dtype[str_]]
+    # after:  ndarray[tuple[int], dtype[str_]]
+
+    reveal_type(np.strings.strip(" x "))
+    # before: ndarray[tuple[Any, ...], dtype[str_]]
+    # after:  str_
