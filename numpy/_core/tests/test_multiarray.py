@@ -2310,6 +2310,10 @@ class TestMethods:
         ):
             np.sort(a, kind="stable", stable=True)
 
+    def test_gh_32830_sort(self):
+        a = np.zeros(2, [("x", "u1", 500_000)])
+        a.sort(kind="stable")
+
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number
     # of sorted items must be greater than ~50 to check the actual
