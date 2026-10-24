@@ -384,6 +384,22 @@ class TestAverage:
         assert wsum.shape == np.shape(expected_wsum)
         assert_array_equal(wsum, expected_wsum)
 
+    def test_average_timedelta64(self):
+        # Regression test for gh-27204: np.average used to fail on
+        # timedelta64 arrays because the sum of the (all-ones) weights was
+        # cast to the array's dtype, which has no scalar type.
+        a = np.array([1, 3, 5], dtype='timedelta64[D]')
+        assert_array_equal(np.average(a), np.timedelta64(3, 'D'))
+        avg, scl = np.average(a, returned=True)
+        assert avg == np.timedelta64(3, 'D')
+        assert scl == 3.0
+        # axis reduction and keepdims
+        b = np.array([[1, 2, 3], [4, 5, 6]], dtype='timedelta64[D]')
+        assert_array_equal(np.average(b, axis=1),
+                           np.array([2, 5], dtype='timedelta64[D]'))
+        assert_array_equal(np.average(b, axis=0, keepdims=True),
+                           np.array([[2, 3, 4]], dtype='timedelta64[D]'))
+
     def test_weights(self):
         y = np.arange(10)
         w = np.arange(10)
