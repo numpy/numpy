@@ -4574,6 +4574,12 @@ resolve_descriptors(int nop,
                 signature, original_descrs, dtypes, &view_offset);
         goto check_safety;
     }
+    else if (ufunc->type_resolver == NULL) {
+        PyErr_Format(PyExc_TypeError,
+                "ufunc '%s' has no type resolver to resolve the descriptors "
+                "of this legacy loop", ufunc_get_name_cstr(ufunc));
+        goto finish;
+    }
     else {
         /*
          * Fall-back to legacy resolver using `operands`, used exclusively
@@ -6478,7 +6484,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
 
-    if (ufunc->nin > 2) {
+    if (ufunc->nin < 1 || ufunc->nin > 2) {
         PyErr_SetString(PyExc_ValueError,
             "Only unary and binary ufuncs supported at this time");
         return NULL;

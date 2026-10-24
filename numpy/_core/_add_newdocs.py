@@ -4159,7 +4159,8 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Raises
     ------
     ValueError
-        If `a` does not own its own data or references or views to may exist.
+        If `a` is read-only, does not own its data, or references or views
+        to it may exist.
 
     See Also
     --------

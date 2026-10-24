@@ -38,6 +38,10 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
     npy_intp *dimptr;
     char *new_data;
 
+    if (PyArray_FailUnlessWriteable(self, "resize") < 0) {
+        return -1;
+    }
+
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_ValueError,
                 "resize only works on single-segment arrays");
@@ -141,7 +145,7 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
         }
         ((PyArrayObject_fields *)self)->data = new_data;
 
-        if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
+        if (newnbytes > oldnbytes) {
             /* Fill new memory with zeros (PyLong zero for object arrays) */
             npy_intp stride = elsize;
             npy_intp size = newsize - oldsize;

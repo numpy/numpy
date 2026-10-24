@@ -2339,7 +2339,7 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
     }
     if (type_num1 == NPY_TIMEDELTA && type_num2 == NPY_TIMEDELTA) {
         out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                             PyArray_DESCR(operands[1]));                             
+                                             PyArray_DESCR(operands[1]));
         if (out_dtypes[0] == NULL) {
             return -1;
         }

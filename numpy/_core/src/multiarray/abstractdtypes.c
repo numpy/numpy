@@ -9,6 +9,7 @@
 #include "numpy/arrayobject.h"
 
 #include "dtypemeta.h"
+#include "usertypes.h"
 #include "abstractdtypes.h"
 #include "convert_datatype.h"
 #include "array_coercion.h"
@@ -364,7 +365,8 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
             return NPY_DT_NewRef(&PyArray_IntpDType);
         }
     }
-    else if (NPY_DT_is_legacy(other)) {
+    else if (NPY_DT_SLOTS(other)->common_dtype ==
+            legacy_userdtype_common_dtype_function) {
         /* This is a back-compat fallback to usually do the right thing... */
         PyArray_DTypeMeta *uint8_dt = &PyArray_UInt8DType;
         PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, uint8_dt);
@@ -415,7 +417,8 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         Py_INCREF((PyObject *)cls);
         return cls;
     }
-    else if (NPY_DT_is_legacy(other)) {
+    else if (NPY_DT_SLOTS(other)->common_dtype ==
+            legacy_userdtype_common_dtype_function) {
         /* This is a back-compat fallback to usually do the right thing... */
         PyArray_DTypeMeta *half_dt = &PyArray_HalfDType;
         PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, half_dt);
@@ -448,7 +451,8 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
             return NPY_DT_NewRef(&PyArray_CDoubleDType);
         }
     }
-    else if (NPY_DT_is_legacy(other)) {
+    else if (NPY_DT_SLOTS(other)->common_dtype ==
+            legacy_userdtype_common_dtype_function) {
         /* This is a back-compat fallback to usually do the right thing... */
         PyArray_DTypeMeta *cfloat_dt = &PyArray_CFloatDType;
         PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, cfloat_dt);

@@ -12,6 +12,18 @@ compared to other Python objects.  On this page we explain the machinery
 that allows you to subclass ndarray, and the implications for
 implementing a subclass.
 
+.. seealso::
+
+   :ref:`special-attributes-and-methods`
+      Reference documentation for ``__array_finalize__``,
+      ``__array_wrap__``, ``__array_priority__`` and the other special
+      attributes and methods used here.
+   :ref:`basics.interoperability`
+      How subclassing compares to the other ways of making a type work
+      with NumPy.
+   :ref:`specific-array-subtyping`
+      Notes on sub-typing ndarray in C.
+
 ndarrays and object creation
 ----------------------------
 
@@ -643,18 +655,23 @@ But, we could do anything we wanted:
 >>> ret
 'I lost your data'
 
-So, by defining a specific ``__array_wrap__`` method for our subclass,
-we can tweak the output from ufuncs. The ``__array_wrap__`` method
-requires ``self``, then an argument - which is the result of the ufunc 
-or another NumPy function - and an optional parameter *context*.
-This parameter is passed by ufuncs as a 3-element tuple:
-(name of the ufunc, arguments of the ufunc, domain of the ufunc),
-but is not passed by other numpy functions. Though,
-as seen above, it is possible to do otherwise, ``__array_wrap__`` should
-return an instance of its containing class.  See the masked array
-subclass for an implementation.
-``__array_wrap__`` is always passed a NumPy array which may or may not be
-a subclass (usually of the caller).
+By defining a specific ``__array_wrap__`` method for our subclass,
+we can tweak the output from ufuncs. Though, as seen above, it is
+possible to do otherwise, ``__array_wrap__`` should return an instance of
+its containing class.  See the masked array subclass for an
+implementation.  The full signature, including what ufuncs pass as
+*context*, is documented in the reference entry for
+:obj:`~numpy.class.__array_wrap__`.
+
+Which ``__array_wrap__`` gets called when a ufunc receives inputs of
+several different subclasses is decided by the
+:obj:`~numpy.class.__array_priority__` attribute: the input with the
+highest priority wins, and on a tie the first such input is used. The
+default for both ndarray and its subclasses is ``0.0``, so a subclass
+that should take precedence over others needs to set a larger value
+(for example, :class:`~numpy.matrix` uses ``10.0``).  See
+:ref:`ufuncs-output-type` for the full rule.  If an ``out`` argument is
+passed, its ``__array_wrap__`` is used instead of any input's.
 
 
 Extra gotchas - custom ``__del__`` methods and ndarray.base

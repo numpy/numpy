@@ -4265,13 +4265,16 @@ class TestMethods:
             # test that fp exceptions are properly cleared
             np.dot(a, a)
 
-            with pytest.raises(FloatingPointError,
-                    match="invalid value encountered in dot"):
-                np.dot(a[np.newaxis, np.newaxis, ...],
-                       b[np.newaxis, ..., np.newaxis])
+            # 3D case triggers deprecation warning (gh-31725)
+            with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+                with pytest.raises(FloatingPointError,
+                        match="invalid value encountered in dot"):
+                    np.dot(a[np.newaxis, np.newaxis, ...],
+                           b[np.newaxis, ..., np.newaxis])
 
-            np.dot(a[np.newaxis, np.newaxis, ...],
-                   a[np.newaxis, ..., np.newaxis])
+            with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+                np.dot(a[np.newaxis, np.newaxis, ...],
+                       a[np.newaxis, ..., np.newaxis])
 
     def test_dot_type_mismatch(self):
         c = 1.
@@ -5431,6 +5434,19 @@ class TestPickling:
         x = np.arange(12, dtype='uint8').reshape(3, 4)[:, :2]
         assert_equal(x, pickle.loads(no_contiguous_dumped))
 
+    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL < 5,
+                        reason="requires pickle protocol 5")
+    def test_load_numpy1_pkl_protocol5(self):
+        # numpy 1.x dumps contiguous arrays with protocol 5 via
+        # numpy.core.numeric._frombuffer, which must be loadable without
+        # warning despite np.core being deprecated in numpy 2.0.
+        c_contiguous_dumped = b'\x80\x05\x95\x8f\x00\x00\x00\x00\x00\x00\x00\x8c\x12numpy.core.numeric\x94\x8c\x0b_frombuffer\x94\x93\x94(\x96\x18\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x94\x8c\x05numpy\x94\x8c\x05dtype\x94\x93\x94\x8c\x02u1\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01|\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94bK\x03K\x04K\x02\x87\x94\x8c\x01C\x94t\x94R\x94.'  # noqa: E501
+        f_contiguous_dumped = b'\x80\x05\x95\x8f\x00\x00\x00\x00\x00\x00\x00\x8c\x12numpy.core.numeric\x94\x8c\x0b_frombuffer\x94\x93\x94(\x96\x18\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x94\x8c\x05numpy\x94\x8c\x05dtype\x94\x93\x94\x8c\x02u1\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01|\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94bK\x03K\x04K\x02\x87\x94\x8c\x01F\x94t\x94R\x94.'  # noqa: E501
+        x = np.arange(24, dtype='uint8').reshape(3, 4, 2)
+        assert_equal(x, pickle.loads(c_contiguous_dumped))
+        x = np.arange(24, dtype='uint8').reshape(3, 4, 2, order='F')
+        assert_equal(x, pickle.loads(f_contiguous_dumped))
+
     def test_non_contiguous_array(self):
         non_contiguous_array = np.arange(12).reshape(3, 4)[:, :2]
         assert not non_contiguous_array.flags.c_contiguous
@@ -6275,6 +6291,42 @@ class TestMinMax:
         # a dtype that supports neither `minmax` nor `min`/`max` still raises
         with pytest.raises(TypeError):
             np.minmax(np.array(["banana", "apple"]))
+
+    def test_minmax_user_dtype_without_loop(self):
+        a = np.array([3, 1, 2], dtype=rational)
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np._core.umath.minimummaximum.reduce(a)
+        lo, hi = np.minmax(a)
+        assert type(lo) is type(hi) is rational
+        assert_equal((lo, hi), (np.min(a), np.max(a)))
+
+    def test_minmax_user_dtype_with_promoter(self):
+        from numpy._core._multiarray_umath import _get_sfloat_dtype
+
+        a = np.array([1., 5., 3.]).astype(_get_sfloat_dtype())
+        lo, hi = np._core.umath.minimummaximum.reduce(a)
+        assert lo.dtype == hi.dtype == np.dtype(np.float64)
+        assert_equal((lo, hi), (1., 5.))
+
+    def test_minmax_user_dtype_byteorder(self):
+        a = np.array([3, 1, 2], dtype=rational)
+        b = a.astype(a.dtype.newbyteorder())
+        with pytest.raises(np._core._exceptions._UFuncNoLoopError):
+            np._core.umath.minimummaximum(a, b)
+        lo, hi = np.minmax(b)
+        assert type(lo) is type(hi) is rational
+        assert_equal((lo, hi), (np.min(b), np.max(b)))
+
+    def test_minmax_fallback_out_overlapping_input(self):
+        a = np.array([3, 1, 2], dtype=rational)
+        out = (a[:1].reshape(()), np.empty((), dtype=rational))
+        assert_equal(np.minmax(a, out=out), (rational(1), rational(3)))
+
+    def test_minmax_fallback_out_in_input_list(self):
+        x = np.array(rational(5))
+        out = (x, np.empty((), dtype=rational))
+        res = np.minmax([x, rational(1), rational(3)], out=out)
+        assert_equal(res, (rational(1), rational(5)))
 
     def test_minmax_array_ufunc_no_fallback(self):
         # a subclass whose __array_ufunc__ declines the private minimummaximum
@@ -7376,6 +7428,18 @@ class TestResize:
         with pytest.raises(ValueError):
             x.resize((5, 5))
 
+    def test_readonly_raises(self):
+        # gh-33082: resize on read-only arrays must raise for grow, shrink,
+        # or same size.
+        x = np.array([1, 2, 3])
+        x.setflags(write=False)
+        with pytest.raises(ValueError, match="read-only"):
+            x.resize((5,), refcheck=False)
+        with pytest.raises(ValueError, match="read-only"):
+            x.resize((2,), refcheck=False)
+        with pytest.raises(ValueError, match="read-only"):
+            x.resize((3,), refcheck=False)
+
     @_no_tracing
     def test_int_shape(self):
         x = np.eye(3)
@@ -7419,6 +7483,11 @@ class TestResize:
         x.resize(2, 3, 3)
         assert_array_equal(x[0], np.eye(3))
         assert_array_equal(x[1], np.zeros((3, 3)))
+
+        # gh-33082: object array zero-filling on resize
+        o = np.array([1, 2], dtype=object)
+        o.resize((4,), refcheck=False)
+        assert o[2] == 0 and o[3] == 0
 
     @_no_tracing
     def test_obj_obj(self):

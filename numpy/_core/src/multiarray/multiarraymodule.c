@@ -950,7 +950,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         Py_INCREF((PyObject *)ap2);
     }
 
-    ret = PyArray_MatrixProduct2((PyObject *)ap1, ap2t, NULL);
+    ret = PyArray_MatrixProduct_int((PyObject *)ap1, ap2t, NULL, NULL);
     if (ret == NULL) {
         goto fail;
     }
@@ -978,15 +978,14 @@ fail:
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 {
-    return PyArray_MatrixProduct2(op1, op2, NULL);
+    return PyArray_MatrixProduct_int(op1, op2, NULL, "PyArray_MatrixProduct");
 }
 
-/*NUMPY_API
- * Numeric.matrixproduct2(a,v,out)
- * just like inner product but does the swapaxes stuff on the fly
- */
+/* Internal matrix product; warns as `funcname` when a.ndim >= 2 and b.ndim > 2.
+ * Pass funcname=NULL to skip the warning (used by np.inner). */
 NPY_NO_EXPORT PyObject *
-PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
+PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
+                          const char *funcname)
 {
     PyArrayObject *ap1, *ap2, *out_buf = NULL, *result = NULL;
     PyArrayIterObject *it1, *it2;
@@ -1058,6 +1057,18 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (nd > NPY_MAXDIMS) {
         PyErr_SetString(PyExc_ValueError, "dot: too many dimensions in result");
         goto fail;
+    }
+
+    /* Deprecated NumPy 2.6: warn when a.ndim >= 2 and b.ndim > 2 */
+    if (funcname != NULL && PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
+        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
+                "%s received arrays with a.ndim >= 2 and b.ndim > 2. "
+                "This places the leading dimensions of b in the middle of "
+                "the result, which is deprecated and will eventually raise "
+                "an error. Use numpy.tensordot(a, b, axes=[-1, -2]) instead. "
+                "(Deprecated NumPy 2.6)", funcname) < 0) {
+            goto fail;
+        }
     }
     j = 0;
     for (i = 0; i < PyArray_NDIM(ap1) - 1; i++) {
@@ -1146,6 +1157,17 @@ fail:
     Py_XDECREF((PyObject *)result);
     Py_XDECREF((PyObject *)typec);
     return NULL;
+}
+
+
+/*NUMPY_API
+ * Numeric.matrixproduct2(a,v,out)
+ * just like inner product but does the swapaxes stuff on the fly
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
+{
+    return PyArray_MatrixProduct_int(op1, op2, out, "PyArray_MatrixProduct2");
 }
 
 
@@ -2597,7 +2619,8 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy),
             return NULL;
         }
     }
-    ret = (PyArrayObject *)PyArray_MatrixProduct2(a, v, (PyArrayObject *)o);
+    ret = (PyArrayObject *)PyArray_MatrixProduct_int(
+            a, v, (PyArrayObject *)o, "numpy.dot");
     return PyArray_Return(ret);
 }
 
