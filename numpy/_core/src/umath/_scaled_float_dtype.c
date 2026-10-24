@@ -792,7 +792,7 @@ promote_minimummaximum_to_double(PyObject *NPY_UNUSED(ufunc),
         if (signature[i] != NULL) {
             new = signature[i];
         }
-        Py_INCREF(new);
+        Py_INCREF((PyObject *)new);
         new_op_dtypes[i] = new;
     }
     return 0;
