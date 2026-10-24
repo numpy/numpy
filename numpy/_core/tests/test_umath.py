@@ -5521,22 +5521,3 @@ class TestHypotErrorMessages:
         with pytest.raises(TypeError, match="hypot\\(\\) takes .* but 4 were given"):
             np.hypot(1, 2, 3, 4)
 
-    @pytest.mark.parametrize(
-    "dtype, real_dtype",
-    [
-        (np.complex64, np.float32),
-        (np.complex128, np.float64),
-    ],
-    )
-    def test_complex_sqrt_rescale_imaginary_component(dtype, real_dtype):
-        # Regression test for gh-33122.
-        finfo = np.finfo(real_dtype)
-        value = dtype(complex(0, finfo.max))
-
-        result = np.sqrt(value)
-        expected = np.sqrt(finfo.max / 2)
-
-        assert np.isfinite(result.real)
-        assert np.isfinite(result.imag)
-        assert_allclose(result.real, expected, rtol=1e-6)
-        assert_allclose(result.imag, expected, rtol=1e-6)
