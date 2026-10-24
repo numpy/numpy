@@ -9,6 +9,7 @@ import numpy as np
 import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
     assert_almost_equal,
+    assert_allclose,
     assert_array_equal,
     assert_array_max_ulp,
     assert_equal,
@@ -302,6 +303,19 @@ class TestCsqrt:
 
         # sqrt(-1)
         check_complex_value(np.sqrt, -1, 0, 0, 1)
+
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+    def test_large_imaginary_rescaling(self, dtype):
+        real_dtype = np.empty((), dtype=dtype).real.dtype
+        max_value = np.finfo(real_dtype).max
+
+        value = np.array(1j * max_value, dtype=dtype)
+        result = np.sqrt(value)
+
+        expected = np.sqrt(max_value / 2)
+
+        assert_allclose(result.real, expected, rtol=5e-6)
+        assert_allclose(result.imag, expected, rtol=5e-6)
 
     def test_simple_conjugate(self):
         ref = np.conj(np.sqrt(complex(1, 1)))
