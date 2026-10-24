@@ -437,11 +437,15 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                 if (arr == NULL) {
                     // Raise a helpful error if this was a ValueError (i.e. could not cast)
                     if (PyErr_ExceptionMatches(PyExc_ValueError)) {
-                        PyErr_Format(PyExc_IndexError,
-                            "only integers, slices (`:`), ellipsis (`...`)%s and integer or boolean "
-                            "arrays are valid indices",
-                            is_flatiter_object ? "" : ", numpy.newaxis (`None`)"
-                        );
+                        /*
+                         * The object failing to cast is the current index
+                         * element `obj`, which can differ from the
+                         * outermost `index` (for a tuple of indices like
+                         * arr["1", "2"], the actionable object is "1", not
+                         * the tuple).
+                         */
+                        PyErr_Format(PyExc_IndexError, "cannot index with %R",
+                                     Py_TYPE(obj));
                     }
                     goto failed_building_indices;
                 }
@@ -613,16 +617,42 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
          */
         if ((PyObject *)arr == obj) {
             /* The input was an array already */
-            PyErr_SetString(PyExc_IndexError,
-                "arrays used as indices must be of integer (or boolean) type");
+            PyObject *arrtype = PyObject_Str((PyObject *)PyArray_DESCR(arr));
+            if (arrtype == NULL) {
+                goto failed_building_indices;
+            }
+            PyErr_Format(PyExc_IndexError,
+                "arrays used as indices must be of integer (or boolean) "
+                "type, but the array dtype was %S", arrtype);
+            Py_DECREF(arrtype);
+        }
+        else if (PyList_Check(obj)) {
+            /*
+             * A list is a valid index container, so reporting its type
+             * (e.g. "cannot index with <class 'list'>") is misleading:
+             * what is invalid is the non-integer content it converts to.
+             * Report the converted array's dtype instead (e.g. for
+             * arr[[1., 2.]] -> "the array dtype was float64").
+             */
+            PyObject *arrtype = PyObject_Str((PyObject *)PyArray_DESCR(arr));
+            if (arrtype == NULL) {
+                goto failed_building_indices;
+            }
+            PyErr_Format(PyExc_IndexError,
+                "arrays used as indices must be of integer (or boolean) "
+                "type, but the array dtype was %S", arrtype);
+            Py_DECREF(arrtype);
         }
         else {
-            /* The input was not an array, so give a general error message */
-            PyErr_Format(PyExc_IndexError,
-                    "only integers, slices (`:`), ellipsis (`...`)%s and integer or boolean "
-                    "arrays are valid indices",
-                    is_flatiter_object ? "" : ", numpy.newaxis (`None`)"
-                );
+            /*
+             * The input was not an array, so give a general error
+             * message. The object that failed to index is the current
+             * element `obj`, which can differ from the outermost
+             * `index` (for a tuple of indices like arr["1", "2"], the
+             * actionable object is "1", not the tuple).
+             */
+            PyErr_Format(PyExc_IndexError, "cannot index with %R",
+                         Py_TYPE(obj));
         }
         goto failed_building_indices;
     }
