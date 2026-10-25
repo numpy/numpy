@@ -380,6 +380,43 @@ class TestMaskedArray:
         assert_equal(xmm.fill_value, xm.fill_value)
         assert_equal(xmm._hardmask, xm._hardmask)
 
+    def test_asarray_foreign_object_array_protocol(self):
+        # gh-29475: object implementing __array__ returning MaskedArray
+        class CustomSubclass(np.ndarray):
+            pass
+
+        class ForeignArray:
+            def __init__(self, data):
+                self._data = data
+
+            def __array__(self, dtype=None, copy=None):
+                return self._data
+
+        # 1. Standard MaskedArray
+        arr = np.ma.array([1, 2, 3], mask=[False, True, False])
+        obj = ForeignArray(arr)
+        res = asarray(obj)
+        assert_equal(res, arr)
+        assert_equal(str(res), str(arr))
+        assert_equal(repr(res), repr(arr))
+        assert_(not isinstance(res._data, MaskedArray))
+
+        # 2. MaskedArray wrapping a custom ndarray subclass
+        base = np.array([10, 20, 30]).view(CustomSubclass)
+        ma_sub = np.ma.masked_array(base, mask=[True, False, True])
+        obj_sub = ForeignArray(ma_sub)
+        res_sub = asarray(obj_sub)
+        assert_(res_sub._baseclass is CustomSubclass)
+        assert_(isinstance(res_sub._data, CustomSubclass))
+        assert_(not isinstance(res_sub._data, MaskedArray))
+        assert_equal(res_sub.mask, [True, False, True])
+        assert_equal(str(res_sub), '[-- 20 --]')
+
+        # 3. asanyarray
+        res_any = np.ma.asanyarray(obj_sub)
+        assert_(res_any._baseclass is CustomSubclass)
+        assert_equal(str(res_any), '[-- 20 --]')
+
     def test_asarray_default_order(self):
         # See Issue #6646
         m = np.eye(3).T
