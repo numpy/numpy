@@ -33,7 +33,7 @@ class Arrayterator:
     buf_size : int, optional
         The buffer size. If `buf_size` is supplied, the maximum amount of
         data that will be read into memory is `buf_size` elements.
-        Default is None, which will read as many element as possible
+        Default is None, which will read as many elements as possible
         into memory.
 
     Attributes
