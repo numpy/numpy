@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define NPY_MAX_HALF_NUM 65504.0f
+
 extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 
 NPY_NO_EXPORT PyObject *
