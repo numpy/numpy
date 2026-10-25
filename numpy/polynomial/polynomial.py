@@ -1623,7 +1623,12 @@ class Polynomial(ABCPolyBase):
     ----------
     coef : array_like
         Polynomial coefficients in order of increasing degree, i.e.,
-        ``(1, 2, 3)`` give ``1 + 2*x + 3*x**2``.
+        ``(1, 2, 3)`` gives ``1 + 2*x + 3*x**2`` when `domain` and `window`
+        are equal, which is the default.
+        Otherwise, the coefficients are with respect to the variable obtained
+        by mapping ``x`` from `domain` to `window`, as is the case for
+        polynomials returned by ``Polynomial.fit``. Use ``p.convert().coef``
+        to get the coefficients with respect to ``x``.
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
