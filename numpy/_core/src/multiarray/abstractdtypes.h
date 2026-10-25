@@ -4,6 +4,7 @@
 #include "numpy/ndarraytypes.h"
 #include "arrayobject.h"
 #include "dtypemeta.h"
+#include "module_state.h"
 
 
 #ifdef __cplusplus
@@ -11,19 +12,70 @@ extern "C" {
 #endif
 
 /*
- * These are mainly needed for value based promotion in ufuncs.  It
- * may be necessary to make them (partially) public, to allow user-defined
- * dtypes to perform value based casting.
+ * Abstract DType classes representing the numerical "kind" hierarchy that
+ * mirrors the NumPy scalar type tree (number -> integer -> signed/unsigned,
+ * number -> inexact -> floating/complex floating).  They are dynamically
+ * created during module init via ``PyType_FromMetaclass`` so the storage is
+ * held in pointer variables; the public ``PyArray_*AbstractDType`` names below
+ * remain usable as struct lvalues (and ``&PyArray_*AbstractDType`` resolves to
+ * the pointer).
+ *
+ * NOTE: A few of the C names are older than the ``numpy.dtypes`` ones and kept
+ *       for backwards compatibility: ``PyArray_IntAbstractDType`` is
+ *       ``IntegerAbstractDType``, ``PyArray_FloatAbstractDType`` is
+ *       ``FloatingAbstractDType``, and ``PyArray_ComplexAbstractDType`` is
+ *       ``ComplexFloatingAbstractDType``.
+ *
+ * They are mainly needed for value based promotion in ufuncs and for the
+ * array-API "kind" classifications used by ``isdtype`` / ``issubdtype``.
  */
-NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_IntAbstractDType;
-NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_FloatAbstractDType;
-NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_ComplexAbstractDType;
-NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyLongDType;
-NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyFloatDType;
-NPY_NO_EXPORT extern PyArray_DTypeMeta PyArray_PyComplexDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_NumberAbstract_dtype;
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_IntegerAbstract_dtype;
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_SignedIntegerAbstract_dtype;
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_UnsignedIntegerAbstract_dtype;
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_InexactAbstract_dtype;
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_FloatAbstract_dtype;
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_ComplexAbstract_dtype;
 
+#define PyArray_NumberAbstractDType (*_NumberAbstract_dtype)
+#define PyArray_IntAbstractDType (*_IntegerAbstract_dtype)
+#define PyArray_SignedIntegerAbstractDType (*_SignedIntegerAbstract_dtype)
+#define PyArray_UnsignedIntegerAbstractDType (*_UnsignedIntegerAbstract_dtype)
+#define PyArray_InexactAbstractDType (*_InexactAbstract_dtype)
+#define PyArray_FloatAbstractDType (*_FloatAbstract_dtype)
+#define PyArray_ComplexAbstractDType (*_ComplexAbstract_dtype)
+
+/*
+ * The "implicit" DType classes for Python ``int``, ``float`` and ``complex``
+ * literals (used by value-based promotion).  Like the abstract DTypes above,
+ * they are created via ``PyType_FromMetaclass`` and stored in pointer
+ * variables.  ``&PyArray_PyLongDType`` resolves to the pointer.
+ */
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_PyLongDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_PyFloatDType;
+NPY_NO_EXPORT extern PyArray_DTypeMeta *_PyComplexDType;
+
+#define PyArray_PyLongDType (*_PyLongDType)
+#define PyArray_PyFloatDType (*_PyFloatDType)
+#define PyArray_PyComplexDType (*_PyComplexDType)
+
+/*
+ * Create the abstract DType classes above, expose them on ``numpy.dtypes``,
+ * and set up the implicit ``PyLongDType`` / ``PyFloatDType`` /
+ * ``PyComplexDType`` value-based-promotion helpers.  Must be called after
+ * ``PyArrayDTypeMeta_Type`` is ready and before any code that uses these
+ * abstracts as ``tp_base`` (e.g. ``set_typeinfo``).
+ */
+ NPY_NO_EXPORT int
+ initialize_abstract_dtypes(multiarray_umath_state *state);
+
+/*
+ * Map the Python ``str`` / ``bytes`` / ``bool`` types to the corresponding
+ * NumPy DType for scalar discovery.  Must be called after ``set_typeinfo``
+ * because it looks up the legacy DType classes by type number.
+ */
 NPY_NO_EXPORT int
-initialize_and_map_pytypes_to_dtypes(void);
+map_legacy_pytypes_to_dtypes(void);
 
 
 /*
@@ -34,8 +86,8 @@ initialize_and_map_pytypes_to_dtypes(void);
  *
  * @param obj The original Python object.
  * @param arr The array into which the Python object was converted.
- * @param[in,out] **dtype A pointer to the array's DType, if not NULL it will be
- *        replaced with the abstract DType.
+ * @param[in,out] **dtype A borrowed pointer to the array's DType, if not NULL
+ *        it will be replaced with the (effectively immortal) abstract DType.
  * @return 0 if the `obj` was not a python scalar, and 1 if it was.
  */
 static inline int
@@ -43,27 +95,41 @@ npy_mark_tmp_array_if_pyscalar(
         PyObject *obj, PyArrayObject *arr, PyArray_DTypeMeta **dtype)
 {
     if (PyLong_CheckExact(obj)) {
-        ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_INT;
+        _PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_INT;
         if (dtype != NULL) {
-            Py_INCREF(&PyArray_PyLongDType);
-            Py_SETREF(*dtype, &PyArray_PyLongDType);
+            *dtype = &PyArray_PyLongDType;
         }
         return 1;
     }
     else if (PyFloat_CheckExact(obj)) {
-        ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_FLOAT;
+        _PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_FLOAT;
         if (dtype != NULL) {
-            Py_INCREF(&PyArray_PyFloatDType);
-            Py_SETREF(*dtype, &PyArray_PyFloatDType);
+            *dtype = &PyArray_PyFloatDType;
         }
         return 1;
     }
     else if (PyComplex_CheckExact(obj)) {
-        ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_COMPLEX;
+        _PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_COMPLEX;
         if (dtype != NULL) {
-            Py_INCREF(&PyArray_PyComplexDType);
-            Py_SETREF(*dtype, &PyArray_PyComplexDType);
+            *dtype = &PyArray_PyComplexDType;
         }
+        return 1;
+    }
+    return 0;
+}
+
+
+/*
+ * As above for an exact Python str.  Promotion is deliberately unaffected,
+ * so there is no abstract DType and the array's DType is not replaced
+ * (see NPY_ARRAY_WAS_PYTHON_STR).  str subclasses, including np.str_,
+ * are deliberately not marked and convert as before.
+ */
+static inline int
+npy_mark_tmp_array_if_pystr(PyObject *obj, PyArrayObject *arr)
+{
+    if (PyUnicode_CheckExact(obj)) {
+        _PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_STR;
         return 1;
     }
     return 0;
@@ -74,6 +140,12 @@ NPY_NO_EXPORT int
 npy_update_operand_for_scalar(
     PyArrayObject **operand, PyObject *scalar, PyArray_Descr *descr,
     NPY_CASTING casting);
+
+
+NPY_NO_EXPORT int
+npy_update_operand_if_pyscalar(
+    PyArrayObject **operand, PyObject *op, Py_ssize_t i,
+    PyArray_Descr *target, NPY_CASTING casting);
 
 
 NPY_NO_EXPORT PyArray_Descr *

@@ -17,6 +17,14 @@ from typing_extensions import TypeVar
 import numpy as np
 
 __all__ = [
+    "register_dlpack_dtype",
+    "NumberAbstractDType",
+    "IntegerAbstractDType",
+    "SignedIntegerAbstractDType",
+    "UnsignedIntegerAbstractDType",
+    "InexactAbstractDType",
+    "FloatingAbstractDType",
+    "ComplexFloatingAbstractDType",
     "BoolDType",
     "Int8DType",
     "ByteDType",
@@ -59,13 +67,19 @@ _NaObjectT_co = TypeVar("_NaObjectT_co", default=Never, covariant=True)
 
 # Helper base classes (typing-only)
 
+# `[('', <dtype.str>)]` for all non-structured dtypes
+type _SimpleDescr = list[tuple[L[""], LiteralString]]
+
 @type_check_only
 class _SimpleDType[ScalarT: np.generic](np.dtype[ScalarT]):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
-    names: None  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
     def __new__(cls, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> NoReturn: ...
+    @property  # type: ignore[misc]
+    def names(self) -> None: ...  # pyrefly: ignore[bad-override]  # pyright: ignore[reportIncompatibleMethodOverride]
     @property
     def base(self) -> np.dtype[ScalarT]: ...
+    @property
+    def descr(self) -> _SimpleDescr: ...
     @property
     def fields(self) -> None: ...
     @property
@@ -124,6 +138,53 @@ class _NBit[AlignmentT: int, ItemSizeT: int]:
 @type_check_only
 class _8Bit(_NoOrder, _NBit[L[1], L[1]]): ...
 
+# Abstract DTypes:
+
+@final
+class NumberAbstractDType[ScalarT: np.number](np.dtype[ScalarT]): ...  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
+
+@final
+class IntegerAbstractDType[ScalarT: np.integer](NumberAbstractDType[ScalarT]): ...  # type: ignore[misc]
+
+@final
+class SignedIntegerAbstractDType[ScalarT: np.signedinteger](IntegerAbstractDType[ScalarT]): ...  # type: ignore[misc]
+
+@final
+class UnsignedIntegerAbstractDType[ScalarT: np.unsignedinteger](IntegerAbstractDType[ScalarT]): ...  # type: ignore[misc]
+
+@final
+class InexactAbstractDType[ScalarT: np.inexact](NumberAbstractDType[ScalarT]): ...  # type: ignore[misc]
+
+@final
+class FloatingAbstractDType[ScalarT: np.floating](InexactAbstractDType[ScalarT]): ...  # type: ignore[misc]
+
+@final
+class ComplexFloatingAbstractDType[ScalarT: np.complexfloating](InexactAbstractDType[ScalarT]): ...  # type: ignore[misc]
+
+@type_check_only
+class _SignedIntegerLiteralDType[ScalarT: np.signedinteger](  # type: ignore[misc]
+    _LiteralDType[ScalarT],
+    SignedIntegerAbstractDType[ScalarT],  # pyrefly: ignore[invalid-inheritance]
+): ...
+
+@type_check_only
+class _UnsignedIntegerLiteralDType[ScalarT: np.unsignedinteger](  # type: ignore[misc]
+    _LiteralDType[ScalarT],
+    UnsignedIntegerAbstractDType[ScalarT],  # pyrefly: ignore[invalid-inheritance]
+): ...
+
+@type_check_only
+class _FloatingLiteralDType[ScalarT: np.floating](  # type: ignore[misc]
+    _LiteralDType[ScalarT],
+    FloatingAbstractDType[ScalarT],  # pyrefly: ignore[invalid-inheritance]
+): ...
+
+@type_check_only
+class _ComplexFloatingLiteralDType[ScalarT: np.complexfloating](  # type: ignore[misc]
+    _LiteralDType[ScalarT],
+    ComplexFloatingAbstractDType[ScalarT],  # pyrefly: ignore[invalid-inheritance]
+): ...
+
 # Boolean:
 
 @final
@@ -143,7 +204,7 @@ class BoolDType(  # type: ignore[misc]
 class Int8DType(  # type: ignore[misc]
     _TypeCodes[L["i"], L["b"], L[1]],
     _8Bit,
-    _LiteralDType[np.int8],
+    _SignedIntegerLiteralDType[np.int8],
 ):
     @property
     def name(self) -> L["int8"]: ...
@@ -154,7 +215,7 @@ class Int8DType(  # type: ignore[misc]
 class UInt8DType(  # type: ignore[misc]
     _TypeCodes[L["u"], L["B"], L[2]],
     _8Bit,
-    _LiteralDType[np.uint8],
+    _UnsignedIntegerLiteralDType[np.uint8],
 ):
     @property
     def name(self) -> L["uint8"]: ...
@@ -166,7 +227,7 @@ class Int16DType(  # type: ignore[misc]
     _TypeCodes[L["i"], L["h"], L[3]],
     _NativeOrder,
     _NBit[L[2], L[2]],
-    _LiteralDType[np.int16],
+    _SignedIntegerLiteralDType[np.int16],
 ):
     @property
     def name(self) -> L["int16"]: ...
@@ -178,7 +239,7 @@ class UInt16DType(  # type: ignore[misc]
     _TypeCodes[L["u"], L["H"], L[4]],
     _NativeOrder,
     _NBit[L[2], L[2]],
-    _LiteralDType[np.uint16],
+    _UnsignedIntegerLiteralDType[np.uint16],
 ):
     @property
     def name(self) -> L["uint16"]: ...
@@ -190,7 +251,7 @@ class Int32DType(  # type: ignore[misc]
     _TypeCodes[L["i"], L["i", "l"], L[5, 7]],
     _NativeOrder,
     _NBit[L[4], L[4]],
-    _LiteralDType[np.int32],
+    _SignedIntegerLiteralDType[np.int32],
 ):
     @property
     def name(self) -> L["int32"]: ...
@@ -202,7 +263,7 @@ class UInt32DType(  # type: ignore[misc]
     _TypeCodes[L["u"], L["I", "L"], L[6, 8]],
     _NativeOrder,
     _NBit[L[4], L[4]],
-    _LiteralDType[np.uint32],
+    _UnsignedIntegerLiteralDType[np.uint32],
 ):
     @property
     def name(self) -> L["uint32"]: ...
@@ -214,7 +275,7 @@ class Int64DType(  # type: ignore[misc]
     _TypeCodes[L["i"], L["l", "q"], L[7, 9]],
     _NativeOrder,
     _NBit[L[8], L[8]],
-    _LiteralDType[np.int64],
+    _SignedIntegerLiteralDType[np.int64],
 ):
     @property
     def name(self) -> L["int64"]: ...
@@ -226,7 +287,7 @@ class UInt64DType(  # type: ignore[misc]
     _TypeCodes[L["u"], L["L", "Q"], L[8, 10]],
     _NativeOrder,
     _NBit[L[8], L[8]],
-    _LiteralDType[np.uint64],
+    _UnsignedIntegerLiteralDType[np.uint64],
 ):
     @property
     def name(self) -> L["uint64"]: ...
@@ -245,7 +306,7 @@ class IntDType(  # type: ignore[misc]
     _TypeCodes[L["i"], L["i"], L[5]],
     _NativeOrder,
     _NBit[L[4], L[4]],
-    _LiteralDType[np.intc],
+    _SignedIntegerLiteralDType[np.intc],
 ):
     @property
     def name(self) -> L["int32"]: ...
@@ -257,7 +318,7 @@ class UIntDType(  # type: ignore[misc]
     _TypeCodes[L["u"], L["I"], L[6]],
     _NativeOrder,
     _NBit[L[4], L[4]],
-    _LiteralDType[np.uintc],
+    _UnsignedIntegerLiteralDType[np.uintc],
 ):
     @property
     def name(self) -> L["uint32"]: ...
@@ -269,7 +330,7 @@ class LongDType(  # type: ignore[misc]
     _TypeCodes[L["i"], L["l"], L[7]],
     _NativeOrder,
     _NBit[L[4, 8], L[4, 8]],
-    _LiteralDType[np.long],
+    _SignedIntegerLiteralDType[np.long],
 ):
     @property
     def name(self) -> L["int32", "int64"]: ...
@@ -281,7 +342,7 @@ class ULongDType(  # type: ignore[misc]
     _TypeCodes[L["u"], L["L"], L[8]],
     _NativeOrder,
     _NBit[L[4, 8], L[4, 8]],
-    _LiteralDType[np.ulong],
+    _UnsignedIntegerLiteralDType[np.ulong],
 ):
     @property
     def name(self) -> L["uint32", "uint64"]: ...
@@ -293,7 +354,7 @@ class LongLongDType(  # type: ignore[misc]
     _TypeCodes[L["i"], L["q"], L[9]],
     _NativeOrder,
     _NBit[L[8], L[8]],
-    _LiteralDType[np.longlong],
+    _SignedIntegerLiteralDType[np.longlong],
 ):
     @property
     def name(self) -> L["int64"]: ...
@@ -305,7 +366,7 @@ class ULongLongDType(  # type: ignore[misc]
     _TypeCodes[L["u"], L["Q"], L[10]],
     _NativeOrder,
     _NBit[L[8], L[8]],
-    _LiteralDType[np.ulonglong],
+    _UnsignedIntegerLiteralDType[np.ulonglong],
 ):
     @property
     def name(self) -> L["uint64"]: ...
@@ -319,7 +380,7 @@ class Float16DType(  # type: ignore[misc]
     _TypeCodes[L["f"], L["e"], L[23]],
     _NativeOrder,
     _NBit[L[2], L[2]],
-    _LiteralDType[np.float16],
+    _FloatingLiteralDType[np.float16],
 ):
     @property
     def name(self) -> L["float16"]: ...
@@ -331,7 +392,7 @@ class Float32DType(  # type: ignore[misc]
     _TypeCodes[L["f"], L["f"], L[11]],
     _NativeOrder,
     _NBit[L[4], L[4]],
-    _LiteralDType[np.float32],
+    _FloatingLiteralDType[np.float32],
 ):
     @property
     def name(self) -> L["float32"]: ...
@@ -343,7 +404,7 @@ class Float64DType(  # type: ignore[misc]
     _TypeCodes[L["f"], L["d"], L[12]],
     _NativeOrder,
     _NBit[L[8], L[8]],
-    _LiteralDType[np.float64],
+    _FloatingLiteralDType[np.float64],
 ):
     @property
     def name(self) -> L["float64"]: ...
@@ -355,7 +416,7 @@ class LongDoubleDType(  # type: ignore[misc]
     _TypeCodes[L["f"], L["g"], L[13]],
     _NativeOrder,
     _NBit[L[8, 12, 16], L[8, 12, 16]],
-    _LiteralDType[np.longdouble],
+    _FloatingLiteralDType[np.longdouble],
 ):
     @property
     def name(self) -> L["float64", "float96", "float128"]: ...
@@ -369,7 +430,7 @@ class Complex64DType(  # type: ignore[misc]
     _TypeCodes[L["c"], L["F"], L[14]],
     _NativeOrder,
     _NBit[L[4], L[8]],
-    _LiteralDType[np.complex64],
+    _ComplexFloatingLiteralDType[np.complex64],
 ):
     @property
     def name(self) -> L["complex64"]: ...
@@ -381,7 +442,7 @@ class Complex128DType(  # type: ignore[misc]
     _TypeCodes[L["c"], L["D"], L[15]],
     _NativeOrder,
     _NBit[L[8], L[16]],
-    _LiteralDType[np.complex128],
+    _ComplexFloatingLiteralDType[np.complex128],
 ):
     @property
     def name(self) -> L["complex128"]: ...
@@ -393,7 +454,7 @@ class CLongDoubleDType(  # type: ignore[misc]
     _TypeCodes[L["c"], L["G"], L[16]],
     _NativeOrder,
     _NBit[L[8, 12, 16], L[16, 24, 32]],
-    _LiteralDType[np.clongdouble],
+    _ComplexFloatingLiteralDType[np.clongdouble],
 ):
     @property
     def name(self) -> L["complex128", "complex192", "complex256"]: ...
@@ -462,6 +523,8 @@ class VoidDType(  # type: ignore[misc]
     def __new__(cls, length: _ItemSizeT_co, /) -> NoReturn: ...
     @property
     def base(self) -> Self: ...
+    @property
+    def descr(self) -> _SimpleDescr: ...
     @property
     def isalignedstruct(self) -> L[False]: ...
     @property
@@ -587,6 +650,12 @@ class StringDType(  # type: ignore[misc]
     def na_object(self) -> _NaObjectT_co: ...
     @property
     def coerce(self) -> L[True]: ...
+    @property
+    def _has_na(self) -> bool: ...
+    @property
+    def _has_nan_na(self) -> bool: ...
+    @property
+    def _has_string_na(self) -> bool: ...
 
     #
     @overload
@@ -600,6 +669,8 @@ class StringDType(  # type: ignore[misc]
     def fields(self) -> None: ...
     @property
     def base(self) -> Self: ...
+    @property
+    def descr(self) -> _SimpleDescr: ...
     @property
     def ndim(self) -> L[0]: ...
     @property
@@ -622,3 +693,5 @@ class StringDType(  # type: ignore[misc]
     def isalignedstruct(self) -> L[False]: ...
     @property
     def isnative(self) -> L[True]: ...
+
+def register_dlpack_dtype(dlpack_key: tuple[int, int], dtype: np.dtype, /) -> None: ...

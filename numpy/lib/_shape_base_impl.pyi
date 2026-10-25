@@ -3,24 +3,32 @@ from collections.abc import Callable, Sequence
 from typing import (
     Any,
     Concatenate,
+    Never,
     Protocol,
     Self,
     SupportsIndex,
+    TypeVar,
     overload,
     type_check_only,
 )
 
 import numpy as np
 from numpy._typing import (
+    Array1D,
+    Array2D,
+    Array3D,
     ArrayLike,
     NDArray,
+    _AnyShape,
     _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
+    _ArrayLikeInt,
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
-    _ArrayLikeUInt_co,
+    _ScalarLike_co,
+    _Shape,
     _ShapeLike,
 )
 
@@ -69,13 +77,66 @@ class _SupportsSplitOps(Protocol):
     def swapaxes(self, axis1: int, axis2: int, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> Self: ...
 
+type _JustAnyShape = tuple[Never, Never, Never, Never]  # workaround for microsoft/pyright#10232
+
+type _0d = tuple[()]
+type _1d = tuple[int]
+type _2d = tuple[int, int]
+type _3d = tuple[int, int, int]
+type _4d = tuple[int, int, int, int]
+type _5d = tuple[int, int, int, int, int]
+type _6d = tuple[int, int, int, int, int, int]
+
+type _Min1D = tuple[int, *tuple[int, ...]]
+type _Min2D = tuple[int, int, *tuple[int, ...]]
+type _Min3D = tuple[int, int, int, *tuple[int, ...]]
+
+type _ArrayMax2D[ScalarT: np.generic] = np.ndarray[tuple[int] | tuple[int, int], np.dtype[ScalarT]]
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustAnyShape, np.dtype[ScalarT]]
+
+type _To0D[ScalarT: np.generic] = np.ndarray[tuple[()], np.dtype[ScalarT]] | ScalarT
+type _To1D[ScalarT: np.generic] = np.ndarray[tuple[()] | tuple[int], np.dtype[ScalarT]] | ScalarT
+type _To2D[ScalarT: np.generic] = np.ndarray[tuple[()] | tuple[int] | tuple[int, int], np.dtype[ScalarT]] | ScalarT
+type _To3D[ScalarT: np.generic] = (
+    np.ndarray[tuple[()] | tuple[int] | tuple[int, int] | tuple[int, int, int], np.dtype[ScalarT]] | ScalarT
+)
+
+type _Func1D[ScalarT: np.generic, **Tss, ReturnT] = Callable[Concatenate[Array1D[ScalarT], Tss], ReturnT]
+
+type _IndicesOrSections = _ShapeLike | Array1D[np.integer]
+
+_AnyNumberT = TypeVar(
+    "_AnyNumberT",
+    np.bool,
+    np.int8, np.int16, np.int32, np.int64,
+    np.uint8, np.uint16, np.uint32, np.uint64,
+    np.float16, np.float32, np.float64, np.longdouble,
+    np.complex64, np.complex128, np.clongdouble,
+    np.object_,
+)
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64, np.datetime64, np.str_, np.bytes_, np.void, np.object_,
+)  # fmt: skip
+_Shape2T = TypeVar("_Shape2T", bound=_Min2D)
+_Shape3T = TypeVar("_Shape3T", bound=_Min3D)
+
 ###
 
+@overload  # Nd T, Nd, axis=<given>
+def take_along_axis[ScalarT: np.generic, ShapeT: _Shape](
+    arr: ScalarT | NDArray[ScalarT],
+    indices: np.ndarray[ShapeT, np.dtype[np.integer]],
+    axis: int = -1,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # Nd T, 1d, axis=None
 def take_along_axis[ScalarT: np.generic](
     arr: ScalarT | NDArray[ScalarT],
     indices: NDArray[np.integer],
-    axis: int | None = -1,
-) -> NDArray[ScalarT]: ...
+    axis: None,
+) -> Array1D[ScalarT]: ...
 
 #
 def put_along_axis[ScalarT: np.generic](
@@ -86,17 +147,185 @@ def put_along_axis[ScalarT: np.generic](
 ) -> None: ...
 
 #
-@overload
-def apply_along_axis[**Tss, ScalarT: np.generic](
-    func1d: Callable[Concatenate[np.ndarray, Tss], _ArrayLike[ScalarT]],
+@overload  # (1d T) -> ?d T, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _ArrayJustND[ResultT]],
+    axis: SupportsIndex,
+    arr: NDArray[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[ResultT]: ...
+@overload  # (1d T) -> ?d T, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _ArrayLike[ResultT]],
+    axis: SupportsIndex,
+    arr: _ArrayJustND[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[ResultT]: ...
+@overload  # (1d T) -> bool, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, bool],
+    axis: SupportsIndex,
+    arr: _ArrayJustND[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[np.bool]: ...
+@overload  # (1d T) -> ~int, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, int],
+    axis: SupportsIndex,
+    arr: _ArrayJustND[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[np.int_]: ...
+@overload  # (1d T) -> ~float, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, float],
+    axis: SupportsIndex,
+    arr: _ArrayJustND[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[np.float64]: ...
+@overload  # (1d T) -> ~complex, ?d T  (workaround)
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, complex],
+    axis: SupportsIndex,
+    arr: _ArrayJustND[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> NDArray[np.complex128]: ...
+@overload  # (1d T) -> 0d T, 1d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _To0D[ResultT]],
+    axis: SupportsIndex,
+    arr: Array1D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> np.ndarray[tuple[()], np.dtype[ResultT]]: ...
+@overload  # (1d T) -> 1d T, 1d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, Array1D[ResultT]],
+    axis: SupportsIndex,
+    arr: Array1D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array1D[ResultT]: ...
+@overload  # (1d T) -> 0d T, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _To0D[ResultT]],
+    axis: SupportsIndex,
+    arr: Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array1D[ResultT]: ...
+@overload  # (1d T) -> 1d T, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, Array1D[ResultT]],
+    axis: SupportsIndex,
+    arr: Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array2D[ResultT]: ...
+@overload  # (1d T) -> 2d T, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, Array2D[ResultT]],
+    axis: SupportsIndex,
+    arr: Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array3D[ResultT]: ...
+@overload  # (1d T) -> bool, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, bool],
+    axis: SupportsIndex,
+    arr: Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array1D[np.bool]: ...
+@overload  # (1d T) -> ~int, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, int],
+    axis: SupportsIndex,
+    arr: Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array1D[np.int_]: ...
+@overload  # (1d T) -> ~float, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, float],
+    axis: SupportsIndex,
+    arr: Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array1D[np.float64]: ...
+@overload  # (1d T) -> ~complex, 2d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, complex],
+    axis: SupportsIndex,
+    arr: Array2D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array1D[np.complex128]: ...
+@overload  # (1d T) -> 0d T, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, _To0D[ResultT]],
+    axis: SupportsIndex,
+    arr: Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array2D[ResultT]: ...
+@overload  # (1d T) -> 1d T, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss, ResultT: np.generic](
+    func1d: _Func1D[ScalarT, Tss, Array1D[ResultT]],
+    axis: SupportsIndex,
+    arr: Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array3D[ResultT]: ...
+@overload  # (1d T) -> bool, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, bool],
+    axis: SupportsIndex,
+    arr: Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array2D[np.bool]: ...
+@overload  # (1d T) -> ~int, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, int],
+    axis: SupportsIndex,
+    arr: Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array2D[np.int_]: ...
+@overload  # (1d T) -> ~float, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, float],
+    axis: SupportsIndex,
+    arr: Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array2D[np.float64]: ...
+@overload  # (1d T) -> ~complex, 3d T
+def apply_along_axis[ScalarT: np.generic, **Tss](
+    func1d: _Func1D[ScalarT, Tss, complex],
+    axis: SupportsIndex,
+    arr: Array3D[ScalarT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> Array2D[np.complex128]: ...
+@overload  # (1d) -> ?d T, ?d
+def apply_along_axis[**Tss, ResultT: np.generic](
+    func1d: _Func1D[Any, Tss, _ArrayLike[ResultT]],
     axis: SupportsIndex,
     arr: ArrayLike,
     *args: Tss.args,
     **kwargs: Tss.kwargs,
-) -> NDArray[ScalarT]: ...
-@overload
+) -> NDArray[ResultT]: ...
+@overload  # (1d) -> ?, ?d  (fallback)
 def apply_along_axis[**Tss](
-    func1d: Callable[Concatenate[np.ndarray, Tss], Any],
+    func1d: _Func1D[Any, Tss, Any],
     axis: SupportsIndex,
     arr: ArrayLike,
     *args: Tss.args,
@@ -104,104 +333,302 @@ def apply_along_axis[**Tss](
 ) -> NDArray[Any]: ...
 
 #
-def apply_over_axes[ScalarT: np.generic](
-    func: Callable[[np.ndarray, int], NDArray[ScalarT]],
-    a: ArrayLike,
+@overload  # (Nd T) -> ?d T, Nd T
+def apply_over_axes[ShapeT: _Shape, ScalarT: np.generic, ResultT: np.generic](
+    func: Callable[[np.ndarray[ShapeT, np.dtype[ScalarT]], int], NDArray[ResultT]],
+    a: np.ndarray[ShapeT, np.dtype[ScalarT]],
     axes: _ShapeLike,
-) -> NDArray[ScalarT]: ...
+) -> np.ndarray[ShapeT, np.dtype[ResultT]]: ...
+@overload  # (1d T) -> ?d T, 1d T
+def apply_over_axes[ScalarT: np.generic, ResultT: np.generic](
+    func: Callable[[Array1D[ScalarT], int], NDArray[ResultT] | ResultT],
+    a: Array1D[ScalarT],
+    axes: _ShapeLike,
+) -> Array1D[ResultT]: ...
 
-#
-@overload
-def expand_dims[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: _ShapeLike) -> NDArray[ScalarT]: ...
-@overload
-def expand_dims(a: ArrayLike, axis: _ShapeLike) -> NDArray[Incomplete]: ...
+# NOTE: runtime explicitly checks `isinstance(axis, (tuple, list))`, so `axis: _ShapeLike`
+# would be too wide
+@overload  # Nd -> Nd
+def expand_dims[ShapeT: _Shape, DTypeT: np.dtype](
+    a: np.ndarray[ShapeT, DTypeT],
+    axis: tuple[()],
+) -> np.ndarray[ShapeT, DTypeT]: ...
+@overload  # ?d -> ?d  (workaround)
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[_JustAnyShape, DTypeT],
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | list[int],
+) -> np.ndarray[_AnyShape, DTypeT]: ...
+@overload  # 0d -> 1d
+def expand_dims[ScalarT: np.generic](
+    a: ScalarT | np.ndarray[_0d, np.dtype[ScalarT]],
+    axis: SupportsIndex | tuple[SupportsIndex],
+) -> np.ndarray[_1d, np.dtype[ScalarT]]: ...
+@overload  # 0d -> 2d
+def expand_dims[ScalarT: np.generic](
+    a: ScalarT | np.ndarray[_0d, np.dtype[ScalarT]],
+    axis: tuple[SupportsIndex, SupportsIndex],
+) -> np.ndarray[_2d, np.dtype[ScalarT]]: ...
+@overload  # 1d -> 2d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[_1d, DTypeT],
+    axis: SupportsIndex | tuple[SupportsIndex],
+) -> np.ndarray[_2d, DTypeT]: ...
+@overload  # 1d -> 3d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[_1d, DTypeT],
+    axis: tuple[SupportsIndex, SupportsIndex],
+) -> np.ndarray[_3d, DTypeT]: ...
+@overload  # 2d -> 3d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[_2d, DTypeT],
+    axis: SupportsIndex | tuple[SupportsIndex],
+) -> np.ndarray[_3d, DTypeT]: ...
+@overload  # 2d -> 4d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[_2d, DTypeT],
+    axis: tuple[SupportsIndex, SupportsIndex],
+) -> np.ndarray[_4d, DTypeT]: ...
+@overload  # 3d -> 4d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[_3d, DTypeT],
+    axis: SupportsIndex | tuple[SupportsIndex],
+) -> np.ndarray[_4d, DTypeT]: ...
+@overload  # 3d -> 5d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[_3d, DTypeT],
+    axis: tuple[SupportsIndex, SupportsIndex],
+) -> np.ndarray[_5d, DTypeT]: ...
+@overload  # 4d -> 5d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[_4d, DTypeT],
+    axis: SupportsIndex | tuple[SupportsIndex],
+) -> np.ndarray[_5d, DTypeT]: ...
+@overload  # 4d -> 6d
+def expand_dims[DTypeT: np.dtype](
+    a: np.ndarray[_4d, DTypeT],
+    axis: tuple[SupportsIndex, SupportsIndex],
+) -> np.ndarray[_6d, DTypeT]: ...
+@overload  # Nd -> ?d
+def expand_dims[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | list[int],
+) -> NDArray[ScalarT]: ...
+@overload  # fallback
+def expand_dims(
+    a: ArrayLike,
+    axis: SupportsIndex | tuple[SupportsIndex, ...] | list[int],
+) -> NDArray[Any]: ...
 
 # keep in sync with `numpy.ma.extras.column_stack`
-@overload
-def column_stack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDArray[ScalarT]: ...
-@overload
-def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Incomplete]: ...
+@overload  # >=2d, known dtype
+def column_stack(  # noqa: UP047
+    tup: Sequence[np.ndarray[_Shape2T, np.dtype[_AnyScalarT]]],
+) -> np.ndarray[_Shape2T, np.dtype[_AnyScalarT]]: ...
+@overload  # >=2d ~str
+def column_stack[ShapeT: _Min2D](
+    tup: Sequence[np.ndarray[ShapeT, np.dtypes.StringDType]],
+) -> np.ndarray[ShapeT, np.dtypes.StringDType]: ...
+@overload  # <=2d, known dtype
+def column_stack(tup: Sequence[_To2D[_AnyScalarT]]) -> Array2D[_AnyScalarT]: ...  # noqa: UP047
+@overload  # ?d, known dtype
+def column_stack(tup: Sequence[_ArrayLike[_AnyScalarT]]) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
+@overload  # fallback
+def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
-# keep in sync with `numpy.ma.extras.dstack`
-@overload
-def dstack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDArray[ScalarT]: ...
-@overload
-def dstack(tup: Sequence[ArrayLike]) -> NDArray[Incomplete]: ...
+#
+@overload  # >=3d T
+def dstack(  # noqa: UP047
+    tup: Sequence[np.ndarray[_Shape3T, np.dtype[_AnyScalarT]]],
+) -> np.ndarray[_Shape3T, np.dtype[_AnyScalarT]]: ...
+@overload  # >=3d ~str
+def dstack[ShapeT: _Min3D](
+    tup: Sequence[np.ndarray[ShapeT, np.dtypes.StringDType]],
+) -> np.ndarray[ShapeT, np.dtypes.StringDType]: ...
+@overload  # <=3d T
+def dstack(tup: Sequence[_To3D[_AnyScalarT]]) -> Array3D[_AnyScalarT]: ...  # noqa: UP047
+@overload  # ?d T
+def dstack(tup: Sequence[_ArrayLike[_AnyScalarT]]) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
+@overload  # fallback
+def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
 #
 @overload
 def array_split[SplitableT: _SupportsSplitOps](
     ary: SplitableT,
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[SplitableT]: ...
 @overload
 def array_split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
 @overload
-def array_split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsIndex = 0) -> list[NDArray[Incomplete]]: ...
+def array_split(
+    ary: Sequence[complex],
+    indices_or_sections: _IndicesOrSections,
+    axis: SupportsIndex = 0,
+) -> list[Array1D[Any]]: ...
+@overload
+def array_split(
+    ary: ArrayLike,
+    indices_or_sections: _IndicesOrSections,
+    axis: SupportsIndex = 0,
+) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
 def split[SplitableT: _SupportsSplitOps](
     ary: SplitableT,
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[SplitableT]: ...
 @overload
 def split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
+    indices_or_sections: _IndicesOrSections,
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
 @overload
-def split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsIndex = 0) -> list[NDArray[Incomplete]]: ...
+def split(
+    ary: Sequence[complex],
+    indices_or_sections: _IndicesOrSections,
+    axis: SupportsIndex = 0,
+) -> list[Array1D[Any]]: ...
+@overload
+def split(
+    ary: ArrayLike,
+    indices_or_sections: _IndicesOrSections,
+    axis: SupportsIndex = 0,
+) -> list[NDArray[Incomplete]]: ...
 
 # keep in sync with `numpy.ma.extras.hsplit`
 @overload
-def hsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
+def hsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _IndicesOrSections) -> list[SplitableT]: ...
 @overload
-def hsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+def hsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[NDArray[ScalarT]]: ...
 @overload
-def hsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
+def hsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
-def vsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
+def vsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _IndicesOrSections) -> list[SplitableT]: ...
 @overload
-def vsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+def vsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[NDArray[ScalarT]]: ...
 @overload
-def vsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
+def vsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDArray[Incomplete]]: ...
 
 #
 @overload
-def dsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
+def dsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _IndicesOrSections) -> list[SplitableT]: ...
 @overload
-def dsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+def dsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _IndicesOrSections) -> list[NDArray[ScalarT]]: ...
 @overload
-def dsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
+def dsplit(ary: ArrayLike, indices_or_sections: _IndicesOrSections) -> list[NDArray[Incomplete]]: ...
 
 #
-@overload
+@overload  # ?d T, ?d T  (workaround)
+def kron(  # noqa: UP047
+    a: _ArrayJustND[_AnyNumberT],
+    b: _ArrayLike[_AnyNumberT],
+) -> NDArray[_AnyNumberT]: ...
+@overload  # ?d T, ?d T  (workaround)
+def kron(  # noqa: UP047
+    a: _ArrayLike[_AnyNumberT],
+    b: _ArrayJustND[_AnyNumberT],
+) -> NDArray[_AnyNumberT]: ...
+@overload  # 1d T, 1d T
+def kron(  # noqa: UP047
+    a: Array1D[_AnyNumberT],
+    b: Array1D[_AnyNumberT],
+) -> Array1D[_AnyNumberT]: ...
+@overload  # 1d T, 2d T
+def kron(  # noqa: UP047
+    a: Array1D[_AnyNumberT],
+    b: Array2D[_AnyNumberT],
+) -> Array2D[_AnyNumberT]: ...
+@overload  # 2d T, <=2d T
+def kron(  # noqa: UP047
+    a: Array2D[_AnyNumberT],
+    b: _ArrayMax2D[_AnyNumberT],
+) -> Array2D[_AnyNumberT]: ...
+@overload  # <=2d T, 3d T
+def kron(  # noqa: UP047
+    a: _ArrayMax2D[_AnyNumberT],
+    b: Array3D[_AnyNumberT],
+) -> Array3D[_AnyNumberT]: ...
+@overload  # 3d T, <=3d T
+def kron(  # noqa: UP047
+    a: Array3D[_AnyNumberT],
+    b: np.ndarray[tuple[int] | tuple[int, int] | tuple[int, int, int], np.dtype[_AnyNumberT]],
+) -> Array3D[_AnyNumberT]: ...
+@overload  # ?d T, ?d T
+def kron(  # noqa: UP047
+    a: _ArrayLike[_AnyNumberT],
+    b: _ArrayLike[_AnyNumberT],
+) -> NDArray[_AnyNumberT]: ...
+@overload  # ?d bool, ?d bool
 def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[np.bool]: ...
-@overload
-def kron(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co) -> NDArray[np.unsignedinteger]: ...
-@overload
-def kron(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co) -> NDArray[np.signedinteger]: ...
-@overload
-def kron(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> NDArray[np.floating]: ...
-@overload
-def kron(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[np.complexfloating]: ...
-@overload
+@overload  # ?d +int, ?d +int
+def kron(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co) -> NDArray[np.int_ | Any]: ...
+@overload  # ?d +f64, ?d +f64
+def kron(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> NDArray[np.float64 | Any]: ...
+@overload  # ?d +c128, ?d +c128
+def kron(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[np.complex128 | Any]: ...
+@overload  # ?d ~object_, ?d
 def kron(a: _ArrayLikeObject_co, b: object) -> NDArray[np.object_]: ...
-@overload
+@overload  # ?d, ?d ~object_
 def kron(a: object, b: _ArrayLikeObject_co) -> NDArray[np.object_]: ...
 
 #
-@overload
-def tile[ScalarT: np.generic](A: _ArrayLike[ScalarT], reps: int | Sequence[int]) -> NDArray[ScalarT]: ...
-@overload
-def tile(A: ArrayLike, reps: int | Sequence[int]) -> NDArray[Incomplete]: ...
+@overload  # ?d, known dtype, (workaround overload)
+def tile[DTypeT: np.dtype](
+    A: np.ndarray[_JustAnyShape, DTypeT],
+    reps: _ArrayLikeInt,
+) -> np.ndarray[_AnyShape, DTypeT]: ...
+@overload  # >=1d, known dtype, <=1d reps
+def tile[ArrayT: np.ndarray[_Min1D]](A: ArrayT, reps: int | tuple[()] | tuple[int]) -> ArrayT: ...
+@overload  # >=2d, known dtype, 2d reps
+def tile[ArrayT: np.ndarray[_Min2D]](A: ArrayT, reps: tuple[int, int]) -> ArrayT: ...
+@overload  # >=3d, known dtype, 3d reps
+def tile[ArrayT: np.ndarray[_Min3D]](A: ArrayT, reps: tuple[int, int, int]) -> ArrayT: ...
+@overload  # <=1d, known dtype, >=1d reps
+def tile[ScalarT: np.generic, ShapeT: (_1d, _2d, _3d, _4d, _5d, _6d)](  # constraints avoid `Literal` propagation
+    A: _To1D[ScalarT],
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # <=2d, known dtype, >=2d reps
+def tile[ScalarT: np.generic, ShapeT: (_2d, _3d, _4d, _5d, _6d)](
+    A: _To2D[ScalarT],
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # <=3d, known dtype, >=3d reps
+def tile[ScalarT: np.generic, ShapeT: (_3d, _4d, _5d, _6d)](
+    A: _To3D[ScalarT],
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # <=1d, unknown dtype, >=1d reps
+def tile[ShapeT: (_1d, _2d, _3d, _4d, _5d, _6d)](
+    A: Sequence[_ScalarLike_co] | _ScalarLike_co,
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # <=1d, unknown dtype, 1d reps
+def tile(
+    A: Sequence[_ScalarLike_co] | _ScalarLike_co,
+    reps: int,
+) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+@overload  # 2d, unknown dtype, >=2d reps
+def tile[ShapeT: (_2d, _3d, _4d, _5d, _6d)](
+    A: Sequence[Sequence[_ScalarLike_co]],
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # 3d, unknown dtype, >=3d reps
+def tile[ShapeT: (_3d, _4d, _5d, _6d)](
+    A: Sequence[Sequence[Sequence[_ScalarLike_co]]],
+    reps: ShapeT,
+) -> np.ndarray[ShapeT, np.dtype[Any]]: ...
+@overload  # ?d, known dtype
+def tile[ScalarT: np.generic](A: _ArrayLike[ScalarT], reps: _ArrayLikeInt) -> NDArray[ScalarT]: ...
+@overload  # ?d, unknown dtype
+def tile(A: ArrayLike, reps: _ArrayLikeInt) -> NDArray[Incomplete]: ...

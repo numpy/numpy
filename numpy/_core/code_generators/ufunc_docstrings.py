@@ -1870,7 +1870,7 @@ add_newdoc('numpy._core.umath', 'isnat',
     Examples
     --------
     >>> import numpy as np
-    >>> np.isnat(np.datetime64("NaT"))
+    >>> np.isnat(np.datetime64("NaT", "D"))
     True
     >>> np.isnat(np.datetime64("2016-01-01"))
     False
@@ -2607,6 +2607,58 @@ add_newdoc('numpy._core.umath', 'minimum',
 
     """)
 
+add_newdoc('numpy._core.umath', 'minimummaximum',
+    """
+    Element-wise minimum and maximum of array elements.
+
+    Compare two arrays and return a new pair of arrays containing the
+    element-wise minima and maxima. If one of the elements being compared is a
+    NaN, then that element is returned for both outputs. If both elements are
+    NaNs then the first is returned. The latter distinction is important for
+    complex NaNs, which are defined as at least one of the real or imaginary
+    parts being a NaN. The net effect is that NaNs are propagated.
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        The arrays holding the elements to be compared.
+        $BROADCASTABLE_2
+    $PARAMS
+
+    Returns
+    -------
+    ymin : ndarray or scalar
+        The minimum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
+    ymax : ndarray or scalar
+        The maximum of `x1` and `x2`, element-wise.
+
+    See Also
+    --------
+    minimum :
+        Element-wise minimum of two arrays, propagates NaNs.
+    maximum :
+        Element-wise maximum of two arrays, propagates NaNs.
+    minmax :
+        The minimum and maximum of an array along a given axis, propagates NaNs.
+
+    Notes
+    -----
+    ``minimummaximum(x1, x2)`` is equivalent to
+    ``(minimum(x1, x2), maximum(x1, x2))`` but computes both in a single pass
+    over the inputs.
+
+    This ufunc is not part of the public API; it is the engine behind
+    `minmax`.
+
+    Examples
+    --------
+    >>> from numpy._core.umath import minimummaximum
+    >>> minimummaximum([2, 3, 4], [1, 5, 2])
+    (array([1, 3, 2]), array([2, 5, 4]))
+
+    """)
+
 add_newdoc('numpy._core.umath', 'fmax',
     """
     Element-wise maximum of array elements.
@@ -3291,6 +3343,26 @@ add_newdoc('numpy._core.umath', '_ones_like',
     See Also
     --------
     ones_like
+
+    """)
+
+add_newdoc('numpy._core.umath', '_unwrap',
+    """
+    _unwrap(p, discont, period)
+
+    Generalized ufunc backing `numpy.unwrap`, with signature
+    ``(n),(),()->(n)``.
+
+    For each 1-D slice ``p`` along the core dimension, unwrap the values by
+    changing elements whose absolute difference from their predecessor exceeds
+    ``max(discont, period/2)`` to their `period`-complementary values.
+    `period` is expected to already share `p`'s dtype, and `discont` its own
+    matching dtype. The public `numpy.unwrap` wrapper fills their defaults
+    and resolves and casts both before calling this.
+
+    See Also
+    --------
+    unwrap
 
     """)
 
@@ -4519,6 +4591,62 @@ add_newdoc('numpy._core.umath', 'bitwise_count',
     >>> np.bitwise_count(a)
     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
           dtype=uint8)
+
+    """)
+
+add_newdoc('numpy._core.umath', 'real',
+    """
+    Returns the real part of the elements in the array.
+
+    Parameters
+    ----------
+    x : array_like
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Real part of input array.
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    ndarray.real
+    ndarray.imag
+
+    Notes
+    -----
+    This ufunc is used internally to implement the `ndarray.real`
+    attribute and the `np.real` function. It should not be used directly.
+
+    """)
+
+add_newdoc('numpy._core.umath', 'imag',
+    """
+    Returns the imaginary part of the elements in the array.
+
+    Unlike typical ufuncs, the return is typically a view into the original array.
+
+    Parameters
+    ----------
+    x : array_like
+    $PARAMS
+
+    Returns
+    -------
+    y : ndarray
+        Complex part of input array or zeros.
+        $OUT_SCALAR_1
+
+    See Also
+    --------
+    ndarray.imag
+    ndarray.real
+
+    Notes
+    -----
+    This ufunc is used internally to implement the `ndarray.imag`
+    attribute and the `np.imag` function. It should not be used directly.
 
     """)
 

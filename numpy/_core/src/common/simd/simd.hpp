@@ -17,7 +17,8 @@
  * When NPY_DISABLE_OPTIMIZATION is defined, SIMD operations are disabled
  * and the code falls back to scalar implementations.
  */
-#ifndef NPY_DISABLE_OPTIMIZATION
+
+#if !defined(NPY_DISABLE_OPTIMIZATION) && !defined(NPY_DISABLE_HIGHWAY)
 #include <hwy/highway.h>
 
 /**
@@ -39,7 +40,7 @@
 
 // Indicates if the SIMD operations are available for float16.
 #define NPY_HWY_F16 (NPY_HWY && HWY_HAVE_FLOAT16)
-// Note: Highway requires SIMD extentions with native float32 support, so we don't need
+// Note: Highway requires SIMD extensions with native float32 support, so we don't need
 // to check for it.
 
 // Indicates if the SIMD operations are available for float64.
@@ -64,7 +65,7 @@ namespace simd {
 /// We can not import all the symbols from the HWY_NAMESPACE because it will
 /// conflict with the existing symbols in the numpy namespace.
 namespace hn = hwy::HWY_NAMESPACE;
-// internaly used by the template header
+// internally used by the template header
 template <typename TLane>
 using _Tag = hn::ScalableTag<TLane>;
 #endif

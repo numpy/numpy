@@ -58,6 +58,3 @@ np.char.index(AR_U, b"a", start=[1, 2, 3])  # type: ignore[arg-type]
 np.char.index(AR_S, "a", end=9)  # type: ignore[arg-type]
 np.char.rindex(AR_U, b"a", start=[1, 2, 3])  # type: ignore[arg-type]
 np.char.rindex(AR_S, "a", end=9)  # type: ignore[arg-type]
-
-np.char.isdecimal(AR_S)  # type: ignore[arg-type]
-np.char.isnumeric(AR_S)  # type: ignore[arg-type]

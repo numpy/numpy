@@ -104,8 +104,8 @@ def fortranSourceLines(fo):
                     break
             yield numberingiter.lineno, ''.join(lines)
         else:
-            raise ValueError("jammed: continuation line not expected: %s:%d" %
-                             (fo.name, numberingiter.lineno))
+            raise ValueError("jammed: continuation line not expected: "
+                             f"{fo.name}:{numberingiter.lineno}")
 
 def getDependencies(filename):
     """For a Fortran source file, return a list of routines declared as EXTERNAL

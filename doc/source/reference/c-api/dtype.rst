@@ -152,9 +152,9 @@ Enumerated types
     .. c:enumerator:: NPY_VSTRING
 
         The enumeration value for UTF-8 variable-width strings. Note that this
-        dtype holds an array of references, with string data stored outside of
-        the array buffer. Use the C API for working with numpy variable-width
-        static strings to access the string data in each array entry.
+        dtype stores opaque packed strings in the array buffer. Use the C API
+        for working with numpy variable-width static strings to access the string
+        data in each array entry.
 
         .. note::
             This DType is new-style and is not included in ``NPY_NTYPES_LEGACY``.

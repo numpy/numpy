@@ -17,9 +17,7 @@ NPY_FINLINE float c_recip_f32(float a)
 { return 1.0f / a; }
 NPY_FINLINE float c_abs_f32(float a)
 {
-    const float tmp = a > 0 ? a : -a;
-    /* add 0 to clear -0.0 */
-    return tmp + 0;
+    return npy_fabsf(a);
 }
 NPY_FINLINE float c_square_f32(float a)
 { return a * a; }
@@ -30,9 +28,7 @@ NPY_FINLINE double c_recip_f64(double a)
 { return 1.0 / a; }
 NPY_FINLINE double c_abs_f64(double a)
 {
-    const double tmp = a > 0 ? a : -a;
-    /* add 0 to clear -0.0 */
-    return tmp + 0;
+    return npy_fabs(a);
 }
 NPY_FINLINE double c_square_f64(double a)
 { return a * a; }

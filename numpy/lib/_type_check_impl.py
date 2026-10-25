@@ -248,21 +248,15 @@ def isreal(x):
     The function does not work on string arrays.
 
     >>> a = np.array([2j, "a"], dtype=np.str_)
-    >>> np.isreal(a)  # Warns about non-elementwise comparison
-    False
+    >>> np.isreal(a)  # returns the result of `"" == 0` currently.
+    array([False, False])
 
-    Returns True for all elements in input array of ``dtype=np.object_`` even if
-    any of the elements is complex.
+    Returns True for all elements that either have no ``.imag`` attribute
+    or for which that attribute is zero:
 
     >>> a = np.array([1, "2", 3+4j], dtype=np.object_)
     >>> np.isreal(a)
-    array([ True,  True,  True])
-
-    isreal should not be used with object arrays
-
-    >>> a = np.array([1+2j, 2+1j], dtype=np.object_)
-    >>> np.isreal(a)
-    array([ True,  True])
+    array([ True,  True,  False])
 
     """
     return imag(x) == 0
@@ -394,11 +388,15 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     ----------
     x : scalar or array_like
         Input data.
-    copy : bool, optional
-        Whether to create a copy of `x` (True) or to replace values
-        in-place (False). The in-place operation only occurs if
-        casting to an array does not require a copy.
-        Default is True.
+    copy : bool or None, optional
+        Whether to create a copy of `x` (``True``) or to replace values
+        in-place (``False``). The in-place operation only occurs if
+        casting to an array does not require a copy. If ``False``, a
+        ``ValueError`` is raised if a copy cannot be avoided. If ``None``,
+        a copy is made only if needed (e.g., when converting a sequence
+        to an array or when casting is required), otherwise values are
+        replaced in-place.
+        Default is ``True``.
     nan : int, float, or bool or array_like of int, float, or bool, optional
         Values to be used to fill NaN values. If no values are passed
         then NaN values will be replaced with 0.0.
@@ -414,8 +412,8 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     Returns
     -------
     out : ndarray
-        `x`, with the non-finite values replaced. If `copy` is False, this may
-        be `x` itself.
+        `x`, with the non-finite values replaced. If `copy` is False or None,
+        this may be `x` itself.
 
     See Also
     --------
@@ -704,7 +702,14 @@ def common_type(*arrays):
     is_complex = False
     precision = 0
     for a in arrays:
-        t = a.dtype.type
+        try:
+            t = a.dtype.type
+        except AttributeError:
+            raise TypeError(
+                f"common_type takes array inputs, not '{a}'. "
+                "To find a common type for dtypes or scalar types use "
+                "np.result_type or np.promote_types instead."
+            ) from None
         if iscomplexobj(a):
             is_complex = True
         if issubclass(t, _nx.integer):

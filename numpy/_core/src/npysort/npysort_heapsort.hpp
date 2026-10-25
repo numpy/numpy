@@ -1,0 +1,287 @@
+#ifndef NUMPY_CORE_SRC_NPYSORT_NPYSORT_HEAPSORT_HPP_
+#define NUMPY_CORE_SRC_NPYSORT_NPYSORT_HEAPSORT_HPP_
+
+/*
+ * The purpose of this module is to add faster sort functions
+ * that are type-specific.  This is done by altering the
+ * function table for the builtin descriptors.
+ *
+ * These sorting functions are copied almost directly from numarray
+ * with a few modifications (complex comparisons compare the imaginary
+ * part if the real parts are equal, for example), and the names
+ * are changed.
+ *
+ * The original sorting code is due to Charles R. Harris who wrote
+ * it for numarray.
+ *
+ * The heap sort is included for completeness.
+ */
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "npy_sort.h"
+#include "npysort_common.h"
+#include "numpy_tag.hpp"
+
+#include <cstdlib>
+
+/*
+ *****************************************************************************
+ **                            NUMERIC SORTS                                **
+ *****************************************************************************
+ */
+
+template <typename Tag, typename type, bool reverse = false>
+inline NPY_NO_EXPORT
+int heapsort_(type *start, npy_intp n)
+{
+    type tmp, *a;
+    npy_intp i, j, l;
+    int ret;
+
+    /* The array needs to be offset by one for heapsort indexing */
+    a = start - 1;
+
+    for (l = n >> 1; l > 0; --l) {
+        tmp = a[l];
+        for (i = l, j = l << 1; j <= n;) {
+            if (j < n) {
+                ret = npy::cmp<Tag, reverse>(a[j], a[j + 1]);
+                if (ret < 0) return ret;
+                if (ret) { j += 1; }
+            }
+
+            ret = npy::cmp<Tag, reverse>(tmp, a[j]);
+            if (ret < 0) return ret;
+            if (ret) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    for (; n > 1;) {
+        tmp = a[n];
+        a[n] = a[1];
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n) {
+                ret = npy::cmp<Tag, reverse>(a[j], a[j + 1]);
+                if (ret < 0) return ret;
+                if (ret) { j++; }
+            }
+
+            ret = npy::cmp<Tag, reverse>(tmp, a[j]);
+            if (ret < 0) return ret;
+            if (ret) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    return 0;
+}
+
+// ``PyArray_SortFunc``-shaped trampoline.
+template <typename Tag, typename type, bool reverse = false>
+inline NPY_NO_EXPORT int
+heapsort_impl(void *start, npy_intp n, void *NPY_UNUSED(varr))
+{
+    return heapsort_<Tag, type, reverse>((type *)start, n);
+}
+
+template <typename Tag, typename type, bool reverse = false>
+inline NPY_NO_EXPORT
+int aheapsort_(type *vv, npy_intp *tosort, npy_intp n)
+{
+    type *v = vv;
+    npy_intp *a, i, j, l, tmp;
+    int ret;
+    /* The arrays need to be offset by one for heapsort indexing */
+    a = tosort - 1;
+
+    for (l = n >> 1; l > 0; --l) {
+        tmp = a[l];
+        for (i = l, j = l << 1; j <= n;) {
+            if (j < n) {
+                ret = npy::cmp<Tag, reverse>(v[a[j]], v[a[j + 1]]);
+                if (ret < 0) return ret;
+                if (ret) { j += 1; }
+            }
+
+            ret = npy::cmp<Tag, reverse>(v[tmp], v[a[j]]);
+            if (ret < 0) return ret;
+            if (ret) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    for (; n > 1;) {
+        tmp = a[n];
+        a[n] = a[1];
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n) {
+                ret = npy::cmp<Tag, reverse>(v[a[j]], v[a[j + 1]]);
+                if (ret < 0) return ret;
+                if (ret) { j++; }
+            }
+
+            ret = npy::cmp<Tag, reverse>(v[tmp], v[a[j]]);
+            if (ret < 0) return ret;
+            if (ret) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    return 0;
+}
+
+// ``PyArray_ArgSortFunc``-shaped trampoline.
+template <typename Tag, typename type, bool reverse = false>
+inline NPY_NO_EXPORT int
+aheapsort_impl(void *vv, npy_intp *tosort, npy_intp n,
+               void *NPY_UNUSED(varr))
+{
+    return aheapsort_<Tag, type, reverse>((type *)vv, tosort, n);
+}
+
+/*
+ *****************************************************************************
+ **                            STRING SORTS                                 **
+ *****************************************************************************
+ */
+
+template <typename Tag, typename type, bool reverse = false>
+inline NPY_NO_EXPORT
+int string_heapsort_(type *start, npy_intp n, int elsize)
+{
+    size_t len = elsize / sizeof(type);
+    if (len == 0) {
+        return 0;  /* no need for sorting if strings are empty */
+    }
+
+    type *tmp = (type *)PyMem_RawMalloc(elsize);
+    type *a = (type *)start - len;
+    npy_intp i, j, l;
+
+    if (tmp == NULL) {
+        return -NPY_ENOMEM;
+    }
+
+    for (l = n >> 1; l > 0; --l) {
+        Tag::copy(tmp, a + l * len, len);
+        for (i = l, j = l << 1; j <= n;) {
+            if (j < n && npy::cmp<Tag, reverse>(a + j * len, a + (j + 1) * len, len))
+                j += 1;
+            if (npy::cmp<Tag, reverse>(tmp, a + j * len, len)) {
+                Tag::copy(a + i * len, a + j * len, len);
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        Tag::copy(a + i * len, tmp, len);
+    }
+
+    for (; n > 1;) {
+        Tag::copy(tmp, a + n * len, len);
+        Tag::copy(a + n * len, a + len, len);
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && npy::cmp<Tag, reverse>(a + j * len, a + (j + 1) * len, len))
+                j++;
+            if (npy::cmp<Tag, reverse>(tmp, a + j * len, len)) {
+                Tag::copy(a + i * len, a + j * len, len);
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        Tag::copy(a + i * len, tmp, len);
+    }
+
+    PyMem_RawFree(tmp);
+    return 0;
+}
+
+template <typename Tag, typename type, bool reverse = false>
+inline NPY_NO_EXPORT
+int string_aheapsort_(type *vv, npy_intp *tosort, npy_intp n, int elsize)
+{
+    type *v = vv;
+    size_t len = elsize / sizeof(type);
+    npy_intp *a, i, j, l, tmp;
+
+    /* The array needs to be offset by one for heapsort indexing */
+    a = tosort - 1;
+
+    for (l = n >> 1; l > 0; --l) {
+        tmp = a[l];
+        for (i = l, j = l << 1; j <= n;) {
+            if (j < n && npy::cmp<Tag, reverse>(v + a[j] * len, v + a[j + 1] * len, len))
+                j += 1;
+            if (npy::cmp<Tag, reverse>(v + tmp * len, v + a[j] * len, len)) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    for (; n > 1;) {
+        tmp = a[n];
+        a[n] = a[1];
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && npy::cmp<Tag, reverse>(v + a[j] * len, v + a[j + 1] * len, len))
+                j++;
+            if (npy::cmp<Tag, reverse>(v + tmp * len, v + a[j] * len, len)) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    return 0;
+}
+
+#endif

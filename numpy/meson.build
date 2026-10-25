@@ -71,7 +71,7 @@ endif
 blas_order = get_option('blas-order')
 if blas_order == ['auto']
   blas_order = []
-  if host_machine.system() == 'darwin'
+  if host_machine.system() in ['darwin', 'ios']
     blas_order += 'accelerate'
   endif
   if host_machine.cpu_family() == 'x86_64'
@@ -82,7 +82,7 @@ endif
 lapack_order = get_option('lapack-order')
 if lapack_order == ['auto']
   lapack_order = []
-  if host_machine.system() == 'darwin'
+  if host_machine.system() in ['darwin', 'ios']
     lapack_order += 'accelerate'
   endif
   if host_machine.cpu_family() == 'x86_64'
@@ -363,13 +363,28 @@ else
 endif
 
 foreach subdir: pure_subdirs
-  install_subdir(subdir, install_dir: np_dir, install_tag: 'python-runtime', exclude_directories: ['tests'])
+  install_subdir(
+    subdir,
+    install_dir: np_dir,
+    install_tag: 'python-runtime',
+    exclude_directories: ['tests', '__pycache__']
+  )
   if fs.is_dir(subdir/'tests')
-    install_subdir(subdir/'tests', install_dir: np_dir/subdir, install_tag: 'tests')
+    install_subdir(
+      subdir/'tests',
+      install_dir: np_dir/subdir,
+      install_tag: 'tests',
+      exclude_directories: ['__pycache__']
+    )
   endif
 endforeach
 
-install_subdir('tests', install_dir: np_dir, install_tag: 'tests')
+install_subdir(
+  'tests',
+  install_dir: np_dir,
+  install_tag: 'tests',
+  exclude_directories: ['__pycache__']
+)
 
 compilers = {
   'C': cc,
@@ -408,7 +423,7 @@ foreach name, machine : machines
   conf_data.set(name + '_CPU_SYSTEM', machine.system())
 endforeach
 
-conf_data.set('CROSS_COMPILED', meson.is_cross_build())
+conf_data.set('CROSS_COMPILED', meson.is_cross_build() ? 'True' : 'False')
 
 # Python information
 conf_data.set('PYTHON_PATH', py.full_path())
@@ -424,13 +439,13 @@ if have_blas
   dependency_map += {'BLAS': blas}
 else
   conf_data.set('BLAS_NAME', blas_name)
-  conf_data.set('BLAS_FOUND', false)
+  conf_data.set('BLAS_FOUND', 'False')
 endif
 
 
 foreach name, dep : dependency_map
   conf_data.set(name + '_NAME', dep.name())
-  conf_data.set(name + '_FOUND', dep.found())
+  conf_data.set(name + '_FOUND', dep.found() ? 'True' : 'False')
   if dep.found()
     conf_data.set(name + '_VERSION', dep.version())
     conf_data.set(name + '_TYPE_NAME', dep.type_name())

@@ -64,8 +64,8 @@ usage, however, is given in the following example.
     iter = (PyArrayIterObject *)PyArray_IterNew(obj);
     if (iter == NULL) goto fail;   /* Assume fail has clean-up code */
     while (iter->index < iter->size) {
-        /* do something with the data at it->dataptr */
-        PyArray_ITER_NEXT(it);
+        /* do something with the data at iter->dataptr */
+        PyArray_ITER_NEXT(iter);
     }
     ...
 
@@ -458,74 +458,74 @@ Specific features of ndarray sub-typing
 
 Some special methods and attributes are used by arrays in order to
 facilitate the interoperation of sub-types with the base ndarray type.
+They are the same ones a Python subclass uses, and the canonical
+description of their semantics lives in the reference section
+:ref:`special-attributes-and-methods`:
 
-The __array_finalize\__ method
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- :obj:`~numpy.class.__array_finalize__` is called whenever NumPy
+  internally creates a new instance of a sub-type (for example, when
+  slicing or when a ufunc produces its output), since neither
+  ``__new__`` nor ``__init__`` runs in that case.
+- :obj:`~numpy.class.__array_wrap__` is called at the end of ufuncs and
+  some other functions, and lets a type turn the computed ndarray back
+  into an instance of itself. It can be seen as the opposite of
+  :obj:`~numpy.class.__array__`.
+- :obj:`~numpy.class.__array_priority__` decides which input's
+  ``__array_wrap__`` is used when an operation involves several
+  sub-types. The default is ``0.0`` for both the base ndarray type and
+  sub-types; see :ref:`ufuncs-output-type` for the exact rule.
 
-.. attribute:: ndarray.__array_finalize__
+.. seealso::
 
-   Several array-creation functions of the ndarray allow
-   specification of a particular sub-type to be created. This allows
-   sub-types to be handled seamlessly in many routines. When a
-   sub-type is created in such a fashion, however, neither the
-   __new_\_ method nor the __init\__ method gets called. Instead, the
-   sub-type is allocated and the appropriate instance-structure
-   members are filled in. Finally, the :obj:`~numpy.class.__array_finalize__`
-   attribute is looked-up in the object dictionary. If it is present and not
-   None, then it can be either a :c:type:`PyCapsule` containing a pointer to a
-   :c:func:`PyArray_FinalizeFunc` or it can be a method taking a single argument
-   (which could be None)
+   :ref:`basics.subclassing`
+      A user-level tutorial, with worked examples, on how these hooks
+      behave for a Python subclass of ndarray.
+   :ref:`basics.interoperability`
+      How these hooks fit alongside ``__array_ufunc__``,
+      ``__array_function__`` and the other interoperability protocols.
 
-   If the :obj:`~numpy.class.__array_finalize__` attribute is a
-   :c:type:`PyCapsule`, then the pointer must be a pointer to a function with
-   the signature:
+The remainder of this section describes what is specific to sub-types
+written in C.
 
-   .. code-block:: c
+The __array_finalize\__ method in C
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-       (int) (PyArrayObject *, PyObject *)
+When a sub-type instance is created internally, the
+:obj:`~numpy.class.__array_finalize__` attribute is looked up on the
+type. Unless it is the default implementation inherited from ndarray
+(which does nothing and is skipped), it must be either a Python method
+taking a single argument (as described in :ref:`basics.subclassing`), or
+a :c:type:`PyCapsule` containing a pointer to a
+:c:func:`PyArray_FinalizeFunc`, that is, a function with the signature:
 
-   The first argument is the newly created sub-type. The second argument
-   (if not NULL) is the "parent" array (if the array was created using
-   slicing or some other operation where a clearly-distinguishable parent
-   is present). This routine can do anything it wants to. It should
-   return a -1 on error and 0 otherwise.
+.. code-block:: c
 
-   If the :obj:`~numpy.class.__array_finalize__` attribute is not None nor a
-   :c:type:`PyCapsule`, then it must be a Python method that takes the parent
-   array as an argument (which could be None if there is no parent), and returns
-   nothing. Errors in this method will be caught and handled.
+    (int) (PyArrayObject *, PyObject *)
 
+The first argument is the newly created sub-type. The second argument
+(if not NULL) is the "parent" array (if the array was created using
+slicing or some other operation where a clearly-distinguishable parent
+is present). This routine can do anything it wants to. It should
+return -1 on error and 0 otherwise.
 
-The __array_priority\__ attribute
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If the attribute is a Python method rather than a capsule, it is called
+with the parent array as its argument (which may be None if there is no
+parent) and its return value is ignored. Errors raised in this method are
+propagated.
 
-.. attribute:: ndarray.__array_priority__
+The __array_priority\__ attribute and __array_wrap\__ method in C
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   This attribute allows simple but flexible determination of which sub-
-   type should be considered "primary" when an operation involving two or
-   more sub-types arises. In operations where different sub-types are
-   being used, the sub-type with the largest :obj:`~numpy.class.__array_priority__`
-   attribute will determine the sub-type of the output(s). If two sub-
-   types have the same :obj:`~numpy.class.__array_priority__` then the sub-type of the
-   first argument determines the output. The default
-   :obj:`~numpy.class.__array_priority__` attribute returns a value of 0.0 for the base
-   ndarray type and 1.0 for a sub-type. This attribute can also be
-   defined by objects that are not sub-types of the ndarray and can be
-   used to determine which :obj:`~numpy.class.__array_wrap__` method should be called for
-   the return output.
-
-The __array_wrap\__ method
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. attribute:: ndarray.__array_wrap__
-
-   Any class or type can define this method which should take an ndarray
-   argument and return an instance of the type. It can be seen as the
-   opposite of the :obj:`~numpy.class.__array__` method. This method is used by the
-   ufuncs (and other NumPy functions) to allow other objects to pass
-   through. For Python >2.4, it can also be used to write a decorator
-   that converts a function that works only with ndarrays to one that
-   works with any type with :obj:`~numpy.class.__array__` and :obj:`~numpy.class.__array_wrap__` methods.
+There is nothing C-specific about these two: a C sub-type exposes them
+exactly as a Python subclass does, as a ``__array_priority__`` attribute
+(a float) and an ``__array_wrap__`` method with the signature
+``__array_wrap__(array, context=None, return_scalar=False)`` in its type
+object. Note that :obj:`~numpy.class.__array_priority__` and
+:obj:`~numpy.class.__array_wrap__` can also be defined by objects that
+are *not* sub-types of ndarray; this is used, for example, to write a
+decorator that converts a function working only with ndarrays into one
+that works with any type implementing :obj:`~numpy.class.__array__` and
+:obj:`~numpy.class.__array_wrap__`.
 
 .. index::
    pair: ndarray; subtyping

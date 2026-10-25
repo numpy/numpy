@@ -63,7 +63,7 @@ distances among them. The output dimension ``p`` must therefore be equal to
 in an output array of the right size. If the size of a core dimension of an output
 cannot be determined from a passed in input or output array, an error will be
 raised.  This can be changed by defining a ``PyUFunc_ProcessCoreDimsFunc`` function
-and assigning it to the ``proces_core_dims_func`` field of the ``PyUFuncObject``
+and assigning it to the ``process_core_dims_func`` field of the ``PyUFuncObject``
 structure.  See below for more details.
 
 Note: Prior to NumPy 1.10.0, less strict checks were in place: missing core

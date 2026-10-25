@@ -40,6 +40,7 @@
 #define NO_IMPORT_ARRAY
 #endif
 #include "stdio.h"
+#include <string.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 %}
@@ -457,11 +458,11 @@ void free_cap(PyObject * cap)
     {
       for (i = 0; i < n-1; i++)
       {
-        sprintf(s, "%d, ", exact_dimensions[i]);
-        strcat(dims_str,s);
+        snprintf(s, sizeof(s), "%d, ", exact_dimensions[i]);
+        strncat(dims_str, s, sizeof(dims_str) - strlen(dims_str) - 1);
       }
-      sprintf(s, " or %d", exact_dimensions[n-1]);
-      strcat(dims_str,s);
+      snprintf(s, sizeof(s), " or %d", exact_dimensions[n-1]);
+      strncat(dims_str, s, sizeof(dims_str) - strlen(dims_str) - 1);
       PyErr_Format(PyExc_TypeError,
                    "Array must have %s dimensions.  Given array has %d dimensions",
                    dims_str,
@@ -497,20 +498,20 @@ void free_cap(PyObject * cap)
       {
         if (size[i] == -1)
         {
-          sprintf(s, "*,");
+          snprintf(s, sizeof(s), "*,");
         }
         else
         {
-          sprintf(s, "%ld,", (long int)size[i]);
+          snprintf(s, sizeof(s), "%ld,", (long int)size[i]);
         }
-        strcat(desired_dims,s);
+        strncat(desired_dims, s, sizeof(desired_dims) - strlen(desired_dims) - 1);
       }
       len = strlen(desired_dims);
       desired_dims[len-1] = ']';
       for (i = 0; i < n; i++)
       {
-        sprintf(s, "%ld,", (long int)array_size(ary,i));
-        strcat(actual_dims,s);
+        snprintf(s, sizeof(s), "%ld,", (long int)array_size(ary,i));
+        strncat(actual_dims, s, sizeof(actual_dims) - strlen(actual_dims) - 1);
       }
       len = strlen(actual_dims);
       actual_dims[len-1] = ']';

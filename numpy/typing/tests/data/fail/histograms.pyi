@@ -8,5 +8,5 @@ np.histogram_bin_edges(AR_i8, range=(0, 1, 2))  # type: ignore[arg-type]
 
 np.histogram(AR_i8, range=(0, 1, 2))  # type: ignore[arg-type]
 
-np.histogramdd(AR_i8, range=(0, 1))  # type: ignore[arg-type]
-np.histogramdd(AR_i8, range=[(0, 1, 2)])  # type: ignore[list-item]
+np.histogramdd(AR_i8, range=(0, 1))  # type: ignore[arg-type, type-var]
+np.histogramdd(AR_i8, range=[(0, 1, 2)])  # type: ignore[list-item, type-var]

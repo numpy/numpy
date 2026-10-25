@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy.exceptions import AxisError, ComplexWarning
-from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
+from numpy.lib._nanfunctions_impl import _divide_by_count, _nan_mask, _replace_nan
 from numpy.testing import (
     assert_,
     assert_almost_equal,
@@ -835,7 +835,7 @@ _TIME_UNITS = (
     "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as"
 )
 
-# All `inexact` + `timdelta64` type codes
+# All `inexact` + `timedelta64` type codes
 _TYPE_CODES = list(np.typecodes["AllFloat"])
 _TYPE_CODES += [f"m8[{unit}]" for unit in _TIME_UNITS]
 
@@ -945,27 +945,37 @@ class TestNanFunctions_Median:
     @pytest.mark.parametrize("axis", [None, 0, 1])
     @pytest.mark.parametrize("dtype", _TYPE_CODES)
     def test_allnans(self, dtype, axis):
-        mat = np.full((3, 3), np.nan).astype(dtype)
-        with pytest.warns(RuntimeWarning) as r:
+        mat = np.full((3, 3), np.nan, dtype=dtype)
+        with pytest.warns((RuntimeWarning, DeprecationWarning)) as r:
             output = np.nanmedian(mat, axis=axis)
             assert output.dtype == mat.dtype
             assert np.isnan(output).all()
 
+            _filtered_record = [
+                item.message
+                for item in r
+                if "All-NaN slice encountered" in str(item.message)
+            ]
             if axis is None:
-                assert_(len(r) == 1)
+                assert_(len(_filtered_record) == 1)
             else:
-                assert_(len(r) == 3)
+                assert_(len(_filtered_record) == 3)
 
             # Check scalar
-            scalar = np.array(np.nan).astype(dtype)[()]
+            scalar = np.full((1, 1), np.nan, dtype=dtype)[0, 0]
             output_scalar = np.nanmedian(scalar)
             assert output_scalar.dtype == scalar.dtype
             assert np.isnan(output_scalar)
 
+            _filtered_record = [
+                item.message
+                for item in r
+                if "All-NaN slice encountered" in str(item.message)
+            ]
             if axis is None:
-                assert_(len(r) == 2)
+                assert_(len(_filtered_record) == 2)
             else:
-                assert_(len(r) == 4)
+                assert_(len(_filtered_record) == 4)
 
     def test_empty(self):
         mat = np.zeros((0, 3))
@@ -1263,6 +1273,7 @@ class TestNanFunctions_Percentile:
         assert_equal(q_weighted, result)
 
     @pytest.mark.parametrize("axis", [0, 1, 2])
+    @pytest.mark.slow
     def test_nan_value_with_weight_ndim(self, axis):
         # Create a multi-dimensional array to test
         np.random.seed(1)
@@ -1331,6 +1342,31 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 0), 0.)
         assert_equal(np.nanquantile(x, 1), 3.5)
         assert_equal(np.nanquantile(x, 0.5), 1.75)
+
+    def test_nanquantile_allnan_first_slice_dtype(self):
+        a = np.array(
+            [
+                [1.0, 2.0],
+                [np.nan, np.nan],
+            ],
+            dtype=np.float32,
+        )
+        q = np.array([0.3])
+
+        with pytest.warns(
+            RuntimeWarning, match="All-NaN slice encountered"
+        ):
+            result = np.nanquantile(a, q, axis=1)
+
+        with pytest.warns(
+            RuntimeWarning, match="All-NaN slice encountered"
+        ):
+            reversed_result = np.nanquantile(a[::-1], q, axis=1)
+
+        expected = np.quantile(a[0], q)
+
+        assert result.dtype == expected.dtype
+        assert reversed_result.dtype == expected.dtype
 
     def test_complex(self):
         arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
@@ -1436,3 +1472,14 @@ def test_memmap_takes_fast_route(tmpdir):
         # For completeness, same for nanmin.
         with pytest.raises(ValueError, match="reduction operation fmin"):
             np.nanmin(mm, out=np.zeros(2))
+
+
+def test_divide_by_count_read_only():
+    # gh-29117: `a` is normally divided into in place, but some reductions
+    # return a read-only array, so that is not always possible.
+    a = np.array([6.0], dtype=np.float32)
+    a.flags.writeable = False
+    res = _divide_by_count(a, np.array([2], dtype=np.intp))
+    assert_equal(res, np.array([3.0], dtype=np.float32))
+    # the fallback must not promote the result to float64
+    assert_equal(res.dtype, np.float32)

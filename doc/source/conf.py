@@ -70,7 +70,7 @@ def replace_scalar_type_names():
         if sys.implementation.name == 'cpython':
             c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
         else:
-            # It is not guarenteed that the c_typ has this model on other
+            # It is not guaranteed that the c_typ has this model on other
             # implementations
             _name_cache[typ] = b"numpy." + name.encode('utf8')
 
@@ -419,7 +419,8 @@ texinfo_documents = [
 intersphinx_mapping = {
     'neps': ('https://numpy.org/neps', None),
     'python': ('https://docs.python.org/3', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy', None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/",
+              "https://static.scipy.org/doc/scipy/objects.inv"),
     'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
@@ -583,7 +584,7 @@ def linkcode_resolve(domain, info):
         fn = relpath(fn, start=dirname(numpy.__file__))
 
     if lineno:
-        linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
+        linespec = f"#L{lineno}-L{lineno + len(source) - 1}"
     else:
         linespec = ""
 
@@ -591,10 +592,15 @@ def linkcode_resolve(domain, info):
         obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if 'dev' in numpy.__version__:
-        return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"
+        # Pin dev docs to the commit they were built from, so that the line
+        # numbers in ``linespec`` stay valid as ``main`` moves on.
+        # ``git_revision`` is empty when the tree has no git history (e.g.,
+        # a GitHub tarball). In that case fall back to ``main``.
+        ref = numpy.version.git_revision or 'main'
+        return f"https://github.com/numpy/numpy/blob/{ref}/numpy/{fn}{linespec}"
     else:
-        return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
-           numpy.__version__, fn, linespec)
+        return (f"https://github.com/numpy/numpy/blob/v{numpy.__version__}/"
+                f"numpy/{fn}{linespec}")
 
 
 from pygments.lexer import inherit

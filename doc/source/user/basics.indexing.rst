@@ -239,13 +239,13 @@ From the above example::
 
     >>> x[..., 0]
     array([[1, 2, 3],
-          [4, 5, 6]])
+           [4, 5, 6]])
 
 This is equivalent to::
 
     >>> x[:, :, 0]
     array([[1, 2, 3],
-          [4, 5, 6]])
+           [4, 5, 6]])
 
 Each :const:`newaxis` object in the selection tuple serves to expand
 the dimensions of the resulting selection by one unit-length
@@ -266,10 +266,10 @@ operations. For example::
     >>> x = np.arange(5)
     >>> x[:, np.newaxis] + x[np.newaxis, :]
     array([[0, 1, 2, 3, 4],
-          [1, 2, 3, 4, 5],
-          [2, 3, 4, 5, 6],
-          [3, 4, 5, 6, 7],
-          [4, 5, 6, 7, 8]])
+           [1, 2, 3, 4, 5],
+           [2, 3, 4, 5, 6],
+           [3, 4, 5, 6, 7],
+           [4, 5, 6, 7, 8]])
 
 
 .. _advanced-indexing:
@@ -317,7 +317,7 @@ If the index values are out of bounds then an ``IndexError`` is thrown::
     >>> x = np.array([[1, 2], [3, 4], [5, 6]])
     >>> x[np.array([1, -1])]
     array([[3, 4],
-          [5, 6]])
+           [5, 6]])
     >>> x[np.array([3, 4])]
     Traceback (most recent call last):
       ...
@@ -528,7 +528,7 @@ indexed::
     array([False, False, False,  True,  True])
     >>> x[b[:, 5]]
     array([[21, 22, 23, 24, 25, 26, 27],
-          [28, 29, 30, 31, 32, 33, 34]])
+           [28, 29, 30, 31, 32, 33, 34]])
 
 Here the 4th and 5th rows are selected from the indexed array and
 combined to make a 2-D array.
@@ -589,15 +589,15 @@ with four True elements to select rows from a 3-D array of shape
     array([[[ 0,  1,  2,  3,  4],
             [ 5,  6,  7,  8,  9],
             [10, 11, 12, 13, 14]],
-          [[15, 16, 17, 18, 19],
+           [[15, 16, 17, 18, 19],
             [20, 21, 22, 23, 24],
             [25, 26, 27, 28, 29]]])
     >>> b = np.array([[True, True, False], [False, True, True]])
     >>> x[b]
     array([[ 0,  1,  2,  3,  4],
-          [ 5,  6,  7,  8,  9],
-          [20, 21, 22, 23, 24],
-          [25, 26, 27, 28, 29]])
+           [ 5,  6,  7,  8,  9],
+           [20, 21, 22, 23, 24],
+           [25, 26, 27, 28, 29]])
 
 
 .. _combining-advanced-and-basic-indexing:
@@ -695,13 +695,13 @@ Slicing can be combined with broadcasted boolean indices::
     >>> b = x > 20
     >>> b
     array([[False, False, False, False, False, False, False],
-          [False, False, False, False, False, False, False],
-          [False, False, False, False, False, False, False],
-          [ True,  True,  True,  True,  True,  True,  True],
-          [ True,  True,  True,  True,  True,  True,  True]])
+           [False, False, False, False, False, False, False],
+           [False, False, False, False, False, False, False],
+           [ True,  True,  True,  True,  True,  True,  True],
+           [ True,  True,  True,  True,  True,  True,  True]])
     >>> x[b[:, 5], 1:3]
     array([[22, 23],
-          [29, 30]])
+           [29, 30]])
 
 
 .. _arrays.indexing.fields:

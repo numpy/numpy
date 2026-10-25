@@ -142,15 +142,6 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
     *ret = (PyArrayObject *)new;
 }
 
-static inline void
-multi_DECREF(PyObject **objects, npy_intp n)
-{
-    npy_intp i;
-    for (i = 0; i < n; i++) {
-        Py_DECREF(objects[i]);
-    }
-}
-
 /**
  * Unpack a tuple into an array of new references. Returns the number of objects
  * unpacked.
@@ -159,7 +150,7 @@ multi_DECREF(PyObject **objects, npy_intp n)
  * that doesn't always want the overhead of allocating a tuple.
  */
 static inline npy_intp
-unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
+unpack_tuple(PyObject *index, PyObject **result, npy_intp result_n)
 {
     npy_intp n, i;
     n = PyTuple_GET_SIZE(index);
@@ -211,7 +202,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
 
     /* Fast route for passing a tuple */
     if (PyTuple_CheckExact(index)) {
-        return unpack_tuple((PyTupleObject *)index, result, result_n);
+        return unpack_tuple(index, result, result_n);
     }
 
     /*
@@ -221,7 +212,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
      * called.
      */
     if (PyTuple_Check(index)) {
-        PyTupleObject *tup = (PyTupleObject *) PySequence_Tuple(index);
+        PyObject *tup = PySequence_Tuple(index);
         if (tup == NULL) {
             return -1;
         }
@@ -1076,7 +1067,7 @@ array_boolean_subscript(PyArrayObject *self,
                 self_data += subloopsize * self_stride;
                 ret_data += subloopsize * itemsize;
             }
-        } while (iternext(iter));
+        } while (res == 0 && iternext(iter));
 
         NPY_END_THREADS;
 
@@ -1274,7 +1265,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
                 self_data += subloopsize * self_stride;
                 v_data += subloopsize * v_stride;
             }
-        } while (iternext(iter));
+        } while (res == 0 && iternext(iter));
 
         if (!(cast_flags & NPY_METH_REQUIRES_PYAPI)) {
             NPY_END_THREADS;
@@ -2102,11 +2093,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (PyArray_CopyObject(tmp_arr, op) < 0) {
              goto fail;
         }
-        /*
-         * In this branch we copy directly from a newly allocated array which
-         * may have a new descr:
-         */
-        descr = PyArray_DESCR(tmp_arr);
     }
 
     if (PyArray_MapIterCheckIndices(mit) < 0) {
@@ -2150,9 +2136,15 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         /* May need a generic copy function (only for refs and odd sizes) */
         NPY_ARRAYMETHOD_FLAGS transfer_flags;
         npy_intp itemsize = PyArray_ITEMSIZE(self);
+        /*
+         * The value's descriptor may differ from `descr`: mit->outer can
+         * present it through a buffer or a temp copy whose descriptor
+         * `finalize_descr` replaced.
+         */
         if (PyArray_GetDTypeTransferFunction(
                 1, itemsize, itemsize,
-                descr, PyArray_DESCR(self),
+                NpyIter_GetDescrArray(mit->outer)[mit->num_fancy],
+                PyArray_DESCR(self),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto fail;
         }
@@ -2755,7 +2747,7 @@ indexing_error:
  *
  * @param Index information filled by prepare_index.
  * @param Number of indices (gotten through prepare_index).
- * @param Kind of index (gotten through preprare_index).
+ * @param Kind of index (gotten through prepare_index).
  * @param NpyIter flags for an extra array. If 0 assume that there is no
  *        extra operand. NPY_ITER_ALLOCATE can make sense here.
  * @param Array being indexed
@@ -2812,7 +2804,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /* create new MapIter object */
-    mit = (PyArrayMapIterObject *)PyArray_malloc(
+    mit = (PyArrayMapIterObject *)PyObject_Malloc(
             sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
     if (mit == NULL) {
         Py_DECREF(intp_descr);
@@ -3462,7 +3454,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
     if (mit->extra_op_iter != NULL) {
         NpyIter_Deallocate(mit->extra_op_iter);
     }
-    PyArray_free(mit);
+    PyObject_Free(mit);
 }
 
 /*
@@ -3481,5 +3473,6 @@ NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
     .tp_name = "numpy.mapiter",
     .tp_basicsize = sizeof(PyArrayMapIterObject),
     .tp_dealloc = (destructor)arraymapiter_dealloc,
+    .tp_free = PyObject_Free,
     .tp_flags = Py_TPFLAGS_DEFAULT,
 };

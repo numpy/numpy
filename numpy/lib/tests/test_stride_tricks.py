@@ -1,7 +1,7 @@
 import pytest
 
 import numpy as np
-from numpy._core._rational_tests import rational
+from numpy._core._rational_tests import rational, rational2
 from numpy.lib._stride_tricks_impl import (
     _broadcast_shape,
     as_strided,
@@ -404,6 +404,13 @@ def test_as_strided():
     assert_equal(a.dtype, a_view.dtype)
     assert_array_equal([r] * 3, a_view)
 
+    # Also exercise the new-DType-API rational variant.
+    r = [rational2(i) for i in range(4)]
+    a = np.array(r, dtype=rational2)
+    a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
+    assert_equal(a.dtype, a_view.dtype)
+    assert_array_equal([r] * 3, a_view)
+
 
 class TestSlidingWindowView:
     def test_1d(self):
@@ -643,6 +650,54 @@ def test_writeable_memoryview():
                 assert memoryview(result).readonly
             else:
                 assert not memoryview(result).readonly
+
+
+@pytest.mark.parametrize("subok", [False, True])
+def test_broadcast_arrays_unbroadcast_writeable(subok):
+    # gh-32819: arrays that do not need broadcasting must stay writeable
+    # (without a warning on write) and share memory with the input.
+    a = np.arange(3.)
+    b = np.arange(6.).reshape(2, 3)
+
+    (res,) = broadcast_arrays(a, subok=subok)
+    assert res.flags.writeable
+    res[0] = 10
+    assert a[0] == 10
+
+    res_a, res_b = broadcast_arrays(a, b, subok=subok)
+    assert res_a.shape == res_b.shape == (2, 3)
+    assert res_b.flags.writeable
+    assert not memoryview(res_b).readonly
+    res_b[...] = -1
+    assert_array_equal(b, np.full((2, 3), -1.))
+
+    # same-shape inputs: nothing is broadcast, all results are writeable
+    c = np.zeros(3)
+    for arr, res in zip((a, c), broadcast_arrays(a, c, subok=subok)):
+        assert res.flags.writeable
+        res[...] = 5
+        assert_array_equal(arr, np.full(3, 5.))
+
+
+@pytest.mark.parametrize("subok", [False, True])
+def test_broadcast_arrays_none(subok):
+    # gh-26214: None must broadcast as a 0-d object array, not be treated
+    # as a request to allocate a new array.
+    a, b = broadcast_arrays(np.zeros(3), None, subok=subok)
+    assert b.dtype == object
+    assert b.shape == (3,)
+    assert all(item is None for item in b)
+    assert_array_equal(a, np.zeros(3))
+
+    b, a = broadcast_arrays(None, np.zeros((2, 3)), subok=subok)
+    assert b.dtype == object
+    assert b.shape == (2, 3)
+    assert b[1, 2] is None
+
+    (b,) = broadcast_arrays(None, subok=subok)
+    assert b.dtype == object
+    assert b.shape == ()
+    assert b[()] is None
 
 
 def test_reference_types():

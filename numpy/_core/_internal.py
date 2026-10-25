@@ -13,6 +13,7 @@ import warnings
 from numpy import _NoValue
 from numpy.exceptions import DTypePromotionError
 
+from ._multiarray_umath import _is_view_safe_cast
 from .multiarray import StringDType, array, dtype, promote_types
 
 try:
@@ -169,8 +170,8 @@ def _commastring(astr):
                 mo = sep_re.match(astr, pos=startindex)
                 if not mo:
                     raise ValueError(
-                        'format number %d of "%s" is not recognized' %
-                        (len(result) + 1, astr))
+                        f'format number {len(result) + 1} of "{astr}" '
+                        'is not recognized')
                 startindex = mo.end()
                 islist = True
 
@@ -484,7 +485,7 @@ def _getfield_is_safe(oldtype, newtype, offset):
 
     """
     if newtype.hasobject or oldtype.hasobject:
-        if offset == 0 and newtype == oldtype:
+        if offset == 0 and _is_view_safe_cast(oldtype, newtype):
             return
         if oldtype.names is not None:
             for name in oldtype.names:
@@ -514,9 +515,10 @@ def _view_is_safe(oldtype, newtype):
 
     """
 
-    # if the types are equivalent, there is no problem.
-    # for example: dtype((np.record, 'i4,i4')) == dtype((np.void, 'i4,i4'))
-    if oldtype == newtype:
+    # more precise than ``oldtype == newtype``: e.g. dtype((np.record, 'i4,i4'))
+    # views safely as dtype((np.void, 'i4,i4')), while two equal StringDType
+    # instances with separate allocators do not
+    if _is_view_safe_cast(oldtype, newtype):
         return
 
     if newtype.hasobject or oldtype.hasobject:
@@ -689,7 +691,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
             is_padding = (typechar == 'x')
             dtypechar = type_map[typechar]
             if dtypechar in 'USV':
-                dtypechar += '%d' % itemsize
+                dtypechar += f'{itemsize}'
                 itemsize = 1
             numpy_byteorder = {'@': '=', '^': '='}.get(
                 stream.byteorder, stream.byteorder)

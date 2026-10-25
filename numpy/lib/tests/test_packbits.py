@@ -1,5 +1,3 @@
-from itertools import chain
-
 import pytest
 
 import numpy as np
@@ -300,7 +298,7 @@ class TestCount:
     padded2[:7, :7] = x
 
     @pytest.mark.parametrize('bitorder', ('little', 'big'))
-    @pytest.mark.parametrize('count', chain(range(58), range(-1, -57, -1)))
+    @pytest.mark.parametrize('count', [*range(58), *range(-1, -57, -1)])
     def test_roundtrip(self, bitorder, count):
         if count < 0:
             # one extra zero of padding
@@ -324,7 +322,7 @@ class TestCount:
 
     @pytest.mark.parametrize('bitorder', ('little', 'big'))
     # delta==-1 when count<0 because one extra zero of padding
-    @pytest.mark.parametrize('count', chain(range(8), range(-1, -9, -1)))
+    @pytest.mark.parametrize('count', [*range(8), *range(-1, -9, -1)])
     def test_roundtrip_axis(self, bitorder, count):
         if count < 0:
             # one extra zero of padding

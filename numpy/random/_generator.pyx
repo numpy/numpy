@@ -3074,7 +3074,7 @@ cdef class Generator:
         cdef double _dp = 0
         cdef int64_t _in = 0
         cdef bint is_scalar = True
-        cdef np.npy_intp i, cnt
+        cdef np.npy_intp _i, i, cnt
         cdef np.ndarray randoms
         cdef np.int64_t *randoms_data
         cdef np.broadcast it
@@ -3098,7 +3098,7 @@ cdef class Generator:
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
             validate_output_shape(it.shape, randoms)
             with self.lock, nogil:
-                for i in range(cnt):
+                for _i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
                     _in = (<int64_t*>np.PyArray_MultiIter_DATA(it, 2))[0]
                     (<int64_t*>np.PyArray_MultiIter_DATA(it, 0))[0] = random_binomial(&self._bitgen, _dp, _in, &self._binomial)
@@ -4089,7 +4089,7 @@ cdef class Generator:
 
         """
 
-        cdef np.npy_intp d, i, sz, offset, pi
+        cdef np.npy_intp d, _i, sz, offset, pi
         cdef np.ndarray parr, mnarr, on, temp_arr
         cdef double *pix
         cdef int ndim
@@ -4170,7 +4170,7 @@ cdef class Generator:
             offset = 0
             sz = it.size
             with self.lock, nogil:
-                for i in range(sz):
+                for _i in range(sz):
                     ni = (<int64_t*>np.PyArray_MultiIter_DATA(it, 0))[0]
                     pi = (<np.npy_intp*>np.PyArray_MultiIter_DATA(it, 1))[0]
                     random_multinomial(&self._bitgen, ni, &mnix[offset], &pix[pi], d, &self._binomial)
@@ -4194,7 +4194,7 @@ cdef class Generator:
         check_constraint(ni, 'n', CONS_NON_NEGATIVE)
         offset = 0
         with self.lock, nogil:
-            for i in range(sz // d):
+            for _i in range(sz // d):
                 random_multinomial(&self._bitgen, ni, &mnix[offset], pix, d, &self._binomial)
                 offset += d
 

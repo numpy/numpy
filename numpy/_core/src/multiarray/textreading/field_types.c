@@ -11,7 +11,7 @@
 
 
 NPY_NO_EXPORT void
-field_types_xclear(int num_field_types, field_type *ft) {
+field_types_xclear(npy_intp num_field_types, field_type *ft) {
     assert(num_field_types >= 0);
     if (ft == NULL) {
         return;
@@ -131,8 +131,8 @@ field_type_grow_recursive(PyArray_Descr *descr,
             }
             PyArray_Descr *field_descr;
             PyObject *title;
-            int offset;
-            if (!PyArg_ParseTuple(tup, "Oi|O", &field_descr, &offset, &title)) {
+            npy_intp offset;
+            if (!PyArg_ParseTuple(tup, "On|O", &field_descr, &offset, &title)) {
                 Py_DECREF(tup);
                 field_types_xclear(num_field_types, *ft);
                 return -1;
@@ -158,6 +158,7 @@ field_type_grow_recursive(PyArray_Descr *descr,
         field_type *new_ft = PyMem_Realloc(*ft, alloc_size);
         if (new_ft == NULL) {
             field_types_xclear(num_field_types, *ft);
+            PyErr_NoMemory();
             return -1;
         }
         *ft = new_ft;
@@ -186,7 +187,7 @@ field_types_create(PyArray_Descr *descr, field_type **ft)
          * so it is an awkward corner case that probably never really worked.
          */
         PyErr_SetString(PyExc_TypeError,
-                "file reader does not support subarray dtypes.  You can"
+                "file reader does not support subarray dtypes.  You can "
                 "put the dtype into a structured one using "
                 "`np.dtype(('name', dtype))` to avoid this limitation.");
         return -1;
@@ -195,6 +196,7 @@ field_types_create(PyArray_Descr *descr, field_type **ft)
     npy_intp ft_size = 4;
     *ft = PyMem_Malloc(ft_size * sizeof(field_type));
     if (*ft == NULL) {
+        PyErr_NoMemory();
         return -1;
     }
     return field_type_grow_recursive(descr, 0, ft, &ft_size, 0);

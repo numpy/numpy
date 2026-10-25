@@ -1,0 +1,28 @@
+Concrete scalar types
+---------------------
+The sized scalar types, such as ``uint8``, ``int64``, ``float32``, and ``complex64``,
+are now concrete subclasses instead of aliases of generic types.
+This matches their runtime definitions, and allows them to be used in ``isinstance``
+checks. Their arithmetic and bitwise operators also follow NumPy's scalar promotion
+rules more closely.
+
+.. code-block:: python
+
+    x = np.float32(1)
+
+    reveal_type(x)
+    # before: floating[_32Bit]
+    # after:  float32
+
+    isinstance(x, np.float32)
+    # before: ERROR
+    # after:  ok
+
+    reveal_type(np.int8(1) + np.uint8(1))
+    # before: Any
+    # after:  int16
+
+The platform-dependent aliases now point to these concrete types, assuming a 64-bit
+platform. For example, ``intp`` and ``longlong`` are ``int64``, and ``long`` is
+``int32`` on Windows and ``int64`` otherwise. Similarly, ``float96`` and ``float128``
+are now equivalent aliases of ``longdouble``.

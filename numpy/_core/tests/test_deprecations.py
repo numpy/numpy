@@ -4,13 +4,22 @@ to document how deprecations should eventually be turned into errors.
 
 """
 import contextlib
+import re
+import sys
+import textwrap
 import warnings
+from collections.abc import Callable
 
 import pytest
 
 import numpy as np
-from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import assert_raises
+from numpy._core._multiarray_tests import (
+    fromstring_null_term_c_api,  # noqa: F401
+    matrixproduct2_c_api,
+    matrixproduct_c_api,
+)
+from numpy.testing import HAS_SUBPROCESSES, assert_array_equal, assert_raises
+from numpy.testing._private.utils import run_subprocess
 
 
 class _DeprecationTestCase:
@@ -85,10 +94,15 @@ class _DeprecationTestCase:
         for warning in w_context:
             if warning.category is self.warning_cls:
                 num_found += 1
+                if self.message:
+                    if not re.match(self.message, str(warning.message)):
+                        raise AssertionError(
+                            f"Warning message '{warning.message}' did not match "
+                            f"expected pattern '{self.message}'"
+                        )
             elif not ignore_others:
-                raise AssertionError(
-                        "expected %s but got: %s" %
-                        (self.warning_cls.__name__, warning.category))
+                name = self.warning_cls.__name__
+                raise AssertionError(f"expected {name} but got: {warning.category}")
         if num is not None and num_found != num:
             msg = f"{len(w_context)} warnings found but {num} expected."
             lst = [str(w) for w in w_context]
@@ -219,6 +233,15 @@ class TestDeprecatedDTypeAliases(_DeprecationTestCase):
             np.dtype(dtype_code)
 
 
+class TestIsDTypeDTypeInstanceKind(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-06
+    message = r"isdtype\(\) with a dtype instance as second argument"
+
+    def test_deprecated(self):
+        self.assert_deprecated(
+                lambda: np.isdtype(np.dtype(">f8"), np.dtype("<f8")))
+
+
 class TestDeprecatedArrayWrap(_DeprecationTestCase):
     message = "__array_wrap__.*"
 
@@ -243,6 +266,7 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.negative(test2))
         assert test2.called
 
+
 class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
     message = "Setting the .*on a NumPy array has been deprecated.*"
 
@@ -250,9 +274,60 @@ class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, 'strides', x.strides))
 
+    def test_deprecated_dtype_set(self):
+        x = np.eye(2)
+        self.assert_deprecated(setattr, args=(x, "dtype", int))
+
+    def test_deprecated_dtype_set_record(self):
+        x = np.zeros(2, dtype="i4,i4").view(np.recarray)
+        self.assert_deprecated(setattr, args=(x, "dtype", np.dtype("f4,f4")))
+
     def test_deprecated_shape_set(self):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, "shape", (4, 1)))
+
+
+class TestDeprecatedViewDtypePropertySetter(_DeprecationTestCase):
+    # view() with dtype change on a subclass that overrides the
+    # dtype property should warn to implement _set_dtype instead.
+    message = r"numpy.ndarray.view\(\) used a custom `dtype` setter.*"
+
+    def test_view_dtype_property_setter(self):
+        class MyArray(np.ndarray):
+            @property
+            def dtype(self):
+                return super().dtype
+
+            @dtype.setter
+            def dtype(self, dtype):
+                super(MyArray, type(self))._set_dtype(self, dtype)
+
+        arr = np.arange(6).view(MyArray)
+        self.assert_deprecated(arr.view, args=(np.float64,))
+
+    def test_view_dtype_property_setter_recarray_subclass(self):
+        # Recarray subclasses without a `_set_dtype` should still work
+        # but warn until they implement it.  As recarray sets it to None
+        # such a subclass may have to do the same fix here (can't use super()).
+        class SideBranch:
+            pass
+
+        class MyRecArray(SideBranch, np.recarray):
+            @property
+            def dtype(self):
+                return super().dtype
+
+            @dtype.setter
+            def dtype(self, dtype):
+                # would need to call `np.ndarray._set_dtype` to avoid the warning
+                # (but that side-steps the recarray dtype handling.)
+                with pytest.warns(DeprecationWarning, match="Setting the dtype"):
+                    np.recarray.dtype.__set__(self, dtype)
+
+        arr = np.rec.fromarrays(
+                [np.arange(3, dtype=np.int32)], names='x').view(MyRecArray)
+        self.assert_deprecated(arr.view, args=([('y', 'i4')],))
+
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     message = "Passing in a parenthesized single number"
@@ -275,11 +350,18 @@ class TestDTypeAlignBool(_VisibleDeprecationTestCase):
         # alignment, or pass them accidentally as a subarray shape (meaning to pass
         # a tuple).
         self.assert_deprecated(lambda: np.dtype("f8", align=3))
+        self.assert_deprecated(lambda: np.dtype("f8", align=0, copy=10**100))
+        self.assert_deprecated(lambda: np.dtype("f8", align=10**100, copy=0))
+        # Subclasses of ints don't hit the below pickle code path:
+        self.assert_deprecated(
+            lambda: np.dtype("f8", align=np.long(0), copy=np.long(1)))
 
     @pytest.mark.parametrize("align", [True, False, np.True_, np.False_])
     def test_not_deprecated(self, align):
         # if the user passes a bool, it is accepted.
         self.assert_not_deprecated(lambda: np.dtype("f8", align=align))
+        # The following specific case is used by old pickles:
+        self.assert_not_deprecated(lambda: np.dtype("f8", align=0, copy=1))
 
 
 class TestFlatiterIndexing0dBoolIndex(_DeprecationTestCase):
@@ -345,7 +427,7 @@ class TestTooManyArgsExtremum(_DeprecationTestCase):
     message = "Passing more than 2 positional arguments to np.maximum and np.minimum "
 
     @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
-    def test_extremem_3_args(self, ufunc):
+    def test_extremum_3_args(self, ufunc):
         self.assert_deprecated(ufunc, args=(np.ones(1), np.zeros(1), np.empty(1)))
 
 
@@ -365,6 +447,116 @@ class TestRoundDeprecation(_DeprecationTestCase):
 
     def test_round_emits_deprecation_warning_scalar(self):
         self.assert_deprecated(lambda: np.ma.round_(3.14))
+
+
+class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
+    # Deprecated in Numpy 2.5, 2025-11
+    # See gh-29619 for scalar operations
+    # See gh-31255 for array operations
+    message = "The 'generic' unit for NumPy timedelta is deprecated"
+
+    @pytest.mark.parametrize('value', [
+        3, 10, "NaT"
+    ])
+    def test_raise_warning_for_timedelta_with_generic_unit(self, value: int | str):
+        self.assert_deprecated(lambda x: np.timedelta64(x), args=(value,))
+
+    @pytest.mark.parametrize('value', [
+        np.timedelta64(3, "s"), np.timedelta64(10, "D")
+    ])
+    @pytest.mark.parametrize('generic_value', [
+        5, 2
+    ])
+    @pytest.mark.parametrize(
+        "op",
+        [
+            np.add,
+            np.subtract,
+        ],
+    )
+    def test_raise_warning_for_operation_with_generic_unit(
+        self, value: int, generic_value: int, op: Callable
+    ):
+        self.assert_deprecated(op, num=1, args=(value, generic_value))
+
+    def test_raise_warning_for_default_constructor(self):
+        self.assert_deprecated(lambda: np.timedelta64())
+        self.assert_deprecated(lambda: np.datetime64())
+
+    def test_raise_warning_for_NAT_construction(self):
+        self.assert_deprecated(lambda: np.datetime64('NaT'))
+        self.assert_deprecated(lambda: np.datetime64(None))
+
+    # Array operations
+    @pytest.mark.parametrize('timedelta_arr', [
+        np.array([1, 2, 3], dtype="m8[s]"),
+        np.array([1], dtype="m8[ms]"),
+    ])
+    @pytest.mark.parametrize('int_arr', [
+        np.array([1, 2, 3]),
+        np.array([1]),
+    ])
+    @pytest.mark.parametrize("op", [np.add, np.subtract])
+    def test_timedelta_array_integer_array_arithmetic(
+        self, timedelta_arr, int_arr, op
+    ):
+        """Test that timedelta64 array + integer array triggers deprecation."""
+        # timedelta op int
+        self.assert_deprecated(op, num=None, args=(timedelta_arr, int_arr))
+        # int op timedelta
+        self.assert_deprecated(op, num=None, args=(int_arr, timedelta_arr))
+
+    @pytest.mark.parametrize('datetime_arr', [
+        np.array(['2020-01-01', '2020-01-02'], dtype="M8[D]"),
+        np.array(['2020-01-01T00:00:00'], dtype="M8[s]"),
+    ])
+    @pytest.mark.parametrize('int_arr', [
+        np.array([1, 2]),
+        np.array([1]),
+    ])
+    @pytest.mark.parametrize("op", [np.add, np.subtract])
+    def test_datetime_array_integer_array_arithmetic(
+        self, datetime_arr, int_arr, op
+    ):
+        """Test that datetime64 array + integer array triggers deprecation."""
+        # datetime op int
+        self.assert_deprecated(op, num=None, args=(datetime_arr, int_arr))
+        # int op datetime
+        if op == np.add:
+            self.assert_deprecated(op, num=None, args=(int_arr, datetime_arr))
+
+    def test_non_associative_case_warns(self):
+        """Verify the specific non-associative case from gh-31255 warns."""
+        a = np.array([1], dtype="m8[s]")
+        b = np.array([1])
+        c = np.array([1], dtype="m8[ms]")
+
+        # Both intermediate operations should trigger warnings
+        self.assert_deprecated(np.add, num=None, args=(a, b))
+        self.assert_deprecated(np.add, num=None, args=(b, c))
+
+    @pytest.mark.skipif(
+        not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
+    )
+    def test_first_call_warns_once(self):
+        # The legacy type resolver used to also warn when invoked to populate
+        # the ufunc promotion cache, so the first call in a process emitted
+        # two warnings and later calls one.  Use a fresh process to test with
+        # a cold cache.
+        code = textwrap.dedent("""
+            import warnings
+            import numpy as np
+
+            for args in [(np.timedelta64(3, "s"), 5),
+                         (np.array([3], dtype="m8[s]"), np.array([5]))]:
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    np.subtract(*args)
+                assert len(w) == 1, [str(x.message) for x in w]
+            """)
+        p = run_subprocess([sys.executable, "-c", code])
+        assert p.returncode == 0, p.stderr
+
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
     # Deprecation in NumPy 2.5, 2026-03
@@ -392,3 +584,114 @@ class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
         self.assert_deprecated(lambda: np.tril_indices_from(a, k=9.8))
+
+
+class TestTakeOutDtype(_DeprecationTestCase):
+    # Deprecated in Numpy 2.5, 2026-01
+    message = "Implicit casting of output to a different kind."
+
+    def test_out_dtype_deprecated(self):
+        a = np.arange(3).astype(np.int32)
+        indices = np.arange(2)
+        different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
+
+        self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
+
+
+_DOT_CALLERS = [
+    pytest.param(np.dot, "numpy.dot", id="np.dot"),
+    pytest.param(np.ndarray.dot, "numpy.dot", id="ndarray.dot"),
+    pytest.param(matrixproduct_c_api, "PyArray_MatrixProduct",
+                 id="PyArray_MatrixProduct"),
+    pytest.param(matrixproduct2_c_api, "PyArray_MatrixProduct2",
+                 id="PyArray_MatrixProduct2"),
+]
+
+
+class TestDotDimensionInterleaving(_DeprecationTestCase):
+    # Deprecated NumPy 2.6, 2026-09
+    # See https://github.com/numpy/numpy/issues/31725
+
+    @pytest.mark.parametrize("func, name", _DOT_CALLERS)
+    @pytest.mark.parametrize("a_shape, b_shape", [
+        ((2, 3), (4, 3, 5)),
+        ((2, 2, 3), (4, 3, 5)),
+        ((2, 3), (2, 4, 3, 5)),
+        ((5, 2, 2, 3), (4, 3, 5)),
+    ], ids=str)
+    def test_warns(self, func, name, a_shape, b_shape):
+        self.message = (
+            f"{re.escape(name)} received arrays with a.ndim >= 2 and b.ndim > 2"
+        )
+        a, b = np.ones(a_shape), np.ones(b_shape)
+        self.assert_deprecated(lambda: func(a, b))
+
+    @pytest.mark.parametrize("func, name", _DOT_CALLERS)
+    @pytest.mark.parametrize("a_shape, b_shape", [
+        ((), (4, 3, 5)),
+        ((3,), (4, 3, 5)),
+        ((3,), (2, 4, 3, 5)),
+        ((2, 3), (3,)),
+        ((2, 3), (3, 5)),
+        ((2, 2, 3), (3,)),
+        ((2, 2, 3), (3, 5)),
+    ], ids=str)
+    def test_no_warning(self, func, name, a_shape, b_shape):
+        a, b = np.ones(a_shape), np.ones(b_shape)
+        self.assert_not_deprecated(lambda: func(a, b))
+
+    @pytest.mark.parametrize("func, name", _DOT_CALLERS)
+    def test_shape_mismatch_raises_valueerror_not_deprecation(self, func, name):
+        a, b = np.ones((2, 3)), np.ones((4, 6, 5))
+        with pytest.raises(ValueError, match="shapes.*not aligned"):
+            func(a, b)
+
+    @pytest.mark.parametrize("b_shape", [(4, 5, 3), (2, 4, 5, 3)], ids=str)
+    def test_inner_not_deprecated(self, b_shape):
+        a, b = np.ones((2, 3)), np.ones(b_shape)
+        self.assert_not_deprecated(lambda: np.inner(a, b))
+
+
+class TestAppendScalarPromotion(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-09
+    warning_cls = FutureWarning
+    message = "np.append converted Python numeric scalars to arrays"
+
+    @pytest.mark.parametrize("dtype, scalar", [
+        ("int8", 1), ("uint8", 300), ("uint8", -1), ("int64", 2**100),
+        ("float32", 1.0 + 2**-30), ("complex64", 1j), ("U1", 1),
+    ])
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_deprecated(self, dtype, scalar, reverse):
+        a = np.array([1], dtype=dtype)
+        args = (scalar, a) if reverse else (a, scalar)
+        explicit_args = tuple(np.asarray(x) for x in args)
+        expected = np.concatenate(explicit_args, axis=None)
+        if dtype == "U1":
+            change = "these inputs have no common dtype and will raise an error"
+        else:
+            change = f"use dtype {dtype}, which may round values differently"
+        self.message += (
+            rf".*producing dtype {re.escape(str(expected.dtype))}.*"
+            rf"{re.escape(change)}.*np\.concatenate.*"
+            rf"dtype={re.escape(repr(str(expected.dtype)))}")
+
+        def append(*args):
+            assert_array_equal(np.append(*args), expected, strict=True)
+
+        self.assert_deprecated(append, args=args)
+        self.assert_not_deprecated(append, args=explicit_args)
+        list_args = ([scalar], a) if reverse else (a, [scalar])
+        self.assert_not_deprecated(append, args=list_args)
+        assert_array_equal(
+            np.concatenate(args, axis=None, dtype=str(expected.dtype)),
+            expected, strict=True)
+
+    @pytest.mark.parametrize("dtype, scalar", [
+        (np.intp, 1), (np.float64, 1.5), (np.complex128, 1j),
+    ])
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_unchanged_scalar_promotion(self, dtype, scalar, reverse):
+        a = np.array([1], dtype=dtype)
+        args = (scalar, a) if reverse else (a, scalar)
+        self.assert_not_deprecated(np.append, args=args)

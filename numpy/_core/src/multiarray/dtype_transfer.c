@@ -169,6 +169,9 @@ _any_to_object_auxdata_clone(NpyAuxData *auxdata)
     _any_to_object_auxdata *data = (_any_to_object_auxdata *)auxdata;
 
     _any_to_object_auxdata *res = PyMem_Malloc(sizeof(_any_to_object_auxdata));
+    if (res == NULL) {
+        return NULL;
+    }
 
     res->base = data->base;
     res->getitem = data->getitem;
@@ -348,6 +351,7 @@ object_to_any_get_loop(
     /* NOTE: auxdata is only really necessary to flag `move_references` */
     _object_to_any_auxdata *data = PyMem_Malloc(sizeof(*data));
     if (data == NULL) {
+        PyErr_NoMemory();
         return -1;
     }
     data->base.free = &_object_to_any_auxdata_free;
@@ -821,14 +825,8 @@ _strided_to_strided_datetime_cast(
     while (N > 0) {
         memcpy(&dt, src, sizeof(dt));
 
-        if (dt != NPY_DATETIME_NAT) {
-            /* Apply the scaling */
-            if (dt < 0) {
-                dt = (dt * num - (denom - 1)) / denom;
-            }
-            else {
-                dt = dt * num / denom;
-            }
+        if (_datetime_scale_with_overflow_check(&dt, num, denom, "datetime64") < 0) {
+            return -1;
         }
 
         memcpy(dst, &dt, sizeof(dt));
@@ -857,14 +855,8 @@ _aligned_strided_to_strided_datetime_cast(
     while (N > 0) {
         dt = *(npy_int64 *)src;
 
-        if (dt != NPY_DATETIME_NAT) {
-            /* Apply the scaling */
-            if (dt < 0) {
-                dt = (dt * num - (denom - 1)) / denom;
-            }
-            else {
-                dt = dt * num / denom;
-            }
+        if (_datetime_scale_with_overflow_check(&dt, num, denom, "datetime64") < 0) {
+            return -1;
         }
 
         *(npy_int64 *)dst = dt;
@@ -1588,6 +1580,7 @@ static NpyAuxData *_n_to_n_data_clone(NpyAuxData *data)
 
     if (NPY_cast_info_copy(&newdata->wrapped, &d->wrapped) < 0) {
         _n_to_n_data_free((NpyAuxData *)newdata);
+        return NULL;
     }
 
     return (NpyAuxData *)newdata;
@@ -2291,7 +2284,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     npy_int i;
     size_t structsize;
     Py_ssize_t field_count;
-    int src_offset, dst_offset;
+    npy_intp src_offset, dst_offset;
     _field_transfer_data *data;
 
     /*
@@ -2320,7 +2313,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         for (i = 0; i < field_count; ++i) {
             key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
             tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key); // noqa: borrowed-ref OK
-            if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
+            if (!PyArg_ParseTuple(tup, "On|O", &dst_fld_dtype,
                                                     &dst_offset, &title)) {
                 PyMem_Free(data);
                 return NPY_FAIL;
@@ -2384,7 +2377,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
 
         key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), 0);
         tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key); // noqa: borrowed-ref OK
-        if (!PyArg_ParseTuple(tup, "Oi|O",
+        if (!PyArg_ParseTuple(tup, "On|O",
                               &src_fld_dtype, &src_offset, &title)) {
             PyMem_Free(data);
             return NPY_FAIL;
@@ -2436,14 +2429,14 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     for (i = 0; i < field_count; ++i) {
         key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
         tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key); // noqa: borrowed-ref OK
-        if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
+        if (!PyArg_ParseTuple(tup, "On|O", &dst_fld_dtype,
                                                 &dst_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
         key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), i);
         tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key); // noqa: borrowed-ref OK
-        if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
+        if (!PyArg_ParseTuple(tup, "On|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;

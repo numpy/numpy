@@ -1227,8 +1227,8 @@ class _SIMD_ALL(_Test_Utility):
                 continue
             dividend = self.load(self._data(dividend))
             data_divc = [trunc_div(a, divisor) for a in dividend]
-            divisor_parms = self.divisor(divisor)
-            divc = self.divc(dividend, divisor_parms)
+            divisor_params = self.divisor(divisor)
+            divc = self.divc(dividend, divisor_params)
             assert divc == data_divc
 
     def test_arithmetic_reduce_sum(self):

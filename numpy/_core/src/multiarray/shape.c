@@ -14,6 +14,7 @@
 #include "ctors.h"
 #include "shape.h"
 #include "npy_static_data.h" /* for interned strings */
+#include "module_state.h"
 #include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "common.h" /* for convert_shape_to_string */
 #include "alloc.h"
@@ -30,12 +31,16 @@ NPY_NO_EXPORT int
 PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
 {
     npy_intp oldnbytes, newnbytes;
-    npy_intp oldsize, newsize;
-    int new_nd=newshape->len, k, elsize;
+    npy_intp oldsize, newsize, elsize;
+    int new_nd=newshape->len, k;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
     npy_intp *dimptr;
     char *new_data;
+
+    if (PyArray_FailUnlessWriteable(self, "resize") < 0) {
+        return -1;
+    }
 
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_ValueError,
@@ -77,26 +82,39 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
             return -1;
         }
 
+        static const char *msg =
+                "cannot resize an array that references or is referenced\n"
+                "by another object in this way.\n"
+                "Use the np.resize function to get a new resized copy or\n "
+                "set refcheck=False to disable this check";
         if (PyArray_BASE(self) != NULL
               || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array that "
-                    "references or is referenced\n"
-                    "by another array in this way. Use the np.resize function.");
+            PyErr_SetString(PyExc_ValueError, msg);
             return -1;
         }
         if (refcheck) {
 #if PY_VERSION_HEX >= 0x030E00B0
+            // Python 3.14 changed reference counting semantics for function-
+            // local variables. There is no way to tell if the calling function
+            // has been optimized (because it might be implemented in C or Cython)
+            //
+            // Instead, warn if the refcount is exactly 2 that this might be a
+            // false positive
             if (!PyUnstable_Object_IsUniquelyReferenced((PyObject *)self)) {
+                if (Py_REFCNT(self) == 2) {
+                    PyErr_SetString(
+                            PyExc_ValueError,
+                            "cannot resize an array that may be referenced "
+                            "by another object.\n"
+                            "It is possible that this is a false positive.\n"
+                            "If you are sure that the array is uniquely referenced, "
+                            "set refcheck=False.");
+                    return -1;
+                }
 #else
             if (Py_REFCNT(self) > 2) {
 #endif
-                PyErr_SetString(
-                        PyExc_ValueError,
-                        "cannot resize an array that "
-                        "references or is referenced\n"
-                        "by another array in this way.\n"
-                        "Use the np.resize function or refcheck=False");
+                PyErr_SetString(PyExc_ValueError, msg);
                 return -1;
             }
         }
@@ -127,7 +145,7 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
         }
         ((PyArrayObject_fields *)self)->data = new_data;
 
-        if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
+        if (newnbytes > oldnbytes) {
             /* Fill new memory with zeros (PyLong zero for object arrays) */
             npy_intp stride = elsize;
             npy_intp size = newsize - oldsize;
@@ -175,6 +193,12 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
  * array and it is contiguous.  If refcheck is 0, then the reference count is
  * not checked and assumed to be 1.  You still must own this data and have no
  * weak-references and no base object.
+ *
+ * On Python 3.13 and older, the check allows objects with exactly one
+ * reference to be reallocated in-place. On Python 3.14 and newer, the array
+ * must be uniquely referenced. In some cases this can lead to spurious
+ * ValueErrors.
+ *
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
@@ -631,10 +655,11 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
     int n = PyArray_NDIM(ap);
     int i;
 
-    if (check_and_adjust_axis_msg(&a1, n, npy_interned_str.axis1) < 0) {
+    npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
+    if (check_and_adjust_axis_msg(&a1, n, interned_str->axis1) < 0) {
         return NULL;
     }
-    if (check_and_adjust_axis_msg(&a2, n, npy_interned_str.axis2) < 0) {
+    if (check_and_adjust_axis_msg(&a2, n, interned_str->axis2) < 0) {
         return NULL;
     }
 

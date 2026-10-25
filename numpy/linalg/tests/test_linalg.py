@@ -3,7 +3,6 @@
 """
 import itertools
 import os
-import subprocess
 import sys
 import textwrap
 import threading
@@ -34,7 +33,7 @@ from numpy.linalg import LinAlgError, matrix_power, matrix_rank, multi_dot, norm
 from numpy.linalg._linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     HAS_LAPACK64,
-    IS_WASM,
+    HAS_SUBPROCESSES,
     NOGIL_BUILD,
     assert_,
     assert_allclose,
@@ -44,9 +43,16 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+from numpy.testing._private.utils import run_subprocess
 
 try:
-    import numpy.linalg.lapack_lite
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The numpy.linalg.lapack_lite module is deprecated",
+            category=DeprecationWarning,
+        )
+        import numpy.linalg.lapack_lite
 except ImportError:
     # May be broken when numpy was built without BLAS/LAPACK present
     # If so, ensure we don't break the whole test suite - the `lapack_lite`
@@ -157,7 +163,10 @@ CASES += apply_tag('square', [
                array([2. + 1j, 1. + 2j], dtype=cdouble)),
     LinalgCase("cdouble_2",
                array([[1. + 2j, 2 + 3j], [3 + 4j, 4 + 5j]], dtype=cdouble),
-               array([[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]], dtype=cdouble)),
+               array(
+                   [[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]],
+                   dtype=cdouble,
+               )),
     LinalgCase("0x0",
                np.empty((0, 0), dtype=double),
                np.empty((0,), dtype=double),
@@ -189,28 +198,43 @@ CASES += apply_tag('nonsquare', [
                array([2., 1., 3.], dtype=double)),
     LinalgCase("csingle_nsq_1",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=csingle),
+                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                   dtype=csingle,
+               ),
                array([2. + 1j, 1. + 2j], dtype=csingle)),
     LinalgCase("csingle_nsq_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=csingle),
+                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=csingle,
+                ),
                array([2. + 1j, 1. + 2j, 3. - 3j], dtype=csingle)),
     LinalgCase("cdouble_nsq_1",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=cdouble),
+                    [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                    dtype=cdouble,
+                ),
                array([2. + 1j, 1. + 2j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=cdouble),
+                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=cdouble,
+                ),
                array([2. + 1j, 1. + 2j, 3. - 3j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_1_2",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=cdouble),
+                    [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                    dtype=cdouble,
+                ),
                array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=cdouble),
-               array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
+                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=cdouble,
+                ),
+               array(
+                    [[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]],
+                    dtype=cdouble,
+                )),
     LinalgCase("8x11",
                np.random.rand(8, 11),
                np.random.rand(8)),
@@ -329,7 +353,7 @@ def _stride_comb_iter(x):
         xi[...] = x
         xi = xi.view(x.__class__)
         assert_(np.all(xi == x))
-        yield xi, "stride_" + "_".join(["%+d" % j for j in repeats])
+        yield xi, "stride_" + "_".join(f"{j:+}" for j in repeats)
 
         # generate also zero strides if possible
         if x.ndim >= 1 and x.shape[-1] == 1:
@@ -633,8 +657,8 @@ class EigCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         res = linalg.eig(a)
         eigenvalues, eigenvectors = res.eigenvalues, res.eigenvectors
         assert_allclose(matmul(a, eigenvectors),
-                        np.asarray(eigenvectors) * np.asarray(eigenvalues)[..., None, :],
-                        rtol=get_rtol(eigenvalues.dtype))
+            np.asarray(eigenvectors) * np.asarray(eigenvalues)[..., None, :],
+            rtol=get_rtol(eigenvalues.dtype))
         assert_(consistent_subclass(eigenvectors, a))
 
 
@@ -721,6 +745,22 @@ class TestSVD(SVDCases, SVDBaseTests):
         s_from_svdvals = linalg.svdvals(x)
         assert_almost_equal(s_from_svd, s_from_svdvals)
 
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    @pytest.mark.parametrize('val', [np.inf, -np.inf, np.nan])
+    def test_nonfinite(self, dtype, val):
+        a = np.ones((3, 3), dtype=dtype)
+        a[0, 0] = val
+        with pytest.raises(LinAlgError):
+            linalg.svd(a)
+        with pytest.raises(LinAlgError):
+            linalg.svd(a, full_matrices=False)
+        with pytest.raises(LinAlgError):
+            linalg.svd(a, compute_uv=False)
+        with pytest.raises(LinAlgError):
+            linalg.svd(np.stack([np.eye(3, dtype=dtype), a]))
+        with pytest.raises(LinAlgError):
+            linalg.pinv(a)
+
 
 class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
@@ -735,8 +775,10 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
             axes[-1], axes[-2] = axes[-2], axes[-1]
             return np.conj(np.transpose(mat, axes=axes))
 
-        assert_almost_equal(np.matmul(u, hermitian(u)), np.broadcast_to(np.eye(u.shape[-1]), u.shape))
-        assert_almost_equal(np.matmul(vt, hermitian(vt)), np.broadcast_to(np.eye(vt.shape[-1]), vt.shape))
+        expected = np.broadcast_to(np.eye(u.shape[-1]), u.shape)
+        assert_almost_equal(np.matmul(u, hermitian(u)), expected)
+        expected = np.broadcast_to(np.eye(vt.shape[-1]), vt.shape)
+        assert_almost_equal(np.matmul(vt, hermitian(vt)), expected)
         assert_equal(np.sort(s)[..., ::-1], s)
         assert_(consistent_subclass(u, a))
         assert_(consistent_subclass(vt, a))
@@ -744,6 +786,12 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
 class TestSVDHermitian(SVDHermitianCases, SVDBaseTests):
     hermitian = True
+
+    def test_singular(self):
+        x = np.array([[1, 0], [0, 0]])
+        u, _, vh = linalg.svd(x, hermitian=self.hermitian)
+        assert_allclose(u @ u.T.conj(), np.eye(2), rtol=1e-14)
+        assert_allclose(vh @ vh.T.conj(), np.eye(2), rtol=1e-14)
 
 
 class CondCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -820,7 +868,7 @@ class TestCond(CondCases):
         # positive norms, and negative norms shouldn't raise
         # exceptions
         As = [np.zeros((2, 2)), np.ones((2, 2))]
-        p_pos = [None, 1, 2, 'fro']
+        p_pos = [None, 1, 2, 'fro', 'nuc']
         p_neg = [-1, -2]
         for A, p in itertools.product(As, p_pos):
             # Inversion may not hit exact infinity, so just check the
@@ -829,13 +877,10 @@ class TestCond(CondCases):
         for A, p in itertools.product(As, p_neg):
             linalg.cond(A, p)
 
-    @pytest.mark.xfail(True, run=False,
-                       reason="Platform/LAPACK-dependent failure, "
-                              "see gh-18914")
     def test_nan(self):
         # nans should be passed through, not converted to infs
-        ps = [None, 1, -1, 2, -2, 'fro']
-        p_pos = [None, 1, 2, 'fro']
+        ps = [None, 1, -1, 2, -2, 'fro', 'nuc']
+        p_pos = [None, 1, 2, 'fro', 'nuc']
 
         A = np.ones((2, 2))
         A[0, 1] = np.nan
@@ -855,6 +900,18 @@ class TestCond(CondCases):
             else:
                 assert_(not np.isnan(c[0]))
                 assert_(not np.isnan(c[2]))
+
+    @pytest.mark.parametrize('p', [None, 1, -1, 2, -2, 'fro', 'nuc', np.inf, -np.inf])
+    def test_inf(self, p):
+        # gh-32591: inf entries give an infinite condition number
+        A = np.ones((3, 3))
+        A[0, 1] = np.inf
+        stacked = np.stack([np.eye(3), A, 2 * np.eye(3)])
+        c, cs = linalg.cond(A, p), linalg.cond(stacked, p)
+        assert_(np.isfinite(cs[0]) and np.isfinite(cs[2]))
+        if p in [None, 1, 2, 'fro', 'nuc', np.inf]:
+            assert_equal(c, np.inf)
+            assert_equal(cs[1], np.inf)
 
     def test_stacked_singular(self):
         # Check behavior when only some of the stacked matrices are
@@ -881,7 +938,8 @@ class PinvCases(LinalgSquareTestCase,
         a_ginv = linalg.pinv(a)
         # `a @ a_ginv == I` does not hold if a is singular
         dot = matmul
-        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
+        result = dot(dot(a, a_ginv), a)
+        assert_almost_equal(result, a, single_decimal=5, double_decimal=11)
         assert_(consistent_subclass(a_ginv, a))
 
 
@@ -895,7 +953,8 @@ class PinvHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
         a_ginv = linalg.pinv(a, hermitian=True)
         # `a @ a_ginv == I` does not hold if a is singular
         dot = matmul
-        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
+        result = dot(dot(a, a_ginv), a)
+        assert_almost_equal(result, a, single_decimal=5, double_decimal=11)
         assert_(consistent_subclass(a_ginv, a))
 
 
@@ -915,6 +974,29 @@ def test_pinv_rtol_arg():
         ValueError, match=r"`rtol` and `rcond` can't be both set."
     ):
         np.linalg.pinv(a, rcond=0.5, rtol=0.5)
+
+
+@pytest.mark.parametrize("dtype", [np.int16, np.int64, np.uint8, np.bool_])
+def test_pinv_rtol_none_non_inexact(dtype):
+    # gh-30917: the default tolerance must come from the dtype pinv
+    # computes in, not from the input dtype (finfo rejects integers).
+    a = np.array([[1, 2, 3], [4, 1, 1], [2, 3, 1]]).astype(dtype)
+    expected = np.linalg.pinv(a.astype(np.float64), rtol=None)
+    res = np.linalg.pinv(a, rtol=None)
+    assert res.dtype == expected.dtype
+    assert_almost_equal(res, expected)
+
+
+@pytest.mark.parametrize("shape", [(0, 3), (3, 0), (0, 0), (2, 0, 3)])
+@pytest.mark.parametrize("dtype", [np.int64, np.float32, np.complex64])
+def test_pinv_empty_dtype(shape, dtype):
+    # gh-18527: the empty shortcut must return the same dtype as the
+    # svd path does for a non-empty input.
+    res = np.linalg.pinv(np.empty(shape, dtype=dtype))
+    ref = np.linalg.pinv(np.ones((1, 1), dtype=dtype))
+    assert res.shape == shape[:-2] + shape[-2:][::-1]
+    assert res.dtype == ref.dtype
+    assert np.linalg.pinv(np.empty(shape, dtype=dtype), rtol=None).dtype == ref.dtype
 
 
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -1025,6 +1107,14 @@ class TestLstsq(LstsqCases):
         assert_(rank == 3)
         x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
         assert_(rank == 3)
+
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    @pytest.mark.parametrize('val', [np.inf, -np.inf, np.nan])
+    def test_nonfinite(self, dtype, val):
+        a = np.ones((3, 3), dtype=dtype)
+        a[0, 0] = val
+        with pytest.raises(LinAlgError):
+            linalg.lstsq(a, np.ones(3, dtype=dtype))
 
     @pytest.mark.parametrize(["m", "n", "n_rhs"], [
         (4, 2, 2),
@@ -1138,7 +1228,6 @@ class TestMatrixPower:
         assert_raises(LinAlgError, matrix_power, np.array([[1], [2]], dt), 1)
         assert_raises(LinAlgError, matrix_power, np.ones((4, 3, 2), dt), 1)
 
-    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_exceptions_not_invertible(self, dt):
         if dt in self.dtnoinv:
             return
@@ -1967,7 +2056,6 @@ def test_byteorder_check():
             assert_array_equal(res, routine(sw_arr))
 
 
-@pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
 def test_generalized_raise_multiloop():
     # It should raise an error even if the error doesn't occur in the
     # last iteration of the ufunc inner loop
@@ -1982,6 +2070,9 @@ def test_generalized_raise_multiloop():
     assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
 
 
+@pytest.mark.filterwarnings(
+    r"ignore:.*fork\(\) may lead to deadlocks.*:DeprecationWarning"
+)
 @pytest.mark.skipif(
     threading.active_count() > 1,
     reason="skipping test that uses fork because there are multiple threads")
@@ -2037,7 +2128,7 @@ def test_xerbla_override():
             pytest.skip('Numpy xerbla not linked in.')
 
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.slow
 def test_sdot_bug_8577():
     # Regression test that loading certain other libraries does not
@@ -2065,12 +2156,12 @@ def test_sdot_bug_8577():
     for bad_lib in bad_libs:
         code = template.format(before="import numpy as np", after="",
                                bad_lib=bad_lib)
-        subprocess.check_call([sys.executable, "-c", code])
+        run_subprocess([sys.executable, "-c", code])
 
         # Swapped import order
         code = template.format(after="import numpy as np", before="",
                                bad_lib=bad_lib)
-        subprocess.check_call([sys.executable, "-c", code])
+        run_subprocess([sys.executable, "-c", code])
 
 
 class TestMultiDot:

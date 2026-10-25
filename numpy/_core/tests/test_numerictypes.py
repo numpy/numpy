@@ -257,7 +257,7 @@ class ReadValuesNested:
             assert_equal(h['z'], np.array([self._buffer[0][5],
                                            self._buffer[1][5]], dtype='u1'))
 
-    def test_nested1_acessors(self):
+    def test_nested1_accessors(self):
         """Check reading the nested fields of a nested array (1st level)"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
@@ -287,7 +287,7 @@ class ReadValuesNested:
                                 self._buffer[1][3][1]],
                                dtype='c16'))
 
-    def test_nested2_acessors(self):
+    def test_nested2_accessors(self):
         """Check reading the nested fields of a nested array (2nd level)"""
         h = np.array(self._buffer, dtype=self._descr)
         if not self.multiple_rows:
@@ -335,7 +335,7 @@ class TestReadValuesNestedMultiple(ReadValuesNested):
 class TestEmptyField:
     def test_assign(self):
         a = np.arange(10, dtype=np.float32)
-        a.dtype = [("int",   "<0i4"), ("float", "<2f4")]
+        a = a.view(dtype=[("int", "<0i4"), ("float", "<2f4")])
         assert_(a['int'].shape == (5, 0))
         assert_(a['float'].shape == (5, 2))
 
@@ -462,6 +462,35 @@ class TestIsDType:
         else:
             assert not np.isdtype(dtype, dtype_group)
 
+    def test_isdtype_abstract_dtype_kind(self):
+        # New pattern: ``kind`` may be an abstract DType class such as
+        # ``np.dtypes.IntegerAbstractDType``.
+        IA = np.dtypes.IntegerAbstractDType
+        FA = np.dtypes.FloatingAbstractDType
+        NA = np.dtypes.NumberAbstractDType
+
+        # dtype instance and scalar type input forms:
+        for arg in [np.dtype('int64'), np.int64]:
+            assert np.isdtype(arg, IA)
+            assert np.isdtype(arg, NA)
+            assert not np.isdtype(arg, FA)
+            # Tuple containing both DType classes and string groups still
+            # works:
+            assert np.isdtype(arg, (FA, "integral"))
+            assert np.isdtype(arg, (FA, IA))
+            assert not np.isdtype(arg, (FA, "complex floating"))
+
+        # Concrete DType class as kind:
+        assert np.isdtype(np.int64, np.dtypes.Int64DType)
+        assert not np.isdtype(np.int64, np.dtypes.Int32DType)
+
+    def test_isdtype_bool_is_not_numeric(self):
+        # Booleans are not part of the "numeric" kind (matching the array API
+        # and `np.number`), even though NumPy internally flags them numeric.
+        assert np.isdtype(np.dtype(bool), "bool")
+        assert not np.isdtype(np.dtype(bool), "numeric")
+        assert not np.isdtype(np.dtype(bool), np.dtypes.NumberAbstractDType)
+
     def test_isdtype_invalid_args(self):
         with assert_raises_regex(TypeError, r".*must be a NumPy dtype.*"):
             np.isdtype("int64", np.int64)
@@ -469,6 +498,34 @@ class TestIsDType:
             np.isdtype(np.int64, 1)
         with assert_raises_regex(ValueError, r".*not a known kind name.*"):
             np.isdtype(np.int64, "int64")
+
+    def test_isdtype_string_dtype(self):
+        # gh-27545: StringDType has no NumPy scalar type, but it is a
+        # built-in dtype, so `isdtype` must accept it rather than raise
+        dt = np.dtypes.StringDType()
+        assert not np.isdtype(dt, "bool")
+        for kind in self.dtype_group_dict:
+            assert not np.isdtype(dt, kind)
+
+        # matches itself and the StringDType class, which stands in for
+        # the scalar type that identifies the other dtypes
+        assert np.isdtype(dt, np.dtypes.StringDType)
+        assert np.isdtype(dt, ("numeric", np.dtypes.StringDType))
+        assert not np.isdtype(dt, ("integral", np.int64))
+
+        # Second argument being an instance is deprecated.
+        with pytest.warns(
+                DeprecationWarning, match=r"isdtype\(\) with a dtype.*"):
+            assert np.isdtype(dt, dt)
+            assert not np.isdtype(np.int64, dt)
+            # dtype parameters are ignored, like datetime64 units
+            assert np.isdtype(np.dtypes.StringDType(na_object=None), dt)
+            assert np.isdtype(dt, np.dtypes.StringDType(na_object=np.nan,
+                                                        coerce=False))
+
+        # fixed-width unicode strings are a different kind
+        assert not np.isdtype(dt, np.str_)
+        assert not np.isdtype(np.dtype("U8"), np.dtypes.StringDType)
 
     def test_sctypes_complete(self):
         # issue 26439: int32/intc were masking each other on 32-bit builds
@@ -507,9 +564,11 @@ class Test_sctype2char:
         assert_equal(sctype2char(np.ndarray), 'O')
 
     def test_third_party_scalar_type(self):
-        from numpy._core._rational_tests import rational
+        from numpy._core._rational_tests import rational, rational2
         assert_raises(KeyError, sctype2char, rational)
         assert_raises(KeyError, sctype2char, rational(1))
+        assert_raises(KeyError, sctype2char, rational2)
+        assert_raises(KeyError, sctype2char, rational2(1))
 
     def test_array_instance(self):
         assert_equal(sctype2char(np.array([1.0, 2.0])), 'd')
@@ -573,7 +632,7 @@ class TestScalarTypeNames:
         assert getattr(np, t.__name__) is t
 
     @pytest.mark.parametrize('t', numeric_types)
-    def test_names_are_undersood_by_dtype(self, t):
+    def test_names_are_understood_by_dtype(self, t):
         """ Test the dtype constructor maps names back to the type """
         assert np.dtype(t.__name__).type is t
 

@@ -1,6 +1,7 @@
 from builtins import bytes as py_bytes
 from collections.abc import Callable
-from typing import Any, Literal, overload
+from typing import Any, Literal, SupportsIndex, overload
+from typing_extensions import disjoint_base
 
 import numpy as np
 from numpy._typing import (
@@ -82,6 +83,7 @@ __all__ = [
     "zipf",
 ]
 
+@disjoint_base
 class RandomState:
     _bit_generator: BitGenerator
 
@@ -93,13 +95,13 @@ class RandomState:
     def __reduce__(self) -> tuple[Callable[[BitGenerator], RandomState], tuple[BitGenerator], dict[str, Any]]: ...
 
     #
-    def seed(self, seed: _ArrayLikeFloat_co | None = None) -> None: ...
+    def seed(self, seed: _ArrayLikeInt_co | None = None) -> None: ...
 
     #
     @overload
-    def get_state(self, legacy: Literal[False] = False) -> dict[str, Any]: ...
+    def get_state(self, legacy: Literal[False]) -> dict[str, Any]: ...
     @overload
-    def get_state(self, legacy: Literal[True] = True) -> dict[str, Any] | tuple[str, NDArray[np.uint32], int, int, float]: ...
+    def get_state(self, legacy: Literal[True] = True) -> tuple[str, NDArray[np.uint32], int, int, float]: ...
 
     #
     def set_state(self, state: dict[str, Any] | tuple[str, NDArray[np.uint32], int, int, float]) -> None: ...
@@ -317,6 +319,24 @@ class RandomState:
         *,
         dtype: _DTypeLike[np.int64] | _Int64Codes,
     ) -> NDArray[np.int64] | Any: ...
+    @overload  # size=<given> (positional), dtype=<int-like> (default)
+    def randint(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: _ShapeLike,
+        *,
+        dtype: type[int] | _DTypeLike[np.int_] | _IntPCodes = int,
+    ) -> NDArray[np.int_]: ...
+    @overload  # size=<given> (keyword), dtype=<int-like> (default)
+    def randint(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        *,
+        size: _ShapeLike,
+        dtype: type[int] | _DTypeLike[np.int_] | _IntPCodes = int,
+    ) -> NDArray[np.int_]: ...
     @overload
     def randint(
         self,
@@ -370,6 +390,22 @@ class RandomState:
         *,
         dtype: _DTypeLikeInt,
     ) -> NDArray[np.integer] | Any: ...
+    @overload  # size=<given>, dtype=<known sctype> (positional)
+    def randint[ScalarT: np.integer | np.bool](
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: _ShapeLike,
+        dtype: _DTypeLike[ScalarT],
+    ) -> NDArray[ScalarT]: ...
+    @overload  # size=<given>, dtype=<unknown str> (positional)
+    def randint(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None,
+        size: _ShapeLike,
+        dtype: str,
+    ) -> NDArray[Any]: ...
 
     #
     def bytes(self, length: int) -> py_bytes: ...
@@ -443,13 +479,13 @@ class RandomState:
     @overload
     def rand(self, /) -> float: ...
     @overload
-    def rand(self, arg0: int, /, *args: int) -> NDArray[np.float64]: ...
+    def rand(self, arg0: SupportsIndex, /, *args: SupportsIndex) -> NDArray[np.float64]: ...
 
     #
     @overload
     def randn(self, /) -> float: ...
     @overload
-    def randn(self, arg0: int, /, *args: int) -> NDArray[np.float64]: ...
+    def randn(self, arg0: SupportsIndex, /, *args: SupportsIndex) -> NDArray[np.float64]: ...
 
     #
     @overload
@@ -458,7 +494,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-    ) -> int: ...
+    ) -> np.long: ...
     @overload
     def random_integers(
         self,

@@ -203,8 +203,6 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     I : ndarray of shape (N,M)
@@ -408,8 +406,6 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
         Data type of the returned array.  The default is float.
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     tri : ndarray of shape (N, M)
@@ -462,7 +458,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     # Deprecation in NumPy 2.5, 2026-03
     if warning_for_type:
         warnings.warn(
-            (f"Cannot convert {(warning_for_type).__name__} safely to an integer."
+            (f"Cannot convert {(warning_for_type).__name__} safely to an integer. "
              "This will raise an error in future versions (Deprecated NumPy 2.5)"),
             DeprecationWarning,
             skip_file_prefixes=(os.path.dirname(__file__),),
@@ -856,8 +852,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
         N = 1
 
     if N not in {1, 2}:
-        xedges = yedges = asarray(bins)
-        bins = [xedges, yedges]
+        bins = [bins, bins]
     hist, edges = histogramdd([x, y], bins, range, density, weights)
     return hist, edges[0], edges[1]
 
@@ -881,7 +876,7 @@ def mask_indices(n, mask_func, k=0):
         A function whose call signature is similar to that of `triu`, `tril`.
         That is, ``mask_func(x, k)`` returns a boolean array, shaped like `x`.
         `k` is an optional argument to the function.
-    k : scalar
+    k : scalar, optional
         An optional argument which is passed through to `mask_func`. Functions
         like `triu`, `tril` take a second argument that is interpreted as an
         offset.
@@ -1167,7 +1162,7 @@ def triu_indices(n, k=0, m=None):
         if not isinstance(k, type(k - 1)):
             # Deprecated in NumPy 2.5, 2026-03
             warnings.warn(
-                (f"Cannot convert {type(k).__name__} safely to an integer."
+                (f"Cannot convert {type(k).__name__} safely to an integer. "
                  "This will raise an error in future versions (Deprecated NumPy 2.5)"),
                 DeprecationWarning,
                 skip_file_prefixes=(os.path.dirname(__file__),),

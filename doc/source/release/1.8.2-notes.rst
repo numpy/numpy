@@ -9,7 +9,7 @@ Issues fixed
 
 * gh-4836: partition produces wrong results for multiple selections in equal ranges
 * gh-4656: Make fftpack._raw_fft threadsafe
-* gh-4628: incorrect argument order to _copyto in in np.nanmax, np.nanmin
+* gh-4628: incorrect argument order to _copyto in np.nanmax, np.nanmin
 * gh-4642: Hold GIL for converting dtypes types with fields
 * gh-4733: fix np.linalg.svd(b, compute_uv=False)
 * gh-4853: avoid unaligned simd load on reductions on i386

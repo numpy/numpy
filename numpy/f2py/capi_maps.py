@@ -16,6 +16,7 @@ import re
 
 from . import cb_rules
 from ._isocbind import iso_c2py_map, iso_c_binding_map, isoc_c2pycode_map
+from ._isofenv import iso_fortran_env_map
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
@@ -70,7 +71,7 @@ c2capi_map = {'double': 'NPY_DOUBLE',
                 'unsigned_long_long': 'NPY_ULONGLONG',
                 'complex_float': 'NPY_CFLOAT',
                 'complex_double': 'NPY_CDOUBLE',
-                'complex_long_double': 'NPY_CDOUBLE',
+                'complex_long_double': 'NPY_CLONGDOUBLE',
                 'string': 'NPY_STRING',
                 'character': 'NPY_STRING'}
 
@@ -132,6 +133,7 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
 c2pycode_map.update(isoc_c2pycode_map)
 c2py_map.update(iso_c2py_map)
 f2cmap_all, _ = process_f2cmap_dict(f2cmap_all, iso_c_binding_map, c2py_map)
+f2cmap_all, _ = process_f2cmap_dict(f2cmap_all, iso_fortran_env_map, c2py_map)
 # End ISO_C handling
 f2cmap_default = copy.deepcopy(f2cmap_all)
 

@@ -237,7 +237,6 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         Unrecognized strings will be ignored with a warning for forward
         compatibility.
 
-        .. versionchanged:: 1.22.0
         .. versionchanged:: 2.2
 
     override_repr: callable, optional
@@ -530,8 +529,16 @@ def _get_format_function(data, **options):
     dtype_ = data.dtype
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
+
     if dtypeobj is None:
         return formatdict["numpystr"]()
+    elif (getattr(dtypeobj, "__module__", None) != "numpy"
+            and not issubclass(dtypeobj, str)):
+        # Use `str()` as a default format for non-NumPy dtypes. This should be
+        # improved.  We use `str` assuming that `repr` is likely to duplicate
+        # information that is contained in the dtype.
+        # (Do this early, because e.g. quaddtype subclasses floating.)
+        return formatdict['void']()
     elif issubclass(dtypeobj, _nt.bool):
         return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):
@@ -1176,8 +1183,6 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         `unique=True`. In that case more digits than necessary to uniquely
         identify the value may be printed and rounded unbiased.
 
-        .. versionadded:: 1.21.0
-
     Returns
     -------
     rep : string
@@ -1263,8 +1268,6 @@ def format_float_positional(x, precision=None, unique=True,
         Minimum number of digits to print. Only has an effect if `unique=True`
         in which case additional digits past those necessary to uniquely
         identify the value may be printed, rounding the last additional digit.
-
-        .. versionadded:: 1.21.0
 
     Returns
     -------
@@ -1415,10 +1418,11 @@ class DatetimeFormat(_TimelikeFormat):
         return super().__call__(x)
 
     def _format_non_nat(self, x):
-        return "'%s'" % datetime_as_string(x,
-                                    unit=self.unit,
-                                    timezone=self.timezone,
-                                    casting=self.casting)
+        datetime_str = datetime_as_string(x,
+                                          unit=self.unit,
+                                          timezone=self.timezone,
+                                          casting=self.casting)
+        return f"'{datetime_str}'"
 
 
 class TimedeltaFormat(_TimelikeFormat):
@@ -1567,7 +1571,7 @@ def dtype_short_repr(dtype):
     >>> dt = np.int64([1, 2]).dtype
     >>> assert eval(dtype_short_repr(dt)) == dt
     """
-    if type(dtype).__repr__ != np.dtype.__repr__:
+    if not type(dtype)._legacy:
         # TODO: Custom repr for user DTypes, logic should likely move.
         return repr(dtype)
     if dtype.names is not None:

@@ -348,6 +348,33 @@ class TestSavezLoad(RoundtripTest):
             data.close()
             assert_(fp.closed)
 
+    @pytest.mark.thread_unsafe(reason="monkeypatches open in _npyio_impl")
+    def test_closing_fid_on_bad_zipfile(self, monkeypatch):
+        # The file opened by np.load should be closed when it looks like a
+        # zip file but cannot be read as one, instead of being left open
+        # until the traceback is garbage collected.
+        opened = []
+
+        def tracking_open(*args, **kwargs):
+            f = open(*args, **kwargs)
+            opened.append(f)
+            return f
+
+        with temppath(suffix='.npz') as tmp:
+            np.savez(tmp, a=np.arange(100))
+            with open(tmp, 'rb') as f:
+                content = f.read()
+            with open(tmp, 'wb') as f:
+                f.write(content[:len(content) // 2])  # truncated archive
+
+            monkeypatch.setattr(_npyio_impl, "open", tracking_open,
+                                raising=False)
+            with pytest.raises(zipfile.BadZipFile):
+                np.load(tmp)
+
+            assert len(opened) == 1
+            assert opened[0].closed
+
     @pytest.mark.parametrize("count, expected_repr", [
         (1, "NpzFile {fname!r} with keys: arr_0"),
         (5, "NpzFile {fname!r} with keys: arr_0, arr_1, arr_2, arr_3, arr_4"),
@@ -1019,7 +1046,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_uint64_type(self):
         tgt = (9223372043271415339, 9223372043271415853)
         c = TextIO()
-        c.write("%s %s" % tgt)
+        c.write(f'{tgt[0]} {tgt[1]}')
         c.seek(0)
         res = np.loadtxt(c, dtype=np.uint64)
         assert_equal(res, tgt)
@@ -1027,7 +1054,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_int64_type(self):
         tgt = (-9223372036854775807, 9223372036854775807)
         c = TextIO()
-        c.write("%s %s" % tgt)
+        c.write(f'{tgt[0]} {tgt[1]}')
         c.seek(0)
         res = np.loadtxt(c, dtype=np.int64)
         assert_equal(res, tgt)
@@ -1069,7 +1096,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_from_complex(self):
         tgt = (complex(1, 1), complex(1, -1))
         c = TextIO()
-        c.write("%s %s" % tgt)
+        c.write(f'{tgt[0]} {tgt[1]}')
         c.seek(0)
         res = np.loadtxt(c, dtype=complex)
         assert_equal(res, tgt)
@@ -1269,20 +1296,16 @@ class TestLoadTxt(LoadTxtBase):
         if callable(data):
             data = data()
 
-        with pytest.warns(UserWarning,
-                    match=f"Input line 3.*max_rows={3 - skip}"):
-            res = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
-                             max_rows=3 - skip)
-            assert_array_equal(res, [[-1, 0], [1, 2], [3, 4]][skip:])
+        res = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                         max_rows=3 - skip)
+        assert_array_equal(res, [[-1, 0], [1, 2], [3, 4]][skip:])
 
         if isinstance(data, StringIO):
             data.seek(0)
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", UserWarning)
-            with pytest.raises(UserWarning):
-                np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
-                           max_rows=3 - skip)
+        # gh-31113 old test checked the warning twice on `StringIO` inputs
+        x = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                       max_rows=3 - skip)
+        assert_array_equal(x, [[-1, 0], [1, 2], [3, 4]][skip:])
 
 class Testfromregex:
     def test_record(self):
@@ -2688,6 +2711,7 @@ def test_npzfile_dict():
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.thread_unsafe(reason="garbage collector is global state")
+@pytest.mark.slow
 def test_load_refcount():
     # Check that objects returned by np.load are directly freed based on
     # their refcount, rather than needing the gc to collect them.

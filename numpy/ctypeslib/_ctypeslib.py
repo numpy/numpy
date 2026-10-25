@@ -53,6 +53,7 @@ __all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
            'as_ctypes_type']
 
 import os
+import sys
 
 import numpy as np
 import numpy._core.multiarray as mu
@@ -129,8 +130,19 @@ else:
         loader_path = os.fsdecode(loader_path)
 
         ext = os.path.splitext(libname)[1]
-        if not ext:
-            import sys
+        if sys.platform == "ios" and loader_path.endswith(".fwork"):
+            # iOS requires all dynamic libraries to be delivered as
+            # frameworks; CPython uses .fwork files to provide tracing
+            # from the CPython-expected location to the runtime location.
+            with open(loader_path) as f:
+                loader_path = os.path.join(
+                    os.path.dirname(sys.executable),
+                    f.read().strip()
+                )
+            base_ext = ""
+            libname = os.path.basename(loader_path)
+            libname_ext = [libname]
+        elif not ext:
             import sysconfig
             # Try to load library with platform-specific name, otherwise
             # default to libname.[so|dll|dylib].  Sometimes, these files are
@@ -193,7 +205,7 @@ class _ndptr(_ndptr_base):
             raise TypeError(f"array must have data type {cls._dtype_}")
         if cls._ndim_ is not None \
                and obj.ndim != cls._ndim_:
-            raise TypeError("array must have %d dimension(s)" % cls._ndim_)
+            raise TypeError(f"array must have {cls._ndim_} dimension(s)")
         if cls._shape_ is not None \
                and obj.shape != cls._shape_:
             raise TypeError(f"array must have shape {str(cls._shape_)}")
@@ -333,7 +345,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     else:
         name = dtype.str
     if ndim is not None:
-        name += "_%dd" % ndim
+        name += f"_{ndim}d"
     if shape is not None:
         name += "_" + "x".join(str(x) for x in shape)
     if flags is not None:

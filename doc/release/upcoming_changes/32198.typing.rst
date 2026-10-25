@@ -1,0 +1,25 @@
+Promotion-aware ufunc return types
+----------------------------------
+All ufuncs in the main namespace are now individually annotated, instead of sharing one
+generic ``numpy.ufunc`` type. Their ``__call__``, ``reduce``, ``accumulate``,
+``reduceat``, ``outer``, and ``at`` methods now follow NumPy's promotion rules, so that
+the output dtype is inferred instead of ``Any``.
+
+.. code-block:: python
+
+    import numpy as np
+    import numpy.typing as npt
+
+    x: npt.NDArray[np.float32]
+    y: npt.NDArray[np.int16]
+
+    reveal_type(np.sqrt(y))
+    # before: npt.NDArray[Any]
+    # after:  npt.NDArray[np.float32]
+
+    reveal_type(np.multiply(x, y))
+    # before: npt.NDArray[Any]
+    # after:  npt.NDArray[np.float32]
+
+This took 44 pull requests and over 20,000 lines of *hand-written* code, spread over
+1,905 overloads.

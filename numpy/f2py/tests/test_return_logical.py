@@ -5,6 +5,7 @@ from numpy import array
 from . import util
 
 
+@pytest.mark.slow
 class TestReturnLogical(util.F2PyTest):
     def check_function(self, t):
         assert t(True) == 1

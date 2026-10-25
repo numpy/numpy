@@ -6,16 +6,14 @@ import pytest
 import numpy as np
 
 
-def test_qr_mode_full_future_warning():
-    """Check mode='full' FutureWarning.
-
-    In numpy 1.8 the mode options 'full' and 'economic' in linalg.qr were
-    deprecated. The release date will probably be sometime in the summer
-    of 2013.
-
-    """
+def test_qr_mode_full_removed():
+    """Check mode='full' and mode='economic' raise ValueError."""
     a = np.eye(2)
-    pytest.warns(DeprecationWarning, np.linalg.qr, a, mode='full')
-    pytest.warns(DeprecationWarning, np.linalg.qr, a, mode='f')
-    pytest.warns(DeprecationWarning, np.linalg.qr, a, mode='economic')
-    pytest.warns(DeprecationWarning, np.linalg.qr, a, mode='e')
+    with pytest.raises(ValueError, match="deprecated in NumPy 1.8"):
+        np.linalg.qr(a, mode='full')
+    with pytest.raises(ValueError, match="deprecated in NumPy 1.8"):
+        np.linalg.qr(a, mode='f')
+    with pytest.raises(ValueError, match="deprecated in NumPy 1.8"):
+        np.linalg.qr(a, mode='economic')
+    with pytest.raises(ValueError, match="deprecated in NumPy 1.8"):
+        np.linalg.qr(a, mode='e')

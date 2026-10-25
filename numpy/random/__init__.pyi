@@ -1,3 +1,7 @@
+from typing import Final
+
+from numpy._pytesttester import PytestTester
+
 from ._generator import Generator, default_rng
 from ._mt19937 import MT19937
 from ._pcg64 import PCG64, PCG64DXSM
@@ -16,7 +20,7 @@ from .mtrand import (
     f,
     gamma,
     geometric,
-    get_bit_generator,
+    get_bit_generator as get_bit_generator,
     get_state,
     gumbel,
     hypergeometric,
@@ -44,7 +48,7 @@ from .mtrand import (
     rayleigh,
     sample,
     seed,
-    set_bit_generator,
+    set_bit_generator as set_bit_generator,
     set_state,
     shuffle,
     standard_cauchy,
@@ -122,3 +126,5 @@ __all__ = [
     "default_rng",
     "BitGenerator",
 ]
+
+test: Final[PytestTester] = ...

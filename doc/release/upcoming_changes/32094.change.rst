@@ -1,0 +1,10 @@
+``ufunc.at`` now follows NEP 50 promotion
+-----------------------------------------
+Python scalars passed as the value operand of ``ufunc.at`` were converted to
+arrays and thus treated as strongly typed, unlike for a normal ufunc call.
+They are now weak, so the operation is computed in the promoted dtype of the
+target array: e.g. ``np.add.at(arr, idx, 1)`` with a ``uint64`` array now uses
+the ``uint64`` loop rather than ``float64``, which rounded large values.  As a
+consequence, out-of-bounds Python integers now raise an ``OverflowError``
+here, as they do for ``ufunc.__call__``; previously they wrapped silently
+(e.g. adding ``-1`` to a ``uint8`` array produced 255).

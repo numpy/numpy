@@ -140,7 +140,7 @@ def as_strided(
     array = np.asarray(DummyArray(interface, base=base))
     # The route via `__interface__` does not preserve structured
     # dtypes. Since dtype should remain unchanged, we set it explicitly.
-    array.dtype = base.dtype
+    array._set_dtype(base.dtype)
 
     view = _maybe_view_as_subclass(base, array)
 
@@ -185,8 +185,6 @@ def sliding_window_view(x, window_shape, axis=None, *,
     Also known as rolling or moving window, the window slides across all
     dimensions of the array and extracts subsets of the array at all window
     positions.
-
-    .. versionadded:: 1.20.0
 
     Parameters
     ----------
@@ -543,8 +541,6 @@ def broadcast_shapes(*args):
     Broadcast the input shapes into a single shape.
 
     :ref:`Learn more about broadcasting here <basics.broadcasting>`.
-
-    .. versionadded:: 1.20.0
 
     Parameters
     ----------

@@ -53,13 +53,13 @@ PyArray_New(
 
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
-        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
+        PyArray_Descr *requested_dtype, npy_bool writeable,
         int copy, int *was_copied_by__array__);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                     PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
-                    int flags, PyObject *context, int *was_scalar);
+                    int flags, int *was_scalar);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -68,7 +68,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
                          PyArray_DTypeMeta *in_DType, int min_depth,
-                         int max_depth, int requirements, PyObject *context);
+                         int max_depth, int requirements);
 
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
@@ -115,7 +115,7 @@ _array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t item
 
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
-                             npy_intp instrides, npy_intp N, int elsize);
+                             npy_intp instrides, npy_intp N, npy_intp elsize);
 
 NPY_NO_EXPORT void
 _strided_byte_swap(void *p, npy_intp stride, npy_intp n, int size);

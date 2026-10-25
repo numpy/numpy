@@ -34,7 +34,7 @@ class FindFuncs(ast.NodeVisitor):
         ast.NodeVisitor.generic_visit(self, node)
 
         if p.ls[-1] == 'simplefilter' or p.ls[-1] == 'filterwarnings':
-            if getattr(node.args[0], "value", None) == "ignore":
+            if node.args and getattr(node.args[0], "value", None) == "ignore":
                 if not self.__filename.name.startswith("test_"):
                     raise AssertionError(
                         "ignore filters should only be used in tests; "

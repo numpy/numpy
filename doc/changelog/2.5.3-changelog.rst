@@ -1,0 +1,50 @@
+
+Contributors
+============
+
+A total of 9 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Iason Krommydas
+* James Davies +
+* Joren Hammudoglu
+* Maanas Arora
+* Matti Picus
+* Nathan Goldbaum
+* Shikhar Goel +
+* Yeonho Kim +
+
+Pull requests merged
+====================
+
+A total of 27 pull requests were merged for this release.
+
+* `#32235 <https://github.com/numpy/numpy/pull/32235>`__: MAINT: Prepare 2.5.x for further development
+* `#32289 <https://github.com/numpy/numpy/pull/32289>`__: BUG: raise ValueError when reading into record array with references...
+* `#32290 <https://github.com/numpy/numpy/pull/32290>`__: BUG: avoid uninitialized memory access / NULL-pointer deref in...
+* `#32291 <https://github.com/numpy/numpy/pull/32291>`__: TYP: fix ``np.random.{get,set}_bit_generator`` implicit re-exports...
+* `#32292 <https://github.com/numpy/numpy/pull/32292>`__: BUG: don't assume strides are a multiple of itemsize in stringdtype...
+* `#32293 <https://github.com/numpy/numpy/pull/32293>`__: CI: fix ccache CC override, add CXX in mac Conda CI (#32285)
+* `#32303 <https://github.com/numpy/numpy/pull/32303>`__: BUG: Fix ref leak in _convert_from_type for custom scalar types...
+* `#32304 <https://github.com/numpy/numpy/pull/32304>`__: BUG: fix a number of issues around iterators and StringDType...
+* `#32326 <https://github.com/numpy/numpy/pull/32326>`__: TST: avoid allocating huge tuple of arrays in concatenate test...
+* `#32338 <https://github.com/numpy/numpy/pull/32338>`__: BUG: avoid possible UB in 'safe' multiplication helpers (#32294)
+* `#32339 <https://github.com/numpy/numpy/pull/32339>`__: MAINT: use ``PyObject_`` functions instead of raw ``PyArray_ ones`` (#32331)
+* `#32378 <https://github.com/numpy/numpy/pull/32378>`__: BUG: validate UTF-8 and harden StringDType bounds handling (#32296)
+* `#32380 <https://github.com/numpy/numpy/pull/32380>`__: BUG: fix two error handling mistakes in stringdtype replace loop...
+* `#32381 <https://github.com/numpy/numpy/pull/32381>`__: BUG: fix visibility annotations for functions in StringDType...
+* `#32384 <https://github.com/numpy/numpy/pull/32384>`__: MAINT: Update ml_dtypes pin to 8/21/2026.
+* `#32385 <https://github.com/numpy/numpy/pull/32385>`__: MAINT: Update numpy/_core/src/umath/svml
+* `#32410 <https://github.com/numpy/numpy/pull/32410>`__: MAINT: skip failing cython limited API tests on Cython 3.3.0...
+* `#32427 <https://github.com/numpy/numpy/pull/32427>`__: BUG: close duplicated file descriptor if fdopen fails (#32386)
+* `#32428 <https://github.com/numpy/numpy/pull/32428>`__: MAINT: add missing space in warning and error messages (#32405)
+* `#32430 <https://github.com/numpy/numpy/pull/32430>`__: BUG: fix error handling in StringDType to fixed-width bytes case...
+* `#32441 <https://github.com/numpy/numpy/pull/32441>`__: MAINT: Only run nightly BLAS tests on main.
+* `#32471 <https://github.com/numpy/numpy/pull/32471>`__: BUG: fix memory leak in StringDType creation error path (#32470)
+* `#32477 <https://github.com/numpy/numpy/pull/32477>`__: BUG: fix stale fill_value after ufuncs change MaskedArray dtype...
+* `#32478 <https://github.com/numpy/numpy/pull/32478>`__: MAINT: exit deadlock tests quickly on slow hardware (#32466)
+* `#32481 <https://github.com/numpy/numpy/pull/32481>`__: BUG: Backport StringDType byteorder fixes
+* `#32506 <https://github.com/numpy/numpy/pull/32506>`__: DOC: use static scipy doc site for intershpinx (#32503)
+* `#32509 <https://github.com/numpy/numpy/pull/32509>`__: BUG: fix crash in ufunc.resolve_dtypes with a Python scalar type...
+

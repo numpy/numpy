@@ -441,6 +441,9 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
         }
         else {
             /* where=False copies nothing */
+            if (copied_src) {
+                Py_DECREF(src);
+            }
             return 0;
         }
     }

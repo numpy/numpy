@@ -1,4 +1,3 @@
-# pyright: reportSelfClsParameterName=false
 from _typeshed import Incomplete, StrOrBytesPath
 from collections.abc import Buffer, Iterable, Sequence
 from typing import (
@@ -145,14 +144,14 @@ def fromarrays(
     arrayList: Iterable[ArrayLike],
     dtype: None = None,
     shape: _ShapeLike | None = None,
-    *,
-    formats: DTypeLike | None,
+    formats: DTypeLike | None = None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,
     byteorder: _ByteOrder | None = None,
 ) -> _RecArray[record]: ...
 
+# exported in `numpy.rec`
 @overload
 def fromrecords(
     recList: _ArrayLikeVoid_co | tuple[object, ...] | _NestedSequence[tuple[object, ...]],
@@ -169,8 +168,7 @@ def fromrecords(
     recList: _ArrayLikeVoid_co | tuple[object, ...] | _NestedSequence[tuple[object, ...]],
     dtype: None = None,
     shape: _ShapeLike | None = None,
-    *,
-    formats: DTypeLike | None,
+    formats: DTypeLike | None = None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,
@@ -269,6 +267,20 @@ def array(
     strides: tuple[int, ...] | None = None,
     *,
     formats: DTypeLike | None,
+    names: str | Sequence[str] | None = None,
+    titles: str | Sequence[str] | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    copy: bool = True,
+) -> _RecArray[record]: ...
+@overload
+def array(
+    obj: list[Any] | tuple[Any, ...],
+    dtype: None = None,
+    shape: _ShapeLike | None = None,
+    offset: int = 0,
+    strides: tuple[int, ...] | None = None,
+    formats: DTypeLike | None = None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,

@@ -1,1 +1,0 @@
-* ``bincount`` now raises a ``TypeError`` for non-integer inputs (deprecated since 2.1).

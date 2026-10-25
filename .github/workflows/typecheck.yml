@@ -20,9 +20,9 @@ on:
     paths-ignore:
       - '**.md'
       - '**.rst'
-      - '.circlecl/**'
+      - '.circleci/**'
       - '.devcontainer/**'
-      - '.spin/**'
+      - '.spin/LICENSE'
       - 'benchmarks/**'
       - 'branding/**'
       - 'doc/**'
@@ -54,52 +54,44 @@ jobs:
         os_python:
           - [macos-latest, '3.14']
           - [ubuntu-latest, '3.13']
-          - [windows-latest, '3.12']
+          - [windows-2022, '3.12']
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       with:
         python-version: ${{ matrix.os_python[1] }}
         activate-environment: true
         cache-dependency-glob: |
-          requirements/build_requirements.txt
-          requirements/typing_requirements.txt
+          **/pyproject.toml
     - name: Install dependencies
-      # orjson makes mypy faster but the default requirements.txt
+      # orjson makes mypy faster but the default typing group
       # can't install it because orjson doesn't support 32 bit Linux
       run: >-
-        uv pip install
-        -r requirements/build_requirements.txt
-        -r requirements/typing_requirements.txt
-        orjson
-        basedpyright
+        uv pip install --group dev-cli --group typing orjson
     - name: Build
       run: |
         spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
     - name: Run Mypy
       run: |
         spin mypy
-    - name: Check basedpyright's type completeness is at least 100%
-      run: >-
-        spin run python tools/pyright_completeness.py
-        --verifytypes numpy
-        --ignoreexternal
-        --exclude-like '*.tests.*' '*.conftest.*'
+    - name: Pyrefly type coverage is 100%
+      run: pyrefly coverage check --public-only
 
   pyrefly:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-    - uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       with:
         activate-environment: true
     - name: Install dependencies
       run: >-
-        uv pip install
-        -r requirements/typing_requirements.txt
+        uv pip install --group typing
     - name: Run pyrefly
       run: pyrefly check
