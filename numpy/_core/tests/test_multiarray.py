@@ -5864,6 +5864,36 @@ class TestArgmaxArgminCommon:
                      np_method(a, out=out2, axis=0))
         assert_equal(out1, out2)
 
+    @pytest.mark.parametrize('method', ['argmax', 'argmin'])
+    def test_object_comparison_error(self, method):
+        # gh-31977: object dtype argmax/argmin must propagate comparison errors
+        # immediately instead of swallowing or corrupting out.
+        class BadComparison:
+            def __gt__(self, other):
+                raise ValueError("comparison error in __gt__")
+
+            def __lt__(self, other):
+                raise ValueError("comparison error in __lt__")
+
+        arr1d = np.array([BadComparison(), BadComparison()], dtype=object)
+        arg_func = getattr(arr1d, method)
+        with pytest.raises(ValueError, match="comparison error"):
+            arg_func()
+
+        out1d = np.zeros((), dtype=np.intp)
+        with pytest.raises(ValueError, match="comparison error"):
+            arg_func(out=out1d)
+
+        # 2D array test with axis and preallocated out
+        arr2d = np.array([
+            [BadComparison(), BadComparison()],
+            [BadComparison(), BadComparison()]
+        ], dtype=object)
+        arg_func2d = getattr(arr2d, method)
+        out2d = np.zeros(2, dtype=np.intp)
+        with pytest.raises(ValueError, match="comparison error"):
+            arg_func2d(axis=1, out=out2d)
+
     @pytest.mark.leaks_references(reason="replaces None with NULL.")
     @pytest.mark.parametrize('method, vals',
         [('argmax', (10, 30)),
