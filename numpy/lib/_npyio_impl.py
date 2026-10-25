@@ -466,11 +466,11 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         fid.seek(-min(N, len(magic)), 1)  # back-up
         if magic.startswith((_ZIP_PREFIX, _ZIP_SUFFIX)):
             # zip-file (assume .npz)
-            # Potentially transfer file ownership to NpzFile
-            stack.pop_all()
             ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,
                           pickle_kwargs=pickle_kwargs,
                           max_header_size=max_header_size)
+            # Transfer file ownership to ret
+            stack.pop_all()
             return ret
         elif magic == format.MAGIC_PREFIX:
             # .npy file
@@ -1209,8 +1209,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         .. versionadded:: 1.23.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1852,8 +1850,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
         .. versionadded:: 1.23.0
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------

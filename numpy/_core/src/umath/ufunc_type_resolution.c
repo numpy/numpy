@@ -599,6 +599,9 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                     out_dtypes[iop] = PyArray_DESCR(operands[iop]);
                     Py_INCREF(out_dtypes[iop]);
                 }
+                for (; iop < nop; iop++) {
+                    out_dtypes[iop] = NULL;
+                }
                 raise_no_loop_found_error(ufunc, (PyObject **)out_dtypes);
                 for (iop = 0; iop < ufunc->nin; iop++) {
                     Py_DECREF(out_dtypes[iop]);
@@ -1395,7 +1398,7 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
             }
         }
         /* m8[<A>] / int## => m8[<A>] / int64 */
-        else if (PyTypeNum_ISINTEGER(type_num2)) {
+        else if (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)) {
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -2336,7 +2339,7 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
     }
     if (type_num1 == NPY_TIMEDELTA && type_num2 == NPY_TIMEDELTA) {
         out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                             PyArray_DESCR(operands[1]));                             
+                                             PyArray_DESCR(operands[1]));
         if (out_dtypes[0] == NULL) {
             return -1;
         }

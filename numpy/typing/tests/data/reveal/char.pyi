@@ -163,7 +163,7 @@ assert_type(np.char.rindex(AR_S, [b"a", b"b", b"c"], end=9), npt.NDArray[np.int_
 assert_type(np.char.rindex(AR_T, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 
 assert_type(np.char.translate(AR_U, ""), npt.NDArray[np.str_])
-assert_type(np.char.translate(AR_S, ""), npt.NDArray[np.bytes_])
+assert_type(np.char.translate(AR_S, b""), npt.NDArray[np.bytes_])
 assert_type(np.char.translate(AR_T, ""), AR_T_alias)
 
 # mypy: disable-error-code="deprecated"

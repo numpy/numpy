@@ -61,21 +61,17 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       with:
         python-version: ${{ matrix.os_python[1] }}
         activate-environment: true
         cache-dependency-glob: |
-          requirements/build_requirements.txt
-          requirements/typing_requirements.txt
+          **/pyproject.toml
     - name: Install dependencies
-      # orjson makes mypy faster but the default requirements.txt
+      # orjson makes mypy faster but the default typing group
       # can't install it because orjson doesn't support 32 bit Linux
       run: >-
-        uv pip install
-        -r requirements/build_requirements.txt
-        -r requirements/typing_requirements.txt
-        orjson
+        uv pip install --group dev-cli --group typing orjson
     - name: Build
       run: |
         spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
@@ -91,12 +87,11 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
-    - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       with:
         activate-environment: true
     - name: Install dependencies
       run: >-
-        uv pip install
-        -r requirements/typing_requirements.txt
+        uv pip install --group typing
     - name: Run pyrefly
       run: pyrefly check

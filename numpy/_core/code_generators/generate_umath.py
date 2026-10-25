@@ -683,6 +683,15 @@ defdict = {
           indexed=flts + ints,
           no_float_errors=True,
           ),
+'minimummaximum':
+    Ufunc(2, 2, ReorderableNone,
+          docstrings.get('numpy._core.umath.minimummaximum'),
+          'NULL',
+          TD('?'),
+          TD(no_obj_bool, dispatch=[('loops_minmax', ints + 'fdg')]),
+          TD(O),
+          no_float_errors=True,
+          ),
 'clip':
     Ufunc(3, 1, ReorderableNone,
           docstrings.get('numpy._core.umath.clip'),
@@ -1595,7 +1604,9 @@ def make_ufuncs(funcdict):
             args['identity_expr'] = 'NULL'
 
         mlist.append(fmt.format(**args))
-        if uf.typereso is not None:
+        if uf.typereso == 'NULL':
+            mlist.append(r"((PyUFuncObject *)f)->type_resolver = NULL;")
+        elif uf.typereso is not None:
             mlist.append(rf"((PyUFuncObject *)f)->type_resolver = &{uf.typereso};")
         for c in uf.indexed:
             # Handle indexed loops by getting the underlying ArrayMethodObject
@@ -1605,6 +1616,7 @@ def make_ufuncs(funcdict):
                 PyArray_DTypeMeta *dtype = PyArray_DTypeFromTypeNum({typenum});
                 PyObject *info = get_info_no_cast((PyUFuncObject *)f,
                                                    dtype, {count});
+                Py_DECREF(dtype);
                 if (info == NULL) {{
                     return -1;
                 }}
@@ -1618,6 +1630,7 @@ def make_ufuncs(funcdict):
                     PyErr_SetString(PyExc_RuntimeError,
                         "Not a PyArrayMethodObject in ufunc "
                         "{name} with {typenum}");
+                    return -1;
                 }}
                 ((PyArrayMethodObject*)info)->contiguous_indexed_loop =
                                                                  {funcname};

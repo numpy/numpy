@@ -1344,6 +1344,31 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 1), 3.5)
         assert_equal(np.nanquantile(x, 0.5), 1.75)
 
+    def test_nanquantile_allnan_first_slice_dtype(self):
+        a = np.array(
+            [
+                [1.0, 2.0],
+                [np.nan, np.nan],
+            ],
+            dtype=np.float32,
+        )
+        q = np.array([0.3])
+
+        with pytest.warns(
+            RuntimeWarning, match="All-NaN slice encountered"
+        ):
+            result = np.nanquantile(a, q, axis=1)
+
+        with pytest.warns(
+            RuntimeWarning, match="All-NaN slice encountered"
+        ):
+            reversed_result = np.nanquantile(a[::-1], q, axis=1)
+
+        expected = np.quantile(a[0], q)
+
+        assert result.dtype == expected.dtype
+        assert reversed_result.dtype == expected.dtype
+
     def test_complex(self):
         arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)

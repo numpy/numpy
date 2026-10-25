@@ -21,14 +21,15 @@ typedef struct {
     npy_global_state_struct    global_state;
 
     NPY_DECLARE_PYOBJECT_FIELDS(NPY_MODULE_STATE_OBJECT_FIELDS)
+    NPY_DECLARE_TYPE_FIELDS(NPY_MODULE_STATE_TYPE_FIELDS)
     NumericOps n_ops;
 } multiarray_umath_state;
 
 /* The structs are generated from the lists, so these only catch a stray
  * member added by hand outside them. */
 static_assert(sizeof(npy_interned_str_struct) ==
-        (NPY_FIELD_COUNT(NPY_INTERNED_STR_FIELDS) + NPY_ERRMODE_STRING_COUNT)
-                * sizeof(PyObject *),
+        (NPY_FIELD_COUNT(NPY_INTERNED_STR_FIELDS) + NPY_ERRMODE_STRING_COUNT
+                + NPY_SCALAR_METHOD_COUNT) * sizeof(PyObject *),
         "npy_interned_str_struct member missing from NPY_INTERNED_STR_FIELDS");
 
 static_assert(sizeof(npy_static_pydata_struct) ==
@@ -48,9 +49,10 @@ static_assert(sizeof(NumericOps) ==
 /* The loose members sit contiguously between the sub-structs and n_ops. */
 static_assert(offsetof(multiarray_umath_state, n_ops) -
         offsetof(multiarray_umath_state, typeDict) ==
-        NPY_FIELD_COUNT(NPY_MODULE_STATE_OBJECT_FIELDS) * sizeof(PyObject *),
+        (NPY_FIELD_COUNT(NPY_MODULE_STATE_OBJECT_FIELDS) +
+         NPY_FIELD_COUNT(NPY_MODULE_STATE_TYPE_FIELDS)) * sizeof(PyObject *),
         "multiarray_umath_state member missing from "
-        "NPY_MODULE_STATE_OBJECT_FIELDS");
+        "NPY_MODULE_STATE_OBJECT_FIELDS or NPY_MODULE_STATE_TYPE_FIELDS");
 
 static inline multiarray_umath_state *
 get_module_state(PyObject *module)

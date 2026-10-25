@@ -1357,22 +1357,77 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
     /* Finish off dimension 1 */
     M = (shape1 - coord1 - 1);
     N = shape0*M;
-    for (i = 0; i < M; ++i) {
-        args[0] = src; args[1] = dst;
-        if (shape0 >= count) {
-            return cast_info->func(&cast_info->context,
-                    args, &count, strides, cast_info->auxdata);
+
+    /*
+     * The source does not advance along this dimension, so all repetitions are
+     * identical: fill the rest by copying the initial chunk, which also avoids
+     * repeating the cast.  The copy grows by doubling the written region.
+     */
+    if (M > 0 && count > 0 && src_stride1 == 0
+            && dst_stride == cast_info->context.descriptors[1]->elsize
+            && PyDataType_ISTRIVIALLYCOPYABLE(
+                    cast_info->context.descriptors[1])) {
+        /* Number of items this dimension still has to write */
+        npy_intp to_write = shape0 * M;
+        /* Start and length of the repetition that is copied from */
+        char *copy_start;
+        npy_intp filled;
+
+        if (to_write > count) {
+            to_write = count;
+        }
+
+        if (coord0 == 0) {
+            /* The transfer above wrote a full row, so copy that one */
+            copy_start = dst - shape0*dst_stride;
+            filled = shape0;
         }
         else {
-            res = cast_info->func(&cast_info->context,
-                    args, &shape0, strides, cast_info->auxdata);
-            if (res < 0) {
+            /* It wrote a partial row, so one full row has to be produced */
+            filled = (shape0 < to_write) ? shape0 : to_write;
+            args[0] = src; args[1] = dst;
+            if (cast_info->func(&cast_info->context,
+                    args, &filled, strides, cast_info->auxdata) < 0) {
                 return -1;
             }
+            copy_start = dst;
+            dst += filled*dst_stride;
+            count -= filled;
+            to_write -= filled;
         }
-        count -= shape0;
-        src += src_stride1;
-        dst += shape0*dst_stride;
+
+        while (to_write > 0) {
+            npy_intp chunk = (filled < to_write) ? filled : to_write;
+            memmove(dst, copy_start, chunk*dst_stride);
+            dst += chunk*dst_stride;
+            count -= chunk;
+            to_write -= chunk;
+            filled += chunk;
+        }
+
+        if (count == 0) {
+            return 0;
+        }
+        /* `src` is unchanged because `src_stride1 == 0` */
+    }
+    else {
+        for (i = 0; i < M; ++i) {
+            args[0] = src; args[1] = dst;
+            if (shape0 >= count) {
+                return cast_info->func(&cast_info->context,
+                        args, &count, strides, cast_info->auxdata);
+            }
+            else {
+                res = cast_info->func(&cast_info->context,
+                        args, &shape0, strides, cast_info->auxdata);
+                if (res < 0) {
+                    return -1;
+                }
+            }
+            count -= shape0;
+            src += src_stride1;
+            dst += shape0*dst_stride;
+        }
     }
 
     /* If it's 2-dimensional, there's no more to copy */

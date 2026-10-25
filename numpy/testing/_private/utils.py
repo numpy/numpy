@@ -890,18 +890,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
         elif isvstring(x) and isvstring(y):
             dt = x.dtype
-            if equal_nan and dt == y.dtype and hasattr(dt, 'na_object'):
-                is_nan = (isinstance(dt.na_object, float) and
-                          np.isnan(dt.na_object))
-                bool_errors = 0
-                try:
-                    bool(dt.na_object)
-                except TypeError:
-                    bool_errors = 1
-                if is_nan or bool_errors:
-                    # nan-like NA object
-                    flagged = func_assert_same_pos(
-                        x, y, func=isnan, hasval=x.dtype.na_object)
+            if equal_nan and dt == y.dtype and dt._has_nan_na:
+                # Let the dtype determine which values are NaN-like.
+                flagged = func_assert_same_pos(
+                    x, y, func=isnan, hasval=dt.na_object)
 
         if flagged.ndim > 0:
             x, y = x[~flagged], y[~flagged]
@@ -1856,13 +1848,21 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     import numpy as np
     ax = np.abs(x)
     ay = np.abs(y)
-    ref = nulp * np.spacing(np.where(ax > ay, ax, ay))
-    if not np.all(np.abs(x - y) <= ref):
+    spacing = np.spacing(np.where(ax > ay, ax, ay))
+    ref = nulp * spacing
+    diff = np.abs(x - y)
+
+    if not np.all(diff <= ref):
         if np.iscomplexobj(x) or np.iscomplexobj(y):
             msg = f"Arrays are not equal to {nulp} ULP"
         else:
-            max_nulp = np.max(nulp_diff(x, y))
-            msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
+            dtype = np.dtype(np.common_type(np.asarray(x), np.asarray(y)))
+            if dtype in (np.float16, np.float32, np.float64):
+                max_nulp = np.max(nulp_diff(x, y))
+                msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
+            else:
+                msg = f"Arrays are not equal to {nulp} ULP"
+
         raise AssertionError(msg)
 
 

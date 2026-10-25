@@ -101,6 +101,7 @@ from numpy.ma.core import (
     min,
     minimum,
     minimum_fill_value,
+    minmax,
     mod,
     multiply,
     mvoid,
@@ -1404,6 +1405,39 @@ class TestMaskedArrayArithmetic:
             nout.fill(-999)
             result = mafunc(xm, axis=0, out=nout)
             assert_(result is nout)
+
+    def test_minmax(self):
+        # ma.minmax returns (ma.min, ma.max) and is mask-aware
+        x = array([1, 2, 3, 4], mask=[0, 0, 1, 1])
+        assert_equal(minmax(x), (min(x), max(x)))
+        assert_equal(minmax(x), (1, 2))
+
+        a = arange(6).reshape(2, 3)
+        a[0, 0] = masked
+        for axis in (None, 0, 1):
+            lo, hi = minmax(a, axis=axis)
+            assert_equal(lo, min(a, axis=axis))
+            assert_equal(hi, max(a, axis=axis))
+
+        lo, hi = minmax(a, axis=1, keepdims=True)
+        assert_equal(lo, min(a, axis=1, keepdims=True))
+        assert_equal(hi, max(a, axis=1, keepdims=True))
+
+        # `out` tuple is filled and returned
+        xm = array(np.random.uniform(0, 10, 12), mask=np.random.rand(12).round())
+        xm = xm.reshape((3, 4))
+        out1 = np.empty((4,), dtype=float)
+        out2 = np.empty((4,), dtype=float)
+        res = minmax(xm, axis=0, out=(out1, out2))
+        assert_(res[0] is out1 and res[1] is out2)
+        assert_equal(out1, min(xm, axis=0))
+        assert_equal(out2, max(xm, axis=0))
+
+        # `out` must be a tuple of two arrays, not silently ignored
+        with pytest.raises(TypeError):
+            minmax(xm, out=out1)
+        with pytest.raises(TypeError):
+            minmax(xm, out=(out1,))
 
     def test_minmax_methods(self):
         # Additional tests on max/min
@@ -2714,6 +2748,28 @@ class TestFillingValues:
             touched = np.ones_like(a, dtype="int64")
         assert_equal(touched.fill_value, untouched.fill_value)
         assert_equal(touched.fill_value, default_fill_value(touched.dtype))
+
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
+    def test_fillvalue_reset_on_lossy_float_cast_in_constructor(self):
+        # gh-28255 follow-up: ``MaskedArray.__new__`` re-checks the
+        # fill_value inherited from ``data`` and must fall back as well.
+        a = arange(9.0)
+        a.fill_value  # materialise the default fill_value
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            b = array(a, dtype="int64")
+        assert_equal(b.fill_value, default_fill_value(b.dtype))
+
+    def test_fillvalue_user_given_still_raises_in_constructor(self):
+        a = arange(9.0)
+        with pytest.raises(TypeError):
+            array(a, fill_value=1e20, dtype="int64")
+
+    def test_fillvalue_reset_on_object_to_float_in_constructor(self):
+        a = array([1, 2, 3], dtype=object)
+        assert_equal(a.fill_value, '?')
+        b = array(a, dtype=float)
+        assert_equal(b.fill_value, default_fill_value(b.dtype))
 
     def test_fillvalue_kept_on_exact_float_cast(self):
         a = array([1.0, 2.0], mask=[0, 1], fill_value=5.0)
@@ -4351,10 +4407,14 @@ class TestMaskedArrayMathMethods:
 
         mYY = mXX.swapaxes(-1, -2)
         fXX, fYY = mXX.filled(0), mYY.filled(0)
-        r = mXX.dot(mYY)
-        assert_almost_equal(r.filled(0), fXX.dot(fYY))
+        # 4D dot triggers deprecation warning (gh-31725)
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            r = mXX.dot(mYY)
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            assert_almost_equal(r.filled(0), fXX.dot(fYY))
         r1 = empty_like(r)
-        mXX.dot(mYY, out=r1)
+        with pytest.warns(DeprecationWarning, match="a.ndim >= 2 and b.ndim > 2"):
+            mXX.dot(mYY, out=r1)
         assert_almost_equal(r, r1)
 
     def test_dot_shape_mismatch(self):

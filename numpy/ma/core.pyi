@@ -68,6 +68,8 @@ from numpy import (
 from numpy._core.fromnumeric import _UFuncKwargs  # type-check only
 from numpy._globals import _NoValueType
 from numpy._typing import (
+    Array1D,
+    Array2D,
     ArrayLike,
     DTypeLike,
     NDArray,
@@ -236,6 +238,7 @@ __all__ = [
     "min",
     "minimum",
     "minimum_fill_value",
+    "minmax",
     "mod",
     "multiply",
     "mvoid",
@@ -302,6 +305,25 @@ _AnyNumericScalarT = TypeVar(
     np.timedelta64,
     np.object_,
 )  # fmt: skip
+_Shape1T = TypeVar("_Shape1T", bound=tuple[int, *tuple[int, ...]])
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64, np.datetime64, np.str_, np.bytes_, np.void, np.object_,
+)  # fmt: skip
+_AnyNumericT = TypeVar(
+    "_AnyNumericT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64,
+)  # fmt: skip
+_AnyNumericObjectT = TypeVar(
+    "_AnyNumericObjectT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64, np.object_,
+)  # fmt: skip
 
 type _RealNumber = np.floating | np.integer
 type _InnerScalar = np.number | np.bool | np.timedelta64
@@ -324,13 +346,11 @@ type _MaskedArrayNumber_co = _MaskedArray[np.number | np.bool]
 type _MaskedArrayTD64_co = _MaskedArray[np.timedelta64 | np.integer | np.bool]
 
 type _ArrayInt_co = NDArray[np.integer | np.bool]
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
-type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 # Workaround for https://github.com/microsoft/pyright/issues/10232
 type _ArrayNoD[ScalarT: np.generic] = np.ndarray[tuple[Never] | tuple[Never, Never], np.dtype[ScalarT]]
 
-type _ToArray1D[ScalarT: np.generic] = _Array1D[ScalarT] | Sequence[ScalarT]
-type _ToArray2D[ScalarT: np.generic] = _Array2D[ScalarT] | Sequence[Sequence[ScalarT]]
+type _ToArray1D[ScalarT: np.generic] = Array1D[ScalarT] | Sequence[ScalarT]
+type _ToArray2D[ScalarT: np.generic] = Array2D[ScalarT] | Sequence[Sequence[ScalarT]]
 
 type _ConvertibleToInt = SupportsInt | SupportsIndex | _CharLike_co
 type _ConvertibleToFloat = SupportsFloat | SupportsIndex | _CharLike_co
@@ -579,21 +599,21 @@ def filled(a: ArrayLike, fill_value: _ScalarLike_co | None = None) -> NDArray[In
 @overload
 def fix_invalid[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT],
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     copy: bool = True,
     fill_value: _ScalarLike_co | None = None,
 ) -> MaskedArray[ShapeT, DTypeT]: ...
 @overload
 def fix_invalid[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     copy: bool = True,
     fill_value: _ScalarLike_co | None = None,
 ) -> _MaskedArray[ScalarT]: ...
 @overload
 def fix_invalid(
     a: ArrayLike,
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     copy: bool = True,
     fill_value: _ScalarLike_co | None = None,
 ) -> _MaskedArray[Incomplete]: ...
@@ -629,6 +649,8 @@ get_mask = getmask
 def getmaskarray(arr: _ScalarLike_co) -> _MaskArray[tuple[()]]: ...
 @overload
 def getmaskarray[ShapeT: _Shape](arr: np.ndarray[ShapeT, Any]) -> _MaskArray[ShapeT]: ...
+@overload
+def getmaskarray(arr: ArrayLike) -> _MaskArray[_AnyShape]: ...
 
 # It's sufficient for `m` to have dtype with type: `type[np.bool_]`,
 # which isn't necessarily an ndarray. Please open an issue if this causes issues.
@@ -804,18 +826,18 @@ def masked_invalid(a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]:
 # keep in sync with other the `masked_*` functions
 @overload  # array-like of known scalar-type
 def masked_where[ShapeT: _Shape, DTypeT: np.dtype](
-    condition: _ArrayLikeBool_co,
+    condition: _ArrayLikeInt_co,
     a: ndarray[ShapeT, DTypeT],
     copy: bool = True,
 ) -> MaskedArray[ShapeT, DTypeT]: ...
 @overload  # array-like of known scalar-type
 def masked_where[ScalarT: np.generic](
-    condition: _ArrayLikeBool_co,
+    condition: _ArrayLikeInt_co,
     a: _ArrayLike[ScalarT],
     copy: bool = True,
 ) -> _MaskedArray[ScalarT]: ...
 @overload  # unknown array-like
-def masked_where(condition: _ArrayLikeBool_co, a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+def masked_where(condition: _ArrayLikeInt_co, a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
 
 # keep in sync with other the `masked_*` functions
 @overload  # known array with known shape and dtype
@@ -1058,7 +1080,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __new__[ScalarT: np.generic](
         cls,
         data: _ArrayLike[ScalarT],
-        mask: _ArrayLikeBool_co = nomask,
+        mask: _ArrayLikeInt_co = nomask,
         dtype: None = None,
         copy: bool = False,
         subok: bool = True,
@@ -1073,7 +1095,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __new__[ScalarT: np.generic](
         cls,
         data: object,
-        mask: _ArrayLikeBool_co,
+        mask: _ArrayLikeInt_co,
         dtype: _DTypeLike[ScalarT],
         copy: bool = False,
         subok: bool = True,
@@ -1088,7 +1110,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __new__[ScalarT: np.generic](
         cls,
         data: object,
-        mask: _ArrayLikeBool_co = nomask,
+        mask: _ArrayLikeInt_co = nomask,
         *,
         dtype: _DTypeLike[ScalarT],
         copy: bool = False,
@@ -1104,7 +1126,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __new__(
         cls,
         data: object = None,
-        mask: _ArrayLikeBool_co = nomask,
+        mask: _ArrayLikeInt_co = nomask,
         dtype: DTypeLike | None = None,
         copy: bool = False,
         subok: bool = True,
@@ -1194,11 +1216,11 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @shape.setter  # type: ignore[override]
     def shape[ShapeT: _Shape](self: MaskedArray[ShapeT, Any], shape: ShapeT, /) -> None: ...
 
-    def __setmask__(self, mask: _ArrayLikeBool_co, copy: bool = False) -> None: ...
+    def __setmask__(self, mask: _ArrayLikeInt_co, copy: bool = False) -> None: ...
     @property
     def mask(self) -> np.ndarray[_ShapeT_co, np.dtype[MaskType]] | MaskType: ...
     @mask.setter
-    def mask(self, value: _ArrayLikeBool_co, /) -> None: ...
+    def mask(self, value: _ArrayLikeInt_co, /) -> None: ...
     @property
     def recordmask(self) -> np.ndarray[_ShapeT_co, np.dtype[MaskType]] | MaskType: ...
     @recordmask.setter
@@ -2904,7 +2926,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def squeeze(
         self,
         /,
-        axis: SupportsIndex | tuple[SupportsIndex] | None = None,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
     ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
 
     #
@@ -2963,7 +2985,7 @@ class mvoid(MaskedArray[_ShapeT_co, _DTypeT_co]):
         cls,
         /,
         data: ArrayLike,
-        mask: _ArrayLikeBool_co = nomask,
+        mask: _ArrayLikeInt_co = nomask,
         dtype: DTypeLike | None = None,
         fill_value: _FillValue = None,
         hardmask: bool = False,
@@ -3022,7 +3044,7 @@ def array[ScalarT: np.generic](
     dtype: None = None,
     copy: bool = False,
     order: _OrderKACF | None = None,
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     fill_value: _ScalarLike_co | None = None,
     keep_mask: bool = True,
     hard_mask: bool = False,
@@ -3036,7 +3058,7 @@ def array[ScalarT: np.generic](
     dtype: _DTypeLike[ScalarT],
     copy: bool = False,
     order: _OrderKACF | None = None,
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     fill_value: _ScalarLike_co | None = None,
     keep_mask: bool = True,
     hard_mask: bool = False,
@@ -3050,7 +3072,7 @@ def array(
     dtype: DTypeLike | None = None,
     copy: bool = False,
     order: _OrderKACF | None = None,
-    mask: _ArrayLikeBool_co = nomask,
+    mask: _ArrayLikeInt_co = nomask,
     fill_value: _ScalarLike_co | None = None,
     keep_mask: bool = True,
     hard_mask: bool = False,
@@ -3173,6 +3195,40 @@ def max[ArrayT: np.ndarray](
 ) -> ArrayT: ...
 
 @overload
+def minmax[ScalarT: np.generic](
+    obj: _ArrayLike[ScalarT],
+    axis: None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> tuple[ScalarT, ScalarT]: ...
+@overload
+def minmax(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...
+) -> tuple[Any, Any]: ...
+@overload
+def minmax[ArrayT: np.ndarray](
+    obj: ArrayLike,
+    axis: _ShapeLike | None,
+    out: tuple[ArrayT, ArrayT],
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> tuple[ArrayT, ArrayT]: ...
+@overload
+def minmax[ArrayT: np.ndarray](
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    out: tuple[ArrayT, ArrayT],
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> tuple[ArrayT, ArrayT]: ...
+
+@overload
 def ptp[ScalarT: np.generic](
     obj: _ArrayLike[ScalarT],
     axis: None = None,
@@ -3225,7 +3281,7 @@ def shrink_mask[MArrayT: MaskedArray](a: MArrayT) -> MArrayT: ...
 def ids(a: ArrayLike) -> tuple[int, int]: ...
 
 # keep in sync with `ndarray.nonzero`
-def nonzero(a: ArrayLike) -> tuple[_Array1D[np.intp], ...]: ...
+def nonzero(a: ArrayLike) -> tuple[Array1D[np.intp], ...]: ...
 
 # keep first overload in sync with `MaskedArray.ravel`
 @overload
@@ -3814,7 +3870,7 @@ def argsort(
     *,
     stable: bool | None = None,
     descending: bool | None = None,
-) -> _Array1D[np.intp]: ...
+) -> Array1D[np.intp]: ...
 @overload  # MaskedArray, axis: None
 def argsort(
     a: MaskedArray,
@@ -3850,7 +3906,7 @@ def argsort(
     *,
     stable: bool | None = None,
     descending: bool | None = None,
-) -> _Array1D[np.intp]: ...
+) -> Array1D[np.intp]: ...
 @overload  # array-like, axis: int-like
 def argsort(
     a: ArrayLike,
@@ -3892,9 +3948,9 @@ def sort(
 
 #
 @overload
-def compressed[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> _Array1D[ScalarT]: ...
+def compressed[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> Array1D[ScalarT]: ...
 @overload
-def compressed(x: ArrayLike) -> _Array1D[Any]: ...
+def compressed(x: ArrayLike) -> Array1D[Any]: ...
 
 #
 @overload
@@ -3906,9 +3962,9 @@ def concatenate(arrays: SupportsLenAndGetItem[ArrayLike], axis: SupportsIndex | 
 @overload
 def diag[ScalarT: np.generic](v: _ArrayNoD[ScalarT] | Sequence[Sequence[ScalarT]], k: int = 0) -> _MaskedArray[ScalarT]: ...
 @overload
-def diag[ScalarT: np.generic](v: _Array2D[ScalarT] | Sequence[Sequence[ScalarT]], k: int = 0) -> _Masked1D[ScalarT]: ...
+def diag[ScalarT: np.generic](v: Array2D[ScalarT] | Sequence[Sequence[ScalarT]], k: int = 0) -> _Masked1D[ScalarT]: ...
 @overload
-def diag[ScalarT: np.generic](v: _Array1D[ScalarT] | Sequence[ScalarT], k: int = 0) -> _Masked2D[ScalarT]: ...
+def diag[ScalarT: np.generic](v: Array1D[ScalarT] | Sequence[ScalarT], k: int = 0) -> _Masked2D[ScalarT]: ...
 @overload
 def diag(v: Sequence[Sequence[_ScalarLike_co]], k: int = 0) -> _Masked1D[Incomplete]: ...
 @overload
@@ -4182,15 +4238,19 @@ def round_[ArrayT: np.ndarray](a: ArrayLike, decimals: int = 0, *, out: ArrayT) 
 
 # keep in sync with `_core.multiarray.inner`
 @overload  # (?d T, Nd T) -> 0d|Nd T  (workaround)
-def inner[ScalarT: _InnerScalar | np.object_](a: _ArrayNoD[ScalarT], b: _ArrayLike[ScalarT]) -> _MaskedArray[ScalarT] | Any: ...
+def inner(  # noqa: UP047
+    a: _ArrayNoD[_AnyNumericObjectT], b: _ArrayLike[_AnyNumericObjectT]
+) -> _MaskedArray[_AnyNumericObjectT] | Any: ...
 @overload  # (Nd T, ?d T) -> 0d|Nd T  (workaround)
-def inner[ScalarT: _InnerScalar | np.object_](a: _ArrayLike[ScalarT], b: _ArrayNoD[ScalarT]) -> _MaskedArray[ScalarT] | Any: ...
+def inner(  # noqa: UP047
+    a: _ArrayLike[_AnyNumericObjectT], b: _ArrayNoD[_AnyNumericObjectT]
+) -> _MaskedArray[_AnyNumericObjectT] | Any: ...
 @overload  # (1d T, 1d T) -> 0d T
-def inner[ScalarT: _InnerScalar](a: _ToArray1D[ScalarT], b: _ToArray1D[ScalarT]) -> ScalarT: ...
+def inner(a: _ToArray1D[_AnyNumericT], b: _ToArray1D[_AnyNumericT]) -> _AnyNumericT: ...  # noqa: UP047
 @overload  # (1d object_, 1d _) -> 0d object
-def inner(a: _Array1D[np.object_], b: _Array1D[np.object_] | _ToArray1D[_InnerScalar]) -> Any: ...
+def inner(a: Array1D[np.object_], b: Array1D[np.object_] | _ToArray1D[_InnerScalar]) -> Any: ...
 @overload  # (1d _, 1d object_) -> 0d object
-def inner(a: _ToArray1D[_InnerScalar], b: _Array1D[np.object_]) -> Any: ...
+def inner(a: _ToArray1D[_InnerScalar], b: Array1D[np.object_]) -> Any: ...
 @overload  # (1d bool, 1d bool) -> bool_
 def inner(a: Sequence[bool], b: Sequence[bool]) -> np.bool: ...
 @overload  # (1d ~int, 1d +int) -> int_
@@ -4206,11 +4266,11 @@ def inner(a: list[complex], b: Sequence[complex]) -> np.complex128: ...
 @overload  # (1d +complex, 1d ~complex) -> complex128
 def inner(a: Sequence[complex], b: list[complex]) -> np.complex128: ...
 @overload  # (1d T, 2d T) -> 1d T
-def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray1D[ScalarT], b: _Array2D[ScalarT]) -> _Masked1D[ScalarT]: ...
+def inner(a: _ToArray1D[_AnyNumericObjectT], b: Array2D[_AnyNumericObjectT]) -> _Masked1D[_AnyNumericObjectT]: ...  # noqa: UP047
 @overload  # (2d T, 1d T) -> 1d T
-def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray2D[ScalarT], b: _Array1D[ScalarT]) -> _Masked1D[ScalarT]: ...
+def inner(a: _ToArray2D[_AnyNumericObjectT], b: Array1D[_AnyNumericObjectT]) -> _Masked1D[_AnyNumericObjectT]: ...  # noqa: UP047
 @overload  # (2d T, 2d T) -> 2d _Masked1D
-def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray2D[ScalarT], b: _Array2D[ScalarT]) -> _Masked2D[ScalarT]: ...
+def inner(a: _ToArray2D[_AnyNumericObjectT], b: Array2D[_AnyNumericObjectT]) -> _Masked2D[_AnyNumericObjectT]: ...  # noqa: UP047
 @overload  # fallback
 def inner(a: ArrayLike, b: ArrayLike) -> Any: ...
 
@@ -4330,54 +4390,60 @@ def allclose(a: ArrayLike, b: ArrayLike, masked_equal: bool = True, rtol: float 
 def fromflex[ShapeT: _Shape](fxarray: np.ndarray[ShapeT, np.dtype[np.void]]) -> MaskedArray[ShapeT, np.dtype[Incomplete]]: ...
 
 # keep in sync with `lib._function_base_impl.append`
-@overload  # known array type, axis specified
-def append[MArrayT: MaskedArray](
-    a: MArrayT,
-    b: MArrayT,
-    axis: SupportsIndex,
-) -> MArrayT: ...
-@overload  # 1d, known scalar type, axis specified
-def append[ScalarT: np.generic](
-    a: Sequence[ScalarT],
-    b: Sequence[ScalarT],
-    axis: SupportsIndex,
-) -> _Masked1D[ScalarT]: ...
-@overload  # 2d, known scalar type, axis specified
-def append[ScalarT: np.generic](
-    a: _Seq2D[ScalarT],
-    b: _Seq2D[ScalarT],
-    axis: SupportsIndex,
-) -> _Masked2D[ScalarT]: ...
-@overload  # 3d, known scalar type, axis specified
-def append[ScalarT: np.generic](
-    a: _Seq3D[ScalarT],
-    b: _Seq3D[ScalarT],
-    axis: SupportsIndex,
-) -> _Masked3D[ScalarT]: ...
-@overload  # ?d, known scalar type, axis specified
-def append[ScalarT: np.generic](
-    a: _NestedSequence[ScalarT],
-    b: _NestedSequence[ScalarT],
-    axis: SupportsIndex,
-) -> _MaskedArray[ScalarT]: ...
-@overload  # ?d, unknown scalar type, axis specified
-def append(
-    a: np.ndarray | _NestedSequence[_ScalarLike_co],
-    b: _NestedSequence[_ScalarLike_co],
-    axis: SupportsIndex,
-) -> _MaskedArray[Incomplete]: ...
-@overload  # known scalar type, axis=None
-def append[ScalarT: np.generic](
-    a: _ArrayLike[ScalarT],
-    b: _ArrayLike[ScalarT],
+@overload  # ?d T, axis=None (default)
+def append(  # noqa: UP047
+    a: _ArrayLike[_AnyScalarT],
+    b: _ArrayLike[_AnyScalarT],
     axis: None = None,
-) -> _Masked1D[ScalarT]: ...
-@overload  # unknown scalar type, axis=None
+) -> _Masked1D[_AnyScalarT]: ...
+@overload  # >=1d T, axis=<given>
+def append(  # noqa: UP047
+    a: np.ndarray[_Shape1T, np.dtype[_AnyScalarT]],
+    b: _ArrayLike[_AnyScalarT],
+    axis: SupportsIndex,
+) -> MaskedArray[_Shape1T, np.dtype[_AnyScalarT]]: ...
+@overload  # >=1d ?, axis=<given>
+def append[ShapeT: tuple[int, *tuple[int, ...]]](
+    a: np.ndarray[ShapeT, Any],
+    b: ArrayLike,
+    axis: SupportsIndex,
+) -> MaskedArray[ShapeT]: ...
+@overload  # 1d T, axis=<given>
+def append(  # noqa: UP047
+    a: Sequence[_AnyScalarT],
+    b: Sequence[_AnyScalarT],
+    axis: SupportsIndex,
+) -> _Masked1D[_AnyScalarT]: ...
+@overload  # 2d T, axis=<given>
+def append(  # noqa: UP047
+    a: _Seq2D[_AnyScalarT],
+    b: _Seq2D[_AnyScalarT],
+    axis: SupportsIndex,
+) -> _Masked2D[_AnyScalarT]: ...
+@overload  # 3d T, axis=<given>
+def append(  # noqa: UP047
+    a: _Seq3D[_AnyScalarT],
+    b: _Seq3D[_AnyScalarT],
+    axis: SupportsIndex,
+) -> _Masked3D[_AnyScalarT]: ...
+@overload  # ?d T, axis=<given>
+def append(  # noqa: UP047
+    a: _NestedSequence[_AnyScalarT],
+    b: _NestedSequence[_AnyScalarT],
+    axis: SupportsIndex,
+) -> _MaskedArray[_AnyScalarT]: ...
+@overload  # ?d ?, axis=None (default)
 def append(
     a: ArrayLike,
     b: ArrayLike,
     axis: None = None,
 ) -> _Masked1D[Incomplete]: ...
+@overload  # ?d ?, axis=<given>
+def append(
+    a: ArrayLike,
+    b: ArrayLike,
+    axis: SupportsIndex,
+) -> _MaskedArray[Incomplete]: ...
 
 # keep in sync with `_core.multiarray.dot`
 @overload
