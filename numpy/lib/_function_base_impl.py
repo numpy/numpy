@@ -4794,7 +4794,7 @@ def _quantile(
                 f"Use one of: {valid_methods}") from None
 
         idx_quantiles = quantiles
-        if quantiles.dtype.type in (np.float16, np.float32):
+        if quantiles.dtype.type is np.float16:
             idx_quantiles = quantiles.astype(np.float64, copy=False)
 
         virtual_indexes = method_props["get_virtual_index"](values_count,
