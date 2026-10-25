@@ -4263,9 +4263,9 @@ class TestPercentile:
         a = np.zeros(65521, dtype=np.float16)
         a[:20_000] = 1.0
         scale = 100 if func is np.percentile else 1
-        q = np.array([0.5 * scale, 0.99 * scale], dtype=np.float16)
+        q = np.array([0.5 * scale, 0.99 * scale, 1.0 * scale], dtype=np.float16)
         z = func(a, q)
-        assert_array_equal(z, np.array([0.0, 1.0], dtype=np.float16))
+        assert_array_equal(z, np.array([0.0, 1.0, 1.0], dtype=np.float16))
         assert z.dtype == np.float16
 
     @pytest.mark.slow
@@ -4735,6 +4735,12 @@ class TestQuantile:
         value = np.quantile(a, q)
         assert value == q * 50_000
         assert value.dtype == np.float16
+
+    def test_longdouble_q_precision(self):
+        # gh-31487: longdouble q must not be cast down to float64
+        a = np.array([0, 1], dtype=np.longdouble)
+        q = np.array([1], dtype=np.longdouble) / 3
+        assert_equal(np.quantile(a, q), q)
 
     @pytest.mark.parametrize("method", interpolating_quantile_methods)
     @pytest.mark.parametrize("q", [0.5, 1])

@@ -1392,6 +1392,9 @@ class TestNanFunctions_Quantile:
         z = func(a, np.float16(0.99 * scale))
         assert z == np.float16(1.0)
         assert z.dtype == np.float16
+        z = func(a, np.float16(1.0 * scale))
+        assert z == np.float16(1.0)
+        assert z.dtype == np.float16
 
 @pytest.mark.parametrize("arr, expected", [
     # array of floats with some nans
