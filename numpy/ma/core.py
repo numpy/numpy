@@ -3853,7 +3853,7 @@ class MaskedArray(ndarray):
         ...                 fill_value=-999)
         >>> x.filled()
         array([  10, -999,   30])
-        >>> x.filled(0)
+        >>> x.filled(fill_value=0)
         array([10,  0, 30])
         >>> x.data
         array([10, 20, 30])
