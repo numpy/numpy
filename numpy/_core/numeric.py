@@ -1853,9 +1853,11 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     function : callable
         The function is called once with N coordinate arrays as parameters,
         where N is the length of `shape`. Each array represents the
-        coordinates along a specific axis.  For example,
+        coordinates along a specific axis. Because coordinate arrays are
+        passed instead of individual scalar indices, `function` must support
+        array operations (broadcasting/vectorization). For example,
         if `shape` were ``(2, 2)``, then the parameters would be
-        ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
+        ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``.
     shape : (N,) tuple of ints
         Shape of the coordinate arrays passed to `function`. The shape of the output
         is determined by the value returned by `function` and may be different from
@@ -1875,11 +1877,18 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     See Also
     --------
-    indices, meshgrid
+    indices, meshgrid, vectorize
 
     Notes
     -----
     Keywords other than `dtype` and `like` are passed to `function`.
+
+    Coordinate arrays are passed to `function` all at once, not element by
+    element. Consequently, `function` cannot rely on scalar Python
+    branching (such as ``if i == j``) or dictionary lookups indexed by
+    the coordinates. If element-wise evaluation of a non-vectorized function
+    is required, consider using :func:`vectorize` or a Python loop over the
+    indices.
 
     .. warning::
         `shape` determines the shape of the coordinate arrays passed to
