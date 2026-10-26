@@ -154,6 +154,7 @@ py.install_sources(
     'tests/data/generator_pcg64_np126.pkl.gz',
     'tests/data/generator_pcg64_np121.pkl.gz',
     'tests/data/seedsequence_cython.pkl.gz',
+    'tests/data/seedsequence_subclass_cython.pkl.gz',
   ],
   subdir: 'numpy/random/tests/data',
   install_tag: 'tests'

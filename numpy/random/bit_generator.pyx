@@ -352,13 +352,18 @@ cdef class SeedSequence:
     def __reduce_ex__(self, protocol):
         from ._pickle import __seed_sequence_ctor
 
-        state = self.state
-        return __seed_sequence_ctor, (type(self), state)
+        state = (
+            self.entropy, self.n_children_spawned, self.pool,
+            self.pool_size, self.spawn_key
+        )
+        if hasattr(self, "__dict__"):
+            state += (self.__dict__,)
+        return __seed_sequence_ctor, (type(self),), state
 
     def __setstate__(self, state):
         from pickle import UnpicklingError
 
-        if not isinstance(state, tuple) or len(state) != 5:
+        if not isinstance(state, tuple) or len(state) not in (5, 6):
             raise UnpicklingError(
                 "invalid state for a pickled SeedSequence"
             )
@@ -369,6 +374,8 @@ cdef class SeedSequence:
         self.pool_size = state[3]
         self.spawn_key = state[4]
         self._lock = Lock()
+        if len(state) == 6:
+            self.__dict__.update(state[5])
 
     cdef mix_entropy(self, np.ndarray[np.npy_uint32, ndim=1] mixer,
                      np.ndarray[np.npy_uint32, ndim=1] entropy_array):

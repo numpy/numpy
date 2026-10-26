@@ -3,7 +3,7 @@ from ._mt19937 import MT19937
 from ._pcg64 import PCG64, PCG64DXSM
 from ._philox import Philox
 from ._sfc64 import SFC64
-from .bit_generator import BitGenerator
+from .bit_generator import BitGenerator, SeedSequence
 from .mtrand import RandomState
 
 BitGenerators = {'MT19937': MT19937,
@@ -88,20 +88,6 @@ def __randomstate_ctor(bit_generator_name="MT19937",
     return RandomState(bit_generator_ctor(bit_generator_name))
 
 
-def __seed_sequence_ctor(seed_sequence_type, state):
-    """
-    Reconstruct a SeedSequence from its serialized state
-
-    Parameters:
-    ----------
-    seed_sequence_type : type
-        SeedSequence class to instantiate
-    state : dict
-        State passed as keyword arguments to SeedSequence constructor
-
-    Returns:
-    ----------
-    seed_sequence : SeedSequence
-        Reconstructed SeedSequence instance
-    """
-    return seed_sequence_type(**state)
+def __seed_sequence_ctor(seed_sequence_type):
+    """Allocate a SeedSequence for restoration by __setstate__."""
+    return SeedSequence.__new__(seed_sequence_type)

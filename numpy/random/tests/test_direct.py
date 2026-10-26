@@ -197,6 +197,33 @@ def test_seedsequence_legacy_pickle():
     assert seed_seq.n_children_spawned == 4
 
 
+def test_seedsequence_subclass_legacy_pickle():
+    import gzip
+    import pickle
+
+    base_path = os.path.split(os.path.abspath(__file__))[0]
+    pkl_file = os.path.join(
+        base_path, "data", "seedsequence_subclass_cython.pkl.gz"
+    )
+
+    with gzip.open(pkl_file, "rb") as file:
+        seed_seq = pickle.load(file)
+
+    assert isinstance(seed_seq, LabeledSeedSequence)
+    assert seed_seq.label == "example"
+
+    child = seed_seq.spawn(1)[0]
+    assert child.spawn_key == (0,)
+    assert seed_seq.n_children_spawned == 1
+
+    reloaded = pickle.loads(pickle.dumps(seed_seq))
+
+    assert isinstance(reloaded, LabeledSeedSequence)
+    assert reloaded.label == "example"
+    assert_equal(reloaded.state, seed_seq.state)
+    assert_array_equal(reloaded.pool, seed_seq.pool)
+
+
 @pytest.mark.skipif(IS_WASM, reason="can't start thread")
 @pytest.mark.thread_unsafe(
     reason="modifies the global thread switch interval"
@@ -690,3 +717,7 @@ class TestDefaultRNG:
         # vital to get global state back to original, otherwise
         # other tests start to fail.
         np.random.set_bit_generator(_original)
+
+
+class LabeledSeedSequence(SeedSequence):
+    pass
