@@ -275,7 +275,7 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     arr = np.asanyarray(a)
     if axis is None:
         arr = arr.ravel()
-        axis = 0
+        axis = -1
     axis = normalize_axis_index(axis, arr.ndim)
 
     kth = k - 1 if k > 0 else np.array([], dtype=np.intp)
