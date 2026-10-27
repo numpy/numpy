@@ -58,6 +58,14 @@ jobs:
           submodules: true
           persist-credentials: false
 
+      - name: Drop the compromised emSign root from the system CA store
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --only-upgrade -y ca-certificates
+          dpkg-query -W ca-certificates
+          test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
       - name: win_arm64 - set environment variables
         if: ${{ matrix.buildplat[1] == 'win_arm64' }}
         run: |

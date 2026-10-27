@@ -61,6 +61,15 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       with:
         python-version: ${{ matrix.os_python[1] }}
@@ -87,6 +96,14 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       with:
         activate-environment: true

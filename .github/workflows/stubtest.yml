@@ -43,6 +43,13 @@ jobs:
           fetch-tags: true
           persist-credentials: false
 
+      - name: Drop the compromised emSign root from the system CA store
+        run: |
+          sudo apt-get update
+          sudo apt-get install --only-upgrade -y ca-certificates
+          dpkg-query -W ca-certificates
+          test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
       - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           python-version: ${{ matrix.py }}

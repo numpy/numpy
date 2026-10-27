@@ -50,6 +50,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: ${{ matrix.version }}
@@ -65,6 +73,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - name: Install debug Python
       uses: deadsnakes/action@e640ac8743173a67cca4d7d77cd837e514bf98e8 # v3.2.0
       with:
@@ -100,6 +116,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: ${{ matrix.version }}
@@ -115,6 +139,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.12'
@@ -157,6 +189,13 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
 
     - name: Creates new container
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
@@ -204,6 +243,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.12'
@@ -244,6 +291,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.12'
@@ -286,6 +341,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - name: Checkout array-api-tests
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -326,6 +389,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - name: Checkout ml_dtypes
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -376,6 +447,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
+
+    - name: Drop the compromised emSign root from the system CA store
+      run: |
+        sudo apt-get update
+        sudo apt-get install --only-upgrade -y ca-certificates
+        dpkg-query -W ca-certificates
+        test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
     - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: '3.12'
