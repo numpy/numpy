@@ -1,5 +1,6 @@
 import numpy as np
-from numpy.testing import assert_, assert_array_equal
+from numpy.testing import assert_, assert_array_equal, assert_raises
+from numpy.ma.testutils import assert_equal
 
 
 class TestRegression:
@@ -88,3 +89,15 @@ class TestRegression:
         a = np.ma.MaskedArray([np.nan, 3], mask=[True, True])
         for f in (np.nanmean, np.nanstd, np.nanvar):
             assert_(np.ma.is_masked(f(a)), f.__name__)
+
+    def test_assert_equal_scalar_nan(self):
+        # Ticket gh-6661
+        assert_equal(np.nan, np.nan)
+        assert_equal(float("nan"), float("nan"))
+        assert_equal(np.float32(np.nan), np.float64(np.nan))
+        assert_equal([np.nan], [np.nan])
+        assert_equal({"a": np.nan}, {"a": np.nan})
+
+        assert_raises(AssertionError, assert_equal, np.nan, 1.0)
+        assert_raises(AssertionError, assert_equal, 1.0, np.nan)
+
