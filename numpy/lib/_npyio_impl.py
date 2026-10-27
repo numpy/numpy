@@ -395,6 +395,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     - If the file is a ``.npz`` file, then a dictionary-like object is
       returned, containing ``{filename: array}`` key-value pairs, one for
       each file in the archive.
+    - If the file is a ``.npz`` file, then arrays are read lazily on
+      key access, so the file should not be modified before then.
     - If the file is a ``.npz`` file, the returned value supports the
       context manager protocol in a similar fashion to the open function::
 
