@@ -3713,31 +3713,34 @@ def append(  # noqa: UP047
     arr: _ArrayLike[_AnyScalarT],
     values: _ArrayLike[_AnyScalarT],
     axis: None = None,
+    dtype: DTypeLike | None = None,
 ) -> Array1D[_AnyScalarT]: ...
 @overload  # >=1d T, axis=<given>
 def append(  # noqa: UP047
     arr: _Array[_Shape1T, _AnyScalarT],
     values: _ArrayLike[_AnyScalarT],
     axis: SupportsIndex,
+    dtype: DTypeLike | None = None,
 ) -> _Array[_Shape1T, _AnyScalarT]: ...
 @overload  # >=1d ?, axis=<given>
 def append[ShapeT: tuple[int, *tuple[int, ...]]](
     arr: np.ndarray[ShapeT, Any],
     values: ArrayLike,
     axis: SupportsIndex,
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray[ShapeT]: ...
 @overload  # 1d T, axis=<given>
-def append(arr: _Seq1D[_AnyScalarT], values: _Seq1D[_AnyScalarT], axis: SupportsIndex) -> Array1D[_AnyScalarT]: ...  # noqa: UP047
+def append(arr: _Seq1D[_AnyScalarT], values: _Seq1D[_AnyScalarT], axis: SupportsIndex, dtype: DTypeLike | None = None) -> Array1D[_AnyScalarT]: ...  # noqa: UP047
 @overload  # 2d T, axis=<given>
-def append(arr: _Seq2D[_AnyScalarT], values: _Seq2D[_AnyScalarT], axis: SupportsIndex) -> Array2D[_AnyScalarT]: ...  # noqa: UP047
+def append(arr: _Seq2D[_AnyScalarT], values: _Seq2D[_AnyScalarT], axis: SupportsIndex, dtype: DTypeLike | None = None) -> Array2D[_AnyScalarT]: ...  # noqa: UP047
 @overload  # 3d T, axis=<given>
-def append(arr: _Seq3D[_AnyScalarT], values: _Seq3D[_AnyScalarT], axis: SupportsIndex) -> Array3D[_AnyScalarT]: ...  # noqa: UP047
+def append(arr: _Seq3D[_AnyScalarT], values: _Seq3D[_AnyScalarT], axis: SupportsIndex, dtype: DTypeLike | None = None) -> Array3D[_AnyScalarT]: ...  # noqa: UP047
 @overload  # ?d T, axis=<given>
-def append(arr: _SeqND[_AnyScalarT], values: _SeqND[_AnyScalarT], axis: SupportsIndex) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
+def append(arr: _SeqND[_AnyScalarT], values: _SeqND[_AnyScalarT], axis: SupportsIndex, dtype: DTypeLike | None = None) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
 @overload  # ?d ?, axis=None (default)
-def append(arr: ArrayLike, values: ArrayLike, axis: None = None) -> Array1D[Any]: ...
+def append(arr: ArrayLike, values: ArrayLike, axis: None = None, dtype: DTypeLike | None = None) -> Array1D[Any]: ...
 @overload  # ?d ?, axis=<given>
-def append(arr: ArrayLike, values: ArrayLike, axis: SupportsIndex) -> NDArray[Any]: ...
+def append(arr: ArrayLike, values: ArrayLike, axis: SupportsIndex, dtype: DTypeLike | None = None) -> NDArray[Any]: ...
 
 #
 @overload

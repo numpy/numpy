@@ -5134,3 +5134,46 @@ class TestSortComplex:
         actual = np.sort_complex(a)
         assert_equal(actual, expected)
         assert_equal(actual.dtype, expected.dtype)
+
+
+class TestAppend:
+    def test_append_dtype(self):
+        # preserve float32 when appending scalar with dtype specified
+        a = np.array([1, 2], dtype=np.float32)
+        out = np.append(a, 42, dtype=np.float32)
+        assert_equal(out.dtype, np.float32)
+        assert_array_equal(out, np.array([1, 2, 42], dtype=np.float32))
+
+        # with axis specified
+        a = np.array([[1, 2]], dtype=np.float32)
+        out = np.append(a, [[3, 4]], axis=0, dtype=np.float32)
+        assert_equal(out.dtype, np.float32)
+        assert_array_equal(out, np.array([[1, 2], [3, 4]], dtype=np.float32))
+
+        # override dtype
+        a = np.array([1, 2], dtype=np.float32)
+        out = np.append(a, 42, dtype=np.float64)
+        assert_equal(out.dtype, np.float64)
+        assert_array_equal(out, np.array([1, 2, 42], dtype=np.float64))
+
+        # append with a list
+        a = np.array([1, 2], dtype=np.int32)
+        out = np.append(a, [3, 4], dtype=np.float32)
+        assert_equal(out.dtype, np.float32)
+        assert_array_equal(out, np.array([1, 2, 3, 4], dtype=np.float32))
+
+        # append with an array
+        a = np.array([1], dtype=np.float32)
+        out = np.append(a, np.array([2.5]), dtype=np.float64)
+        assert_equal(out.dtype, np.float64)
+        assert_array_equal(out, np.array([1.0, 2.5], dtype=np.float64))
+
+        # scalar appended to different dtypes
+        a = np.array([1, 2], dtype=np.int32)
+        out = np.append(a, 5, dtype=np.int64)
+        assert_equal(out.dtype, np.int64)
+
+        # scalar appended to different dtypes (with str)
+        a = np.array([1, 2], dtype=np.int32)
+        out = np.append(a, 5, dtype='int64')
+        assert_equal(out.dtype, np.int64)

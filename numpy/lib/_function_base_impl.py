@@ -5603,12 +5603,12 @@ def insert(arr, obj, values, axis=None):
     return conv.wrap(new, to_scalar=False)
 
 
-def _append_dispatcher(arr, values, axis=None):
+def _append_dispatcher(arr, values, axis=None, dtype=None):
     return (arr, values)
 
 
 @array_function_dispatch(_append_dispatcher)
-def append(arr, values, axis=None):
+def append(arr, values, axis=None, dtype=None):
     """
     Append values to the end of an array.
 
@@ -5625,6 +5625,9 @@ def append(arr, values, axis=None):
         The axis along which `values` are appended.  If `axis` is not
         given, both `arr` and `values` are flattened before use.
 
+    dtype : dtype-like or str, optional
+        If provided, the returned array will have this dtype.
+        This argument is passed through to `numpy.concatenate`.
     Returns
     -------
     append : ndarray
@@ -5678,18 +5681,20 @@ def append(arr, values, axis=None):
 
     """
     if axis is not None:
-        return concatenate((arr, values), axis=axis)
+        return concatenate((arr, values), axis=axis, dtype=dtype)
     conv = _array_converter(arr, values)
     arrays = conv.as_arrays(pyscalars="convert")
     if conv.has_pyscalars:
         # DEPRECATED 2026-09-15, NumPy 2.6
-        result = concatenate(arrays, axis=None)
+        result = concatenate(arrays, axis=None, dtype=dtype)
         try:
             future_dtype = conv.result_type()
         except np.exceptions.DTypePromotionError:
             change = "these inputs have no common dtype and will raise an error"
         else:
             if future_dtype == result.dtype:
+                return result
+            if dtype is not None:
                 return result
             change = (
                 f"these inputs will use dtype {future_dtype}, which may "
@@ -5704,7 +5709,7 @@ def append(arr, values, axis=None):
         return result
     inputs = tuple(obj if scalar else a for obj, scalar, a in
                    zip((arr, values), conv.scalar_input, arrays))
-    return concatenate(inputs, axis=None)
+    return concatenate(inputs, axis=None, dtype=dtype)
 
 
 def _digitize_dispatcher(x, bins, right=None):
