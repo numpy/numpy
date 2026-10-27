@@ -350,6 +350,11 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         goto fail;
     }
 
+    /* Empty results cannot wrap an index around a zero-length axis. */
+    if (max_item == 0 && clipmode == NPY_WRAP) {
+        n = 0;
+    }
+
     if (npy_fasttake(
             dest, src, indices_data, n, m, max_item, nelem, chunk,
             clipmode, itemsize, needs_refcounting, src_descr, dst_descr,
