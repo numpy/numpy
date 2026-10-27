@@ -278,7 +278,7 @@ def multiply(a, i):
     Returns
     -------
     out : ndarray
-        Output array of ``str_`` or ``bytes_``, depending on input types
+        Output array of ``str_`` or ``bytes_`` dtype, depending on input types
 
     Notes
     -----
@@ -418,7 +418,7 @@ class chararray(ndarray):
        the free functions in the `numpy.char` module for fast vectorized
        string operations.
 
-    Versus a NumPy array of dtype ``str_`` or ``bytes_``, this
+    Versus a NumPy array of dtype `~numpy.str_` or `~numpy.bytes_`, this
     class adds the following functionality:
 
     1) values automatically have whitespace removed from the end
@@ -663,7 +663,7 @@ class chararray(ndarray):
     def __add__(self, other):
         """
         Return (self + other), that is string concatenation,
-        element-wise for a pair of array_likes of ``str_`` or ``bytes_``.
+        element-wise for a pair of array_likes of `str` or `bytes`.
 
         See Also
         --------
@@ -674,7 +674,7 @@ class chararray(ndarray):
     def __radd__(self, other):
         """
         Return (other + self), that is string concatenation,
-        element-wise for a pair of array_likes of ``str_`` or ``bytes_``.
+        element-wise for a pair of array_likes of `str` or `bytes`.
 
         See Also
         --------
@@ -707,8 +707,8 @@ class chararray(ndarray):
     def __mod__(self, i):
         """
         Return (self % i), that is pre-Python 2.6 string formatting
-        (interpolation), element-wise for a pair of array_likes of ``str_``
-        or ``bytes_``.
+        (interpolation), element-wise for a pair of array_likes of `str`
+        or `bytes`.
 
         See Also
         --------
@@ -1226,10 +1226,10 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     .. note::
        This class is provided for numarray backward-compatibility.
        New code (not concerned with numarray compatibility) should use
-       arrays of type ``str_`` or ``bytes_`` and use the free functions
+       arrays of type `~numpy.str_` or `~numpy.bytes_` and use the free functions
        in :mod:`numpy.char` for fast vectorized string operations instead.
 
-    Versus a NumPy array of dtype ``str_`` or ``bytes_``, this
+    Versus a NumPy array of dtype `~numpy.str_` or `~numpy.bytes_`, this
     class adds the following functionality:
 
     1) values automatically have whitespace removed from the end
@@ -1371,7 +1371,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
        ``chararray`` is deprecated. Use an ``ndarray`` with a string or
        bytes dtype instead.
 
-    Versus a NumPy array of dtype ``str_`` or ``bytes_``, this
+    Versus a NumPy array of dtype `~numpy.str_` or `~numpy.bytes_`, this
     class adds the following functionality:
 
     1) values automatically have whitespace removed from the end
