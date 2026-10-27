@@ -339,7 +339,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         memory-mapped array is kept on disk. However, it can be accessed
         and sliced like any ndarray.  Memory mapping is especially useful
         for accessing small fragments of large files without reading the
-        entire file into memory.
+        entire file into memory.  Memory mapping is not supported for
+        ``.npz`` files.
     allow_pickle : bool, optional
         Allow loading pickled object arrays stored in npy files. Reasons for
         disallowing pickles include security, as loading pickled data can
@@ -376,7 +377,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     UnpicklingError
         If ``allow_pickle=True``, but the file cannot be loaded as a pickle.
     ValueError
-        The file contains an object array, but ``allow_pickle=False`` given.
+        The file contains an object array, but ``allow_pickle=False`` given,
+        or ``mmap_mode`` is given for a ``.npz`` file.
     EOFError
         When calling ``np.load`` multiple times on the same file handle,
         if all data has already been read
@@ -474,6 +476,9 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         fid.seek(-min(N, len(magic)), 1)  # back-up
         if magic.startswith((_ZIP_PREFIX, _ZIP_SUFFIX)):
             # zip-file (assume .npz)
+            if mmap_mode:
+                raise ValueError(
+                    "mmap_mode is not supported when loading .npz files")
             ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,
                           pickle_kwargs=pickle_kwargs,
                           max_header_size=max_header_size)

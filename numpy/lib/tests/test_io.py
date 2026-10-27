@@ -212,6 +212,14 @@ class TestSavezLoad(RoundtripTest):
                 arr_reloaded.fid.close()
                 os.remove(arr_reloaded.fid.name)
 
+    def test_mmap(self):
+        # gh-28795: .npz files cannot be memory-mapped, so mmap_mode
+        # raises instead of being silently ignored
+        with temppath(prefix="numpy_test_npz_mmap_", suffix=".npz") as tmp:
+            np.savez(tmp, x=np.arange(10))
+            with pytest.raises(ValueError, match="mmap_mode is not supported"):
+                np.load(tmp, mmap_mode='r')
+
     def test_load_non_npy(self):
         """Test loading non-.npy files and name mapping in .npz."""
         with temppath(prefix="numpy_test_npz_load_non_npy_", suffix=".npz") as tmp:
