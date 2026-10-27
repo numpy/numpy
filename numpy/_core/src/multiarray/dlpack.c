@@ -127,7 +127,7 @@ array_dlpack_deleter_unversioned(DLManagedTensor *self)
 
     PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
     PyMem_Free(self);
-    Py_XDECREF(array);
+    Py_XDECREF((PyObject *)array);
 
     PyGILState_Release(state);
 }
@@ -589,7 +589,7 @@ array_dlpack(PyArrayObject *self,
         }
     }
     else {
-        Py_INCREF(self);
+        Py_INCREF((PyObject *)self);
     }
 
     if (major_version < 1 && !(PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE)) {

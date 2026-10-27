@@ -710,9 +710,9 @@ cblas_matrixproduct(PyArray_Descr *typec, PyArrayObject *ap1, PyArrayObject *ap2
     return PyArray_Return(result);
 
 fail:
-    Py_XDECREF(ap1);
-    Py_XDECREF(ap2);
-    Py_XDECREF(out_buf);
-    Py_XDECREF(result);
+    Py_XDECREF((PyObject *)ap1);
+    Py_XDECREF((PyObject *)ap2);
+    Py_XDECREF((PyObject *)out_buf);
+    Py_XDECREF((PyObject *)result);
     return NULL;
 }

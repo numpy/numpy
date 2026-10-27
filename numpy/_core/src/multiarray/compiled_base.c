@@ -215,9 +215,9 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     return (PyObject *)ans;
 
 fail:
-    Py_XDECREF(lst);
-    Py_XDECREF(wts);
-    Py_XDECREF(ans);
+    Py_XDECREF((PyObject *)lst);
+    Py_XDECREF((PyObject *)wts);
+    Py_XDECREF((PyObject *)ans);
     return NULL;
 }
 
@@ -270,7 +270,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     mask_data = PyArray_DATA(mask);
     dtype = PyArray_DESCR(array);
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
 
     values = (PyArrayObject *)PyArray_FromAny(values0, dtype,
                                     0, 0, NPY_ARRAY_CARRAY, NULL);
@@ -295,10 +295,10 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                             "Cannot insert from an empty array!");
             goto fail;
         } else {
-            Py_XDECREF(values);
-            Py_XDECREF(mask);
+            Py_XDECREF((PyObject *)values);
+            Py_XDECREF((PyObject *)mask);
             PyArray_ResolveWritebackIfCopy(array);
-            Py_XDECREF(array);
+            Py_XDECREF((PyObject *)array);
             Py_RETURN_NONE;
         }
     }
@@ -368,17 +368,17 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
     }
 
-    Py_XDECREF(values);
-    Py_XDECREF(mask);
+    Py_XDECREF((PyObject *)values);
+    Py_XDECREF((PyObject *)mask);
     PyArray_ResolveWritebackIfCopy(array);
     Py_DECREF(array);
     Py_RETURN_NONE;
 
  fail:
-    Py_XDECREF(mask);
+    Py_XDECREF((PyObject *)mask);
     PyArray_DiscardWritebackIfCopy(array);
-    Py_XDECREF(array);
-    Py_XDECREF(values);
+    Py_XDECREF((PyObject *)array);
+    Py_XDECREF((PyObject *)values);
     return NULL;
 }
 
@@ -663,10 +663,10 @@ finish:
     return PyArray_Return(af);
 
 fail:
-    Py_XDECREF(afp);
-    Py_XDECREF(axp);
-    Py_XDECREF(ax);
-    Py_XDECREF(af);
+    Py_XDECREF((PyObject *)afp);
+    Py_XDECREF((PyObject *)axp);
+    Py_XDECREF((PyObject *)ax);
+    Py_XDECREF((PyObject *)af);
     return NULL;
 }
 
@@ -868,10 +868,10 @@ finish:
     return PyArray_Return(af);
 
 fail:
-    Py_XDECREF(afp);
-    Py_XDECREF(axp);
-    Py_XDECREF(ax);
-    Py_XDECREF(af);
+    Py_XDECREF((PyObject *)afp);
+    Py_XDECREF((PyObject *)axp);
+    Py_XDECREF((PyObject *)ax);
+    Py_XDECREF((PyObject *)af);
     return NULL;
 }
 
@@ -905,7 +905,7 @@ astype_anyint(PyObject *obj) {
     }
     else {
         ret = (PyArrayObject *)obj;
-        Py_INCREF(ret);
+        Py_INCREF((PyObject *)ret);
     }
 
     if (!(PyArray_ISINTEGER(ret) || PyArray_ISBOOL(ret))) {
@@ -958,7 +958,7 @@ static int int_sequence_to_arrays(PyObject *seq,
 
 fail:
     while (--i >= 0) {
-        Py_XDECREF(op[i]);
+        Py_XDECREF((PyObject *)op[i]);
         op[i] = NULL;
     }
     return -1;
@@ -1172,20 +1172,20 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
     }
 
     ret = NpyIter_GetOperandArray(iter)[dimensions.len];
-    Py_INCREF(ret);
+    Py_INCREF((PyObject *)ret);
 
     Py_DECREF(dtype[0]);
     for (i = 0; i < dimensions.len; ++i) {
-        Py_XDECREF(op[i]);
+        Py_XDECREF((PyObject *)op[i]);
     }
     npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
     return PyArray_Return(ret);
 
 fail:
-    Py_XDECREF(dtype[0]);
+    Py_XDECREF((PyObject *)dtype[0]);
     for (i = 0; i < dimensions.len; ++i) {
-        Py_XDECREF(op[i]);
+        Py_XDECREF((PyObject *)op[i]);
     }
     npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
@@ -1396,7 +1396,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     }
 
     Py_DECREF(ret_arr);
-    Py_XDECREF(indices);
+    Py_XDECREF((PyObject *)indices);
     npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
 
@@ -1404,9 +1404,9 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 
 fail:
     Py_XDECREF(ret_tuple);
-    Py_XDECREF(ret_arr);
-    Py_XDECREF(dtype);
-    Py_XDECREF(indices);
+    Py_XDECREF((PyObject *)ret_arr);
+    Py_XDECREF((PyObject *)dtype);
+    Py_XDECREF((PyObject *)indices);
     npy_free_cache_dim_obj(dimensions);
     NpyIter_Deallocate(iter);
     return NULL;
@@ -1724,7 +1724,7 @@ pack_bits(PyObject *input, int axis, char order)
         char *optr, *iptr;
 
         out = (PyArrayObject *)PyArray_NewFromDescr(
-                Py_TYPE(new), PyArray_DescrFromType(NPY_UBYTE),
+                Py_TYPE((PyObject *)new), PyArray_DescrFromType(NPY_UBYTE),
                 0, NULL, NULL, NULL,
                 0, NULL);
         if (out == NULL) {
@@ -1757,7 +1757,7 @@ pack_bits(PyObject *input, int axis, char order)
 
     /* Create output array */
     out = (PyArrayObject *)PyArray_NewFromDescr(
-            Py_TYPE(new), PyArray_DescrFromType(NPY_UBYTE),
+            Py_TYPE((PyObject *)new), PyArray_DescrFromType(NPY_UBYTE),
             PyArray_NDIM(new), outdims, NULL, NULL,
             PyArray_ISFORTRAN(new), NULL);
     if (out == NULL) {
@@ -1767,8 +1767,8 @@ pack_bits(PyObject *input, int axis, char order)
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)new, &axis);
     ot = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)out, &axis);
     if (it == NULL || ot == NULL) {
-        Py_XDECREF(it);
-        Py_XDECREF(ot);
+        Py_XDECREF((PyObject *)it);
+        Py_XDECREF((PyObject *)ot);
         goto fail;
     }
     const PACK_ORDER ordere = order == 'b' ? PACK_ORDER_BIG : PACK_ORDER_LITTLE;
@@ -1791,8 +1791,8 @@ finish:
     return (PyObject *)out;
 
 fail:
-    Py_XDECREF(new);
-    Py_XDECREF(out);
+    Py_XDECREF((PyObject *)new);
+    Py_XDECREF((PyObject *)out);
     return NULL;
 }
 
@@ -1868,7 +1868,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 
     /* Create output array */
     out = (PyArrayObject *)PyArray_NewFromDescr(
-            Py_TYPE(new), PyArray_DescrFromType(NPY_UBYTE),
+            Py_TYPE((PyObject *)new), PyArray_DescrFromType(NPY_UBYTE),
             PyArray_NDIM(new), outdims, NULL, NULL,
             PyArray_ISFORTRAN(new), NULL);
     if (out == NULL) {
@@ -1879,8 +1879,8 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)new, &axis);
     ot = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)out, &axis);
     if (it == NULL || ot == NULL) {
-        Py_XDECREF(it);
-        Py_XDECREF(ot);
+        Py_XDECREF((PyObject *)it);
+        Py_XDECREF((PyObject *)ot);
         goto fail;
     }
 
@@ -1990,8 +1990,8 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
     return (PyObject *)out;
 
 fail:
-    Py_XDECREF(new);
-    Py_XDECREF(out);
+    Py_XDECREF((PyObject *)new);
+    Py_XDECREF((PyObject *)out);
     return NULL;
 }
 

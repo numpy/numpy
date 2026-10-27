@@ -113,7 +113,7 @@ minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
     /* A fixed output DType fixes the operation DType. */
     PyArray_DTypeMeta *common = signature[2] != NULL ? signature[2] : signature[3];
     if (common != NULL) {
-        Py_INCREF(common);
+        Py_INCREF((PyObject *)common);
     }
     else {
         common = PyArray_CommonDType(op_dtypes[0], op_dtypes[1]);
@@ -130,14 +130,14 @@ minimummaximum_promoter(PyObject *NPY_UNUSED(ufunc),
                 return -1;
             }
             common = NPY_DTYPE(descr);
-            Py_INCREF(common);
+            Py_INCREF((PyObject *)common);
             Py_DECREF(descr);
         }
     }
 
     for (int i = 0; i < 4; i++) {
         PyArray_DTypeMeta *dt = signature[i] != NULL ? signature[i] : common;
-        Py_INCREF(dt);
+        Py_INCREF((PyObject *)dt);
         new_op_dtypes[i] = dt;
     }
     Py_DECREF(common);
@@ -184,7 +184,7 @@ minimummaximum_resolve_descriptors(
     }
 
     for (int i = 0; i < 4; i++) {
-        Py_INCREF(common);
+        Py_INCREF((PyObject *)common);
         loop_descrs[i] = common;
     }
     Py_DECREF(common);

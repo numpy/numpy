@@ -176,7 +176,7 @@ _any_to_object_auxdata_clone(NpyAuxData *auxdata)
     res->base = data->base;
     res->getitem = data->getitem;
     res->arr_fields = data->arr_fields;
-    Py_INCREF(res->arr_fields.descr);
+    Py_INCREF((PyObject *)res->arr_fields.descr);
 
     if (data->decref_src.func != NULL) {
         if (NPY_traverse_info_copy(&res->decref_src, &data->decref_src) < 0) {
@@ -250,9 +250,9 @@ any_to_object_get_loop(
     data->base.free = &_any_to_object_auxdata_free;
     data->base.clone = &_any_to_object_auxdata_clone;
     data->arr_fields.base = NULL;
-    Py_SET_TYPE(&data->arr_fields, NULL);
+    Py_SET_TYPE((PyObject *)&data->arr_fields, NULL);
     data->arr_fields.descr = context->descriptors[0];
-    Py_INCREF(data->arr_fields.descr);
+    Py_INCREF((PyObject *)data->arr_fields.descr);
     data->arr_fields.flags = aligned ? NPY_ARRAY_ALIGNED : 0;
     data->arr_fields.nd = 0;
 
@@ -299,7 +299,7 @@ _object_to_any_auxdata_clone(NpyAuxData *data)
         return NULL;
     }
     memcpy(res, data, sizeof(*res));
-    Py_INCREF(res->descr);
+    Py_INCREF((PyObject *)res->descr);
     return (NpyAuxData *)res;
 }
 
@@ -357,7 +357,7 @@ object_to_any_get_loop(
     data->base.free = &_object_to_any_auxdata_free;
     data->base.clone = &_object_to_any_auxdata_clone;
 
-    Py_INCREF(context->descriptors[1]);
+    Py_INCREF((PyObject *)context->descriptors[1]);
     data->descr = context->descriptors[1];
     data->move_references = move_references;
     *out_transferdata = (NpyAuxData *)data;
@@ -515,7 +515,7 @@ static NpyAuxData *_wrap_copy_swap_data_clone(NpyAuxData *data)
     }
 
     memcpy(newdata, data, sizeof(_wrap_copy_swap_data));
-    Py_INCREF(newdata->arr);
+    Py_INCREF((PyObject *)newdata->arr);
 
     return (NpyAuxData *)newdata;
 }
@@ -566,7 +566,7 @@ wrap_copy_swap_function(
      * TODO: This is a hack so the copyswap functions have an array.
      *       The copyswap functions shouldn't need that.
      */
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     npy_intp shape = 1;
     data->arr = (PyArrayObject *)PyArray_NewFromDescr_int(
             &PyArray_Type, dtype,
@@ -613,8 +613,8 @@ static NpyAuxData *_strided_cast_data_clone(NpyAuxData *data)
     }
 
     memcpy(newdata, data, sizeof(_strided_cast_data));
-    Py_INCREF(newdata->aip);
-    Py_INCREF(newdata->aop);
+    Py_INCREF((PyObject *)newdata->aip);
+    Py_INCREF((PyObject *)newdata->aop);
 
     return (NpyAuxData *)newdata;
 }
@@ -1298,7 +1298,7 @@ get_legacy_dtype_cast_function(
      */
     if (PyArray_ISNBO(src_dtype->byteorder)) {
         tmp_dtype = src_dtype;
-        Py_INCREF(tmp_dtype);
+        Py_INCREF((PyObject *)tmp_dtype);
     }
     else {
         tmp_dtype = PyArray_DescrNewByteorder(src_dtype, NPY_NATIVE);
@@ -1324,7 +1324,7 @@ get_legacy_dtype_cast_function(
      */
     if (PyArray_ISNBO(dst_dtype->byteorder)) {
         tmp_dtype = dst_dtype;
-        Py_INCREF(tmp_dtype);
+        Py_INCREF((PyObject *)tmp_dtype);
     }
     else {
         tmp_dtype = PyArray_DescrNewByteorder(dst_dtype, NPY_NATIVE);
@@ -2854,8 +2854,8 @@ init_cast_info(
         Py_DECREF(meth);
         return -1;
     }
-    assert(PyArray_DescrCheck(cast_info->descriptors[0]));
-    assert(PyArray_DescrCheck(cast_info->descriptors[1]));
+    assert(PyArray_DescrCheck((PyObject *)cast_info->descriptors[0]));
+    assert(PyArray_DescrCheck((PyObject *)cast_info->descriptors[1]));
 
     if (!main_step && NPY_UNLIKELY(src_dtype != cast_info->descriptors[0] ||
                                    dst_dtype != cast_info->descriptors[1])) {
@@ -3055,9 +3055,9 @@ define_cast_for_descrs(
     }
     /* The full cast passed in is only the "main" step, copy cast_info there */
     NPY_cast_info_move(&castdata.main, cast_info);
-    Py_INCREF(src_dtype);
+    Py_INCREF((PyObject *)src_dtype);
     cast_info->descriptors[0] = src_dtype;
-    Py_INCREF(dst_dtype);
+    Py_INCREF((PyObject *)dst_dtype);
     cast_info->descriptors[1] = dst_dtype;
     cast_info->context.method = NULL;
 
@@ -3141,13 +3141,13 @@ wrap_aligned_transferfunction(
     *out_transferdata = NULL;
     castdata.main.context.method = NULL;
     /* These are always legacy casts that only support native-byte-order: */
-    Py_INCREF(src_wrapped_dtype);
+    Py_INCREF((PyObject *)src_wrapped_dtype);
     castdata.main.descriptors[0] = src_wrapped_dtype;
     if (castdata.main.descriptors[0] == NULL) {
         castdata.main.descriptors[1] = NULL;
         goto fail;
     }
-    Py_INCREF(dst_wrapped_dtype);
+    Py_INCREF((PyObject *)dst_wrapped_dtype);
     castdata.main.descriptors[1] = dst_wrapped_dtype;
     if (castdata.main.descriptors[1] == NULL) {
         goto fail;
@@ -3361,9 +3361,9 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
     }
     cast_info->auxdata = (NpyAuxData *)data;
     /* The context is almost unused, but clear it for cleanup. */
-    Py_INCREF(src_dtype);
+    Py_INCREF((PyObject *)src_dtype);
     cast_info->descriptors[0] = src_dtype;
-    Py_INCREF(dst_dtype);
+    Py_INCREF((PyObject *)dst_dtype);
     cast_info->descriptors[1] = dst_dtype;
     cast_info->context.caller = NULL;
     cast_info->context.method = NULL;

@@ -42,7 +42,7 @@ static inline PyArrayObject *
 empty_array_like(PyArrayObject *arr, npy_intp length)
 {
     PyArray_Descr *descr = PyArray_DESCR(arr);
-    Py_INCREF(descr);
+    Py_INCREF((PyObject *)descr);
 
     // Create the output array.
     PyArrayObject *res_obj =
@@ -512,7 +512,7 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
     if (npy_parse_arguments("_unique_hash", args, len_args, kwnames,
             {"arr", (void *)&PyArray_Converter, &arr},
             {"|equal_nan", (void *)&PyArray_BoolConverter, &equal_nan}) < 0) {
-        Py_XDECREF(arr);
+        Py_XDECREF((PyObject *)arr);
         return NULL;
     }
 

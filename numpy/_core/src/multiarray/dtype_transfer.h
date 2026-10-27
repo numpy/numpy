@@ -67,8 +67,8 @@ NPY_cast_info_xfree(NPY_cast_info *cast_info)
     assert(cast_info->context.descriptors == cast_info->descriptors);
     NPY_AUXDATA_FREE(cast_info->auxdata);
     Py_DECREF(cast_info->descriptors[0]);
-    Py_XDECREF(cast_info->descriptors[1]);
-    Py_XDECREF(cast_info->context.method);
+    Py_XDECREF((PyObject *)cast_info->descriptors[1]);
+    Py_XDECREF((PyObject *)cast_info->context.method);
     cast_info->func = NULL;
 }
 
@@ -101,14 +101,14 @@ NPY_cast_info_copy(NPY_cast_info *cast_info, NPY_cast_info *original)
     assert(original->func != NULL);
     cast_info->func = original->func;
     cast_info->descriptors[0] = original->descriptors[0];
-    Py_XINCREF(cast_info->descriptors[0]);
+    Py_XINCREF((PyObject *)cast_info->descriptors[0]);
     cast_info->descriptors[1] = original->descriptors[1];
-    Py_XINCREF(cast_info->descriptors[1]);
+    Py_XINCREF((PyObject *)cast_info->descriptors[1]);
     cast_info->context.caller = original->context.caller;
     Py_XINCREF(cast_info->context.caller);
     cast_info->context.flags = original->context.flags;
     cast_info->context.method = original->context.method;
-    Py_XINCREF(cast_info->context.method);
+    Py_XINCREF((PyObject *)cast_info->context.method);
     if (original->auxdata == NULL) {
         cast_info->auxdata = NULL;
         return 0;

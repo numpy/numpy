@@ -342,8 +342,8 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             /* Replace all the data types */
             for (iop = 0; iop < nop; ++iop) {
                 if (op_dtype[iop] != dtype) {
-                    Py_XDECREF(op_dtype[iop]);
-                    Py_INCREF(dtype);
+                    Py_XDECREF((PyObject *)op_dtype[iop]);
+                    Py_INCREF((PyObject *)dtype);
                     op_dtype[iop] = dtype;
                 }
             }
@@ -353,7 +353,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             /* Replace the NULL data types */
             for (iop = 0; iop < nop; ++iop) {
                 if (op_dtype[iop] == NULL) {
-                    Py_INCREF(dtype);
+                    Py_INCREF((PyObject *)dtype);
                     op_dtype[iop] = dtype;
                 }
             }
@@ -551,8 +551,8 @@ NpyIter_Copy(NpyIter *iter)
     objects = NIT_OPERANDS(newiter);
     dtypes = NIT_DTYPES(newiter);
     for (iop = 0; iop < nop; ++iop) {
-        Py_INCREF(objects[iop]);
-        Py_INCREF(dtypes[iop]);
+        Py_INCREF((PyObject *)objects[iop]);
+        Py_INCREF((PyObject *)dtypes[iop]);
     }
 
     /* Allocate buffers and make copies of the transfer data if necessary */
@@ -716,8 +716,8 @@ NpyIter_Deallocate(NpyIter *iter)
                 PyArray_DiscardWritebackIfCopy(*object);
             }
         }
-        Py_XDECREF(*dtype);
-        Py_XDECREF(*object);
+        Py_XDECREF((PyObject *)*dtype);
+        Py_XDECREF((PyObject *)*object);
     }
 
     /* Deallocate the iterator memory */
@@ -1039,7 +1039,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             }
 
             /* If a requested dtype was provided, use it, otherwise NULL */
-            Py_XINCREF(op_request_dtype);
+            Py_XINCREF((PyObject *)op_request_dtype);
             *op_dtype = op_request_dtype;
         }
         else {
@@ -1070,7 +1070,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
     }
 
 
-    if (PyArray_Check(*op)) {
+    if (PyArray_Check((PyObject *)*op)) {
 
         if ((*op_itflags) & NPY_OP_ITFLAG_WRITE
             && PyArray_FailUnlessWriteable(*op, "operand array with iterator "
@@ -1099,7 +1099,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         }
         else {
             *op_dtype = PyArray_DESCR(*op);
-            Py_INCREF(*op_dtype);
+            Py_INCREF((PyObject *)*op_dtype);
         }
 
         /*
@@ -1183,7 +1183,7 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
      */
     for (iop = 0; iop < nop; ++iop) {
         op[iop] = op_in[iop];
-        Py_XINCREF(op[iop]);
+        Py_XINCREF((PyObject *)op[iop]);
         op_dtype[iop] = NULL;
 
         /* Check the readonly/writeonly flags, and fill in op_itflags */
@@ -1243,8 +1243,8 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
     iop = nop - 1;
   fail_iop:
     for (i = 0; i < iop+1; ++i) {
-        Py_XDECREF(op[i]);
-        Py_XDECREF(op_dtype[i]);
+        Py_XDECREF((PyObject *)op[i]);
+        Py_XDECREF((PyObject *)op_dtype[i]);
     }
     return 0;
 }
@@ -2848,7 +2848,7 @@ npyiter_get_common_dtype(int nop, PyArrayObject **op,
         }
         if (i == ndtypes) {
             if (ndtypes == 1 || PyArray_ISNBO(ret->byteorder)) {
-                Py_INCREF(ret);
+                Py_INCREF((PyObject *)ret);
             }
             else {
                 ret = PyArray_DescrNewByteorder(ret, NPY_NATIVE);
@@ -2908,7 +2908,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
     /* If it's a scalar, don't need to check the axes */
     if (op_ndim == 0) {
-        Py_INCREF(op_dtype);
+        Py_INCREF((PyObject *)op_dtype);
         ret = (PyArrayObject *)PyArray_NewFromDescr(subtype, op_dtype, 0,
                                NULL, NULL, NULL, 0, NULL);
 
@@ -3046,7 +3046,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     }
 
     /* Allocate the temporary array */
-    Py_INCREF(op_dtype);
+    Py_INCREF((PyObject *)op_dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(subtype, op_dtype, op_ndim,
                                shape, strides, NULL, 0, NULL);
     if (ret == NULL) {
@@ -3083,7 +3083,7 @@ npyiter_sync_finalized_op_dtype(PyArray_Descr **op_dtype, PyArrayObject *op)
 {
     if (*op_dtype != PyArray_DESCR(op) &&
             NPY_DT_has_finalize(NPY_DTYPE(*op_dtype))) {
-        Py_INCREF(PyArray_DESCR(op));
+        Py_INCREF((PyObject *)PyArray_DESCR(op));
         Py_SETREF(*op_dtype, PyArray_DESCR(op));
     }
 }
@@ -3253,7 +3253,7 @@ npyiter_allocate_arrays(NpyIter *iter,
                                                    NPY_OP_ITFLAG_READ) &&
                           PyArray_NDIM(op[iop]) == 0) {
             PyArrayObject *temp;
-            Py_INCREF(op_dtype[iop]);
+            Py_INCREF((PyObject *)op_dtype[iop]);
             temp = (PyArrayObject *)PyArray_NewFromDescr(
                                         &PyArray_Type, op_dtype[iop],
                                         0, NULL, NULL, NULL, 0, NULL);
@@ -3315,7 +3315,7 @@ npyiter_allocate_arrays(NpyIter *iter,
             /* If the data will be written to, set WRITEBACKIFCOPY
                and require a context manager */
             if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
-                Py_INCREF(op[iop]);
+                Py_INCREF((PyObject *)op[iop]);
                 if (PyArray_SetWritebackIfCopyBase(temp, op[iop]) < 0) {
                     Py_DECREF(temp);
                     return 0;
@@ -3423,7 +3423,7 @@ npyiter_get_priority_subtype(int nop, PyArrayObject **op,
             double priority = PyArray_GetPriority((PyObject *)op[iop], 0.0);
             if (priority > *subtype_priority) {
                 *subtype_priority = priority;
-                *subtype = Py_TYPE(op[iop]);
+                *subtype = Py_TYPE((PyObject *)op[iop]);
             }
         }
     }

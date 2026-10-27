@@ -98,11 +98,11 @@ simple_legacy_resolve_descriptors(
             Py_CLEAR(output_descrs[2]);
             return -1;
         }
-        Py_INCREF(output_descrs[2]);
+        Py_INCREF((PyObject *)output_descrs[2]);
         output_descrs[0] = output_descrs[2];
         if (dtypes[1] == dtypes[2]) {
             /* Same for the second one (accumulation is stricter) */
-            Py_INCREF(output_descrs[2]);
+            Py_INCREF((PyObject *)output_descrs[2]);
             output_descrs[1] = output_descrs[2];
         }
         else {
@@ -121,7 +121,7 @@ simple_legacy_resolve_descriptors(
         }
         else if (dtypes[i] == dtypes[0] && i > 0) {
             /* Preserve metadata from the first operand if same dtype */
-            Py_INCREF(output_descrs[0]);
+            Py_INCREF((PyObject *)output_descrs[0]);
             output_descrs[i] = output_descrs[0];
         }
         else {
@@ -445,7 +445,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         }
     }
 
-    Py_INCREF(res);
+    Py_INCREF((PyObject *)res);
     Py_DECREF(bound_res);
 
     return res;

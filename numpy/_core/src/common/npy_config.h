@@ -217,4 +217,41 @@
 #endif  /* defined(__GLIBC) */
 #endif  /* defined(HAVE_FEATURES_H) */
 
+/*
+ * CI only (GCC/clang): undefine CPython's casting macros, so that a typed
+ * pointer needs a `(PyObject *)` cast like it does under the Limited API.
+ * TODO: remove once _multiarray_umath uses the Limited API (gh-31913).
+ */
+#if defined(NPY_STRICT_PYOBJECT_CASTS) && !defined(Py_LIMITED_API)
+/* Its inline functions need the casting macros, so include it first. */
+#include "pythoncapi-compat/pythoncapi_compat.h"
+#ifndef __cplusplus
+#pragma GCC diagnostic error "-Wincompatible-pointer-types"
+#endif
+#undef Py_INCREF
+#undef Py_XINCREF
+#undef Py_XDECREF
+#undef Py_NewRef
+#undef Py_XNewRef
+#undef Py_TYPE
+#undef Py_IS_TYPE
+#undef Py_SET_TYPE
+#undef Py_REFCNT
+#undef Py_SET_REFCNT
+#undef Py_SIZE
+#undef Py_SET_SIZE
+#undef PyObject_TypeCheck
+#undef PyType_Check
+#undef PyType_CheckExact
+/* CPython's Py_XSETREF passes its typed temporary to Py_XDECREF. */
+#undef Py_XSETREF
+#define Py_XSETREF(dst, src)                                            \
+    do {                                                                \
+        __typeof__(dst) *_npy_dst_ptr = &(dst);                         \
+        __typeof__(dst) _npy_old_dst = *_npy_dst_ptr;                   \
+        *_npy_dst_ptr = (src);                                          \
+        Py_XDECREF((PyObject *)_npy_old_dst);                           \
+    } while (0)
+#endif
+
 #endif  /* NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_ */

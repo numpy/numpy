@@ -389,7 +389,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
             flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
 
-        Py_INCREF(PyArray_DESCR(self));
+        Py_INCREF((PyObject *)PyArray_DESCR(self));
         /* Array view */
         PyArrayObject *dest_array = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type,
@@ -684,12 +684,12 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         subtype = pytype;
     }
     else {
-        subtype = Py_TYPE(self);
+        subtype = Py_TYPE((PyObject *)self);
     }
 
     if (type == NULL) {
         /* No dtype change. */
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
         return PyArray_NewFromDescr_int(
                 subtype, dtype, nd, dims, strides, PyArray_DATA(self),
                 flags, (PyObject *)self, (PyObject *)self,
@@ -746,7 +746,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     /*
      * Other paths: first create a view with the old dtype.
      */
-    Py_INCREF(dtype);
+    Py_INCREF((PyObject *)dtype);
     ret = PyArray_NewFromDescr_int(
             subtype, dtype, nd, dims, strides, PyArray_DATA(self),
             flags, (PyObject *)self, (PyObject *)self,

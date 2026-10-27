@@ -290,7 +290,7 @@ discover_dtype_from_pyobject(
          */
         if ((Py_TYPE(obj) == fixed_DType->scalar_type) ||
                 NPY_DT_CALL_is_known_scalar_type(fixed_DType, Py_TYPE(obj))) {
-            Py_INCREF(fixed_DType);
+            Py_INCREF((PyObject *)fixed_DType);
             return fixed_DType;
         }
     }
@@ -327,7 +327,7 @@ discover_dtype_from_pyobject(
 
     if (legacy_descr != NULL) {
         DType = NPY_DTYPE(legacy_descr);
-        Py_INCREF(DType);
+        Py_INCREF((PyObject *)DType);
         Py_DECREF(legacy_descr);
         /* TODO: Enable warning about subclass handling */
         if ((0) && !((*flags) & GAVE_SUBCLASS_WARNING)) {
@@ -520,7 +520,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
     }
     if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
         /* We can set the element directly (or at least will try to) */
-        Py_XDECREF(DType);
+        Py_XDECREF((PyObject *)DType);
         return NPY_DT_CALL_setitem(descr, value, item);
     }
     PyArray_Descr *tmp_descr;
@@ -705,7 +705,7 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
     assert(!(*flags & DESCRIPTOR_WAS_SET));
 
     if (*out_descr == NULL) {
-        Py_INCREF(descr);
+        Py_INCREF((PyObject *)descr);
         *out_descr = descr;
         return 0;
     }
@@ -797,7 +797,7 @@ find_descriptor_from_array(
 
     if (DType == NULL) {
         *out_descr = PyArray_DESCR(arr);
-        Py_INCREF(*out_descr);
+        Py_INCREF((PyObject *)*out_descr);
         return 0;
     }
 
@@ -842,11 +842,11 @@ find_descriptor_from_array(
                     NULL, DType, &flags, item_DType) < 0) {
                 Py_DECREF(iter);
                 Py_DECREF(elem);
-                Py_XDECREF(*out_descr);
-                Py_XDECREF(item_DType);
+                Py_XDECREF((PyObject *)*out_descr);
+                Py_XDECREF((PyObject *)item_DType);
                 return -1;
             }
-            Py_XDECREF(item_DType);
+            Py_XDECREF((PyObject *)item_DType);
             Py_DECREF(elem);
             PyArray_ITER_NEXT(iter);
         }
@@ -931,7 +931,7 @@ PyArray_AdaptDescriptorToArray(
 
     if (dtype != NULL && descr != NULL) {
         /* descr was given and no special logic, return (call not necessary) */
-        Py_INCREF(descr);
+        Py_INCREF((PyObject *)descr);
         return descr;
     }
     if (dtype == NULL) {
@@ -943,7 +943,7 @@ PyArray_AdaptDescriptorToArray(
     }
     else {
         assert(descr == NULL);  /* gueranteed above */
-        Py_INCREF(dtype);
+        Py_INCREF((PyObject *)dtype);
     }
 
     res = find_descriptor_from_array(arr, dtype, &new_descr);
@@ -955,7 +955,7 @@ PyArray_AdaptDescriptorToArray(
         /* This is an object array but contained no elements, use default */
         new_descr = NPY_DT_CALL_default_descr(dtype);
     }
-    Py_XDECREF(dtype);
+    Py_XDECREF((PyObject *)dtype);
     return new_descr;
 }
 
@@ -1036,7 +1036,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
      */
     if (PyArray_Check(obj)) {
         arr = (PyArrayObject *)obj;
-        Py_INCREF(arr);
+        Py_INCREF((PyObject *)arr);
     }
     else {
         PyArray_Descr *requested_descr = NULL;
@@ -1294,7 +1294,7 @@ PyArray_DiscoverDTypeAndShape(
             assert(fixed_DType == NPY_DTYPE(requested_descr));
         }
         /* The output descriptor must be the input. */
-        Py_INCREF(requested_descr);
+        Py_INCREF((PyObject *)requested_descr);
         *out_descr = requested_descr;
         flags |= DESCRIPTOR_WAS_SET;
     }
@@ -1444,8 +1444,8 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
             obj, NPY_MAXDIMS, shape,
             &coercion_cache,
             dt_info.dtype, dt_info.descr, (PyArray_Descr **)&out_dtype, 0, NULL);
-    Py_XDECREF(dt_info.dtype);
-    Py_XDECREF(dt_info.descr);
+    Py_XDECREF((PyObject *)dt_info.dtype);
+    Py_XDECREF((PyObject *)dt_info.descr);
     if (ndim < 0) {
         return NULL;
     }
