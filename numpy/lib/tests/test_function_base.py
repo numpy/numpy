@@ -2996,6 +2996,10 @@ class TestCov:
         actual = np.cov(x.T, ddof=0, rowvar=False)
         assert_allclose(actual, expected, strict=True)
 
+    def test_cov_large_offset(self):
+        y = 1e12 + np.random.default_rng(0).random((2, 300_000))
+        assert_allclose(np.cov(y), np.cov(y - 1e12), rtol=1e-10)
+
 
 class Test_I0:
 

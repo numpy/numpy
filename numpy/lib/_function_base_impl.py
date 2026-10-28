@@ -2848,6 +2848,41 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         else:
             dtype = np.result_type(m, y, np.float64)
 
+    if ddof is None:
+        ddof = 1 if bias == 0 else 0
+
+    if y is None and fweights is None and aweights is None:
+        dt = np.dtype(dtype)
+        T = np.array(m, copy=None, ndmin=2)
+        if not rowvar and m.ndim != 1:
+            T = T.T
+        n = T.shape[1]
+        if (dt.kind in "fc" and np.can_cast(T.dtype, dt, "same_kind")
+                and T.shape[0] <= 128 and T.size >= 1 << 18):
+            step = (1 << 19) // (T.shape[0] * dt.itemsize)
+            with np.errstate(all="ignore"):
+                s = T[:, ::max(1, n // 4096)].mean(axis=1, dtype=dt)
+                for _ in range(2):
+                    c = np.zeros((T.shape[0],) * 2, dt)
+                    d = np.zeros_like(s)
+                    for i in range(0, n, step):
+                        B = T[:, i:i + step].astype(dt)
+                        B -= s[:, None]
+                        c += B @ B.T.conj()
+                        d += B.sum(axis=1)
+                    if np.all(abs(d) ** 2 <= n * c.diagonal().real / 2):
+                        break
+                    s = s + d / n
+                c -= np.outer(d, d.conj()) / n
+            if np.isfinite(c).all():
+                fact = n - ddof
+                if fact <= 0:
+                    warnings.warn("Degrees of freedom <= 0 for slice",
+                                  RuntimeWarning, stacklevel=2)
+                    fact = 0.0
+                c *= np.true_divide(1, fact)
+                return c.squeeze()
+
     X = array(m, ndmin=2, dtype=dtype)
     if not rowvar and m.ndim != 1:
         X = X.T
@@ -2858,12 +2893,6 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         if not rowvar and y.shape[0] != 1:
             y = y.T
         X = np.concatenate((X, y), axis=0)
-
-    if ddof is None:
-        if bias == 0:
-            ddof = 1
-        else:
-            ddof = 0
 
     # Get the product of frequencies and weights
     w = None
