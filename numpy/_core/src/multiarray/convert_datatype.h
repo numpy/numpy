@@ -98,18 +98,6 @@ PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private_
 NPY_NO_EXPORT NPY_CASTING
 PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2);
 
-/*
- * Marks casts that will require casting="unsafe" after the deprecation.
- * This flag is internal to NumPy and is not part of the public C API.
- *
- * Deprecated NumPy 2.6, 2026-10-13: "safe" and "same_kind" text/bytes casts.
- * Carry pending casting changes through PyArray_MinCastSafety; add flags here
- * for future deprecations. NPY_COERCION_POLICY is read at import: "warn" keeps
- * the existing rules with warnings, while "strict" treats these casts as
- * unsafe. Public casting queries remain quiet.
- */
-#define NPY_CAST_WILL_BE_UNSAFE 128
-
 /* Return 1 if valid, 0 if invalid, or -1 if a warning was raised as an error. */
 NPY_NO_EXPORT int
 npy_cast_safety_to_bool(NPY_CASTING safety, NPY_CASTING casting, int warn);

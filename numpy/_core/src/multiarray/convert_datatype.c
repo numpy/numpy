@@ -351,9 +351,9 @@ PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2)
         return -1;
     }
     int flags = (casting1 & casting2 & NPY_SAME_VALUE_CASTING_FLAG) |
-            ((casting1 | casting2) & NPY_CAST_WILL_BE_UNSAFE);
-    casting1 &= ~(NPY_SAME_VALUE_CASTING_FLAG | NPY_CAST_WILL_BE_UNSAFE);
-    casting2 &= ~(NPY_SAME_VALUE_CASTING_FLAG | NPY_CAST_WILL_BE_UNSAFE);
+            ((casting1 | casting2) & _NPY_CAST_WILL_BE_UNSAFE);
+    casting1 &= ~(NPY_SAME_VALUE_CASTING_FLAG | _NPY_CAST_WILL_BE_UNSAFE);
+    casting2 &= ~(NPY_SAME_VALUE_CASTING_FLAG | _NPY_CAST_WILL_BE_UNSAFE);
     /* larger casting values are less safe */
     if (casting1 > casting2) {
         return casting1 | flags;
@@ -610,7 +610,7 @@ get_cast_safety(NPY_CASTING casting,
 
     NPY_CASTING safety = castingimpl->casting;
     if (PyArray_MinCastSafety(
-            safety & ~NPY_CAST_WILL_BE_UNSAFE, casting) == casting) {
+            safety & ~_NPY_CAST_WILL_BE_UNSAFE, casting) == casting) {
         /* No need to check using `castingimpl.resolve_descriptors()` */
         Py_DECREF(meth);
         return safety;
@@ -834,8 +834,8 @@ can_cast_to(PyArray_Descr *from, PyArray_Descr *to, NPY_CASTING casting,
 NPY_NO_EXPORT int
 npy_cast_safety_to_bool(NPY_CASTING safety, NPY_CASTING casting, int warn)
 {
-    int deprecated = safety & NPY_CAST_WILL_BE_UNSAFE;
-    safety &= ~NPY_CAST_WILL_BE_UNSAFE;
+    int deprecated = safety & _NPY_CAST_WILL_BE_UNSAFE;
+    safety &= ~_NPY_CAST_WILL_BE_UNSAFE;
     if (PyArray_MinCastSafety(safety, casting) != casting) {
         return 0;
     }
@@ -2647,7 +2647,7 @@ cast_to_string_resolve_descriptors(
         return self->casting;
     }
 
-    int flags = self->casting & NPY_CAST_WILL_BE_UNSAFE;
+    int flags = self->casting & _NPY_CAST_WILL_BE_UNSAFE;
     if (loop_descrs[1]->elsize >= size) {
         return NPY_SAFE_CASTING | flags;
     }
@@ -2704,7 +2704,7 @@ add_other_to_and_from_string_cast(
     }
 
     if (NPY_DT_is_bytes(other) && NPY_DT_is_text(string)) {
-        spec.casting |= NPY_CAST_WILL_BE_UNSAFE;
+        spec.casting |= _NPY_CAST_WILL_BE_UNSAFE;
     }
     return PyArray_AddCastingImplementation_FromSpec(&spec, 1);
 }

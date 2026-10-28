@@ -98,7 +98,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
         3: "~",  # same-kind casting
         4: ".",  # unsafe casting
     }
-    # NPY_SAME_VALUE_CASTING_FLAG and NPY_CAST_WILL_BE_UNSAFE
+    # NPY_SAME_VALUE_CASTING_FLAG and _NPY_CAST_WILL_BE_UNSAFE
     casting_flags = 64 | 128
     flags_table = {
         0: "▗", 7: "█",
