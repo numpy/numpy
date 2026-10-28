@@ -7,6 +7,7 @@ import pytest
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy.exceptions import AxisError, ComplexWarning
+from numpy.lib._function_base_impl import _QuantileMethods
 from numpy.lib._nanfunctions_impl import _divide_by_count, _nan_mask, _replace_nan
 from numpy.testing import (
     assert_,
@@ -1403,6 +1404,24 @@ class TestNanFunctions_Quantile:
             out = np.nanquantile(array, 1, axis=axis)
         assert np.isnan(out).all()
         assert out.dtype == array.dtype
+
+    @pytest.mark.parametrize("method", list(_QuantileMethods))
+    @pytest.mark.parametrize("func", [np.nanquantile, np.nanpercentile])
+    def test_float16_gh_31487(self, func, method):
+        # gh-31487: overflowed on large float16 arrays (also see
+        # test_function_base.py for percentile/quantile).
+        a = np.zeros(65521, dtype=np.float16)
+        a[:20_000] = 1.0
+        scale = 100 if func is np.nanpercentile else 1
+        z = func(a, np.float16(0.5 * scale), method=method)
+        assert z == np.float16(0.0)
+        assert z.dtype == np.float16
+        z = func(a, np.float16(0.99 * scale), method=method)
+        assert z == np.float16(1.0)
+        assert z.dtype == np.float16
+        z = func(a, np.float16(1.0 * scale), method=method)
+        assert z == np.float16(1.0)
+        assert z.dtype == np.float16
 
 @pytest.mark.parametrize("arr, expected", [
     # array of floats with some nans

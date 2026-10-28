@@ -4579,7 +4579,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     ) - 1
 
 
-def _get_gamma(virtual_indexes, previous_indexes, method):
+def _get_gamma(virtual_indexes, method):
     """
     Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
@@ -4587,8 +4587,6 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     virtual_indexes : array_like
         The indexes where the percentile is supposed to be found in the sorted
         sample.
-    previous_indexes : array_like
-        The floor values of virtual_indexes.
     method : dict
         The interpolation method chosen, which may have a specific rule
         modifying gamma.
@@ -4596,7 +4594,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     gamma is usually the fractional part of virtual_indexes but can be modified
     by the interpolation method.
     """
-    gamma = np.asanyarray(virtual_indexes - previous_indexes)
+    gamma = np.asanyarray(virtual_indexes - np.floor(virtual_indexes))
     gamma = method["fix_gamma"](gamma, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
@@ -4779,8 +4777,13 @@ def _quantile(
             raise ValueError(
                 f"{method!r} is not a valid method. "
                 f"Use one of: {valid_methods}") from None
+
+        idx_quantiles = quantiles
+        if quantiles.dtype.type is np.float16:
+            idx_quantiles = quantiles.astype(np.float64, copy=False)
+
         virtual_indexes = method_props["get_virtual_index"](values_count,
-                                                            quantiles)
+                                                            idx_quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
 
         if method_props["fix_gamma"] is None:
@@ -4822,11 +4825,12 @@ def _quantile(
             previous = arr[previous_indexes]
             next = arr[next_indexes]
             # --- Linear interpolation
-            gamma = _get_gamma(virtual_indexes, previous_indexes,
-                               method_props)
+            gamma = _get_gamma(virtual_indexes, method_props)
             if weak_q:
                 gamma = float(gamma)
             else:
+                if idx_quantiles.dtype != quantiles.dtype:
+                    gamma = gamma.astype(quantiles.dtype, copy=False)
                 result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
                 gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
