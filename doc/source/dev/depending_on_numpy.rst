@@ -168,8 +168,9 @@ frequently, (b) use a large part of NumPy's API surface, and (c) is
 worried that changes in NumPy may break your code, you can set an
 upper bound of ``<MAJOR.MINOR + N`` with N no less than 3, and
 ``MAJOR.MINOR`` being the current release of NumPy.\ [#N]_ If you use the NumPy
-C-API (directly or via Cython), you can also pin the current major
-version to prevent ABI breakage. Note that setting an upper bound on
+C-API (directly or via Cython), a major version pin or lower bound is not
+necessary to prevent ABI breakage (see :ref:`numpy-2-abi-handling`). Note
+that setting an upper bound on
 NumPy may `affect the ability of your library to be installed
 alongside other, newer packages
 <https://iscinumpy.dev/post/bound-version-constraints/>`__.
@@ -197,6 +198,11 @@ alongside other, newer packages
 
 NumPy 2.0 ABI handling
 ~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+    This section is about the NumPy 1.x to 2.x transition, but we expect
+    future major releases to follow the same or possibly a less disruptive
+    pattern.
 
 NumPy 2.0 changed the C ABI. The important rule for binary wheels is:
 
