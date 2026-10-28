@@ -11322,21 +11322,17 @@ class TestArange:
             np.arange("a", "b")
 
     @pytest.mark.parametrize("args", [
-        (0, 4 + 4j),               # complex stop, nonzero imag
-        (0, 4 + 0j),               # complex stop, zero imag
-        (4 + 4j,),                 # single arg -> start side
-        (2 + 1j, 10),              # complex start, real stop
-        (np.complex128(4 + 4j),),  # numpy complex scalar
+        (0, 4 + 4j),
+        (0, 4 + 0j),
+        (4 + 4j,),
+        (2 + 1j, 10),
+        (np.complex128(4 + 4j),),
     ])
     def test_complex_without_step_raises(self, args):
-        # gh-10332: with complex start/stop and no step, there is no
-        # well-defined way to count steps, so raise an error instead of
-        # returning an empty/incorrect result
         with pytest.raises(ValueError, match="step must be specified"):
             np.arange(*args)
 
     def test_complex_with_real_values_still_works(self):
-        # real/float inputs are unaffected, even with a complex dtype
         assert_array_equal(np.arange(0, 5, dtype=complex),
                            np.array([0, 1, 2, 3, 4], dtype=complex))
         assert_array_equal(np.arange(2.0, 10.0),

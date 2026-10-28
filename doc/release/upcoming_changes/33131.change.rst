@@ -2,5 +2,4 @@
 --------------------------------------------------------------
 Calling `numpy.arange` with a complex ``start`` or ``stop`` and without a ``step``
 specified now raises a ``ValueError`` instead of returning an incorrect result.
-There is no well-defined way to count steps for this situation. The error
-points users to `numpy.linspace` for generating evenly spaced complex values.
+
