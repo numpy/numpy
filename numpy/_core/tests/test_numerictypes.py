@@ -5,9 +5,9 @@ import pytest
 
 import numpy as np
 import numpy._core.numerictypes as nt
-from numpy._core.numerictypes import issctype, sctype2char, sctypes
 from numpy._core._multiarray_umath import _get_sfloat_dtype
 from numpy._core._rational_tests import rational, rational2
+from numpy._core.numerictypes import issctype, sctype2char, sctypes
 from numpy.testing import assert_, assert_equal, assert_raises, assert_raises_regex
 
 # This is the structure of the table used for plain objects:
