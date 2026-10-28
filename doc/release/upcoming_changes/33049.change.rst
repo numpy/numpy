@@ -1,0 +1,7 @@
+``finfo(double)`` and ``finfo(longdouble)`` are no longer identical on all platforms
+------------------------------------------------------------------------------------
+On platforms where ``np.longdouble`` shares the same bit-width as ``np.double``
+(such as MSVC Windows and macOS ARM64), `numpy.finfo` now maintains distinct
+cache entries for each dtype class. Consequently, ``np.finfo(np.double)`` and
+``np.finfo(np.longdouble)`` are no longer identical objects, and comparing them
+with ``==`` will evaluate to ``False``.

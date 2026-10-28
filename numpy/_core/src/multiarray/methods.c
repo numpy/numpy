@@ -2567,7 +2567,8 @@ array_dot(PyArrayObject *self,
             return NULL;
         }
     }
-    ret = (PyArrayObject *)PyArray_MatrixProduct2(a, b, (PyArrayObject *)o);
+    ret = (PyArrayObject *)PyArray_MatrixProduct_int(
+            a, b, (PyArrayObject *)o, "numpy.dot");
     return PyArray_Return(ret);
 }
 

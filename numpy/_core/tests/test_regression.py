@@ -2570,6 +2570,22 @@ class TestRegression:
         result = pickle.loads(test_data, encoding='bytes')
         assert result is np.add
 
+    def test_load_core_pickle_globals(self):
+        # numpy 1.x pickles arrays and scalars with paths in numpy.core,
+        # which must be loadable without warning despite np.core being
+        # deprecated in 2.0.
+        test_data = b'\x80\x04\x95&\x00\x00\x00\x00\x00\x00\x00\x8c\x12numpy.core.numeric\x94\x8c\x0b_frombuffer\x94\x93\x94.'  # noqa: E501
+        result = pickle.loads(test_data, encoding='bytes')
+        assert result is np._core.numeric._frombuffer
+
+        test_data = b'\x80\x04\x95*\x00\x00\x00\x00\x00\x00\x00\x8c\x15numpy.core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94.'  # noqa: E501
+        result = pickle.loads(test_data, encoding='bytes')
+        assert result is np._core.multiarray._reconstruct
+
+        test_data = b'\x80\x04\x95$\x00\x00\x00\x00\x00\x00\x00\x8c\x15numpy.core.multiarray\x94\x8c\x06scalar\x94\x93\x94.'  # noqa: E501
+        result = pickle.loads(test_data, encoding='bytes')
+        assert result is np._core.multiarray.scalar
+
     def test__array_namespace__(self):
         arr = np.arange(2)
 
