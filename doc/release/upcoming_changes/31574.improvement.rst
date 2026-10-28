@@ -1,0 +1,10 @@
+``dot``, ``vdot`` and ``inner`` now work for user-defined DTypes
+----------------------------------------------------------------
+`numpy.dot`, `numpy.vdot`, `numpy.inner`, and other code paths that rely on
+them (such as `numpy.tensordot` and `numpy.cov`), previously required the
+legacy ``dotfunc`` "array function" slot, which new-style user-defined DTypes
+cannot provide.  They now fall back to `numpy.matmul`, and to `numpy.vecdot`
+for `numpy.vdot`, so the operations work as long as the DType implements
+those.  The stacked outer-product behaviour for ``a.ndim >= 2`` and
+``b.ndim >= 3`` is intentionally not reproduced and raises a ``ValueError``
+pointing to `numpy.tensordot` instead.
