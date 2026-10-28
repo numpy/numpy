@@ -920,9 +920,10 @@ def hsplit(ary, indices_or_sections):
     [array([0, 1, 2]), array([3, 4, 5])]
 
     """
-    if _nx.ndim(ary) == 0:
+    ndim = _nx.ndim(ary)
+    if ndim == 0:
         raise ValueError('hsplit only works on arrays of 1 or more dimensions')
-    if _nx.ndim(ary) > 1:
+    if ndim > 1:
         return split(ary, indices_or_sections, 1)
     else:
         return split(ary, indices_or_sections, 0)
