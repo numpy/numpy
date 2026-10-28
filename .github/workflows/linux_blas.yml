@@ -125,7 +125,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install --group dev-cli --group test-extending
+        pip install --group dev-cli --group test-core
 
     - name: Build (LP64)
       run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
@@ -161,7 +161,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install --group dev-cli --group test-extending
+        pip install --group dev-cli --group test-core
 
     - name: Build
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
@@ -195,7 +195,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install --group dev-cli --group test-extending
+        pip install --group dev-cli --group test-core
         sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
@@ -224,7 +224,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install --group dev-cli --group test-extending
+        pip install --group dev-cli --group test-core
         sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
@@ -287,7 +287,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install --group dev-cli --group test-extending
+        pip install --group dev-cli --group test-core
         pip install mkl mkl-devel
 
     - name: Repair MKL pkg-config files and symlinks
@@ -352,7 +352,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install --group dev-cli --group test-extending
+        pip install --group dev-cli --group test-core
         sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
@@ -389,7 +389,7 @@ jobs:
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install --group dev-cli --group test-extending
+        pip install --group dev-cli --group test-core
         sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 
