@@ -1,13 +1,6 @@
 `numpy.spacing` semantics consistent for negative values
 --------------------------------------------------------
-`numpy.spacing` now has consistent semantics across all floating-point types for
-negative values:
-
-* For negative inputs (including ``-0.0``), spacing is measured toward negative
-  infinity: ``spacing(x) == np.nextafter(x, -np.inf) - x``.
-* The sign of the output always matches the sign of the input, and
-  ``spacing(-x) == -spacing(x)`` for all finite ``x``.
-* In particular, ``np.spacing(-0.0)`` now returns ``-minsubnormal`` (previously
-  ``+minsubnormal``), and ``np.spacing`` on negative `numpy.float16` values now
-  returns negative spacing toward negative infinity (previously positive distance
-  toward positive infinity).
+* `numpy.spacing(-0.0)` now returns `-finfo(dtype).smallest_subnormal` for all floating
+  point dtypes. Previously, the sign of `-0.0` was ignored.
+* `numpy.spacing` for negative `float16` inputs now retuns spacing toward negative
+  infinity, matching the behavior of `float32` and `float64`.
