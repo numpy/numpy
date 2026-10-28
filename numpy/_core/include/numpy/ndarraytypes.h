@@ -248,16 +248,8 @@ typedef enum {
 #endif
 
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
-/*
- * Marks casts that will require casting="unsafe" after the deprecation.
- * This flag is internal to NumPy and is not part of the public C API.
- *
- * Deprecated NumPy 2.6, 2026-10-13: "safe" and "same_kind" text/bytes casts.
- * Carry pending casting changes through PyArray_MinCastSafety; add flags here
- * for future deprecations. NPY_COERCION_POLICY is read at import: "warn" keeps
- * the existing rules with warnings, while "strict" treats these casts as
- * unsafe. Public casting queries remain quiet.
- */
+// Marks casts that will require casting="unsafe" after a deprecation expires
+// Currently needed by text/bytes coercion deprecation from NumPy 2.6.
 #define _NPY_CAST_WILL_BE_UNSAFE 128
 #endif
 

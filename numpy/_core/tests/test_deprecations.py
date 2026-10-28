@@ -712,8 +712,17 @@ def _check_coercion_policy(mode, size):
         np.strings.add(a, "", signature="UU->U")
     with expect(category):
         np.strings.add(a, a, out=add_out)
-    with expect(category):
-        np.array([b"a", "b"])
+    if mode == "strict":
+        mixed = np.array([b"a", "b"])
+        assert mixed.dtype == np.dtype(object)
+        assert mixed.tolist() == [b"a", "b"]
+    else:
+        with expect(category):
+            np.array([b"a", "b"])
+    values = [np.datetime64("2020-01-01"), 1.5]
+    mixed = np.array(values)
+    assert mixed.dtype == np.dtype(object)
+    assert mixed.tolist() == values
     with expect(np.exceptions.DTypePromotionError if mode == "strict" else category):
         np.result_type("S1", "U1")
     with expect(category):
@@ -735,6 +744,11 @@ def _check_coercion_policy(mode, size):
         assert np.can_cast(a.dtype, out.dtype) == (mode == "warn")
         assert np.can_cast(a.dtype, out.dtype, casting="unsafe")
         np.copyto(out, a, casting="unsafe")
+        if mode == "strict":
+            mixed = np.array([a[0], out[0]])
+            assert mixed.dtype == np.dtype(object)
+            assert mixed[0].dtype == a.dtype
+            assert mixed[1].dtype == out.dtype
         with expect(category):
             a.astype(out.dtype, casting="same_kind")
         with expect(category):

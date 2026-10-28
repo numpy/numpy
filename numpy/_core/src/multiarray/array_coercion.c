@@ -711,13 +711,11 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
     }
     PyArray_Descr *new_descr = PyArray_PromoteTypes(descr, *out_descr);
     if (NPY_UNLIKELY(new_descr == NULL)) {
-        if (fixed_DType != NULL || PyErr_ExceptionMatches(PyExc_Warning) ||
-                PyErr_ExceptionMatches(
-                        _npy_module_state->static_pydata.CoercionPolicyError)) {
+        if (fixed_DType != NULL || PyErr_ExceptionMatches(PyExc_Warning)) {
             /*
              * If a DType is fixed, promotion must not fail. Do not catch
-             * warnings raised as errors or strict policy failures. Other
-             * promotion failures may still fall back to object dtype.
+             * warnings raised as errors. Other promotion failures may still
+             * fall back to object dtype.
              */
             return -1;
         }

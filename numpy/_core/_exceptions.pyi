@@ -3,11 +3,8 @@ from typing import Any, Final, overload
 
 import numpy as np
 from numpy import _CastingKind
-from numpy.exceptions import DTypePromotionError
 
 ###
-
-class _CoercionPolicyError(DTypePromotionError): ...
 
 class UFuncTypeError(TypeError):
     ufunc: Final[np.ufunc]

@@ -5,7 +5,8 @@ Casts between bytes (``np.bytes_``) and text (``np.str_`` and ``StringDType``)
 with ``casting="safe"`` or ``casting="same_kind"``, promotion between ``S`` and
 ``U``, and implicit text/bytes conversions in string operations now emit
 ``DeprecationWarning``. These operations will raise ``TypeError`` in a future
-release. For example::
+release, except array construction, which will fall back to ``object`` dtype.
+For example::
 
     a = np.array([b"hello"])
     a.astype("U", casting="same_kind")      # Deprecated cast
@@ -22,7 +23,7 @@ and missing-value placeholders, use bytes with bytes and text with text, such as
     np.concatenate([text, ["world"]])
 
 For mixed Python sequences, encode or decode individual values before passing
-these sequences to `numpy.array`.
+these sequences to `numpy.array`, or use ``dtype=object`` to preserve their types.
 
 Unsafe casting (the default for ``astype``) and array construction with an
 explicit dtype, such as ``np.array(a, dtype="U")``, are unchanged.
@@ -41,4 +42,5 @@ Call                              ``NPY_COERCION_POLICY=warn`` (default)  ``NPY_
 ``np.result_type("S1", "U1")``    ``U1`` dtype, warns                     Raises ``DTypePromotionError``
 ``np.promote_types("S1", "U1")``  ``U1`` dtype, warns                     Raises ``DTypePromotionError``
 ``np.can_cast("S1", "U1")``       ``True``, no warning                    ``False``
+``np.array([b"a", "b"])``         ``U1`` array, warns                     ``object`` array
 ================================  ======================================  ==============================

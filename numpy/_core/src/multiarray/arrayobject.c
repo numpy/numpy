@@ -632,10 +632,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         /* Use promotion to decide whether the comparison is valid */
         PyArray_Descr *promoted = PyArray_PromoteTypes(
                 PyArray_DESCR(self), PyArray_DESCR(other));
-        if (promoted == NULL &&
-                (PyErr_ExceptionMatches(PyExc_Warning) ||
-                 PyErr_ExceptionMatches(
-                         _npy_module_state->static_pydata.CoercionPolicyError))) {
+        if (promoted == NULL && PyErr_ExceptionMatches(PyExc_Warning)) {
             return NULL;
         }
         if (promoted == NULL) {

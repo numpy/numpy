@@ -78,15 +78,16 @@ check_promotion(npy_intp length, PyArray_DTypeMeta *const dtypes[],
             continue;
         }
         if (npy_coercion_is_strict()) {
-            PyErr_SetString(_npy_module_state->static_pydata.CoercionPolicyError,
+            PyErr_SetString(_npy_module_state->static_pydata.DTypePromotionError,
                     "Promoting strings and bytes is not allowed.");
             return -1;
         }
         return DEPRECATE(
                 "Promoting strings and bytes to a common dtype is "
-                "deprecated and will raise TypeError in a future release. "
-                "Use matching bytes or text inputs. Encode or decode "
-                "values with an explicit encoding before constructing "
+                "deprecated. In a future release, array construction will "
+                "fall back to object dtype and other promotions will raise "
+                "TypeError. Use matching bytes or text inputs. Encode or "
+                "decode values with an explicit encoding before constructing "
                 "or combining arrays. (Deprecated NumPy 2.6)");
     }
     return 0;
