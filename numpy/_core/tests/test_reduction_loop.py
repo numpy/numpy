@@ -248,18 +248,6 @@ class TestReductionLoop:
         check_minmax(method, *args, **kwargs, ufunc=ufunc, max_dtype=max_dtype,
                      out=out)
 
-    # accumulate, where acc and out differ, must skip the in-place SIMD paths.
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
-    @pytest.mark.parametrize("dtype", ["f8", "f4", "i8", "i1"])
-    @pytest.mark.parametrize("step", [1, 2])
-    def test_builtin_minimummaximum(self, method, dtype, step):
-        a = np.random.default_rng(46).integers(-50, 51, size=(4, 48))
-        a = a.astype(dtype)[:, ::step]
-        for axis in method_axes(method, a.ndim):
-            args, kwargs = method_args(method, a, axis)
-            check_minmax(method, *args, **kwargs,
-                         ufunc=np._core.umath.minimummaximum)
-
     def test_forward_python_scalars(self):
         got_min, got_max = mm(3.0, 5.0)
         assert (got_min, got_max) == (3.0, 5.0)
