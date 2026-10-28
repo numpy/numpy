@@ -332,9 +332,15 @@ jobs:
         repository: jax-ml/ml_dtypes
         # Current ml_dtypes main, should be updated occasionally:
         ref: 'b793a6e2864ce20b6680df2fd480a5cd2a75fa82'  # main as of 2026-08-21
-        submodules: 'true'
+        submodules: false
         path: 'ml_dtypes'
         persist-credentials: false
+    - name: Checkout Eigen from GitHub mirror
+      working-directory: ml_dtypes
+      run: |
+        git submodule init
+        git config submodule.third_party/eigen.url https://github.com/eigen-mirror/eigen.git
+        git submodule update --init --depth=1
     - name: Set up Python
       uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
