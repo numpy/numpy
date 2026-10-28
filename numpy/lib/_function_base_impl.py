@@ -4549,7 +4549,11 @@ def _quantile_is_valid(q):
             if not (0.0 <= q[i] <= 1.0):
                 return False
     else:
-        q_min, q_max = np.minmax(q)
+        # subclasses may not support np.minmax
+        if type(q) is np.ndarray:
+            q_min, q_max = np.minmax(q)
+        else:
+            q_min, q_max = q.min(), q.max()
         if not (q_min >= 0 and q_max <= 1):
             return False
     return True
