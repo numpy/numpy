@@ -205,7 +205,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --group dev-cli --group test-extending
+        python -m pip install --group dev-cli --group test-core
 
     - name: Build
       run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=X86_V4 -Dtest-simd='BASELINE,AVX512_ICL,AVX512_SPR'
@@ -259,7 +259,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --group dev-cli --group test-extending
+        python -m pip install --group dev-cli --group test-core
 
     - name: Build
       run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=avx512_spr
