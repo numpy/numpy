@@ -410,8 +410,7 @@ npy_csqrt@c@(@ctype@ z)
 
     /* Rescale. */
     if (scale) {
-        return (npy_cpack@c@(npy_creal@c@(result) * 2,
-                             npy_cimag@c@(result) * 2));
+        return (npy_cpack@c@(npy_creal@c@(result) * 2, npy_cimag@c@(result) * 2));
     }
     else {
         return (result);
