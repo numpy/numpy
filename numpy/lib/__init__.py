@@ -10,8 +10,36 @@ other public modules and are useful to have in the main name-space.
 
 # Public submodules
 # Note: recfunctions is public, but not imported
+# Lazy on Python 3.15+ (PEP 810).
+__lazy_modules__ = [
+    "numpy.lib",
+    "numpy.lib._arraypad_impl",
+    "numpy.lib._arraysetops_impl",
+    "numpy.lib._arrayterator_impl",
+    "numpy.lib._function_base_impl",
+    "numpy.lib._histograms_impl",
+    "numpy.lib._index_tricks_impl",
+    "numpy.lib._nanfunctions_impl",
+    "numpy.lib._npyio_impl",
+    "numpy.lib._polynomial_impl",
+    "numpy.lib._shape_base_impl",
+    "numpy.lib._stride_tricks_impl",
+    "numpy.lib._twodim_base_impl",
+    "numpy.lib._type_check_impl",
+    "numpy.lib._ufunclike_impl",
+    "numpy.lib._utils_impl",
+    "numpy.lib._version",
+    "numpy.lib.array_utils",
+    "numpy.lib.format",
+    "numpy.lib.introspect",
+    "numpy.lib.mixins",
+    "numpy.lib.npyio",
+    "numpy.lib.scimath",
+    "numpy.lib.stride_tricks",
+]
+
+from numpy._core._add_docstring import add_newdoc
 from numpy._core._multiarray_umath import add_docstring, tracemalloc_domain
-from numpy._core.function_base import add_newdoc
 
 # Private submodules
 # load module names. See https://github.com/networkx/networkx/issues/5838

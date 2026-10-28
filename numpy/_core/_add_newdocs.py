@@ -11,7 +11,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 
 import textwrap
 
-from numpy._core.function_base import add_newdoc
+from numpy._core._add_docstring import add_newdoc
 from numpy._core.overrides import get_array_function_like_doc  # noqa: F401
 
 ###############################################################################
