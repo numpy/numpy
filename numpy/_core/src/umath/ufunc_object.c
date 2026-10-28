@@ -4595,7 +4595,11 @@ resolve_descriptors(int nop,
     if (safety < 0) {
         goto finish;
     }
-    if (NPY_UNLIKELY(PyArray_MinCastSafety(safety, casting) != casting)) {
+    int can_cast = npy_cast_safety_to_bool(safety, casting, 1);
+    if (can_cast < 0) {
+        goto finish;
+    }
+    if (NPY_UNLIKELY(!can_cast)) {
         /* TODO: Currently impossible to reach (specialized unsafe loop) */
         PyErr_Format(PyExc_TypeError,
                 "The ufunc implementation for %s with the given dtype "

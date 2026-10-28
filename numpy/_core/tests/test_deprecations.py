@@ -11,6 +11,7 @@ import sys
 import textwrap
 import warnings
 from collections.abc import Callable
+from itertools import permutations
 
 import pytest
 
@@ -678,6 +679,12 @@ def _check_coercion_policy(mode, size):
     else:
         expect = pytest.warns
         category = DeprecationWarning
+
+    for dtypes in set(permutations(("S10", "U10", "S10", "O", "U10"))):
+        assert np.result_type(*dtypes) == np.dtype(object)
+    for dtypes in set(permutations(("S10", "U10", "S10", "U10"))):
+        with expect(category):
+            np.result_type(*dtypes)
 
     assert np.can_cast("S1", "U1") == (mode == "warn")
     assert can_cast_safely(np.dtype("S").num, np.dtype("T").num) == (mode == "warn")

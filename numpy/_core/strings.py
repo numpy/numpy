@@ -731,7 +731,8 @@ def _cast_string_arg(arg, dtype):
             "Mixing strings and bytes in numpy.strings is deprecated and "
             "will raise TypeError in a future release. Use matching bytes or "
             "text arguments. Convert with numpy.strings.encode or "
-            "numpy.strings.decode and an explicit encoding if needed.",
+            "numpy.strings.decode and an explicit encoding if needed. "
+            "(Deprecated NumPy 2.6)",
             DeprecationWarning,
             skip_file_prefixes=_STRING_WARNING_SKIP_PREFIXES,
         )

@@ -1113,26 +1113,11 @@ static PyArray_DTypeMeta *
 string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     assert(cls->type_num < NPY_NTYPES_LEGACY && cls != other);
-    int text_bytes = NPY_DT_is_text(cls) && NPY_DT_is_bytes(other);
     if (!NPY_DT_is_legacy(other) || (!PyTypeNum_ISNUMBER(other->type_num) &&
             /* Not numeric so defer unless cls is unicode and other is string */
-            !text_bytes)) {
+            !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
-    }
-    /* Deprecated NumPy 2.6, 2026-10-13: implicit S/U promotion. */
-    if (text_bytes && npy_coercion_is_strict()) {
-        PyErr_SetString(_npy_module_state->static_pydata.CoercionPolicyError,
-                "Promoting strings and bytes is not allowed.");
-        return NULL;
-    }
-    if (text_bytes && DEPRECATE(
-                "Promoting strings and bytes to a common dtype is "
-                "deprecated and will raise TypeError in a future release. "
-                "Use matching bytes or text inputs. Encode or decode "
-                "values with an explicit encoding before constructing "
-                "or combining arrays.") < 0) {
-        return NULL;
     }
     /*
      * The builtin types are ordered by complexity (aside from object) here.

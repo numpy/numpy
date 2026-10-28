@@ -99,36 +99,30 @@ NPY_NO_EXPORT NPY_CASTING
 PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2);
 
 /*
- * Flags accumulated during cast resolution, including casts for structured
- * dtype fields and subarray elements. Add flags here for future casting
- * deprecations.
+ * Marks casts that will require casting="unsafe" after the deprecation.
+ * This flag is internal to NumPy and is not part of the public C API.
  *
- * Deprecated NumPy 2.6, 2026-10-13: "safe" and "same_kind" casts between
- * bytes (S) and text (U or T). NPY_CAST_TEXT_BYTES identifies these casts.
- *
- * numpy._core._coercion_policy reads NPY_COERCION_POLICY at import; its
- * _STRICT value is stored in the C module state for npy_coercion_is_strict().
- * can_cast_to checks these flags after resolution: the default "warn" policy
- * preserves the old rules and warns for otherwise allowed casts; "strict"
- * rejects them. Explicit "unsafe" casts remain supported, and public casting
- * queries do not warn.
+ * Deprecated NumPy 2.6, 2026-10-13: "safe" and "same_kind" text/bytes casts.
+ * Carry pending casting changes through PyArray_MinCastSafety; add flags here
+ * for future deprecations. NPY_COERCION_POLICY is read at import: "warn" keeps
+ * the existing rules with warnings, while "strict" treats these casts as
+ * unsafe. Public casting queries remain quiet.
  */
-#define NPY_CAST_TEXT_BYTES 1
+#define NPY_CAST_WILL_BE_UNSAFE 128
+
+/* Return 1 if valid, 0 if invalid, or -1 if a warning was raised as an error. */
+NPY_NO_EXPORT int
+npy_cast_safety_to_bool(NPY_CASTING safety, NPY_CASTING casting, int warn);
 
 NPY_NO_EXPORT NPY_CASTING
 PyArray_GetCastInfo(
         PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype,
-        npy_intp *view_offset, unsigned int *cast_flags);
+        npy_intp *view_offset);
 
 NPY_NO_EXPORT npy_intp
 PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
                  npy_intp* view_offset, NPY_CASTING minimum_safety,
                  npy_intp ignore_errors);
-
-NPY_NO_EXPORT int
-PyArray_CheckCastSafety(NPY_CASTING casting,
-        PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype,
-        unsigned int *cast_flags);
 
 NPY_NO_EXPORT NPY_CASTING
 legacy_same_dtype_resolve_descriptors(

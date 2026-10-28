@@ -31,24 +31,8 @@
  */
 
 
-/*NUMPY_API
- * This function defines the common DType operator.
- *
- * Note that the common DType will not be "object" (unless one of the dtypes
- * is object), even though object can technically represent all values
- * correctly. Similar to `np.result_type`, but works on the classes and not
- * instances.
- *
- *
- * TODO: Before exposure, we should review the return value (e.g. no error
- *       when no common DType is found).
- *
- * @param dtype1 DType class to find the common type for.
- * @param dtype2 Second DType class.
- * @return The common DType or NULL with an error set
- */
-NPY_NO_EXPORT PyArray_DTypeMeta *
-PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
+static PyArray_DTypeMeta *
+common_dtype(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
 {
     if (dtype1 == dtype2) {
         Py_INCREF(dtype1);
@@ -74,6 +58,66 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
         return NULL;
     }
     return common_dtype;
+}
+
+
+/*
+ * Deprecated NumPy 2.6, 2026-10-13: implicit text/bytes promotion.
+ * Check the final result, not intermediate pairs: another input may select
+ * object or a user DType without requiring text/bytes conversion.
+ */
+static int
+check_promotion(npy_intp length, PyArray_DTypeMeta *const dtypes[],
+        PyArray_DTypeMeta *result)
+{
+    if (!NPY_DT_is_text(result)) {
+        return 0;
+    }
+    for (npy_intp i = 0; i < length; i++) {
+        if (!NPY_DT_is_bytes(dtypes[i])) {
+            continue;
+        }
+        if (npy_coercion_is_strict()) {
+            PyErr_SetString(_npy_module_state->static_pydata.CoercionPolicyError,
+                    "Promoting strings and bytes is not allowed.");
+            return -1;
+        }
+        return DEPRECATE(
+                "Promoting strings and bytes to a common dtype is "
+                "deprecated and will raise TypeError in a future release. "
+                "Use matching bytes or text inputs. Encode or decode "
+                "values with an explicit encoding before constructing "
+                "or combining arrays. (Deprecated NumPy 2.6)");
+    }
+    return 0;
+}
+
+
+/*NUMPY_API
+ * This function defines the common DType operator.
+ *
+ * Note that the common DType will not be "object" (unless one of the dtypes
+ * is object), even though object can technically represent all values
+ * correctly. Similar to `np.result_type`, but works on the classes and not
+ * instances.
+ *
+ *
+ * TODO: Before exposure, we should review the return value (e.g. no error
+ *       when no common DType is found).
+ *
+ * @param dtype1 DType class to find the common type for.
+ * @param dtype2 Second DType class.
+ * @return The common DType or NULL with an error set
+ */
+NPY_NO_EXPORT PyArray_DTypeMeta *
+PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
+{
+    PyArray_DTypeMeta *result = common_dtype(dtype1, dtype2);
+    PyArray_DTypeMeta *dtypes[] = {dtype1, dtype2};
+    if (result != NULL && check_promotion(2, dtypes, result) < 0) {
+        Py_CLEAR(result);
+    }
+    return result;
 }
 
 
@@ -297,7 +341,7 @@ PyArray_PromoteDTypeSequence(
          * The above promoted, now "reduce" with the current result; note that
          * in the typical cases we expect this step to be a no-op.
          */
-        Py_SETREF(result, PyArray_CommonDType(result, promotion));
+        Py_SETREF(result, common_dtype(result, promotion));
         Py_DECREF(promotion);
         if (result == NULL) {
             goto finish;
@@ -305,6 +349,9 @@ PyArray_PromoteDTypeSequence(
     }
 
   finish:
+    if (result != NULL && check_promotion(length, dtypes_in, result) < 0) {
+        Py_CLEAR(result);
+    }
     npy_free_workspace(dtypes);
     return result;
 }
