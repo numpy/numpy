@@ -3458,25 +3458,17 @@ def _minmax_separate(a, axis, out, keepdims, initial, where):
     out_min, out_max = out if out is not None else (None, None)
     initial_min, initial_max = (initial if isinstance(initial, tuple)
                                 else (initial, initial))
-    if out_min is not None:
-        # the minimum is written before the maximum's operands are read
-        # check for aliasing and copy if needed
-        if not _overrides_min_max(a):
-            a = np.asanyarray(a)
-        if np.may_share_memory(a, out_min):
-            a = a.copy()
-        if where is not np._NoValue:
-            if not isinstance(where, np.ndarray):
-                where = np.asarray(where, dtype=bool)
-            if np.may_share_memory(where, out_min):
-                where = where.copy()
-        if (initial_max is not np._NoValue
-                and np.may_share_memory(initial_max, out_min)):
-            initial_max = np.asanyarray(initial_max, copy=True)
-    return (min(a, axis=axis, out=out_min, keepdims=keepdims,
-                initial=initial_min, where=where),
-            max(a, axis=axis, out=out_max, keepdims=keepdims,
-                initial=initial_max, where=where))
+    # out_min may alias the operands of the maximum, so the minimum goes to a
+    # temporary that is copied into out_min after the maximum is computed
+    tmp_min = None if out_min is None else np.empty_like(out_min)
+    min_value = min(a, axis=axis, out=tmp_min, keepdims=keepdims,
+                    initial=initial_min, where=where)
+    max_value = max(a, axis=axis, out=out_max, keepdims=keepdims,
+                    initial=initial_max, where=where)
+    if out_min is None:
+        return min_value, max_value
+    out_min[...] = min_value
+    return out_min, max_value
 
 
 def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
