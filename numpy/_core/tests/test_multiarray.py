@@ -6328,6 +6328,27 @@ class TestMinMax:
         res = np.minmax([x, rational(1), rational(3)], out=out)
         assert_equal(res, (rational(1), rational(5)))
 
+    def test_minmax_overridden_methods_out_overlapping_input(self):
+        class ArrayLike:
+            def __init__(self):
+                self.data = np.array([3, 1, 2])
+
+            def __array__(self, dtype=None, copy=None):
+                return np.asarray(self.data, dtype=dtype, copy=copy)
+
+            def min(self, **kwargs):
+                return self.data.min(**kwargs)
+
+            def max(self, **kwargs):
+                return self.data.max(**kwargs)
+
+        a = ArrayLike()
+        out = (a.data[:1].reshape(()), a.data[1:2].reshape(()))
+        res = np.minmax(a, out=out)
+        assert res[0] is out[0]
+        assert res[1] is out[1]
+        assert_equal(res, (1, 3))
+
     def test_minmax_array_ufunc_no_fallback(self):
         # a subclass whose __array_ufunc__ declines the private minimummaximum
         # ufunc takes total control (the __array_ufunc__ contract), so minmax
