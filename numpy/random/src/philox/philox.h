@@ -247,6 +247,10 @@ static inline uint32_t philox_next32(philox_state *state) {
   return (uint32_t)(next & 0xffffffff);
 }
 
+void philox_fill_uint32(philox_state *state, size_t count, uint32_t *out);
+void philox_fill_uint64(philox_state *state, size_t count, uint64_t *out);
+void philox_fill_double(philox_state *state, size_t count, double *out);
+
 extern void philox_jump(philox_state *state);
 
 extern void philox_advance(uint64_t *step, philox_state *state);

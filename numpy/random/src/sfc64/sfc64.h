@@ -49,6 +49,10 @@ static inline uint32_t sfc64_next32(sfc64_state *state) {
   return (uint32_t)(next & 0xffffffff);
 }
 
+void sfc64_fill_uint32(sfc64_state *state, size_t count, uint32_t *out);
+void sfc64_fill_uint64(sfc64_state *state, size_t count, uint64_t *out);
+void sfc64_fill_double(sfc64_state *state, size_t count, double *out);
+
 void sfc64_set_seed(sfc64_state *state, uint64_t *seed);
 
 void sfc64_get_state(sfc64_state *state, uint64_t *state_arr, int *has_uint32,
