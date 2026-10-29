@@ -18,6 +18,9 @@ COMPARISONS = [
 ]
 
 MAX = np.iinfo(np.int64).max
+# Long enough to exercise the two-way search path with this needle.
+LONG_NEAR_MATCH_HAYSTACK = ("c" + "b" * 99 + "aa") * 26
+LONG_NEAR_MATCH_NEEDLE = "b" * 100 + "a"
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
 def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
@@ -437,6 +440,11 @@ class TestMethods:
         ("Ae¢☃€ 😊" * 2, "😊", 7, None, 13),
         pytest.param("A" * (2 ** 17), r"[\w]+\Z", 0, None, -1,
                      id=r"A*2**17-[\w]+\Z-0-None--1"),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK, LONG_NEAR_MATCH_NEEDLE,
+                     0, None, -1, id="long-near-match"),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK + LONG_NEAR_MATCH_NEEDLE,
+                     LONG_NEAR_MATCH_NEEDLE, 0, None,
+                     len(LONG_NEAR_MATCH_HAYSTACK), id="long-near-match-found"),
     ])
     def test_find(self, a, sub, start, end, out, dt):
         if "😊" in a and dt == "S":
@@ -505,6 +513,11 @@ class TestMethods:
         ("", "xx", MAX, 0, 0),
         (["aaa", ""], ["a", ""], [0, 0], None, [3, 1]),
         ("Ae¢☃€ 😊" * 100, "😊", 0, None, 100),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK, LONG_NEAR_MATCH_NEEDLE,
+                     0, None, 0, id="long-near-match"),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK + LONG_NEAR_MATCH_NEEDLE,
+                     LONG_NEAR_MATCH_NEEDLE, 0, None, 1,
+                     id="long-near-match-found"),
     ])
     def test_count(self, a, sub, start, end, out, dt):
         if "😊" in a and dt == "S":
@@ -811,6 +824,9 @@ class TestMethods:
         ("abc", "ab", "--", 0, "abc"),
         ("abc", "xy", "--", -1, "abc"),
         (["abbc", "abbd"], "b", "z", [1, 2], ["azbc", "azzd"]),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK, LONG_NEAR_MATCH_NEEDLE,
+                     "X" * 101, -1, LONG_NEAR_MATCH_HAYSTACK,
+                     id="long-near-match"),
     ])
     def test_replace(self, buf, old, new, count, res, dt):
         if "😊" in buf and dt == "S":
