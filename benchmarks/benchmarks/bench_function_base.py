@@ -73,6 +73,46 @@ class Mean(Benchmark):
         np.mean(self.array, axis=1)
 
 
+class Insert(Benchmark):
+    params = [
+        [(1000,), (100, 100)],
+        [None, 0],
+        ["list", "array"],
+    ]
+    param_names = ["shape", "axis", "indexer_type"]
+
+    def setup(self, shape, axis, indexer_type):
+        self.arr = np.arange(np.prod(shape)).reshape(shape)
+        if indexer_type == "list":
+            self.empty_indices = []
+        else:
+            self.empty_indices = np.array([], dtype=np.intp)
+
+    def time_empty_indices(self, shape, axis, indexer_type):
+        np.insert(self.arr, self.empty_indices, 9, axis=axis)
+
+
+class InsertSmall(Benchmark):
+    # Non-empty and small cases that should not regress from the
+    # empty-index fast path.
+    params = [
+        [(10,), (1000,)],
+        [[0], [0, 1], [0, 2, 4]],
+    ]
+    param_names = ["shape", "indices"]
+
+    def setup(self, shape, indices):
+        self.arr = np.arange(np.prod(shape))
+        self.indices = indices
+        self.indices_arr = np.array(indices, dtype=np.intp)
+
+    def time_insert_list(self, shape, indices):
+        np.insert(self.arr, self.indices, 9)
+
+    def time_insert_array(self, shape, indices):
+        np.insert(self.arr, self.indices_arr, 9)
+
+
 class Median(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
