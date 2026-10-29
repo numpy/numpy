@@ -115,7 +115,7 @@ argument to pytest::
     $ spin test -v -t numpy/_core/tests/test_multiarray.py -- -k "MatMul and not vector"
 
 To run "doctests" -- to check that the code examples in the documentation is correct --
-use the `check-docs` spin command. It relies on the `scipy-docs` package, which
+use the `check-docs` spin command. It relies on the `scipy-doctest` package, which
 provides several additional features on top of the standard library ``doctest``
 package. Install ``scipy-doctest`` and run one of::
 

@@ -698,13 +698,13 @@ The ``code.c`` file also contains the function ``dfilter2d``:
             rm1 = r - S0;
             for (j = 1; j < N - 1; j++) {
                 c = j*S1;
-                cp1 = j + S1;
-                cm1 = j - S1;
+                cp1 = c + S1;
+                cm1 = c - S1;
                 b[i*N + j] = a[r + c] +
                     (a[rp1 + c] + a[rm1 + c] +
                      a[r + cp1] + a[r + cm1])*0.5 +
                     (a[rp1 + cp1] + a[rp1 + cm1] +
-                     a[rm1 + cp1] + a[rm1 + cp1])*0.25;
+                     a[rm1 + cp1] + a[rm1 + cm1])*0.25;
             }
         }
     }
@@ -734,7 +734,7 @@ following lines at the top:
     import numpy as np
     import os
 
-    _path = os.path.dirname('__file__')
+    _path = os.path.dirname(__file__)
     lib = np.ctypeslib.load_library('code', _path)
     _typedict = {'zadd' : complex, 'sadd' : np.single,
                  'cadd' : np.csingle, 'dadd' : float}

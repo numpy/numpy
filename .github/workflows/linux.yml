@@ -50,7 +50,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: ${{ matrix.version }}
     - uses: ./.github/meson_actions
@@ -93,14 +93,14 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.13", "3.14", "3.15-dev", "3.15t-dev"]
+        version: ["3.13", "3.14", "3.15", "3.15t"]
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: ${{ matrix.version }}
     - uses: ./.github/meson_actions
@@ -115,12 +115,12 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
-        pip install --group dev-cli --group test    # includes hypothesis
+        pip install --group build --group test    # includes hypothesis
     - name: Install gfortran and setup OpenBLAS 32 bits
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
@@ -204,7 +204,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
     - name: Install build and benchmarking dependencies
@@ -244,7 +244,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
     - name: Install gfortran and setup OpenBLAS (sdist build)
@@ -295,12 +295,11 @@ jobs:
         path: 'array-api-tests'
         persist-credentials: false
     - name: Set up Python
-      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
-        python -m pip install --group dev-cli
         python -m pip install --group test-extending
         python -m pip install -r array-api-tests/requirements.txt
     - name: Build and install NumPy
@@ -333,19 +332,24 @@ jobs:
         repository: jax-ml/ml_dtypes
         # Current ml_dtypes main, should be updated occasionally:
         ref: 'b793a6e2864ce20b6680df2fd480a5cd2a75fa82'  # main as of 2026-08-21
-        submodules: 'true'
+        submodules: false
         path: 'ml_dtypes'
         persist-credentials: false
+    - name: Checkout Eigen from GitHub mirror
+      working-directory: ml_dtypes
+      run: |
+        git submodule init
+        git config submodule.third_party/eigen.url https://github.com/eigen-mirror/eigen.git
+        git submodule update --init --depth=1
     - name: Set up Python
-      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
         python -m pip install --upgrade pip
-        python -m pip install --group dev-cli
         python -m pip install --group test-extending
-        python -m pip install --upgrade scikit-build-core cmake wheel
+        python -m pip install --upgrade scikit-build-core cmake
     - name: Build and install NumPy
       run: |
         python -m pip install . -v -Csetup-args=-Dallow-noblas=true -Csetup-args=-Dcpu-baseline=none -Csetup-args=-Dcpu-dispatch=none
@@ -377,7 +381,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -388,7 +392,6 @@ jobs:
     - name: Install build and test dependencies from PyPI
       run: |
         pip install --group dev-cli
-        pip install --group test-extending
         pip install "vulture!=2.15"
     - name: Build and install NumPy
       run: |

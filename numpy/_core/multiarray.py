@@ -41,7 +41,7 @@ __all__ = [
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
     'frombuffer', 'fromfile', 'fromiter', 'fromstring',
     'get_handler_name', 'get_handler_version', 'inner', 'interp',
-    'interp_complex', 'is_busday', 'lexsort', 'matmul', 'vecdot',
+    'interp_complex', 'is_busday', 'issubdtype', 'lexsort', 'matmul', 'vecdot',
     'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
     'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
@@ -68,6 +68,7 @@ fromfile.__module__ = 'numpy'
 fromiter.__module__ = 'numpy'
 frompyfunc.__module__ = 'numpy'
 fromstring.__module__ = 'numpy'
+issubdtype.__module__ = 'numpy'
 may_share_memory.__module__ = 'numpy'
 nested_iters.__module__ = 'numpy'
 promote_types.__module__ = 'numpy'
@@ -228,13 +229,9 @@ def concatenate(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
         If provided, the destination array will have this dtype. Cannot be
         provided together with `out`.
 
-        .. versionadded:: 1.20.0
-
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
         For a description of the options, please see :term:`casting`.
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -773,6 +770,12 @@ def dot(a, b, out=None):
 
         dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
 
+      .. deprecated:: 2.6
+          Calling `dot` when `a` has 2 or more dimensions and `b` has more
+          than 2 dimensions is deprecated and will eventually raise an error,
+          because the leading dimensions of `b` end up in the middle of the
+          result. Use ``tensordot(a, b, axes=[-1, -2])`` instead.
+
     It uses an optimized BLAS library when possible (see `numpy.linalg`).
 
     Parameters
@@ -830,13 +833,6 @@ def dot(a, b, out=None):
     >>> np.dot(a, b)
     array([[4, 1],
            [2, 2]])
-
-    >>> a = np.arange(3*4*5*6).reshape((3,4,5,6))
-    >>> b = np.arange(3*4*5*6)[::-1].reshape((5,4,6,3))
-    >>> np.dot(a, b)[2,3,2,1,2,2]
-    499128
-    >>> sum(a[2,3,2,:] * b[1,2,:,2])
-    499128
 
     """
     return (a, b, out)

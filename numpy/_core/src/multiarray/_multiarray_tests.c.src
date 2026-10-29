@@ -13,6 +13,7 @@
 #include "mem_overlap.h"
 #include "npy_extint128.h"
 #include "npy_hashtable.h"
+#include "npy_pycompat.h"
 
 #if defined(MS_WIN32) || defined(__CYGWIN__)
 #define EXPORT(x) __declspec(dllexport) x
@@ -504,6 +505,28 @@ fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
         return NULL;
     }
     return PyArray_FromString(string, -1, NULL, -1, " ");
+}
+
+
+static PyObject *
+matrixproduct_c_api(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyObject *a, *b;
+    if (!PyArg_ParseTuple(args, "OO", &a, &b)) {
+        return NULL;
+    }
+    return PyArray_MatrixProduct(a, b);
+}
+
+
+static PyObject *
+matrixproduct2_c_api(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyObject *a, *b;
+    if (!PyArg_ParseTuple(args, "OO", &a, &b)) {
+        return NULL;
+    }
+    return PyArray_MatrixProduct2(a, b, NULL);
 }
 
 
@@ -2269,9 +2292,7 @@ static PyObject *
 _npy_import_entry_point(PyObject *NPY_UNUSED(self), PyObject *obj) {
     PyObject *res = PyUnicode_AsASCIIString(obj);
     if (res != NULL) {
-        PyObject *imported = npy_import_entry_point(PyBytes_AsString(res));
-        Py_DECREF(res);
-        res = imported;
+        Py_SETREF(res, npy_import_entry_point(PyBytes_AsString(res)));
     }
     return res;
 }
@@ -2295,6 +2316,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"fromstring_null_term_c_api",
         fromstring_null_term_c_api,
         METH_O, NULL},
+    {"matrixproduct_c_api",
+        matrixproduct_c_api,
+        METH_VARARGS, NULL},
+    {"matrixproduct2_c_api",
+        matrixproduct2_c_api,
+        METH_VARARGS, NULL},
     {"create_custom_field_dtype",
         create_custom_field_dtype,
         METH_VARARGS, NULL},

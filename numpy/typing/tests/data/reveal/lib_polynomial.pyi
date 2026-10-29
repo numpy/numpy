@@ -128,8 +128,8 @@ assert_type(_py_f_1d * _poly_f4, np.poly1d[Any])
 
 assert_type(_poly_f8**2, np.poly1d[np.float64])
 assert_type(_poly_b**2, np.poly1d[np.int_])
-assert_type(_poly_f4**2, np.poly1d[np.float64])  # type: ignore[assert-type]
-assert_type(_poly_c8**2, np.poly1d[np.complex128])  # type: ignore[assert-type]
+assert_type(_poly_f4**2, np.poly1d[np.float64])
+assert_type(_poly_c8**2, np.poly1d[np.complex128])
 assert_type(_poly_O**2, np.poly1d[Any])
 
 assert_type(_poly_f8 / _f8, np.poly1d[np.float64])
@@ -156,13 +156,13 @@ assert_type(_poly_f4.__rtruediv__(AR_f8), tuple[np.poly1d[Any], np.poly1d[Any]])
 
 assert_type(_poly_f8.deriv(), np.poly1d[np.float64])
 assert_type(_poly_b.deriv(), np.poly1d[np.int_])
-assert_type(_poly_f4.deriv(), np.poly1d[np.float64])  # type: ignore[assert-type]
-assert_type(_poly_c8.deriv(), np.poly1d[np.complex128])  # type: ignore[assert-type]
+assert_type(_poly_f4.deriv(), np.poly1d[np.float64])
+assert_type(_poly_c8.deriv(), np.poly1d[np.complex128])
 assert_type(_poly_O.deriv(), np.poly1d[Any])
 
 assert_type(_poly_f8.integ(), np.poly1d[np.float64])
 assert_type(_poly_b.integ(), np.poly1d[np.float64])
-assert_type(_poly_c8.integ(), np.poly1d[np.complex128])  # type: ignore[assert-type]
+assert_type(_poly_c8.integ(), np.poly1d[np.complex128])
 assert_type(_poly_O.integ(), np.poly1d[Any])
 
 assert_type(np.poly(_poly_f8), npt.Array1D[Any])

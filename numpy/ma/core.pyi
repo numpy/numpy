@@ -143,6 +143,7 @@ __all__ = [
     "array",
     "asanyarray",
     "asarray",
+    "assert_array_equal",
     "bitwise_and",
     "bitwise_or",
     "bitwise_xor",
@@ -311,6 +312,18 @@ _AnyScalarT = TypeVar(
     np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
     np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
     np.timedelta64, np.datetime64, np.str_, np.bytes_, np.void, np.object_,
+)  # fmt: skip
+_AnyNumericT = TypeVar(
+    "_AnyNumericT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64,
+)  # fmt: skip
+_AnyNumericObjectT = TypeVar(
+    "_AnyNumericObjectT",
+    np.bool, np.intp, np.int64, np.int32, np.int16, np.int8, np.uint64, np.uint32, np.uint16, np.uint8,
+    np.float64, np.longdouble, np.float32, np.float16, np.complex128, np.clongdouble, np.complex64,
+    np.timedelta64, np.object_,
 )  # fmt: skip
 
 type _RealNumber = np.floating | np.integer
@@ -4226,11 +4239,15 @@ def round_[ArrayT: np.ndarray](a: ArrayLike, decimals: int = 0, *, out: ArrayT) 
 
 # keep in sync with `_core.multiarray.inner`
 @overload  # (?d T, Nd T) -> 0d|Nd T  (workaround)
-def inner[ScalarT: _InnerScalar | np.object_](a: _ArrayNoD[ScalarT], b: _ArrayLike[ScalarT]) -> _MaskedArray[ScalarT] | Any: ...
+def inner(  # noqa: UP047
+    a: _ArrayNoD[_AnyNumericObjectT], b: _ArrayLike[_AnyNumericObjectT]
+) -> _MaskedArray[_AnyNumericObjectT] | Any: ...
 @overload  # (Nd T, ?d T) -> 0d|Nd T  (workaround)
-def inner[ScalarT: _InnerScalar | np.object_](a: _ArrayLike[ScalarT], b: _ArrayNoD[ScalarT]) -> _MaskedArray[ScalarT] | Any: ...
+def inner(  # noqa: UP047
+    a: _ArrayLike[_AnyNumericObjectT], b: _ArrayNoD[_AnyNumericObjectT]
+) -> _MaskedArray[_AnyNumericObjectT] | Any: ...
 @overload  # (1d T, 1d T) -> 0d T
-def inner[ScalarT: _InnerScalar](a: _ToArray1D[ScalarT], b: _ToArray1D[ScalarT]) -> ScalarT: ...
+def inner(a: _ToArray1D[_AnyNumericT], b: _ToArray1D[_AnyNumericT]) -> _AnyNumericT: ...  # noqa: UP047
 @overload  # (1d object_, 1d _) -> 0d object
 def inner(a: Array1D[np.object_], b: Array1D[np.object_] | _ToArray1D[_InnerScalar]) -> Any: ...
 @overload  # (1d _, 1d object_) -> 0d object
@@ -4250,11 +4267,11 @@ def inner(a: list[complex], b: Sequence[complex]) -> np.complex128: ...
 @overload  # (1d +complex, 1d ~complex) -> complex128
 def inner(a: Sequence[complex], b: list[complex]) -> np.complex128: ...
 @overload  # (1d T, 2d T) -> 1d T
-def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray1D[ScalarT], b: Array2D[ScalarT]) -> _Masked1D[ScalarT]: ...
+def inner(a: _ToArray1D[_AnyNumericObjectT], b: Array2D[_AnyNumericObjectT]) -> _Masked1D[_AnyNumericObjectT]: ...  # noqa: UP047
 @overload  # (2d T, 1d T) -> 1d T
-def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray2D[ScalarT], b: Array1D[ScalarT]) -> _Masked1D[ScalarT]: ...
+def inner(a: _ToArray2D[_AnyNumericObjectT], b: Array1D[_AnyNumericObjectT]) -> _Masked1D[_AnyNumericObjectT]: ...  # noqa: UP047
 @overload  # (2d T, 2d T) -> 2d _Masked1D
-def inner[ScalarT: _InnerScalar | np.object_](a: _ToArray2D[ScalarT], b: Array2D[ScalarT]) -> _Masked2D[ScalarT]: ...
+def inner(a: _ToArray2D[_AnyNumericObjectT], b: Array2D[_AnyNumericObjectT]) -> _Masked2D[_AnyNumericObjectT]: ...  # noqa: UP047
 @overload  # fallback
 def inner(a: ArrayLike, b: ArrayLike) -> Any: ...
 
@@ -4369,6 +4386,14 @@ def convolve(
 #
 def allequal(a: ArrayLike, b: ArrayLike, fill_value: bool = True) -> bool: ...
 def allclose(a: ArrayLike, b: ArrayLike, masked_equal: bool = True, rtol: float = 1e-5, atol: float = 1e-8) -> bool: ...
+def assert_array_equal(
+    actual: object,
+    desired: object,
+    err_msg: object = "",
+    verbose: bool = True,
+    *,
+    strict: bool = False,
+) -> None: ...
 
 #
 def fromflex[ShapeT: _Shape](fxarray: np.ndarray[ShapeT, np.dtype[np.void]]) -> MaskedArray[ShapeT, np.dtype[Incomplete]]: ...

@@ -82,6 +82,7 @@ from .multiarray import (
     datetime_as_string,
     datetime_data,
     is_busday,
+    issubdtype,
 )
 
 __all__ = [
@@ -166,7 +167,6 @@ class _TypeCodes(TypedDict):
     All: L["?bhilqnpBHILQNPefdgFDGSUVOMm"]
 
 def isdtype(dtype: dtype | type, kind: DTypeLike | tuple[DTypeLike, ...]) -> py_bool: ...
-def issubdtype(arg1: DTypeLike | None, arg2: DTypeLike | None) -> py_bool: ...
 
 typecodes: Final[_TypeCodes] = ...
 ScalarType: Final[

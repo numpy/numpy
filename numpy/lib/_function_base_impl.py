@@ -1805,8 +1805,6 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         Size of the range over which the input wraps. By default, it is
         ``2 pi``.
 
-        .. versionadded:: 1.21.0
-
     Returns
     -------
     out : ndarray
@@ -2763,8 +2761,6 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
 
-        .. versionadded:: 1.20
-
     Returns
     -------
     out : ndarray
@@ -2967,8 +2963,6 @@ def corrcoef(x, y=None, rowvar=True, *,
     dtype : data-type, optional
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
-
-        .. versionadded:: 1.20
 
     Returns
     -------
@@ -4147,10 +4141,6 @@ def percentile(a,
         * 'midpoint'
         * 'nearest'
 
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
-
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -4348,10 +4338,6 @@ def quantile(a,
         * 'nearest'
 
         See Notes for details.
-
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
@@ -4593,7 +4579,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     ) - 1
 
 
-def _get_gamma(virtual_indexes, previous_indexes, method):
+def _get_gamma(virtual_indexes, method):
     """
     Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
@@ -4601,8 +4587,6 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     virtual_indexes : array_like
         The indexes where the percentile is supposed to be found in the sorted
         sample.
-    previous_indexes : array_like
-        The floor values of virtual_indexes.
     method : dict
         The interpolation method chosen, which may have a specific rule
         modifying gamma.
@@ -4610,7 +4594,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     gamma is usually the fractional part of virtual_indexes but can be modified
     by the interpolation method.
     """
-    gamma = np.asanyarray(virtual_indexes - previous_indexes)
+    gamma = np.asanyarray(virtual_indexes - np.floor(virtual_indexes))
     gamma = method["fix_gamma"](gamma, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
@@ -4793,8 +4777,13 @@ def _quantile(
             raise ValueError(
                 f"{method!r} is not a valid method. "
                 f"Use one of: {valid_methods}") from None
+
+        idx_quantiles = quantiles
+        if quantiles.dtype.type is np.float16:
+            idx_quantiles = quantiles.astype(np.float64, copy=False)
+
         virtual_indexes = method_props["get_virtual_index"](values_count,
-                                                            quantiles)
+                                                            idx_quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
 
         if method_props["fix_gamma"] is None:
@@ -4836,11 +4825,12 @@ def _quantile(
             previous = arr[previous_indexes]
             next = arr[next_indexes]
             # --- Linear interpolation
-            gamma = _get_gamma(virtual_indexes, previous_indexes,
-                               method_props)
+            gamma = _get_gamma(virtual_indexes, method_props)
             if weak_q:
                 gamma = float(gamma)
             else:
+                if idx_quantiles.dtype != quantiles.dtype:
+                    gamma = gamma.astype(quantiles.dtype, copy=False)
                 result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
                 gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
@@ -5257,11 +5247,7 @@ def delete(arr, obj, axis=None):
         Input array.
     obj : slice, int, array-like of ints or bools
         Indicate indices of sub-arrays to remove along the specified axis.
-
-        .. versionchanged:: 1.19.0
-            Boolean indices are now treated as a mask of elements to remove,
-            rather than being cast to the integers 0 and 1.
-
+        Boolean arrays are treated as a mask of elements to remove.
     axis : int, optional
         The axis along which to delete the subarray defined by `obj`.
         If `axis` is None, `obj` is applied to the flattened array.
@@ -5655,6 +5641,15 @@ def append(arr, values, axis=None):
     insert : Insert elements into an array.
     delete : Delete elements from an array.
 
+    Notes
+    -----
+    .. deprecated:: 2.6
+        When ``axis=None``, Python numeric scalars currently promote as if
+        converted to arrays. A future release will use the scalar promotion
+        rules of ``np.concatenate((arr, values), axis=None)``. Call
+        `concatenate` directly to use the future behavior, or pass its
+        ``dtype=`` argument to choose the result dtype explicitly.
+
     Examples
     --------
     >>> import numpy as np
@@ -5686,13 +5681,34 @@ def append(arr, values, axis=None):
     `float64` when appended with dtype `int64`
 
     """
-    arr = asanyarray(arr)
-    if axis is None:
-        if arr.ndim != 1:
-            arr = arr.ravel()
-        values = ravel(values)
-        axis = arr.ndim - 1
-    return concatenate((arr, values), axis=axis)
+    if axis is not None:
+        return concatenate((arr, values), axis=axis)
+    conv = _array_converter(arr, values)
+    arrays = conv.as_arrays(pyscalars="convert")
+    if conv.has_pyscalars:
+        # DEPRECATED 2026-09-15, NumPy 2.6
+        result = concatenate(arrays, axis=None)
+        try:
+            future_dtype = conv.result_type()
+        except np.exceptions.DTypePromotionError:
+            change = "these inputs have no common dtype and will raise an error"
+        else:
+            if future_dtype == result.dtype:
+                return result
+            change = (
+                f"these inputs will use dtype {future_dtype}, which may "
+                "round values differently or raise an error")
+        warnings.warn(
+            "np.append converted Python numeric scalars to arrays before "
+            f"choosing the result dtype, producing dtype {result.dtype}. "
+            "This behavior will change in a future release, "
+            f"{change}. Use np.concatenate((arr, values), axis=None) for the "
+            f"future behavior; add dtype={str(result.dtype)!r} to that call to "
+            "keep the current result.", FutureWarning, stacklevel=2)
+        return result
+    inputs = tuple(obj if scalar else a for obj, scalar, a in
+                   zip((arr, values), conv.scalar_input, arrays))
+    return concatenate(inputs, axis=None)
 
 
 def _digitize_dispatcher(x, bins, right=None):
@@ -5751,8 +5767,6 @@ def digitize(x, bins, right=False):
     If values in `x` are such that they fall outside the bin range,
     attempting to index `bins` with the indices that `digitize` returns
     will result in an IndexError.
-
-    .. versionadded:: 1.10.0
 
     `numpy.digitize` is  implemented in terms of `numpy.searchsorted`.
     This means that a binary search is used to bin the values, which scales

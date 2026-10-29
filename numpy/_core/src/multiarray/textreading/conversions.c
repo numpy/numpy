@@ -15,6 +15,7 @@
 
 #include "alloc.h"
 #include "array_coercion.h"
+#include "npy_pycompat.h"
 
 
 /*

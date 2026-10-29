@@ -1394,8 +1394,6 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
 
-        .. versionadded:: 1.22.0
-
     Returns
     -------
     index_array : ndarray of ints
@@ -1493,8 +1491,6 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -2636,8 +2632,6 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
         Elements to include in checking for any `True` values.
         See `~numpy.ufunc.reduce` for details.
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     any : bool or ndarray
@@ -2748,8 +2742,6 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     where : array_like of bool, optional
         Elements to include in checking for all `True` values.
         See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -3456,6 +3448,29 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
+def _overrides_min_max(a):
+    cls = type(a)
+    return (getattr(cls, 'min', mu.ndarray.min) is not mu.ndarray.min
+            or getattr(cls, 'max', mu.ndarray.max) is not mu.ndarray.max)
+
+
+def _minmax_separate(a, axis, out, keepdims, initial, where):
+    out_min, out_max = out if out is not None else (None, None)
+    initial_min, initial_max = (initial if isinstance(initial, tuple)
+                                else (initial, initial))
+    # out_min may alias the operands of the maximum, so the minimum goes to a
+    # temporary that is copied into out_min after the maximum is computed
+    tmp_min = None if out_min is None else np.empty_like(out_min)
+    min_value = min(a, axis=axis, out=tmp_min, keepdims=keepdims,
+                    initial=initial_min, where=where)
+    max_value = max(a, axis=axis, out=out_max, keepdims=keepdims,
+                    initial=initial_max, where=where)
+    if out_min is None:
+        return min_value, max_value
+    out_min[...] = min_value
+    return out_min, max_value
+
+
 def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
                        where=None):
     return (a, *out) if type(out) is tuple else (a, out)
@@ -3536,17 +3551,14 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     (array([0, 2]), array([1, 3]))
 
     """
+    if (type(a) is not mu.ndarray and not hasattr(a, 'minmax')
+            and _overrides_min_max(a)):
+        return _minmax_separate(a, axis, out, keepdims, initial, where)
     try:
         return _wrapreduction(a, um.minimummaximum, 'minmax', axis, None, out,
                               keepdims, initial, where)
     except np._core._exceptions._UFuncNoLoopError:
-        out_min, out_max = out if out is not None else (None, None)
-        initial_min, initial_max = (initial if type(initial) is tuple
-                                    else (initial, initial))
-        return (min(a, axis=axis, out=out_min, keepdims=keepdims,
-                    initial=initial_min, where=where),
-                max(a, axis=axis, out=out_max, keepdims=keepdims,
-                    initial=initial_max, where=where))
+        return _minmax_separate(a, axis, out, keepdims, initial, where)
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
@@ -4015,8 +4027,6 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
     where : array_like of bool, optional
         Elements to include in the mean. See `~numpy.ufunc.reduce` for details.
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     m : ndarray, see dtype parameter above
@@ -4148,8 +4158,6 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     where : array_like of bool, optional
         Elements to include in the standard deviation.
         See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.20.0
 
     mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
@@ -4352,8 +4360,6 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     where : array_like of bool, optional
         Elements to include in the variance. See `~numpy.ufunc.reduce` for
         details.
-
-        .. versionadded:: 1.20.0
 
     mean : array like, optional
         Provide the mean to prevent its recalculation. The mean should have

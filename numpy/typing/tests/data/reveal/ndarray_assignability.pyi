@@ -2,7 +2,6 @@ from typing import Any, Protocol, assert_type
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _64Bit
 
 class CanAbs[T](Protocol):
     def __abs__(self, /) -> T: ...
@@ -42,9 +41,7 @@ assert_type(do_abs(f8_1d), npt.Array1D[np.float64])
 assert_type(do_abs(g_1d), npt.Array1D[np.longdouble])
 
 assert_type(do_abs(c8_1d), npt.Array1D[np.float32])
-# NOTE: Unfortunately it's not possible to have this return a `float64` sctype, see
-# https://github.com/python/mypy/issues/14070
-assert_type(do_abs(c16_1d), np.ndarray[tuple[int], np.dtype[np.floating[_64Bit]]])
+assert_type(do_abs(c16_1d), npt.Array1D[np.float64])
 assert_type(do_abs(G_1d), npt.Array1D[np.longdouble])
 
 assert_type(do_invert(b1_1d), npt.Array1D[np.bool])

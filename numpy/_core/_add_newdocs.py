@@ -944,8 +944,6 @@ add_newdoc('numpy._core.multiarray', 'array',
         .. versionadded:: 2.4.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1071,8 +1069,6 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1168,8 +1164,6 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
 
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray or an ndarray subclass
@@ -1218,8 +1212,6 @@ add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
     dtype : str or dtype object, optional
         Data-type of returned array.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1283,8 +1275,6 @@ add_newdoc('numpy._core.multiarray', 'asfortranarray',
     dtype : str or dtype object, optional
         By default, the data-type is inferred from the input data.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1358,8 +1348,6 @@ add_newdoc('numpy._core.multiarray', 'empty',
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1435,8 +1423,6 @@ add_newdoc('numpy._core.multiarray', 'zeros',
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1511,8 +1497,6 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
             raw bytes, was removed. Use `frombuffer` instead to read raw bytes.
 
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1604,8 +1588,6 @@ add_newdoc('numpy._core.multiarray', 'fromiter',
         which means all data is read.
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1675,8 +1657,6 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
         Only permitted for binary files.
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     See also
     --------
     load, save
@@ -1745,8 +1725,6 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
     offset : int, optional
         Start reading the buffer from this offset (in bytes); default: 0.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1894,8 +1872,6 @@ add_newdoc('numpy._core.multiarray', 'arange',
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     arange : ndarray
@@ -1971,6 +1947,75 @@ add_newdoc('numpy._core.multiarray', '_reconstruct',
     """_reconstruct(subtype, shape, dtype)
 
     Construct an empty array. Used by Pickle.
+
+    """)
+
+add_newdoc('numpy._core.multiarray', 'issubdtype',
+    r"""
+    issubdtype(arg1, arg2)
+    --
+
+    issubdtype(arg1, arg2)
+
+    Returns True if first argument is a typecode lower/equal in type hierarchy.
+
+    .. note::
+        This function relies on the scalar type hierarchy.  That works in
+        practice for NumPy dtypes and some user defined ones, but does not
+        generalize.  `isdtype` has slightly clearer semantics, although
+        NumPy 2.6 or later is required for it to work with user defined
+        dtypes in general.
+
+    Parameters
+    ----------
+    arg1, arg2 : dtype_like
+        `dtype` or object coercible to one
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    isdtype : Similar function with clearer defined semantics.
+    :ref:`arrays.scalars` : Overview of the numpy type hierarchy.
+
+    Examples
+    --------
+    `issubdtype` can be used to check the type of arrays:
+
+    >>> ints = np.array([1, 2, 3], dtype=np.int32)
+    >>> np.issubdtype(ints.dtype, np.integer)
+    True
+    >>> np.issubdtype(ints.dtype, np.floating)
+    False
+
+    >>> floats = np.array([1, 2, 3], dtype=np.float32)
+    >>> np.issubdtype(floats.dtype, np.integer)
+    False
+    >>> np.issubdtype(floats.dtype, np.floating)
+    True
+
+    Similar types of different sizes are not subdtypes of each other:
+
+    >>> np.issubdtype(np.float64, np.float32)
+    False
+    >>> np.issubdtype(np.float32, np.float64)
+    False
+
+    but both are subtypes of `floating`:
+
+    >>> np.issubdtype(np.float64, np.floating)
+    True
+    >>> np.issubdtype(np.float32, np.floating)
+    True
+
+    For convenience, dtype-like objects are allowed too:
+
+    >>> np.issubdtype('S1', np.bytes_)
+    True
+    >>> np.issubdtype('i4', np.signedinteger)
+    True
 
     """)
 
@@ -3162,8 +3207,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
 
     Return a parametrized wrapper around the `~numpy.ndarray` type.
 
-    .. versionadded:: 1.22
-
     Returns
     -------
     alias : types.GenericAlias
@@ -4185,7 +4228,8 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Raises
     ------
     ValueError
-        If `a` does not own its own data or references or views to may exist.
+        If `a` is read-only, does not own its data, or references or views
+        to it may exist.
 
     See Also
     --------
@@ -5619,16 +5663,25 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
         If not provided or None, a freshly-allocated array is returned.
         For consistency with ``ufunc.__call__``, if passed as a keyword
         argument, can be Ellipses (``out=...``, which has the same effect
-        as None as an array is always returned), or a 1-element tuple.
+        as None as an array is always returned), or a tuple with one entry
+        per output. For a ufunc with a single output, a 1-element tuple is
+        also accepted.
 
     Returns
     -------
-    r : ndarray
+    r : ndarray or tuple of ndarray
         The reduced values. If `out` was supplied, `r` is a reference to
-        `out`.
+        `out`. For a ufunc with more than one output whose loop implementation
+        registers a reduction loop, `r` is instead a tuple with one array per
+        output.
 
     Notes
     -----
+    ``reduceat`` normally only supports ufuncs with a single output. A ufunc
+    with more than one output can still be used if its loop implementation
+    registers a dedicated reduction loop. Otherwise, calling it raises a
+    ``TypeError``.
+
     A descriptive example:
 
     If ``array`` is 1-D, the function ``ufunc.accumulate(array)`` is the same as
@@ -6628,8 +6681,6 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('__class_getitem__',
 
     Return a parametrized wrapper around the `~numpy.dtype` type.
 
-    .. versionadded:: 1.22
-
     Returns
     -------
     alias : types.GenericAlias
@@ -6960,8 +7011,6 @@ add_newdoc('numpy._core.numerictypes', 'number', ('__class_getitem__',
     number.__class_getitem__(item, /)
 
     Return a parametrized wrapper around the `~numpy.number` type.
-
-    .. versionadded:: 1.22
 
     Returns
     -------

@@ -3,6 +3,17 @@ import numpy as np
 from .common import Benchmark
 
 
+class IsSubDType(Benchmark):
+    params = [[np.dtype('f8'), np.float64, np.floating]] * 2
+    param_names = ['arg1', 'arg2']
+
+    def time_issubdtype(self, arg1, arg2):
+        # Time 100 calls, amortizing method and attribute-lookup overhead.
+        issubdtype = np.issubdtype
+        for _ in range(100):
+            issubdtype(arg1, arg2)
+
+
 class Core(Benchmark):
     def setup(self):
         self.l100 = range(100)

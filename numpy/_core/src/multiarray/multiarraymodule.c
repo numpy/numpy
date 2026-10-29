@@ -78,7 +78,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "stringdtype/dtype.h"
 
 #include "get_attr_string.h"
-#include "public_dtype_api.h"  /* _fill_dtype_api */
 #include "textreading/readtext.h"  /* _readtext_from_file_object */
 
 #include "npy_dlpack.h"
@@ -951,7 +950,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         Py_INCREF(ap2);
     }
 
-    ret = PyArray_MatrixProduct2((PyObject *)ap1, ap2t, NULL);
+    ret = PyArray_MatrixProduct_int((PyObject *)ap1, ap2t, NULL, NULL);
     if (ret == NULL) {
         goto fail;
     }
@@ -979,15 +978,14 @@ fail:
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
 {
-    return PyArray_MatrixProduct2(op1, op2, NULL);
+    return PyArray_MatrixProduct_int(op1, op2, NULL, "PyArray_MatrixProduct");
 }
 
-/*NUMPY_API
- * Numeric.matrixproduct2(a,v,out)
- * just like inner product but does the swapaxes stuff on the fly
- */
+/* Internal matrix product; warns as `funcname` when a.ndim >= 2 and b.ndim > 2.
+ * Pass funcname=NULL to skip the warning (used by np.inner). */
 NPY_NO_EXPORT PyObject *
-PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
+PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
+                          const char *funcname)
 {
     PyArrayObject *ap1, *ap2, *out_buf = NULL, *result = NULL;
     PyArrayIterObject *it1, *it2;
@@ -1059,6 +1057,18 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (nd > NPY_MAXDIMS) {
         PyErr_SetString(PyExc_ValueError, "dot: too many dimensions in result");
         goto fail;
+    }
+
+    /* Deprecated NumPy 2.6: warn when a.ndim >= 2 and b.ndim > 2 */
+    if (funcname != NULL && PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
+        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
+                "%s received arrays with a.ndim >= 2 and b.ndim > 2. "
+                "This places the leading dimensions of b in the middle of "
+                "the result, which is deprecated and will eventually raise "
+                "an error. Use numpy.tensordot(a, b, axes=[-1, -2]) instead. "
+                "(Deprecated NumPy 2.6)", funcname) < 0) {
+            goto fail;
+        }
     }
     j = 0;
     for (i = 0; i < PyArray_NDIM(ap1) - 1; i++) {
@@ -1147,6 +1157,17 @@ fail:
     Py_XDECREF(result);
     Py_XDECREF(typec);
     return NULL;
+}
+
+
+/*NUMPY_API
+ * Numeric.matrixproduct2(a,v,out)
+ * just like inner product but does the swapaxes stuff on the fly
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
+{
+    return PyArray_MatrixProduct_int(op1, op2, out, "PyArray_MatrixProduct2");
 }
 
 
@@ -2598,7 +2619,8 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy),
             return NULL;
         }
     }
-    ret = (PyArrayObject *)PyArray_MatrixProduct2(a, v, (PyArrayObject *)o);
+    ret = (PyArrayObject *)PyArray_MatrixProduct_int(
+            a, v, (PyArrayObject *)o, "numpy.dot");
     return PyArray_Return(ret);
 }
 
@@ -3583,6 +3605,88 @@ array_can_cast_safely(PyObject *self,
     Py_XDECREF(d1);
     Py_XDECREF(d2);
     return retobj;
+}
+
+/* Built-in dtypes do not override __bases__ or .type. */
+static int
+issubdtype_is_builtin_descr(PyObject *obj)
+{
+    return PyArray_DescrCheck(obj) &&
+            ((unsigned int)((PyArray_Descr *)obj)->type_num < NPY_NTYPES_LEGACY ||
+             Py_IS_TYPE(obj, (PyTypeObject *)&PyArray_StringDType));
+}
+
+/* Return the scalar type as a new reference. */
+static PyObject *
+issubdtype_scalar_type(PyObject *obj)
+{
+    if (issubdtype_is_builtin_descr(obj)) {
+        return Py_NewRef((PyObject *)((PyArray_Descr *)obj)->typeobj);
+    }
+    if (!PyUnicode_CheckExact(obj) && !PyBytes_CheckExact(obj) && obj != Py_None) {
+        int is_scalar = PyObject_IsSubclass(
+                obj, (PyObject *)&PyGenericArrType_Type);
+        if (is_scalar > 0) {
+            return Py_NewRef(obj);
+        }
+        if (is_scalar < 0) {
+            if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+                return NULL;
+            }
+            PyErr_Clear();
+        }
+    }
+
+    PyArray_Descr *descr;
+    if (!PyArray_DescrConverter(obj, &descr)) {
+        return NULL;
+    }
+    PyObject *result;
+    if (issubdtype_is_builtin_descr((PyObject *)descr)) {
+        result = Py_NewRef((PyObject *)descr->typeobj);
+    }
+    else {
+        /* User dtypes may override .type. */
+        result = PyObject_GetAttrString((PyObject *)descr, "type");
+    }
+    Py_DECREF(descr);
+    return result;
+}
+
+static PyObject *
+array_issubdtype(PyObject *NPY_UNUSED(dummy), PyObject *const *args,
+                Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyObject *arg1, *arg2;
+    if (len_args == 2 && kwnames == NULL) {
+        arg1 = args[0];
+        arg2 = args[1];
+    }
+    else {
+        NPY_PREPARE_ARGPARSER;
+        if (npy_parse_arguments("issubdtype", args, len_args, kwnames,
+                {"arg1", NULL, &arg1}, {"arg2", NULL, &arg2}) < 0) {
+            return NULL;
+        }
+    }
+
+    PyObject *type1 = issubdtype_scalar_type(arg1);
+    if (type1 == NULL) {
+        return NULL;
+    }
+    PyObject *type2 = issubdtype_scalar_type(arg2);
+    if (type2 == NULL) {
+        Py_DECREF(type1);
+        return NULL;
+    }
+    /* Allow classes to customize subclass checks via __subclasscheck__. */
+    int result = PyObject_IsSubclass(type1, type2);
+    Py_DECREF(type1);
+    Py_DECREF(type2);
+    if (result < 0) {
+        return NULL;
+    }
+    return PyBool_FromLong(result);
 }
 
 static PyObject *
@@ -4817,6 +4921,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"lexsort",
         (PyCFunction)array_lexsort,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"issubdtype",
+        (PyCFunction)array_issubdtype,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"putmask",
         (PyCFunction)array_putmask,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -5497,8 +5604,12 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
         return -1;
     }
 
-    /* Create all abstract DType classes */
-    if (initialize_abstract_dtypes() < 0) {
+    /*
+     * Create the abstract DType classes and expose them on ``numpy.dtypes``.
+     * Must run before ``set_typeinfo`` so the legacy concrete DType classes
+     * can use them as ``tp_base`` directly.
+     */
+    if (initialize_abstract_dtypes(state) < 0) {
         return -1;
     }
 
@@ -5506,22 +5617,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
     if (set_typeinfo(d) != 0) {
         return -1;
     }
-
-    /*
-     * Map ``str``/``bytes``/``bool`` to the matching legacy DTypes.  Done
-     * after ``set_typeinfo`` since that is what wraps those DTypes.
-     */
-    PyArray_DTypeMeta *dt;
-    dt = typenum_to_dtypemeta(NPY_UNICODE);
-    if (_PyArray_MapPyTypeToDType(dt, &PyUnicode_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-    dt = typenum_to_dtypemeta(NPY_STRING);
-    if (_PyArray_MapPyTypeToDType(dt, &PyBytes_Type, NPY_FALSE) < 0) {
-        return -1;
-    }
-    dt = typenum_to_dtypemeta(NPY_BOOL);
-    if (_PyArray_MapPyTypeToDType(dt, &PyBool_Type, NPY_FALSE) < 0) {
+    if (map_legacy_pytypes_to_dtypes() < 0) {
         return -1;
     }
 
@@ -5647,7 +5743,7 @@ _multiarray_umath_exec_impl(PyObject *m, multiarray_umath_state *state) {
      * Export the API tables
      */
     c_api = PyCapsule_New((void *)PyArray_API, NULL, NULL);
-    /* The dtype API is not auto-filled/generated via Python scripts: */
+    /* Fill the DType slots at runtime, after DType initialization. */
     _fill_dtype_api(PyArray_API);
     if (c_api == NULL) {
         return -1;
