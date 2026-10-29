@@ -561,8 +561,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
             goto finish;
         }
         if (indices[0].value) {
-            ret = PyArray_ToScalar(self->dataptr, self->ao);
-            goto finish;
+            index_type = HAS_INTEGER;
+            indices[0].value = 0;
         }
         else { /* empty array */
             npy_intp ii = 0;
@@ -834,11 +834,12 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
                       "and may be removed in a future version. (Deprecated NumPy 2.4)") < 0) {
             goto finish;
         }
-        ret = 0;
-        if (indices[0].value) {
-            ret = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);
+        if (!indices[0].value) {
+            ret = 0;
+            goto finish;
         }
-        goto finish;
+        index_type = HAS_INTEGER;
+        indices[0].value = 0;
     }
 
     PyArray_ITER_RESET(self);
