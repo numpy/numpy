@@ -162,7 +162,7 @@ typing = [
 linter = [
     "cython-lint",
     "ruff==0.16.10",
-    "GitPython==3.2.1",
+    "gitpython==3.2.1",
     "spin",
 ]
 
@@ -206,7 +206,7 @@ release = [
     # for building, testing, and the creation of documentation.
     # changelog.py
     "pygithub",
-    "gitpython==3.2.0",
+    "gitpython==3.2.1",
     # uploading release documentation
     "packaging",
 ]
