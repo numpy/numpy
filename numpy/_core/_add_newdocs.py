@@ -5995,8 +5995,9 @@ add_newdoc('numpy._core.multiarray', 'dtype',
         or a comma-separated string. If a struct dtype is being created,
         this also sets a sticky alignment flag ``isalignedstruct``.
     copy : bool, optional
-        Make a new copy of the data-type object. If ``False``, the result
-        may just be a reference to a built-in data-type object.
+        Intended only for unpickling. If ``True``, copy shared legacy dtype
+        singletons so their state can be restored safely. Other dtype
+        instances may be returned unchanged.
     metadata : dict, optional
         An optional dictionary with dtype metadata.
 

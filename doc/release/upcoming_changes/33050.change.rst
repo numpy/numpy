@@ -1,0 +1,2 @@
+* Byte-order changes for legacy user-defined dtypes are now correctly rejected
+  with ``casting="no"``.
