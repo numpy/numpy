@@ -150,6 +150,102 @@ a number of ways:
 Users with a very large amount of parallelism will want to consult
 :ref:`upgrading-pcg64`.
 
+API reference
+-------------
+
+Recommended Generator interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `Generator` class is the recommended interface for generating
+random numbers. Use `default_rng` to create a new generator.
+
+.. autosummary::
+
+   default_rng
+   Generator
+
+Accessing the BitGenerator and spawning
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+
+   Generator.bit_generator
+   Generator.spawn
+
+Simple random data
+^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+
+   Generator.integers
+   Generator.random
+   Generator.choice
+   Generator.bytes
+
+Permutations
+^^^^^^^^^^^^
+
+.. autosummary::
+
+   Generator.shuffle
+   Generator.permutation
+   Generator.permuted
+
+Distributions
+^^^^^^^^^^^^^
+
+.. autosummary::
+
+   Generator.beta
+   Generator.binomial
+   Generator.chisquare
+   Generator.dirichlet
+   Generator.exponential
+   Generator.f
+   Generator.gamma
+   Generator.geometric
+   Generator.gumbel
+   Generator.hypergeometric
+   Generator.laplace
+   Generator.logistic
+   Generator.lognormal
+   Generator.logseries
+   Generator.multinomial
+   Generator.multivariate_hypergeometric
+   Generator.multivariate_normal
+   Generator.negative_binomial
+   Generator.noncentral_chisquare
+   Generator.noncentral_f
+   Generator.normal
+   Generator.pareto
+   Generator.poisson
+   Generator.power
+   Generator.rayleigh
+   Generator.standard_cauchy
+   Generator.standard_exponential
+   Generator.standard_gamma
+   Generator.standard_normal
+   Generator.standard_t
+   Generator.triangular
+   Generator.uniform
+   Generator.vonmises
+   Generator.wald
+   Generator.weibull
+   Generator.zipf
+
+Legacy interface
+~~~~~~~~~~~~~~~~
+
+The `RandomState` class provides the legacy interface for generating
+random numbers and is retained for compatibility. New code should use
+`Generator`.
+
+.. autosummary::
+
+   RandomState
+   random_sample
+   randint
+
 Concepts
 --------
 .. toctree::
