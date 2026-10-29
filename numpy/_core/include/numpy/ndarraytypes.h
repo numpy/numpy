@@ -247,12 +247,6 @@ typedef enum {
 #define NPY_SAME_VALUE_CASTING_FLAG 64
 #endif
 
-#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
-// Marks casts that will require casting="unsafe" after a deprecation expires
-// Currently needed by text/bytes coercion deprecation from NumPy 2.6.
-#define _NPY_CAST_WILL_BE_UNSAFE 128
-#endif
-
 /* For specifying allowed casting in operations which support it */
 typedef enum {
         _NPY_ERROR_OCCURRED_IN_CAST = -1,
@@ -268,6 +262,13 @@ typedef enum {
         NPY_UNSAFE_CASTING=4,
 #if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
         NPY_SAME_VALUE_CASTING=NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG,
+#endif
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+        /*
+         * Marks casts that will require casting="unsafe" after a deprecation
+         * expires. Currently needed by the text/bytes deprecation from NumPy 2.6.
+         */
+        _NPY_CAST_WILL_BE_UNSAFE=128,
 #endif
 } NPY_CASTING;
 
