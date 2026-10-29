@@ -157,11 +157,8 @@ object_minimummaximum_loop(PyArrayMethod_Context *NPY_UNUSED(context),
             Py_XDECREF(hi);
             return -1;
         }
-        PyObject *old1 = *o1, *old2 = *o2;
-        *o1 = lo;
-        *o2 = hi;
-        Py_XDECREF(old1);
-        Py_XDECREF(old2);
+        Py_XSETREF(*o1, lo);
+        Py_XSETREF(*o2, hi);
         in1 += strides[0]; in2 += strides[1];
         out1 += strides[2]; out2 += strides[3];
     }
@@ -193,11 +190,8 @@ object_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
             Py_XDECREF(hi);
             return -1;
         }
-        PyObject *old_min = *o_min, *old_max = *o_max;
-        *o_min = lo;
-        *o_max = hi;
-        Py_XDECREF(old_min);
-        Py_XDECREF(old_max);
+        Py_XSETREF(*o_min, lo);
+        Py_XSETREF(*o_max, hi);
         acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
         out_min += strides[3]; out_max += strides[4];
     }
