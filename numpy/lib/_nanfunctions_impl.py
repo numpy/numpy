@@ -1591,6 +1591,8 @@ def _nanquantile_ureduce_func(
         result = _nanquantile_1d(part, q, overwrite_input, method,
                                  weights=wgt, weak_q=weak_q)
     # Note that this code could try to fill in `out` right away
+    elif weights is None and _nanquantile_can_group(a, q, axis):
+        result = _nanquantile_grouped(a, q, axis, method, weak_q)
     elif weights is None:
         result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
                                      overwrite_input, method, weights, weak_q)
@@ -1625,6 +1627,64 @@ def _nanquantile_ureduce_func(
     if out is not None:
         out[...] = result
     return result
+
+
+def _nanquantile_can_group(a, q, axis):
+    """
+    Whether `_nanquantile_grouped` can replace `apply_along_axis` here.
+
+    The grouped path sorts every slice, so it only pays off when there are
+    more slices than elements per slice, which is where the per-slice
+    overhead of `apply_along_axis` dominates (gh-16575).
+    """
+    return (type(a) is np.ndarray
+            and a.dtype.kind in "biufmM"
+            and q.ndim <= 2
+            and a.size // a.shape[axis] > a.shape[axis])
+
+
+def _nanquantile_grouped(a, q, axis, method, weak_q):
+    """
+    Compute ``_nanquantile_1d`` for every slice of `a` along `axis` at once.
+
+    Sorting moves the NaNs to the end of each slice, so the non-NaN values
+    of a slice holding ``n`` of them are its first ``n`` sorted elements.
+    Slices sharing the same ``n`` are then reduced by a single call to
+    `fnb._quantile`, the function `_nanquantile_1d` ends up calling on each
+    slice, so this loops over the distinct counts rather than the slices.
+    """
+    arr = np.moveaxis(a, axis, -1)
+    batch_shape = arr.shape[:-1]
+    arr = arr.reshape(-1, arr.shape[-1])
+    # `apply_along_axis` gives the result the dtype of the first slice's
+    # result and casts the other slices into it; keep that dtype so that the
+    # output does not change.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        first_dtype = np.asarray(
+            _nanquantile_1d(arr[0], q, False, method, None, weak_q)).dtype
+    arr = np.sort(arr, axis=-1)
+    counts = arr.shape[-1] - np.count_nonzero(np.isnan(arr), axis=-1)
+
+    order = np.argsort(counts, kind="stable")
+    groups = np.split(order, np.flatnonzero(np.diff(counts[order])) + 1)
+    results = []
+    for idx in groups:
+        n = counts[idx[0]]
+        if n == 0:
+            warnings.warn("All-NaN slice encountered", RuntimeWarning,
+                          stacklevel=6)
+            # Use the quantile implementation to preserve its output dtype.
+            part = np.full((1, idx.size), np.nan, dtype=arr.dtype)
+        else:
+            part = arr[idx, :n].T
+        results.append(fnb._quantile(part, q, axis=0, method=method,
+                                     weak_q=weak_q))
+
+    result = np.empty(q.shape + (arr.shape[0],), dtype=first_dtype)
+    for idx, res in zip(groups, results):
+        result[..., idx] = res
+    return result.reshape(q.shape + batch_shape)
 
 
 def _nanquantile_1d(

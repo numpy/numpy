@@ -1423,6 +1423,49 @@ class TestNanFunctions_Quantile:
         assert z == np.float16(1.0)
         assert z.dtype == np.float16
 
+    @pytest.mark.parametrize("method", list(_QuantileMethods))
+    @pytest.mark.parametrize("q", [0.4, [0.0, 0.25, 1.0], [[0.1], [0.9]]])
+    @pytest.mark.parametrize("axis", [0, 1, 2])
+    def test_many_short_slices(self, method, q, axis):
+        # gh-16575: with more slices than elements per slice, the slices are
+        # grouped by NaN count instead of being reduced one by one. Check them
+        # against np.quantile on the non-NaN values of each slice.
+        rng = np.random.default_rng(16575)
+        shape = [20, 21, 22]
+        shape[axis] = 5
+        a = rng.integers(-3, 4, size=shape).astype(np.float64)
+        a[rng.random(shape) < 0.4] = np.nan
+        a = np.moveaxis(a, axis, -1)
+        a[0, 0] = np.nan  # at least one all-NaN slice
+        a[1, 1] = np.arange(5.)  # and one without NaN
+        a = np.moveaxis(a, -1, axis)
+
+        with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+            res = np.nanquantile(a, q, axis=axis, method=method)
+
+        q = np.asarray(q)
+        assert res.shape == q.shape + tuple(np.delete(a.shape, axis))
+        slices = np.moveaxis(a, axis, -1)
+        for idx in np.ndindex(slices.shape[:-1]):
+            values = slices[idx][~np.isnan(slices[idx])]
+            if values.size == 0:
+                assert np.isnan(res[(...,) + idx]).all()
+            else:
+                expected = np.quantile(values, q, method=method)
+                assert_array_equal(res[(...,) + idx], expected)
+
+    @pytest.mark.parametrize("dtype", ["m8[s]", "M8[s]"])
+    def test_many_short_slices_nat(self, dtype):
+        a = np.arange(60).reshape(20, 3).astype(dtype)
+        a[::2, 1:] = np.array("NaT", dtype=dtype)
+        a[3] = np.array("NaT", dtype=dtype)
+        with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+            res = np.nanquantile(a, 0.5, axis=1)
+        expected = [np.quantile(row[~np.isnat(row)], 0.5) if (~np.isnat(row)).any()
+                    else np.array("NaT", dtype=dtype) for row in a]
+        assert_array_equal(res, np.array(expected, dtype=res.dtype))
+
+
 @pytest.mark.parametrize("arr, expected", [
     # array of floats with some nans
     (np.array([np.nan, 5.0, np.nan, np.inf]),
