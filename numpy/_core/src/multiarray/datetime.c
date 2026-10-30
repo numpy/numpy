@@ -33,6 +33,7 @@
 
 #include "dtype_transfer.h"
 #include "lowlevel_strided_loops.h"
+#include "npy_extint128.h"
 
 #include <datetime.h>
 #include <time.h>
@@ -2605,6 +2606,32 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
 }
 
 /*
+ * Converts the days, seconds and microseconds of a Python timedelta to
+ * microseconds in '*out'.
+ *
+ * Returns 0 on success, and -1 with an OverflowError set if the result does
+ * not fit into an int64 or is NPY_DATETIME_NAT.
+ */
+static int
+pytimedelta_to_us(npy_int64 days, long seconds, long useconds,
+                  npy_timedelta *out)
+{
+    npy_extint128_t td128;
+    char overflow = 0;
+
+    td128 = mul_64_64(days, 24*60*60*1000000LL);
+    td128 = add_128(td128, mul_64_64(seconds, 1000000LL), &overflow);
+    td128 = add_128(td128, to_128(useconds), &overflow);
+    *out = to_64(td128, &overflow);
+    if (overflow || *out == NPY_DATETIME_NAT) {
+        PyErr_SetString(PyExc_OverflowError,
+                "Overflow when converting datetime.timedelta to timedelta64");
+        return -1;
+    }
+    return 0;
+}
+
+/*
  * Converts a PyObject * into a timedelta, in any of the forms supported
  *
  * If the units metadata isn't known ahead of time, set meta->base
@@ -2808,7 +2835,9 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             useconds = vals[2];
         }
 
-        td = days*(24*60*60*1000000LL) + seconds*1000000LL + useconds;
+        if (pytimedelta_to_us(days, seconds, useconds, &td) < 0) {
+            return -1;
+        }
 
         /* Use microseconds if none was specified */
         if (meta->base == NPY_FR_ERROR) {
