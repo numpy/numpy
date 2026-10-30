@@ -11327,16 +11327,25 @@ class TestArange:
         (4 + 4j,),
         (2 + 1j, 10),
         (np.complex128(4 + 4j),),
+        (np.complex64(4 + 4j),),
+        (np.clongdouble(4 + 4j),),
+        (np.array(4 + 4j),),
     ])
     def test_complex_without_step_raises(self, args):
         with pytest.raises(ValueError, match="step must be specified"):
             np.arange(*args)
 
-    def test_complex_with_real_values_still_works(self):
+    def test_complex_with_real_values(self):
+        assert_array_equal(np.arange(5, dtype=complex),
+                           np.array([0, 1, 2, 3, 4], dtype=complex))
         assert_array_equal(np.arange(0, 5, dtype=complex),
                            np.array([0, 1, 2, 3, 4], dtype=complex))
         assert_array_equal(np.arange(2.0, 10.0),
                            np.array([2., 3., 4., 5., 6., 7., 8., 9.]))
+
+    def test_complex_without_step_explicit_dtype_raises(self):
+        with pytest.raises(ValueError, match="step must be specified"):
+            np.arange(4 + 4j, dtype=complex)
 
     def test_byteswapped(self):
         res_be = np.arange(1, 1000, dtype=">i4")
