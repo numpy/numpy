@@ -4,6 +4,9 @@ import warnings
 import pytest
 
 import numpy as np
+from numpy._core._multiarray_umath import _get_sfloat_dtype
+from numpy._core._rational_tests import rational
+from numpy._utils import _pep440
 from numpy.testing import (
     assert_,
     assert_allclose,
@@ -13,6 +16,8 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+
+SF = _get_sfloat_dtype()
 
 # Setup for optimize einsum
 chars = 'abcdefghij'
@@ -83,6 +88,106 @@ class TestEinsum:
             a = np.arange(3)
             # einsum_path does not yet accept kwarg 'casting'
             np.einsum('ij->j', [a, a], casting='same_value')
+
+    @pytest.mark.parametrize("dtype,base", [
+        (rational, np.int64), (SF(1.), np.float64), (SF(2.), np.float64)],
+        ids=["rational", "sfloat", "sfloat-scaled"])
+    @pytest.mark.parametrize("subscripts,shapes", [
+        ("i->", [(3,)]),
+        ("ij->i", [(3, 4)]),
+        ("ii->", [(3, 3)]),
+        ("i...->...", [(3, 2, 2)]),
+        ("i,i->", [(3,), (3,)]),
+        ("i,i->", [(10000,), (10000,)]),
+        ("i,i->", [(0,), (0,)]),
+        ("ij,jk->ik", [(3, 4), (4, 5)]),
+        ("ij,jk->ik", [(3, 0), (0, 4)]),
+        ("...ij,...jk->...ik", [(1, 3, 4), (2, 4, 5)]),
+        ("i,i,i->", [(5,), (5,), (5,)]),
+        ("ij,ij,ij,ij->i", [(3, 4)] * 4),
+    ])
+    def test_einsum_user_dtype(self, dtype, base, subscripts, shapes):
+        # gh-30793: user DTypes have no einsum kernels, so einsum uses their
+        # `multiply` and `add` ufunc loops.
+        rng = np.random.default_rng(0)
+        ops = [rng.integers(-3, 4, size=shape).astype(base) for shape in shapes]
+        expected = np.einsum(subscripts, *ops)
+        ops = [op.astype(dtype) for op in ops]
+
+        res = np.einsum(subscripts, *ops)
+        if isinstance(res, np.ndarray):
+            assert res.dtype == dtype
+        assert_array_equal(np.asarray(res).astype(base), expected)
+
+        out = np.ones(expected.shape, dtype=base).astype(dtype)
+        assert np.einsum(subscripts, *ops, out=out) is out
+        assert_array_equal(out.astype(base), expected)
+
+    def test_einsum_user_dtype_reorderable(self):
+        # Like np.add.reduce, einsum sums more than one label only if `add`
+        # is reorderable.  rational's is, sfloat's is not.
+        a = np.arange(9).reshape(3, 3)
+        expected = np.einsum("ij,jk,kl->il", a, a, a)
+        r = a.astype(rational)
+        res = np.einsum("ij,jk,kl->il", r, r, r)
+        assert_array_equal(res.astype(np.int64), expected)
+
+        s = a.astype(np.float64).astype(SF(1.))
+        for subscripts in ["ij->", "ij,jk,kl->il"]:
+            n = subscripts.count(",") + 1
+            with pytest.raises(ValueError, match="not reorderable"):
+                np.einsum(subscripts, *[s] * n)
+
+        # One label is summed in its logical order, even for a reversed input
+        s = np.array([-1e16, 1e16, 1.]).astype(SF(1.))[::-1]
+        out = np.array(7.).astype(SF(1.))
+        np.einsum("i->", s, out=out)
+        assert_array_equal(out.astype(np.float64), 0.)
+
+    def test_einsum_user_dtype_loop_error(self):
+        # The product's scaling is not finite, so sfloat's `add` loop fails.
+        a = np.ones(3).astype(SF(1e200))
+        with pytest.raises(TypeError, match="non-finite factor"):
+            np.einsum("i,i->", a, a)
+
+    def test_einsum_writeback_error(self):
+        # `out` is also an input, so einsum writes to a copy.  Casting the
+        # copy back to int8 overflows, which used to raise SystemError.
+        a = np.full(3, 100).astype(rational)
+        b = np.full(3, 100, dtype=np.int8)
+        with pytest.raises(OverflowError):
+            np.einsum("i,i->i", a, b, out=b, casting="unsafe")
+
+    @pytest.mark.parametrize("dtype", ["m8[s]", np.dtypes.StringDType()])
+    def test_einsum_unsupported_dtype(self, dtype):
+        a = np.ones(3, dtype=dtype)
+        out = np.ones((), dtype=dtype)
+        with pytest.raises(TypeError, match="invalid data type"):
+            np.einsum("i->", a, out=out)
+        assert_array_equal(out, np.ones((), dtype=dtype))
+
+    def test_einsum_new_style_dtype(self):
+        # gh-32671: new-style DTypes have type_num -1.  The kernel tables were
+        # indexed at -1, so a float16 loop ran over the quad data.
+        from importlib.metadata import version
+
+        try:
+            quaddtype_version = version("numpy_quaddtype")
+        except Exception:
+            pytest.skip("numpy_quaddtype not installed")
+        else:
+            if _pep440.Version(quaddtype_version) <= _pep440.Version("1.0.0"):
+                pytest.skip("critical bug in quaddtype during import")
+
+        numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
+
+        a = np.arange(9.).reshape(3, 3)
+        q = a.astype(numpy_quaddtype.QuadPrecDType())
+        for subscripts in ["ij->", "ij->i", "ij,ij->", "ij,jk->ik"]:
+            n = subscripts.count(",") + 1
+            res = np.einsum(subscripts, *[q] * n)
+            expected = np.einsum(subscripts, *[a] * n)
+            assert_array_equal(np.asarray(res).astype(np.float64), expected)
 
     def test_einsum_sorting_behavior(self):
         # Case 1: 26 dimensions (all lowercase indices)
