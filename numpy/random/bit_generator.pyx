@@ -349,7 +349,7 @@ cdef class SeedSequence:
                  'n_children_spawned']
                 if getattr(self, k) is not None}
 
-    def __reduce_ex__(self, protocol):
+    def __reduce__(self):
         from ._pickle import __seed_sequence_ctor
 
         state = (
