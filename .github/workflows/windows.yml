@@ -33,7 +33,7 @@ jobs:
         persist-credentials: false
 
     - name: Setup Python
-      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: "3.15t"
 
@@ -41,9 +41,8 @@ jobs:
       run: |
         pip install --group dev-cli
 
-    - name: Install pkg-config
+    - name: Set PKG_CONFIG_PATH
       run: |
-        python -m pip install pkgconf==2.5.1.post1
         echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
 
     - name: Install NumPy (Clang-cl)
@@ -61,7 +60,6 @@ jobs:
     - name: Install test dependencies
       run: |
         python -m pip install --group test
-        python -m pip install threadpoolctl
 
     - name: Run test suite
       run: |
@@ -93,7 +91,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python_version }}
           architecture: ${{ matrix.architecture }}
@@ -153,13 +151,9 @@ jobs:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.pyver }}
-
-      - name: pkg-config
-        run: |
-          python -m pip install pkgconf==2.5.1.post1
 
       - name: Dependencies
         run: |

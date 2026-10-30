@@ -143,6 +143,7 @@ __all__ = [
     "array",
     "asanyarray",
     "asarray",
+    "assert_array_equal",
     "bitwise_and",
     "bitwise_or",
     "bitwise_xor",
@@ -4385,6 +4386,14 @@ def convolve(
 #
 def allequal(a: ArrayLike, b: ArrayLike, fill_value: bool = True) -> bool: ...
 def allclose(a: ArrayLike, b: ArrayLike, masked_equal: bool = True, rtol: float = 1e-5, atol: float = 1e-8) -> bool: ...
+def assert_array_equal(
+    actual: object,
+    desired: object,
+    err_msg: object = "",
+    verbose: bool = True,
+    *,
+    strict: bool = False,
+) -> None: ...
 
 #
 def fromflex[ShapeT: _Shape](fxarray: np.ndarray[ShapeT, np.dtype[np.void]]) -> MaskedArray[ShapeT, np.dtype[Incomplete]]: ...
