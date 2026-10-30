@@ -49,6 +49,65 @@ if sys.flags.optimize > 1:
 pwd = os.path.dirname(os.path.abspath(__file__))
 
 
+# Generated from NumPy commit 5660ab563832647e4d2a09580744cf49190f53ce
+# using Python 3.12.14, Cython 3.3.0, and pickle protocol 4 on
+# macOS arm64, before SeedSequence gained a lock.
+#
+# The base object was generated with:
+#     seed = SeedSequence(100)
+#     seed.spawn(3)
+#     pickle.dumps(seed, protocol=4)
+#
+_SEED_SEQUENCE_CYTHON_PICKLE = (
+    b'\x80\x04\x95\xfe\x00\x00\x00\x00\x00\x00\x00\x8c\x1anum'
+    b'py.random.bit_ge'
+    b'nerator\x94\x8c\x1b__pyx_'
+    b'unpickle_SeedSeq'
+    b'uence\x94\x93\x94h\x00\x8c\x0cSeed'
+    b'Sequence\x94\x93\x94J"\xa2\xea\x03'
+    b'N\x87\x94R\x94(KdK\x03\x8c\x16nump'
+    b'y._core.multiarr'
+    b'ay\x94\x8c\x0c_reconstruc'
+    b't\x94\x93\x94\x8c\x05numpy\x94\x8c\x07nd'
+    b'array\x94\x93\x94K\x00\x85\x94C\x01b\x94'
+    b'\x87\x94R\x94(K\x01K\x04\x85\x94h\n\x8c\x05d'
+    b'type\x94\x93\x94\x8c\x02u4\x94\x89\x88\x87\x94'
+    b'R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff'
+    b'\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C\x10;y'
+    b'\n\xabn\xe4\x03\xac\xbcw\xb2\x00v\xfdO\x87\x94t'
+    b'\x94bK\x04)t\x94b.'
+)
+
+# The subclass object was generated after defining LabeledSeedSequence
+# in numpy.random.tests.test_direct, then with:
+#     seed = LabeledSeedSequence(100)
+#     seed.label = "example"
+#     pickle.dumps(seed, protocol=4)
+_SEED_SEQUENCE_SUBCLASS_CYTHON_PICKLE = (
+    b'\x80\x04\x959\x01\x00\x00\x00\x00\x00\x00\x8c\x1anum'
+    b'py.random.bit_ge'
+    b'nerator\x94\x8c\x1b__pyx_'
+    b'unpickle_SeedSeq'
+    b'uence\x94\x93\x94\x8c\x1enumpy.'
+    b'random.tests.tes'
+    b't_direct\x94\x8c\x13Label'
+    b'edSeedSequence\x94\x93'
+    b'\x94J"\xa2\xea\x03N\x87\x94R\x94(KdK\x00'
+    b'\x8c\x16numpy._core.mu'
+    b'ltiarray\x94\x8c\x0c_reco'
+    b'nstruct\x94\x93\x94\x8c\x05nump'
+    b'y\x94\x8c\x07ndarray\x94\x93\x94K\x00'
+    b'\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x04\x85'
+    b'\x94h\x0b\x8c\x05dtype\x94\x93\x94\x8c\x02u'
+    b'4\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94N'
+    b'NNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94'
+    b'b\x89C\x10;y\n\xabn\xe4\x03\xac\xbcw\xb2\x00'
+    b'v\xfdO\x87\x94t\x94bK\x04)}\x94\x8c\x05l'
+    b'abel\x94\x8c\x07example\x94s'
+    b't\x94b.'
+)
+
+
 def assert_state_equal(actual, target):
     for key in actual:
         if isinstance(actual[key], dict):
@@ -164,16 +223,9 @@ def test_seedsequence():
 
 
 def test_seedsequence_legacy_pickle():
-    import gzip
     import pickle
 
-    base_path = os.path.split(os.path.abspath(__file__))[0]
-    pkl_file = os.path.join(
-        base_path, "data", "seedsequence_cython.pkl.gz"
-    )
-
-    with gzip.open(pkl_file, "rb") as file:
-        seed_seq = pickle.load(file)
+    seed_seq = pickle.loads(_SEED_SEQUENCE_CYTHON_PICKLE)
 
     expected_state = {
         "entropy": 100,
@@ -198,16 +250,9 @@ def test_seedsequence_legacy_pickle():
 
 
 def test_seedsequence_subclass_legacy_pickle():
-    import gzip
     import pickle
 
-    base_path = os.path.split(os.path.abspath(__file__))[0]
-    pkl_file = os.path.join(
-        base_path, "data", "seedsequence_subclass_cython.pkl.gz"
-    )
-
-    with gzip.open(pkl_file, "rb") as file:
-        seed_seq = pickle.load(file)
+    seed_seq = pickle.loads(_SEED_SEQUENCE_SUBCLASS_CYTHON_PICKLE)
 
     assert isinstance(seed_seq, LabeledSeedSequence)
     assert seed_seq.label == "example"
