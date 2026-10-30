@@ -2592,15 +2592,14 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
 }
 
 
-static int
-reduce_loop(PyArrayMethod_Context *context,
+NPY_FINLINE int
+reduce_loop_impl(PyArrayMethod_Context *context, int nout,
         PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
         NpyIter *iter, char **dataptrs, npy_intp const *strides,
         npy_intp const *countptr, NpyIter_IterNextFunc *iternext,
         int needs_api, npy_intp skip_first_count)
 {
     int retval = 0;
-    int nout = context->method->nout;
     char *dataptrs_copy[NPY_MAXARGS];
     npy_intp strides_copy[NPY_MAXARGS];
     npy_bool masked;
@@ -2687,6 +2686,24 @@ finish_loop:
     NPY_END_THREADS;
 
     return retval;
+}
+
+static int
+reduce_loop(PyArrayMethod_Context *context,
+        PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
+        NpyIter *iter, char **dataptrs, npy_intp const *strides,
+        npy_intp const *countptr, NpyIter_IterNextFunc *iternext,
+        int needs_api, npy_intp skip_first_count)
+{
+    /* A literal nout lets the compiler specialize the single-output case */
+    if (context->method->nout == 1) {
+        return reduce_loop_impl(context, 1, strided_loop, auxdata, iter,
+                dataptrs, strides, countptr, iternext, needs_api,
+                skip_first_count);
+    }
+    return reduce_loop_impl(context, context->method->nout, strided_loop,
+            auxdata, iter, dataptrs, strides, countptr, iternext, needs_api,
+            skip_first_count);
 }
 
 /*
@@ -2941,13 +2958,13 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
  * [out_0 .. out_{nout-1}, arr].  The first element is copied into each
  * output and the rest are folded in with the reduction loop.
  */
-static int
-accumulate_along_axis(PyArrayMethod_Context *context,
+NPY_FINLINE int
+accumulate_along_axis(PyArrayMethod_Context *context, int nout,
         PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
         NPY_cast_info *copy_info, char *const *dataptr,
-        const npy_intp *fixed_strides, npy_intp count)
+        const npy_intp *fixed_strides, const npy_intp *elsizes,
+        npy_intp count)
 {
-    int nout = context->method->nout;
     char *dataptr_copy[NPY_MAXARGS];
 
     /*
@@ -2967,8 +2984,7 @@ accumulate_along_axis(PyArrayMethod_Context *context,
             }
         }
         else {
-            memmove(dataptr[i], dataptr[nout],
-                    (size_t)context->descriptors[nout + 1 + i]->elsize);
+            memmove(dataptr[i], dataptr[nout], (size_t)elsizes[i]);
         }
     }
 
@@ -3266,6 +3282,10 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
     }
 
     npy_intp count = PyArray_DIM(op[nout], axis);
+    npy_intp elsizes[NPY_MAXARGS];
+    for (int i = 0; i < nout; i++) {
+        elsizes[i] = loop_descrs[nout + 1 + i]->elsize;
+    }
 
     if (iter && NpyIter_GetIterSize(iter) != 0) {
         NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
@@ -3280,10 +3300,19 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
             NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
         }
 
-        do {
-            res = accumulate_along_axis(&context, strided_loop, auxdata,
-                    copy_info, dataptr, fixed_strides, count);
-        } while (res == 0 && iternext(iter));
+        /* A literal nout lets the compiler specialize the single-output case */
+        if (nout == 1) {
+            do {
+                res = accumulate_along_axis(&context, 1, strided_loop, auxdata,
+                        copy_info, dataptr, fixed_strides, elsizes, count);
+            } while (res == 0 && iternext(iter));
+        }
+        else {
+            do {
+                res = accumulate_along_axis(&context, nout, strided_loop, auxdata,
+                        copy_info, dataptr, fixed_strides, elsizes, count);
+            } while (res == 0 && iternext(iter));
+        }
 
         NPY_END_THREADS;
     }
@@ -3299,8 +3328,10 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
             NPY_BEGIN_THREADS_THRESHOLDED(count);
         }
 
-        res = accumulate_along_axis(&context, strided_loop, auxdata,
-                copy_info, dataptr, fixed_strides, count);
+        /* Multiple outputs always use the iterator */
+        assert(nout == 1);
+        res = accumulate_along_axis(&context, 1, strided_loop, auxdata,
+                copy_info, dataptr, fixed_strides, elsizes, count);
 
         NPY_END_THREADS;
     }
@@ -3338,17 +3369,20 @@ fail:
  * [out_0 .. out_{nout-1}, arr].  Each segment is seeded with its first
  * element and the rest are folded in with the reduction loop.
  */
-static int
-reduceat_segments(PyArrayMethod_Context *context,
+NPY_FINLINE int
+reduceat_segments_impl(PyArrayMethod_Context *context, int nout,
         PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
         NPY_cast_info *copy_info, char *const *dataptr,
         const npy_intp *out_strides, const npy_intp *fixed_strides,
         const npy_intp *reduceat_ind, npy_intp ind_size,
         npy_intp red_axis_size)
 {
-    int nout = context->method->nout;
     npy_intp stride = fixed_strides[nout];
     char *dataptr_copy[NPY_MAXARGS];
+    npy_intp elsizes[NPY_MAXARGS];
+    for (int j = 0; j < nout; j++) {
+        elsizes[j] = context->descriptors[nout + 1 + j]->elsize;
+    }
 
     for (npy_intp i = 0; i < ind_size; i++) {
         npy_intp start = reduceat_ind[i];
@@ -3361,7 +3395,10 @@ reduceat_segments(PyArrayMethod_Context *context,
             char *out_j = dataptr[j] + out_strides[j] * i;
             dataptr_copy[j] = out_j;
             dataptr_copy[nout + 1 + j] = out_j;
-            if (copy_info[j].func) {
+            if (copy_info[j].func == &_strided_to_strided_copy_references) {
+                Py_XSETREF(*(PyObject **)out_j, Py_XNewRef(*(PyObject **)x0));
+            }
+            else if (copy_info[j].func) {
                 char *args[2] = {x0, out_j};
                 const npy_intp one = 1;
                 npy_intp strides[2] = {stride, 0};
@@ -3371,8 +3408,7 @@ reduceat_segments(PyArrayMethod_Context *context,
                 }
             }
             else {
-                memmove(out_j, x0,
-                        (size_t)context->descriptors[nout + 1 + j]->elsize);
+                memmove(out_j, x0, (size_t)elsizes[j]);
             }
         }
         dataptr_copy[nout] = x0;
@@ -3390,6 +3426,25 @@ reduceat_segments(PyArrayMethod_Context *context,
         }
     }
     return 0;
+}
+
+static int
+reduceat_segments(PyArrayMethod_Context *context,
+        PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
+        NPY_cast_info *copy_info, char *const *dataptr,
+        const npy_intp *out_strides, const npy_intp *fixed_strides,
+        const npy_intp *reduceat_ind, npy_intp ind_size,
+        npy_intp red_axis_size)
+{
+    /* A literal nout lets the compiler specialize the single-output case */
+    if (context->method->nout == 1) {
+        return reduceat_segments_impl(context, 1, strided_loop, auxdata,
+                copy_info, dataptr, out_strides, fixed_strides,
+                reduceat_ind, ind_size, red_axis_size);
+    }
+    return reduceat_segments_impl(context, context->method->nout,
+            strided_loop, auxdata, copy_info, dataptr, out_strides,
+            fixed_strides, reduceat_ind, ind_size, red_axis_size);
 }
 
 /*
