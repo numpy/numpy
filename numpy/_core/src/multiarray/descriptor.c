@@ -2261,9 +2261,6 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
     return ret;
 }
 
-/*
- * helpers for arraydescr_name_get
- */
 static const char *
 _kind_name(PyArray_Descr *dtype)
 {
@@ -2371,7 +2368,7 @@ arraydescr_name_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
     }
 
     if (_name_includes_bit_suffix(self)) {
-        Py_SETREF(name, _append_bit_count(name, self->elsize * 8));
+        Py_SETREF(name, _append_bit_count(name, self->elsize));
         if (name == NULL) {
             return NULL;
         }
