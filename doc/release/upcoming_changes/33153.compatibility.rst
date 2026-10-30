@@ -1,0 +1,6 @@
+``np.load`` raises for ``mmap_mode`` with ``.npz`` files
+--------------------------------------------------------
+``np.load`` now raises a ``ValueError`` when ``mmap_mode`` is given for a
+``.npz`` file. Arrays inside a ``.npz`` archive cannot be memory-mapped, and
+previously ``mmap_mode`` was silently ignored and each array was read into
+memory when accessed.
