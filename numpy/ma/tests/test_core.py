@@ -11,6 +11,7 @@ import inspect
 import itertools
 import operator
 import pickle
+import re
 import sys
 import textwrap
 import warnings
@@ -5351,6 +5352,79 @@ class TestMaskedArrayFunctions:
         assert_equal(test, masked_equal([1, 1, -1, 1, 1], -1))
         test = np.ma.convolve(a, b, propagate_mask=True)
         assert_equal(test, masked_equal([-1, -1, -1, -1, -1], -1))
+
+
+class TestAssertArrayEqual:
+    @pytest.mark.parametrize("actual, desired", [
+        (array([1, 2, 3], mask=[0, 1, 0]), array([1, 9, 3], mask=[0, 1, 0])),
+        (masked, array([1, 2], mask=True)),
+        (array([3, 3]), 3),
+        ([np.nan, 1.0], array([np.nan, 1.0])),
+    ])
+    def test_equal(self, actual, desired):
+        np.ma.assert_array_equal(actual, desired)
+
+    def test_mask_mismatch(self):
+        # gh-30564
+        expected_msg = ('Mismatched mask elements: 1 / 1 (100%)\n'
+                        'Mask mismatch at index:\n'
+                        ' [0]: -- (ACTUAL), 3.0 (DESIRED)\n')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            np.ma.assert_array_equal(array([4.0], mask=[1]), np.array([3.0]))
+
+        a = array([[1, 2], [3, 4]], mask=[[0, 1], [0, 0]])
+        b = array([[1, 2], [3, 4]], mask=[[0, 0], [1, 0]])
+        expected_msg = ('\nArrays are not equal\ncontext\n'
+                        'Mismatched mask elements: 2 / 4 (50%)\n'
+                        'Mask mismatch at indices:\n'
+                        ' [0, 1]: -- (ACTUAL), 2 (DESIRED)\n'
+                        ' [1, 0]: 3 (ACTUAL), -- (DESIRED)')
+        with pytest.raises(AssertionError) as exc_info:
+            np.ma.assert_array_equal(a, b, err_msg='context', verbose=False)
+        assert str(exc_info.value) == expected_msg
+
+        expected_msg = ('Mismatched mask elements: 6 / 6 (100%)\n'
+                        'First 5 mask mismatches are at indices:\n'
+                        ' [0]: -- (ACTUAL), 3 (DESIRED)\n')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            np.ma.assert_array_equal(array([3] * 6, mask=True), 3)
+
+    def test_value_mismatch(self):
+        a = array([1.0, 2.0, 3.0], mask=[1, 0, 0])
+        b = array([9.0, 2.0, 4.0], mask=[1, 0, 0])
+        expected_msg = ('Mismatched elements: 1 / 3 (33.3%)\n'
+                        'Mismatch at index:\n'
+                        ' [2]: 3.0 (ACTUAL), 4.0 (DESIRED)\n'
+                        'Max absolute difference among violations: 1.\n'
+                        'Max relative difference among violations: 0.25\n'
+                        f' ACTUAL: {a!r}\n'
+                        f' DESIRED: {b!r}')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            np.ma.assert_array_equal(a, b)
+
+    def test_shape_and_strict(self):
+        a = array([1, 2], mask=[1, 0], dtype=np.int32)
+        b = array([1, 2], mask=[1, 0], dtype=np.float64)
+        np.ma.assert_array_equal(a, b)
+        with pytest.raises(AssertionError,
+                           match=re.escape('(dtypes int32, float64 mismatch)')):
+            np.ma.assert_array_equal(a, b, strict=True)
+        with pytest.raises(AssertionError,
+                           match=re.escape('(shapes (2,), () mismatch)')):
+            np.ma.assert_array_equal(a, 2, strict=True)
+        with pytest.raises(AssertionError,
+                           match=re.escape('(shapes (2,), (3,) mismatch)')):
+            np.ma.assert_array_equal(a, [1, 2, 3])
+
+    def test_structured(self):
+        dt = [('a', np.int64), ('b', np.float64)]
+        a = array([(1, 2.0)], dtype=dt, mask=[(1, 0)])
+        np.ma.assert_array_equal(a, array([(9, 2.0)], dtype=dt, mask=[(1, 0)]))
+
+        b = array([(1, 2.0)], dtype=dt, mask=[(0, 1)])
+        expected_msg = ' [0]: (--, 2.0) (ACTUAL), (1, --) (DESIRED)'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            np.ma.assert_array_equal(a, b)
 
 
 class TestMaskedFields:

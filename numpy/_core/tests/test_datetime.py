@@ -530,6 +530,44 @@ class TestDateTime:
                             np.timedelta64)
         assert_equal(actual, expected)
 
+    def test_pytimedelta_subclass_and_duck_typing(self):
+        us = 10**6
+        day = 86400 * us
+
+        # exact
+        td = datetime.timedelta(days=-3, seconds=5, microseconds=7)
+        expected = np.timedelta64(-3 * day + 5 * us + 7, 'us')
+        assert_equal(np.timedelta64(td), expected)
+        assert_equal(np.timedelta64(td).dtype, np.dtype('m8[us]'))
+
+        # subclass
+        class MyTimedelta(datetime.timedelta):
+            pass
+        assert_equal(np.timedelta64(MyTimedelta(days=-3, seconds=5,
+                                                microseconds=7)), expected)
+
+        # overridden attribute is honored
+        class ShiftedDays(datetime.timedelta):
+            @property
+            def days(self):
+                return super().days + 1
+        assert_equal(np.timedelta64(ShiftedDays(days=1, seconds=2)),
+                     np.timedelta64(2 * day + 2 * us, 'us'))
+
+        # duck-typed
+        class DuckTimedelta:
+            days, seconds, microseconds = 2, 3, 4
+        duck_expected = np.timedelta64(2 * day + 3 * us + 4, 'us')
+        assert_equal(np.timedelta64(DuckTimedelta()), duck_expected)
+
+        # arrays
+        arr = np.array([td, MyTimedelta(days=-3, seconds=5, microseconds=7),
+                        DuckTimedelta()], dtype='m8[us]')
+        assert_equal(arr, np.array([expected, expected, duck_expected]))
+        assert_equal(np.array([datetime.timedelta(days=2, seconds=3)],
+                              dtype='m8[s]'),
+                     np.array([2 * 86400 + 3], dtype='m8[s]'))
+
     def test_timedelta_nat_format(self):
         # gh-17552
         with pytest.warns(
