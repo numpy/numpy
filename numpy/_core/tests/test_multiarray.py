@@ -1451,6 +1451,33 @@ class TestCreation:
 
 
 class TestStructured:
+    @pytest.mark.parametrize("operation, expected_indices", [
+        ("take", [2, 0, 2]),
+        ("repeat", [0, 2, 2]),
+        ("put", [1, None, 2]),
+        ("putmask", [0, None, 2]),
+    ])
+    def test_selection_nested_unaligned_objects(self, operation, expected_indices):
+        # Nested records must still use the field-copy path's generic
+        # fallback. The leading byte leaves the object field unaligned.
+        dtype = np.dtype([("pad", "u1"),
+                          ("record", [("value", object), ("number", ">i4")])])
+        records = [(1, ("a", 10)), (2, ("b", 20)), (3, ("c", 30))]
+        arr = np.array(records, dtype=dtype)
+        result = np.zeros(3, dtype=dtype)
+        if operation == "take":
+            result = arr.take([2, 0, 2])
+        elif operation == "repeat":
+            result = arr.repeat([1, 0, 2])
+        elif operation == "put":
+            np.put(result, [2, 0, 2], arr)
+        else:
+            np.putmask(result, [True, False, True], arr)
+
+        expected = [records[i] if i is not None else (0, (0, 0))
+                    for i in expected_indices]
+        assert_array_equal(result, np.array(expected, dtype=dtype))
+
     def test_subarray_field_access(self):
         a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])
         a['a'] = np.arange(60).reshape(3, 5, 2, 2)
@@ -2210,9 +2237,10 @@ class TestMethods:
                          [1, 2, 3],
                          [4, 5, 6]])
 
-        A = m_rect.repeat([1, 3, 2], axis=1)
-        assert_equal(A, [[1, 2, 2, 2, 3, 3],
-                         [4, 5, 5, 5, 6, 6]])
+        # Skipping a leading zero must advance the source in every row.
+        A = m_rect.repeat([0, 3, 2], axis=1)
+        assert_equal(A, [[2, 2, 2, 3, 3],
+                         [5, 5, 5, 6, 6]])
 
         A = m_rect.repeat(2, axis=0)
         assert_equal(A, [[1, 2, 3],
@@ -2223,6 +2251,11 @@ class TestMethods:
         A = m_rect.repeat(2, axis=1)
         assert_equal(A, [[1, 1, 2, 2, 3, 3],
                          [4, 4, 5, 5, 6, 6]])
+
+        # Numeric repeat(1) must copy every outer row. Change the input so
+        # reused output memory cannot hide an incomplete copy.
+        m_rect += 10
+        assert_equal(m_rect.repeat(1, axis=1), m_rect)
 
     def test_reshape(self):
         arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
@@ -4487,6 +4520,36 @@ class TestMethods:
                             match="cannot replace elements of an empty array"):
             np.put(empty_array, 1, 1, mode="clip")
 
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    @pytest.mark.parametrize("operation, selection, expected", [
+        ("take", [0, 1, 2, 3, 4, 5], [10, 14, 10, 13, 14, 15]),
+        ("put", [0, 1, 2, 3, 4, 5], [12, 1, 2, 10, 11, 12]),
+        ("putmask", [True, False, True, False, True, False],
+         [10, 11, 2, 3, 11, 5]),
+    ])
+    def test_selection_observes_destructor(self, operation, selection, expected):
+        selection = np.array(selection)
+        seen = []
+
+        class ChangeSelection:
+            def __del__(self):
+                seen.append(arr[0])
+                selection[1:3] = [selection[4], 0]
+
+        arr = np.arange(6, dtype=object)
+        arr[0] = ChangeSelection()
+        values = np.arange(10, 16, dtype=object)
+        if operation == "take":
+            np.take(values, selection, out=arr, mode="clip")
+        else:
+            getattr(np, operation)(arr, selection, values[:3])
+
+        # DECREF can run Python inside the copy loop: publish the replacement
+        # first, then read later indices/mask entries after the callback.
+        # put cycles by index position, putmask by array position.
+        assert_equal(seen, [10])
+        assert_array_equal(arr, expected)
+
     def test_ravel(self):
         a = np.array([[0, 1], [2, 3]])
         assert_equal(a.ravel(), [0, 1, 2, 3])
@@ -6513,9 +6576,12 @@ class TestPutmask:
                             val = np.iinfo(T).max - 99
                         self.tst_basic(x.copy().astype(T), T, mask, val)
 
-            # Also test string of a length which uses an untypical length
-            dt = np.dtype("S3")
-            self.tst_basic(x.astype(dt), dt.type, mask, dt.type(val)[:3])
+            # S64 uses a fixed-size copy; S3 uses the generic case. Fill every
+            # byte so a truncated copy cannot pass because of zero padding.
+            for width in (3, 64):
+                dt = np.dtype(f"S{width}")
+                value = str(val).encode().ljust(width, b"!")[:width]
+                self.tst_basic(x.astype(dt), dt.type, mask, value)
 
     def test_mask_size(self):
         assert_raises(ValueError, np.putmask, np.array([1, 2, 3]), [True], 5)
@@ -6604,14 +6670,20 @@ class TestTake:
         assert_array_equal(x.take([-1], axis=0, mode='clip')[0], x[0])
         assert_array_equal(x.take([2], axis=0, mode='clip')[0], x[1])
 
-    def test_wrap(self):
+    @pytest.mark.parametrize("dtype", [float, object, "T"])
+    def test_wrap(self, dtype):
         x = np.random.random(24) * 100
-        x = x.reshape((2, 3, 4))
+        x = x.reshape((2, 3, 4)).astype(dtype)
+        # Exercise outer iterations with both block and scalar transfers.
+        assert_array_equal(x.take([2, 0, 1], axis=1, mode="wrap"),
+                           x[:, [2, 0, 1]])
+        assert_array_equal(x.take([3, 1], axis=2, mode="wrap"),
+                           x[..., [3, 1]])
         assert_array_equal(x.take([-1], axis=0, mode='wrap')[0], x[1])
         assert_array_equal(x.take([2], axis=0, mode='wrap')[0], x[0])
         assert_array_equal(x.take([3], axis=0, mode='wrap')[0], x[1])
 
-        empty = np.empty((0, 0))
+        empty = np.empty((0, 0), dtype=dtype)
         assert_equal(empty.take([-1, 0, 1], axis=0, mode="wrap").shape, (3, 0))
 
     @pytest.mark.parametrize('dtype', ('>i4', '<i4'))
@@ -6631,6 +6703,32 @@ class TestTake:
         x = np.arange(5)
         y = np.take(x, [1, 2, 3], out=x[2:5], mode='wrap')
         assert_equal(y, np.array([1, 2, 3]))
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    @pytest.mark.parametrize("blocksize, expected", [
+        (1, ["0a", "0b", "1a", "1b", "2a", "2b", "3a", "3b"]),
+        (2, ["0a", "1a", "0b", "1b", "2a", "3a", "2b", "3b"]),
+    ])
+    def test_out_structured_object_destruction_order(self, blocksize, expected):
+        destroyed = []
+
+        class RecordDeletion:
+            def __init__(self, name):
+                self.name = name
+
+            def __del__(self):
+                destroyed.append(self.name)
+
+        out = np.array([(RecordDeletion(f"{i}a"), RecordDeletion(f"{i}b"))
+                        for i in range(4)], dtype=[("a", object), ("b", object)])
+        out = out.reshape(-1, blocksize)
+        values = np.zeros_like(out)
+        np.take(values, np.arange(len(out)), axis=0, out=out, mode="clip")
+
+        # The existing strided transfer visits fields first within each block.
+        # Preserve its observable DECREF order in both scalar and block copies.
+        assert_equal(destroyed, expected)
+        assert_array_equal(out, values)
 
     @pytest.mark.parametrize('shape', [(1, 2), (1,), ()])
     def test_ret_is_out(self, shape):

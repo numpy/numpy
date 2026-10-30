@@ -38,8 +38,54 @@
 
 #include "stringdtype/dtype.h"
 
-static NPY_GCC_OPT_3 inline int
-npy_fasttake_impl(
+/* Trivial copies share the traversal, with each block treated as one item.
+ * The callers buffer overlapping operands before reaching these loops. */
+NPY_FINLINE int
+transfer_copy_trivial(NPY_cast_info *NPY_UNUSED(info), char *src, char *dst,
+                      npy_intp count, const npy_intp *strides)
+{
+    memcpy(dst, src, count * strides[0]);
+    return 0;
+}
+
+NPY_FINLINE int
+npy_fastcopy_impl(NPY_transfer_loop loop, npy_intp chunk)
+{
+    /* Specialize each contiguous block as one fixed-size item. */
+    loop.itemsize = chunk;
+    if (loop.kind == NPY_TRANSFER_INDEXED_CONTIGUOUS) {
+        loop.selection.indexed.blocksize = 1;
+    }
+    else if (loop.kind == NPY_TRANSFER_PUTMASK_CONTIGUOUS &&
+            loop.selection.putmask.value_period == 1) {
+        for (npy_intp i = 0; i < loop.count; i++) {
+            if (loop.selection.putmask.mask[i]) {
+                memcpy(loop.data[1] + i*chunk, loop.data[0], chunk);
+            }
+        }
+        return 0;
+    }
+    return npy_transfer_loop(NULL, &loop, transfer_copy_trivial);
+}
+
+/* Specialize all trivial selections for the common fixed-size copies. */
+NPY_FINLINE int
+npy_fastcopy(const NPY_transfer_loop *loop, npy_intp chunk)
+{
+    switch (chunk) {
+        case 1: return npy_fastcopy_impl(*loop, 1);
+        case 2: return npy_fastcopy_impl(*loop, 2);
+        case 4: return npy_fastcopy_impl(*loop, 4);
+        case 8: return npy_fastcopy_impl(*loop, 8);
+        case 16: return npy_fastcopy_impl(*loop, 16);
+        case 32: return npy_fastcopy_impl(*loop, 32);
+        case 64: return npy_fastcopy_impl(*loop, 64);
+        default: return npy_fastcopy_impl(*loop, chunk);
+    }
+}
+
+static int
+npy_fasttake(
         char *dest, char *src, const npy_intp *indices,
         npy_intp n, npy_intp m, npy_intp max_item,
         npy_intp nelem, npy_intp chunk,
@@ -67,164 +113,22 @@ npy_fasttake_impl(
         }
     }
 
-    switch (clipmode) {
-        case NPY_RAISE:
-            for (npy_intp i = 0; i < n; i++) {
-                for (npy_intp j = 0; j < m; j++) {
-                    npy_intp tmp = indices[j];
-                    if (check_and_adjust_index(&tmp, max_item, axis,
-                                               _save) < 0) {
-                        goto fail;
-                    }
-                    char *tmp_src = src + tmp * chunk;
-                    if (needs_refcounting) {
-                        char *data[2] = {tmp_src, dest};
-                        npy_intp strides[2] = {itemsize, itemsize};
-                        if (cast_info.func(
-                                &cast_info.context, data, &nelem, strides,
-                                cast_info.auxdata) < 0) {
-                            NPY_END_THREADS;
-                            goto fail;
-                        }
-                    }
-                    else {
-                        memcpy(dest, tmp_src, chunk);
-                    }
-                    dest += chunk;
-                }
-                src += chunk*max_item;
-            }
-            break;
-        case NPY_WRAP:
-            for (npy_intp i = 0; i < n; i++) {
-                for (npy_intp j = 0; j < m; j++) {
-                    npy_intp tmp = indices[j];
-                    if (tmp < 0) {
-                        while (tmp < 0) {
-                            tmp += max_item;
-                        }
-                    }
-                    else if (tmp >= max_item) {
-                        while (tmp >= max_item) {
-                            tmp -= max_item;
-                        }
-                    }
-                    char *tmp_src = src + tmp * chunk;
-                    if (needs_refcounting) {
-                        char *data[2] = {tmp_src, dest};
-                        npy_intp strides[2] = {itemsize, itemsize};
-                        if (cast_info.func(
-                                &cast_info.context, data, &nelem, strides,
-                                cast_info.auxdata) < 0) {
-                            NPY_END_THREADS;
-                            goto fail;
-                        }
-                    }
-                    else {
-                        memcpy(dest, tmp_src, chunk);
-                    }
-                    dest += chunk;
-                }
-                src += chunk*max_item;
-            }
-            break;
-        case NPY_CLIP:
-            for (npy_intp i = 0; i < n; i++) {
-                for (npy_intp j = 0; j < m; j++) {
-                    npy_intp tmp = indices[j];
-                    if (tmp < 0) {
-                        tmp = 0;
-                    }
-                    else if (tmp >= max_item) {
-                        tmp = max_item - 1;
-                    }
-                    char *tmp_src = src + tmp * chunk;
-                    if (needs_refcounting) {
-                        char *data[2] = {tmp_src, dest};
-                        npy_intp strides[2] = {itemsize, itemsize};
-                        if (cast_info.func(
-                                &cast_info.context, data, &nelem, strides,
-                                cast_info.auxdata) < 0) {
-                            NPY_END_THREADS;
-                            goto fail;
-                        }
-                    }
-                    else {
-                        memcpy(dest, tmp_src, chunk);
-                    }
-                    dest += chunk;
-                }
-                src += chunk*max_item;
-            }
-            break;
-    }
-
+    NPY_transfer_loop loop = {
+        .kind = NPY_TRANSFER_INDEXED_CONTIGUOUS, .data = {src, dest}, .count = m,
+        .itemsize = itemsize,
+        .selection.indexed = {
+            .blocksize = nelem, .outer_count = n,
+            .indices = indices, .index_dim = max_item,
+            .axis = axis, .clipmode = clipmode,
+        },
+    };
+    NPY_transfer_loop_function *copy = needs_refcounting
+            ? NPY_get_transfer_loop(&cast_info, loop.kind) : NULL;
+    int res = needs_refcounting ? copy(&cast_info, &loop)
+            : npy_fastcopy(&loop, chunk);
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
-    return 0;
-
-  fail:
-    /* NPY_END_THREADS already ensured. */
-    NPY_cast_info_xfree(&cast_info);
-    return -1;
-}
-
-
-/*
- * Helper function instantiating npy_fasttake_impl in different branches
- * to allow the compiler to optimize each to the specific itemsize.
- */
-static NPY_GCC_OPT_3 int
-npy_fasttake(
-        char *dest, char *src, const npy_intp *indices,
-        npy_intp n, npy_intp m, npy_intp max_item,
-        npy_intp nelem, npy_intp chunk,
-        NPY_CLIPMODE clipmode, npy_intp itemsize, int needs_refcounting,
-        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype, int axis)
-{
-    if (!needs_refcounting) {
-        if (chunk == 1) {
-            return npy_fasttake_impl(
-                    dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, src_dtype,
-                    dst_dtype, axis);
-        }
-        if (chunk == 2) {
-            return npy_fasttake_impl(
-                    dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, src_dtype,
-                    dst_dtype, axis);
-        }
-        if (chunk == 4) {
-            return npy_fasttake_impl(
-                    dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, src_dtype,
-                    dst_dtype, axis);
-        }
-        if (chunk == 8) {
-            return npy_fasttake_impl(
-                    dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, src_dtype,
-                    dst_dtype, axis);
-        }
-        if (chunk == 16) {
-            return npy_fasttake_impl(
-                    dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, src_dtype,
-                    dst_dtype, axis);
-        }
-        if (chunk == 32) {
-            return npy_fasttake_impl(
-                    dest, src, indices, n, m, max_item, nelem, chunk,
-                    clipmode, itemsize, needs_refcounting, src_dtype,
-                    dst_dtype, axis);
-        }
-    }
-
-    return npy_fasttake_impl(
-            dest, src, indices, n, m, max_item, nelem, chunk,
-            clipmode, itemsize, needs_refcounting, src_dtype,
-            dst_dtype, axis);
+    return res;
 }
 
 
@@ -391,8 +295,8 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
               NPY_CLIPMODE clipmode)
 {
     PyArrayObject  *indices, *values;
-    npy_intp i, itemsize, ni, max_item, nv, tmp;
-    char *src, *dest;
+    npy_intp itemsize, ni, max_item, nv;
+    char *dest;
     int copied = 0;
     int overlap = 0;
 
@@ -479,116 +383,24 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     }
 
 
-    if (has_references) {
-        const npy_intp one = 1;
-        const npy_intp strides[2] = {itemsize, itemsize};
-
-        switch(clipmode) {
-        case NPY_RAISE:
-            for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + itemsize*(i % nv);
-                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (check_and_adjust_index(&tmp, max_item, 0, _save) < 0) {
-                    goto fail;
-                }
-                char *data[2] = {src, dest + tmp*itemsize};
-                if (cast_info.func(
-                        &cast_info.context, data, &one, strides,
-                        cast_info.auxdata) < 0) {
-                    NPY_END_THREADS;
-                    goto fail;
-                }
-            }
-            break;
-        case NPY_WRAP:
-            for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + itemsize * (i % nv);
-                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (tmp < 0) {
-                    while (tmp < 0) {
-                        tmp += max_item;
-                    }
-                }
-                else if (tmp >= max_item) {
-                    while (tmp >= max_item) {
-                        tmp -= max_item;
-                    }
-                }
-                char *data[2] = {src, dest + tmp*itemsize};
-                if (cast_info.func(
-                        &cast_info.context, data, &one, strides,
-                        cast_info.auxdata) < 0) {
-                    NPY_END_THREADS;
-                    goto fail;
-                }
-            }
-            break;
-        case NPY_CLIP:
-            for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + itemsize * (i % nv);
-                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (tmp < 0) {
-                    tmp = 0;
-                }
-                else if (tmp >= max_item) {
-                    tmp = max_item - 1;
-                }
-                char *data[2] = {src, dest + tmp*itemsize};
-                if (cast_info.func(
-                        &cast_info.context, data, &one, strides,
-                        cast_info.auxdata) < 0) {
-                    NPY_END_THREADS;
-                    goto fail;
-                }
-            }
-            break;
-        }
-    }
-    else {
-        switch(clipmode) {
-        case NPY_RAISE:
-            for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + itemsize * (i % nv);
-                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (check_and_adjust_index(&tmp, max_item, 0, _save) < 0) {
-                    goto fail;
-                }
-                memmove(dest + tmp * itemsize, src, itemsize);
-            }
-            break;
-        case NPY_WRAP:
-            for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + itemsize * (i % nv);
-                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (tmp < 0) {
-                    while (tmp < 0) {
-                        tmp += max_item;
-                    }
-                }
-                else if (tmp >= max_item) {
-                    while (tmp >= max_item) {
-                        tmp -= max_item;
-                    }
-                }
-                memmove(dest + tmp * itemsize, src, itemsize);
-            }
-            break;
-        case NPY_CLIP:
-            for (i = 0; i < ni; i++) {
-                src = PyArray_BYTES(values) + itemsize * (i % nv);
-                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (tmp < 0) {
-                    tmp = 0;
-                }
-                else if (tmp >= max_item) {
-                    tmp = max_item - 1;
-                }
-                memmove(dest + tmp * itemsize, src, itemsize);
-            }
-            break;
-        }
-    }
+    NPY_transfer_loop loop = {
+        .kind = NPY_TRANSFER_INDEXED_CONTIGUOUS,
+        .data = {PyArray_BYTES(values), dest}, .count = ni,
+        .itemsize = itemsize,
+        .selection.indexed = {
+            .blocksize = 1, .outer_count = 1,
+            .indices = (npy_intp *)PyArray_DATA(indices), .index_dim = max_item,
+            .scatter = 1, .clipmode = clipmode, .value_period = nv,
+        },
+    };
+    NPY_transfer_loop_function *copy = has_references
+            ? NPY_get_transfer_loop(&cast_info, loop.kind) : NULL;
+    int res = has_references ? copy(&cast_info, &loop)
+            : npy_fastcopy(&loop, itemsize);
     NPY_END_THREADS;
+    if (res < 0) {
+        goto fail;
+    }
 
  finish:
     NPY_cast_info_xfree(&cast_info);
@@ -611,69 +423,6 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         Py_XDECREF(self);
     }
     return NULL;
-}
-
-
-static NPY_GCC_OPT_3 inline void
-npy_fastputmask_impl(
-        char *dest, char *src, const npy_bool *mask_data,
-        npy_intp ni, npy_intp nv, npy_intp chunk)
-{
-    if (nv == 1) {
-        for (npy_intp i = 0; i < ni; i++) {
-            if (mask_data[i]) {
-                memmove(dest, src, chunk);
-            }
-            dest += chunk;
-        }
-    }
-    else {
-        char *tmp_src = src;
-        for (npy_intp i = 0, j = 0; i < ni; i++, j++) {
-            if (NPY_UNLIKELY(j >= nv)) {
-                j = 0;
-                tmp_src = src;
-            }
-            if (mask_data[i]) {
-                memmove(dest, tmp_src, chunk);
-            }
-            dest += chunk;
-            tmp_src += chunk;
-        }
-    }
-}
-
-
-/*
- * Helper function instantiating npy_fastput_impl in different branches
- * to allow the compiler to optimize each to the specific itemsize.
- */
-static NPY_GCC_OPT_3 void
-npy_fastputmask(
-        char *dest, char *src, npy_bool *mask_data,
-        npy_intp ni, npy_intp nv, npy_intp chunk)
-{
-    if (chunk == 1) {
-        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
-    }
-    else if (chunk == 2) {
-        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
-    }
-    else if (chunk == 4) {
-        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
-    }
-    else if (chunk == 8) {
-        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
-    }
-    else if (chunk == 16) {
-        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
-    }
-    else if (chunk == 32) {
-        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
-    }
-    else {
-        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
-    }
 }
 
 
@@ -757,11 +506,16 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     itemsize = PyArray_ITEMSIZE(self);
     dest = PyArray_DATA(self);
 
+    NPY_transfer_loop loop = {
+        .kind = NPY_TRANSFER_PUTMASK_CONTIGUOUS,
+        .data = {src, dest}, .count = ni, .itemsize = itemsize,
+        .selection.putmask = {
+            .mask = mask_data, .value_period = nv,
+        },
+    };
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         NPY_cast_info cast_info;
         NPY_ARRAYMETHOD_FLAGS flags;
-        const npy_intp one = 1;
-        const npy_intp strides[2] = {itemsize, itemsize};
 
         NPY_cast_info_init(&cast_info);
         if (PyArray_GetDTypeTransferFunction(
@@ -775,27 +529,18 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
             NPY_BEGIN_THREADS;
         }
 
-        for (npy_intp i = 0, j = 0; i < ni; i++, j++) {
-            if (j >= nv) {
-                j = 0;
-            }
-            if (mask_data[i]) {
-                char *data[2] = {src + j*itemsize, dest + i*itemsize};
-                if (cast_info.func(
-                        &cast_info.context, data, &one, strides,
-                        cast_info.auxdata) < 0) {
-                    NPY_END_THREADS;
-                    NPY_cast_info_xfree(&cast_info);
-                    goto fail;
-                }
-            }
-        }
+        NPY_transfer_loop_function *copy = NPY_get_transfer_loop(&cast_info, loop.kind);
+        assert(copy != NULL);
+        int res = copy(&cast_info, &loop);
         NPY_END_THREADS;
         NPY_cast_info_xfree(&cast_info);
+        if (res < 0) {
+            goto fail;
+        }
     }
     else {
         NPY_BEGIN_THREADS;
-        npy_fastputmask(dest, src, mask_data, ni, nv, itemsize);
+        npy_fastcopy(&loop, itemsize);
         NPY_END_THREADS;
     }
 
@@ -817,28 +562,26 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     return NULL;
 }
 
+/* Keep numeric repeat separate so the compiler can specialize its copies. */
 static NPY_GCC_OPT_3 inline int
 npy_fastrepeat_impl(
-    npy_intp n_outer, npy_intp n, npy_intp nel, npy_intp chunk,
-    npy_bool broadcast, npy_intp* counts, char* new_data, char* old_data,
-    npy_intp elsize, NPY_cast_info *cast_info, int needs_custom_copy)
+    npy_intp n_outer, npy_intp n, npy_intp chunk,
+    npy_bool broadcast, npy_intp* counts, char* new_data, char* old_data)
 {
     npy_intp i, j, k;
+    npy_intp count_stride = !broadcast;
     for (i = 0; i < n_outer; i++) {
-        for (j = 0; j < n; j++) {
-            npy_intp tmp = broadcast ? counts[0] : counts[j];
+        const npy_intp *count = counts;
+        for (j = 0; j < n; j++, count += count_stride) {
+            npy_intp tmp = *count;
+            while (tmp == 0 && j + 1 < n) {
+                old_data += chunk;
+                count += count_stride;
+                j++;
+                tmp = *count;
+            }
             for (k = 0; k < tmp; k++) {
-                if (!needs_custom_copy) {
-                    memcpy(new_data, old_data, chunk);
-                }
-                else {
-                    char *data[2] = {old_data, new_data};
-                    npy_intp strides[2] = {elsize, elsize};
-                    if (cast_info->func(&cast_info->context, data, &nel,
-                                       strides, cast_info->auxdata) < 0) {
-                        return -1;
-                    }
-                }
+                memcpy(new_data, old_data, chunk);
                 new_data += chunk;
             }
             old_data += chunk;
@@ -850,50 +593,52 @@ npy_fastrepeat_impl(
 
 /*
  * Helper to allow the compiler to specialize for all direct element copy
- * cases (e.g. all numerical dtypes).
+ * cases (e.g. all numerical dtypes), without inlining them into
+ * PyArray_Repeat's validation and allocation code.
  */
-static NPY_GCC_OPT_3 int
+NPY_NOINLINE NPY_GCC_OPT_3 int
 npy_fastrepeat(
     npy_intp n_outer, npy_intp n, npy_intp nel, npy_intp chunk,
     npy_bool broadcast, npy_intp* counts, char* new_data, char* old_data,
     npy_intp elsize, NPY_cast_info *cast_info, int needs_custom_copy)
 {
-    if (!needs_custom_copy) {
-        if (chunk == 1) {
-            return npy_fastrepeat_impl(
-                n_outer, n, nel, chunk, broadcast, counts, new_data, old_data,
-                elsize, cast_info, needs_custom_copy);
-        }
-        if (chunk == 2) {
-            return npy_fastrepeat_impl(
-                n_outer, n, nel, chunk, broadcast, counts, new_data, old_data,
-                elsize, cast_info, needs_custom_copy);
-        }
-        if (chunk == 4) {
-            return npy_fastrepeat_impl(
-                n_outer, n, nel, chunk, broadcast, counts, new_data, old_data,
-                elsize, cast_info, needs_custom_copy);
-        }
-        if (chunk == 8) {
-            return npy_fastrepeat_impl(
-                n_outer, n, nel, chunk, broadcast, counts, new_data, old_data,
-                elsize, cast_info, needs_custom_copy);
-        }
-        if (chunk == 16) {
-            return npy_fastrepeat_impl(
-                n_outer, n, nel, chunk, broadcast, counts, new_data, old_data,
-                elsize, cast_info, needs_custom_copy);
-        }
-        if (chunk == 32) {
-            return npy_fastrepeat_impl(
-                n_outer, n, nel, chunk, broadcast, counts, new_data, old_data,
-                elsize, cast_info, needs_custom_copy);
-        }
+    if (broadcast && counts[0] == 0) {
+        return 0;
     }
-
-    return npy_fastrepeat_impl(
-        n_outer, n, nel, chunk, broadcast, counts, new_data, old_data, elsize,
-        cast_info, needs_custom_copy);
+    if (needs_custom_copy) {
+        NPY_transfer_loop loop = {
+            .kind = NPY_TRANSFER_REPEAT_CONTIGUOUS,
+            .data = {old_data, new_data}, .count = n,
+            .itemsize = elsize,
+            .selection.repeat = {
+                .blocksize = nel, .outer_count = n_outer,
+                .counts = counts, .count_stride = !broadcast,
+            },
+        };
+        NPY_transfer_loop_function *copy = NPY_get_transfer_loop(cast_info, loop.kind);
+        assert(copy != NULL);
+        return copy(cast_info, &loop);
+    }
+    if (broadcast && counts[0] == 1) {
+        memcpy(new_data, old_data, chunk * n * n_outer);
+        return 0;
+    }
+    switch (chunk) {
+        case 1: return npy_fastrepeat_impl(n_outer, n, 1, broadcast, counts,
+                                         new_data, old_data);
+        case 2: return npy_fastrepeat_impl(n_outer, n, 2, broadcast, counts,
+                                         new_data, old_data);
+        case 4: return npy_fastrepeat_impl(n_outer, n, 4, broadcast, counts,
+                                         new_data, old_data);
+        case 8: return npy_fastrepeat_impl(n_outer, n, 8, broadcast, counts,
+                                         new_data, old_data);
+        case 16: return npy_fastrepeat_impl(n_outer, n, 16, broadcast, counts,
+                                          new_data, old_data);
+        case 32: return npy_fastrepeat_impl(n_outer, n, 32, broadcast, counts,
+                                          new_data, old_data);
+        default: return npy_fastrepeat_impl(n_outer, n, chunk, broadcast, counts,
+                                          new_data, old_data);
+    }
 }
 
 
@@ -3534,5 +3279,4 @@ fail:
     }
     return ret;
 }
-
 
