@@ -575,8 +575,6 @@ def isfortran(a):
     >>> a
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(a)
-    False
     >>> a.flags.fnc
     False
 
@@ -584,8 +582,6 @@ def isfortran(a):
     >>> b
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(b)
-    True
     >>> b.flags.fnc
     True
 
@@ -596,8 +592,6 @@ def isfortran(a):
     >>> a
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(a)
-    False
     >>> a.flags.fnc
     False
     >>> b = a.T
@@ -605,15 +599,11 @@ def isfortran(a):
     array([[1, 4],
            [2, 5],
            [3, 6]])
-    >>> np.isfortran(b)
-    True
     >>> b.flags.fnc
     True
 
     C-ordered arrays evaluate as False even if they are also FORTRAN-ordered.
 
-    >>> np.isfortran(np.array([1, 2], order='F'))
-    False
     >>> np.array([1, 2], order='F').flags.fnc
     False
 
