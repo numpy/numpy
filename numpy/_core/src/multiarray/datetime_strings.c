@@ -249,9 +249,9 @@ NpyDatetime_ParseISO8601Datetime(
      * not even matching the strcmp function signature as it should.
      */
     if (len <= 0 || (len == 3 &&
-                        tolower(str[0]) == 'n' &&
-                        tolower(str[1]) == 'a' &&
-                        tolower(str[2]) == 't')) {
+                        tolower(Py_CHARMASK(str[0])) == 'n' &&
+                        tolower(Py_CHARMASK(str[1])) == 'a' &&
+                        tolower(Py_CHARMASK(str[2])) == 't')) {
         out->year = NPY_DATETIME_NAT;
 
         /*
@@ -284,11 +284,11 @@ NpyDatetime_ParseISO8601Datetime(
      * switching to an adjacent day depending on the current time and your
      * timezone.
      */
-    if (len == 5 && tolower(str[0]) == 't' &&
-                    tolower(str[1]) == 'o' &&
-                    tolower(str[2]) == 'd' &&
-                    tolower(str[3]) == 'a' &&
-                    tolower(str[4]) == 'y') {
+    if (len == 5 && tolower(Py_CHARMASK(str[0])) == 't' &&
+                    tolower(Py_CHARMASK(str[1])) == 'o' &&
+                    tolower(Py_CHARMASK(str[2])) == 'd' &&
+                    tolower(Py_CHARMASK(str[3])) == 'a' &&
+                    tolower(Py_CHARMASK(str[4])) == 'y') {
         NPY_TIME_T rawtime = 0;
         struct tm tm_;
 
@@ -327,9 +327,9 @@ NpyDatetime_ParseISO8601Datetime(
     }
 
     /* The string "now" resolves to the current UTC time */
-    if (len == 3 && tolower(str[0]) == 'n' &&
-                    tolower(str[1]) == 'o' &&
-                    tolower(str[2]) == 'w') {
+    if (len == 3 && tolower(Py_CHARMASK(str[0])) == 'n' &&
+                    tolower(Py_CHARMASK(str[1])) == 'o' &&
+                    tolower(Py_CHARMASK(str[2])) == 'w') {
         NPY_TIME_T rawtime = 0;
         PyArray_DatetimeMetaData meta;
 
@@ -375,7 +375,7 @@ NpyDatetime_ParseISO8601Datetime(
     sublen = len;
 
     /* Skip leading whitespace */
-    while (sublen > 0 && isspace(*substr)) {
+    while (sublen > 0 && isspace(Py_CHARMASK(*substr))) {
         ++substr;
         --sublen;
     }
@@ -392,7 +392,7 @@ NpyDatetime_ParseISO8601Datetime(
 
     /* PARSE THE YEAR (digits until the '-' character) */
     out->year = 0;
-    while (sublen > 0 && isdigit(*substr)) {
+    while (sublen > 0 && isdigit(Py_CHARMASK(*substr))) {
         out->year = 10 * out->year + (*substr - '0');
         ++substr;
         --sublen;
@@ -424,7 +424,8 @@ NpyDatetime_ParseISO8601Datetime(
     }
 
     /* PARSE THE MONTH (2 digits) */
-    if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+    if (sublen >= 2 && isdigit(Py_CHARMASK(substr[0]))
+            && isdigit(Py_CHARMASK(substr[1]))) {
         out->month = 10 * (substr[0] - '0') + (substr[1] - '0');
 
         if (out->month < 1 || out->month > 12) {
@@ -458,7 +459,8 @@ NpyDatetime_ParseISO8601Datetime(
     }
 
     /* PARSE THE DAY (2 digits) */
-    if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+    if (sublen >= 2 && isdigit(Py_CHARMASK(substr[0]))
+            && isdigit(Py_CHARMASK(substr[1]))) {
         out->day = 10 * (substr[0] - '0') + (substr[1] - '0');
 
         if (out->day < 1 ||
@@ -488,7 +490,8 @@ NpyDatetime_ParseISO8601Datetime(
     }
 
     /* PARSE THE HOURS (2 digits) */
-    if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+    if (sublen >= 2 && isdigit(Py_CHARMASK(substr[0]))
+            && isdigit(Py_CHARMASK(substr[1]))) {
         out->hour = 10 * (substr[0] - '0') + (substr[1] - '0');
 
         if (out->hour >= 24) {
@@ -519,7 +522,8 @@ NpyDatetime_ParseISO8601Datetime(
     }
 
     /* PARSE THE MINUTES (2 digits) */
-    if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+    if (sublen >= 2 && isdigit(Py_CHARMASK(substr[0]))
+            && isdigit(Py_CHARMASK(substr[1]))) {
         out->min = 10 * (substr[0] - '0') + (substr[1] - '0');
 
         if (out->min >= 60) {
@@ -550,7 +554,8 @@ NpyDatetime_ParseISO8601Datetime(
     }
 
     /* PARSE THE SECONDS (2 digits) */
-    if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+    if (sublen >= 2 && isdigit(Py_CHARMASK(substr[0]))
+            && isdigit(Py_CHARMASK(substr[1]))) {
         out->sec = 10 * (substr[0] - '0') + (substr[1] - '0');
 
         if (out->sec >= 60) {
@@ -579,7 +584,7 @@ NpyDatetime_ParseISO8601Datetime(
     numdigits = 0;
     for (i = 0; i < 6; ++i) {
         out->us *= 10;
-        if (sublen > 0  && isdigit(*substr)) {
+        if (sublen > 0  && isdigit(Py_CHARMASK(*substr))) {
             out->us += (*substr - '0');
             ++substr;
             --sublen;
@@ -587,7 +592,7 @@ NpyDatetime_ParseISO8601Datetime(
         }
     }
 
-    if (sublen == 0 || !isdigit(*substr)) {
+    if (sublen == 0 || !isdigit(Py_CHARMASK(*substr))) {
         if (numdigits > 3) {
             bestunit = NPY_FR_us;
         }
@@ -601,7 +606,7 @@ NpyDatetime_ParseISO8601Datetime(
     numdigits = 0;
     for (i = 0; i < 6; ++i) {
         out->ps *= 10;
-        if (sublen > 0 && isdigit(*substr)) {
+        if (sublen > 0 && isdigit(Py_CHARMASK(*substr))) {
             out->ps += (*substr - '0');
             ++substr;
             --sublen;
@@ -609,7 +614,7 @@ NpyDatetime_ParseISO8601Datetime(
         }
     }
 
-    if (sublen == 0 || !isdigit(*substr)) {
+    if (sublen == 0 || !isdigit(Py_CHARMASK(*substr))) {
         if (numdigits > 3) {
             bestunit = NPY_FR_ps;
         }
@@ -623,7 +628,7 @@ NpyDatetime_ParseISO8601Datetime(
     numdigits = 0;
     for (i = 0; i < 6; ++i) {
         out->as *= 10;
-        if (sublen > 0 && isdigit(*substr)) {
+        if (sublen > 0 && isdigit(Py_CHARMASK(*substr))) {
             out->as += (*substr - '0');
             ++substr;
             --sublen;
@@ -675,7 +680,8 @@ parse_timezone:
         --sublen;
 
         /* The hours offset */
-        if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+        if (sublen >= 2 && isdigit(Py_CHARMASK(substr[0]))
+                && isdigit(Py_CHARMASK(substr[1]))) {
             offset_hour = 10 * (substr[0] - '0') + (substr[1] - '0');
             substr += 2;
             sublen -= 2;
@@ -699,7 +705,8 @@ parse_timezone:
             }
 
             /* The minutes offset (at the end of the string) */
-            if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
+            if (sublen >= 2 && isdigit(Py_CHARMASK(substr[0]))
+                    && isdigit(Py_CHARMASK(substr[1]))) {
                 offset_minute = 10 * (substr[0] - '0') + (substr[1] - '0');
                 substr += 2;
                 sublen -= 2;
@@ -724,7 +731,7 @@ parse_timezone:
     }
 
     /* Skip trailing whitespace */
-    while (sublen > 0 && isspace(*substr)) {
+    while (sublen > 0 && isspace(Py_CHARMASK(*substr))) {
         ++substr;
         --sublen;
     }
