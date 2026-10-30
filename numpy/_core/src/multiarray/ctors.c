@@ -3298,6 +3298,22 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
     return len;
 }
 
+/* Return 1 if obj has a complex dtype, 0 if not, -1 on error */
+static int
+_object_is_complex(PyObject *obj)
+{
+    if (obj == NULL || obj == Py_None) {
+        return 0;
+    }
+    PyArray_Descr *dt = PyArray_DescrFromObject(obj, NULL);
+    if (dt == NULL) {
+        return -1;
+    }
+    int is_complex = PyTypeNum_ISCOMPLEX(dt->type_num);
+    Py_DECREF(dt);
+    return is_complex;
+}
+
 /*NUMPY_API
  *
  * ArangeObj,
@@ -3378,11 +3394,26 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     }
 
     if (!step || step == Py_None) {
+        if (PyTypeNum_ISCOMPLEX(dtype->type_num)) {
+            int start_cplx = _object_is_complex(start);
+            int stop_cplx = _object_is_complex(stop);
+            if (start_cplx < 0 || stop_cplx < 0) {
+                goto fail;
+            }
+            if (start_cplx || stop_cplx) {
+                PyErr_SetString(PyExc_ValueError,
+                        "arange: step must be specified when start or stop is "
+                        "complex; use numpy.linspace to generate evenly spaced "
+                        "complex values.");
+                goto fail;
+            }
+        }
         Py_XSETREF(step, PyLong_FromLong(1));
         if (step == NULL) {
             goto fail;
         }
     }
+
     if (!stop || stop == Py_None) {
         Py_XSETREF(stop, start);
         start = PyLong_FromLong(0);
