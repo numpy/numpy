@@ -1626,7 +1626,8 @@ def make_ufuncs(funcdict):
                         "{name} with {typenum}");
                     return -1;
                 }}
-                if (!PyObject_TypeCheck(info, &PyArrayMethod_Type)) {{
+                if (!PyObject_TypeCheck(
+                        info, _npy_module_state->PyArrayMethod_Type)) {{
                     PyErr_SetString(PyExc_RuntimeError,
                         "Not a PyArrayMethodObject in ufunc "
                         "{name} with {typenum}");
@@ -1672,6 +1673,7 @@ def make_code(funcdict, filename):
     #include "clip.h"
     #include "dtypemeta.h"
     #include "dispatching.h"
+    #include "module_state.h"
     #include "_umath_doc_generated.h"
 
     %s
