@@ -3394,17 +3394,19 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     }
 
     if (!step || step == Py_None) {
-        int start_cplx = _object_is_complex(start);
-        int stop_cplx = _object_is_complex(stop);
-        if (start_cplx < 0 || stop_cplx < 0) {
-            goto fail;
-        }
-        if (start_cplx || stop_cplx) {
-            PyErr_SetString(PyExc_ValueError,
-                    "arange: step must be specified when start or stop is "
-                    "complex; use numpy.linspace to generate evenly spaced "
-                    "complex values.");
-            goto fail;
+        if (PyTypeNum_ISCOMPLEX(dtype->type_num)) {
+            int start_cplx = _object_is_complex(start);
+            int stop_cplx = _object_is_complex(stop);
+            if (start_cplx < 0 || stop_cplx < 0) {
+                goto fail;
+            }
+            if (start_cplx || stop_cplx) {
+                PyErr_SetString(PyExc_ValueError,
+                        "arange: step must be specified when start or stop is "
+                        "complex; use numpy.linspace to generate evenly spaced "
+                        "complex values.");
+                goto fail;
+            }
         }
         Py_XSETREF(step, PyLong_FromLong(1));
         if (step == NULL) {
