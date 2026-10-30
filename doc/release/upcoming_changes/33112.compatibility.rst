@@ -1,0 +1,6 @@
+`numpy.spacing` semantics consistent for negative values
+--------------------------------------------------------
+* `numpy.spacing(-0.0)` now returns `-finfo(dtype).smallest_subnormal` for all floating
+  point dtypes. Previously, the sign of `-0.0` was ignored.
+* `numpy.spacing` for negative `float16` inputs now retuns spacing toward negative
+  infinity, matching the behavior of `float32` and `float64`.
