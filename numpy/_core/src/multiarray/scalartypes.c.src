@@ -772,28 +772,21 @@ stringtype_@form@(PyObject *self)
 static PyObject *
 unicodetype_@form@(PyObject *self)
 {
-    Py_UCS4 *dptr, *ip;
-    Py_ssize_t len;
-    PyObject *new;
-    PyObject *ret;
-
-    /* PyUnicode_READY is called by PyUnicode_GetLength */
-    len = PyUnicode_GetLength(self);
-    ip = PyUnicode_AsUCS4Copy(self);
-    if (ip == NULL) {
+    Py_ssize_t len = PyUnicode_GetLength(self);
+    if (len < 0) {
         return NULL;
     }
-    for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
-    new = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ip, len);
-    if (new == NULL) {
-        PyMem_Free(ip);
-        return NULL;
+    while (len > 0 && PyUnicode_ReadChar(self, len - 1) == 0) {
+        len--;
     }
-    ret = PyUnicode_Type.tp_@form@(new);
-    Py_DECREF(new);
-    PyMem_Free(ip);
+    /* An exact `str`, also for a subclass so `str()` can return it */
+    PyObject *ret = PyUnicode_Substring(self, 0, len);
 
 #ifdef IS_repr
+    if (ret == NULL) {
+        return NULL;
+    }
+    Py_SETREF(ret, PyObject_Repr(ret));
     if (ret == NULL) {
         return NULL;
     }
