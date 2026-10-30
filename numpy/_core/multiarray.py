@@ -41,7 +41,7 @@ __all__ = [
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
     'frombuffer', 'fromfile', 'fromiter', 'fromstring',
     'get_handler_name', 'get_handler_version', 'inner', 'interp',
-    'interp_complex', 'is_busday', 'lexsort', 'matmul', 'vecdot',
+    'interp_complex', 'is_busday', 'issubdtype', 'lexsort', 'matmul', 'vecdot',
     'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
     'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
@@ -68,6 +68,7 @@ fromfile.__module__ = 'numpy'
 fromiter.__module__ = 'numpy'
 frompyfunc.__module__ = 'numpy'
 fromstring.__module__ = 'numpy'
+issubdtype.__module__ = 'numpy'
 may_share_memory.__module__ = 'numpy'
 nested_iters.__module__ = 'numpy'
 promote_types.__module__ = 'numpy'

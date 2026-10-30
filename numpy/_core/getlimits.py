@@ -171,7 +171,7 @@ class finfo:
             raise TypeError("dtype must not be None")
 
         try:
-            obj = cls._finfo_cache.get(dtype)  # most common path
+            obj = cls._finfo_cache.get((type(dtype), dtype))
             if obj is not None:
                 return obj
         except TypeError:
@@ -183,9 +183,17 @@ class finfo:
             # In case a float instance was given
             dtype = numeric.dtype(type(dtype))
 
-        obj = cls._finfo_cache.get(dtype)
+        obj = cls._finfo_cache.get((type(dtype), dtype))
         if obj is not None:
             return obj
+
+        # Fallback for third-party dtypes (like ml_dtypes) that populate
+        # _finfo_cache directly using bare dtype as key:
+        obj = cls._finfo_cache.get(dtype)
+        if obj is not None:
+            cls._finfo_cache[(type(dtype), dtype)] = obj
+            return obj
+
         dtypes = [dtype]
         # Call result_type to normalize to e.g. native byte-order:
         newdtype = numeric.result_type(dtype)
@@ -193,8 +201,10 @@ class finfo:
             dtypes.append(newdtype)
             dtype = newdtype
 
-        obj = cls._finfo_cache.get(dtype)
+        obj = cls._finfo_cache.get((type(dtype), dtype))
         if obj is not None:
+            for dt in dtypes:
+                cls._finfo_cache[(type(dt), dt)] = obj
             return obj
 
         sctype = newdtype.type
@@ -205,17 +215,18 @@ class finfo:
                 dtypes.append(newdtype)
                 dtype = newdtype
 
-                obj = cls._finfo_cache.get(dtype, None)
+                obj = cls._finfo_cache.get((type(dtype), dtype))
                 if obj is not None:
                     # the original dtype was not in the cache, but the new
                     # dtype is in the cache. we add the original dtypes to
                     # the cache and return the result
                     for dt in dtypes:
-                        cls._finfo_cache[dt] = obj
+                        cls._finfo_cache[(type(dt), dt)] = obj
                     return obj
+
         obj = object.__new__(cls)._init(dtype)
         for dt in dtypes:
-            cls._finfo_cache[dt] = obj
+            cls._finfo_cache[(type(dt), dt)] = obj
         return obj
 
     def _init(self, dtype):
