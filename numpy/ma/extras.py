@@ -49,6 +49,7 @@ from .core import (  # noqa: F401
     mask_or,
     masked,
     masked_array,
+    minmax,
     nomask,
     ones,
     sort,
@@ -2113,8 +2114,9 @@ def notmasked_edges(a, axis=None):
         return flatnotmasked_edges(a)
     m = getmaskarray(a)
     idx = array(np.indices(a.shape), mask=np.asarray([m] * a.ndim))
-    return [tuple(idx[i].min(axis).compressed() for i in range(a.ndim)),
-            tuple(idx[i].max(axis).compressed() for i in range(a.ndim)), ]
+    edges = [minmax(idx[i], axis) for i in range(a.ndim)]
+    return [tuple(edge[0].compressed() for edge in edges),
+            tuple(edge[1].compressed() for edge in edges), ]
 
 
 def flatnotmasked_contiguous(a):
