@@ -296,6 +296,18 @@ class TestAsArray:
                     reason="ctypes not available on this python installation")
 class TestAsCtypesType:
     """ Test conversion from dtypes to ctypes types """
+
+    @staticmethod
+    def _ctypes_type_equal(a, b):
+        """Compare two ctypes types, tolerating array-type identity races."""
+        if a is b:
+            return True
+        if issubclass(a, ctypes.Array):
+            return (issubclass(b, ctypes.Array) and
+                    a._length_ == b._length_ and
+                    TestAsCtypesType._ctypes_type_equal(a._type_, b._type_))
+        return False
+
     def test_scalar(self):
         dt = np.dtype('<u2')
         ct = np.ctypeslib.as_ctypes_type(dt)
@@ -309,11 +321,10 @@ class TestAsCtypesType:
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_equal(ct, ctypes.c_uint16)
 
-    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_subarray(self):
         dt = np.dtype((np.int32, (2, 3)))
         ct = np.ctypeslib.as_ctypes_type(dt)
-        assert_equal(ct, 2 * (3 * ctypes.c_int32))
+        assert_(self._ctypes_type_equal(ct, 2 * (3 * ctypes.c_int32)))
 
     def test_structure(self):
         dt = np.dtype([
@@ -329,7 +340,6 @@ class TestAsCtypesType:
             ('b', ctypes.c_uint32),
         ])
 
-    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_structure_aligned(self):
         dt = np.dtype([
             ('a', np.uint16),
@@ -339,11 +349,15 @@ class TestAsCtypesType:
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_(issubclass(ct, ctypes.Structure))
         assert_equal(ctypes.sizeof(ct), dt.itemsize)
-        assert_equal(ct._fields_, [
-            ('a', ctypes.c_uint16),
-            ('', ctypes.c_char * 2),  # padding
-            ('b', ctypes.c_uint32),
-        ])
+        for (actual_name, actual_type), (desired_name, desired_type) in zip(
+            ct._fields_, [
+                ('a', ctypes.c_uint16),
+                ('', ctypes.c_char * 2),  # padding
+                ('b', ctypes.c_uint32),
+            ]
+        ):
+            assert_equal(actual_name, desired_name)
+            assert_(self._ctypes_type_equal(actual_type, desired_type))
 
     def test_union(self):
         dt = np.dtype({
@@ -360,7 +374,6 @@ class TestAsCtypesType:
             ('b', ctypes.c_uint32),
         ])
 
-    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_padded_union(self):
         dt = np.dtype({
             'names': ['a', 'b'],
@@ -372,11 +385,15 @@ class TestAsCtypesType:
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_(issubclass(ct, ctypes.Union))
         assert_equal(ctypes.sizeof(ct), dt.itemsize)
-        assert_equal(ct._fields_, [
-            ('a', ctypes.c_uint16),
-            ('b', ctypes.c_uint32),
-            ('', ctypes.c_char * 5),  # padding
-        ])
+        for (actual_name, actual_type), (desired_name, desired_type) in zip(
+            ct._fields_, [
+                ('a', ctypes.c_uint16),
+                ('b', ctypes.c_uint32),
+                ('', ctypes.c_char * 5),  # padding
+            ]
+        ):
+            assert_equal(actual_name, desired_name)
+            assert_(self._ctypes_type_equal(actual_type, desired_type))
 
     def test_overlapping(self):
         dt = np.dtype({
