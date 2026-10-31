@@ -397,7 +397,7 @@ Type strings
    The first element, *field_name*, is the field name (if this is
    ``''`` then a standard field name, ``'f#'``, is assigned).  The
    field name may also be a 2-tuple of strings where the first string
-   is either a "title" (which may be any string or unicode string) or
+   is either a "title" (which may be any string) or
    meta-data for the field which can be any object, and the second
    string is the "name" which must be a valid Python identifier.
 
@@ -486,7 +486,7 @@ Type strings
     This style allows passing in the :attr:`fields <dtype.fields>`
     attribute of a data-type object.
 
-    *obj* should contain string or unicode keys that refer to
+    *obj* should contain string keys that refer to
     ``(data-type, offset)`` or ``(data-type, offset, title)`` tuples.
 
     .. admonition:: Example

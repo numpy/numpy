@@ -99,8 +99,8 @@ array_function_dispatch = functools.partial(
 def _get_num_chars(a):
     """
     Helper function that returns the number of characters per field in
-    a string or unicode array.  This is to abstract out the fact that
-    for a unicode array this is itemsize / 4.
+    a ``str_`` or ``bytes_`` array.  This is to abstract out the fact that
+    for a ``str_`` array this is itemsize / 4.
     """
     if issubclass(a.dtype.type, np.str_):
         return a.itemsize // 4
@@ -218,9 +218,9 @@ def _mod_dispatcher(a, values):
 @array_function_dispatch(_mod_dispatcher)
 def mod(a, values):
     """
-    Return (a % i), that is pre-Python 2.6 string formatting
-    (interpolation), element-wise for a pair of array_likes of str
-    or unicode.
+    Return (a % i), that is printf-style string formatting
+    (interpolation), element-wise for a pair of array_likes of `str`
+    or `bytes`.
 
     Parameters
     ----------
@@ -1243,7 +1243,7 @@ def capitalize(a):
 @array_function_dispatch(_unary_op_dispatcher)
 def title(a):
     """
-    Return element-wise title cased version of string or unicode.
+    Return element-wise title cased version of `str` or `bytes`.
 
     Title case words start with uppercase characters, all remaining cased
     characters are lowercase.
@@ -1412,7 +1412,7 @@ def _split(a, sep=None, maxsplit=None):
     ----------
     a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    sep : str or unicode, optional
+    sep : {str, bytes}, optional
        If `sep` is not specified or None, any whitespace string is a
        separator.
 
@@ -1460,7 +1460,7 @@ def _rsplit(a, sep=None, maxsplit=None):
     ----------
     a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    sep : str or unicode, optional
+    sep : {str, bytes}, optional
         If `sep` is not specified or None, any whitespace string
         is a separator.
     maxsplit : int, optional
@@ -1710,7 +1710,7 @@ def translate(a, table, deletechars=None):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``str_`` or ``bytes_`` dtype, depending on input type
 
     See Also
     --------
