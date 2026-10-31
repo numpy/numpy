@@ -389,7 +389,7 @@ def take[ArrayT: np.ndarray](
 ) -> ArrayT: ...
 
 #
-@overload  # Nd T
+@overload  # Nd T, axis=<given>
 def top_k[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT],
     k: int | np.integer,
@@ -399,6 +399,16 @@ def top_k[ShapeT: _Shape, DTypeT: np.dtype](
     mode: _TopKMode = "largest",
     sorted: bool = True,
 ) -> tuple[np.ndarray[ShapeT, DTypeT], np.ndarray[ShapeT, np.dtype[np.intp]]]: ...
+@overload  # Nd T, axis=None
+def top_k[DTypeT: np.dtype](
+    a: np.ndarray[Any, DTypeT],
+    k: int | np.integer,
+    /,
+    *,
+    axis: None,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[np.ndarray[tuple[int], DTypeT], Array1D[np.intp]]: ...
 @overload  # 1d bool
 def top_k(
     a: list[bool],
@@ -479,7 +489,7 @@ def top_k(
     mode: _TopKMode = "largest",
     sorted: bool = True,
 ) -> tuple[Array2D[np.complex128], Array2D[np.intp]]: ...
-@overload  # ?d T
+@overload  # ?d T, axis=<given>
 def top_k[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     k: int | np.integer,
@@ -489,7 +499,17 @@ def top_k[ScalarT: np.generic](
     mode: _TopKMode = "largest",
     sorted: bool = True,
 ) -> tuple[NDArray[ScalarT], NDArray[np.intp]]: ...
-@overload  # ?d  (fallback)
+@overload  # ?d T, axis=None
+def top_k[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    k: int | np.integer,
+    /,
+    *,
+    axis: None,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[Array1D[ScalarT], Array1D[np.intp]]: ...
+@overload  # ?d, axis=<given> (fallback)
 def top_k(
     a: ArrayLike,
     k: int | np.integer,
@@ -499,6 +519,16 @@ def top_k(
     mode: _TopKMode = "largest",
     sorted: bool = True,
 ) -> tuple[NDArray[Any], NDArray[np.intp]]: ...
+@overload  # ?d, axis=None    (fallback)
+def top_k(
+    a: ArrayLike,
+    k: int | np.integer,
+    /,
+    *,
+    axis: None,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[Array1D[Any], Array1D[np.intp]]: ...
 
 # keep in sync with `ma.core.reshape`
 @overload  # shape: index
