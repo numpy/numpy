@@ -1892,8 +1892,12 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     /* Raise an error if the casting rule isn't followed */
-    if (!PyArray_CanCastArrayTo(arr, newtype, casting)) {
-        PyErr_Clear();
+    int can_cast = PyArray_CanCastArrayTo_int(arr, newtype, casting);
+    if (can_cast < 0) {
+        Py_DECREF(newtype);
+        return NULL;
+    }
+    if (can_cast == 0) {
         npy_set_invalid_cast_error(
                 PyArray_DESCR(arr), newtype, casting, PyArray_NDIM(arr) == 0);
         Py_DECREF(newtype);

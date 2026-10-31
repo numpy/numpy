@@ -629,8 +629,14 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         /* Adjust the window dimensions for this array */
         sliding_view->dimensions[0] = PyArray_SIZE(arrays[iarrays]);
 
-        if (!PyArray_CanCastArrayTo(
-                arrays[iarrays], PyArray_DESCR(ret), casting)) {
+        int can_cast = PyArray_CanCastArrayTo_int(
+                arrays[iarrays], PyArray_DESCR(ret), casting);
+        if (can_cast < 0) {
+            Py_DECREF(sliding_view);
+            Py_DECREF(ret);
+            return NULL;
+        }
+        if (can_cast == 0) {
             npy_set_invalid_cast_error(
                     PyArray_DESCR(arrays[iarrays]), PyArray_DESCR(ret),
                     casting, PyArray_NDIM(arrays[iarrays]) == 0);

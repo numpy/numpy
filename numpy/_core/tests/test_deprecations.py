@@ -4,11 +4,14 @@ to document how deprecations should eventually be turned into errors.
 
 """
 import contextlib
+import operator
+import os
 import re
 import sys
 import textwrap
 import warnings
 from collections.abc import Callable
+from itertools import permutations
 
 import pytest
 
@@ -596,6 +599,189 @@ class TestTakeOutDtype(_DeprecationTestCase):
         different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
 
         self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
+
+
+class TestStringArgumentConversion(_DeprecationTestCase):
+    message = "Mixing strings and bytes in numpy.strings"
+
+    @pytest.mark.parametrize("name,args,expected,num", [
+        ("replace", (b"aba", "a", b"xy"), b"xybxy", 1),
+        ("replace", (b"aba", b"a", "xy"), b"xybxy", 1),
+        ("replace", ("aba", b"a", b"xy"), "xybxy", 2),
+        ("partition", (b"a-b", "-"), (b"a", b"-", b"b"), 1),
+        ("rpartition", ("a-b", b"-"), ("a", "-", "b"), 1),
+        ("center", (b"a", 3, "*"), b"*a*", 1),
+        ("ljust", ("a", 3, b"*"), "a**", 1),
+        ("rjust", (b"a", 3, "*"), b"**a", 1),
+    ])
+    def test_argument_conversion(self, name, args, expected, num):
+        function = getattr(np.strings, name)
+        with self.filter_warnings() as record:
+            result = function(*args)
+        assert_array_equal(result, expected)
+        assert all(w.filename == __file__ for w in record)
+        self.assert_deprecated(function, args=args, num=num)
+
+
+class TestTextBytesCastingAndPromotion(_DeprecationTestCase):
+    message = ".*strings and bytes"
+
+    @pytest.mark.parametrize("source,target,casting,allowed", [
+        ("S2", "U2", "safe", True), ("S2", "U1", "safe", False),
+        ("S2", "U1", "same_kind", True), ("U2", "S2", "same_kind", False),
+        ("S2", "T", "safe", True), ("T", "S2", "same_kind", True),
+        ("T", "S2", "safe", False), ("S2", "U", "safe", True),
+        ("T", "S", "same_kind", True),
+        ([('x', 'S2'), ('y', 'S2')], [('x', 'U2'), ('y', 'U2')], "safe", True),
+        ([('x', [('y', 'S2', (2,))])], [('x', [('y', 'U2', (2,))])],
+         "same_kind", True),
+        ([('x', 'S2')], [('x', 'U1')], "safe", False),
+    ])
+    def test_casting(self, source, target, casting, allowed):
+        a = np.full(2, "ab", dtype=source)
+        expected = a.astype(target)  # Default explicit casts remain quiet.
+        # Queries keep their old answers without warning during deprecation.
+        assert np.can_cast(a.dtype, target, casting=casting) == allowed
+        assert np.can_cast(a, target, casting=casting) == allowed
+        assert np.can_cast(a.dtype, target, casting="unsafe")
+        if not allowed:
+            with pytest.raises(TypeError):
+                a.astype(target, casting=casting)
+            return
+        with pytest.warns(DeprecationWarning, match=self.message):
+            assert_array_equal(a.astype(target, casting=casting), expected)
+        self.assert_deprecated(a.astype, args=(target,), kwargs={"casting": casting})
+
+    @pytest.mark.parametrize("operation,args,dtype", [
+        (np.result_type, ("S1", "U1"), "U1"),
+        (np.promote_types, ("U1", "S1"), "U1"),
+        (np.array, ([b"a", "b"],), "U1"),
+        (np.concatenate, ([np.array([b"a"]), np.array(["b"])],), "U1"),
+        (np.promote_types, ([('x', 'S1')], [('x', 'U1')]), [('x', 'U1')]),
+        (operator.eq, (np.array([(b"a",)], dtype=[('x', 'S1')]),
+                       np.array([("a",)], dtype=[('x', 'U1')])), bool),
+    ])
+    def test_promotion(self, operation, args, dtype):
+        with pytest.warns(DeprecationWarning, match=self.message):
+            result = operation(*args)
+        assert getattr(result, "dtype", result) == np.dtype(dtype)
+        self.assert_deprecated(operation, args=args, num=None)
+
+    def test_unsafe_scalar_assignment(self):
+        self.assert_not_deprecated(np.full, args=(2, "x"), kwargs={"dtype": "S"})
+        self.assert_not_deprecated(np.full_like, args=(np.array([b"a"]), "x"))
+        self.assert_not_deprecated(np.copyto, args=(np.empty(1, dtype="S1"), "x"),
+                                   kwargs={"casting": "unsafe"})
+
+
+def _check_coercion_policy(mode, size):
+    from numpy._core._multiarray_tests import can_cast_safely
+
+    if mode == "strict":
+        expect = pytest.raises
+        category = TypeError
+    else:
+        expect = pytest.warns
+        category = DeprecationWarning
+
+    for dtypes in set(permutations(("S10", "U10", "S10", "O", "U10"))):
+        assert np.result_type(*dtypes) == np.dtype(object)
+    for dtypes in set(permutations(("S10", "U10", "S10", "U10"))):
+        with expect(category):
+            np.result_type(*dtypes)
+
+    assert np.can_cast("S1", "U1") == (mode == "warn")
+    assert can_cast_safely(np.dtype("S").num, np.dtype("T").num) == (mode == "warn")
+    a = np.full(size, b"a")
+    text = a.astype("T")
+    out = np.empty(a.shape, dtype="U1")
+    add_out = np.empty(a.shape, dtype="U2")
+    with expect(category):
+        a.astype("U1", casting="same_kind")
+    with expect(category):
+        a.astype("T", casting="same_kind")
+    with expect(category):
+        text.astype("S1", casting="same_kind")
+    with expect(category):
+        np.copyto(out, a)
+    with expect(category):
+        np.concatenate([a], axis=None, dtype="U1")
+    with expect(category):
+        list(np.nditer(a, op_dtypes=["U1"], flags=["buffered"]))
+    with expect(category):
+        np.strings.add(a, "", signature="UU->U")
+    with expect(category):
+        np.strings.add(a, a, out=add_out)
+    if mode == "strict":
+        mixed = np.array([b"a", "b"])
+        assert mixed.dtype == np.dtype(object)
+        assert mixed.tolist() == [b"a", "b"]
+    else:
+        with expect(category):
+            np.array([b"a", "b"])
+    values = [np.datetime64("2020-01-01"), 1.5]
+    mixed = np.array(values)
+    assert mixed.dtype == np.dtype(object)
+    assert mixed.tolist() == values
+    with expect(np.exceptions.DTypePromotionError if mode == "strict" else category):
+        np.result_type("S1", "U1")
+    with expect(category):
+        np.promote_types("U1", "S1")
+    with expect(category):
+        np.strings.replace(a, b"a", "b")
+    with expect(category):
+        np.strings.center(a, 3, "*")
+    with expect(category):
+        np.strings.partition(a, "-")
+    assert_array_equal(a.astype("U1"), ["a"] * size)
+    assert_array_equal(np.array([b"a", "b"], dtype="U1"), ["a", "b"])
+    for source, target in [
+        ([('x', 'S1')], [('x', 'U1')]),
+        ([('x', [('y', 'S1', (2,))])], [('x', [('y', 'U1', (2,))])]),
+    ]:
+        a = np.zeros(2, dtype=source)
+        out = np.empty(2, dtype=target)
+        assert np.can_cast(a.dtype, out.dtype) == (mode == "warn")
+        assert np.can_cast(a.dtype, out.dtype, casting="unsafe")
+        np.copyto(out, a, casting="unsafe")
+        if mode == "strict":
+            mixed = np.array([a[0], out[0]])
+            assert mixed.dtype == np.dtype(object)
+            assert mixed[0].dtype == a.dtype
+            assert mixed[1].dtype == out.dtype
+        with expect(category):
+            a.astype(out.dtype, casting="same_kind")
+        with expect(category):
+            np.copyto(out, a)
+        with expect(category):
+            np.result_type(a, out)
+        with expect(category):
+            _ = a == out
+
+
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="requires subprocesses")
+@pytest.mark.parametrize("mode", ["warn", "strict"])
+@pytest.mark.parametrize("size", [1, 10000])
+def test_coercion_policy_environment(mode, size):
+    code = (
+        "from numpy._core.tests.test_deprecations import _check_coercion_policy\n"
+        f"_check_coercion_policy({mode!r}, {size})"
+    )
+    run_subprocess(
+        [sys.executable, "-Werror::DeprecationWarning", "-c", code],
+        env={**os.environ, "NPY_COERCION_POLICY": mode},
+    )
+
+
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="requires subprocesses")
+def test_coercion_policy_invalid():
+    code = (
+        "import pytest\n"
+        "with pytest.raises(ValueError, match='coercion policy'):\n"
+        "    import numpy"
+    )
+    run_subprocess([sys.executable, "-c", code],
+                   env={**os.environ, "NPY_COERCION_POLICY": "invalid"})
 
 
 _DOT_CALLERS = [

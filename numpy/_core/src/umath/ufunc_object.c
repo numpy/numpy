@@ -842,6 +842,14 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
             if (i < nin && (PyArray_NDIM(op[i]) == 0
                             || (PyArray_NDIM(op[i]) == 1
                                 && PyArray_DIM(op[i], 0) <= buffersize))) {
+                /* CastToType uses unsafe casting, so warn before copying. */
+                if (!force_cast_input) {
+                    int can_cast = PyArray_CanCastArrayTo_int(
+                            op[i], dtypes[i], casting);
+                    if (can_cast <= 0) {
+                        return can_cast;
+                    }
+                }
                 PyArrayObject *tmp;
                 Py_INCREF(dtypes[i]);
                 tmp = (PyArrayObject *)PyArray_CastToType(op[i], dtypes[i], 0);
@@ -4644,7 +4652,11 @@ resolve_descriptors(int nop,
     if (safety < 0) {
         goto finish;
     }
-    if (NPY_UNLIKELY(PyArray_MinCastSafety(safety, casting) != casting)) {
+    int can_cast = npy_cast_safety_to_bool(safety, casting, 1);
+    if (can_cast < 0) {
+        goto finish;
+    }
+    if (NPY_UNLIKELY(!can_cast)) {
         /* TODO: Currently impossible to reach (specialized unsafe loop) */
         PyErr_Format(PyExc_TypeError,
                 "The ufunc implementation for %s with the given dtype "
