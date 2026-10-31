@@ -1,0 +1,9 @@
+``f2py`` ignores names inside character literals
+------------------------------------------------
+``f2py`` no longer records a dependency on a name that appears only
+inside a character literal.
+Signature generation no longer crashes on a parameter such as
+``mkdir = 'mkdir '``.
+``f2py`` now orders cyclic initializers by what each one uses.
+``lda = MAX(1, n)`` runs after ``n = shape(a, 1)`` in either declaration
+order.
