@@ -9,7 +9,7 @@ _defaults: &defaults
   docker:
     # CircleCI maintains a library of pre-built images
     # documented at https://circleci.com/developer/images/image/cimg/python
-    - image: cimg/python:3.12.12
+    - image: cimg/python:3.12.16
   working_directory: ~/repo
 
 # PRs changing only paths matching this regex skip the build job
@@ -76,11 +76,12 @@ jobs:
           command: |
             python3.12 -m venv venv
             . venv/bin/activate
-            pip install --progress-bar=off -r requirements/test_requirements.txt \
-               -r requirements/build_requirements.txt \
-               -r requirements/ci_requirements.txt
+            python -m pip install --upgrade pip
+            pip install --progress-bar=off --group test-extending \
+               --group dev-cli \
+               --group openblas64
             # get newer, pre-release versions of critical packages
-            pip install --progress-bar=off --pre -r requirements/doc_requirements.txt
+            pip install --progress-bar=off --pre --group doc
             # then install numpy HEAD, which will override the version installed above
             spin build --with-scipy-openblas=64 -j 2
 

@@ -35,6 +35,11 @@ TYPES = {
     "DTypeLike": TypeTup.from_type_alias(npt.DTypeLike),
     "NBitBase": TypeTup(npt.NBitBase, (), None),  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
     "NDArray": TypeTup.from_type_alias(npt.NDArray),
+    "Array0D": TypeTup.from_type_alias(npt.Array0D),
+    "Array1D": TypeTup.from_type_alias(npt.Array1D),
+    "Array2D": TypeTup.from_type_alias(npt.Array2D),
+    "Array3D": TypeTup.from_type_alias(npt.Array3D),
+    "Array4D": TypeTup.from_type_alias(npt.Array4D),
 }
 
 

@@ -195,8 +195,8 @@ Use
 or :func:`numpy.savez_compressed`.
 
 For :ref:`security and portability <how-to-io-pickle-file>`, set
-``allow_pickle=False`` unless the dtype contains Python objects, which
-requires pickling.
+``allow_pickle=False`` unless the dtype contains Python objects or is
+`numpy.dtypes.StringDType`, which requires pickling.
 
 Masked arrays :any:`can't currently be saved <MaskedArray.tofile>`,
 nor can other arbitrary array subclasses.
@@ -318,8 +318,8 @@ Avoid when possible; :doc:`pickles <python:library/pickle>` are not secure
 against erroneous or maliciously constructed data.
 
 Use :func:`numpy.save` and :func:`numpy.load`.  Set ``allow_pickle=False``,
-unless the array dtype includes Python objects, in which case pickling is
-required.
+unless the array dtype includes Python objects or is
+`numpy.dtypes.StringDType`, in which case pickling is required.
 
 :func:`numpy.load` and `pickle` submodule also support unpickling files
 created with NumPy 1.26.

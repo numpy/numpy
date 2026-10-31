@@ -781,7 +781,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
         PyErr_SetString(PyExc_ValueError, "ndarray is not C-contiguous");
         goto fail;
     }
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+    if ((flags & PyBUF_WRITABLE) == PyBUF_WRITABLE) {
         if (PyArray_FailUnlessWriteable(self, "buffer source array") < 0) {
             goto fail;
         }

@@ -1,6 +1,7 @@
 import contextlib
 import re
 import sys
+import threading
 import types
 import unittest
 import warnings
@@ -160,14 +161,18 @@ assert_type(np.testing.measure(b"for i in range(1000): np.sqrt(i**2)", times=5),
 
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8), None)
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8, rtol=0.005), None)
+assert_type(np.testing.assert_allclose(AR_i8, AR_f8, rtol=np.float32(0.005)), None)
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8, atol=1), None)
+assert_type(np.testing.assert_allclose(AR_i8, AR_f8, atol=np.float32(1)), None)
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8, equal_nan=True), None)
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8, err_msg="err"), None)
 assert_type(np.testing.assert_allclose(AR_i8, AR_f8, verbose=False), None)
 
 assert_type(np.testing.assert_array_almost_equal_nulp(AR_i8, AR_f8, nulp=2), None)
+assert_type(np.testing.assert_array_almost_equal_nulp(AR_i8, AR_f8, nulp=np.float32(2)), None)
 
 assert_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, maxulp=2), npt.NDArray[Any])
+assert_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, maxulp=np.float32(2)), npt.NDArray[Any])
 assert_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, dtype=np.float32), npt.NDArray[Any])
 
 assert_type(np.testing.assert_warns(RuntimeWarning), contextlib._GeneratorContextManager[None])  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
@@ -194,3 +199,21 @@ assert_type(np.testing.assert_no_gc_cycles(func3, 5), None)
 assert_type(np.testing.break_cycles(), None)
 
 assert_type(np.testing.TestCase(), unittest.case.TestCase)
+
+# run_threaded
+
+def _f_prepare() -> list[Any]: ...
+def _f_default() -> None: ...
+def _f_default_args(*args: Any) -> None: ...
+def _f_count(i: int) -> None: ...
+def _f_count_args(i: int, *args: Any) -> None: ...
+def _f_barrier(barrier: threading.Barrier) -> None: ...
+def _f_count_barrier(i: int, barrier: threading.Barrier) -> None: ...
+
+assert_type(np.testing.run_threaded(_f_default), None)
+assert_type(np.testing.run_threaded(_f_default_args, prepare_args=_f_prepare), None)
+assert_type(np.testing.run_threaded(_f_count, pass_count=True), None)
+assert_type(np.testing.run_threaded(_f_count_args, pass_count=True, prepare_args=_f_prepare), None)
+assert_type(np.testing.run_threaded(_f_barrier, pass_barrier=True), None)
+assert_type(np.testing.run_threaded(_f_count_barrier, pass_count=True, pass_barrier=True), None)
+assert_type(np.testing.run_threaded(_f_count_args, pass_count=True, pass_barrier=True, prepare_args=_f_prepare), None)

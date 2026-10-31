@@ -518,6 +518,22 @@ def test_memmap_roundtrip(tmpdir):
         ma.flush()
 
 
+@pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
+def test_memmap_numpy_integer_shape(tmp_path):
+    fname = tmp_path / "numpy_ints.npy"
+    shape = tuple(np.int64(dim) for dim in (2, 3))
+    marray = format.open_memmap(fname, mode='w+', dtype=np.int64, shape=shape)
+    marray[...] = np.arange(6).reshape(2, 3)
+    marray.flush()
+    del marray
+
+    with open(fname, 'rb') as fp:
+        assert b'np.int64' not in fp.read(128)
+
+    loaded = np.load(fname)
+    assert_array_equal(loaded, np.arange(6).reshape(2, 3))
+
+
 def test_compressed_roundtrip(tmpdir):
     arr = np.random.rand(200, 200)
     npz_file = os.path.join(tmpdir, 'compressed.npz')

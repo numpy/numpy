@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import operator
 from collections.abc import Hashable
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -162,7 +162,7 @@ C.searchsorted(1)
 A.trace()
 A.trace(out=B0)
 
-void = cast(np.void, np.array(1, dtype=[("f", np.float64)]).take(0))
+void = np.array(1, dtype=[("f", np.float64)]).take(0)
 void.setfield(10, np.float64)
 
 A.item(0)

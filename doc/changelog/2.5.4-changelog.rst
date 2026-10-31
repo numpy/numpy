@@ -1,0 +1,39 @@
+
+Contributors
+============
+
+A total of 9 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Aniket Singh Yadav
+* Bhuvansh Kataria +
+* Charles Harris
+* Iason Krommydas
+* Joren Hammudoglu
+* Lazizbek Ergashev +
+* Nathan Goldbaum
+* Sebastian Berg
+* Yeonho Kim
+
+Pull requests merged
+====================
+
+A total of 17 pull requests were merged for this release.
+
+* `#32520 <https://github.com/numpy/numpy/pull/32520>`__: MAINT: Prepare 2.5.x for further development
+* `#32557 <https://github.com/numpy/numpy/pull/32557>`__: BUG: Reset an unrepresentable fill_value on a dtype change (#32508)
+* `#32565 <https://github.com/numpy/numpy/pull/32565>`__: BLD: work around MSVC 19.51 bug (#32561)
+* `#32600 <https://github.com/numpy/numpy/pull/32600>`__: BUG: fix np.strings.replace truncating old/new to a's
+* `#32707 <https://github.com/numpy/numpy/pull/32707>`__: BUG: fix _ureduce reshape when a kept axis has size 0 (#32536)
+* `#32709 <https://github.com/numpy/numpy/pull/32709>`__: BUG: fix two possible crashes in the ufunc.accumulate implementation...
+* `#32710 <https://github.com/numpy/numpy/pull/32710>`__: BUG: Reset an inherited fill_value in MaskedArray.__new__ as...
+* `#32711 <https://github.com/numpy/numpy/pull/32711>`__: ENH: Improvements and fixes for stringdtype hashing (#32563)
+* `#32713 <https://github.com/numpy/numpy/pull/32713>`__: CI: increase ppc64le timeout to match other timeouts (#32583)
+* `#32718 <https://github.com/numpy/numpy/pull/32718>`__: BUG: fix memory leak in legacy ArrayMethod wrapper code
+* `#32719 <https://github.com/numpy/numpy/pull/32719>`__: BUG: check for non-finite input before calling gesdd/gelsd and...
+* `#32738 <https://github.com/numpy/numpy/pull/32738>`__: BUG: fix segfault in as_arrays() on self-referencing pyscalars
+* `#32741 <https://github.com/numpy/numpy/pull/32741>`__: TYP: Various typing improvements.
+* `#32791 <https://github.com/numpy/numpy/pull/32791>`__: BUG: Fix canonicalization/promotion of nested subarray types...
+* `#32888 <https://github.com/numpy/numpy/pull/32888>`__: MAINT: Update vendored-meson to match main.
+* `#32904 <https://github.com/numpy/numpy/pull/32904>`__: TYP: Backport a number of typing updates.
+* `#32956 <https://github.com/numpy/numpy/pull/32956>`__: TYP: Various typing fixes and improvements.

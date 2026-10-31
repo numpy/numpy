@@ -191,8 +191,6 @@ def ones(shape, dtype=None, order='C', *, device=None, like=None):
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -344,8 +342,6 @@ def full(shape, fill_value, dtype=None, order='C', *, device=None, like=None):
 
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -551,8 +547,10 @@ def isfortran(a):
     """
     Check if the array is Fortran contiguous but *not* C contiguous.
 
-    This function is obsolete. If you only want to check if an array is Fortran
-    contiguous use ``a.flags.f_contiguous`` instead.
+    .. deprecated:: 2.6
+        `numpy.isfortran` is deprecated. Use ``a.flags.fnc`` instead, or
+        ``a.flags.f_contiguous`` if you only need to check for Fortran
+        contiguity.
 
     Parameters
     ----------
@@ -577,14 +575,14 @@ def isfortran(a):
     >>> a
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(a)
+    >>> a.flags.fnc
     False
 
     >>> b = np.array([[1, 2, 3], [4, 5, 6]], order='F')
     >>> b
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(b)
+    >>> b.flags.fnc
     True
 
 
@@ -594,22 +592,28 @@ def isfortran(a):
     >>> a
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(a)
+    >>> a.flags.fnc
     False
     >>> b = a.T
     >>> b
     array([[1, 4],
            [2, 5],
            [3, 6]])
-    >>> np.isfortran(b)
+    >>> b.flags.fnc
     True
 
     C-ordered arrays evaluate as False even if they are also FORTRAN-ordered.
 
-    >>> np.isfortran(np.array([1, 2], order='F'))
+    >>> np.array([1, 2], order='F').flags.fnc
     False
 
     """
+    # Deprecated in NumPy 2.6, 2026-10-14
+    warnings.warn(
+        "numpy.isfortran is deprecated. Use a.flags.fnc instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return a.flags.fnc
 
 
@@ -1869,8 +1873,6 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
         By default, `dtype` is float.
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     fromfunction : any
@@ -2216,8 +2218,6 @@ def identity(n, dtype=None, *, like=None):
     dtype : data-type, optional
         Data-type of the output.  Defaults to ``float``.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------

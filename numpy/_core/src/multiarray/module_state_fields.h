@@ -71,6 +71,9 @@ extern "C" {
     F(tzinfo)               \
     F(utcoffset)            \
     F(total_seconds)        \
+    F(days)                 \
+    F(seconds)              \
+    F(microseconds)         \
     F(reduce)               \
     F(accumulate)
 

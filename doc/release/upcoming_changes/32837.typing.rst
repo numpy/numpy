@@ -1,0 +1,5 @@
+New ``numpy.typing.Array{0,1,2,3,4}D`` shape-typed array aliases
+----------------------------------------------------------------
+``numpy.typing`` now provides the ``Array0D``, ``Array1D``, ``Array2D``, ``Array3D``, and
+``Array4D`` generic type aliases for arrays with a known number of dimensions. For example,
+``npt.Array2D[np.float64]`` is equivalent to ``np.ndarray[tuple[int, int], np.dtype[np.float64]]``.

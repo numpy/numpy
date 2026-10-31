@@ -84,7 +84,7 @@ class TestAsIntegerRatio:
             [0, -7400, 14266, -7822, -8721],
             marks=[
                 pytest.mark.skipif(
-                    np.finfo(np.double) == np.finfo(np.longdouble),
+                    np.dtype(np.double) == np.dtype(np.longdouble),
                     reason="long double is same as double"),
                 pytest.mark.skipif(
                     LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
