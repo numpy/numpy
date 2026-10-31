@@ -2148,32 +2148,46 @@ def postcrack(block, args=None, tab=''):
 
 
 def _sort_cyclic_dependents(dep, vars):
-    """Order variables in a dependency cycle for initialization.
+    """Order one cyclic depend group by real dependency edges.
 
-    When a cycle cannot be resolved topologically, prefer:
+    ``sortvarnames`` calls this only after a cycle has been reported.
+    The usual f2py cycle is an input array dimensioned by hide scalars
+    that are computed from that array (``n = shape(a, ...)``,
+    ``lda = MAX(1, n)``). Those array-to-hide edges are dropped so
+    ``getarrdims`` can blank them, and every remaining edge is honored
+    by a topological sort. An initializer therefore runs after the
+    names it uses, independent of declaration order.
 
-    1. intent(in) inputs (e.g. ``a``) so shape-based hide vars can run
-    2. variables defined via ``=`` (e.g. ``n = shape(a, 1)``,
-       ``lda = MAX(1, n)``) so dimension expressions see real values
-    3. remaining hide arrays (e.g. ``work`` with ``dimension(3*n)``)
-
-    This restores a usable order after literal masking removes accidental
-    edges such as ``diag = 'N'`` matching ``n`` inside the quotes.
-    ``getarrdims`` blanks any dimension that names a later depargs
-    entry, so workspace arrays must not sort ahead of the scalars they
-    size from.
+    A cycle that is not one of those shape back-edges is left in
+    ``dep`` order. The caller has already reported it. This function
+    does not recurse.
     """
-    def sort_key(name):
-        var = vars[name]
-        if isintent_in(var) and not isintent_hide(var):
-            tier = 0
-        elif '=' in var:
-            tier = 1
-        else:
-            tier = 2
-        return (tier, dep.index(name))
+    remaining = set(dep)
 
-    return sorted(dep, key=sort_key)
+    def blocking(name):
+        var = vars[name]
+        blocked_by = []
+        for dep_name in var.get('depend') or []:
+            if dep_name not in remaining or dep_name == name:
+                continue
+            target = vars.get(dep_name, {})
+            # Dimension back-edge onto a hide value or an initializer.
+            if (isarray(var) and isintent_nothide(var)
+                    and (isintent_hide(target) or '=' in target)):
+                continue
+            blocked_by.append(dep_name)
+        return blocked_by
+
+    ordered = []
+    while remaining:
+        ready = [name for name in dep
+                 if name in remaining and not blocking(name)]
+        if not ready:
+            ordered.extend(name for name in dep if name in remaining)
+            break
+        ordered.append(ready[0])
+        remaining.remove(ready[0])
+    return ordered
 
 
 def sortvarnames(vars):
@@ -2399,23 +2413,31 @@ word_pattern = re.compile(r'\b[a-z][\w$]*\b', re.I)
 
 
 def _get_depend_dict(name, vars, deps):
-    if name in vars:
-        words = vars[name].get('depend', [])
-
-        if '=' in vars[name] and not isstring(vars[name]):
-            for word in word_pattern.findall(vars[name]['=']):
-                # The word_pattern may return values that are not
-                # only variables, they can be string content for instance
-                if word not in words and word in vars and word != name:
-                    words.append(word)
-        for word in words[:]:
-            for w in deps.get(word, []) \
-                    or _get_depend_dict(word, vars, deps):
-                if w not in words:
-                    words.append(w)
-    else:
+    # ``deps[name]`` is stored before walking dependencies so a cycle
+    # returns the partial list instead of recursing without bound.
+    if name in deps:
+        return deps[name]
+    if name not in vars:
         outmess(f'_get_depend_dict: no dependence info for {repr(name)}\n')
+        deps[name] = []
+        return []
+    deps[name] = []
+    # Extend an existing depend list in place, matching the previous
+    # behavior of walking that same list object.
+    words = vars[name].get('depend')
+    if words is None:
         words = []
+    if '=' in vars[name] and not isstring(vars[name]):
+        # Same literal mask as analyzevars (gh-28700). Names that occur
+        # only inside quotes are not dependencies.
+        rhs = mask_string_literals(vars[name]['='])
+        for word in word_pattern.findall(rhs):
+            if word not in words and word in vars and word != name:
+                words.append(word)
+    for word in list(words):
+        for w in _get_depend_dict(word, vars, deps):
+            if w not in words and w != name:
+                words.append(w)
     deps[name] = words
     return words
 
@@ -2436,13 +2458,23 @@ def get_sorted_names(vars):
             names.append(name)
             del depend_dict[name]
     while depend_dict:
+        progressed = False
         for name, lst in list(depend_dict.items()):
+            if name not in depend_dict:
+                continue
             new_lst = [n for n in lst if n in depend_dict]
             if not new_lst:
                 names.append(name)
                 del depend_dict[name]
+                progressed = True
             else:
                 depend_dict[name] = new_lst
+        if not progressed:
+            errmess('get_sorted_names: failed to compute dependencies because'
+                    ' of cyclic dependencies between '
+                    + ', '.join(depend_dict) + '\n')
+            names.extend(depend_dict.keys())
+            break
     return [name for name in names if name in vars]
 
 
