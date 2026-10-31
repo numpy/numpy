@@ -568,6 +568,50 @@ class TestDateTime:
                               dtype='m8[s]'),
                      np.array([2 * 86400 + 3], dtype='m8[s]'))
 
+    def test_pytimedelta_int64_limits(self):
+        int64_max = np.iinfo(np.int64).max
+        largest = datetime.timedelta(days=106751991, seconds=14454,
+                                     microseconds=775807)
+        assert_equal(np.timedelta64(largest).astype(np.int64), int64_max)
+        assert_equal(np.timedelta64(-largest).astype(np.int64), -int64_max)
+        # days alone overflow, the sum does not
+        td = datetime.timedelta(days=-106751992, seconds=80000)
+        assert_equal(np.timedelta64(td).astype(np.int64),
+                     -106751992 * 86400 * 10**6 + 80000 * 10**6)
+
+    @pytest.mark.parametrize("td", [
+        datetime.timedelta.max,
+        datetime.timedelta.min,
+        # INT64_MAX + 1 and INT64_MIN - 1 us
+        datetime.timedelta(days=106751991, seconds=14454, microseconds=775808),
+        datetime.timedelta(days=-106751992, seconds=71945, microseconds=224191),
+    ])
+    def test_pytimedelta_overflow_raises(self, td):
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.timedelta64(td)
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.timedelta64(td, 's')
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.array([td], dtype='m8[us]')
+
+    def test_pytimedelta_result_equals_nat_raises(self):
+        # INT64_MIN us is NaT
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.timedelta64(datetime.timedelta(microseconds=-2**63))
+
+    def test_pytimedelta_subclass_and_duck_typing_overflow_raises(self):
+        # attribute path instead of the C struct
+        class MyTimedelta(datetime.timedelta):
+            pass
+
+        class DuckTimedelta:
+            days, seconds, microseconds = 2**31 - 1, 0, 0
+
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.timedelta64(MyTimedelta(days=999999999))
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.timedelta64(DuckTimedelta())
+
     def test_timedelta_nat_format(self):
         # gh-17552
         with pytest.warns(
@@ -3001,6 +3045,37 @@ class TestDateTime:
 
         assert_equal(np.busday_count(friday, saturday), 1)
         assert_equal(np.busday_count(saturday, friday), 0)
+
+    def test_datetime_busday_count_large_range(self):
+        int64_max = np.iinfo(np.int64).max
+        d0 = np.datetime64(0, 'D')
+        # 2**63 - 1 is divisible by 7
+        assert_equal(np.busday_count(d0, np.datetime64(int64_max, 'D')),
+                     5 * (int64_max // 7))
+        assert_equal(np.busday_count(np.datetime64(7 * 10**18, 'D'), d0),
+                     -5 * 10**18)
+
+    @pytest.mark.parametrize("begin, end", [
+        (-1, 2**63 - 1),
+        (-(2**63 - 1), 2**63 - 1),
+        (-2**62, 2**62),
+        (-2**62 - 1, 2**62),
+    ])
+    def test_datetime_busday_count_overflow_raises(self, begin, end):
+        begin, end = np.datetime64(begin, 'D'), np.datetime64(end, 'D')
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.busday_count(begin, end)
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.busday_count(end, begin)
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.busday_count(np.array([0, begin], 'M8[D]'),
+                            np.array([5, end], 'M8[D]'))
+
+    def test_datetime_busday_count_reversed_overflow_raises(self):
+        # reversed ranges are shifted by one day (gh-23197), the width fits
+        dmax = np.datetime64(np.iinfo(np.int64).max, 'D')
+        with pytest.raises(OverflowError, match="Overflow"):
+            np.busday_count(dmax, np.datetime64(0, 'D'))
 
     def test_datetime_is_busday(self):
         holidays = ['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',

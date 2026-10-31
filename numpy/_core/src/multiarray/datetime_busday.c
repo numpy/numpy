@@ -23,6 +23,7 @@
 #include "datetime_busday.h"
 #include "datetime_busdaycal.h"
 #include "module_state.h"
+#include "npy_extint128.h"
 
 /* Gets the day of the week for a datetime64[D] value */
 static int
@@ -365,10 +366,11 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
                     const npy_bool *weekmask, int busdays_in_weekmask,
                     npy_datetime *holidays_begin, npy_datetime *holidays_end)
 {
-    npy_int64 count, whole_weeks;
+    npy_int64 count, whole_weeks, width;
 
     int day_of_week = 0;
     int swapped = 0;
+    char overflow = 0;
 
     /* If we get a NaT, raise an error */
     if (date_begin == NPY_DATETIME_NAT || date_end == NPY_DATETIME_NAT) {
@@ -390,8 +392,14 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
         swapped = 1;
         // we swapped date_begin and date_end, so we need to correct for the
         // original date_end that should not be included. gh-23197
-        date_begin++;
-        date_end++;
+        date_begin = safe_add(date_begin, 1, &overflow);
+        date_end = safe_add(date_end, 1, &overflow);
+    }
+
+    width = safe_sub(date_end, date_begin, &overflow);
+    if (overflow) {
+        PyErr_SetString(PyExc_OverflowError, "Overflow in busday_count");
+        return -1;
     }
 
     /* Remove any earlier holidays */
@@ -405,7 +413,7 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
     count = -(holidays_end - holidays_begin);
 
     /* Add the whole weeks between date_begin and date_end */
-    whole_weeks = (date_end - date_begin) / 7;
+    whole_weeks = width / 7;
     count += whole_weeks * busdays_in_weekmask;
     date_begin += whole_weeks * 7;
 
