@@ -1,0 +1,57 @@
+name: Update copyright year range
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Pull request should only be created if there is a diff, so run monthly
+    - cron: "0 6 1 * *"
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update-license-year:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Update copyright year range
+        id: update
+        run: |
+          year=$(date -u +%Y)
+          echo "year=${year}" >> "$GITHUB_OUTPUT"
+          sed -i -E "1s/^(Copyright \(c\) 2005-)[0-9]{4}(, NumPy Developers\.)$/\1${year}\2/" LICENSE.txt
+
+      - name: Validate date updated correctly
+        env:
+          YEAR: ${{ steps.update.outputs.year }}
+        run: |
+          expected="Copyright (c) 2005-${YEAR}, NumPy Developers."
+          if [ "$(head -n 1 LICENSE.txt)" != "$expected" ]; then
+            echo "::error file=LICENSE.txt,line=1::Expected '${expected}'"
+            exit 1
+          fi
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: update-copyright-year
+          delete-branch: true
+          commit-message: "MAINT: Update Copyright year range"
+          title: "MAINT: Update Copyright year range in LICENSE.txt"
+          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          body: |
+            Automated update of copyright year range to end in current year.
+          labels: |
+            03 - Maintenance
