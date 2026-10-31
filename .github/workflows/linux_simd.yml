@@ -108,7 +108,7 @@ jobs:
   arm64_simd:
     if: github.repository == 'numpy/numpy'
     needs: [baseline_only]
-    runs-on: ubuntu-22.04-arm
+    runs-on: ubuntu-26.04-arm
     strategy:
       fail-fast: false
       matrix:
