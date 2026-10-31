@@ -7,7 +7,8 @@ import time
 import pytest
 
 import numpy as np
-from numpy.f2py import crackfortran
+from numpy.f2py import capi_maps, crackfortran
+from numpy.f2py.auxfuncs import getargs2
 from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
 
 from . import util
@@ -310,6 +311,66 @@ class TestStringLiteralDepend:
         assert set(lvs["lwork"]["depend"]) == {"norm", "n"}
         assert lvs["lwork"]["="] == "(*norm=='i'?3*n:n)"
         assert lvs["work"]["dimension"] == ["lwork"]
+
+    def test_lda_declared_before_n(self):
+        # Declaration order must not put ``lda = MAX(1, n)`` ahead of
+        # ``n = shape(a, 1)``. getarrdims blanks a dimension that names a
+        # later depargs entry, so ``work`` must follow ``n`` as well.
+        fpath = util.getpath("tests", "src", "crackfortran",
+                             "gh28700_lda_before_n.pyf")
+        mod = crackfortran.crackfortran([str(fpath)])
+        iface = next(b for b in mod
+                     if b.get("name") == "gh28700_lda_before_n")["body"][0]
+        probe = next(b for b in iface["body"] if b.get("name") == "probe")
+        order = probe["sortvars"]
+        assert order.index("a") < order.index("n")
+        assert order.index("n") < order.index("lda")
+        assert order.index("n") < order.index("work")
+        _, depargs = getargs2(probe)
+        capi_maps.depargs = depargs
+        work_dims = capi_maps.getarrdims("work", probe["vars"]["work"])
+        assert work_dims["setdims"] == "#varname#_Dims[0]=3 * n"
+        assert capi_maps.getarrdims("a", probe["vars"]["a"])["setdims"] == ""
+
+    def test_true_cycle_does_not_recurse(self, tmp_path, capsys):
+        # Names inside character literals, and a genuine parameter cycle,
+        # must be reported instead of blowing the stack in _get_depend_dict.
+        src = tmp_path / "cycle.f90"
+        src.write_text(
+            "module nonchar_literal_cycle\n"
+            "  integer, parameter :: n = len('m')\n"
+            "  integer, parameter :: m = len('n')\n"
+            "end module nonchar_literal_cycle\n"
+            "module char_real_cycle\n"
+            "  character(len=8), parameter :: aaa = bbb\n"
+            "  character(len=8), parameter :: bbb = aaa\n"
+            "end module char_real_cycle\n"
+            "subroutine uses_cycle\n"
+            "  use char_real_cycle\n"
+            "end subroutine uses_cycle\n"
+        )
+        mod = crackfortran.crackfortran([str(src)])
+        assert any(b.get("name") == "nonchar_literal_cycle" for b in mod)
+        err = capsys.readouterr().err
+        assert "cyclic dependencies" in err
+
+
+@pytest.mark.slow
+class TestLdaBeforeNRuntime(util.F2PyTest):
+    # Fortran-order array shape (5, 4): shape(a, 1) is a_Dims[1] == 4,
+    # and lda = MAX(1, n) must be computed from that n, not from 0.
+    # The .pyf names the extension; f2py ignores -m in that case.
+    module_name = "gh28700_lda_before_n"
+    sources = [
+        util.getpath("tests", "src", "crackfortran", "gh28700_lda_before_n.pyf"),
+        util.getpath("tests", "src", "crackfortran", "gh28700_lda_before_n.f90"),
+    ]
+
+    def test_shape_then_lda(self):
+        a = np.ones((5, 4), dtype=np.float32, order="F")
+        gotn, gotlda = self.module.probe(a)
+        assert gotn == 4
+        assert gotlda == 4
 
 
 @pytest.mark.slow
