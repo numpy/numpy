@@ -2804,14 +2804,18 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /* create new MapIter object */
-    mit = (PyArrayMapIterObject *)PyObject_Malloc(
-            sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
+    size_t mit_size = sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info);
+    mit = (PyArrayMapIterObject *)PyObject_Malloc(mit_size);
     if (mit == NULL) {
         Py_DECREF(intp_descr);
+        PyErr_NoMemory();
         return NULL;
     }
-    /* set all attributes of mapiter to zero */
-    memset(mit, 0, sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
+    /*
+     * Zero everything past the object header. Clearing the header would be
+     * wrong on PyPy, since PyObject_Malloc sets ob_refcnt.
+     */
+    memset((char *)mit + sizeof(PyObject), 0, mit_size - sizeof(PyObject));
     PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
 
     Py_INCREF(arr);
