@@ -1,0 +1,19 @@
+Default output of ``strings.encode`` will change
+------------------------------------------------
+`numpy.strings.encode` currently converts a `numpy.dtypes.StringDType` text
+array to a fixed-width bytes array. A future release will instead return
+`numpy.dtypes.ByteStringDType`, whose elements can have different lengths.
+Calls without ``dtype=`` now emit a ``FutureWarning``.
+
+Choose the output type explicitly to avoid the warning and keep the same
+behavior across releases::
+
+    import numpy as np
+
+    text = np.array(["hello", "world"], dtype=np.dtypes.StringDType())
+    fixed = np.strings.encode(text, dtype=np.bytes_)
+    variable = np.strings.encode(text, dtype=np.dtypes.ByteStringDType())
+
+The variable-length output supports only UTF-8 and raises an error for invalid
+data. Keep the fixed-width output if you need other encodings or error-handling
+options. Encoding fixed-width text arrays is unchanged.

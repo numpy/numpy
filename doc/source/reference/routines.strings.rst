@@ -8,7 +8,8 @@ String functionality
 .. module:: numpy.strings
 
 The `numpy.strings` module provides a set of universal functions operating
-on arrays of type `numpy.str_` or `numpy.bytes_`.
+on arrays of type `numpy.str_`, `numpy.bytes_`, `numpy.dtypes.StringDType`
+or `numpy.dtypes.ByteStringDType`.
 For example,
 
 .. try_examples::
@@ -25,6 +26,17 @@ to get the performance benefits as well.
    Prior to NumPy 2.0, all string functionality was in `numpy.char`, which
    only operated on fixed-width strings. That module will not be getting
    updates and will be deprecated at some point in the future.
+
+.. note::
+
+   `numpy.dtypes.ByteStringDType` input is supported by `add`, `multiply`,
+   `numpy.maximum`, `numpy.minimum`, the comparison functions, `str_len`, `isalpha`,
+   `find`, `count`, `replace`, `strip`, `lstrip`, `rstrip`, `partition`,
+   `rpartition`, `slice` and `decode`. `encode` returns it for
+   `numpy.dtypes.StringDType` input when passed
+   ``dtype=np.dtypes.ByteStringDType()``. `strip`, `lstrip` and `rstrip`
+   support only ``chars=None``. The other functions raise for
+   ``ByteStringDType`` input.
 
 String operations
 -----------------

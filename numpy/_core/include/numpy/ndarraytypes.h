@@ -86,6 +86,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
                      * future.
                      */
                     NPY_VSTRING=2056,
+                    NPY_VBYTES=2057,
 };
 
 
@@ -137,6 +138,7 @@ enum NPY_TYPECHAR {
          * New non-legacy DTypes
          */
         NPY_VSTRINGLTR = 'T',
+        NPY_VBYTELTR = 'R',
 
         /*
          * Note, we removed `NPY_INTPLTR` due to changing its definition

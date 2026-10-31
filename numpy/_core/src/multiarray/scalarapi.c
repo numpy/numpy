@@ -18,6 +18,7 @@
 #include "descriptor.h"
 #include "dtypemeta.h"
 #include "scalartypes.h"
+#include "stringdtype/dtype.h"
 
 #include "common.h"
 #include "module_state.h"
@@ -87,6 +88,22 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         case NPY_VOID:
             /* Note: no & needed here, so can't use CASE */
             return PyArrayScalar_VAL(scalar, Void);
+        case NPY_VBYTES:
+            /*
+             * A vbytes owns Python bytes, not a packed dtype value/arena.
+             * TODO: embed a borrowed packed-string header pointing into the
+             * scalar's immutable bytes buffer. Supporting this without a
+             * separate allocation or arena needs explicit non-owning storage
+             * semantics: allocator-free loads, independently owned copies
+             * when storing in arrays, and free/replacement paths that never
+             * free the borrowed buffer. Reusing the owned heap-string flags
+             * would incorrectly free Python-owned memory. Keep rejecting raw
+             * access until these paths and the scalar lifetime are handled.
+             */
+            PyErr_SetString(PyExc_TypeError,
+                    "vbytes scalars do not expose packed ByteStringDType "
+                    "storage; convert to a zero-dimensional array instead");
+            return NULL;
     }
 
     /*
@@ -138,7 +155,14 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
     PyArray_Descr *typecode;
     void *newptr;
     typecode = PyArray_DescrFromScalar(scalar);
+    if (typecode == NULL) {
+        return;
+    }
     newptr = scalar_value(scalar, typecode);
+    if (newptr == NULL) {
+        Py_DECREF(typecode);
+        return;
+    }
 
     if (PyTypeNum_ISEXTENDED(typecode->type_num)) {
         void **ct = (void **)ctypeptr;
@@ -149,6 +173,27 @@ PyArray_ScalarAsCtype(PyObject *scalar, void *ctypeptr)
     }
     Py_DECREF(typecode);
     return;
+}
+
+/* Keep the packed value and its arena alive for the duration of the cast. */
+static int
+cast_vbytes_scalar(PyObject *scalar, PyArray_Descr *indescr,
+                   PyArray_Descr *outdescr, void *ctypeptr)
+{
+    Py_INCREF(indescr);
+    PyArrayObject *array = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, indescr, 0, NULL, NULL, NULL, 0, NULL);
+    if (array == NULL) {
+        return -1;
+    }
+    if (PyArray_Pack(PyArray_DESCR(array), PyArray_DATA(array), scalar) < 0) {
+        Py_DECREF(array);
+        return -1;
+    }
+    int res = npy_cast_raw_scalar_item(
+            PyArray_DESCR(array), PyArray_DATA(array), outdescr, ctypeptr);
+    Py_DECREF(array);
+    return res;
 }
 
 /*NUMPY_API
@@ -167,6 +212,11 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
     descr = PyArray_DescrFromScalar(scalar);
     if (descr == NULL) {
         return -1;
+    }
+    if (descr->type_num == NPY_VBYTES) {
+        int res = cast_vbytes_scalar(scalar, descr, outcode, ctypeptr);
+        Py_DECREF(descr);
+        return res;
     }
     void *src = scalar_value(scalar, descr);
     if (src == NULL) {
@@ -189,6 +239,18 @@ PyArray_CastScalarDirect(PyObject *scalar, PyArray_Descr *indescr,
     PyArray_Descr *out_dt = PyArray_DescrFromType(outtype);
     if (out_dt == NULL) {
         return -1;
+    }
+    if (out_dt->type_num == NPY_VBYTES) {
+        Py_DECREF(out_dt);
+        PyErr_SetString(PyExc_TypeError,
+                "casting to ByteStringDType storage requires an owning "
+                "descriptor; use PyArray_CastScalarToCtype instead");
+        return -1;
+    }
+    if (indescr->type_num == NPY_VBYTES) {
+        int res = cast_vbytes_scalar(scalar, indescr, out_dt, ctypeptr);
+        Py_DECREF(out_dt);
+        return res;
     }
     void *src = scalar_value(scalar, indescr);
     if (src == NULL) {
@@ -262,6 +324,11 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
         return (PyObject *)r;
     }
     if (PyArray_EquivTypes(outcode, typecode)) {
+        if (typecode->type_num == NPY_VBYTES) {
+            /* The array-owned descriptor owns the arena containing its value. */
+            Py_DECREF(outcode);
+            return (PyObject *)r;
+        }
         if (!PyTypeNum_ISEXTENDED(typecode->type_num)
                 || (outcode->elsize == typecode->elsize)) {
             /*
@@ -475,6 +542,9 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     type_num = descr->type_num;
     if (type_num == NPY_BOOL) {
         PyArrayScalar_RETURN_BOOL_FROM_LONG(*(npy_bool*)data);
+    }
+    else if (type_num == NPY_VBYTES) {
+        return bytestring_getitem_scalar((PyArray_StringDTypeObject *)descr, (char **)data);
     }
     else if (PyDataType_FLAGCHK(descr, NPY_USE_GETITEM)) {
         return PyDataType_GetArrFuncs(descr)->getitem(data, base);

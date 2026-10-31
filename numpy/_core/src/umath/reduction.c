@@ -22,6 +22,7 @@
 #include "array_coercion.h"
 #include "array_method.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 #include "refcount.h"
 
 #include "numpy/ufuncobject.h"
@@ -236,6 +237,16 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
                       NPY_ITER_ALIGNED |
                       NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_SUBTYPE;
+        if (PyTypeNum_ISVSTRINGLIKE(op_dtypes[i]->type_num)) {
+            /*
+             * Initial values are copied into the iterator's operand before
+             * buffering starts. Keep a temporary operand in the resolved
+             * dtype when out has different null semantics, so that a null
+             * accumulator is not converted to an ordinary string before
+             * the reduction runs. Convert to out only on writeback.
+             */
+            op_flags[i] |= NPY_ITER_UPDATEIFCOPY;
+        }
     }
     op_flags[nout] = NPY_ITER_READONLY |
                   NPY_ITER_ALIGNED |
