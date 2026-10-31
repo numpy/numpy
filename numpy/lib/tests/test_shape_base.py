@@ -479,6 +479,31 @@ class TestArraySplit:
                    np.arange(7, 10), np.array([]), np.array([])]
         compare_results(res, desired)
 
+    def test_nested_list(self):
+        a = np.arange(24).reshape(2, 3, 4)
+        res = array_split(a.tolist(), 3, axis=2)
+        compare_results(res, array_split(a, 3, axis=2))
+
+    def test_duck_array(self):
+        class Duck:
+            def __init__(self, arr):
+                self.arr = arr
+
+            @property
+            def shape(self):
+                return self.arr.shape
+
+            def swapaxes(self, axis1, axis2):
+                return Duck(self.arr.swapaxes(axis1, axis2))
+
+            def __getitem__(self, key):
+                return Duck(self.arr[key])
+
+        a = np.arange(24).reshape(2, 3, 4)
+        res = array_split(Duck(a), 3, axis=2)
+        assert all(type(r) is Duck for r in res)
+        compare_results([r.arr for r in res], array_split(a, 3, axis=2))
+
 
 class TestSplit:
     # The split function is essentially the same as array_split,
@@ -494,6 +519,10 @@ class TestSplit:
     def test_unequal_split(self):
         a = np.arange(10)
         assert_raises(ValueError, split, a, 3)
+
+    def test_nested_list(self):
+        a = np.arange(24).reshape(2, 3, 4)
+        compare_results(split(a.tolist(), 3, axis=1), split(a, 3, axis=1))
 
 
 class TestColumnStack:
@@ -592,6 +621,10 @@ class TestHsplit:
         desired = [np.array([[1, 2], [1, 2]]), np.array([[3, 4], [3, 4]])]
         compare_results(res, desired)
 
+    def test_nested_list(self):
+        a = np.arange(24).reshape(2, 3, 4)
+        compare_results(hsplit(a.tolist(), 3), hsplit(a, 3))
+
 
 class TestVsplit:
     """Only testing for integer splits.
@@ -618,6 +651,10 @@ class TestVsplit:
         res = vsplit(a, 2)
         desired = [np.array([[1, 2, 3, 4]]), np.array([[1, 2, 3, 4]])]
         compare_results(res, desired)
+
+    def test_nested_list(self):
+        a = np.arange(24).reshape(2, 3, 4)
+        compare_results(vsplit(a.tolist(), 2), vsplit(a, 2))
 
 
 class TestDsplit:
@@ -651,6 +688,10 @@ class TestDsplit:
         desired = [np.array([[[1, 2], [1, 2]], [[1, 2], [1, 2]]]),
                    np.array([[[3, 4], [3, 4]], [[3, 4], [3, 4]]])]
         compare_results(res, desired)
+
+    def test_nested_list(self):
+        a = np.arange(24).reshape(2, 3, 4)
+        compare_results(dsplit(a.tolist(), 2), dsplit(a, 2))
 
 
 class TestSqueeze:
