@@ -989,9 +989,9 @@ def compress_rows(a):
 
     Parameters
     ----------
-    x : array_like, MaskedArray
+    a : array_like, MaskedArray
         The array to operate on. If not a MaskedArray instance (or if no array
-        elements are masked), `x` is interpreted as a MaskedArray with
+        elements are masked), `a` is interpreted as a MaskedArray with
         `mask` set to `nomask`. Must be a 2D array.
 
     Returns
@@ -1028,9 +1028,9 @@ def compress_cols(a):
 
     Parameters
     ----------
-    x : array_like, MaskedArray
+    a : array_like, MaskedArray
         The array to operate on.  If not a MaskedArray instance (or if no array
-        elements are masked), `x` is interpreted as a MaskedArray with
+        elements are masked), `a` is interpreted as a MaskedArray with
         `mask` set to `nomask`. Must be a 2D array.
 
     Returns
