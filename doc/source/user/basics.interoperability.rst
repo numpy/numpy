@@ -57,6 +57,14 @@ describes its memory layout and NumPy does everything else (zero-copy if
 possible). If that's not possible, the object itself is responsible for
 returning a ``ndarray`` from ``__array__()``.
 
+If an object is not able to expose its data through
+``__array_interface__``, it can define the attribute as a property that
+raises ``AttributeError``. NumPy then tries ``__array__()`` if it is
+defined. Other exceptions cause conversion to fail rather than falling
+back to ``__array__()``. Returning an invalid interface dictionary, such as
+one containing an unsupported ``typestr``, also causes conversion to fail
+without falling back to ``__array__()``.
+
 :doc:`DLPack <dlpack:index>` is yet another protocol to convert foreign objects
 to NumPy arrays in a language and device agnostic manner. NumPy doesn't implicitly
 convert objects to ndarrays using DLPack. It provides the function
