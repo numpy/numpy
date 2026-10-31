@@ -1260,10 +1260,19 @@ def gradient(f, *varargs, axis=None, edge_order=1):
                 raise ValueError("when 1d, distances must match "
                                  "the length of the corresponding dimension")
             if np.issubdtype(distances.dtype, np.integer):
-                # Convert numpy integer types to float64 to avoid modular
-                # arithmetic in np.diff(distances).
-                distances = distances.astype(np.float64)
-            diffx = np.diff(distances)
+                # Differences of integers are exact modulo 2**64 in uint64,
+                # take the sign from a comparison in the original dtype since
+                # the true difference may need 65 bits.
+                if distances.dtype.itemsize == 8:
+                    u = distances.view(np.uint64)
+                else:
+                    u = distances.astype(np.uint64)
+                d = np.diff(u)
+                diffx = d.astype(np.float64)
+                neg = distances[1:] < distances[:-1]
+                diffx[neg] = -(-d[neg]).astype(np.float64)
+            else:
+                diffx = np.diff(distances)
             # if distances are constant reduce to the scalar case
             # since it brings a consistent speedup
             if (diffx == diffx[0]).all():

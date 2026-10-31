@@ -1365,6 +1365,16 @@ class TestGradient:
         dfdx = gradient(f, x)
         assert_array_equal(dfdx, [0.5, 0.5])
 
+    def test_integer_spacing_precision(self):
+        # Large integer offsets must not affect the spacing differences.
+        elapsed = np.array([0, 1, 3, 6], dtype=np.int64)
+        timestamps = 1767225600000000000 + elapsed
+        values = elapsed.astype(np.float64)
+
+        result = gradient(values, timestamps)
+
+        assert_array_equal(result, np.ones(4))
+
     def test_return_type(self):
         res = np.gradient(([1, 2], [2, 3]))
         assert type(res) is tuple
