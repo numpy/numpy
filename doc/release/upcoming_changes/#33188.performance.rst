@@ -1,0 +1,1 @@
+* Accessing `numpy.dtype.name` will be several times faster.

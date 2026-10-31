@@ -2261,19 +2261,136 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
     return ret;
 }
 
+static const char *
+_kind_name(PyArray_Descr *dtype)
+{
+    switch (dtype->kind) {
+        case 'u': return "uint";
+        case 'i': return "int";
+        case 'c': return "complex";
+        case 'f': return "float";
+        case 'b': return "bool";
+        case 'V': return "void";
+        case 'O': return "object";
+        case 'M': return "datetime";
+        case 'm': return "timedelta";
+        case 'S': return "bytes";
+        case 'U': return "str";
+        default:
+            PyErr_Format(PyExc_RuntimeError,
+                    "internal dtype error, unknown dtype kind '%c'", dtype->kind);
+            return NULL;
+    }
+}
+
+static int
+_name_includes_bit_suffix(PyArray_Descr *dtype)
+{
+    PyTypeObject *scalar_type = dtype->typeobj;
+
+    if (scalar_type == &PyObjectArrType_Type) {
+        return 0;
+    }
+    else if (scalar_type == &PyBoolArrType_Type) {
+        return 0;
+    }
+    else if (scalar_type == NULL) {
+        return 1;
+    }
+    else if (PyType_IsSubtype(scalar_type, &PyFlexibleArrType_Type)
+             && dtype->elsize == 0) {
+                return 0;
+    }
+    return 1;
+}
+
+/*
+ * Return a new string `<name><elsize * 8>`
+ *
+ * On 32-bit builds (npy_intp is 32 bits, e.g. 32-bit Linux or Pyodide) any
+ * size above NPY_MAX_INTP / 8 overflows.  Fall back to Python integers in that 
+ * rare case
+ */
+static PyObject *
+_append_bit_count(PyObject *name, npy_intp elsize)
+{
+    if (elsize >= 0 && elsize <= NPY_MAX_INTP / 8) {
+        return PyUnicode_FromFormat("%U%zd", name, (Py_ssize_t)(elsize * 8));
+    }
+ 
+    PyObject *size = PyLong_FromSsize_t((Py_ssize_t)elsize);
+    PyObject *three = PyLong_FromLong(3);
+    PyObject *bits = NULL;
+    if (size != NULL && three != NULL) {
+        bits = PyNumber_Lshift(size, three);  /* elsize * 8, exact */
+    }
+    Py_XDECREF(size);
+    Py_XDECREF(three);
+    if (bits == NULL) {
+        return NULL;
+    }
+    PyObject *res = PyUnicode_FromFormat("%U%S", name, bits);
+    Py_DECREF(bits);
+    return res;
+}
+
 static PyObject *
 arraydescr_name_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
-    /* let python handle this */
-    PyObject *_numpy_dtype;
-    PyObject *res;
-    _numpy_dtype = PyImport_ImportModule("numpy._core._dtype");
-    if (_numpy_dtype == NULL) {
+    PyObject *name;
+
+    if (PyTypeNum_ISUSERDEF(self->type_num)) {
+        if (self->typeobj == NULL) {
+            PyErr_SetString(PyExc_AttributeError,
+                    "'NoneType' object has no attribute '__name__'");
+            return NULL;
+        }
+        return PyType_GetName(self->typeobj);
+    }
+
+    if (!NPY_DT_is_legacy(NPY_DTYPE(self))) {
+        name = PyType_GetName(Py_TYPE(self));
+    }
+    else if (self->typeobj != NULL
+             && PyType_IsSubtype(self->typeobj, &PyVoidArrType_Type)) {
+        /* historically, void subclasses preserve their name, eg `record64` */
+        name = PyType_GetName(self->typeobj);
+    }
+    else {
+        const char *stem = _kind_name(self);
+        if (stem == NULL) {
+            return NULL;
+        }
+        name = PyUnicode_FromString(stem);
+    }
+    if (name == NULL) {
         return NULL;
     }
-    res = PyObject_CallMethod(_numpy_dtype, "_name_get", "O", self);
-    Py_DECREF(_numpy_dtype);
-    return res;
+
+    if (_name_includes_bit_suffix(self)) {
+        Py_SETREF(name, _append_bit_count(name, self->elsize));
+        if (name == NULL) {
+            return NULL;
+        }
+    }
+
+    if (self->typeobj == &PyDatetimeArrType_Type
+            || self->typeobj == &PyTimedeltaArrType_Type) {
+        PyArray_DatetimeMetaData *meta = get_datetime_metadata_from_dtype(self);
+        if (meta == NULL) {
+            Py_DECREF(name);
+            return NULL;
+        }
+        PyObject *umeta = metastr_to_unicode(meta, 0);
+        if (umeta == NULL) {
+            Py_DECREF(name);
+            return NULL;
+        }
+        Py_SETREF(name, PyUnicode_Concat(name, umeta));
+        Py_DECREF(umeta);
+    }
+
+    return name;
 }
 
 static PyObject *
