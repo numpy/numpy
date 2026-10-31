@@ -273,6 +273,21 @@ For more information on these methods, see :ref:`basics.subclassing` and
 Interoperability examples
 -------------------------
 
+Example: Arrow database results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Database clients using Apache Arrow ADBC can return SQL results as Arrow tables.
+Numeric columns can then be converted to NumPy arrays with Arrow's
+``ChunkedArray.to_numpy()`` method. This may allocate memory; handle NULL values
+and choose suitable numeric dtypes before using the arrays.
+
+For a concrete external database example, the
+`Redis ADBC NumPy guide
+<https://github.com/redis/redis-adbc-driver/blob/a48432273a0f9978e893bca27057b9f128e7603e/docs/integrations/numpy.md>`_
+shows a SQL query, Arrow-to-array conversion and value checks. Redis must run
+separately with Search enabled; the driver is not part of NumPy.
+
+
 Example: Pandas ``Series`` objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
