@@ -674,6 +674,24 @@ class TestArrayLikes:
         empty[:] = [obj]
         assert empty[0] is obj
 
+    @pytest.mark.parametrize(
+        "attribute",
+        ["__array__", "__array_interface__", "__array_struct__"],
+    )
+    def test_object_assignment_nested_arraylike_not_converted(self, attribute):
+        class ArrayLike:
+            def __getattr__(self, attr):
+                if attr == attribute:
+                    raise AssertionError(f"{attribute} should not be accessed")
+                raise AttributeError(attr)
+
+        obj = ArrayLike()
+
+        res = np.empty(1, dtype=object)
+        res[:] = [obj]
+
+        assert res[0] is obj
+
     def test_0d_generic_special_case(self):
         class ArraySubclass(np.ndarray):
             def __float__(self):
