@@ -337,7 +337,7 @@ repair-wheel-command = "bash -el ./tools/wheels/repair_windows.sh {wheel} {dest_
 
 [[tool.cibuildwheel.overrides]]
 select = ["*-android_*", "*-*linux_*"]
-PKG_CONFIG_PATH = "$(pwd)/.openblas"
+environment.PKG_CONFIG_PATH = "$(pwd)/.openblas"
 
 [[tool.cibuildwheel.overrides]]
 select = ["*-win32"]
