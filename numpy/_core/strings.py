@@ -219,8 +219,8 @@ def _mod_dispatcher(a, values):
 def mod(a, values):
     """
     Return (a % i), that is printf-style string formatting
-    (interpolation), element-wise for a pair of array_likes of `str`
-    or `bytes`.
+    (interpolation), element-wise for a pair of array_likes of ``str``
+    or ``bytes``.
 
     Parameters
     ----------
@@ -1243,7 +1243,7 @@ def capitalize(a):
 @array_function_dispatch(_unary_op_dispatcher)
 def title(a):
     """
-    Return element-wise title cased version of `str` or `bytes`.
+    Return element-wise title cased version of ``str`` or ``bytes``.
 
     Title case words start with uppercase characters, all remaining cased
     characters are lowercase.
