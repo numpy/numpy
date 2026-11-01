@@ -1,0 +1,6 @@
+Avoid unnecessary array-like conversion during object-array assignment
+----------------------------------------------------------------------
+Assigning nested array-like objects into an existing ``dtype=object`` array
+no longer accesses their array conversion protocols when the original objects
+are stored directly in the destination. This avoids potentially expensive
+temporary conversions that are discarded during assignment.
