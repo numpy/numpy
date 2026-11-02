@@ -71,6 +71,8 @@ numpy-dev/
 venv/
 # cibuildwheel output directory
 wheelhouse/
+# pixi environments
+.pixi/
 
 # Paver generated files #
 #########################
