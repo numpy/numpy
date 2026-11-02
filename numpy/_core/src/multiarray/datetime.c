@@ -446,7 +446,7 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
         npy_datetimestruct *out)
 {
     npy_int64 days;
-    npy_int64 cycles; //since this isn't as  obvious as "days", these are gregorian calendar 400 year cycles
+    npy_int64 cycles; // gregorian calendar 400 year cycles
 
     /* Initialize the output to all zeros */
     memset(out, 0, sizeof(npy_datetimestruct));
