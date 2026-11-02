@@ -1981,9 +1981,10 @@ class Chebyshev(ABCPolyBase):
         ``(1, 2, 3)`` gives ``1*T_0(x) + 2*T_1(x) + 3*T_2(x)`` when `domain`
         and `window` are equal, which is the default.
         Otherwise, the coefficients are with respect to the variable obtained
-        by mapping ``x`` from `domain` to `window`, as is the case for
-        polynomials returned by ``Chebyshev.fit``. Use ``p.convert()``
-        to get the equivalent Chebyshev series with respect to ``x``.
+        by mapping ``x`` from `domain` to `window`. ``p.convert()`` returns
+        an equivalent series with the default `domain` and `window`, whose
+        coefficients are with respect to ``x``. Note that the conversion
+        generally loses precision.
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.

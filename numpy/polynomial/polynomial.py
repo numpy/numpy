@@ -1626,9 +1626,10 @@ class Polynomial(ABCPolyBase):
         ``(1, 2, 3)`` gives ``1 + 2*x + 3*x**2`` when `domain` and `window`
         are equal, which is the default.
         Otherwise, the coefficients are with respect to the variable obtained
-        by mapping ``x`` from `domain` to `window`, as is the case for
-        polynomials returned by ``Polynomial.fit``. Use ``p.convert()``
-        to get the equivalent polynomial with respect to ``x``.
+        by mapping ``x`` from `domain` to `window`. ``p.convert()`` returns
+        an equivalent series with the default `domain` and `window`, whose
+        coefficients are with respect to ``x``. Note that the conversion
+        generally loses precision.
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
