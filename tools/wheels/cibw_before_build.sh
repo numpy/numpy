@@ -35,10 +35,7 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     mkdir -p $pkgconf_path
 
     pushd $PROJECT_DIR
-    # FIXME: remove extra-index-url once the scipy-openblas version from pyproject.toml
-    # is on PyPI.
-    python -m pip install --group $OPENBLAS \
-        --extra-index-url https://chaquo.com/pypi-upstream/
+    python -m pip install --group $OPENBLAS
     popd
     python -c "import scipy_${OPENBLAS}; print(scipy_${OPENBLAS}.get_pkg_config())" > $pkgconf_path/scipy-openblas.pc
 

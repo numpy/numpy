@@ -117,12 +117,12 @@ dev-cli = [
 ]
 
 openblas32 = [
-    "scipy-openblas32==0.3.34.481.2",
+    "scipy-openblas32==0.3.34.481.3",
     'pkgconf==2.5.1.post1; sys_platform == "win32"',
 ]
 
 openblas64 = [
-    "scipy-openblas64==0.3.34.481.2",
+    "scipy-openblas64==0.3.34.481.3",
     'pkgconf==2.5.1.post1; sys_platform == "win32"',
 ]
 
