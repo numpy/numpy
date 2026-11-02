@@ -3,8 +3,8 @@ name: Update copyright year range
 on:
   workflow_dispatch:
   schedule:
-    # Pull request should only be created if there is a diff, so run monthly
-    - cron: "0 6 1 * *"
+    # Run every year on Jan 1
+    - cron: "0 6 1 1 *"
 
 concurrency:
   group: ${{ github.workflow }}
