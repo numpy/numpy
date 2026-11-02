@@ -1,0 +1,3 @@
+``np.copyto`` is faster when ``where=True``
+-------------------------------------------
+``np.copyto`` now skips converting the ``where`` argument to a boolean mask when ``where=True``, reducing overhead in the all-True case.
