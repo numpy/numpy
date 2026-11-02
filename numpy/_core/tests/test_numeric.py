@@ -3879,6 +3879,21 @@ class TestRoll:
         x = np.arange(4)
         assert_equal(np.roll(x, 2**100), x)
 
+    @pytest.mark.parametrize("shift, axis", [
+        (0, 0),
+        (3, 1),
+        ((1, -1), (0, 0)),
+        ((), ()),
+        (1, ()),
+    ])
+    def test_roll_noop_returns_copy(self, shift, axis):
+        x = np.arange(6).reshape(2, 3)
+        xr = np.roll(x, shift, axis=axis)
+
+        assert_array_equal(xr, x)
+        assert_(xr is not x)
+        assert_(not np.shares_memory(xr, x))
+
 
 class TestRollaxis:
 
