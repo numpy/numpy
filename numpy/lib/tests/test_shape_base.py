@@ -108,6 +108,16 @@ class TestPutAlongAxis:
 
             assert_equal(i_min, i_max)
 
+    def test_axis_none_noncontiguous(self):
+        """ axis=None must write through to non-contiguous arrays """
+        a = np.arange(12)[::2]
+        put_along_axis(a, np.array([0, 3]), np.array([-1, -2]), axis=None)
+        assert_array_equal(a, [-1, 2, 4, -2, 8, 10])
+
+        b = np.asfortranarray(np.arange(6).reshape(2, 3))
+        put_along_axis(b, np.array([0, 5]), np.array([99, 77]), axis=None)
+        assert_array_equal(b, [[99, 1, 2], [3, 4, 77]])
+
     def test_broadcast(self):
         """ Test that non-indexing dimensions are broadcast in both directions """
         a = np.ones((3, 4, 1))
