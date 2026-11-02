@@ -967,7 +967,7 @@ PyArray_AdaptDescriptorToArray(
  * @param obj The current (possibly nested) object
  * @param curr_dims The current depth, i.e. initially 0 and increasing.
  * @param max_dims Maximum number of dimensions, modified during discovery.
- * @param fixed_max_dims Destination depth used as a fixed boundary
+ * @param fixed_max_dims Immutable destination depth used as a leaf boundary
  *        during assignment, or -1 outside assignment.
  * @param out_descr dtype instance (or NULL) to promoted and update.
  * @param out_shape The current shape (updated)
@@ -1036,12 +1036,18 @@ PyArray_DiscoverDTypeAndShape_Recursive(
      * Although it is still possible that this fails and we have to use
      * `object`.
      */
+    /*
+     * Preserve existing conversion for sequence and buffer objects, since
+     * skipping it for dual-protocol objects would change protocol precedence.
+     */
     npy_bool is_fixed_object_leaf =
         fixed_max_dims >= 0 &&
         curr_dims > 0 &&
         curr_dims == fixed_max_dims &&
         fixed_DType != NULL &&
-        fixed_DType->type_num == NPY_OBJECT;
+        fixed_DType->type_num == NPY_OBJECT &&
+        !PySequence_Check(obj) &&
+        !PyObject_CheckBuffer(obj);
     if (PyArray_Check(obj)) {
         arr = (PyArrayObject *)obj;
         Py_INCREF(arr);
@@ -1246,8 +1252,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  *
  * @param obj Scalar or nested sequences.
  * @param max_dims Maximum number of dimensions (after this scalars are forced)
- * @param max_dims_from_dest If max_dims is the number of dimensions
- *        of an assignment destination.
+ * @param max_dims_from_dest Whether max_dims comes from the assignment 
+ *        destination ndim and is therefore immutable.
  * @param out_shape Will be filled with the output shape (more than the actual
  *        shape may be written).
  * @param coercion_cache NULL initialized reference to a cache pointer.
