@@ -1,0 +1,6 @@
+``np.put_along_axis`` with ``axis=None`` on non-contiguous arrays
+----------------------------------------------------------------
+``np.put_along_axis`` raised ``ValueError: assignment destination is read-only``
+for arrays that are not C-contiguous when called with ``axis=None`` (for example
+slices, transposes and Fortran-ordered arrays). It now writes through the flat
+iterator again instead of assigning into a read-only copy.
