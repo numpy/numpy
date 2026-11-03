@@ -69,10 +69,12 @@ def _nan_mask(a, out=None):
 
 def _replace_nan(a, val):
     """
-    If `a` is of inexact type, make a copy of `a`, replace NaNs with
-    the `val` value, and return the copy together with a boolean mask
-    marking the locations where NaNs were present. If `a` is not of
-    inexact type, do nothing and return `a` together with a mask of None.
+    If `a` is of inexact, datetime64 or timedelta64 type, make a copy of
+    `a`, replace NaNs (or NaTs) with the `val` value, and return the copy
+    together with a boolean mask marking the locations where NaNs were
+    present. Otherwise, do nothing and return `a` together with a mask of
+    None. For datetime64 and timedelta64, a `val` of +-inf is replaced by
+    the largest/smallest representable value.
 
     Note that scalars will end up as array scalars, which is important
     for using the result as the value of the out argument in some
@@ -100,13 +102,21 @@ def _replace_nan(a, val):
     if a.dtype == np.object_:
         # object arrays do not support `isnan` (gh-9009), so make a guess
         mask = np.not_equal(a, a, dtype=bool)
-    elif issubclass(a.dtype.type, np.inexact):
+    elif issubclass(a.dtype.type, (np.inexact, np.datetime64, np.timedelta64)):
         mask = np.isnan(a)
     else:
         mask = None
 
     if mask is not None:
         a = np.array(a, subok=True, copy=True)
+        if a.dtype.kind in "mM":
+            # NaT is the minimum int64, so the extremes of the remaining
+            # range stand in for +-inf.
+            if val == np.inf:
+                val = np.iinfo(np.int64).max
+            elif val == -np.inf:
+                val = np.iinfo(np.int64).min + 1
+            val = np.array(val).astype(a.dtype)
         np.copyto(a, val, where=mask)
 
     return a, mask
@@ -1014,10 +1024,11 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     if dtype is not None:
         dtype = np.dtype(dtype)
-    if dtype is not None and not issubclass(dtype.type, np.inexact):
-        raise TypeError("If a is inexact, then dtype must be inexact")
-    if out is not None and not issubclass(out.dtype.type, np.inexact):
-        raise TypeError("If a is inexact, then out must be inexact")
+    if arr.dtype.kind != "m":
+        if dtype is not None and not issubclass(dtype.type, np.inexact):
+            raise TypeError("If a is inexact, then dtype must be inexact")
+        if out is not None and not issubclass(out.dtype.type, np.inexact):
+            raise TypeError("If a is inexact, then out must be inexact")
 
     cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=keepdims,
                  where=where)
