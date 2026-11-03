@@ -2785,6 +2785,19 @@ def test_binary(string_array, unicode_array, function_name, args):
         assert 0
 
 
+@pytest.mark.parametrize("na_object", [None, pd_NA], ids=["None", "pandas.NA"])
+def test_missing_value_operands(na_object):
+    # A missing value passed as an operand only reaches the null checks in the
+    # StringDType loops if it's converted to StringDType rather than object.
+    a = np.array(["abc", "xbx"], dtype=StringDType(na_object=na_object))
+    for func in (np.strings.partition, np.strings.rpartition):
+        with pytest.raises(ValueError, match="Null values are not"):
+            func(a, na_object)
+    for old, new in [(na_object, "Z"), ("b", na_object)]:
+        with pytest.raises(ValueError, match="Null values are not"):
+            np.strings.replace(a, old, new)
+
+
 @pytest.mark.parametrize("function, expected", [
     (np.strings.find, [[2, -1], [1, -1]]),
     (np.strings.startswith, [[False, False], [True, False]])])
