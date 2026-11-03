@@ -1407,16 +1407,14 @@ class TestDateTime:
             assert result == info.min + offset
             assert isinstance(result, int)
 
-    #greetings traveler. the purpose of this test is to show that we can handle large weeks correctly
-    #it may not be apparent at first but weeks are translated to days before becoming months
-    #so this can result in an overflow of the underlying c integer unless we do some clever workarounds 
+    #Test for integer overflow when converting weeks to months naively vs intentionally
     @pytest.mark.parametrize("weeks", [2**61, -2**61, np.iinfo(np.int64).max])
     def test_datetime64_large_week_values(self, weeks):
-        #First we try to calculate the date the "safe way" by chopping off complete 400-year cycles (later interpreted in months)
+        #compute 400-year cycles as weeks to remove from intentional date 
         leap_days_per_400_years = 400 // 4 - 400 // 100 + 400 // 400
         days_per_400_years = 400 * 365 + leap_days_per_400_years
         weeks_per_400_years, remainder = divmod(days_per_400_years, 7)
-        assert remainder == 0 #this is a miracle. there's absolutely no good philosophical reason that this number should be divisible by 7
+        assert remainder == 0 
         cycles, leftover_weeks = divmod(weeks, weeks_per_400_years)
 
         # The leftover is small (under 400 years), so it converts safely.
@@ -1424,11 +1422,10 @@ class TestDateTime:
 
         # Move the small date forward by the removed cycles, counted in months.
         months_to_add = np.timedelta64(400 * 12 * cycles, "M")
-        true_date = small_date.astype("datetime64[M]") + months_to_add
+        intentional_date = small_date.astype("datetime64[M]") + months_to_add
 
-        #now we just shoot from the hip by directly estimating the month from the total weeks
         naive_date = np.datetime64(weeks, "W")
-        assert naive_date.astype("datetime64[M]") == true_date
+        assert naive_date.astype("datetime64[M]") == intentional_date
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
