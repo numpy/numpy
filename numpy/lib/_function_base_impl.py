@@ -5536,7 +5536,7 @@ def insert(arr, obj, values, axis=None):
         # need to copy obj, because indices will be changed in-place
         indices = np.array(obj)
         if indices.dtype == bool:
-            if obj.ndim != 1:
+            if indices.ndim != 1:
                 raise ValueError('boolean array argument obj to insert '
                                 'must be one dimensional')
             indices = np.flatnonzero(obj)

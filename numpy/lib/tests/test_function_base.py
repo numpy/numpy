@@ -617,6 +617,17 @@ class TestInsert:
         assert_equal(insert(a, np.array([True] * 4), 9), [9, 1, 9, 2, 9, 3, 9])
         assert_equal(insert(a, np.array([True, False, True, False]), 9),
                      [9, 1, 2, 9, 3])
+        assert_equal(insert(a, [True, False, True, False], 9),
+                     [9, 1, 2, 9, 3])
+
+    def test_boolean_mask_like_input(self):
+        # gh-33205: list and scalar bool masks behave like bool arrays
+        a = [1, 2, 3, 4]
+        assert_equal(insert(a, [True, False, True, False], 9),
+                     insert(a, np.array([True, False, True, False]), 9))
+        assert_equal(insert(a, [True] * 4, 9), [9, 1, 9, 2, 9, 3, 9, 4])
+        assert_raises(ValueError, insert, a, [[True], [False]], 9)
+        assert_raises(ValueError, insert, a, True, 9)
 
     def test_multidim(self):
         a = [[1, 1, 1]]
