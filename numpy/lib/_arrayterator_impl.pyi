@@ -29,7 +29,7 @@ class Arrayterator(np.ndarray[_ShapeT_co, _DTypeT_co]):
 
     @property  # type: ignore[misc]
     def shape(self) -> _ShapeT_co: ...  # pyrefly: ignore[bad-override]
-    @property
+    @property  # type:ignore[misc]
     def flat[ScalarT: np.generic](self: Arrayterator[Any, np.dtype[ScalarT]]) -> Generator[ScalarT]: ...  # type: ignore[override]
 
     #

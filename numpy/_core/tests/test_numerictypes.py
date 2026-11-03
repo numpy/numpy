@@ -5,6 +5,8 @@ import pytest
 
 import numpy as np
 import numpy._core.numerictypes as nt
+from numpy._core._multiarray_umath import _get_sfloat_dtype
+from numpy._core._rational_tests import rational, rational2
 from numpy._core.numerictypes import issctype, sctype2char, sctypes
 from numpy.testing import assert_, assert_equal, assert_raises, assert_raises_regex
 
@@ -358,12 +360,32 @@ class TestIsSubDType:
     # scalar types can be promoted into dtypes
     wrappers = [np.dtype, lambda x: x]
 
+    @pytest.mark.parametrize('arg', ['invalid', _get_sfloat_dtype()(2.)])
+    def test_invalid_dtype(self, arg):
+        for args in [(arg, np.float64), (np.float64, arg)]:
+            with pytest.raises(TypeError):
+                np.issubdtype(*args)
+
+    def test_subclasscheck(self):
+        class Meta(type):
+            def __subclasscheck__(cls, other):
+                raise TypeError('subclass check failed')
+
+        class Scalar(np.float64, metaclass=Meta):
+            pass
+
+        # Even identical classes must call __subclasscheck__.
+        for arg in [np.float32, np.dtype('f4'), Scalar]:
+            with pytest.raises(TypeError, match='subclass check failed'):
+                np.issubdtype(arg, Scalar)
+
     def test_both_abstract(self):
         assert_(np.issubdtype(np.floating, np.inexact))
         assert_(not np.issubdtype(np.inexact, np.floating))
 
     def test_same(self):
-        for cls in (np.float32, np.int32):
+        for cls in (np.float32, np.int32, rational, rational2, None,
+                    np.dtypes.StringDType()):
             for w1, w2 in itertools.product(self.wrappers, repeat=2):
                 assert_(np.issubdtype(w1(cls), w2(cls)))
 
@@ -373,6 +395,16 @@ class TestIsSubDType:
         for w in self.wrappers:
             assert_(np.issubdtype(w(np.float32), np.floating))
             assert_(np.issubdtype(w(np.float64), np.floating))
+
+        assert np.issubdtype(np.float32, arg2=np.floating)
+        assert np.issubdtype(arg2=np.floating, arg1=np.float32)
+
+        class Scalar(np.float64):
+            pass
+
+        # Converting Scalar to a dtype would discard the subclass.
+        assert np.issubdtype(Scalar, np.floating)
+        assert not np.issubdtype(np.float64, Scalar)
 
     def test_subclass_backwards(self):
         for w in self.wrappers:
@@ -412,6 +444,10 @@ class TestIsSubDType:
         assert np.issubdtype(np.complex64, np.complexfloating)
         assert np.issubdtype(np.float64, "float")
         assert np.issubdtype(np.float32, "f")
+
+        assert np.issubdtype(None, np.float64)
+        assert np.issubdtype(np.float64, None)
+        assert np.issubdtype(b'f8', np.floating)
 
 
 class TestIsDType:
@@ -462,6 +498,35 @@ class TestIsDType:
         else:
             assert not np.isdtype(dtype, dtype_group)
 
+    def test_isdtype_abstract_dtype_kind(self):
+        # New pattern: ``kind`` may be an abstract DType class such as
+        # ``np.dtypes.IntegerAbstractDType``.
+        IA = np.dtypes.IntegerAbstractDType
+        FA = np.dtypes.FloatingAbstractDType
+        NA = np.dtypes.NumberAbstractDType
+
+        # dtype instance and scalar type input forms:
+        for arg in [np.dtype('int64'), np.int64]:
+            assert np.isdtype(arg, IA)
+            assert np.isdtype(arg, NA)
+            assert not np.isdtype(arg, FA)
+            # Tuple containing both DType classes and string groups still
+            # works:
+            assert np.isdtype(arg, (FA, "integral"))
+            assert np.isdtype(arg, (FA, IA))
+            assert not np.isdtype(arg, (FA, "complex floating"))
+
+        # Concrete DType class as kind:
+        assert np.isdtype(np.int64, np.dtypes.Int64DType)
+        assert not np.isdtype(np.int64, np.dtypes.Int32DType)
+
+    def test_isdtype_bool_is_not_numeric(self):
+        # Booleans are not part of the "numeric" kind (matching the array API
+        # and `np.number`), even though NumPy internally flags them numeric.
+        assert np.isdtype(np.dtype(bool), "bool")
+        assert not np.isdtype(np.dtype(bool), "numeric")
+        assert not np.isdtype(np.dtype(bool), np.dtypes.NumberAbstractDType)
+
     def test_isdtype_invalid_args(self):
         with assert_raises_regex(TypeError, r".*must be a NumPy dtype.*"):
             np.isdtype("int64", np.int64)
@@ -480,21 +545,23 @@ class TestIsDType:
 
         # matches itself and the StringDType class, which stands in for
         # the scalar type that identifies the other dtypes
-        assert np.isdtype(dt, dt)
         assert np.isdtype(dt, np.dtypes.StringDType)
-        assert np.isdtype(np.dtypes.StringDType, dt)
         assert np.isdtype(dt, ("numeric", np.dtypes.StringDType))
-        assert not np.isdtype(np.int64, dt)
         assert not np.isdtype(dt, ("integral", np.int64))
 
-        # dtype parameters are ignored, like datetime64 units
-        assert np.isdtype(np.dtypes.StringDType(na_object=None), dt)
-        assert np.isdtype(dt, np.dtypes.StringDType(na_object=np.nan,
-                                                    coerce=False))
+        # Second argument being an instance is deprecated.
+        with pytest.warns(
+                DeprecationWarning, match=r"isdtype\(\) with a dtype.*"):
+            assert np.isdtype(dt, dt)
+            assert not np.isdtype(np.int64, dt)
+            # dtype parameters are ignored, like datetime64 units
+            assert np.isdtype(np.dtypes.StringDType(na_object=None), dt)
+            assert np.isdtype(dt, np.dtypes.StringDType(na_object=np.nan,
+                                                        coerce=False))
 
         # fixed-width unicode strings are a different kind
         assert not np.isdtype(dt, np.str_)
-        assert not np.isdtype(np.dtype("U8"), dt)
+        assert not np.isdtype(np.dtype("U8"), np.dtypes.StringDType)
 
     def test_sctypes_complete(self):
         # issue 26439: int32/intc were masking each other on 32-bit builds

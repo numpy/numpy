@@ -31,12 +31,16 @@ NPY_NO_EXPORT int
 PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
 {
     npy_intp oldnbytes, newnbytes;
-    npy_intp oldsize, newsize;
-    int new_nd=newshape->len, k, elsize;
+    npy_intp oldsize, newsize, elsize;
+    int new_nd=newshape->len, k;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
     npy_intp *dimptr;
     char *new_data;
+
+    if (PyArray_FailUnlessWriteable(self, "resize") < 0) {
+        return -1;
+    }
 
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_ValueError,
@@ -141,7 +145,7 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
         }
         ((PyArrayObject_fields *)self)->data = new_data;
 
-        if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
+        if (newnbytes > oldnbytes) {
             /* Fill new memory with zeros (PyLong zero for object arrays) */
             npy_intp stride = elsize;
             npy_intp size = newsize - oldsize;

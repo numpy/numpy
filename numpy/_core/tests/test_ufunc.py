@@ -924,6 +924,12 @@ class TestUfunc:
         assert c is b
         assert_allclose(c, expected)
 
+    def test_matvec_object_empty_is_zero(self):
+        A = np.empty((3, 0), dtype=object)
+        v = np.empty((0,), dtype=object)
+        result = np.matvec(A, v)
+        assert_array_equal(result, np.zeros(3, dtype=object))
+
     def test_vecdot_subclass(self):
         class MySubclass(np.ndarray):
             pass
@@ -2483,6 +2489,16 @@ class TestUfunc:
         with pytest.raises(ValueError):
             np.add.at(arr, [0, 1], [1, 2, 3])
 
+    @pytest.mark.parametrize("nin, nout, match", [
+        (0, 1, "unary and binary"),
+        (3, 1, "unary and binary"),
+        (1, 0, "single output"),
+    ])
+    def test_at_bad_nin_nout(self, nin, nout, match):
+        f = np.frompyfunc(lambda *args: 0, nin, nout)
+        with pytest.raises(ValueError, match=match):
+            f.at(np.arange(3), [0])
+
     def test_reduce_arguments(self):
         f = np.add.reduce
         d = np.ones((5, 2), dtype=int)
@@ -3165,8 +3181,8 @@ def test_reduce_casterrors(offset):
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-def test_reduction_no_reference_leak():
-    # Test that the generic reduction does not leak references.
+def test_ufunc_no_reference_leak():
+    # Test that ufunc calls and reductions do not leak references.
     # gh-29358
     arr = np.array([1, 2, 3], dtype=np.int32)
     count = sys.getrefcount(arr)
@@ -3201,6 +3217,14 @@ def test_reduction_no_reference_leak():
     np.add.reduceat(arr, [0, 1], dtype=np.int32, out=out)
     assert count == sys.getrefcount(arr)
     assert out_count == sys.getrefcount(out)
+
+    # Initializing a dtype with metadata creates a fresh descriptor instead of
+    # a reference to a builtin dtype singleton
+    dtype = np.dtype(np.int32, metadata={})
+    out = np.empty(arr.shape, dtype=dtype)
+    dtype_count = sys.getrefcount(dtype)
+    np.divmod(arr, 2, out=(None, out))
+    assert sys.getrefcount(dtype) == dtype_count
 
 
 def test_object_reduce_cleanup_on_failure():

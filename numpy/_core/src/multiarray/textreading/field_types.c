@@ -11,7 +11,7 @@
 
 
 NPY_NO_EXPORT void
-field_types_xclear(int num_field_types, field_type *ft) {
+field_types_xclear(npy_intp num_field_types, field_type *ft) {
     assert(num_field_types >= 0);
     if (ft == NULL) {
         return;
@@ -131,8 +131,8 @@ field_type_grow_recursive(PyArray_Descr *descr,
             }
             PyArray_Descr *field_descr;
             PyObject *title;
-            int offset;
-            if (!PyArg_ParseTuple(tup, "Oi|O", &field_descr, &offset, &title)) {
+            npy_intp offset;
+            if (!PyArg_ParseTuple(tup, "On|O", &field_descr, &offset, &title)) {
                 Py_DECREF(tup);
                 field_types_xclear(num_field_types, *ft);
                 return -1;

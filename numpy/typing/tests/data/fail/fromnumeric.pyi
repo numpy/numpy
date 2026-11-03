@@ -16,6 +16,10 @@ np.take(a, axis=1.0)  # type: ignore[call-overload]
 np.take(A, out=1)  # type: ignore[call-overload]
 np.take(A, mode="bob")  # type: ignore[call-overload]
 
+np.top_k(AR_f4, 1.0)  # type: ignore[call-overload]
+np.top_k(AR_f4, 1, axis=None)  # type: ignore[call-overload]
+np.top_k(AR_f4, 1, mode="bob")  # type: ignore[call-overload]
+
 np.reshape(a, None)  # type: ignore[call-overload]
 np.reshape(A, 1, order="bob")  # type: ignore[call-overload]
 

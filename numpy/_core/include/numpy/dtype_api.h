@@ -173,8 +173,9 @@ typedef struct {
 #define _NPY_METH_static_data 10
 /*
  * A `PyArrayMethod_GetLoop` that returns the dedicated (nout+1)->nout
- * reduction loop for `ufunc.reduce`, needed for ufuncs with more than one
- * output whose forward loop cannot double as a reduction loop.
+ * reduction loop for `ufunc.reduce` and `ufunc.reduceat`, needed for ufuncs
+ * with more than one output whose forward loop cannot double as a reduction
+ * loop.
  */
 #define NPY_METH_get_reduction_loop 11
 /*

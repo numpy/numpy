@@ -114,6 +114,7 @@ doc/source/savefig/
 doc/source/**/generated/
 doc/source/release/notes-towncrier.rst
 doc/source/.jupyterlite.doit.db
+doc/source/_contents
 
 # AI coding agent configuration files #
 #######################################

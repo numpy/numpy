@@ -12,6 +12,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <string.h>
 
 #include "npy_config.h"
 #include "npy_cpu_features.h"

@@ -35,3 +35,4 @@ with np.printoptions():
     np.format_float_positional(1, trim="k")
     np.array_repr(AR)
     np.array_str(AR)
+    np.array2string(AR, formatter={"all": lambda x: "int: " + str(-x)})

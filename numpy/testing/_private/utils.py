@@ -890,7 +890,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
         elif isvstring(x) and isvstring(y):
             dt = x.dtype
-            if equal_nan and dt == y.dtype and hasattr(dt, 'na_object'):
+            if equal_nan and dt == y.dtype and dt._has_nan_na:
                 # Let the dtype determine which values are NaN-like.
                 flagged = func_assert_same_pos(
                     x, y, func=isnan, hasval=dt.na_object)
@@ -1848,13 +1848,21 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     import numpy as np
     ax = np.abs(x)
     ay = np.abs(y)
-    ref = nulp * np.spacing(np.where(ax > ay, ax, ay))
-    if not np.all(np.abs(x - y) <= ref):
+    spacing = np.spacing(np.where(ax > ay, ax, ay))
+    ref = nulp * spacing
+    diff = np.abs(x - y)
+
+    if not np.all(diff <= ref):
         if np.iscomplexobj(x) or np.iscomplexobj(y):
             msg = f"Arrays are not equal to {nulp} ULP"
         else:
-            max_nulp = np.max(nulp_diff(x, y))
-            msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
+            dtype = np.dtype(np.common_type(np.asarray(x), np.asarray(y)))
+            if dtype in (np.float16, np.float32, np.float64):
+                max_nulp = np.max(nulp_diff(x, y))
+                msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
+            else:
+                msg = f"Arrays are not equal to {nulp} ULP"
+
         raise AssertionError(msg)
 
 
@@ -2822,36 +2830,50 @@ _glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)
 
 def run_threaded(func, max_workers=8, pass_count=False,
                  pass_barrier=False, outer_iterations=1,
-                 prepare_args=None):
-    """Runs a function many times in parallel"""
-    for _ in range(outer_iterations):
-        with (concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
-              as tpe):
-            if prepare_args is None:
-                args = []
-            else:
-                args = prepare_args()
-            if pass_barrier:
-                barrier = threading.Barrier(max_workers)
-                args.append(barrier)
-            if pass_count:
-                all_args = [(func, i, *args) for i in range(max_workers)]
-            else:
-                all_args = [(func, *args) for i in range(max_workers)]
-            try:
-                futures = []
-                for arg in all_args:
-                    futures.append(tpe.submit(*arg))
-            except RuntimeError as e:
-                import pytest
-                pytest.skip(f"Spawning {max_workers} threads failed with "
-                            f"error {e!r} (likely due to resource limits on the "
-                            "system running the tests)")
-            finally:
-                if len(futures) < max_workers and pass_barrier:
-                    barrier.abort()
-            for f in futures:
-                f.result()
+                 prepare_args=None, switch_interval=1e-5):
+    """Runs a function many times in parallel
+
+    By default, temporarily use a short thread switch interval to encourage
+    thread interleaving on GIL-enabled Python builds. Pass
+    ``switch_interval=None`` to leave the current interval unchanged.
+    """
+    old_switch_interval = sys.getswitchinterval()
+
+    if switch_interval is not None:
+        sys.setswitchinterval(switch_interval)
+
+    try:
+        for _ in range(outer_iterations):
+            with (concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+                as tpe):
+                if prepare_args is None:
+                    args = []
+                else:
+                    args = prepare_args()
+                if pass_barrier:
+                    barrier = threading.Barrier(max_workers)
+                    args.append(barrier)
+                if pass_count:
+                    all_args = [(func, i, *args) for i in range(max_workers)]
+                else:
+                    all_args = [(func, *args) for i in range(max_workers)]
+                try:
+                    futures = []
+                    for arg in all_args:
+                        futures.append(tpe.submit(*arg))
+                except RuntimeError as e:
+                    import pytest
+                    pytest.skip(f"Spawning {max_workers} threads failed with "
+                                f"error {e!r} (likely due to resource limits on the "
+                                "system running the tests)")
+                finally:
+                    if len(futures) < max_workers and pass_barrier:
+                        barrier.abort()
+                for f in futures:
+                    f.result()
+    finally:
+        if switch_interval is not None:
+            sys.setswitchinterval(old_switch_interval)
 
 
 def requires_deep_recursion(func):

@@ -53,7 +53,7 @@ Dependencies
 All of the necessary dependencies for building the NumPy docs except for
 Doxygen_ can be installed with::
 
-    pip install -r requirements/doc_requirements.txt
+    pip install --group doc
 
 .. note::
 
@@ -62,7 +62,7 @@ Doxygen_ can be installed with::
 
         pip install --pre --force-reinstall --extra-index-url \
         https://pypi.anaconda.org/scientific-python-nightly-wheels/simple \
-        -r requirements/doc_requirements.txt
+        --group doc
 
 We currently use Sphinx_ along with Doxygen_ for generating the API and
 reference documentation for NumPy. In addition, building the documentation
@@ -103,6 +103,11 @@ Now you are ready to generate the docs, so write::
 This will build NumPy from source if you haven't already, and run Sphinx to
 build the ``html`` docs. If all goes well, this will generate a ``build/html``
 subdirectory in the ``/doc`` directory, containing the built documentation.
+
+.. tip::
+
+   If you'd rather not set up a local environment, you can build and preview
+   the documentation in the cloud. See :ref:`development_ghcodespaces`.
 
 The documentation for NumPy distributed at https://numpy.org/doc in html and
 pdf format is also built with ``make dist``.  See `HOWTO RELEASE`_ for details

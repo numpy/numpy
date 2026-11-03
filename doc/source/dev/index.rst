@@ -109,7 +109,7 @@ Here's the short summary, complete TOC links are below:
      button. Make sure the title and message are clear, concise, and self-
      explanatory. Then click the button to submit it.
 
-   * Note that non-maintainers may only have one non-draft pull request
+   * Note that non-maintainers may only have two non-draft pull requests
      open for review at a time. See :ref:`pull-request-limit` for details
      and how to be allowed more open pull requests.
 
@@ -219,11 +219,11 @@ tests to fail before the PR and pass afterwards. You should :ref:`run the tests
 <development-environment>` before pushing a PR.
 
 Running NumPy's test suite locally requires some additional packages, such as
-``pytest`` and ``hypothesis``. The additional testing dependencies are listed
-in ``requirements/test_requirements.txt`` in the top-level directory, and can
-conveniently be installed with::
+``pytest`` and ``hypothesis``. The additional testing dependencies are defined
+in the ``test`` dependency group in ``pyproject.toml``, and can conveniently be
+installed with::
 
-    $ python -m pip install -r requirements/test_requirements.txt
+    $ python -m pip install --group test
 
 Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.
@@ -232,7 +232,7 @@ Coverage for the Python and the compiled C sources is collected by separate
 tools, but both can be measured in a single ``spin test`` invocation.
 First install the coverage tools along with NumPy's test requirements::
 
-    $ python -m pip install coverage gcovr -r requirements/test_requirements.txt
+    $ python -m pip install coverage gcovr --group test
 
 Then rebuild with C coverage instrumentation and run the tests, generating both
 reports at once::

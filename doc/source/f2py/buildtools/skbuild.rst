@@ -13,8 +13,8 @@ Using via ``scikit-build``
 
    It is possible to use ``scikit-build``'s ``cmake`` modules to `bypass the
    cmake setup mechanism`_ completely, and to write targets which call ``f2py
-   -c``. This usage is **not recommended** since the point of these build system
-   documents are to move away from the internal ``numpy.distutils`` methods.
+   -c``. This usage is **not recommended**; prefer the ``meson`` or ``cmake``
+   workflows described in the other build system documents.
 
 For situations where no ``setuptools`` replacements are required or wanted (i.e.
 if ``wheels`` are not needed), it is recommended to instead use the vanilla

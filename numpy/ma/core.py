@@ -54,7 +54,8 @@ __all__ = [
     'angle', 'anom', 'anomalies', 'any', 'append', 'arange', 'arccos',
     'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2', 'arctanh',
     'argmax', 'argmin', 'argsort', 'around', 'array', 'asanyarray',
-    'asarray', 'bitwise_and', 'bitwise_or', 'bitwise_xor', 'bool_', 'ceil',
+    'asarray', 'assert_array_equal', 'bitwise_and', 'bitwise_or',
+    'bitwise_xor', 'bool_', 'ceil',
     'choose', 'clip', 'common_fill_value', 'compress', 'compressed',
     'concatenate', 'conjugate', 'convolve', 'copy', 'correlate', 'cos', 'cosh',
     'count', 'cumprod', 'cumsum', 'default_fill_value', 'diag', 'diagonal',
@@ -8742,6 +8743,129 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
                masked_equal)
 
     return np.all(d)
+
+
+def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
+                       strict=False):
+    """
+    Raises an AssertionError if two masked arrays are not equal.
+
+    Given two array_like objects, check that their masks are equal and that
+    their data is equal wherever it is not masked. Unlike
+    `numpy.testing.assert_array_equal`, which ignores masked values, a value
+    that is masked in only one of the objects is reported as a mismatch.
+    Objects that are not masked arrays are treated as having no masked
+    values. As in `numpy.testing.assert_array_equal`, NaNs in the same
+    unmasked positions are considered equal, and a scalar is compared with
+    every element of an array unless `strict` is set.
+
+    .. versionadded:: 2.6.0
+
+    Parameters
+    ----------
+    actual : array_like
+        The actual object to check.
+    desired : array_like
+        The desired, expected object.
+    err_msg : str, optional
+        The error message to be printed in case of failure.
+    verbose : bool, optional
+        If True, the conflicting values are appended to the error message.
+    strict : bool, optional
+        If True, raise an AssertionError when either the shape or the data
+        type of the array_like objects does not match, and disable the
+        special handling of scalars.
+
+    Raises
+    ------
+    AssertionError
+        If the masks of actual and desired, or their unmasked values, are
+        not equal.
+
+    See Also
+    --------
+    numpy.testing.assert_array_equal : Ignores values masked in either array.
+    numpy.ma.allequal
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    Masked values are not compared, so this does not raise:
+
+    >>> a = np.ma.array([1.0, 2.0, 3.0], mask=[False, True, False])
+    >>> b = np.ma.array([1.0, -9.0, 3.0], mask=[False, True, False])
+    >>> np.ma.assert_array_equal(a, b)
+
+    A value that is masked in only one of the objects is a mismatch:
+
+    >>> np.ma.assert_array_equal(a, [1.0, 2.0, 3.0])
+    Traceback (most recent call last):
+        ...
+    AssertionError:
+    Arrays are not equal
+    <BLANKLINE>
+    Mismatched mask elements: 1 / 3 (33.3%)
+    Mask mismatch at index:
+     [1]: -- (ACTUAL), 2.0 (DESIRED)
+     ACTUAL: masked_array(data=[1.0, --, 3.0],
+                 mask=[False,  True, False],
+           fill_value=1e+20)
+     DESIRED: masked_array(data=[1., 2., 3.],
+                 mask=False,
+           fill_value=1e+20)
+
+    """
+    __tracebackhide__ = True  # Hide traceback for py.test
+    from numpy.testing import assert_array_compare, build_err_msg
+
+    actual = asanyarray(actual)
+    desired = asanyarray(desired)
+    header = 'Arrays are not equal'
+
+    def append_arrays(msg):
+        if verbose:
+            for name, a in (('ACTUAL', actual), ('DESIRED', desired)):
+                r = repr(a)
+                if r.count('\n') > 3:
+                    r = '\n'.join(r.splitlines()[:3]) + '...'
+                msg += f'\n {name}: {r}'
+        return msg
+
+    if actual.shape == desired.shape or (
+            not strict and (actual.ndim == 0 or desired.ndim == 0)):
+        mismatch = getmaskarray(actual) != getmaskarray(desired)
+        if mismatch.any():
+            n_mismatch = np.count_nonzero(mismatch)
+            percent = 100 * n_mismatch / mismatch.size
+            remarks = [(f'Mismatched mask elements: {n_mismatch} / '
+                        f'{mismatch.size} ({percent:.3g}%)')]
+            if mismatch.ndim > 0:
+                positions = np.argwhere(mismatch)
+                lines = []
+                for p in positions[:5]:
+                    a = actual if actual.ndim == 0 else actual[tuple(p)]
+                    d = desired if desired.ndim == 0 else desired[tuple(p)]
+                    lines.append(
+                        f' {p.tolist()}: {a!s} (ACTUAL), {d!s} (DESIRED)')
+                s = '\n'.join(lines)
+                if len(positions) == 1:
+                    remarks.append(f'Mask mismatch at index:\n{s}')
+                elif len(positions) <= 5:
+                    remarks.append(f'Mask mismatch at indices:\n{s}')
+                else:
+                    remarks.append(
+                        f'First 5 mask mismatches are at indices:\n{s}')
+            msg = build_err_msg([], f'{err_msg}\n' + '\n'.join(remarks),
+                                header=header, verbose=False)
+            raise AssertionError(append_arrays(msg))
+
+    try:
+        assert_array_compare(operator.__eq__, actual.filled(0),
+                             desired.filled(0), err_msg=err_msg,
+                             verbose=False, header=header, strict=strict)
+    except AssertionError as exc:
+        raise AssertionError(append_arrays(str(exc))) from None
 
 
 def asarray(a, dtype=None, order=None):

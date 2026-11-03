@@ -3,6 +3,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <string.h>
 
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
@@ -13,6 +14,7 @@
 #include "abstractdtypes.h"
 #include "npy_static_data.h"
 #include "module_state.h"
+#include "npy_pycompat.h"
 
 
 /*

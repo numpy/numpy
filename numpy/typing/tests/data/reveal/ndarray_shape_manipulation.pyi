@@ -4,12 +4,10 @@ import numpy as np
 import numpy.typing as npt
 
 type _ArrayND = npt.NDArray[np.int64]
-type _Array2D = np.ndarray[tuple[int, int], np.dtype[np.int8]]
-type _Array3D = np.ndarray[tuple[int, int, int], np.dtype[np.bool]]
 
 _nd: _ArrayND
-_2d: _Array2D
-_3d: _Array3D
+_2d: npt.Array2D[np.int8]
+_3d: npt.Array3D[np.bool]
 
 # reshape
 assert_type(_nd.reshape(None), npt.NDArray[np.int64])
@@ -30,8 +28,8 @@ assert_type(_nd.transpose((1, 0)), npt.NDArray[np.int64])
 
 # swapaxes
 assert_type(_nd.swapaxes(0, 1), _ArrayND)
-assert_type(_2d.swapaxes(0, 1), _Array2D)
-assert_type(_3d.swapaxes(0, 1), _Array3D)
+assert_type(_2d.swapaxes(0, 1), npt.Array2D[np.int8])
+assert_type(_3d.swapaxes(0, 1), npt.Array3D[np.bool])
 
 # flatten
 assert_type(_nd.flatten(), np.ndarray[tuple[int], np.dtype[np.int64]])
