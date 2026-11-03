@@ -152,16 +152,6 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         goto fail;
     }
 
-    /* handle empty list */
-    if (len == 0 && weight == Py_None) {
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &minlength, NPY_INTP, 0);
-        if (ans == NULL){
-            goto fail;
-        }
-        Py_DECREF(lst);
-        return (PyObject *)ans;
-    }
-
     numbers = (npy_intp *)PyArray_DATA(lst);
     if (len == 0) {
         ans_size = minlength;
