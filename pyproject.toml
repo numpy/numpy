@@ -107,7 +107,7 @@ changelog = "https://github.com/numpy/numpy/tree/main/doc/changelog"
 build = [
     "meson-python>=0.20.0",
     "Cython>=3.1.0",
-    "ninja",
+    'ninja; sys_platform != "emscripten"',
 ]
 
 dev-cli = [
@@ -135,9 +135,7 @@ test-core = [
 ]
 test-extending = [            # includes tests that build extensions / f2py
     { include-group = "test-core" },
-    "Cython",
-    "meson",
-    'ninja; sys_platform != "emscripten"',
+    { include-group = "build" },
     "charset-normalizer",
     "pytest-cov==7.1.0",
     'numpy_quaddtype; python_version < "3.15" and sys_platform == "darwin"',
