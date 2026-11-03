@@ -1,0 +1,8 @@
+``numpy.insert`` accepts boolean masks given as lists
+-----------------------------------------------------
+
+``numpy.insert`` previously raised an ``AttributeError`` when its boolean
+``obj`` argument was a list of booleans or a Python ``bool`` instead of an
+array. The dimensionality check now runs on the converted ``indices``
+array, so list inputs behave like the equivalent boolean arrays and a
+scalar ``bool`` raises the intended ``ValueError``.
