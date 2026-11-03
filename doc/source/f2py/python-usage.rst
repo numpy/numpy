@@ -294,7 +294,9 @@ If the function ``gun`` may return any number of objects as a tuple; then the
 following rules are applied:
 
 * If ``k < l``, then ``y_{k + 1}, ..., y_l`` are ignored.
-* If ``k > l``, then only ``x_1, ..., x_l`` are set.
+* If ``k > l``, then only ``x_1, ..., x_l`` are set. If the call-back is a
+  Fortran function, ``x_1`` is its result, and a ``RuntimeWarning`` is issued
+  when ``gun`` returns no value.
 
 
 Common blocks
