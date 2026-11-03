@@ -278,3 +278,19 @@ class TestGH5098(util.F2PyTest):
         r = self.module.strings_result(
             lambda n: np.array([b"ab", b"cd", b"ef"], dtype="S2"), 3)
         assert_array_equal(r, [b"ab", b"cd", b"ef"])
+
+
+@pytest.mark.slow
+class TestPythonTLSRaisingCallback(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "callback", "gh5098.f"),
+               util.getpath("tests", "src", "callback", "python_tls.pyf")]
+    module_name = "callback_python_tls"
+
+    def test_raising_callback(self):
+        def callback(n):
+            raise RuntimeError("callback failed on purpose")
+
+        with pytest.raises(RuntimeError, match="callback failed on purpose"):
+            self.module.array_result(callback, 3)
+        r = self.module.array_result(lambda n: np.ones(n), 3)
+        assert_array_equal(r, [1, 1, 1])
