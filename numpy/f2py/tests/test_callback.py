@@ -121,6 +121,30 @@ class TestF77Callback(util.F2PyTest):
             res = f(callback, cu, cu.size)
             assert res == 0
 
+    def test_raising_callback(self, capfd):
+        # gh-5098: the exception propagates and nothing is printed
+        def callback():
+            raise RuntimeError("callback failed on purpose")
+
+        with pytest.raises(RuntimeError, match="callback failed on purpose"):
+            self.module.t(callback)
+        assert capfd.readouterr().err == ""
+
+    def test_argument_list_errors(self, capfd):
+        # gh-5098: the reason is part of the exception, not printed
+        error = getattr(self.module, f"_{self.module.__name__}_error")
+        t = self.module.t
+        with pytest.raises(error, match=r"call-back fun -- call-back argument"
+                                        r" must be function\|.* but got int"):
+            t(42)
+        with pytest.raises(error, match="call-back fun -- failed to build"
+                                        " argument list"):
+            t(lambda a, b, c: 0)
+        with pytest.raises(error, match="call-back fun -- extra arguments"
+                                        " tuple cannot be used with PyCapsule"):
+            t(self.module.func0._cpointer, fun_extra_args=(1,))
+        assert capfd.readouterr().err == ""
+
     def test_threadsafety(self):
         # Segfaults if the callback handling is not threadsafe
 
@@ -278,6 +302,21 @@ class TestGH5098(util.F2PyTest):
         r = self.module.strings_result(
             lambda n: np.array([b"ab", b"cd", b"ef"], dtype="S2"), 3)
         assert_array_equal(r, [b"ab", b"cd", b"ef"])
+
+    def test_array_result_wrong_shape(self, capfd):
+        # gh-5098: the error names the call-back and nothing is printed
+        with pytest.raises(ValueError, match="argument x of call-back function"
+                           " cb_array_cb_in___user__routines to C/Fortran array"
+                           " -- 0-th dimension must be fixed to 3 but got 4"):
+            self.module.array_result(lambda n: np.zeros(n + 1), 3)
+        assert capfd.readouterr().err == ""
+
+    def test_string_result(self, capfd):
+        assert self.module.string_result(lambda: b"abcd") == b"abcd"
+        with pytest.raises(self.module._gh5098_error,
+                           match="bytes object expected, got 4-str"):
+            self.module.string_result(lambda: "abcd")
+        assert capfd.readouterr().err == ""
 
 
 @pytest.mark.slow
