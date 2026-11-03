@@ -524,12 +524,6 @@ _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
 {
     npy_string_allocator *allocator_a = descr_a->allocator;
     npy_string_allocator *allocator_b = descr_b->allocator;
-    PyArray_Descr *descrs[2] = {(PyArray_Descr *)descr_a, (PyArray_Descr *)descr_b};
-    PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(2, descrs);
-    int has_null = nadescr->na_object != NULL;
-    int has_string_na = nadescr->has_string_na;
-    int has_nan_na = nadescr->has_nan_na;
-    npy_static_string *default_string = &nadescr->default_string;
     const npy_packed_static_string *ps_a = (npy_packed_static_string *)a;
     npy_static_string s_a = {0, NULL};
     int a_is_null = NpyString_load(allocator_a, ps_a, &s_a);
@@ -542,6 +536,12 @@ _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
         return -1;
     }
     else if (NPY_UNLIKELY(a_is_null || b_is_null)) {
+        PyArray_Descr *descrs[2] = {(PyArray_Descr *)descr_a, (PyArray_Descr *)descr_b};
+        PyArray_StringDTypeObject *nadescr = stringdtype_effective_na_descr(2, descrs);
+        int has_null = nadescr->na_object != NULL;
+        int has_string_na = nadescr->has_string_na;
+        int has_nan_na = nadescr->has_nan_na;
+        npy_static_string *default_string = &nadescr->default_string;
         if (has_null && !has_string_na) {
             if (has_nan_na) {
                 // nan-like nulls sort to the end even in a descending
@@ -635,6 +635,11 @@ static PyArray_CompareFunc *stringdtype_sort_compares[2] = {
 static int
 argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 {
+    /* A singleton needs no comparison or allocator access. */
+    if (n == 1) {
+        *max_ind = 0;
+        return 0;
+    }
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
     npy_intp elsize = ((PyArray_Descr *)descr)->elsize;
     npy_intp ind = 0;
@@ -643,7 +648,7 @@ argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
         int cmp;
         if (_compare(data + i * elsize, data + ind * elsize, descr, descr, &cmp) < 0) {
             NpyString_release_allocator(descr->allocator);
-            return 0;
+            return -1;
         }
         if (cmp > 0) {
             ind = i;
@@ -659,6 +664,11 @@ argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 static int
 argmin(char *data, npy_intp n, npy_intp *min_ind, void *arr)
 {
+    /* A singleton needs no comparison or allocator access. */
+    if (n == 1) {
+        *min_ind = 0;
+        return 0;
+    }
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
     npy_intp elsize = ((PyArray_Descr *)descr)->elsize;
     npy_intp ind = 0;
@@ -667,7 +677,7 @@ argmin(char *data, npy_intp n, npy_intp *min_ind, void *arr)
         int cmp;
         if (_compare(data + i * elsize, data + ind * elsize, descr, descr, &cmp) < 0) {
             NpyString_release_allocator(descr->allocator);
-            return 0;
+            return -1;
         }
         if (cmp < 0) {
             ind = i;

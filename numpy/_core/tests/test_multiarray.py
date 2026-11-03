@@ -5864,6 +5864,15 @@ class TestArgmaxArgminCommon:
                      np_method(a, out=out2, axis=0))
         assert_equal(out1, out2)
 
+    @pytest.mark.parametrize("method", [np.argmax, np.argmin])
+    def test_object_comparison_error_stops_iteration(self, method):
+        arr = np.array([[None, 1], [2, 3]], dtype=object)
+        out = np.full(2, -1, dtype=np.intp)
+        with pytest.raises(TypeError):
+            method(arr, axis=1, out=out)
+        # The error in the first row must leave the second row's output untouched.
+        assert out[1] == -1
+
     @pytest.mark.leaks_references(reason="replaces None with NULL.")
     @pytest.mark.parametrize('method, vals',
         [('argmax', (10, 30)),

@@ -1602,6 +1602,16 @@ def test_argmax(strings):
     assert np.argmin(arr) == strings.index(min(strings))
 
 
+@pytest.mark.parametrize("method", [np.argmax, np.argmin])
+def test_argmin_argmax_error_stops_iteration(method):
+    arr = np.array([[None, "a"], ["a", "b"]], dtype=StringDType(na_object=None))
+    out = np.full(2, -1, dtype=np.intp)
+    with pytest.raises(ValueError):
+        method(arr, axis=1, out=out)
+    # The error in the first row must leave the second row's output untouched.
+    assert out[1] == -1
+
+
 @pytest.mark.parametrize(
     "arrfunc,expected",
     [
