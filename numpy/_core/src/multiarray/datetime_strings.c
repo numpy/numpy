@@ -16,6 +16,7 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
+#include "npy_pycompat.h"
 
 
 #include "numpy/arrayscalars.h"
@@ -23,6 +24,9 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 
+#include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 /*

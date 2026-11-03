@@ -63,6 +63,9 @@ stringdtype_effective_na_descr(int ndescrs, PyArray_Descr *const descrs[]);
 NPY_NO_EXPORT int
 na_eq_cmp(PyObject *a, PyObject *b);
 
+NPY_NO_EXPORT npy_bool
+stringdtype_null_is_truthy(const PyArray_StringDTypeObject *descr);
+
 #ifdef __cplusplus
 }
 #endif

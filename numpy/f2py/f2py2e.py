@@ -155,9 +155,9 @@ with the meson backend or above Python 3.12:
 
   --backend            <backend_type>
                        Specify the build backend for the compilation process.
-                       The supported backends are 'meson' and 'distutils'.
-                       If not specified, defaults to 'distutils'. On
-                       Python 3.12 or higher, the default is 'meson'.
+                       The only supported backend is 'meson', which is the
+                       default. The 'distutils' backend has been removed;
+                       requesting it falls back to 'meson'.
 
 Extra options (only effective with -c):
 
@@ -659,7 +659,7 @@ def run_compile():
         v = '--fcompiler='
         if s[:len(v)] == v:
             outmess(
-                "--fcompiler cannot be used with meson,"
+                "--fcompiler cannot be used with meson, "
                 "set compiler with the FC environment variable\n"
                 )
     for s in del_list:

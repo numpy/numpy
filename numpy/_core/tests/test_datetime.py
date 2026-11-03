@@ -530,6 +530,44 @@ class TestDateTime:
                             np.timedelta64)
         assert_equal(actual, expected)
 
+    def test_pytimedelta_subclass_and_duck_typing(self):
+        us = 10**6
+        day = 86400 * us
+
+        # exact
+        td = datetime.timedelta(days=-3, seconds=5, microseconds=7)
+        expected = np.timedelta64(-3 * day + 5 * us + 7, 'us')
+        assert_equal(np.timedelta64(td), expected)
+        assert_equal(np.timedelta64(td).dtype, np.dtype('m8[us]'))
+
+        # subclass
+        class MyTimedelta(datetime.timedelta):
+            pass
+        assert_equal(np.timedelta64(MyTimedelta(days=-3, seconds=5,
+                                                microseconds=7)), expected)
+
+        # overridden attribute is honored
+        class ShiftedDays(datetime.timedelta):
+            @property
+            def days(self):
+                return super().days + 1
+        assert_equal(np.timedelta64(ShiftedDays(days=1, seconds=2)),
+                     np.timedelta64(2 * day + 2 * us, 'us'))
+
+        # duck-typed
+        class DuckTimedelta:
+            days, seconds, microseconds = 2, 3, 4
+        duck_expected = np.timedelta64(2 * day + 3 * us + 4, 'us')
+        assert_equal(np.timedelta64(DuckTimedelta()), duck_expected)
+
+        # arrays
+        arr = np.array([td, MyTimedelta(days=-3, seconds=5, microseconds=7),
+                        DuckTimedelta()], dtype='m8[us]')
+        assert_equal(arr, np.array([expected, expected, duck_expected]))
+        assert_equal(np.array([datetime.timedelta(days=2, seconds=3)],
+                              dtype='m8[s]'),
+                     np.array([2 * 86400 + 3], dtype='m8[s]'))
+
     def test_timedelta_nat_format(self):
         # gh-17552
         with pytest.warns(
@@ -1777,9 +1815,44 @@ class TestDateTime:
         (np.array([1, 2, 3], dtype='m8[s]'),
          np.array([2], dtype='m8[s]'),
          np.array([0, 1, 1], dtype=np.int64)),
+        # m8 // bool
+        (np.timedelta64(7, 's'), True, np.timedelta64(7, 's'))
         ])
     def test_timedelta_floor_divide(self, op1, op2, exp):
         assert_equal(op1 // op2, exp)
+
+    @staticmethod
+    def _simd_timedelta_operands():
+        # Array larger than any SIMD width and not a multiple of it, so the
+        # vectorized division kernels run both their vector body and scalar
+        # tail. NaT sits at a vector boundary and in the tail.
+        imin = np.iinfo(np.int64).min  # == NaT
+        vals = (np.arange(137, dtype=np.int64) - 68) * np.int64(0x200000001)
+        vals[::17] = -vals[::17]
+        vals[3] = vals[64] = vals[-1] = imin
+        return vals
+
+    @pytest.mark.parametrize("d", [1, 2, 3, 7, -4, 999983,
+                                   np.iinfo(np.int64).min])
+    def test_timedelta_divide_by_scalar_simd(self, d):
+        # m8 / int -> truncated division (TIMEDELTA_mq_m_divide)
+        imin = np.iinfo(np.int64).min
+        vals = self._simd_timedelta_operands()
+        got = (vals.view('m8[s]') / np.int64(d)).view(np.int64)
+        exp = [imin if v == imin else
+               abs(int(v)) // abs(d) * (1 if (v < 0) == (d < 0) else -1)
+               for v in vals]
+        assert_array_equal(got, np.array(exp, dtype=np.int64))
+
+    @pytest.mark.parametrize("d", [1, 2, 3, 7, -4, 999983])
+    def test_timedelta_floor_divide_by_scalar_simd(self, d):
+        # m8 // m8 -> floor division (TIMEDELTA_mm_q_floor_divide)
+        imin = np.iinfo(np.int64).min
+        vals = self._simd_timedelta_operands()
+        with np.errstate(invalid='ignore'):
+            got = vals.view('m8[s]') // np.timedelta64(d, 's')
+        exp = [0 if v == imin else int(v) // d for v in vals]
+        assert_array_equal(got, np.array(exp, dtype=np.int64))
 
     def test_generic_timedelta_floor_divide(self):
         with pytest.warns(
@@ -1926,6 +1999,15 @@ class TestDateTime:
             # m8 / float
             assert_equal(tda / 0.5, tdc)
             assert_equal((tda / 0.5).dtype, np.dtype('m8[h]'))
+            # m8 / bool
+            assert_equal(tdc / True, tdc)
+            assert_equal((tdc / True).dtype, np.dtype('m8[h]'))
+            # m8 / np.bool_
+            assert_equal(tdc / np.True_, tdc)
+            assert_equal((tdc / np.True_).dtype, np.dtype('m8[h]'))
+            # m8 / np.array(True)
+            assert_equal(tdc / np.array(True), tdc)
+            assert_equal((tdc / np.array(True)).dtype, np.dtype('m8[h]'))
             # m8 / m8
             assert_equal(tda / tdb, 6 / 9)
             assert_equal(np.divide(tda, tdb), 6 / 9)

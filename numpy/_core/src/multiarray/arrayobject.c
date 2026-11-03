@@ -59,10 +59,12 @@ maintainer email:  oliphant.travis@ieee.org
 #include "numpyos.h"
 #include "refcount.h"
 #include "strfuncs.h"
+#include "templ_common.h"
 
 #include "binop_override.h"
 #include "array_coercion.h"
 #include "multiarraymodule.h"
+#include "module_state.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -367,7 +369,7 @@ static inline int
 write_and_clear_error_if_unraisable(int status, npy_bool unraisable)
 {
     if (status < 0 && unraisable) {
-        PyErr_WriteUnraisable(npy_interned_str.array_dealloc);
+        PyErr_WriteUnraisable(_npy_module_state->interned_str.array_dealloc);
         return 0;
     }
     return status;
@@ -431,7 +433,7 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
         }
         /* mem_handler can be absent if NPY_ARRAY_OWNDATA arbitrarily set */
         if (fa->mem_handler == NULL) {
-            if (npy_global_state.warn_if_no_mem_policy) {
+            if (_npy_module_state->global_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
@@ -509,7 +511,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
     printf("\n");
 
     printf(" dtype  : ");
-    PyObject_Print((PyObject *)fobj->descr, stdout, 0);
+    arraydescr_debug_print(fobj->descr);
     printf("\n");
     printf(" data   : %p\n", fobj->data);
     printf(" strides:");
@@ -653,7 +655,9 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             return NULL;
         }
 
-        PyObject *op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
+        multiarray_umath_state *state = _npy_module_state;
+        PyObject *op = (cmp_op == Py_EQ ?
+                state->n_ops.logical_and : state->n_ops.logical_or);
         PyObject *res = NULL;
         for (int i = 0; i < field_count; ++i) {
             PyObject *fieldname, *temp, *temp2;
@@ -759,7 +763,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                 res = temp;
             }
             else {
-                temp2 = PyObject_CallFunction(op, "OO", res, temp);
+                PyObject *call_args[2] = {res, temp};
+                temp2 = PyObject_Vectorcall(op, call_args, 2, NULL);
                 Py_DECREF(temp);
                 Py_DECREF(res);
                 if (temp2 == NULL) {
@@ -836,6 +841,7 @@ DEPRECATE_silence_error(const char *msg) {
 NPY_NO_EXPORT PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyArrayObject *array_other;
     PyObject *obj_self = (PyObject *)self;
     PyObject *result = NULL;
@@ -844,12 +850,12 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     case Py_LT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.less);
+                (PyObject *)self, other, state->n_ops.less);
         break;
     case Py_LE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.less_equal);
+                (PyObject *)self, other, state->n_ops.less_equal);
         break;
     case Py_EQ:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -881,7 +887,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, (PyObject *)other, n_ops.equal);
+                (PyObject *)self, (PyObject *)other, state->n_ops.equal);
         break;
     case Py_NE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -913,17 +919,17 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, (PyObject *)other, n_ops.not_equal);
+                (PyObject *)self, (PyObject *)other, state->n_ops.not_equal);
         break;
     case Py_GT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.greater);
+                (PyObject *)self, other, state->n_ops.greater);
         break;
     case Py_GE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.greater_equal);
+                (PyObject *)self, other, state->n_ops.greater_equal);
         break;
     default:
         Py_INCREF(Py_NotImplemented);
@@ -957,7 +963,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     if (result == NULL
             && (cmp_op == Py_EQ || cmp_op == Py_NE)
             && PyErr_ExceptionMatches(
-                    npy_static_pydata._UFuncNoLoopError)) {
+                    state->static_pydata._UFuncNoLoopError)) {
         PyErr_Clear();
 
         PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);
@@ -1042,7 +1048,7 @@ NPY_NO_EXPORT int
 PyArray_ElementStrides(PyObject *obj)
 {
     PyArrayObject *arr;
-    int itemsize;
+    npy_intp itemsize;
     int i, ndim;
     npy_intp *strides;
 
@@ -1081,17 +1087,19 @@ PyArray_ElementStrides(PyObject *obj)
  * or negative).
  */
 
-/*NUMPY_API*/
 NPY_NO_EXPORT npy_bool
-PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
-                     npy_intp const *dims, npy_intp const *newstrides)
+npy_check_strides(npy_intp elsize, int nd, npy_intp numbytes, npy_intp offset,
+                  npy_intp const *dims, npy_intp const *newstrides)
 {
     npy_intp begin, end;
     npy_intp lower_offset;
     npy_intp upper_offset;
 
     if (numbytes == 0) {
-        numbytes = PyArray_MultiplyList(dims, nd) * elsize;
+        npy_intp count = PyArray_OverflowMultiplyList(dims, nd);
+        if (count < 0 || npy_mul_sizes_with_overflow(&numbytes, count, elsize)) {
+            return NPY_FALSE;
+        }
     }
 
     begin = -offset;
@@ -1106,6 +1114,14 @@ PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
     return NPY_TRUE;
 }
 
+/*NUMPY_API*/
+NPY_NO_EXPORT npy_bool
+PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
+                     npy_intp const *dims, npy_intp const *newstrides)
+{
+    return npy_check_strides(elsize, nd, numbytes, offset, dims, newstrides);
+}
+
 
 static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
@@ -1113,7 +1129,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"shape", "dtype", "buffer", "offset", "strides",
                              "order", NULL};
     PyArray_Descr *descr = NULL;
-    int itemsize;
+    npy_intp itemsize;
     PyArray_Dims dims = {NULL, 0};
     PyArray_Dims strides = {NULL, -1};
     PyArray_Chunk buffer;
@@ -1170,9 +1186,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
 
 
-        if (!PyArray_CheckStrides(itemsize, dims.len,
-                                  nb, off,
-                                  dims.ptr, strides.ptr)) {
+        if (!npy_check_strides(
+                itemsize, dims.len, nb, off, dims.ptr, strides.ptr)) {
             PyErr_SetString(PyExc_ValueError,
                             "strides is incompatible "      \
                             "with shape of requested "      \

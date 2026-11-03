@@ -142,15 +142,6 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
     *ret = (PyArrayObject *)new;
 }
 
-static inline void
-multi_DECREF(PyObject **objects, npy_intp n)
-{
-    npy_intp i;
-    for (i = 0; i < n; i++) {
-        Py_DECREF(objects[i]);
-    }
-}
-
 /**
  * Unpack a tuple into an array of new references. Returns the number of objects
  * unpacked.
@@ -159,7 +150,7 @@ multi_DECREF(PyObject **objects, npy_intp n)
  * that doesn't always want the overhead of allocating a tuple.
  */
 static inline npy_intp
-unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
+unpack_tuple(PyObject *index, PyObject **result, npy_intp result_n)
 {
     npy_intp n, i;
     n = PyTuple_GET_SIZE(index);
@@ -211,7 +202,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
 
     /* Fast route for passing a tuple */
     if (PyTuple_CheckExact(index)) {
-        return unpack_tuple((PyTupleObject *)index, result, result_n);
+        return unpack_tuple(index, result, result_n);
     }
 
     /*
@@ -221,7 +212,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
      * called.
      */
     if (PyTuple_Check(index)) {
-        PyTupleObject *tup = (PyTupleObject *) PySequence_Tuple(index);
+        PyObject *tup = PySequence_Tuple(index);
         if (tup == NULL) {
             return -1;
         }

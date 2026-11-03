@@ -526,7 +526,7 @@ class TestConversion:
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, int, x)
 
-    @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+    @pytest.mark.skipif(np.dtype(np.double) == np.dtype(np.longdouble),
                         reason="long double is same as double")
     @pytest.mark.skipif(LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                         reason="IBM double double")

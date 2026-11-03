@@ -419,7 +419,8 @@ texinfo_documents = [
 intersphinx_mapping = {
     'neps': ('https://numpy.org/neps', None),
     'python': ('https://docs.python.org/3', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy', None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/",
+              "https://static.scipy.org/doc/scipy/objects.inv"),
     'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
@@ -591,7 +592,12 @@ def linkcode_resolve(domain, info):
         obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if 'dev' in numpy.__version__:
-        return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"
+        # Pin dev docs to the commit they were built from, so that the line
+        # numbers in ``linespec`` stay valid as ``main`` moves on.
+        # ``git_revision`` is empty when the tree has no git history (e.g.,
+        # a GitHub tarball). In that case fall back to ``main``.
+        ref = numpy.version.git_revision or 'main'
+        return f"https://github.com/numpy/numpy/blob/{ref}/numpy/{fn}{linespec}"
     else:
         return (f"https://github.com/numpy/numpy/blob/v{numpy.__version__}/"
                 f"numpy/{fn}{linespec}")

@@ -94,7 +94,11 @@ simd_sequence_from_iterable(PyObject *obj, simd_data_type dtype, Py_ssize_t min_
     if (seq_obj == NULL) {
         return NULL;
     }
-    Py_ssize_t seq_size = PySequence_Fast_GET_SIZE(seq_obj);
+    Py_ssize_t seq_size = PySequence_Size(seq_obj);
+    if (seq_size < 0) {
+        Py_DECREF(seq_obj);
+        return NULL;
+    }
     if (seq_size < min_size) {
         PyErr_Format(PyExc_ValueError,
             "minimum acceptable size of the required sequence is %d, given(%d)",
@@ -108,9 +112,15 @@ simd_sequence_from_iterable(PyObject *obj, simd_data_type dtype, Py_ssize_t min_
         Py_DECREF(seq_obj);
         return NULL;
     }
-    PyObject **seq_items = PySequence_Fast_ITEMS(seq_obj);
     for (Py_ssize_t i = 0; i < seq_size; ++i) {
-        simd_data data = simd_scalar_from_number(seq_items[i], info->to_scalar);
+        PyObject *item = PySequence_GetItem(seq_obj, i);
+        if (item == NULL) {
+            simd_sequence_free(dst);
+            Py_DECREF(seq_obj);
+            return NULL;
+        }
+        simd_data data = simd_scalar_from_number(item, info->to_scalar);
+        Py_DECREF(item);
         npyv_lanetype_u8 *sdst = dst + i * info->lane_size;
         memcpy(sdst, &data.u64, info->lane_size);
     }
@@ -174,7 +184,7 @@ simd_vectorx_from_tuple(PyObject *obj, simd_data_type dtype)
     assert(info->is_vectorx > 1 && info->is_vectorx < 4);
 
     simd_data data = {.u64 = 0};
-    if (!PyTuple_Check(obj) || PyTuple_GET_SIZE(obj) != info->is_vectorx) {
+    if (!PyTuple_Check(obj) || PyTuple_Size(obj) != info->is_vectorx) {
         PyErr_Format(PyExc_TypeError,
             "a tuple of %d vector type %s is required",
             info->is_vectorx, simd_data_getinfo(info->to_vector)->pyname
@@ -182,7 +192,7 @@ simd_vectorx_from_tuple(PyObject *obj, simd_data_type dtype)
         return data;
     }
     for (int i = 0; i < info->is_vectorx; ++i) {
-        PyObject *item = PyTuple_GET_ITEM(obj, i);
+        PyObject *item = PyTuple_GetItem(obj, i);
         // get the max multi-vec and let the compiler do the rest
         data.vu64x3.val[i] = PySIMDVector_AsData((PySIMDVectorObject*)item, info->to_vector).vu64;
         if (PyErr_Occurred()) {
@@ -212,7 +222,10 @@ simd_vectorx_to_tuple(simd_data data, simd_data_type dtype)
             Py_DECREF(tuple);
             return NULL;
         }
-        PyTuple_SET_ITEM(tuple, i, item);
+        if (PyTuple_SetItem(tuple, i, item) < 0) {
+            Py_DECREF(tuple);
+            return NULL;
+        }
     }
     return tuple;
 }

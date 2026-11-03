@@ -9,6 +9,7 @@ import pytest
 
 import numpy as np
 import numpy._core._multiarray_umath as ncu
+from numpy._core.tests._natype import pd_NA
 from numpy.testing import (
     HAS_REFCOUNT,
     assert_,
@@ -171,6 +172,17 @@ class TestArrayEqual(_GenericTest):
         c = np.array(['floupipi', 'floupa'])
 
         self._test_not_equal(c, b)
+
+    @pytest.mark.parametrize("na_object", [np.float32("nan"), pd_NA, None, ""])
+    def test_stringdtype_missing(self, na_object):
+        dtype = np.dtypes.StringDType(na_object=na_object)
+        a = np.array(["", "value", na_object], dtype=dtype)
+        self._test_equal(a, a.copy())
+
+        b = a.copy()
+        b[-1] = "other"
+        self._test_not_equal(a, b)
+        self._test_not_equal(b, a)
 
     def test_recarrays(self):
         """Test record arrays."""
@@ -1629,6 +1641,14 @@ class TestArrayAlmostEqualNulp:
         y = x - x * epsneg * nulp
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
                       xi, y + y * 1j, nulp)
+
+    def test_longdouble_fail(self):
+        x = np.longdouble(1)
+        y = np.nextafter(x, np.longdouble(2))
+        y = np.nextafter(y, np.longdouble(2))
+
+        with pytest.raises(AssertionError, match="1 ULP"):
+            assert_array_almost_equal_nulp(x, y, nulp=1)
 
 
 class TestULP:

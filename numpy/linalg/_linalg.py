@@ -1356,10 +1356,9 @@ def eig(a):
     eigenvalues : (..., M) array
         The eigenvalues, each repeated according to its multiplicity.
         The eigenvalues are not necessarily ordered. The resulting
-        array will be of complex type, unless the imaginary part is
-        zero in which case it will be cast to a real type. When `a`
-        is real the resulting eigenvalues will be real (0 imaginary
-        part) or occur in conjugate pairs
+        array will be of complex type. When `a` is real the resulting
+        eigenvalues will be real (0 imaginary part) or occur in
+        conjugate pairs.
 
     eigenvectors : (..., M, M) array
         The normalized (unit "length") eigenvectors, such that the
@@ -1881,6 +1880,16 @@ def svdvals(x, /):
     return svd(x, compute_uv=False, hermitian=False)
 
 
+def _cond_svdvals(x):
+    # like svd(x, compute_uv=False), but nan instead of an error for
+    # non-finite input (gh-32591)
+    t, result_t = _commonType(x)
+    signature = 'D->d' if isComplexType(t) else 'd->d'
+    with errstate(all='ignore'):
+        s = _umath_linalg.svd(x, signature=signature)
+    return s.astype(_realType(result_t), copy=False)
+
+
 def _cond_dispatcher(x, p=None):
     return (x,)
 
@@ -1898,7 +1907,7 @@ def cond(x, p=None):
     ----------
     x : (..., M, N) array_like
         The matrix whose condition number is sought.
-    p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
+    p : {None, 1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
         Order of the norm used in the condition number computation:
 
         =====  ============================
@@ -1906,6 +1915,7 @@ def cond(x, p=None):
         =====  ============================
         None   2-norm, computed directly using the ``SVD``
         'fro'  Frobenius norm
+        'nuc'  nuclear norm
         inf    max(sum(abs(x), axis=1))
         -inf   min(sum(abs(x), axis=1))
         1      max(sum(abs(x), axis=0))
@@ -1971,7 +1981,8 @@ def cond(x, p=None):
     if _is_empty_2d(x):
         raise LinAlgError("cond is not defined on empty arrays")
     if p is None or p in {2, -2}:
-        s = svd(x, compute_uv=False)
+        _assert_stacked_2d(x)
+        s = _cond_svdvals(x)
         with errstate(all='ignore'):
             if p == -2:
                 r = s[..., -1] / s[..., 0]
@@ -1986,7 +1997,12 @@ def cond(x, p=None):
         signature = 'D->D' if isComplexType(t) else 'd->d'
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)
-            r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
+            if p == 'nuc':
+                # norm() would raise for the nans of a failed inversion
+                r = (sum(_cond_svdvals(x), axis=-1, initial=0)
+                     * sum(_cond_svdvals(invx), axis=-1, initial=0))
+            else:
+                r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
         r = r.astype(result_t, copy=False)
 
     # Convert nans to infs unless the original array had nan entries
@@ -2213,7 +2229,8 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
         if rtol is _NoValue:
             rcond = 1e-15
         elif rtol is None:
-            rcond = max(a.shape[-2:]) * finfo(a.dtype).eps
+            result_t = _commonType(a)[1] if a.dtype.kind in "biu" else a.dtype
+            rcond = max(a.shape[-2:]) * finfo(result_t).eps
         else:
             rcond = rtol
     elif rtol is not _NoValue:
@@ -2225,7 +2242,8 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
     rcond = asarray(rcond)
     if _is_empty_2d(a):
         m, n = a.shape[-2:]
-        res = empty(a.shape[:-2] + (n, m), dtype=a.dtype)
+        result_t = _commonType(a)[1] if a.dtype.kind in "biu" else a.dtype
+        res = empty(a.shape[:-2] + (n, m), dtype=result_t)
         return wrap(res)
     a = a.conjugate()
     u, s, vt = svd(a, full_matrices=False, hermitian=hermitian)

@@ -8,6 +8,8 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "numpy/ndarraytypes.h"
 
@@ -18,9 +20,11 @@
 #include "legacy_array_method.h"
 #include "dtypemeta.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 
 #include "ufunc_object.h"
 #include "ufunc_type_resolution.h"
+#include "npy_pycompat.h"
 
 
 /*
@@ -320,6 +324,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         if (identity_obj != Py_None) {
             get_reduction_initial = &get_initial_from_ufunc;
         }
+        Py_DECREF(identity_obj);
     }
     for (int i = 0; i < ufunc->nin+ufunc->nout; i++) {
         if (signature[i]->singleton->flags & (
@@ -422,7 +427,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
                 ufunc, descrs, &loop, &user_data, &needs_api) < 0) {
             /* Only ignore a missing loop */
             if (!PyErr_ExceptionMatches(
-                    npy_static_pydata._UFuncNoLoopError)) {
+                    _npy_module_state->static_pydata._UFuncNoLoopError)) {
                 Py_DECREF(bound_res);
                 return NULL;
             }

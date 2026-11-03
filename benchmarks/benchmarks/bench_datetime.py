@@ -1,3 +1,5 @@
+import datetime
+
 import numpy as np
 
 from .common import Benchmark
@@ -63,6 +65,53 @@ class DatetimeToObject(Benchmark):
 
     def time_astype_object(self, size, dtype):
         self.arr.astype(object)
+
+
+class TimedeltaDivide(Benchmark):
+    """Timedelta division by an invariant scalar divisor.
+
+    Exercises the two ufunc loops:
+      - np.divide(m8, int)      -> TIMEDELTA_mq_m_divide       (truncation)
+      - np.floor_divide(m8, m8) -> TIMEDELTA_mm_q_floor_divide (floor)
+    """
+    params = [[1_000_000], [3, 7, -4, 999983]]
+    param_names = ['size', 'divisor']
+
+    def setup(self, size, divisor):
+        rng = np.random.default_rng(0xD47E)
+        self.arr = rng.integers(-(1 << 40), 1 << 40,
+                                size=size).astype('timedelta64[s]')
+        self.int_div = divisor
+        self.td_div = np.timedelta64(divisor, 's')
+
+    def time_divide_scalar(self, size, divisor):
+        np.divide(self.arr, self.int_div)
+
+    def time_floor_divide_scalar(self, size, divisor):
+        np.floor_divide(self.arr, self.td_div)
+
+
+class PyTimedeltaToTimedelta64(Benchmark):
+    """Convert a list of datetime.timedelta objects to timedelta64.
+    Exact timedelta is read from the C struct, subclasses use attribute lookups.
+    """
+    params = [
+        [100_000],
+        ['exact', 'subclass'],
+        ['timedelta64[us]', 'timedelta64[s]'],
+    ]
+    param_names = ['size', 'kind', 'dtype']
+
+    def setup(self, size, kind, dtype):
+        class Subclass(datetime.timedelta):
+            pass
+
+        cls = Subclass if kind == 'subclass' else datetime.timedelta
+        self.objs = [cls(days=i % 50, seconds=i % 86400, microseconds=i)
+                     for i in range(size)]
+
+    def time_array_from_timedelta(self, size, kind, dtype):
+        np.array(self.objs, dtype=dtype)
 
 
 class DatetimeWideRange(Benchmark):

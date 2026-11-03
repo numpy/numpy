@@ -1,3 +1,7 @@
+from typing import Final
+
+from numpy._pytesttester import PytestTester
+
 from . import core, extras
 from .core import (
     MAError,
@@ -33,6 +37,7 @@ from .core import (
     array,
     asanyarray,
     asarray,
+    assert_array_equal,
     bitwise_and,
     bitwise_or,
     bitwise_xor,
@@ -128,6 +133,7 @@ from .core import (
     min,
     minimum,
     minimum_fill_value,
+    minmax,
     mod,
     multiply,
     mvoid,
@@ -265,6 +271,7 @@ __all__ = [
     "array",
     "asanyarray",
     "asarray",
+    "assert_array_equal",
     "bitwise_and",
     "bitwise_or",
     "bitwise_xor",
@@ -360,6 +367,7 @@ __all__ = [
     "min",
     "minimum",
     "minimum_fill_value",
+    "minmax",
     "mod",
     "multiply",
     "mvoid",
@@ -458,3 +466,5 @@ __all__ = [
     "vander",
     "vstack",
 ]
+
+test: Final[PytestTester] = ...

@@ -13,6 +13,7 @@ import pytest
 import numpy as np
 from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
+from numpy.exceptions import ComplexWarning
 from numpy.testing import assert_array_equal
 
 
@@ -45,6 +46,15 @@ def coerce(request):
 )
 def na_object(request):
     """Possible values for the missing data sentinel"""
+    return request.param
+
+
+@pytest.fixture(
+    params=[np.nan, float("nan"), pd_NA],
+    ids=["np.nan", "float('nan')", "pandas.NA"],
+)
+def nan_like_na_object(request):
+    """The subset of ``na_object`` sentinels that are NaN-like (has_nan_na)"""
     return request.param
 
 
@@ -118,6 +128,30 @@ def test_dtype_creation():
     hashes.add(hash(dt))
     assert len(hashes) == 4
 
+    assert np.dtype(dt, copy=True) is dt
+    with pytest.raises(TypeError, match="cannot attach metadata"):
+        np.dtype(dt, metadata={"foo": "bar"})
+
+
+@pytest.mark.parametrize("kwargs, expected", [
+    ({}, (False, False, False)),
+    ({"na_object": None}, (True, False, False)),
+    ({"na_object": object()}, (True, False, False)),
+    ({"na_object": np.nan}, (True, True, False)),
+    ({"na_object": pd_NA}, (True, True, False)),
+    ({"na_object": ""}, (True, False, True)),
+    ({"na_object": "NA"}, (True, False, True)),
+])
+def test_private_na_flags(kwargs, expected):
+    dtype = StringDType(**kwargs)
+    for name, value in zip(
+            ("_has_na", "_has_nan_na", "_has_string_na"), expected):
+        assert getattr(dtype, name) is value
+        with pytest.raises(AttributeError):
+            setattr(dtype, name, not value)
+        with pytest.raises(AttributeError):
+            delattr(dtype, name)
+
 
 @pytest.mark.parametrize("dtype_spec", [
     [("a", StringDType())],
@@ -148,12 +182,23 @@ def test_dtype_equality(dtype):
         assert dtype != np.dtype(f"{ch}8")
 
 
+def test_dtype_hash(dtype, dtype2):
+    assert len({dtype, dtype2}) == (1 if dtype == dtype2 else 2)
+
+
+def test_dtype_hash_float64_nan(coerce):
+    dtype = StringDType(na_object=np.float64("nan"), coerce=coerce)
+    other = StringDType(na_object=float("nan"), coerce=coerce)
+    assert dtype == other
+    assert hash(dtype) == hash(other)
+
+
 def test_dtype_repr(dtype):
-    if not hasattr(dtype, "na_object") and dtype.coerce:
+    if not dtype._has_na and dtype.coerce:
         assert repr(dtype) == "StringDType()"
     elif dtype.coerce:
         assert repr(dtype) == f"StringDType(na_object={dtype.na_object!r})"
-    elif not hasattr(dtype, "na_object"):
+    elif not dtype._has_na:
         assert repr(dtype) == "StringDType(coerce=False)"
     else:
         assert (
@@ -163,7 +208,7 @@ def test_dtype_repr(dtype):
 
 
 def test_create_with_na(dtype):
-    if not hasattr(dtype, "na_object"):
+    if not dtype._has_na:
         pytest.skip("does not have an na object")
     na_val = dtype.na_object
     string_list = ["hello", na_val, "world"]
@@ -199,6 +244,15 @@ def test_create_with_failing_na_comparison():
     # na object classification, which fails
     with pytest.raises(RuntimeError, match="boom"):
         np.array(["y"], dtype=dt)
+
+
+def test_create_with_failing_na_str():
+    class BadStr(str):
+        def __str__(self):
+            raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        StringDType(na_object=BadStr("na"))
 
 
 @pytest.mark.parametrize("i", list(range(5)))
@@ -276,6 +330,84 @@ def test_pystr_scalar_ufunc_operand_any_instance(dtype):
     arr = np.array(["abc\0"], dtype=dtype)
     assert_array_equal(arr == "abc\0", [True])
     assert (arr + "x\0")[0] == "abc\0x\0"
+
+
+def test_pystr_scalar_full_copyto_where_preserve_nulls(dtype):
+    scalar = "x\0"
+
+    assert np.full(2, scalar, dtype=dtype)[0] == scalar
+
+    dst = np.empty(2, dtype=dtype)
+    np.copyto(dst, scalar)
+    assert dst.tolist() == [scalar, scalar]
+
+    cond = np.array([True, False])
+    arr = np.array(["y", "y"], dtype=dtype)
+    assert_array_equal(np.where(cond, scalar, arr),
+                       np.array([scalar, "y"], dtype=dtype), strict=True)
+    assert_array_equal(np.where(cond, arr, scalar),
+                       np.array(["y", scalar], dtype=dtype), strict=True)
+
+
+def test_pystr_scalar_full_copyto_where_object_preserve_nulls():
+    scalar = "x\0"
+
+    assert np.full(1, scalar, dtype=object)[0] == scalar
+
+    dst = np.empty(1, dtype=object)
+    np.copyto(dst, scalar)
+    assert dst[0] == scalar
+
+    assert np.where([True], scalar, np.array(["y"], dtype=object))[0] == scalar
+
+
+def test_pystr_scalar_concatenate_preserves_nulls(dtype):
+    scalar = "x\0"
+    arr = np.array(["y"], dtype=dtype)
+
+    res = np.concatenate((arr, scalar), axis=None)
+    assert_array_equal(res, np.array(["y", scalar], dtype=dtype), strict=True)
+
+    res = np.concatenate((scalar, arr), axis=None)
+    assert res[0] == scalar
+
+    out = np.empty(2, dtype=dtype)
+    np.concatenate((arr, scalar), axis=None, out=out)
+    assert out[1] == scalar
+
+    res = np.concatenate((["y"], scalar), axis=None, dtype=dtype)
+    assert res[1] == scalar
+
+    res = np.concatenate((scalar,), axis=None, dtype=dtype)
+    assert res[0] == scalar
+
+
+@pytest.mark.parametrize("value", ["x\0", "\0", "long string" * 10 + "\0\0"])
+@pytest.mark.parametrize("reverse", [False, True])
+def test_pystr_scalar_append_preserves_nulls(dtype, value, reverse):
+    arr = np.array([["a", value]], dtype=dtype)
+    args = (value, arr) if reverse else (arr, value)
+    expected = [value, "a", value] if reverse else ["a", value, value]
+    assert_array_equal(np.append(*args), np.array(expected, dtype=dtype),
+                       strict=True)
+
+
+def test_pystr_scalar_choose_preserves_nulls(dtype):
+    scalar = "x\0"
+    arr = np.array(["y"], dtype=dtype)
+
+    res = np.choose(np.array([1]), (arr, scalar))
+    assert_array_equal(res, np.array([scalar], dtype=dtype), strict=True)
+
+    res = np.choose(np.array([0]), (arr, scalar))
+    assert res[0] == "y"
+
+
+def test_pystr_scalar_concatenate_choose_object_preserve_nulls():
+    scalar = "x\0"
+    arr = np.array(["y"], dtype=object)
+    assert np.concatenate((arr, scalar), axis=None)[1] == scalar
+    assert np.choose(np.array([1]), (arr, scalar))[0] == scalar
 
 
 def test_partition_str_sep():
@@ -408,27 +540,27 @@ def test_scalars_string_conversion(data, dtype):
     ],
 )
 def test_self_casts(dtype, dtype2, strings):
-    if hasattr(dtype, "na_object"):
+    if dtype._has_na:
         strings = strings + [dtype.na_object]
-    elif hasattr(dtype2, "na_object"):
+    elif dtype2._has_na:
         strings = strings + [""]
     arr = np.array(strings, dtype=dtype)
     newarr = arr.astype(dtype2)
 
-    if hasattr(dtype, "na_object") and not hasattr(dtype2, "na_object"):
+    if dtype._has_na and not dtype2._has_na:
         assert newarr[-1] == str(dtype.na_object)
         with pytest.raises(TypeError):
             arr.astype(dtype2, casting="safe")
-    elif hasattr(dtype, "na_object") and hasattr(dtype2, "na_object"):
+    elif dtype._has_na and dtype2._has_na:
         assert newarr[-1] is dtype2.na_object
         arr.astype(dtype2, casting="safe")
-    elif hasattr(dtype2, "na_object"):
+    elif dtype2._has_na:
         assert newarr[-1] == ""
         arr.astype(dtype2, casting="safe")
     else:
         arr.astype(dtype2, casting="safe")
 
-    if hasattr(dtype, "na_object") and hasattr(dtype2, "na_object"):
+    if dtype._has_na and dtype2._has_na:
         na1 = dtype.na_object
         na2 = dtype2.na_object
         if (na1 is not na2 and
@@ -530,7 +662,7 @@ INVALID_UTF8 = [
 @pytest.mark.parametrize("bad", INVALID_UTF8)
 def test_bytes_cast_rejects_invalid_utf8(bad):
     arr = np.array([bad], dtype=f"S{len(bad)}")
-    with pytest.raises(TypeError, match="Invalid UTF-8"):
+    with pytest.raises(UnicodeDecodeError):
         arr.astype(StringDType())
 
 
@@ -538,7 +670,7 @@ def test_bytes_cast_rejects_invalid_utf8(bad):
 def test_void_cast_rejects_invalid_utf8(bad):
     # the void ('V') -> StringDType cast validates the same way as bytes
     arr = np.array([bad], dtype=f"V{len(bad)}")
-    with pytest.raises(TypeError, match="Invalid UTF-8"):
+    with pytest.raises(UnicodeDecodeError):
         arr.astype(StringDType())
 
 
@@ -604,6 +736,193 @@ def test_zfill_no_padding_no_oob():
     from numpy._core.umath import _zfill
     a = np.array([""], dtype=dt)
     assert _zfill(a, 20, out=a).tolist() == ["0" * 20]
+
+
+UNSIZED_SPELLINGS = {
+    "S": ["S", "S0", np.dtype("S"), np.dtypes.BytesDType, np.bytes_],
+    "U": ["U", "U0", np.dtype("U"), np.dtypes.StrDType, np.str_],
+    "V": ["V", "V0", np.dtype("V"), np.dtypes.VoidDType, np.void],
+}
+
+
+def encode_nested(strings):
+    if isinstance(strings, str):
+        return strings.encode()
+    return [encode_nested(s) for s in strings]
+
+
+def fixed_width_array(strings, dtype):
+    # void dtypes only accept bytes
+    if np.dtype(dtype).kind == "V":
+        strings = encode_nested(strings)
+    return np.array(strings, dtype=dtype)
+
+
+CONVERSION_PATHS = [
+    pytest.param(lambda arr, req: arr.astype(req), id="astype"),
+    pytest.param(lambda arr, req: np.array(arr, dtype=req), id="np.array"),
+    pytest.param(lambda arr, req: np.asarray(arr, dtype=req),
+                 id="np.asarray"),
+    # exercises PyArray_CastToType
+    pytest.param(lambda arr, req: arr.__array__(dtype=np.dtype(req),
+                                                copy=True), id="__array__"),
+]
+
+
+class TestUnsizedFixedWidthCasts:
+    """Converting to an unsized "S", "U" or "V" dtype infers the width by
+    inspecting the values in the array being converted."""
+
+    @pytest.mark.parametrize("kind", ["S", "U", "V"])
+    def test_unsized_spellings(self, kind):
+        arr = np.array(["this", "is", "an", "array"], dtype="T")
+        expected = fixed_width_array(["this", "is", "an", "array"], f"{kind}5")
+        for spelling in UNSIZED_SPELLINGS[kind]:
+            assert_array_equal(arr.astype(spelling), expected, strict=True)
+
+    @pytest.mark.parametrize("convert", CONVERSION_PATHS)
+    @pytest.mark.parametrize("kind", ["S", "U", "V"])
+    @pytest.mark.parametrize(
+        "strings,width",
+        [
+            (["this", "is", "an", "array"], 5),
+            (["a" * 100, "", "b"], 100),
+            # embedded and trailing NULs count as data
+            (["x\0", "y\0\0z", ""], 4),
+            # empty arrays and all-empty entries produce width 1
+            ([], 1),
+            (["", "", ""], 1),
+        ],
+    )
+    def test_conversion_paths_infer_width(self, convert, kind, strings,
+                                          width):
+        arr = np.array(strings, dtype="T")
+        res = convert(arr, kind)
+        assert res.dtype == np.dtype(f"{kind}{width}")
+        assert_array_equal(res, fixed_width_array(strings, f"{kind}{width}"))
+
+    @pytest.mark.parametrize("kind", ["S", "U", "V"])
+    def test_zero_dimensional(self, kind):
+        res = np.array("abcd", dtype="T").astype(kind)
+        assert res.dtype == np.dtype(f"{kind}4")
+        assert res == fixed_width_array("abcd", f"{kind}4")
+
+    @pytest.mark.parametrize("kind", ["S", "U", "V"])
+    def test_strided_and_multidimensional(self, kind):
+        arr = np.array(
+            ["a long string entry", "ab", "c", "d"], dtype="T")
+        # only the short entries participate in a strided view
+        assert arr[1::2].astype(kind).dtype == np.dtype(f"{kind}2")
+        assert arr[::-1].astype(kind).dtype == np.dtype(f"{kind}19")
+        arr_2d = np.array([["a", "bb"], ["ccc", "dddd"]], dtype="T")
+        res = arr_2d.astype(kind)
+        assert res.dtype == np.dtype(f"{kind}4")
+        assert_array_equal(
+            res, fixed_width_array([["a", "bb"], ["ccc", "dddd"]], f"{kind}4"))
+
+    def test_multibyte_unicode_widths(self):
+        # "U" widths count code points, "S" and "V" widths count UTF-8 bytes
+        arr = np.array(["a😊b", "é"], dtype="T")
+        res = arr.astype("U")
+        assert_array_equal(res, np.array(["a😊b", "é"], dtype="U3"), strict=True)
+        res = arr.astype("V")
+        assert_array_equal(res, fixed_width_array(["a😊b", "é"], "V6"), strict=True)
+        # the "S" cast rejects non-ASCII entries
+        with pytest.raises(UnicodeEncodeError):
+            arr.astype("S")
+
+    def test_multiple_arrays_promote_to_widest(self):
+        arr1 = np.array(["abc"], dtype="T")
+        arr2 = np.array(["longer!"], dtype="T")
+        assert np.array([arr1, arr2], dtype="S").dtype == np.dtype("S7")
+
+    @pytest.mark.parametrize("kind", ["S", "U", "V"])
+    def test_descriptor_only_resolution_still_fails(self, kind):
+        # functions that adapt descriptors without inspecting array values
+        # cannot infer a width
+        arr = np.array(["abc"], dtype="T")
+        with pytest.raises(TypeError,
+                           match="cannot cast dtype StringDType"):
+            np.concatenate([arr, arr], dtype=kind)
+
+    def test_explicit_width_still_truncates(self):
+        arr = np.array(["abcdef"], dtype="T")
+        assert_array_equal(arr.astype("S3"), np.array([b"abc"], dtype="S3"))
+        assert_array_equal(arr.astype("U3"), np.array(["abc"], dtype="U3"))
+        assert_array_equal(arr.astype("V3"), np.array([b"abc"], dtype="V3"))
+
+
+class TestUnsizedCastMissingValues:
+    def test_nan_na(self):
+        dt = StringDType(na_object=np.nan)
+        arr = np.array(["abcde", np.nan], dtype=dt)
+        res = arr.astype("U")
+        assert_array_equal(res, np.array(["abcde", "nan"], dtype="U5"), strict=True)
+        res = arr.astype("V")
+        assert_array_equal(res, np.array([b"abcde", b"nan"], dtype="V5"), strict=True)
+        all_null = np.array([np.nan, np.nan], dtype=dt)
+        res = all_null.astype("U")
+        assert_array_equal(res, np.array(["nan", "nan"], dtype="U3"), strict=True)
+
+    def test_non_ascii_string_na(self):
+        # a missing entry counts with the width of the sentinel, in code
+        # points for "U" and UTF-8 bytes for "V", and raises for the
+        # ASCII-only "S" cast
+        dt = StringDType(na_object="😊😊")
+        arr = np.array(["ab", None], dtype=StringDType(na_object=None)).astype(dt)
+        assert arr[1] is dt.na_object
+        res = arr.astype("U")
+        assert_array_equal(res, np.array(["ab", "😊😊"], dtype="U2"), strict=True)
+        res = arr.astype("V")
+        assert_array_equal(res, fixed_width_array(["ab", "😊😊"], "V8"), strict=True)
+        with pytest.raises(UnicodeEncodeError):
+            arr.astype("S")
+
+
+class TestStringDTypeNditer:
+    def test_infer_width_for_existing_operand(self):
+        arr = np.array(["abc", "defgh"], dtype="T")
+        for kind, expected in [("S", "S5"), ("U", "U5"), ("V", "V5")]:
+            with np.nditer(
+                arr,
+                op_dtypes=[np.dtype(kind)],
+                flags=["buffered", "refs_ok"],
+                casting="unsafe" if kind == "V" else "same_kind",
+            ) as it:
+                assert it.dtypes[0] == np.dtype(expected)
+                assert [x[()] for x in it] == list(
+                    fixed_width_array(["abc", "defgh"], expected))
+
+    def test_readwrite_stringdtype_operand_fixed_width_buffers(self):
+        # reads convert to the inferred fixed-width dtype and writing
+        # back into the StringDType array round-trips the values
+        arr = np.array(["abc", "defgh"], dtype="T")
+        with np.nditer(
+            arr,
+            op_dtypes=[np.dtype("U")],
+            op_flags=[["readwrite"]],
+            flags=["buffered", "refs_ok"],
+            casting="same_kind",
+        ) as it:
+            assert it.dtypes[0] == np.dtype("U5")
+            for x in it:
+                x[...] = str(x[()]).upper()
+        assert_array_equal(
+            arr, np.array(["ABC", "DEFGH"], dtype="T"))
+
+    @pytest.mark.parametrize("kind,expected", [("S", "S1"), ("U", "U1")])
+    def test_allocated_output_stays_unsized_legacy(self, kind, expected):
+        # allocated outputs have no values to inspect, so an unsized
+        # request keeps the legacy one-character width
+        arr = np.array(["abc", "defgh"], dtype="T")
+        it = np.nditer(
+            [arr, None],
+            op_dtypes=[arr.dtype, np.dtype(kind)],
+            op_flags=[["readonly"], ["writeonly", "allocate"]],
+            flags=["buffered", "refs_ok"],
+            casting="unsafe",
+        )
+        assert it.operands[1].dtype == np.dtype(expected)
 
 
 def test_additional_unicode_cast(dtype):
@@ -700,8 +1019,42 @@ def test_comparisons(string_list, dtype, op, o_dtype):
     assert_array_equal(res, orres)
 
 
+@pytest.mark.parametrize("op", comparison_operators)
+def test_nan_like_comparisons(nan_like_na_object, op):
+    na = nan_like_na_object
+    dtype = StringDType(na_object=na)
+    left = np.array([na, "a", na, "a", "b"], dtype=dtype)
+    right = np.array(["a", na, na, "a", "a"], dtype=dtype)
+    numeric_left = np.array([np.nan, 0, np.nan, 0, 1])
+    numeric_right = np.array([0, np.nan, np.nan, 0, 0])
+    assert_array_equal(op(left, right), op(numeric_left, numeric_right))
+    assert_array_equal(op(left, "a"), op(numeric_left, 0))
+
+
+@pytest.mark.parametrize("op", comparison_operators)
+@pytest.mark.parametrize("na_object", [None, object()], ids=["None", "object"])
+def test_non_string_na_comparisons(dtype, op):
+    na = dtype.na_object
+    left = np.array(["", na, "x", na, "", "x"], dtype=dtype)
+    right = np.array([na, "", na, na, "", "x"], dtype=dtype)
+    if op not in (np.equal, np.not_equal):
+        with pytest.raises(ValueError, match="not supported for null values"):
+            op(left, right)
+        with pytest.raises(ValueError, match="not supported for null values"):
+            op(left, "")
+        assert_array_equal(op(left[4:], right[4:]), op(["", "x"], ["", "x"]))
+        return
+    equal = np.array([False, False, False, True, True, True])
+    equal_empty = np.array([True, False, False, False, True, False])
+    if op is np.not_equal:
+        equal, equal_empty = ~equal, ~equal_empty
+    assert_array_equal(op(left, right), equal)
+    assert_array_equal(op(left, ""), equal_empty)
+    assert_array_equal(op("", left), equal_empty)
+
+
 def test_isnan(dtype, string_list):
-    if not hasattr(dtype, "na_object"):
+    if not dtype._has_na:
         pytest.skip("no na support")
     sarr = np.array(string_list + [dtype.na_object], dtype=dtype)
     is_nan = isinstance(dtype.na_object, float) and np.isnan(dtype.na_object)
@@ -731,6 +1084,7 @@ def test_pickle(dtype, string_list):
 
     assert_array_equal(res[0], arr)
     assert res[1] == dtype
+    assert hash(res[1]) == hash(dtype)
 
     os.remove(f.name)
 
@@ -772,7 +1126,7 @@ def test_sort(dtype, strings, stable):
             ):
                 np.argsort(arr, stable=stable)
             argsorted = None
-        elif na_object is pd_NA or na_object != '':
+        elif dtype._has_nan_na:
             argsorted = None
         else:
             argsorted = np.argsort(arr, stable=stable)
@@ -794,7 +1148,7 @@ def test_sort(dtype, strings, stable):
     arr_sorted = np.array(sorted(strings), dtype=dtype)
     test_sort(strings, arr_sorted)
 
-    if not hasattr(dtype, "na_object"):
+    if not dtype._has_na:
         return
 
     # make sure NAs get sorted to the end of the array and string NAs get
@@ -803,7 +1157,7 @@ def test_sort(dtype, strings, stable):
     strings.insert(2, dtype.na_object)
     # can't use append because doing that with NA converts
     # the result to object dtype
-    if not isinstance(dtype.na_object, str):
+    if not dtype._has_string_na:
         arr_sorted = np.array(
             arr_sorted.tolist() + [dtype.na_object, dtype.na_object],
             dtype=dtype,
@@ -812,6 +1166,13 @@ def test_sort(dtype, strings, stable):
         arr_sorted = np.array(sorted(strings), dtype=dtype)
 
     test_sort(strings, arr_sorted)
+
+
+@pytest.mark.parametrize("descending", [True, False])
+def test_sort_nan_like_stability(nan_like_na_object, descending):
+    dtype = StringDType(na_object=nan_like_na_object)
+    arr = np.array([nan_like_na_object] * 2, dtype=dtype)
+    assert_array_equal(np.argsort(arr, stable=True, descending=descending), [0, 1])
 
 
 @pytest.mark.parametrize("strings", SORT_STRINGS)
@@ -824,7 +1185,7 @@ def test_sort_descending(dtype, strings, stable):
     argsorted = np.argsort(arr, stable=stable, descending=True)
     assert_array_equal(arr[argsorted], expected)
 
-    if not hasattr(dtype, "na_object"):
+    if not dtype._has_na:
         return
 
     # make sure NAs get sorted to the end of the array in descending
@@ -842,7 +1203,7 @@ def test_sort_descending(dtype, strings, stable):
             np.sort(arr, stable=stable, descending=True)
         return
 
-    if isinstance(dtype.na_object, str):
+    if dtype._has_string_na:
         expected = np.array(sorted(strings, reverse=True), dtype=dtype)
     else:
         expected = np.array(
@@ -898,6 +1259,30 @@ def test_searchsorted_gh31533():
     )
 
 
+@pytest.mark.parametrize("na_object, matches", [
+    (None, True), (np.nan, False), (pd_NA, False), ("NA", True),
+])
+def test_isin_missing(na_object, matches):
+    dtype = StringDType(na_object=na_object)
+    a = np.array(["a", "b", na_object], dtype=dtype)
+    b = np.array(["b", na_object] * 20, dtype=dtype)
+    expected = np.array([False, True, matches])
+    assert_array_equal(np.isin(a, b), expected)
+    assert_array_equal(np.isin(a, b, invert=True), ~expected)
+    assert_array_equal(np.isin(a, b[:2]), expected)
+    missing = np.array([na_object] * 40, dtype=dtype)
+    assert_array_equal(np.isin(missing, missing), [matches] * 40)
+
+    no_missing = np.array(["b", "c"] * 20, dtype=dtype)
+    expected = np.array([False, True, False])
+    assert_array_equal(np.isin(a, no_missing), expected)
+    assert_array_equal(np.isin(a, no_missing, invert=True), ~expected)
+
+    no_missing = np.array(["a", "b", "c"], dtype=dtype)
+    assert_array_equal(np.isin(no_missing, b), expected)
+    assert_array_equal(np.isin(no_missing, b, invert=True), ~expected)
+
+
 @pytest.mark.parametrize(
     "strings",
     [
@@ -913,13 +1298,15 @@ def test_nonzero(strings, na_object):
         [i for i, item in enumerate(strings) if len(item) != 0])
     assert_array_equal(arr.nonzero()[0], is_nonzero)
 
-    if na_object is not pd_NA and na_object == 'unset':
+    if not dtype._has_na:
         return
 
     strings_with_na = np.array(strings + [na_object], dtype=dtype)
-    is_nan = np.isnan(np.array([dtype.na_object], dtype=dtype))[0]
+    # a string sentinel null is truthy exactly when the sentinel is
+    is_truthy = dtype._has_nan_na or (
+        dtype._has_string_na and na_object != "")
 
-    if is_nan:
+    if is_truthy:
         assert strings_with_na.nonzero()[0][-1] == 4
     else:
         assert strings_with_na.nonzero()[0][-1] == 3
@@ -1143,7 +1530,7 @@ def test_flat_set_aliased(dtype):
 
     # The identical-pointer case also matters for null strings, which do not
     # have a string buffer for the general sharing check to compare.
-    if hasattr(dtype, "na_object"):
+    if dtype._has_na:
         missing = np.array([dtype.na_object], dtype=dtype)
         missing.flat = missing
         assert missing[0] is dtype.na_object
@@ -1362,13 +1749,239 @@ def test_string_to_bytes_invalid_ascii_error():
     )
 
 
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble"])
+def test_float_to_string_nan_na_consistent(typename, nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    arr = np.array([1.5, np.nan, -2.0], dtype=typename).astype(dt)
+    assert arr[0] == "1.5"
+    assert arr[2] == "-2.0"
+    assert arr[1] is nan_like_na_object
+
+
+@pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
+def test_cfloat_to_string_nan_na(typename, nan_like_na_object):
+    # a complex value with any NaN component is missing (np.isnan semantics)
+    dt = StringDType(na_object=nan_like_na_object)
+
+    for val in (complex(np.nan, 0.0), complex(np.nan, 2.0),
+                complex(0.0, np.nan), complex(2.0, np.nan),
+                complex(np.nan, np.nan)):
+        arr = np.array([val], dtype=typename).astype(dt)
+        assert arr[0] is nan_like_na_object
+
+    # no NaN component (even inf): stringified
+    arr = np.array([1.5 + 2j, complex(np.inf, 1)], dtype=typename).astype(dt)
+    assert arr[0] == "(1.5+2j)"
+    assert arr[1] == "(inf+1j)"
+
+
+def test_cfloat_to_string_nan_na_strided_field_view(nan_like_na_object):
+    # the field view's byte stride is aligned but not a multiple of the
+    # itemsize; the NaN check and the value read must step in bytes
+    rec = np.zeros(3, dtype=[("c", "c16"), ("pad", "f8")])
+    rec["c"] = [1 + 2j, complex(np.nan, 4.0), 5 + 6j]
+    dt = StringDType(na_object=nan_like_na_object)
+    res = rec["c"].astype(dt)
+    assert res[0] == "(1+2j)"
+    assert res[1] is nan_like_na_object
+    assert res[2] == "(5+6j)"
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "complex64", "complex128"])
+def test_float_to_string_nan_na_non_native_byteorder(typename,
+                                                     nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    arr = np.array([1.5, np.nan, -2.0], dtype=typename)
+    expected = arr.astype(dt)
+    res = arr.astype(arr.dtype.newbyteorder("S")).astype(dt)
+    assert res[0] == expected[0]
+    assert res[1] is nan_like_na_object
+    assert res[2] == expected[2]
+
+    # the bytes of a native NaN are a finite subnormal in the other byte
+    # order, so they must not be mistaken for a NaN
+    finite = arr[1:2].view(arr.dtype.newbyteorder("S"))
+    assert not np.isnan(finite[0])
+    res = finite.astype(dt)
+    assert isinstance(res[0], str)
+    assert res[0] == str(finite[0])
+
+
+NON_NATIVE_BYTEORDER_CASES = [
+    ("i4", [1, -2, 300]),
+    ("u2", [1, 2, 300]),
+    ("f2", [1.5, -2.0]),
+    ("f8", [1.5, -2.0]),
+    ("c16", [1.5 + 2j]),
+    ("M8[s]", ["2020-01-01", "NaT"]),
+    ("m8[s]", [5, "NaT"]),
+    ("U3", ["abc", "d"]),
+]
+
+
+@pytest.mark.parametrize("dtype, values", NON_NATIVE_BYTEORDER_CASES)
+def test_non_native_byteorder_to_string(dtype, values):
+    native = np.array(values, dtype=dtype)
+    swapped = native.astype(native.dtype.newbyteorder("S"))
+    assert_array_equal(swapped.astype(StringDType()),
+                       native.astype(StringDType()))
+
+
+@pytest.mark.parametrize("dtype, values", NON_NATIVE_BYTEORDER_CASES)
+def test_string_to_non_native_byteorder(dtype, values):
+    native = np.array(values, dtype=dtype)
+    swapped_dtype = native.dtype.newbyteorder("S")
+    res = native.astype(StringDType()).astype(swapped_dtype)
+    assert res.dtype == swapped_dtype
+    assert_array_equal(res, native)
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble"])
+def test_setitem_nan_na_matches_float_cast(typename, nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    nan_scalar = np.dtype(typename).type("nan")
+
+    arr = np.empty(4, dtype=dt)
+    arr[0] = nan_scalar
+    arr[1] = float("nan")
+    arr[2] = np.nan
+    arr[3] = np.dtype(typename).type("1.5")
+    assert arr[0] is nan_like_na_object
+    assert arr[1] is nan_like_na_object
+    assert arr[2] is nan_like_na_object
+    assert arr[3] == "1.5"
+
+    cast = np.array([nan_scalar, float("nan"), np.nan, 1.5], dtype=typename).astype(dt)
+    assert cast[0] is nan_like_na_object
+    assert cast[1] is nan_like_na_object
+    assert cast[2] is nan_like_na_object
+    assert cast[3] == arr[3]
+
+
+@pytest.mark.parametrize("typename", ["complex64", "complex128", "clongdouble"])
+def test_setitem_cfloat_nan(typename, nan_like_na_object):
+    # setitem agrees with the cast, for numpy scalars and Python complex
+    dt = StringDType(na_object=nan_like_na_object)
+    arr = np.empty(1, dtype=dt)
+
+    for val in (complex(np.nan, 0.0), complex(np.nan, 2.0),
+                complex(0.0, np.nan), complex(2.0, np.nan),
+                complex(np.nan, np.nan)):
+        arr[0] = np.dtype(typename).type(val)
+        assert arr[0] is nan_like_na_object
+        arr[0] = val
+        assert arr[0] is nan_like_na_object
+
+    arr[0] = np.dtype(typename).type(1.5 + 2j)
+    assert arr[0] == "(1.5+2j)"
+
+
+@pytest.mark.parametrize("dt", [StringDType(), StringDType(na_object="missing")],
+                         ids=["no-na", "string-na"])
+def test_nan_is_not_missing_without_nan_like_na(dt):
+    arr = np.array([np.nan, 1.5], dtype="float32").astype(dt)
+    assert arr[0] == "nan"
+    assert arr[1] == "1.5"
+    arr = np.array([complex(np.nan, 2.0), complex(0.0, np.nan)],
+                   dtype="complex128").astype(dt)
+    assert arr[0] == "(nan+2j)"
+    assert arr[1] == "nanj"
+    arr = np.empty(2, dtype=dt)
+    arr[0] = np.float32("nan")
+    arr[1] = np.complex128(complex(np.nan, 2.0))
+    assert arr[0] == "nan"
+    assert arr[1] == "(nan+2j)"
+
+
+@pytest.mark.parametrize("typename", ["float16", "float32", "float64",
+                                      "longdouble", "complex64", "complex128",
+                                      "clongdouble"])
+def test_string_na_to_numeric_is_nan(typename, nan_like_na_object):
+    dt = StringDType(na_object=nan_like_na_object)
+    out = np.array(["1.5", nan_like_na_object], dtype=dt).astype(typename)
+    assert out[0] == np.dtype(typename).type("1.5")
+    assert np.isnan(out[1])
+
+
+@pytest.mark.parametrize(
+    "order",
+    # complex -> string -> float can't round-trip (a complex stringifies to
+    # "(1.5+0j)", not a valid float literal), so those orderings are omitted
+    [o for o in itertools.permutations(["complex128", "float64", "string"])
+     if ("complex128", "string") not in zip(o, o[1:])],
+    ids="->".join)
+def test_roundtrip_float_through_complex_and_string(order, nan_like_na_object):
+    # bracketing the trip with float64 normalizes the string form of a complex
+    # value ("(1.5+0j)" vs "1.5") so the values come back unchanged
+    dt = StringDType(na_object=nan_like_na_object)
+    specs = {"complex128": "complex128", "float64": "float64", "string": dt}
+    original = np.array([1.5, np.nan, -2.0, 0.0], dtype="float64")
+
+    arr = original
+    # each order does complex -> real exactly once, which warns
+    with pytest.warns(ComplexWarning):
+        for name in (*order, "float64"):
+            arr = arr.astype(specs[name])
+    assert_array_equal(arr, original)
+
+
 def test_void_to_string_invalid_utf8_error():
-    # invalid UTF-8 in a void buffer used to surface as a confusing
-    # MemoryError because the error return of utf8_buffer_size was
-    # stored in an unsigned variable
     varr = np.array([b"\xff\xff\xff\xff"], dtype="V4")
-    with pytest.raises(TypeError, match="Invalid UTF-8"):
-        varr.astype(StringDType())
+    with pytest.raises(UnicodeDecodeError) as excinfo:
+        varr.astype("T")
+    exc = excinfo.value
+    assert exc.encoding == "utf-8"
+    assert exc.object == b"\xff\xff\xff\xff"
+    assert exc.start == 0
+
+
+class TestFixedWidthCastSafety:
+    def test_fixed_width_to_stringdtype_is_safe(self):
+        for source in ["S10", "U10"]:
+            assert np.can_cast(source, "T", casting="safe")
+            assert np.can_cast(source, "T", casting="same_kind")
+            assert not np.can_cast(source, "T", casting="no")
+            assert not np.can_cast(source, "T", casting="equiv")
+
+    def test_stringdtype_to_fixed_width_is_same_kind(self):
+        for target in ["S5", "U5", "S", "U"]:
+            assert not np.can_cast("T", target, casting="safe")
+            assert np.can_cast("T", target, casting="same_kind")
+            assert np.can_cast("T", target, casting="unsafe")
+
+    def test_unicode_surrogate_runtime_error(self):
+        arr = np.array(["\ud800"], dtype="U1")
+        assert np.can_cast(arr.dtype, "T", casting="safe")
+        with pytest.raises(TypeError, match="Invalid unicode code point"):
+            arr.astype("T")
+
+    def test_bytes_to_stringdtype_valid_utf8(self):
+        barr = np.array(["café".encode(), "😊".encode()], dtype="S5")
+        assert_array_equal(
+            barr.astype("T"),
+            np.array(["café", "😊"], dtype="T"),
+        )
+
+    @pytest.mark.parametrize("kind", ["S", "V"])
+    @pytest.mark.parametrize(
+        "bad,reason",
+        [
+            (b"a\xffb", "invalid start byte"),
+            # 0xc3 starts a two-byte sequence the itemsize truncates
+            (b"a\xc3", "unexpected end of data"),
+        ],
+    )
+    def test_invalid_utf8_error(self, kind, bad, reason):
+        arr = np.array([bad], dtype=f"{kind}{len(bad)}")
+        with pytest.raises(UnicodeDecodeError) as excinfo:
+            arr.astype("T")
+        exc = excinfo.value
+        assert exc.encoding == "utf-8"
+        assert exc.object == bad
+        assert (exc.start, exc.end, exc.reason) == (1, 2, reason)
 
 
 @pytest.mark.parametrize(
@@ -1519,21 +2132,16 @@ def test_ufunc_add(dtype, string_list, other_strings, use_out):
 
     assert_array_equal(res, result)
 
-    if not hasattr(dtype, "na_object"):
+    if not dtype._has_na:
         return
 
-    is_nan = isinstance(dtype.na_object, float) and np.isnan(dtype.na_object)
-    is_str = isinstance(dtype.na_object, str)
-    bool_errors = 0
-    try:
-        bool(dtype.na_object)
-    except TypeError:
-        bool_errors = 1
+    is_nan = dtype._has_nan_na
+    is_str = dtype._has_string_na
 
     arr1 = np.array([dtype.na_object] + string_list, dtype=dtype)
     arr2 = np.array(other_strings + [dtype.na_object], dtype=dtype)
 
-    if is_nan or bool_errors or is_str:
+    if is_nan or is_str:
         res = np.add(arr1, arr2)
         assert_array_equal(res[1:-1], arr1[1:-1] + arr2[1:-1])
         if not is_str:
@@ -1688,28 +2296,23 @@ def test_ufunc_multiply(dtype, string_list, other, other_dtype, use_out):
         rres = other * arr
         assert_array_equal(rres, result)
 
-    if not hasattr(dtype, "na_object"):
+    if not dtype._has_na:
         return
 
-    is_nan = np.isnan(np.array([dtype.na_object], dtype=dtype))[0]
-    is_str = isinstance(dtype.na_object, str)
-    bool_errors = 0
-    try:
-        bool(dtype.na_object)
-    except TypeError:
-        bool_errors = 1
+    is_nan = dtype._has_nan_na
+    is_str = dtype._has_string_na
 
     arr = np.array(string_list + [dtype.na_object], dtype=dtype)
 
     try:
         len(other)
-        other = np.append(other, 3)
+        other = np.append(other, [3])
         if other_dtype is not None:
             other = other.astype(other_dtype)
     except TypeError:
         pass
 
-    if is_nan or bool_errors or is_str:
+    if is_nan or is_str:
         for res in [arr * other, other * arr]:
             assert_array_equal(res[:-1], result)
             if not is_str:
@@ -1815,8 +2418,8 @@ def test_datetime_timedelta_cast(dtype, input_data, input_dtype):
 
     a = np.array(input_data, dtype=input_dtype)
 
-    has_na = hasattr(dtype, "na_object")
-    is_str = isinstance(getattr(dtype, "na_object", None), str)
+    has_na = dtype._has_na
+    is_str = dtype._has_string_na
 
     if not has_na or is_str:
         a = np.delete(a, 3)
@@ -2014,11 +2617,11 @@ def test_unary(string_array, unicode_array, function_name):
         ures = ures.astype(StringDType())
     assert_array_equal(sres, ures)
 
-    if not hasattr(dtype, "na_object"):
+    if not dtype._has_na:
         return
 
-    is_nan = np.isnan(np.array([dtype.na_object], dtype=dtype))[0]
-    is_str = isinstance(dtype.na_object, str)
+    is_nan = dtype._has_nan_na
+    is_str = dtype._has_string_na
     na_arr = np.insert(string_array, 0, dtype.na_object)
 
     if function_name in UNIMPLEMENTED_VEC_STRING_FUNCTIONS:
@@ -2152,12 +2755,12 @@ def test_binary(string_array, unicode_array, function_name, args):
     assert_array_equal(sres, ures)
 
     dtype = string_array.dtype
-    if function_name not in SUPPORTS_NULLS or not hasattr(dtype, "na_object"):
+    if function_name not in SUPPORTS_NULLS or not dtype._has_na:
         return
 
     na_arr = np.insert(string_array, 0, dtype.na_object)
-    is_nan = np.isnan(np.array([dtype.na_object], dtype=dtype))[0]
-    is_str = isinstance(dtype.na_object, str)
+    is_nan = dtype._has_nan_na
+    is_str = dtype._has_string_na
     should_error = not (is_nan or is_str)
 
     if (
@@ -2427,6 +3030,22 @@ def test_accumulation(string_array, tile):
         res_obj = np.add.accumulate(arr.astype(object), axis=-1)
 
         assert_array_equal(res, res_obj.astype(arr.dtype), strict=True)
+
+
+def test_minimum_maximum_promote_fixed_width_and_str():
+    arr = np.array(["b", "y"], dtype=StringDType())
+    assert np.minimum(arr, "c\x00").tolist() == ["b", "c\x00"]
+    assert np.maximum(arr, "c\x00").tolist() == ["c\x00", "y"]
+    fixed = np.array(["c", "c"])
+    assert np.minimum(arr, fixed).tolist() == ["b", "c"]
+    assert np.maximum(fixed, arr).dtype == StringDType()
+
+
+@pytest.mark.parametrize("na", ["", "x"])
+def test_string_na_cast_to_bool_matches_sentinel(na):
+    arr = np.array([na, "y"], dtype=StringDType(na_object=na))
+    assert arr.astype(bool).tolist() == [bool(na), True]
+    assert arr.nonzero()[0].tolist() == [i for i in range(2) if [na, "y"][i]]
 
 
 class TestImplementation:
@@ -2826,8 +3445,6 @@ def test_setops_distinct_allocators():
     assert_array_equal(np.setdiff1d(a, b), np.setdiff1d(au, bu))
     assert_array_equal(np.setxor1d(a, b), np.setxor1d(au, bu))
 
-    # StringDType has hasobject set, so isin always takes the
-    # element-comparison loop and 'table' only supports integers
     assert_array_equal(
         np.isin(a, b, invert=True), np.isin(au, bu, invert=True)
     )
@@ -2850,6 +3467,13 @@ def test_setops_distinct_allocators():
     )
     for r, e in zip(res, expected):
         assert_array_equal(r, e)
+
+    # exercise the fallback to the slow object sorting path for dtype instances
+    # with incompatible na_object
+    a_none = a.astype(StringDType(na_object=None))
+    b_nan = b.astype(StringDType(na_object=np.nan))
+    assert_array_equal(np.isin(a_none, b_nan), np.isin(au, bu))
+    assert_array_equal(np.setdiff1d(a_none, b_nan), np.setdiff1d(au, bu))
 
 
 def test_unique_arena_strings():

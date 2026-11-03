@@ -36,9 +36,11 @@ if IS_EDITABLE:
     )
 
 
-@pytest.fixture(scope='module')
-def install_temp(tmpdir_factory):
+def build_limited_api_modules(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
+    # This runs meson only once, but that single build compiles a separate
+    # extension module for every (Python, NumPy) version combination; see
+    # the comment above _PY_ABI3_VERSIONS below.
     if not HAS_SUBPROCESSES:
         pytest.skip("No subprocess")
 
@@ -171,7 +173,24 @@ def _check_api_module(mod, cython=False):
             assert mod.stringdtype_load(arr) is None
 
 
-# Test limited API extension modules for all supported Python and NumPy versions
+# Test limited API extension modules for all supported Python and NumPy versions.
+#
+# The single meson build run by build_limited_api_modules compiles one C and one
+# Cython extension module for every combination of abi3 Python version (up to
+# the running interpreter) and NumPy target version listed below, e.g.
+# limited_api_3_11_npy2_2 and limited_api_cython_3_11_npy2_2 (see meson.build
+# in examples/limited_api). The test first runs the build, then imports every
+# one of those modules by name and tests it with the _check_api_module helper.
+# So every iteration tests a different extension module built with a different
+# combination of Python and NumPy target versions.
+#
+# Normally a single Python package uses a single Python and a single NumPy version
+# as the target (i.e., lowest-supported) version, so this test isn't realistic in
+# that respect. However, it *is* realistic for cross-package issues between
+# extension modules. This can happen in practice, e.g. when Cython extensions load
+# types/objects from `sys.modules` instead of from the local copy embedded in each
+# extension (cython#7914).
+#
 # The _PY_ABI3_VERSIONS and _NPY_TARGET_VERSIONS lists should be kept in sync
 # with the lists defined in meson.build, and the test should be updated
 # if new versions are added here.
@@ -180,9 +199,10 @@ def _check_api_module(mod, cython=False):
 _PY_ABI3_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
 _NPY_TARGET_VERSIONS = ["2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "default"]
 
-def _module_names(prefix, abi3_versions):
+
+def _module_names(prefix):
     names = []
-    for py_ver in abi3_versions:
+    for py_ver in _PY_ABI3_VERSIONS:
         if sys.version_info < tuple(map(int, py_ver.split('.'))):
             continue
         py = py_ver.replace('.', '_')
@@ -192,70 +212,41 @@ def _module_names(prefix, abi3_versions):
     return names
 
 
-def limited_api_module_names():
-    return _module_names("limited_api", _PY_ABI3_VERSIONS)
-
-
-def limited_api_cython_module_names():
-    # see https://github.com/cython/cython/issues/7914
-    skip_3_11 = pytest.mark.skipif(
-        cython is not None
-        and _pep440.parse(cython_version) == _pep440.Version("3.3.0"),
-        reason="abi3 3.11 module is unimportable with Cython 3.3.0")
-    return [
-        pytest.param(name, marks=skip_3_11) if "_3_11_" in name else name
-        for name in _module_names("limited_api_cython", _PY_ABI3_VERSIONS)
-    ]
-
 @pytest.mark.skipif(
     not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
 )
-@pytest.mark.skipif(
-    sysconfig.get_config_var("Py_DEBUG"),
-    reason=(
-        "Py_LIMITED_API is incompatible with Py_DEBUG, Py_TRACE_REFS, "
-        "and Py_REF_DEBUG"
-    ),
-)
-@pytest.mark.skipif(
-    NOGIL_BUILD,
-    reason="Py_GIL_DISABLED builds do not support abi3",
-)
-@pytest.mark.parametrize("module_name", limited_api_module_names())
-def test_limited_api_abi3(install_temp, module_name):
-    mod = importlib.import_module(module_name)
-    _check_api_module(mod)
+def test_limited_api(tmpdir_factory, subtests):
+    # Keep these conditions in sync with the ones in meson.build: the abi3
+    # modules are only built on GIL-enabled interpreters (and Py_LIMITED_API
+    # is incompatible with Py_DEBUG), while the opaque abi3t module requires
+    # Python 3.15+ and, on Windows, a free-threaded build.
+    test_abi3 = not NOGIL_BUILD and not sysconfig.get_config_var("Py_DEBUG")
+    test_opaque = sys.version_info >= (3, 15) and (
+        sys.platform != "win32" or sysconfig.get_config_var("Py_GIL_DISABLED")
+    )
+    if not test_abi3 and not test_opaque:
+        pytest.skip("no limited API modules are built for this interpreter")
 
+    build_limited_api_modules(tmpdir_factory)
 
-@pytest.mark.skipif(
-    not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
-)
-@pytest.mark.skipif(
-    sysconfig.get_config_var("Py_DEBUG"),
-    reason=(
-        "Py_LIMITED_API is incompatible with Py_DEBUG, Py_TRACE_REFS, "
-        "and Py_REF_DEBUG"
-    ),
-)
-@pytest.mark.skipif(
-    NOGIL_BUILD,
-    reason="Py_GIL_DISABLED builds do not support abi3",
-)
-@pytest.mark.parametrize("module_name", limited_api_cython_module_names())
-def test_limited_api_cython(install_temp, module_name):
-    mod = importlib.import_module(module_name)
-    _check_api_module(mod, cython=True)
+    if test_abi3:
+        for module_name in _module_names("limited_api"):
+            with subtests.test(module=module_name):
+                mod = importlib.import_module(module_name)
+                _check_api_module(mod)
 
+        # see https://github.com/cython/cython/issues/7914
+        skip_3_11 = _pep440.parse(cython_version) == _pep440.Version("3.3.0")
+        for module_name in _module_names("limited_api_cython"):
+            if skip_3_11 and "_3_11_" in module_name:
+                # abi3 3.11 module is unimportable with Cython 3.3.0
+                continue
+            with subtests.test(module=module_name):
+                mod = importlib.import_module(module_name)
+                _check_api_module(mod, cython=True)
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 15), reason="opaque PyObject requires Python 3.15+"
-)
-@pytest.mark.skipif(
-    sys.platform == "win32" and not sysconfig.get_config_var('Py_GIL_DISABLED'),
-    reason=("Meson does not yet support building abi3t extensions on the "
-            "GIL-enabled build")
-)
-def test_limited_opaque(install_temp):
-    import limited_api_opaque
+    if test_opaque:
+        with subtests.test(module="limited_api_opaque"):
+            import limited_api_opaque
 
-    _check_api_module(limited_api_opaque)
+            _check_api_module(limited_api_opaque)

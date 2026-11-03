@@ -13,7 +13,7 @@ Using via ``meson``
 .. versionchanged:: 1.26.x
 
    The default build system for ``f2py`` is now ``meson``, see
-   :ref:`distutils-status-migration` for some more details..
+   :ref:`distutils-status-migration` for some more details.
 
 Fibonacci walkthrough (F77)
 ===========================

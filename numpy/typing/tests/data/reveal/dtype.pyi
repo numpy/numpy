@@ -28,6 +28,8 @@ cs_generic: Literal["H", "U", "h", "|M8[Y]", "?"]
 
 dt_inexact: np.dtype[np.inexact]
 dt_string: StringDType
+dt_f8: np.dtypes.Float64DType
+dt_void: np.dtypes.VoidDType
 
 assert_type(np.dtype(np.float64), np.dtype[np.float64])
 assert_type(np.dtype(np.float64, metadata={"test": "test"}), np.dtype[np.float64])
@@ -120,9 +122,10 @@ assert_type(np.dtype(dt_inexact), np.dtype[np.inexact])
 
 # Parameterized dtypes
 assert_type(np.dtype("S8"), np.dtype)
+assert_type(np.dtype(("U", 10)), np.dtype[np.str_])
+assert_type(np.dtype((bytes, 5)), np.dtype[np.bytes_])
 
 # Void
-assert_type(np.dtype(("U", 10)), np.dtype[np.void])
 assert_type(np.dtype({"formats": (int, "u8"), "names": ("n", "B")}), np.dtype[np.void])
 
 # StringDType
@@ -134,6 +137,10 @@ assert_type(np.dtype("|T"), StringDType)
 # Methods and attributes
 assert_type(dtype_U.base, np.dtype)
 assert_type(dtype_U.subdtype, tuple[np.dtype, tuple[Any, ...]] | None)
+assert_type(dtype_U.descr, list[tuple[Any, ...]])
+assert_type(dt_f8.descr, list[tuple[Literal[""], LiteralString]])
+assert_type(dt_void.descr, list[tuple[Literal[""], LiteralString]])
+assert_type(dt_string.descr, list[tuple[Literal[""], LiteralString]])
 assert_type(dtype_U.newbyteorder(), np.dtype[np.str_])
 assert_type(dtype_U.type, type[np.str_])
 assert_type(dtype_U.name, LiteralString)

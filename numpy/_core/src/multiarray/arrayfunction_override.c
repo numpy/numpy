@@ -10,30 +10,45 @@
 #include "npy_argparse.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "multiarraymodule.h"
 
 #include "arrayfunction_override.h"
 
 /*
  * Get an object's __array_function__ method in the fastest way possible.
- * Never raises an exception. Returns NULL if the method doesn't exist.
+ * Never raises an exception.
+ *
+ * Returns -1 if the object does not implement `__array_function__`,
+ * 0 if it uses the default `ndarray.__array_function__` and 1 if it
+ * overrides it.  Only in the last case `*method` is set (to a new reference),
+ * otherwise it is NULL.  The default is thus represented by NULL and needs
+ * no reference counting, which avoids contention on the shared method object
+ * in the free-threaded build.
  */
-static PyObject *
-get_array_function(PyObject *obj)
+static int
+get_array_function(PyObject *obj, PyObject **method)
 {
+    multiarray_umath_state *state = _npy_module_state;
+    *method = NULL;
     /* Fast return for ndarray */
     if (PyArray_CheckExact(obj)) {
-        Py_INCREF(npy_static_pydata.ndarray_array_function);
-        return npy_static_pydata.ndarray_array_function;
+        return 0;
     }
 
-    PyObject *array_function;
     if (PyArray_LookupSpecial(
-            obj, npy_interned_str.array_function, &array_function) < 0) {
+            obj, state->interned_str.array_function, method) < 0) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
-
-    return array_function;
+    if (*method == NULL) {
+        return -1;
+    }
+    if (*method == state->static_pydata.ndarray_array_function) {
+        /* ndarray subclass without override */
+        Py_CLEAR(*method);
+        return 0;
+    }
+    return 1;
 }
 
 
@@ -54,6 +69,7 @@ pyobject_array_insert(PyObject **array, int length, int index, PyObject *item)
  * Collects arguments with __array_function__ and their corresponding methods
  * in the order in which they should be tried (i.e., skipping redundant types).
  * `relevant_args` is expected to have been produced by PySequence_Fast.
+ * A NULL entry in `methods` denotes the default `ndarray.__array_function__`.
  * Returns the number of arguments, or -1 on failure.
  */
 static int
@@ -78,9 +94,9 @@ get_implementing_args_and_methods(PyObject *relevant_args,
             }
         }
         if (new_class) {
-            PyObject *method = get_array_function(argument);
+            PyObject *method;
 
-            if (method != NULL) {
+            if (get_array_function(argument, &method) >= 0) {
                 int arg_index;
 
                 if (num_implementing_args >= NPY_MAXARGS) {
@@ -89,7 +105,7 @@ get_implementing_args_and_methods(PyObject *relevant_args,
                         "maximum number (%d) of distinct argument types " \
                         "implementing __array_function__ exceeded",
                         NPY_MAXARGS);
-                    Py_DECREF(method);
+                    Py_XDECREF(method);
                     goto fail;
                 }
 
@@ -117,19 +133,9 @@ get_implementing_args_and_methods(PyObject *relevant_args,
 fail:
     for (int j = 0; j < num_implementing_args; j++) {
         Py_DECREF(implementing_args[j]);
-        Py_DECREF(methods[j]);
+        Py_XDECREF(methods[j]);
     }
     return -1;
-}
-
-
-/*
- * Is this object ndarray.__array_function__?
- */
-static int
-is_default_array_function(PyObject *obj)
-{
-    return obj == npy_static_pydata.ndarray_array_function;
 }
 
 
@@ -166,7 +172,7 @@ array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
      */
     PyObject *implementation;
     if (PyObject_GetOptionalAttr(
-            func, npy_interned_str.implementation, &implementation) < 0) {
+            func, _npy_module_state->interned_str.implementation, &implementation) < 0) {
         return NULL;
     }
     else if (implementation == NULL) {
@@ -187,7 +193,7 @@ call_array_function(PyObject* argument, PyObject* method,
                     PyObject* public_api, PyObject* types,
                     PyObject* args, PyObject* kwargs)
 {
-    if (is_default_array_function(method)) {
+    if (method == NULL) {
         return array_function_method_impl(public_api, types, args, kwargs);
     }
     else {
@@ -245,13 +251,14 @@ get_args_and_kwargs(
 static void
 set_no_matching_types_error(PyObject *public_api, PyObject *types)
 {
+    multiarray_umath_state *state = _npy_module_state;
     /* No acceptable override found, raise TypeError. */
     if (npy_cache_import_runtime(
             "numpy._core._internal",
             "array_function_errmsg_formatter",
-            &npy_runtime_imports.array_function_errmsg_formatter) == 0) {
+            &state->runtime_imports.array_function_errmsg_formatter) == 0) {
         PyObject *errmsg = PyObject_CallFunctionObjArgs(
-                npy_runtime_imports.array_function_errmsg_formatter,
+                state->runtime_imports.array_function_errmsg_formatter,
                 public_api, types, NULL);
         if (errmsg != NULL) {
             PyErr_SetObject(PyExc_TypeError, errmsg);
@@ -273,24 +280,25 @@ array_implement_c_array_function_creation(
     PyObject *args, PyObject *kwargs,
     PyObject *const *fast_args, Py_ssize_t len_args, PyObject *kwnames)
 {
+    multiarray_umath_state *state = _npy_module_state;
     PyObject *dispatch_types = NULL;
     PyObject *numpy_module = NULL;
     PyObject *public_api = NULL;
     PyObject *result = NULL;
 
     /* If `like` doesn't implement `__array_function__`, raise a `TypeError` */
-    PyObject *method = get_array_function(like);
-    if (method == NULL) {
+    PyObject *method;
+    int has_override = get_array_function(like, &method);
+    if (has_override < 0) {
         return PyErr_Format(PyExc_TypeError,
                 "The `like` argument must be an array-like that "
                 "implements the `__array_function__` protocol.");
     }
-    if (is_default_array_function(method)) {
+    if (has_override == 0) {
         /*
          * Return a borrowed reference of Py_NotImplemented to defer back to
          * the original function.
          */
-        Py_DECREF(method);
         return Py_NotImplemented;
     }
 
@@ -314,12 +322,12 @@ array_implement_c_array_function_creation(
     }
 
     /* The like argument must be present in the keyword arguments, remove it */
-    if (PyDict_DelItem(kwargs, npy_interned_str.like) < 0) {
+    if (PyDict_DelItem(kwargs, state->interned_str.like) < 0) {
         goto finish;
     }
 
     /* Fetch the actual symbol (the long way right now) */
-    numpy_module = PyImport_Import(npy_interned_str.numpy);
+    numpy_module = PyImport_Import(state->interned_str.numpy);
     if (numpy_module == NULL) {
         goto finish;
     }
@@ -399,7 +407,7 @@ array__get_implementing_args(
 cleanup:
     for (int j = 0; j < num_implementing_args; j++) {
         Py_DECREF(implementing_args[j]);
-        Py_DECREF(array_function_methods[j]);
+        Py_XDECREF(array_function_methods[j]);
     }
     Py_DECREF(relevant_args);
     return result;
@@ -438,8 +446,9 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
 {
     PyObject *a = NULL, *axis = Py_None, *out = Py_None;
     PyObject *dtype = self->reduction_kind == REDUCTION_ANY_ALL ? (PyObject *)&PyBool_Type : Py_None;
-    PyObject *keepdims = npy_static_pydata._NoValue, *where = npy_static_pydata._NoValue;
-    PyObject *initial = npy_static_pydata._NoValue;
+    PyObject *no_value = _npy_module_state->static_pydata._NoValue;
+    PyObject *keepdims = no_value, *where = no_value;
+    PyObject *initial = no_value;
     int parsed = 0;
     switch (self->reduction_kind) {
         case REDUCTION_SUM_PROD: {
@@ -489,7 +498,7 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
     }
     if (!PyArray_CheckExact(a) ||
         (out != Py_None && !PyArray_CheckExact(out)) ||
-        (where != npy_static_pydata._NoValue && where != Py_None &&
+        (where != no_value && where != Py_None &&
             !PyBool_Check(where) && !PyArray_CheckExact(where))) {
         return 0;
     }
@@ -497,17 +506,44 @@ try_reduction(PyArray_ArrayFunctionDispatcherObject *self,
     // This set of arguments must exactly match ufunc.reduce positional argument order
     PyObject *call_args[] = {
         a, axis, dtype, out,
-        keepdims == npy_static_pydata._NoValue ? Py_False : keepdims,
+        keepdims == no_value ? Py_False : keepdims,
         initial,
-        where == npy_static_pydata._NoValue ? Py_True : where,
+        where == no_value ? Py_True : where,
     };
     *result = PyObject_Vectorcall(self->reduction, call_args, 7, NULL);
-    return *result != NULL ? 1 : -1;
+    if (*result == NULL) {
+        /*
+         * The fast-path ufunc has no loop for this dtype; defer to the Python
+         * implementation, which may provide a fallback (e.g. `minmax` reducing
+         * via `min`/`max`).  Any other error propagates.
+         */
+        if (PyErr_ExceptionMatches(
+                _npy_module_state->static_pydata._UFuncNoLoopError)) {
+            PyErr_Clear();
+            return 0;
+        }
+        return -1;
+    }
+    return 1;
 }
 
 
-static void
-dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
+static int
+dispatcher_traverse(
+        PyArray_ArrayFunctionDispatcherObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(Py_TYPE(self));
+    Py_VISIT(self->relevant_arg_func);
+    Py_VISIT(self->default_impl);
+    Py_VISIT(self->reduction);
+    Py_VISIT(self->dict);
+    Py_VISIT(self->dispatcher_name);
+    Py_VISIT(self->public_name);
+    return 0;
+}
+
+static int
+dispatcher_clear(PyArray_ArrayFunctionDispatcherObject *self)
 {
     Py_CLEAR(self->relevant_arg_func);
     Py_CLEAR(self->default_impl);
@@ -515,7 +551,18 @@ dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
     Py_CLEAR(self->dict);
     Py_CLEAR(self->dispatcher_name);
     Py_CLEAR(self->public_name);
-    PyObject_FREE(self);
+    return 0;
+}
+
+static void
+dispatcher_dealloc(PyArray_ArrayFunctionDispatcherObject *self)
+{
+    PyObject_GC_UnTrack(self);
+    dispatcher_clear(self);
+
+    PyTypeObject *type = Py_TYPE(self);
+    type->tp_free((PyObject *)self);
+    Py_DECREF(type);
 }
 
 
@@ -646,8 +693,7 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
             return NULL;
         }
 
-        array_function_methods[0] = get_array_function(args[0]);
-        if (array_function_methods[0] == NULL) {
+        if (get_array_function(args[0], &array_function_methods[0]) < 0) {
             return PyErr_Format(PyExc_TypeError,
                     "The `like` argument must be an array-like that "
                     "implements the `__array_function__` protocol.");
@@ -670,7 +716,7 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
      */
     int any_overrides = 0;
     for (int j = 0; j < num_implementing_args; j++) {
-        if (!is_default_array_function(array_function_methods[j])) {
+        if (array_function_methods[j] != NULL) {
             any_overrides = 1;
             break;
         }
@@ -727,7 +773,7 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
 cleanup:
     for (int j = 0; j < num_implementing_args; j++) {
         Py_DECREF(implementing_args[j]);
-        Py_DECREF(array_function_methods[j]);
+        Py_XDECREF(array_function_methods[j]);
     }
     Py_XDECREF(packed_args);
     Py_XDECREF(packed_kwargs);
@@ -738,7 +784,7 @@ cleanup:
 
 
 static PyObject *
-dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
+dispatcher_new(PyTypeObject *cls, PyObject *args, PyObject *kwargs)
 {
     PyArray_ArrayFunctionDispatcherObject *self;
     PyObject *reduction = Py_None;
@@ -752,11 +798,9 @@ dispatcher_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    self = PyObject_New(
-            PyArray_ArrayFunctionDispatcherObject,
-            &PyArrayFunctionDispatcher_Type);
+    self = (PyArray_ArrayFunctionDispatcherObject *)PyType_GenericAlloc(cls, 0);
     if (self == NULL) {
-        return PyErr_NoMemory();
+        return NULL;
     }
 
     self->vectorcall = (vectorcallfunc)dispatcher_vectorcall;
@@ -886,21 +930,53 @@ static struct PyGetSetDef func_dispatcher_getset[] = {
 };
 
 
-NPY_NO_EXPORT PyTypeObject PyArrayFunctionDispatcher_Type = {
-     PyVarObject_HEAD_INIT(NULL, 0)
-     .tp_name = "numpy._ArrayFunctionDispatcher",
-     .tp_basicsize = sizeof(PyArray_ArrayFunctionDispatcherObject),
-     /* We have a dict, so in theory could traverse, but in practice... */
-     .tp_dictoffset = offsetof(PyArray_ArrayFunctionDispatcherObject, dict),
-     .tp_dealloc = (destructor)dispatcher_dealloc,
-     .tp_new = (newfunc)dispatcher_new,
-     .tp_str = (reprfunc)dispatcher_str,
-     .tp_repr = (reprfunc)dispatcher_repr,
-     .tp_flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_VECTORCALL
-                  | Py_TPFLAGS_METHOD_DESCRIPTOR),
-     .tp_methods = func_dispatcher_methods,
-     .tp_getset = func_dispatcher_getset,
-     .tp_descr_get = func_dispatcher___get__,
-     .tp_call = &PyVectorcall_Call,
-     .tp_vectorcall_offset = offsetof(PyArray_ArrayFunctionDispatcherObject, vectorcall),
+/*
+ * A spec cannot set tp_vectorcall_offset or tp_dictoffset directly; they are
+ * given as the members CPython reserves for them.
+ */
+static struct PyMemberDef dispatcher_members[] = {
+    {"__vectorcalloffset__", Py_T_PYSSIZET,
+        offsetof(PyArray_ArrayFunctionDispatcherObject, vectorcall),
+        Py_READONLY},
+    {"__dictoffset__", Py_T_PYSSIZET,
+        offsetof(PyArray_ArrayFunctionDispatcherObject, dict), Py_READONLY},
+    {NULL, 0, 0, 0, NULL}
 };
+
+
+static PyType_Slot dispatcher_slots[] = {
+    {Py_tp_dealloc, dispatcher_dealloc},
+    {Py_tp_traverse, dispatcher_traverse},
+    {Py_tp_clear, dispatcher_clear},
+    {Py_tp_new, dispatcher_new},
+    {Py_tp_str, dispatcher_str},
+    {Py_tp_repr, dispatcher_repr},
+    {Py_tp_methods, func_dispatcher_methods},
+    {Py_tp_getset, func_dispatcher_getset},
+    {Py_tp_members, dispatcher_members},
+    {Py_tp_descr_get, func_dispatcher___get__},
+    {Py_tp_call, PyVectorcall_Call},
+    {0, NULL},
+};
+
+static PyType_Spec dispatcher_spec = {
+    .name = "numpy._ArrayFunctionDispatcher",
+    .basicsize = sizeof(PyArray_ArrayFunctionDispatcherObject),
+    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC
+              | Py_TPFLAGS_IMMUTABLETYPE | Py_TPFLAGS_HAVE_VECTORCALL
+              | Py_TPFLAGS_METHOD_DESCRIPTOR),
+    .slots = dispatcher_slots,
+};
+
+NPY_NO_EXPORT int
+init_array_function_dispatcher_type(PyObject *module)
+{
+    PyObject *type = PyType_FromModuleAndSpec(
+            module, &dispatcher_spec, NULL);
+    if (type == NULL) {
+        return -1;
+    }
+    get_module_state(module)->PyArrayFunctionDispatcher_Type =
+            (PyTypeObject *)type;
+    return 0;
+}

@@ -61,36 +61,24 @@ env:
   APT_TIMEOUT_MINUTES: 15
 
 jobs:
-  openblas32_stable_nightly:
-    # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+  openblas32_nightly:
+    if: github.repository == 'numpy/numpy' && github.base_ref == 'main'
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        USE_NIGHTLY_OPENBLAS: [false, true]
-    env:
-      USE_NIGHTLY_OPENBLAS: ${{ matrix.USE_NIGHTLY_OPENBLAS }}
-    name: "Test Linux (${{ matrix.USE_NIGHTLY_OPENBLAS && 'nightly' || 'stable' }} OpenBLAS)"
+    name: "Test Linux (nightly OpenBLAS)"
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
-        # Install OpenBLAS
-        if [[ $USE_NIGHTLY_OPENBLAS == "true" ]]; then
-            python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas32
-        else
-            python -m pip install -r requirements/ci32_requirements.txt
-        fi
+        pip install --group dev-cli --group test-extending
+        python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas32
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
 
@@ -98,27 +86,24 @@ jobs:
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
-      run:
-        spin build -- --werror -Dallow-noblas=false -Dpkg_config_path=${PWD}/.openblas
+      run: spin build -- --werror -Dallow-noblas=false -Dpkg_config_path=${PWD}/.openblas
 
     - name: Check build-internal dependencies
-      run:
-        ninja -C build -t missingdeps
+      run: ninja -C build -t missingdeps
 
     - name: Check installed test and stub files
-      run:
-        python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
-    - name: Ensure scipy-openblas
+      run: python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
+
+    - name: Ensure scipy-openblas minimum version
       run: |
         set -ex
-        spin python tools/check_openblas_version.py -- --min-version 0.3.30
+        python -c "import scipy_openblas32 as sob; assert sob.__version__>'0.3.30'"
 
     - name: Test
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
-      run: |
-        spin test -j auto -- --timeout=600 --durations=10
+      run: spin test -j auto -- --timeout=600 --durations=10
 
 
   openblas_no_pkgconfig_fedora:
@@ -139,7 +124,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --upgrade pip
+        pip install --group dev-cli --group test-core
 
     - name: Build (LP64)
       run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
@@ -174,7 +160,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --upgrade pip
+        pip install --group dev-cli --group test-core
 
     - name: Build
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
@@ -201,14 +188,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
 
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-core
         sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
@@ -230,14 +217,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
 
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-core
         sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
@@ -253,7 +240,7 @@ jobs:
   netlib-split:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
-    container: opensuse/tumbleweed
+    container: opensuse/tumbleweed # zizmor: ignore[unpinned-images]
     name: "OpenSUSE Netlib BLAS/LAPACK"
     steps:
     - name: Install system dependencies
@@ -270,7 +257,7 @@ jobs:
 
     - name: Install PyPI dependencies
       run: |
-        pip install --break-system-packages -r requirements/build_requirements.txt
+        pip install --break-system-packages --group dev-cli
 
     - name: Build
       run: |
@@ -278,9 +265,9 @@ jobs:
 
     - name: Test
       run: |
-        # do not use test_requirements.txt, it includes coverage which requires
+        # do not use the test-extending group, it will install coverage, which requires
         # sqlite3, which is not available on OpenSUSE python
-        pip install --break-system-packages pytest pytest-xdist pytest-timeout
+        pip install --break-system-packages --group test-core
         spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
@@ -294,14 +281,13 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-core
         pip install mkl mkl-devel
 
     - name: Repair MKL pkg-config files and symlinks
@@ -359,15 +345,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
 
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-core
         sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
@@ -397,15 +382,14 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
 
     - name: Install dependencies
       timeout-minutes: ${{ fromJSON(env.APT_TIMEOUT_MINUTES) }}
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        pip install --group dev-cli --group test-core
         sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 

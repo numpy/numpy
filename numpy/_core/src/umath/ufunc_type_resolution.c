@@ -33,12 +33,14 @@
 #endif
 
 #include "npy_config.h"
+#include "npy_pycompat.h"
 
 #include "numpy/npy_common.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"
 #include "common.h"
@@ -86,14 +88,14 @@ NPY_NO_EXPORT PyObject *
 npy_begin_legacy_resolver_promotion(void)
 {
     return PyContextVar_Set(
-            npy_static_pydata.legacy_resolver_promoting, Py_True);
+            _npy_module_state->static_pydata.legacy_resolver_promoting, Py_True);
 }
 
 NPY_NO_EXPORT int
 npy_end_legacy_resolver_promotion(PyObject *token)
 {
     int result = PyContextVar_Reset(
-            npy_static_pydata.legacy_resolver_promoting, token);
+            _npy_module_state->static_pydata.legacy_resolver_promoting, token);
     Py_DECREF(token);
     return result;
 }
@@ -102,7 +104,7 @@ static int
 deprecate_integer_datetime_operation(void)
 {
     PyObject *promoting;
-    if (PyContextVar_Get(npy_static_pydata.legacy_resolver_promoting,
+    if (PyContextVar_Get(_npy_module_state->static_pydata.legacy_resolver_promoting,
                          Py_False, &promoting) < 0) {
         return -1;
     }
@@ -135,7 +137,7 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
         return -1;
     }
     PyErr_SetObject(
-            npy_static_pydata._UFuncBinaryResolutionError, exc_value);
+            _npy_module_state->static_pydata._UFuncBinaryResolutionError, exc_value);
     Py_DECREF(exc_value);
 
     return -1;
@@ -158,7 +160,7 @@ raise_no_loop_found_error(
     if (exc_value == NULL) {
         return -1;
     }
-    PyErr_SetObject(npy_static_pydata._UFuncNoLoopError, exc_value);
+    PyErr_SetObject(_npy_module_state->static_pydata._UFuncNoLoopError, exc_value);
     Py_DECREF(exc_value);
 
     return -1;
@@ -210,7 +212,7 @@ raise_input_casting_error(
         PyArray_Descr *to,
         npy_intp i)
 {
-    return raise_casting_error(npy_static_pydata._UFuncInputCastingError,
+    return raise_casting_error(_npy_module_state->static_pydata._UFuncInputCastingError,
                                ufunc, casting, from, to, i);
 }
 
@@ -226,7 +228,7 @@ raise_output_casting_error(
         PyArray_Descr *to,
         npy_intp i)
 {
-    return raise_casting_error(npy_static_pydata._UFuncOutputCastingError,
+    return raise_casting_error(_npy_module_state->static_pydata._UFuncOutputCastingError,
                                ufunc, casting, from, to, i);
 }
 
@@ -597,6 +599,9 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                 for (iop = 0; iop < ufunc->nin; iop++) {
                     out_dtypes[iop] = PyArray_DESCR(operands[iop]);
                     Py_INCREF(out_dtypes[iop]);
+                }
+                for (; iop < nop; iop++) {
+                    out_dtypes[iop] = NULL;
                 }
                 raise_no_loop_found_error(ufunc, (PyObject **)out_dtypes);
                 for (iop = 0; iop < ufunc->nin; iop++) {
@@ -1394,7 +1399,7 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
             }
         }
         /* m8[<A>] / int## => m8[<A>] / int64 */
-        else if (PyTypeNum_ISINTEGER(type_num2)) {
+        else if (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)) {
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
@@ -1524,7 +1529,7 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
             (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
         return PyUFunc_DefaultTypeResolver(
                 ufunc, casting, operands,
-                npy_static_pydata.default_truediv_type_tup, out_dtypes);
+                _npy_module_state->static_pydata.default_truediv_type_tup, out_dtypes);
     }
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);
@@ -2335,7 +2340,7 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
     }
     if (type_num1 == NPY_TIMEDELTA && type_num2 == NPY_TIMEDELTA) {
         out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                             PyArray_DESCR(operands[1]));                             
+                                             PyArray_DESCR(operands[1]));
         if (out_dtypes[0] == NULL) {
             return -1;
         }

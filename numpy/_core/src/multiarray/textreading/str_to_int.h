@@ -4,6 +4,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/ndarraytypes.h"
+#include <ctype.h>
 
 #include "textreading/parser_config.h"
 

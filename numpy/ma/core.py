@@ -54,7 +54,8 @@ __all__ = [
     'angle', 'anom', 'anomalies', 'any', 'append', 'arange', 'arccos',
     'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2', 'arctanh',
     'argmax', 'argmin', 'argsort', 'around', 'array', 'asanyarray',
-    'asarray', 'bitwise_and', 'bitwise_or', 'bitwise_xor', 'bool_', 'ceil',
+    'asarray', 'assert_array_equal', 'bitwise_and', 'bitwise_or',
+    'bitwise_xor', 'bool_', 'ceil',
     'choose', 'clip', 'common_fill_value', 'compress', 'compressed',
     'concatenate', 'conjugate', 'convolve', 'copy', 'correlate', 'cos', 'cosh',
     'count', 'cumprod', 'cumsum', 'default_fill_value', 'diag', 'diagonal',
@@ -74,7 +75,8 @@ __all__ = [
     'masked_object', 'masked_outside', 'masked_print_option',
     'masked_singleton', 'masked_values', 'masked_where', 'max', 'maximum',
     'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
-    'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask', 'nonzero',
+    'minmax', 'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask',
+    'nonzero',
     'not_equal', 'ones', 'ones_like', 'outer', 'outerproduct', 'power', 'prod',
     'product', 'ptp', 'put', 'putmask', 'ravel', 'remainder',
     'repeat', 'reshape', 'resize', 'right_shift', 'round', 'round_',
@@ -312,6 +314,14 @@ def default_fill_value(obj):
 
     dtype = _get_dtype_of(obj)
     return _recursive_fill_value(dtype, _scalar_fill_value)
+
+
+def _check_fill_value_or_default(fill_value, ndtype):
+    try:
+        with np.errstate(invalid='raise'):
+            return _check_fill_value(fill_value, ndtype)
+    except (TypeError, ValueError, OverflowError, FloatingPointError):
+        return None
 
 
 def _extremum_fill_value(obj, extremum, extremum_name):
@@ -3009,11 +3019,19 @@ class MaskedArray(ndarray):
                 _data._sharedmask = False
 
         # Update fill_value.
-        if fill_value is None:
-            fill_value = getattr(data, '_fill_value', None)
-        # But don't run the check unless we have something to check.
         if fill_value is not None:
             _data._fill_value = _check_fill_value(fill_value, _data.dtype)
+        else:
+            fill_value = getattr(data, '_fill_value', None)
+            if fill_value is not None:
+                if getattr(data, 'dtype', None) != _data.dtype:
+                    fill_value = _check_fill_value_or_default(
+                        fill_value, _data.dtype)
+                    if fill_value is not None:
+                        _data._fill_value = fill_value
+                else:
+                    _data._fill_value = _check_fill_value(
+                        fill_value, _data.dtype)
         # Process extra options ..
         if hard_mask is None:
             _data._hardmask = getattr(data, '_hardmask', False)
@@ -3037,7 +3055,10 @@ class MaskedArray(ndarray):
         _optinfo.update(getattr(obj, '_basedict', {}))
         if not isinstance(obj, MaskedArray):
             _optinfo.update(getattr(obj, '__dict__', {}))
-        _dict = {'_fill_value': getattr(obj, '_fill_value', None),
+        _fill_value = getattr(obj, '_fill_value', None)
+        if _fill_value is not None and getattr(obj, 'dtype', None) != self.dtype:
+            _fill_value = _check_fill_value_or_default(_fill_value, self.dtype)
+        _dict = {'_fill_value': _fill_value,
                      '_hardmask': getattr(obj, '_hardmask', False),
                      '_sharedmask': getattr(obj, '_sharedmask', False),
                      '_isfield': getattr(obj, '_isfield', False),
@@ -7053,6 +7074,84 @@ def max(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
 max.__doc__ = MaskedArray.max.__doc__
 
 
+def minmax(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
+    """
+    Return the minimum and maximum along a given axis.
+
+    This is equivalent to ``(ma.min(obj, ...), ma.max(obj, ...))`` but returns
+    both in a single call.
+
+    .. versionadded:: 2.6.0
+
+    Parameters
+    ----------
+    axis : None or int or tuple of ints, optional
+        Axis along which to operate.  By default, ``axis`` is None and the
+        flattened input is used.
+        If this is a tuple of ints, the reduction is performed over multiple
+        axes, instead of a single axis or all the axes as before.
+    out : tuple of array_like, optional
+        A tuple ``(min, max)`` of alternative output arrays in which to place
+        the result.  Must be of the same shape and buffer length as the
+        expected output.
+    fill_value : scalar or None, optional
+        Value used to fill in the masked values.
+        If None, use the output of `minimum_fill_value` for the minimum and of
+        `maximum_fill_value` for the maximum.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the array.
+
+    Returns
+    -------
+    result : tuple of array_like
+        A tuple ``(min, max)`` holding the minimum and maximum.
+        If ``out`` was specified, its arrays are returned.
+
+    See Also
+    --------
+    ma.min : Return the minimum along a given axis.
+    ma.max : Return the maximum along a given axis.
+    ma.minimum_fill_value
+        Returns the minimum filling value for a given datatype.
+    ma.maximum_fill_value
+        Returns the maximum filling value for a given datatype.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = [[1., -2., 3.], [0.2, -0.7, 0.1]]
+    >>> mask = [[1, 1, 0], [0, 0, 1]]
+    >>> masked_x = ma.masked_array(x, mask)
+    >>> masked_x
+    masked_array(
+      data=[[--, --, 3.0],
+            [0.2, -0.7, --]],
+      mask=[[ True,  True, False],
+            [False, False,  True]],
+      fill_value=1e+20)
+    >>> ma.minmax(masked_x)
+    (-0.7, 3.0)
+    >>> mn, mx = ma.minmax(masked_x, axis=-1)
+    >>> mn
+    masked_array(data=[3.0, -0.7],
+                 mask=[False, False],
+           fill_value=1e+20)
+    >>> mx
+    masked_array(data=[3.0, 0.2],
+                 mask=[False, False],
+           fill_value=1e+20)
+    """
+    if out is not None and (type(out) is not tuple or len(out) != 2):
+        raise TypeError("'out' must be a tuple of two arrays")
+    out_min, out_max = out if out is not None else (None, None)
+    return (min(obj, axis=axis, out=out_min, fill_value=fill_value,
+                keepdims=keepdims),
+            max(obj, axis=axis, out=out_max, fill_value=fill_value,
+                keepdims=keepdims))
+
+
 def ptp(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
     kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
     try:
@@ -8495,9 +8594,8 @@ def allequal(a, b, fill_value=True):
     Returns
     -------
     y : bool
-        Returns True if the two arrays are equal within the given
-        tolerance, False otherwise. If either array contains NaN,
-        then False is returned.
+        Returns True if the arrays are equal. If either array contains
+        NaN, then False is returned.
 
     See Also
     --------
@@ -8645,6 +8743,129 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
                masked_equal)
 
     return np.all(d)
+
+
+def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
+                       strict=False):
+    """
+    Raises an AssertionError if two masked arrays are not equal.
+
+    Given two array_like objects, check that their masks are equal and that
+    their data is equal wherever it is not masked. Unlike
+    `numpy.testing.assert_array_equal`, which ignores masked values, a value
+    that is masked in only one of the objects is reported as a mismatch.
+    Objects that are not masked arrays are treated as having no masked
+    values. As in `numpy.testing.assert_array_equal`, NaNs in the same
+    unmasked positions are considered equal, and a scalar is compared with
+    every element of an array unless `strict` is set.
+
+    .. versionadded:: 2.6.0
+
+    Parameters
+    ----------
+    actual : array_like
+        The actual object to check.
+    desired : array_like
+        The desired, expected object.
+    err_msg : str, optional
+        The error message to be printed in case of failure.
+    verbose : bool, optional
+        If True, the conflicting values are appended to the error message.
+    strict : bool, optional
+        If True, raise an AssertionError when either the shape or the data
+        type of the array_like objects does not match, and disable the
+        special handling of scalars.
+
+    Raises
+    ------
+    AssertionError
+        If the masks of actual and desired, or their unmasked values, are
+        not equal.
+
+    See Also
+    --------
+    numpy.testing.assert_array_equal : Ignores values masked in either array.
+    numpy.ma.allequal
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    Masked values are not compared, so this does not raise:
+
+    >>> a = np.ma.array([1.0, 2.0, 3.0], mask=[False, True, False])
+    >>> b = np.ma.array([1.0, -9.0, 3.0], mask=[False, True, False])
+    >>> np.ma.assert_array_equal(a, b)
+
+    A value that is masked in only one of the objects is a mismatch:
+
+    >>> np.ma.assert_array_equal(a, [1.0, 2.0, 3.0])
+    Traceback (most recent call last):
+        ...
+    AssertionError:
+    Arrays are not equal
+    <BLANKLINE>
+    Mismatched mask elements: 1 / 3 (33.3%)
+    Mask mismatch at index:
+     [1]: -- (ACTUAL), 2.0 (DESIRED)
+     ACTUAL: masked_array(data=[1.0, --, 3.0],
+                 mask=[False,  True, False],
+           fill_value=1e+20)
+     DESIRED: masked_array(data=[1., 2., 3.],
+                 mask=False,
+           fill_value=1e+20)
+
+    """
+    __tracebackhide__ = True  # Hide traceback for py.test
+    from numpy.testing import assert_array_compare, build_err_msg
+
+    actual = asanyarray(actual)
+    desired = asanyarray(desired)
+    header = 'Arrays are not equal'
+
+    def append_arrays(msg):
+        if verbose:
+            for name, a in (('ACTUAL', actual), ('DESIRED', desired)):
+                r = repr(a)
+                if r.count('\n') > 3:
+                    r = '\n'.join(r.splitlines()[:3]) + '...'
+                msg += f'\n {name}: {r}'
+        return msg
+
+    if actual.shape == desired.shape or (
+            not strict and (actual.ndim == 0 or desired.ndim == 0)):
+        mismatch = getmaskarray(actual) != getmaskarray(desired)
+        if mismatch.any():
+            n_mismatch = np.count_nonzero(mismatch)
+            percent = 100 * n_mismatch / mismatch.size
+            remarks = [(f'Mismatched mask elements: {n_mismatch} / '
+                        f'{mismatch.size} ({percent:.3g}%)')]
+            if mismatch.ndim > 0:
+                positions = np.argwhere(mismatch)
+                lines = []
+                for p in positions[:5]:
+                    a = actual if actual.ndim == 0 else actual[tuple(p)]
+                    d = desired if desired.ndim == 0 else desired[tuple(p)]
+                    lines.append(
+                        f' {p.tolist()}: {a!s} (ACTUAL), {d!s} (DESIRED)')
+                s = '\n'.join(lines)
+                if len(positions) == 1:
+                    remarks.append(f'Mask mismatch at index:\n{s}')
+                elif len(positions) <= 5:
+                    remarks.append(f'Mask mismatch at indices:\n{s}')
+                else:
+                    remarks.append(
+                        f'First 5 mask mismatches are at indices:\n{s}')
+            msg = build_err_msg([], f'{err_msg}\n' + '\n'.join(remarks),
+                                header=header, verbose=False)
+            raise AssertionError(append_arrays(msg))
+
+    try:
+        assert_array_compare(operator.__eq__, actual.filled(0),
+                             desired.filled(0), err_msg=err_msg,
+                             verbose=False, header=header, strict=strict)
+    except AssertionError as exc:
+        raise AssertionError(append_arrays(str(exc))) from None
 
 
 def asarray(a, dtype=None, order=None):

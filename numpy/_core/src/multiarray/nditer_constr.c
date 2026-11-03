@@ -22,6 +22,7 @@
 #include "templ_common.h"
 #include "array_assign.h"
 #include "dtype_traversal.h"
+#include "npy_pycompat.h"
 
 
 /* Internal helper functions private to this file */
@@ -1427,7 +1428,7 @@ npyiter_check_reduce_ok_and_set_flags(
                     "result of a reduction");
             return 0;
         }
-        NPY_IT_DBG_PRINT("Iterator: Indicating that a reduction is"
+        NPY_IT_DBG_PRINT("Iterator: Indicating that a reduction is "
                          "occurring\n");
 
         NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;

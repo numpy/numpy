@@ -1,0 +1,7 @@
+``ndarray.resize`` now raises when the array is read-only
+---------------------------------------------------------
+
+``ndarray.resize`` previously reallocated read-only arrays without
+error, leaving the newly added elements uninitialized (and, for
+``dtype=object`` arrays, could lead to a segfault). It now raises a
+``ValueError`` for read-only arrays, for both growing and shrinking.

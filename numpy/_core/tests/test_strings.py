@@ -18,6 +18,9 @@ COMPARISONS = [
 ]
 
 MAX = np.iinfo(np.int64).max
+# Long enough to exercise the two-way search path with this needle.
+LONG_NEAR_MATCH_HAYSTACK = ("c" + "b" * 99 + "aa") * 26
+LONG_NEAR_MATCH_NEEDLE = "b" * 100 + "a"
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
 def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
@@ -437,6 +440,11 @@ class TestMethods:
         ("Ae¢☃€ 😊" * 2, "😊", 7, None, 13),
         pytest.param("A" * (2 ** 17), r"[\w]+\Z", 0, None, -1,
                      id=r"A*2**17-[\w]+\Z-0-None--1"),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK, LONG_NEAR_MATCH_NEEDLE,
+                     0, None, -1, id="long-near-match"),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK + LONG_NEAR_MATCH_NEEDLE,
+                     LONG_NEAR_MATCH_NEEDLE, 0, None,
+                     len(LONG_NEAR_MATCH_HAYSTACK), id="long-near-match-found"),
     ])
     def test_find(self, a, sub, start, end, out, dt):
         if "😊" in a and dt == "S":
@@ -505,6 +513,11 @@ class TestMethods:
         ("", "xx", MAX, 0, 0),
         (["aaa", ""], ["a", ""], [0, 0], None, [3, 1]),
         ("Ae¢☃€ 😊" * 100, "😊", 0, None, 100),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK, LONG_NEAR_MATCH_NEEDLE,
+                     0, None, 0, id="long-near-match"),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK + LONG_NEAR_MATCH_NEEDLE,
+                     LONG_NEAR_MATCH_NEEDLE, 0, None, 1,
+                     id="long-near-match-found"),
     ])
     def test_count(self, a, sub, start, end, out, dt):
         if "😊" in a and dt == "S":
@@ -541,8 +554,12 @@ class TestMethods:
         ("hello", "", -3, -3, True),
         ("hello", "lo", -9, None, False),
         (["hello", ""], ["he", ""], [0, 0], None, [True, True]),
+        ("a" * 64, "a" + "😀" * 62 + "a", 0, None, False),
+        ("éa😀a中", "a😀a", 1, 4, True),
     ])
     def test_startswith(self, a, prefix, start, end, out, dt):
+        if dt == "S" and "😀" in prefix:
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         prefix = np.array(prefix, dtype=dt)
         assert_array_equal(np.strings.startswith(a, prefix, start, end), out)
@@ -580,8 +597,12 @@ class TestMethods:
         ("helloworld", "lowo", -8, -2, False),
         (["hello", "helloworld"], ["lo", "worl"], [0, -6], None,
          [True, False]),
+        ("a" * 64, "a" + "😀" * 62 + "a", 0, None, False),
+        ("éa😀a中", "a😀a", 1, 4, True),
     ])
     def test_endswith(self, a, suffix, start, end, out, dt):
+        if dt == "S" and "😀" in suffix:
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         suffix = np.array(suffix, dtype=dt)
         assert_array_equal(np.strings.endswith(a, suffix, start, end), out)
@@ -664,6 +685,22 @@ class TestMethods:
             chars = np.array(chars, dtype=dt)
         out = np.array(out, dtype=dt)
         assert_array_equal(np.strings.strip(a, chars), out)
+
+    @pytest.mark.parametrize("a,chars,left,right,both", [
+        ("a", "éa", "", "", ""),
+        ("a", "aé", "", "", ""),       # this one already worked
+        ("a", "中a", "", "", ""),       # 3-byte lead char
+        ("a", "😀a", "", "", ""),       # 4-byte lead char
+        ("aaaé", "éx", "aaaé", "aaa", "aaa"),  # asymmetric, must not over-strip
+    ])
+    def test_strip_multibyte_chars(self, a, chars, left, right, both, dt):
+        if dt == "S":
+            pytest.skip("Bytes dtype does not support non-ascii input")
+        a = np.array([a], dtype=dt)
+        chars = np.array([chars], dtype=dt)
+        assert_array_equal(np.strings.lstrip(a, chars), np.array([left], dtype=dt))
+        assert_array_equal(np.strings.rstrip(a, chars), np.array([right], dtype=dt))
+        assert_array_equal(np.strings.strip(a, chars), np.array([both], dtype=dt))
 
     @pytest.mark.parametrize("buf,old,new,count,res", [
         ("", "", "", -1, ""),
@@ -787,6 +824,9 @@ class TestMethods:
         ("abc", "ab", "--", 0, "abc"),
         ("abc", "xy", "--", -1, "abc"),
         (["abbc", "abbd"], "b", "z", [1, 2], ["azbc", "azzd"]),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK, LONG_NEAR_MATCH_NEEDLE,
+                     "X" * 101, -1, LONG_NEAR_MATCH_HAYSTACK,
+                     id="long-near-match"),
     ])
     def test_replace(self, buf, old, new, count, res, dt):
         if "😊" in buf and dt == "S":
@@ -853,11 +893,18 @@ class TestMethods:
         ("abc\r\nab\tdef\ng\thi", 4, "abc\r\nab  def\ng   hi"),
         ("abc\r\nab\r\ndef\ng\r\nhi", 4, "abc\r\nab\r\ndef\ng\r\nhi"),
         (" \ta\n\tb", 1, "  a\n b"),
+        ("é\t中😀", 4, "é   中😀"),
     ])
     def test_expandtabs(self, buf, tabsize, res, dt):
+        if dt == "S" and "😀" in buf:
+            pytest.skip("Bytes dtype does not support non-ascii input")
         buf = np.array(buf, dtype=dt)
         res = np.array(res, dtype=dt)
-        assert_array_equal(np.strings.expandtabs(buf, tabsize), res)
+        result = np.strings.expandtabs(buf, tabsize)
+        assert_array_equal(result, res)
+        if dt != "T":
+            # StringDType has `str` scalars with no `dtype` attribute
+            assert result.dtype == res.dtype
 
     def test_expandtabs_raises_overflow(self, dt):
         with pytest.raises(OverflowError, match="new string is too long"):
@@ -988,6 +1035,13 @@ class TestMethods:
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
 
+    def test_partition_sep_not_truncated(self, dt):
+        buf = np.array(["a"], dtype=dt)
+        act1, act2, act3 = np.strings.partition(buf, "ab")
+        assert_array_equal(act1, np.array(["a"], dtype=dt))
+        assert_array_equal(act2, np.array([""], dtype=dt))
+        assert_array_equal(act3, np.array([""], dtype=dt))
+
     @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
         ("this is the partition method", "ti", "this is the parti",
             "ti", "on method"),
@@ -1014,6 +1068,13 @@ class TestMethods:
         assert_array_equal(act2, res2)
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
+
+    def test_rpartition_sep_not_truncated(self, dt):
+        buf = np.array(["a"], dtype=dt)
+        act1, act2, act3 = np.strings.rpartition(buf, "ab")
+        assert_array_equal(act1, np.array([""], dtype=dt))
+        assert_array_equal(act2, np.array([""], dtype=dt))
+        assert_array_equal(act3, np.array(["a"], dtype=dt))
 
     @pytest.mark.parametrize("args", [
         (None,),
@@ -1470,6 +1531,13 @@ class TestReplaceOnArrays:
         assert_array_equal(r5, np.array(
             ["01234ABCDE6789" * i for i in range(3)]
             + ["01234ABCDE6789" + "0123456789" * 2], dtype=dt))
+
+    def test_replace_old_new_not_truncated(self, dt):
+        a = np.array(["a"], dtype=dt)
+        r1 = np.strings.replace(a, "ab", "X")
+        assert_array_equal(r1, np.array(["a"], dtype=dt))
+        r2 = np.strings.replace(a, "a", "XY")
+        assert_array_equal(r2, np.array(["XY"], dtype=dt))
 
     def test_replace_broadcasting(self, dt):
         a = np.array("0,0,0", dtype=dt)

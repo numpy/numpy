@@ -1,3 +1,7 @@
+from typing import Final
+
+from numpy._pytesttester import PytestTester
+
 from ._generator import Generator, default_rng
 from ._mt19937 import MT19937
 from ._pcg64 import PCG64, PCG64DXSM
@@ -122,3 +126,5 @@ __all__ = [
     "default_rng",
     "BitGenerator",
 ]
+
+test: Final[PytestTester] = ...

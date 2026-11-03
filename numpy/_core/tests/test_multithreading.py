@@ -1,5 +1,6 @@
 import concurrent.futures
 import inspect
+import pickle
 import random
 import subprocess
 import sys
@@ -399,6 +400,24 @@ def test_legacy_usertype_cast_init_thread_safety(rat_cls):
 
     run_threaded(closure, 250, pass_barrier=True)
 
+
+@pytest.mark.parametrize("rat_cls", [
+    _rational_tests.rational, _rational_tests.rational2])
+def test_legacy_usertype_unpickle_thread_safety(rat_cls):
+    # gh-33018: unpickling writes to dtype(..., copy=True) via __setstate__,
+    # so that has to be a private copy rather than the user dtype singleton.
+    # Only TSan can catch the race, there is nothing to assert here.
+    payload = pickle.dumps(np.full(128, rat_cls(1, 2)))
+
+    def closure(b):
+        b.wait()
+        for _ in range(100):
+            arr = pickle.loads(payload)
+            pickle.dumps(arr, protocol=5)
+
+    run_threaded(closure, pass_barrier=True)
+
+
 @pytest.mark.parametrize("dtype", [bool, int, float])
 def test_nonzero(dtype):
     # See: gh-28361
@@ -560,7 +579,8 @@ def assert_no_deadlock(workload, *, args=(), helpers=(), timeout=30,
         ) from None
 
 
-def threaded_deadlock_reproducer(operation, nworkers, niters, stall):
+def threaded_deadlock_reproducer(operation, nworkers, niters, stall,
+                                 time_budget_secs=2.0):
     import faulthandler
     import os
     import sys
@@ -574,9 +594,12 @@ def threaded_deadlock_reproducer(operation, nworkers, niters, stall):
     def worker(idx):
         try:
             barrier.wait()
+            deadline = time.monotonic() + time_budget_secs
             for _ in range(niters):
                 operation(idx)
                 progress[idx] += 1
+                if time.monotonic() > deadline:
+                    break
         except BaseException as exc:
             errors.append(exc)
             raise

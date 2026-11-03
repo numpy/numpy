@@ -7,7 +7,8 @@ import pytest
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy.exceptions import AxisError, ComplexWarning
-from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
+from numpy.lib._function_base_impl import _QuantileMethods
+from numpy.lib._nanfunctions_impl import _divide_by_count, _nan_mask, _replace_nan
 from numpy.testing import (
     assert_,
     assert_almost_equal,
@@ -1343,6 +1344,31 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 1), 3.5)
         assert_equal(np.nanquantile(x, 0.5), 1.75)
 
+    def test_nanquantile_allnan_first_slice_dtype(self):
+        a = np.array(
+            [
+                [1.0, 2.0],
+                [np.nan, np.nan],
+            ],
+            dtype=np.float32,
+        )
+        q = np.array([0.3])
+
+        with pytest.warns(
+            RuntimeWarning, match="All-NaN slice encountered"
+        ):
+            result = np.nanquantile(a, q, axis=1)
+
+        with pytest.warns(
+            RuntimeWarning, match="All-NaN slice encountered"
+        ):
+            reversed_result = np.nanquantile(a[::-1], q, axis=1)
+
+        expected = np.quantile(a[0], q)
+
+        assert result.dtype == expected.dtype
+        assert reversed_result.dtype == expected.dtype
+
     def test_complex(self):
         arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
@@ -1378,6 +1404,24 @@ class TestNanFunctions_Quantile:
             out = np.nanquantile(array, 1, axis=axis)
         assert np.isnan(out).all()
         assert out.dtype == array.dtype
+
+    @pytest.mark.parametrize("method", list(_QuantileMethods))
+    @pytest.mark.parametrize("func", [np.nanquantile, np.nanpercentile])
+    def test_float16_gh_31487(self, func, method):
+        # gh-31487: overflowed on large float16 arrays (also see
+        # test_function_base.py for percentile/quantile).
+        a = np.zeros(65521, dtype=np.float16)
+        a[:20_000] = 1.0
+        scale = 100 if func is np.nanpercentile else 1
+        z = func(a, np.float16(0.5 * scale), method=method)
+        assert z == np.float16(0.0)
+        assert z.dtype == np.float16
+        z = func(a, np.float16(0.99 * scale), method=method)
+        assert z == np.float16(1.0)
+        assert z.dtype == np.float16
+        z = func(a, np.float16(1.0 * scale), method=method)
+        assert z == np.float16(1.0)
+        assert z.dtype == np.float16
 
 @pytest.mark.parametrize("arr, expected", [
     # array of floats with some nans
@@ -1447,3 +1491,14 @@ def test_memmap_takes_fast_route(tmpdir):
         # For completeness, same for nanmin.
         with pytest.raises(ValueError, match="reduction operation fmin"):
             np.nanmin(mm, out=np.zeros(2))
+
+
+def test_divide_by_count_read_only():
+    # gh-29117: `a` is normally divided into in place, but some reductions
+    # return a read-only array, so that is not always possible.
+    a = np.array([6.0], dtype=np.float32)
+    a.flags.writeable = False
+    res = _divide_by_count(a, np.array([2], dtype=np.intp))
+    assert_equal(res, np.array([3.0], dtype=np.float32))
+    # the fallback must not promote the result to float64
+    assert_equal(res.dtype, np.float32)

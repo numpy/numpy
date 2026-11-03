@@ -69,9 +69,8 @@ jobs:
         pyenv global 3.14
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/ci_requirements.txt
-        pip install -r requirements/test_requirements.txt
+        pip install --group dev-cli
+        pip install --group test-extending
         # xdist captures stdout/stderr, but we want the ASAN output
         pip uninstall -y pytest-xdist
     - name: Build
@@ -95,15 +94,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Trust working directory and initialize submodules
         run: |
           git config --global --add safe.directory /__w/numpy/numpy
           git submodule update --init --recursive
       - name: Get OpenBLAS version
         run: |
-          version=$(sed -nE 's/^scipy-openblas64==([0-9]+\.[0-9]+\.[0-9]+)\..*$/\1/p' requirements/ci_requirements.txt)
+          version=$(python - <<'EOF'
+          import tomllib
+          
+          with open("pyproject.toml", "rb") as f:
+              req = tomllib.load(f)["dependency-groups"]["openblas64"][0]
+          
+          print(".".join(req.split("==")[1].split(".")[:3]))
+          EOF
+          )
           if [ -z "$version" ]; then
-            echo "Could not parse the scipy-openblas64 pin from requirements/ci_requirements.txt"
+            echo "Could not obtain the scipy-openblas64 pin from pyproject.toml"
             exit 1
           fi
           echo "OPENBLAS_VERSION=v$version"
@@ -206,6 +215,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Trust working directory and initialize submodules
         run: |
           git config --global --add safe.directory /__w/numpy/numpy
@@ -213,9 +224,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements/build_requirements.txt
-          pip install -r requirements/ci_requirements.txt
-          pip install -r requirements/test_requirements.txt
+          pip install --group dev-cli --group test-extending
           # xdist captures stdout/stderr, but we want the ASAN output
           pip uninstall -y pytest-xdist
 

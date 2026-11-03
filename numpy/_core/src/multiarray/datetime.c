@@ -11,6 +11,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <ctype.h>
 
 #include "numpy/arrayobject.h"
 #include "numpyos.h"
@@ -18,6 +19,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 #include "npy_static_data.h"
+#include "module_state.h"
 #include "numpy/npy_math.h"
 
 #include "common.h"
@@ -2110,6 +2112,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
         PyObject *obj, npy_datetimestruct *out, NPY_DATETIMEUNIT *out_bestunit,
         int apply_tzinfo)
 {
+    multiarray_umath_state *state = _npy_module_state;
     int isleap;
     int has_time;
 
@@ -2146,7 +2149,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
      */
     long val;
     PyObject *tmp;
-    int found = PyObject_GetOptionalAttr(obj, npy_interned_str.year, &tmp);
+    int found = PyObject_GetOptionalAttr(obj, state->interned_str.year, &tmp);
     if (found < 0) {
         return -1;
     }
@@ -2174,7 +2177,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     }
     out->year = val;
 
-    found = pydatetime_attr_to_long(obj, npy_interned_str.month, &val);
+    found = pydatetime_attr_to_long(obj, state->interned_str.month, &val);
     if (found < 0) {
         return -1;
     }
@@ -2183,7 +2186,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     }
     out->month = val;
 
-    found = pydatetime_attr_to_long(obj, npy_interned_str.day, &val);
+    found = pydatetime_attr_to_long(obj, state->interned_str.day, &val);
     if (found < 0) {
         return -1;
     }
@@ -2196,8 +2199,8 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
      * are present. */
     long time_vals[4];
     PyObject *const time_names[4] = {
-        npy_interned_str.hour, npy_interned_str.minute,
-        npy_interned_str.second, npy_interned_str.microsecond,
+        state->interned_str.hour, state->interned_str.minute,
+        state->interned_str.second, state->interned_str.microsecond,
     };
     has_time = 1;
     for (int i = 0; i < 4; i++) {
@@ -2252,7 +2255,7 @@ validate_and_return:
             tzinfo = Py_NewRef(PyDateTime_DATE_GET_TZINFO(obj));
         }
         else if (PyObject_GetOptionalAttr(
-                        obj, npy_interned_str.tzinfo, &tzinfo) < 0) {
+                        obj, state->interned_str.tzinfo, &tzinfo) < 0) {
             return -1;
         }
         if (tzinfo != NULL && tzinfo != Py_None) {
@@ -2265,8 +2268,9 @@ validate_and_return:
                 }
 
             /* The utcoffset function should return a timedelta */
-            PyObject *offset = PyObject_CallMethodOneArg(
-                    tzinfo, npy_interned_str.utcoffset, obj);
+            PyObject *args[2] = {tzinfo, obj};
+            PyObject *offset = PyObject_VectorcallMethod(
+                    state->interned_str.utcoffset, args, 2, NULL);
             Py_DECREF(tzinfo);
             if (offset == NULL) {
                 return -1;
@@ -2276,8 +2280,8 @@ validate_and_return:
              * The timedelta should have a function "total_seconds"
              * which contains the value we want.
              */
-            PyObject *total_seconds = PyObject_CallMethodNoArgs(
-                    offset, npy_interned_str.total_seconds);
+            PyObject *total_seconds = PyObject_VectorcallMethod(
+                    state->interned_str.total_seconds, &offset, 1, NULL);
             Py_DECREF(offset);
             if (total_seconds == NULL) {
                 return -1;
@@ -2341,7 +2345,9 @@ get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
     }
 
     /* Convert the datetime from UTC to local time */
-    loc_dt = PyObject_CallMethod(dt, "astimezone", "O", timezone_obj);
+    PyObject *args[2] = {dt, timezone_obj};
+    loc_dt = PyObject_VectorcallMethod(
+            _npy_module_state->interned_str.astimezone, args, 2, NULL);
     Py_DECREF(dt);
     if (loc_dt == NULL) {
         return -1;
@@ -2426,7 +2432,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (DEPRECATE(
                         "The 'generic' unit for NumPy timedelta is deprecated, "
                         "and will raise an error in the future. "
-                        "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                        "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                         "Please use a specific unit instead.") < 0) {
                 return -1;
             }
@@ -2583,7 +2589,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (DEPRECATE(
                         "The 'generic' unit for NumPy timedelta is deprecated, "
                         "and will raise an error in the future. "
-                        "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                        "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                         "Please use a specific unit instead.") < 0) {
                 return -1;
             }
@@ -2617,6 +2623,8 @@ NPY_NO_EXPORT int
 convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                                 NPY_CASTING casting, npy_timedelta *out)
 {
+    multiarray_umath_state *state = _npy_module_state;
+
     if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
         PyObject *utf8 = NULL;
         int succeeded = 0;
@@ -2669,7 +2677,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 if (DEPRECATE(
                             "The 'generic' unit for NumPy timedelta is deprecated, "
                             "and will raise an error in the future. "
-                            "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                            "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                             "Please use a specific unit instead.") < 0) {
                     return -1;
                 }
@@ -2695,7 +2703,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (DEPRECATE(
                     "The 'generic' unit for NumPy timedelta is deprecated, "
                     "and will raise an error in the future. "
-                    "This includes implicit conversion of bare integers (e.g. `+ 1`)."
+                    "This includes implicit conversion of bare integers (e.g. `+ 1`). "
                     "Please use a specific unit instead.") < 0) {
                 return -1;
             }
@@ -2768,50 +2776,37 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
     }
     /* Convert from a Python timedelta object */
-    else if (PyObject_HasAttrString(obj, "days") &&
-                PyObject_HasAttrString(obj, "seconds") &&
-                PyObject_HasAttrString(obj, "microseconds")) {
-        PyObject *tmp;
+    else {
         PyArray_DatetimeMetaData us_meta;
         npy_timedelta td;
         npy_int64 days;
-        int seconds = 0, useconds = 0;
+        long seconds = 0, useconds = 0;
 
-        /* Get the days */
-        tmp = PyObject_GetAttrString(obj, "days");
-        if (tmp == NULL) {
-            return -1;
+        if (PyDelta_CheckExact(obj)) {
+            /* Reads from the C struct. */
+            days = PyDateTime_DELTA_GET_DAYS(obj);
+            seconds = PyDateTime_DELTA_GET_SECONDS(obj);
+            useconds = PyDateTime_DELTA_GET_MICROSECONDS(obj);
         }
-        days = PyLong_AsLongLong(tmp);
-        if (error_converting(days)) {
-            Py_DECREF(tmp);
-            return -1;
+        else {
+            long vals[3];
+            PyObject *const names[3] = {
+                state->interned_str.days, state->interned_str.seconds,
+                state->interned_str.microseconds,
+            };
+            for (int i = 0; i < 3; i++) {
+                int found = pydatetime_attr_to_long(obj, names[i], &vals[i]);
+                if (found < 0) {
+                    return -1;
+                }
+                if (found == 0) {
+                    goto not_a_timedelta;
+                }
+            }
+            days = vals[0];
+            seconds = vals[1];
+            useconds = vals[2];
         }
-        Py_DECREF(tmp);
-
-        /* Get the seconds */
-        tmp = PyObject_GetAttrString(obj, "seconds");
-        if (tmp == NULL) {
-            return -1;
-        }
-        seconds = PyLong_AsLong(tmp);
-        if (error_converting(seconds)) {
-            Py_DECREF(tmp);
-            return -1;
-        }
-        Py_DECREF(tmp);
-
-        /* Get the microseconds */
-        tmp = PyObject_GetAttrString(obj, "microseconds");
-        if (tmp == NULL) {
-            return -1;
-        }
-        useconds = PyLong_AsLong(tmp);
-        if (error_converting(useconds)) {
-            Py_DECREF(tmp);
-            return -1;
-        }
-        Py_DECREF(tmp);
 
         td = days*(24*60*60*1000000LL) + seconds*1000000LL + useconds;
 
@@ -2867,6 +2862,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
     }
 
+not_a_timedelta:
     /*
      * With unsafe casting, convert unrecognized objects into NaT
      * and with same_kind casting, convert None into NaT

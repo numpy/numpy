@@ -81,3 +81,10 @@ class TestRegression:
         np.ma.array((1, (b"", b"")),
                     dtype=[("x", np.int_),
                           ("y", [("i", np.void), ("j", np.void)])])
+
+    def test_nanfunctions_all_masked(self):
+        # see gh-29117. An all-masked array reduces to the read-only
+        # `np.ma.masked`, which these used to try to divide into.
+        a = np.ma.MaskedArray([np.nan, 3], mask=[True, True])
+        for f in (np.nanmean, np.nanstd, np.nanvar):
+            assert_(np.ma.is_masked(f(a)), f.__name__)
