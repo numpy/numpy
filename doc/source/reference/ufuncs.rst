@@ -131,10 +131,16 @@ onwards, the default is 'same_kind'.
 .. rubric:: *order*
 
 Specifies the calculation iteration order/memory layout of the output array.
-Defaults to 'K'. 'C' means the output should be C-contiguous, 'F' means
-F-contiguous, 'A' means F-contiguous if the inputs are F-contiguous and
-not also not C-contiguous, C-contiguous otherwise, and 'K' means to match
-the element ordering of the inputs as closely as possible.
+Defaults to 'K'.
+
+- 'C' means the output should be C-contiguous.
+- 'F' means the output should be F-contiguous.
+- 'A' means the output should be F-contiguous if all inputs are
+  F-contiguous, and C-contiguous otherwise. Scalar inputs and arrays
+  that are both C- and F-contiguous, such as 0-D arrays and contiguous
+  1-D arrays, are treated as F-contiguous.
+- 'K' means to match the element ordering of the inputs as closely as
+  possible.
 
 .. rubric:: *dtype*
 
