@@ -904,10 +904,10 @@ string_to_int(
             npy_gil_error(PyExc_RuntimeError, "Encountered problem converting string dtype to integer dtype.");
             goto fail;
         }
-        *(NpyType *)out = (NpyType)value;
+        NpyType narrowed = (NpyType)value;
 
         // Cast back to NpyLongType to check for out-of-bounds errors
-        if (static_cast<NpyLongType>(*(NpyType *)out) != value) {
+        if (static_cast<NpyLongType>(narrowed) != value) {
             // out of bounds, raise error following NEP 50 behavior
             const char *errmsg = NULL;
             if constexpr (std::is_same_v<NpyLongType, npy_ulonglong>) {
@@ -920,6 +920,7 @@ string_to_int(
             npy_gil_error(PyExc_OverflowError, errmsg, value, typenum_to_cstr(typenum));
             goto fail;
         }
+        *(NpyType *)out = narrowed;
         in += in_stride;
         out += out_stride;
     }
