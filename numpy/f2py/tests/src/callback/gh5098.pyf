@@ -8,6 +8,9 @@ python module __user__routines
             integer intent(in) :: n
             character*4 dimension(n), intent(out) :: s
         end subroutine strings_cb
+        subroutine string_cb(s)
+            character*4 intent(out) :: s
+        end subroutine string_cb
     end interface
 end python module __user__routines
 
@@ -25,5 +28,10 @@ python module gh5098
             integer intent(in) :: n
             character*4 dimension(n), intent(out), depend(n) :: s
         end subroutine strings_result
+        subroutine string_result(string_cb, s)
+            use __user__routines
+            external string_cb
+            character*4 intent(out) :: s
+        end subroutine string_result
     end interface
 end python module gh5098
