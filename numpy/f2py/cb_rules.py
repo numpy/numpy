@@ -243,9 +243,10 @@ cb_rout_rules = [
         GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,
           "#ctype#_from_pyobj failed in converting return_value of"
           " call-back function #name# to C #ctype#\\n");
-    } else {
-        fprintf(stderr,"Warning: call-back function #name# did not provide"
-                       " return value (index=%d, type=#ctype#)\\n",capi_i);
+    } else if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+                   "call-back function #name# did not provide"
+                   " return value (index=%d, type=#ctype#)", capi_i) < 0) {
+        goto capi_fail;
     }''',
             {debugcapi:
              '    fprintf(stderr,"#showvalueformat#.\\n",return_value);'}
@@ -264,9 +265,10 @@ cb_rout_rules = [
             """\
     if (capi_j>capi_i) {
         GETSTRFROMPYTUPLE(capi_return,capi_i++,return_value,return_value_len);
-    } else {
-        fprintf(stderr,"Warning: call-back function #name# did not provide"
-                       " return value (index=%d, type=#ctype#)\\n",capi_i);
+    } else if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+                   "call-back function #name# did not provide"
+                   " return value (index=%d, type=#ctype#)", capi_i) < 0) {
+        goto capi_fail;
     }""",
             {debugcapi:
              '    fprintf(stderr,"#showvalueformat#\\".\\n",return_value);'}
@@ -310,10 +312,10 @@ return_value
           \"#ctype#_from_pyobj failed in converting return_value of call-back\"
           \" function #name# to C #ctype#\\n\");
 #endif
-    } else {
-        fprintf(stderr,
-                \"Warning: call-back function #name# did not provide\"
-                \" return value (index=%d, type=#ctype#)\\n\",capi_i);
+    } else if (PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+                   \"call-back function #name# did not provide\"
+                   \" return value (index=%d, type=#ctype#)\", capi_i) < 0) {
+        goto capi_fail;
     }""",
             {debugcapi: """\
 #ifdef F2PY_CB_RETURNCOMPLEX

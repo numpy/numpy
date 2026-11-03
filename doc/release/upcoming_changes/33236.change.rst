@@ -11,3 +11,12 @@ names the type received, and a call-back argument list that cannot be built
 passed, or a ``PyCapsule`` given extra arguments) states the reason instead of
 only ``failed in processing argument list``. The call-back trace is still
 printed for modules built with ``--debug-capi``.
+
+``f2py`` reports call-backs that return no value with a ``RuntimeWarning``
+--------------------------------------------------------------------------
+A call-back declared as a function whose Python implementation returns no
+value is now reported with a ``RuntimeWarning`` instead of a
+``Warning: call-back function ... did not provide return value`` line on
+stderr, so that it can be filtered like any other warning. When warnings are
+turned into errors, the call-back fails and the exception propagates to the
+caller of the wrapped routine.
