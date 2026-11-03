@@ -1355,11 +1355,9 @@ init_promoter(PyObject *umath, const char *name, int nin, int nout,
         return -1;
     }
 
-    if (install_promoter(umath, name, info) < 0) {
-        return -1;
-    }
-
-    return 0;
+    int res = install_promoter(umath, name, info);
+    Py_DECREF(info);
+    return res;
 }
 
 
