@@ -194,7 +194,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     floatmode : str, optional
         Controls the interpretation of the `precision` option for
         floating-point types. Can take the following values
-        (default maxprec_equal):
+        (default `maxprec`):
 
         * 'fixed': Always print exactly `precision` fractional digits,
                 even if this would print more or fewer digits than
