@@ -47,7 +47,7 @@ def as_strided(
     Parameters
     ----------
     x : ndarray
-        Array to create a new.
+        Array to create a new view of.
     shape : sequence of int, optional
         The shape of the new array. Defaults to ``x.shape``.
     strides : sequence of int, optional
@@ -58,9 +58,10 @@ def as_strided(
         If set to False, the returned array will always be readonly.
         Otherwise it will be writable if the original array was. It
         is advisable to set this to False if possible (see Notes).
-    check_bounds : bool or None
-        Check new stride and shape for potential out of bound memory
-        access.
+    check_bounds : bool or None, optional
+        If True, check that the new shape and strides cannot access memory
+        outside of the base array. Defaults to None, which performs no
+        check.
 
     Returns
     -------
@@ -72,12 +73,12 @@ def as_strided(
         If `check_bounds` is True the given shape and strides could result in
         out-of-bounds memory access.
 
-    See also
+    See Also
     --------
     broadcast_to : broadcast an array to a given shape.
     reshape : reshape an array.
     lib.stride_tricks.sliding_window_view :
-        userfriendly and safe function for a creation of sliding window views.
+        user-friendly and safe function for creating sliding window views.
 
     Notes
     -----
@@ -89,8 +90,8 @@ def as_strided(
     calculating new strides to avoid reliance on a contiguous memory
     layout.
 
-    Furthermore, arrays created with this function often contain self
-    overlapping memory, so that two elements are identical.
+    Furthermore, arrays created with this function often contain
+    self-overlapping memory, so that two elements are identical.
     Vectorized write operations on such arrays will typically be
     unpredictable. They may even give different results for small, large,
     or transposed arrays.
@@ -106,16 +107,16 @@ def as_strided(
     --------
 
     >>> import numpy as np
-    ... from numpy.lib.stride_tricks import as_strided
-    ... x = np.arange(10)
-    ... y = as_strided(x, shape=(5,), strides=(8,), check_bounds=True)
-    ... y
+    >>> from numpy.lib.stride_tricks import as_strided
+    >>> x = np.arange(10)
+    >>> y = as_strided(x, shape=(5,), strides=x.strides, check_bounds=True)
+    >>> y
     array([0, 1, 2, 3, 4])
 
-    Attempting to create an out-of-bounds view and use ``check_bounds=True``
-    as_strided will raises an error:
+    With ``check_bounds=True``, attempting to create an out-of-bounds view
+    raises an error:
 
-    >>> as_strided(x, shape=(20,), strides=(8,), check_bounds=True)
+    >>> as_strided(x, shape=(20,), strides=x.strides, check_bounds=True)
     Traceback (most recent call last):
     ...
     ValueError: Given shape and strides would access memory out of bounds...
@@ -123,10 +124,11 @@ def as_strided(
     When working with views, bounds are checked against the base array:
 
     >>> a = np.arange(1000)
-    ... b = a[:2]
-    ... c = as_strided(b, shape=(2,), strides=(400,), check_bounds=True)
-    ... c[0], c[1]
-    (0, 50)
+    >>> b = a[:2]
+    >>> c = as_strided(b, shape=(2,), strides=(50 * a.strides[0],),
+    ...                check_bounds=True)
+    >>> c
+    array([ 0, 50])
     """
 
     # first convert input to array, possibly keeping subclass
