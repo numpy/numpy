@@ -257,7 +257,7 @@ cb_rout_rules = [
     {  # String function
         'pyobjfrom': {debugcapi: '    fprintf(stderr,"debug-capi:cb:#name#:%d:\\n",return_value_len);'},
         'args': '#ctype# return_value,int return_value_len',
-        'args_nm': 'return_value,&return_value_len',
+        'args_nm': 'return_value,return_value_len',
         'args_td': '#ctype# ,int',
         'frompyobj': [
             {debugcapi: '    CFUNCSMESS("cb:Getting return_value->\\"");'},

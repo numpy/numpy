@@ -11,6 +11,9 @@ python module __user__routines
         subroutine string_cb(s)
             character*4 intent(out) :: s
         end subroutine string_cb
+        function string_fun() result (r)
+            character*4 :: r
+        end function string_fun
     end interface
 end python module __user__routines
 
@@ -33,5 +36,13 @@ python module gh5098
             external string_cb
             character*4 intent(out) :: s
         end subroutine string_result
+        subroutine string_function_result(string_fun, s)
+            use __user__routines
+            external string_fun
+            character*4 intent(out) :: s
+        end subroutine string_function_result
+        function four_chars()
+            character*4 :: four_chars
+        end function four_chars
     end interface
 end python module gh5098
