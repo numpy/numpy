@@ -4874,34 +4874,6 @@ execute_unary_trivial_loop(
 
 
 /*
- * Stack storage for a single element of any builtin non-flexible dtype
- * (numeric, bool, datetime), with the correct alignment for each.
- */
-typedef union {
-    npy_bool bool_;
-    npy_byte byte_;
-    npy_ubyte ubyte_;
-    npy_short short_;
-    npy_ushort ushort_;
-    npy_int int_;
-    npy_uint uint_;
-    npy_long long_;
-    npy_ulong ulong_;
-    npy_longlong longlong_;
-    npy_ulonglong ulonglong_;
-    npy_half half_;
-    npy_float float_;
-    npy_double double_;
-    npy_longdouble longdouble_;
-    npy_cfloat cfloat_;
-    npy_cdouble cdouble_;
-    npy_clongdouble clongdouble_;
-    npy_datetime datetime_;
-    npy_timedelta timedelta_;
-} ufunc_scalar_storage;
-
-
-/*
  * Find the cached loop for a unary call with a single builtin numeric input
  * DType and no other arguments.  Only legacy loops whose descriptor
  * resolution trivially yields the DType singletons qualify, so the loop can
