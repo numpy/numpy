@@ -373,6 +373,7 @@ if __name__ == "__main__":
 
 is_linux = sys.platform.startswith('linux')
 is_cygwin = sys.platform.startswith('cygwin')
+is_darwin = sys.platform.startswith('darwin')
 machine = platform.machine()
 is_x86 = re.match(r"^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
 @pytest.mark.skipif(
@@ -500,6 +501,30 @@ class Test_ARM_Features(AbstractTest):
                 # if the kernel reports any one of the following ARM8 features.
                 "ASIMD": ("AES", "SHA1", "SHA2", "PMULL", "CRC32")
             }
+
+
+@pytest.mark.skipif(
+    not is_darwin or not is_arm,
+    reason="Only for Darwin and ARM",
+)
+class Test_Darwin_ARM_Features(AbstractTest):
+    features = ["ASIMDFHM"]
+
+    def load_flags(self):
+        for name in (
+            "hw.optional.arm.FEAT_FHM",
+            "hw.optional.armv8_2_fhm",
+        ):
+            result = subprocess.run(
+                ["sysctl", "-n", name],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode != 0:
+                continue
+            if int(result.stdout.strip()) != 0:
+                self.features_flags.add("ASIMDFHM")
+            break
 
 
 is_loongarch = re.match(r"^(loongarch)", machine, re.IGNORECASE)
