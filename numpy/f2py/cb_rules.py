@@ -486,9 +486,9 @@ cb_arg_rules = [
                       """    if (capi_j>capi_i) {
         PyArrayObject *rv_cb_arr = NULL;
         if ((capi_tmp = PyTuple_GetItem(capi_return,capi_i++))==NULL) goto capi_fail;
-        rv_cb_arr =  array_from_pyobj(#atype#,#varname_i#_Dims,#rank#,F2PY_INTENT_IN""",
+        rv_cb_arr = ndarray_from_pyobj(#atype#,#elsize#,#varname_i#_Dims,#rank#,F2PY_INTENT_IN""",
                       {isintent_c: '|F2PY_INTENT_C'},
-                      """,capi_tmp);
+                      """,capi_tmp,NULL);
         if (rv_cb_arr == NULL) {
             fprintf(stderr,\"rv_cb_arr is NULL\\n\");
             goto capi_fail;

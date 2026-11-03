@@ -9,6 +9,7 @@ import traceback
 import pytest
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from . import util
 
@@ -260,3 +261,20 @@ class TestCBFortranCallstatement(util.F2PyTest):
         with pytest.raises(ValueError, match='helpme') as exc:
             self.module.mypy_abort = self.module.utils.my_abort
             self.module.utils.do_something('helpme')
+
+
+@pytest.mark.slow
+class TestGH5098(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "callback", "gh5098.f"),
+               util.getpath("tests", "src", "callback", "gh5098.pyf")]
+    module_name = "gh5098"
+
+    def test_array_result(self):
+        r = self.module.array_result(lambda n: np.arange(n, dtype=float), 3)
+        assert_array_equal(r, [0, 1, 2])
+
+    def test_strings_result_itemsize(self):
+        # converted to the declared character*4, not copied byte for byte
+        r = self.module.strings_result(
+            lambda n: np.array([b"ab", b"cd", b"ef"], dtype="S2"), 3)
+        assert_array_equal(r, [b"ab", b"cd", b"ef"])
