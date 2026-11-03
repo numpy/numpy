@@ -511,7 +511,8 @@ compare(void *a, void *b, void *arr)
     // acquire the allocator here but let _compare get its own reference via
     // descr so we can assume in _compare that the mutex is already acquired
     NpyString_acquire_allocator(descr);
-    int ret = _compare(a, b, descr, descr);
+    int ret = 0;
+    _compare(a, b, descr, descr, &ret);
     NpyString_release_allocator(descr->allocator);
     return ret;
 }
@@ -519,7 +520,7 @@ compare(void *a, void *b, void *arr)
 // We assume the allocator mutex is already held.
 static int
 _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
-              PyArray_StringDTypeObject *descr_b, int descending)
+              PyArray_StringDTypeObject *descr_b, int descending, int *cmp)
 {
     npy_string_allocator *allocator_a = descr_a->allocator;
     npy_string_allocator *allocator_b = descr_b->allocator;
@@ -538,7 +539,7 @@ _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
     if (NPY_UNLIKELY(a_is_null == -1 || b_is_null == -1)) {
         char *msg = "Failed to load string in string comparison";
         npy_gil_error(PyExc_MemoryError, msg);
-        return 0;
+        return -1;
     }
     else if (NPY_UNLIKELY(a_is_null || b_is_null)) {
         if (has_null && !has_string_na) {
@@ -546,17 +547,19 @@ _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
                 // nan-like nulls sort to the end even in a descending
                 // sort, matching how NaN sorts for floats
                 if (a_is_null) {
-                    return b_is_null ? 0 : 1;
+                    *cmp = b_is_null ? 0 : 1;
+                    return 0;
                 }
                 else if (b_is_null) {
-                    return -1;
+                    *cmp = -1;
+                    return 0;
                 }
             }
             else {
                 npy_gil_error(
                         PyExc_ValueError,
                         "Cannot compare null that is not a nan-like value");
-                return 0;
+                return -1;
             }
         }
         else {
@@ -569,26 +572,31 @@ _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
         }
     }
     if (descending) {
-        return NpyString_cmp(&s_b, &s_a);
+        *cmp = NpyString_cmp(&s_b, &s_a);
     }
-    return NpyString_cmp(&s_a, &s_b);
+    else {
+        *cmp = NpyString_cmp(&s_a, &s_b);
+    }
+    return 0;
 }
 
 // We assume the allocator mutex is already held.
 NPY_NO_EXPORT int
 _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
-         PyArray_StringDTypeObject *descr_b)
+         PyArray_StringDTypeObject *descr_b, int *cmp)
 {
-    return _compare_impl(a, b, descr_a, descr_b, 0);
+    return _compare_impl(a, b, descr_a, descr_b, 0, cmp);
 }
 
 NPY_NO_EXPORT int
 stringdtype_binsearch_compare(const void *a, const void *b,
                               PyArrayObject *arr_a, PyArrayObject *arr_b)
 {
-    return _compare((void *)a, (void *)b,
-                    (PyArray_StringDTypeObject *)PyArray_DESCR(arr_a),
-                    (PyArray_StringDTypeObject *)PyArray_DESCR(arr_b));
+    int cmp = 0;
+    _compare((void *)a, (void *)b,
+             (PyArray_StringDTypeObject *)PyArray_DESCR(arr_a),
+             (PyArray_StringDTypeObject *)PyArray_DESCR(arr_b), &cmp);
+    return cmp;
 }
 
 NPY_NO_EXPORT int
@@ -598,7 +606,9 @@ _sort_compare(const void *a, const void *b, void *context)
     PyArray_StringDTypeObject *sdescr =
         (PyArray_StringDTypeObject *)sort_context->descriptors[0];
 
-    return _compare_impl((void *)a, (void *)b, sdescr, sdescr, 0);
+    int cmp = 0;
+    _compare_impl((void *)a, (void *)b, sdescr, sdescr, 0, &cmp);
+    return cmp;
 }
 
 static int
@@ -608,7 +618,9 @@ _sort_compare_descending(const void *a, const void *b, void *context)
     PyArray_StringDTypeObject *sdescr =
         (PyArray_StringDTypeObject *)sort_context->descriptors[0];
 
-    return _compare_impl((void *)a, (void *)b, sdescr, sdescr, 1);
+    int cmp = 0;
+    _compare_impl((void *)a, (void *)b, sdescr, sdescr, 1, &cmp);
+    return cmp;
 }
 
 // {ascending, descending} compare functions, stored in the static_data of
@@ -623,14 +635,22 @@ static PyArray_CompareFunc *stringdtype_sort_compares[2] = {
 static int
 argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 {
-    PyArray_Descr *descr = PyArray_DESCR(arr);
-    npy_intp elsize = descr->elsize;
-    *max_ind = 0;
-    for (int i = 1; i < n; i++) {
-        if (compare(data + i * elsize, data + (*max_ind) * elsize, arr) > 0) {
-            *max_ind = i;
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
+    npy_intp elsize = ((PyArray_Descr *)descr)->elsize;
+    npy_intp ind = 0;
+    NpyString_acquire_allocator(descr);
+    for (npy_intp i = 1; i < n; i++) {
+        int cmp;
+        if (_compare(data + i * elsize, data + ind * elsize, descr, descr, &cmp) < 0) {
+            NpyString_release_allocator(descr->allocator);
+            return 0;
+        }
+        if (cmp > 0) {
+            ind = i;
         }
     }
+    NpyString_release_allocator(descr->allocator);
+    *max_ind = ind;
     return 0;
 }
 
@@ -639,14 +659,22 @@ argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 static int
 argmin(char *data, npy_intp n, npy_intp *min_ind, void *arr)
 {
-    PyArray_Descr *descr = PyArray_DESCR(arr);
-    npy_intp elsize = descr->elsize;
-    *min_ind = 0;
-    for (int i = 1; i < n; i++) {
-        if (compare(data + i * elsize, data + (*min_ind) * elsize, arr) < 0) {
-            *min_ind = i;
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
+    npy_intp elsize = ((PyArray_Descr *)descr)->elsize;
+    npy_intp ind = 0;
+    NpyString_acquire_allocator(descr);
+    for (npy_intp i = 1; i < n; i++) {
+        int cmp;
+        if (_compare(data + i * elsize, data + ind * elsize, descr, descr, &cmp) < 0) {
+            NpyString_release_allocator(descr->allocator);
+            return 0;
+        }
+        if (cmp < 0) {
+            ind = i;
         }
     }
+    NpyString_release_allocator(descr->allocator);
+    *min_ind = ind;
     return 0;
 }
 

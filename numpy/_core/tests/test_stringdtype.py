@@ -1125,6 +1125,23 @@ def test_sort(dtype, strings, stable):
                 match="Cannot compare null that is not a nan-like value",
             ):
                 np.argsort(arr, stable=stable)
+            for func, out_dtype in itertools.product(
+                [np.argmax, np.argmin], [np.intp, np.int32]
+            ):
+                out = np.full((), -1, dtype=out_dtype)
+                with pytest.raises(
+                    ValueError,
+                    match="Cannot compare null that is not a nan-like value",
+                ):
+                    func(arr, out=out)
+                assert out == -1
+            out = np.zeros_like(arr)
+            with pytest.raises(
+                ValueError,
+                match="Cannot compare null that is not a nan-like value",
+            ):
+                np.maximum(arr, arr, out=out)
+            assert_array_equal(out, np.zeros_like(arr))
             argsorted = None
         elif dtype._has_nan_na:
             argsorted = None
