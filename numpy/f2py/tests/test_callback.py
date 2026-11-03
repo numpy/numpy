@@ -5,6 +5,7 @@ import textwrap
 import threading
 import time
 import traceback
+import warnings
 
 import pytest
 
@@ -143,6 +144,17 @@ class TestF77Callback(util.F2PyTest):
         with pytest.raises(error, match="call-back fun -- extra arguments"
                                         " tuple cannot be used with PyCapsule"):
             t(self.module.func0._cpointer, fun_extra_args=(1,))
+        assert capfd.readouterr().err == ""
+
+    def test_callback_without_return_value(self, capfd):
+        # gh-5098: a warning instead of a message on stderr
+        f = self.module.string_callback
+        with pytest.warns(RuntimeWarning, match="did not provide return value"):
+            assert f(lambda code: None) == 0
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            with pytest.raises(RuntimeWarning):
+                f(lambda code: None)
         assert capfd.readouterr().err == ""
 
     def test_threadsafety(self):
@@ -322,6 +334,13 @@ class TestGH5098(util.F2PyTest):
         f = self.module.string_function_result
         assert f(lambda: b"abcd") == b"abcd"
         assert f(self.module.four_chars._cpointer) == b"wxyz"
+
+    def test_string_function_without_return_value(self, capfd):
+        f = self.module.string_function_result
+        with pytest.warns(RuntimeWarning, match="cb_string_fun_in___user__"
+                          "routines did not provide return value"):
+            f(lambda: None)
+        assert capfd.readouterr().err == ""
 
 
 @pytest.mark.slow
