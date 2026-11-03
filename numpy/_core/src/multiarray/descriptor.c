@@ -3114,7 +3114,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         Py_ssize_t len;
 
         if (PyUnicode_Check(endian_obj)) {
-            if (!PyUnicode_IS_ASCII(endian_obj)) {
+            if (!npy_PyUnicode_IsASCII(endian_obj)) {
                 str = NULL;
                 len = 0;
             }

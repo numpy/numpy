@@ -95,7 +95,7 @@ parse_control_character(PyObject *obj, Py_UCS4 *character)
                 "character or None; but got: %.100R", obj);
         return 0;
     }
-    *character = PyUnicode_READ_CHAR(obj, 0);
+    *character = PyUnicode_ReadChar(obj, 0);
     return 1;
 }
 

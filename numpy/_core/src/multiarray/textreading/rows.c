@@ -391,8 +391,7 @@ read_rows(stream *s,
                 PyErr_Fetch(&exc, &val, &tb);
 
                 size_t length = end - str;
-                PyObject *string = PyUnicode_FromKindAndData(
-                        PyUnicode_4BYTE_KIND, str, length);
+                PyObject *string = npy_PyUnicode_FromUCS4(str, length);
                 if (string == NULL) {
                     npy_PyErr_ChainExceptions(exc, val, tb);
                     goto error;

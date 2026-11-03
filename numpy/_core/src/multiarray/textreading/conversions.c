@@ -342,7 +342,7 @@ static PyObject *
 call_converter_function(
         PyObject *func, const Py_UCS4 *str, size_t length, bool byte_converters)
 {
-    PyObject *s = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, str, length);
+    PyObject *s = npy_PyUnicode_FromUCS4(str, length);
     if (s == NULL) {
         return s;
     }
