@@ -17,3 +17,15 @@
       character*4 s
       call string_cb(s)
       end
+
+      subroutine string_function_result(string_fun, s)
+      external string_fun
+      character*4 string_fun
+      character*4 s
+      s = string_fun()
+      end
+
+      function four_chars()
+      character*4 four_chars
+      four_chars = 'wxyz'
+      end

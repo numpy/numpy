@@ -14,3 +14,11 @@ When the call-back pointers are kept in the Python thread state (with
 storage), an exception raised by a call-back is now propagated to the caller
 of the wrapped routine. Previously it aborted the interpreter with
 ``Fatal Python error: F2PySwapThreadLocalCallbackPtr: PyLong_AsVoidPtr failed``.
+
+``f2py`` modules with character function call-backs build with current compilers
+---------------------------------------------------------------------------------
+The code generated for a call-back that is a character function passed the
+address of the result length where the length itself is expected, which GCC 14
+and Clang 15 and newer reject, so such modules failed to build. The length is
+now passed by value, which also gives a ``PyCapsule`` passed as the call-back
+the correct length.

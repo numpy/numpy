@@ -318,6 +318,11 @@ class TestGH5098(util.F2PyTest):
             self.module.string_result(lambda: "abcd")
         assert capfd.readouterr().err == ""
 
+    def test_string_function_result(self):
+        f = self.module.string_function_result
+        assert f(lambda: b"abcd") == b"abcd"
+        assert f(self.module.four_chars._cpointer) == b"wxyz"
+
 
 @pytest.mark.slow
 class TestPythonTLSRaisingCallback(util.F2PyTest):
