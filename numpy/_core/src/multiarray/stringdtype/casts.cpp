@@ -911,13 +911,12 @@ string_to_int(
             // out of bounds, raise error following NEP 50 behavior
             const char *errmsg = NULL;
             if constexpr (std::is_same_v<NpyLongType, npy_ulonglong>) {
-                errmsg = "Integer %llu is out of bounds for %s";
-            } else if constexpr (std::is_same_v<NpyLongType, npy_longlong>) {
-                errmsg = "Integer %lli is out of bounds for %s";
+                errmsg = "Python integer %llu out of bounds for %S";
             } else {
-                errmsg = "Unrecognized integer type %i is out of bounds for %s";
+                errmsg = "Python integer %lli out of bounds for %S";
             }
-            npy_gil_error(PyExc_OverflowError, errmsg, value, typenum_to_cstr(typenum));
+            npy_gil_error(PyExc_OverflowError, errmsg, value,
+                          context->descriptors[1]);
             goto fail;
         }
         *(NpyType *)out = narrowed;

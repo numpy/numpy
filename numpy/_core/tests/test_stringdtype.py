@@ -1656,14 +1656,20 @@ def test_sized_integer_casts(bitsize, signed):
     with pytest.raises(OverflowError):
         np.array(oob, dtype="T").astype(idtype)
 
-    out = np.full(3, 5, dtype=idtype)
-    with pytest.raises(OverflowError):
-        out[...] = np.array(["7", str(2**bitsize), "9"], dtype="T")
-    assert_array_equal(out, [7, 5, 5])
-
     with pytest.raises(ValueError):
         np.array(["1", np.nan, "3"],
                  dtype=StringDType(na_object=np.nan)).astype(idtype)
+
+
+@pytest.mark.parametrize("bitsize", [8, 16, 32, 64])
+@pytest.mark.parametrize("signed", [True, False])
+def test_integer_cast_overflow_preserves_output(bitsize, signed):
+    idtype = f"{'int' if signed else 'uint'}{bitsize}"
+    for string_dtype in ["T", "U"]:
+        out = np.array([5], dtype=idtype)
+        with pytest.raises(OverflowError):
+            out[...] = np.array([str(2**bitsize)], dtype=string_dtype)
+        assert_array_equal(out, [5])
 
 
 @pytest.mark.parametrize("typename", ["byte", "short", "int", "longlong"])
