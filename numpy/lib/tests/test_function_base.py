@@ -3429,6 +3429,35 @@ class TestBincount:
         expected = [1, 3, 1, 1, 0, 0, 0, 1]
         assert_array_equal(actual, expected)
 
+    @pytest.mark.parametrize(
+        "x, weights, minlength",
+        [
+            ([], [], 0),
+            (np.array([], dtype=np.intp),
+             np.array([], dtype=np.float64), 3),
+            (np.array([], dtype=np.intp),
+             np.array([], dtype=np.intp), 3),
+        ],
+    )
+    def test_empty_with_weights(self, x, weights, minlength):
+        # gh-33203
+        actual = np.bincount(x, weights=weights, minlength=minlength)
+        assert actual.dtype == np.dtype(np.float64)
+        assert_array_equal(actual, np.zeros(minlength, dtype=np.float64))
+
+    @pytest.mark.parametrize(
+        "weights, error",
+        [
+            ([1.0], ValueError),
+            (np.empty((0, 1)), ValueError),
+            (np.array([], dtype=np.complex128), TypeError),
+        ],
+    )
+    def test_empty_with_invalid_weights(self, weights, error):
+        # gh-33203
+        with pytest.raises(error):
+            np.bincount([], weights=weights)
+
 
 class TestInterp:
 

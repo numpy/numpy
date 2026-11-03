@@ -153,7 +153,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     }
 
     /* handle empty list */
-    if (len == 0) {
+    if (len == 0 && weight == Py_None) {
         ans = (PyArrayObject *)PyArray_ZEROS(1, &minlength, NPY_INTP, 0);
         if (ans == NULL){
             goto fail;
@@ -163,16 +163,21 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     }
 
     numbers = (npy_intp *)PyArray_DATA(lst);
-    minmax(numbers, len, &mn, &mx);
-    if (mn < 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "'list' argument must have no negative elements");
-        goto fail;
+    if (len == 0) {
+        ans_size = minlength;
     }
-    ans_size = mx + 1;
-    if (mlength != Py_None) {
-        if (ans_size < minlength) {
-            ans_size = minlength;
+    else {
+        minmax(numbers, len, &mn, &mx);
+        if (mn < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "'list' argument must have no negative elements");
+            goto fail;
+        }
+        ans_size = mx + 1;
+        if (mlength != Py_None) {
+            if (ans_size < minlength) {
+                ans_size = minlength;
+            }
         }
     }
     if (weight == Py_None) {
