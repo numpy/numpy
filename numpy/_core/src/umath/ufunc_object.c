@@ -2727,9 +2727,14 @@ reduce_loop(PyArrayMethod_Context *context,
         npy_intp const *countptr, NpyIter_IterNextFunc *iternext,
         int needs_api, npy_intp skip_first_count)
 {
-    /* A literal nout lets the compiler specialize the single-output case */
+    /* A literal nout lets the compiler specialize one and two outputs */
     if (context->method->nout == 1) {
         return reduce_loop_impl(context, 1, strided_loop, auxdata, iter,
+                dataptrs, strides, countptr, iternext, needs_api,
+                skip_first_count);
+    }
+    if (context->method->nout == 2) {
+        return reduce_loop_impl(context, 2, strided_loop, auxdata, iter,
                 dataptrs, strides, countptr, iternext, needs_api,
                 skip_first_count);
     }
@@ -3352,10 +3357,16 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
             NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
         }
 
-        /* A literal nout lets the compiler specialize the single-output case */
+        /* A literal nout lets the compiler specialize one and two outputs */
         if (nout == 1) {
             do {
                 res = accumulate_along_axis(&context, 1, strided_loop, auxdata,
+                        copy_info, dataptr, fixed_strides, elsizes, count);
+            } while (res == 0 && iternext(iter));
+        }
+        else if (nout == 2) {
+            do {
+                res = accumulate_along_axis(&context, 2, strided_loop, auxdata,
                         copy_info, dataptr, fixed_strides, elsizes, count);
             } while (res == 0 && iternext(iter));
         }
@@ -3488,9 +3499,14 @@ reduceat_segments(PyArrayMethod_Context *context,
         const npy_intp *reduceat_ind, npy_intp ind_size,
         npy_intp red_axis_size)
 {
-    /* A literal nout lets the compiler specialize the single-output case */
+    /* A literal nout lets the compiler specialize one and two outputs */
     if (context->method->nout == 1) {
         return reduceat_segments_impl(context, 1, strided_loop, auxdata,
+                copy_info, dataptr, out_strides, fixed_strides,
+                reduceat_ind, ind_size, red_axis_size);
+    }
+    if (context->method->nout == 2) {
+        return reduceat_segments_impl(context, 2, strided_loop, auxdata,
                 copy_info, dataptr, out_strides, fixed_strides,
                 reduceat_ind, ind_size, red_axis_size);
     }
