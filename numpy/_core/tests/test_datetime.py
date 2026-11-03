@@ -1417,10 +1417,7 @@ class TestDateTime:
         assert remainder == 0
         cycles, leftover_weeks = divmod(weeks, weeks_per_400_years)
 
-        # The leftover is small (under 400 years), so it converts safely.
         small_date = np.datetime64(leftover_weeks, "W")
-
-        # Move the small date forward by the removed cycles, counted in months.
         months_to_add = np.timedelta64(400 * 12 * cycles, "M")
         intentional_date = small_date.astype("datetime64[M]") + months_to_add
 
