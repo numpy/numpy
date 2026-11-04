@@ -1904,7 +1904,7 @@ the functions that must be implemented for each slot.
    where ``x`` is the streamed element being reduced in. For
    :meth:`~numpy.ufunc.reduce` and :meth:`~numpy.ufunc.reduceat`, each
    ``out_i`` points at the same memory as the matching ``acc_i`` (and
-   typically has a stride of 0 relative to it). For
+   both typically have a stride of 0). For
    :meth:`~numpy.ufunc.accumulate` it does not, see below.
 
    The *strides* argument passed to ``NPY_METH_get_reduction_loop`` itself at
@@ -1916,8 +1916,8 @@ the functions that must be implemented for each slot.
    ``out_i`` instead points at the next element of the same output, and
    ``acc_i`` and ``out_i`` both use the output's stride, so a loop may only
    accumulate in place when ``data[i] == data[nout + 1 + i]``. When a
-   ``where=`` mask is used, one further entry at ``strides[2 * nout + 1]``
-   holds the mask stride.
+   ``where=`` mask is used (only possible with :meth:`~numpy.ufunc.reduce`),
+   one further entry at ``strides[2 * nout + 1]`` holds the mask stride.
 
    If ``NPY_METH_get_reduction_loop`` is not set, these methods fall back
    to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only works for
@@ -1942,9 +1942,10 @@ the functions that must be implemented for each slot.
    a :c:type:`PyArrayMethod_GetMultiReductionInitials` function. It is the
    multi-output version of :c:macro:`NPY_METH_get_reduction_initial` and fills
    one initial value per reduction output instead of a single one.
-   :meth:`~numpy.ufunc.reduce` uses it to seed the accumulators when the
-   reduction is empty or when a ``where=`` mask is given, for a ufunc whose
-   loop also registers a :c:macro:`NPY_METH_get_reduction_loop`. See
+   :meth:`~numpy.ufunc.reduce` uses it to seed the accumulators (it is
+   required when the reduction is empty or when a ``where=`` mask is given),
+   for a ufunc whose loop also registers a
+   :c:macro:`NPY_METH_get_reduction_loop`. See
    :c:type:`PyArrayMethod_GetMultiReductionInitials` for the signature.
    :meth:`~numpy.ufunc.reduceat` and :meth:`~numpy.ufunc.accumulate` do not
    use them and seed with the first element instead.

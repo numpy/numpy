@@ -5446,7 +5446,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         (which is useful especially for object dtype), or a tuple with one
         entry per output (latter for consistency with ``ufunc.__call__``).
         For a ufunc with a single output, a 1-element tuple is also
-        accepted, as before.
+        accepted.
 
         .. versionadded:: 2.3
             Support for ``out=...`` was added.
