@@ -18,6 +18,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
+    IS_PYPY,
     IS_WASM,
     assert_,
     assert_almost_equal,
@@ -4258,6 +4259,7 @@ class TestBroadcast:
             np.broadcast([[1, 2, 3]], [[4], [5]], [6, 7])
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_signatures(self):
         sig_new = inspect.signature(np.broadcast)
         assert len(sig_new.parameters) == 1
