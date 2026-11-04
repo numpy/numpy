@@ -22,15 +22,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  aarch64_conda:
-    name: macOS aarch64 conda
+  aarch64_pixi:
+    name: macOS aarch64, OpenBLAS, full, pixi
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     runs-on: macos-26
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.12"]
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -41,71 +37,42 @@ jobs:
 
     - name:  Prepare cache dirs and timestamps
       id:    prep-ccache
-      shell: bash -l {0}
       run: |
         mkdir -p "${CCACHE_DIR}"
         echo "dir=$CCACHE_DIR" >> $GITHUB_OUTPUT
         NOW=$(date -u +"%F-%T")
         echo "timestamp=${NOW}" >> $GITHUB_OUTPUT
-        echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
     - name: Setup compiler cache
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       id:    cache-ccache
       with:
         path: ${{ steps.prep-ccache.outputs.dir }}
-        key:  ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-${{ steps.prep-ccache.outputs.timestamp }}
+        key:  ${{ github.workflow }}-${{ github.job }}-ccache-macos-${{ steps.prep-ccache.outputs.timestamp }}
         restore-keys: |
-          ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
+          ${{ github.workflow }}-${{ github.job }}-ccache-macos-
 
-    - name: Setup Miniforge
-      uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
+    # Compilers and OpenBLAS come from Pixi; its activation sets CC="ccache clang".
+    - uses: prefix-dev/setup-pixi@ad1da6449d9e506fd127fd67ab2d054a769f6a94 # v0.11.2
       with:
-        python-version: ${{ matrix.python-version }}
-        channels: conda-forge
-        channel-priority: true
-        activate-environment: numpy-dev
-        use-only-tar-bz2: false
-        miniforge-variant: Miniforge3
-        miniforge-version: latest
-        use-mamba: true
+        pixi-version: v0.83.0
+        cache: false
 
-    # Updates if `environment.yml` or the date changes. The latter is needed to
-    # ensure we re-solve once a day (since we don't lock versions). Could be
-    # replaced by a conda-lock based approach in the future.
-    - name: Cache conda environment
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-      env:
-        # Increase this value to reset cache if environment.yml has not changed
-        CACHE_NUMBER: 1
-      with:
-        path: ${{ env.CONDA }}/envs/numpy-dev
-        key:
-          ${{ runner.os }}--${{ steps.prep-ccache.outputs.today }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
-      id: envcache
-
-    - name: Update Conda Environment
-      run: mamba env update -n numpy-dev -f environment.yml
-      if: steps.envcache.outputs.cache-hit != 'true'
-
-    - name: Build and Install NumPy
-      shell: bash -l {0}
-      run: |
-        conda activate numpy-dev
-        CC="ccache ${CC:-clang}" CXX="ccache ${CXX:-clang++}" spin build -j2 -- -Dallow-noblas=false
+    - name: Build NumPy
+      run: pixi run --locked build
 
     - name: Run test suite (full)
-      shell: bash -l {0}
-      run: |
-        conda activate numpy-dev
-        export OMP_NUM_THREADS=2
-        spin test -j2 -m full -- --durations=10
+      env:
+        OMP_NUM_THREADS: 2
+        PYTEST_ADDOPTS: "--durations=10"
+      run: pixi run --locked --skip-deps test-full -j2
+
+    - name: Meson log
+      if: failure()
+      run: cat build/meson-logs/meson-log.txt
 
     - name: Ccache statistics
-      shell: bash -l {0}
-      run: |
-        conda activate numpy-dev
-        ccache -s
+      run: pixi run --locked -e build ccache -s
 
 
   accelerate:

@@ -1,0 +1,287 @@
+[workspace]
+name = "numpy"
+description = "Fundamental package for array computing in Python"
+authors = ["NumPy Developers <numpy-discussion@python.org>"]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["linux-64", "linux-aarch64", "osx-arm64", "win-64"]
+requires-pixi = ">=0.83.0"
+
+
+### Environments ###
+# We include one build task (and a corresponding environment) per solve group
+
+[environments.build]
+# tasks: build
+features = ["build-deps", "build-task"]
+solve-group = "default"
+
+[environments.test]
+# tasks: test, test-full, test-parallel
+features = ["build-deps", "test-deps", "test-tasks"]
+solve-group = "default"
+
+[environments.typecheck]
+# tasks: mypy, pyrefly, stubtest
+features = ["build-deps", "test-deps", "typecheck"]
+solve-group = "default"
+
+[environments.ipython]
+# tasks: ipython
+features = ["build-deps", "test-deps", "ipython"]
+solve-group = "default"
+
+[environments.docs]
+# tasks: docs, check-docs, check-tutorials
+features = ["build-deps", "test-deps", "docs"]
+solve-group = "default"
+
+[environments.bench]
+# tasks: bench
+# Separate solve group: the `asv` pin restricts the Python versions available.
+features = ["build-deps", "bench"]
+solve-group = "bench"
+
+[environments.lint]
+# tasks: lint, check-python-h
+features = ["lint"]
+
+[environments.debug]
+# tasks: build-debug, test-debug, gdb (Linux), lldb (macOS)
+features = ["build-deps", "test-deps", "debug"]
+solve-group = "default"
+
+[environments.free-threading]
+# tasks: build-freethreading, test-freethreading, test-parallel-freethreading
+features = ["py-freethreading", "build-deps", "test-deps", "free-threading"]
+solve-group = "freethreading"
+
+
+### Default dependencies (included in all environments by default) ###
+
+[dependencies]
+# A single Python version for all environments and platforms (with a looser
+# constraint, the solver picks different versions per platform). Bump this when
+# NumPy gains support for a new Python version (see pyproject.toml).
+python = "3.14.*"
+spin = "*"
+
+
+### Building ###
+
+[feature.build-deps.dependencies]
+c-compiler = "*"
+cxx-compiler = "*"
+ccache = "*"
+pkg-config = "*"
+ninja = "*"
+meson = "*"
+meson-python = ">=0.20.0"
+cython = ">=3.1.0"
+openblas = "*"
+
+[feature.build-deps.target.unix.dependencies]
+# Only needed for the f2py tests. Not included on Windows, where mixing a
+# Fortran compiler with MSVC is not straightforward (see the build docs).
+fortran-compiler = "*"
+
+# Speed up rebuilds with ccache (gcc on Linux, clang on macOS, as provided by
+# the conda-forge compiler packages).
+[feature.build-deps.target.linux.activation.env]
+CC = "ccache gcc"
+CXX = "ccache g++"
+
+[feature.build-deps.target.osx.activation.env]
+CC = "ccache clang"
+CXX = "ccache clang++"
+
+[feature.build-task.tasks.build]
+# `allow-noblas=false` makes the build fail loudly if no BLAS library is
+# found, rather than silently falling back to the slow internal routines.
+cmd = "spin build -- -Dallow-noblas=false"
+description = "Build NumPy"
+
+
+### Testing ###
+
+[feature.test-deps.dependencies]
+pytest = "==9.1.1"
+hypothesis = "==6.168.3"
+pytest-cov = "==7.1.0"
+pytest-timeout = "*"
+pytest-xdist = "*"
+pytest-run-parallel = "==0.8.2"  # keep in sync with .github/workflows/macos.yml
+charset-normalizer = "*"  # for optional f2py encoding detection
+tzdata = "*"
+cffi = "*"  # used in some tests
+
+[feature.test-deps.target.osx.dependencies]
+# macOS only, like the `test-extending` dependency group in pyproject.toml
+numpy_quaddtype = "*"
+
+[feature.test-tasks.tasks.test]
+cmd = "spin test --no-build"
+depends-on = "build"
+description = "Run the test suite (excluding slow tests)"
+
+[feature.test-tasks.tasks.test-full]
+cmd = "spin test --no-build -m full"
+depends-on = "build"
+description = "Run the full test suite (including slow tests)"
+
+[feature.test-tasks.tasks.test-parallel]
+cmd = "spin test --no-build -p auto -- --skip-thread-unsafe=true"
+depends-on = "build"
+description = "Run the test suite in parallel threads with pytest-run-parallel"
+
+
+### Type checking ###
+
+[feature.typecheck.dependencies]
+mypy = "==2.4.0"
+pyrefly = "==1.3.2"
+orjson = "*"  # makes mypy faster
+
+[feature.typecheck.tasks.mypy]
+cmd = "spin mypy"
+depends-on = "build"
+description = "Run the mypy type tests"
+
+[feature.typecheck.tasks.pyrefly]
+cmd = "spin pyrefly"
+depends-on = "build"
+description = "Run the pyrefly type checks"
+
+[feature.typecheck.tasks.stubtest]
+cmd = "spin stubtest"
+depends-on = "build"
+description = "Run mypy's stubtest on the NumPy stubs"
+
+
+### IPython ###
+
+[feature.ipython.dependencies]
+ipython = "*"
+
+[feature.ipython.tasks.ipython]
+cmd = "spin ipython"
+depends-on = "build"
+description = "Start IPython with NumPy pre-imported as `np`"
+
+
+### Documentation ###
+
+[feature.docs.dependencies]
+sphinx = "==8.2.3"
+numpydoc = "==1.11.0"
+pydata-sphinx-theme = "*"
+sphinx-copybutton = "*"
+sphinx-design = "*"
+scipy = "*"
+matplotlib-base = "*"
+pandas = "*"
+breathe = "*"
+ipython = "*"
+pickleshare = "*"
+towncrier = "*"
+toml = "*"
+scipy-doctest = "*"
+jupyterlite-sphinx = "*"
+jupyterlite-pyodide-kernel = "==0.5.2"
+doxygen = "*"
+
+[feature.docs.tasks.docs]
+cmd = "spin docs --no-build"
+depends-on = "build"
+description = "Build the html documentation"
+
+[feature.docs.tasks.check-docs]
+cmd = "spin check-docs --no-build"
+depends-on = "build"
+description = "Run the doctests in the docstrings"
+
+[feature.docs.tasks.check-tutorials]
+cmd = "spin check-tutorials --no-build"
+depends-on = "build"
+description = "Run the doctests in the user guide"
+
+
+### Benchmarking ###
+
+[feature.bench.dependencies]
+asv = "<0.6.5"
+virtualenv = "*"
+packaging = "*"
+
+[feature.bench.tasks.bench]
+cmd = "spin bench"
+depends-on = "build"
+description = "Run the ASV benchmarks"
+
+
+### Linting ###
+
+[feature.lint.dependencies]
+ruff = "==0.16.10"
+cython-lint = "*"
+gitpython = "==3.2.1"
+
+[feature.lint.tasks.lint]
+cmd = "spin lint"
+description = "Run lint checks on the changes in the current branch"
+
+[feature.lint.tasks.check-python-h]
+cmd = "python tools/check_python_h_first.py"
+description = "Check that `Python.h` is included before any other header"
+
+
+### Debugging ###
+
+[feature.debug]
+# Linux and macOS only: gdb/lldb and the -O0 flags below don't apply to MSVC.
+platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
+
+[feature.debug.target.linux.dependencies]
+gdb = "*"
+
+[feature.debug.target.osx.dependencies]
+lldb = "*"
+
+[feature.debug.tasks.build-debug]
+# Explicit -O0: otherwise the conda-forge compiler flags (-O2, -DNDEBUG) win.
+cmd = "spin build --build-dir=build-debug -- -Dallow-noblas=false -Dbuildtype=debug -Dc_args=-O0 -Dcpp_args=-O0"
+description = "Build NumPy with debug settings (into `build-debug`)"
+
+[feature.debug.tasks.test-debug]
+cmd = "spin test --no-build --build-dir=build-debug"
+depends-on = "build-debug"
+description = "Run the test suite against the debug build"
+
+[feature.debug.target.linux.tasks.gdb]
+cmd = "spin gdb --build-dir=build-debug --no-build"
+depends-on = "build-debug"
+description = "Run a Python script under gdb, e.g. `pixi run gdb /path/to/script.py`"
+
+[feature.debug.target.osx.tasks.lldb]
+cmd = "spin lldb --build-dir=build-debug --no-build"
+depends-on = "build-debug"
+description = "Run a Python script under lldb, e.g. `pixi run lldb /path/to/script.py`"
+
+
+### Free-threaded Python ###
+
+[feature.py-freethreading.dependencies]
+python-freethreading = ">=3.14"
+
+[feature.free-threading.tasks.build-freethreading]
+cmd = "spin build --build-dir=build-freethreading -- -Dallow-noblas=false"
+description = "Build NumPy with free-threaded Python (into `build-freethreading`)"
+
+[feature.free-threading.tasks.test-freethreading]
+cmd = "spin test --no-build --build-dir=build-freethreading"
+depends-on = "build-freethreading"
+description = "Run the test suite with free-threaded Python"
+
+[feature.free-threading.tasks.test-parallel-freethreading]
+cmd = "spin test --no-build --build-dir=build-freethreading -p auto -- --skip-thread-unsafe=true"
+depends-on = "build-freethreading"
+description = "Run the test suite in parallel threads with free-threaded Python"
