@@ -64,7 +64,8 @@ jobs:
     - name: Run test suite (full)
       env:
         OMP_NUM_THREADS: 2
-      run: pixi run --locked --skip-deps test-full -j2 -- --durations=10
+        PYTEST_ADDOPTS: "--durations=10"
+      run: pixi run --locked --skip-deps test-full -j2
 
     - name: Meson log
       if: failure()

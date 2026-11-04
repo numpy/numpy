@@ -72,7 +72,10 @@ jobs:
     - name: Build NumPy debug
       run: pixi run --locked build-debug
     - name: Run test suite
-      run: pixi run --locked --skip-deps test-debug -- --timeout=600 --durations=10
+      # Pytest options via PYTEST_ADDOPTS, since pixi drops a leading `--`.
+      env:
+        PYTEST_ADDOPTS: "--timeout=600 --durations=10"
+      run: pixi run --locked --skip-deps test-debug
     - name: Meson log
       if: failure()
       run: cat build-debug/meson-logs/meson-log.txt
@@ -96,7 +99,9 @@ jobs:
     - name: Build NumPy
       run: pixi run --locked build-freethreading
     - name: Run test suite
-      run: pixi run --locked --skip-deps test-freethreading -- --timeout=600 --durations=10
+      env:
+        PYTEST_ADDOPTS: "--timeout=600 --durations=10"
+      run: pixi run --locked --skip-deps test-freethreading
     - name: Meson log
       if: failure()
       run: cat build-freethreading/meson-logs/meson-log.txt

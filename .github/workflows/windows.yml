@@ -48,7 +48,9 @@ jobs:
         cat build/meson-logs/meson-log.txt
 
     - name: Run test suite
-      run: pixi run --locked --skip-deps test -- --timeout=600 --durations=10
+      env:
+        PYTEST_ADDOPTS: "--timeout=600 --durations=10"
+      run: pixi run --locked --skip-deps test
 
 
   #=======================================================================================
