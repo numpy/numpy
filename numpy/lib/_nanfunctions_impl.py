@@ -147,7 +147,7 @@ def _copyto(a, val, mask):
     if isinstance(a, np.ndarray):
         np.copyto(a, val, where=mask, casting='unsafe')
     else:
-        a = a.dtype.type(val)
+        a = np.array(val).astype(a.dtype)[()]
     return a
 
 
