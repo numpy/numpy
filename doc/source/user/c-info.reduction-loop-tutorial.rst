@@ -30,8 +30,9 @@ That trick does not generalize to ufuncs with more than one output, such as
 signature. There is no natural way to pair each output up with an input
 that could hold its running result.
 
-To support ``reduce`` for such ufuncs, an ``ArrayMethod`` can register a
-*dedicated* reduction loop through the ``NPY_METH_get_reduction_loop``
+To support ``reduce``, ``reduceat``, and ``accumulate`` for such ufuncs, an
+``ArrayMethod`` can register a *dedicated* reduction loop through the
+``NPY_METH_get_reduction_loop``
 slot. That loop has an ``(nout + 1)``-in/``nout``-out signature. It takes
 the current per-output accumulators plus one streamed input element, and
 writes the updated accumulators. We use this signature because it collapses
@@ -109,7 +110,7 @@ with ``/* BEGIN main computation */`` and ``/* END main computation */``.
          * A minimal ufunc for a single dtype ('f8') that computes the
          * running minimum and maximum in one pass, and registers a
          * reduction loop for it so that `minimummaximum.reduce(a)` computes
-         * the actual minmax.
+         * the actual minmax (`reduceat` and `accumulate` use the same loop).
          */
 
         static int
@@ -137,8 +138,8 @@ with ``/* BEGIN main computation */`` and ``/* END main computation */``.
 
         /*
          * Reads the running accumulators acc_i and writes the new ones to
-         * out_i. For reduce these are the same memory, for accumulate out_i
-         * is the next element of the output.
+         * out_i. For reduce and reduceat these are the same memory, for
+         * accumulate out_i is the next element of the output.
          */
         static int
         double_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
@@ -379,6 +380,10 @@ explicit ``np.float64(...)`` wrapping is needed::
     (np.float64(1.0), np.float64(9.0))
     >>> minmax.minimummaximum.reduce(b, axis=1)
     (array([1., 2.]), array([4., 9.]))
+    >>> minmax.minimummaximum.reduceat(a, [0, 4])
+    (array([1., 2.]), array([4., 9.]))
+    >>> minmax.minimummaximum.accumulate(a)
+    (array([3., 1., 1., 1., 1., 1., 1., 1.]), array([3., 3., 4., 4., 5., 9., 9., 9.]))
 
 Note that ``minimummaximum.reduce`` returns a tuple with one array per
 output, rather than a single array, so it is usually unpacked as
