@@ -2547,6 +2547,7 @@ NPY_NO_EXPORT int
         acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
         out_min += strides[3]; out_max += strides[4];
     }
+    npy_clear_floatstatus_barrier((char*)dimensions);
     return 0;
 }
 

@@ -2753,6 +2753,11 @@ class TestMinimumMaximum(_FilterInvalids):
         assert_equal(lo, np.minimum.reduce(a, **kwargs))
         assert_equal(hi, np.maximum.reduce(a, **kwargs))
 
+    def check_accumulate(self, a, **kwargs):
+        lo, hi = ncu.minimummaximum.accumulate(a, **kwargs)
+        assert_equal(lo, np.minimum.accumulate(a, **kwargs))
+        assert_equal(hi, np.maximum.accumulate(a, **kwargs))
+
     def test_dtypes(self):
         dtypes = (np.typecodes['AllInteger'] + np.typecodes['AllFloat']
                   + np.typecodes['Complex'] + '?')
@@ -2775,6 +2780,7 @@ class TestMinimumMaximum(_FilterInvalids):
                 a = np.arange(n).astype(dt)
                 b = a[::-1].copy()
                 self.check(a, b)
+                self.check_accumulate(a)
                 if n > 0:
                     self.check_reduce(a)
 
@@ -2794,6 +2800,8 @@ class TestMinimumMaximum(_FilterInvalids):
             arg1 = np.array([0, cnan, cnan], dtype=complex)
             arg2 = np.array([cnan, 0, cnan], dtype=complex)
             self.check(arg1, arg2)
+            with np.errstate(invalid="raise"):
+                self.check_accumulate(arg1)
 
     def test_object_array(self):
         arg1 = np.arange(5, dtype=object)
@@ -2859,6 +2867,7 @@ class TestMinimumMaximum(_FilterInvalids):
         self.check_reduce(a, axis=1, keepdims=True)
         for view in (a[::2], a[:, ::2], a.T, np.asfortranarray(a)):
             self.check_reduce(view, axis=1)
+            self.check_accumulate(view, axis=1)
 
     def test_reduce_out(self):
         a = np.arange(12.0).reshape(3, 4)
