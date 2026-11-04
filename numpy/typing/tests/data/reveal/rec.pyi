@@ -147,6 +147,8 @@ assert_type(
     _RecArray,
 )
 
+assert_type(np.rec.array([(1, 1.5)]), _RecArray)
+
 assert_type(
     np.rec.array(
         None,

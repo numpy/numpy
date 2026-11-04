@@ -1,0 +1,5 @@
+`numpy.digitize` preserves integer ordering for large values
+------------------------------------------------------------
+
+`numpy.digitize` no longer loses ordering information for large integer bin
+edges that cannot be distinguished after conversion to ``float64``.

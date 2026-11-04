@@ -288,6 +288,9 @@ Glossary
          casts within a kind, like float64 to float32.
        - ``unsafe``: any data conversions may be done.
 
+       Python ``int``, ``float`` and ``complex`` scalars are treated by kind
+       rather than by dtype, see :ref:`arrays.promotion.python-scalar-casting`.
+
    column-major
        See `Row- and column-major order <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_.
 

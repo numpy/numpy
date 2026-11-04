@@ -1,0 +1,1 @@
+* `numpy.isin` is now much faster for large ``StringDType`` arrays.

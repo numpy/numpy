@@ -618,8 +618,14 @@ When promoting multiple dtypes, the result is aligned if any of the inputs is::
     >>> np.result_type(np.dtype("i,i"), np.dtype("i,i", align=True))
     dtype([('f0', '<i4'), ('f1', '<i4')], align=True)
 
-The ``<`` and ``>`` operators always return ``False`` when comparing void
-structured arrays, and arithmetic and bitwise operations are not supported.
+NumPy defines ``==`` and ``!=`` for structured arrays by comparing all fields
+individually, as shown above. Most other functions, such as ``<``,
+`numpy.add` or `~numpy.ndarray.sum`, are not defined for structured arrays and
+raise an error. To do math, work with the individual fields instead::
+
+ >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', 'f8'), ('y', 'i8')])
+ >>> x['x'].sum()
+ np.float64(4.0)
 
 .. versionchanged:: 1.23
     Before NumPy 1.23, a warning was given and ``False`` returned when

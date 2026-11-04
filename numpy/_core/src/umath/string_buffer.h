@@ -25,6 +25,13 @@ enum class ENCODING {
     ASCII, UTF32, UTF8
 };
 
+// Fixed-width strings are NUL-padded; variable-width strings store a length.
+constexpr bool
+has_null_padding(ENCODING enc)
+{
+    return enc == ENCODING::ASCII || enc == ENCODING::UTF32;
+}
+
 enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISALPHA,
     ISDECIMAL,
@@ -646,7 +653,7 @@ struct Buffer {
         tmp--;
         while (tmp >= *this && (
                 NumPyOS_ascii_isspace(*tmp) ||
-                (enc != ENCODING::UTF8 && *tmp == '\0'))) {
+                (has_null_padding(enc) && *tmp == '\0'))) {
             tmp--;
         }
         tmp++;
@@ -1149,6 +1156,12 @@ tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 
     Buffer start_buf = (buf1 + offset);
     Buffer end_buf = start_buf + end_sub;
+    if (enc == ENCODING::UTF8) {
+        size_t size1 = (end_buf.buf - start_buf.buf) + end_buf.num_bytes_next_character();
+        if (size1 != size2) {
+            return 0;
+        }
+    }
     if (*start_buf == *buf2 && *end_buf == *(buf2 + end_sub)) {
         return !start_buf.buffer_memcmp(buf2, size2);
     }
@@ -1167,7 +1180,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE strip_type
 {
     size_t len = buf.num_codepoints();
     if (len == 0) {
-        if (enc != ENCODING::UTF8) {
+        if (has_null_padding(enc)) {
             out.buffer_fill_with_zeros_after_index(0);
         }
         return 0;
@@ -1200,7 +1213,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE strip_type
     if (strip_type != STRIPTYPE::LEFTSTRIP) {
         while (new_stop > new_start) {
             if (!traverse_buf.first_character_isspace() &&
-                    (enc == ENCODING::UTF8 || *traverse_buf != 0)) {
+                    (!has_null_padding(enc) || *traverse_buf != 0)) {
                 break;
             }
 
@@ -1215,7 +1228,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE strip_type
     }
 
     Buffer offset_buf = buf + new_start;
-    if (enc == ENCODING::UTF8) {
+    if (!has_null_padding(enc)) {
         offset_buf.buffer_memcpy(out, num_bytes);
         return num_bytes;
     }
@@ -1231,7 +1244,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
 {
     size_t len1 = buf1.num_codepoints();
     if (len1 == 0) {
-        if (enc != ENCODING::UTF8) {
+        if (has_null_padding(enc)) {
             out.buffer_fill_with_zeros_after_index(0);
         }
         return 0;
@@ -1247,6 +1260,8 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
         out.buffer_fill_with_zeros_after_index(len1);
         return len1;
     }
+
+    size_t len2_bytes = (size_t)(buf2.after - buf2.buf);
 
     size_t new_start = 0;
 
@@ -1267,8 +1282,8 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 case ENCODING::UTF8:
                 {
                     if (current_point_bytes == 1) {
-                        CheckedIndexer<char> ind(buf2.buf, len2);
-                        res = find_char<char>(ind, len2, *traverse_buf);
+                        CheckedIndexer<char> ind(buf2.buf, len2_bytes);
+                        res = find_char<char>(ind, len2_bytes, *traverse_buf);
                     } else {
                         res = fastsearch(buf2.buf, buf2.after - buf2.buf,
                                 traverse_buf.buf, current_point_bytes,
@@ -1313,8 +1328,8 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 case ENCODING::UTF8:
                 {
                     if (current_point_bytes == 1) {
-                        CheckedIndexer<char> ind(buf2.buf, len2);
-                        res = find_char<char>(ind, len2, *traverse_buf);
+                        CheckedIndexer<char> ind(buf2.buf, len2_bytes);
+                        res = find_char<char>(ind, len2_bytes, *traverse_buf);
                     } else {
                         res = fastsearch(buf2.buf, buf2.after - buf2.buf,
                                 traverse_buf.buf, current_point_bytes,
@@ -1342,7 +1357,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
     }
 
     Buffer offset_buf = buf1 + new_start;
-    if (enc == ENCODING::UTF8) {
+    if (!has_null_padding(enc)) {
         offset_buf.buffer_memcpy(out, num_bytes);
         return num_bytes;
     }
@@ -1377,7 +1392,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     size_t len3 = buf3.num_codepoints();
     char *start;
     size_t length = len1;
-    if (enc == ENCODING::UTF8) {
+    if (!has_null_padding(enc)) {
         start = buf1.after;
         length = 0;
     }
@@ -1483,7 +1498,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
 copy_rest:
     buf1.buffer_memcpy(out, end1 - buf1);
     ret += end1 - buf1;
-    if (enc == ENCODING::UTF8) {
+    if (!has_null_padding(enc)) {
         return ret;
     }
     out.buffer_fill_with_zeros_after_index(end1 - buf1);
@@ -1511,8 +1526,7 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
         }
         else {
             line_pos += 1;
-            size_t n_bytes = tmp.num_bytes_next_character();
-            new_len += n_bytes;
+            new_len += enc == ENCODING::UTF8 ? tmp.num_bytes_next_character() : 1;
             if (ch == '\n' || ch == '\r') {
                 line_pos = 0;
             }

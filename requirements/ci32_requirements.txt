@@ -1,3 +1,0 @@
-spin
-# Keep this in sync with ci_requirements.txt
-scipy-openblas32==0.3.34.106.0

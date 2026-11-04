@@ -16,6 +16,13 @@ Array API
    pair: ndarray; C-API
    pair: C-API; array
 
+.. note::
+
+   Unless stated otherwise, the functions and macros on this page are made
+   available by including ``numpy/arrayobject.h``. See
+   :ref:`including-the-c-api` for which headers to include and how to
+   import the API with ``import_array()`` before using it.
+
 
 Array structure and data access
 -------------------------------
@@ -529,8 +536,8 @@ From other objects
 
     Return an ndarray object from a Python object that exposes the
     :obj:`~numpy.class.__array__` method. The third-party implementations of
-    :obj:`~numpy.class.__array__` must take ``dtype`` and ``copy`` keyword
-    arguments. ``context`` is unused.
+    :obj:`~numpy.class.__array__` must accept ``dtype`` positionally and
+    ``copy`` as a keyword argument. ``context`` is unused.
 
 .. c:function:: PyObject* PyArray_ContiguousFromAny( \
         PyObject* op, int typenum, int min_depth, int max_depth)
@@ -1875,7 +1882,10 @@ the functions that must be implemented for each slot.
 
    .. versionadded:: 2.6
 
-   Registers a dedicated loop for use by :meth:`~numpy.ufunc.reduce`,
+   Registers a dedicated loop for use by the reduce-like methods
+   (:meth:`~numpy.ufunc.reduce`,
+   :meth:`~numpy.ufunc.reduceat`,
+   :meth:`~numpy.ufunc.accumulate`),
    implemented as a :c:type:`PyArrayMethod_GetLoop` function (the same
    typedef used for ``NPY_METH_get_loop``). This is required to reduce
    ufuncs with more than one output, since the "forward" elementwise loop of
@@ -1891,26 +1901,30 @@ the functions that must be implemented for each slot.
 
        [acc_0, ..., acc_{nout-1}, x, out_0, ..., out_{nout-1}]
 
-   where ``x`` is the streamed element being reduced in, and each ``out_i``
-   points at the same memory as the matching ``acc_i`` (and typically has a
-   stride of 0 relative to it).
+   where ``x`` is the streamed element being reduced in. For
+   :meth:`~numpy.ufunc.reduce` and :meth:`~numpy.ufunc.reduceat`, each
+   ``out_i`` points at the same memory as the matching ``acc_i`` (and
+   typically has a stride of 0 relative to it). For
+   :meth:`~numpy.ufunc.accumulate` it does not, see below.
 
    The *strides* argument passed to ``NPY_METH_get_reduction_loop`` itself at
    setup time uses this same layout, so that ``strides[i]`` describes the
    ``i``-th operand of the loop being requested. ``strides[nout]`` is the
    stride of the streamed input, and each ``strides[nout + 1 + i]`` repeats
-   ``strides[i]``, because ``out_i`` and ``acc_i`` are the same buffer. The
-   accumulator strides are normally 0, since the reduction accumulates in
-   place. When a ``where=`` mask is used, one further entry at
-   ``strides[2 * nout + 1]`` holds the mask stride.
+   ``strides[i]``. The accumulator strides are normally 0, since the
+   reduction accumulates in place. For :meth:`~numpy.ufunc.accumulate`,
+   ``out_i`` instead points at the next element of the same output, and
+   ``acc_i`` and ``out_i`` both use the output's stride, so a loop may only
+   accumulate in place when ``data[i] == data[nout + 1 + i]``. When a
+   ``where=`` mask is used, one further entry at ``strides[2 * nout + 1]``
+   holds the mask stride.
 
-   If ``NPY_METH_get_reduction_loop`` is not set, :meth:`~numpy.ufunc.reduce`
-   falls back to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only
-   works for the typical two-input/one-output case. Calling
-   :meth:`~numpy.ufunc.reduce` on a ufunc with more than one output whose
-   resolved ArrayMethod does not register a reduction loop raises a
-   :exc:`TypeError`. See :ref:`c-api.reduction-loop-tutorial` for a
-   worked example.
+   If ``NPY_METH_get_reduction_loop`` is not set, these methods fall back
+   to ``NPY_METH_get_loop``/``NPY_METH_strided_loop``, which only works for
+   the typical two-input/one-output case. Calling any of them on a ufunc with
+   more than one output whose resolved ArrayMethod does not register a
+   reduction loop raises a :exc:`TypeError`. See
+   :ref:`c-api.reduction-loop-tutorial` for a worked example.
 
    Note that this slot only lifts the restriction on how many outputs a
    ufunc may have. It does not change how many inputs a ufunc may have:
@@ -1932,6 +1946,8 @@ the functions that must be implemented for each slot.
    reduction is empty or when a ``where=`` mask is given, for a ufunc whose
    loop also registers a :c:macro:`NPY_METH_get_reduction_loop`. See
    :c:type:`PyArrayMethod_GetMultiReductionInitials` for the signature.
+   :meth:`~numpy.ufunc.reduceat` and :meth:`~numpy.ufunc.accumulate` do not
+   use them and seed with the first element instead.
 
    A method may register at most one of
    :c:macro:`NPY_METH_get_reduction_initial` and
@@ -2927,18 +2943,26 @@ Array Functions
     Compute a product-sum over the last dimensions of *obj1* and
     *obj2*. Neither array is conjugated.
 
-.. c:function:: PyObject* PyArray_MatrixProduct(PyObject* obj1, PyObject* obj)
+.. c:function:: PyObject* PyArray_MatrixProduct(PyObject* obj1, PyObject* obj2)
 
     Compute a product-sum over the last dimension of *obj1* and the
     second-to-last dimension of *obj2*. For 2-d arrays this is a
     matrix-product. Neither array is conjugated.
 
+    .. deprecated:: 2.6
+        Passing *obj1* with 2 or more dimensions and *obj2* with more than
+        2 dimensions is deprecated and will eventually raise an error.
+
 .. c:function:: PyObject* PyArray_MatrixProduct2( \
-        PyObject* obj1, PyObject* obj, PyArrayObject* out)
+        PyObject* obj1, PyObject* obj2, PyArrayObject* out)
 
     Same as PyArray_MatrixProduct, but store the result in *out*.  The
     output array must have the correct shape, type, and be
     C-contiguous, or an exception is raised.
+
+    .. deprecated:: 2.6
+        Passing *obj1* with 2 or more dimensions and *obj2* with more than
+        2 dimensions is deprecated and will eventually raise an error.
 
 .. c:function:: PyArrayObject* PyArray_EinsteinSum( \
         char* subscripts, npy_intp nop, PyArrayObject** op_in, \
@@ -4229,7 +4253,7 @@ which uses the NumPy API must import NumPy using one of the functions
 ``PyArray_ImportNumPyAPI()`` or ``import_array()``.
 In some places, functionality which requires ``import_array()`` is not
 needed, because you only need type definitions.  In this case, it is
-sufficient to include ``numpy/ndarratypes.h``.
+sufficient to include ``numpy/ndarraytypes.h``.
 
 For the typical Python project, multiple C or C++ files will be compiled into
 a single shared object (the Python C-module) and ``PyArray_ImportNumPyAPI()``

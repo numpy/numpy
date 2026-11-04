@@ -41,7 +41,9 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
             --index-url https://chaquo.com/pypi-upstream/ \
             chaquopy-openblas==0.3.33
     else
-        python -m pip install -r $PROJECT_DIR/requirements/ci_requirements.txt
+        pushd $PROJECT_DIR
+        python -m pip install --group $OPENBLAS
+        popd
         python -c "import scipy_${OPENBLAS}; print(scipy_${OPENBLAS}.get_pkg_config())" > $pkgconf_path/scipy-openblas.pc
 
         # Copy scipy-openblas DLL's to a fixed location so we can point delvewheel
@@ -55,11 +57,4 @@ shutil.copytree(srcdir, os.path.join("$pkgconf_path", "lib"))
 EOF
         fi
     fi
-fi
-
-if [[ $RUNNER_OS == "Windows" ]]; then
-    python -m pip install -r $PROJECT_DIR/requirements/delvewheel_requirements.txt
-    # pkgconf - carries out the role of pkg-config.
-    # Alternative is pkgconfiglite that you have to install with choco
-    python -m pip install -r $PROJECT_DIR/requirements/pkgconf_requirements.txt
 fi

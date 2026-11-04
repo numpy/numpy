@@ -671,7 +671,7 @@ preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
 
     // Compare parts of the needle to check for periodicity.
     int cmp = memcmp(needle.buffer, needle.buffer + p->period,
-                     (size_t) p->cut);
+                     (size_t) p->cut * sizeof(char_type));
     p->is_periodic = (0 == cmp);
 
     // If periodic, gap is unused; otherwise, calculate period and gap.

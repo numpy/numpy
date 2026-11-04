@@ -4,6 +4,8 @@
 NumPy 2.4.0 Release Notes
 ==========================
 
+*Released on 2025-12-20.*
+
 The NumPy 2.4.0 release continues the work to improve free threaded Python
 support, user dtypes implementation, and annotations. There are many expired
 deprecations and bug fixes as well.

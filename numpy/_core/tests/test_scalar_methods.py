@@ -84,7 +84,7 @@ class TestAsIntegerRatio:
             [0, -7400, 14266, -7822, -8721],
             marks=[
                 pytest.mark.skipif(
-                    np.finfo(np.double) == np.finfo(np.longdouble),
+                    np.dtype(np.double) == np.dtype(np.longdouble),
                     reason="long double is same as double"),
                 pytest.mark.skipif(
                     LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
@@ -217,6 +217,16 @@ class TestBitCount:
             assert np.uint64(a - 1).bit_count() == exp
             assert np.uint64(a ^ 63).bit_count() == 7
             assert np.uint64((a - 1) ^ 510).bit_count() == exp - 8
+
+
+class TestMethodForwarding:
+    def test_many_forwarded_arguments(self):
+        # more forwarded arguments than fit the on-stack buffer, so that the
+        # heap fallback is exercised
+        scalar = np.float64(1.5)
+        shape = (1,) * 13
+        assert scalar.reshape(*shape).shape == shape
+        assert scalar.reshape(*shape, order="C").shape == shape
 
 
 class TestDevice:

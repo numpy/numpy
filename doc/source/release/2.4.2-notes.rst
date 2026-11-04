@@ -4,6 +4,8 @@
 NumPy 2.4.2 Release Notes
 =========================
 
+*Released on 2026-01-31.*
+
 The NumPy 2.4.2 is a patch release that fixes bugs discovered after the
 2.4.1 release. Highlights are:
 

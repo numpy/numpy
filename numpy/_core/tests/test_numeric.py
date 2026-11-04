@@ -17,6 +17,7 @@ from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_64BIT,
     IS_WASM,
     assert_,
     assert_almost_equal,
@@ -28,7 +29,7 @@ from numpy.testing import (
     assert_raises_regex,
 )
 from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, given, hynp, st
-from numpy.testing._private.utils import longdouble_fpe_mark
+from numpy.testing._private.utils import longdouble_fpe_mark, requires_memory
 
 
 class TestResize:
@@ -1674,6 +1675,18 @@ class TestWrapFunc:
 
 
 class TestNonzero:
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=2.2e9)
+    @pytest.mark.parametrize("dtype", [
+        [("x", "u1", 2**31 + 2)],
+         "V2147483650",
+        ])
+    def test_nonzero_large_dtype(self, dtype):
+        # gh-32809
+        a = np.zeros(1, dtype)
+        a.view(np.uint8)[-1] = 1
+        assert np.count_nonzero(a) == 1
+
     def test_nonzero_trivial(self):
         assert_equal(np.count_nonzero(np.array([])), 0)
         assert_equal(np.count_nonzero(np.array([], dtype='?')), 0)

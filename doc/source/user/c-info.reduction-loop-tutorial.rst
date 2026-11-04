@@ -136,9 +136,9 @@ with ``/* BEGIN main computation */`` and ``/* END main computation */``.
         }
 
         /*
-         * The reduce machinery points each out_i at the same memory as the
-         * matching acc_i (with stride 0), so this both reads the running
-         * accumulators and writes the new ones.
+         * Reads the running accumulators acc_i and writes the new ones to
+         * out_i. For reduce these are the same memory, for accumulate out_i
+         * is the next element of the output.
          */
         static int
         double_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
@@ -422,13 +422,15 @@ real-world implementation, like the built-in :func:`numpy.add` or a fuller
   It is registered alongside the reduction loop, by adding this entry to the
   ``slots`` array above:
   ``{NPY_METH_get_multi_reduction_initials, (void *)&minimummaximum_get_multi_reduction_initials}``.
-- :meth:`~numpy.ufunc.accumulate`, :meth:`~numpy.ufunc.reduceat`, and
-  :meth:`~numpy.ufunc.at` are not supported for multi-output ufuncs yet,
-  only :meth:`~numpy.ufunc.reduce` is.
+- :meth:`~numpy.ufunc.at` is not supported for multi-output ufuncs yet.
+  :meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.reduceat`, and
+  :meth:`~numpy.ufunc.accumulate` all work for them once a reduction loop is
+  registered.
 
 .. seealso::
 
    * :doc:`ArrayMethod API reference </reference/c-api/array>` for the full
      :c:macro:`NPY_METH_get_reduction_loop` reference documentation.
    * :ref:`ufuncs-basics` for the Python-level behavior of
-     :meth:`~numpy.ufunc.reduce` on multi-output ufuncs.
+     :meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.reduceat`, and
+     :meth:`~numpy.ufunc.accumulate` on multi-output ufuncs.

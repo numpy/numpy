@@ -18,9 +18,18 @@ intern_strings(void);
 NPY_NO_EXPORT int
 verify_static_structs_initialized(void);
 
+/* Indices into `npy_interned_str_struct.scalar_method_names`. */
+enum {
+#define NPY_SCALAR_METHOD_ENUM_ENTRY(name) NPY_SCALAR_METHOD_##name,
+    NPY_SCALAR_METHOD_NAMES(NPY_SCALAR_METHOD_ENUM_ENTRY)
+#undef NPY_SCALAR_METHOD_ENUM_ENTRY
+    NPY_SCALAR_METHOD_COUNT
+};
+
 typedef struct npy_interned_str_struct {
     NPY_DECLARE_PYOBJECT_FIELDS(NPY_INTERNED_STR_FIELDS)
     PyObject *errmode_strings[NPY_ERRMODE_STRING_COUNT];
+    PyObject *scalar_method_names[NPY_SCALAR_METHOD_COUNT];
 } npy_interned_str_struct;
 
 /*

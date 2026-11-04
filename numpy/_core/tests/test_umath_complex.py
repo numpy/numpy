@@ -8,6 +8,7 @@ import numpy as np
 # import the c-extension module directly since _arg is not exported via umath
 import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
+    assert_allclose,
     assert_almost_equal,
     assert_array_equal,
     assert_array_max_ulp,
@@ -140,6 +141,17 @@ class TestClog:
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
         y = np.log(x)
         assert_almost_equal(y, y_r)
+
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("value", [complex(np.nan, 1),
+                                       complex(np.nan, np.nan),
+                                       complex(1, np.nan)])
+    def test_nan_components(self, dtype, value):
+        x = np.array(value, dtype=dtype)
+        with np.errstate(invalid='raise'):
+            y = np.log(x)
+        assert np.isnan(y.real)
+        assert np.isnan(y.imag)
 
     @platform_skip
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
@@ -291,6 +303,19 @@ class TestCsqrt:
 
         # sqrt(-1)
         check_complex_value(np.sqrt, -1, 0, 0, 1)
+
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+    def test_large_imaginary_rescaling(self, dtype):
+        real_dtype = np.empty((), dtype=dtype).real.dtype
+        max_value = np.finfo(real_dtype).max
+
+        value = np.array(1j * max_value, dtype=dtype)
+        result = np.sqrt(value)
+
+        expected = np.sqrt(max_value / 2)
+
+        assert_allclose(result.real, expected, rtol=5e-6)
+        assert_allclose(result.imag, expected, rtol=5e-6)
 
     def test_simple_conjugate(self):
         ref = np.conj(np.sqrt(complex(1, 1)))

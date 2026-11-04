@@ -1,0 +1,14 @@
+python module gh28700_lda_before_n
+    interface
+        subroutine probe(a, lda, n, work, gotn, gotlda)
+            real intent(in), dimension(lda, n) :: a
+            ! lda is declared before n on purpose. The initializer
+            ! ``lda = MAX(1, n)`` must still run after ``n = shape(a, 1)``.
+            integer intent(hide), depend(n) :: lda = MAX(1, n)
+            integer intent(hide), depend(a) :: n = shape(a, 1)
+            real intent(hide), dimension(3*n), depend(n) :: work
+            integer intent(out) :: gotn
+            integer intent(out) :: gotlda
+        end subroutine probe
+    end interface
+end python module gh28700_lda_before_n

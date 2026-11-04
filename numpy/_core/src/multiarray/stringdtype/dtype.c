@@ -1,6 +1,8 @@
 /* The implementation of the StringDType class */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdatomic.h>
+#include <string.h>
 #include "structmember.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -544,7 +546,7 @@ _compare_impl(void *a, void *b, PyArray_StringDTypeObject *descr_a,
                 // nan-like nulls sort to the end even in a descending
                 // sort, matching how NaN sorts for floats
                 if (a_is_null) {
-                    return 1;
+                    return b_is_null ? 0 : 1;
                 }
                 else if (b_is_null) {
                     return -1;
@@ -970,12 +972,30 @@ static PyMethodDef PyArray_StringDType_methods[] = {
         {NULL, NULL, 0, NULL},
 };
 
+static PyObject *
+stringdtype_has_na(PyArray_StringDTypeObject *self, void *NPY_UNUSED(ignored))
+{
+    return PyBool_FromLong(self->na_object != NULL);
+}
+
+static PyGetSetDef PyArray_StringDType_getset[] = {
+        {"_has_na", (getter)stringdtype_has_na, NULL,
+         "Whether a missing value object is configured", NULL},
+        {NULL, NULL, NULL, NULL, NULL},
+};
+
 static PyMemberDef PyArray_StringDType_members[] = {
         {"na_object", T_OBJECT_EX, offsetof(PyArray_StringDTypeObject, na_object),
          READONLY,
          "The missing value object associated with the dtype instance"},
         {"coerce", T_BOOL, offsetof(PyArray_StringDTypeObject, coerce), READONLY,
          "Controls hether non-string values should be coerced to string"},
+        {"_has_nan_na", T_BOOL,
+         offsetof(PyArray_StringDTypeObject, has_nan_na), READONLY,
+         "Whether the missing value object has NaN-like semantics"},
+        {"_has_string_na", T_BOOL,
+         offsetof(PyArray_StringDTypeObject, has_string_na), READONLY,
+         "Whether the missing value object is a string"},
         {NULL, 0, 0, 0, NULL},
 };
 
@@ -1009,16 +1029,39 @@ static Py_hash_t
 PyArray_StringDType_hash(PyObject *self)
 {
     PyArray_StringDTypeObject *sself = (PyArray_StringDTypeObject *)self;
+    /* PyArrayDescr_Type.tp_new initializes base.hash to -1. */
+    Py_hash_t hash = atomic_load_explicit(
+            (_Atomic(npy_hash_t) *)&sself->base.hash, memory_order_relaxed);
+    if (hash != -1) {
+        return hash;
+    }
+
     PyObject *hash_tup = NULL;
     if (sself->na_object != NULL) {
-        hash_tup = Py_BuildValue("(iO)", sself->coerce, sself->na_object);
+        if (PyFloat_Check(sself->na_object) &&
+                npy_isnan(PyFloat_AS_DOUBLE(sself->na_object))) {
+            // na_eq_cmp treats distinct float NaNs as equal, so use a fixed
+            // value instead of their identity-dependent hashes.
+            hash_tup = Py_BuildValue("(ii)", sself->coerce, 0);
+        }
+        else {
+            hash_tup = Py_BuildValue("(iO)", sself->coerce, sself->na_object);
+        }
     }
     else {
         hash_tup = Py_BuildValue("(i)", sself->coerce);
     }
+    if (hash_tup == NULL) {
+        return -1;
+    }
 
     Py_hash_t ret = PyObject_Hash(hash_tup);
     Py_DECREF(hash_tup);
+    if (ret != -1) {
+        atomic_store_explicit(
+                (_Atomic(npy_hash_t) *)&sself->base.hash, ret,
+                memory_order_relaxed);
+    }
     return ret;
 }
 
@@ -1039,6 +1082,7 @@ PyArray_DTypeMeta PyArray_StringDType = {
                 .tp_str = (reprfunc)stringdtype_repr,
                 .tp_methods = PyArray_StringDType_methods,
                 .tp_members = PyArray_StringDType_members,
+                .tp_getset = PyArray_StringDType_getset,
                 .tp_richcompare = PyArray_StringDType_richcompare,
                 .tp_hash = PyArray_StringDType_hash,
         }},

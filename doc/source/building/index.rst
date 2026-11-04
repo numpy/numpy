@@ -377,7 +377,7 @@ virtual environments:
 
     Then install the Python-level dependencies from PyPI with::
 
-       python -m pip install -r requirements/build_requirements.txt
+       python -m pip install --group dev-cli
 
 To build NumPy in an activated development environment, run::
 

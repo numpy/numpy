@@ -146,10 +146,13 @@ array_take(PyArrayObject *self,
 }
 
 static PyObject *
-array_fill(PyArrayObject *self, PyObject *args)
+array_fill(PyArrayObject *self, PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *obj;
-    if (!PyArg_ParseTuple(args, "O:fill", &obj)) {
+    NPY_PREPARE_ARGPARSER;
+
+    if (npy_parse_arguments("fill", args, len_args, NULL,
+            {"", NULL, &obj}) < 0) {
         return NULL;
     }
     if (PyArray_FillWithScalar(self, obj) < 0) {
@@ -366,11 +369,14 @@ array_min(PyArrayObject *self,
 }
 
 static PyObject *
-array_swapaxes(PyArrayObject *self, PyObject *args)
+array_swapaxes(PyArrayObject *self, PyObject *const *args, Py_ssize_t len_args)
 {
     int axis1, axis2;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTuple(args, "ii:swapaxes", &axis1, &axis2)) {
+    if (npy_parse_arguments("swapaxes", args, len_args, NULL,
+            {"", &PyArray_PythonPyIntFromInt, &axis1},
+            {"", &PyArray_PythonPyIntFromInt, &axis2}) < 0) {
         return NULL;
     }
     return PyArray_SwapAxes(self, axis1, axis2);
@@ -382,12 +388,12 @@ array_swapaxes(PyArrayObject *self, PyObject *args)
   steals reference to typed, must not be NULL
 */
 NPY_NO_EXPORT PyObject *
-PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
+PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, npy_intp offset)
 {
     multiarray_umath_state *state = _npy_module_state;
     PyObject *ret = NULL;
     PyObject *safe;
-    int self_elsize, typed_elsize;
+    npy_intp self_elsize, typed_elsize;
 
     if (self == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -412,7 +418,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 
         /* only returns True or raises */
         safe = PyObject_CallFunction(state->runtime_imports._getfield_is_safe,
-                                     "OOi", PyArray_DESCR(self),
+                                     "OOn", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
             Py_DECREF(typed);
@@ -455,12 +461,12 @@ array_getfield(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyArray_Descr *dtype = NULL;
-    int offset = 0;
+    npy_intp offset = 0;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("getfield", args, len_args, kwnames,
             {"dtype", &PyArray_DescrConverter, &dtype},
-            {"|offset", &PyArray_PythonPyIntFromInt, &offset}) < 0) {
+            {"|offset", &PyArray_IntpFromPyIntConverter, &offset}) < 0) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -475,7 +481,7 @@ array_getfield(PyArrayObject *self,
 */
 NPY_NO_EXPORT int
 PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
-                 int offset, PyObject *val)
+                 npy_intp offset, PyObject *val)
 {
     PyObject *ret = NULL;
     int retval = 0;
@@ -509,17 +515,18 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 }
 
 static PyObject *
-array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_setfield(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyArray_Descr *dtype = NULL;
-    int offset = 0;
+    npy_intp offset = 0;
     PyObject *value;
-    static char *kwlist[] = {"value", "dtype", "offset", 0};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|i:setfield", kwlist,
-                                     &value,
-                                     PyArray_DescrConverter, &dtype,
-                                     &offset)) {
+    if (npy_parse_arguments("setfield", args, len_args, kwnames,
+            {"value", NULL, &value},
+            {"dtype", &PyArray_DescrConverter, &dtype},
+            {"|offset", &PyArray_IntpFromPyIntConverter, &offset}) < 0) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -542,6 +549,12 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
     PyArray_CopySwapNFunc *copyswapn;
     PyArrayIterObject *it;
 
+    if (PyArray_DESCR(self)->elsize > NPY_MAX_INT) {
+        PyErr_SetString(PyExc_TypeError,
+                "byte-swapping with itemsize larger than INT_MAX "
+                "is not supported");
+        return NULL;
+    }
     if (inplace && PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
         return NULL;
     }
@@ -604,24 +617,22 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
 
 
 static PyObject *
-array_byteswap(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_byteswap(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     npy_bool inplace = NPY_FALSE;
-    static char *kwlist[] = {"inplace", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:byteswap", kwlist,
-                                     PyArray_BoolConverter, &inplace)) {
+    if (npy_parse_arguments("byteswap", args, len_args, kwnames,
+            {"|inplace", &PyArray_BoolConverter, &inplace}) < 0) {
         return NULL;
     }
     return PyArray_Byteswap(self, inplace);
 }
 
 static PyObject *
-array_tolist(PyArrayObject *self, PyObject *args)
+array_tolist(PyArrayObject *self, PyObject *NPY_UNUSED(ignored))
 {
-    if (!PyArg_ParseTuple(args, "")) {
-        return NULL;
-    }
     return PyArray_ToList(self);
 }
 
@@ -717,16 +728,17 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array_toscalar(PyArrayObject *self, PyObject *args)
+array_toscalar(PyArrayObject *self, PyObject *const *args, Py_ssize_t len_args)
 {
     npy_intp multi_index[NPY_MAXDIMS];
-    int n = PyTuple_GET_SIZE(args);
+    Py_ssize_t n = len_args;
     int idim, ndim = PyArray_NDIM(self);
 
     /* If there is a tuple as a single argument, treat it as the argument */
-    if (n == 1 && PyTuple_Check(PyTuple_GET_ITEM(args, 0))) {
-        args = PyTuple_GET_ITEM(args, 0);
-        n = PyTuple_GET_SIZE(args);
+    if (n == 1 && PyTuple_Check(args[0])) {
+        PyObject *tup = args[0];
+        n = PyTuple_GET_SIZE(tup);
+        args = PySequence_Fast_ITEMS(tup);
     }
 
     if (n == 0) {
@@ -746,7 +758,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
         npy_intp *shape = PyArray_SHAPE(self);
         npy_intp value, size = PyArray_SIZE(self);
 
-        value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, 0));
+        value = PyArray_PyIntAsIntp(args[0]);
         if (error_converting(value)) {
             return NULL;
         }
@@ -766,7 +778,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
         npy_intp value;
 
         for (idim = 0; idim < ndim; ++idim) {
-            value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, idim));
+            value = PyArray_PyIntAsIntp(args[idim]);
             if (error_converting(value)) {
                 return NULL;
             }
@@ -1191,11 +1203,8 @@ array_copy(PyArrayObject *self,
 
 /* Separate from array_copy to make __copy__ preserve Fortran contiguity. */
 static PyObject *
-array_copy_keeporder(PyArrayObject *self, PyObject *args)
+array_copy_keeporder(PyArrayObject *self, PyObject *NPY_UNUSED(ignored))
 {
-    if (!PyArg_ParseTuple(args, ":__copy__")) {
-        return NULL;
-    }
     return PyArray_NewCopy(self, NPY_KEEPORDER);
 }
 
@@ -1665,13 +1674,14 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
     else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
-        int offset, res;
+        npy_intp offset;
+        int res;
         Py_ssize_t pos = 0;
         while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
+            if (!PyArg_ParseTuple(value, "On|O", &new, &offset,
                                   &title)) {
                 return -1;
             }
@@ -1706,7 +1716,7 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
 
 
 static PyObject *
-array_deepcopy(PyArrayObject *self, PyObject *args)
+array_deepcopy(PyArrayObject *self, PyObject *const *args, Py_ssize_t len_args)
 {
     PyArrayObject *copied_array;
     PyObject *visit;
@@ -1718,8 +1728,10 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
     npy_intp stride, count;
     PyObject *copy, *deepcopy;
     int deepcopy_res;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTuple(args, "O:__deepcopy__", &visit)) {
+    if (npy_parse_arguments("__deepcopy__", args, len_args, NULL,
+            {"", NULL, &visit}) < 0) {
         return NULL;
     }
     copied_array = (PyArrayObject*) PyArray_NewCopy(self, NPY_KEEPORDER);
@@ -1900,8 +1912,13 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
         return NULL;
     }
     PyTuple_SET_ITEM(state, 0, PyLong_FromLong(version));
-    PyTuple_SET_ITEM(state, 1, PyObject_GetAttrString((PyObject *)self,
-                                                      "shape"));
+    obj = PyObject_GetAttrString((PyObject *)self, "shape");
+    if (obj == NULL) {
+        Py_DECREF(ret);
+        Py_DECREF(state);
+        return NULL;
+    }
+    PyTuple_SET_ITEM(state, 1, obj);
     descr = PyArray_DESCR(self);
     Py_INCREF(descr);
     PyTuple_SET_ITEM(state, 2, (PyObject *)descr);
@@ -2008,7 +2025,8 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
             return array_reduce_ex_regular(self, protocol);
         }
     }
-    buffer = PyObject_CallOneArg(picklebuf_class, transposed_array == NULL ? (PyObject*) self: transposed_array);
+    PyObject *arg = transposed_array == NULL ? (PyObject *)self : transposed_array;
+    buffer = PyObject_Vectorcall(picklebuf_class, &arg, 1, NULL);
     if (buffer == NULL) {
         /* Some arrays may refuse to export a buffer, in which case
          * just fall back on regular __reduce_ex__ implementation
@@ -2170,6 +2188,11 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (!PyList_Check(rawdata)) {
             PyErr_SetString(PyExc_TypeError,
                             "object pickle not returning list");
+            goto end;
+        }
+        if (PyList_GET_SIZE(rawdata) != PyArray_MultiplyList(dimensions, nd)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "list size does not match array size");
             goto end;
         }
     }
@@ -2410,18 +2433,23 @@ array_sizeof(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 
 
 static PyObject *
-array_transpose(PyArrayObject *self, PyObject *args)
+array_transpose(PyArrayObject *self, PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *shape = Py_None;
-    Py_ssize_t n = PyTuple_Size(args);
+    PyObject *axes_tuple = NULL;
     PyArray_Dims permute;
     PyObject *ret;
 
-    if (n > 1) {
-        shape = args;
+    if (len_args > 1) {
+        /* Axes passed one by one; the converter wants a sequence */
+        axes_tuple = PyTuple_FromArray(args, len_args);
+        if (axes_tuple == NULL) {
+            return NULL;
+        }
+        shape = axes_tuple;
     }
-    else if (n == 1) {
-        shape = PyTuple_GET_ITEM(args, 0);
+    else if (len_args == 1) {
+        shape = args[0];
     }
 
     if (shape == Py_None) {
@@ -2429,12 +2457,14 @@ array_transpose(PyArrayObject *self, PyObject *args)
     }
     else {
         if (!PyArray_IntpConverter(shape, &permute)) {
+            Py_XDECREF(axes_tuple);
             return NULL;
         }
         ret = PyArray_Transpose(self, &permute);
         npy_free_cache_dim_obj(permute);
     }
 
+    Py_XDECREF(axes_tuple);
     return ret;
 }
 
@@ -2533,7 +2563,8 @@ array_dot(PyArrayObject *self,
             return NULL;
         }
     }
-    ret = (PyArrayObject *)PyArray_MatrixProduct2(a, b, (PyArrayObject *)o);
+    ret = (PyArrayObject *)PyArray_MatrixProduct_int(
+            a, b, (PyArrayObject *)o, "numpy.dot");
     return PyArray_Return(ret);
 }
 
@@ -2596,11 +2627,8 @@ array_compress(PyArrayObject *self,
 
 
 static PyObject *
-array_nonzero(PyArrayObject *self, PyObject *args)
+array_nonzero(PyArrayObject *self, PyObject *NPY_UNUSED(ignored))
 {
-    if (!PyArg_ParseTuple(args, "")) {
-        return NULL;
-    }
     return PyArray_Nonzero(self);
 }
 
@@ -2659,12 +2687,13 @@ array_clip(PyArrayObject *self,
 
 
 static PyObject *
-array_conjugate(PyArrayObject *self, PyObject *args)
+array_conjugate(PyArrayObject *self, PyObject *const *args, Py_ssize_t len_args)
 {
     PyArrayObject *out = NULL;
-    if (!PyArg_ParseTuple(args, "|O&:conjugate",
-                          PyArray_OutputConverter,
-                          &out)) {
+    NPY_PREPARE_ARGPARSER;
+
+    if (npy_parse_arguments("conjugate", args, len_args, NULL,
+            {"|", &PyArray_OutputConverter, &out}) < 0) {
         return NULL;
     }
     return PyArray_Conjugate(self, out);
@@ -2872,15 +2901,14 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 
     if (PyArray_TYPE(self) == NPY_OBJECT) {
         /* let python try calling __complex__ on the object. */
-        PyObject *args, *res;
-
         Py_DECREF(dtype);
-        args = Py_BuildValue("(O)", *((PyObject**)PyArray_DATA(self)));
-        if (args == NULL) {
+        PyObject *item = PyArray_GETITEM(self, PyArray_DATA(self));
+        if (item == NULL) {
             return NULL;
         }
-        res = PyComplex_Type.tp_new(&PyComplex_Type, args, NULL);
-        Py_DECREF(args);
+        PyObject *res = PyObject_Vectorcall(
+                (PyObject *)&PyComplex_Type, &item, 1, NULL);
+        Py_DECREF(item);
         return res;
     }
 
@@ -2888,7 +2916,8 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     if (arr == NULL) {
         return NULL;
     }
-    c = PyComplex_FromCComplex(*((Py_complex*)PyArray_DATA(arr)));
+    double *value = (double *)PyArray_DATA(arr);
+    c = PyComplex_FromDoubles(value[0], value[1]);
     Py_DECREF(arr);
     return c;
 }
@@ -2945,10 +2974,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /* for the copy module */
     {"__copy__",
         (PyCFunction)array_copy_keeporder,
-        METH_VARARGS, NULL},
+        METH_NOARGS, NULL},
     {"__deepcopy__",
         (PyCFunction)array_deepcopy,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
 
     /* for Pickling */
     {"__reduce__",
@@ -3005,7 +3034,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)array_byteswap,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"choose",
         (PyCFunction)array_choose,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -3017,10 +3046,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"conj",
         (PyCFunction)array_conjugate,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"conjugate",
         (PyCFunction)array_conjugate,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"copy",
         (PyCFunction)array_copy,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -3038,7 +3067,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"fill",
         (PyCFunction)array_fill,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"flatten",
         (PyCFunction)array_flatten,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -3047,7 +3076,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"item",
         (PyCFunction)array_toscalar,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"max",
         (PyCFunction)array_max,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -3059,7 +3088,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"nonzero",
         (PyCFunction)array_nonzero,
-        METH_VARARGS, NULL},
+        METH_NOARGS, NULL},
     {"partition",
         (PyCFunction)array_partition,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -3089,7 +3118,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"setfield",
         (PyCFunction)array_setfield,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"setflags",
         (PyCFunction)array_setflags,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -3107,7 +3136,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"swapaxes",
         (PyCFunction)array_swapaxes,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"take",
         (PyCFunction)array_take,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -3119,13 +3148,13 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"tolist",
         (PyCFunction)array_tolist,
-        METH_VARARGS, NULL},
+        METH_NOARGS, NULL},
     {"trace",
         (PyCFunction)array_trace,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"transpose",
         (PyCFunction)array_transpose,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"var",
         (PyCFunction)array_variance,
         METH_FASTCALL | METH_KEYWORDS, NULL},

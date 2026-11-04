@@ -1,0 +1,5 @@
+Better multithreaded scaling of promotion and ``__array_function__`` dispatch
+-----------------------------------------------------------------------------
+On free-threaded Python, ``np.result_type`` with identical dtypes and
+dispatching through ``__array_function__`` avoid shared reference counts and
+scale much better across threads.

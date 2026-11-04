@@ -94,7 +94,6 @@ array_converter_new(
         self->narrs++;
         Py_INCREF(item->object);
         item->DType = NPY_DTYPE(PyArray_DESCR(item->array));
-        Py_INCREF(item->DType);
 
         /*
          * Check whether we were passed an int/float/complex Python scalar.
@@ -118,6 +117,7 @@ array_converter_new(
                 self->flags &= ~(NPY_CH_ALL_PYSCALARS | NPY_CH_ALL_SCALARS);
             }
         }
+        Py_INCREF(item->DType);
     }
 
     return (PyObject *)self;
@@ -148,6 +148,18 @@ array_converter_get_scalar_input(PyArrayArrayConverterObject *self)
         }
     }
     return ret;
+}
+
+
+static PyObject *
+array_converter_get_has_pyscalars(PyArrayArrayConverterObject *self)
+{
+    for (int i = 0; i < self->narrs; i++) {
+        if (self->items[i].descr == NULL) {
+            Py_RETURN_TRUE;
+        }
+    }
+    Py_RETURN_FALSE;
 }
 
 
@@ -185,6 +197,11 @@ typedef enum {
 static int
 pyscalar_mode_conv(PyObject *obj, scalar_policy *policy)
 {
+    if (!PyUnicode_Check(obj)) {
+        PyErr_Format(PyExc_TypeError,
+                "invalid pyscalar mode %.100R, must be a string", obj);
+        return 0;
+    }
     npy_interned_str_struct *interned_str = &_npy_module_state->interned_str;
     PyObject *strings[3] = {
             interned_str->convert, interned_str->preserve,
@@ -392,6 +409,10 @@ array_converter_result_type(PyArrayArrayConverterObject *self,
 
 
 static PyGetSetDef array_converter_getsets[] = {
+    {"has_pyscalars",
+        (getter)array_converter_get_has_pyscalars,
+        NULL,
+        NULL, NULL},
     {"scalar_input",
         (getter)array_converter_get_scalar_input,
         NULL,
