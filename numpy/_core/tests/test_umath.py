@@ -2800,6 +2800,8 @@ class TestMinimumMaximum(_FilterInvalids):
             arg1 = np.array([0, cnan, cnan], dtype=complex)
             arg2 = np.array([cnan, 0, cnan], dtype=complex)
             self.check(arg1, arg2)
+            with np.errstate(invalid="raise"):
+                self.check_accumulate(arg1)
 
     def test_object_array(self):
         arg1 = np.arange(5, dtype=object)
