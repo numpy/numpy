@@ -884,6 +884,9 @@ string_to_int(
     npy_intp const strides[],
     NpyAuxData *NPY_UNUSED(auxdata)
 ) {
+    // load-bearing for the format codes used in error cases below
+    static_assert(std::is_same_v<NpyLongType, npy_longlong> ||
+                  std::is_same_v<NpyLongType, npy_ulonglong>);
     PyArray_StringDTypeObject *descr =
             ((PyArray_StringDTypeObject *)context->descriptors[0]);
     npy_string_allocator *allocator =
@@ -901,7 +904,6 @@ string_to_int(
     while (N--) {
         NpyLongType value;
         if (stringbuf_to_int<NpyLongType>(in, &value, has_null, default_string, allocator) != 0) {
-            npy_gil_error(PyExc_RuntimeError, "Encountered problem converting string dtype to integer dtype.");
             goto fail;
         }
         NpyType narrowed = (NpyType)value;
