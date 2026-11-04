@@ -45,20 +45,10 @@ solve-group = "bench"
 # tasks: lint, check-python-h
 features = ["lint"]
 
-[environments.build-debug]
-# tasks: build-debug
-features = ["build-deps", "build-debug"]
-solve-group = "debug"
-
-[environments.gdb]
-# tasks: gdb
-features = ["build-deps", "test-deps", "gdb"]
-solve-group = "debug"
-
-[environments.lldb]
-# tasks: lldb
-features = ["build-deps", "test-deps", "lldb"]
-solve-group = "debug"
+[environments.debug]
+# tasks: build-debug, test-debug, gdb (Linux), lldb (macOS)
+features = ["build-deps", "test-deps", "debug"]
+solve-group = "default"
 
 [environments.free-threading]
 # tasks: build-freethreading, test-freethreading, test-parallel-freethreading
@@ -246,33 +236,32 @@ description = "Check that `Python.h` is included before any other header"
 
 ### Debugging ###
 
-[feature.build-debug]
+[feature.debug]
+# Linux and macOS only: gdb/lldb and the -O0 flags below don't apply to MSVC.
 platforms = ["linux-64", "linux-aarch64", "osx-arm64"]
 
-[feature.build-debug.tasks.build-debug]
-# `-Dc_args`/`-Dcpp_args` are needed to override the `-O2` from the `CFLAGS`
-# and `CXXFLAGS` set by the conda-forge compiler activation scripts.
-cmd = "spin build --build-dir=build-debug -- -Dallow-noblas=false -Dbuildtype=debug -Ddisable-optimization=true -Dc_args=-O0 -Dcpp_args=-O0"
-description = "Build NumPy with debug settings (into `build-debug`)"
-
-[feature.gdb]
-platforms = ["linux-64", "linux-aarch64"]
-
-[feature.gdb.dependencies]
+[feature.debug.target.linux.dependencies]
 gdb = "*"
 
-[feature.gdb.tasks.gdb]
+[feature.debug.target.osx.dependencies]
+lldb = "*"
+
+[feature.debug.tasks.build-debug]
+# Explicit -O0: otherwise the conda-forge compiler flags (-O2, -DNDEBUG) win.
+cmd = "spin build --build-dir=build-debug -- -Dallow-noblas=false -Dbuildtype=debug -Dc_args=-O0 -Dcpp_args=-O0"
+description = "Build NumPy with debug settings (into `build-debug`)"
+
+[feature.debug.tasks.test-debug]
+cmd = "spin test --no-build --build-dir=build-debug"
+depends-on = "build-debug"
+description = "Run the test suite against the debug build"
+
+[feature.debug.target.linux.tasks.gdb]
 cmd = "spin gdb --build-dir=build-debug --no-build"
 depends-on = "build-debug"
 description = "Run a Python script under gdb, e.g. `pixi run gdb /path/to/script.py`"
 
-[feature.lldb]
-platforms = ["osx-arm64"]
-
-[feature.lldb.dependencies]
-lldb = "*"
-
-[feature.lldb.tasks.lldb]
+[feature.debug.target.osx.tasks.lldb]
 cmd = "spin lldb --build-dir=build-debug --no-build"
 depends-on = "build-debug"
 description = "Run a Python script under lldb, e.g. `pixi run lldb /path/to/script.py`"

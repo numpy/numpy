@@ -65,45 +65,41 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - name: Install debug Python
-      uses: deadsnakes/action@e640ac8743173a67cca4d7d77cd837e514bf98e8 # v3.2.0
+    - uses: prefix-dev/setup-pixi@ad1da6449d9e506fd127fd67ab2d054a769f6a94 # v0.11.2
       with:
-        python-version: '3.14'
-        debug: true
-    - name: Install dependencies
-      run: |
-        python --version
-        pip install -U pip
-        pip install --group dev-cli --group test-extending
+        pixi-version: v0.83.0
+        cache: false
     - name: Build NumPy debug
-      run: |
-        spin build -- -Dbuildtype=debug -Dallow-noblas=true \
-          -Dpython.allow_limited_api=true
+      run: pixi run --locked build-debug
     - name: Run test suite
-      run: |
-        spin test -- --timeout=600 --durations=10
+      run: pixi run --locked --skip-deps test-debug -- --timeout=600 --durations=10
+    - name: Meson log
+      if: failure()
+      run: cat build-debug/meson-logs/meson-log.txt
 
-  all_versions:
-    # like the smoke tests but runs on more Python versions
+  free_threaded_aarch64:
+    # Free-threaded Python with OpenBLAS and SIMD, on aarch64, via Pixi.
     needs: [smoke_test]
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-latest
-    env:
-      MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
-    strategy:
-      matrix:
-        version: ["3.13", "3.14", "3.15", "3.15t"]
+    runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+    - uses: prefix-dev/setup-pixi@ad1da6449d9e506fd127fd67ab2d054a769f6a94 # v0.11.2
       with:
-        python-version: ${{ matrix.version }}
-    - uses: ./.github/meson_actions
+        pixi-version: v0.83.0
+        cache: false
+    - name: Build NumPy
+      run: pixi run --locked build-freethreading
+    - name: Run test suite
+      run: pixi run --locked --skip-deps test-freethreading -- --timeout=600 --durations=10
+    - name: Meson log
+      if: failure()
+      run: cat build-freethreading/meson-logs/meson-log.txt
 
   full:
     # Install as editable, then run the full test suite with code coverage
