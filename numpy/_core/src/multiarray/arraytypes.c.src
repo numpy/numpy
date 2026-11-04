@@ -3433,7 +3433,7 @@ OBJECT_argmax(PyObject **ip, npy_intp n, npy_intp *max_ind,
                 int greater_than = PyObject_RichCompareBool(val, mp, Py_GT);
 
                 if (greater_than < 0) {
-                    return 0;
+                    return -1;
                 }
                 if (greater_than) {
                     mp = val;
@@ -3459,7 +3459,8 @@ static int
     @type@ *mp = (@type@ *)PyMem_RawMalloc(elsize);
 
     if (mp == NULL) {
-        return 0;
+        PyErr_NoMemory();
+        return -1;
     }
     memcpy(mp, ip, elsize);
     *max_ind = 0;
@@ -3497,7 +3498,7 @@ OBJECT_argmin(PyObject **ip, npy_intp n, npy_intp *min_ind,
                 int less_than = PyObject_RichCompareBool(val, mp, Py_LT);
 
                 if (less_than < 0) {
-                    return 0;
+                    return -1;
                 }
                 if (less_than) {
                     mp = val;
@@ -3522,7 +3523,10 @@ static int
     int elsize = PyArray_ITEMSIZE(aip);
     @type@ *mp = (@type@ *)PyMem_RawMalloc(elsize);
 
-    if (mp==NULL) return 0;
+    if (mp == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
     memcpy(mp, ip, elsize);
     *min_ind = 0;
     for(i=1; i<n; i++) {

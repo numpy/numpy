@@ -176,7 +176,10 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     n = PyArray_SIZE(ap)/m;
     rptr = (npy_intp *)PyArray_DATA(rp);
     for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
-        arg_func(ip, m, rptr, ap);
+        if (arg_func(ip, m, rptr, ap) < 0) {
+            NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
+            goto fail;
+        }
         rptr += 1;
     }
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
@@ -193,7 +196,10 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
 
  fail:
     Py_DECREF(ap);
-    Py_XDECREF(rp);
+    if (rp != NULL) {
+        PyArray_DiscardWritebackIfCopy(rp);
+        Py_DECREF(rp);
+    }
     return NULL;
 }
 
