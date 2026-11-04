@@ -2905,6 +2905,8 @@ class MaskedArray(ndarray):
         _data = np.array(data, dtype=dtype, copy=copy,
                          order=order, subok=True, ndmin=ndmin)
         _baseclass = getattr(data, '_baseclass', type(_data))
+        if issubclass(_baseclass, MaskedArray):
+            _baseclass = getattr(_data, '_baseclass', ndarray)
         # Check that we're not erasing the mask.
         if isinstance(data, MaskedArray) and (data.shape != _data.shape):
             copy = True
