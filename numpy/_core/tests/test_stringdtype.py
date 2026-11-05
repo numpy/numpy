@@ -1977,6 +1977,9 @@ class TestFixedWidthCastSafety:
         assert np.can_cast(arr.dtype, "T", casting="safe")
         with pytest.raises(TypeError, match="Invalid unicode code point"):
             arr.astype("T")
+        big = np.full(2 * np.getbufsize(), "\ud800", dtype="U1")
+        with pytest.raises(TypeError, match="Invalid unicode code point"):
+            np.add(big, np.array("", dtype="T"))
 
     def test_bytes_to_stringdtype_valid_utf8(self):
         barr = np.array(["café".encode(), "😊".encode()], dtype="S5")
