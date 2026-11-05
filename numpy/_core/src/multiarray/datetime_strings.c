@@ -686,8 +686,8 @@ parse_timezone:
             sublen -= 2;
             if (offset_hour >= 24) {
                 npy_gil_error(PyExc_ValueError,
-                            "Timezone hours offset out of range "
-                            "in datetime string \"%s\"", str);
+                              "Timezone hours offset out of range "
+                              "in datetime string \"%s\"", str);
                 goto error;
             }
         }
@@ -710,8 +710,8 @@ parse_timezone:
                 sublen -= 2;
                 if (offset_minute >= 60) {
                     npy_gil_error(PyExc_ValueError,
-                                "Timezone minutes offset out of range "
-                                "in datetime string \"%s\"", str);
+                                  "Timezone minutes offset out of range "
+                                  "in datetime string \"%s\"", str);
                     goto error;
                 }
             }
