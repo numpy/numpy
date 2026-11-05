@@ -1667,6 +1667,9 @@ fail:
         PyDataMem_UserFREE(valbuffer, N * elsize, mem_handler);
     }
     PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), mem_handler);
+    if (ret == 0 && PyErr_Occurred()) {
+        ret = -1;
+    }
     if (ret < 0) {
         if (!PyErr_Occurred()) {
             /* Out of memory during sorting or buffer creation */
@@ -2393,6 +2396,9 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
 
     if (error < 0) {
         PyErr_SetString(PyExc_ValueError, "Sorter index out of range.");
+        goto fail;
+    }
+    if (PyErr_Occurred()) {
         goto fail;
     }
     if (ap3 != NULL) {
