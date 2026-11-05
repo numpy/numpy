@@ -1790,6 +1790,12 @@ def test_cfloat_to_string_nan_na(typename, nan_like_na_object):
     assert arr[1] == "(inf+1j)"
 
 
+def test_string_to_bytes_error_in_buffered_ufunc():
+    arr = np.full(2 * np.getbufsize(), "é", dtype="T")
+    with pytest.raises(UnicodeEncodeError):
+        np.add(arr, arr, out=np.empty(arr.shape, dtype="S4"))
+
+
 def test_cfloat_to_string_nan_na_strided_field_view(nan_like_na_object):
     # the field view's byte stride is aligned but not a multiple of the
     # itemsize; the NaN check and the value read must step in bytes
@@ -1971,6 +1977,9 @@ class TestFixedWidthCastSafety:
         assert np.can_cast(arr.dtype, "T", casting="safe")
         with pytest.raises(TypeError, match="Invalid unicode code point"):
             arr.astype("T")
+        big = np.full(2 * np.getbufsize(), "\ud800", dtype="U1")
+        with pytest.raises(TypeError, match="Invalid unicode code point"):
+            np.add(big, np.array("", dtype="T"))
 
     def test_bytes_to_stringdtype_valid_utf8(self):
         barr = np.array(["café".encode(), "😊".encode()], dtype="S5")

@@ -1213,6 +1213,7 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
 
     /* The reset may copy the first buffer chunk, which could cause FPEs */
     if (NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
+        NPY_END_THREADS;
         NPY_AUXDATA_FREE(auxdata);
         NpyIter_Deallocate(iter);
         return -1;
