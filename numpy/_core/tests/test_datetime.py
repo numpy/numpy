@@ -44,6 +44,8 @@ class TestDateTime:
               "np.datetime64"
         with pytest.warns(UserWarning, match=msg):
             np.datetime64('2000-01-01T00+01')
+        with pytest.warns(UserWarning, match=msg):
+            np.array([b'2000-01-01T00+01'] * 1000).astype('M8[us]')
 
     def test_datetime(self):
         msg = "no explicit representation of timezones available for " \
@@ -1009,6 +1011,9 @@ class TestDateTime:
 
         # gh-16352: upconversion to finer units overflows
         arr = np.array(["2367-12-31 12:00:00"], dtype="datetime64[h]")
+        with pytest.raises(OverflowError, match="Overflow"):
+            arr.astype("datetime64[ns]")
+        arr = np.array(["2367-12-31 12:00:00"] * 1000, dtype="datetime64[h]")
         with pytest.raises(OverflowError, match="Overflow"):
             arr.astype("datetime64[ns]")
 
@@ -2070,6 +2075,12 @@ class TestDateTime:
               "np.datetime64"
         # Arbitrary bad string
         assert_raises(ValueError, np.array, ['badvalue'], np.dtype('M8[us]'))
+        for s in [b'badvalue', b'1980-13', b'1980-01-32', b'1980-01-01T25',
+                  b'1980-01-01T00:60', b'1980-01-01T00:00:60']:
+            assert_raises(ValueError, np.array([s] * 1000).astype, 'M8[us]')
+        for s in [b'1980-01-01T00+25', b'1980-01-01T00+01:60']:
+            with pytest.warns(UserWarning, match=msg):
+                assert_raises(ValueError, np.array([s] * 1000).astype, 'M8[us]')
         # Character after year must be '-'
         assert_raises(ValueError, np.array, ['1980X'], np.dtype('M8[us]'))
         # Cannot have trailing '-'
