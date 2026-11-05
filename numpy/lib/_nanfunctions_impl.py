@@ -151,6 +151,14 @@ def _copyto(a, val, mask):
     return a
 
 
+def _all_nan_message(dtype, where="slice"):
+    """
+    Message for an all-NaN slice, naming NaT for datetime64 and timedelta64.
+    """
+    nan = "NaT" if dtype.kind in "mM" else "NaN"
+    return f"All-{nan} {where} encountered"
+
+
 def _remove_nan_1d(arr1d, second_arr1d=None, overwrite_input=False):
     """
     Equivalent to arr1d[~arr1d.isnan()], but in a different order
@@ -184,7 +192,7 @@ def _remove_nan_1d(arr1d, second_arr1d=None, overwrite_input=False):
 
     s = np.nonzero(c)[0]
     if s.size == arr1d.size:
-        warnings.warn("All-NaN slice encountered", RuntimeWarning,
+        warnings.warn(_all_nan_message(arr1d.dtype), RuntimeWarning,
                       stacklevel=6)
         if second_arr1d is None:
             return arr1d[:0], None, True
@@ -366,7 +374,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         # which do not implement isnan (gh-9009), or fmin correctly (gh-8975)
         res = np.fmin.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
-            warnings.warn("All-NaN slice encountered", RuntimeWarning,
+            warnings.warn(_all_nan_message(a.dtype), RuntimeWarning,
                           stacklevel=2)
     else:
         # Slow, but safe for subclasses of ndarray
@@ -380,7 +388,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
             res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning,
+            warnings.warn(_all_nan_message(a.dtype, "axis"), RuntimeWarning,
                           stacklevel=2)
     return res
 
@@ -491,7 +499,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
         res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
-            warnings.warn("All-NaN slice encountered", RuntimeWarning,
+            warnings.warn(_all_nan_message(a.dtype), RuntimeWarning,
                           stacklevel=2)
     else:
         # Slow, but safe for subclasses of ndarray
@@ -505,7 +513,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
             res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning,
+            warnings.warn(_all_nan_message(a.dtype, "axis"), RuntimeWarning,
                           stacklevel=2)
     return res
 
@@ -562,7 +570,7 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     if mask is not None and mask.size:
         mask = np.all(mask, axis=axis)
         if np.any(mask):
-            raise ValueError("All-NaN slice encountered")
+            raise ValueError(_all_nan_message(a.dtype))
     res = np.argmin(a, axis=axis, out=out, keepdims=keepdims)
     return res
 
@@ -620,7 +628,7 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     if mask is not None and mask.size:
         mask = np.all(mask, axis=axis)
         if np.any(mask):
-            raise ValueError("All-NaN slice encountered")
+            raise ValueError(_all_nan_message(a.dtype))
     res = np.argmax(a, axis=axis, out=out, keepdims=keepdims)
     return res
 
@@ -1097,7 +1105,7 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     a = np.ma.masked_array(a, np.isnan(a))
     m = np.ma.median(a, axis=axis, overwrite_input=overwrite_input)
     for i in range(np.count_nonzero(m.mask.ravel())):
-        warnings.warn("All-NaN slice encountered", RuntimeWarning,
+        warnings.warn(_all_nan_message(a.dtype), RuntimeWarning,
                       stacklevel=5)
 
     fill_value = np.timedelta64("NaT") if m.dtype.kind == "m" else np.nan
