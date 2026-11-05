@@ -265,15 +265,28 @@ class TestModuleDeclaration:
 
 
 class TestStringLiteralDepend:
-    # gh-28700: identifiers inside a character parameter's literal value
+    # gh-28700, gh-33220: identifiers inside a character parameter's literal value
     # must not be harvested as dependencies (a self-dependency crashes the
-    # dependency sort during a -c build).
+    # dependency sort during a -c build). Backslashes inside literals are not
+    # escapes in Fortran and must not bleed across string boundaries.
     def test_mask_string_literals(self):
         mask = crackfortran.mask_string_literals
         assert mask("'mkdir '") == "''"
         assert mask('"badvar2"') == "''"
         assert mask("'mkdir '//badvar2") == "''//badvar2"
         assert mask("a + b") == "a + b"
+        # gh-33220: backslash inside literal
+        assert mask(r"'c:\'//n//'x'") == "''//n//''"
+        assert mask(r'"c:\"//n//"x"') == "''//n//''"
+        assert mask(r"'don''t'//n") == "''//n"
+        assert mask(r'"say ""hi"""//n') == "''//n"
+
+    def test_split_by_unquoted_backslash_and_quotes(self):
+        # gh-33220: split_by_unquoted must not treat backslash as escape
+        split = crackfortran.split_by_unquoted
+        assert split(r"x = 'c:\'; y = 1", ";") == (r"x = 'c:\'", "; y = 1")
+        assert split(r'x = "c:\"; y = 1', ";") == (r'x = "c:\"', "; y = 1")
+        assert split(r"x = 'don''t;'; y = 2", ";") == (r"x = 'don''t;'", "; y = 2")
 
     def test_no_self_depend_from_literal(self):
         fpath = util.getpath("tests", "src", "crackfortran", "gh28700.f90")
