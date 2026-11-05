@@ -2255,6 +2255,12 @@ class TestDateTime:
         for s in [b'1980-01-01T00+25', b'1980-01-01T00+01:60']:
             with pytest.warns(UserWarning, match=msg):
                 assert_raises(ValueError, np.array([s] * 1000).astype, 'M8[us]')
+        match = '^Error parsing datetime string "\ufffdbad" at position 0$'
+        with pytest.raises(ValueError, match=match):
+            np.array([b'\xffbad']).astype('M8[us]')
+        with pytest.raises(ValueError) as excinfo:
+            np.datetime64('x' * 200)
+        assert 'x' * 101 not in str(excinfo.value)
         # Character after year must be '-'
         assert_raises(ValueError, np.array, ['1980X'], np.dtype('M8[us]'))
         # Cannot have trailing '-'
