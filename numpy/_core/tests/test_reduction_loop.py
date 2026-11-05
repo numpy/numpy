@@ -68,7 +68,7 @@ def method_args(method, a, axis=0):
     Positional and keyword arguments for ``ufunc.<method>`` over `a`.
     `reduceat` gets two segments along `axis`, or one if it has length 1.
     """
-    if method == "reduce":
+    if method in ("reduce", "accumulate"):
         return (a,), {"axis": axis}
     n = a.shape[axis]
     return (a, [0] if n == 1 else [0, n // 2]), {"axis": axis}
@@ -137,7 +137,7 @@ class TestReductionLoop:
             np.testing.assert_array_equal(red_min, np.minimum.reduce(a))
             np.testing.assert_array_equal(red_max, np.maximum.reduce(a))
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_reduce_like(self, method, shape):
         a = make_array(shape, seed=3)
@@ -145,12 +145,12 @@ class TestReductionLoop:
             args, kwargs = method_args(method, a, axis)
             check_minmax(method, *args, **kwargs)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     def test_single_element(self, method):
         args, kwargs = method_args(method, np.array([7.0]))
         check_minmax(method, *args, **kwargs)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_strided(self, method, shape):
         a = make_array(shape, seed=15)[::-1]
@@ -158,14 +158,14 @@ class TestReductionLoop:
             args, kwargs = method_args(method, a, axis)
             check_minmax(method, *args, **kwargs)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     @pytest.mark.parametrize("kind", list(SPECIALS))
     def test_specials(self, method, kind):
         vals = [1.0, -2.0, 3.5, 0.0, -1.0] + SPECIALS[kind]
         args, kwargs = method_args(method, np.array(vals, dtype=np.float64))
         check_minmax(method, *args, **kwargs)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_out_tuple(self, method, shape):
         a = make_array(shape, seed=8)
@@ -175,20 +175,21 @@ class TestReductionLoop:
             out = (np.empty(out_shape), np.empty(out_shape))
             check_minmax(method, *args, **kwargs, out=out)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     def test_out_overlapping_input(self, method):
         # `out` views into the reduced array make the iterator use a writeback
         # temporary, but the arrays that were passed in must still be the ones
         # returned and updated.
-        a = np.arange(24, dtype=np.float64).reshape(6, 4)
+        flat = np.arange(72, dtype=np.float64)
+        a = flat[:24].reshape(6, 4)
         args, kwargs = method_args(method, a)
         out_shape = method_out_shape(method, args, kwargs)
         n = int(np.prod(out_shape))
-        flat = a.reshape(-1)
-        out = (flat[:n].reshape(out_shape), flat[n:2 * n].reshape(out_shape))
+        out = (flat[1:n + 1].reshape(out_shape),
+               flat[n + 1:2 * n + 1].reshape(out_shape))
         check_minmax(method, *args, **kwargs, out=out)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     @pytest.mark.parametrize("which", [0, 1])
     def test_out_partial(self, method, which):
         # Only some entries of the `out` tuple given, the rest allocated.
@@ -197,14 +198,14 @@ class TestReductionLoop:
         out[which] = np.empty(method_out_shape(method, args, kwargs))
         check_minmax(method, *args, **kwargs, out=tuple(out))
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     def test_no_reduction_loop_raises(self, method):
         args, kwargs = method_args(method, np.array([1, 2, 3]))
         with pytest.raises(
                 TypeError, match="resolved loop does not register a reduction loop"):
             getattr(np.divmod, method)(*args, **kwargs)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_object(self, method, shape):
         # Offset past the immortal small ints, so refcount bugs are visible.
@@ -216,7 +217,7 @@ class TestReductionLoop:
 
     # The second output of the mixed ufuncs is the maximum as intp/object, so
     # the first element of each reduction is cast from float64 into it.
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     @pytest.mark.parametrize("ufunc, max_dtype", [
         (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
         ids=["intp", "object"])
@@ -232,7 +233,7 @@ class TestReductionLoop:
             check_minmax(method, *args, **kwargs, ufunc=ufunc,
                          max_dtype=max_dtype)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat"])
+    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
     @pytest.mark.parametrize("ufunc, max_dtype", [
         (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
         ids=["intp", "object"])
@@ -259,12 +260,6 @@ class TestReductionLoop:
     def test_forward_dtype_propagates_to_inputs(self):
         got_min, got_max = mm(1, 5, dtype=np.float64)
         assert got_min == 1.0 and got_max == 5.0
-
-    def test_accumulate_raises(self):
-        a = make_array((4,), seed=20)
-        with pytest.raises(
-                ValueError, match="only supported for functions returning a single"):
-            mm.accumulate(a)
 
     def test_at_raises(self):
         a = make_array((4,), seed=22)
@@ -527,3 +522,25 @@ class TestReduceat:
         with pytest.raises(TypeError):
             mm.reduceat(a, [0, 2], out=out)
         assert out[0][1] is None and out[1][1] is None
+
+
+class TestAccumulate:
+    def test_accumulate_empty(self):
+        check_minmax("accumulate", np.array([], np.float64))
+
+    def test_accumulate_outputs_overlap_each_other(self):
+        # buf[1:3] is shared, but the elements only one output owns must be
+        # right, so the outputs need a writeback copy.
+        a = np.array([3.0, 1.0, 2.0])
+        buf = np.zeros(4)
+        lo, hi = mm.accumulate(a, out=(buf[:3], buf[1:]))
+        assert lo[0] == 3.0 and hi[-1] == 3.0
+
+    def test_accumulate_error_stops_later_rows(self):
+        # The loop error in the first row must stop the accumulation, so
+        # the second row of `out` is never written.
+        a = np.array([[1, "x"], [2, 3]], dtype=object)
+        out = (np.full((2, 2), None, object), np.full((2, 2), None, object))
+        with pytest.raises(TypeError):
+            mm.accumulate(a, axis=1, out=out)
+        assert out[0][1, 0] is None and out[1][1, 0] is None

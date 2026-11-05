@@ -80,7 +80,7 @@ jobs:
         if: matrix.buildplat[1] == 'macosx_x86_64' || matrix.buildplat[1] == 'macosx_arm64'
         run: |
           # Needed due to https://github.com/actions/runner-images/issues/3371
-          # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
+          # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
           echo "FC=gfortran-13" >> "$GITHUB_ENV"
           echo "F77=gfortran-13" >> "$GITHUB_ENV"
           echo "F90=gfortran-13" >> "$GITHUB_ENV"
@@ -112,7 +112,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@b9e566a2b284570af229f6c2a33673410d0389a3 # v4.3.4
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         with:
           only: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 

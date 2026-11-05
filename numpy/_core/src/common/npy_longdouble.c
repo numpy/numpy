@@ -10,6 +10,7 @@
 #include "numpy/npy_math.h"
 
 #include "numpyos.h"
+#include "npy_pycompat.h"
 
 /*
  * Heavily derived from PyLong_FromDouble

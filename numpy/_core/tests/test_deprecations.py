@@ -784,6 +784,15 @@ def test_coercion_policy_invalid():
                    env={**os.environ, "NPY_COERCION_POLICY": "invalid"})
 
 
+class TestIsfortran(_DeprecationTestCase):
+    # Deprecation in NumPy 2.6, 2026-10
+    message = "numpy.isfortran is deprecated."
+
+    def test_array_isfortran_deprecated(self):
+        a = np.array([1])
+        self.assert_deprecated(lambda: np.isfortran(a))
+
+
 _DOT_CALLERS = [
     pytest.param(np.dot, "numpy.dot", id="np.dot"),
     pytest.param(np.ndarray.dot, "numpy.dot", id="ndarray.dot"),

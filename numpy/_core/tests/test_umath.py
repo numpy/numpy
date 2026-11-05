@@ -1,4 +1,5 @@
 import fnmatch
+import gc
 import inspect
 import itertools
 import operator
@@ -17,6 +18,7 @@ from numpy._core import _umath_tests as ncu_tests, sctypes
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_MUSL,
+    IS_PYPY,
     IS_WASM,
     _gen_alignment_data,
     assert_,
@@ -492,6 +494,7 @@ class TestAdd:
         victim_array[0] = Victim()
 
         assert_equal(np.add(left, victim_array)[0], 42)
+        gc.collect()  # PyPy: finalizers are not refcount-driven
         assert victim_deleted  # the slot really was cleared re-entrantly
 
 
@@ -2753,6 +2756,11 @@ class TestMinimumMaximum(_FilterInvalids):
         assert_equal(lo, np.minimum.reduce(a, **kwargs))
         assert_equal(hi, np.maximum.reduce(a, **kwargs))
 
+    def check_accumulate(self, a, **kwargs):
+        lo, hi = ncu.minimummaximum.accumulate(a, **kwargs)
+        assert_equal(lo, np.minimum.accumulate(a, **kwargs))
+        assert_equal(hi, np.maximum.accumulate(a, **kwargs))
+
     def test_dtypes(self):
         dtypes = (np.typecodes['AllInteger'] + np.typecodes['AllFloat']
                   + np.typecodes['Complex'] + '?')
@@ -2775,6 +2783,7 @@ class TestMinimumMaximum(_FilterInvalids):
                 a = np.arange(n).astype(dt)
                 b = a[::-1].copy()
                 self.check(a, b)
+                self.check_accumulate(a)
                 if n > 0:
                     self.check_reduce(a)
 
@@ -2794,6 +2803,8 @@ class TestMinimumMaximum(_FilterInvalids):
             arg1 = np.array([0, cnan, cnan], dtype=complex)
             arg2 = np.array([cnan, 0, cnan], dtype=complex)
             self.check(arg1, arg2)
+            with np.errstate(invalid="raise"):
+                self.check_accumulate(arg1)
 
     def test_object_array(self):
         arg1 = np.arange(5, dtype=object)
@@ -2859,6 +2870,7 @@ class TestMinimumMaximum(_FilterInvalids):
         self.check_reduce(a, axis=1, keepdims=True)
         for view in (a[::2], a[:, ::2], a.T, np.asfortranarray(a)):
             self.check_reduce(view, axis=1)
+            self.check_accumulate(view, axis=1)
 
     def test_reduce_out(self):
         a = np.arange(12.0).reshape(3, 4)
@@ -4549,6 +4561,7 @@ class TestRationalFunctions:
         victim_array[0] = Victim()
 
         assert_equal(np.gcd(left, victim_array)[0], 4)
+        gc.collect()  # PyPy: finalizers are not refcount-driven
         assert victim_deleted  # the slot really was cleared re-entrantly
 
     def test_lcm_object_reentrant_mutation(self):
@@ -4580,6 +4593,7 @@ class TestRationalFunctions:
         victim_array[0] = Victim()
 
         assert_equal(np.lcm(left, victim_array)[0], 24)
+        gc.collect()  # PyPy: finalizers are not refcount-driven
         assert victim_deleted
 
     def test_decimal(self):
@@ -5486,6 +5500,7 @@ class TestReplaceLoopBySignature:
 
 class TestAddDocstring:
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_same_docstring(self):
         # test for attributes (which are C-level defined)
         ncu.add_docstring(np.ndarray.flat, np.ndarray.flat.__doc__)

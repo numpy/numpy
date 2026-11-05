@@ -14,7 +14,7 @@ import numpy as np
 from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import ComplexWarning
-from numpy.testing import assert_array_equal
+from numpy.testing import IS_PYPY, assert_array_equal
 
 
 def random_unicode_string_list():
@@ -1476,7 +1476,10 @@ def test_concatenate(string_list):
 
 def test_resize_method(string_list):
     sarr = np.array(string_list, dtype="T")
-    sarr.resize(len(string_list) + 3)
+    if IS_PYPY:
+        sarr.resize(len(string_list) + 3, refcheck=False)
+    else:
+        sarr.resize(len(string_list) + 3)
     assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
 
 
@@ -1661,6 +1664,17 @@ def test_sized_integer_casts(bitsize, signed):
     with pytest.raises(ValueError):
         np.array(["1", np.nan, "3"],
                  dtype=StringDType(na_object=np.nan)).astype(idtype)
+
+
+@pytest.mark.parametrize("bitsize", [8, 16, 32, 64])
+@pytest.mark.parametrize("signed", [True, False])
+def test_integer_cast_overflow_preserves_output(bitsize, signed):
+    idtype = f"{'int' if signed else 'uint'}{bitsize}"
+    for string_dtype in ["T", "U"]:
+        out = np.array([5], dtype=idtype)
+        with pytest.raises(OverflowError):
+            out[...] = np.array([str(2**bitsize)], dtype=string_dtype)
+        assert_array_equal(out, [5])
 
 
 @pytest.mark.parametrize("typename", ["byte", "short", "int", "longlong"])
