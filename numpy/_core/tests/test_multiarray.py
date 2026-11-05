@@ -5836,6 +5836,22 @@ class TestArgmaxArgminCommon:
         ret = arg_method(axis=0, out=out)
         assert ret is out
 
+    def test_compare_error_with_out(self):
+        # a strided out is written through a temporary copy, which must be
+        # discarded rather than written back when a comparison fails
+        data = [['a', 'b', 'c'], ['b', None, 'a']]
+        out = np.full(4, -1, dtype=np.intp)
+
+        def check(dtype, exc, match):
+            a = np.array(data, dtype=dtype)
+            with pytest.raises(exc, match=match):
+                a.argmax(axis=1, out=out[::2])
+            assert_array_equal(out, -1)
+
+        check(object, TypeError, "not supported")
+        check(np.dtypes.StringDType(na_object=None), ValueError,
+              "Cannot compare null")
+
     @pytest.mark.parametrize('np_array, method, idx, val',
         [(np.zeros, 'argmax', 5942, "as"),
          (np.ones, 'argmin', 6001, "0")])
@@ -6711,6 +6727,8 @@ class TestLexsort:
             surnames = np.array(['Hertz',    'Galilei', 'Hertz'], dtype=dtype)
             first_names = np.array(['Heinrich', 'Galileo', 'Gustav'], dtype=dtype)
             assert_array_equal(np.lexsort((first_names, surnames)), [1, 2, 0])
+            assert_array_equal(
+                np.lexsort((first_names[::-1], surnames[::-1])), [1, 0, 2])
 
     def test_invalid_axis(self):  # gh-7528
         x = np.linspace(0., 1., 42 * 3).reshape(42, 3)

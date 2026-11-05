@@ -2127,8 +2127,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                     _strided_byte_swap(valbuffer, (npy_intp) elsize, N, elsize);
                 }
                 rcode = argsort(valbuffer, (npy_intp *)indbuffer, N, mps[j]);
-                if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
-                            && PyErr_Occurred())) {
+                if (rcode < 0 || (object && PyErr_Occurred())) {
                     PyDataMem_FREE(valbuffer);
                     PyDataMem_FREE(indbuffer);
                     PyMem_RawFree(swaps);
@@ -2169,6 +2168,9 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 
     if (!object) {
         NPY_END_THREADS;
+        if (PyErr_Occurred()) {
+            goto fail;
+        }
     }
 
  finish:
