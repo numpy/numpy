@@ -156,6 +156,17 @@ class TestNonarrayArgs:
         a = [3, 4, 5, 10, -3, -5, 6.0]
         assert_equal(np.ptp(a, axis=0), 15.0)
 
+    @pytest.mark.parametrize("axis, out_index", [
+        (0, (0,)), (0, (1,)), (1, (slice(None), 0)), (1, (slice(None), 1)),
+    ])
+    def test_ptp_out_overlaps_input(self, axis, out_index):
+        a = np.array([[1., 2.], [5., 10.]])
+        expected = np.ptp(a, axis=axis)
+        out = a[out_index]
+        res = np.ptp(a, axis=axis, out=out)
+        assert res is out
+        assert_equal(res, expected)
+
     def test_prod(self):
         arr = [[1, 2, 3, 4],
                [5, 6, 7, 9],

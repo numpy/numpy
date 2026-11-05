@@ -1,0 +1,12 @@
+Use ``minmax`` reductions internally
+------------------------------------
+
+Many NumPy operations now use `numpy.minmax` internally instead of
+computing the minimum and maximum separately. For supported dtypes, this
+reduces two passes over the data to one, improving performance in array
+formatting, histogram calculations, and other operations that need both
+extrema.
+
+The function `numpy.ptp` does not use it yet because of downstream
+compatibility concerns but we plan to use it there too in a future
+NumPy version.
