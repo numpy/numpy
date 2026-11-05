@@ -947,6 +947,7 @@ class TestNanFunctions_Median:
     @pytest.mark.parametrize("dtype", _TYPE_CODES)
     def test_allnans(self, dtype, axis):
         mat = np.full((3, 3), np.nan, dtype=dtype)
+        nan = "NaT" if mat.dtype.kind == "m" else "NaN"
         with pytest.warns((RuntimeWarning, DeprecationWarning)) as r:
             output = np.nanmedian(mat, axis=axis)
             assert output.dtype == mat.dtype
@@ -955,7 +956,7 @@ class TestNanFunctions_Median:
             _filtered_record = [
                 item.message
                 for item in r
-                if "All-NaN slice encountered" in str(item.message)
+                if f"All-{nan} slice encountered" in str(item.message)
             ]
             if axis is None:
                 assert_(len(_filtered_record) == 1)
@@ -971,7 +972,7 @@ class TestNanFunctions_Median:
             _filtered_record = [
                 item.message
                 for item in r
-                if "All-NaN slice encountered" in str(item.message)
+                if f"All-{nan} slice encountered" in str(item.message)
             ]
             if axis is None:
                 assert_(len(_filtered_record) == 2)
@@ -1470,13 +1471,13 @@ class TestNanFunctions_DatetimeTimedelta:
             array = array[()]
 
         for func in [np.nanmin, np.nanmax]:
-            with pytest.warns(RuntimeWarning, match="All-NaN (slice|axis)"):
+            with pytest.warns(RuntimeWarning, match="All-NaT (slice|axis)"):
                 out = func(array, axis=axis)
             assert np.isnat(out).all()
             assert out.dtype == array.dtype
 
         for func in [np.nanargmin, np.nanargmax]:
-            with pytest.raises(ValueError, match="All-NaN slice encountered"):
+            with pytest.raises(ValueError, match="All-NaT slice encountered"):
                 func(array, axis=axis)
 
         if array.dtype.kind == "m":
