@@ -1,0 +1,3 @@
+* For DTypes registered using :c:macro:`NPY_DT_legacy_descriptor_proto`, a
+  missing self-cast is now generated from the legacy ``copyswapn`` or
+  ``copyswap`` function.
