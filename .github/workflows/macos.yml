@@ -156,4 +156,4 @@ jobs:
       if: ${{ endsWith(matrix.version, 't') && matrix.build_runner[0] == 'macos-15' }}
       run:  |
         pip install pytest-run-parallel==0.8.2
-        spin test -p 4 -- -sv --timeout=600 --durations=10
+        spin test -p 4 -- -s --timeout=600 --durations=10
