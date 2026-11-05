@@ -17,7 +17,6 @@ from numpy._globals import _NoValue
 bool_dt = mu.dtype("bool")
 umr_maximum = um.maximum.reduce
 umr_minimum = um.minimum.reduce
-umr_minimummaximum = um.minimummaximum.reduce
 umr_sum = um.add.reduce
 umr_prod = um.multiply.reduce
 umr_bitwise_count = um.bitwise_count
@@ -230,13 +229,10 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     return ret
 
 def _ptp(a, axis=None, out=None, keepdims=False):
-    try:
-        min_value, max_value = umr_minimummaximum(
-            a, axis, None, (None, out), keepdims
-        )
-    except TypeError:
-        min_value = umr_minimum(a, axis, None, None, keepdims)
-        max_value = umr_maximum(a, axis, None, out, keepdims)
+    # TODO: use minimummaximum once downstream libraries that override
+    # __array_ufunc__, e.g. pandas, support it
+    min_value = umr_minimum(a, axis, None, None, keepdims)
+    max_value = umr_maximum(a, axis, None, out, keepdims)
     return um.subtract(max_value, min_value, out)
 
 def _dump(self, file, protocol=2):
