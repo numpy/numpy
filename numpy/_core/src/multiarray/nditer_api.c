@@ -1746,7 +1746,10 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
             }
             if (buffer == NULL) {
                 if (errmsg == NULL) {
+                    NPY_ALLOW_C_API_DEF;
+                    NPY_ALLOW_C_API;
                     PyErr_NoMemory();
+                    NPY_DISABLE_C_API;
                 }
                 else {
                     *errmsg = "out of memory";
@@ -2276,6 +2279,8 @@ npyiter_clear_buffers(NpyIter *iter)
      * In that case, further cleanup may be necessary and we clear buffers
      * explicitly.
      */
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
     PyObject *type, *value, *traceback;
     PyErr_Fetch(&type,  &value, &traceback);
 
@@ -2307,6 +2312,7 @@ npyiter_clear_buffers(NpyIter *iter)
     /* Signal that the buffers are empty */
     NBF_SIZE(bufferdata) = 0;
     PyErr_Restore(type, value, traceback);
+    NPY_DISABLE_C_API;
 }
 
 

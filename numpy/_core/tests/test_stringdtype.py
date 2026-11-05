@@ -1177,6 +1177,12 @@ def test_string_to_bytes_invalid_ascii_error():
     )
 
 
+def test_string_to_bytes_error_in_buffered_ufunc():
+    arr = np.full(2 * np.getbufsize(), "é", dtype="T")
+    with pytest.raises(UnicodeEncodeError):
+        np.add(arr, arr, out=np.empty(arr.shape, dtype="S4"))
+
+
 NON_NATIVE_BYTEORDER_CASES = [
     ("i4", [1, -2, 300]),
     ("u2", [1, 2, 300]),
