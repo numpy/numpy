@@ -23,7 +23,7 @@ init_string_dtype(void);
 // descriptors
 NPY_NO_EXPORT int
 _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
-         PyArray_StringDTypeObject *descr_b);
+         PyArray_StringDTypeObject *descr_b, int *cmp);
 
 NPY_NO_EXPORT int
 stringdtype_binsearch_compare(const void *a, const void *b,

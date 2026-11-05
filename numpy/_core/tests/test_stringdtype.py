@@ -1125,6 +1125,23 @@ def test_sort(dtype, strings, stable):
                 match="Cannot compare null that is not a nan-like value",
             ):
                 np.argsort(arr, stable=stable)
+            for func, out_dtype in itertools.product(
+                [np.argmax, np.argmin], [np.intp, np.int32]
+            ):
+                out = np.full((), -1, dtype=out_dtype)
+                with pytest.raises(
+                    ValueError,
+                    match="Cannot compare null that is not a nan-like value",
+                ):
+                    func(arr, out=out)
+                assert out == -1
+            out = np.zeros_like(arr)
+            with pytest.raises(
+                ValueError,
+                match="Cannot compare null that is not a nan-like value",
+            ):
+                np.maximum(arr, arr, out=out)
+            assert_array_equal(out, np.zeros_like(arr))
             argsorted = None
         elif dtype._has_nan_na:
             argsorted = None
@@ -1586,6 +1603,16 @@ def test_argmax(strings):
     arr = np.array(strings, dtype="T")
     assert np.argmax(arr) == strings.index(max(strings))
     assert np.argmin(arr) == strings.index(min(strings))
+
+
+@pytest.mark.parametrize("method", [np.argmax, np.argmin])
+def test_argmin_argmax_error_stops_iteration(method):
+    arr = np.array([[None, "a"], ["a", "b"]], dtype=StringDType(na_object=None))
+    out = np.full(2, -1, dtype=np.intp)
+    with pytest.raises(ValueError):
+        method(arr, axis=1, out=out)
+    # The error in the first row must leave the second row's output untouched.
+    assert out[1] == -1
 
 
 @pytest.mark.parametrize(
