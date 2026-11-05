@@ -45,7 +45,7 @@ jobs:
     # Only workflow_dispatch is enabled on forks.
     # To enable this job and subsequent jobs on a fork for other events, comment out:
     if: github.repository == 'numpy/numpy' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -54,7 +54,7 @@ jobs:
           - [
               "riscv64",
               "riscv64-linux-gnu",
-              "riscv64/ubuntu:22.04",
+              "riscv64/ubuntu:26.04",
               "-Dallow-noblas=true",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
               "riscv64"
@@ -100,7 +100,7 @@ jobs:
           # timeout-minutes can't reach inside 'docker run', so bound apt directly
           timeout ${APT_TIMEOUT_MINUTES}m apt update &&
           timeout ${APT_TIMEOUT_MINUTES}m apt install -y cmake git curl ca-certificates &&
-          # Fix expired Microsoft/azure-cli repo key (affects riscv64/ubuntu:22.04)
+          # Fix expired Microsoft/azure-cli repo key (affects riscv64/ubuntu:26.04)
           mkdir -p /etc/apt/keyrings &&
           curl -sLS https://packages.microsoft.com/keys/microsoft.asc | \
             gpg --dearmor | \
