@@ -1726,6 +1726,26 @@ def test_nat_conversion():
             np.array(["a", nat], dtype=StringDType(coerce=False))
 
 
+@pytest.mark.filterwarnings("ignore:no explicit representation of timezones")
+def test_datetime_parse_error_bounded():
+    bad_timestamps = [
+        "not-a-date-but-long-enough",
+        "2023-13-01T00:00:00",
+        "2023-02-30T00:00:00",
+        "2023-01-01T25:00:00",
+        "2023-01-01T00:60:00",
+        "2023-01-01T00:00:60",
+        "2023-01-01T00:00+25:00",
+        "2023-01-01T00:00+01:60",
+    ]
+    for bad in bad_timestamps:
+        arr = np.array([bad, "2023-01-02T00:00:00"], dtype="T")
+        for a in [arr, arr[:1]]:
+            with pytest.raises(ValueError) as excinfo:
+                a.astype("M8[s]")
+            assert "2023-01-02" not in str(excinfo.value)
+
+
 def test_growing_strings(dtype):
     # growing a string leads to a heap allocation, this tests to make sure
     # we do that bookkeeping correctly for all possible starting cases
