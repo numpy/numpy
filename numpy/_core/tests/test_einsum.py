@@ -4,6 +4,9 @@ import warnings
 import pytest
 
 import numpy as np
+from numpy._core._multiarray_umath import _get_sfloat_dtype
+from numpy._core._rational_tests import rational
+from numpy._utils import _pep440
 from numpy.testing import (
     assert_,
     assert_allclose,
@@ -13,6 +16,8 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+
+SF = _get_sfloat_dtype()
 
 # Setup for optimize einsum
 chars = 'abcdefghij'
@@ -83,6 +88,49 @@ class TestEinsum:
             a = np.arange(3)
             # einsum_path does not yet accept kwarg 'casting'
             np.einsum('ij->j', [a, a], casting='same_value')
+
+    @pytest.mark.parametrize("dtype", [rational, SF(1.)],
+                             ids=["rational", "sfloat"])
+    @pytest.mark.parametrize("subscripts,shapes,out_shape", [
+        ("i->", [(3,)], ()),
+        ("i,i->", [(3,), (3,)], ()),
+        ("ij->i", [(3, 3)], (3,)),
+        ("ij,jk->ik", [(3, 3), (3, 3)], (3, 3)),
+    ])
+    def test_einsum_unsupported_user_dtype(self, dtype, subscripts, shapes,
+                                           out_shape):
+        # gh-32671: user DTypes have no einsum kernel, and new-style ones
+        # (type_num -1) indexed the kernel tables out of bounds.
+        ops = [np.zeros(shape, dtype=dtype) for shape in shapes]
+        with pytest.raises(TypeError, match="invalid data type"):
+            np.einsum(subscripts, *ops)
+
+        out = np.ones(out_shape, dtype=bool).astype(dtype)
+        with pytest.raises(TypeError, match="invalid data type"):
+            np.einsum(subscripts, *ops, out=out)
+        assert_array_equal(out.astype(np.float64), 1)
+
+    def test_einsum_unsupported_new_style_dtype(self):
+        # gh-30793: new-style DTypes have type_num -1.  The kernel tables were
+        # indexed at -1, so a float16 loop ran over the quad data and gave
+        # wrong results or a crash instead of this error.
+        from importlib.metadata import version
+
+        try:
+            quaddtype_version = version("numpy_quaddtype")
+        except Exception:
+            pytest.skip("numpy_quaddtype not installed")
+        else:
+            if _pep440.Version(quaddtype_version) <= _pep440.Version("1.0.0"):
+                pytest.skip("critical bug in quaddtype during import")
+
+        numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
+
+        a = np.ones((3, 3), dtype=numpy_quaddtype.QuadPrecDType())
+        for subscripts in ["ij->", "ij->i", "ij,ij->", "ij,jk->ik"]:
+            ops = [a] * (subscripts.count(",") + 1)
+            with pytest.raises(TypeError, match="invalid data type"):
+                np.einsum(subscripts, *ops)
 
     def test_einsum_sorting_behavior(self):
         # Case 1: 26 dimensions (all lowercase indices)

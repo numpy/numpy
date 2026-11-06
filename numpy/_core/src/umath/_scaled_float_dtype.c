@@ -446,6 +446,41 @@ sfloat_to_bool_resolve_descriptors(
 }
 
 
+/*
+ * Cast from boolean, used when filling with zeros (e.g. in einsum).  As for
+ * doubles, only the factor of 1 is defined here.
+ */
+static int
+cast_bool_to_sfloat(PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+    char *out = data[1];
+    for (npy_intp i = 0; i < N; i++) {
+        *(double *)out = *(npy_bool *)in != 0;
+        in += strides[0];
+        out += strides[1];
+    }
+    return 0;
+}
+
+static NPY_CASTING
+bool_to_sfloat_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *dtypes[2],
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);  /* cannot fail */
+    return NPY_SAFE_CASTING;
+}
+
+
 static int
 sfloat_init_casts(void)
 {
@@ -510,6 +545,21 @@ sfloat_init_casts(void)
     spec.name = "sfloat_to_bool_cast";
     dtypes[0] = &PyArray_SFloatDType;
     dtypes[1] = &PyArray_BoolDType;
+
+    if (PyArray_AddCastingImplementation_FromSpec(&spec, 0)) {
+        return -1;
+    }
+
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &bool_to_sfloat_resolve_descriptors;
+    slots[1].slot = NPY_METH_strided_loop;
+    slots[1].pfunc = &cast_bool_to_sfloat;
+    slots[2].slot = 0;
+    slots[2].pfunc = NULL;
+
+    spec.name = "bool_to_sfloat_cast";
+    dtypes[0] = &PyArray_BoolDType;
+    dtypes[1] = &PyArray_SFloatDType;
 
     if (PyArray_AddCastingImplementation_FromSpec(&spec, 0)) {
         return -1;
