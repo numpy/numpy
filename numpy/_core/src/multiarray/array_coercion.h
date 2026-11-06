@@ -19,6 +19,7 @@ NPY_NO_EXPORT int
 _PyArray_MapPyTypeToDType(
         PyArray_DTypeMeta *DType, PyTypeObject *pytype, npy_bool userdef);
 
+/* Returns a borrowed reference (or NULL without an error set) */
 NPY_NO_EXPORT PyObject *
 PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype);
 
