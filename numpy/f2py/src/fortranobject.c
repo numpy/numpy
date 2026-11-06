@@ -47,12 +47,19 @@ F2PyDict_SetItemString(PyObject *dict, char *name, PyObject *obj)
 
 /*
  * Python-only fallback for thread-local callback pointers
+ *
+ * These also run while the exception of a failed callback is pending, so
+ * it is set aside for the duration: the PyErr_Occurred checks below must
+ * only see errors raised here.
  */
 void *
 F2PySwapThreadLocalCallbackPtr(char *key, void *ptr)
 {
     PyObject *local_dict, *value;
+    PyObject *exc_type, *exc_value, *exc_tb;
     void *prev;
+
+    PyErr_Fetch(&exc_type, &exc_value, &exc_tb);
 
     local_dict = PyThreadState_GetDict();
     if (local_dict == NULL) {
@@ -86,6 +93,7 @@ F2PySwapThreadLocalCallbackPtr(char *key, void *ptr)
 
     Py_DECREF(value);
 
+    PyErr_Restore(exc_type, exc_value, exc_tb);
     return prev;
 }
 
@@ -93,7 +101,10 @@ void *
 F2PyGetThreadLocalCallbackPtr(char *key)
 {
     PyObject *local_dict, *value;
+    PyObject *exc_type, *exc_value, *exc_tb;
     void *prev;
+
+    PyErr_Fetch(&exc_type, &exc_value, &exc_tb);
 
     local_dict = PyThreadState_GetDict();
     if (local_dict == NULL) {
@@ -113,6 +124,7 @@ F2PyGetThreadLocalCallbackPtr(char *key)
         prev = NULL;
     }
 
+    PyErr_Restore(exc_type, exc_value, exc_tb);
     return prev;
 }
 

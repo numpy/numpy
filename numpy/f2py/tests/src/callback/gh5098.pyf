@@ -1,0 +1,48 @@
+python module __user__routines
+    interface
+        subroutine array_cb(n, x)
+            integer intent(in) :: n
+            double precision dimension(n), intent(out) :: x
+        end subroutine array_cb
+        subroutine strings_cb(n, s)
+            integer intent(in) :: n
+            character*4 dimension(n), intent(out) :: s
+        end subroutine strings_cb
+        subroutine string_cb(s)
+            character*4 intent(out) :: s
+        end subroutine string_cb
+        function string_fun() result (r)
+            character*4 :: r
+        end function string_fun
+    end interface
+end python module __user__routines
+
+python module gh5098
+    interface
+        subroutine array_result(array_cb, n, x)
+            use __user__routines
+            external array_cb
+            integer intent(in) :: n
+            double precision dimension(n), intent(out), depend(n) :: x
+        end subroutine array_result
+        subroutine strings_result(strings_cb, n, s)
+            use __user__routines
+            external strings_cb
+            integer intent(in) :: n
+            character*4 dimension(n), intent(out), depend(n) :: s
+        end subroutine strings_result
+        subroutine string_result(string_cb, s)
+            use __user__routines
+            external string_cb
+            character*4 intent(out) :: s
+        end subroutine string_result
+        subroutine string_function_result(string_fun, s)
+            use __user__routines
+            external string_fun
+            character*4 intent(out) :: s
+        end subroutine string_function_result
+        function four_chars()
+            character*4 :: four_chars
+        end function four_chars
+    end interface
+end python module gh5098

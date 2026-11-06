@@ -5,10 +5,12 @@ import textwrap
 import threading
 import time
 import traceback
+import warnings
 
 import pytest
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from . import util
 
@@ -119,6 +121,41 @@ class TestF77Callback(util.F2PyTest):
         for cu in [cu1, cu2, cu3]:
             res = f(callback, cu, cu.size)
             assert res == 0
+
+    def test_raising_callback(self, capfd):
+        # gh-5098: the exception propagates and nothing is printed
+        def callback():
+            raise RuntimeError("callback failed on purpose")
+
+        with pytest.raises(RuntimeError, match="callback failed on purpose"):
+            self.module.t(callback)
+        assert capfd.readouterr().err == ""
+
+    def test_argument_list_errors(self, capfd):
+        # gh-5098: the reason is part of the exception, not printed
+        error = getattr(self.module, f"_{self.module.__name__}_error")
+        t = self.module.t
+        with pytest.raises(error, match=r"call-back fun -- call-back argument"
+                                        r" must be function\|.* but got int"):
+            t(42)
+        with pytest.raises(error, match="call-back fun -- failed to build"
+                                        " argument list"):
+            t(lambda a, b, c: 0)
+        with pytest.raises(error, match="call-back fun -- extra arguments"
+                                        " tuple cannot be used with PyCapsule"):
+            t(self.module.func0._cpointer, fun_extra_args=(1,))
+        assert capfd.readouterr().err == ""
+
+    def test_callback_without_return_value(self, capfd):
+        # gh-5098: a warning instead of a message on stderr
+        f = self.module.string_callback
+        with pytest.warns(RuntimeWarning, match="did not provide return value"):
+            assert f(lambda code: None) == 0
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            with pytest.raises(RuntimeWarning):
+                f(lambda code: None)
+        assert capfd.readouterr().err == ""
 
     def test_threadsafety(self):
         # Segfaults if the callback handling is not threadsafe
@@ -260,3 +297,63 @@ class TestCBFortranCallstatement(util.F2PyTest):
         with pytest.raises(ValueError, match='helpme') as exc:
             self.module.mypy_abort = self.module.utils.my_abort
             self.module.utils.do_something('helpme')
+
+
+@pytest.mark.slow
+class TestGH5098(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "callback", "gh5098.f"),
+               util.getpath("tests", "src", "callback", "gh5098.pyf")]
+    module_name = "gh5098"
+
+    def test_array_result(self):
+        r = self.module.array_result(lambda n: np.arange(n, dtype=float), 3)
+        assert_array_equal(r, [0, 1, 2])
+
+    def test_strings_result_itemsize(self):
+        # converted to the declared character*4, not copied byte for byte
+        r = self.module.strings_result(
+            lambda n: np.array([b"ab", b"cd", b"ef"], dtype="S2"), 3)
+        assert_array_equal(r, [b"ab", b"cd", b"ef"])
+
+    def test_array_result_wrong_shape(self, capfd):
+        # gh-5098: the error names the call-back and nothing is printed
+        with pytest.raises(ValueError, match="argument x of call-back function"
+                           " cb_array_cb_in___user__routines to C/Fortran array"
+                           " -- 0-th dimension must be fixed to 3 but got 4"):
+            self.module.array_result(lambda n: np.zeros(n + 1), 3)
+        assert capfd.readouterr().err == ""
+
+    def test_string_result(self, capfd):
+        assert self.module.string_result(lambda: b"abcd") == b"abcd"
+        with pytest.raises(self.module._gh5098_error,
+                           match="bytes object expected, got 4-str"):
+            self.module.string_result(lambda: "abcd")
+        assert capfd.readouterr().err == ""
+
+    def test_string_function_result(self):
+        f = self.module.string_function_result
+        assert f(lambda: b"abcd") == b"abcd"
+        assert f(self.module.four_chars._cpointer) == b"wxyz"
+
+    def test_string_function_without_return_value(self, capfd):
+        f = self.module.string_function_result
+        with pytest.warns(RuntimeWarning, match="cb_string_fun_in___user__"
+                          "routines did not provide return value"):
+            f(lambda: None)
+        assert capfd.readouterr().err == ""
+
+
+@pytest.mark.slow
+class TestPythonTLSRaisingCallback(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "callback", "gh5098.f"),
+               util.getpath("tests", "src", "callback", "python_tls.pyf")]
+    module_name = "callback_python_tls"
+
+    def test_raising_callback(self):
+        def callback(n):
+            raise RuntimeError("callback failed on purpose")
+
+        with pytest.raises(RuntimeError, match="callback failed on purpose"):
+            self.module.array_result(callback, 3)
+        r = self.module.array_result(lambda n: np.ones(n), 3)
+        assert_array_equal(r, [1, 1, 1])
