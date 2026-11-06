@@ -51,6 +51,7 @@
 #define PCG64_H_INCLUDED 1
 
 #include <inttypes.h>
+#include <stddef.h>
 
 #ifdef _WIN32
 #include <stdlib.h>
@@ -395,6 +396,10 @@ static inline uint32_t pcg64_next32(pcg64_state *state) {
   return (uint32_t)(next & 0xffffffff);
 }
 
+void pcg64_fill_uint32(pcg64_state *state, size_t count, uint32_t *out);
+void pcg64_fill_uint64(pcg64_state *state, size_t count, uint64_t *out);
+void pcg64_fill_double(pcg64_state *state, size_t count, double *out);
+
 static inline uint64_t pcg64_cm_next64(pcg64_state *state) {
   return pcg_cm_random_r(state->pcg_state);
 }
@@ -421,5 +426,9 @@ void pcg64_get_state(pcg64_state *state, uint64_t *state_arr, int *has_uint32,
 
 void pcg64_set_state(pcg64_state *state, uint64_t *state_arr, int has_uint32,
                      uint32_t uinteger);
+
+void pcg64_cm_fill_uint32(pcg64_state *state, size_t count, uint32_t *out);
+void pcg64_cm_fill_uint64(pcg64_state *state, size_t count, uint64_t *out);
+void pcg64_cm_fill_double(pcg64_state *state, size_t count, double *out);
 
 #endif /* PCG64_H_INCLUDED */

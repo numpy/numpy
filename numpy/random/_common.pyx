@@ -314,6 +314,32 @@ cdef object double_fill(void *func, bitgen_t *state, object size, object lock, o
         random_func(state, n, out_array_data)
     return out_array
 
+cdef object double_fill_bulk(void *func, bitgen_t *state,
+                             const bitgen_bulk_v1 *bulk, object size,
+                             object lock, object out):
+    cdef random_double_fill_bulk random_func = (<random_double_fill_bulk>func)
+    cdef double out_val
+    cdef double *out_array_data
+    cdef np.ndarray out_array
+    cdef np.npy_intp n
+
+    if size is None and out is None:
+        with lock:
+            random_func(state, bulk, 1, &out_val)
+            return out_val
+
+    if out is not None:
+        check_output(out, np.float64, size, False)
+        out_array = <np.ndarray>out
+    else:
+        out_array = <np.ndarray>np.empty(size, np.double)
+
+    n = np.PyArray_SIZE(out_array)
+    out_array_data = <double *>np.PyArray_DATA(out_array)
+    with lock, nogil:
+        random_func(state, bulk, n, out_array_data)
+    return out_array
+
 cdef object float_fill(void *func, bitgen_t *state, object size, object lock, object out):
     cdef random_float_fill random_func = (<random_float_fill>func)
     cdef float out_val
@@ -336,6 +362,32 @@ cdef object float_fill(void *func, bitgen_t *state, object size, object lock, ob
     out_array_data = <float *>np.PyArray_DATA(out_array)
     with lock, nogil:
         random_func(state, n, out_array_data)
+    return out_array
+
+cdef object float_fill_bulk(void *func, bitgen_t *state,
+                            const bitgen_bulk_v1 *bulk, object size,
+                            object lock, object out):
+    cdef random_float_fill_bulk random_func = (<random_float_fill_bulk>func)
+    cdef float out_val
+    cdef float *out_array_data
+    cdef np.ndarray out_array
+    cdef np.npy_intp n
+
+    if size is None and out is None:
+        with lock:
+            random_func(state, bulk, 1, &out_val)
+            return out_val
+
+    if out is not None:
+        check_output(out, np.float32, size, False)
+        out_array = <np.ndarray>out
+    else:
+        out_array = <np.ndarray>np.empty(size, np.float32)
+
+    n = np.PyArray_SIZE(out_array)
+    out_array_data = <float *>np.PyArray_DATA(out_array)
+    with lock, nogil:
+        random_func(state, bulk, n, out_array_data)
     return out_array
 
 cdef object float_fill_from_double(void *func, bitgen_t *state, object size, object lock, object out):
