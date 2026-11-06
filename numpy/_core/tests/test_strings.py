@@ -1035,6 +1035,10 @@ class TestMethods:
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
 
+        for act, res in zip(np.strings.partition(buf, sep.astype(object)),
+                            (res1, res2, res3)):
+            assert_array_equal(act, res)
+
     def test_partition_sep_not_truncated(self, dt):
         buf = np.array(["a"], dtype=dt)
         act1, act2, act3 = np.strings.partition(buf, "ab")
@@ -1068,6 +1072,10 @@ class TestMethods:
         assert_array_equal(act2, res2)
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
+
+        for act, res in zip(np.strings.rpartition(buf, sep.astype(object)),
+                            (res1, res2, res3)):
+            assert_array_equal(act, res)
 
     def test_rpartition_sep_not_truncated(self, dt):
         buf = np.array(["a"], dtype=dt)
