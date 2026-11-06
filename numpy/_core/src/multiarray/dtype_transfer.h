@@ -25,6 +25,97 @@ typedef struct {
 } NPY_cast_info;
 
 
+/* Selection kinds have separate contracts.  Add a kind and its parameter
+ * structure for a new traversal instead of broadening an existing kind.
+ */
+typedef enum {
+    NPY_TRANSFER_INDEXED_CONTIGUOUS,
+    NPY_TRANSFER_REPEAT_CONTIGUOUS,
+    NPY_TRANSFER_PUTMASK_CONTIGUOUS
+} NPY_transfer_kind;
+
+typedef struct {
+    /* Number of contiguous elements in each block. */
+    npy_intp blocksize;
+    /* The number of independent groups that get the same indexing.
+     * Scatter requires one group. */
+    npy_intp outer_count;
+    /* Contiguous, aligned, native-endian indices, read in order. */
+    const npy_intp *indices;
+    npy_intp index_dim;
+    /* scatter is a boolean: 0 gathers indexed source blocks from
+     * data[0] into consecutive destination blocks in data[1];
+     * 1 scatters source blocks from data[0], cycling at value_period,
+     * to indexed destination blocks in data[1].
+     * take uses gather; put uses scatter. */
+    int scatter, axis;
+    NPY_CLIPMODE clipmode;
+    /* Value blocks for scatter (>0); unused for gather. */
+    npy_intp value_period;
+} NPY_indexed_contiguous_transfer;
+
+typedef struct {
+    /* Number of contiguous elements in each block. */
+    npy_intp blocksize;
+    /* The number of independent groups that get the same repetition. */
+    npy_intp outer_count;
+    /* Repeat counts, shared by all outer groups. */
+    const npy_intp *counts;
+    /* Step in counts, in npy_intp elements: 0 uses counts[0] for every
+     * block; 1 uses counts[j] for block j. */
+    npy_intp count_stride;
+} NPY_repeat_contiguous_transfer;
+
+typedef struct {
+    const npy_bool *mask;
+    /* Values cycle at every mask position, including false entries. */
+    npy_intp value_period;
+} NPY_putmask_contiguous_transfer;
+
+/* Arguments for copying selected elements from data[0] to data[1].
+ * kind chooses take/put, repeat, or putmask; fill the matching member of
+ * selection with that operation's arguments. The copy function writes the
+ * destination without changing this struct.
+ */
+typedef struct {
+    NPY_transfer_kind kind;
+    char *data[2];
+    /* Number of selections per outer iteration. */
+    npy_intp count;
+    /* Bytes per element. */
+    npy_intp itemsize;
+    union {
+        NPY_indexed_contiguous_transfer indexed;
+        NPY_repeat_contiguous_transfer repeat;
+        NPY_putmask_contiguous_transfer putmask;
+    } selection;
+} NPY_transfer_loop;
+
+typedef int NPY_transfer_loop_function(NPY_cast_info *, const NPY_transfer_loop *);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+/* Return a copy function for the cast in info and the requested operation,
+ * or NULL when the caller should use its existing copy path (e.g. memcpy
+ * for data without references).
+ * Call the returned function as copy(info, &loop), with loop.kind == kind.
+ *
+ * The caller owns the arrays and info. Keep them alive for the call, and
+ * hold the GIL if the cast requires Python API access.
+ */
+NPY_NO_EXPORT NPY_transfer_loop_function *
+NPY_get_transfer_loop(NPY_cast_info *info, NPY_transfer_kind kind);
+NPY_NO_EXPORT NPY_transfer_loop_function *
+NPY_get_string_transfer_loop(PyArrayMethod_StridedLoop *loop,
+                             NPY_transfer_kind kind);
+NPY_NO_EXPORT int
+NPY_transfer_check_index(npy_intp index, npy_intp dim, int axis);
+#ifdef __cplusplus
+}
+#endif
+
+
 static inline void
 NPY_context_init(PyArrayMethod_Context *context, PyArray_Descr *descr[2])
 {
@@ -207,5 +298,123 @@ get_wrapped_legacy_cast_function(int aligned,
         NpyAuxData **out_transferdata,
         int *out_needs_api, int allow_wrapped);
 
+
+typedef int NPY_transfer_copy_function(NPY_cast_info *, char *, char *,
+                                       npy_intp, const npy_intp *);
+
+NPY_FINLINE int
+npy_transfer_loop_impl(NPY_cast_info *info,
+        const NPY_transfer_loop *loop, int scatter,
+        NPY_transfer_copy_function *copy)
+{
+    char *src = loop->data[0], *dst = loop->data[1];
+    const npy_intp size = loop->count;
+    switch (loop->kind) {
+        case NPY_TRANSFER_INDEXED_CONTIGUOUS: {
+            const npy_intp strides[2] = {loop->itemsize, loop->itemsize};
+            const npy_intp blocksize = loop->selection.indexed.blocksize;
+            const npy_intp chunk = blocksize * loop->itemsize;
+            const npy_intp period = loop->selection.indexed.value_period;
+            const npy_intp *indices = loop->selection.indexed.indices;
+            const npy_intp dim = loop->selection.indexed.index_dim;
+            const NPY_CLIPMODE clipmode = loop->selection.indexed.clipmode;
+            char *base = loop->data[scatter];
+            char *values = loop->data[1 - scatter];
+            for (npy_intp i = 0;
+                    i < loop->selection.indexed.outer_count; i++) {
+                npy_intp value_index = 0;
+                for (npy_intp j = 0; j < size; j++) {
+                    /* Read each index when visited: DECREF may call Python. */
+                    npy_intp index = indices[j];
+                    if (clipmode == NPY_WRAP) {
+                        if (index < 0 || index >= dim) {
+                            index %= dim;
+                            if (index < 0) {
+                                index += dim;
+                            }
+                        }
+                    }
+                    else if (clipmode == NPY_CLIP) {
+                        index = index < 0 ? 0 : (index >= dim ? dim - 1 : index);
+                    }
+                    else {
+                        if (NPY_UNLIKELY(index < -dim || index >= dim)) {
+                            return NPY_transfer_check_index(
+                                    index, dim, loop->selection.indexed.axis);
+                        }
+                        if (index < 0) {
+                            index += dim;
+                        }
+                    }
+                    char *indexed = base + index * chunk;
+                    if (copy(info, scatter ? values : indexed,
+                            scatter ? indexed : values, blocksize, strides) < 0) {
+                        return -1;
+                    }
+                    values += chunk;
+                    if (scatter && ++value_index == period) {
+                        values = loop->data[0];
+                        value_index = 0;
+                    }
+                }
+                base += dim * chunk;
+            }
+            return 0;
+        }
+        case NPY_TRANSFER_REPEAT_CONTIGUOUS: {
+            const npy_intp strides[2] = {loop->itemsize, loop->itemsize};
+            const npy_intp blocksize = loop->selection.repeat.blocksize;
+            const npy_intp chunk = blocksize * loop->itemsize;
+            const npy_intp outer_count = loop->selection.repeat.outer_count;
+            const npy_intp *counts = loop->selection.repeat.counts;
+            const npy_intp count_stride = loop->selection.repeat.count_stride;
+            for (npy_intp i = 0; i < outer_count; i++) {
+                for (npy_intp j = 0; j < size; j++) {
+                    npy_intp repeats = counts[j * count_stride];
+                    /* Scan zero counts without entering the copy loop. */
+                    while (repeats == 0 && j + 1 < size) {
+                        repeats = counts[++j * count_stride];
+                    }
+                    for (npy_intp k = 0; k < repeats; k++) {
+                        if (copy(info, src + j*chunk, dst,
+                                blocksize, strides) < 0) {
+                            return -1;
+                        }
+                        dst += chunk;
+                    }
+                }
+                src += size * chunk;
+            }
+            return 0;
+        }
+        case NPY_TRANSFER_PUTMASK_CONTIGUOUS: {
+            const npy_intp strides[2] = {loop->itemsize, loop->itemsize};
+            const npy_intp period = loop->selection.putmask.value_period;
+            const npy_bool *mask = loop->selection.putmask.mask;
+            for (npy_intp i = 0, j = 0; i < size; i++, j++) {
+                if (j == period) {
+                    j = 0;
+                }
+                if (mask[i] && copy(info, src + j*strides[0],
+                        dst + i*strides[1], 1, strides) < 0) {
+                    return -1;
+                }
+            }
+            return 0;
+        }
+    }
+    return -1;  /* Internal programming error. */
+}
+
+NPY_FINLINE int
+npy_transfer_loop(NPY_cast_info *info, const NPY_transfer_loop *loop,
+                  NPY_transfer_copy_function *copy)
+{
+    if (loop->kind == NPY_TRANSFER_INDEXED_CONTIGUOUS &&
+            loop->selection.indexed.scatter) {
+        return npy_transfer_loop_impl(info, loop, 1, copy);
+    }
+    return npy_transfer_loop_impl(info, loop, 0, copy);
+}
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPE_TRANSFER_H_  */

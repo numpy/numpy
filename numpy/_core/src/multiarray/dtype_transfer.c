@@ -110,6 +110,21 @@ _strided_to_strided_move_references(
     return 0;
 }
 
+/* Copy a possibly unaligned reference, publishing it before releasing dst. */
+NPY_FINLINE void
+copy_reference(char *src, char *dst)
+{
+    PyObject *src_ref, *dst_ref;
+    memcpy(&src_ref, src, sizeof(src_ref));
+    memcpy(&dst_ref, dst, sizeof(dst_ref));
+
+    NPY_DT_DBG_REFTRACE("copy src ref", src_ref);
+    memcpy(dst, &src_ref, sizeof(src_ref));
+    Py_XINCREF(src_ref);
+    NPY_DT_DBG_REFTRACE("dec dst ref", dst_ref);
+    Py_XDECREF(dst_ref);
+}
+
 /* Copies references from src to dst */
 NPY_NO_EXPORT int
 _strided_to_strided_copy_references(
@@ -121,19 +136,8 @@ _strided_to_strided_copy_references(
     char *src = args[0], *dst = args[1];
     npy_intp src_stride = strides[0], dst_stride = strides[1];
 
-    PyObject *src_ref = NULL, *dst_ref = NULL;
     while (N > 0) {
-        memcpy(&src_ref, src, sizeof(src_ref));
-        memcpy(&dst_ref, dst, sizeof(dst_ref));
-
-        /* Copy the reference */
-        NPY_DT_DBG_REFTRACE("copy src ref", src_ref);
-        memcpy(dst, &src_ref, sizeof(src_ref));
-        /* Claim the reference */
-        Py_XINCREF(src_ref);
-        /* Release the reference in dst */
-        NPY_DT_DBG_REFTRACE("dec dst ref", dst_ref);
-        Py_XDECREF(dst_ref);
+        copy_reference(src, dst);
 
         src += src_stride;
         dst += dst_stride;
@@ -3824,4 +3828,94 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp const *shape,
     *out_dataC = dataC;
     *out_ndim = ndim;
     return 0;
+}
+
+
+
+NPY_NO_EXPORT int
+NPY_transfer_check_index(npy_intp index, npy_intp dim, int axis)
+{
+    PyGILState_STATE state = PyGILState_Ensure();
+    int res = check_and_adjust_index(&index, dim, axis, NULL);
+    PyGILState_Release(state);
+    return res;
+}
+
+static inline int
+transfer_copy_generic(NPY_cast_info *info, char *src, char *dst,
+                      npy_intp count, const npy_intp *strides)
+{
+    char *args[2] = {src, dst};
+    return info->func(&info->context, args, &count, strides, info->auxdata);
+}
+
+NPY_FINLINE int
+transfer_copy_object(NPY_cast_info *info, char *src, char *dst,
+                     npy_intp count, const npy_intp *strides)
+{
+    if (count != 1) {
+        return transfer_copy_generic(info, src, dst, count, strides);
+    }
+    copy_reference(src, dst);
+    return 0;
+}
+
+static inline int
+transfer_copy_fields(NPY_cast_info *info, char *src, char *dst,
+                     npy_intp count, const npy_intp *strides)
+{
+    _field_transfer_data *d = (_field_transfer_data *)info->auxdata;
+    if (count != 1 || d->decref_src.func != NULL) {
+        return transfer_copy_generic(info, src, dst, count, strides);
+    }
+    for (npy_intp i = 0; i < d->field_count; i++) {
+        _single_field_transfer *field = &d->fields[i];
+        char *f_src = src + field->src_offset, *f_dst = dst + field->dst_offset;
+        int res;
+        if (field->info.func == &_strided_to_strided_copy_references) {
+            res = transfer_copy_object(&field->info, f_src, f_dst, 1, strides);
+        }
+        else {
+            res = transfer_copy_generic(&field->info, f_src, f_dst, 1, strides);
+        }
+        if (res < 0) { return -1; }
+    }
+    return 0;
+}
+
+/* Bind a copy function so the inlined traversal can specialize its calls. */
+#define NPY_DEFINE_TRANSFER_LOOP(NAME, COPY) \
+NPY_FINLINE int NAME(NPY_cast_info *info, const NPY_transfer_loop *loop) \
+{ \
+    return npy_transfer_loop(info, loop, COPY); \
+}
+NPY_DEFINE_TRANSFER_LOOP(transfer_loop_generic, transfer_copy_generic)
+NPY_DEFINE_TRANSFER_LOOP(transfer_loop_object, transfer_copy_object)
+NPY_DEFINE_TRANSFER_LOOP(transfer_loop_fields, transfer_copy_fields)
+#undef NPY_DEFINE_TRANSFER_LOOP
+
+NPY_NO_EXPORT NPY_transfer_loop_function *
+NPY_get_transfer_loop(NPY_cast_info *info, NPY_transfer_kind kind)
+{
+    switch (kind) {
+        case NPY_TRANSFER_INDEXED_CONTIGUOUS:
+        case NPY_TRANSFER_REPEAT_CONTIGUOUS:
+        case NPY_TRANSFER_PUTMASK_CONTIGUOUS:
+            break;
+        default:
+            return NULL;
+    }
+    /* Leave trivial numeric copies on the existing low-overhead paths. */
+    if (!PyDataType_REFCHK(info->descriptors[0]) &&
+            !PyDataType_REFCHK(info->descriptors[1])) {
+        return NULL;
+    }
+    if (info->func == &_strided_to_strided_copy_references) {
+        return &transfer_loop_object;
+    }
+    if (info->func == &_strided_to_strided_field_transfer) {
+        return &transfer_loop_fields;
+    }
+    NPY_transfer_loop_function *loop = NPY_get_string_transfer_loop(info->func, kind);
+    return loop != NULL ? loop : &transfer_loop_generic;
 }
