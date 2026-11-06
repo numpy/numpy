@@ -842,6 +842,25 @@ _TYPE_CODES += [f"m8[{unit}]" for unit in _TIME_UNITS]
 
 
 class TestNanFunctions_Median:
+    @pytest.mark.parametrize('axis', [0, 1])
+    @pytest.mark.parametrize('count', [1, 2, 3])
+    @pytest.mark.parametrize('keepdims', [False, True])
+    def test_float16_overflow(self, axis, count, keepdims):
+        a = np.full((4, 2), [40000, -40000], dtype=np.float16)
+        a[count:] = np.nan
+        expected = np.array([40000, -40000], dtype=np.float16)
+        if axis == 1:
+            a = a.T
+        if keepdims:
+            expected = np.expand_dims(expected, axis)
+
+        result = np.nanmedian(a, axis=axis, keepdims=keepdims)
+        assert_array_equal(result, expected, strict=True)
+
+        out = np.empty(expected.shape, dtype=np.float16)
+        result = np.nanmedian(a, axis=axis, keepdims=keepdims, out=out)
+        assert result is out
+        assert_array_equal(result, expected, strict=True)
 
     def test_mutation(self):
         # Check that passed array is not modified.
