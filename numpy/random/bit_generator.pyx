@@ -38,7 +38,7 @@ from itertools import cycle
 import re
 from secrets import randbits
 
-from threading import RLock
+from threading import Lock, RLock
 
 from cpython.pycapsule cimport PyCapsule_New
 
@@ -316,6 +316,7 @@ cdef class SeedSequence:
                                       np.ndarray)):
             raise TypeError('SeedSequence expects int or sequence of ints for '
                             f'entropy not {entropy}')
+        self._lock = Lock()
         self.entropy = entropy
         self.spawn_key = tuple(spawn_key)
         self.pool_size = pool_size
@@ -347,6 +348,34 @@ cdef class SeedSequence:
                 ['entropy', 'spawn_key', 'pool_size',
                  'n_children_spawned']
                 if getattr(self, k) is not None}
+
+    def __reduce__(self):
+        from ._pickle import __seed_sequence_ctor
+
+        state = (
+            self.entropy, self.n_children_spawned, self.pool,
+            self.pool_size, self.spawn_key
+        )
+        if hasattr(self, "__dict__"):
+            state += (self.__dict__,)
+        return __seed_sequence_ctor, (type(self),), state
+
+    def __setstate__(self, state):
+        from pickle import UnpicklingError
+
+        if not isinstance(state, tuple) or len(state) not in (5, 6):
+            raise UnpicklingError(
+                "invalid state for a pickled SeedSequence"
+            )
+
+        self.entropy = state[0]
+        self.n_children_spawned = state[1]
+        self.pool = state[2]
+        self.pool_size = state[3]
+        self.spawn_key = state[4]
+        self._lock = Lock()
+        if len(state) == 6:
+            self.__dict__.update(state[5])
 
     cdef mix_entropy(self, np.ndarray[np.npy_uint32, ndim=1] mixer,
                      np.ndarray[np.npy_uint32, ndim=1] entropy_array):
@@ -483,21 +512,37 @@ cdef class SeedSequence:
             Equivalent method on the generator and bit generator.
 
         """
-        cdef uint32_t i
+        cdef uint32_t i, start
 
         if n_children < 0:
             raise ValueError("n_children must be non-negative")
 
+        with self._lock:
+            start = self.n_children_spawned
+            self.n_children_spawned += n_children
+
         seqs = []
-        for i in range(self.n_children_spawned,
-                       self.n_children_spawned + n_children):
+        for i in range(start, start + n_children):
             seqs.append(type(self)(
                 self.entropy,
                 spawn_key=self.spawn_key + (i,),
                 pool_size=self.pool_size,
             ))
-        self.n_children_spawned += n_children
+
         return seqs
+
+
+def __pyx_unpickle_SeedSequence(
+    seed_sequence_type,
+    _checksum,
+    state,
+):
+    # `_checksum` is retained for compatibility with Cython-generated
+    # SeedSequence pickles.
+    result = SeedSequence.__new__(seed_sequence_type)
+    if state is not None:
+        result.__setstate__(state)
+    return result
 
 
 ISpawnableSeedSequence.register(SeedSequence)

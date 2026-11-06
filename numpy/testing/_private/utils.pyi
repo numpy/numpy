@@ -476,6 +476,7 @@ def run_threaded(
     pass_barrier: L[False] = False,
     outer_iterations: int = 1,
     prepare_args: None = None,
+    switch_interval: float | None = 1e-5,
 ) -> None: ...
 @overload  # prepare_args=<given>
 def run_threaded(
@@ -486,6 +487,7 @@ def run_threaded(
     outer_iterations: int = 1,
     *,
     prepare_args: Callable[[], list[Any]],
+    switch_interval: float | None = 1e-5,
 ) -> None: ...
 @overload  # pass_count=True
 def run_threaded(
@@ -496,6 +498,7 @@ def run_threaded(
     pass_barrier: L[False] = False,
     outer_iterations: int = 1,
     prepare_args: None = None,
+    switch_interval: float | None = 1e-5,
 ) -> None: ...
 @overload  # pass_count=True, prepare_args=<given>
 def run_threaded(
@@ -506,6 +509,7 @@ def run_threaded(
     pass_barrier: bool = False,
     outer_iterations: int = 1,
     prepare_args: Callable[[], list[Any]],
+    switch_interval: float | None = 1e-5,
 ) -> None: ...
 @overload  # pass_barrier=True
 def run_threaded(
@@ -516,6 +520,7 @@ def run_threaded(
     pass_barrier: L[True],
     outer_iterations: int = 1,
     prepare_args: None = None,
+    switch_interval: float | None = 1e-5,
 ) -> None: ...
 @overload  # pass_count=True, pass_barrier=True
 def run_threaded(
@@ -526,6 +531,7 @@ def run_threaded(
     pass_barrier: L[True],
     outer_iterations: int = 1,
     prepare_args: None = None,
+    switch_interval: float | None = 1e-5,
 ) -> None: ...
 
 #
