@@ -792,11 +792,14 @@ _strided_to_strided_datetime_general_cast(
                                                dt, &dts) < 0) {
             return -1;
         }
-        else {
-            if (NpyDatetime_ConvertDatetimeStructToDatetime64(&d->dst_meta,
+        else if (NpyDatetime_ConvertDatetimeStructToDatetime64(&d->dst_meta,
                                                    &dts, &dt) < 0) {
-                return -1;
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_OverflowError,
+                        "Overflow in datetime conversion: datetime64 value "
+                        "is out of range for the requested unit");
             }
+            return -1;
         }
 
         memcpy(dst, &dt, sizeof(dt));
@@ -951,11 +954,11 @@ _strided_to_strided_string_to_datetime(
             }
         }
 
-        /* Convert to the datetime */
+        /* On overflow store NaT silently; out-of-range strings become NaT. */
         if (dt != NPY_DATETIME_NAT &&
                 NpyDatetime_ConvertDatetimeStructToDatetime64(&d->dst_meta,
                                                &dts, &dt) < 0) {
-            return -1;
+            dt = NPY_DATETIME_NAT;
         }
 
         memcpy(dst, &dt, sizeof(dt));
