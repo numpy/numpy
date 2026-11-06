@@ -1,0 +1,3 @@
+from typing import Final
+
+_STRICT: Final[bool] = ...

@@ -1,0 +1,44 @@
+Implicit text/bytes casting and promotion are deprecated
+--------------------------------------------------------
+
+Casts between bytes (``np.bytes_``) and text (``np.str_`` and ``StringDType``)
+with ``casting="safe"`` or ``casting="same_kind"``, promotion between ``S`` and
+``U``, and implicit text/bytes conversions in string operations now emit
+``DeprecationWarning``. These operations will raise ``TypeError`` in a future
+release. For example::
+
+    a = np.array([b"hello"])
+    a.astype("U", casting="same_kind")      # Deprecated cast
+    np.array([b"hello", "world"])           # Deprecated promotion
+    np.strings.replace(a, b"h", "H")        # Deprecated mixed arguments
+
+Make argument types agree before constructing or combining arrays. For literals
+and missing-value placeholders, use bytes with bytes and text with text, such as
+``b""`` or ``""`` respectively. Use `numpy.strings.encode` or
+`numpy.strings.decode` with an explicit encoding to convert array values::
+
+    text = np.strings.decode(a, encoding="utf-8")
+    np.strings.replace(text, "h", "H")
+    np.concatenate([text, ["world"]])
+
+For mixed Python sequences, encode or decode individual values before passing
+these sequences to `numpy.array`.
+
+Unsafe casting (the default for ``astype``) and array construction with an
+explicit dtype, such as ``np.array(a, dtype="U")``, are unchanged.
+
+To avoid deprecated promotion in operations such as `numpy.concatenate`,
+specify an output dtype as well as ``casting="unsafe"``::
+
+    np.concatenate([a, ["world"]], dtype="U", casting="unsafe")
+
+Set ``NPY_COERCION_POLICY=strict`` before importing NumPy to test the future
+rules:
+
+================================  ======================================  ==============================
+Call                              ``NPY_COERCION_POLICY=warn`` (default)  ``NPY_COERCION_POLICY=strict``
+================================  ======================================  ==============================
+``np.result_type("S1", "U1")``    ``U1`` dtype, warns                     Raises ``DTypePromotionError``
+``np.promote_types("S1", "U1")``  ``U1`` dtype, warns                     Raises ``DTypePromotionError``
+``np.can_cast("S1", "U1")``       ``True``, no warning                    ``False``
+================================  ======================================  ==============================

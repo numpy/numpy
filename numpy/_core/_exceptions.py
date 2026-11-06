@@ -6,6 +6,9 @@ By putting the formatting in `__str__`, we also avoid paying the cost for
 users who silence the exceptions.
 """
 
+from numpy.exceptions import DTypePromotionError
+
+
 def _unpack_tuple(tup):
     if len(tup) == 1:
         return tup[0]
@@ -26,6 +29,15 @@ def _display_as_base(cls):
     assert issubclass(cls, Exception)
     cls.__name__ = cls.__base__.__name__
     return cls
+
+
+@_display_as_base
+class _CoercionPolicyError(DTypePromotionError):
+    """Promotion failure that must not fall back to object during discovery.
+
+    This distinction remains necessary after the text/bytes deprecation expires:
+    mixed text/bytes array construction must raise instead of choosing object.
+    """
 
 
 class UFuncTypeError(TypeError):

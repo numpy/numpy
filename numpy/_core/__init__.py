@@ -10,6 +10,8 @@ import os
 
 from numpy.version import version as __version__
 
+from . import _coercion_policy
+
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
 env_added = []

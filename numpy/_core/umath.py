@@ -18,6 +18,8 @@ from ._multiarray_umath import *
 from ._multiarray_umath import (
     _UFUNC_API,
     _center,
+    _decode,
+    _encode,
     _expandtabs,
     _expandtabs_length,
     _extobj_contextvar,
