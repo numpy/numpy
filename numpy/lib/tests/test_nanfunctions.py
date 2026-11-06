@@ -947,6 +947,7 @@ class TestNanFunctions_Median:
     @pytest.mark.parametrize("dtype", _TYPE_CODES)
     def test_allnans(self, dtype, axis):
         mat = np.full((3, 3), np.nan, dtype=dtype)
+        nan = "NaT" if mat.dtype.kind == "m" else "NaN"
         with pytest.warns((RuntimeWarning, DeprecationWarning)) as r:
             output = np.nanmedian(mat, axis=axis)
             assert output.dtype == mat.dtype
@@ -955,7 +956,7 @@ class TestNanFunctions_Median:
             _filtered_record = [
                 item.message
                 for item in r
-                if "All-NaN slice encountered" in str(item.message)
+                if f"All-{nan} slice encountered" in str(item.message)
             ]
             if axis is None:
                 assert_(len(_filtered_record) == 1)
@@ -971,7 +972,7 @@ class TestNanFunctions_Median:
             _filtered_record = [
                 item.message
                 for item in r
-                if "All-NaN slice encountered" in str(item.message)
+                if f"All-{nan} slice encountered" in str(item.message)
             ]
             if axis is None:
                 assert_(len(_filtered_record) == 2)
@@ -1422,6 +1423,80 @@ class TestNanFunctions_Quantile:
         z = func(a, np.float16(1.0 * scale), method=method)
         assert z == np.float16(1.0)
         assert z.dtype == np.float16
+
+
+class TestNanFunctions_DatetimeTimedelta:
+    # NaT is skipped by the nan-functions just like NaN (gh-33207), so the
+    # results must match those for the same data as floats.
+    fdat = np.array([[2, np.nan, 8],
+                     [np.nan, 4, 10],
+                     [6, 12, np.nan]])
+
+    @pytest.mark.parametrize("subclass", [False, True])
+    @pytest.mark.parametrize("axis", [None, 0, 1])
+    @pytest.mark.parametrize("func, dtype", [
+        *[(func, "m8[s]") for func in [
+            np.nanmin, np.nanmax, np.nanargmin, np.nanargmax,
+            np.nansum, np.nanmean, np.nancumsum]],
+        *[(func, "M8[s]") for func in [
+            np.nanmin, np.nanmax, np.nanargmin, np.nanargmax]],
+    ])
+    def test_result_values(self, func, dtype, axis, subclass):
+        class MyNDArray(np.ndarray):
+            pass
+
+        zero = np.zeros((), dtype=dtype)
+        array = self.fdat.astype("m8[s]") + zero
+        if subclass:
+            array = array.view(MyNDArray)
+        array_copy = array.copy()
+
+        res = func(array, axis=axis)
+        tgt = func(self.fdat, axis=axis)
+        if func not in (np.nanargmin, np.nanargmax):
+            tgt = tgt.astype("m8[s]") + zero
+            assert res.dtype == array.dtype
+        assert_equal(res, tgt)
+        assert_equal(array, array_copy)
+
+    @pytest.mark.parametrize("axis", [None, 0, 1])
+    @pytest.mark.parametrize("dtype", ["m8[s]", "M8[s]"])
+    @pytest.mark.parametrize("kind", ["scalar", "0d", "2d"])
+    def test_allnat(self, kind, dtype, axis):
+        if axis is not None and kind != "2d":
+            pytest.skip("`axis != None` not supported for 0d arrays")
+
+        array = np.full((3, 3) if kind == "2d" else (), np.nan).astype(dtype)
+        if kind == "scalar":
+            array = array[()]
+
+        for func in [np.nanmin, np.nanmax]:
+            with pytest.warns(RuntimeWarning, match="All-NaT (slice|axis)"):
+                out = func(array, axis=axis)
+            assert np.isnat(out).all()
+            assert out.dtype == array.dtype
+
+        for func in [np.nanargmin, np.nanargmax]:
+            with pytest.raises(ValueError, match="All-NaT slice encountered"):
+                func(array, axis=axis)
+
+        if array.dtype.kind == "m":
+            for func in [np.nansum, np.nancumsum]:
+                out = func(array, axis=axis)
+                assert np.all(out == np.timedelta64(0, "s"))
+                assert out.dtype == array.dtype
+
+            with pytest.warns(RuntimeWarning, match="Mean of empty slice"):
+                out = np.nanmean(array, axis=axis)
+            assert np.isnat(out).all()
+            assert out.dtype == array.dtype
+
+    def test_nanmean_timedelta_out(self):
+        out = np.empty(3, dtype="m8[ms]")
+        res = np.nanmean(self.fdat.astype("m8[s]"), axis=1, out=out)
+        assert res is out
+        assert_equal(res, np.array([5, 7, 9], dtype="m8[s]"))
+
 
 @pytest.mark.parametrize("arr, expected", [
     # array of floats with some nans
