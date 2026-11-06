@@ -92,14 +92,14 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
-        CC="ccache ${CC:-clang}" CXX="ccache ${CXX:-clang++}" spin build -j2 -- -Dallow-noblas=false
+        CC="ccache ${CC:-clang}" CXX="ccache ${CXX:-clang++}" spin build -j3 -- -Dallow-noblas=false
 
     - name: Run test suite (full)
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
         export OMP_NUM_THREADS=2
-        spin test -j2 -m full -- --durations=10
+        spin test -j3 -m full -- --durations=10
 
     - name: Ccache statistics
       shell: bash -l {0}
@@ -113,6 +113,8 @@ jobs:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.build_runner[0] }}
+    env:
+      CCACHE_MAXSIZE: 500M
     strategy:
       fail-fast: false
       matrix:
@@ -137,6 +139,10 @@ jobs:
       run: |
         pip install --group dev-cli --group test
 
+    # Reuse compilation between LP64 and ILP64 without uploading a cache.
+    - name: Install compiler cache
+      run: brew install ccache
+
     - name: Build against Accelerate (LP64)
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
@@ -157,3 +163,7 @@ jobs:
       run:  |
         pip install pytest-run-parallel==0.8.2
         spin test -p 4 -- -s --timeout=600 --durations=10
+
+    - name: Compiler cache statistics
+      if: ${{ !cancelled() }}
+      run: ccache -s
