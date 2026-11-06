@@ -680,7 +680,8 @@ class TestAppendScalarPromotion(_DeprecationTestCase):
             change = "these inputs have no common dtype and will raise an error"
         else:
             change = f"use dtype {dtype}, which may round values differently"
-        self.message += (
+        self.message = (
+            type(self).message +
             rf".*producing dtype {re.escape(str(expected.dtype))}.*"
             rf"{re.escape(change)}.*np\.concatenate.*"
             rf"dtype={re.escape(repr(str(expected.dtype)))}")
