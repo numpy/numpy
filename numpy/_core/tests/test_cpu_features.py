@@ -71,6 +71,7 @@ class AbstractTest:
     features_groups = {}
     features_map = {}
     features_flags = set()
+    features_hwcap = dict()
 
     def load_flags(self):
         # a hook
@@ -121,6 +122,31 @@ class AbstractTest:
                 self.features_flags = self.features_flags.union(
                     hwcap_value[1].upper().decode().split()
                 )
+
+    def load_flags_proc_auxv(self):
+        def read_proc_auxv():
+            import struct
+
+            with open("/proc/self/auxv", "rb") as f:
+                data = f.read()
+
+            auxv = {}
+            for key, value in struct.iter_unpack("@LL", data):
+                if key == 0:  # AT_NULL
+                    return auxv
+                auxv[key] = value
+            raise ValueError("Missing AT_NULL in /proc/self/auxv")
+
+        auxv = read_proc_auxv()
+
+        AT_HWCAP = 0x10
+
+        if AT_HWCAP not in auxv:
+            raise ValueError("AT_HWCAP is missing in /proc/self/auxv")
+
+        for k, v in self.features_hwcap.items():
+            if (auxv[AT_HWCAP] & k) != 0:
+                self.features_flags.add(v)
 
 @pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.thread_unsafe(
@@ -464,9 +490,10 @@ is_zarch = re.match(r"^(s390x)", machine, re.IGNORECASE)
                     reason="Only for Linux and IBM Z")
 class Test_ZARCH_Features(AbstractTest):
     features = ["VX", "VXE", "VXE2"]
+    features_hwcap = { (1 << 11): "VX", (1 << 13): "VXE", (1 << 15): "VXE2"}
 
     def load_flags(self):
-        self.load_flags_cpuinfo("features")
+        self.load_flags_proc_auxv()
 
 
 is_arm = re.match(r"^(arm|aarch64)", machine, re.IGNORECASE)
@@ -518,12 +545,8 @@ is_riscv = re.match(r"^(riscv)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_riscv, reason="Only for Linux and RISC-V")
 class Test_RISCV_Features(AbstractTest):
     features = ["RVV"]
+    # (1 << 21) = HWCAP_RISCV_V
+    features_hwcap = { (1 << 21): "RVV"}
 
     def load_flags(self):
-        self.load_flags_auxv()
-        if not self.features_flags:
-            # Let the test fail and dump if we cannot read HWCAP.
-            return
-        hwcap = int(next(iter(self.features_flags)), 16)
-        if hwcap & (1 << 21):  # HWCAP_RISCV_V
-            self.features_flags.add("RVV")
+        self.load_flags_proc_auxv()
