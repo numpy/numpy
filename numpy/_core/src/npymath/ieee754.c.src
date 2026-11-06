@@ -34,10 +34,18 @@ static double _next(double x, int p)
     if (((ix >= 0x7ff00000) && ((ix - 0x7ff00000) | lx) != 0))        /* x is nan */
         return x;
     if ((ix | lx) == 0) {       /* x == 0 */
-        if (p >= 0) {
-            INSERT_WORDS(x, 0x0, 1);    /* return +minsubnormal */
+        if (hx < 0) {
+            if (p >= 0) {
+                INSERT_WORDS(x, 0x80000000, 1);    /* return -minsubnormal */
+            } else {
+                INSERT_WORDS(x, 0x0, 1);    /* return +minsubnormal */
+            }
         } else {
-            INSERT_WORDS(x, 0x80000000, 1);    /* return -minsubnormal */
+            if (p >= 0) {
+                INSERT_WORDS(x, 0x0, 1);    /* return +minsubnormal */
+            } else {
+                INSERT_WORDS(x, 0x80000000, 1);    /* return -minsubnormal */
+            }
         }
         t = x * x;
         if (t == x)
@@ -79,10 +87,18 @@ static float _nextf(float x, int p)
     if ((ix > 0x7f800000))      /* x is nan */
         return x;
     if (ix == 0) {              /* x == 0 */
-        if (p >= 0) {
-            SET_FLOAT_WORD(x, 0x0 | 1); /* return +minsubnormal */
+        if (hx < 0) {
+            if (p >= 0) {
+                SET_FLOAT_WORD(x, 0x80000000 | 1); /* return -minsubnormal */
+            } else {
+                SET_FLOAT_WORD(x, 0x0 | 1); /* return +minsubnormal */
+            }
         } else {
-            SET_FLOAT_WORD(x, 0x80000000 | 1); /* return -minsubnormal */
+            if (p >= 0) {
+                SET_FLOAT_WORD(x, 0x0 | 1); /* return +minsubnormal */
+            } else {
+                SET_FLOAT_WORD(x, 0x80000000 | 1); /* return -minsubnormal */
+            }
         }
         t = x * x;
         if (t == x)
@@ -232,6 +248,7 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
     }
 }
 #else
+#if NPY_SIZEOF_LONGDOUBLE != NPY_SIZEOF_DOUBLE
 static npy_longdouble _nextl(npy_longdouble x, int p)
 {
     volatile npy_longdouble t;
@@ -246,10 +263,18 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
     if (ux.e == 0.0) {
         SET_LDOUBLE_MANH(ux, 0);              /* return +-minsubnormal */
         SET_LDOUBLE_MANL(ux, 1);
-        if (p >= 0) {
-            SET_LDOUBLE_SIGN(ux, 0);
+        if (GET_LDOUBLE_SIGN(ux)) {
+            if (p >= 0) {
+                SET_LDOUBLE_SIGN(ux, 1);
+            } else {
+                SET_LDOUBLE_SIGN(ux, 0);
+            }
         } else {
-            SET_LDOUBLE_SIGN(ux, 1);
+            if (p >= 0) {
+                SET_LDOUBLE_SIGN(ux, 0);
+            } else {
+                SET_LDOUBLE_SIGN(ux, 1);
+            }
         }
         t = ux.e * ux.e;
         if (t == ux.e) {
@@ -280,7 +305,7 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
         }
     }
     if (GET_LDOUBLE_EXP(ux) == 0x7fff) {
-        return ux.e + ux.e;           /* overflow  */
+        return x + x;           /* overflow  */
     }
     if (GET_LDOUBLE_EXP(ux) == 0) {            /* underflow */
         if (LDBL_NBIT) {
@@ -295,11 +320,12 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
     return ux.e;
 }
 #endif
+#endif
 
 /**begin repeat
- * #suff = f,,l#
- * #SUFF = F,,L#
- * #type = npy_float, npy_double, npy_longdouble#
+ * #suff = f,#
+ * #SUFF = F,#
+ * #type = npy_float, npy_double#
  */
 @type@ npy_spacing@suff@(@type@ x)
 {
@@ -314,6 +340,22 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
     return _next@suff@(x, 1) - x;
 }
 /**end repeat**/
+
+npy_longdouble npy_spacingl(npy_longdouble x)
+{
+#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+    return (npy_longdouble)npy_spacing((npy_double)x);
+#else
+    if (npy_isnan(x)) {
+        return x;
+    }
+    if (npy_isinf(x)) {
+        return NPY_NANL;
+    }
+
+    return _nextl(x, 1) - x;
+#endif
+}
 
 int npy_clear_floatstatus() {
     char x=0;
