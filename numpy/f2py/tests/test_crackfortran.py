@@ -274,6 +274,11 @@ class TestStringLiteralDepend:
         assert mask('"badvar2"') == "''"
         assert mask("'mkdir '//badvar2") == "''//badvar2"
         assert mask("a + b") == "a + b"
+        assert mask(r"'C:\'//n//'x'") == "''//n//''"
+        assert mask(r"'C:\folder\file'") == "''"
+        assert crackfortran.split_by_unquoted(
+            r"'C:\'//n//'x',tail", ","
+        ) == (r"'C:\'//n//'x'", ",tail")
 
     def test_no_self_depend_from_literal(self):
         fpath = util.getpath("tests", "src", "crackfortran", "gh28700.f90")

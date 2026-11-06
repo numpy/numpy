@@ -673,8 +673,8 @@ def split_by_unquoted(line, characters):
         r"(?P<after>{char}.*)\Z".format(
             not_quoted=f"[^\"'{re.escape(characters)}]",
             char=f"[{re.escape(characters)}]",
-            single_quoted=r"('([^'\\]|(\\.))*')",
-            double_quoted=r'("([^"\\]|(\\.))*")'))
+            single_quoted=r"('([^']|'')*')",
+            double_quoted=r'("([^"]|"")*")'))
     m = r.match(line)
     if m:
         d = m.groupdict()
@@ -683,7 +683,7 @@ def split_by_unquoted(line, characters):
 
 
 _quoted_string_re = re.compile(
-    r"('([^'\\]|(\\.))*')|(\"([^\"\\]|(\\.))*\")")
+    r"('([^']|'')*')|(\"([^\"]|\"\")*\")")
 
 
 def mask_string_literals(expr):
