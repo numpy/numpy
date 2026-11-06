@@ -1548,7 +1548,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     }
 
     ndim = PyArray_DiscoverDTypeAndShape(
-            op, max_depth, dims, &cache, in_DType, in_descr, &dtype,
+            op, max_depth, NPY_FALSE, dims, &cache, in_DType, in_descr, &dtype,
             copy, &was_copied_by__array__);
 
     if (ndim < 0) {

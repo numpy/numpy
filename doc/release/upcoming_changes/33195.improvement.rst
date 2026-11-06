@@ -1,0 +1,7 @@
+Avoid unnecessary array-like conversion during object-array assignment
+----------------------------------------------------------------------
+Assigning nested non-sequence array-like objects that do not export 
+a buffer into an existing ``dtype=object`` array no longer accesses 
+their array conversion protocols when the original objects are stored 
+directly in the destination. Sequence and buffer objects retain their
+existing conversion behavior.
