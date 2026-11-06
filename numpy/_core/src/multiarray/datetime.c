@@ -446,6 +446,7 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
         npy_datetimestruct *out)
 {
     npy_int64 days;
+    npy_int64 cycles; // gregorian calendar 400 year cycles
 
     /* Initialize the output to all zeros */
     memset(out, 0, sizeof(npy_datetimestruct));
@@ -493,8 +494,13 @@ NpyDatetime_ConvertDatetime64ToDatetimeStruct(
             break;
 
         case NPY_FR_W:
-            /* A week is 7 days */
+            /*
+            * A week is 7 days. Avoid overflow in dt * 7 by first removing
+            * whole 400-year Gregorian cycles (146097 days == 20871 weeks).
+            */
+            cycles = extract_unit_64(&dt, 20871);
             set_datetimestruct_days(dt * 7, out);
+            out->year += 400 * cycles;
             break;
 
         case NPY_FR_D:
