@@ -2936,3 +2936,108 @@ def run_subprocess(cmd, cwd=None, **kwargs):
             f"----- stderr -----\n{res.stderr}",
             pytrace=False)
     return res
+
+
+def run_with_memory_limit(func, make_args, limit):
+    """Fail the test if any call needs more than ``limit`` bytes of address
+    space beyond what the process already uses.
+
+    ``make_args()`` returns a mapping of labels to argument tuples, and
+    ``func(*args)`` runs for each of them.  Both run in a fresh subprocess, so
+    they must be module-level functions, and each call runs in its own forked
+    child of that subprocess.  Skips on platforms other than Linux and macOS.
+    """
+    import pytest
+
+    if sys.platform not in ("linux", "darwin"):
+        pytest.skip("needs fork and an enforced RLIMIT_AS")
+    cflags = sysconfig.get_config_var('CFLAGS') or ''
+    config_args = sysconfig.get_config_var('CONFIG_ARGS') or ''
+    address_sanitizer = (
+        '-fsanitize=address' in cflags or
+        '--with-address-sanitizer' in config_args
+    )
+    thread_sanitizer = (
+        '-fsanitize=thread' in cflags or
+        '--with-thread-sanitizer' in config_args
+    )
+    if address_sanitizer or thread_sanitizer:
+        pytest.skip("sanitizer memory overhead is incompatible with RLIMIT_AS tests")
+    locations = [(f.__module__, getattr(sys.modules[f.__module__], "__file__", None),
+                  f.__qualname__) for f in (func, make_args)]
+    code = ("from numpy.testing._private.utils import _run_with_memory_limit; "
+            f"_run_with_memory_limit(*{locations!r}, {limit!r})")
+    # Avoid starting an OpenBLAS thread pool before the subprocess forks.
+    # Set this before importing NumPy, without changing the parent's environment.
+    env = dict(os.environ, OPENBLAS_NUM_THREADS="1")
+    run_subprocess([sys.executable, "-c", code], env=env)
+
+
+def _load_function(module_name, path, qualname):
+    import importlib
+
+    try:
+        obj = importlib.import_module(module_name)
+    except ImportError:
+        # a test module pytest imported by its bare name; mirror what pytest
+        # does and put the file's directory on sys.path. Mutating sys.path is
+        # safe because this runs in a subprocess that exits after the test.
+        sys.path.insert(0, os.path.dirname(path))
+        obj = importlib.import_module(module_name)
+    for attr in qualname.split("."):
+        obj = getattr(obj, attr)
+    return obj
+
+
+def _run_with_memory_limit(func_location, make_args_location, limit):
+    import resource
+    import subprocess
+    import traceback
+
+    func = _load_function(*func_location)
+    calls = _load_function(*make_args_location)()
+    failed = []
+    for label, args in calls.items():
+        # fork so memory the allocator kept from one call can't hide another;
+        # safe because this process only runs this loop and each child makes
+        # one call before os._exit
+        pid = os.fork()
+        if pid == 0:
+            stage = "measuring address space"
+            mapped = soft = hard = None
+            try:
+                # Measure after fork: the child's mappings can differ from the
+                # parent's. macOS rejects limits below current address-space use.
+                if sys.platform == "darwin":
+                    ps = ["ps", "-o", "vsz=", "-p", str(os.getpid())]
+                    mapped = int(subprocess.check_output(ps)) * 1024
+                else:
+                    with open("/proc/self/statm") as f:
+                        mapped = int(f.read().split()[0]) * resource.getpagesize()
+                hard = resource.getrlimit(resource.RLIMIT_AS)[1]
+                soft = mapped + limit
+                if hard != resource.RLIM_INFINITY:
+                    soft = min(soft, hard)
+                stage = "setting RLIMIT_AS"
+                resource.setrlimit(resource.RLIMIT_AS, (soft, hard))
+                stage = "running the check"
+                func(*args)
+            except BaseException:
+                print(f"Memory-limit check {label!r} failed while {stage}.\n"
+                      f"Requested limits: soft={soft}, hard={hard} bytes; "
+                      f"measured address space={mapped} bytes; "
+                      f"additional allowance={limit} bytes.",
+                      file=sys.stderr, flush=True)
+                traceback.print_exc()
+                sys.stderr.flush()
+                os._exit(1)
+            os._exit(0)
+        exitcode = os.waitstatus_to_exitcode(os.waitpid(pid, 0)[1])
+        if exitcode < 0:
+            failed.append(f"{label}: killed by signal {-exitcode}")
+        elif exitcode:
+            failed.append(f"{label}: exited with status {exitcode}")
+    if failed:
+        raise SystemExit(
+            "Memory-limit checks failed (see child diagnostics above):\n"
+            + "\n".join(f"  {failure}" for failure in failed))
