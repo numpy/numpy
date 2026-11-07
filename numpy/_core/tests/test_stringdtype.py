@@ -15,6 +15,7 @@ from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import ComplexWarning
 from numpy.testing import IS_PYPY, assert_array_equal
+from numpy.testing._private.utils import run_with_memory_limit
 
 
 def random_unicode_string_list():
@@ -2729,11 +2730,21 @@ BINARY_FUNCTIONS = [
     ("rsplit", (None, "A")),
     ("rstrip", (None, "A")),
     ("rpartition", (None, "A")),
+    ("slice", (None, 1, 5)),
     ("split", (None, "A")),
     ("strip", (None, "A")),
     ("startswith", (None, "A")),
+    ("translate", (None, {ord("A"): "B"})),
     ("zfill", (None, 12)),
 ]
+
+
+def test_function_tables_cover_np_strings():
+    names = {*UNARY_FUNCTIONS, *(name for name, _ in BINARY_FUNCTIONS),
+             *(op.__name__ for op in comparison_operators)}
+    # decode only accepts bytes
+    assert set(np.strings.__all__) - names == {"decode"}
+
 
 PASSES_THROUGH_NAN_NULLS = [
     "add",
@@ -2826,6 +2837,38 @@ def test_binary(string_array, unicode_array, function_name, args):
     else:
         # shouldn't ever get here
         assert 0
+
+
+# _vec_string calls a Python str method on each element, so it holds the string
+# as Python objects (four bytes per character here), and case mapping reserves
+# three codepoints per character
+LARGE_STRING_KNOWN_ISSUES = {
+    "capitalize", "encode", "lower", "mod", "swapcase", "title", "translate", "upper"
+}
+LARGE_STRING_FUNCTIONS = {
+    name: args for name, args in [
+        *((name, (None,)) for name in UNARY_FUNCTIONS),
+        *BINARY_FUNCTIONS,
+        *((op.__name__, (None, None)) for op in comparison_operators),
+        # an empty pattern matches between every pair of characters, but with
+        # count=1 the output only needs room for one insertion
+        ("replace", (None, "", "prefix: ", 1)),
+    ]
+    if name not in ONLY_IN_NP_CHAR and name not in LARGE_STRING_KNOWN_ISSUES
+}
+
+
+def _large_string_args():
+    arr = np.array([UFUNC_TEST_DATA[1] * 2**12], dtype="T")  # about 1.2 MiB
+    return {name: (getattr(np.strings, name),
+                   *(arr if arg is None else arg for arg in args))
+            for name, args in LARGE_STRING_FUNCTIONS.items()}
+
+
+def test_large_string_memory_limit():
+    # run all string operations under a tight memory limit to check for large
+    # temporary allocations
+    run_with_memory_limit(operator.call, _large_string_args, 6 * 1024**2)
 
 
 @pytest.mark.parametrize("function, expected", [
