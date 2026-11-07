@@ -124,7 +124,15 @@ def load(
 
 def save(file: _FNameWriteBytes, arr: ArrayLike, allow_pickle: bool = True) -> None: ...
 def savez(file: _FNameWriteBytes, *args: ArrayLike, allow_pickle: bool = True, **kwds: ArrayLike) -> None: ...
-def savez_compressed(file: _FNameWriteBytes, *args: ArrayLike, allow_pickle: bool = True, **kwds: ArrayLike) -> None: ...
+
+#
+def savez_compressed(
+    file: _FNameWriteBytes,
+    *args: ArrayLike,
+    allow_pickle: bool = True,
+    zipfile_kwargs: Mapping[str, Any] | None = None,
+    **kwds: ArrayLike,
+) -> None: ...
 
 # NOTE: the free `KeyT` type parameter is used to deal with the _invariant_ `Mapping` key type
 # File-like objects only have to implement `__iter__` and, optionally, `encoding`
