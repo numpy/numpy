@@ -3,7 +3,7 @@ name: Type-checking
 # Mypy is too slow to run as part of regular CI. The purpose of the jobs in
 # this file is to cover running Mypy across:
 #
-#   - OSes: Linux, Windows and macOS
+#   - OSes: Linux and Windows
 #   - Python versions: lowest/highest supported versions, and an intermediate one
 #
 # The build matrix aims for sparse coverage across those two dimensions.
@@ -52,7 +52,8 @@ jobs:
       fail-fast: false
       matrix:
         os_python:
-          - [macos-latest, '3.14']
+          # macOS CI capacity is limited; cover this Python version on Linux.
+          - [ubuntu-latest, '3.14']
           - [ubuntu-latest, '3.13']
           - [windows-2022, '3.12']
     steps:
