@@ -1490,6 +1490,17 @@ class TestPromotion:
     """Test cases related to more complex DType promotions.  Further promotion
     tests are defined in `test_numeric.py`
     """
+
+    @pytest.mark.parametrize(
+        ("dtype", "scalar_type"),
+        [(np.int32, int), (np.float32, float), (np.complex64, complex)],
+    )
+    def test_builtin_scalar_type_is_weak(self, dtype, scalar_type):
+        # Builtin scalar types should follow the same weak-promotion rules as
+        # instances of those types.
+        for inputs in [(dtype, scalar_type), (scalar_type, dtype)]:
+            assert np.result_type(*inputs) == np.dtype(dtype)
+
     @pytest.mark.parametrize(["other", "expected"],
             [(2**16 - 1, np.complex64),
              (2**32 - 1, np.complex64),
