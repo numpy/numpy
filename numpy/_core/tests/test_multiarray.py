@@ -6745,6 +6745,96 @@ class TestLexsort:
         x = np.linspace(0., 1., 42 * 3).reshape(42, 3)
         assert_raises(AxisError, np.lexsort, x, axis=2)
 
+    @staticmethod
+    def _reference_lexsort(keys, axis=-1):
+        # lexsort is a sequence of stable argsorts, the last key being primary
+        keys = [np.moveaxis(np.asarray(k), axis, -1) for k in keys]
+        idx = np.broadcast_to(np.arange(keys[0].shape[-1]), keys[0].shape)
+        for k in keys:
+            perm = np.argsort(np.take_along_axis(k, idx, axis=-1),
+                              axis=-1, stable=True)
+            idx = np.take_along_axis(idx, perm, axis=-1)
+        return np.moveaxis(idx, -1, axis)
+
+    @pytest.mark.parametrize("dtype", [
+        "?", "i1", "u2", "i4", "u8", "f2", "f4", "f8", "c16", "M8[s]", "m8[s]",
+        "S3", "U3", "O", "T",
+    ])
+    @pytest.mark.parametrize("axis", [0, 1, -1])
+    def test_against_reference(self, dtype, axis):
+        rng = np.random.default_rng(31424)
+        shape = (7, 50)
+        primary = rng.integers(0, 3, size=shape)
+        secondary = rng.integers(0, 5, size=shape)
+        if dtype == "?":
+            primary, secondary = primary > 1, secondary > 2
+        keys = [secondary.astype(dtype), primary.astype(dtype)]
+        expected = self._reference_lexsort(keys, axis=axis)
+        assert_array_equal(np.lexsort(keys, axis=axis), expected)
+
+    @pytest.mark.parametrize("dtype", ["i2", "f4", "f8", "c8", "M8[s]", "U2"])
+    def test_buffered_keys(self, dtype):
+        # Keys that cannot be passed to the sort loop directly need to be
+        # copied/cast into a buffer first.
+        rng = np.random.default_rng(31424)
+        a = rng.integers(0, 4, size=40).astype(dtype)
+        b = rng.integers(0, 4, size=40).astype(dtype)
+        expected = np.lexsort((b, a))
+
+        # byteswapped
+        a_swapped = a.astype(a.dtype.newbyteorder())
+        b_swapped = b.astype(b.dtype.newbyteorder())
+        assert_array_equal(np.lexsort((b_swapped, a_swapped)), expected)
+        assert_array_equal(np.lexsort((b, a_swapped)), expected)
+
+        # non-contiguous
+        a_strided = np.repeat(a, 2)[::2]
+        b_strided = np.repeat(b, 3)[::3]
+        assert_array_equal(np.lexsort((b_strided, a_strided)), expected)
+
+        # unaligned
+        if a.dtype.alignment > 1:
+            buf = np.zeros(a.nbytes + 1, dtype=np.uint8)
+            a_unaligned = buf[1:].view(a.dtype)
+            a_unaligned[...] = a
+            assert not a_unaligned.flags.aligned
+            assert_array_equal(np.lexsort((b, a_unaligned)), expected)
+
+    def test_nan(self):
+        a = np.array([1, 0, 1, 0, 1, 0])
+        b = np.array([np.nan, 2., 1., np.nan, -np.inf, 2.])
+        assert_array_equal(np.lexsort((b, a)), [1, 5, 3, 4, 2, 0])
+
+    def test_structured(self):
+        # Structured dtypes use the legacy (compare based) argsort
+        dt = np.dtype([("x", "i4"), ("y", "f8")])
+        a = np.array([(1, 2.), (0, 1.), (1, 1.), (0, 1.)], dtype=dt)
+        b = np.array([3, 2, 1, 0])
+        assert_array_equal(np.lexsort((b, a)), [3, 1, 2, 0])
+        assert_array_equal(np.lexsort((a, b)), [3, 2, 1, 0])
+
+        swapped = a.astype(dt.newbyteorder())
+        assert_array_equal(np.lexsort((b, swapped)), [3, 1, 2, 0])
+
+    def test_single_element_and_empty(self):
+        assert_array_equal(np.lexsort(([1],)), [0])
+        assert np.lexsort((np.array([], dtype="f8"),)).shape == (0,)
+        assert np.lexsort((np.zeros((3, 0)),), axis=0).shape == (3, 0)
+
+    def test_object_comparison_error(self):
+        class Uncomparable:
+            def __lt__(self, other):
+                raise RuntimeError("cannot compare")
+
+            __gt__ = __le__ = __ge__ = __lt__
+
+        a = np.array([Uncomparable() for _ in range(5)], dtype=object)
+        b = np.arange(5)
+        with pytest.raises(RuntimeError, match="cannot compare"):
+            np.lexsort((b, a))
+        with pytest.raises(RuntimeError, match="cannot compare"):
+            np.lexsort((a[::-1], b))
+
 
 def normalize_filename(tmp_path, param):
     # Handles two cases, where filename should

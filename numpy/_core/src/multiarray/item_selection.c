@@ -1938,29 +1938,193 @@ fail:
 }
 
 
-/*NUMPY_API
- *LexSort an array providing indices that will sort a collection of arrays
- *lexicographically.  The first key is sorted on first, followed by the second key
- *-- requires that arg"merge"sort is available for each sort_key
- *
- *Returns an index array that shows the indexes for the lexicographic sort along
- *the given axis.
+/*
+ * Per-key state for lexsort.  Every key is argsorted stably, reusing the
+ * index buffer produced by the previous key.  The argsort is done with the
+ * DType's ArrayMethod based ``argsort_meth`` loop when available, otherwise
+ * with the legacy ``argsort[NPY_STABLESORT]`` ArrFunc (or the generic
+ * ``npy_atimsort`` if the DType only provides ``compare``).
  */
-NPY_NO_EXPORT PyObject *
-PyArray_LexSort(PyObject *sort_keys, int axis)
+typedef struct {
+    PyArrayObject *arr;
+    PyArrayIterObject *it;
+    /* New-style ArrayMethod argsort (``strided_loop == NULL`` if legacy) */
+    PyArrayMethod_StridedLoop *strided_loop;
+    NpyAuxData *auxdata;
+    PyArrayMethod_SortParameters params;
+    PyArrayMethod_Context context;
+    PyArray_Descr *loop_descrs[2];
+    /* Legacy argsort function (NULL if the new-style loop is used) */
+    PyArray_ArgSortFunc *argsort;
+    /* Descriptor of the data passed to the sort and buffering information */
+    PyArray_Descr *odescr;
+    npy_intp astride;
+    int needcopy;
+    char *valbuffer;
+    npy_intp valbufsize;
+    NPY_cast_info cast_info;
+} lexsort_key;
+
+
+/*
+ * Find the argsort implementation for a single lexsort key.  Sets
+ * ``*needs_api`` if the loop requires the Python API.
+ */
+static int
+lexsort_key_get_loop(lexsort_key *key, npy_intp i, NPY_SORTKIND flags,
+                     int *needs_api)
 {
-    PyArrayObject **mps;
-    PyArrayIterObject **its;
+    PyArray_Descr *descr = PyArray_DESCR(key->arr);
+    PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
+    PyArrayMethodObject *argsort_method = NPY_DT_SLOTS(dt)->argsort_meth;
+
+    if (argsort_method != NULL) {
+        PyArray_Descr *idescr = PyArray_DescrFromType(NPY_INTP);
+        PyArray_DTypeMeta *dtypes[2] = {dt, NPY_DTYPE(idescr)};
+        PyArray_Descr *given_descrs[2] = {descr, idescr};
+        // we can ignore the view_offset for sorting
+        npy_intp view_offset = 0;
+        NPY_ARRAYMETHOD_FLAGS method_flags = 0;
+
+        int resolve_ret = argsort_method->resolve_descriptors(
+                argsort_method, dtypes, given_descrs, key->loop_descrs,
+                &view_offset);
+        Py_DECREF(idescr);
+        if (resolve_ret < 0) {
+            /* Resolvers may leave stale pointers behind on error */
+            key->loop_descrs[0] = NULL;
+            key->loop_descrs[1] = NULL;
+            return -1;
+        }
+        key->params = (PyArrayMethod_SortParameters){.flags = flags};
+        key->context.descriptors = key->loop_descrs;
+        key->context.parameters = &key->params;
+        key->context.method = argsort_method;
+
+        // The sort loop is always called on contiguous data
+        npy_intp strides[2] = {key->loop_descrs[0]->elsize, sizeof(npy_intp)};
+        if (argsort_method->get_strided_loop(
+                &key->context, 1, 0, strides, &key->strided_loop,
+                &key->auxdata, &method_flags) < 0) {
+            return -1;
+        }
+        if (method_flags & NPY_METH_REQUIRES_PYAPI) {
+            *needs_api = 1;
+        }
+        key->odescr = key->loop_descrs[0];
+        Py_INCREF(key->odescr);
+    }
+    else {
+        if (flags & NPY_SORT_DESCENDING) {
+            PyErr_Format(PyExc_TypeError,
+                         "item %zd type does not support descending sorts", i);
+            return -1;
+        }
+        key->argsort = PyDataType_GetArrFuncs(descr)->argsort[NPY_STABLESORT];
+        if (key->argsort == NULL) {
+            if (!PyDataType_GetArrFuncs(descr)->compare) {
+                PyErr_Format(PyExc_TypeError,
+                             "item %zd type does not have compare function", i);
+                return -1;
+            }
+            key->argsort = npy_atimsort;
+        }
+        if (PyDataType_FLAGCHK(descr, NPY_NEEDS_PYAPI)) {
+            *needs_api = 1;
+        }
+        if (PyArray_ISBYTESWAPPED(key->arr)) {
+            key->odescr = PyArray_DescrNewByteorder(descr, NPY_SWAP);
+            if (key->odescr == NULL) {
+                return -1;
+            }
+        }
+        else {
+            key->odescr = descr;
+            Py_INCREF(key->odescr);
+        }
+    }
+    return 0;
+}
+
+
+/*
+ * Set up the (contiguous, aligned, native) buffer for a key if the data
+ * cannot be passed to the sort loop directly.
+ */
+static int
+lexsort_key_setup_buffer(lexsort_key *key, int axis, npy_intp N,
+                         PyObject *mem_handler, int *needs_api)
+{
+    PyArrayObject *arr = key->arr;
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+    npy_intp elsize = key->odescr->elsize;
+    int is_aligned = IsAligned(arr);
+
+    key->astride = PyArray_STRIDE(arr, axis);
+    key->needcopy = (!is_aligned || key->astride != elsize
+                     || !PyArray_EquivTypes(descr, key->odescr));
+    if (!key->needcopy) {
+        return 0;
+    }
+
+    key->valbufsize = N * elsize;
+    if (NPY_UNLIKELY(key->valbufsize == 0)) {
+        key->valbufsize = 1;  /* Ensure allocation is not empty */
+    }
+    key->valbuffer = PyDataMem_UserNEW(key->valbufsize, mem_handler);
+    if (key->valbuffer == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    if (PyDataType_FLAGCHK(key->odescr, NPY_NEEDS_INIT)) {
+        memset(key->valbuffer, 0, key->valbufsize);
+    }
+
+    NPY_ARRAYMETHOD_FLAGS transfer_flags;
+    if (PyArray_GetDTypeTransferFunction(
+            is_aligned, key->astride, elsize, descr, key->odescr, 0,
+            &key->cast_info, &transfer_flags) != NPY_SUCCEED) {
+        return -1;
+    }
+    if (transfer_flags & NPY_METH_REQUIRES_PYAPI) {
+        *needs_api = 1;
+    }
+    return 0;
+}
+
+
+/* Must be called with the GIL held. */
+static void
+lexsort_key_clear(lexsort_key *key, npy_intp N, PyObject *mem_handler)
+{
+    if (key->valbuffer != NULL) {
+        PyArray_ClearBuffer(key->odescr, key->valbuffer,
+                            key->odescr->elsize, N, 1);
+        PyDataMem_UserFREE(key->valbuffer, key->valbufsize, mem_handler);
+    }
+    NPY_cast_info_xfree(&key->cast_info);
+    NPY_AUXDATA_FREE(key->auxdata);
+    Py_XDECREF(key->loop_descrs[0]);
+    Py_XDECREF(key->loop_descrs[1]);
+    Py_XDECREF(key->odescr);
+    Py_XDECREF(key->it);
+    Py_XDECREF(key->arr);
+}
+
+
+static PyObject *
+lexsort_impl(PyObject *sort_keys, int axis, NPY_SORTKIND flags)
+{
+    lexsort_key *keys = NULL;
     PyArrayObject *ret = NULL;
     PyArrayIterObject *rit = NULL;
-    npy_intp n, N, size, i, j;
-    npy_intp astride, rstride, *iptr;
+    npy_intp *idxbuffer = NULL;
+    npy_intp n, N = 0, size, i, j;
+    npy_intp rstride;
     int nd;
-    int needcopy = 0;
-    npy_intp elsize;
-    npy_intp maxelsize;
-    int object = 0;
-    PyArray_ArgSortFunc *argsort;
+    int needidxbuffer;
+    int needs_api = 0;
+    int failed = 0;
     NPY_BEGIN_THREADS_DEF;
 
     if (!PySequence_Check(sort_keys)
@@ -1969,54 +2133,43 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 "need sequence of keys with len > 0 in lexsort");
         return NULL;
     }
-    mps = (PyArrayObject **) PyMem_RawMalloc(n * sizeof(PyArrayObject *));
-    if (mps == NULL) {
-        return PyErr_NoMemory();
+    PyObject *mem_handler = PyDataMem_GetHandler();
+    if (mem_handler == NULL) {
+        return NULL;
     }
-    its = (PyArrayIterObject **) PyMem_RawMalloc(n * sizeof(PyArrayIterObject *));
-    if (its == NULL) {
-        PyMem_RawFree(mps);
+    /* zero-initialized, so that cleanup is always safe */
+    keys = (lexsort_key *)PyMem_RawCalloc(n, sizeof(lexsort_key));
+    if (keys == NULL) {
+        Py_DECREF(mem_handler);
         return PyErr_NoMemory();
     }
     for (i = 0; i < n; i++) {
-        mps[i] = NULL;
-        its[i] = NULL;
-    }
-    for (i = 0; i < n; i++) {
-        PyObject *obj;
-        obj = PySequence_GetItem(sort_keys, i);
+        PyObject *obj = PySequence_GetItem(sort_keys, i);
         if (obj == NULL) {
             goto fail;
         }
-        mps[i] = (PyArrayObject *)PyArray_FROM_O(obj);
+        keys[i].arr = (PyArrayObject *)PyArray_FROM_O(obj);
         Py_DECREF(obj);
-        if (mps[i] == NULL) {
+        if (keys[i].arr == NULL) {
             goto fail;
         }
         if (i > 0) {
-            if ((PyArray_NDIM(mps[i]) != PyArray_NDIM(mps[0]))
-                || (!PyArray_CompareLists(PyArray_DIMS(mps[i]),
-                                       PyArray_DIMS(mps[0]),
-                                       PyArray_NDIM(mps[0])))) {
+            if ((PyArray_NDIM(keys[i].arr) != PyArray_NDIM(keys[0].arr))
+                || (!PyArray_CompareLists(PyArray_DIMS(keys[i].arr),
+                                          PyArray_DIMS(keys[0].arr),
+                                          PyArray_NDIM(keys[0].arr)))) {
                 PyErr_SetString(PyExc_ValueError,
                                 "all keys need to be the same shape");
                 goto fail;
             }
         }
-        if (!PyDataType_GetArrFuncs(PyArray_DESCR(mps[i]))->argsort[NPY_STABLESORT]
-                && !PyDataType_GetArrFuncs(PyArray_DESCR(mps[i]))->compare) {
-            PyErr_Format(PyExc_TypeError,
-                         "item %zd type does not have compare function", i);
+        if (lexsort_key_get_loop(&keys[i], i, flags, &needs_api) < 0) {
             goto fail;
-        }
-        if (!object
-            && PyDataType_FLAGCHK(PyArray_DESCR(mps[i]), NPY_NEEDS_PYAPI)) {
-            object = 1;
         }
     }
 
     /* Now we can check the axis */
-    nd = PyArray_NDIM(mps[0]);
+    nd = PyArray_NDIM(keys[0].arr);
     /*
     * Special case letting axis={-1,0} slip through for scalars,
     * for backwards compatibility reasons.
@@ -2027,26 +2180,33 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     else if (check_and_adjust_axis(&axis, nd) < 0) {
         goto fail;
     }
-    if ((nd == 0) || (PyArray_SIZE(mps[0]) <= 1)) {
+    if ((nd == 0) || (PyArray_SIZE(keys[0].arr) <= 1)) {
         /* empty/single element case */
         ret = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, PyArray_DescrFromType(NPY_INTP),
-            PyArray_NDIM(mps[0]), PyArray_DIMS(mps[0]), NULL, NULL,
+            PyArray_NDIM(keys[0].arr), PyArray_DIMS(keys[0].arr), NULL, NULL,
             0, NULL);
 
         if (ret == NULL) {
             goto fail;
         }
-        if (PyArray_SIZE(mps[0]) > 0) {
+        if (PyArray_SIZE(keys[0].arr) > 0) {
             *((npy_intp *)(PyArray_DATA(ret))) = 0;
         }
         goto finish;
     }
 
+    N = PyArray_DIMS(keys[0].arr)[axis];
+    assert(N > 0);  /* Guaranteed and assumed by the buffers */
+
     for (i = 0; i < n; i++) {
-        its[i] = (PyArrayIterObject *)PyArray_IterAllButAxis(
-                (PyObject *)mps[i], &axis);
-        if (its[i] == NULL) {
+        keys[i].it = (PyArrayIterObject *)PyArray_IterAllButAxis(
+                (PyObject *)keys[i].arr, &axis);
+        if (keys[i].it == NULL) {
+            goto fail;
+        }
+        if (lexsort_key_setup_buffer(
+                &keys[i], axis, N, mem_handler, &needs_api) < 0) {
             goto fail;
         }
     }
@@ -2054,7 +2214,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     /* Now do the sorting */
     ret = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, PyArray_DescrFromType(NPY_INTP),
-            PyArray_NDIM(mps[0]), PyArray_DIMS(mps[0]), NULL, NULL,
+            PyArray_NDIM(keys[0].arr), PyArray_DIMS(keys[0].arr), NULL, NULL,
             0, NULL);
     if (ret == NULL) {
         goto fail;
@@ -2064,143 +2224,113 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     if (rit == NULL) {
         goto fail;
     }
-    if (!object) {
+    size = rit->size;
+    rstride = PyArray_STRIDE(ret, axis);
+    needidxbuffer = (rstride != sizeof(npy_intp));
+    if (needidxbuffer) {
+        idxbuffer = (npy_intp *)PyDataMem_UserNEW(N * sizeof(npy_intp),
+                                                  mem_handler);
+        if (idxbuffer == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
+    }
+
+    if (!needs_api) {
         NPY_BEGIN_THREADS;
     }
-    size = rit->size;
-    N = PyArray_DIMS(mps[0])[axis];
-    rstride = PyArray_STRIDE(ret, axis);
-    maxelsize = PyArray_ITEMSIZE(mps[0]);
-    needcopy = (rstride != sizeof(npy_intp));
-    for (j = 0; j < n; j++) {
-        needcopy = needcopy
-            || PyArray_ISBYTESWAPPED(mps[j])
-            || !(PyArray_FLAGS(mps[j]) & NPY_ARRAY_ALIGNED)
-            || (PyArray_STRIDES(mps[j])[axis] != (npy_intp)PyArray_ITEMSIZE(mps[j]));
-        if (PyArray_ITEMSIZE(mps[j]) > maxelsize) {
-            maxelsize = PyArray_ITEMSIZE(mps[j]);
-        }
-    }
 
-    if (needcopy) {
-        char *valbuffer, *indbuffer;
-        int *swaps;
-
-        assert(N > 0);  /* Guaranteed and assumed by indbuffer */
-        npy_intp valbufsize = N * maxelsize;
-        if (NPY_UNLIKELY(valbufsize) == 0) {
-            valbufsize = 1;  /* Ensure allocation is not empty */
+    while (size--) {
+        npy_intp *idxptr = needidxbuffer ? idxbuffer
+                                         : (npy_intp *)rit->dataptr;
+        for (i = 0; i < N; i++) {
+            idxptr[i] = i;
         }
-
-        valbuffer = PyDataMem_NEW(valbufsize);
-        if (valbuffer == NULL) {
-            goto fail;
-        }
-        indbuffer = PyDataMem_NEW(N * sizeof(npy_intp));
-        if (indbuffer == NULL) {
-            PyDataMem_FREE(valbuffer);
-            goto fail;
-        }
-        swaps = PyMem_RawMalloc(NPY_LIKELY(n > 0) ? n * sizeof(int) : 1);
-        if (swaps == NULL) {
-            PyDataMem_FREE(valbuffer);
-            PyDataMem_FREE(indbuffer);
-            goto fail;
-        }
-
+        /*
+         * Sort by each key in turn; since every sort is stable and starts
+         * from the order produced by the previous key, the last key ends up
+         * being the primary one.
+         */
         for (j = 0; j < n; j++) {
-            swaps[j] = PyArray_ISBYTESWAPPED(mps[j]);
+            lexsort_key *key = &keys[j];
+            char *valptr = key->it->dataptr;
+            npy_intp elsize = key->odescr->elsize;
+            int rcode;
+
+            if (key->needcopy) {
+                char *args[2] = {valptr, key->valbuffer};
+                npy_intp strides[2] = {key->astride, elsize};
+
+                if (NPY_UNLIKELY(key->cast_info.func(
+                        &key->cast_info.context, args, &N, strides,
+                        key->cast_info.auxdata) < 0)) {
+                    failed = 1;
+                    goto finish_loop;
+                }
+                valptr = key->valbuffer;
+            }
+
+            if (key->strided_loop != NULL) {
+                char *const data[2] = {valptr, (char *)idxptr};
+                npy_intp strides[2] = {elsize, sizeof(npy_intp)};
+                rcode = key->strided_loop(
+                        &key->context, data, &N, strides, key->auxdata);
+            }
+            else {
+                rcode = key->argsort(valptr, idxptr, N, key->arr);
+            }
+            /* Object comparisons may raise an exception */
+            if (rcode < 0 || (needs_api && PyErr_Occurred())) {
+                failed = 1;
+                goto finish_loop;
+            }
+            PyArray_ITER_NEXT(key->it);
         }
-        while (size--) {
-            iptr = (npy_intp *)indbuffer;
-            for (i = 0; i < N; i++) {
-                *iptr++ = i;
-            }
-            for (j = 0; j < n; j++) {
-                int rcode;
-                elsize = PyArray_ITEMSIZE(mps[j]);
-                astride = PyArray_STRIDES(mps[j])[axis];
-                argsort = PyDataType_GetArrFuncs(PyArray_DESCR(mps[j]))->argsort[NPY_STABLESORT];
-                if(argsort == NULL) {
-                    argsort = npy_atimsort;
-                }
-                _unaligned_strided_byte_copy(valbuffer, (npy_intp) elsize,
-                                             its[j]->dataptr, astride, N, elsize);
-                if (swaps[j]) {
-                    _strided_byte_swap(valbuffer, (npy_intp) elsize, N, elsize);
-                }
-                rcode = argsort(valbuffer, (npy_intp *)indbuffer, N, mps[j]);
-                if (rcode < 0 || (object && PyErr_Occurred())) {
-                    PyDataMem_FREE(valbuffer);
-                    PyDataMem_FREE(indbuffer);
-                    PyMem_RawFree(swaps);
-                    goto fail;
-                }
-                PyArray_ITER_NEXT(its[j]);
-            }
-            _unaligned_strided_byte_copy(rit->dataptr, rstride, indbuffer,
+        if (needidxbuffer) {
+            _unaligned_strided_byte_copy(rit->dataptr, rstride, (char *)idxbuffer,
                                          sizeof(npy_intp), N, sizeof(npy_intp));
-            PyArray_ITER_NEXT(rit);
         }
-        PyDataMem_FREE(valbuffer);
-        PyDataMem_FREE(indbuffer);
-        PyMem_RawFree(swaps);
-    }
-    else {
-        while (size--) {
-            iptr = (npy_intp *)rit->dataptr;
-            for (i = 0; i < N; i++) {
-                *iptr++ = i;
-            }
-            for (j = 0; j < n; j++) {
-                int rcode;
-                argsort = PyDataType_GetArrFuncs(PyArray_DESCR(mps[j]))->argsort[NPY_STABLESORT];
-                if(argsort == NULL) {
-                    argsort = npy_atimsort;
-                }
-                rcode = argsort(its[j]->dataptr,
-                        (npy_intp *)rit->dataptr, N, mps[j]);
-                if (rcode < 0 || (object && PyErr_Occurred())) {
-                    goto fail;
-                }
-                PyArray_ITER_NEXT(its[j]);
-            }
-            PyArray_ITER_NEXT(rit);
-        }
+        PyArray_ITER_NEXT(rit);
     }
 
-    if (!object) {
-        NPY_END_THREADS;
-        if (PyErr_Occurred()) {
-            goto fail;
-        }
+  finish_loop:
+    NPY_END_THREADS;
+    if (failed || PyErr_Occurred()) {
+        goto fail;
     }
 
- finish:
+  finish:
+    PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), mem_handler);
     for (i = 0; i < n; i++) {
-        Py_XDECREF(mps[i]);
-        Py_XDECREF(its[i]);
+        lexsort_key_clear(&keys[i], N, mem_handler);
     }
     Py_XDECREF(rit);
-    PyMem_RawFree(mps);
-    PyMem_RawFree(its);
+    PyMem_RawFree(keys);
+    Py_DECREF(mem_handler);
     return (PyObject *)ret;
 
- fail:
-    NPY_END_THREADS;
+  fail:
     if (!PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
         PyErr_NoMemory();
     }
-    Py_XDECREF(rit);
-    Py_XDECREF(ret);
-    for (i = 0; i < n; i++) {
-        Py_XDECREF(mps[i]);
-        Py_XDECREF(its[i]);
-    }
-    PyMem_RawFree(mps);
-    PyMem_RawFree(its);
-    return NULL;
+    Py_CLEAR(ret);
+    goto finish;
+}
+
+
+/*NUMPY_API
+ *LexSort an array providing indices that will sort a collection of arrays
+ *lexicographically.  The first key is sorted on first, followed by the second key
+ *-- requires that a stable argsort is available for each sort_key
+ *
+ *Returns an index array that shows the indexes for the lexicographic sort along
+ *the given axis.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_LexSort(PyObject *sort_keys, int axis)
+{
+    return lexsort_impl(sort_keys, axis, NPY_SORT_STABLE);
 }
 
 
