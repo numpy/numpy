@@ -288,7 +288,7 @@ Memory mapping lacks features like data chunking and compression; more
 full-featured formats and libraries usable with NumPy include:
 
 * **HDF5**: `h5py <https://www.h5py.org/>`_ or `PyTables <https://www.pytables.org/>`_.
-* **Zarr**: `here <https://zarr.readthedocs.io/en/stable/tutorial.html#reading-and-writing-data>`_.
+* **Zarr**: `here <https://zarr.readthedocs.io/en/stable/user-guide/>`_.
 * **NetCDF**: :class:`scipy.io.netcdf_file`.
 
 For tradeoffs among memmap, Zarr, and HDF5, see
