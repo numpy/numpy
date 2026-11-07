@@ -29,11 +29,6 @@ Follow this decision guide::
 * :func:`numpy.block` assembles arrays using **nested lists** that describe
   their arrangement. It concatenates from the innermost lists outward.
 
-For common 2- or 3-dimensional cases, :func:`numpy.hstack`,
-:func:`numpy.vstack`, :func:`numpy.dstack`, and :func:`numpy.column_stack`
-may be more convenient. Their handling of 1-dimensional inputs differs; see
-:ref:`quickstart.stacking-arrays` for examples.
-
 Join arrays along an existing axis
 ==================================
 
@@ -135,6 +130,4 @@ requirements described above, :func:`numpy.block` has two rules of its own:
 
 .. seealso::
 
-   :func:`numpy.concatenate`, :func:`numpy.stack`, :func:`numpy.block`,
-   :func:`numpy.hstack`, :func:`numpy.vstack`, :func:`numpy.dstack`,
-   :func:`numpy.column_stack`
+   :func:`numpy.concatenate`, :func:`numpy.stack`, :func:`numpy.block`
