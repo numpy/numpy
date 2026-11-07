@@ -3760,6 +3760,7 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
 
     for (i = 0; i < len; ++i) {
         PyObject *obj = args[i];
+        PyObject *weak_scalar = NULL;
         if (obj == previous_obj) {
             continue;
         }
@@ -3770,9 +3771,29 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
             ++narr;
         }
         else if (PyArray_IsScalar(obj, Generic) ||
-                                    PyArray_IsPythonNumber(obj)) {
+                PyArray_IsPythonNumber(obj) || obj == (PyObject *)&PyLong_Type ||
+                obj == (PyObject *)&PyFloat_Type ||
+                obj == (PyObject *)&PyComplex_Type) {
+            if (obj == (PyObject *)&PyLong_Type) {
+                weak_scalar = PyLong_FromLong(0);
+            }
+            else if (obj == (PyObject *)&PyFloat_Type) {
+                weak_scalar = PyFloat_FromDouble(0.);
+            }
+            else if (obj == (PyObject *)&PyComplex_Type) {
+                weak_scalar = PyComplex_FromDoubles(0., 0.);
+            }
+            if (weak_scalar == NULL &&
+                    !PyArray_IsScalar(obj, Generic) &&
+                    !PyArray_IsPythonNumber(obj)) {
+                goto finish;
+            }
+            if (weak_scalar != NULL) {
+                obj = weak_scalar;
+            }
             arr[narr] = (PyArrayObject *)PyArray_FROM_O(obj);
             if (arr[narr] == NULL) {
+                Py_XDECREF(weak_scalar);
                 goto finish;
             }
             /*
@@ -3780,6 +3801,7 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
              * DType here yet, this is figured out inside ResultType.
              */
             npy_mark_tmp_array_if_pyscalar(obj, arr[narr], NULL);
+            Py_XDECREF(weak_scalar);
             ++narr;
         }
         else {
