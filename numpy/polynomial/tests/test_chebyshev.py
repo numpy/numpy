@@ -6,7 +6,7 @@ from functools import reduce
 import numpy as np
 import numpy.polynomial.chebyshev as cheb
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import assert_, assert_almost_equal, assert_equal, assert_raises
+from numpy.testing import assert_, assert_almost_equal, assert_equal, assert_raises, assert_raises_regex
 
 
 def trim(x):
@@ -100,6 +100,8 @@ class TestArithmetic:
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
     def test_chebdiv(self):
+        assert_raises_regex(ZeroDivisionError, "zero polynomial",
+                            cheb.chebdiv, [1], [0])
         for i in range(5):
             for j in range(5):
                 msg = f"At i={i}, j={j}"
