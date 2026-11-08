@@ -1410,7 +1410,7 @@ class TestDateTime:
     #Test for integer overflow when converting weeks to months
     @pytest.mark.parametrize("weeks", [2**61, -2**61, np.iinfo(np.int64).max])
     def test_datetime64_large_week_values(self, weeks):
-        #compute 400-year cycles as weeks to remove from intentional date
+        #compute weeks taking into account 400 year cycles of leap years
         leap_days_per_400_years = 400 // 4 - 400 // 100 + 400 // 400
         days_per_400_years = 400 * 365 + leap_days_per_400_years
         weeks_per_400_years, remainder = divmod(days_per_400_years, 7)
