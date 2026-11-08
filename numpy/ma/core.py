@@ -4248,7 +4248,13 @@ class MaskedArray(ndarray):
         smask = self.mask
         mask = mask_or(smask, omask, copy=True)
 
-        odata = getdata(other)
+        # Preserve Python scalars so NumPy uses its normal weak scalar
+        # promotion rules when comparing against the underlying data.
+        if np.isscalar(other) and not isinstance(other, np.generic):
+            odata = other
+        else:
+            odata = getdata(other)
+
         if mask.dtype.names is not None:
             # only == and != are reasonably defined for structured dtypes,
             # so give up early for all other comparisons:

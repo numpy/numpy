@@ -2102,6 +2102,15 @@ class TestMaskedArrayArithmetic:
         assert_equal(b != 0, masked)
         assert_equal(b != 1, masked)
 
+    def test_float32_scalar_comparison_matches_data(self):
+        a = np.ma.MaskedArray(data=[0.1, 0.7], dtype=np.float32)
+
+        expected = a.data < 0.7
+        result = (a < 0.7).data
+
+        np.testing.assert_array_equal(result, expected)
+        np.testing.assert_array_equal(result, [True, False])
+
     def test_eq_different_dimensions(self):
         m1 = array([1, 1], mask=[0, 1])
         # test comparison with both masked and regular arrays.
