@@ -1,0 +1,8 @@
+Faster polynomial arithmetic
+----------------------------
+Arithmetic operations on the `numpy.polynomial` convenience classes
+(such as addition, multiplication and negation) skip re-validation of
+already-validated data when constructing the result, making them
+roughly 1.5x to 3x faster for small polynomials. As part of this,
+`numpy.polynomial.polyutils.as_series` gained a ``copy`` keyword to
+allow avoiding copies of the input arrays.
