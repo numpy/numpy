@@ -508,6 +508,48 @@ vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
 /**end repeat**/
 #endif // NPY_SIMD && defined(NPY_HAVE_VSX4)
 
+/* x86 AVX2 remainder for a contiguous int32 array and scalar divisor. */
+#if NPY_SIMD && defined(NPY_HAVE_X86_V3)
+static inline void
+simd_remainder_by_scalar_s32(char **args, npy_intp len)
+{
+    npyv_lanetype_s32 *src = (npyv_lanetype_s32 *)args[0];
+    const npyv_lanetype_s32 scalar = *(npyv_lanetype_s32 *)args[1];
+    npyv_lanetype_s32 *dst = (npyv_lanetype_s32 *)args[2];
+    const int vstep = npyv_nlanes_s32;
+    const npyv_s32x3 divisor = npyv_divisor_s32(scalar);
+    const npyv_s32 vscalar = npyv_setall_s32(scalar);
+    const npyv_s32 nsign_d = npyv_setall_s32(scalar < 0);
+
+    for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
+        npyv_s32 a = npyv_load_s32(src);
+        /* Compare against 0 for a nonnegative divisor and 1 for a negative
+         * divisor, so nsign_a means a < 0 or a <= 0, respectively. This
+         * makes zero have the divisor's sign for the floor-quotient fixup.
+         */
+        npyv_s32 nsign_a = npyv_cvt_s32_b32(npyv_cmplt_s32(a, nsign_d));
+        nsign_a = npyv_and_s32(nsign_a, npyv_setall_s32(1));
+        npyv_s32 diff_sign = npyv_sub_s32(nsign_a, nsign_d);
+        npyv_s32 to_ninf = npyv_xor_s32(nsign_a, nsign_d);
+        npyv_s32 q_trunc = npyv_divc_s32(npyv_add_s32(a, diff_sign), divisor);
+        npyv_s32 q_floor = npyv_sub_s32(q_trunc, to_ninf);
+
+        /* Low-32-bit SIMD multiply is intentional: q_floor * scalar may
+         * exceed int32 even though the final remainder is representable. */
+        npyv_s32 qn = npyv_mul_s32(q_floor, vscalar);
+        npyv_s32 rem = npyv_sub_s32(a, qn);
+        npyv_store_s32(dst, rem);
+    }
+
+    for (; len > 0; --len, ++src, ++dst) {
+        const npyv_lanetype_s32 a = *src;
+        const npyv_lanetype_s32 rem = a % scalar;
+        *dst = ((a > 0) == (scalar > 0) || rem == 0) ? rem : rem + scalar;
+    }
+    npyv_cleanup();
+}
+#endif
+
 /*****************************************************************************
  ** Defining ufunc inner functions
  *****************************************************************************/
@@ -583,6 +625,21 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_remainder)
         TO_SIMD_SFX(vsx4_simd_remainder_by_scalar_contig)(args, dimensions[0]);
         return ;
     }
+#endif
+#if NPY_SIMD && defined(NPY_HAVE_X86_V3) && @signed@ && NPY_BITSOF_@TYPE@ == 32
+    if (dimensions[0] >= npyv_nlanes_s32 &&
+        IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), NPY_SIMD_WIDTH)) {
+        const npy_int32 scalar = *(npy_int32 *)args[1];
+        if (scalar != 0 && scalar != -1 && scalar != NPY_MIN_INT32) {
+            simd_remainder_by_scalar_s32(args, dimensions[0]);
+            return;
+        }
+    }
+#endif
+#if NPY_SIMD && defined(NPY_HAVE_X86_V3) && @signed@ && NPY_BITSOF_@TYPE@ == 32
+    /* Keep non-vectorized int32 cases on the baseline scalar loop. */
+    @TYPE@_remainder(args, dimensions, steps, NULL);
+    return;
 #endif
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;

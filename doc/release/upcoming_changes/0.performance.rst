@@ -1,0 +1,5 @@
+Faster int32 remainder for scalar divisors on x86
+-------------------------------------------------
+`numpy.remainder` on contiguous ``int32`` arrays with a scalar divisor now
+uses an ``X86_V3`` SIMD implementation when supported, improving performance for
+sufficiently long arrays. Other inputs continue through existing loops.

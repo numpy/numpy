@@ -802,6 +802,147 @@ class TestRemainder:
                     else:
                         assert_(b > rem >= 0, msg)
 
+    def test_int32_scalar_remainder(self):
+        info = np.iinfo(np.int32)
+        boundary = np.array(
+            [info.min, info.min + 1, info.min + 2, -1000003, -17, -8,
+             -7, -3, -2, -1, 0, 1, 2, 3, 7, 8, 17, 1000003,
+             info.max - 1, info.max],
+            dtype=np.int32,
+        )
+        rng = np.random.default_rng(0xA17E)
+        random_values = rng.integers(
+            0, 2**32, size=128, dtype=np.uint32
+        ).view(np.int32)
+        values = np.concatenate((boundary, random_values))
+        divisors = [
+            info.min, -1000003, -17, -8, -7, -3, -2, -1, 0,
+            1, 2, 3, 7, 8, 17, 1000003, info.max,
+        ]
+
+        for length in (0, 1, 7, 8, 9, 15, 16, 17, 31, 32, 33, 127,
+                       128, 129, values.size):
+            dividend = values[:length]
+            for divisor in divisors:
+                with np.errstate(divide="ignore"):
+                    actual = np.remainder(dividend, np.int32(divisor))
+                expected = np.array(
+                    [int(value) % divisor if divisor else 0
+                     for value in dividend],
+                    dtype=np.int32,
+                )
+                assert_array_equal(actual, expected)
+                assert_equal(actual.dtype, np.dtype(np.int32))
+
+        # A Python integer scalar follows the same int32 ufunc loop here.
+        actual = np.remainder(values, 7)
+        expected = np.array([int(value) % 7 for value in values], dtype=np.int32)
+        assert_array_equal(actual, expected)
+
+        with pytest.raises(FloatingPointError,
+                           match="divide by zero encountered in remainder"):
+            with np.errstate(divide="raise"):
+                np.remainder(values[:9], np.int32(0))
+
+        # Integer remainder handles INT32_MIN % -1 as zero without overflow.
+        with np.errstate(over="raise"):
+            actual = np.remainder(
+                np.full(9, info.min, dtype=np.int32), np.int32(-1)
+            )
+        assert_array_equal(actual, np.zeros(9, dtype=np.int32))
+
+        # The scalar fallback must also preserve ufunc output and overlap
+        # handling when the V3 loop delegates to the baseline implementation.
+        where = np.arange(values.size) % 3 == 0
+        out = np.full(values.size, -1234567, dtype=np.int32)
+        expected = out.copy()
+        expected[where] = np.array(
+            [int(value) % info.min for value in values[where]],
+            dtype=np.int32,
+        )
+        np.remainder(values, np.int32(info.min), out=out, where=where)
+        assert_array_equal(out, expected)
+
+        inplace = values.copy()
+        expected = np.array(
+            [int(value) % info.min for value in values], dtype=np.int32
+        )
+        np.remainder(inplace, np.int32(info.min), out=inplace)
+        assert_array_equal(inplace, expected)
+
+        overlap = np.resize(values, 19).copy()
+        source = overlap[:-1].copy()
+        expected = np.array(
+            [int(value) % info.min for value in source], dtype=np.int32
+        )
+        np.remainder(overlap[:-1], np.int32(info.min), out=overlap[1:])
+        assert_array_equal(overlap[1:], expected)
+
+        noncontiguous = values[::2]
+        actual = np.remainder(noncontiguous, np.int32(-7))
+        expected = np.array(
+            [int(value) % -7 for value in noncontiguous], dtype=np.int32
+        )
+        assert_array_equal(actual, expected)
+
+        array_divisor = np.resize(
+            np.array([0, -1, -7, 2, 17], dtype=np.int32), values.size
+        )
+        with np.errstate(divide="ignore"):
+            actual = np.remainder(values, array_divisor)
+        expected = np.array(
+            [int(value) % int(divisor) if divisor else 0
+             for value, divisor in zip(values, array_divisor)],
+            dtype=np.int32,
+        )
+        assert_array_equal(actual, expected)
+        assert_array_equal(
+            np.remainder(values[:0], array_divisor[:0]),
+            np.empty(0, dtype=np.int32),
+        )
+
+    def test_int32_scalar_remainder_simd_out_modes(self):
+        info = np.iinfo(np.int32)
+        values = np.resize(
+            np.array(
+                [info.min, info.min + 1, -1000003, -17, -8, -7, -1, 0,
+                 1, 7, 8, 17, 1000003, info.max - 1, info.max],
+                dtype=np.int32,
+            ),
+            33,
+        )
+        mask = np.arange(values.size) < 25
+        initial = np.full(values.size, -1234567, dtype=np.int32)
+
+        # Length 33 is longer than the AVX2 int32 vector width and has a tail.
+        # Use eligible divisors here so these output modes can exercise SIMD.
+        for divisor in (7, -7):
+            expected = np.array(
+                [int(value) % divisor for value in values], dtype=np.int32
+            )
+
+            inplace = values.copy()
+            np.remainder(inplace, np.int32(divisor), out=inplace)
+            assert_array_equal(inplace, expected)
+
+            out = initial.copy()
+            expected_where = initial.copy()
+            expected_where[mask] = expected[mask]
+            np.remainder(values, np.int32(divisor), out=out, where=mask)
+            assert_array_equal(out, expected_where)
+
+            overlap = np.empty(values.size + 1, dtype=np.int32)
+            overlap[:-1] = values
+            overlap[-1] = 0
+            original = overlap[:-1].copy()
+            expected_overlap = np.array(
+                [int(value) % divisor for value in original], dtype=np.int32
+            )
+            np.remainder(
+                overlap[:-1], np.int32(divisor), out=overlap[1:]
+            )
+            assert_array_equal(overlap[1:], expected_overlap)
+
     def test_float_remainder_exact(self):
         # test that float results are exact for small integers. This also
         # holds for the same integers scaled by powers of two.

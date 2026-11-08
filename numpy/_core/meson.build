@@ -1119,6 +1119,7 @@ foreach gen_mtargets : [
     'loops_modulo.dispatch.h',
     src_file.process('src/umath/loops_modulo.dispatch.c.src'),
     [
+      X86_V3,
       VSX4
     ]
   ],
