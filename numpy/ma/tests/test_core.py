@@ -4345,6 +4345,34 @@ class TestMaskedArrayMathMethods:
         a = masked_array([[1, 2, 3], [4, 5, 6]], dtype=object)
         assert_equal(a.prod(axis=0), [4, 10, 18])
 
+    @pytest.mark.parametrize("dtype", [np.bool, np.int8, np.uint64, np.float16,
+                                       np.float32, np.float64, np.complex128])
+    @pytest.mark.parametrize("axis", [None, 0, 1])
+    def test_reductions_match_filled(self, dtype, axis):
+        # The reductions must give exactly the result of reducing the filled
+        # data, e.g. a masked float sum must still use pairwise summation.
+        rng = np.random.default_rng(1234)
+        mask = rng.random((300, 40)) < 0.3
+        mask[5] = True
+        mask[:, 7] = True
+        a = masked_array((rng.random((300, 40)) * 3).astype(dtype), mask=mask)
+        methods = [("sum", 0), ("prod", 1), ("all", True), ("any", False),
+                   ("min", minimum_fill_value(a)),
+                   ("max", maximum_fill_value(a))]
+        with np.errstate(over="ignore", invalid="ignore"):
+            for method, fill_value in methods:
+                result = getattr(a, method)(axis=axis)
+                expected = getattr(a.filled(fill_value), method)(axis=axis)
+                assert_equal(result, expected)
+                assert_equal(getmask(result), mask.all(axis=axis))
+
+    def test_minmax_fill_value_partial_mask(self):
+        # A fill_value only replaces masked values, it does not take part in
+        # rows without any.
+        a = masked_array([[5, 3], [1, 2]], mask=[[0, 1], [0, 0]])
+        assert_equal(a.min(axis=1, fill_value=-10), [-10, 1])
+        assert_equal(a.max(axis=1, fill_value=10), [10, 2])
+
     def test_meananom_object(self):
         # Test mean/anom on object dtype
         a = masked_array([1, 2, 3], dtype=object)
