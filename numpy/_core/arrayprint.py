@@ -243,7 +243,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         If set a passed function will be used for generating arrays' repr.
         Other options will be ignored.
 
-        .. versionchanged:: 2.1
+        .. versionadded:: 2.1
 
     See Also
     --------
