@@ -261,6 +261,12 @@ class TestReductionLoop:
         got_min, got_max = mm(1, 5, dtype=np.float64)
         assert got_min == 1.0 and got_max == 5.0
 
+    def test_segmented_reduce_raises(self):
+        a = make_array((4,), seed=25)
+        with pytest.raises(
+                ValueError, match="only supported for functions returning a single"):
+            mm.segmented_reduce(a, [0, 2], [2, 4])
+
     def test_at_raises(self):
         a = make_array((4,), seed=22)
         with pytest.raises(ValueError, match="single output"):
