@@ -1419,7 +1419,7 @@ class TestDateTime:
 
         small_date = np.datetime64(leftover_weeks, "W")
         months_to_add = np.timedelta64(400 * 12 * cycles, "M")
-        intentional_date = small_date.astype("datetime64[M]") + months_to_add
+        expected = small_date.astype("datetime64[M]") + months_to_add
 
         actual = np.datetime64(weeks, "W")
         assert actual.astype("datetime64[M]") == expected
