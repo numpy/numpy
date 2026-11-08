@@ -3725,25 +3725,30 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     printf("\n");
 #endif
 
-    /*
-     * The number of segments defines the length of the output along `axis`,
-     * the iterator would broadcast `starts` up to a longer one.
-     */
-    for (int i = 0; i < nout && stops != NULL; i++) {
-        if (out[i] != NULL && PyArray_NDIM(out[i]) != ndim) {
+    /* `out` must have the result's shape, the iterator would broadcast */
+    for (int i = 0; i < nout; i++) {
+        if (out[i] == NULL) {
+            continue;
+        }
+        if (PyArray_NDIM(out[i]) != ndim) {
             PyErr_Format(PyExc_ValueError,
                     "output parameter for reduction operation %s has the wrong "
                     "number of dimensions: Found %d but expected %d",
                     ufunc_name, PyArray_NDIM(out[i]), ndim);
             goto fail;
         }
-        if (out[i] != NULL && PyArray_DIM(out[i], axis) != ind_size) {
-            PyErr_Format(PyExc_ValueError,
-                    "output parameter for reduction operation %s has the wrong "
-                    "length along axis %d: Found %" NPY_INTP_FMT
-                    " but expected %" NPY_INTP_FMT " (the number of segments)",
-                    ufunc_name, axis, PyArray_DIM(out[i], axis), ind_size);
-            goto fail;
+        for (idim = 0; idim < ndim; idim++) {
+            npy_intp expected = (idim == axis) ?
+                    ind_size : PyArray_DIM(arr, idim);
+            if (PyArray_DIM(out[i], idim) != expected) {
+                PyErr_Format(PyExc_ValueError,
+                        "output parameter for reduction operation %s has the "
+                        "wrong length along axis %d: Found %" NPY_INTP_FMT
+                        " but expected %" NPY_INTP_FMT "%s",
+                        ufunc_name, idim, PyArray_DIM(out[i], idim), expected,
+                        (idim == axis) ? " (the number of segments)" : "");
+                goto fail;
+            }
         }
     }
 

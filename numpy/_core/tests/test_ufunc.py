@@ -2825,11 +2825,30 @@ class TestUfunc:
             # the generic NpyIter (non-fast) path.
             out = out.astype(np.float64)
 
-        with pytest.raises(ValueError, match="(shape|size)"):
+        with pytest.raises(ValueError, match="(shape|size|length)"):
             np.add.reduceat(arr, [0, 3], out=out)
 
         with pytest.raises(ValueError, match="(shape|size)"):
             np.add.accumulate(arr, out=out)
+
+    @pytest.mark.parametrize("out_shape", [(3,), (1, 3)])
+    def test_reduceat_out_shape_mismatch_single_index(self, out_shape):
+        # A single index must not be broadcast to fill a longer `out`.
+        arr = np.arange(5)
+        out = np.full(out_shape, -1)
+        with pytest.raises(ValueError, match="(length|dimensions)"):
+            np.add.reduceat(arr, [0], out=out)
+        assert (out == -1).all()
+
+    @pytest.mark.parametrize("method, args", [
+        ("reduceat", ([0, 2],)), ("segmented_reduce", ([0, 2], [2, 5]))])
+    def test_reduceat_out_shape_mismatch_other_axis(self, method, args):
+        # The input must not be broadcast to fill a larger `out` either.
+        arr = np.ones((1, 5))
+        out = np.full((3, 2), -1.)
+        with pytest.raises(ValueError, match="length along axis 0"):
+            getattr(np.add, method)(arr, *args, axis=1, out=out)
+        assert (out == -1).all()
 
     @pytest.mark.parametrize("shape, out_shape", [
         ((0,), (1,)),       # Empty input must not bypass shape validation.
