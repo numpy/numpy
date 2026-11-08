@@ -1,0 +1,6 @@
+``numpy.ma.isin`` and ``numpy.ma.in1d`` mask the result correctly
+-----------------------------------------------------------------
+`numpy.ma.isin` and `numpy.ma.in1d` now return a result that is masked at
+exactly the positions that are masked in the first argument; previously the
+mask could be placed at the wrong positions.  Masked values in the array of
+test elements are treated as not present and therefore match nothing.
