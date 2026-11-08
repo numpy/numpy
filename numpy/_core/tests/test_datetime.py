@@ -1421,8 +1421,8 @@ class TestDateTime:
         months_to_add = np.timedelta64(400 * 12 * cycles, "M")
         intentional_date = small_date.astype("datetime64[M]") + months_to_add
 
-        naive_date = np.datetime64(weeks, "W")
-        assert naive_date.astype("datetime64[M]") == intentional_date
+        actual = np.datetime64(weeks, "W")
+        assert actual.astype("datetime64[M]") == expected
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
