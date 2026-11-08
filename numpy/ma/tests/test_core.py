@@ -2090,6 +2090,15 @@ class TestMaskedArrayArithmetic:
         a = masked
         assert_equal(a == None, masked)  # noqa: E711
 
+    @pytest.mark.parametrize("op", [operator.lt, operator.le, operator.gt,
+                                operator.ge, operator.eq, operator.ne])
+    def test_comparison_python_scalar_weak(self, op):
+        # gh-33219: Python scalars must stay "weak" (NEP 50) in masked
+        # comparisons, so the result matches the plain ndarray.
+        data = np.array([0.1, 0.7], dtype=np.float32)
+        a = np.ma.MaskedArray(data)
+        assert_array_equal(op(a, 0.7).data, op(data, 0.7))
+
     def test_eq_with_scalar(self):
         a = array(1)
         assert_equal(a == 1, True)
