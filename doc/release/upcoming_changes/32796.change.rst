@@ -1,0 +1,5 @@
+Several ufuncs no longer warn when propagating NaNs
+---------------------------------------------------
+`numpy.exp`, `numpy.log`, `numpy.logaddexp`, `numpy.logaddexp2`,
+`numpy.spacing`, and `numpy.divide` now avoid spurious invalid floating-point
+warnings when NaN inputs are propagated to NaN outputs.
