@@ -1407,7 +1407,7 @@ class TestDateTime:
             assert result == info.min + offset
             assert isinstance(result, int)
 
-    #Test for integer overflow when converting weeks to months naively vs intentionally
+    #Test for integer overflow when converting weeks to months
     @pytest.mark.parametrize("weeks", [2**61, -2**61, np.iinfo(np.int64).max])
     def test_datetime64_large_week_values(self, weeks):
         #compute 400-year cycles as weeks to remove from intentional date
