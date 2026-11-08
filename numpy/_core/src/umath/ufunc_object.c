@@ -66,7 +66,6 @@
 #include "npy_static_data.h"
 #include "module_state.h"
 #include "multiarraymodule.h"
-#include "refcount.h"  // for PyArray_ClearBuffer
 #include "number.h"
 #include "scalartypes.h"  // for is_anyscalar_exact and scalar_value
 
@@ -3923,42 +3922,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     /* Get the initial values if any, `initial` is None for reduceat */
     if (initial != Py_None) {
-        /*
-         * A per-output `initial` may be given as a tuple with one entry per
-         * reduction output. A scalar seeds every output.
-         */
-        npy_bool initial_is_tuple = (initial != NULL && nout > 1
-                                     && PyTuple_Check(initial));
-        if (initial_is_tuple && PyTuple_GET_SIZE(initial) != nout) {
-            PyErr_Format(PyExc_ValueError,
-                    "'initial' must be a scalar or a tuple with one entry "
-                    "per reduction output (%d), got length %zd",
-                    nout, PyTuple_GET_SIZE(initial));
+        if (reduction_alloc_initial(initial, nout, descrs, initial_buf) < 0) {
             goto fail;
         }
-        /* Not all functions will need initialization, but init always: */
-        for (int i = 0; i < nout; i++) {
-            initial_buf[i] = PyMem_Calloc(1, descrs[i]->elsize);
-            if (initial_buf[i] == NULL) {
-                PyErr_NoMemory();
-                goto fail;
-            }
-        }
         if (initial != NULL) {
-            /* must use user provided initial value(s) */
-            for (int i = 0; i < nout; i++) {
-                PyObject *initial_i = initial_is_tuple ?
-                        PyTuple_GET_ITEM(initial, i) : initial;
-                /* "No initial value" cannot be requested per output */
-                if (initial_is_tuple && initial_i == Py_None) {
-                    PyErr_SetString(PyExc_ValueError,
-                                    "entries of a tuple 'initial' cannot be None");
-                    goto fail;
-                }
-                if (PyArray_Pack(descrs[i], initial_buf[i], initial_i) < 0) {
-                    goto fail;
-                }
-            }
             segment_initials = empty_initials = initial_buf;
         }
         else {
@@ -4061,11 +4028,8 @@ finish:
     NPY_AUXDATA_FREE(auxdata);
     for (int i = 0; i < nout; i++) {
         NPY_cast_info_xfree(&copy_info[i]);
-        if (initial_buf[i] != NULL && PyDataType_REFCHK(descrs[i])) {
-            PyArray_ClearBuffer(descrs[i], initial_buf[i], 0, 1, 1);
-        }
-        PyMem_FREE(initial_buf[i]);
     }
+    reduction_free_initial(nout, descrs, initial_buf);
     multi_DECREF((PyObject *const *)descrs, 2 * nout + 1);
 
     if (!NpyIter_Deallocate(iter)) {
