@@ -346,6 +346,12 @@ class _CanUfuncReduce[OutT](Protocol):
 class _CanUfuncReduceAt[IxT, OutT](Protocol):
     def __array_ufunc__(self, ufunc: np.ufunc, method: Literal["reduceat"], a: Self, indices: IxT, /) -> OutT: ...
 
+@type_check_only
+class _CanUfuncSegmentedReduce[IxT, OutT](Protocol):
+    def __array_ufunc__(
+        self, ufunc: np.ufunc, method: Literal["segmented_reduce"], a: Self, starts: IxT, stops: IxT, /
+    ) -> OutT: ...
+
 ###
 # ufunc specializations
 
@@ -4266,6 +4272,74 @@ class _ufunc_21_logical[IdT: bool](_ufunc_21[IdT]):  # type: ignore[misc]
     #
     @override
     @overload  # known shape
+    def segmented_reduce[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
+        self,
+        array: np.ndarray[ShapeT, _DTypeNonObject],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> _Array[ShapeT, np.bool]: ...
+    @overload  # known shape, object_
+    def segmented_reduce[ShapeT: _Shape, T](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, np.object_[T]],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: _DTypeLikeObject | None = None,
+        *,
+        out: None = None,
+        initial: T = ...,
+    ) -> _Array[ShapeT, np.object_[T]]: ...
+    @overload  # unknown shape
+    def segmented_reduce(
+        self,
+        array: _ArrayUnlikeObject,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: np.ndarray](
+        self,
+        array: npt.ArrayLike,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | _DTypeLikeObject | None = None,
+        *,
+        out: OutT,
+        initial: _IntLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: _IntLike_co = ...,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # known shape
     def accumulate[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
         self,
         array: np.ndarray[ShapeT, _DTypeNonObject],
@@ -4760,6 +4834,61 @@ class _ufunc_21_cmp(_ufunc_21[None]):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         *,
         out: np.ndarray | None = None,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # known shape
+    def segmented_reduce[ShapeT: _Shape](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, np.bool],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> _Array[ShapeT, np.bool]: ...
+    @overload  # unknown shape
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeBool_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: np.ndarray](
+        self,
+        array: _ArrayLikeBool_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: _DTypeLikeBool | None = None,
+        *,
+        out: OutT,
+        initial: _IntLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: _IntLike_co = ...,
     ) -> OutT: ...
 
     #
@@ -6592,6 +6721,139 @@ class _ufunc_21_float_power(_ufunc_21[None]):  # type: ignore[misc]
     #
     @override
     @overload  # Nd
+    def segmented_reduce[ShapeT: _Shape, ScalarT: _from_f64](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # Nd +f64
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _to_f64],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> _Array[ShapeT, np.float64]: ...
+    @overload  # Nd ~c128
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, np.complex64],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> _Array[ShapeT, np.complex128]: ...
+    @overload  # known scalar type
+    def segmented_reduce[ScalarT: _from_f64](
+        self,
+        array: _ArrayLike[ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ~f64
+    def segmented_reduce(
+        self,
+        array: _DualArrayLike[np.dtype[_to_f64], float],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # ~c128
+    def segmented_reduce(
+        self,
+        array: _ArrayLike[np.complex64] | _NestedList[complex],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # dtype=<known>
+    def segmented_reduce[ScalarT: _from_f64](
+        self,
+        array: _ArrayLikeNumber_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # dtype=<unknown>
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeNumber_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[Any]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: npt.NDArray[_to_floating]](
+        self,
+        array: _ArrayLikeNumber_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: OutT,
+        initial: _NumberLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: _NumberLike_co = ...,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # Nd
     def accumulate[ShapeT: _Shape, ScalarT: _from_f64](  # pyrefly:ignore[bad-override]
         self,
         array: _Array[ShapeT, ScalarT],
@@ -7867,6 +8129,178 @@ class _ufunc_21_f[IdT](_ufunc_21[IdT]):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         *,
         out: np.ndarray | None = None,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # Nd
+    def segmented_reduce[ShapeT: _Shape, FloatT: np.floating](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, FloatT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: float | FloatT = ...,
+    ) -> _Array[ShapeT, FloatT]: ...
+    @overload  # Nd ~f64
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _as_f64],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: float | _to_f64 = ...,
+    ) -> _Array[ShapeT, np.float64]: ...
+    @overload  # Nd ~f32
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _as_f32],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: float | _to_f32 = ...,
+    ) -> _Array[ShapeT, np.float32]: ...
+    @overload  # Nd ~f16
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _as_f16],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: float | _as_f16 = ...,
+    ) -> _Array[ShapeT, np.float16]: ...
+    @overload  # T@floating
+    def segmented_reduce[FloatT: np.floating](
+        self,
+        array: _ArrayLike[FloatT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: float | FloatT = ...,
+    ) -> npt.NDArray[FloatT]: ...
+    @overload  # ~f64
+    def segmented_reduce(
+        self,
+        array: _DualArrayLike[np.dtype[_as_f64], float],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: float | _to_f64 = ...,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # ~f32
+    def segmented_reduce(
+        self,
+        array: _ArrayLike[_as_f32],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: float | _to_f32 = ...,
+    ) -> npt.NDArray[np.float32]: ...
+    @overload  # ~f16
+    def segmented_reduce(
+        self,
+        array: _ArrayLike[_as_f16],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: float | _as_f16 = ...,
+    ) -> npt.NDArray[np.float16]: ...
+    @overload  # dtype=<known>
+    def segmented_reduce[ScalarT: np.floating](
+        self,
+        array: _ArrayLikeFloat_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # dtype=float
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeFloat_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: type[float],
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # dtype=<unknown>
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeFloat_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[np.floating]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: npt.NDArray[_to_floating]](
+        self,
+        array: _ArrayLikeFloat_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: OutT,
+        initial: _FloatLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: _FloatLike_co = ...,
     ) -> OutT: ...
 
     #
@@ -9438,6 +9872,139 @@ class _ufunc_21_divide(_ufunc_21[None]):  # type: ignore[misc]
     #
     @override
     @overload  # Nd
+    def segmented_reduce[ShapeT: _Shape, ScalarT: np.inexact | np.object_](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: complex | ScalarT = ...,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # Nd +f64
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, _to_f64],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: float | _to_f64 = ...,
+    ) -> _Array[ShapeT, np.float64]: ...
+    @overload  # T@(inexact | object_)
+    def segmented_reduce[ScalarT: np.inexact | np.object_](
+        self,
+        array: _ArrayLike[ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: complex | ScalarT = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # +f64
+    def segmented_reduce(
+        self,
+        array: _DualArrayLike[np.dtype[_to_f64], float],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: float | _to_f64 = ...,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # ~complex
+    def segmented_reduce(
+        self,
+        array: _NestedList[complex],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: complex | _to_c128 = ...,
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # dtype=<known>
+    def segmented_reduce[ScalarT: np.inexact | np.object_](
+        self,
+        array: _ArrayLikeNumberObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # dtype=float
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeNumberObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: type[float],
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # dtype=<unknown>
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeNumberObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[Any]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: npt.NDArray[_to_number | np.object_]](
+        self,
+        array: _ArrayLikeNumberObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: OutT,
+        initial: _NumberLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: object = ...,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # Nd
     def accumulate[ShapeT: _Shape, ScalarT: np.inexact | np.object_](  # pyrefly:ignore[bad-override]
         self,
         array: _Array[ShapeT, ScalarT],
@@ -10742,6 +11309,126 @@ class _ufunc_21_bio(_ufunc_21[_IdT_co], Generic[_IdT_co, _ScalarT_contra]):  # t
         dtype: npt.DTypeLike | None = None,
         *,
         out: np.ndarray | None = None,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # Nd
+    def segmented_reduce[ShapeT: _Shape, ScalarT: np.integer | np.object_](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: int | ScalarT = ...,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # Nd ~bool
+    def segmented_reduce[ShapeT: _Shape](
+        self: _ufunc_21_bio[Any, np.bool],
+        array: _Array[ShapeT, np.bool],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> _Array[ShapeT, np.bool]: ...
+    @overload  # known scalar type
+    def segmented_reduce[ScalarT: np.integer | np.object_](
+        self,
+        array: _ArrayLike[ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: int | ScalarT = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ~bool
+    def segmented_reduce(
+        self: _ufunc_21_bio[Any, np.bool],
+        array: _ArrayLikeBool_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # ~int
+    def segmented_reduce(
+        self,
+        array: _NestedList[int],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.int_]: ...
+    @overload  # dtype=<known>
+    def segmented_reduce[ScalarT: _to_integer | np.object_](
+        self,
+        array: _ArrayLikeIntObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # dtype=<unknown>
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeIntObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[Any]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: npt.NDArray[_to_integer | np.object_]](
+        self,
+        array: _ArrayLikeIntObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: OutT,
+        initial: _IntLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, indices, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: _IntLike_co = ...,
     ) -> OutT: ...
 
     #
@@ -12628,6 +13315,165 @@ class _ufunc_21_mod(_ufunc_21[None], Generic[_ScalarT_contra, _ScalarT_co]):  # 
         dtype: npt.DTypeLike | None = None,
         *,
         out: np.ndarray | None = None,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # Nd
+    def segmented_reduce[ShapeT: _Shape, ScalarT: np.floating | np.integer](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # Nd ~bool
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, np.bool],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: bool | _to_i8 = ...,
+    ) -> _Array[ShapeT, np.int8]: ...
+    @overload  # known scalar type
+    def segmented_reduce[ScalarT: np.floating | np.integer](
+        self,
+        array: _ArrayLike[ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ~timedelta64
+    def segmented_reduce[MT: np.timedelta64](
+        self: _ufunc_21_mod[np.timedelta64, np.timedelta64],
+        array: npt.NDArray[MT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: np.timedelta64 = ...,
+    ) -> npt.NDArray[MT]: ...
+    @overload  # ~object_
+    def segmented_reduce(
+        self: _ufunc_21_mod[np.object_, Any],
+        array: npt.NDArray[np.object_],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: object = ...,
+    ) -> npt.NDArray[np.object_]: ...
+    @overload  # ~bool
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeBool_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: bool | _to_i8 = ...,
+    ) -> npt.NDArray[np.int8]: ...
+    @overload  # ~int
+    def segmented_reduce(
+        self,
+        array: _NestedList[int],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~float
+    def segmented_reduce(
+        self,
+        array: _NestedList[float],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # dtype=<known>
+    def segmented_reduce[ScalarT: np.floating | np.integer | np.timedelta64 | np.object_](
+        self,
+        array: _ArrayLikeFloat_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # dtype=<unknown>
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeFloatObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[Any]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: npt.NDArray[np.floating | np.integer | np.object_]](
+        self,
+        array: _ArrayLikeFloat_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: OutT,
+        initial: _FloatLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, indices, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: _FloatLike_co = ...,
     ) -> OutT: ...
 
     #
@@ -14927,6 +15773,178 @@ class _ufunc_21_pow_sub(_ufunc_21[None], Generic[_ScalarT_contra]):  # type: ign
     #
     @override
     @overload  # Nd
+    def segmented_reduce[ShapeT: _Shape, ScalarT: np.number](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # Nd ~bool
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, np.bool],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: bool | _to_i8 = ...,
+    ) -> _Array[ShapeT, np.int8]: ...
+    @overload  # known scalar type
+    def segmented_reduce[ScalarT: np.number](
+        self,
+        array: _ArrayLike[ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ~bool
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeBool_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: bool | _to_i8 = ...,
+    ) -> npt.NDArray[np.int8]: ...
+    @overload  # object_
+    def segmented_reduce(
+        self,
+        array: npt.NDArray[np.object_],
+        /,
+        starts: tuple[int, ...],
+        stops: tuple[int, ...],
+        *,
+        axis: int = 0,
+        dtype: None = None,
+        out: None = None,
+        initial: object = ...,
+    ) -> npt.NDArray[np.object_[Any]]: ...
+    @overload  # ~timedelta64  (if timedelta in domain)
+    def segmented_reduce[TimedeltaT: np.timedelta64](
+        self: _ufunc_21_pow_sub[np.timedelta64],
+        array: _ArrayLike[TimedeltaT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: np.timedelta64 | _IntLike_co = ...,
+    ) -> npt.NDArray[TimedeltaT]: ...
+    @overload  # ~int
+    def segmented_reduce(
+        self,
+        array: _NestedList[int],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~float
+    def segmented_reduce(
+        self,
+        array: _NestedList[float],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # ~complex
+    def segmented_reduce(
+        self,
+        array: _NestedList[complex],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # dtype=<known>
+    def segmented_reduce[ScalarT: np.number | np.object_](
+        self,
+        array: _ArrayLikeNumberObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # dtype=<unknown>
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeNumberObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[Any]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: npt.NDArray[np.number | np.object_]](
+        self,
+        array: _ArrayLikeNumberObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: OutT,
+        initial: _NumberLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, indices, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: _NumberLike_co = ...,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # Nd
     def accumulate[ShapeT: _Shape, ScalarT: np.number](  # pyrefly:ignore[bad-override]
         self,
         array: _Array[ShapeT, ScalarT],
@@ -17089,6 +18107,165 @@ class _ufunc_21_multiply(_ufunc_21[Literal[1]]):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         *,
         out: np.ndarray | None = None,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # Nd
+    def segmented_reduce[ShapeT: _Shape, ScalarT: np.inexact | np.object_](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumericLike_co = ...,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # Nd +int
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, np.signedinteger | np.bool],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> _Array[ShapeT, np.int_]: ...
+    @overload  # Nd ~uint
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, np.unsignedinteger],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> _Array[ShapeT, np.uint]: ...
+    @overload  # known scalar type
+    def segmented_reduce[ScalarT: np.inexact | np.object_](
+        self,
+        array: _ArrayLike[ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumericLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # +int
+    def segmented_reduce(
+        self,
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def segmented_reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.uint]: ...
+    @overload  # ~float
+    def segmented_reduce(
+        self,
+        array: _NestedList[float],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # ~complex
+    def segmented_reduce(
+        self,
+        array: _NestedList[complex],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumericLike_co = ...,
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # dtype=<known>
+    def segmented_reduce[ScalarT: _to_number | np.object_](
+        self,
+        array: _ArrayLikeNumberObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        initial: _NumberLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # dtype=<unknown>
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeNumberObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: None = None,
+        initial: _NumericLike_co = ...,
+    ) -> npt.NDArray[Any]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: npt.NDArray[_to_number | np.object_]](
+        self,
+        array: _ArrayLikeNumberObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: OutT,
+        initial: _NumericLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, indices, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: _NumericLike_co = ...,
     ) -> OutT: ...
 
     #
@@ -19319,6 +20496,139 @@ class _ufunc_21_extremum(_ufunc_21[Literal[None]], Generic[_T_contra]):  # type:
         dtype: npt.DTypeLike | None = None,
         *,
         out: np.ndarray | None = None,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # Nd
+    def segmented_reduce[ShapeT: _Shape, ScalarT: _to_numeric | np.datetime64 | np.object_](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumTimeLike_co = ...,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # known scalar type
+    def segmented_reduce[ScalarT: _to_numeric | np.datetime64 | np.object_](
+        self,
+        array: _ArrayLike[ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumTimeLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # ~bool
+    def segmented_reduce(
+        self,
+        array: _NestedSequence[bool],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.bool]: ...
+    @overload  # ~int
+    def segmented_reduce(
+        self,
+        array: _NestedList[int],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~float
+    def segmented_reduce(
+        self,
+        array: _NestedList[float],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # ~complex
+    def segmented_reduce(
+        self,
+        array: _NestedList[complex],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumTimeLike_co = ...,
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # dtype=<known>
+    def segmented_reduce[ScalarT: _to_numeric | np.datetime64 | np.object_](
+        self,
+        array: _ArrayLikeNumTimeObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        initial: _NumTimeLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # dtype=<unknown>
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeNumTimeObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: None = None,
+        initial: _NumTimeLike_co = ...,
+    ) -> npt.NDArray[Any]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: npt.NDArray[_to_numeric | np.datetime64 | np.object_]](
+        self,
+        array: _ArrayLikeNumTimeObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: OutT,
+        initial: _NumTimeLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, indices, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: _NumericLike_co = ...,
     ) -> OutT: ...
 
     #
@@ -21655,6 +22965,165 @@ class _ufunc_21_add(_ufunc_21[Literal[0]]):  # type: ignore[misc]
         dtype: npt.DTypeLike | None = None,
         *,
         out: np.ndarray | None = None,
+    ) -> OutT: ...
+
+    #
+    @override
+    @overload  # Nd
+    def segmented_reduce[ShapeT: _Shape, ScalarT: np.inexact | np.timedelta64 | np.object_](  # pyrefly:ignore[bad-override]
+        self,
+        array: _Array[ShapeT, ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumericLike_co = ...,
+    ) -> _Array[ShapeT, ScalarT]: ...
+    @overload  # Nd +int
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, np.signedinteger | np.bool],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> _Array[ShapeT, np.int_]: ...
+    @overload  # Nd ~uint
+    def segmented_reduce[ShapeT: _Shape](
+        self,
+        array: _Array[ShapeT, np.unsignedinteger],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> _Array[ShapeT, np.uint]: ...
+    @overload  # known scalar type
+    def segmented_reduce[ScalarT: np.inexact | np.timedelta64 | np.object_](
+        self,
+        array: _ArrayLike[ScalarT],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumericLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # +int
+    def segmented_reduce(
+        self,
+        array: _DualArrayLike[np.dtype[np.signedinteger | np.bool], int],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.int_]: ...
+    @overload  # ~uint
+    def segmented_reduce(
+        self,
+        array: _ArrayLike[np.unsignedinteger],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _IntLike_co = ...,
+    ) -> npt.NDArray[np.uint]: ...
+    @overload  # ~float
+    def segmented_reduce(
+        self,
+        array: _NestedList[float],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _FloatLike_co = ...,
+    ) -> npt.NDArray[np.float64]: ...
+    @overload  # ~complex
+    def segmented_reduce(
+        self,
+        array: _NestedList[complex],
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: None = None,
+        *,
+        out: None = None,
+        initial: _NumericLike_co = ...,
+    ) -> npt.NDArray[np.complex128]: ...
+    @overload  # dtype=<known>
+    def segmented_reduce[ScalarT: np.generic](
+        self,
+        array: _ArrayLikeNumericObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        out: None = None,
+        initial: _ScalarLike_co = ...,
+    ) -> npt.NDArray[ScalarT]: ...
+    @overload  # dtype=<unknown>
+    def segmented_reduce(
+        self,
+        array: _ArrayLikeNumericObj_co,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: None = None,
+        initial: _ScalarLike_co = ...,
+    ) -> npt.NDArray[Any]: ...
+    @overload  # out=<given>
+    def segmented_reduce[OutT: np.ndarray](
+        self,
+        array: npt.ArrayLike,
+        /,
+        starts: _ArrayLikeInt,
+        stops: _ArrayLikeInt,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: OutT,
+        initial: _ScalarLike_co = ...,
+    ) -> OutT: ...
+    @overload  # array.__array_ufunc__(self, "segmented_reduce", array, indices, ...)
+    def segmented_reduce[IxT, OutT](
+        self,
+        array: _CanUfuncSegmentedReduce[IxT, OutT],
+        /,
+        starts: IxT,
+        stops: IxT,
+        axis: int = 0,
+        dtype: npt.DTypeLike | None = None,
+        *,
+        out: np.ndarray | None = None,
+        initial: _NumericLike_co = ...,
     ) -> OutT: ...
 
     #

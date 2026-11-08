@@ -46,7 +46,7 @@ class _SupportsArrayUFunc(Protocol):
     def __array_ufunc__(
         self,
         ufunc: ufunc,
-        method: Literal["__call__", "reduce", "reduceat", "accumulate", "outer", "at"],
+        method: Literal["__call__", "reduce", "reduceat", "segmented_reduce", "accumulate", "outer", "at"],
         *inputs: Any,
         **kwargs: Any,
     ) -> Any: ...
@@ -203,6 +203,8 @@ class _PyFunc_Nin1_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     def reduce(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
     @override
     def reduceat(self, array: Never, /, indices: Never) -> NoReturn: ...  # type: ignore[override]
+    @override
+    def segmented_reduce(self, array: Never, /, starts: Never, stops: Never) -> NoReturn: ...  # type: ignore[override]
     @override
     def outer(self, A: Never, B: Never, /) -> NoReturn: ...  # type: ignore[override]
 
@@ -582,6 +584,82 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
 
     #
     @override  # type: ignore[override]
+    @overload  # Nd
+    def segmented_reduce[ShapeT: _Shape](  # pyrefly: ignore[bad-override]
+        self,
+        array: np.ndarray[ShapeT, Any],
+        /,
+        starts: _ArrayLikeInt_co,
+        stops: _ArrayLikeInt_co,
+        axis: SupportsIndex = 0,
+        dtype: DTypeLike | None = None,
+        out: EllipsisType | None = None,
+        initial: Incomplete = ...,
+    ) -> _ObjectArray[ShapeT, ReturnT]: ...
+    @overload  # 1d
+    def segmented_reduce[ScalarT: _ScalarLike_co](
+        self,
+        array: list[ScalarT],
+        /,
+        starts: _ArrayLikeInt_co,
+        stops: _ArrayLikeInt_co,
+        axis: SupportsIndex = 0,
+        dtype: DTypeLike | None = None,
+        out: EllipsisType | None = None,
+        initial: Incomplete = ...,
+    ) -> _ObjectArray[tuple[int], ReturnT]: ...
+    @overload  # 2d
+    def segmented_reduce[ScalarT: _ScalarLike_co](
+        self,
+        array: Sequence[list[ScalarT]],
+        /,
+        starts: _ArrayLikeInt_co,
+        stops: _ArrayLikeInt_co,
+        axis: SupportsIndex = 0,
+        dtype: DTypeLike | None = None,
+        out: EllipsisType | None = None,
+        initial: Incomplete = ...,
+    ) -> _ObjectArray[tuple[int, int], ReturnT]: ...
+    @overload  # ?d, out=T
+    def segmented_reduce[OutT: np.ndarray](
+        self,
+        array: ArrayLike,
+        /,
+        starts: _ArrayLikeInt_co,
+        stops: _ArrayLikeInt_co,
+        axis: SupportsIndex = 0,
+        dtype: DTypeLike | None = None,
+        *,
+        out: OutT | tuple[OutT],
+        initial: Incomplete = ...,
+    ) -> OutT: ...
+    @overload  # ?d  (fallback)
+    def segmented_reduce(
+        self,
+        array: ArrayLike,
+        /,
+        starts: _ArrayLikeInt_co,
+        stops: _ArrayLikeInt_co,
+        axis: SupportsIndex = 0,
+        dtype: DTypeLike | None = None,
+        out: EllipsisType | None = None,
+        initial: Incomplete = ...,
+    ) -> NDArray[np.object_[ReturnT]]: ...
+    @overload  # __array_ufunc__
+    def segmented_reduce(
+        self,
+        array: _SupportsArrayUFunc,
+        /,
+        starts: _ArrayLikeInt_co,
+        stops: _ArrayLikeInt_co,
+        axis: SupportsIndex = 0,
+        dtype: DTypeLike | None = None,
+        out: np.ndarray | tuple[np.ndarray] | EllipsisType | None = None,
+        initial: Incomplete = ...,
+    ) -> Any: ...
+
+    #
+    @override  # type: ignore[override]
     @overload  # Nd, 0d
     def outer[ShapeT: _Shape](  # pyrefly: ignore[bad-override]
         self,
@@ -883,6 +961,8 @@ class _PyFunc_Nin3P_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     @override
     def reduceat(self, array: Never, /, indices: Never) -> NoReturn: ...  # type: ignore[override]
     @override
+    def segmented_reduce(self, array: Never, /, starts: Never, stops: Never) -> NoReturn: ...  # type: ignore[override]
+    @override
     def outer(self, A: Never, B: Never, /) -> NoReturn: ...  # type: ignore[override]
     @override
     def at(self, a: Never, indices: Never, /, *args: Never) -> NoReturn: ...  # type: ignore[override]
@@ -981,6 +1061,8 @@ class _PyFunc_Nin1P_Nout2P[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     def reduce(self, array: Never, /) -> NoReturn: ...  # type: ignore[override]
     @override
     def reduceat(self, array: Never, /, indices: Never) -> NoReturn: ...  # type: ignore[override]
+    @override
+    def segmented_reduce(self, array: Never, /, starts: Never, stops: Never) -> NoReturn: ...  # type: ignore[override]
     @override
     def outer(self, A: Never, B: Never, /) -> NoReturn: ...  # type: ignore[override]
     @override
