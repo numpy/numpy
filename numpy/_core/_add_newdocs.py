@@ -5801,16 +5801,23 @@ add_newdoc('numpy._core', 'ufunc', ('segmented_reduce',
         If not provided or None, a freshly-allocated array is returned.
         For consistency with ``ufunc.__call__``, if passed as a keyword
         argument, can be Ellipses (``out=...``, which has the same effect
-        as None as an array is always returned), or a 1-element tuple.
-    initial : scalar, optional
+        as None as an array is always returned), or a tuple with one entry
+        per output. For a ufunc with a single output, a 1-element tuple is
+        also accepted.
+    initial : scalar or tuple of scalars, optional
         The value with which to start each segment reduction.  If the ufunc
         has no identity, it is required when any segment may be empty.
+        For a ufunc with more than one output, a tuple with one value per
+        output may be given instead of a single scalar. A scalar still seeds
+        every output. The entries of such a tuple cannot be ``None``.
 
     Returns
     -------
-    r : ndarray
+    r : ndarray or tuple of ndarray
         The reduced values. If `out` was supplied, `r` is a reference to
-        `out`.
+        `out`. For a ufunc with more than one output whose loop implementation
+        registers a reduction loop, `r` is instead a tuple with one array per
+        output.
 
     See Also
     --------
@@ -5836,6 +5843,11 @@ add_newdoc('numpy._core', 'ufunc', ('segmented_reduce',
     Unlike `ufunc.reduceat`, offsets are never an error and empty segments
     have a well defined result, so that ``starts`` and ``stops`` can be
     computed without clipping them first.
+
+    ``segmented_reduce`` normally only supports ufuncs with a single output.
+    A ufunc with more than one output can still be used if its loop
+    implementation registers a dedicated reduction loop. Otherwise, calling
+    it raises a ``TypeError``.
 
     Examples
     --------

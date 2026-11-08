@@ -64,10 +64,11 @@ ufuncs that take two input arguments and return one output argument (so-called
 "scalar" ufuncs since the inner loop operates on a single scalar value).
 Attempting to call these methods on other ufuncs will cause a
 :exc:`ValueError` (or, for :meth:`~numpy.ufunc.reduce`,
-:meth:`~numpy.ufunc.reduceat`, and :meth:`~numpy.ufunc.accumulate` on a ufunc
-with two inputs and more than one output, a :exc:`TypeError`), unless the
-ufunc's loop implementation registers a dedicated reduction loop, in which case
-:meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.reduceat`, and
+:meth:`~numpy.ufunc.reduceat`, :meth:`~numpy.ufunc.segmented_reduce`, and
+:meth:`~numpy.ufunc.accumulate` on a ufunc with two inputs and more than one
+output, a :exc:`TypeError`), unless the ufunc's loop implementation registers a
+dedicated reduction loop, in which case :meth:`~numpy.ufunc.reduce`,
+:meth:`~numpy.ufunc.reduceat`, :meth:`~numpy.ufunc.segmented_reduce`, and
 :meth:`~numpy.ufunc.accumulate` all work for ufuncs with more than one
 output. See
 :doc:`c-info.reduction-loop-tutorial` for how to add one to a custom ufunc.
@@ -89,9 +90,10 @@ reduction loop registered, so calling its methods raises an error::
    TypeError: divmod.reduce is not supported: the resolved loop does not register a reduction loop
 
 For a ufunc with more than one output whose loop *does* register a reduction
-loop, :meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.reduceat`, and
-:meth:`~numpy.ufunc.accumulate` instead return a tuple with one array per
-output. The *initial* argument of :meth:`~numpy.ufunc.reduce` then also
+loop, :meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.reduceat`,
+:meth:`~numpy.ufunc.segmented_reduce`, and :meth:`~numpy.ufunc.accumulate`
+instead return a tuple with one array per output. The *initial* argument of
+:meth:`~numpy.ufunc.reduce` and :meth:`~numpy.ufunc.segmented_reduce` then also
 accepts either a single value, broadcast to every output, or a tuple with one
 value per output.
 

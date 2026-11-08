@@ -3259,7 +3259,7 @@ class TestSegmentedReduce:
         arr = np.arange(10.)
         with pytest.raises(ValueError, match="binary functions"):
             np.sin.segmented_reduce(arr, [0], [1])
-        with pytest.raises(ValueError, match="single value"):
+        with pytest.raises(TypeError, match="does not register a reduction loop"):
             np.divmod.segmented_reduce(arr, [0], [1])
         with pytest.raises(RuntimeError, match="Reduction not defined"):
             umt.inner1d.segmented_reduce(arr, [0], [1])

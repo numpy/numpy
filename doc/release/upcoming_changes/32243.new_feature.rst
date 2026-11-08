@@ -18,3 +18,7 @@ without an identity, such as `numpy.maximum`).
 Consecutive segments are commonly stored as a single array of offsets, with
 the i-th segment given by ``offsets[i]:offsets[i + 1]``.  Such an array is
 passed as ``starts=offsets[:-1]`` and ``stops=offsets[1:]``.
+
+Like `~numpy.ufunc.reduce`, it supports ufuncs with more than one output whose
+loop registers a reduction loop, returning a tuple with one array per output.
+``initial`` may then also be a tuple with one value per output.

@@ -3923,6 +3923,19 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     /* Get the initial values if any, `initial` is None for reduceat */
     if (initial != Py_None) {
+        /*
+         * A per-output `initial` may be given as a tuple with one entry per
+         * reduction output. A scalar seeds every output.
+         */
+        npy_bool initial_is_tuple = (initial != NULL && nout > 1
+                                     && PyTuple_Check(initial));
+        if (initial_is_tuple && PyTuple_GET_SIZE(initial) != nout) {
+            PyErr_Format(PyExc_ValueError,
+                    "'initial' must be a scalar or a tuple with one entry "
+                    "per reduction output (%d), got length %zd",
+                    nout, PyTuple_GET_SIZE(initial));
+            goto fail;
+        }
         /* Not all functions will need initialization, but init always: */
         for (int i = 0; i < nout; i++) {
             initial_buf[i] = PyMem_Calloc(1, descrs[i]->elsize);
@@ -3932,9 +3945,17 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             }
         }
         if (initial != NULL) {
-            /* must use user provided initial value */
+            /* must use user provided initial value(s) */
             for (int i = 0; i < nout; i++) {
-                if (PyArray_Pack(descrs[i], initial_buf[i], initial) < 0) {
+                PyObject *initial_i = initial_is_tuple ?
+                        PyTuple_GET_ITEM(initial, i) : initial;
+                /* "No initial value" cannot be requested per output */
+                if (initial_is_tuple && initial_i == Py_None) {
+                    PyErr_SetString(PyExc_ValueError,
+                                    "entries of a tuple 'initial' cannot be None");
+                    goto fail;
+                }
+                if (PyArray_Pack(descrs[i], initial_buf[i], initial_i) < 0) {
                     goto fail;
                 }
             }
@@ -4503,12 +4524,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         if (naxes != 1) {
             PyErr_SetString(PyExc_ValueError,
                         "segmented_reduce does not allow multiple axes");
-            goto fail;
-        }
-        if (ufunc->nout != 1) {
-            PyErr_SetString(PyExc_ValueError,
-                        "segmented_reduce only supported for functions "
-                        "returning a single value");
             goto fail;
         }
         ret = PyUFunc_Reduceat(ufunc,
