@@ -3619,13 +3619,14 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     /* One first-element copy (stream -> out_i) per output. */
     NPY_cast_info copy_info[NPY_MAXARGS];
-    /* Buffers to use when we need initial values, and views into them */
-    char *initial_buf[NPY_MAXARGS];
+    /* Buffers for the initial values of all or only of the empty segments */
+    char *initial_buf[NPY_MAXARGS], *empty_buf[NPY_MAXARGS];
     /* Values that start every segment, and the results of empty ones */
     char **segment_initials = NULL, **empty_initials = NULL;
     for (int i = 0; i < nout; i++) {
         NPY_cast_info_init(&copy_info[i]);
         initial_buf[i] = NULL;
+        empty_buf[i] = NULL;
     }
 
     /* The reduceat indices - ind must be validated outside this call */
@@ -3926,39 +3927,38 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
     /* Get the initial values if any, `initial` is None for reduceat */
-    if (initial != Py_None) {
+    if ((initial == NULL && ufuncimpl->get_reduction_initial == NULL
+                && ufuncimpl->get_multi_reduction_initials == NULL)
+            || initial == Py_None) {
+        /* There is no initial value, or initial value was explicitly unset */
+    }
+    else if (initial != NULL) {
         if (reduction_alloc_initial(initial, nout, descrs, initial_buf) < 0) {
             goto fail;
         }
-        if (initial != NULL) {
-            segment_initials = empty_initials = initial_buf;
+        segment_initials = empty_initials = initial_buf;
+    }
+    else {
+        /* As for reduce, empty reductions may get a different initial value */
+        if (reduction_alloc_initial(NULL, nout, descrs, initial_buf) < 0
+                || reduction_alloc_initial(NULL, nout, descrs, empty_buf) < 0) {
+            goto fail;
         }
-        else {
-            int has_initial = reduction_get_initial(&context,
-                    /* reduction_is_empty */ NPY_FALSE, (void **)initial_buf);
-            if (has_initial < 0) {
-                goto fail;
-            }
-            if (has_initial) {
-                segment_initials = empty_initials = initial_buf;
-            }
-            else {
-                /*
-                 * The method may still have an identity for an empty
-                 * reduction (for `object` dtype it is not used when the
-                 * reduction has elements), it then only defines the result
-                 * of the empty segments.
-                 */
-                has_initial = reduction_get_initial(&context,
-                        /* reduction_is_empty */ NPY_TRUE,
-                        (void **)initial_buf);
-                if (has_initial < 0) {
-                    goto fail;
-                }
-                if (has_initial) {
-                    empty_initials = initial_buf;
-                }
-            }
+        int has_initial = reduction_get_initial(&context,
+                /* reduction_is_empty */ NPY_FALSE, (void **)initial_buf);
+        if (has_initial < 0) {
+            goto fail;
+        }
+        if (has_initial) {
+            segment_initials = initial_buf;
+        }
+        has_initial = reduction_get_initial(&context,
+                /* reduction_is_empty */ NPY_TRUE, (void **)empty_buf);
+        if (has_initial < 0) {
+            goto fail;
+        }
+        if (has_initial) {
+            empty_initials = empty_buf;
         }
     }
 
@@ -4035,6 +4035,7 @@ finish:
         NPY_cast_info_xfree(&copy_info[i]);
     }
     reduction_free_initial(nout, descrs, initial_buf);
+    reduction_free_initial(nout, descrs, empty_buf);
     multi_DECREF((PyObject *const *)descrs, 2 * nout + 1);
 
     if (!NpyIter_Deallocate(iter)) {
