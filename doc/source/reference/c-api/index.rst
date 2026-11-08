@@ -134,6 +134,7 @@ For a longer introduction to building Cython extensions that use NumPy, see
    generalized-ufuncs
    strings
    coremath
+   float16
    datetimes
    deprecations
    data_memory
