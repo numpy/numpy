@@ -181,6 +181,11 @@ Use statements
 * Currently F2PY uses ``use`` statements only for linking call-back modules and
   ``external`` arguments (call-back functions). See :ref:`Call-back arguments`.
 
+  In larger staged builds, this same mechanism can be used when callback
+  registration is done at the final Python/F2PY boundary while callback
+  invocation happens later in deeper Fortran routines linked from a prebuilt
+  host library. See also :ref:`Call-back arguments`.
+
 Common block statements
 ^^^^^^^^^^^^^^^^^^^^^^^
 
