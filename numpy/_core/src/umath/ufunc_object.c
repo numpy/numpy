@@ -3429,17 +3429,19 @@ fail:
 }
 
 /*
- * Run the reduceat segments once for the operands at `dataptr`, laid out as
- * [out_0 .. out_{nout-1}, arr].  Each segment is seeded with its first
- * element and the rest are folded in with the reduction loop.
+ * Run the segments once for the operands at `dataptr`, laid out as
+ * [out_0 .. out_{nout-1}, arr].  Segment i is [starts[i], stops[i]), or ends
+ * at the next start if `stops` is NULL.  Each is seeded with `initials`, its
+ * first element, or `empty_initials` if empty, and reduced with the loop.
  */
 NPY_FINLINE int
 reduceat_segments_impl(PyArrayMethod_Context *context, int nout,
         PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
         NPY_cast_info *copy_info, char *const *dataptr,
         const npy_intp *out_strides, const npy_intp *fixed_strides,
-        const npy_intp *reduceat_ind, npy_intp ind_size,
-        npy_intp red_axis_size)
+        const npy_intp *starts, const npy_intp *stops, npy_intp ind_size,
+        npy_intp red_axis_size, char *const *initials,
+        char *const *empty_initials)
 {
     npy_intp stride = fixed_strides[nout];
     char *dataptr_copy[NPY_MAXARGS];
@@ -3449,17 +3451,33 @@ reduceat_segments_impl(PyArrayMethod_Context *context, int nout,
     }
 
     for (npy_intp i = 0; i < ind_size; i++) {
-        npy_intp start = reduceat_ind[i];
-        npy_intp end = (i == ind_size - 1) ? red_axis_size : reduceat_ind[i + 1];
+        npy_intp start = starts[i];
+        npy_intp end = (stops != NULL) ? stops[i] :
+                (i == ind_size - 1) ? red_axis_size : starts[i + 1];
         npy_intp count = end - start;
         char *x0 = dataptr[nout] + stride * start;
+        char *const *seeds = initials;
+        if (seeds == NULL && count <= 0) {
+            seeds = empty_initials;
+        }
 
-        /* Copy the first element to start each reduction segment. */
+        /* Copy the initial value or first element to start each segment. */
         for (int j = 0; j < nout; j++) {
             char *out_j = dataptr[j] + out_strides[j] * i;
             dataptr_copy[j] = out_j;
             dataptr_copy[nout + 1 + j] = out_j;
-            if (copy_info[j].func == &_strided_to_strided_copy_references) {
+            if (seeds != NULL) {
+                /* The initial values already have the output dtype */
+                if (PyDataType_REFCHK(context->descriptors[nout + 1 + j])) {
+                    Py_XSETREF(*(PyObject **)out_j,
+                               Py_XNewRef(*(PyObject **)seeds[j]));
+                }
+                else {
+                    memmove(out_j, seeds[j], (size_t)elsizes[j]);
+                }
+            }
+            else if (copy_info[j].func
+                    == &_strided_to_strided_copy_references) {
                 Py_XSETREF(*(PyObject **)out_j, Py_XNewRef(*(PyObject **)x0));
             }
             else if (copy_info[j].func) {
@@ -3476,11 +3494,13 @@ reduceat_segments_impl(PyArrayMethod_Context *context, int nout,
             }
         }
         dataptr_copy[nout] = x0;
-
-        if (count > 1) {
-            /* Inner loop like REDUCE */
+        if (seeds == NULL) {
             --count;
             dataptr_copy[nout] += stride;
+        }
+
+        if (count > 0) {
+            /* Inner loop like REDUCE */
             NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)count);
             int res = strided_loop(context,
                     dataptr_copy, &count, fixed_strides, auxdata);
@@ -3497,23 +3517,27 @@ reduceat_segments(PyArrayMethod_Context *context,
         PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
         NPY_cast_info *copy_info, char *const *dataptr,
         const npy_intp *out_strides, const npy_intp *fixed_strides,
-        const npy_intp *reduceat_ind, npy_intp ind_size,
-        npy_intp red_axis_size)
+        const npy_intp *starts, const npy_intp *stops, npy_intp ind_size,
+        npy_intp red_axis_size, char *const *initials,
+        char *const *empty_initials)
 {
     /* A literal nout lets the compiler specialize one and two outputs */
     if (context->method->nout == 1) {
         return reduceat_segments_impl(context, 1, strided_loop, auxdata,
                 copy_info, dataptr, out_strides, fixed_strides,
-                reduceat_ind, ind_size, red_axis_size);
+                starts, stops, ind_size, red_axis_size,
+                initials, empty_initials);
     }
     if (context->method->nout == 2) {
         return reduceat_segments_impl(context, 2, strided_loop, auxdata,
                 copy_info, dataptr, out_strides, fixed_strides,
-                reduceat_ind, ind_size, red_axis_size);
+                starts, stops, ind_size, red_axis_size,
+                initials, empty_initials);
     }
     return reduceat_segments_impl(context, context->method->nout,
             strided_loop, auxdata, copy_info, dataptr, out_strides,
-            fixed_strides, reduceat_ind, ind_size, red_axis_size);
+            fixed_strides, starts, stops, ind_size, red_axis_size,
+            initials, empty_initials);
 }
 
 /*
@@ -3866,7 +3890,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         do {
             res = reduceat_segments(&context, strided_loop, auxdata,
                     copy_info, dataptr, out_strides, fixed_strides,
-                    reduceat_ind, ind_size, red_axis_size);
+                    reduceat_ind, NULL, ind_size, red_axis_size, NULL, NULL);
         } while (res == 0 && iternext(iter));
 
         NPY_END_THREADS;
@@ -3885,7 +3909,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
         res = reduceat_segments(&context, strided_loop, auxdata,
                 copy_info, dataptr, out_strides, fixed_strides,
-                reduceat_ind, ind_size, red_axis_size);
+                reduceat_ind, NULL, ind_size, red_axis_size, NULL, NULL);
 
         NPY_END_THREADS;
     }
