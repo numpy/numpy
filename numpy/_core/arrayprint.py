@@ -243,6 +243,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         If set a passed function will be used for generating arrays' repr.
         Other options will be ignored.
 
+        .. versionadded:: 2.1
+
     See Also
     --------
     get_printoptions, printoptions, array2string
@@ -352,6 +354,7 @@ def get_printoptions():
         - formatter : dict of callables
         - floatmode : str
         - legacy : str or False
+        - override_repr : callable
 
         For a full description of these options, see `set_printoptions`.
 
