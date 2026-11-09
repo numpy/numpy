@@ -45,10 +45,12 @@ encounter a foreign object, they will try (in order):
 
 1. The buffer protocol, described :py:doc:`in the Python C-API documentation
    <python:c-api/buffer>`.
-2. The ``__array_struct__`` and ``__array_interface__`` protocols, described
-   :ref:`in this page <arrays.interface>`. A precursor to Python's buffer
-   protocol, it defines a way to access the contents of a NumPy array from other
-   C extensions. NumPy checks ``__array_struct__`` before ``__array_interface__``.
+2. The NumPy array interface, exposed through the ``__array_struct__`` and
+   ``__array_interface__`` attributes and described
+   :ref:`here <arrays.interface>`. It predates the revised Python buffer
+   protocol (PEP 3118) and allows C extensions to access the contents of
+   array-like objects. NumPy checks ``__array_struct__`` before
+   ``__array_interface__``.
 3. The ``__array__()`` method, which asks an arbitrary object to convert
    itself into an array.
 
