@@ -1,0 +1,5 @@
+``np.arange`` now raises for complex arguments without a step
+--------------------------------------------------------------
+Calling `numpy.arange` with a complex ``start`` or ``stop`` and without a ``step``
+specified now raises a ``ValueError`` instead of returning an incorrect result.
+

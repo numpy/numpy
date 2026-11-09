@@ -530,6 +530,29 @@ matrixproduct2_c_api(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 
+static PyObject *
+argsort_c_api(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyArrayObject *a;
+    if (!PyArg_ParseTuple(args, "O!", &PyArray_Type, &a)) {
+        return NULL;
+    }
+    return PyArray_ArgSort(a, -1, NPY_SORT_DEFAULT);
+}
+
+
+static PyObject *
+searchsorted_c_api(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyArrayObject *a;
+    PyObject *v;
+    if (!PyArg_ParseTuple(args, "O!O", &PyArray_Type, &a, &v)) {
+        return NULL;
+    }
+    return PyArray_SearchSorted(a, v, NPY_SEARCHLEFT, NULL);
+}
+
+
 /*
  * Create a custom field dtype from an existing void one (and test some errors).
  * The dtypes created by this function may be not be usable (or even crash
@@ -2321,6 +2344,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_VARARGS, NULL},
     {"matrixproduct2_c_api",
         matrixproduct2_c_api,
+        METH_VARARGS, NULL},
+    {"argsort_c_api",
+        argsort_c_api,
+        METH_VARARGS, NULL},
+    {"searchsorted_c_api",
+        searchsorted_c_api,
         METH_VARARGS, NULL},
     {"create_custom_field_dtype",
         create_custom_field_dtype,

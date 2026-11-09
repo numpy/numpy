@@ -8,7 +8,13 @@ import numpy._core.numerictypes as nt
 from numpy._core._multiarray_umath import _get_sfloat_dtype
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.numerictypes import issctype, sctype2char, sctypes
-from numpy.testing import assert_, assert_equal, assert_raises, assert_raises_regex
+from numpy.testing import (
+    IS_PYPY,
+    assert_,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 # This is the structure of the table used for plain objects:
 #
@@ -635,6 +641,10 @@ def test_issctype(rep, expected):
 @pytest.mark.skipif(
     sys.flags.optimize > 1,
     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1",
+)
+@pytest.mark.xfail(
+    IS_PYPY,
+    reason="PyPy cannot modify tp_doc after PyType_Ready",
 )
 class TestDocStrings:
     def test_platform_dependent_aliases(self):

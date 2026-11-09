@@ -884,6 +884,9 @@ string_to_int(
     npy_intp const strides[],
     NpyAuxData *NPY_UNUSED(auxdata)
 ) {
+    // load-bearing for the format codes used in error cases below
+    static_assert(std::is_same_v<NpyLongType, npy_longlong> ||
+                  std::is_same_v<NpyLongType, npy_ulonglong>);
     PyArray_StringDTypeObject *descr =
             ((PyArray_StringDTypeObject *)context->descriptors[0]);
     npy_string_allocator *allocator =
@@ -901,25 +904,24 @@ string_to_int(
     while (N--) {
         NpyLongType value;
         if (stringbuf_to_int<NpyLongType>(in, &value, has_null, default_string, allocator) != 0) {
-            npy_gil_error(PyExc_RuntimeError, "Encountered problem converting string dtype to integer dtype.");
             goto fail;
         }
-        *(NpyType *)out = (NpyType)value;
+        NpyType narrowed = (NpyType)value;
 
         // Cast back to NpyLongType to check for out-of-bounds errors
-        if (static_cast<NpyLongType>(*(NpyType *)out) != value) {
+        if (static_cast<NpyLongType>(narrowed) != value) {
             // out of bounds, raise error following NEP 50 behavior
             const char *errmsg = NULL;
             if constexpr (std::is_same_v<NpyLongType, npy_ulonglong>) {
-                errmsg = "Integer %llu is out of bounds for %s";
-            } else if constexpr (std::is_same_v<NpyLongType, npy_longlong>) {
-                errmsg = "Integer %lli is out of bounds for %s";
+                errmsg = "Python integer %llu out of bounds for %S";
             } else {
-                errmsg = "Unrecognized integer type %i is out of bounds for %s";
+                errmsg = "Python integer %lli out of bounds for %S";
             }
-            npy_gil_error(PyExc_OverflowError, errmsg, value, typenum_to_cstr(typenum));
+            npy_gil_error(PyExc_OverflowError, errmsg, value,
+                          context->descriptors[1]);
             goto fail;
         }
+        *(NpyType *)out = narrowed;
         in += in_stride;
         out += out_stride;
     }

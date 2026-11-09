@@ -14,7 +14,7 @@ import numpy as np
 from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import ComplexWarning
-from numpy.testing import assert_array_equal
+from numpy.testing import IS_PYPY, assert_array_equal
 
 
 def random_unicode_string_list():
@@ -1491,7 +1491,10 @@ def test_concatenate(string_list):
 
 def test_resize_method(string_list):
     sarr = np.array(string_list, dtype="T")
-    sarr.resize(len(string_list) + 3)
+    if IS_PYPY:
+        sarr.resize(len(string_list) + 3, refcheck=False)
+    else:
+        sarr.resize(len(string_list) + 3)
     assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
 
 
@@ -1688,6 +1691,17 @@ def test_sized_integer_casts(bitsize, signed):
                  dtype=StringDType(na_object=np.nan)).astype(idtype)
 
 
+@pytest.mark.parametrize("bitsize", [8, 16, 32, 64])
+@pytest.mark.parametrize("signed", [True, False])
+def test_integer_cast_overflow_preserves_output(bitsize, signed):
+    idtype = f"{'int' if signed else 'uint'}{bitsize}"
+    for string_dtype in ["T", "U"]:
+        out = np.array([5], dtype=idtype)
+        with pytest.raises(OverflowError):
+            out[...] = np.array([str(2**bitsize)], dtype=string_dtype)
+        assert_array_equal(out, [5])
+
+
 @pytest.mark.parametrize("typename", ["byte", "short", "int", "longlong"])
 @pytest.mark.parametrize("signed", ["", "u"])
 def test_unsized_integer_casts(typename, signed):
@@ -1801,6 +1815,12 @@ def test_cfloat_to_string_nan_na(typename, nan_like_na_object):
     arr = np.array([1.5 + 2j, complex(np.inf, 1)], dtype=typename).astype(dt)
     assert arr[0] == "(1.5+2j)"
     assert arr[1] == "(inf+1j)"
+
+
+def test_string_to_bytes_error_in_buffered_ufunc():
+    arr = np.full(2 * np.getbufsize(), "é", dtype="T")
+    with pytest.raises(UnicodeEncodeError):
+        np.add(arr, arr, out=np.empty(arr.shape, dtype="S4"))
 
 
 def test_cfloat_to_string_nan_na_strided_field_view(nan_like_na_object):
@@ -1984,6 +2004,9 @@ class TestFixedWidthCastSafety:
         assert np.can_cast(arr.dtype, "T", casting="safe")
         with pytest.raises(TypeError, match="Invalid unicode code point"):
             arr.astype("T")
+        big = np.full(2 * np.getbufsize(), "\ud800", dtype="U1")
+        with pytest.raises(TypeError, match="Invalid unicode code point"):
+            np.add(big, np.array("", dtype="T"))
 
     def test_bytes_to_stringdtype_valid_utf8(self):
         barr = np.array(["café".encode(), "😊".encode()], dtype="S5")
@@ -2504,6 +2527,26 @@ def test_nat_conversion():
     for nat in [np.datetime64("NaT", "s"), np.timedelta64("NaT", "s")]:
         with pytest.raises(ValueError, match="string coercion is disabled"):
             np.array(["a", nat], dtype=StringDType(coerce=False))
+
+
+@pytest.mark.filterwarnings("ignore:no explicit representation of timezones")
+def test_datetime_parse_error_bounded():
+    bad_timestamps = [
+        "not-a-date-but-long-enough",
+        "2023-13-01T00:00:00",
+        "2023-02-30T00:00:00",
+        "2023-01-01T25:00:00",
+        "2023-01-01T00:60:00",
+        "2023-01-01T00:00:60",
+        "2023-01-01T00:00+25:00",
+        "2023-01-01T00:00+01:60",
+    ]
+    for bad in bad_timestamps:
+        arr = np.array([bad, "2023-01-02T00:00:00"], dtype="T")
+        for a in [arr, arr[:1]]:
+            with pytest.raises(ValueError) as excinfo:
+                a.astype("M8[s]")
+            assert "2023-01-02" not in str(excinfo.value)
 
 
 def test_growing_strings(dtype):

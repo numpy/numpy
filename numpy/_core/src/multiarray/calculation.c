@@ -172,19 +172,23 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
         }
     }
 
-    int needs_api = PyDataType_FLAGCHK(PyArray_DESCR(ap), NPY_NEEDS_PYAPI);
+    int needs_pyapi = PyDataType_FLAGCHK(PyArray_DESCR(ap), NPY_NEEDS_PYAPI);
+    int rcode = 0;
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap));
     n = PyArray_SIZE(ap)/m;
     rptr = (npy_intp *)PyArray_DATA(rp);
     for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
-        /* Some callbacks, including object dtype, return zero even on error. */
-        if (arg_func(ip, m, rptr, ap) < 0 ||
-                (needs_api && PyErr_Occurred())) {
+        rcode = arg_func(ip, m, rptr, ap);
+        if (rcode < 0 || (needs_pyapi && PyErr_Occurred())) {
             break;
         }
         rptr += 1;
     }
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
+    if (rcode < 0 || PyErr_Occurred()) {
+        PyArray_DiscardWritebackIfCopy(rp);
+        goto fail;
+    }
 
     if (PyErr_Occurred()) {
         if (out != NULL && out != rp) {
