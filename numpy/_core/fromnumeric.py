@@ -230,7 +230,7 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
         ``topk_values`` are the top ``k`` values and ``topk_indices``
         are the corresponding indices. Both arrays are of the shape
         of the input array with the dimension along ``axis`` replaced
-        by ``k``.
+        by ``k``. If ``axis`` is None, both arrays are of shape (k,).
 
 
     Notes
