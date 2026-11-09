@@ -196,7 +196,7 @@ def test_blank_lines_normal_delimiter():
     )
 
 
-@pytest.mark.parametrize("dtype", (float, object))
+@pytest.mark.parametrize("dtype", (float, object, np.dtypes.StringDType()))
 def test_maxrows_no_blank_lines(dtype):
     txt = StringIO("1.5,2.5\n3.0,4.0\n5.5,6.0")
     res = np.loadtxt(txt, dtype=dtype, delimiter=",", max_rows=2)
@@ -269,10 +269,11 @@ def test_empty_usecols():
 
 @pytest.mark.parametrize("c1", ["a", "の", "🫕"])
 @pytest.mark.parametrize("c2", ["a", "の", "🫕"])
-def test_large_unicode_characters(c1, c2):
+@pytest.mark.parametrize("dtype", ["U12", "T"])
+def test_large_unicode_characters(c1, c2, dtype):
     # c1 and c2 span ascii, 16bit and 32bit range.
     txt = StringIO(f"a,{c1},c,1.0\ne,{c2},2.0,g")
-    res = np.loadtxt(txt, dtype=np.dtype('U12'), delimiter=",")
+    res = np.loadtxt(txt, dtype=dtype, delimiter=",")
     expected = np.array(
         [f"a,{c1},c,1.0".split(","), f"e,{c2},2.0,g".split(",")],
         dtype=np.dtype('U12')
@@ -280,12 +281,13 @@ def test_large_unicode_characters(c1, c2):
     assert_equal(res, expected)
 
 
-def test_unicode_with_converter():
+@pytest.mark.parametrize("dtype", ["U12", "T"])
+def test_unicode_with_converter(dtype):
     txt = StringIO("cat,dog\nαβγ,δεζ\nabc,def\n")
     conv = {0: lambda s: s.upper()}
     res = np.loadtxt(
         txt,
-        dtype=np.dtype("U12"),
+        dtype=dtype,
         converters=conv,
         delimiter=",",
         encoding=None
@@ -305,7 +307,8 @@ def test_converter_with_structured_dtype():
     assert_equal(res, expected)
 
 
-def test_converter_with_unicode_dtype():
+@pytest.mark.parametrize("dtype", ["U3", "T"])
+def test_converter_with_unicode_dtype(dtype):
     """
     With the 'bytes' encoding, tokens are encoded prior to being
     passed to the converter. This means that the output of the converter may
@@ -317,7 +320,7 @@ def test_converter_with_unicode_dtype():
     txt = StringIO('abc,def\nrst,xyz')
     conv = bytes.upper
     res = np.loadtxt(
-            txt, dtype=np.dtype("U3"), converters=conv, delimiter=",",
+            txt, dtype=dtype, converters=conv, delimiter=",",
             encoding="bytes")
     expected = np.array([['ABC', 'DEF'], ['RST', 'XYZ']])
     assert_equal(res, expected)
@@ -611,24 +614,27 @@ def test_structured_dtype_with_quotes():
     assert_array_equal(res, expected)
 
 
-def test_quoted_field_is_not_empty():
+@pytest.mark.parametrize("dtype", ["U1", "T"])
+def test_quoted_field_is_not_empty(dtype):
     txt = StringIO('1\n\n"4"\n""')
-    expected = np.array(["1", "4", ""], dtype="U1")
-    res = np.loadtxt(txt, delimiter=",", dtype="U1", quotechar='"')
+    expected = np.array(["1", "4", ""], dtype=dtype)
+    res = np.loadtxt(txt, delimiter=",", dtype=dtype, quotechar='"')
     assert_equal(res, expected)
 
-def test_quoted_field_is_not_empty_nonstrict():
+@pytest.mark.parametrize("dtype", ["U1", "T"])
+def test_quoted_field_is_not_empty_nonstrict(dtype):
     # Same as test_quoted_field_is_not_empty but check that we are not strict
     # about missing closing quote (this is the `csv.reader` default also)
     txt = StringIO('1\n\n"4"\n"')
-    expected = np.array(["1", "4", ""], dtype="U1")
-    res = np.loadtxt(txt, delimiter=",", dtype="U1", quotechar='"')
+    expected = np.array(["1", "4", ""], dtype=dtype)
+    res = np.loadtxt(txt, delimiter=",", dtype=dtype, quotechar='"')
     assert_equal(res, expected)
 
-def test_consecutive_quotechar_escaped():
+@pytest.mark.parametrize("dtype", ["U40", "T"])
+def test_consecutive_quotechar_escaped(dtype):
     txt = StringIO('"Hello, my name is ""Monty""!"')
-    expected = np.array('Hello, my name is "Monty"!', dtype="U40")
-    res = np.loadtxt(txt, dtype="U40", delimiter=",", quotechar='"')
+    expected = np.array('Hello, my name is "Monty"!', dtype=dtype)
+    res = np.loadtxt(txt, dtype=dtype, delimiter=",", quotechar='"')
     assert_equal(res, expected)
 
 
