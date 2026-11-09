@@ -3974,9 +3974,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         for (i = 0; i < ind_size; ++i) {
             if (stop_offsets[i] <= reduceat_ind[i]) {
                 PyErr_Format(PyExc_ValueError,
-                        "zero-size segment in reduction operation '%s' which "
-                        "does not have an identity, so to allow empty "
-                        "segments one has to specify 'initial'", ufunc_name);
+                        "zero-size segment in reduction operation '%s' %s, so "
+                        "to allow empty segments one has to specify 'initial'",
+                        ufunc_name, (initial == Py_None) ? "with initial=None"
+                                    : "which does not have an identity");
                 goto fail;
             }
         }

@@ -3049,7 +3049,7 @@ class TestSegmentedReduce:
         # (and thus no identity), just as it does for `reduce`.
         res = np.add.segmented_reduce(arr, [0, 5], [5, 10], initial=None)
         assert_array_equal(res, [10, 35])
-        with pytest.raises(ValueError, match="zero-size segment"):
+        with pytest.raises(ValueError, match="with initial=None"):
             np.add.segmented_reduce(arr, [0], [0], initial=None)
 
         # An initial value that cannot be cast is an error
