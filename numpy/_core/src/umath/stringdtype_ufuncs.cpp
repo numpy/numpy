@@ -434,7 +434,10 @@ minimum_maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
         const npy_packed_static_string *sin1 = (npy_packed_static_string *)in1;
         const npy_packed_static_string *sin2 = (npy_packed_static_string *)in2;
         npy_packed_static_string *sout = (npy_packed_static_string *)out;
-        int cmp = _compare(in1, in2, in1_descr, in2_descr);
+        int cmp;
+        if (_compare(in1, in2, in1_descr, in2_descr, &cmp) < 0) {
+            goto fail;
+        }
         if (cmp == 0 && (in1 == out || in2 == out)) {
             goto next_step;
         }
