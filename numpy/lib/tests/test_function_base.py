@@ -617,6 +617,10 @@ class TestInsert:
         assert_equal(insert(a, np.array([True] * 4), 9), [9, 1, 9, 2, 9, 3, 9])
         assert_equal(insert(a, np.array([True, False, True, False]), 9),
                      [9, 1, 2, 9, 3])
+        assert_equal(insert(a, [True, False, True, False], 9),
+                     [9, 1, 2, 9, 3])
+        assert_equal(insert(a, (True, False, True, False), 9),
+                     [9, 1, 2, 9, 3])
 
     def test_multidim(self):
         a = [[1, 1, 1]]
@@ -709,6 +713,11 @@ class TestInsert:
     def test_index_out_of_bounds(self, idx, values):
         with pytest.raises(IndexError, match='out of bounds'):
             np.insert([0, 1, 2], idx, values)
+
+    @pytest.mark.parametrize("obj", [True, False, [[True, False]]])
+    def test_boolean_obj_invalid(self, obj):
+        with pytest.raises(ValueError, match="must be one dimensional"):
+            np.insert([1, 2, 3], obj, 0)
 
 
 class TestAmax:
