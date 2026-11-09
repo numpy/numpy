@@ -190,13 +190,6 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
         goto fail;
     }
 
-    if (PyErr_Occurred()) {
-        if (out != NULL && out != rp) {
-            PyArray_DiscardWritebackIfCopy(rp);
-        }
-        goto fail;
-    }
-
     Py_DECREF(ap);
     /* Trigger the WRITEBACKIFCOPY if necessary */
     if (out != NULL && out != rp) {
