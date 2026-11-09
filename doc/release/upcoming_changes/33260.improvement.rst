@@ -1,0 +1,4 @@
+Fixed-width string outputs in `numpy.vectorize` preserve their width
+--------------------------------------------------------------------
+When a signature is supplied to `numpy.vectorize`, fixed-width Unicode and
+byte-string output dtypes now retain the width specified in ``otypes``.
