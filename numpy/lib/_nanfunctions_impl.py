@@ -112,6 +112,19 @@ def _replace_nan(a, val):
     return a, mask
 
 
+def _replace_nat(a, val):
+    """Replace NaT values in datetime-like arrays with an integer sentinel."""
+    a = np.asanyarray(a)
+    if a.dtype.kind not in "mM":
+        return a, None
+
+    mask = np.isnat(a)
+    if np.any(mask):
+        a = np.array(a, subok=True, copy=True)
+        np.copyto(a.view(np.int64), val, where=mask)
+    return a, mask
+
+
 def _copyto(a, val, mask):
     """
     Replace values in `a` with NaN where `mask` is True.  This differs from
@@ -548,7 +561,9 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     array([1, 0])
 
     """
-    a, mask = _replace_nan(a, np.inf)
+    a, mask = _replace_nat(a, np.iinfo(np.int64).max)
+    if mask is None:
+        a, mask = _replace_nan(a, np.inf)
     if mask is not None and mask.size:
         mask = np.all(mask, axis=axis)
         if np.any(mask):
@@ -606,7 +621,9 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     array([1, 1])
 
     """
-    a, mask = _replace_nan(a, -np.inf)
+    a, mask = _replace_nat(a, np.iinfo(np.int64).min)
+    if mask is None:
+        a, mask = _replace_nan(a, -np.inf)
     if mask is not None and mask.size:
         mask = np.all(mask, axis=axis)
         if np.any(mask):

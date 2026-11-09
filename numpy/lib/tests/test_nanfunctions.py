@@ -171,6 +171,18 @@ class TestNanFunctions_MinMax:
         for f in self.nanfuncs:
             assert_(f(0.) == 0.)
 
+    def test_datetime_nat(self):
+        dates = np.array(
+            ["2020-01-01", "NaT", "2020-03-01"], dtype="datetime64[D]"
+        )
+        timedeltas = np.array([1, "NaT", 3], dtype="timedelta64[D]")
+
+        for values in [dates, timedeltas]:
+            assert np.nanargmin(values) == 0
+            assert np.nanargmax(values) == 2
+            assert np.nanargmin(values.reshape(3, 1), axis=0) == 0
+            assert np.nanargmax(values.reshape(3, 1), axis=0) == 2
+
     def test_subclass(self):
         class MyNDArray(np.ndarray):
             pass
