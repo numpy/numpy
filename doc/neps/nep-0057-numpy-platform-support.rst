@@ -196,16 +196,19 @@ Tier 2
 
 Tier 2 platforms:
 
-+---------------------------+-------+------------------------------------------+
-| Platform                  | Notes | Contacts                                 |
-+===========================+=======+==========================================+
-| Linux x86-64 (musllinux)  |       | Ralf Gommers                             |
-+---------------------------+-------+------------------------------------------+
-| Linux aarch64 (musllinux) |       | Ralf Gommers                             |
-+---------------------------+-------+------------------------------------------+
-| Free-threaded CPython     |       | Nathan Goldbaum, Kumar Aditya,           |
-|                           |       | Ralf Gommers                             |
-+---------------------------+-------+------------------------------------------+
++---------------------------+--------------------------+-------------------------------------+
+| Platform                  | Notes                    | Contacts                            |
++===========================+==========================+=====================================+
+| Linux x86-64 (musllinux)  |                          | Ralf Gommers                        |
++---------------------------+--------------------------+-------------------------------------+
+| Linux aarch64 (musllinux) |                          | Ralf Gommers                        |
++---------------------------+--------------------------+-------------------------------------+
+| Free-threaded CPython     |                          | Nathan Goldbaum, Kumar Aditya,      |
+|                           |                          | Ralf Gommers                        |
++---------------------------+--------------------------+-------------------------------------+
+| PyPy                      | Was restored to Tier 2   |                                     |
+|                           | for 2.6, see gh-32332_   | Matti Picus                         |
++---------------------------+--------------------------+-------------------------------------+
 
 
 Tier 3
@@ -265,9 +268,7 @@ list):
 | Platform                           | Notes                                            |
 +====================================+==================================================+
 | FreeBSD                            | Was Tier 3, ran on Cirrus CI                     |
-+--------------------+----------------------------------------+-------------------------+
-| PyPy                               | Was Tier 2 for releases <=2.4.x, see gh-30416_   |
-+------------------------------------+--------------------------------------------------+
++-------------------------------------------------------------+-------------------------+
 | macOS ppc64, universal, universal2 |                                                  |
 +------------------------------------+--------------------------------------------------+
 | Linux i686                         | Dropped in 1.22.0, low demand                    |
@@ -311,6 +312,7 @@ Discussion
 - `Discussion about supported platforms for wheels (scientific-python issue/discussion (Nov 2025) <https://github.com/scientific-python/summit-2025-nov/issues/4>`__
 - `What platforms should wheels be provided for by default? (Packaging Discourse thread, 2026) <https://discuss.python.org/t/what-platforms-should-wheels-be-provided-for-by-default/105822>`__
 - `Expectations that projects provide ever more wheels (pypackaging-native) <https://pypackaging-native.github.io/meta-topics/user_expectations_wheels/>`__
+- `Moving PyPy 3.12 into Tier 2 support for the 2.6 release <https://mail.python.org/archives/list/numpy-discussion@python.org/thread/4V3M3YTAHUIM7PMDQH3YSV3CIMV4VE5Z/>`__
 
 
 References and footnotes
@@ -322,7 +324,7 @@ References and footnotes
 .. _gh-28759: https://github.com/numpy/numpy/pull/28759
 .. _gh-30216: https://github.com/numpy/numpy/issues/30216
 .. _gh-30412: https://github.com/numpy/numpy/pull/30412
-.. _gh-30416: https://github.com/numpy/numpy/issues/30416
+.. _gh-32332: https://github.com/numpy/numpy/issues/32332
 .. _discussion board: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/FGVCDS5JICVIUVBISGWZNQ46QZ3XX5PB/#TTSOQQ3XLXXK52CZYMN7MALJQEI65U
 
 
