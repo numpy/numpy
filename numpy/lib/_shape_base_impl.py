@@ -321,6 +321,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         replaced with new dimensions equal to the shape of the return value
         of `func1d`. So if `func1d` returns a scalar `out` will have one
         fewer dimensions than `arr`.
+        For fixed-width string results, the width grows as needed to hold
+        values returned by later calls to `func1d`.
 
     See Also
     --------
@@ -407,8 +409,17 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
 
     # save the first result, then compute and save all remaining results
     buff[ind0] = res
-    for ind in inds:
-        buff[ind] = asanyarray(func1d(inarr_view[ind], *args, **kwargs))
+    if buff.dtype.kind in 'US':
+        for ind in inds:
+            res = asanyarray(func1d(inarr_view[ind], *args, **kwargs))
+            if (res.dtype.kind == buff.dtype.kind
+                    and res.dtype.itemsize > buff.dtype.itemsize):
+                # Fixed-width strings may be longer than the first result.
+                buff = buff.astype(res.dtype)
+            buff[ind] = res
+    else:
+        for ind in inds:
+            buff[ind] = asanyarray(func1d(inarr_view[ind], *args, **kwargs))
 
     res = transpose(buff, buff_permute)
     return conv.wrap(res)

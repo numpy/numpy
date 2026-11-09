@@ -134,6 +134,15 @@ class TestPutAlongAxis:
 
 
 class TestApplyAlongAxis:
+    @pytest.mark.parametrize("kind, join", [("U", "".join), ("S", b"".join)])
+    def test_string_width_grows_with_results(self, kind, join):
+        # gh-24689: the first result is shorter than later results.
+        values = np.arange(20).astype(kind)[:, None]
+        result = apply_along_axis(join, 1, values)
+
+        assert_array_equal(result, np.arange(20).astype(kind))
+        assert_equal(result.dtype, np.dtype(f"{kind}2"))
+
     def test_simple(self):
         a = np.ones((20, 10), 'd')
         assert_array_equal(
