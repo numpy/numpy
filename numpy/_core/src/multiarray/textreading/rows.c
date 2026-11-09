@@ -8,6 +8,7 @@
 #include "numpy/npy_3kcompat.h"
 #include "npy_pycompat.h"
 #include "alloc.h"
+#include "dtypemeta.h"
 #include "shape.h"  // For PyArray_Resize_int
 
 #include <string.h>
@@ -286,6 +287,11 @@ read_rows(stream *s,
 
                 if (data_array == NULL) {
                     goto error;
+                }
+                if (NPY_DT_has_finalize(NPY_DTYPE(out_descr))) {
+                    // finalization might replace the descriptor
+                    Py_INCREF(PyArray_DESCR(data_array));
+                    Py_SETREF(field_types[0].descr, PyArray_DESCR(data_array));
                 }
             }
             else {
