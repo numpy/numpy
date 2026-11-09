@@ -1285,7 +1285,7 @@ def require_fields(array, required_dtype):
 
     Parameters
     ----------
-    a : ndarray
+    array : ndarray
        array to cast
     required_dtype : dtype
        datatype for output array
