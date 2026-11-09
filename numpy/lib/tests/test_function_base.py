@@ -1149,6 +1149,28 @@ class TestGradient:
         assert_raises_regex(ValueError, '.*scalars or 1d',
             gradient, f_2d, np.stack([dx] * 2, axis=-1), 1)
 
+    def test_integer_coordinates_precision(self):
+        coordinates = 1767225600000000000 + np.array(
+            [0, 1000, 3000, 6000], dtype=np.int64
+        )
+        values = np.array([0, 1000, 3000, 6000], dtype=np.float64)
+        assert_array_equal(gradient(values, coordinates), np.ones(4))
+
+        nanosecond_coordinates = 1767225600000000000 + np.arange(
+            4, dtype=np.int64
+        )
+        assert_array_equal(
+            gradient(np.arange(4, dtype=np.float64), nanosecond_coordinates),
+            np.ones(4),
+        )
+
+        # Keep the existing modular-difference behavior for unsigned inputs.
+        unsigned_coordinates = np.array([255, 0, 10], dtype=np.uint8)
+        assert_array_equal(
+            gradient(unsigned_coordinates.astype(np.float64), unsigned_coordinates),
+            np.ones(3),
+        )
+
     def test_badargs(self):
         f_2d = np.arange(25).reshape(5, 5)
         x = np.cumsum(np.ones(5))
