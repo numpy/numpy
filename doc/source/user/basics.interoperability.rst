@@ -53,9 +53,9 @@ encounter a foreign object, they will try (in order):
    itself into an array.
 
 For the buffer, ``__array_struct__``, and ``__array_interface__`` protocols, the
-object describes its memory layout and NumPy does everything else (zero-copy if
-possible). If that's not possible, the object itself is responsible for
-returning a ``ndarray`` from ``__array__()``.
+object exposes its memory layout, which NumPy can use without copying when
+possible. Objects that cannot provide a suitable interface can instead implement
+``__array__()`` to return an ``ndarray``.
 
 If an object is not able to expose its data through ``__array_struct__`` or
 ``__array_interface__``, it can define the corresponding attribute as a property
