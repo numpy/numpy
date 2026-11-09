@@ -45,17 +45,28 @@ encounter a foreign object, they will try (in order):
 
 1. The buffer protocol, described :py:doc:`in the Python C-API documentation
    <python:c-api/buffer>`.
-2. The ``__array_interface__`` protocol, described
-   :ref:`in this page <arrays.interface>`. A precursor to Python's buffer
-   protocol, it defines a way to access the contents of a NumPy array from other
-   C extensions.
+2. The NumPy array interface, exposed through the ``__array_struct__`` and
+   ``__array_interface__`` attributes and described
+   :ref:`here <arrays.interface>`. It predates the revised Python buffer
+   protocol (PEP 3118) and allows C extensions to access the contents of
+   array-like objects. NumPy checks ``__array_struct__`` before
+   ``__array_interface__``.
 3. The ``__array__()`` method, which asks an arbitrary object to convert
    itself into an array.
 
-For both the buffer and the ``__array_interface__`` protocols, the object
-describes its memory layout and NumPy does everything else (zero-copy if
-possible). If that's not possible, the object itself is responsible for
-returning a ``ndarray`` from ``__array__()``.
+For the buffer, ``__array_struct__``, and ``__array_interface__`` protocols, the
+object exposes its memory layout, which NumPy can use without copying when
+possible. Objects that cannot provide a suitable interface can instead implement
+``__array__()`` to return an ``ndarray``.
+
+If an object is not able to expose its data through ``__array_struct__`` or
+``__array_interface__``, it can define the corresponding attribute as a property
+that raises ``AttributeError``. NumPy then tries the next protocol in the order
+listed above, including ``__array__()`` if it is defined and neither interface
+is available. Other exceptions cause conversion to fail rather than falling
+back to ``__array__()``. Returning an invalid interface dictionary, such as
+one containing an unsupported ``typestr``, also causes conversion to fail
+without falling back to ``__array__()``.
 
 :doc:`DLPack <dlpack:index>` is yet another protocol to convert foreign objects
 to NumPy arrays in a language and device agnostic manner. NumPy doesn't implicitly
