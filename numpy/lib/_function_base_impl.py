@@ -2493,7 +2493,9 @@ class vectorize:
                 if char not in typecodes['All']:
                     raise ValueError(f"Invalid otype specified: {char}")
         elif iterable(otypes):
-            otypes = [_get_vectorize_dtype(_nx.dtype(x)) for x in otypes]
+            otypes = [_nx.dtype(x) for x in otypes]
+            if signature is None:
+                otypes = [_get_vectorize_dtype(x) for x in otypes]
         elif otypes is not None:
             raise ValueError("Invalid otype specification")
         self.otypes = otypes

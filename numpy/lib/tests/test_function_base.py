@@ -1960,6 +1960,16 @@ class TestVectorize:
         assert_equal(r.dtype, np.dtype('float64'))
         assert_array_equal(r, [1, 2, 3])
 
+    @pytest.mark.parametrize("otype", ["U10", "S10"])
+    def test_signature_fixed_width_string_otypes(self, otype):
+        f = vectorize(lambda x: str(x).ljust(10), signature='()->()',
+                      otypes=[otype])
+        result = f([1, 24])
+        expected = np.array(["1         ", "24        "], dtype=otype)
+        assert_equal(result.dtype, np.dtype(otype))
+        assert_array_equal(result, expected)
+        assert_equal(f([]).dtype, np.dtype(otype))
+
     def test_signature_invalid_inputs(self):
         f = vectorize(operator.add, signature='(n),(n)->(n)')
         with assert_raises_regex(TypeError, 'wrong number of positional'):
