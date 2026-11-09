@@ -3576,19 +3576,20 @@ clip_segment_offsets(npy_intp *offsets, npy_intp n, npy_intp axis_size)
  *
  * output shape is based on the size of indices
  *
- * With `stops`, `ind` holds the starts of segmented_reduce, which computes
- * op.reduce(array[starts[i]:stops[i]]) with clipped offsets and gives
- * `initial` (or the identity) for empty segments.
+ * `starts` holds the indices and `stops` is NULL for reduceat.  With `stops`,
+ * this is segmented_reduce, which computes op.reduce(array[starts[i]:stops[i]])
+ * with clipped offsets and gives `initial` (or the identity) for empty
+ * segments.
  *
  * TODO: Reduceat duplicates too much code from accumulate!
  */
 static PyObject *
-PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
-                 PyArrayObject *stops, PyArrayObject *out_arrays[], int axis,
-                 PyArray_DTypeMeta *signature[], PyObject *initial)
+reduceat_impl(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *starts,
+              PyArrayObject *stops, PyArrayObject *out_arrays[], int axis,
+              PyArray_DTypeMeta *signature[], PyObject *initial)
 {
     int nout = ufunc->nout;
-    /* Operands are [out_0 .. out_{nout-1}, arr, ind] (nout + 2 total). */
+    /* Operands are [out_0 .. out_{nout-1}, arr, starts] (nout + 2 total). */
     PyArrayObject *op[NPY_MAXARGS];
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
@@ -3629,10 +3630,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         empty_buf[i] = NULL;
     }
 
-    /* The reduceat indices - ind must be validated outside this call */
-    npy_intp *reduceat_ind;
-    /* The segmented_reduce stops, `ind` and `stops` are copies clipped below */
-    npy_intp *stop_offsets = NULL;
+    /* The segment offsets, segmented_reduce passes copies clipped below */
+    npy_intp *start_offsets, *stop_offsets = NULL;
     npy_intp i, ind_size, red_axis_size;
 
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
@@ -3643,23 +3642,23 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     NPY_BEGIN_THREADS_DEF;
 
-    reduceat_ind = (npy_intp *)PyArray_DATA(ind);
-    ind_size = PyArray_DIM(ind, 0);
+    start_offsets = (npy_intp *)PyArray_DATA(starts);
+    ind_size = PyArray_DIM(starts, 0);
     red_axis_size = PyArray_DIM(arr, axis);
 
     if (stops != NULL) {
         /* Out-of-bounds offsets are not an error, they are clipped in-place */
         stop_offsets = (npy_intp *)PyArray_DATA(stops);
-        clip_segment_offsets(reduceat_ind, ind_size, red_axis_size);
+        clip_segment_offsets(start_offsets, ind_size, red_axis_size);
         clip_segment_offsets(stop_offsets, ind_size, red_axis_size);
     }
     else {
         /* Check for out-of-bounds values in indices array */
         for (i = 0; i < ind_size; ++i) {
-            if (reduceat_ind[i] < 0 || reduceat_ind[i] >= red_axis_size) {
+            if (start_offsets[i] < 0 || start_offsets[i] >= red_axis_size) {
                 PyErr_Format(PyExc_IndexError,
                     "index %" NPY_INTP_FMT " out-of-bounds in %s.%s [0, %" NPY_INTP_FMT ")",
-                    reduceat_ind[i], ufunc_name, opname, red_axis_size);
+                    start_offsets[i], ufunc_name, opname, red_axis_size);
                 return NULL;
             }
         }
@@ -3755,20 +3754,20 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     /* Set up the op_axes for the outer loop */
     for (idim = 0; idim < ndim; ++idim) {
-        /* Use the i-th iteration dimension to match up ind */
+        /* Use the i-th iteration dimension to match up starts */
         if (idim == axis) {
             for (int i = 0; i < nout; i++) {
                 op_axes_arrays[i][idim] = axis;    /* out_i */
             }
             op_axes_arrays[nout][idim] = -1;       /* arr */
-            op_axes_arrays[nout + 1][idim] = 0;    /* ind */
+            op_axes_arrays[nout + 1][idim] = 0;    /* starts */
         }
         else {
             for (int i = 0; i < nout; i++) {
                 op_axes_arrays[i][idim] = idim;    /* out_i */
             }
             op_axes_arrays[nout][idim] = idim;     /* arr */
-            op_axes_arrays[nout + 1][idim] = -1;   /* ind */
+            op_axes_arrays[nout + 1][idim] = -1;   /* starts */
         }
     }
 
@@ -3776,7 +3775,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         op[i] = out[i];
     }
     op[nout] = arr;
-    op[nout + 1] = ind;
+    op[nout + 1] = starts;
 
     npy_bool any_out = NPY_FALSE;
     for (int i = 0; i < nout; i++) {
@@ -3796,7 +3795,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             op_dtypes[i] = descrs[i];        /* out_i (== acc_i) */
         }
         op_dtypes[nout] = descrs[nout];      /* stream (the copied input) */
-        op_dtypes[nout + 1] = NULL;          /* ind keeps its own dtype */
+        op_dtypes[nout + 1] = NULL;          /* starts keeps its own dtype */
 
         npy_uint32 iter_flags = NPY_ITER_ZEROSIZE_OK|
                                 NPY_ITER_REFS_OK|
@@ -3972,7 +3971,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     if (stops != NULL && empty_initials == NULL) {
         /* Check now, as the loops below may run without holding the GIL */
         for (i = 0; i < ind_size; ++i) {
-            if (stop_offsets[i] <= reduceat_ind[i]) {
+            if (stop_offsets[i] <= start_offsets[i]) {
                 PyErr_Format(PyExc_ValueError,
                         "zero-size segment in reduction operation '%s' %s, so "
                         "to allow empty segments one has to specify 'initial'",
@@ -4004,7 +4003,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         do {
             res = reduceat_segments(&context, strided_loop, auxdata,
                     copy_info, dataptr, out_strides, fixed_strides,
-                    reduceat_ind, stop_offsets, ind_size, red_axis_size,
+                    start_offsets, stop_offsets, ind_size, red_axis_size,
                     segment_initials, empty_initials);
         } while (res == 0 && iternext(iter));
 
@@ -4024,7 +4023,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
         res = reduceat_segments(&context, strided_loop, auxdata,
                 copy_info, dataptr, out_strides, fixed_strides,
-                reduceat_ind, stop_offsets, ind_size, red_axis_size,
+                start_offsets, stop_offsets, ind_size, red_axis_size,
                 segment_initials, empty_initials);
 
         NPY_END_THREADS;
@@ -4058,6 +4057,27 @@ finish:
 fail:
     res = -1;
     goto finish;
+}
+
+/* ufunc.reduceat, see `reduceat_impl` */
+static PyObject *
+PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
+                 PyArrayObject *out_arrays[], int axis,
+                 PyArray_DTypeMeta *signature[])
+{
+    return reduceat_impl(ufunc, arr, ind, NULL, out_arrays, axis, signature,
+                         Py_None);
+}
+
+/* ufunc.segmented_reduce, see `reduceat_impl` */
+static PyObject *
+PyUFunc_SegmentedReduce(PyUFuncObject *ufunc, PyArrayObject *arr,
+                        PyArrayObject *starts, PyArrayObject *stops,
+                        PyArrayObject *out_arrays[], int axis,
+                        PyArray_DTypeMeta *signature[], PyObject *initial)
+{
+    return reduceat_impl(ufunc, arr, starts, stops, out_arrays, axis,
+                         signature, initial);
 }
 
 
@@ -4483,7 +4503,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         ret = PyUFunc_Reduceat(ufunc,
-                mp, indices, NULL, out, axes[0], signature, Py_None);
+                mp, indices, out, axes[0], signature);
         Py_SETREF(indices, NULL);
         break;
     case UFUNC_SEGMENTED_REDUCE:
@@ -4497,7 +4517,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
                         "segmented_reduce does not allow multiple axes");
             goto fail;
         }
-        ret = PyUFunc_Reduceat(ufunc,
+        ret = PyUFunc_SegmentedReduce(ufunc,
                 mp, starts, stops, out, axes[0], signature, initial);
         Py_SETREF(starts, NULL);
         Py_SETREF(stops, NULL);
