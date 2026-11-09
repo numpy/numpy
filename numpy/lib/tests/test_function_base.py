@@ -602,6 +602,14 @@ class TestSelect:
 
 class TestInsert:
 
+    def test_boolean_list_obj(self):
+        a = [1, 2, 3]
+        assert_equal(insert(a, [True, False, True], 0), [0, 1, 2, 0, 3])
+        with pytest.raises(ValueError, match="one dimensional"):
+            insert(a, True, 0)
+        with pytest.raises(ValueError, match="one dimensional"):
+            insert(a, [[True], [False]], 0)
+
     def test_basic(self):
         a = [1, 2, 3]
         assert_equal(insert(a, 0, 1), [1, 1, 2, 3])
