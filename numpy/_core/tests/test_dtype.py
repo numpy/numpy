@@ -1422,6 +1422,15 @@ class TestPickling:
             ):
                 dt.__setstate__(extended)
 
+    def test_setstate_invalid_tuple_size_for_version(self):
+        # 6-element state tuples only exist for pickle versions 0 and 1;
+        # versions 2+ require at least 7 elements (including `names`).
+        dt = np.dtype([('a', 'f4')])
+        with pytest.raises(
+            ValueError, match="6-tuple state requires version 0 or 1"
+        ):
+            dt.__setstate__((2, "<", None, {}, -1, -1))
+
 
 class TestPromotion:
     """Test cases related to more complex DType promotions.  Further promotion
