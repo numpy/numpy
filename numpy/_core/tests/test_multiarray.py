@@ -2121,6 +2121,20 @@ class TestMethods:
         assert arr.any(dtype=object, keepdims=True).dtype == object
         assert arr.all(dtype=object, keepdims=True).dtype == object
 
+    def test_any_and_all_positional_arguments(self):
+        # The documented method signature is
+        # ``a.any(axis=None, out=None, keepdims=False, *, where=True)``,
+        # so the second positional argument is ``out``, not ``dtype``.
+        a = np.array([[True, False, True], [False, False, True]])
+        for method in (a.any, a.all):
+            out = np.zeros(3, bool)
+            ret = method(0, out)
+            assert ret is out
+            assert_equal(out, getattr(np, method.__name__)(a, axis=0))
+            # A fourth positional argument (previously accepted and
+            # misassigned) is not allowed by the documented signature.
+            assert_raises(TypeError, method, 0, None, None, True)
+
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
         arr = np.arange(10).reshape(2, 5)
