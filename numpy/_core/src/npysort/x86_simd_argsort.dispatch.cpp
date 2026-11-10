@@ -28,6 +28,12 @@ namespace np { namespace qsort_simd {
     DISPATCH_ARG_METHODS(int64_t)
     DISPATCH_ARG_METHODS(double)
 
+template<> void NPY_CPU_DISPATCH_CURFX(KVQSort)(int64_t* key, npy_intp *val, npy_intp size)
+{
+    static_assert(sizeof(npy_intp) == sizeof(uint64_t), "npy_intp must be 64-bit");
+    x86simdsortStatic::keyvalue_qsort(key, reinterpret_cast<uint64_t*>(val), (size_t)size, false, false);
+}
+
 }} // namespace np::simd
 
 #endif // __CYGWIN__

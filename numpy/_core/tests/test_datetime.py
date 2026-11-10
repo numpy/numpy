@@ -3420,3 +3420,19 @@ def test_comparisons_return_not_implemented():
         assert item.__lt__(obj) is NotImplemented
         assert item.__ge__(obj) is NotImplemented
         assert item.__gt__(obj) is NotImplemented
+
+
+@pytest.mark.parametrize("dtype", ["M8[ms]", "M8[s]", "M8[ns]",
+                                   "m8[ms]", "m8[s]"])
+@pytest.mark.parametrize("n", [0, 1, 2, 17, 1000, 200001])
+def test_default_argsort_datetime_simd(dtype, n):
+    # Default datetime/timedelta argsort may use a SIMD key-value sort with
+    # NaT remapped to sort last; it must produce a valid sort permutation.
+    rng = np.random.default_rng(n)
+    a = rng.integers(-2**62, 2**62, n).view(dtype)
+    if n > 3:
+        a[::7] = np.array("NaT", dtype=dtype)
+        a[1] = np.array(-2**63 + 1, dtype="i8").view(dtype)
+    p = np.argsort(a)
+    assert_array_equal(np.sort(p), np.arange(n))
+    assert_array_equal(a[p].view("i8"), np.sort(a, kind="stable").view("i8"))
