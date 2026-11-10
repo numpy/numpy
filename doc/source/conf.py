@@ -307,6 +307,11 @@ plot_html_show_source_link = False
 # sphinx-copybutton configurations
 copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
 copybutton_prompt_is_regexp = True
+
+# Cards use explicit headers and footers instead of legacy separators.
+# https://sphinx-design.readthedocs.io/en/latest/cards.html#legacy-separator-syntax
+sd_card_legacy_separators = False
+
 # -----------------------------------------------------------------------------
 # LaTeX output
 # -----------------------------------------------------------------------------
