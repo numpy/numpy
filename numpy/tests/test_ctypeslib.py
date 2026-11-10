@@ -403,7 +403,9 @@ class TestAsCtypesType:
             else:
                 numpy_scalar = _scalar_type(1)
 
-            with pytest.raises(
-                TypeError, match="readonly arrays unsupported"
-            ):
+            if _scalar_type == np.vbytes:
+                msg = "vbytes scalars do not expose packed ByteStringDType storage"
+            else:
+                msg = "readonly arrays unsupported"
+            with pytest.raises(TypeError, match=msg):
                 np.ctypeslib.as_ctypes(numpy_scalar)

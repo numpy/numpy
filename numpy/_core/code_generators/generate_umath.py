@@ -1317,6 +1317,16 @@ defdict = {
           docstrings.get('numpy._core.umath._replace'),
           None,
           ),
+'_encode':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._encode'),
+          None,
+          ),
+'_decode':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath._decode'),
+          None,
+          ),
 'startswith':
     Ufunc(4, 1, False_,
           docstrings.get('numpy._core.umath.startswith'),

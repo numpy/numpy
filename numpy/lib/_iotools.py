@@ -584,6 +584,11 @@ class StringConverter:
 
     @classmethod
     def _find_map_entry(cls, dtype):
+        # variable-width bytes never assume an encoding, so the latin-1
+        # bytes_ entry must not match; callers provide explicit converters
+        if dtype.kind == "R":
+            raise LookupError
+
         # if a converter for the specific dtype is available use that
         for i, (deftype, func, default_def) in enumerate(cls._mapper):
             if dtype.type == deftype:

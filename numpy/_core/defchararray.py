@@ -755,7 +755,7 @@ class chararray(ndarray):
         """
         return asarray(capitalize(self))
 
-    def center(self, width, fillchar=' '):
+    def center(self, width, fillchar=None):
         """
         Return a copy of `self` with its elements centered in a
         string of length `width`.
@@ -949,7 +949,7 @@ class chararray(ndarray):
         """
         return join(self, seq)
 
-    def ljust(self, width, fillchar=' '):
+    def ljust(self, width, fillchar=None):
         """
         Return an array with the elements of `self` left-justified in a
         string of length `width`.
@@ -1032,7 +1032,7 @@ class chararray(ndarray):
         """
         return rindex(self, sub, start, end)
 
-    def rjust(self, width, fillchar=' '):
+    def rjust(self, width, fillchar=None):
         """
         Return an array with the elements of `self`
         right-justified in a string of length `width`.
