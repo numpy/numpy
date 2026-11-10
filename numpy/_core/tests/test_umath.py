@@ -4470,7 +4470,7 @@ class TestRationalFunctions:
 
     def test_gcd(self):
         self._test_gcd_inner(np.int16)
-        self._test_lcm_inner(np.uint16)
+        self._test_gcd_inner(np.uint16)
 
     def test_gcd_object(self):
         self._test_gcd_inner(np.object_)
@@ -4511,6 +4511,10 @@ class TestRationalFunctions:
         # reduce
         a = np.array([15, 25, 35], dtype=dtype)
         assert_equal(np.gcd.reduce(a), 5)
+
+        # reduction reaches 1 before consuming the full input
+        a = np.array([12, 18, 1, 0, 42], dtype=dtype)
+        assert_equal(np.gcd.reduce(a), 1)
 
         # broadcasting, and a test including 0
         a = np.arange(6).astype(dtype)

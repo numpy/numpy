@@ -16,6 +16,7 @@
 #include "loops_utils.h"
 #include "gil_utils.h"
 #include "npy_extint128.h"
+#include "array_method.h"
 
 #include "npy_pycompat.h"
 
@@ -671,7 +672,122 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 /**end repeat**/
 
+/**begin repeat
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
+ * #c    = ,,,l,ll#
+ */
+NPY_NO_EXPORT int
+@TYPE@_gcd_reduce_loop(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    @type@ acc = *(@type@ *)data[0];
+    char *input = data[1];
+    char *output = data[2];
 
+    for (npy_intp i = 0; i < dimensions[0]; i++) {
+        if (acc != 1) {
+            @type@ value = *(@type@ *)input;
+            acc = npy_gcd@c@(acc, value);
+        }
+
+        *(@type@ *)output = acc;
+
+        input += strides[1];
+        output += strides[2];
+    }
+
+    return 0;
+}
+/**end repeat**/
+
+/**begin repeat
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #c    = u,u,u,ul,ull#
+ */
+NPY_NO_EXPORT int
+@TYPE@_gcd_reduce_loop(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    @type@ acc = *(@type@ *)data[0];
+    char *input = data[1];
+    char *output = data[2];
+
+    for (npy_intp i = 0; i < dimensions[0]; i++) {
+        if (acc != 1) {
+            @type@ value = *(@type@ *)input;
+            acc = npy_gcd@c@(acc, value);
+        }
+
+        *(@type@ *)output = acc;
+
+        input += strides[1];
+        output += strides[2];
+    }
+
+    return 0;
+}
+/**end repeat**/
+NPY_NO_EXPORT int
+gcd_get_reduction_loop(
+        PyArrayMethod_Context *context,
+        int NPY_UNUSED(aligned),
+        int NPY_UNUSED(move_references),
+        const npy_intp *NPY_UNUSED(strides),
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    switch (context->descriptors[0]->type_num) {
+        case NPY_BYTE:
+            *out_loop = &BYTE_gcd_reduce_loop;
+            break;
+        case NPY_SHORT:
+            *out_loop = &SHORT_gcd_reduce_loop;
+            break;
+        case NPY_INT:
+            *out_loop = &INT_gcd_reduce_loop;
+            break;
+        case NPY_LONG:
+            *out_loop = &LONG_gcd_reduce_loop;
+            break;
+        case NPY_LONGLONG:
+            *out_loop = &LONGLONG_gcd_reduce_loop;
+            break;
+        case NPY_UBYTE:
+            *out_loop = &UBYTE_gcd_reduce_loop;
+            break;
+        case NPY_USHORT:
+            *out_loop = &USHORT_gcd_reduce_loop;
+            break;
+        case NPY_UINT:
+            *out_loop = &UINT_gcd_reduce_loop;
+            break;
+        case NPY_ULONG:
+            *out_loop = &ULONG_gcd_reduce_loop;
+            break;
+        case NPY_ULONGLONG:
+            *out_loop = &ULONGLONG_gcd_reduce_loop;
+            break;
+        default:
+            PyErr_SetString(PyExc_TypeError,
+                    "unsupported dtype for gcd reduction");
+            return -1;
+    }
+
+    *out_transferdata = NULL;
+    *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    return 0;
+}
 /*
  * NOTE: It may be nice to vectorize these, OTOH, these are still faster
  *       than the cast we used to do.
