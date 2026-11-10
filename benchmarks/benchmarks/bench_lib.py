@@ -119,6 +119,24 @@ class Nan(Benchmark):
         np.nanpercentile(self.arr, q=50)
 
 
+class NanQuantileAxis(Benchmark):
+    """Benchmark for nanquantile reducing many short slices (gh-16575)"""
+
+    param_names = ["shape", "percent_nans"]
+    params = [
+            [(50, 100, 100), (2, 100000)],
+            [0, 10., 90.],
+            ]
+
+    def setup(self, shape, percent_nans):
+        rnd = np.random.RandomState(1819780348)
+        self.arr = rnd.uniform(size=shape)
+        self.arr[self.arr < percent_nans / 100.] = np.nan
+
+    def time_nanquantile_axis0(self, shape, percent_nans):
+        np.nanquantile(self.arr, q=[0.1, 0.5, 0.9], axis=0)
+
+
 class Unique(Benchmark):
     """Benchmark for np.unique with np.nan values."""
 
