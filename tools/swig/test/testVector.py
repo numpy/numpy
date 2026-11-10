@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import subprocess
 import sys
 import unittest
 
@@ -353,6 +354,37 @@ class doubleTestCase(VectorTestCase):
 
 ######################################################################
 
+class ImportArrayFailureTestCase(unittest.TestCase):
+    """Test that failure in import_array() raises the expected ImportError.
+
+    Regression test for gh-33272.
+    """
+
+    def test_import_array_failure_raises_importerror(self):
+        script = (
+            "import sys\n"
+            "sys.modules['numpy._core._multiarray_umath'] = None\n"
+            "sys.modules['numpy.core._multiarray_umath'] = None\n"
+            "try:\n"
+            "    import _Vector\n"
+            "except Exception as exc:\n"
+            "    print(f'{type(exc).__name__}: {exc}')\n"
+            "else:\n"
+            "    print('SUCCESS')\n"
+        )
+        proc = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(proc.returncode, 0, f"Subprocess crashed:\n{proc.stderr}")
+        self.assertEqual(
+            proc.stdout.strip(),
+            "ImportError: numpy._core.multiarray failed to import",
+        )
+
+######################################################################
+
 
 if __name__ == "__main__":
 
@@ -370,6 +402,9 @@ if __name__ == "__main__":
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ulongLongTestCase))
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    floatTestCase))
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(   doubleTestCase))
+    suite.addTest(
+        unittest.TestLoader().loadTestsFromTestCase(ImportArrayFailureTestCase)
+    )
 
     # Execute the test suite
     print("Testing 1D Functions of Module Vector")

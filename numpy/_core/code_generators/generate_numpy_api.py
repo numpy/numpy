@@ -153,10 +153,10 @@ _import_array(void)
   return 0;
 }
 
-#if (SWIG_VERSION < 0x040400)
-#define _RETURN_VALUE NULL
+#if defined(SWIG_VERSION) && (SWIG_VERSION >= 0x040400)
+#define _RETURN_VALUE -1
 #else
-#define _RETURN_VALUE 0
+#define _RETURN_VALUE NULL
 #endif
 
 #define import_array() { \
