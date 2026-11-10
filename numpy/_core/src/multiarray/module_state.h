@@ -8,6 +8,7 @@
 #include "multiarraymodule.h"
 #include "number.h"
 #include "module_state_fields.h"
+#include "npy_hashtable.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,6 +24,8 @@ typedef struct {
     NPY_DECLARE_PYOBJECT_FIELDS(NPY_MODULE_STATE_OBJECT_FIELDS)
     NPY_DECLARE_TYPE_FIELDS(NPY_MODULE_STATE_TYPE_FIELDS)
     NumericOps n_ops;
+    /* Python scalar type -> DType class (or None); owns its entries */
+    PyArrayIdentityHash *pytype_to_dtype_hash;
 } multiarray_umath_state;
 
 /* The structs are generated from the lists, so these only catch a stray
