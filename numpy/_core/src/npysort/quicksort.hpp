@@ -131,6 +131,7 @@ inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
         (std::is_same_v<Tag, npy::datetime_tag> ||
          std::is_same_v<Tag, npy::timedelta_tag>)
         && !reverse && sizeof(T) == sizeof(int64_t)
+        && sizeof(npy_intp) == sizeof(int64_t)
     ) {
         /*
          * datetime64/timedelta64 are int64 with NaT (INT64_MIN) sorting last.
