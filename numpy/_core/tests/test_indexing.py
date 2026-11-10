@@ -26,7 +26,9 @@ class TestIndexing:
         # produce an invalid pointer (which used to segfault).
         from numpy.lib.stride_tricks import as_strided
         buf = np.zeros(128, dtype=np.int8)
-        a = as_strided(buf, shape=(4, 4), strides=(2**62, 1))
+        # Use the platform's pointer size, so this also works on 32-bit.
+        big = 2 ** (np.dtype(np.intp).itemsize * 8 - 2)
+        a = as_strided(buf, shape=(4, 4), strides=(big, 1))
         with pytest.raises(ValueError, match="overflow"):
             a[3, 0]
 
