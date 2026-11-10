@@ -621,6 +621,8 @@ class TestInsert:
                      [9, 1, 2, 9, 3])
         assert_equal(insert(a, (True, False, True, False), 9),
                      [9, 1, 2, 9, 3])
+        m = np.ma.array([False, True, False], mask=[False, True, False])
+        assert_equal(insert([10, 20, 30], m, 99), [10, 20, 30])
 
     def test_multidim(self):
         a = [[1, 1, 1]]

@@ -5544,7 +5544,7 @@ def insert(arr, obj, values, axis=None):
             if indices.ndim != 1:
                 raise ValueError('boolean array argument obj to insert '
                                 'must be one dimensional')
-            indices = np.flatnonzero(indices)
+            indices = np.flatnonzero(obj)
         elif indices.ndim > 1:
             raise ValueError(
                 "index array argument obj to insert must be one dimensional "
