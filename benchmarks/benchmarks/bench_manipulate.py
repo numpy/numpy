@@ -107,5 +107,17 @@ class DimsManipulations(Benchmark):
     def time_roll(self, shape):
         np.roll(self.xarg, 3)
 
+    def time_roll_axis(self, shape):
+        np.roll(self.xarg, 1, axis=0)
+
+    def time_roll_multi_axis(self, shape):
+        np.roll(self.xarg, (1, 1), axis=(0, -1))
+
+    def time_roll_zero_shift(self, shape):
+        np.roll(self.xarg, 0, axis=0)
+
+    def time_roll_empty_axes(self, shape):
+        np.roll(self.xarg, (), axis=())
+
     def time_reshape(self, shape):
         np.reshape(self.xarg, self.reshaped)
