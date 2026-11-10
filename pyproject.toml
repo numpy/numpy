@@ -149,7 +149,7 @@ test-extending = [            # includes tests that build extensions / f2py
 # hard to install on platforms without a prebuilt wheel (riscv64, win-arm64,
 # ppc64le, s390x, CPython pre-releases, QEMU-emulated targets). The test suite
 # skips the property-based tests when hypothesis is not installed.
-hypothesis = ["hypothesis==6.168.3"]
+hypothesis = ["hypothesis==6.170.14"]
 
 test = [{ include-group = "test-extending" }, { include-group = "hypothesis" }]
 
