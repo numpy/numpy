@@ -1646,11 +1646,7 @@ def fromregex(file, regexp, dtype, encoding=None):
     Parameters
     ----------
     file : file, str, or pathlib.Path
-        Filename or file object to read.
-
-        .. versionchanged:: 1.22.0
-            Now accepts `os.PathLike` implementations.
-
+        Filename, file or :term:`python:path-like object` to read.
     regexp : str or regexp
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
