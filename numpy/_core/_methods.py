@@ -52,7 +52,7 @@ def _prod(a, axis=None, dtype=None, out=None, keepdims=False,
           initial=_NoValue, where=True):
     return umr_prod(a, axis, dtype, out, keepdims, initial, where)
 
-def _any(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
+def _any(a, axis=None, out=None, keepdims=False, *, dtype=None, where=True):
     # By default, return a boolean for any and all
     if dtype is None:
         dtype = bool_dt
@@ -61,7 +61,7 @@ def _any(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
         return umr_any(a, axis, dtype, out, keepdims)
     return umr_any(a, axis, dtype, out, keepdims, where=where)
 
-def _all(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
+def _all(a, axis=None, out=None, keepdims=False, *, dtype=None, where=True):
     # By default, return a boolean for any and all
     if dtype is None:
         dtype = bool_dt
