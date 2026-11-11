@@ -33,11 +33,10 @@ typedef int (PyArray_ReduceLoopFunc)(PyArrayMethod_Context *context,
 
 NPY_NO_EXPORT int
 reduction_alloc_initial(PyObject *initial, int nout,
-        PyArray_Descr *const *descrs, char **initial_buf);
+        PyArray_Descr *const *op_dtypes, char **initial_buf);
 
 NPY_NO_EXPORT void
-reduction_free_initial(int nout, PyArray_Descr *const *descrs,
-        char **initial_buf);
+reduction_free_initial(int nout, PyArray_Descr *const *op_dtypes, char **initial_buf);
 
 /*
  * This function executes all the standard NumPy reduction function

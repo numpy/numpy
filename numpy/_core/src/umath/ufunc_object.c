@@ -3441,8 +3441,7 @@ reduceat_segments_impl(PyArrayMethod_Context *context, int nout,
         NPY_cast_info *copy_info, char *const *dataptr,
         const npy_intp *out_strides, const npy_intp *fixed_strides,
         const npy_intp *starts, const npy_intp *stops, npy_intp ind_size,
-        npy_intp red_axis_size, char *const *initials,
-        char *const *empty_initials)
+        npy_intp red_axis_size, char *const *initials, char *const *empty_initials)
 {
     npy_intp stride = fixed_strides[nout];
     char *dataptr_copy[NPY_MAXARGS];
@@ -3453,8 +3452,13 @@ reduceat_segments_impl(PyArrayMethod_Context *context, int nout,
 
     for (npy_intp i = 0; i < ind_size; i++) {
         npy_intp start = starts[i];
-        npy_intp end = (stops != NULL) ? stops[i] :
-                (i == ind_size - 1) ? red_axis_size : starts[i + 1];
+        npy_intp end;
+        if (stops != NULL) {
+            end = stops[i];
+        }
+        else {
+            end = (i == ind_size - 1) ? red_axis_size : starts[i + 1];
+        }
         npy_intp count = end - start;
         char *x0 = dataptr[nout] + stride * start;
         char *const *seeds = initials;
@@ -3470,15 +3474,13 @@ reduceat_segments_impl(PyArrayMethod_Context *context, int nout,
             if (seeds != NULL) {
                 /* The initial values already have the output dtype */
                 if (PyDataType_REFCHK(context->descriptors[nout + 1 + j])) {
-                    Py_XSETREF(*(PyObject **)out_j,
-                               Py_XNewRef(*(PyObject **)seeds[j]));
+                    Py_XSETREF(*(PyObject **)out_j, Py_XNewRef(*(PyObject **)seeds[j]));
                 }
                 else {
                     memmove(out_j, seeds[j], (size_t)elsizes[j]);
                 }
             }
-            else if (copy_info[j].func
-                    == &_strided_to_strided_copy_references) {
+            else if (copy_info[j].func == &_strided_to_strided_copy_references) {
                 Py_XSETREF(*(PyObject **)out_j, Py_XNewRef(*(PyObject **)x0));
             }
             else if (copy_info[j].func) {
@@ -3519,21 +3521,18 @@ reduceat_segments(PyArrayMethod_Context *context,
         NPY_cast_info *copy_info, char *const *dataptr,
         const npy_intp *out_strides, const npy_intp *fixed_strides,
         const npy_intp *starts, const npy_intp *stops, npy_intp ind_size,
-        npy_intp red_axis_size, char *const *initials,
-        char *const *empty_initials)
+        npy_intp red_axis_size, char *const *initials, char *const *empty_initials)
 {
     /* A literal nout lets the compiler specialize one and two outputs */
     if (context->method->nout == 1) {
         return reduceat_segments_impl(context, 1, strided_loop, auxdata,
                 copy_info, dataptr, out_strides, fixed_strides,
-                starts, stops, ind_size, red_axis_size,
-                initials, empty_initials);
+                starts, stops, ind_size, red_axis_size, initials, empty_initials);
     }
     if (context->method->nout == 2) {
         return reduceat_segments_impl(context, 2, strided_loop, auxdata,
                 copy_info, dataptr, out_strides, fixed_strides,
-                starts, stops, ind_size, red_axis_size,
-                initials, empty_initials);
+                starts, stops, ind_size, red_axis_size, initials, empty_initials);
     }
     return reduceat_segments_impl(context, context->method->nout,
             strided_loop, auxdata, copy_info, dataptr, out_strides,
@@ -3738,8 +3737,7 @@ reduceat_impl(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *starts,
             goto fail;
         }
         for (idim = 0; idim < ndim; idim++) {
-            npy_intp expected = (idim == axis) ?
-                    ind_size : PyArray_DIM(arr, idim);
+            npy_intp expected = (idim == axis) ? ind_size : PyArray_DIM(arr, idim);
             if (PyArray_DIM(out[i], idim) != expected) {
                 PyErr_Format(PyExc_ValueError,
                         "output parameter for reduction operation %s has the "
@@ -4065,8 +4063,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                  PyArrayObject *out_arrays[], int axis,
                  PyArray_DTypeMeta *signature[])
 {
-    return reduceat_impl(ufunc, arr, ind, NULL, out_arrays, axis, signature,
-                         Py_None);
+    return reduceat_impl(ufunc, arr, ind, NULL, out_arrays, axis, signature, Py_None);
 }
 
 /* ufunc.segmented_reduce, see `reduceat_impl` */

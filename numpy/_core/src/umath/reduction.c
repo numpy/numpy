@@ -152,20 +152,25 @@ PyArray_CopyInitialReduceValues(
  */
 NPY_NO_EXPORT int
 reduction_alloc_initial(PyObject *initial, int nout,
-        PyArray_Descr *const *descrs, char **initial_buf)
+        PyArray_Descr *const *op_dtypes, char **initial_buf)
 {
-    npy_bool initial_is_tuple = (initial != NULL && nout > 1
-                                 && PyTuple_Check(initial));
-    if (initial_is_tuple && PyTuple_GET_SIZE(initial) != nout) {
-        PyErr_Format(PyExc_ValueError,
-                "'initial' must be a scalar or a tuple with one entry "
-                "per reduction output (%d), got length %zd",
-                nout, PyTuple_GET_SIZE(initial));
-        return -1;
+    /* Whether `initial` is a per-output tuple (one entry per output) */
+    npy_bool initial_is_tuple = NPY_FALSE;
+
+    if (initial != NULL && initial != Py_None && nout > 1 && PyTuple_Check(initial)) {
+        initial_is_tuple = NPY_TRUE;
+        if (PyTuple_GET_SIZE(initial) != nout) {
+            PyErr_Format(PyExc_ValueError,
+                    "'initial' must be a scalar or a tuple with one entry "
+                    "per reduction output (%d), got length %zd",
+                    nout, PyTuple_GET_SIZE(initial));
+            return -1;
+        }
     }
+
     /* Not all functions will need initialization, but init always: */
     for (int i = 0; i < nout; i++) {
-        initial_buf[i] = PyMem_Calloc(1, descrs[i]->elsize);
+        initial_buf[i] = PyMem_Calloc(1, op_dtypes[i]->elsize);
         if (initial_buf[i] == NULL) {
             PyErr_NoMemory();
             return -1;
@@ -176,8 +181,7 @@ reduction_alloc_initial(PyObject *initial, int nout,
     }
     /* must use user provided initial value(s) */
     for (int i = 0; i < nout; i++) {
-        PyObject *initial_i = initial_is_tuple ?
-                PyTuple_GET_ITEM(initial, i) : initial;
+        PyObject *initial_i = initial_is_tuple ? PyTuple_GET_ITEM(initial, i) : initial;
         /*
          * `initial=None` means "no initial value", which we cannot
          * express per-output.  Reject it rather than let PyArray_Pack
@@ -188,7 +192,7 @@ reduction_alloc_initial(PyObject *initial, int nout,
                             "entries of a tuple 'initial' cannot be None");
             return -1;
         }
-        if (PyArray_Pack(descrs[i], initial_buf[i], initial_i) < 0) {
+        if (PyArray_Pack(op_dtypes[i], initial_buf[i], initial_i) < 0) {
             return -1;
         }
     }
@@ -197,12 +201,11 @@ reduction_alloc_initial(PyObject *initial, int nout,
 
 /* Clear and free the buffers of `reduction_alloc_initial`, NULL is skipped */
 NPY_NO_EXPORT void
-reduction_free_initial(int nout, PyArray_Descr *const *descrs,
-        char **initial_buf)
+reduction_free_initial(int nout, PyArray_Descr *const *op_dtypes, char **initial_buf)
 {
     for (int i = 0; i < nout; i++) {
-        if (initial_buf[i] != NULL && PyDataType_REFCHK(descrs[i])) {
-            PyArray_ClearBuffer(descrs[i], initial_buf[i], 0, 1, 1);
+        if (initial_buf[i] != NULL && PyDataType_REFCHK(op_dtypes[i])) {
+            PyArray_ClearBuffer(op_dtypes[i], initial_buf[i], 0, 1, 1);
         }
         PyMem_FREE(initial_buf[i]);
     }
@@ -406,8 +409,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         /* There is no initial value, or initial value was explicitly unset */
     }
     else {
-        if (reduction_alloc_initial(
-                initial, nout, op_dtypes, initial_buf) < 0) {
+        if (reduction_alloc_initial(initial, nout, op_dtypes, initial_buf) < 0) {
             goto fail;
         }
         if (initial == NULL) {
