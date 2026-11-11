@@ -983,6 +983,23 @@ def test_failed_bytes_cast_releases_buffer():
     assert_memory_growth_below(decode, limit=1024)
 
 
+@pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
+def test_ufunc_fixed_width_out_releases_buffer():
+    # the ufunc computes its StringDType results into a temporary buffer and
+    # then casts them to the output array. The strings in the buffer leak
+    # unless that cast frees them.
+    def add():
+        n = 2 * np.getbufsize()
+        first = np.array([f"first name {i}" for i in range(n)], dtype="T")
+        last = np.array([f"a longer last name, number {i}" for i in range(n)],
+                        dtype="T")
+        full = np.empty(n, dtype="U60")
+        np.strings.add(first, last, out=full)
+        assert full[-1] == first[-1] + last[-1]
+
+    assert_memory_growth_below(add, limit=1024)
+
+
 def test_insert_scalar(dtype, string_list):
     """Test that inserting a scalar works."""
     arr = np.array(string_list, dtype=dtype)

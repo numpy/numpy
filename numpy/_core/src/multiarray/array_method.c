@@ -40,6 +40,7 @@
 #include "common.h"
 #include "numpy/ufuncobject.h"
 #include "dtype_transfer.h"
+#include "dtype_traversal.h"
 
 
 /*
@@ -116,6 +117,88 @@ is_contiguous(
 }
 
 
+typedef struct {
+    NpyAuxData base;
+    PyArrayMethod_StridedLoop *loop;
+    NPY_traverse_info clear;
+} move_references_auxdata;
+
+
+static void
+move_references_auxdata_free(NpyAuxData *auxdata)
+{
+    move_references_auxdata *data = (move_references_auxdata *)auxdata;
+    NPY_traverse_info_xfree(&data->clear);
+    PyMem_Free(data);
+}
+
+
+static NpyAuxData *
+move_references_auxdata_clone(NpyAuxData *auxdata)
+{
+    move_references_auxdata *data = (move_references_auxdata *)auxdata;
+    move_references_auxdata *res = PyMem_Malloc(sizeof(move_references_auxdata));
+    if (res == NULL) {
+        return NULL;
+    }
+    res->base = data->base;
+    res->loop = data->loop;
+    if (NPY_traverse_info_copy(&res->clear, &data->clear) < 0) {
+        PyMem_Free(res);
+        return NULL;
+    }
+    return (NpyAuxData *)res;
+}
+
+
+/*
+ * Runs a cast loop that does not know about `move_references` and then
+ * clears the input, also when the loop failed.
+ */
+static int
+move_references_strided_loop(
+        PyArrayMethod_Context *context, char *const *data,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *auxdata)
+{
+    move_references_auxdata *aux = (move_references_auxdata *)auxdata;
+    int res = aux->loop(context, data, dimensions, strides, NULL);
+    if (aux->clear.func(NULL, aux->clear.descr, data[0], dimensions[0],
+                        strides[0], aux->clear.auxdata) < 0) {
+        return -1;
+    }
+    return res;
+}
+
+
+static int
+wrap_loop_to_move_references(
+        PyArrayMethod_Context *context, int aligned, const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    move_references_auxdata *data = PyMem_Malloc(sizeof(move_references_auxdata));
+    if (data == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    NPY_ARRAYMETHOD_FLAGS clear_flags;
+    if (PyArray_GetClearFunction(
+            aligned, strides[0], context->descriptors[0],
+            &data->clear, &clear_flags) < 0) {
+        PyMem_Free(data);
+        return -1;
+    }
+    data->base.free = &move_references_auxdata_free;
+    data->base.clone = &move_references_auxdata_clone;
+    data->loop = *out_loop;
+    *out_loop = &move_references_strided_loop;
+    *out_transferdata = (NpyAuxData *)data;
+    *flags = PyArrayMethod_COMBINED_FLAGS(*flags, clear_flags);
+    return 0;
+}
+
+
 /**
  * The default method to fetch the correct loop for a cast or ufunc
  * (at the time of writing only casts).
@@ -126,7 +209,8 @@ is_contiguous(
  *
  * @param context The arraymethod context
  * @param aligned Flag indicating data is aligned (1) or not (0)
- * param move_references UNUSED -- listed below but doxygen doesn't see as a parameter
+ * @param move_references If set, the references held by the input are
+ *        released after the loop has run.
  * @param strides Array of step sizes for each dimension of the arrays involved
  * @param out_loop Output pointer to the function that will perform the strided loop.
  * @param out_transferdata Output pointer to auxiliary data (if any)
@@ -138,7 +222,7 @@ is_contiguous(
 NPY_NO_EXPORT int
 npy_default_get_strided_loop(
         PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
+        int aligned, int move_references, const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -152,7 +236,7 @@ npy_default_get_strided_loop(
         if (meth->contiguous_loop == NULL ||
                 !is_contiguous(strides, descrs, nargs)) {
             *out_loop = meth->strided_loop;
-            return 0;
+            goto finish;
         }
         *out_loop = meth->contiguous_loop;
     }
@@ -160,9 +244,15 @@ npy_default_get_strided_loop(
         if (meth->unaligned_contiguous_loop == NULL ||
                 !is_contiguous(strides, descrs, nargs)) {
             *out_loop = meth->unaligned_strided_loop;
-            return 0;
+            goto finish;
         }
         *out_loop = meth->unaligned_contiguous_loop;
+    }
+
+  finish:
+    if (move_references && PyDataType_REFCHK(descrs[0])) {
+        return wrap_loop_to_move_references(
+                context, aligned, strides, out_loop, out_transferdata, flags);
     }
     return 0;
 }

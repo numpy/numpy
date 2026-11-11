@@ -1829,7 +1829,19 @@ the functions that must be implemented for each slot.
    Sets the loop to use for an operation at runtime. The *context* is the
    runtime context for the operation. *aligned* indicates whether the data
    access for the loop is aligned (1) or unaligned (0). *move_references*
-   indicates whether embedded references in the data should be copied. *strides*
+   is only set for casts. A cast normally leaves its input untouched. If
+   *move_references* is nonzero, the cast is a move instead of a copy: NumPy
+   will discard or overwrite the input without cleaning it up, so the loop
+   must free whatever the input elements own, for example by decrementing
+   the reference count of objects or freeing heap-allocated buffers, once it
+   has converted them. NumPy sets it when the input is one of its own
+   temporary buffers, such as the buffer a ufunc computes its results into
+   when the output array has a different dtype, or the intermediate buffer
+   of a cast that takes more than one step. When ``NPY_METH_get_loop`` is
+   not defined, NumPy handles this itself: it runs the
+   ``NPY_METH_strided_loop`` or ``NPY_METH_unaligned_strided_loop`` and then
+   clears the input elements with the ``NPY_DT_get_clear_loop`` of the input
+   DType. *strides*
    are the strides for the input array, *out_loop* is a pointer that must be
    filled in with a pointer to the loop implementation. *out_transferdata* can
    be optionally filled in to allow passing in extra user-defined context to an
