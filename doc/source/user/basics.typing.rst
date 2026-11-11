@@ -5,58 +5,101 @@ Static typing
 *************
 
 The ``numpy`` package includes `type stubs`_ (``.pyi`` files) for static type-checkers.
-This page covers type inference, annotations, shape-typing, and the assumptions that the
-stubs make about the platform and the type-checker. The stubs have no effect at runtime.
-The public typing aliases are listed in `numpy.typing`.
+The stubs have no effect at runtime. This page covers type inference, annotations, and
+shape-typing.
+
+The public typing aliases, which can also be used at runtime, are documented in
+`numpy.typing`, together with the assumptions that the stubs make about the platform and
+the type-checker.
+
+This page is specific to NumPy, and isn't an introduction to static typing in Python.
+For that, see the `Python typing documentation`_.
 
 .. note::
 
    ``reveal_type(x)  # T`` means that static type-checkers infer the type ``T`` for
-   ``x``, see |reveal_type|_. Type-checkers can display an equivalent form, such as
-   ``np.ndarray[tuple[int], np.dtype[np.float64]]`` for ``npt.Array1D[np.float64]``.
+   ``x``, see |reveal_type|_.
 
 
-Example: fitting a line
-=======================
+Introduction
+============
 
-The following function fits a straight line through a set of points:
+Static type-checkers use NumPy's stubs to determine, or *infer*, the type of each
+expression, without running the code. This also works for code without annotations:
 
 .. code-block:: python
 
     import numpy as np
-    import numpy.typing as npt
+
+    x = np.linspace(0, 1, 50)
+    reveal_type(x)                 # npt.Array1D[np.float64]
+
+    grid = x.reshape(5, 10)
+    reveal_type(grid)              # npt.Array2D[np.float64]
+    reveal_type(grid.sum(axis=0))  # npt.Array1D[np.float64]
+    reveal_type(grid > 0.5)        # npt.Array2D[np.bool]
+    reveal_type(grid[0, 0])        # np.float64
+
+Here ``npt`` is `numpy.typing`, and ``npt.Array1D[np.float64]`` is the type of a 1-d
+array with dtype ``np.float64``. The inferred types describe the number of dimensions
+and the dtype of each array, see :ref:`basics.typing.shape-typing`. ``npt.Array1D`` and
+``npt.Array2D`` are new in NumPy 2.6. Type-checkers can display an equivalent form, such
+as ``np.ndarray[tuple[int], np.dtype[np.float64]]`` for ``npt.Array1D[np.float64]``.
+
+With these types, type-checkers report mistakes before the code is run:
+
+.. code-block:: python
+
+    rows, cols = x.shape  # error: x is 1-d, so its shape has 1 value
+    np.zeros(3, 4)        # error: 4 isn't a dtype; a 2-d shape must be a tuple
+    x[0.5]                # error: a float isn't a valid index
+    len(x.mean())         # error: the mean of x is a scalar
+
+They can also report the use of deprecated functionality:
+
+.. code-block:: python
+
+    grid.shape = (10, 5)  # deprecated: use reshape instead
+    np.fix(x)             # deprecated: use np.trunc instead
+
+The types of some functions depend on the values of their arguments. For example, for
+commonly used subscripts, the number of dimensions of the result of
+`np.einsum <numpy.einsum>` is inferred from the subscripts:
+
+.. code-block:: python
+
+    reveal_type(np.einsum("ij,kj->ik", grid, grid))  # npt.Array2D[np.float64]
+    reveal_type(np.einsum("ij,ij->i", grid, grid))   # npt.Array1D[np.float64]
+    reveal_type(np.einsum("ij,ij->", grid, grid))    # np.float64
 
 
-    def fit_line(
-        x: npt.Array1D[np.float64],
-        y: npt.Array1D[np.float64],
-    ) -> tuple[np.float64, np.float64]:
-        design = np.column_stack([x, np.ones_like(x)])
-        reveal_type(design)               # npt.Array2D[np.float64]
+Summary
+=======
 
-        solution, *_ = np.linalg.lstsq(design, y)
-        reveal_type(solution)             # npt.Array1D[np.float64]
+The main recommendations of this page are:
 
-        slope, intercept = solution
-        return slope, intercept
+.. list-table::
+   :header-rows: 1
+   :widths: auto
 
-
-    x = np.linspace(0.0, 1.0, 50)
-    y = 3 * x + 1
-
-    slope, intercept = fit_line(x, y)
-    fit_line(np.column_stack([x, y]), y)  # error: 2-d array, expected a 1-d array
-
-Only the signature of ``fit_line`` is annotated. Static type-checkers determine, or
-*infer*, the types of ``design`` and ``solution`` from the annotations in NumPy's stubs.
-For example, the stubs declare that `np.column_stack <numpy.column_stack>` returns a 2-d
-array when it's given 1-d arrays. ``npt.Array1D`` and ``npt.Array2D`` (new in NumPy 2.6)
-are the types of 1-d and 2-d arrays, see :ref:`basics.typing.shape-typing`.
-
-The last call passes a 2-d array as ``x``. At runtime, ``np.column_stack`` and
-`np.linalg.lstsq <numpy.linalg.lstsq>` accept it, and the error only occurs at
-``slope, intercept = solution``, as a ``ValueError``. A static type-checker reports the
-error at the call, before the code is run.
+   * - Use
+     - Instead of
+     - Details
+   * - ``dtype=np.float64``
+     - ``dtype=float`` or ``dtype="float64"``
+     - `dtype arguments`_
+   * - ``npt.Array2D[np.float64]``, if the number of dimensions is known
+     - ``np.ndarray``
+     - `Function annotations`_, `Shape-typing`_
+   * - ``npt.NDArray[np.float64]``, if the number of dimensions is unknown
+     - ``np.ndarray[tuple[int, ...], ...]`` or ``np.ndarray[Any, ...]``
+     - `Unknown number of dimensions`_
+   * - Concrete return types, such as ``npt.Array2D[np.float64]``
+     - ``npt.ArrayLike`` or ``npt.DTypeLike`` as return types
+     - `ArrayLike and DTypeLike inputs`_
+   * - :class:`int` axis sizes, as in ``tuple[int, int]``
+     - ``Literal`` axis sizes
+     - `Literal axis sizes`_
 
 
 Type inference
@@ -141,10 +184,50 @@ Annotations
 Function annotations
 --------------------
 
-Annotate the parameter and return types of functions as precisely as possible, and
-let the type-checker infer the types of local variables. `np.ndarray <numpy.ndarray>`
-without type arguments is equivalent to ``npt.NDArray[Any]``: it has an unknown shape
-and dtype, and so do most results that are computed from it:
+Annotate the parameter and return types of functions as precisely as possible, and let
+the type-checker infer the types of local variables. For example, this function fits a
+straight line through a set of points:
+
+.. code-block:: python
+
+    import numpy as np
+    import numpy.typing as npt
+
+
+    def fit_line(
+        x: npt.Array1D[np.float64],
+        y: npt.Array1D[np.float64],
+    ) -> tuple[np.float64, np.float64]:
+        design = np.column_stack([x, np.ones_like(x)])
+        reveal_type(design)               # npt.Array2D[np.float64]
+
+        solution, *_ = np.linalg.lstsq(design, y)
+        reveal_type(solution)             # npt.Array1D[np.float64]
+
+        slope, intercept = solution
+        return slope, intercept
+
+
+    x = np.linspace(0.0, 1.0, 50)
+    y = 3 * x + 1
+
+    slope, intercept = fit_line(x, y)
+    fit_line(np.column_stack([x, y]), y)  # error: 2-d array, expected a 1-d array
+
+Only the signature of ``fit_line`` is annotated. The types of ``design`` and
+``solution`` are inferred. For example, the stubs declare that
+`np.column_stack <numpy.column_stack>` returns a 2-d array when it's given 1-d arrays.
+
+The last call passes a 2-d array as ``x``. At runtime, ``np.column_stack`` and
+`np.linalg.lstsq <numpy.linalg.lstsq>` accept it, and the error only occurs at
+``slope, intercept = solution``, as a ``ValueError``. A static type-checker reports the
+error at the call, before the code is run.
+
+Writing ``npt.Array1D[np.float64]`` takes no more effort than writing
+``npt.NDArray[np.float64]`` or ``np.ndarray``, but only ``npt.Array1D`` lets
+type-checkers report this error. `np.ndarray <numpy.ndarray>` without type arguments is
+equivalent to ``npt.NDArray[Any]``: it has an unknown shape and dtype, and so do most
+results that are computed from it:
 
 .. code-block:: python
 
@@ -162,7 +245,7 @@ and dtype, and so do most results that are computed from it:
         reveal_type(float64.mean())   # np.float64
 
 Abstract scalar types such as `np.floating <numpy.floating>` are useful in parameter
-types and as `upper bounds <upper bound_>`_ of type parameters. Return types should be
+types and as `upper bounds <upper bound_>`__ of type parameters. Return types should be
 concrete, such as `np.float64 <numpy.float64>`, when possible.
 
 Scalar type promotion
@@ -225,21 +308,29 @@ have its own return type. For example, this ``midpoint`` follows the promotion r
     reveal_type(midpoint(x32, x64))  # npt.Array1D[np.float64]
     reveal_type(midpoint(x64, x32))  # npt.Array1D[np.float64]
 
-``ArrayLike`` inputs
---------------------
+``ArrayLike`` and ``DTypeLike`` inputs
+--------------------------------------
 
 Use `~numpy.typing.ArrayLike` for parameters that accept array-like objects, and
-convert them with, for example, `np.asarray <numpy.asarray>`:
+`~numpy.typing.DTypeLike` for parameters that accept dtype-like objects. ``DTypeLike``
+doesn't include ``None``, so write ``npt.DTypeLike | None`` for an optional ``dtype``
+parameter. Convert array-like inputs with, for example, `np.asarray <numpy.asarray>`,
+which also accepts the ``dtype``:
 
 .. code-block:: python
+
+    from typing import Any
 
     import numpy as np
     import numpy.typing as npt
 
 
-    def load_table(values: npt.ArrayLike) -> npt.Array2D[np.float64]:
-        table = np.asarray(values, dtype=np.float64)
-        reveal_type(table)  # npt.NDArray[np.float64]
+    def load_table(
+        values: npt.ArrayLike,
+        dtype: npt.DTypeLike | None = None,
+    ) -> npt.Array2D[Any]:
+        table = np.asarray(values, dtype=dtype)
+        reveal_type(table)  # npt.NDArray[Any]
 
         if table.ndim != 2:
             raise ValueError("expected a 2-d array")
@@ -251,32 +342,17 @@ Type-checkers don't `narrow`_ the type of ``table`` based on the ``ndim`` check.
 `assignable`_ to an array type with any number of dimensions, see
 :ref:`basics.typing.unknown-rank`.
 
-``DTypeLike`` inputs
---------------------
+The dtype of ``table`` is unknown, because ``DTypeLike`` can describe any dtype. With a
+fixed dtype, such as ``np.asarray(values, dtype=np.float64)``, the type of ``table``
+would be ``npt.NDArray[np.float64]``. So use ``DTypeLike`` only as a fallback. Where
+possible, accept more specific types, such as ``type[np.float32]`` and
+``type[np.float64]`` in `overloads`_, or ``type[ScalarT]`` with a type parameter, so
+that type-checkers can infer the dtype of the result.
 
-Use `~numpy.typing.DTypeLike` for parameters that accept dtype-like objects.
-``DTypeLike`` doesn't include ``None``, so write ``npt.DTypeLike | None`` for an
-optional ``dtype`` parameter:
-
-.. code-block:: python
-
-    from typing import Any
-
-    import numpy as np
-    import numpy.typing as npt
-
-
-    def identity(n: int, dtype: npt.DTypeLike | None = None) -> npt.Array2D[Any]:
-        return np.eye(n, dtype=dtype)
-
-The dtype of the result is unknown, because ``DTypeLike`` can describe any dtype. So use
-``DTypeLike`` only as a fallback. Where possible, accept more specific types, such as
-``type[np.float32]`` and ``type[np.float64]`` in `overloads`_, or ``type[ScalarT]`` with
-a type parameter, so that type-checkers can infer the dtype of the result more
-accurately.
-
-``ArrayLike`` and ``DTypeLike`` exclude some rarely used inputs that NumPy accepts at
-runtime, see `numpy.typing`.
+``ArrayLike`` and ``DTypeLike`` exclude some inputs that NumPy accepts at runtime. For
+example, ``ArrayLike`` excludes generators, which NumPy converts to an object array, and
+``DTypeLike`` excludes some dictionaries of fields. See :ref:`typing.differences` for
+details.
 
 .. important::
 
@@ -536,107 +612,42 @@ The reasons are:
 - **Inference:** The type system has no arithmetic on literals, and many sizes depend on
   runtime values. For example, ``np.ones(12).reshape((3, -1))`` has shape ``(3, 4)``,
   but a shape-type taken from the arguments would be ``tuple[Literal[3], Literal[-1]]``.
-  The same applies to slicing, boolean indexing, `np.concatenate <numpy.concatenate>`,
-  `np.unique <numpy.unique>`, and broadcasting. Only a few functions, such as
-  `np.ones <numpy.ones>`, could infer correct literal sizes, and most results would have
-  :class:`int` sizes anyway.
+  Slicing, boolean indexing, concatenation, and broadcasting have the same problem. Only
+  a few functions, such as ``np.ones``, could infer correct literal sizes, so most
+  results would have :class:`int` sizes anyway.
 - **Assignability:** ``int`` isn't assignable to a ``Literal`` type, so most arrays
-  couldn't be passed to a function that requires literal sizes. Code that uses literal
-  shape-types would need many |cast|_ calls or |type-ignore|_ comments.
-- **Stub behavior:** NumPy's stubs assume that shape-types only describe the number of
-  dimensions, so they don't keep literal shape-types correct. For example, transposing
-  preserves the number of dimensions, so the stubs return the same shape-type. For a
-  ``(2, 3)`` array with a literal shape-type, the result would then claim the shape
-  ``(2, 3)`` instead of ``(3, 2)``.
-- **Type-checker differences:** NumPy aims for the same inference in all type-checkers,
-  and literals are a common source of differences. Literal shape-types would also make
-  error messages longer.
+  couldn't be passed to a function that requires literal sizes without a |cast|_ or a
+  |type-ignore|_ comment.
+- **Stub behavior:** The stubs assume that shape-types only describe the number of
+  dimensions. For example, transposing returns the same shape-type, so the transpose of
+  a ``(2, 3)`` array with a literal shape-type would still claim the shape ``(2, 3)``
+  instead of ``(3, 2)``.
+- **Type-checker differences:** Type-checkers handle literals differently, while NumPy
+  aims for the same inference in all of them. Literal shape-types would also make error
+  messages longer.
 
-
-Assumptions
-===========
-
-Scalar type sizes
------------------
-
-NumPy's stubs assume a 64-bit platform, and a 32-bit C ``int``:
-
-.. list-table::
-   :header-rows: 1
-   :widths: auto
-
-   * - Scalar types
-     - Type-checkers see
-   * - ``np.intp``, ``np.int_``, ``np.longlong``
-     - ``np.int64``
-   * - ``np.uintp``, ``np.uint``, ``np.ulonglong``
-     - ``np.uint64``
-   * - ``np.long``
-     - ``np.int64``, or ``np.int32`` on Windows
-   * - ``np.ulong``
-     - ``np.uint64``, or ``np.uint32`` on Windows
-   * - ``np.intc``
-     - ``np.int32``
-   * - ``np.uintc``
-     - ``np.uint32``
-
-``np.long`` and ``np.ulong`` depend on `sys.platform`.
-
-On 32-bit platforms, ``np.intp``, ``np.int_``, ``np.long``, and their unsigned
-counterparts are 32-bit at runtime. On the rare platforms where C ``int`` isn't 32-bit,
-``np.intc`` and ``np.uintc`` have a different size. On these platforms, the types above
-are incorrect.
-
-The sizes of `np.longdouble <numpy.longdouble>` and `np.clongdouble <numpy.clongdouble>`
-depend on the platform, so they are separate types, not aliases of other scalar types.
-``np.float96``, ``np.float128``, ``np.complex192``, and ``np.complex256`` are aliases of
-these two types. The stubs always define all four, but at runtime a platform has at most
-one of ``np.float96`` and ``np.float128``, and at most one of ``np.complex192`` and
-``np.complex256``. For example, x86-64 Linux has ``np.float128`` but not
-``np.float96``. On some platforms, such as Windows and arm64 macOS, ``np.longdouble`` is
-a 64-bit float, like ``np.float64``, and none of the four aliases exist. Type-checkers
-still treat ``np.longdouble`` and ``np.float64`` as different types there.
-
-Supported type-checkers
------------------------
-
-NumPy's stubs follow the `Python typing specification`_, rather than the behavior of
-a specific type-checker, and support all modern type-checkers. No plugins are needed.
-
-Where a type-checker deviates from the typing specification in a way that would
-degrade inference, the stubs can contain workarounds, such as a specific order of
-overloads, or extra overloads for a specific type-checker. This explains some unusual
-overloads in the stubs.
-
-These deviations can also affect your code. For example, if an argument is (partially)
-``Any``, several overloads can match it. If several of these remain after the
-specification's filtering steps, and their return types aren't equivalent, the call is
-ambiguous (see `overload call evaluation`_). The specification then requires a result
-type that is assignable to each of these return types, such as ``Any``. Some
-type-checkers pick the first matching overload instead, so type-checkers can infer
-different types, especially for arrays with an unknown dtype. Arrays with a known dtype
-avoid most of these differences.
-
-If you find an incorrect type, or type-checkers that disagree about a type, please
-`open an issue <https://github.com/numpy/numpy/issues>`__.
-
-.. _Python typing specification: https://typing.python.org/en/latest/spec/
+.. _Python typing documentation: https://typing.python.org/en/latest/
 .. _type stubs: https://typing.python.org/en/latest/spec/distributing.html#stub-files
 .. _reveal_type: https://typing.python.org/en/latest/spec/directives.html#reveal-type
-.. _gradual form: https://typing.python.org/en/latest/spec/glossary.html#term-gradual-form
-.. _fully static type: https://typing.python.org/en/latest/spec/glossary.html#term-fully-static-type
+.. _gradual form:
+   https://typing.python.org/en/latest/spec/glossary.html#term-gradual-form
+.. _fully static type:
+   https://typing.python.org/en/latest/spec/glossary.html#term-fully-static-type
 .. _narrow: https://typing.python.org/en/latest/spec/glossary.html#term-narrow
 .. _assignable: https://typing.python.org/en/latest/spec/glossary.html#term-assignable
 .. _overloads: https://typing.python.org/en/latest/spec/overload.html
-.. _overload call evaluation: https://typing.python.org/en/latest/spec/overload.html#step-5
-.. _generic class: https://typing.python.org/en/latest/spec/generics.html#user-defined-generic-types
+.. _generic class:
+   https://typing.python.org/en/latest/spec/generics.html#user-defined-generic-types
 .. _type aliases: https://typing.python.org/en/latest/spec/aliases.html
 .. _type statement: https://typing.python.org/en/latest/spec/aliases.html#type-statement
-.. _upper bound: https://typing.python.org/en/latest/spec/generics.html#type-variables-with-an-upper-bound
-.. _assignable to and from tuples of any length: https://typing.python.org/en/latest/spec/tuples.html#tuple-type-form
+.. _upper bound:
+   https://typing.python.org/en/latest/spec/generics.html#type-variables-with-an-upper-bound
+.. _assignable to and from tuples of any length:
+   https://typing.python.org/en/latest/spec/tuples.html#tuple-type-form
 .. _Literal: https://typing.python.org/en/latest/spec/literal.html
 .. _cast: https://typing.python.org/en/latest/spec/directives.html#cast
-.. _type-ignore: https://typing.python.org/en/latest/spec/directives.html#type-ignore-comments
+.. _type-ignore:
+   https://typing.python.org/en/latest/spec/directives.html#type-ignore-comments
 
 .. |reveal_type| replace:: ``reveal_type``
 .. |Literal| replace:: ``Literal``
