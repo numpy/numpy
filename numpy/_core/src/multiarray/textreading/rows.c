@@ -288,8 +288,8 @@ read_rows(stream *s,
                 if (data_array == NULL) {
                     goto error;
                 }
-                if (NPY_DT_has_finalize(NPY_DTYPE(out_descr))) {
-                    // finalization might replace the descriptor
+                if (out_descr != PyArray_DESCR(data_array)) {
+                    // array creation replaced the descriptor
                     Py_INCREF(PyArray_DESCR(data_array));
                     Py_SETREF(field_types[0].descr, PyArray_DESCR(data_array));
                 }
