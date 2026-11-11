@@ -18,6 +18,70 @@ TYPE_CODES = np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "O"
 
 
 class TestPolynomial:
+    @pytest.mark.parametrize("func", [np.poly, np.roots])
+    @pytest.mark.parametrize("iterable", [False, True])
+    def test_array_function_dispatch(self, func, iterable):
+        class DuckArray:
+            def __array_function__(self, called, types, args, kwargs):
+                return called
+
+        class IterableDuckArray(DuckArray):
+            def __iter__(self):
+                return iter([1, 2, 3])
+
+        value = IterableDuckArray() if iterable else DuckArray()
+        assert func(value) is func
+
+    @pytest.mark.parametrize("func", [np.poly, np.roots])
+    def test_array_function_dispatch_subclass(self, func):
+        class Subclass(np.ndarray):
+            def __array_function__(self, called, types, args, kwargs):
+                return called
+
+        value = np.array([1, 2]).view(Subclass)
+        assert func(value) is func
+
+    @pytest.mark.parametrize("func", [np.poly, np.roots])
+    @pytest.mark.parametrize("container", [list, tuple, "object_array"])
+    def test_sequence_element_override(self, func, container):
+        class Element(np.ndarray):
+            def __array_function__(self, called, types, args, kwargs):
+                assert called is func
+                assert args[0] is seq
+                return self
+
+        element = np.array(2).view(Element)
+        if container == "object_array":
+            seq = np.empty(2, dtype=object)
+            seq[:] = [1, element]
+        else:
+            seq = container([1, element])
+        assert func(seq) is element
+
+    @pytest.mark.parametrize("func", [np.poly, np.roots])
+    def test_outer_override_not_implemented(self, func):
+        calls = []
+
+        class Element:
+            def __array_function__(self, called, types, args, kwargs):
+                pytest.fail("unexpected element dispatch")
+
+        class Outer(list):
+            def __iter__(self):
+                pytest.fail("unexpected iteration before outer dispatch")
+
+            def __array_function__(self, called, types, args, kwargs):
+                calls.append(called)
+                return NotImplemented
+
+        with pytest.raises(TypeError, match="no implementation found"):
+            func(Outer([Element()]))
+        assert calls == [func]
+
+    @pytest.mark.parametrize("func, expected", [(np.poly, [1, -3]), (np.roots, [])])
+    def test_zero_dimensional_object_array(self, func, expected):
+        assert_array_equal(func(np.array(3, dtype=object)), expected)
+
     def test_poly1d_str_and_repr(self):
         p = np.poly1d([1., 2, 3])
         assert_equal(repr(p), 'poly1d([1., 2., 3.])')

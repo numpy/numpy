@@ -32,8 +32,22 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
+def _poly_dispatch_args(value):
+    if (type(value) is NX.ndarray and value.dtype.isbuiltin == 1
+            and value.dtype.kind in "buifc"):
+        # Built-in numeric arrays cannot contain elements with custom overrides.
+        return (value,)
+    method = getattr(type(value), "__array_function__", None)
+    if method is not None and method is not NX.ndarray.__array_function__:
+        return (value,)
+    if isinstance(value, NX.ndarray) and value.ndim == 0:
+        return (value,)
+    # Historically, elements of sequences could override poly and roots.
+    return value
+
+
 def _poly_dispatcher(seq_of_zeros):
-    return seq_of_zeros
+    return _poly_dispatch_args(seq_of_zeros)
 
 
 @array_function_dispatch(_poly_dispatcher)
@@ -162,7 +176,7 @@ def poly(seq_of_zeros):
 
 
 def _roots_dispatcher(p):
-    return p
+    return _poly_dispatch_args(p)
 
 
 @array_function_dispatch(_roots_dispatcher)
