@@ -69,12 +69,12 @@ def _nan_mask(a, out=None):
 
 def _replace_nan(a, val):
     """
-    If `a` is of inexact, datetime64 or timedelta64 type, make a copy of
-    `a`, replace NaNs (or NaTs) with the `val` value, and return the copy
-    together with a boolean mask marking the locations where NaNs were
-    present. Otherwise, do nothing and return `a` together with a mask of
-    None. For datetime64 and timedelta64, a `val` of +-inf is replaced by
-    the largest/smallest representable value.
+    If `a` is of inexact type, or of datetime64 or timedelta64 type with
+    NaTs, make a copy of `a`, replace NaNs (or NaTs) with the `val` value,
+    and return the copy together with a boolean mask marking the locations
+    where NaNs were present. Otherwise, do nothing and return `a` together
+    with a mask of None. For datetime64 and timedelta64, a `val` of +-inf is
+    replaced by the largest/smallest representable value.
 
     Note that scalars will end up as array scalars, which is important
     for using the result as the value of the out argument in some
@@ -102,8 +102,12 @@ def _replace_nan(a, val):
     if a.dtype == np.object_:
         # object arrays do not support `isnan` (gh-9009), so make a guess
         mask = np.not_equal(a, a, dtype=bool)
-    elif issubclass(a.dtype.type, (np.inexact, np.datetime64, np.timedelta64)):
+    elif issubclass(a.dtype.type, np.inexact):
         mask = np.isnan(a)
+    elif issubclass(a.dtype.type, (np.datetime64, np.timedelta64)):
+        mask = np.isnan(a)
+        if not mask.any():
+            return a, None
     else:
         mask = None
 
@@ -568,9 +572,13 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     """
     a, mask = _replace_nan(a, np.inf)
     if mask is not None and mask.size:
-        mask = np.all(mask, axis=axis)
-        if np.any(mask):
+        if np.any(np.all(mask, axis=axis)):
             raise ValueError(_all_nan_message(a.dtype))
+        if a.dtype.kind in "mM":
+            # NaT is replaced by a valid value that it can tie with. As int64,
+            # moving all other values down by one makes room above them.
+            a = a.astype(np.int64) - 1
+            np.copyto(a, np.iinfo(np.int64).max, where=mask)
     res = np.argmin(a, axis=axis, out=out, keepdims=keepdims)
     return res
 
@@ -626,9 +634,13 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     """
     a, mask = _replace_nan(a, -np.inf)
     if mask is not None and mask.size:
-        mask = np.all(mask, axis=axis)
-        if np.any(mask):
+        if np.any(np.all(mask, axis=axis)):
             raise ValueError(_all_nan_message(a.dtype))
+        if a.dtype.kind in "mM":
+            # NaT is replaced by a valid value that it can tie with. As int64,
+            # the smallest value is below all others.
+            a = a.astype(np.int64)
+            np.copyto(a, np.iinfo(np.int64).min, where=mask)
     res = np.argmax(a, axis=axis, out=out, keepdims=keepdims)
     return res
 
