@@ -29,7 +29,7 @@ dependencies:
   # For building docs
   - sphinx>=4.5.0
   - sphinx-copybutton
-  - sphinx-design
+  - sphinx-design<0.8
   - numpydoc=1.4.0
   - ipython
   - scipy
