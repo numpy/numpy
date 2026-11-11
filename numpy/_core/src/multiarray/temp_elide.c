@@ -66,10 +66,18 @@
 
 /* 1 prints elided operations, 2 prints stacktraces */
 #define NPY_ELIDE_DEBUG 0
-#define NPY_MAX_STACKSIZE 10
+#define NPY_MAX_STACKSIZE 12
 
 /* TODO can pep523 be used to somehow? */
 #define PYFRAMEEVAL_FUNC "_PyEval_EvalFrameDefault"
+/*
+ * The tail-calling interpreter runs opcodes in _TAIL_CALL_* functions and
+ * PYFRAMEEVAL_FUNC is inlined into its callers. The _TAIL_CALL_* functions are
+ * local symbols that dladdr only resolves on some platforms (e.g. macOS), so
+ * the exported PyEval_EvalCode further up the stack serves as a fallback.
+ */
+#define PYTAILCALL_PREFIX "_TAIL_CALL_"
+#define PYEVALCODE_FUNC "PyEval_EvalCode"
 /*
  * Heuristic size of the array in bytes at which backtrace overhead generation
  * becomes less than speed gained by in-place operations. Depends on stack depth
@@ -267,7 +275,10 @@ check_callers(int * cannot)
                 break;
             }
             if (info.dli_sname &&
-                    strcmp(info.dli_sname, PYFRAMEEVAL_FUNC) == 0) {
+                    (strcmp(info.dli_sname, PYFRAMEEVAL_FUNC) == 0 ||
+                     strncmp(info.dli_sname, PYTAILCALL_PREFIX,
+                             sizeof(PYTAILCALL_PREFIX) - 1) == 0 ||
+                     strcmp(info.dli_sname, PYEVALCODE_FUNC) == 0)) {
                 if (n_pyeval < (npy_intp)ARRAY_SIZE(pyeval_addr)) {
                     /* store address to not have to dladdr it again */
                     pyeval_addr[n_pyeval++] = buffer[i];
