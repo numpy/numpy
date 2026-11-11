@@ -517,6 +517,9 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
         if (*flags == 0) {
             // string isn't previously allocated, so add to existing arena allocation
             char *ret = arena_malloc(arena, allocator->realloc, sizeof(char) * size);
+            if (ret == NULL) {
+                return NULL;
+            }
             if (size <= NPY_MEDIUM_STRING_MAX_SIZE) {
                 *flags = NPY_STRING_INITIALIZED;
             }
