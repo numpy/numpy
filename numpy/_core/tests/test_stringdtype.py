@@ -2965,3 +2965,12 @@ def test_nditer_distinct_allocators():
     it = np.nditer([a], flags=["refs_ok", "buffered"], op_dtypes=[b.dtype],
                    casting="unsafe")
     assert_array_equal([str(x) for x in it.copy()], a_obj.tolist())
+
+    # a string buffer written back to an object array is released
+    res = np.array(["a"] * 20, dtype=object)
+    with np.nditer([res], flags=["refs_ok", "buffered", "external_loop"],
+                   op_flags=[["readwrite"]], op_dtypes=["T"],
+                   casting="unsafe") as it:
+        for chunk in it:
+            chunk[...] = a_obj[0]
+    assert res.tolist() == [a_obj[0]] * 20

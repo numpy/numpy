@@ -205,6 +205,7 @@ _strided_to_strided_any_to_object(
 
     PyObject *dst_ref = NULL;
     char *orig_src = src;
+    int res = 0;
     while (N > 0) {
         memcpy(&dst_ref, dst, sizeof(dst_ref));
         Py_XDECREF(dst_ref);
@@ -212,7 +213,8 @@ _strided_to_strided_any_to_object(
         memcpy(dst, &dst_ref, sizeof(PyObject *));
 
         if (dst_ref == NULL) {
-            return -1;
+            res = -1;
+            break;
         }
         src += src_stride;
         dst += dst_stride;
@@ -221,11 +223,12 @@ _strided_to_strided_any_to_object(
     if (data->decref_src.func != NULL) {
         /* If necessary, clear the input buffer (`move_references`) */
         if (data->decref_src.func(NULL, data->decref_src.descr,
-                orig_src, N, src_stride, data->decref_src.auxdata) < 0) {
+                orig_src, dimensions[0], src_stride,
+                data->decref_src.auxdata) < 0) {
             return -1;
         }
     }
-    return 0;
+    return res;
 }
 
 
