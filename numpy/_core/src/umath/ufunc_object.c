@@ -6715,6 +6715,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     op1_array = (PyArrayObject *)op1;
 
+    if (PyArray_FailUnlessWriteable(op1_array, "array to perform in place operation on") < 0) {
+        return NULL;
+    }
+
     /* Create second operand from number array if needed. */
     if (op2 == NULL) {
         nop = 2;
