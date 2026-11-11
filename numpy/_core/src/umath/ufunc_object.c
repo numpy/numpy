@@ -6715,7 +6715,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     op1_array = (PyArrayObject *)op1;
 
-    if (PyArray_FailUnlessWriteable(op1_array, "ufunc.at operand") < 0) {
+    if (PyArray_FailUnlessWriteable(op1_array, "array to perform in place operation on") < 0) {
         return NULL;
     }
 
