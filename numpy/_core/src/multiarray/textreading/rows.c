@@ -8,7 +8,6 @@
 #include "numpy/npy_3kcompat.h"
 #include "npy_pycompat.h"
 #include "alloc.h"
-#include "dtypemeta.h"
 #include "shape.h"  // For PyArray_Resize_int
 
 #include <string.h>
