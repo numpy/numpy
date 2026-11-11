@@ -1,0 +1,10 @@
+``np.linalg.norm`` no longer overflows for representable results
+----------------------------------------------------------------
+`numpy.linalg.norm` computed its 2-norms (and the Frobenius and ``ord > 1``
+norms) from a naive sum of powers, so the result was ``inf`` or ``0`` whenever
+that intermediate sum over- or underflowed, even when the norm itself was
+perfectly representable. For example ``norm([1e200, 1e200])`` returned ``inf``
+instead of ``1.4142135623730951e+200``, and the equivalent tiny vector returned
+``0``. Those cases are now recomputed with a max-scaled sum, matching the
+scaling that LAPACK's ``nrm2`` uses. ``inf``, ``nan`` and genuine zeros are
+unchanged, as are results that never over- or underflowed.
