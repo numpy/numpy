@@ -27,6 +27,7 @@
 #include "utf8_utils.h"
 
 #include "casts.h"
+#include "dtype_transfer.h"
 
 // Get a c string representation of a type number.
 static const char *
@@ -182,8 +183,9 @@ string_to_string_resolve_descriptors(PyObject *NPY_UNUSED(self),
     return NPY_NO_CASTING;
 }
 
+/* Both descriptor allocators must be held by the caller. */
 static int
-string_to_string(PyArrayMethod_Context *context, char *const data[],
+string_to_string_unlocked(PyArrayMethod_Context *context, char *const data[],
                  npy_intp const dimensions[], npy_intp const strides[],
                  NpyAuxData *NPY_UNUSED(auxdata))
 {
@@ -198,11 +200,8 @@ string_to_string(PyArrayMethod_Context *context, char *const data[],
     npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
-    npy_string_allocator *allocators[2] = {NULL, NULL};
-    NpyString_acquire_allocators(2, context->descriptors, allocators);
-    npy_string_allocator *iallocator = allocators[0];
-    npy_string_allocator *oallocator = allocators[1];
-
+    npy_string_allocator *iallocator = idescr->allocator;
+    npy_string_allocator *oallocator = odescr->allocator;
 
     while (N--) {
         const npy_packed_static_string *s = (npy_packed_static_string *)in;
@@ -215,12 +214,12 @@ string_to_string(PyArrayMethod_Context *context, char *const data[],
                     npy_gil_error(PyExc_MemoryError,
                               "Failed to pack string in string to string "
                               "cast.");
-                    goto fail;
+                    return -1;
                 }
             }
             else if (free_and_copy(iallocator, oallocator, s, os,
                                    "string to string cast") < 0) {
-                goto fail;
+                return -1;
             }
         }
 
@@ -228,15 +227,55 @@ string_to_string(PyArrayMethod_Context *context, char *const data[],
         out += out_stride;
     }
 
-    NpyString_release_allocators(2, allocators);
-
     return 0;
+}
 
-fail:
-
+static int
+string_to_string(PyArrayMethod_Context *context, char *const data[],
+                 npy_intp const dimensions[], npy_intp const strides[],
+                 NpyAuxData *auxdata)
+{
+    npy_string_allocator *allocators[2] = {NULL, NULL};
+    NpyString_acquire_allocators(2, context->descriptors, allocators);
+    int ret = string_to_string_unlocked(context, data, dimensions, strides, auxdata);
     NpyString_release_allocators(2, allocators);
+    return ret;
+}
 
-    return -1;
+static inline int
+transfer_copy_string(NPY_cast_info *info, char *src, char *dst,
+                     npy_intp count, const npy_intp *strides)
+{
+    char *args[2] = {src, dst};
+    return string_to_string_unlocked(&info->context, args, &count,
+                                    strides, info->auxdata);
+}
+
+static int
+string_transfer_loop(NPY_cast_info *info, const NPY_transfer_loop *loop)
+{
+    npy_string_allocator *allocators[2] = {NULL, NULL};
+    NpyString_acquire_allocators(2, info->context.descriptors, allocators);
+    int res = npy_transfer_loop(info, loop, transfer_copy_string);
+    NpyString_release_allocators(2, allocators);
+    return res;
+}
+
+NPY_NO_EXPORT NPY_transfer_loop_function *
+NPY_get_string_transfer_loop(PyArrayMethod_StridedLoop *loop,
+                             NPY_transfer_kind kind)
+{
+    if (loop != &string_to_string) {
+        return NULL;
+    }
+    switch (kind) {
+        case NPY_TRANSFER_INDEXED_CONTIGUOUS:
+        case NPY_TRANSFER_REPEAT_CONTIGUOUS:
+        case NPY_TRANSFER_PUTMASK_CONTIGUOUS:
+            return &string_transfer_loop;
+        default:
+            return NULL;
+    }
 }
 
 static PyType_Slot s2s_slots[] = {
