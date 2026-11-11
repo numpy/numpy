@@ -907,7 +907,16 @@ PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
    .. c:member:: PyArrayMethod_Spec **casts;
 
       A ``NULL``-terminated array of ArrayMethod specifications for
-      casts defined by the DType.
+      casts defined by the DType, including a cast between instances of
+      the DType itself.
+
+      .. versionchanged:: 2.6
+
+         For DTypes registered using :c:macro:`NPY_DT_legacy_descriptor_proto`,
+         a missing within-DType cast is supplied using the legacy
+         ``copyswapn`` or ``copyswap`` function, which must be provided.
+         If no casts are supplied explicitly, use an array containing only
+         ``NULL``. This requires NumPy 2.6 or newer at runtime.
 
    .. c:member:: PyType_Slot *slots;
 
