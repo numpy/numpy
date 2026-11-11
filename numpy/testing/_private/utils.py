@@ -3056,10 +3056,8 @@ def trace_memory_growth():
     exits it returns the growth at exit.  `tracemalloc` is not thread-safe,
     so tests that use this need the ``thread_unsafe`` marker.
     """
-    import pytest
+    import tracemalloc
 
-    # not available on PyPy
-    tracemalloc = pytest.importorskip("tracemalloc")
     started = not tracemalloc.is_tracing()
     if started:
         tracemalloc.start()
@@ -3103,7 +3101,7 @@ def _assert_memory_growth_below(func_location, limit, repeat):
     with trace_memory_growth() as growth:
         for _ in range(repeat):
             func()
-    if growth() >= limit:
-        raise SystemExit(
-            f"memory grew by {growth()} bytes after {repeat} calls, "
-            f"limit is {limit}")
+    assert growth() < limit, (
+        f"memory grew by {growth()} bytes after {repeat} calls, "
+        f"limit is {limit}")
+
