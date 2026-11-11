@@ -15,6 +15,7 @@ from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import ComplexWarning
 from numpy.testing import IS_PYPY, assert_array_equal
+from numpy.testing._private.utils import assert_memory_growth_below
 
 
 def random_unicode_string_list():
@@ -2556,6 +2557,21 @@ def test_datetime_parse_error_bounded():
             with pytest.raises(ValueError) as excinfo:
                 a.astype("M8[s]")
             assert "2023-01-02" not in str(excinfo.value)
+
+
+@pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
+def test_fixed_width_cast_does_not_grow_arena():
+    arr = np.array([f"{i:040d}" for i in range(1000)], dtype="T")
+    assert_memory_growth_below(lambda: arr.astype("U40"), limit=1024)
+
+
+def test_unaligned_unicode_casts():
+    strings = ["abc", "a string that is not stored inline"]
+    unaligned = np.zeros(2, dtype=[("pad", "u1"), ("s", "U40")])["s"]
+    assert not unaligned.flags.aligned
+    unaligned[...] = np.array(strings, dtype="T")
+    assert unaligned.tolist() == strings
+    assert unaligned.astype("T").tolist() == strings
 
 
 def test_growing_strings(dtype):

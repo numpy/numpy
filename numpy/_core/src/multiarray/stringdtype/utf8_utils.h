@@ -5,6 +5,14 @@
 extern "C" {
 #endif
 
+static inline Py_UCS4
+read_ucs4(const char *codepoints, size_t index)
+{
+    Py_UCS4 code;
+    memcpy(&code, codepoints + index * sizeof(Py_UCS4), sizeof(Py_UCS4));
+    return code;
+}
+
 NPY_NO_EXPORT size_t
 utf8_char_to_ucs4_code(const unsigned char *c, Py_UCS4 *code);
 
@@ -48,7 +56,7 @@ NPY_NO_EXPORT int
 num_codepoints_for_utf8_bytes(const unsigned char *s, size_t *num_codepoints, size_t max_bytes);
 
 NPY_NO_EXPORT int
-utf8_size(const Py_UCS4 *codepoints, long max_length, size_t *num_codepoints,
+utf8_size(const char *codepoints, long max_length, size_t *num_codepoints,
           size_t *utf8_bytes);
 
 NPY_NO_EXPORT size_t
