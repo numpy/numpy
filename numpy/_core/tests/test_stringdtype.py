@@ -15,6 +15,7 @@ from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import ComplexWarning
 from numpy.testing import IS_PYPY, assert_array_equal
+from numpy.testing._private.utils import assert_memory_growth_below
 
 
 def random_unicode_string_list():
@@ -965,6 +966,21 @@ def test_invalid_numeric_casts_error(dtype, invalid):
 
     with pytest.raises(ValueError):
         arr.astype(dtype)
+
+
+@pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
+def test_failed_bytes_cast_releases_buffer():
+    # the cast decodes into a temporary buffer of StringDType strings. When
+    # an element can't be decoded, the strings already in the buffer leak
+    # unless the cast frees them.
+    def decode():
+        names = np.array([f"customer number {i} from region {i % 7}".encode()
+                          for i in range(1000)])
+        names[-1] = b"\xff"
+        with pytest.raises(UnicodeDecodeError):
+            names.astype("T")
+
+    assert_memory_growth_below(decode, limit=1024)
 
 
 def test_insert_scalar(dtype, string_list):
