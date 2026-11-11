@@ -3554,6 +3554,10 @@ _array_method_doc('astype', "dtype, order='K', casting='unsafe', subok=True, cop
 
     Copy of the array, cast to a specified type.
 
+    For immutable scalars, if the specified data type matches the data
+    type of the input, the input scalar is returned regardless of the value
+    of ``copy``.
+
     Parameters
     ----------
     dtype : str or dtype
