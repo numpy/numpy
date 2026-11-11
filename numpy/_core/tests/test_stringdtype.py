@@ -927,6 +927,12 @@ def test_fromiter_reused_dtype():
     assert_array_equal(arr1, arr2)
 
 
+def test_loadtxt_reused_dtype(string_list):
+    arr = np.array(string_list, dtype="T")
+    res = np.loadtxt(string_list, dtype=arr.dtype, delimiter=",")
+    assert_array_equal(res, arr)
+
+
 def test_flatiter_indexing():
     # see gh-29659
     arr = np.array(['hello', 'world'], dtype='T')
