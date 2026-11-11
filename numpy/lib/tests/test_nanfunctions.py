@@ -842,8 +842,9 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
         # A fractional mean checks that nothing is truncated before the
         # conversion to milliseconds
         out = np.empty(2, dtype="m8[ms]")
-        assert np.nanmean(ar, axis=1, out=out) is out
-        assert_equal(out, np.array([1500, 6500], dtype="m8[ms]"))
+        ret = np.nanmean(ar, axis=1, out=out)
+        assert ret is out
+        assert_equal(ret, np.array([1500, 6500], dtype="m8[ms]"))
 
         ret = np.nanmean(ar, axis=1, dtype=np.float64)
         tgt = np.mean(ar, axis=1, dtype=np.float64, where=~np.isnat(ar))
