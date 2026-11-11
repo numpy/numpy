@@ -2922,3 +2922,49 @@ def run_subprocess(cmd, cwd=None, **kwargs):
             f"----- stderr -----\n{res.stderr}",
             pytrace=False)
     return res
+
+
+@contextlib.contextmanager
+def trace_memory_growth():
+    """Context manager that measures memory growth with `tracemalloc`.
+
+    Yields a function that returns the number of bytes that were allocated
+    since entering the block and are still allocated.  After the block
+    exits it returns the growth at exit.  `tracemalloc` is not thread-safe,
+    so tests that use this need the ``thread_unsafe`` marker.
+    """
+    import tracemalloc
+
+    started = not tracemalloc.is_tracing()
+    if started:
+        tracemalloc.start()
+    before = tracemalloc.get_traced_memory()[0]
+    final = None
+
+    def growth():
+        if final is not None:
+            return final
+        return tracemalloc.get_traced_memory()[0] - before
+
+    try:
+        yield growth
+    finally:
+        final = growth()
+        if started:
+            tracemalloc.stop()
+
+
+def assert_memory_growth_below(func, limit, repeat=10):
+    """Fail if more than ``limit`` bytes are still allocated after calling
+    ``func()`` ``repeat`` times.
+
+    ``func`` is called once before the measurement starts.  This uses
+    `tracemalloc` and is not thread-safe.
+    """
+    func()
+    with trace_memory_growth() as growth:
+        for _ in range(repeat):
+            func()
+    assert growth() < limit, (
+        f"memory grew by {growth()} bytes after {repeat} calls, "
+        f"limit is {limit}")
