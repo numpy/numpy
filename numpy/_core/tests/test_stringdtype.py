@@ -288,6 +288,15 @@ def test_string_too_large_error():
     arr = np.array(["a", "b", "c"], dtype=StringDType())
     with pytest.raises(OverflowError):
         arr * (sys.maxsize + 1)
+    arr[0] = 'b'
+    np.testing.assert_array_equal(arr, ["b", "b", "c"])
+
+    # Tries to allocate on 64 bit. On 32-bit, still above sys.maxsize.
+    out = np.empty_like(arr)
+    with pytest.raises((MemoryError, OverflowError)):
+        np.multiply(arr, 2**55, out=out)
+    out[:] = "a" * 20
+    assert_array_equal(out, "a" * 20)
 
 
 @pytest.mark.parametrize(
