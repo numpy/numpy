@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+import subprocess
 import sys
 import unittest
+from pathlib import Path
 
 import numpy as np
 
@@ -13,6 +15,28 @@ else:
 import Vector
 
 ######################################################################
+
+class ImportArrayTestCase(unittest.TestCase):
+
+    def testImportFailure(self):
+        result = subprocess.run(
+            [sys.executable, "-c", r"""
+import sys
+import unittest
+import numpy
+
+sys.modules["numpy._core._multiarray_umath"] = None
+sys.modules["numpy.core._multiarray_umath"] = None
+with unittest.TestCase().assertRaisesRegex(
+        ImportError, r"^numpy\._core\.multiarray failed to import$"):
+    import _Vector
+"""],
+            cwd=Path(__file__).resolve().parent,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
 
 class VectorTestCase(unittest.TestCase):
 
@@ -358,6 +382,7 @@ if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ImportArrayTestCase))
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    scharTestCase))
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    ucharTestCase))
     suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    shortTestCase))
