@@ -2177,6 +2177,20 @@ def test_iter_buffered_cast_structured_type():
     if HAS_REFCOUNT:
         assert_equal(sys.getrefcount(a[0]), rc)
 
+    # struct type -> object, written back from the buffer
+    obj = object()
+    a = np.empty((3,), dtype='O')
+    if HAS_REFCOUNT:
+        rc = sys.getrefcount(obj)
+    with nditer(a, ['buffered', 'refs_ok'], ['writeonly'],
+                casting='unsafe', op_dtypes=[('d', 'O')]) as i:
+        for x in i:
+            x[...] = (obj,)
+    assert_equal(a.tolist(), [(obj,)] * 3)
+    a, i, x = [None] * 3
+    if HAS_REFCOUNT:
+        assert_equal(sys.getrefcount(obj), rc)
+
     # single-field struct type -> simple
     sdt = [('a', 'f4')]
     a = np.array([(5.5,), (8,)], dtype=sdt)
