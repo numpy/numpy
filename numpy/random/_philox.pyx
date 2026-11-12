@@ -252,7 +252,10 @@ cdef class Philox(BitGenerator):
 
             self.rng_state.has_uint32 = value['has_uint32']
             self.rng_state.uinteger = value['uinteger']
-            self.rng_state.buffer_pos = value['buffer_pos']
+            buffer_pos = int(value['buffer_pos'])
+            if buffer_pos < 1 or buffer_pos > PHILOX_BUFFER_SIZE:
+                raise ValueError(f'buffer_pos must be between 1 and {PHILOX_BUFFER_SIZE}')
+            self.rng_state.buffer_pos = buffer_pos
 
     cdef jump_inplace(self, iter):
         """
