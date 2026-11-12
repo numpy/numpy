@@ -3433,6 +3433,13 @@ class TestBincount:
         with assert_raises(ValueError):
             np.bincount([np.iinfo(np.intp).max], weights=[1.0])
 
+    @pytest.mark.parametrize("val", [np.iinfo(np.intp).max,
+                                     np.iinfo(np.intp).max + 1,
+                                     np.iinfo(np.uintp).max])
+    def test_too_large_unsigned(self, val):
+        with pytest.raises(ValueError, match="too large"):
+            np.bincount(np.array([val], dtype=np.uintp))
+
     def test_contiguous_handling(self):
         # check for absence of hard crash
         np.bincount(np.arange(10000)[::2])
