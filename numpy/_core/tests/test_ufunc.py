@@ -2251,6 +2251,24 @@ class TestUfunc:
 
         assert_array_equal(a, expected)
 
+    def test_ufunc_at_readonly(self):
+        # gh-33275: `at` writes into its first operand, so a non-writeable
+        # array must raise, as it does for `out=`.
+        a = np.arange(3.0)
+        a.flags.writeable = False
+        with pytest.raises(ValueError, match="read-only"):
+            np.add.at(a, [0], 1.0)
+        with pytest.raises(ValueError, match="read-only"):
+            np.negative.at(a, [1])
+        assert_array_equal(a, np.arange(3.0))
+
+        # an array over an immutable bytes object must stay untouched
+        buf = bytes(16)
+        b = np.frombuffer(buf, dtype=np.float64)
+        with pytest.raises(ValueError, match="read-only"):
+            np.add.at(b, [0], 1.0)
+        assert buf == bytes(16)
+
     def test_ufunc_at_ellipsis(self):
         # Make sure the indexed loop check does not choke on iters
         # with subspaces
