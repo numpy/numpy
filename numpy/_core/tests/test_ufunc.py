@@ -2413,6 +2413,52 @@ class TestUfunc:
               [121, 222, 323],
               [124, 225, 326]]])
 
+    @pytest.mark.parametrize("dtype", [np.int32, np.float32, np.float64,
+                                       np.complex128])
+    @pytest.mark.parametrize("ufunc", [np.add, np.maximum, np.negative])
+    @pytest.mark.parametrize("axis", [0, 1])
+    @pytest.mark.parametrize("view", ["contiguous", "strided", "reversed",
+                                      "transposed"])
+    def test_ufunc_at_subarrays(self, dtype, ufunc, axis, view):
+        # one index array selecting whole rows (or columns) of a 2-D array,
+        # compared with applying the ufunc one index at a time
+        rng = np.random.default_rng(0)
+        views = {
+            "contiguous": lambda x: x[:, :-1].copy(),
+            "strided": lambda x: x[:, :-1],
+            "reversed": lambda x: x[::-1, ::-3],
+            "transposed": lambda x: x.T[::2],
+        }
+        base = rng.integers(-50, 50, (6, 10)).astype(dtype)
+        shape = views[view](base).shape
+        idx = np.array([3, 0, 3, -1, 2, 3])
+        n = shape[1 - axis]
+        full = rng.integers(-50, 50, (len(idx), n)).astype(dtype)
+        if axis == 1:
+            full = full.T
+        if ufunc is np.negative:
+            values = [None]
+        else:
+            values = [full, full[..., ::-1].copy()[..., ::-1], dtype(7),
+                      full[0] if axis == 0 else full[:, :1]]
+        for b in values:
+            a = views[view](base.copy())
+            expected = a.copy()
+            for i, j in enumerate(idx):
+                sel = (j,) if axis == 0 else (slice(None), j)
+                if b is None:
+                    expected[sel] = ufunc(expected[sel])
+                else:
+                    bi = np.broadcast_to(b, full.shape)
+                    expected[sel] = ufunc(expected[sel],
+                                          bi[i] if axis == 0 else bi[:, i])
+            index = idx if axis == 0 else (slice(None), idx)
+            if b is None:
+                ufunc.at(a, index)
+            else:
+                ufunc.at(a, index, b)
+            assert_array_equal(a, expected)
+
     def test_ufunc_at_0D(self):
         a = np.array(0)
         np.add.at(a, (), 1)
