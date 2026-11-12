@@ -1,4 +1,4 @@
-"""
+""
 Functions to operate on polynomials.
 
 """
@@ -33,7 +33,7 @@ array_function_dispatch = functools.partial(
 
 
 def _poly_dispatcher(seq_of_zeros):
-    return seq_of_zeros
+    return (seq_of_zeros,)
 
 
 @array_function_dispatch(_poly_dispatcher)
@@ -162,7 +162,7 @@ def poly(seq_of_zeros):
 
 
 def _roots_dispatcher(p):
-    return p
+    return (p,)
 
 
 @array_function_dispatch(_roots_dispatcher)
