@@ -5535,3 +5535,15 @@ class TestHypotErrorMessages:
     def test_hypot_error_message_multiple_args(self):
         with pytest.raises(TypeError, match="hypot\\(\\) takes .* but 4 were given"):
             np.hypot(1, 2, 3, 4)
+
+
+@pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64,
+                                   np.float32, np.float64])
+@pytest.mark.parametrize("istride", [1, 2, 4, 8])
+def test_negative_strided_input_and_output(dtype, istride):
+    # an input stride equal to the itemsize (in elements) was read as contiguous
+    a = np.arange(16 * istride, dtype=dtype)
+    out = np.zeros(32, dtype=dtype)
+    np.negative(a[::istride], out=out[::2])
+    assert_array_equal(out[::2], -a[::istride])
+    assert_array_equal(out[1::2], 0)
