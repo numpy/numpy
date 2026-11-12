@@ -54,7 +54,8 @@ _readtext_from_stream(stream *s,
 
     Py_ssize_t num_fields = field_types_create(out_dtype, &ft);
     if (num_fields < 0) {
-        goto finish;
+        Py_DECREF(out_dtype);
+        return NULL;
     }
     bool homogeneous = num_fields == 1 && ft[0].descr == out_dtype;
 
