@@ -77,7 +77,10 @@ _readtext_from_stream(stream *s,
 
   finish:
     Py_XDECREF(out_dtype);
-    field_types_xclear(num_fields, ft);
+    /* On failure, field_types_create() already cleaned up `ft` */
+    if (num_fields >= 0) {
+        field_types_xclear(num_fields, ft);
+    }
     return (PyObject *)arr;
 }
 
