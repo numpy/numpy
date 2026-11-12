@@ -270,6 +270,16 @@ class Base:
         uints = bit_generator.random_raw(1000, output=False)
         assert uints is None
 
+    def test_raw_tuple_size(self):
+        # Fixes a bug where random_raw computed the size
+        # incorrectly when a tuple was passed in. It uses sum rather than prod.
+        bit_generator = self.bit_generator(*self.data1['seed'])
+        uints = bit_generator.random_raw((3, 5))
+        assert uints.shape == (3, 5)
+
+        with pytest.raises(ValueError, match="negative dimensions are not allowed"):
+            bit_generator.random_raw((-1, 5))
+
     def test_gauss_inv(self):
         n = 25
         rs = RandomState(self.bit_generator(*self.data1['seed']))

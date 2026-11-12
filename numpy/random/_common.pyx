@@ -85,7 +85,7 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
             with lock:
                 bitgen.next_raw(bitgen.state)
             return None
-        n = np.asarray(size).sum()
+        n = int(np.prod(size))
         with lock, nogil:
             for _i in range(n):
                 bitgen.next_raw(bitgen.state)
