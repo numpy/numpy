@@ -2933,8 +2933,10 @@ def trace_memory_growth():
     exits it returns the growth at exit.  `tracemalloc` is not thread-safe,
     so tests that use this need the ``thread_unsafe`` marker.
     """
-    import tracemalloc
+    import pytest
 
+    # not available on PyPy
+    tracemalloc = pytest.importorskip("tracemalloc")
     started = not tracemalloc.is_tracing()
     if started:
         tracemalloc.start()
