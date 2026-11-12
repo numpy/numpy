@@ -577,7 +577,8 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
         if a.dtype.kind in "mM":
             # NaT is replaced by a valid value that it can tie with. As int64,
             # moving all other values down by one makes room above them.
-            a = a.astype(np.int64) - 1
+            a = a.view(a.dtype.byteorder + "i8")
+            a -= 1
             np.copyto(a, np.iinfo(np.int64).max, where=mask)
     res = np.argmin(a, axis=axis, out=out, keepdims=keepdims)
     return res
@@ -639,7 +640,7 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
         if a.dtype.kind in "mM":
             # NaT is replaced by a valid value that it can tie with. As int64,
             # the smallest value is below all others.
-            a = a.astype(np.int64)
+            a = a.view(a.dtype.byteorder + "i8")
             np.copyto(a, np.iinfo(np.int64).min, where=mask)
     res = np.argmax(a, axis=axis, out=out, keepdims=keepdims)
     return res

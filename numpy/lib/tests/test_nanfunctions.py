@@ -846,8 +846,8 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
         assert ret is out
         assert_equal(ret, np.array([1500, 6500], dtype="m8[ms]"))
 
-        ret = np.nanmean(ar, axis=1, dtype=np.float64)
-        tgt = np.mean(ar, axis=1, dtype=np.float64, where=~np.isnat(ar))
+        ret = np.nanmean(ar, axis=1, dtype=np.timedelta64)
+        tgt = np.mean(ar, axis=1, dtype=np.timedelta64, where=~np.isnat(ar))
         assert_equal(ret, tgt)
 
     def test_nanstd_with_mean_keyword(self):
