@@ -169,6 +169,11 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
                 "'list' argument must have no negative elements");
         goto fail;
     }
+    if (mx == NPY_MAX_INTP) {
+        PyErr_SetString(PyExc_ValueError,
+                "'list' argument contains a value too large for bincount");
+        goto fail;
+    }
     ans_size = mx + 1;
     if (mlength != Py_None) {
         if (ans_size < minlength) {

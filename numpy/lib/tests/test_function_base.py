@@ -3426,6 +3426,13 @@ class TestBincount:
         expected = [1, 3, 1, 1, 0, 0, 0, 1]
         assert_array_equal(actual, expected)
 
+    def test_max_intp_overflow(self):
+        # gh-33305: mx + 1 overflowed and the loop wrote out of bounds
+        with assert_raises(ValueError):
+            np.bincount([np.iinfo(np.intp).max])
+        with assert_raises(ValueError):
+            np.bincount([np.iinfo(np.intp).max], weights=[1.0])
+
     def test_contiguous_handling(self):
         # check for absence of hard crash
         np.bincount(np.arange(10000)[::2])
