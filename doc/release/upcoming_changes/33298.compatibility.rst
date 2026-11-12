@@ -1,0 +1,3 @@
+* Casting a structured void dtype or subarray dtype to
+  `numpy.dtypes.StringDType` now raises a ``TypeError`` instead of interpreting
+  the raw bytes of each element as UTF-8.
