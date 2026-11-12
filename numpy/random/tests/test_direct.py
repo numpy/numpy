@@ -559,21 +559,21 @@ class TestMT19937(Base):
 
     def test_valid_state_pos(self):
         # Ensures that buffer access after setting the state is valid for
-        # MT19937. The state position must be between 1 and 624, and prevents
-        # accessing the buffer at an invalid position.
+        # MT19937. The state position must be between 1 and 624 normally.
+        # After jumped, however, it can be 0, so we also allow this value.
         bg = self.bit_generator(*self.data1['seed'])
         state = bg.state
         original_pos = state['state']['pos']
-        state['state']['pos'] = 0
+        state['state']['pos'] = -1
         with pytest.raises(
             ValueError,
-            match='state position must be between 1 and 624'
+            match='state position must be between 0 and 624'
         ):
             bg.state = state
         state['state']['pos'] = 625
         with pytest.raises(
             ValueError,
-            match='state position must be between 1 and 624'
+            match='state position must be between 0 and 624'
         ):
             bg.state = state
         state['state']['pos'] = original_pos

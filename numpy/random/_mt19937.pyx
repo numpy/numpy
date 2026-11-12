@@ -295,6 +295,6 @@ cdef class MT19937(BitGenerator):
             for i in range(624):
                 self.rng_state.key[i] = key[i]
             pos = int(value['state']['pos'])
-            if pos < 1 or pos > 624:
-                raise ValueError('state position must be between 1 and 624')
+            if pos < 0 or pos > 624:
+                raise ValueError('state position must be between 0 and 624')
             self.rng_state.pos = pos
