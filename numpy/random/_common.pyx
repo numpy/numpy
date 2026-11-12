@@ -85,7 +85,10 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
             with lock:
                 bitgen.next_raw(bitgen.state)
             return None
-        n = int(np.prod(size))
+        _size = np.asarray(size)
+        if not np.issubdtype(_size.dtype, np.integer) or np.any(_size < 0):
+            raise ValueError("negative dimensions are not allowed")
+        n = np.prod(_size, dtype=np.intp)
         with lock, nogil:
             for _i in range(n):
                 bitgen.next_raw(bitgen.state)
