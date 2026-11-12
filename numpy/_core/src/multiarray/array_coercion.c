@@ -966,9 +966,9 @@ PyArray_AdaptDescriptorToArray(
  *
  * @param obj The current (possibly nested) object
  * @param curr_dims The current depth, i.e. initially 0 and increasing.
- * @param max_dims Maximum number of dimensions, modified during discovery.
- * @param fixed_max_dims Immutable destination depth used as a leaf boundary
- *        during assignment, or -1 outside assignment.
+ * @param max_dims Current depth limit, which can shrink during discovery.
+ * @param skip_conversion_depth Original depth limit for skipping array
+ *        conversion of eligible object inputs, or -1 for normal discovery.
  * @param out_descr dtype instance (or NULL) to promoted and update.
  * @param out_shape The current shape (updated)
  * @param coercion_cache_tail_ptr The tail of the linked list of coercion
@@ -985,7 +985,7 @@ PyArray_AdaptDescriptorToArray(
  */
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape_Recursive(
-        PyObject *obj, int curr_dims, int max_dims, int fixed_max_dims,
+        PyObject *obj, int curr_dims, int max_dims, int skip_conversion_depth,
         PyArray_Descr**out_descr, npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj ***coercion_cache_tail_ptr,
         PyArray_DTypeMeta *fixed_DType, enum _dtype_discovery_flags *flags,
@@ -1036,23 +1036,20 @@ PyArray_DiscoverDTypeAndShape_Recursive(
      * Although it is still possible that this fails and we have to use
      * `object`.
      */
-    /*
-     * Preserve existing conversion for sequence and buffer objects, since
-     * skipping it for dual-protocol objects would change protocol precedence.
-     */
-    npy_bool is_fixed_object_leaf =
-        fixed_max_dims >= 0 &&
-        curr_dims > 0 &&
-        curr_dims == fixed_max_dims &&
-        fixed_DType != NULL &&
-        fixed_DType->type_num == NPY_OBJECT &&
-        !PySequence_Check(obj) &&
-        !PyObject_CheckBuffer(obj);
     if (PyArray_Check(obj)) {
         arr = (PyArrayObject *)obj;
         Py_INCREF(arr);
     }
-    else if (!is_fixed_object_leaf) {
+    else if (curr_dims == skip_conversion_depth &&
+             !PySequence_Check(obj) && !PyObject_CheckBuffer(obj)) {
+        /*
+         * The object array can store obj directly at this depth.  Sequence
+         * and buffer objects are excluded to preserve protocol precedence.
+         */
+        return handle_scalar(obj, curr_dims, &max_dims, out_descr, out_shape,
+                             fixed_DType, flags, NULL);
+    }
+    else {
         PyArray_Descr *requested_descr = NULL;
         if (*flags & DESCRIPTOR_WAS_SET) {
             /* __array__ may be passed the requested descriptor if provided */
@@ -1223,7 +1220,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     /* Recursive call for each sequence item */
     for (Py_ssize_t i = 0; i < size; i++) {
         max_dims = PyArray_DiscoverDTypeAndShape_Recursive(
-                objects[i], curr_dims + 1, max_dims, fixed_max_dims,
+                objects[i], curr_dims + 1, max_dims, skip_conversion_depth,
                 out_descr, out_shape, coercion_cache_tail_ptr, fixed_DType,
                 flags, copy);
 
@@ -1252,8 +1249,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  *
  * @param obj Scalar or nested sequences.
  * @param max_dims Maximum number of dimensions (after this scalars are forced)
- * @param max_dims_from_dest Whether max_dims comes from the assignment 
- *        destination ndim and is therefore immutable.
+ * @param allow_skip_conversion Whether the caller allows skipping
+ *        array conversion at the original depth limit for object elements.
  * @param out_shape Will be filled with the output shape (more than the actual
  *        shape may be written).
  * @param coercion_cache NULL initialized reference to a cache pointer.
@@ -1285,7 +1282,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  */
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape(
-        PyObject *obj, int max_dims, npy_bool max_dims_from_dest,
+        PyObject *obj, int max_dims, npy_bool allow_skip_conversion,
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj **coercion_cache,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
@@ -1305,6 +1302,7 @@ PyArray_DiscoverDTypeAndShape(
                 (PyObject *)fixed_DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     }
 
+    int skip_conversion_depth = -1;
     if (requested_descr != NULL) {
         if (fixed_DType != NULL) {
             assert(fixed_DType == NPY_DTYPE(requested_descr));
@@ -1313,6 +1311,11 @@ PyArray_DiscoverDTypeAndShape(
         Py_INCREF(requested_descr);
         *out_descr = requested_descr;
         flags |= DESCRIPTOR_WAS_SET;
+
+        if (requested_descr->type_num == NPY_OBJECT &&
+                allow_skip_conversion && max_dims > 0) {
+            skip_conversion_depth = max_dims;
+        }
     }
 
     /*
@@ -1335,9 +1338,8 @@ PyArray_DiscoverDTypeAndShape(
         }
     }
 
-    int fixed_max_dims = max_dims_from_dest ? max_dims : -1;
     int ndim = PyArray_DiscoverDTypeAndShape_Recursive(
-            obj, 0, max_dims, fixed_max_dims,
+            obj, 0, max_dims, skip_conversion_depth,
             out_descr, out_shape, &coercion_cache,
             fixed_DType, &flags, copy);
     if (ndim < 0) {

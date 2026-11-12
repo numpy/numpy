@@ -1387,6 +1387,38 @@ class TestCreation:
         assert arr.shape == (2, 2)
         assert arr.dtype == object
 
+    @pytest.mark.parametrize(
+        "ndmax, expected_shape", [(1, (2,)), (2, (1, 2))])
+    @pytest.mark.parametrize(
+        "attribute", ["__array__", "__array_interface__", "__array_struct__"])
+    def test_ndmax_skips_array_conversion_for_object_elements(
+            self, ndmax, expected_shape, attribute):
+        class ArrayLike:
+            def __getattr__(self, attr):
+                if attr == attribute:
+                    raise RuntimeError("array protocol was accessed")
+                raise AttributeError(attr)
+
+        obj = ArrayLike()
+        data = [0, obj]
+        if ndmax == 2:
+            data = [data]
+        arr = np.array(data, dtype=object, ndmax=ndmax)
+        assert arr.shape == expected_shape
+        assert arr.flat[1] is obj
+
+        # The preceding scalar can shrink the inferred depth below the limit.
+        with pytest.raises(RuntimeError, match="array protocol was accessed"):
+            np.array(data, dtype=object, ndmax=ndmax + 1)
+
+    def test_ndmax_object_elements_copy_false(self):
+        class ArrayLike:
+            def __array__(self, dtype=None, copy=None):
+                raise AssertionError("array protocol should not be called")
+
+        with pytest.raises(ValueError, match="Unable to avoid copy"):
+            np.array([ArrayLike()], dtype=object, ndmax=1, copy=False)
+
     def test_ndmax_equal_to_actual_dims(self):
         data = [[1, 2], [3, 4]]
         arr = np.array(data, ndmax=2)

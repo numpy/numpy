@@ -705,7 +705,7 @@ class TestArrayLikes:
                 return 2
 
             def __getitem__(self, index):
-                return index
+                raise AssertionError("__getitem__ should not be called")
 
         obj = ArrayLike()
 
