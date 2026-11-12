@@ -86,7 +86,9 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
                 bitgen.next_raw(bitgen.state)
             return None
         _size = np.asarray(size)
-        if not np.issubdtype(_size.dtype, np.integer) or np.any(_size < 0):
+        if _size.size and not np.issubdtype(_size.dtype, np.integer):
+            raise TypeError("size must be an integer or a tuple of integers")
+        if np.any(_size < 0):
             raise ValueError("negative dimensions are not allowed")
         n = np.prod(_size, dtype=np.intp)
         with lock, nogil:
