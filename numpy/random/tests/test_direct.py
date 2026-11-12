@@ -594,6 +594,19 @@ class TestMT19937(Base):
         bg.state = state  # Should not raise
         assert bg.state['state']['pos'] == original_pos
 
+    def test_ordered_draws(self):
+        # Test that draws are ordered correctly when using the state tuple
+        rs = Generator(self.bit_generator(*self.data1['seed']))
+        bit_generator = rs.bit_generator
+        state = bit_generator.state
+        a, b = bit_generator.random_raw(2)
+        bit_generator.state = state
+        random_float64 = rs.random()
+        a = a >> 5
+        b = b >> 6
+        direct_float64 = (a * 67108864.0 + b) / 9007199254740992.0
+        assert_allclose(random_float64, direct_float64, rtol=1e-15, atol=0.0)
+
 
 class TestSFC64(Base):
     @classmethod
