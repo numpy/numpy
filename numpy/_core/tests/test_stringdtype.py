@@ -480,6 +480,15 @@ def test_void_cast_rejects_invalid_utf8(bad):
         arr.astype(StringDType())
 
 
+@pytest.mark.parametrize("structured", ["i8,i8", "O,i8"])
+def test_structured_cast_rejected(dtype, structured):
+    match = "is a structured or subarray dtype"
+    with pytest.raises(TypeError, match=match):
+        np.zeros(1, dtype=structured).astype(dtype)
+    with pytest.raises(TypeError, match=match):
+        np.array(["a"], dtype=dtype).astype(structured)
+
+
 def test_bytes_cast_roundtrips_valid_utf8():
     # boundary code points adjacent to the reject cases above: largest 2-byte,
     # U+D7FF below the surrogates, max code point

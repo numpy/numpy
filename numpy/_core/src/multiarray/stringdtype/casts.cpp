@@ -1801,10 +1801,11 @@ string_to_void_resolve_descriptors(PyObject *NPY_UNUSED(self),
     else {
         // reject structured voids
         if (PyDataType_NAMES(given_descrs[1]) != NULL || PyDataType_SUBARRAY(given_descrs[1]) != NULL) {
-            PyErr_SetString(
+            PyErr_Format(
                     PyExc_TypeError,
-                    "Casting from StringDType to a structured dtype is not "
-                    "supported.");
+                    "Only casts from StringDType to unstructured void dtypes "
+                    "are supported, but %R is a structured or subarray dtype.",
+                    given_descrs[1]);
             return (NPY_CASTING)-1;
         }
         Py_INCREF(given_descrs[1]);
@@ -1816,6 +1817,29 @@ string_to_void_resolve_descriptors(PyObject *NPY_UNUSED(self),
 
     return NPY_UNSAFE_CASTING;
 }
+
+// void to string
+
+static NPY_CASTING
+void_to_string_resolve_descriptors(PyObject *self,
+                                   PyArray_DTypeMeta *dtypes[2],
+                                   PyArray_Descr *given_descrs[2],
+                                   PyArray_Descr *loop_descrs[2],
+                                   npy_intp *view_offset)
+{
+    if (PyDataType_NAMES(given_descrs[0]) != NULL || PyDataType_SUBARRAY(given_descrs[0]) != NULL) {
+        PyErr_Format(
+                PyExc_TypeError,
+                "Only casts from unstructured void dtypes to StringDType are "
+                "supported, but %R is a structured or subarray dtype.",
+                given_descrs[0]);
+        return (NPY_CASTING)-1;
+    }
+    return any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>(
+            self, dtypes, given_descrs, loop_descrs, view_offset);
+}
+
+// void to string and bytes to string
 
 static int
 string_to_void(PyArrayMethod_Context *context, char *const data[],
@@ -1926,7 +1950,7 @@ fail:
 }
 
 static PyType_Slot v2s_slots[] = {
-    {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>},
+    {NPY_METH_resolve_descriptors, (void *)&void_to_string_resolve_descriptors},
     {NPY_METH_strided_loop, (void *)&void_to_string},
     {0, NULL}
 };
