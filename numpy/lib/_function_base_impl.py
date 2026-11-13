@@ -1,6 +1,7 @@
 import builtins
 import collections.abc
 import functools
+import keyword
 import math
 import operator
 import re
@@ -2300,6 +2301,41 @@ def _get_vectorize_dtype(dtype):
     return dtype
 
 
+@functools.lru_cache(maxsize=256)
+def _make_vectorize_wrapper(nargs, kwnames, excluded):
+    """
+    Return ``(factory, inds)`` for calling a vectorized function with `nargs`
+    positional arguments and keyword arguments named `kwnames`.
+
+    ``factory(pyfunc, *args, *kwargs.values())`` returns a function of the
+    arguments at positions ``inds`` (those not in `excluded`) that calls
+    ``pyfunc`` with all arguments in their original positional or keyword
+    position.
+    """
+    keys = (*range(nargs), *kwnames)
+    names = [f"_a{i}" for i in range(len(keys))]
+    inds = tuple(i for i, key in enumerate(keys) if key not in excluded)
+    call = names[:nargs]
+    kwcall = []
+    for name, value in zip(kwnames, names[nargs:]):
+        # Non-ASCII identifiers are NFKC normalized in source code, which
+        # would change the name that is passed on.
+        if (name.isidentifier() and name.isascii()
+                and not keyword.iskeyword(name)):
+            call.append(f"{name}={value}")
+        else:
+            kwcall.append(f"{name!r}: {value}")
+    if kwcall:
+        call.append("**{" + ", ".join(kwcall) + "}")
+
+    # The parameters of the inner function shadow those of the factory, so
+    # only the excluded arguments are taken from the closure.
+    source = (f"lambda {', '.join(['pyfunc', *names])}: "
+              f"lambda {', '.join([names[i] for i in inds])}: "
+              f"pyfunc({', '.join(call)})")
+    return eval(source, {}), inds
+
+
 @set_module('numpy')
 class vectorize:
     """
@@ -2521,28 +2557,15 @@ class vectorize:
         Return arrays with the results of `pyfunc` broadcast (vectorized) over
         `args` and `kwargs` not in `excluded`.
         """
-        excluded = self.excluded
-        if not kwargs and not excluded:
+        if not kwargs and not self.excluded:
             func = self.pyfunc
             vargs = args
         else:
-            # The wrapper accepts only positional arguments: we use `names` and
-            # `inds` to mutate `the_args` and `kwargs` to pass to the original
-            # function.
-            nargs = len(args)
-
-            names = [_n for _n in kwargs if _n not in excluded]
-            inds = [_i for _i in range(nargs) if _i not in excluded]
-            the_args = list(args)
-
-            def func(*vargs):
-                for _n, _i in enumerate(inds):
-                    the_args[_i] = vargs[_n]
-                kwargs.update(zip(names, vargs[len(inds):]))
-                return self.pyfunc(*the_args, **kwargs)
-
-            vargs = [args[_i] for _i in inds]
-            vargs.extend([kwargs[_n] for _n in names])
+            allargs = (*args, *kwargs.values())
+            factory, inds = _make_vectorize_wrapper(
+                len(args), tuple(kwargs), frozenset(self.excluded))
+            func = factory(self.pyfunc, *allargs)
+            vargs = [allargs[i] for i in inds]
 
         return self._vectorize_call(func=func, args=vargs)
 

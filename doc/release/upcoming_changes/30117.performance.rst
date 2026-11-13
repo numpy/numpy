@@ -1,0 +1,6 @@
+Faster ``np.vectorize`` calls with keyword or excluded arguments
+---------------------------------------------------------------
+Calling a `numpy.vectorize` wrapped function with keyword arguments, or with
+``excluded`` arguments, is up to 5x faster: the function is now called through
+a generated wrapper with ordinary positional and keyword arguments instead of
+a generic ``pyfunc(*args, **kwargs)`` wrapper.
