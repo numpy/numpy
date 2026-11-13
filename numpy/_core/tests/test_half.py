@@ -404,8 +404,9 @@ class TestHalf:
         # switch to negatives
         a |= 0x8000
 
-        assert_equal(np.spacing(a_f16[0]), np.spacing(a_f16[1]))
-        assert_equal(np.spacing(a_f16[1:]), a_f16[:-1] - a_f16[1:])
+        assert_equal(np.spacing(a_f16[:-1]), a_f16[1:] - a_f16[:-1])
+        with np.errstate(all='ignore'):
+            assert_equal(np.spacing(a_f16[-1]), -hinf[0])
 
         assert_equal(np.nextafter(a_f16[0], hinf), -a_f16[1])
         assert_equal(np.nextafter(a_f16[1:], hinf), a_f16[:-1])
@@ -554,6 +555,7 @@ class TestHalf:
             assert_raises_fpe('overflow', np.nextafter, float16(65504), float16(np.inf))
             assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))  # noqa: E501
             assert_raises_fpe('overflow', np.spacing, float16(65504))
+            assert_raises_fpe('overflow', np.spacing, float16(-65504))
 
             # Invalid value errors
             assert_raises_fpe('invalid', np.divide, float16(np.inf), float16(np.inf))
@@ -562,7 +564,6 @@ class TestHalf:
             float16(65472) + float16(32)
             float16(2**-13) / float16(2)
             float16(2**-14) / float16(2**10)
-            np.spacing(float16(-65504))
             np.spacing(float16(np.nan))
             np.spacing(float16(np.inf))
             np.spacing(float16(-np.inf))

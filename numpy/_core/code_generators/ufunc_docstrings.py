@@ -3995,7 +3995,18 @@ add_newdoc('numpy._core.umath', 'nextafter',
 
 add_newdoc('numpy._core.umath', 'spacing',
     """
-    Return the distance between x and the nearest adjacent number.
+    Return the distance between x and the next adjacent floating point number.
+
+    For positive inputs (including ``+0.0``), spacing is measured toward
+    positive infinity: ``spacing(x) == np.nextafter(x, np.inf) - x``.
+    For negative inputs (including ``-0.0``), spacing is measured toward
+    negative infinity: ``spacing(x) == np.nextafter(x, -np.inf) - x``.
+    Consequently, the sign of the output always matches the sign of the input,
+    and ``spacing(-x) == -spacing(x)`` for all finite `x`.
+
+    Integer and boolean inputs are handled according to standard ufunc
+    casting rules (e.g. 8-bit integers and bools promote to `float16`,
+    16-bit integers to `float32`, and other integers to `float64`).
 
     Parameters
     ----------
@@ -4014,7 +4025,11 @@ add_newdoc('numpy._core.umath', 'spacing',
     It can be considered as a generalization of EPS:
     ``spacing(np.float64(1)) == np.finfo(np.float64).eps``, and there
     should not be any representable number between ``x + spacing(x)`` and
-    x for any finite x.
+    `x` for any finite `x`.
+
+    For the maximum finite floating point values (``np.finfo(dtype).max``
+    and its negative), the distance toward infinity overflows to ``+inf``
+    and ``-inf`` respectively.
 
     Spacing of +- inf and NaN is NaN.
 
@@ -4023,6 +4038,16 @@ add_newdoc('numpy._core.umath', 'spacing',
     >>> import numpy as np
     >>> np.spacing(1) == np.finfo(np.float64).eps
     True
+    >>> np.spacing(1.0)
+    2.220446049250313e-16
+    >>> np.spacing(-1.0)
+    -2.220446049250313e-16
+    >>> np.spacing(0.0)
+    5e-324
+    >>> np.spacing(-0.0)
+    -5e-324
+    >>> np.spacing(np.int16(1))
+    np.float32(1.1920929e-07)
 
     """)
 
