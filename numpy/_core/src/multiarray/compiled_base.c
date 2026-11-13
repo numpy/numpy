@@ -49,6 +49,62 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
 }
 
 /*
+ * The forced cast to intp in bincount is only safe when intp is as wide as
+ * the input.  On 32-bit platforms 64-bit values would silently wrap, so
+ * reject anything that is negative or does not fit in an intp up front.
+ * Returns 0 if ok, -1 with an exception set otherwise.
+ */
+static int
+check_bincount_range(PyArrayObject *arr)
+{
+    if (PyArray_ITEMSIZE(arr) <= (npy_intp)sizeof(npy_intp)) {
+        return 0;
+    }
+
+    int is_signed = PyArray_ISSIGNED(arr);
+    PyArrayObject *wide = (PyArrayObject *)PyArray_FromAny(
+            (PyObject *)arr,
+            PyArray_DescrFromType(is_signed ? NPY_LONGLONG : NPY_ULONGLONG),
+            1, 1, NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS, NULL);
+    if (wide == NULL) {
+        return -1;
+    }
+
+    npy_intp n = PyArray_SIZE(wide);
+    int res = 0;
+    if (is_signed) {
+        npy_longlong *vals = (npy_longlong *)PyArray_DATA(wide);
+        for (npy_intp i = 0; i < n; i++) {
+            if (vals[i] < 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "'list' argument must have no negative elements");
+                res = -1;
+                break;
+            }
+            if (vals[i] > (npy_longlong)NPY_MAX_INTP) {
+                PyErr_SetString(PyExc_ValueError,
+                        "'list' argument has elements that are too large");
+                res = -1;
+                break;
+            }
+        }
+    }
+    else {
+        npy_ulonglong *vals = (npy_ulonglong *)PyArray_DATA(wide);
+        for (npy_intp i = 0; i < n; i++) {
+            if (vals[i] > (npy_ulonglong)NPY_MAX_INTP) {
+                PyErr_SetString(PyExc_ValueError,
+                        "'list' argument has elements that are too large");
+                res = -1;
+                break;
+            }
+        }
+    }
+    Py_DECREF(wide);
+    return res;
+}
+
+/*
  * arr_bincount is registered as bincount.
  *
  * bincount accepts one, two or three arguments. The first is an array of
@@ -102,6 +158,10 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
             /* The input is not empty, so convert it to NPY_INTP. */
             int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
             if (PyArray_ISINTEGER(tmp1)) {
+                if (check_bincount_range(tmp1) < 0) {
+                    Py_DECREF(tmp1);
+                    goto fail;
+                }
                 flags = flags | NPY_ARRAY_FORCECAST;
             }
             PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
@@ -121,6 +181,9 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
         if (PyArray_Check((PyObject *)list) &&
             PyArray_ISINTEGER((PyArrayObject *)list)) {
+            if (check_bincount_range((PyArrayObject *)list) < 0) {
+                goto fail;
+            }
             flags = flags | NPY_ARRAY_FORCECAST;
         }
         PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);

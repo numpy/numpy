@@ -3372,6 +3372,17 @@ class TestBincount:
         assert_array_equal(np.bincount([], minlength=minlength),
                            np.zeros(minlength, dtype=int))
 
+    @pytest.mark.skipif(np.dtype(np.intp).itemsize > 4,
+                        reason="only 32-bit intp can overflow here")
+    @pytest.mark.parametrize("val", [2**32 + 5, -2**32 + 5, 2**31])
+    def test_out_of_range_64bit(self, val):
+        # gh-33319: values not fitting in intp used to wrap silently
+        with pytest.raises(ValueError):
+            np.bincount(np.array([val], dtype=np.int64))
+        if val > 0:
+            with pytest.raises(ValueError):
+                np.bincount(np.array([val], dtype=np.uint64))
+
     def test_with_incorrect_minlength(self):
         x = np.array([], dtype=int)
         assert_raises_regex(TypeError,
