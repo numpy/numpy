@@ -127,6 +127,36 @@ inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
             return true;
         }
     }
+    else if constexpr (
+        (std::is_same_v<Tag, npy::datetime_tag> ||
+         std::is_same_v<Tag, npy::timedelta_tag>)
+        && !reverse && sizeof(T) == sizeof(int64_t)
+        && sizeof(npy_intp) == sizeof(int64_t)
+    ) {
+        /*
+         * datetime64/timedelta64 are int64 with NaT (INT64_MIN) sorting last.
+         * Sort a copy of the keys remapped as key = (uint64)v - 1: NaT becomes
+         * INT64_MAX while all other values keep their relative order and stay
+         * distinct, so the int64 order of the keys is exactly the datetime
+         * order.  A SIMD key-value sort of (key, arg) is much faster than an
+         * indirect argsort since it works on contiguous memory.
+         */
+        void (*dispfunc)(int64_t*, npy_intp*, npy_intp) = nullptr;
+        #include "x86_simd_argsort.dispatch.h"
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template KVQSort, <int64_t>);
+        if (dispfunc && num > 1) {
+            const int64_t *v = reinterpret_cast<const int64_t *>(start);
+            int64_t *key = (int64_t *)malloc(num * sizeof(int64_t));
+            if (key != NULL) {
+                for (npy_intp i = 0; i < num; i++) {
+                    key[i] = (int64_t)((uint64_t)v[i] - 1u);
+                }
+                (*dispfunc)(key, arg, num);
+                free(key);
+                return true;
+            }
+        }
+    }
 #endif // __CYGWIN__
     (void)start; (void)arg; (void)num; // to avoid unused arg warn
     return false;

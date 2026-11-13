@@ -13,6 +13,9 @@ NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSelect, (T* arr, npy_intp n
 #include "x86_simd_argsort.dispatch.h"
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void ArgQSort, (T *arr, npy_intp* arg, npy_intp size, bool reverse))
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void ArgQSelect, (T *arr, npy_intp* arg, npy_intp kth, npy_intp size, bool reverse))
+// Ascending (unstable) key-value sort: sorts ``key`` and applies the same
+// permutation to ``val``.  ``key`` is overwritten.
+NPY_CPU_DISPATCH_DECLARE(template <typename T> void KVQSort, (T *key, npy_intp* val, npy_intp size))
 
 #include "x86_simd_qsort_16bit.dispatch.h"
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size, bool reverse))
