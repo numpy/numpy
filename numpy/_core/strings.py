@@ -124,6 +124,14 @@ def _to_bytes_or_str_array(result, output_dtype_like):
     return ret.astype(type(output_dtype_like.dtype)(_get_num_chars(ret)))
 
 
+def _object_to_stringdtype(a, arr):
+    # result_type(StringDType, object) is object, which would send
+    # StringDType input down the fixed-width path.
+    if arr.dtype.char == "O" and a.dtype.char == "T":
+        return arr.astype(a.dtype)
+    return arr
+
+
 def _clean_args(*args):
     """
     Helper function for delegating arguments to Python string
@@ -1334,6 +1342,10 @@ def replace(a, old, new, count=-1):
     old_arr = np.asanyarray(old)
     new_dtype = getattr(new, 'dtype', None)
     new_arr = np.asanyarray(new)
+    if old_dtype is None:
+        old_arr = _object_to_stringdtype(arr, old_arr)
+    if new_dtype is None:
+        new_arr = _object_to_stringdtype(arr, new_arr)
 
     if np.result_type(arr, old_arr, new_arr).char == "T":
         # pass exact str objects so the ufunc converts them directly
@@ -1582,7 +1594,7 @@ def partition(a, sep):
 
     """
     a_arr = np.asanyarray(a)
-    sep_arr = np.asanyarray(sep)
+    sep_arr = _object_to_stringdtype(a_arr, np.asanyarray(sep))
 
     if np.result_type(a_arr, sep_arr).char == "T":
         # pass exact str objects so the ufunc converts them directly
@@ -1655,7 +1667,7 @@ def rpartition(a, sep):
 
     """
     a_arr = np.asanyarray(a)
-    sep_arr = np.asanyarray(sep)
+    sep_arr = _object_to_stringdtype(a_arr, np.asanyarray(sep))
 
     if np.result_type(a_arr, sep_arr).char == "T":
         # pass exact str objects so the ufunc converts them directly
