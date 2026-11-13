@@ -11449,6 +11449,30 @@ class TestArange:
                            np.array([0, 1, 2, 3, 4], dtype=complex))
         assert_array_equal(np.arange(2.0, 10.0),
                            np.array([2., 3., 4., 5., 6., 7., 8., 9.]))
+        assert_array_equal(np.arange(0, 10, 2, dtype=complex),
+                           np.array([0, 2, 4, 6, 8], dtype=complex))
+
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    def test_complex_with_step_real_span(self, dtype):
+        result = np.arange(dtype(0), dtype(10), dtype(2))
+        assert_array_equal(result, np.array([0, 2, 4, 6, 8], dtype=dtype))
+
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    def test_complex_with_step_imaginary_span_raises(self, dtype):
+        with pytest.raises(ValueError, match="imaginary"):
+            np.arange(dtype(0), dtype(4 + 4j), dtype(2))
+
+    def test_complex_imaginary_axis_with_step(self):
+        assert_array_equal(np.arange(0, 4j, 1j),
+                           np.array([0, 1j, 2j, 3j]))
+
+    def test_complex_with_step_noninteger_length(self):
+        assert_array_equal(np.arange(0 + 0j, 5 + 0j, 2 + 0j),
+                           np.array([0, 2, 4], dtype=complex))
+
+    def test_complex_0d_array_with_step_raises(self):
+        with pytest.raises(ValueError, match="imaginary"):
+            np.arange(np.array(0), np.array(4 + 4j), np.array(2))
 
     def test_byteswapped(self):
         res_be = np.arange(1, 1000, dtype=">i4")
