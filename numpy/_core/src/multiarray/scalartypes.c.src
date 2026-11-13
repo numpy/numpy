@@ -2318,6 +2318,7 @@ gentype_astype(PyObject *self,
     int equiv = (to != NULL) && PyArray_EquivTypes(from, to);
     Py_DECREF(from);
     if(equiv){
+        // Return self for immutables regardless of copy
         if ((forcecopy == 0) | (! PyArray_IsScalar(self, Void))){
             Py_DECREF(to);
             Py_DECREF(temp);
@@ -2340,7 +2341,6 @@ gentype_astype(PyObject *self,
     if (ret == NULL) {
         Py_DECREF(temp);
         Py_DECREF(to);
-        Py_DECREF(ret);
         return NULL;
     }
 
