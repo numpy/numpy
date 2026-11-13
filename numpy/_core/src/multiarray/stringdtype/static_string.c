@@ -631,7 +631,7 @@ NpyString_pack_empty(npy_packed_static_string *out)
     return 0;
 }
 
-NPY_NO_EXPORT int
+static int
 NpyString_newemptysize(size_t size, npy_packed_static_string *out,
                        npy_string_allocator *allocator)
 {
@@ -677,7 +677,7 @@ NpyString_newemptysize(size_t size, npy_packed_static_string *out,
     return 0;
 }
 
-NPY_NO_EXPORT int
+static inline int
 NpyString_newsize(const char *init, size_t size,
                   npy_packed_static_string *to_init,
                   npy_string_allocator *allocator)
@@ -714,12 +714,6 @@ NpyString_replace(const char *init, size_t size,
     _npy_static_string_u *out_u = (_npy_static_string_u *)out;
     char *old_buffer = has_heap_allocation(out)
             ? vstring_buffer(&allocator->arena, out_u) : NULL;
-    if (size == 0) {
-        if (old_buffer != NULL) {
-            allocator->free(old_buffer);
-        }
-        return NpyString_pack_empty(out);
-    }
     int ret = init == NULL ? NpyString_newemptysize(size, out, allocator)
                            : NpyString_newsize(init, size, out, allocator);
     if (ret < 0) {
@@ -816,8 +810,7 @@ NpyString_dup(const npy_packed_static_string *in,
     else {
         in_buf = vstring_buffer(arena, in_u);
     }
-    int ret =
-            NpyString_replace(in_buf, size, out, out_allocator);
+    int ret = NpyString_replace(in_buf, size, out, out_allocator);
     if (used_malloc) {
         in_allocator->free(in_buf);
     }
