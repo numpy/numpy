@@ -393,7 +393,9 @@ class Custom(Benchmark):
 class CustomInplace(Benchmark):
     def setup(self):
         self.c = np.ones(500000, dtype=np.int8)
+        self.c2 = np.ones(500000, dtype=np.int8)
         self.i = np.ones(150000, dtype=np.int32)
+        self.i2 = np.ones(150000, dtype=np.int32)
         self.f = np.zeros(150000, dtype=np.float32)
         self.d = np.zeros(75000, dtype=np.float64)
         # fault memory
@@ -407,9 +409,17 @@ class CustomInplace(Benchmark):
     def time_char_or_temp(self):
         0 | self.c | 0
 
+    def time_char_or_array(self):
+        np.bitwise_or(self.c, self.c2, out=self.c)
+        np.bitwise_or(self.c2, self.c, out=self.c)
+
     def time_int_or(self):
         np.bitwise_or(self.i, 0, out=self.i)
         np.bitwise_or(0, self.i, out=self.i)
+
+    def time_int_or_array(self):
+        np.bitwise_or(self.i, self.i2, out=self.i)
+        np.bitwise_or(self.i2, self.i, out=self.i)
 
     def time_int_or_temp(self):
         0 | self.i | 0
