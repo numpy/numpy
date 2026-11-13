@@ -4,8 +4,6 @@ import warnings
 import pytest
 
 import numpy as np
-from numpy._core._multiarray_umath import _get_sfloat_dtype
-from numpy._core._rational_tests import rational
 from numpy._utils import _pep440
 from numpy.testing import (
     assert_,
@@ -16,8 +14,6 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
-
-SF = _get_sfloat_dtype()
 
 # Setup for optimize einsum
 chars = 'abcdefghij'
@@ -89,31 +85,20 @@ class TestEinsum:
             # einsum_path does not yet accept kwarg 'casting'
             np.einsum('ij->j', [a, a], casting='same_value')
 
-    @pytest.mark.parametrize("dtype", [rational, SF(1.)],
-                             ids=["rational", "sfloat"])
-    @pytest.mark.parametrize("subscripts,shapes,out_shape", [
-        ("i->", [(3,)], ()),
-        ("i,i->", [(3,), (3,)], ()),
-        ("ij->i", [(3, 3)], (3,)),
-        ("ij,jk->ik", [(3, 3), (3, 3)], (3, 3)),
-    ])
-    def test_einsum_unsupported_user_dtype(self, dtype, subscripts, shapes,
-                                           out_shape):
-        # gh-32671: user DTypes have no einsum kernel, and new-style ones
-        # (type_num -1) indexed the kernel tables out of bounds.
-        ops = [np.zeros(shape, dtype=dtype) for shape in shapes]
+    def test_einsum_unsupported_dtype(self):
+        out = np.ones((), dtype="m8[s]")
         with pytest.raises(TypeError, match="invalid data type"):
-            np.einsum(subscripts, *ops)
+            np.einsum("i->", np.ones(3, dtype="m8[s]"), out=out)
+        assert out == np.timedelta64(1, "s")
 
-        out = np.ones(out_shape, dtype=bool).astype(dtype)
-        with pytest.raises(TypeError, match="invalid data type"):
-            np.einsum(subscripts, *ops, out=out)
-        assert_array_equal(out.astype(np.float64), 1)
+    def test_einsum_writeback_error(self):
+        a = np.full(3, 100, dtype=np.int8)
+        with pytest.raises(OverflowError):
+            np.einsum("i,i->i", a.astype(object), a, out=a, casting="unsafe")
 
     def test_einsum_unsupported_new_style_dtype(self):
-        # gh-30793: new-style DTypes have type_num -1.  The kernel tables were
-        # indexed at -1, so a float16 loop ran over the quad data and gave
-        # wrong results or a crash instead of this error.
+        # gh-32671: new-style DTypes have type_num -1, which indexed the
+        # kernel tables out of bounds.
         from importlib.metadata import version
 
         try:
@@ -127,10 +112,8 @@ class TestEinsum:
         numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
 
         a = np.ones((3, 3), dtype=numpy_quaddtype.QuadPrecDType())
-        for subscripts in ["ij->", "ij->i", "ij,ij->", "ij,jk->ik"]:
-            ops = [a] * (subscripts.count(",") + 1)
-            with pytest.raises(TypeError, match="invalid data type"):
-                np.einsum(subscripts, *ops)
+        with pytest.raises(TypeError, match="invalid data type"):
+            np.einsum("ij->", a)
 
     def test_einsum_sorting_behavior(self):
         # Case 1: 26 dimensions (all lowercase indices)

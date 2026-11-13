@@ -1172,7 +1172,9 @@ finish:
     }
     Py_INCREF(ret);
 
-    NpyIter_Deallocate(iter);
+    if (!NpyIter_Deallocate(iter)) {
+        Py_CLEAR(ret);
+    }
     for (iop = 0; iop < nop; ++iop) {
         Py_DECREF(op[iop]);
     }
