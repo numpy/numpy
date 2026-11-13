@@ -16,7 +16,6 @@
 #include "loops_utils.h"
 #include "gil_utils.h"
 #include "npy_extint128.h"
-#include "array_method.h"
 
 #include "npy_pycompat.h"
 
@@ -694,6 +693,7 @@ NPY_NO_EXPORT int
     npy_intp acc_step = strides[0];
     npy_intp in_step = strides[1];
     npy_intp out_step = strides[2];
+
     for (npy_intp i = 0; i < n; i++) {
         @type@ cur_acc = *(@type@ *)acc;
         if (cur_acc != 1) {
@@ -709,6 +709,7 @@ NPY_NO_EXPORT int
     return 0;
 }
 /**end repeat**/
+
 NPY_NO_EXPORT int
 gcd_get_reduction_loop(
         PyArrayMethod_Context *context,
@@ -760,6 +761,7 @@ gcd_get_reduction_loop(
     *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
     return 0;
 }
+
 /*
  * NOTE: It may be nice to vectorize these, OTOH, these are still faster
  *       than the cast we used to do.
