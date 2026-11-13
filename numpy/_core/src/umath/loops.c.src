@@ -638,10 +638,21 @@ NPY_NO_EXPORT void
  */
 /**begin repeat1
  * #kind = gcd, lcm#
+ * #absorbing = 1, 0#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            if (io1 == @absorbing@) {
+                break;
+            }
+            io1 = npy_@kind@@c@(io1, *(@type@ *)ip2);
+        }
+        *((@type@ *)iop1) = io1;
+        return;
+    }
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
@@ -658,10 +669,21 @@ NPY_NO_EXPORT void
  */
 /**begin repeat1
  * #kind = gcd, lcm#
+ * #absorbing = 1, 0#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            if (io1 == @absorbing@) {
+                break;
+            }
+            io1 = npy_@kind@@c@(io1, *(@type@ *)ip2);
+        }
+        *((@type@ *)iop1) = io1;
+        return;
+    }
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
@@ -671,96 +693,6 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 /**end repeat**/
 
-/**begin repeat
- * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG,
- *         UBYTE, USHORT, UINT, ULONG, ULONGLONG#
- * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
- * #c    = ,,,l,ll,u,u,u,ul,ull#
- */
-NPY_NO_EXPORT int
-@TYPE@_gcd_reduce_loop(
-        PyArrayMethod_Context *NPY_UNUSED(context),
-        char *const *data,
-        const npy_intp *dimensions,
-        const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata))
-{
-    npy_intp n = dimensions[0];
-    char *acc = data[0];
-    char *in = data[1];
-    char *out = data[2];
-    npy_intp acc_step = strides[0];
-    npy_intp in_step = strides[1];
-    npy_intp out_step = strides[2];
-
-    for (npy_intp i = 0; i < n; i++) {
-        @type@ cur_acc = *(@type@ *)acc;
-        if (cur_acc != 1) {
-            @type@ value = *(@type@ *)in;
-            cur_acc = npy_gcd@c@(cur_acc, value);
-        }
-        *(@type@ *)out = cur_acc;
-        acc += acc_step;
-        in += in_step;
-        out += out_step;
-    }
-
-    return 0;
-}
-/**end repeat**/
-
-NPY_NO_EXPORT int
-gcd_get_reduction_loop(
-        PyArrayMethod_Context *context,
-        int NPY_UNUSED(aligned),
-        int NPY_UNUSED(move_references),
-        const npy_intp *NPY_UNUSED(strides),
-        PyArrayMethod_StridedLoop **out_loop,
-        NpyAuxData **out_transferdata,
-        NPY_ARRAYMETHOD_FLAGS *flags)
-{
-    switch (context->descriptors[0]->type_num) {
-        case NPY_BYTE:
-            *out_loop = &BYTE_gcd_reduce_loop;
-            break;
-        case NPY_SHORT:
-            *out_loop = &SHORT_gcd_reduce_loop;
-            break;
-        case NPY_INT:
-            *out_loop = &INT_gcd_reduce_loop;
-            break;
-        case NPY_LONG:
-            *out_loop = &LONG_gcd_reduce_loop;
-            break;
-        case NPY_LONGLONG:
-            *out_loop = &LONGLONG_gcd_reduce_loop;
-            break;
-        case NPY_UBYTE:
-            *out_loop = &UBYTE_gcd_reduce_loop;
-            break;
-        case NPY_USHORT:
-            *out_loop = &USHORT_gcd_reduce_loop;
-            break;
-        case NPY_UINT:
-            *out_loop = &UINT_gcd_reduce_loop;
-            break;
-        case NPY_ULONG:
-            *out_loop = &ULONG_gcd_reduce_loop;
-            break;
-        case NPY_ULONGLONG:
-            *out_loop = &ULONGLONG_gcd_reduce_loop;
-            break;
-        default:
-            PyErr_SetString(PyExc_TypeError,
-                    "unsupported dtype for gcd reduction");
-            return -1;
-    }
-
-    *out_transferdata = NULL;
-    *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
-    return 0;
-}
 
 /*
  * NOTE: It may be nice to vectorize these, OTOH, these are still faster
