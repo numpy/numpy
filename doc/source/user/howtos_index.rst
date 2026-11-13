@@ -14,6 +14,7 @@ the package, see the :ref:`API reference <reference>`.
    how-to-how-to
    how-to-io
    how-to-index
+   how-to-stack
    how-to-verify-bug
    how-to-partition
    how-to-print

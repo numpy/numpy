@@ -1950,6 +1950,75 @@ add_newdoc('numpy._core.multiarray', '_reconstruct',
 
     """)
 
+add_newdoc('numpy._core.multiarray', 'issubdtype',
+    r"""
+    issubdtype(arg1, arg2)
+    --
+
+    issubdtype(arg1, arg2)
+
+    Returns True if first argument is a typecode lower/equal in type hierarchy.
+
+    .. note::
+        This function relies on the scalar type hierarchy.  That works in
+        practice for NumPy dtypes and some user defined ones, but does not
+        generalize.  `isdtype` has slightly clearer semantics, although
+        NumPy 2.6 or later is required for it to work with user defined
+        dtypes in general.
+
+    Parameters
+    ----------
+    arg1, arg2 : dtype_like
+        `dtype` or object coercible to one
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    isdtype : Similar function with clearer defined semantics.
+    :ref:`arrays.scalars` : Overview of the numpy type hierarchy.
+
+    Examples
+    --------
+    `issubdtype` can be used to check the type of arrays:
+
+    >>> ints = np.array([1, 2, 3], dtype=np.int32)
+    >>> np.issubdtype(ints.dtype, np.integer)
+    True
+    >>> np.issubdtype(ints.dtype, np.floating)
+    False
+
+    >>> floats = np.array([1, 2, 3], dtype=np.float32)
+    >>> np.issubdtype(floats.dtype, np.integer)
+    False
+    >>> np.issubdtype(floats.dtype, np.floating)
+    True
+
+    Similar types of different sizes are not subdtypes of each other:
+
+    >>> np.issubdtype(np.float64, np.float32)
+    False
+    >>> np.issubdtype(np.float32, np.float64)
+    False
+
+    but both are subtypes of `floating`:
+
+    >>> np.issubdtype(np.float64, np.floating)
+    True
+    >>> np.issubdtype(np.float32, np.floating)
+    True
+
+    For convenience, dtype-like objects are allowed too:
+
+    >>> np.issubdtype('S1', np.bytes_)
+    True
+    >>> np.issubdtype('i4', np.signedinteger)
+    True
+
+    """)
+
 add_newdoc('numpy._core.multiarray', 'promote_types',
     """
     promote_types(type1, type2, /)
@@ -3352,14 +3421,14 @@ _METHOD_DOC_TEMPLATE = """{name}({params})
 
 {doc}"""
 
-def _array_method_doc(name: str, params: str, doc: str) -> None:
+def _array_method_doc(name: str, params: str, doc: str, *, scalar_doc: str | None = None) -> None:
     """
-    Interenal helper function for adding docstrings to a common method of
+    Internal helper function for adding docstrings to a common method of
     `numpy.ndarray` and `numpy.generic`.
 
     The provided docstring will be added to the given `numpy.ndarray` method.
-    For the  `numpy.generic` method, a shorter docstring indicating that it is
-    identical to the `ndarray` method will be created.
+    For the  `numpy.generic` method, a shorter docstring is generated unless
+    `scalar_doc` is provided.
     Both methods will have a proper and identical `__text_signature__`.
 
     Parameters
@@ -3373,6 +3442,8 @@ def _array_method_doc(name: str, params: str, doc: str) -> None:
         bytes, numbers, tuples, lists, dicts, sets, booleans, or None.
     doc : str
         The full docstring for the `ndarray` method.
+    scalar_doc : str, optional
+        The docstring body for the `numpy.generic` method.
     """
 
     # prepend the pos-only `$self` parameter to the method signature
@@ -3386,8 +3457,10 @@ def _array_method_doc(name: str, params: str, doc: str) -> None:
     add_newdoc("numpy._core.multiarray", "ndarray", (name, doc_array))
 
     # add docstring to `np.generic.{name}`
-    doc_scalar = f"Scalar method identical to `ndarray.{name}`."
-    doc_scalar = _METHOD_DOC_TEMPLATE.format(name=name, params=params, doc=doc_scalar)
+    if scalar_doc is None:
+        scalar_doc = f"Scalar method identical to `ndarray.{name}`."
+    scalar_doc = textwrap.dedent(scalar_doc).strip()
+    doc_scalar = _METHOD_DOC_TEMPLATE.format(name=name, params=params, doc=scalar_doc)
     add_newdoc("numpy._core.numerictypes", "generic", (name, doc_scalar))
 
 
@@ -3555,6 +3628,12 @@ _array_method_doc('astype', "dtype, order='K', casting='unsafe', subok=True, cop
 
     >>> x[:2].astype(np.int_, casting="same_value")
     array([1, 2])
+    """,
+    scalar_doc="""
+    Cast the scalar to a specified data type.
+
+    For immutable scalars, an equivalent ``dtype`` returns the original
+    scalar, regardless of the value of ``copy``.
     """)
 
 _array_method_doc('byteswap', "inplace=False",
@@ -4159,7 +4238,8 @@ _array_method_doc('resize', "*new_shape, refcheck=True",
     Raises
     ------
     ValueError
-        If `a` does not own its own data or references or views to may exist.
+        If `a` is read-only, does not own its data, or references or views
+        to it may exist.
 
     See Also
     --------
@@ -5376,7 +5456,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         (which is useful especially for object dtype), or a tuple with one
         entry per output (latter for consistency with ``ufunc.__call__``).
         For a ufunc with a single output, a 1-element tuple is also
-        accepted, as before.
+        accepted.
 
         .. versionadded:: 2.3
             Support for ``out=...`` was added.
@@ -5508,13 +5588,24 @@ add_newdoc('numpy._core', 'ufunc', ('accumulate',
         If not provided or None, a freshly-allocated array is returned.
         For consistency with ``ufunc.__call__``, if passed as a keyword
         argument, can be Ellipses (``out=...``, which has the same effect
-        as None as an array is always returned), or a 1-element tuple.
+        as None as an array is always returned), or a tuple with one entry
+        per output. For a ufunc with a single output, a 1-element tuple is
+        also accepted.
 
     Returns
     -------
-    r : ndarray
+    r : ndarray or tuple of ndarray
         The accumulated values. If `out` was supplied, `r` is a reference to
-        `out`.
+        `out`. For a ufunc with more than one output whose loop implementation
+        registers a reduction loop, `r` is instead a tuple with one array per
+        output.
+
+    Notes
+    -----
+    ``accumulate`` normally only supports ufuncs with a single output. A ufunc
+    with more than one output can still be used if its loop implementation
+    registers a dedicated reduction loop. Otherwise, calling it raises a
+    ``TypeError``.
 
     Examples
     --------
@@ -5593,16 +5684,25 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
         If not provided or None, a freshly-allocated array is returned.
         For consistency with ``ufunc.__call__``, if passed as a keyword
         argument, can be Ellipses (``out=...``, which has the same effect
-        as None as an array is always returned), or a 1-element tuple.
+        as None as an array is always returned), or a tuple with one entry
+        per output. For a ufunc with a single output, a 1-element tuple is
+        also accepted.
 
     Returns
     -------
-    r : ndarray
+    r : ndarray or tuple of ndarray
         The reduced values. If `out` was supplied, `r` is a reference to
-        `out`.
+        `out`. For a ufunc with more than one output whose loop implementation
+        registers a reduction loop, `r` is instead a tuple with one array per
+        output.
 
     Notes
     -----
+    ``reduceat`` normally only supports ufuncs with a single output. A ufunc
+    with more than one output can still be used if its loop implementation
+    registers a dedicated reduction loop. Otherwise, calling it raises a
+    ``TypeError``.
+
     A descriptive example:
 
     If ``array`` is 1-D, the function ``ufunc.accumulate(array)`` is the same as

@@ -155,6 +155,7 @@ __all__ = [
     "interp",
     "interp_complex",
     "is_busday",
+    "issubdtype",
     "lexsort",
     "matmul",
     "vecdot",
@@ -3625,6 +3626,7 @@ def asfortranarray(
 ) -> NDArray[Any]: ...
 
 #
+def issubdtype(arg1: DTypeLike | None, arg2: DTypeLike | None) -> bool: ...
 def promote_types(__type1: DTypeLike, __type2: DTypeLike) -> dtype: ...
 
 # `sep` is a de facto mandatory argument, as its default value is deprecated

@@ -1407,10 +1407,10 @@ assert_type(random_st.hypergeometric(I_arr_like_20, I_arr_like_20, I_arr_like_10
 
 assert_type(random_st.randint(0, 100), int)
 assert_type(random_st.randint(100), int)
-assert_type(random_st.randint([100]), npt.NDArray[np.long] | Any)
-assert_type(random_st.randint(0, [100]), npt.NDArray[np.long] | Any)
-assert_type(random_st.randint(0, 100, 3), npt.NDArray[np.long])
-assert_type(random_st.randint(100, size=3), npt.NDArray[np.long])
+assert_type(random_st.randint([100]), npt.NDArray[np.int_] | Any)
+assert_type(random_st.randint(0, [100]), npt.NDArray[np.int_] | Any)
+assert_type(random_st.randint(0, 100, 3), npt.NDArray[np.int_])
+assert_type(random_st.randint(100, size=3), npt.NDArray[np.int_])
 
 assert_type(random_st.randint(2, dtype=bool), bool)
 assert_type(random_st.randint(0, 2, dtype=bool), bool)

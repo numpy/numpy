@@ -14,6 +14,7 @@ from numpy.testing import (
     HAS_REFCOUNT,
     HAS_SUBPROCESSES,
     IS_64BIT,
+    IS_PYPY,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -2176,6 +2177,20 @@ def test_iter_buffered_cast_structured_type():
     if HAS_REFCOUNT:
         assert_equal(sys.getrefcount(a[0]), rc)
 
+    # struct type -> object, written back from the buffer
+    obj = object()
+    a = np.empty((3,), dtype='O')
+    if HAS_REFCOUNT:
+        rc = sys.getrefcount(obj)
+    with nditer(a, ['buffered', 'refs_ok'], ['writeonly'],
+                casting='unsafe', op_dtypes=[('d', 'O')]) as i:
+        for x in i:
+            x[...] = (obj,)
+    assert_equal(a.tolist(), [(obj,)] * 3)
+    a, i, x = [None] * 3
+    if HAS_REFCOUNT:
+        assert_equal(sys.getrefcount(obj), rc)
+
     # single-field struct type -> simple
     sdt = [('a', 'f4')]
     a = np.array([(5.5,), (8,)], dtype=sdt)
@@ -2239,6 +2254,7 @@ def test_buffered_cast_error_paths():
             buf[...] = "a"  # cannot be converted to int.
 
 @pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="PyPy seems to not hit this.")
 def test_buffered_cast_error_paths_unraisable():
     # The following gives an unraisable error. Pytest sometimes captures that
     # (depending python and/or pytest version). So with Python>=3.8 this can
@@ -3902,6 +3918,7 @@ def test_debug_print_dtype_repr_error(capfd):
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
 def test_signature_constructor():
     sig = inspect.signature(np.nditer)
 

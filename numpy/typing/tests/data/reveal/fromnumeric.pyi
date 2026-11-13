@@ -88,6 +88,9 @@ assert_type(np.top_k([[1.0]], 1), tuple[npt.Array2D[np.float64], npt.Array2D[np.
 assert_type(np.top_k([1j], 1), tuple[npt.Array1D[np.complex128], npt.Array1D[np.intp]])
 assert_type(np.top_k([[1j]], 1), tuple[npt.Array2D[np.complex128], npt.Array2D[np.intp]])
 assert_type(np.top_k(_py_str_1d, 1), tuple[npt.NDArray[Any], npt.NDArray[np.intp]])
+assert_type(np.top_k(AR_f4_2d, 1, axis=None), tuple[npt.Array1D[np.float32], npt.Array1D[np.intp]])
+assert_type(np.top_k([[1]], 1, axis=None), tuple[npt.Array1D[Any], npt.Array1D[np.intp]])
+assert_type(np.top_k(_py_str_1d, 1, axis=None), tuple[npt.Array1D[Any], npt.Array1D[np.intp]])
 
 assert_type(np.reshape(b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.reshape(f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])

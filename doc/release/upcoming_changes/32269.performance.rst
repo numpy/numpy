@@ -1,0 +1,6 @@
+Full reductions skip the temporary 0-d array
+--------------------------------------------
+Full reductions (``axis=None``) such as ``numpy.sum``, ``numpy.prod``,
+``numpy.min``, ``numpy.max``, ``numpy.all`` and ``numpy.any`` now create
+their scalar result directly instead of going through a temporary 0-d
+array. This makes full reductions of small arrays up to 1.5x faster.

@@ -92,14 +92,14 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
-        CC="ccache ${CC:-clang}" CXX="ccache ${CXX:-clang++}" spin build -j2 -- -Dallow-noblas=false
+        CC="ccache ${CC:-clang}" CXX="ccache ${CXX:-clang++}" spin build -j3 -- -Dallow-noblas=false
 
     - name: Run test suite (full)
       shell: bash -l {0}
       run: |
         conda activate numpy-dev
         export OMP_NUM_THREADS=2
-        spin test -j2 -m full -- --durations=10
+        spin test -j3 -m full -- --durations=10
 
     - name: Ccache statistics
       shell: bash -l {0}
@@ -113,13 +113,16 @@ jobs:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.build_runner[0] }}
+    env:
+      CCACHE_MAXSIZE: 500M
     strategy:
       fail-fast: false
       matrix:
-        build_runner:
-          - [ macos-15-intel, "macos_x86_64" ]
-          - [ macos-15, "macos_arm64" ]
-        version: ["3.12", "3.15t-dev"]
+        include:
+          - build_runner: [macos-15-intel, "macos_x86_64"]
+            version: "3.12"
+          - build_runner: [macos-15, "macos_arm64"]
+            version: "3.15t"
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -128,13 +131,17 @@ jobs:
         fetch-tags: true
         persist-credentials: false
 
-    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: ${{ matrix.version }}
 
     - name: Install dependencies
       run: |
         pip install --group dev-cli --group test
+
+    # Reuse compilation between LP64 and ILP64 without uploading a cache.
+    - name: Install compiler cache
+      run: brew install ccache
 
     - name: Build against Accelerate (LP64)
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
@@ -148,11 +155,15 @@ jobs:
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (fast tests)
-      if: ${{ matrix.version != '3.14t' || matrix.build_runner[0] != 'macos-15' }}
+      if: ${{ !endsWith(matrix.version, 't') || matrix.build_runner[0] != 'macos-15' }}
       run: spin test -j2 -- --timeout=600 --durations=10
 
     - name: Test in multiple threads
-      if: ${{ matrix.version == '3.14t' && matrix.build_runner[0] == 'macos-15' }}
+      if: ${{ endsWith(matrix.version, 't') && matrix.build_runner[0] == 'macos-15' }}
       run:  |
         pip install pytest-run-parallel==0.8.2
-        spin test -p 4 -- -sv --timeout=600 --durations=10
+        spin test -p 4 -- -s --timeout=600 --durations=10
+
+    - name: Compiler cache statistics
+      if: ${{ !cancelled() }}
+      run: ccache -s

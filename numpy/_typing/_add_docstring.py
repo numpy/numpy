@@ -67,8 +67,6 @@ add_newdoc('ArrayLike', 'typing.Union[...]',
     * (Nested) sequences.
     * Objects implementing the `~class.__array__` protocol.
 
-    .. versionadded:: 1.20
-
     See Also
     --------
     :term:`array_like`:
@@ -97,8 +95,6 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
     * Character codes or the names of :class:`type` objects.
     * Objects with the ``.dtype`` attribute.
 
-    .. versionadded:: 1.20
-
     See Also
     --------
     :ref:`Specifying and constructing data types <arrays.dtypes.constructing>`
@@ -125,8 +121,6 @@ add_newdoc('NDArray[ST: generic]', None,
     .. code-block:: python
 
         type NDArray[ST: generic] = ndarray[tuple[Any, ...], dtype[ST]]
-
-    .. versionadded:: 1.21
 
     Examples
     --------

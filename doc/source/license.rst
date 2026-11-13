@@ -36,7 +36,6 @@ their own terms, which are included in the wheel:
 
 - ``libopenblas`` (OpenBLAS): ``BSD-3-Clause AND BSD-3-Clause-Attribution``
 - ``libgfortran`` (GNU Fortran runtime): ``GPL-3.0-with-GCC-exception``
-- ``libquadmath`` (GCC quad-precision math): ``LGPL-2.1-or-later``
 
 Exactly which of these libraries are bundled depends on the platform. See the
 license comments in

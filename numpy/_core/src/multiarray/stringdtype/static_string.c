@@ -155,6 +155,8 @@ vstring_buffer(npy_string_arena *arena, _npy_static_string_u *string)
     return (char *)((size_t)arena->buffer + string->vstring.offset);
 }
 
+#define ARENA_DOUBLING_THRESHOLD 256
+
 static char *
 arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
 {
@@ -171,8 +173,17 @@ arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
         if (minsize < arena->cursor) {
             return NULL;  // overflow means out of memory
         }
-        // Allocate 25% more than needed for this string.
-        size_t newsize = minsize + minsize / 4;
+        // Double a small arena so that it doesn't have to grow for every
+        // string that is added to it, and ease into allocating 25% more
+        // than needed for a large one. This is the rule Go uses for slices:
+        // https://github.com/golang/go/blob/go1.27.0/src/runtime/slice.go#L326-L358
+        size_t newsize;
+        if (minsize < ARENA_DOUBLING_THRESHOLD) {
+            newsize = 2 * minsize;
+        }
+        else {
+            newsize = minsize + (minsize + 3 * ARENA_DOUBLING_THRESHOLD) / 4;
+        }
         if (newsize < minsize) {
             return NULL;  // overflow means out of memory
         }
@@ -517,6 +528,9 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
         if (*flags == 0) {
             // string isn't previously allocated, so add to existing arena allocation
             char *ret = arena_malloc(arena, allocator->realloc, sizeof(char) * size);
+            if (ret == NULL) {
+                return NULL;
+            }
             if (size <= NPY_MEDIUM_STRING_MAX_SIZE) {
                 *flags = NPY_STRING_INITIALIZED;
             }
@@ -534,8 +548,7 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
         size_t alloc_size;
         if (*flags & NPY_STRING_LONG) {
             // Long string size not necessarily memory-aligned, so use memcpy.
-            size_t *size_loc = (size_t *)((uintptr_t)buf - sizeof(size_t));
-            memcpy(&alloc_size, size_loc, sizeof(size_t));
+            memcpy(&alloc_size, buf - sizeof(size_t), sizeof(size_t));
         }
         else {
             // medium string size is stored in a char so direct access is OK.

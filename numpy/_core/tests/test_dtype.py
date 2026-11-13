@@ -20,6 +20,7 @@ from numpy._core._rational_tests import rational, rational2
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
+    IS_PYPY,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -1452,6 +1453,15 @@ class TestPickling:
             ):
                 dt.__setstate__(extended)
 
+    def test_setstate_invalid_tuple_size_for_version(self):
+        # 6-element state tuples only exist for pickle versions 0 and 1;
+        # versions 2+ require at least 7 elements (including `names`).
+        dt = np.dtype([('a', 'f4')])
+        with pytest.raises(
+            ValueError, match="6-tuple state requires version 0 or 1"
+        ):
+            dt.__setstate__((2, "<", None, {}, -1, -1))
+
     @pytest.mark.parametrize('spec, align', [
         ([('a', 'i4'), ('b', 'f8')], False),
         ('i4, i1', True),
@@ -1538,15 +1548,33 @@ class TestPromotion:
         res = np.minimum(np.ones(3, dtype=other), complex_scalar).dtype
         assert res == expected
 
-    @pytest.mark.parametrize("rat_cls", [rational, rational2])
-    def test_complex_pyscalar_promote_rational(self, rat_cls):
+    def test_complex_pyscalar_promote_rational(self):
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
-            np.result_type(1j, rat_cls)
+            np.result_type(1j, rational)
 
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
-            np.result_type(1j, rat_cls(1, 2))
+            np.result_type(rational, 1j)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(1j, rational(1, 2))
+
+    def test_complex_pyscalar_promote_rational2(self):
+        # rational2 CommonDType is always called here and gives a custom error
+        # to indicate that. The abstract DType returns NotImplemented.
+        with pytest.raises(TypeError,
+                match="rational2 refuses Python complex promotion"):
+            np.result_type(1j, rational2)
+
+        with pytest.raises(TypeError,
+                match="rational2 refuses Python complex promotion"):
+            np.result_type(rational2, 1j)
+
+        with pytest.raises(TypeError,
+                match="rational2 refuses Python complex promotion"):
+            np.result_type(1j, rational2(1, 2))
 
     @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2 * 100])
     def test_python_integer_promotion(self, val):
@@ -1565,6 +1593,22 @@ class TestPromotion:
         # inconsistent here).  The new promotion fixed this (partially?)
         assert np.result_type(other, rational) == expected
         assert np.result_type(other, rational(1, 2)) == expected
+
+    @pytest.mark.parametrize("other", [1, 1.])
+    def test_float_int_pyscalar_promote_rational2(self, other):
+        # Currently rational2 does not handle this explicitly so it fails
+        # (If CommonDType is implemented, it must handle these promotions).
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(other, rational2)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(rational2, other)
+
+        with pytest.raises(TypeError,
+                match=r".* no common DType exists for the given inputs"):
+            np.result_type(other, rational2(1, 2))
 
     @pytest.mark.parametrize("shape",
             # The empty case makes basically no sense, but it creates a ()
@@ -1613,15 +1657,6 @@ class TestPromotion:
         # type, which would then promote to a larger than necessary float.
         for perm in permutations(dtypes):
             assert np.result_type(*perm) == expected
-
-
-def test_rational2_uses_new_dtype_api():
-    # ``rational2`` provides its own ``common_dtype`` slot (which the
-    # legacy ``rational`` cannot), and that slot rejects floats.
-    assert np.result_type(rational, 1.0) == np.float64
-    with pytest.raises(TypeError,
-            match=r".* no common DType exists for the given inputs"):
-        np.result_type(rational2, 1.0)
 
 
 @pytest.mark.parametrize("rat_cls", [rational, rational2])
@@ -2210,6 +2245,7 @@ def test_creating_dtype_with_dtype_class_errors():
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestDTypeSignatures:
     def test_signature_dtype(self):
         sig = inspect.signature(np.dtype)

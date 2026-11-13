@@ -39,7 +39,6 @@ jobs:
           - [ubuntu-22.04, musllinux_x86_64, ""]
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
-          - [macos-15-intel, macosx_x86_64, openblas]
           - [macos-15, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
           - [windows-11-arm, win_arm64, ""]
@@ -47,9 +46,11 @@ jobs:
           # runner. So we build for ARM on a non-ARM runner, which will skip the tests.
           - [ubuntu-24.04, android_arm64_v8a]
           - [ubuntu-24.04, android_x86_64]
-          - [macos-26, ios_arm64_iphoneos, accelerate]
-          - [macos-26, ios_arm64_iphonesimulator, accelerate]
         python: ["cp313"]
+        include:
+          # Cover free-threaded wheel packaging and OpenBLAS on Intel macOS.
+          - buildplat: [macos-15-intel, macosx_x86_64, openblas]
+            python: "cp314t"
 
     steps:
       - name: Checkout numpy
@@ -80,7 +81,7 @@ jobs:
         if: matrix.buildplat[1] == 'macosx_x86_64' || matrix.buildplat[1] == 'macosx_arm64'
         run: |
           # Needed due to https://github.com/actions/runner-images/issues/3371
-          # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
+          # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
           echo "FC=gfortran-13" >> "$GITHUB_ENV"
           echo "F77=gfortran-13" >> "$GITHUB_ENV"
           echo "F90=gfortran-13" >> "$GITHUB_ENV"
@@ -98,25 +99,45 @@ jobs:
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"
           fi
 
-      - name: Setup iOS
-        if: matrix.buildplat[1] == 'ios_arm64_iphoneos' || matrix.buildplat[1] == 'ios_arm64_iphonesimulator'
-        run: |
-          if [[ "${{ matrix.buildplat[2] }}" == 'accelerate' ]]; then
-            # ACCELERATE_NEW_LAPACK with ILP64 requires iOS 16.4 or higher
-            CIBW_ENV="IPHONEOS_DEPLOYMENT_TARGET=17.0"
-            echo "CIBW_ENVIRONMENT_IOS=$CIBW_ENV" >> "$GITHUB_ENV"
-          else
-            # On older iOS versions, use LP64 with the older Accelerate
-            CIBW_CONFIG="setup-args=-Dallow-noblas=false build-dir=build"
-            echo "CIBW_CONFIG_SETTINGS_IOS=$CIBW_CONFIG" >> "$GITHUB_ENV"
-          fi
-
       - name: Build wheels
-        uses: pypa/cibuildwheel@adba99c781d3746d38b3a09b1cf797965bcb7fe6  # v4.3.0
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         with:
           only: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
+          path: ./wheelhouse/*.whl
+
+  build_ios_wheels:
+    name: Build wheels cp313-iOS-arm64-accelerate (device and simulator)
+    if: github.repository == 'numpy/numpy'
+    runs-on: macos-26
+    env:
+      # ACCELERATE_NEW_LAPACK with ILP64 requires iOS 16.4 or higher.
+      CIBW_ENVIRONMENT_IOS: IPHONEOS_DEPLOYMENT_TARGET=17.0
+      # Meson's build directory must not be shared across cross-compilation targets.
+      CIBW_BEFORE_BUILD_IOS: rm -rf build
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+
+      # Together these take about 14 minutes, so share a runner and checkout.
+      - name: Build iOS device wheel
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
+        with:
+          only: cp313-ios_arm64_iphoneos
+
+      - name: Build and test iOS simulator wheel
+        if: ${{ !cancelled() }}
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
+        with:
+          only: cp313-ios_arm64_iphonesimulator
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cp313-ios-arm64-accelerate
           path: ./wheelhouse/*.whl

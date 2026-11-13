@@ -73,6 +73,8 @@ def pytest_configure(config):
         "leaks_references: Tests that are known to leak references.")
     config.addinivalue_line("markers",
         "slow: Tests that are very slow.")
+    config.addinivalue_line("markers",
+        "slow_pypy: Tests that are very slow on pypy.")
     if not PARALLEL_RUN_AVAILABLE:
         config.addinivalue_line("markers",
             "parallel_threads(n): run the given test function in parallel "
@@ -194,6 +196,7 @@ if HAVE_SCPDT:
                 "The chararray class is deprecated",  # char.chararray
                 "numpy.typename is deprecated",  # typename -> dtype.name
                 "numpy.ma.round_ is deprecated",  # ma.round_ -> ma.round
+                "numpy.dot received arrays with a.ndim >= 2 and b.ndim > 2",
         ]
         msg = "|".join(msgs)
 

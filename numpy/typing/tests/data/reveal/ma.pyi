@@ -370,6 +370,10 @@ assert_type(MAR_2d_f4.repeat(MAR_i8, axis=0), np.ma.MaskedArray[tuple[int, int],
 assert_type(np.ma.allequal(AR_f4, MAR_f4), bool)
 assert_type(np.ma.allequal(AR_f4, MAR_f4, fill_value=False), bool)
 
+assert_type(np.ma.assert_array_equal(AR_f4, MAR_f4), None)
+assert_type(np.ma.assert_array_equal(AR_f4, MAR_f4, err_msg="msg", verbose=False), None)
+assert_type(np.ma.assert_array_equal(AR_f4, MAR_f4, strict=True), None)
+
 assert_type(np.ma.allclose(AR_f4, MAR_f4), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, masked_equal=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)

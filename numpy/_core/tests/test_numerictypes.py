@@ -5,8 +5,16 @@ import pytest
 
 import numpy as np
 import numpy._core.numerictypes as nt
+from numpy._core._multiarray_umath import _get_sfloat_dtype
+from numpy._core._rational_tests import rational, rational2
 from numpy._core.numerictypes import issctype, sctype2char, sctypes
-from numpy.testing import assert_, assert_equal, assert_raises, assert_raises_regex
+from numpy.testing import (
+    IS_PYPY,
+    assert_,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 # This is the structure of the table used for plain objects:
 #
@@ -358,12 +366,32 @@ class TestIsSubDType:
     # scalar types can be promoted into dtypes
     wrappers = [np.dtype, lambda x: x]
 
+    @pytest.mark.parametrize('arg', ['invalid', _get_sfloat_dtype()(2.)])
+    def test_invalid_dtype(self, arg):
+        for args in [(arg, np.float64), (np.float64, arg)]:
+            with pytest.raises(TypeError):
+                np.issubdtype(*args)
+
+    def test_subclasscheck(self):
+        class Meta(type):
+            def __subclasscheck__(cls, other):
+                raise TypeError('subclass check failed')
+
+        class Scalar(np.float64, metaclass=Meta):
+            pass
+
+        # Even identical classes must call __subclasscheck__.
+        for arg in [np.float32, np.dtype('f4'), Scalar]:
+            with pytest.raises(TypeError, match='subclass check failed'):
+                np.issubdtype(arg, Scalar)
+
     def test_both_abstract(self):
         assert_(np.issubdtype(np.floating, np.inexact))
         assert_(not np.issubdtype(np.inexact, np.floating))
 
     def test_same(self):
-        for cls in (np.float32, np.int32):
+        for cls in (np.float32, np.int32, rational, rational2, None,
+                    np.dtypes.StringDType()):
             for w1, w2 in itertools.product(self.wrappers, repeat=2):
                 assert_(np.issubdtype(w1(cls), w2(cls)))
 
@@ -373,6 +401,16 @@ class TestIsSubDType:
         for w in self.wrappers:
             assert_(np.issubdtype(w(np.float32), np.floating))
             assert_(np.issubdtype(w(np.float64), np.floating))
+
+        assert np.issubdtype(np.float32, arg2=np.floating)
+        assert np.issubdtype(arg2=np.floating, arg1=np.float32)
+
+        class Scalar(np.float64):
+            pass
+
+        # Converting Scalar to a dtype would discard the subclass.
+        assert np.issubdtype(Scalar, np.floating)
+        assert not np.issubdtype(np.float64, Scalar)
 
     def test_subclass_backwards(self):
         for w in self.wrappers:
@@ -412,6 +450,10 @@ class TestIsSubDType:
         assert np.issubdtype(np.complex64, np.complexfloating)
         assert np.issubdtype(np.float64, "float")
         assert np.issubdtype(np.float32, "f")
+
+        assert np.issubdtype(None, np.float64)
+        assert np.issubdtype(np.float64, None)
+        assert np.issubdtype(b'f8', np.floating)
 
 
 class TestIsDType:
@@ -599,6 +641,10 @@ def test_issctype(rep, expected):
 @pytest.mark.skipif(
     sys.flags.optimize > 1,
     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1",
+)
+@pytest.mark.xfail(
+    IS_PYPY,
+    reason="PyPy cannot modify tp_doc after PyType_Ready",
 )
 class TestDocStrings:
     def test_platform_dependent_aliases(self):

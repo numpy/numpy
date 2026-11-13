@@ -19,6 +19,7 @@
 #include "einsum_debug.h"
 #include "simd/simd.h"
 #include "common.h"
+#include "npy_pycompat.h"
 
 // ARM/Neon don't have instructions for aligned memory access
 #ifdef NPY_HAVE_NEON

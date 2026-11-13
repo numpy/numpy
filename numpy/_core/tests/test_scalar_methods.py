@@ -11,7 +11,7 @@ import pytest
 
 import numpy as np
 from numpy._core import sctypes
-from numpy.testing import assert_equal, assert_raises
+from numpy.testing import HAS_REFCOUNT, IS_PYPY, assert_equal, assert_raises
 from numpy.testing._private.utils import LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE
 
 
@@ -84,7 +84,7 @@ class TestAsIntegerRatio:
             [0, -7400, 14266, -7822, -8721],
             marks=[
                 pytest.mark.skipif(
-                    np.finfo(np.double) == np.finfo(np.longdouble),
+                    np.dtype(np.double) == np.dtype(np.longdouble),
                     reason="long double is same as double"),
                 pytest.mark.skipif(
                     LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
@@ -135,6 +135,42 @@ class TestIsInteger:
                 continue
             assert not value.is_integer()
 
+class TestAsType:
+    def test_copy(self) -> None:
+        a = np.float64(4.5)
+        b = a.astype(np.float64, copy=False)
+        assert a is b
+        b = np.astype(a, np.int64, copy=False)
+        assert a != b
+        b = a.astype(np.float64, copy=True)
+        assert a is b
+
+class TestAsTypeStructuredCopy:
+    # Regression test for gh-32379: astype on a structured scalar
+    # must return an independent object, not a mutable view into the parent array.
+    def test_copy_true_is_independent(self) -> None:
+        a = np.array([('AB',), ('CD',)], dtype=[('name', 'U5')])
+        b = a[1]
+
+        c = b.astype(b, copy=True)
+        assert c is not b
+        c['name'] = 'ZZ'
+        assert a[1]['name'] == 'CD'
+
+    def test_default_copy_is_independent(self) -> None:
+        # copy defaults to True, so the same guarantee holds without the kwarg
+        a = np.array([('AB',), ('CD',)], dtype=[('name', 'U5')])
+        b = a[1]
+
+        c = b.astype(b)
+        c['name'] = 'ZZ'
+        assert a[1]['name'] == 'CD'
+
+    def test_subarray_dtype(self):
+        x = np.array(([1, 2],), dtype=[("f", "i4", (2,))])[()]
+        assert_equal(x.astype(np.dtype(("i4", (2,)))), [1, 2])
+        with pytest.raises(TypeError):
+            np.int64(128).astype(("i1", (2,)), casting="same_value")
 
 class TestClassGetItem:
     @pytest.mark.parametrize("cls", [
@@ -271,9 +307,10 @@ class TestByteswap:
         assert swapped["b"] is sentinel
         assert swapped["a"] == np.int32(1).byteswap()
 
-        count = sys.getrefcount(sentinel)
-        scalar.byteswap()
-        assert sys.getrefcount(sentinel) == count
+        if HAS_REFCOUNT:
+            count = sys.getrefcount(sentinel)
+            scalar.byteswap()
+            assert sys.getrefcount(sentinel) == count
 
     @pytest.mark.parametrize("scalar", [
         np.bytes_(b""),
@@ -309,6 +346,7 @@ def test_array_wrap(scalar):
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestSignature:
     # test that scalar types have a valid __text_signature__ or __signature__ set
     @pytest.mark.parametrize(

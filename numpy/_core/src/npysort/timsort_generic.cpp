@@ -504,7 +504,7 @@ npy_timsort_impl(void *start, npy_intp num, void *varr, npy_intp elsize,
     minrun = compute_min_run_short(num);
 
     /* used for insertion sort and gallop key */
-    ret = resize_buffer_char(&buffer, len);
+    ret = resize_buffer_char(&buffer, 1);
 
     if (NPY_UNLIKELY(ret < 0)) {
         goto cleanup;

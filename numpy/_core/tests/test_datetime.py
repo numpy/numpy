@@ -43,6 +43,8 @@ class TestDateTime:
               "np.datetime64"
         with pytest.warns(UserWarning, match=msg):
             np.datetime64('2000-01-01T00+01')
+        with pytest.warns(UserWarning, match=msg):
+            np.array([b'2000-01-01T00+01'] * 1000).astype('M8[us]')
 
     def test_datetime(self):
         msg = "no explicit representation of timezones available for " \
@@ -529,6 +531,44 @@ class TestDateTime:
         expected = np.array(datetime.timedelta(seconds=20),
                             np.timedelta64)
         assert_equal(actual, expected)
+
+    def test_pytimedelta_subclass_and_duck_typing(self):
+        us = 10**6
+        day = 86400 * us
+
+        # exact
+        td = datetime.timedelta(days=-3, seconds=5, microseconds=7)
+        expected = np.timedelta64(-3 * day + 5 * us + 7, 'us')
+        assert_equal(np.timedelta64(td), expected)
+        assert_equal(np.timedelta64(td).dtype, np.dtype('m8[us]'))
+
+        # subclass
+        class MyTimedelta(datetime.timedelta):
+            pass
+        assert_equal(np.timedelta64(MyTimedelta(days=-3, seconds=5,
+                                                microseconds=7)), expected)
+
+        # overridden attribute is honored
+        class ShiftedDays(datetime.timedelta):
+            @property
+            def days(self):
+                return super().days + 1
+        assert_equal(np.timedelta64(ShiftedDays(days=1, seconds=2)),
+                     np.timedelta64(2 * day + 2 * us, 'us'))
+
+        # duck-typed
+        class DuckTimedelta:
+            days, seconds, microseconds = 2, 3, 4
+        duck_expected = np.timedelta64(2 * day + 3 * us + 4, 'us')
+        assert_equal(np.timedelta64(DuckTimedelta()), duck_expected)
+
+        # arrays
+        arr = np.array([td, MyTimedelta(days=-3, seconds=5, microseconds=7),
+                        DuckTimedelta()], dtype='m8[us]')
+        assert_equal(arr, np.array([expected, expected, duck_expected]))
+        assert_equal(np.array([datetime.timedelta(days=2, seconds=3)],
+                              dtype='m8[s]'),
+                     np.array([2 * 86400 + 3], dtype='m8[s]'))
 
     def test_timedelta_nat_format(self):
         # gh-17552
@@ -1103,6 +1143,9 @@ class TestDateTime:
 
         # gh-16352: upconversion to finer units overflows
         arr = np.array(["2367-12-31 12:00:00"], dtype="datetime64[h]")
+        with pytest.raises(OverflowError, match="Overflow"):
+            arr.astype("datetime64[ns]")
+        arr = np.array(["2367-12-31 12:00:00"] * 1000, dtype="datetime64[h]")
         with pytest.raises(OverflowError, match="Overflow"):
             arr.astype("datetime64[ns]")
 
@@ -2206,6 +2249,18 @@ class TestDateTime:
               "np.datetime64"
         # Arbitrary bad string
         assert_raises(ValueError, np.array, ['badvalue'], np.dtype('M8[us]'))
+        for s in [b'badvalue', b'1980-13', b'1980-01-32', b'1980-01-01T25',
+                  b'1980-01-01T00:60', b'1980-01-01T00:00:60']:
+            assert_raises(ValueError, np.array([s] * 1000).astype, 'M8[us]')
+        for s in [b'1980-01-01T00+25', b'1980-01-01T00+01:60']:
+            with pytest.warns(UserWarning, match=msg):
+                assert_raises(ValueError, np.array([s] * 1000).astype, 'M8[us]')
+        match = '^Error parsing datetime string "\ufffdbad" at position 0$'
+        with pytest.raises(ValueError, match=match):
+            np.array([b'\xffbad']).astype('M8[us]')
+        with pytest.raises(ValueError) as excinfo:
+            np.datetime64('x' * 200)
+        assert 'x' * 101 not in str(excinfo.value)
         # Character after year must be '-'
         assert_raises(ValueError, np.array, ['1980X'], np.dtype('M8[us]'))
         # Cannot have trailing '-'

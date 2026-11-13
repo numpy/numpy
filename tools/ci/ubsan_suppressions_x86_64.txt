@@ -7,8 +7,9 @@
 # https://github.com/numpy/numpy/issues/24209#issuecomment-2160154181
 signed-integer-overflow:*
 
-# all alignment runtime errors ignored in favor of this being tracked via TypeSanitizer
-# otherwise ubsan may detect system file alignment errors outside numpy
+# alignment runtime errors are checked by the macOS arm64 job, which uses
+# ubsan_suppressions_arm64.txt. They are ignored here because ubsan may detect
+# Linux system file alignment errors outside numpy
 alignment:*
 
 # suggested fix for runtime error: check for overflow if signed

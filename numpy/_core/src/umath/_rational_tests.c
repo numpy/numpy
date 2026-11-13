@@ -986,12 +986,25 @@ rational2_within_dtype_loop(
 
 /*
  * `common_dtype` slot offered only by the new DType API.  Promotes
- * `rational2` with itself or any integer dtype to `rational2`; everything
- * else returns `Py_NotImplemented`.
+ * `rational2` with itself or any integer dtype to `rational2`.  Deliberately
+ * treat Python complex and complex128 differently to test that abstract
+ * DTypes defer to this slot instead of using the legacy promotion fallback.
+ * Everything else returns `Py_NotImplemented`.
  */
 static PyArray_DTypeMeta *
 rational2_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
+    if (other == &PyArray_PyComplexDType) {
+        PyErr_SetString(PyExc_TypeError,
+                "rational2 refuses Python complex promotion");
+        return NULL;
+    }
+    if (other == &PyArray_CDoubleDType) {
+        /* PyArray_PyComplexDType must not reach here via its fallback. */
+        PyErr_SetString(PyExc_TypeError,
+                "Tests should not hit cdouble promotion");
+        return NULL;
+    }
     if (cls == other) {
         Py_INCREF((PyObject *)cls);
         return cls;

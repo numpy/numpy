@@ -48,11 +48,12 @@ c_args_random = [
   cflags_large_file_support,
   '-DNPY_NO_DEPRECATED_API=0',  # Cython still uses old NumPy C API
 ]
+
 if host_machine.system() == 'cygwin'
   c_args_random += ['-Wl,--export-all-symbols']
 endif
 
-cython_args = []
+cython_args = []  
 if cy.version().version_compare('>=3.1.0')
   cython_args += ['-Xfreethreading_compatible=True']
 endif

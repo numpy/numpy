@@ -106,8 +106,8 @@ jobs:
             gpg --dearmor | \
             tee /etc/apt/keyrings/microsoft.gpg > /dev/null &&
           chmod go+r /etc/apt/keyrings/microsoft.gpg &&
-          curl -LsSf https://astral.sh/uv/0.10.8/install.sh -o /tmp/uv-install.sh &&
-          echo 'eae5e1dae89cd0b74d357f549ccd6faa94b2ad6c1d89d78972a625655a4556ae  /tmp/uv-install.sh' | sha256sum -c - &&
+          curl -LsSf https://astral.sh/uv/0.13.5/install.sh -o /tmp/uv-install.sh &&
+          echo '1c6e7f025499664633ac2dce43a210800510e9ef0625c52e034a8afdf8bf177a  /tmp/uv-install.sh' | sha256sum -c - &&
           sh /tmp/uv-install.sh &&
           export PATH="/root/.local/bin:$PATH" &&
           mkdir -p /lib64 && ln -s /host/lib64/ld-* /lib64/ &&

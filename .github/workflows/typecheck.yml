@@ -3,7 +3,7 @@ name: Type-checking
 # Mypy is too slow to run as part of regular CI. The purpose of the jobs in
 # this file is to cover running Mypy across:
 #
-#   - OSes: Linux, Windows and macOS
+#   - OSes: Linux and Windows
 #   - Python versions: lowest/highest supported versions, and an intermediate one
 #
 # The build matrix aims for sparse coverage across those two dimensions.
@@ -52,7 +52,8 @@ jobs:
       fail-fast: false
       matrix:
         os_python:
-          - [macos-latest, '3.14']
+          # macOS CI capacity is limited; cover this Python version on Linux.
+          - [ubuntu-latest, '3.14']
           - [ubuntu-latest, '3.13']
           - [windows-2022, '3.12']
     steps:
@@ -61,7 +62,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
         python-version: ${{ matrix.os_python[1] }}
         activate-environment: true
@@ -87,7 +88,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
-    - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
         activate-environment: true
     - name: Install dependencies

@@ -9,7 +9,7 @@ _defaults: &defaults
   docker:
     # CircleCI maintains a library of pre-built images
     # documented at https://circleci.com/developer/images/image/cimg/python
-    - image: cimg/python:3.12.12
+    - image: cimg/python:3.12.16
   working_directory: ~/repo
 
 # PRs changing only paths matching this regex skip the build job

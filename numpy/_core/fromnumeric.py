@@ -209,9 +209,9 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
         The number of largest/smallest elements to return. ``k`` must
         be a non-negative integer and within indexable range specified by
         ``axis``.
-    axis: int, optional
-        Axis along which to find the largest/smallest elements.
-        The default is -1 (the last axis).
+    axis: int or None, optional
+        Axis along which to find the largest/smallest elements. If None,
+        the flattened array is used. The default is -1 (the last axis).
     mode: {"largest", "smallest"}, optional
         If "largest", the largest elements are returned. If "smallest",
         the smallest elements are returned. The default is "largest".
@@ -230,7 +230,7 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
         ``topk_values`` are the top ``k`` values and ``topk_indices``
         are the corresponding indices. Both arrays are of the shape
         of the input array with the dimension along ``axis`` replaced
-        by ``k``.
+        by ``k``. If ``axis`` is None, both arrays are of shape (k,).
 
 
     Notes
@@ -268,13 +268,14 @@ def top_k(a, k, /, *, axis=-1, mode="largest", sorted=True):
     """
     if k < 0:
         raise ValueError(f'k(={k}) provided must be a non-negative integer.')
-    if axis is None:
-        raise ValueError('axis=None is not supported. Please provide a valid axis.')
     if mode not in ["largest", "smallest"]:
         raise ValueError(f'mode(="{mode}") must be either "largest" or "smallest".')
     largest = mode == "largest"
 
     arr = np.asanyarray(a)
+    if axis is None:
+        arr = arr.ravel()
+        axis = -1
     axis = normalize_axis_index(axis, arr.ndim)
 
     kth = k - 1 if k > 0 else np.array([], dtype=np.intp)
@@ -3448,6 +3449,29 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims, initial, where)
 
 
+def _overrides_min_max(a):
+    cls = type(a)
+    return (getattr(cls, 'min', mu.ndarray.min) is not mu.ndarray.min
+            or getattr(cls, 'max', mu.ndarray.max) is not mu.ndarray.max)
+
+
+def _minmax_separate(a, axis, out, keepdims, initial, where):
+    out_min, out_max = out if out is not None else (None, None)
+    initial_min, initial_max = (initial if isinstance(initial, tuple)
+                                else (initial, initial))
+    # out_min may alias the operands of the maximum, so the minimum goes to a
+    # temporary that is copied into out_min after the maximum is computed
+    tmp_min = None if out_min is None else np.empty_like(out_min)
+    min_value = min(a, axis=axis, out=tmp_min, keepdims=keepdims,
+                    initial=initial_min, where=where)
+    max_value = max(a, axis=axis, out=out_max, keepdims=keepdims,
+                    initial=initial_max, where=where)
+    if out_min is None:
+        return min_value, max_value
+    out_min[...] = min_value
+    return out_min, max_value
+
+
 def _minmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
                        where=None):
     return (a, *out) if type(out) is tuple else (a, out)
@@ -3528,17 +3552,14 @@ def minmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     (array([0, 2]), array([1, 3]))
 
     """
+    if (type(a) is not mu.ndarray and not hasattr(a, 'minmax')
+            and _overrides_min_max(a)):
+        return _minmax_separate(a, axis, out, keepdims, initial, where)
     try:
         return _wrapreduction(a, um.minimummaximum, 'minmax', axis, None, out,
                               keepdims, initial, where)
     except np._core._exceptions._UFuncNoLoopError:
-        out_min, out_max = out if out is not None else (None, None)
-        initial_min, initial_max = (initial if type(initial) is tuple
-                                    else (initial, initial))
-        return (min(a, axis=axis, out=out_min, keepdims=keepdims,
-                    initial=initial_min, where=where),
-                max(a, axis=axis, out=out_max, keepdims=keepdims,
-                    initial=initial_max, where=where))
+        return _minmax_separate(a, axis, out, keepdims, initial, where)
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,

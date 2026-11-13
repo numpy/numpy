@@ -14,6 +14,7 @@
 #include "abstractdtypes.h"
 #include "npy_static_data.h"
 #include "module_state.h"
+#include "npy_pycompat.h"
 
 
 /*

@@ -884,6 +884,9 @@ string_to_int(
     npy_intp const strides[],
     NpyAuxData *NPY_UNUSED(auxdata)
 ) {
+    // load-bearing for the format codes used in error cases below
+    static_assert(std::is_same_v<NpyLongType, npy_longlong> ||
+                  std::is_same_v<NpyLongType, npy_ulonglong>);
     PyArray_StringDTypeObject *descr =
             ((PyArray_StringDTypeObject *)context->descriptors[0]);
     npy_string_allocator *allocator =
@@ -901,25 +904,24 @@ string_to_int(
     while (N--) {
         NpyLongType value;
         if (stringbuf_to_int<NpyLongType>(in, &value, has_null, default_string, allocator) != 0) {
-            npy_gil_error(PyExc_RuntimeError, "Encountered problem converting string dtype to integer dtype.");
             goto fail;
         }
-        *(NpyType *)out = (NpyType)value;
+        NpyType narrowed = (NpyType)value;
 
         // Cast back to NpyLongType to check for out-of-bounds errors
-        if (static_cast<NpyLongType>(*(NpyType *)out) != value) {
+        if (static_cast<NpyLongType>(narrowed) != value) {
             // out of bounds, raise error following NEP 50 behavior
             const char *errmsg = NULL;
             if constexpr (std::is_same_v<NpyLongType, npy_ulonglong>) {
-                errmsg = "Integer %llu is out of bounds for %s";
-            } else if constexpr (std::is_same_v<NpyLongType, npy_longlong>) {
-                errmsg = "Integer %lli is out of bounds for %s";
+                errmsg = "Python integer %llu out of bounds for %S";
             } else {
-                errmsg = "Unrecognized integer type %i is out of bounds for %s";
+                errmsg = "Python integer %lli out of bounds for %S";
             }
-            npy_gil_error(PyExc_OverflowError, errmsg, value, typenum_to_cstr(typenum));
+            npy_gil_error(PyExc_OverflowError, errmsg, value,
+                          context->descriptors[1]);
             goto fail;
         }
+        *(NpyType *)out = narrowed;
         in += in_stride;
         out += out_stride;
     }
@@ -1915,10 +1917,11 @@ string_to_void_resolve_descriptors(PyObject *NPY_UNUSED(self),
     else {
         // reject structured voids
         if (PyDataType_NAMES(given_descrs[1]) != NULL || PyDataType_SUBARRAY(given_descrs[1]) != NULL) {
-            PyErr_SetString(
+            PyErr_Format(
                     PyExc_TypeError,
-                    "Casting from StringDType to a structured dtype is not "
-                    "supported.");
+                    "Only casts from StringDType to unstructured void dtypes "
+                    "are supported, but %R is a structured or subarray dtype.",
+                    given_descrs[1]);
             return (NPY_CASTING)-1;
         }
         Py_INCREF(given_descrs[1]);
@@ -1929,6 +1932,27 @@ string_to_void_resolve_descriptors(PyObject *NPY_UNUSED(self),
     loop_descrs[0] = given_descrs[0];
 
     return NPY_UNSAFE_CASTING;
+}
+
+// void to string
+
+static NPY_CASTING
+void_to_string_resolve_descriptors(PyObject *self,
+                                   PyArray_DTypeMeta *dtypes[2],
+                                   PyArray_Descr *given_descrs[2],
+                                   PyArray_Descr *loop_descrs[2],
+                                   npy_intp *view_offset)
+{
+    if (PyDataType_NAMES(given_descrs[0]) != NULL || PyDataType_SUBARRAY(given_descrs[0]) != NULL) {
+        PyErr_Format(
+                PyExc_TypeError,
+                "Only casts from unstructured void dtypes to StringDType are "
+                "supported, but %R is a structured or subarray dtype.",
+                given_descrs[0]);
+        return (NPY_CASTING)-1;
+    }
+    return any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>(
+            self, dtypes, given_descrs, loop_descrs, view_offset);
 }
 
 // void to string and bytes to string
@@ -2012,7 +2036,7 @@ fixed_width_bytes_to_string(PyArrayMethod_Context *context, char *const data[],
 }
 
 static PyType_Slot v2s_slots[] = {
-    {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAME_KIND_CASTING>},
+    {NPY_METH_resolve_descriptors, (void *)&void_to_string_resolve_descriptors},
     {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string},
     {0, NULL}
 };

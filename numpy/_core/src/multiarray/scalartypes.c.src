@@ -17,9 +17,12 @@
 #include "npy_pycompat.h"
 
 #include "arraytypes.h"
+#include "array_assign.h"
+#include "array_coercion.h"
 #include "npy_config.h"
 #include "mapping.h"
 #include "ctors.h"
+#include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "descriptor.h"
 #include "usertypes.h"
@@ -35,6 +38,7 @@
 #include "alloc.h"
 #include "npy_import.h"
 #include "dragon4.h"
+#include "npy_argparse.h"
 #include "npy_longdouble.h"
 #include "npy_buffer.h"
 #include "npy_dlpack.h"
@@ -2258,6 +2262,110 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
     }
 }
 
+NPY_NO_EXPORT int
+PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting);
+
+static PyObject*
+gentype_astype(PyObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyArray_Descr *from = PyArray_DescrFromScalar(self);
+    if (from == NULL) {
+        return NULL;
+    }
+
+    NPY_PREPARE_ARGPARSER;
+
+    npy_dtype_info dt_info = {NULL, NULL};
+    NPY_CASTING casting = NPY_UNSAFE_CASTING;
+    NPY_ORDER order = NPY_KEEPORDER;
+    NPY_ASTYPECOPYMODE forcecopy = 1;
+    int subok = 1;
+
+    if (npy_parse_arguments("astype", args, len_args, kwnames,
+        {"dtype", &PyArray_DTypeOrDescrConverterRequired, &dt_info},
+        {"|order", &PyArray_OrderConverter, &order},
+        {"|casting", &PyArray_CastingConverterSameValue, &casting},
+        {"|subok", &PyArray_PythonPyIntFromInt, &subok},
+        {"|copy", &PyArray_AsTypeCopyConverter, &forcecopy}) < 0){
+
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        Py_DECREF(from);
+        return NULL;
+    }
+
+    PyArrayObject *temp = (PyArrayObject *)PyArray_FromScalar(self, NULL);
+
+    if (temp == NULL){
+        Py_XDECREF(dt_info.descr);
+        Py_DECREF(dt_info.dtype);
+        Py_DECREF(from);
+        return NULL;
+    }
+
+    PyArray_Descr *to = PyArray_AdaptDescriptorToArray(temp, dt_info.dtype, dt_info.descr);
+
+    Py_XDECREF(dt_info.descr);
+    Py_DECREF(dt_info.dtype);
+
+    if (to == NULL){
+        Py_DECREF(from);
+        Py_DECREF(temp);
+        return NULL;
+    }
+
+    int equiv = (to != NULL) && PyArray_EquivTypes(from, to);
+    Py_DECREF(from);
+    if(equiv){
+        // Return self for immutables regardless of copy
+        if ((forcecopy == 0) | (! PyArray_IsScalar(self, Void))){
+            Py_DECREF(to);
+            Py_DECREF(temp);
+            return Py_NewRef(self);
+        }
+    }
+
+    if (!PyArray_CanCastArrayTo(temp, to, casting)) {
+        PyErr_Clear();
+        npy_set_invalid_cast_error(
+                PyArray_DESCR(temp), to, casting, PyArray_NDIM(temp) == 0);
+        Py_DECREF(to);
+        Py_DECREF(temp);
+        return NULL;
+    }
+
+    Py_INCREF(to);
+    PyArrayObject *ret = (PyArrayObject *)PyArray_NewLikeArray(temp, order, to, subok);
+
+    if (ret == NULL) {
+        Py_DECREF(temp);
+        Py_DECREF(to);
+        return NULL;
+    }
+
+    int out_ndim = PyArray_NDIM(ret);
+    PyArray_Descr *out_descr = PyArray_DESCR(ret);
+
+    if (out_ndim != PyArray_NDIM(temp)) {
+        ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(temp);
+        ((PyArrayObject_fields *)ret)->descr = to;
+    }
+
+    int success = PyArray_AssignArray(ret, temp, NULL, casting);
+
+    ((PyArrayObject_fields *)ret)->nd = out_ndim;
+    ((PyArrayObject_fields *)ret)->descr = out_descr;
+    Py_DECREF(temp);
+    Py_DECREF(to);
+
+    if (success < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    return PyArray_Return(ret);
+}
 
 /*
  * These gentype_* functions take keyword arguments.
@@ -2267,7 +2375,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
- *         round, argmax, argmin, max, min, any, all, astype, resize,
+ *         round, argmax, argmin, max, min, any, all, resize,
  *         reshape, choose, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
@@ -3565,6 +3673,102 @@ scalar_new_parse_posargs(PyObject *args, PyObject *kwds, const char *format,
                                        arg0) ? 0 : -1;
 }
 
+static int
+scalar_as_longdouble(PyObject *obj, npy_longdouble *value)
+{
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_LONGDOUBLE);
+    if (descr == NULL) {
+        return -1;
+    }
+
+    int res = PyArray_Pack(descr, value, obj);
+    Py_DECREF(descr);
+    if (res < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
+static int
+clongdouble_component_as_longdouble(PyObject *obj, npy_longdouble *value)
+{
+    if (PyArray_IsScalar(obj, Bool) ||
+            (PyArray_IsScalar(obj, Integer) &&
+             !PyArray_IsScalar(obj, Timedelta)) ||
+            PyArray_IsScalar(obj, Floating)) {
+        return scalar_as_longdouble(obj, value);
+    }
+
+    if (PyArray_CheckExact(obj) &&
+            PyArray_NDIM((PyArrayObject *)obj) == 0) {
+        PyArray_Descr *dtype = PyArray_DESCR((PyArrayObject *)obj);
+        if (PyDataType_ISBOOL(dtype) || PyDataType_ISINTEGER(dtype) ||
+                PyDataType_ISFLOAT(dtype)) {
+            /* Accept exact 0-D ndarrays with a real numeric dtype. */
+            return scalar_as_longdouble(obj, value);
+        }
+    }
+
+    if (PyArray_IsScalar(obj, Generic) || PyArray_Check(obj)) {
+        /*
+         * Reject other NumPy scalars and arrays before generic numeric
+         * conversion.  PyFloat_AsDouble(np.complex64(...)) would otherwise
+         * drop the imaginary part.
+         */
+        PyErr_SetString(PyExc_TypeError,
+                "clongdouble real and imaginary components must be real numbers");
+        return -1;
+    }
+
+    if (PyLong_Check(obj) && !PyBool_Check(obj)) {
+        /*
+         * npy_longdouble_from_PyLong converts through a string, which cannot
+         * represent a Python bool.  PyFloat_AsDouble handles bool instead.
+        */
+        *value = npy_longdouble_from_PyLong(obj);
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return 0;
+    }
+
+    double double_value = PyFloat_AsDouble(obj);
+    if (double_value == -1.0 && PyErr_Occurred()) {
+        return -1;
+    }
+    *value = double_value;
+    return 0;
+}
+
+
+static PyObject *
+clongdouble_from_real_imag(PyTypeObject *type, PyObject *real_obj,
+        PyObject *imag_obj)
+{
+    /*
+     * Unlike the corresponding cdouble/cfloat paths, we do not construct
+     * through PyComplex_Type. The PyComplex_Type approach accepts
+     * complex-valued components, e.g. np.cdouble(np.complex64(1 + 2j), 1),
+     * which is behavior that may be deprecated in the future.
+     * It also converts components through double, losing longdouble and
+     * large-integer precision.
+     */
+    npy_longdouble real, imag;
+    if (clongdouble_component_as_longdouble(real_obj, &real) < 0 ||
+            clongdouble_component_as_longdouble(imag_obj, &imag) < 0) {
+        return NULL;
+    }
+
+    PyObject *result = type->tp_alloc(type, 0);
+    if (result == NULL) {
+        return NULL;
+    }
+    PyArrayScalar_VAL(result, CLongDouble) = npy_cpackl(real, imag);
+    return result;
+}
+
 
 /**begin repeat
  * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
@@ -3633,6 +3837,23 @@ static PyObject *
         if (obj == NULL) {
             return NULL;
         }
+    }
+#elif defined(_@TYPE@_IS_CLONGDOUBLE)
+    if (PyTuple_GET_SIZE(args) <= 1) {
+        static char *kwnames[] = {"", NULL};  /* positional-only */
+        if (scalar_new_parse_posargs(args, kwds, "|O", kwnames, &obj) < 0) {
+            return NULL;
+        }
+    }
+    else {
+        static char *kwnames[] = {"", "", NULL};  /* positional-only */
+        PyObject *real_obj;
+        PyObject *imag_obj;
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwnames,
+                &real_obj, &imag_obj)) {
+            return NULL;
+        }
+        return clongdouble_from_real_imag(type, real_obj, imag_obj);
     }
 #else
     static char *kwnames[] = {"", NULL};  /* positional-only */

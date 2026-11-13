@@ -1965,8 +1965,7 @@ def _arg_trim_zeros(filt):
     if nonzero.size == 0:
         start = stop = np.array([], dtype=np.intp)
     else:
-        start = nonzero.min(axis=0)
-        stop = nonzero.max(axis=0)
+        start, stop = np.minmax(nonzero, axis=0)
     return start, stop
 
 
@@ -4549,8 +4548,14 @@ def _quantile_is_valid(q):
         for i in range(q.size):
             if not (0.0 <= q[i] <= 1.0):
                 return False
-    elif not (q.min() >= 0 and q.max() <= 1):
-        return False
+    else:
+        # subclasses may not support np.minmax
+        if type(q) is np.ndarray:
+            q_min, q_max = np.minmax(q)
+        else:
+            q_min, q_max = q.min(), q.max()
+        if not (q_min >= 0 and q_max <= 1):
+            return False
     return True
 
 
@@ -4579,7 +4584,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     ) - 1
 
 
-def _get_gamma(virtual_indexes, previous_indexes, method):
+def _get_gamma(virtual_indexes, method):
     """
     Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
@@ -4587,8 +4592,6 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     virtual_indexes : array_like
         The indexes where the percentile is supposed to be found in the sorted
         sample.
-    previous_indexes : array_like
-        The floor values of virtual_indexes.
     method : dict
         The interpolation method chosen, which may have a specific rule
         modifying gamma.
@@ -4596,7 +4599,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     gamma is usually the fractional part of virtual_indexes but can be modified
     by the interpolation method.
     """
-    gamma = np.asanyarray(virtual_indexes - previous_indexes)
+    gamma = np.asanyarray(virtual_indexes - np.floor(virtual_indexes))
     gamma = method["fix_gamma"](gamma, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
@@ -4779,8 +4782,13 @@ def _quantile(
             raise ValueError(
                 f"{method!r} is not a valid method. "
                 f"Use one of: {valid_methods}") from None
+
+        idx_quantiles = quantiles
+        if quantiles.dtype.type is np.float16:
+            idx_quantiles = quantiles.astype(np.float64, copy=False)
+
         virtual_indexes = method_props["get_virtual_index"](values_count,
-                                                            quantiles)
+                                                            idx_quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
 
         if method_props["fix_gamma"] is None:
@@ -4822,11 +4830,12 @@ def _quantile(
             previous = arr[previous_indexes]
             next = arr[next_indexes]
             # --- Linear interpolation
-            gamma = _get_gamma(virtual_indexes, previous_indexes,
-                               method_props)
+            gamma = _get_gamma(virtual_indexes, method_props)
             if weak_q:
                 gamma = float(gamma)
             else:
+                if idx_quantiles.dtype != quantiles.dtype:
+                    gamma = gamma.astype(quantiles.dtype, copy=False)
                 result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
                 gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
@@ -5532,7 +5541,7 @@ def insert(arr, obj, values, axis=None):
         # need to copy obj, because indices will be changed in-place
         indices = np.array(obj)
         if indices.dtype == bool:
-            if obj.ndim != 1:
+            if indices.ndim != 1:
                 raise ValueError('boolean array argument obj to insert '
                                 'must be one dimensional')
             indices = np.flatnonzero(obj)
@@ -5575,8 +5584,7 @@ def insert(arr, obj, values, axis=None):
         indices = indices.astype(intp)
 
     if indices.size > 0:
-        min_idx = indices.min()
-        max_idx = indices.max()
+        min_idx, max_idx = np.minmax(indices)
         if min_idx < -N or max_idx > N:
             oob = min_idx if min_idx < -N else max_idx
             raise IndexError(
