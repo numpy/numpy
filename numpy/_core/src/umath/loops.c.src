@@ -673,9 +673,11 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
- * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
- * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
- * #c    = ,,,l,ll#
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #c    = ,,,l,ll,u,u,u,ul,ull#
  */
 NPY_NO_EXPORT int
 @TYPE@_gcd_reduce_loop(
@@ -685,53 +687,23 @@ NPY_NO_EXPORT int
         const npy_intp *strides,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
-    @type@ acc = *(@type@ *)data[0];
-    char *input = data[1];
-    char *output = data[2];
-
-    for (npy_intp i = 0; i < dimensions[0]; i++) {
-        if (acc != 1) {
-            @type@ value = *(@type@ *)input;
-            acc = npy_gcd@c@(acc, value);
+    npy_intp n = dimensions[0];
+    char *acc = data[0];
+    char *in = data[1];
+    char *out = data[2];
+    npy_intp acc_step = strides[0];
+    npy_intp in_step = strides[1];
+    npy_intp out_step = strides[2];
+    for (npy_intp i = 0; i < n; i++) {
+        @type@ cur_acc = *(@type@ *)acc;
+        if (cur_acc != 1) {
+            @type@ value = *(@type@ *)in;
+            cur_acc = npy_gcd@c@(cur_acc, value);
         }
-
-        *(@type@ *)output = acc;
-
-        input += strides[1];
-        output += strides[2];
-    }
-
-    return 0;
-}
-/**end repeat**/
-
-/**begin repeat
- * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
- * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
- * #c    = u,u,u,ul,ull#
- */
-NPY_NO_EXPORT int
-@TYPE@_gcd_reduce_loop(
-        PyArrayMethod_Context *NPY_UNUSED(context),
-        char *const *data,
-        const npy_intp *dimensions,
-        const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata))
-{
-    @type@ acc = *(@type@ *)data[0];
-    char *input = data[1];
-    char *output = data[2];
-
-    for (npy_intp i = 0; i < dimensions[0]; i++) {
-        if (acc != 1) {
-            @type@ value = *(@type@ *)input;
-            acc = npy_gcd@c@(acc, value);
-        }
-
-        *(@type@ *)output = acc;
-
-        input += strides[1];
-        output += strides[2];
+        *(@type@ *)out = cur_acc;
+        acc += acc_step;
+        in += in_step;
+        out += out_step;
     }
 
     return 0;
