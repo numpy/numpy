@@ -12446,3 +12446,34 @@ class TestArrayConverter:
         conv = _array_converter([1, 2, 3])
         with pytest.raises(ValueError, match="invalid pyscalar mode"):
             conv.as_arrays(pyscalars="invalid")
+
+
+@pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                   np.int8, np.int32, np.int64, np.uint64])
+@pytest.mark.parametrize("side", ["left", "right"])
+@pytest.mark.parametrize("nan_haystack", [False, True])
+def test_searchsorted_blocked_matches_sorter_path(dtype, side, nan_haystack):
+    # The typed search processes keys in L1-sized blocks and uses a plain
+    # comparison when no NaNs are involved; the sorter path is independent.
+    rng = np.random.default_rng(42)
+    for n, m in [(0, 10), (1, 300), (3, 1000), (257, 1000), (1000, 5000)]:
+        if np.dtype(dtype).kind == "f":
+            e = np.sort(rng.normal(size=n) * 50).astype(dtype)
+            if nan_haystack and n:
+                e[-max(1, n // 10):] = np.nan
+            k = (rng.normal(size=m) * 60).astype(dtype)
+            k[::7] = np.nan
+            k[1::11] = -0.0
+            k[2::13] = np.inf
+        else:
+            e = np.sort(rng.integers(0, 100, n)).astype(dtype)
+            k = rng.integers(0, 120, m).astype(dtype)
+        sorter = np.arange(n)
+        for kk in (k, k[::3]):
+            expected = np.searchsorted(e, kk, side=side, sorter=sorter)
+            assert_array_equal(np.searchsorted(e, kk, side=side), expected)
+        if n > 1:
+            expected = np.searchsorted(e[::2], k, side=side,
+                                       sorter=np.arange(e[::2].size))
+            assert_array_equal(np.searchsorted(e[::2], k, side=side),
+                               expected)
