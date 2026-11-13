@@ -6,7 +6,7 @@ import functools
 import itertools
 import operator
 
-from numpy._core.multiarray import c_einsum, matmul
+from numpy._core.multiarray import c_einsum, matmul, result_type
 from numpy._core.numeric import asanyarray, reshape
 from numpy._core.overrides import array_function_dispatch
 from numpy._core.umath import multiply
@@ -920,6 +920,15 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     return (path, path_print)
 
 
+def _term_is_reduced(term, shape, desired):
+    """Whether preparing ``term`` as ``desired`` sums over any of its indices.
+
+    Indices of size one are ignored since summing over them cannot change any
+    value, and neither can taking a diagonal or transposing.
+    """
+    return any(d != 1 and ix not in desired for ix, d in zip(term, shape))
+
+
 def _parse_eq_to_pure_multiplication(a_term, shape_a, b_term, shape_b, out):
     """If there are no contracted indices, then we can directly transpose and
     insert singleton dimensions into ``a`` and ``b`` such that (broadcast)
@@ -962,6 +971,8 @@ def _parse_eq_to_pure_multiplication(a_term, shape_a, b_term, shape_b, out):
         None,  # new_shape_ab, not needed since not fusing
         None,  # perm_ab, not needed as we transpose a and b first
         True,  # pure_multiplication=True
+        _term_is_reduced(a_term, shape_a, desired_a),
+        _term_is_reduced(b_term, shape_b, desired_b),
     )
 
 
@@ -1119,6 +1130,8 @@ def _parse_eq_to_batch_matmul(eq, shape_a, shape_b):
         new_shape_ab,
         perm_ab,
         False,  # pure_multiplication=False
+        _term_is_reduced(a_term, shape_a, desired_a),
+        _term_is_reduced(b_term, shape_b, desired_b),
     )
 
 
@@ -1174,6 +1187,8 @@ def bmm_einsum(eq, a, b, out=None, **kwargs):
         new_shape_ab,
         perm_ab,
         pure_multiplication,
+        reduce_a,
+        reduce_b,
     ) = _parse_eq_to_batch_matmul(eq, a.shape, b.shape)
 
     # n.b. one could special case various cases to call c_einsum directly here
@@ -1184,17 +1199,35 @@ def bmm_einsum(eq, a, b, out=None, **kwargs):
         kwargs.pop("order", "K"), a.flags.f_contiguous, b.flags.f_contiguous
     )
 
+    # Summing a term on its own must happen in the dtype of the contraction,
+    # not in the dtype of that term: otherwise e.g. a boolean term is reduced
+    # with logical-or and a small integer term can overflow before it ever
+    # meets the wider dtype of the other term.
+    if reduce_a or reduce_b:
+        dtype = kwargs.get("dtype")
+        if dtype is None:
+            dtype = result_type(a.dtype, b.dtype)
+        reduce_kwargs = {"dtype": dtype}
+        if "casting" in kwargs:
+            reduce_kwargs["casting"] = kwargs["casting"]
+
     # prepare left
     if eq_a is not None:
         # diagonals, sums, and transpose
-        a = c_einsum(eq_a, a)
+        if reduce_a:
+            a = c_einsum(eq_a, a, **reduce_kwargs)
+        else:
+            a = c_einsum(eq_a, a)
     if new_shape_a is not None:
         a = reshape(a, new_shape_a)
 
     # prepare right
     if eq_b is not None:
         # diagonals, sums, and transpose
-        b = c_einsum(eq_b, b)
+        if reduce_b:
+            b = c_einsum(eq_b, b, **reduce_kwargs)
+        else:
+            b = c_einsum(eq_b, b)
     if new_shape_b is not None:
         b = reshape(b, new_shape_b)
 

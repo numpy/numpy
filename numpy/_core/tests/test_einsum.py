@@ -1170,6 +1170,45 @@ class TestEinsum:
         arrays = [np.random.rand(*shape) for shape in shapes]
         self.optimize_compare(eq, operands=arrays)
 
+    @pytest.mark.parametrize("optimize", [True, "greedy", "optimal"])
+    @pytest.mark.parametrize("subscripts, a, b", [
+        # a boolean term must be counted, not reduced with logical-or
+        ("ij,k->k", np.ones((2, 3), dtype=bool), np.array([0.5, 0.25])),
+        ("ij,jk->k", np.ones((2, 3), dtype=bool), np.arange(6.).reshape(3, 2)),
+        ("k,ij->k", np.array([0.5, 0.25]), np.ones((2, 3), dtype=bool)),
+        # small integer terms must not overflow before being promoted
+        ("i,j->j", np.array([200, 200], dtype=np.uint8), np.arange(3)),
+        ("ij,jk->k", np.full((2, 3), 100, dtype=np.int8),
+         np.arange(6.).reshape(3, 2)),
+        ("ii,j->j", np.full((2, 2), 100, dtype=np.int8), np.arange(3.)),
+    ])
+    def test_optimize_sums_term_in_result_dtype(self, optimize, subscripts,
+                                                a, b):
+        # Indices that appear in a single term are summed before the
+        # pairwise contraction, which has to happen in the result dtype.
+        expected = np.einsum(subscripts, a, b, optimize=False)
+        res = np.einsum(subscripts, a, b, optimize=optimize)
+        assert res.dtype == expected.dtype
+        assert_array_equal(res, expected)
+
+    @pytest.mark.parametrize("optimize", [True, "greedy", "optimal"])
+    def test_optimize_sums_term_in_requested_dtype(self, optimize):
+        a = np.array([100, 100], dtype=np.int8)
+        b = np.array([1, 2], dtype=np.int8)
+        expected = np.einsum("i,j->j", a, b, dtype=np.int64, optimize=False)
+        assert_array_equal(expected, [200, 400])
+        res = np.einsum("i,j->j", a, b, dtype=np.int64, optimize=optimize)
+        assert res.dtype == np.int64
+        assert_array_equal(res, expected)
+
+        # the casting rule still applies to the requested dtype
+        with pytest.raises(TypeError):
+            np.einsum("i,j->j", a.astype(np.float64), b, dtype=np.int64,
+                      optimize=optimize)
+        res = np.einsum("i,j->j", a.astype(np.float64), b, dtype=np.int64,
+                        casting="unsafe", optimize=optimize)
+        assert_array_equal(res, expected)
+
 
 class TestEinsumPath:
     def build_operands(self, string, size_dict=global_size_dict):
