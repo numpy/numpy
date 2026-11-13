@@ -1236,15 +1236,11 @@ init_string_dtype(void)
 }
 
 NPY_NO_EXPORT int
-free_and_copy(npy_string_allocator *in_allocator,
-              npy_string_allocator *out_allocator,
-              const npy_packed_static_string *in,
-              npy_packed_static_string *out, const char *location)
+copy_string(npy_string_allocator *in_allocator,
+            npy_string_allocator *out_allocator,
+            const npy_packed_static_string *in,
+            npy_packed_static_string *out, const char *location)
 {
-    if (NpyString_free(out, out_allocator) < 0) {
-        npy_gil_error(PyExc_MemoryError, "Failed to deallocate string in %s", location);
-        return -1;
-    }
     if (NpyString_dup(in, out, in_allocator, out_allocator) < 0) {
         npy_gil_error(PyExc_MemoryError, "Failed to allocate string in %s", location);
         return -1;
@@ -1263,12 +1259,7 @@ load_new_string(npy_packed_static_string *out, npy_static_string *out_ss,
                 const char *err_context)
 {
     npy_packed_static_string *out_pss = (npy_packed_static_string *)out;
-    if (NpyString_free(out_pss, allocator) < 0) {
-        npy_gil_error(PyExc_MemoryError,
-                      "Failed to deallocate string in %s", err_context);
-        return -1;
-    }
-    if (NpyString_newemptysize(num_bytes, out_pss, allocator) < 0) {
+    if (NpyString_replace(NULL, num_bytes, out_pss, allocator) < 0) {
         npy_gil_error(PyExc_MemoryError,
                       "Failed to allocate string in %s", err_context);
         return -1;
