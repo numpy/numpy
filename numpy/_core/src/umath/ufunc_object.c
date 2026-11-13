@@ -6983,6 +6983,13 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                         op2_array, &context);
 
         }
+        /*
+         * The indices select subarrays (some dimensions of op1 are not
+         * indexed by an array). The last iteration dimension is then the
+         * last dimension of these subarrays, and the inner loop can be
+         * called once per run along it. With runs of length 1 this would
+         * gain nothing over the per-element path below.
+         */
         else if ((iter->subspace_iter != NULL) && (iter->nd > 0) &&
                  (iter->dimensions[iter->nd - 1] > 1)) {
             res = ufunc_at__subspace_iter(ufuncimpl, flags, iter, iter2,
