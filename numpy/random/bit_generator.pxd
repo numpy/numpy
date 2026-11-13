@@ -33,3 +33,7 @@ cdef class SeedSequence():
 
 cdef class SeedlessSeedSequence:
     pass
+
+from numpy.random._bitgen_bulk cimport bitgen_bulk_v1
+
+cdef const bitgen_bulk_v1 *get_bitgen_bulk(object bit_generator) except? NULL

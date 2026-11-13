@@ -1,5 +1,5 @@
 from typing import TypedDict, type_check_only
-from typing_extensions import disjoint_base
+from typing_extensions import CapsuleType, disjoint_base
 
 from numpy._typing import _ArrayLikeInt_co
 from numpy.random.bit_generator import BitGenerator, SeedSequence
@@ -20,6 +20,8 @@ class _PCG64State(TypedDict):
 
 @disjoint_base
 class PCG64(BitGenerator):
+    @property
+    def bulk_capsule(self) -> CapsuleType: ...
     def __init__(self, seed: _ArrayLikeInt_co | SeedSequence | None = ...) -> None: ...
     def jumped(self, jumps: int = 1) -> PCG64: ...
     @property  # type: ignore[override]
@@ -31,6 +33,8 @@ class PCG64(BitGenerator):
 @disjoint_base
 class PCG64DXSM(BitGenerator):
     def __init__(self, seed: _ArrayLikeInt_co | SeedSequence | None = ...) -> None: ...
+    @property
+    def bulk_capsule(self) -> CapsuleType: ...
     def jumped(self, jumps: int = 1) -> PCG64DXSM: ...
     @property  # type: ignore[override]
     def state(self) -> _PCG64State: ...  # pyrefly: ignore[bad-override]

@@ -5,6 +5,7 @@ cimport numpy as np
 ctypedef np.npy_bool bool_t
 
 from numpy.random cimport bitgen_t
+from numpy.random._bitgen_bulk cimport bitgen_bulk_v1
 
 cdef inline uint64_t _gen_mask(uint64_t max_val) noexcept nogil:
     """Mask generator for use in bounded random numbers"""
@@ -23,4 +24,5 @@ inttypes = ('uint64','uint32','uint16','uint8','bool','int64','int32','int16','i
 }}
 {{for inttype in inttypes}}
 cdef object _rand_{{inttype}}(object low, object high, object size, bint use_masked, bint closed, bitgen_t *state, object lock)
+cdef object _rand_{{inttype}}_bulk(object low, object high, object size, bint use_masked, bint closed, bitgen_t *state, const bitgen_bulk_v1 *bulk, object lock)
 {{endfor}}

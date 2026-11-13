@@ -1,5 +1,5 @@
 from typing import TypedDict, type_check_only
-from typing_extensions import disjoint_base
+from typing_extensions import CapsuleType, disjoint_base
 
 from numpy import uint64
 from numpy._typing import NDArray, _ArrayLikeInt_co
@@ -20,6 +20,8 @@ class _SFC64State(TypedDict):
 
 @disjoint_base
 class SFC64(BitGenerator):
+    @property
+    def bulk_capsule(self) -> CapsuleType: ...
     def __init__(self, seed: _ArrayLikeInt_co | SeedSequence | None = ...) -> None: ...
     @property  # type: ignore[override]
     def state(self) -> _SFC64State: ...  # pyrefly: ignore[bad-override]

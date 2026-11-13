@@ -17,18 +17,32 @@ from .c_distributions cimport *
 from libc cimport string
 from libc.math cimport sqrt
 from libc.stdint cimport (uint64_t, int64_t, INT64_MAX, SIZE_MAX)
-from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
-         _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
-         _rand_uint8, _gen_mask)
+from ._bounded_integers cimport (
+         _gen_mask, _rand_bool, _rand_int16, _rand_int32_bulk,
+         _rand_int64_bulk, _rand_int8, _rand_uint16,
+         _rand_uint32_bulk, _rand_uint64_bulk,
+         _rand_uint8,
+)
 from ._pcg64 import PCG64
 from numpy.random cimport bitgen_t
+from numpy.random._bitgen_bulk cimport bitgen_bulk_v1
+from numpy.random.bit_generator cimport get_bitgen_bulk
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
             CONS_BOUNDED_LT_0_1, CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
-            double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
+            double_fill, double_fill_bulk, cont, kahan_sum, cont_broadcast_3,
+            float_fill, float_fill_bulk, cont_f,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
             validate_output_shape
         )
+
+cdef extern from "src/distributions/distributions_bulk.h":
+    void random_standard_uniform_fill_with_bulk(
+        bitgen_t *bitgen_state, const bitgen_bulk_v1 *bulk,
+        np.npy_intp cnt, double *out) noexcept nogil
+    void random_standard_uniform_fill_f_with_bulk(
+        bitgen_t *bitgen_state, const bitgen_bulk_v1 *bulk,
+        np.npy_intp cnt, float *out) noexcept nogil
 
 cdef extern from "numpy/arrayobject.h":
     int PyArray_ResolveWritebackIfCopy(np.ndarray)
@@ -352,11 +366,16 @@ cdef class Generator:
                [-1.23204345, -1.75224494]])
 
         """
+        cdef const bitgen_bulk_v1 *bulk = get_bitgen_bulk(self._bit_generator)
         _dtype = np.dtype(dtype)
         if _dtype == np.float64:
-            return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, out)
+            return double_fill_bulk(
+                &random_standard_uniform_fill_with_bulk, &self._bitgen, bulk,
+                size, self.lock, out)
         elif _dtype == np.float32:
-            return float_fill(&random_standard_uniform_fill_f, &self._bitgen, size, self.lock, out)
+            return float_fill_bulk(
+                &random_standard_uniform_fill_f_with_bulk, &self._bitgen, bulk,
+                size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype %r for random' % _dtype)
 
@@ -675,19 +694,20 @@ cdef class Generator:
         # bounded uniform integers. Lemire's method is preferable since it is
         # faster. randomgen allows a choice, we will always use the faster one.
         cdef bint _masked = False
+        cdef const bitgen_bulk_v1 *bulk = get_bitgen_bulk(self._bit_generator)
 
         if _dtype == np.int32:
-            ret = _rand_int32(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
+            ret = _rand_int32_bulk(low, high, size, _masked, endpoint, &self._bitgen, bulk, self.lock)
         elif _dtype == np.int64:
-            ret = _rand_int64(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
+            ret = _rand_int64_bulk(low, high, size, _masked, endpoint, &self._bitgen, bulk, self.lock)
         elif _dtype == np.int16:
             ret = _rand_int16(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
         elif _dtype == np.int8:
             ret = _rand_int8(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
         elif _dtype == np.uint64:
-            ret = _rand_uint64(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
+            ret = _rand_uint64_bulk(low, high, size, _masked, endpoint, &self._bitgen, bulk, self.lock)
         elif _dtype == np.uint32:
-            ret = _rand_uint32(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
+            ret = _rand_uint32_bulk(low, high, size, _masked, endpoint, &self._bitgen, bulk, self.lock)
         elif _dtype == np.uint16:
             ret = _rand_uint16(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
         elif _dtype == np.uint8:
