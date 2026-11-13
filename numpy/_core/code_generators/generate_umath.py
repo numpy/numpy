@@ -203,12 +203,11 @@ class Ufunc:
     type_descriptions : TypeDescription objects
     signature: a generalized ufunc signature (like for matmul)
     indexed: add indexed loops (ufunc.at) for these type characters
-    reduction_loop: add a dedicated reduction loop for these type characters
     no_float_errors: if True, the ufunc never raises floating point errors
     """
     def __init__(self, nin, nout, identity, docstring, typereso,
                  *type_descriptions, signature=None, indexed='',
-                 reduction_loop='', no_float_errors=False):
+                 no_float_errors=False):
         self.nin = nin
         self.nout = nout
         if identity is None:
@@ -219,7 +218,6 @@ class Ufunc:
         self.type_descriptions = []
         self.signature = signature
         self.indexed = indexed
-        self.reduction_loop = reduction_loop
         self.no_float_errors = no_float_errors
         for td in type_descriptions:
             self.type_descriptions.extend(td)
@@ -1174,7 +1172,6 @@ defdict = {
           "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(ints),
           TD('O', f='npy_ObjectGCD'),
-          reduction_loop=ints
           ),
 'lcm':
     Ufunc(2, 1, None,
@@ -1646,39 +1643,7 @@ def make_ufuncs(funcdict):
                 name=name,
                 funcname=f"{english_upper(chartoname[c])}_{name}_indexed",
             ))
-        for c in uf.reduction_loop:
-            fmt = textwrap.dedent("""
-            {{
-                PyArray_DTypeMeta *dtype = PyArray_DTypeFromTypeNum({typenum});
-                PyObject *info = get_info_no_cast((PyUFuncObject *)f,
-                                                dtype, {count});
-                Py_DECREF(dtype);
-                if (info == NULL) {{
-                    return -1;
-                }}
-                if (info == Py_None) {{
-                    PyErr_SetString(PyExc_RuntimeError,
-                        "cannot add reduction loop to ufunc "
-                        "{name} with {typenum}");
-                    return -1;
-                }}
-                if (!PyObject_TypeCheck(info, &PyArrayMethod_Type)) {{
-                    PyErr_SetString(PyExc_RuntimeError,
-                        "Not a PyArrayMethodObject in ufunc "
-                        "{name} with {typenum}");
-                    return -1;
-                }}
-                ((PyArrayMethodObject *)info)->get_reduction_loop =
-                        &{funcname};
-                /* info is borrowed, no need to decref */
-            }}
-            """)
-            mlist.append(fmt.format(
-                typenum=f"NPY_{english_upper(chartoname[c])}",
-                count=uf.nin + uf.nout,
-                name=name,
-                funcname=f"{name}_get_reduction_loop",
-            ))
+
         if uf.no_float_errors:
             mlist.append(
                 r"((PyUFuncObject *)f)->_ufunc_flags |="
@@ -1708,7 +1673,6 @@ def make_code(funcdict, filename):
     #include "dtypemeta.h"
     #include "dispatching.h"
     #include "_umath_doc_generated.h"
-    #include "gcd.h"
 
     %s
 
