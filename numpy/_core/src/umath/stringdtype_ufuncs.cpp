@@ -445,16 +445,16 @@ minimum_maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
             // if in and out are the same address, do nothing to avoid a
             // use-after-free
             if (in1 != out) {
-                if (free_and_copy(in1_allocator, out_allocator, sin1, sout,
-                                  ufunc_name) == -1) {
+                if (copy_string(in1_allocator, out_allocator, sin1, sout,
+                                ufunc_name) == -1) {
                     goto fail;
                 }
             }
         }
         else {
             if (in2 != out) {
-                if (free_and_copy(in2_allocator, out_allocator, sin2, sout,
-                                  ufunc_name) == -1) {
+                if (copy_string(in2_allocator, out_allocator, sin2, sout,
+                                ufunc_name) == -1) {
                     goto fail;
                 }
             }
