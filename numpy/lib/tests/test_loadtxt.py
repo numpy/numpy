@@ -118,6 +118,13 @@ def test_nested_structured_subarray():
     assert_array_equal(np.loadtxt(data, dtype=dt, delimiter=","), expected)
 
 
+@pytest.mark.parametrize("dtype", ["2i", "(2,2)f8"])
+def test_subarray_dtype_raises(dtype):
+    # Test from gh-33302, subarray dtypes are rejected (and must not crash)
+    with pytest.raises(TypeError, match="subarray"):
+        np.loadtxt(["1"], dtype=dtype)
+
+
 def test_structured_dtype_offsets():
     # An aligned structured dtype will have additional padding
     dt = np.dtype("i1, i4, i1, i4, i1, i4", align=True)

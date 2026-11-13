@@ -3421,14 +3421,14 @@ _METHOD_DOC_TEMPLATE = """{name}({params})
 
 {doc}"""
 
-def _array_method_doc(name: str, params: str, doc: str) -> None:
+def _array_method_doc(name: str, params: str, doc: str, *, scalar_doc: str | None = None) -> None:
     """
-    Interenal helper function for adding docstrings to a common method of
+    Internal helper function for adding docstrings to a common method of
     `numpy.ndarray` and `numpy.generic`.
 
     The provided docstring will be added to the given `numpy.ndarray` method.
-    For the  `numpy.generic` method, a shorter docstring indicating that it is
-    identical to the `ndarray` method will be created.
+    For the  `numpy.generic` method, a shorter docstring is generated unless
+    `scalar_doc` is provided.
     Both methods will have a proper and identical `__text_signature__`.
 
     Parameters
@@ -3442,6 +3442,8 @@ def _array_method_doc(name: str, params: str, doc: str) -> None:
         bytes, numbers, tuples, lists, dicts, sets, booleans, or None.
     doc : str
         The full docstring for the `ndarray` method.
+    scalar_doc : str, optional
+        The docstring body for the `numpy.generic` method.
     """
 
     # prepend the pos-only `$self` parameter to the method signature
@@ -3455,8 +3457,10 @@ def _array_method_doc(name: str, params: str, doc: str) -> None:
     add_newdoc("numpy._core.multiarray", "ndarray", (name, doc_array))
 
     # add docstring to `np.generic.{name}`
-    doc_scalar = f"Scalar method identical to `ndarray.{name}`."
-    doc_scalar = _METHOD_DOC_TEMPLATE.format(name=name, params=params, doc=doc_scalar)
+    if scalar_doc is None:
+        scalar_doc = f"Scalar method identical to `ndarray.{name}`."
+    scalar_doc = textwrap.dedent(scalar_doc).strip()
+    doc_scalar = _METHOD_DOC_TEMPLATE.format(name=name, params=params, doc=scalar_doc)
     add_newdoc("numpy._core.numerictypes", "generic", (name, doc_scalar))
 
 
@@ -3624,6 +3628,12 @@ _array_method_doc('astype', "dtype, order='K', casting='unsafe', subok=True, cop
 
     >>> x[:2].astype(np.int_, casting="same_value")
     array([1, 2])
+    """,
+    scalar_doc="""
+    Cast the scalar to a specified data type.
+
+    For immutable scalars, an equivalent ``dtype`` returns the original
+    scalar, regardless of the value of ``copy``.
     """)
 
 _array_method_doc('byteswap', "inplace=False",

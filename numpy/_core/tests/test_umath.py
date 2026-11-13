@@ -3380,7 +3380,8 @@ class TestAbsoluteNegative:
 
     @pytest.mark.parametrize("dtype", ['d', 'f', 'int32', 'int64'])
     @pytest.mark.parametrize("big", [True, False])
-    def test_noncontiguous(self, dtype, big):
+    @pytest.mark.parametrize("stride", [2, 4, 8])
+    def test_noncontiguous(self, dtype, big, stride):
         data = np.array([-1.0, 1.0, -0.0, 0.0, 2.2251e-308, -2.5, 2.5, -6,
                             6, -2.2251e-308, -8, 10], dtype=dtype)
         expect = np.array([1.0, -1.0, 0.0, -0.0, -2.2251e-308, 2.5, -2.5, 6,
@@ -3389,19 +3390,19 @@ class TestAbsoluteNegative:
             data = np.repeat(data, 10)
             expect = np.repeat(expect, 10)
         out = np.ndarray(data.shape, dtype=dtype)
-        ncontig_in = data[1::2]
-        ncontig_out = out[1::2]
+        ncontig_in = data[1::stride]
+        ncontig_out = out[1::stride]
         contig_in = np.array(ncontig_in)
         # contig in, contig out
-        assert_array_equal(np.negative(contig_in), expect[1::2])
+        assert_array_equal(np.negative(contig_in), expect[1::stride])
         # contig in, ncontig out
         assert_array_equal(np.negative(contig_in, out=ncontig_out),
-                                expect[1::2])
+                                expect[1::stride])
         # ncontig in, contig out
-        assert_array_equal(np.negative(ncontig_in), expect[1::2])
+        assert_array_equal(np.negative(ncontig_in), expect[1::stride])
         # ncontig in, ncontig out
         assert_array_equal(np.negative(ncontig_in, out=ncontig_out),
-                                expect[1::2])
+                                expect[1::stride])
         # contig in, contig out, nd stride
         data_split = np.array(np.array_split(data, 2))
         expect_split = np.array(np.array_split(expect, 2))
