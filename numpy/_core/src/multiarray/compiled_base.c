@@ -71,6 +71,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     npy_intp minlength = 0;
     npy_intp i;
     double *weights , *dans;
+    int unsigned_input = 0;
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("bincount", args, len_args, kwnames,
@@ -103,6 +104,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
             int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
             if (PyArray_ISINTEGER(tmp1)) {
                 flags = flags | NPY_ARRAY_FORCECAST;
+                unsigned_input = PyArray_ISUNSIGNED(tmp1);
             }
             PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
             lst = (PyArrayObject *)PyArray_FromAny((PyObject *)tmp1, local_dtype, 1, 1, flags, NULL);
@@ -122,6 +124,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         if (PyArray_Check((PyObject *)list) &&
             PyArray_ISINTEGER((PyArrayObject *)list)) {
             flags = flags | NPY_ARRAY_FORCECAST;
+            unsigned_input = PyArray_ISUNSIGNED((PyArrayObject *)list);
         }
         PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
         lst = (PyArrayObject *)PyArray_FromAny(list, local_dtype, 1, 1, flags, NULL);
@@ -164,9 +167,14 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
 
     numbers = (npy_intp *)PyArray_DATA(lst);
     minmax(numbers, len, &mn, &mx);
-    if (mn < 0) {
+    if (mn < 0 && !unsigned_input) {
         PyErr_SetString(PyExc_ValueError,
                 "'list' argument must have no negative elements");
+        goto fail;
+    }
+    if (mn < 0 || mx == NPY_MAX_INTP) {
+        PyErr_SetString(PyExc_ValueError,
+                "'list' argument contains a value too large for bincount");
         goto fail;
     }
     ans_size = mx + 1;
