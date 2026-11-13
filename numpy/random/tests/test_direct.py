@@ -430,6 +430,19 @@ class TestPhilox(Base):
                                    key=state['state']['key'])
         assert_state_equal(bit_generator.state, keyed.state)
 
+    def test_valid_buffer_position(self):
+        bit_generator = self.bit_generator(*self.data1['seed'])
+        state = bit_generator.state
+        original_position = state["buffer_pos"]
+        state["buffer_pos"] = 0
+        with pytest.raises(ValueError, match="buffer_pos must be between 1 and 4"):
+            bit_generator.state = state
+        state["buffer_pos"] = 5
+        with pytest.raises(ValueError, match="buffer_pos must be between 1 and 4"):
+            bit_generator.state = state
+        state["buffer_pos"] = original_position
+        bit_generator.state = state  # Should not raise
+
 
 class TestPCG64(Base):
     @classmethod
@@ -543,6 +556,29 @@ class TestMT19937(Base):
         bit_generator.state = tup
         actual = rs.integers(2 ** 16)
         assert_equal(actual, desired)
+
+    def test_valid_state_pos(self):
+        # Ensures that buffer access after setting the state is valid for
+        # MT19937. The state position must be between 1 and 624 normally.
+        # After jumped, however, it can be 0, so we also allow this value.
+        bg = self.bit_generator(*self.data1['seed'])
+        state = bg.state
+        original_pos = state['state']['pos']
+        state['state']['pos'] = -1
+        with pytest.raises(
+            ValueError,
+            match='state position must be between 0 and 624'
+        ):
+            bg.state = state
+        state['state']['pos'] = 625
+        with pytest.raises(
+            ValueError,
+            match='state position must be between 0 and 624'
+        ):
+            bg.state = state
+        state['state']['pos'] = original_pos
+        bg.state = state  # Should not raise
+        assert bg.state['state']['pos'] == original_pos
 
 
 class TestSFC64(Base):
