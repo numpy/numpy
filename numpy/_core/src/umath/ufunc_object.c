@@ -6511,7 +6511,6 @@ ufunc_at__subspace_iter(PyArrayMethodObject *ufuncimpl,
 
     for (npy_intp pos = 0; pos < iter->size; pos += run) {
         char *dataptr[3];
-        npy_intp count = run;
 
         dataptr[0] = iter->dataptr;
         if (iter2 != NULL) {
@@ -6524,7 +6523,7 @@ ufunc_at__subspace_iter(PyArrayMethodObject *ufuncimpl,
             dataptr[2] = NULL;
         }
 
-        res = strided_loop(context, dataptr, &count, strides, auxdata);
+        res = strided_loop(context, dataptr, &run, strides, auxdata);
         if (res != 0) {
             break;
         }
