@@ -4517,6 +4517,14 @@ class TestRationalFunctions:
         a = np.array([12, 18, 1, 0, 42], dtype=dtype)
         assert_equal(np.gcd.reduce(a), 1)
 
+        # one output reaches 1 before the others
+        a = np.array([[4, 6, 10], [3, 9, 15], [2, 3, 5]], dtype=dtype)
+        assert_equal(np.gcd.reduce(a, axis=0), [1, 3, 5])
+        f = np.asfortranarray([[2, 3, 5], [4, 6, 10], [3, 9, 15]]).astype(dtype)
+        assert_equal(np.gcd.reduce(f, axis=1), [1, 2, 3])
+        b = np.array([[6, 8], [5, 12], [9, 20]], dtype=dtype)
+        assert_equal(np.gcd.accumulate(b, axis=0), [[6, 8], [1, 4], [1, 4]])
+
         # broadcasting, and a test including 0
         a = np.arange(6).astype(dtype)
         b = 20
