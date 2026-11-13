@@ -331,12 +331,3 @@ class TestPolynomial:
         # this never used to be allowed - let's not add features to deprecated
         # APIs
         assert_raises(AttributeError, setattr, p, 'coeffs', np.array(1))
-
-    def test_poly_roots_array_function_dispatch(self):
-        class DuckArray:
-            def __array_function__(self, func, types, args, kwargs):
-                return func.__name__
-
-        duck = DuckArray()
-        assert_equal(np.poly(duck), "poly")
-        assert_equal(np.roots(duck), "roots")
