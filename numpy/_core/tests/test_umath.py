@@ -4513,7 +4513,7 @@ class TestRationalFunctions:
         a = np.array([15, 25, 35], dtype=dtype)
         assert_equal(np.gcd.reduce(a), 5)
 
-        # reduction reaches 1 before processing the remaining elements        
+        # reduction reaches 1 before processing the remaining elements
         a = np.array([12, 18, 1, 0, 42], dtype=dtype)
         assert_equal(np.gcd.reduce(a), 1)
 
