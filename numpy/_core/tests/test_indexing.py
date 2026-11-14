@@ -1523,6 +1523,24 @@ class TestFlatiterIndexing:
                            match="boolean index did not match indexed flat iterator"):
             a.flat[wrong_mask]
 
+    def test_flatiter_indexing_boolean_after_iteration(self):
+        # gh-33081
+        a = np.arange(4)
+        it = a.flat
+        next(it)
+        with pytest.warns(DeprecationWarning, match="0-dimensional boolean index"):
+            assert_array_equal(it[True], 0)
+
+        for _ in it:
+            pass
+        with pytest.warns(DeprecationWarning, match="0-dimensional boolean index"):
+            assert_array_equal(it[True], 0)
+
+        e = np.empty(0)
+        with pytest.warns(DeprecationWarning, match="0-dimensional boolean index"):
+            with pytest.raises(IndexError, match="index 0 is out of bounds"):
+                e.flat[True]
+
     def test_flatiter_indexing_fancy(self):
         a = np.arange(9).reshape((3, 3))
 
@@ -1636,6 +1654,21 @@ class TestFlatiterIndexing:
         with pytest.raises(IndexError,
                            match="boolean index did not match indexed flat iterator"):
             a.flat[wrong_mask] = 40
+
+    def test_flatiter_indexing_boolean_assign_after_iteration(self):
+        # gh-33081
+        a = np.arange(4)
+        it = a.flat
+        for _ in it:
+            pass
+        with pytest.warns(DeprecationWarning, match="0-dimensional boolean index"):
+            it[True] = 10
+        assert_array_equal(a, np.array([10, 1, 2, 3]))
+
+        e = np.empty(0)
+        with pytest.warns(DeprecationWarning, match="0-dimensional boolean index"):
+            with pytest.raises(IndexError, match="index 0 is out of bounds"):
+                e.flat[True] = 10
 
     def test_flatiter_indexing_fancy_assign(self):
         a = np.arange(9).reshape((3, 3))
