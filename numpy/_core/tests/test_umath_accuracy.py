@@ -18,12 +18,12 @@ UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 UNARY_OBJECT_UFUNCS.remove(np.invert)
 UNARY_OBJECT_UFUNCS.remove(np.bitwise_count)
 
-IS_AVX = __cpu_features__.get('AVX512F', False) or \
-        (__cpu_features__.get('FMA3', False) and __cpu_features__.get('AVX2', False))
+# SVML is only dispatched on AVX512_SKX (see loops_umath_fp.dispatch.c.src)
+IS_SVML = __cpu_features__.get('AVX512_SKX', False)
 
-# only run on linux with AVX, also avoid old glibc (numpy/numpy#20448).
+# only run on linux with SVML, also avoid old glibc (numpy/numpy#20448).
 runtest = (sys.platform.startswith('linux')
-           and IS_AVX and not _glibc_older_than("2.17"))
+           and IS_SVML and not _glibc_older_than("2.17"))
 platform_skip = pytest.mark.skipif(not runtest,
                                    reason="avoid testing inconsistent platform "
                                    "library implementations")
