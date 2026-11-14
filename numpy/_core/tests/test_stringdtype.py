@@ -487,19 +487,25 @@ def test_embedded_null_string_like_casts(dtype):
     assert roundtripped.tolist() == strings
 
 
-def test_string_too_large_error():
-    arr = np.array(["a", "b", "c"], dtype=StringDType())
+@pytest.mark.parametrize("old", ["short", "a" * 20, "heap", None])
+def test_string_too_large_error(old):
+    arr = np.array(["a", "b", "c"], dtype=StringDType(na_object=None))
     with pytest.raises(OverflowError):
         arr * (sys.maxsize + 1)
     arr[0] = 'b'
     np.testing.assert_array_equal(arr, ["b", "b", "c"])
 
     # Tries to allocate on 64 bit. On 32-bit, still above sys.maxsize.
-    out = np.empty_like(arr)
+    out = np.full_like(arr, old)
+    if old == "heap":
+        # Growing an existing element moves it out of the arena.
+        old = "a" * 100
+        out[:] = old
     with pytest.raises((MemoryError, OverflowError)):
         np.multiply(arr, 2**55, out=out)
-    out[:] = "a" * 20
-    assert_array_equal(out, "a" * 20)
+    assert_array_equal(out, np.full_like(out, old))
+    out[:] = "a" * 200
+    assert_array_equal(out, "a" * 200)
 
 
 @pytest.mark.parametrize(
