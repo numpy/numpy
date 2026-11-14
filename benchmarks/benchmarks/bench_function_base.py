@@ -421,3 +421,25 @@ class Where(Benchmark):
 
     def time_interleaved_ones_x8(self):
         np.where(self.rep_ones_8)
+
+
+class Vectorize(Benchmark):
+    params = [[10, 10_000]]
+    param_names = ['size']
+
+    def setup(self, size):
+        def func(a, b, c=0):
+            return a + b + c
+
+        self.a = np.arange(size)
+        self.vfunc = np.vectorize(func)
+        self.vfunc_excluded = np.vectorize(func, excluded={'c'})
+
+    def time_positional(self, size):
+        self.vfunc(self.a, 1)
+
+    def time_keyword(self, size):
+        self.vfunc(self.a, b=1)
+
+    def time_excluded(self, size):
+        self.vfunc_excluded(self.a, 1, c=2)
