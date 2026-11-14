@@ -36,7 +36,7 @@ PyArray_AdaptDescriptorToArray(
 
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape(
-        PyObject *obj, int max_dims,
+        PyObject *obj, int max_dims, npy_bool allow_skip_conversion,
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj **coercion_cache,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,

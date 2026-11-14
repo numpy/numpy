@@ -1730,8 +1730,12 @@ _array_fromobject_generic(
 
     flags |= NPY_ARRAY_FORCECAST;
 
-    ret = (PyArrayObject *)PyArray_CheckFromAny_int(
-            op, dtype, in_DType, 0, ndmax, flags);
+    /* NPY_MAXDIMS is the default; only np.array accepts a smaller ndmax. */
+    const npy_bool allow_skip_conversion = ndmax < NPY_MAXDIMS;
+    int was_scalar;
+    ret = (PyArrayObject *)PyArray_FromAny_int(
+            op, dtype, in_DType, 0, ndmax, allow_skip_conversion,
+            flags, &was_scalar);
 
 finish:
     Py_XDECREF(dtype);

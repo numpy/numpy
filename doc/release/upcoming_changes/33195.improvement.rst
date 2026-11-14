@@ -1,0 +1,7 @@
+Fewer conversions for object arrays
+-----------------------------------
+
+Slice assignment to an object array can now avoid unnecessary array
+conversions for objects stored as individual elements. `numpy.array`
+can also skip these conversions when creating an object array with a
+depth limit such as ``ndmax=1``.
