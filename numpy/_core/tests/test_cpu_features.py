@@ -292,6 +292,27 @@ if __name__ == "__main__":
         reason=(
             "NPY_*_CPU_FEATURES only parsed if "
             "`__cpu_dispatch__` is non-empty"
+        ),
+    )
+    @pytest.mark.parametrize("action", ["ENABLE", "DISABLE"])
+    def test_unknown_feature_warning_is_visible(self, action):
+        feature = "NOT_A_CPU_FEATURE"
+        self.env[f"NPY_{action}_CPU_FEATURES"] = feature
+        self.env.pop("PYTHONWARNINGS", None)
+
+        out = self._run()
+
+        assert re.search(
+            rf"UserWarning:.*{re.escape(feature)}",
+            out.stderr,
+            flags=re.DOTALL,
+        )
+
+    @pytest.mark.skipif(
+        not __cpu_dispatch__,
+        reason=(
+            "NPY_*_CPU_FEATURES only parsed if "
+            "`__cpu_dispatch__` is non-empty"
         )
     )
     def test_impossible_feature_disable(self):
