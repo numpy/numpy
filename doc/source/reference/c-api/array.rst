@@ -1885,6 +1885,7 @@ the functions that must be implemented for each slot.
    Registers a dedicated loop for use by the reduce-like methods
    (:meth:`~numpy.ufunc.reduce`,
    :meth:`~numpy.ufunc.reduceat`,
+   :meth:`~numpy.ufunc.segmented_reduce`,
    :meth:`~numpy.ufunc.accumulate`),
    implemented as a :c:type:`PyArrayMethod_GetLoop` function (the same
    typedef used for ``NPY_METH_get_loop``). This is required to reduce
@@ -1902,7 +1903,8 @@ the functions that must be implemented for each slot.
        [acc_0, ..., acc_{nout-1}, x, out_0, ..., out_{nout-1}]
 
    where ``x`` is the streamed element being reduced in. For
-   :meth:`~numpy.ufunc.reduce` and :meth:`~numpy.ufunc.reduceat`, each
+   :meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.reduceat`, and
+   :meth:`~numpy.ufunc.segmented_reduce`, each
    ``out_i`` points at the same memory as the matching ``acc_i`` (and
    both typically have a stride of 0). For
    :meth:`~numpy.ufunc.accumulate` it does not, see below.
@@ -1928,8 +1930,9 @@ the functions that must be implemented for each slot.
 
    Note that this slot only lifts the restriction on how many outputs a
    ufunc may have. It does not change how many inputs a ufunc may have:
-   :meth:`~numpy.ufunc.reduce` (as well as :meth:`~numpy.ufunc.accumulate`
-   and :meth:`~numpy.ufunc.reduceat`) still only works on ufuncs that take
+   :meth:`~numpy.ufunc.reduce` (as well as :meth:`~numpy.ufunc.accumulate`,
+   :meth:`~numpy.ufunc.reduceat`, and :meth:`~numpy.ufunc.segmented_reduce`)
+   still only works on ufuncs that take
    exactly two inputs, whether or not a reduction loop is registered.
    Calling any of these methods on a ufunc with a number of inputs other
    than two raises a :exc:`ValueError`.
@@ -1947,6 +1950,8 @@ the functions that must be implemented for each slot.
    for a ufunc whose loop also registers a
    :c:macro:`NPY_METH_get_reduction_loop`. See
    :c:type:`PyArrayMethod_GetMultiReductionInitials` for the signature.
+   :meth:`~numpy.ufunc.segmented_reduce` uses them like
+   :meth:`~numpy.ufunc.reduce`, for every segment.
    :meth:`~numpy.ufunc.reduceat` and :meth:`~numpy.ufunc.accumulate` do not
    use them and seed with the first element instead.
 

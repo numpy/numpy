@@ -30,7 +30,8 @@ That trick does not generalize to ufuncs with more than one output, such as
 signature. There is no natural way to pair each output up with an input
 that could hold its running result.
 
-To support ``reduce``, ``reduceat``, and ``accumulate`` for such ufuncs, an
+To support ``reduce``, ``reduceat``, ``segmented_reduce``, and ``accumulate``
+for such ufuncs, an
 ``ArrayMethod`` can register a *dedicated* reduction loop through the
 ``NPY_METH_get_reduction_loop``
 slot. That loop has an ``(nout + 1)``-in/``nout``-out signature. It takes
@@ -428,14 +429,15 @@ real-world implementation, like the built-in :func:`numpy.add` or a fuller
   ``slots`` array above:
   ``{NPY_METH_get_multi_reduction_initials, (void *)&minimummaximum_get_multi_reduction_initials}``.
 - :meth:`~numpy.ufunc.at` is not supported for multi-output ufuncs yet.
-  :meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.reduceat`, and
-  :meth:`~numpy.ufunc.accumulate` all work for them once a reduction loop is
-  registered.
+  :meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.reduceat`,
+  :meth:`~numpy.ufunc.segmented_reduce`, and :meth:`~numpy.ufunc.accumulate`
+  all work for them once a reduction loop is registered.
 
 .. seealso::
 
    * :doc:`ArrayMethod API reference </reference/c-api/array>` for the full
      :c:macro:`NPY_METH_get_reduction_loop` reference documentation.
    * :ref:`ufuncs-basics` for the Python-level behavior of
-     :meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.reduceat`, and
+     :meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.reduceat`,
+     :meth:`~numpy.ufunc.segmented_reduce`, and
      :meth:`~numpy.ufunc.accumulate` on multi-output ufuncs.
