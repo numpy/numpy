@@ -201,15 +201,20 @@ def buildhooks(pymod):
                 modobjs.append(f"{b_name}()")
                 b['modulename'] = m_name
                 api, wrap = rules.buildapi(b)
+                if isinstance(wrap, tuple):
+                    _mod_src, wrap_src = wrap
+                else:
+                    wrap_src = wrap or ''
                 if isfunction(b):
-                    fhooks[0] = fhooks[0] + wrap
+                    fhooks[0] = fhooks[0] + wrap_src
                     fargs.append(f"f2pywrap_{m_name}_{b_name}")
-                    ifargs.append(func2subr.createfuncwrapper(b, signature=1))
-                elif wrap:
-                    fhooks[0] = fhooks[0] + wrap
+                    _ms, sig = func2subr.createfuncwrapper(b, signature=1)
+                    ifargs.append(sig)
+                elif wrap_src:
+                    fhooks[0] = fhooks[0] + wrap_src
                     fargs.append(f"f2pywrap_{m_name}_{b_name}")
-                    ifargs.append(
-                        func2subr.createsubrwrapper(b, signature=1))
+                    _ms, sig = func2subr.createsubrwrapper(b, signature=1)
+                    ifargs.append(sig)
                 else:
                     fargs.append(b_name)
                     mfargs.append(fargs[-1])
