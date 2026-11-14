@@ -1,0 +1,1 @@
+``np.average`` now works on ``timedelta64`` arrays, matching the behavior of ``np.mean``. (GH32530)
