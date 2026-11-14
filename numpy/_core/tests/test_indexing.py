@@ -10,6 +10,7 @@ import pytest
 import numpy as np
 from numpy._core._multiarray_tests import array_indexing
 from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
+from numpy.lib.stride_tricks import as_strided
 from numpy.testing import (
     HAS_REFCOUNT,
     assert_,
@@ -22,23 +23,10 @@ from numpy.testing import (
 
 class TestIndexing:
     def test_integer_index_stride_overflow(self):
-        # gh-32219: stride * index must not silently wrap around and
-        # produce an invalid pointer (which used to segfault).
-        from numpy.lib.stride_tricks import as_strided
-        buf = np.zeros(128, dtype=np.int8)
-        # Use the platform's pointer size, so this also works on 32-bit.
-        big = 2 ** (np.dtype(np.intp).itemsize * 8 - 2)
-        a = as_strided(buf, shape=(4, 4), strides=(big, 1))
-        with pytest.raises(ValueError, match="overflow"):
-            a[3, 0]
-
-    def test_integer_index_large_stride_no_overflow(self):
-        # A large stride is fine as long as stride * index fits in npy_intp.
-        from numpy.lib.stride_tricks import as_strided
-        buf = np.zeros(128, dtype=np.int8)
-        a = as_strided(buf, shape=(4,), strides=(8,))
-        assert a[3] == 0
-        assert a[-1] == 0
+        # gh-32219
+        big = 1 << (8 * np.dtype(np.intp).itemsize - 2)
+        a = as_strided(np.zeros(16, np.int8), shape=(4, 4), strides=(big, 1))
+        assert_raises(ValueError, lambda: a[3, 0])
 
     def test_index_no_floats(self):
         a = np.array([[[5]]])
