@@ -177,7 +177,6 @@ dolowercase = 1
 debug = []
 
 # Global variables
-beginpattern = ''
 currentfilename = ''
 expectbegin = 1
 f90modulevars = {}
@@ -411,10 +410,6 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 strictf77 = 1
             elif is_free_format(currentfilename) and not _has_fix_header(l):
                 sourcecodeform = 'free'
-            if strictf77:
-                beginpattern = beginpattern77
-            else:
-                beginpattern = beginpattern90
             outmess(f"\tReading file {currentfilename!r} "
                     f"(format:{sourcecodeform}{',strict' if strictf77 else ''})\n")
 
@@ -604,6 +599,7 @@ groupbegins90 = groupbegins77 + \
     r'type(?!\s*\()'
 beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
+beginpattern = beginpattern90  # gh-32360
 groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
@@ -759,7 +755,7 @@ def crackline(line, reset=0):
             grouplist[groupcounter - 1].append(groupcache[groupcounter])
             grouplist[groupcounter - 1][-1]['body'] = grouplist[groupcounter]
             del grouplist[groupcounter]
-            groupcounter = groupcounter - 1
+            groupcounter -= 1
         if f77modulename and neededmodule == groupcounter:
             grouplist[groupcounter - 1].append(groupcache[groupcounter])
             grouplist[groupcounter - 1][-1]['body'] = grouplist[groupcounter]
@@ -768,7 +764,7 @@ def crackline(line, reset=0):
             grouplist[groupcounter - 1].append(groupcache[groupcounter])
             grouplist[groupcounter - 1][-1]['body'] = grouplist[groupcounter]
             del grouplist[groupcounter]
-            groupcounter = groupcounter - 1  # end module
+            groupcounter -= 1  # end module
             neededmodule = -1
         return
     if line == '':
@@ -825,7 +821,7 @@ def crackline(line, reset=0):
         return
     elif pat[1] == 'end':
         if 0 <= skipblocksuntil < groupcounter:
-            groupcounter = groupcounter - 1
+            groupcounter -= 1
             if skipblocksuntil <= groupcounter:
                 return
         if groupcounter <= 0:
@@ -841,12 +837,12 @@ def crackline(line, reset=0):
         grouplist[groupcounter - 1].append(groupcache[groupcounter])
         grouplist[groupcounter - 1][-1]['body'] = grouplist[groupcounter]
         del grouplist[groupcounter]
-        groupcounter = groupcounter - 1
+        groupcounter -= 1
         if not skipemptyends:
             expectbegin = 1
     elif pat[1] == 'begin':
         if 0 <= skipblocksuntil <= groupcounter:
-            groupcounter = groupcounter + 1
+            groupcounter += 1
             return
         gotnextfile = 0
         analyzeline(m, pat[1], line)
@@ -1028,7 +1024,7 @@ def analyzeline(m, case, line):
         outmess(
             f'analyzeline: no group yet. Creating program group with name "{newname}".\n')
         gotnextfile = 0
-        groupcounter = groupcounter + 1
+        groupcounter += 1
         groupname[groupcounter] = 'program'
         groupcache[groupcounter] = {}
         grouplist[groupcounter] = []
@@ -1096,7 +1092,7 @@ def analyzeline(m, case, line):
             if block not in ['interface', 'abstract interface']:
                 needinterface = 1
         # Create new block(s)
-        groupcounter = groupcounter + 1
+        groupcounter += 1
         groupcache[groupcounter] = {}
         grouplist[groupcounter] = []
         if needmodule:
@@ -1110,7 +1106,7 @@ def analyzeline(m, case, line):
             groupcache[groupcounter]['externals'] = []
             groupcache[groupcounter]['interfaced'] = []
             groupcache[groupcounter]['vars'] = {}
-            groupcounter = groupcounter + 1
+            groupcounter += 1
             groupcache[groupcounter] = {}
             grouplist[groupcounter] = []
         if needinterface:
@@ -1126,7 +1122,7 @@ def analyzeline(m, case, line):
             groupcache[groupcounter]['externals'] = []
             groupcache[groupcounter]['interfaced'] = []
             groupcache[groupcounter]['vars'] = {}
-            groupcounter = groupcounter + 1
+            groupcounter += 1
             groupcache[groupcounter] = {}
             grouplist[groupcounter] = []
         groupname[groupcounter] = block
@@ -1202,11 +1198,11 @@ def analyzeline(m, case, line):
             grouplist[groupcounter - 1].append(groupcache[groupcounter])
             grouplist[groupcounter - 1][-1]['body'] = grouplist[groupcounter]
             del grouplist[groupcounter]
-            groupcounter = groupcounter - 1  # end routine
+            groupcounter -= 1  # end routine
             grouplist[groupcounter - 1].append(groupcache[groupcounter])
             grouplist[groupcounter - 1][-1]['body'] = grouplist[groupcounter]
             del grouplist[groupcounter]
-            groupcounter = groupcounter - 1  # end interface
+            groupcounter -= 1  # end interface
 
     elif case == 'entry':
         name, args, result, _ = _resolvenameargspattern(m.group('after'))
