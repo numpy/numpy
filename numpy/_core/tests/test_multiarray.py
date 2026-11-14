@@ -6989,6 +6989,62 @@ class TestIO:
         assert_raises_regex(ValueError, "Cannot read into object array",
                             np.fromfile, tmp_filename, dtype=object)
 
+    @pytest.mark.parametrize("dtype", ["S0", "U0", "V0"])
+    @pytest.mark.parametrize("count", [None, -1, -2])
+    @pytest.mark.parametrize("sep", ["", " "])
+    def test_fromfile_zero_itemsize_inferred_count(
+        self, tmp_path, param_filename, dtype, count, sep
+    ):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+        with open(tmp_filename, "wb") as f:
+            f.write(b"data")
+
+        kwargs = {} if count is None else {"count": count}
+        msg = "Cannot infer count for a dtype with itemsize 0"
+        with pytest.raises(ValueError, match=msg):
+            np.fromfile(tmp_filename, dtype=dtype, sep=sep, **kwargs)
+        with open(tmp_filename, "rb") as f:
+            with pytest.raises(ValueError, match=msg):
+                np.fromfile(f, dtype=dtype, sep=sep, **kwargs)
+            assert not f.closed
+            assert f.tell() == 0
+
+    @pytest.mark.parametrize("dtype", ["S0", "U0", "V0"])
+    @pytest.mark.parametrize("count", [0, 2])
+    @pytest.mark.parametrize("sep", ["", " "])
+    def test_fromfile_zero_itemsize_explicit_count(
+        self, tmp_path, param_filename, dtype, count, sep
+    ):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+        with open(tmp_filename, "wb") as f:
+            f.write(b"data")
+
+        result = np.fromfile(tmp_filename, dtype=dtype, count=count, sep=sep)
+        assert result.shape == (count,)
+        assert result.dtype == np.dtype(dtype)
+        with open(tmp_filename, "rb") as f:
+            result = np.fromfile(f, dtype=dtype, count=count, sep=sep)
+            assert result.shape == (count,)
+            assert result.dtype == np.dtype(dtype)
+            assert f.tell() == 0
+
+    @pytest.mark.parametrize("dtype", ["S2", "U2", "V2"])
+    @pytest.mark.parametrize("count", [-1, 0, 2])
+    def test_fromfile_fixed_itemsize(self, tmp_path, param_filename, dtype, count):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
+        expected = np.array(["ab", "cd", "ef"], dtype="S2").astype(dtype)
+        expected.tofile(tmp_filename)
+        if count >= 0:
+            expected = expected[:count]
+
+        result = np.fromfile(tmp_filename, dtype=dtype, count=count)
+        assert_array_equal(result, expected)
+        assert result.dtype == expected.dtype
+        with open(tmp_filename, "rb") as f:
+            result = np.fromfile(f, dtype=dtype, count=count)
+        assert_array_equal(result, expected)
+        assert result.dtype == expected.dtype
+
     def test_fromfile_offset(self, tmp_path, param_filename):
         tmp_filename = normalize_filename(tmp_path, param_filename)
         x = self._create_data()
