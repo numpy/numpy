@@ -5,8 +5,15 @@ import pytest
 
 import numpy as np
 from numpy._core._exceptions import _UFuncNoLoopError
+from numpy._core.tests.test_stringdtype import (
+    BINARY_FUNCTIONS,
+    ONLY_IN_NP_CHAR,
+    UFUNC_TEST_DATA,
+    UNARY_FUNCTIONS,
+    comparison_operators,
+)
 from numpy.testing import assert_array_equal, assert_raises
-from numpy.testing._private.utils import requires_memory
+from numpy.testing._private.utils import requires_memory, run_with_memory_limit
 
 COMPARISONS = [
     (operator.eq, np.equal, "=="),
@@ -193,6 +200,91 @@ def test_large_string_cast():
     # (this happens due clunky code and/or buffer setup.)
     with pytest.raises((TypeError, MemoryError)):
         a.astype("U")
+
+
+# _vec_string calls a Python str or bytes method on each element, so it holds
+# the string as Python objects, and case mapping reserves three codepoints per
+# character
+FIXED_WIDTH_KNOWN_ISSUES = {
+    "capitalize", "encode", "lower", "mod", "swapcase", "title", "translate", "upper"
+}
+
+
+def _large_fixed_width_args():
+    arrays = {
+        "S": np.array([(UFUNC_TEST_DATA[0] * 2**14).encode()]),  # about 0.8 MiB
+        "U": np.array([UFUNC_TEST_DATA[1] * 2**11]),  # about 1.1 MiB
+    }
+    cases = {
+        **dict.fromkeys(UNARY_FUNCTIONS, (None,)),
+        **dict(BINARY_FUNCTIONS),
+        **{op.__name__: (None, None) for op in comparison_operators},
+        # an empty pattern matches between every pair of characters, but with
+        # count=1 the output only needs room for one insertion
+        "replace": (None, "", "prefix: ", 1),
+    }
+    calls = {}
+    for dt, arr in arrays.items():
+        for name, args in cases.items():
+            if name in ONLY_IN_NP_CHAR or name in FIXED_WIDTH_KNOWN_ISSUES:
+                continue
+            if dt == "S":
+                if name in ("isdecimal", "isnumeric"):
+                    continue
+                args = tuple(a.encode() if isinstance(a, str) else a for a in args)
+            calls[f"{dt} {name}"] = (getattr(np.strings, name),
+                                     *(arr if a is None else a for a in args))
+    return calls
+
+
+def test_large_fixed_width_string_memory_limit():
+    # run all string operations under a tight memory limit to check for large
+    # temporary allocations
+    run_with_memory_limit(operator.call, _large_fixed_width_args, 6 * 1024**2)
+
+
+def _large_string_cast_args():
+    # One MiB per fixed-width element, but only a short value to convert.
+    string_dtypes = [np.dtype("S1048576"), np.dtype("U262144"),
+                     np.dtype("U262144").newbyteorder("S"), np.dtype("T")]
+    numeric_arrays = [np.array([123], dtype=dt) for dt in ("i8", "f8", "c16", "?")]
+    calls = {}
+    for src_dtype in string_dtypes:
+        arr = np.array(["123"], dtype=src_dtype)
+        for dst_dtype in string_dtypes:
+            expected = b"123" if dst_dtype.kind == "S" else "123"
+            calls[f"{src_dtype} -> {dst_dtype}"] = (arr, dst_dtype, expected)
+        for numeric in numeric_arrays:
+            calls[f"{src_dtype} -> {numeric.dtype}"] = (
+                arr, numeric.dtype, numeric[0])
+
+    for arr in numeric_arrays:
+        text = arr.astype("U")[0]
+        for dst_dtype in string_dtypes:
+            expected = text.encode() if dst_dtype.kind == "S" else text
+            calls[f"{arr.dtype} -> {dst_dtype}"] = (arr, dst_dtype, expected)
+    return calls
+
+
+def _check_large_string_cast(arr, dtype, expected):
+    result = arr.astype(dtype)
+    assert result.dtype == dtype
+    assert result[0] == expected
+
+
+def test_large_string_cast_memory_limit():
+    # The output and any conversion buffers should fit in a few MiB, even
+    # when the fixed-width source or destination has a large itemsize.
+    run_with_memory_limit(_check_large_string_cast, _large_string_cast_args,
+                          6 * 1024**2)
+
+
+@pytest.mark.parametrize("dtype", ["S16384", "U4096",
+                                  np.dtype("U4096").newbyteorder("S")])
+def test_large_string_cast_multiple_blocks(dtype):
+    # Exercise multiple cast-buffer blocks and a partial final block.
+    arr = np.arange(130)
+    assert_array_equal(arr.astype(dtype).astype(arr.dtype), arr)
 
 
 @pytest.mark.parametrize("dt", ["S1", "U1"])
