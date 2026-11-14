@@ -28,19 +28,19 @@ JUMP_TEST_DATA = [
         "seed": 0,
         "steps": 10,
         "initial": {"key_sha256": "bb1636883c2707b51c5b7fc26c6927af4430f2e0785a8c7bc886337f919f9edf", "pos": 9},    # noqa: E501
-        "jumped":  {"key_sha256": "ff682ac12bb140f2d72fba8d3506cf4e46817a0db27aae1683867629031d8d55", "pos": 598},  # noqa: E501
+        "jumped":  {"key_sha256": "8183c25a31bcb11689b3da3cf2620ce0671e73d9390d8176ad20deefcdd2864b", "pos": 9},    # noqa: E501
     },
     {
         "seed": 384908324,
         "steps": 312,
         "initial": {"key_sha256": "16b791a1e04886ccbbb4d448d6ff791267dc458ae599475d08d5cced29d11614", "pos": 311},  # noqa: E501
-        "jumped":  {"key_sha256": "a0110a2cf23b56be0feaed8f787a7fc84bef0cb5623003d75b26bdfa1c18002c", "pos": 276},  # noqa: E501
+        "jumped":  {"key_sha256": "0083c9ec3b313ebe34242e1102b6e87302eefe03fd539496819ae70e66332c24", "pos": 311},  # noqa: E501
     },
     {
         "seed": [839438204, 980239840, 859048019, 821],
         "steps": 511,
         "initial": {"key_sha256": "d306cf01314d51bd37892d874308200951a35265ede54d200f1e065004c3e9ea", "pos": 510},  # noqa: E501
-        "jumped":  {"key_sha256": "0e00ab449f01a5195a83b4aee0dfbc2ce8d46466a640b92e33977d2e42f777f8", "pos": 475},  # noqa: E501
+        "jumped":  {"key_sha256": "57303c4999e050a143c24ed8f89e3f4a289abdb216eb815b8b702d7aab80daf2", "pos": 510},  # noqa: E501
     },
 ]
 
@@ -2656,7 +2656,8 @@ def test_jumped(config):
     # Each config contains the initial seed, a number of raw steps
     # the sha256 hashes of the initial and the final states' keys and
     # the position of the initial and the final state.
-    # These were produced using the original C implementation.
+    # Initial states use the original C implementation; jumped states store
+    # the linear block with the original consumption position.
     seed = config["seed"]
     steps = config["steps"]
 
@@ -2677,6 +2678,51 @@ def test_jumped(config):
     sha256 = hashlib.sha256(key)
     assert jumped.state["state"]["pos"] == config["jumped"]["pos"]
     assert sha256.hexdigest() == config["jumped"]["key_sha256"]
+
+
+@pytest.mark.parametrize("position", [0, 1, 623, 624])
+@pytest.mark.parametrize("steps", [1, 10, 624, 1000])
+def test_jumped_draw_order(position, steps):
+    # gh-33318: jumping must commute with ordinary draws across block boundaries.
+    first = MT19937(0)
+    first.random_raw(624)
+    state = first.state
+    state["state"]["pos"] = position
+    first.state = state
+    second = MT19937(0)
+    second.state = state
+
+    first.random_raw(steps)
+    first = first.jumped()
+    second = second.jumped()
+    second.random_raw(steps)
+    assert_array_equal(first.random_raw(2000), second.random_raw(2000))
+
+
+@pytest.mark.parametrize("jumps, expected", [
+    (1, "0900fab3a8e25f0de585e6c20d326680f8e7aeee203ac24a5da0a4fd613039f7"),
+    (2, "fbf53098a1294f7521c801885b0408bb4cc710d32573efb227bc7b2a3516820d"),
+])
+def test_jumped_output(jumps, expected):
+    # Reference: apply x**(jumps * 2**128) modulo the characteristic polynomial
+    # to the ordinary output stream, independently of the jump implementation.
+    jumped = MT19937(0).jumped(jumps)
+    output = jumped.random_raw(2000).astype("<u4")
+    assert hashlib.sha256(output.tobytes()).hexdigest() == expected
+
+
+def test_jump_from_restored_block():
+    # Old jumped states can have pos=0 and a noncanonical first word.
+    # The first word's low bits cannot affect any draw after the first.
+    first = MT19937(42)
+    state = first.state
+    state["state"]["pos"] = 0
+    first.state = state
+    state["state"]["key"][0] ^= 1
+    second = MT19937(0)
+    second.state = state
+    assert_array_equal(first.jumped().random_raw(624),
+                       second.jumped().random_raw(624))
 
 
 def test_broadcast_size_error():
