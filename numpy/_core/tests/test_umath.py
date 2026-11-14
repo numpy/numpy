@@ -4492,6 +4492,18 @@ class TestRationalFunctions:
         a = np.array([3, 12, 20], dtype=dtype)
         assert_equal(np.lcm.reduce([3, 12, 20]), 60)
 
+        # reduction reaches 0 before processing the remaining elements
+        a = np.array([3, 4, 0, 5, 7], dtype=dtype)
+        assert_equal(np.lcm.reduce(a), 0)
+
+        # one output reaches 0 before the others
+        a = np.array([[3, 4, 5], [0, 6, 10], [2, 0, 3]], dtype=dtype)
+        assert_equal(np.lcm.reduce(a, axis=0), [0, 0, 30])
+        f = np.asfortranarray([[3, 0, 5], [4, 6, 10], [5, 10, 3]]).astype(dtype)
+        assert_equal(np.lcm.reduce(f, axis=1), [0, 60, 30])
+        b = np.array([[3, 4], [0, 6], [5, 10]], dtype=dtype)
+        assert_equal(np.lcm.accumulate(b, axis=0), [[3, 4], [0, 12], [0, 60]])
+
         # broadcasting, and a test including 0
         a = np.arange(6).astype(dtype)
         b = 20
