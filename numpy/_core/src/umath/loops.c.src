@@ -632,8 +632,10 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
- * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG, ULONGLONG#
- * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong, npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
  * #c    = ,,,l,ll,u,u,u,ul,ull#
  */
 /**begin repeat1
