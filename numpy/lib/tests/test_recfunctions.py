@@ -1040,3 +1040,23 @@ class TestAppendFieldsObj:
         control = np.array([(obj, 1.0, 10), (obj, 2.0, 20)],
                            dtype=[('A', object), ('B', float), ('C', int)])
         assert_equal(test, control)
+
+
+class TestArrayFunctionDispatch:
+    class MyArray:
+        def __init__(self, data=None):
+            self.data = np.array([1, 2]) if data is None else data
+
+        def __array_function__(self, func, types, args, kwargs):
+            return "dispatched"
+
+    @pytest.mark.parametrize("func", [merge_arrays, stack_arrays])
+    def test_single_array_dispatch(self, func):
+        arr = self.MyArray()
+        assert func(arr) == "dispatched"
+
+    @pytest.mark.parametrize("func", [merge_arrays, stack_arrays])
+    def test_sequence_of_arrays_dispatch(self, func):
+        arr = self.MyArray()
+        assert func([arr, arr]) == "dispatched"
+        assert func((arr, arr)) == "dispatched"
