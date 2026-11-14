@@ -1235,6 +1235,7 @@ init_string_dtype(void)
     return 0;
 }
 
+// wrapper around NpyString_dup that sets a Python error
 NPY_NO_EXPORT int
 copy_string(npy_string_allocator *in_allocator,
             npy_string_allocator *out_allocator,
