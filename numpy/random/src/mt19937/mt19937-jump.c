@@ -98,6 +98,7 @@ void horner1(unsigned long *pf, mt19937_state *state) {
 
 void mt19937_jump_state(mt19937_state *state) {
   unsigned long *pf;
+  mt19937_state linear_state;
   int i;
 
   pf = (unsigned long *)PyMem_RawCalloc(P_SIZE, sizeof(unsigned long));
@@ -105,11 +106,27 @@ void mt19937_jump_state(mt19937_state *state) {
     pf[i] = poly_coef[i];
   }
 
-  if (state->pos >= _MT19937_N) {
-    state->pos = 0;
-  }
-
+  /* Jump the linear block, independently of how many words were consumed. */
+  linear_state.pos = state->pos;
+  state->pos = 0;
   horner1(pf, state);
+
+  /* Horner's result is a circular window starting at state->pos. */
+  for (i = 0; i < _MT19937_N; i++) {
+    linear_state.key[i] = state->key[(i + state->pos) % _MT19937_N];
+  }
+  /*
+   * The low 31 bits of the input's first word play no part in the
+   * next twist. A restored block can have arbitrary values there, which
+   * the constant term of the jump polynomial carries into the result.
+   * Recover these bits from the last equation of mt19937_gen.
+   */
+  uint32_t twist = linear_state.key[_MT19937_N - 1] ^
+                   linear_state.key[_MT19937_M - 1];
+  uint32_t odd = twist >> 31;
+  uint32_t pair = ((twist ^ (odd ? MATRIX_A : 0)) << 1) | odd;
+  linear_state.key[0] = (linear_state.key[0] & UPPER_MASK) | (pair & LOWER_MASK);
+  copy_state(state, &linear_state);
 
   PyMem_RawFree(pf);
 }
