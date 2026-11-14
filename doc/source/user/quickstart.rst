@@ -1441,7 +1441,7 @@ strange.
 
 .. seealso::
 
-   :doc:`numpy-for-matlab-users`
+   `NumPy for MATLAB users <https://numpy.org/numpy-tutorials/numpy-for-matlab-users/>`__
 
 Histograms
 ----------
