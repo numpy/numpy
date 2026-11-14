@@ -1,0 +1,4 @@
+* Casts between `numpy.dtypes.StringDType` and the fixed-width string, bytes
+  and void dtypes now support unaligned data directly instead of going
+  through an intermediate buffer. They are up to twice as fast. As a
+  consequence of this change, these casts no longer leak memory.
