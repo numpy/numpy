@@ -361,8 +361,12 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     }
 
     /* Check the casting rule */
-    if (!PyArray_CanCastTypeTo(PyArray_DESCR(src),
-                                PyArray_DESCR(dst), casting)) {
+    int can_cast = PyArray_CanCastTypeTo_int(
+            PyArray_DESCR(src), PyArray_DESCR(dst), casting);
+    if (can_cast < 0) {
+        goto fail;
+    }
+    if (can_cast == 0) {
         npy_set_invalid_cast_error(
                 PyArray_DESCR(src), PyArray_DESCR(dst), casting, NPY_FALSE);
         goto fail;

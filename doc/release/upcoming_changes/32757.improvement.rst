@@ -1,0 +1,3 @@
+* `numpy.strings.center`, `numpy.strings.ljust`, and `numpy.strings.rjust` now
+  use ``fillchar=None`` as their default instead of ``fillchar=" "``.
+  ``None`` uses a space matching the input dtype.

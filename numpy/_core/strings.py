@@ -4,7 +4,9 @@ operations.
 """
 
 import functools
+import os
 import sys
+import warnings
 
 import numpy as np
 from numpy import (
@@ -17,6 +19,7 @@ from numpy import (
     multiply as _multiply_ufunc,
     not_equal,
 )
+from numpy._core._coercion_policy import _STRICT
 from numpy._core.multiarray import _vec_string
 from numpy._core.overrides import array_function_dispatch, set_module
 from numpy._core.umath import (
@@ -56,6 +59,7 @@ from numpy._core.umath import (
     startswith as _startswith_ufunc,
     str_len,
 )
+from numpy._utils import _get_warn_skip_file_prefixes
 
 
 def _override___module__():
@@ -91,6 +95,15 @@ __all__ = [
 
 
 MAX = np.iinfo(np.int64).max
+
+# Text/bytes semantics and variable-width storage are separate categories.
+_TEXT_CHARS = "UT"
+_BYTES_CHARS = "S"
+_VARIABLE_LENGTH = "T"
+
+_STRING_WARNING_SKIP_PREFIXES = _get_warn_skip_file_prefixes(
+    __file__, os.path.join(os.path.dirname(__file__), "defchararray.py"),
+)
 
 array_function_dispatch = functools.partial(
     array_function_dispatch, module='numpy.strings')
@@ -684,13 +697,65 @@ def expandtabs(a, tabsize=8):
     return _expandtabs(a, tabsize, out=out)
 
 
+def _use_variable_stringdtype(*arrays):
+    # Deprecated NumPy 2.6, 2026-10-13: implicit S/U promotion.
+    # Avoid legacy S/U promotion, including with numeric or object arguments.
+    # After the warning period, delete this helper and use
+    # np.result_type(*arrays).char in _VARIABLE_LENGTH at the call sites.
+    if all(
+        a.dtype.char not in _VARIABLE_LENGTH and a.dtype.kind in "biufcOSU"
+        for a in arrays
+    ):
+        return False
+    return np.result_type(*arrays).char in _VARIABLE_LENGTH
+
+
+def _cast_string_arg(arg, dtype):
+    # Call only after _use_variable_stringdtype returns False, so these casts
+    # cannot hide the original dtypes from variable-width promotion and dispatch.
+
+    # Deprecated NumPy 2.6, 2026-10-13: implicit text/bytes casts in np.strings.
+    # After this deprecation expires and C classifies text/bytes casts as unsafe,
+    # delete this helper and use astype(..., casting="same_kind") for string
+    # arguments at the call sites. Keep non-string coercion unchanged.
+    from_char, to_char = arg.dtype.char, np.dtype(dtype).char
+    mixed = (
+        (from_char in _BYTES_CHARS and to_char in _TEXT_CHARS)
+        or (from_char in _TEXT_CHARS and to_char in _BYTES_CHARS)
+    )
+    if mixed and _STRICT:
+        return arg.astype(dtype, casting="same_kind", copy=False)
+    result = arg.astype(dtype, copy=False)
+    if mixed:
+        warnings.warn(
+            "Mixing strings and bytes in numpy.strings is deprecated and "
+            "will raise TypeError in a future release. Use matching bytes or "
+            "text arguments. Convert with numpy.strings.encode or "
+            "numpy.strings.decode and an explicit encoding if needed. "
+            "(Deprecated NumPy 2.6)",
+            DeprecationWarning,
+            skip_file_prefixes=_STRING_WARNING_SKIP_PREFIXES,
+        )
+    return result
+
+
+def _get_fillchar(a, fillchar):
+    if fillchar is None:
+        fillchar = b" " if a.dtype.char in _BYTES_CHARS else " "
+    fillchar = np.asanyarray(fillchar)
+    if np.any(str_len(fillchar) != 1):
+        raise TypeError(
+            "The fill character must be exactly one character long")
+    return fillchar
+
+
 def _just_dispatcher(a, width, fillchar=None):
     return (a,)
 
 
 @set_module("numpy.strings")
 @array_function_dispatch(_just_dispatcher)
-def center(a, width, fillchar=' '):
+def center(a, width, fillchar=None):
     """
     Return a copy of `a` with its elements centered in a string of
     length `width`.
@@ -702,7 +767,8 @@ def center(a, width, fillchar=' '):
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
     fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
-        Optional padding character to use (default is space).
+        Optional padding character to use. The default is ``None``, which selects
+        a space matching the string or bytes dtype of ``a``.
 
     Returns
     -------
@@ -716,9 +782,8 @@ def center(a, width, fillchar=' '):
 
     Notes
     -----
-    While it is possible for ``a`` and ``fillchar`` to have different dtypes,
-    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S"
-    is not allowed, and a ``ValueError`` is raised.
+    Mixing text and bytes in ``a`` and ``fillchar`` is deprecated.
+    Use `encode` or `decode` to convert explicitly before padding.
 
     Examples
     --------
@@ -739,16 +804,12 @@ def center(a, width, fillchar=' '):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
     a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
+    fillchar = _get_fillchar(a, fillchar)
 
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
-
-    if np.result_type(a, fillchar).char == "T":
+    if _use_variable_stringdtype(a, fillchar):
         return _center(a, width, fillchar)
 
-    fillchar = fillchar.astype(a.dtype, copy=False)
+    fillchar = _cast_string_arg(fillchar, a.dtype)
     width = np.maximum(str_len(a), width)
     out_dtype = f"{a.dtype.char}{width.max()}"
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
@@ -759,7 +820,7 @@ def center(a, width, fillchar=' '):
 
 @set_module("numpy.strings")
 @array_function_dispatch(_just_dispatcher)
-def ljust(a, width, fillchar=' '):
+def ljust(a, width, fillchar=None):
     """
     Return an array with the elements of `a` left-justified in a
     string of length `width`.
@@ -771,7 +832,8 @@ def ljust(a, width, fillchar=' '):
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
     fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
-        Optional character to use for padding (default is space).
+        Optional character to use for padding. The default is ``None``, which
+        selects a space matching the string or bytes dtype of ``a``.
 
     Returns
     -------
@@ -785,9 +847,8 @@ def ljust(a, width, fillchar=' '):
 
     Notes
     -----
-    While it is possible for ``a`` and ``fillchar`` to have different dtypes,
-    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S"
-    is not allowed, and a ``ValueError`` is raised.
+    Mixing text and bytes in ``a`` and ``fillchar`` is deprecated.
+    Use `encode` or `decode` to convert explicitly before padding.
 
     Examples
     --------
@@ -804,16 +865,12 @@ def ljust(a, width, fillchar=' '):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
     a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
+    fillchar = _get_fillchar(a, fillchar)
 
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
-
-    if np.result_type(a, fillchar).char == "T":
+    if _use_variable_stringdtype(a, fillchar):
         return _ljust(a, width, fillchar)
 
-    fillchar = fillchar.astype(a.dtype, copy=False)
+    fillchar = _cast_string_arg(fillchar, a.dtype)
     width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
@@ -824,7 +881,7 @@ def ljust(a, width, fillchar=' '):
 
 @set_module("numpy.strings")
 @array_function_dispatch(_just_dispatcher)
-def rjust(a, width, fillchar=' '):
+def rjust(a, width, fillchar=None):
     """
     Return an array with the elements of `a` right-justified in a
     string of length `width`.
@@ -836,7 +893,8 @@ def rjust(a, width, fillchar=' '):
     width : array_like, with any integer dtype
         The length of the resulting strings, unless ``width < str_len(a)``.
     fillchar : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
-        Optional padding character to use (default is space).
+        Optional padding character to use. The default is ``None``, which selects
+        a space matching the string or bytes dtype of ``a``.
 
     Returns
     -------
@@ -850,9 +908,8 @@ def rjust(a, width, fillchar=' '):
 
     Notes
     -----
-    While it is possible for ``a`` and ``fillchar`` to have different dtypes,
-    passing a non-ASCII character in ``fillchar`` when ``a`` is of dtype "S"
-    is not allowed, and a ``ValueError`` is raised.
+    Mixing text and bytes in ``a`` and ``fillchar`` is deprecated.
+    Use `encode` or `decode` to convert explicitly before padding.
 
     Examples
     --------
@@ -869,16 +926,12 @@ def rjust(a, width, fillchar=' '):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
     a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
+    fillchar = _get_fillchar(a, fillchar)
 
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
-
-    if np.result_type(a, fillchar).char == "T":
+    if _use_variable_stringdtype(a, fillchar):
         return _rjust(a, width, fillchar)
 
-    fillchar = fillchar.astype(a.dtype, copy=False)
+    fillchar = _cast_string_arg(fillchar, a.dtype)
     width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
@@ -1335,16 +1388,16 @@ def replace(a, old, new, count=-1):
     new_dtype = getattr(new, 'dtype', None)
     new_arr = np.asanyarray(new)
 
-    if np.result_type(arr, old_arr, new_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else arr
-        old = old if type(old) is str else old_arr
-        new = new if type(new) is str else new_arr
+    if _use_variable_stringdtype(arr, old_arr, new_arr):
+        # Pass exact str/bytes objects so the ufunc converts them directly.
+        a = a if type(a) in (str, bytes) else arr
+        old = old if type(old) in (str, bytes) else old_arr
+        new = new if type(new) in (str, bytes) else new_arr
         return _replace(a, old, new, count)
 
     a_dt = arr.dtype
-    old = old_arr.astype(old_dtype or a_dt.char, copy=False)
-    new = new_arr.astype(new_dtype or a_dt.char, copy=False)
+    old = _cast_string_arg(old_arr, old_dtype or a_dt.char)
+    new = _cast_string_arg(new_arr, new_dtype or a_dt.char)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
@@ -1584,14 +1637,14 @@ def partition(a, sep):
     a_arr = np.asanyarray(a)
     sep_arr = np.asanyarray(sep)
 
-    if np.result_type(a_arr, sep_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else a_arr
-        sep = sep if type(sep) is str else sep_arr
+    if _use_variable_stringdtype(a_arr, sep_arr):
+        # Pass exact str/bytes objects so the ufunc converts them directly.
+        a = a if type(a) in (str, bytes) else a_arr
+        sep = sep if type(sep) in (str, bytes) else sep_arr
         return _partition(a, sep)
 
     a = a_arr
-    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
+    sep = _cast_string_arg(sep_arr, a_arr.dtype.char)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1657,14 +1710,14 @@ def rpartition(a, sep):
     a_arr = np.asanyarray(a)
     sep_arr = np.asanyarray(sep)
 
-    if np.result_type(a_arr, sep_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else a_arr
-        sep = sep if type(sep) is str else sep_arr
+    if _use_variable_stringdtype(a_arr, sep_arr):
+        # Pass exact str/bytes objects so the ufunc converts them directly.
+        a = a if type(a) in (str, bytes) else a_arr
+        sep = sep if type(sep) in (str, bytes) else sep_arr
         return _rpartition(a, sep)
 
     a = a_arr
-    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
+    sep = _cast_string_arg(sep_arr, a_arr.dtype.char)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)

@@ -185,7 +185,7 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch ((int)spec->casting) {
+    switch ((int)spec->casting & ~_NPY_CAST_WILL_BE_UNSAFE) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
@@ -715,8 +715,9 @@ boundarraymethod__resolve_descriptors(
     }
     if (self->method->casting != -1) {
         NPY_CASTING cast = casting;
-        if (self->method->casting !=
-                PyArray_MinCastSafety(cast, self->method->casting)) {
+        if ((self->method->casting & ~_NPY_CAST_WILL_BE_UNSAFE) !=
+                (PyArray_MinCastSafety(cast, self->method->casting) &
+                 ~_NPY_CAST_WILL_BE_UNSAFE)) {
             PyErr_Format(PyExc_RuntimeError,
                     "resolve_descriptors cast level did not match stored one. "
                     "(set level is %d, got %d for method %s)",

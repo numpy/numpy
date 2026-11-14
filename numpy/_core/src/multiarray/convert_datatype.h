@@ -59,6 +59,21 @@ should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
 NPY_NO_EXPORT int
 should_use_min_scalar_weak_literals(int narrs, PyArrayObject **arr);
 
+/*
+ * Unlike the public versions, these propagate warnings raised as errors.
+ * Return 1 if valid, 0 if invalid, and -1 on error.
+ */
+NPY_NO_EXPORT int
+PyArray_CanCastTypeTo_int(PyArray_Descr *from, PyArray_Descr *to,
+        NPY_CASTING casting);
+
+NPY_NO_EXPORT int
+PyArray_CanCastArrayTo_int(PyArrayObject *arr, PyArray_Descr *to,
+        NPY_CASTING casting);
+
+NPY_NO_EXPORT int
+npy_coercion_is_strict(void);
+
 NPY_NO_EXPORT const char *
 npy_casting_to_string(NPY_CASTING casting);
 
@@ -83,6 +98,10 @@ PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private_
 NPY_NO_EXPORT NPY_CASTING
 PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2);
 
+/* Return 1 if valid, 0 if invalid, or -1 if a warning was raised as an error. */
+NPY_NO_EXPORT int
+npy_cast_safety_to_bool(NPY_CASTING safety, NPY_CASTING casting, int warn);
+
 NPY_NO_EXPORT NPY_CASTING
 PyArray_GetCastInfo(
         PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype,
@@ -92,10 +111,6 @@ NPY_NO_EXPORT npy_intp
 PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
                  npy_intp* view_offset, NPY_CASTING minimum_safety,
                  npy_intp ignore_errors);
-
-NPY_NO_EXPORT int
-PyArray_CheckCastSafety(NPY_CASTING casting,
-        PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype);
 
 NPY_NO_EXPORT NPY_CASTING
 legacy_same_dtype_resolve_descriptors(
