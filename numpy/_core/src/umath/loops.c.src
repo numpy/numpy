@@ -658,7 +658,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
+        *((@type@ *)op1) = (in1 == @absorbing@) ? in1 : npy_@kind@@c@(in1, in2);
     }
 }
 /**end repeat1**/
