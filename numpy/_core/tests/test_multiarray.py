@@ -41,6 +41,7 @@ from numpy.testing import (
     HAS_REFCOUNT,
     HAS_SUBPROCESSES,
     IS_64BIT,
+    IS_IOS,
     IS_MUSL,
     IS_PYPY,
     IS_WASM,
@@ -12409,7 +12410,10 @@ class TestSubinterpreterTeardown:
     exercises its teardown path even though the import failed.
     """
 
-    @pytest.mark.skipif(IS_WASM, reason="no subinterpreter support in wasm")
+    @pytest.mark.skipif(
+        IS_IOS or IS_WASM,
+        reason="no subinterpreter support on this platform"
+    )
     def test_subinterpreter_import_fails_cleanly(self):
         # concurrent.interpreters is Python 3.14+
         interpreters = pytest.importorskip("concurrent.interpreters")
