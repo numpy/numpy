@@ -416,7 +416,7 @@ jobs:
   Linux_Python_312_32bit_full:
     name: i686, cp312, full
     needs: [smoke_test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
        # There are few options for i686 images at https://quay.io/organization/pypa,
        # use the glibc2.28 one
