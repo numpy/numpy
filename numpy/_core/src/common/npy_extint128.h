@@ -359,4 +359,24 @@ ceildiv_128_64(npy_extint128_t a, npy_int64 b)
     return result;
 }
 
+/*
+ * Accumulate: acc = acc * factor + field, using 128-bit arithmetic to avoid
+ * signed-integer overflow UB on intermediate products.  Sets *overflow if
+ * acc does not fit in int64 before the multiply, or if the final to_64()
+ * call overflows.
+ */
+static inline npy_extint128_t
+accum_128(npy_extint128_t acc, npy_int64 factor, npy_int64 field,
+          char *overflow)
+{
+    npy_int64 cur;
+    char ov = 0;
+    cur = to_64(acc, &ov);
+    if (ov) {
+        *overflow = 1;
+        return acc;
+    }
+    return add_128(mul_64_64(cur, factor), to_128(field), overflow);
+}
+
 #endif  /* NUMPY_CORE_SRC_COMMON_NPY_EXTINT128_H_ */
