@@ -517,7 +517,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         }
 
         /* truncation occurs here */
-        PyObject *u = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ucs4, itemsize / 4);
+        PyObject *u = npy_PyUnicode_FromUCS4(ucs4, itemsize / 4);
         PyMem_RawFree(buff);
         if (u == NULL) {
             return NULL;

@@ -283,8 +283,8 @@ tokenizer_core(tokenizer_state *ts, parser_config *const config)
  * field whether the buffer is large enough.
  * Different choices are possible, this one seems to work well, though.
  *
- * The core (main part) of the tokenizer is specialized for the three Python
- * unicode flavors UCS1, UCS2, and UCS4 as a worthwhile optimization.
+ * The core (main part) of the tokenizer is specialized for ASCII text, which
+ * the streams provide in place, and for UCS4 copies of other text.
  */
 NPY_NO_EXPORT int
 npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
@@ -341,14 +341,11 @@ npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
             }
         }
         int status;
-        if (ts->unicode_kind == PyUnicode_1BYTE_KIND) {
+        if (ts->unicode_kind == (int)sizeof(Py_UCS1)) {
             status = tokenizer_core<Py_UCS1>(ts, config);
         }
-        else if (ts->unicode_kind == PyUnicode_2BYTE_KIND) {
-            status = tokenizer_core<Py_UCS2>(ts, config);
-        }
         else {
-            assert(ts->unicode_kind == PyUnicode_4BYTE_KIND);
+            assert(ts->unicode_kind == (int)sizeof(Py_UCS4));
             status = tokenizer_core<Py_UCS4>(ts, config);
         }
         if (status < 0) {
