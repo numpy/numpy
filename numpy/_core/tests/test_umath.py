@@ -4471,6 +4471,7 @@ class TestRationalFunctions:
 
     def test_gcd(self):
         self._test_gcd_inner(np.int16)
+        self._test_gcd_inner(np.uint16)
         self._test_lcm_inner(np.uint16)
 
     def test_gcd_object(self):
@@ -4492,6 +4493,18 @@ class TestRationalFunctions:
         a = np.array([3, 12, 20], dtype=dtype)
         assert_equal(np.lcm.reduce([3, 12, 20]), 60)
 
+        # reduction reaches 0 before processing the remaining elements
+        a = np.array([3, 4, 0, 5, 7], dtype=dtype)
+        assert_equal(np.lcm.reduce(a), 0)
+
+        # one output reaches 0 before the others
+        a = np.array([[3, 4, 5], [0, 6, 10], [2, 0, 3]], dtype=dtype)
+        assert_equal(np.lcm.reduce(a, axis=0), [0, 0, 30])
+        f = np.asfortranarray([[3, 0, 5], [4, 6, 10], [5, 10, 3]]).astype(dtype)
+        assert_equal(np.lcm.reduce(f, axis=1), [0, 60, 30])
+        b = np.array([[3, 4], [0, 6], [5, 10]], dtype=dtype)
+        assert_equal(np.lcm.accumulate(b, axis=0), [[3, 4], [0, 12], [0, 60]])
+
         # broadcasting, and a test including 0
         a = np.arange(6).astype(dtype)
         b = 20
@@ -4512,6 +4525,18 @@ class TestRationalFunctions:
         # reduce
         a = np.array([15, 25, 35], dtype=dtype)
         assert_equal(np.gcd.reduce(a), 5)
+
+        # reduction reaches 1 before processing the remaining elements
+        a = np.array([12, 18, 1, 0, 42], dtype=dtype)
+        assert_equal(np.gcd.reduce(a), 1)
+
+        # one output reaches 1 before the others
+        a = np.array([[4, 6, 10], [3, 9, 15], [2, 3, 5]], dtype=dtype)
+        assert_equal(np.gcd.reduce(a, axis=0), [1, 3, 5])
+        f = np.asfortranarray([[2, 3, 5], [4, 6, 10], [3, 9, 15]]).astype(dtype)
+        assert_equal(np.gcd.reduce(f, axis=1), [1, 2, 3])
+        b = np.array([[6, 8], [5, 12], [9, 20]], dtype=dtype)
+        assert_equal(np.gcd.accumulate(b, axis=0), [[6, 8], [1, 4], [1, 4]])
 
         # broadcasting, and a test including 0
         a = np.arange(6).astype(dtype)

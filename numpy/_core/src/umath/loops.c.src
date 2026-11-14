@@ -632,45 +632,37 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
- * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
- * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
- * #c    = ,,,l,ll#
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #c    = ,,,l,ll,u,u,u,ul,ull#
  */
 /**begin repeat1
  * #kind = gcd, lcm#
+ * #absorbing = 1, 0#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            if (io1 == @absorbing@) {
+                break;
+            }
+            io1 = npy_@kind@@c@(io1, *(@type@ *)ip2);
+        }
+        *((@type@ *)iop1) = io1;
+        return;
+    }
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
+        *((@type@ *)op1) = (in1 == @absorbing@) ? in1 : npy_@kind@@c@(in1, in2);
     }
 }
 /**end repeat1**/
 /**end repeat**/
-
-/**begin repeat
- * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
- * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
- * #c    = u,u,u,ul,ull#
- */
-/**begin repeat1
- * #kind = gcd, lcm#
- **/
-NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
-    }
-}
-/**end repeat1**/
-/**end repeat**/
-
 
 /*
  * NOTE: It may be nice to vectorize these, OTOH, these are still faster
