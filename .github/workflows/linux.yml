@@ -62,7 +62,7 @@ jobs:
   smoke_test:
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
@@ -112,7 +112,7 @@ jobs:
     needs: [smoke_test]
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
@@ -257,7 +257,7 @@ jobs:
 
   sdist:
     needs: [smoke_test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name != 'push'
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -443,7 +443,7 @@ jobs:
   Linux_Python_312_32bit_full:
     name: i686, cp312, full
     needs: [smoke_test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
        # There are few options for i686 images at https://quay.io/organization/pypa,
        # use the glibc2.28 one
