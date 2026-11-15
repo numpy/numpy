@@ -1991,6 +1991,23 @@ M   33  21.99
                              usecols=(0, -1), filling_values={1: -2, -1: -4})
         assert_equal(test, [[1, -4], [-1, -4]])
 
+        # When usecols only reorders the columns, names are not reduced and
+        # name keys still refer to the columns of the file
+        data = "a,b\nN/A,5\n4,6"
+        test = np.genfromtxt(TextIO(data), delimiter=",", dtype=int,
+                             names=True, usecols=(1, 0),
+                             missing_values={"a": "N/A"},
+                             filling_values={"a": -9})
+        assert_equal(test.tolist(), [(5, -9), (6, 4)])
+
+        # Integer keys refer to the columns of the file, also when names
+        # are reduced to the selected columns
+        data = "a,b,c\n,2,3\n4,5,"
+        test = np.genfromtxt(TextIO(data), delimiter=",", dtype=int,
+                             names=True, usecols=(2, 0),
+                             filling_values={0: -9, 2: -7})
+        assert_equal(test.tolist(), [(3, -9), (-7, 4)])
+
     def test_withmissing_float(self):
         data = TextIO('A,B\n0,1.5\n2,-999.00')
         test = np.genfromtxt(data, dtype=None, delimiter=',',
