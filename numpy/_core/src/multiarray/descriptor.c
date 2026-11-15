@@ -3057,6 +3057,12 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
                     &elsize, &alignment)) {
             return NULL;
         }
+        if (version != 0 && version != 1) {
+            PyErr_Format(PyExc_ValueError,
+                         "6-tuple state requires version 0 or 1, got %d",
+                         version);
+            return NULL;
+        }
         break;
     case 5:
         version = 0;

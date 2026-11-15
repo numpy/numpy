@@ -2148,8 +2148,8 @@ with the rest of the ArrayMethod API.
 
 .. c:type:: int (PyArrayMethod_TranslateGivenDescriptors)( \
                     int nin, int nout, \
-                    PyArray_DTypeMeta *wrapped_dtypes[], \
-                    PyArray_Descr *given_descrs[], \
+                    PyArray_DTypeMeta *const wrapped_dtypes[], \
+                    PyArray_Descr *const given_descrs[], \
                     PyArray_Descr *new_descrs[]);
 
     The function to convert the given descriptors (passed in to
@@ -2167,8 +2167,9 @@ with the rest of the ArrayMethod API.
     unit from the input unit.
 
 .. c:type:: int (PyArrayMethod_TranslateLoopDescriptors)( \
-                    int nin, int nout, PyArray_DTypeMeta *new_dtypes[], \
-                    PyArray_Descr *given_descrs[], \
+                    int nin, int nout, \
+                    PyArray_DTypeMeta *const new_dtypes[], \
+                    PyArray_Descr *const given_descrs[], \
                     PyArray_Descr *original_descrs[], \
                     PyArray_Descr *loop_descrs[]);
 
@@ -2215,8 +2216,8 @@ code:
 
     static int
     translate_given_descrs(int nin, int nout,
-                           PyArray_DTypeMeta *NPY_UNUSED(wrapped_dtypes[]),
-                           PyArray_Descr *given_descrs[],
+                           PyArray_DTypeMeta *const NPY_UNUSED(wrapped_dtypes[]),
+                           PyArray_Descr *const given_descrs[],
                            PyArray_Descr *new_descrs[])
     {
         for (int i = 0; i < nin + nout; i++) {
@@ -2232,8 +2233,8 @@ code:
 
     static int
     translate_loop_descrs(int nin, int NPY_UNUSED(nout),
-                          PyArray_DTypeMeta *NPY_UNUSED(new_dtypes[]),
-                          PyArray_Descr *given_descrs[],
+                          PyArray_DTypeMeta *const NPY_UNUSED(new_dtypes[]),
+                          PyArray_Descr *const given_descrs[],
                           PyArray_Descr *original_descrs[],
                           PyArray_Descr *loop_descrs[])
     {

@@ -487,10 +487,25 @@ def test_embedded_null_string_like_casts(dtype):
     assert roundtripped.tolist() == strings
 
 
-def test_string_too_large_error():
-    arr = np.array(["a", "b", "c"], dtype=StringDType())
+@pytest.mark.parametrize("old", ["short", "a" * 20, "heap", None])
+def test_string_too_large_error(old):
+    arr = np.array(["a", "b", "c"], dtype=StringDType(na_object=None))
     with pytest.raises(OverflowError):
         arr * (sys.maxsize + 1)
+    arr[0] = 'b'
+    np.testing.assert_array_equal(arr, ["b", "b", "c"])
+
+    # Tries to allocate on 64 bit. On 32-bit, still above sys.maxsize.
+    out = np.full_like(arr, old)
+    if old == "heap":
+        # Growing an existing element moves it out of the arena.
+        old = "a" * 100
+        out[:] = old
+    with pytest.raises((MemoryError, OverflowError)):
+        np.multiply(arr, 2**55, out=out)
+    assert_array_equal(out, np.full_like(out, old))
+    out[:] = "a" * 200
+    assert_array_equal(out, "a" * 200)
 
 
 @pytest.mark.parametrize(
@@ -672,6 +687,15 @@ def test_void_cast_rejects_invalid_utf8(bad):
     arr = np.array([bad], dtype=f"V{len(bad)}")
     with pytest.raises(UnicodeDecodeError):
         arr.astype(StringDType())
+
+
+@pytest.mark.parametrize("structured", ["i8,i8", "O,i8"])
+def test_structured_cast_rejected(dtype, structured):
+    match = "is a structured or subarray dtype"
+    with pytest.raises(TypeError, match=match):
+        np.zeros(1, dtype=structured).astype(dtype)
+    with pytest.raises(TypeError, match=match):
+        np.array(["a"], dtype=dtype).astype(structured)
 
 
 def test_bytes_cast_roundtrips_valid_utf8():
@@ -1125,6 +1149,23 @@ def test_sort(dtype, strings, stable):
                 match="Cannot compare null that is not a nan-like value",
             ):
                 np.argsort(arr, stable=stable)
+            for func, out_dtype in itertools.product(
+                [np.argmax, np.argmin], [np.intp, np.int32]
+            ):
+                out = np.full((), -1, dtype=out_dtype)
+                with pytest.raises(
+                    ValueError,
+                    match="Cannot compare null that is not a nan-like value",
+                ):
+                    func(arr, out=out)
+                assert out == -1
+            out = np.zeros_like(arr)
+            with pytest.raises(
+                ValueError,
+                match="Cannot compare null that is not a nan-like value",
+            ):
+                np.maximum(arr, arr, out=out)
+            assert_array_equal(out, np.zeros_like(arr))
             argsorted = None
         elif dtype._has_nan_na:
             argsorted = None
@@ -1450,6 +1491,12 @@ def test_fromiter_reused_dtype():
     assert_array_equal(arr1, arr2)
 
 
+def test_loadtxt_reused_dtype(string_list):
+    arr = np.array(string_list, dtype="T")
+    res = np.loadtxt(string_list, dtype=arr.dtype, delimiter=",")
+    assert_array_equal(res, arr)
+
+
 def test_flatiter_indexing():
     # see gh-29659
     arr = np.array(['hello', 'world'], dtype='T')
@@ -1586,6 +1633,16 @@ def test_argmax(strings):
     arr = np.array(strings, dtype="T")
     assert np.argmax(arr) == strings.index(max(strings))
     assert np.argmin(arr) == strings.index(min(strings))
+
+
+@pytest.mark.parametrize("method", [np.argmax, np.argmin])
+def test_argmin_argmax_error_stops_iteration(method):
+    arr = np.array([[None, "a"], ["a", "b"]], dtype=StringDType(na_object=None))
+    out = np.full(2, -1, dtype=np.intp)
+    with pytest.raises(ValueError):
+        method(arr, axis=1, out=out)
+    # The error in the first row must leave the second row's output untouched.
+    assert out[1] == -1
 
 
 @pytest.mark.parametrize(
@@ -3762,3 +3819,12 @@ def test_nditer_distinct_allocators():
     it = np.nditer([a], flags=["refs_ok", "buffered"], op_dtypes=[b.dtype],
                    casting="unsafe")
     assert_array_equal([str(x) for x in it.copy()], a_obj.tolist())
+
+    # a string buffer written back to an object array is released
+    res = np.array(["a"] * 20, dtype=object)
+    with np.nditer([res], flags=["refs_ok", "buffered", "external_loop"],
+                   op_flags=[["readwrite"]], op_dtypes=["T"],
+                   casting="unsafe") as it:
+        for chunk in it:
+            chunk[...] = a_obj[0]
+    assert res.tolist() == [a_obj[0]] * 20

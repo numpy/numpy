@@ -434,7 +434,10 @@ minimum_maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
         const npy_packed_static_string *sin1 = (npy_packed_static_string *)in1;
         const npy_packed_static_string *sin2 = (npy_packed_static_string *)in2;
         npy_packed_static_string *sout = (npy_packed_static_string *)out;
-        int cmp = _compare(in1, in2, in1_descr, in2_descr);
+        int cmp;
+        if (_compare(in1, in2, in1_descr, in2_descr, &cmp) < 0) {
+            goto fail;
+        }
         if (cmp == 0 && (in1 == out || in2 == out)) {
             goto next_step;
         }
@@ -442,16 +445,16 @@ minimum_maximum_strided_loop(PyArrayMethod_Context *context, char *const data[],
             // if in and out are the same address, do nothing to avoid a
             // use-after-free
             if (in1 != out) {
-                if (free_and_copy(in1_allocator, out_allocator, sin1, sout,
-                                  ufunc_name) == -1) {
+                if (copy_string(in1_allocator, out_allocator, sin1, sout,
+                                ufunc_name) == -1) {
                     goto fail;
                 }
             }
         }
         else {
             if (in2 != out) {
-                if (free_and_copy(in2_allocator, out_allocator, sin2, sout,
-                                  ufunc_name) == -1) {
+                if (copy_string(in2_allocator, out_allocator, sin2, sout,
+                                ufunc_name) == -1) {
                     goto fail;
                 }
             }

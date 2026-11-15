@@ -59,7 +59,7 @@ jobs:
   baseline_only:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
     steps:
@@ -77,7 +77,7 @@ jobs:
   old_gcc:
     if: github.event_name != 'push'
     needs: [baseline_only]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       MESON_ARGS: "-Dallow-noblas=true"
     steps:
@@ -141,7 +141,7 @@ jobs:
 
   specialize:
     needs: [baseline_only]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name != 'push'
     continue-on-error: true
     strategy:

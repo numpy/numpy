@@ -4,6 +4,7 @@ import warnings
 import pytest
 
 import numpy as np
+from numpy._utils import _pep440
 from numpy.testing import (
     assert_,
     assert_allclose,
@@ -83,6 +84,36 @@ class TestEinsum:
             a = np.arange(3)
             # einsum_path does not yet accept kwarg 'casting'
             np.einsum('ij->j', [a, a], casting='same_value')
+
+    def test_einsum_unsupported_dtype(self):
+        out = np.ones((), dtype="m8[s]")
+        with pytest.raises(TypeError, match="invalid data type"):
+            np.einsum("i->", np.ones(3, dtype="m8[s]"), out=out)
+        assert out == np.timedelta64(1, "s")
+
+    def test_einsum_writeback_error(self):
+        a = np.full(3, 100, dtype=np.int8)
+        with pytest.raises(OverflowError):
+            np.einsum("i,i->i", a.astype(object), a, out=a, casting="unsafe")
+
+    def test_einsum_unsupported_new_style_dtype(self):
+        # gh-32671: new-style DTypes have type_num -1, which indexed the
+        # kernel tables out of bounds.
+        from importlib.metadata import version
+
+        try:
+            quaddtype_version = version("numpy_quaddtype")
+        except Exception:
+            pytest.skip("numpy_quaddtype not installed")
+        else:
+            if _pep440.Version(quaddtype_version) <= _pep440.Version("1.0.0"):
+                pytest.skip("critical bug in quaddtype during import")
+
+        numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
+
+        a = np.ones((3, 3), dtype=numpy_quaddtype.QuadPrecDType())
+        with pytest.raises(TypeError, match="invalid data type"):
+            np.einsum("ij->", a)
 
     def test_einsum_sorting_behavior(self):
         # Case 1: 26 dimensions (all lowercase indices)

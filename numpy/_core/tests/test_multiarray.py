@@ -4075,12 +4075,6 @@ class TestMethods:
         ):
             np.top_k(a, 2, mode="invalid")
 
-        with pytest.raises(
-            ValueError,
-            match=r"axis=None is not supported. Please provide a valid axis."
-        ):
-            np.top_k(a, 2, axis=None)
-
         y = (
             np.array([[], [], []], dtype=np.int8),
             np.array([[], [], []], dtype=np.intp)
@@ -4108,6 +4102,12 @@ class TestMethods:
         )
         self.assert_top_k(a, 2, -1, y, mode="smallest", sorted=sorted)
         self.assert_top_k(a, 2, 1, y, mode="smallest", sorted=sorted)
+
+        y = (
+            np.array([[5, 5]], dtype=np.int8),
+            np.array([[4, 5]], dtype=np.intp)
+        )
+        self.assert_top_k(a, 2, None, y, sorted=sorted)
 
     @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
     def test_top_k_floating_nan(self, dtype):
@@ -5893,6 +5893,15 @@ class TestArgmaxArgminCommon:
         assert_equal(arg_method(out=out1, axis=0),
                      np_method(a, out=out2, axis=0))
         assert_equal(out1, out2)
+
+    @pytest.mark.parametrize("method", [np.argmax, np.argmin])
+    def test_object_comparison_error_stops_iteration(self, method):
+        arr = np.array([[None, 1], [2, 3]], dtype=object)
+        out = np.full(2, -1, dtype=np.intp)
+        with pytest.raises(TypeError):
+            method(arr, axis=1, out=out)
+        # The error in the first row must leave the second row's output untouched.
+        assert out[1] == -1
 
     @pytest.mark.leaks_references(reason="replaces None with NULL.")
     @pytest.mark.parametrize('method, vals',

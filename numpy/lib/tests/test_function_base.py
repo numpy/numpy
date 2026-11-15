@@ -617,6 +617,12 @@ class TestInsert:
         assert_equal(insert(a, np.array([True] * 4), 9), [9, 1, 9, 2, 9, 3, 9])
         assert_equal(insert(a, np.array([True, False, True, False]), 9),
                      [9, 1, 2, 9, 3])
+        assert_equal(insert(a, [True, False, True, False], 9),
+                     [9, 1, 2, 9, 3])
+        assert_equal(insert(a, (True, False, True, False), 9),
+                     [9, 1, 2, 9, 3])
+        m = np.ma.array([False, True, False], mask=[False, True, False])
+        assert_equal(insert([10, 20, 30], m, 99), [10, 20, 30])
 
     def test_multidim(self):
         a = [[1, 1, 1]]
@@ -709,6 +715,11 @@ class TestInsert:
     def test_index_out_of_bounds(self, idx, values):
         with pytest.raises(IndexError, match='out of bounds'):
             np.insert([0, 1, 2], idx, values)
+
+    @pytest.mark.parametrize("obj", [True, False, [[True, False]]])
+    def test_boolean_obj_invalid(self, obj):
+        with pytest.raises(ValueError, match="must be one dimensional"):
+            np.insert([1, 2, 3], obj, 0)
 
 
 class TestAmax:
@@ -3414,6 +3425,20 @@ class TestBincount:
         actual = np.bincount(a)
         expected = [1, 3, 1, 1, 0, 0, 0, 1]
         assert_array_equal(actual, expected)
+
+    def test_max_intp_overflow(self):
+        # gh-33305: mx + 1 overflowed and the loop wrote out of bounds
+        with assert_raises(ValueError):
+            np.bincount([np.iinfo(np.intp).max])
+        with assert_raises(ValueError):
+            np.bincount([np.iinfo(np.intp).max], weights=[1.0])
+
+    @pytest.mark.parametrize("val", [np.iinfo(np.intp).max,
+                                     np.iinfo(np.intp).max + 1,
+                                     np.iinfo(np.uintp).max])
+    def test_too_large_unsigned(self, val):
+        with pytest.raises(ValueError, match="too large"):
+            np.bincount(np.array([val], dtype=np.uintp))
 
     def test_contiguous_handling(self):
         # check for absence of hard crash

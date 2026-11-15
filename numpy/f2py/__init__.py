@@ -39,8 +39,6 @@ def get_include():
 
     Notes
     -----
-    .. versionadded:: 1.21.1
-
     Unless the build system you are using has specific support for f2py,
     building a Python extension using a ``.pyf`` signature file is a two-step
     process. For a module ``mymod``:

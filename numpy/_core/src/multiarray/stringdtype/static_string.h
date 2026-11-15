@@ -29,22 +29,6 @@ NpyString_new_allocator(npy_string_malloc_func m, npy_string_free_func f,
 NPY_NO_EXPORT void
 NpyString_free_allocator(npy_string_allocator *allocator);
 
-// Allocates a new buffer for *to_init*, which must be set to NULL before
-// calling this function, filling the newly allocated buffer with the copied
-// contents of the first *size* entries in *init*, which must be valid and
-// initialized beforehand. Calling NpyString_free on *to_init* before calling
-// this function on an existing string or copying the contents of
-// NPY_EMPTY_STRING into *to_init* is sufficient to initialize it. Does not
-// check if *to_init* is NULL or if the internal buffer is non-NULL, undefined
-// behavior or memory leaks are possible if this function is passed a pointer
-// to an uninitialized struct, a NULL pointer, or an existing heap-allocated
-// string.  Returns -1 if allocating the string would exceed the maximum
-// allowed string size or exhaust available memory. Returns 0 on success.
-NPY_NO_EXPORT int
-NpyString_newsize(const char *init, size_t size,
-                  npy_packed_static_string *to_init,
-                  npy_string_allocator *allocator);
-
 // Zeroes out the packed string and frees any heap allocated data. For
 // arena-allocated data, checks if the data are inside the arena and
 // will return -1 if not. Returns 0 on success.
@@ -52,8 +36,7 @@ NPY_NO_EXPORT int
 NpyString_free(npy_packed_static_string *str, npy_string_allocator *allocator);
 
 // Copies the contents of *in* into *out*. Allocates a new string buffer for
-// *out*, NpyString_free *must* be called before this is called if *out*
-// points to an existing string. Returns -1 if malloc fails. Returns 0 on
+// *out*, releasing any existing string. Returns -1 if malloc fails. Returns 0 on
 // success.
 NPY_NO_EXPORT int
 NpyString_dup(const npy_packed_static_string *in,
@@ -61,20 +44,13 @@ NpyString_dup(const npy_packed_static_string *in,
               npy_string_allocator *in_allocator,
               npy_string_allocator *out_allocator);
 
-// Allocates a new string buffer for *out* with enough capacity to store
-// *size* bytes of text. Does not do any initialization, the caller must
-// initialize the string buffer after this function returns. Calling
-// NpyString_free on *to_init* before calling this function on an existing
-// string or initializing a new string with the contents of NPY_EMPTY_STRING
-// is sufficient to initialize it. Does not check if *to_init* has already
-// been initialized or if the internal buffer is non-NULL, undefined behavior
-// or memory leaks are possible if this function is passed a NULL pointer or
-// an existing heap-allocated string.  Returns 0 on success. Returns -1 if
-// allocating the string would exceed the maximum allowed string size or
-// exhaust available memory. Returns 0 on success.
+// Replace *out*, copying *size* bytes from *init* if it is non-NULL.
+// If *init* is NULL, the caller must initialize the new buffer.
+// Returns 0 on success, or -1 with *out* unchanged on failure.
 NPY_NO_EXPORT int
-NpyString_newemptysize(size_t size, npy_packed_static_string *out,
-                       npy_string_allocator *allocator);
+NpyString_replace(const char *init, size_t size,
+                  npy_packed_static_string *out,
+                  npy_string_allocator *allocator);
 
 // Determine if *in* corresponds to a null string (e.g. an NA object). Returns
 // -1 if *in* cannot be unpacked. Returns 1 if *in* is a null string and

@@ -1,0 +1,5 @@
+NaN-aware functions now skip ``NaT`` consistently
+-------------------------------------------------
+All NaN-aware functions such as `numpy.nanargmin` or `numpy.nansum` now
+consistently skip ``NaT`` in ``datetime64`` and ``timedelta64`` arrays
+the same way they skip ``NaN`` in floating point arrays.

@@ -593,14 +593,15 @@ class TestNumPyFunctions:
         signature = inspect.signature(np.sum)
         assert_('axis' in signature.parameters)
 
-    def test_override_sum(self):
+    @pytest.mark.parametrize("func", [np.sum, np.poly, np.roots])
+    def test_override(self, func):
         MyArray, implements = _new_duck_type_and_implements()
 
-        @implements(np.sum)
+        @implements(func)
         def _(array):
             return 'yes'
 
-        assert_equal(np.sum(MyArray()), 'yes')
+        assert_equal(func(MyArray()), 'yes')
 
     def test_sum_on_mock_array(self):
 
