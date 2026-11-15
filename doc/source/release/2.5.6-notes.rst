@@ -1,0 +1,13 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.5.6 Release Notes
+=========================
+
+*Released on 2026-11-15.*
+
+NumPy 2.5.6 is a patch release that fixes bugs discovered after the 2.5.5
+release.
+
+This release supports Python versions 3.12-3.15.
+
