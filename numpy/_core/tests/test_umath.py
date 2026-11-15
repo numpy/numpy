@@ -5117,6 +5117,7 @@ class TestFrompyfunc:
             result = ufunc.outer(np.array([1.0, 2.0]), np.array([10.0, 20.0]))
         assert_equal(result, [[11.0, 21.0], [12.0, 22.0]])
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_numpy_overflow_inside_function_still_raises(self):
         """Calling a frompyfunc ufunc whose function overflows in a NumPy
         scalar multiplication, under ``errstate(over="raise")``, raises
