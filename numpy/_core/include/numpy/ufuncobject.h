@@ -259,6 +259,11 @@ typedef struct _tagPyUFuncObject {
  * expensive npy_clear_floatstatus/npy_get_floatstatus calls.
  */
 #define UFUNC_NO_FLOATINGPOINT_ERRORS  0x1
+/*
+ * Like UFUNC_NO_FLOATINGPOINT_ERRORS, but also applies to object loops.
+ * Used by ``np.frompyfunc``, whose loops only run arbitrary Python code.
+ */
+#define UFUNC_NO_FLOATINGPOINT_ERRORS_ALL_LOOPS  0x2
 #endif  /* NPY_INTERNAL_BUILD */
 
 

@@ -1,0 +1,14 @@
+``frompyfunc`` and ``vectorize`` ignore floating point flags left by the function
+---------------------------------------------------------------------------------
+Ufuncs created by `numpy.frompyfunc`, and functions wrapped by
+`numpy.vectorize`, no longer check the CPU's floating point error flags after
+the Python function returns. This applies to calls and to the ``reduce``,
+``accumulate``, ``reduceat``, ``outer`` and ``at`` methods. These flags can be
+left set by unrelated Python or C code, which gave spurious warnings such as
+``RuntimeWarning: invalid value encountered in func (vectorized)``, or a
+``FloatingPointError`` under ``np.errstate(all="raise")``.
+
+NumPy operations inside the function, and casts of its results, still report
+their own floating point errors as usual. Arithmetic on plain Python floats
+inside the function is no longer reported: for example an overflowing
+multiplication returns ``inf`` without a warning, as it does in Python itself.

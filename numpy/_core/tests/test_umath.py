@@ -4963,6 +4963,13 @@ class TestSubclass:
         assert_equal(a + a, a)
 
 
+def _leave_invalid_flag_set(x):
+    # inf - inf sets the CPU's "invalid" floating point flag, and plain
+    # Python code never clears it again.
+    float("inf") - float("inf")
+    return x
+
+
 class TestFrompyfunc:
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
@@ -4999,6 +5006,142 @@ class TestFrompyfunc:
             lambda: mul_ufunc.reduce(np.ones((2, 2)), axis=(0, 1)),
         )
         assert_raises(ValueError, lambda: mul_ufunc.reduce([]))
+
+    def test_function_leaving_invalid_flag_does_not_warn(self):
+        """Calling a frompyfunc ufunc whose function leaves the invalid flag
+        set, under ``errstate(invalid="warn")``, gives no warning.
+
+        The flag comes from the Python function, not the ufunc (gh-27760).
+        """
+        ufunc = np.frompyfunc(_leave_invalid_flag_set, 1, 1)
+        with np.errstate(invalid="warn"), assert_no_warnings():
+            result = ufunc(np.array([1.0, 2.0]))
+        assert_equal(result, [1.0, 2.0])
+
+    def test_function_leaving_invalid_flag_does_not_raise(self):
+        """Calling a frompyfunc ufunc whose function leaves the invalid flag
+        set, under ``errstate(all="raise")``, returns the results without
+        raising FloatingPointError.
+        """
+        ufunc = np.frompyfunc(_leave_invalid_flag_set, 1, 1)
+        with np.errstate(all="raise"):
+            result = ufunc(np.array([1.0, 2.0]))
+        assert_equal(result, [1.0, 2.0])
+
+    def test_reduce_function_leaving_invalid_flag_does_not_warn(self):
+        """``reduce`` of a frompyfunc ufunc whose function leaves the invalid
+        flag set, under ``errstate(invalid="warn")``, gives no warning.
+        """
+        def add(a, b):
+            return _leave_invalid_flag_set(a + b)
+
+        ufunc = np.frompyfunc(add, 2, 1)
+        with np.errstate(invalid="warn"), assert_no_warnings():
+            result = ufunc.reduce(np.array([1.0, 2.0, 3.0]))
+        assert_equal(result, 6.0)
+
+    def test_accumulate_function_leaving_invalid_flag_does_not_warn(self):
+        """``accumulate`` of a frompyfunc ufunc whose function leaves the
+        invalid flag set, under ``errstate(invalid="warn")``, gives no warning.
+        """
+        def add(a, b):
+            return _leave_invalid_flag_set(a + b)
+
+        ufunc = np.frompyfunc(add, 2, 1)
+        with np.errstate(invalid="warn"), assert_no_warnings():
+            result = ufunc.accumulate(np.array([1.0, 2.0, 3.0]))
+        assert_equal(result, [1.0, 3.0, 6.0])
+
+    def test_reduceat_function_leaving_invalid_flag_does_not_warn(self):
+        """``reduceat`` of a frompyfunc ufunc whose function leaves the
+        invalid flag set, under ``errstate(invalid="warn")``, gives no warning.
+        """
+        def add(a, b):
+            return _leave_invalid_flag_set(a + b)
+
+        ufunc = np.frompyfunc(add, 2, 1)
+        with np.errstate(invalid="warn"), assert_no_warnings():
+            result = ufunc.reduceat(np.array([1.0, 2.0, 3.0, 4.0]), [0, 2])
+        assert_equal(result, [3.0, 7.0])
+
+    def test_accumulate_2d_function_leaving_invalid_flag_does_not_warn(self):
+        """``accumulate`` over a 2-D array of a frompyfunc ufunc whose
+        function leaves the invalid flag set, under
+        ``errstate(invalid="warn")``, gives no warning.
+        """
+        def add(a, b):
+            return _leave_invalid_flag_set(a + b)
+
+        ufunc = np.frompyfunc(add, 2, 1)
+        arr = np.array([[1.0, 2.0], [3.0, 4.0]])
+        with np.errstate(invalid="warn"), assert_no_warnings():
+            result = ufunc.accumulate(arr, axis=1)
+        assert_equal(result, [[1.0, 3.0], [3.0, 7.0]])
+
+    def test_reduceat_2d_function_leaving_invalid_flag_does_not_warn(self):
+        """``reduceat`` over a 2-D array of a frompyfunc ufunc whose
+        function leaves the invalid flag set, under
+        ``errstate(invalid="warn")``, gives no warning.
+        """
+        def add(a, b):
+            return _leave_invalid_flag_set(a + b)
+
+        ufunc = np.frompyfunc(add, 2, 1)
+        arr = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+        with np.errstate(invalid="warn"), assert_no_warnings():
+            result = ufunc.reduceat(arr, [0, 1], axis=1)
+        assert_equal(result, [[1.0, 5.0], [4.0, 11.0]])
+
+    def test_at_function_leaving_invalid_flag_does_not_warn(self):
+        """``at`` of a frompyfunc ufunc whose function leaves the invalid
+        flag set, under ``errstate(invalid="warn")``, gives no warning.
+        """
+        def add(a, b):
+            return _leave_invalid_flag_set(a + b)
+
+        ufunc = np.frompyfunc(add, 2, 1)
+        arr = np.array([1.0, 2.0, 3.0], dtype=object)
+        with np.errstate(invalid="warn"), assert_no_warnings():
+            ufunc.at(arr, [0, 2], 10.0)
+        assert_equal(arr, [11.0, 2.0, 13.0])
+
+    def test_outer_function_leaving_invalid_flag_does_not_warn(self):
+        """``outer`` of a frompyfunc ufunc whose function leaves the invalid
+        flag set, under ``errstate(invalid="warn")``, gives no warning.
+        """
+        def add(a, b):
+            return _leave_invalid_flag_set(a + b)
+
+        ufunc = np.frompyfunc(add, 2, 1)
+        with np.errstate(invalid="warn"), assert_no_warnings():
+            result = ufunc.outer(np.array([1.0, 2.0]), np.array([10.0, 20.0]))
+        assert_equal(result, [[11.0, 21.0], [12.0, 22.0]])
+
+    def test_numpy_overflow_inside_function_still_raises(self):
+        """Calling a frompyfunc ufunc whose function overflows in a NumPy
+        scalar multiplication, under ``errstate(over="raise")``, raises
+        FloatingPointError.
+        """
+        def overflow(x):
+            return np.float64(x) * np.float64(1e308)
+
+        ufunc = np.frompyfunc(overflow, 1, 1)
+        with np.errstate(over="raise"):
+            with pytest.raises(FloatingPointError):
+                ufunc(np.array([10.0]))
+
+    def test_python_float_overflow_inside_function_is_not_reported(self):
+        """Calling a frompyfunc ufunc whose function overflows in a Python
+        float multiplication, under ``errstate(over="raise")``, returns inf
+        without raising, as plain Python does.
+        """
+        def overflow(x):
+            return x * 1e308
+
+        ufunc = np.frompyfunc(overflow, 1, 1)
+        with np.errstate(over="raise"):
+            result = ufunc(np.array([10.0]))
+        assert_equal(result, [np.inf])
 
 
 def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
