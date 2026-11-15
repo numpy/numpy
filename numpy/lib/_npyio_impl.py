@@ -2099,11 +2099,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                         # We couldn't find it: the name must have been dropped
                         continue
                 # Redefine the key as needed if it's a column number
-                if usecols:
+                elif usecols and key is not None:
+                    if key < 0:
+                        key += len(first_values)
                     try:
                         key = usecols.index(key)
                     except ValueError:
-                        pass
+                        # The column is not used
+                        continue
                 # Transform the value as a list of string
                 if isinstance(val, (list, tuple)):
                     val = [str(_) for _ in val]
@@ -2151,11 +2154,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                         continue
                 # Redefine the key if it's a column number
                 # and usecols is defined
-                if usecols:
+                elif usecols and key is not None:
+                    if key < 0:
+                        key += len(first_values)
                     try:
                         key = usecols.index(key)
                     except ValueError:
-                        pass
+                        # The column is not used
+                        continue
                 # Add the value to the list
                 filling_values[key] = val
         # We have a sequence : update on a one-to-one basis
