@@ -2797,6 +2797,18 @@ class TestSinc:
         # resulting in nan
         assert_array_equal(sinc(x), np.asarray(1.0))
 
+    def test_precision_near_integers(self):
+        # reference values computed with mpmath at 60 digits
+        x = [9.000039129512828, 3.000022083469023, -761442529114881.1]
+        expected = [-4.347704734002287e-06,
+                    -7.361102148942857e-06,
+                    -1.5997519857756192e-16]
+        assert_allclose(sinc(x), expected, rtol=4 * np.finfo(np.float64).eps)
+
+    def test_exact_zero_at_integers(self):
+        x = np.array([1.0, -2.0, 7.0, -2540477405594.0, 2.0**60])
+        assert_array_equal(sinc(x), 0)
+
 
 class TestUnique:
 

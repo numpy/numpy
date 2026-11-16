@@ -3839,11 +3839,14 @@ def sinc(x):
 
     """
     x = np.asanyarray(x)
-    x = pi * x
     # Hope that 1e-20 is sufficient for objects...
     eps = np.finfo(x.dtype).eps if x.dtype.kind == "f" else 1e-20
-    y = where(x, x, eps)
-    return sin(y) / y
+    x = where(x, x, eps)
+
+    # sin(pi*x) = (-1)**n * sin(pi*(x - n)), and x - n is exact and in [-1/2, 1/2]
+    n = np.round(x.real)
+    y = sin(pi * (x - n)) / (pi * x)
+    return where(n % 2, -y, y)[()]
 
 
 def _ureduce(a, func, keepdims=False, **kwargs):
