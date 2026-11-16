@@ -495,7 +495,6 @@ A `type statement`_ can give a shape-typed array a name:
         red_channel = scaled[..., 0]
         reveal_type(red_channel)  # npt.Array2D[np.float32]
 
-        # the result of this operation is not fully inferred (see below)
         return scaled @ LUMA_WEIGHTS
 
 To preserve the number of dimensions, use a type parameter for the shape-type. Its upper
@@ -572,13 +571,13 @@ Limitations
 -----------
 
 Some operations aren't shape-typed. Operations on arrays with different numbers of
-dimensions, such as ``Array2D - Array1D`` or ``Array3D @ Array1D``, usually result in
-an unknown number of dimensions, and sometimes in an unknown dtype. The same applies to
-functions where the number of dimensions of the result depends on runtime values, such
-as `np.squeeze <numpy.squeeze>`.
+dimensions, such as ``Array2D - Array1D``, usually result in an unknown number of
+dimensions, and sometimes in an unknown dtype. The same applies to functions where the
+number of dimensions of the result depends on runtime values, such as
+`np.squeeze <numpy.squeeze>`.
 
-In these cases, annotate the return type or the variable, as in ``to_grayscale`` above.
-``keepdims=True`` can also help, because it preserves the number of dimensions:
+In these cases, annotate the return type or the variable. ``keepdims=True`` can also
+help, because it preserves the number of dimensions:
 
 .. code-block:: python
 
