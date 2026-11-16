@@ -28,7 +28,6 @@
 #include "stringdtype/utf8_utils.h"
 
 #include <cstdio>
-#include <vector>
 
 #define LOAD_TWO_INPUT_STRINGS(CONTEXT)                                            \
         const npy_packed_static_string *ps1 = (npy_packed_static_string *)in1;     \
@@ -1370,6 +1369,67 @@ replace_resolve_descriptors(struct PyArrayMethodObject_tag *method,
 
 template <ENCODING enc>
 static int
+write_replacement(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3,
+                  npy_int64 in_count, bool shares_allocator, npy_packed_static_string *ops,
+                  npy_string_allocator *oallocator)
+{
+    if (in_count < 0) {
+        in_count = NPY_MAX_INT64;
+    }
+    npy_int64 found_count = string_count<enc>(buf1, buf2, 0, NPY_MAX_INT64);
+    if (found_count < 0) {
+        return -1;
+    }
+    size_t count = (size_t)Py_MIN(in_count, found_count);
+
+    // matches don't overlap, so count * size2 <= size1
+    size_t size1 = buf1.after - buf1.buf;
+    size_t size2 = buf2.after - buf2.buf;
+    size_t added;
+    int overflow = npy_mul_with_overflow_size_t(&added, count, buf3.after - buf3.buf);
+    size_t new_size = size1 - count * size2 + added;
+    if (overflow || new_size < added) {
+        npy_gil_error(PyExc_MemoryError, "Failed to allocate string in replace");
+        return -1;
+    }
+
+    char *new_buf = NULL;
+    if (shares_allocator) {
+        new_buf = (char *)PyMem_RawMalloc(new_size);
+        if (new_buf == NULL) {
+            npy_gil_error(PyExc_MemoryError, "Failed to allocate string in replace");
+            return -1;
+        }
+    }
+    else {
+        npy_static_string os = {0, NULL};
+        if (load_new_string(ops, &os, new_size, oallocator, "replace") < 0) {
+            return -1;
+        }
+        /* explicitly discard const; initializing new buffer */
+        new_buf = (char *)os.buf;
+    }
+
+    if (count == 0) {
+        memcpy(new_buf, buf1.buf, size1);
+    }
+    else {
+        string_replace(buf1, buf2, buf3, count, Buffer<enc>(new_buf, new_size));
+    }
+
+    if (shares_allocator) {
+        int res = NpyString_pack(oallocator, ops, new_buf, new_size);
+        PyMem_RawFree(new_buf);
+        if (res < 0) {
+            npy_gil_error(PyExc_MemoryError, "Failed to pack string in replace");
+            return -1;
+        }
+    }
+    return 0;
+}
+
+template <ENCODING enc>
+static int
 string_replace_strided_loop(
         PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
@@ -1398,6 +1458,12 @@ string_replace_strided_loop(
     npy_string_allocator *i3allocator = allocators[2];
     // allocators[3] is NULL
     npy_string_allocator *oallocator = allocators[4];
+
+    // The output shares an input's arena, and allocating the output
+    // can reallocate the arena, leaving the loaded input buffers dangling
+    bool shares_allocator = (context->descriptors[0] == context->descriptors[4] ||
+                     context->descriptors[1] == context->descriptors[4] ||
+                     context->descriptors[2] == context->descriptors[4]);
 
     while (N--) {
         const npy_packed_static_string *i1ps = (npy_packed_static_string *)in1;
@@ -1455,62 +1521,11 @@ string_replace_strided_loop(
             }
         }
 
-        {
-            Buffer<enc> buf1((char *)i1s.buf, i1s.size);
-            Buffer<enc> buf2((char *)i2s.buf, i2s.size);
-
-            npy_int64 in_count = *(npy_int64*)in4;
-            if (in_count < 0) {
-                in_count = NPY_MAX_INT64;
-            }
-
-            npy_int64 found_count = string_count<enc>(
-                    buf1, buf2, 0, NPY_MAX_INT64);
-            if (found_count < 0) {
-                goto fail;
-            }
-
-            npy_intp count = Py_MIN(in_count, found_count);
-
-            Buffer<enc> buf3((char *)i3s.buf, i3s.size);
-
-            // conservatively overallocate
-            size_t num_repl, growth;
-            if (i2s.size == 0) {
-                // interleaving
-                num_repl = (size_t)i1s.size + 1;
-                growth = i3s.size;
-            }
-            else {
-                // replace i2 with i3
-                num_repl = (size_t)count;
-                growth = i2s.size >= i3s.size ? 0 : i3s.size - i2s.size;
-            }
-            char *new_buf = NULL;
-            size_t max_size;
-            if (!npy_mul_with_overflow_size_t(&max_size, num_repl, growth)) {
-                max_size += i1s.size;
-                if (max_size >= i1s.size) {
-                    new_buf = (char *)PyMem_RawCalloc(max_size, 1);
-                }
-            }
-            if (new_buf == NULL) {
-                npy_gil_error(PyExc_MemoryError,
-                              "Failed to allocate string in replace");
-                goto fail;
-            }
-            Buffer<enc> outbuf(new_buf, max_size);
-
-            size_t new_buf_size = string_replace(
-                    buf1, buf2, buf3, count, outbuf);
-
-            if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-                npy_gil_error(PyExc_MemoryError, "Failed to pack string in replace");
-                PyMem_RawFree(new_buf);
-                goto fail;
-            }
-
-            PyMem_RawFree(new_buf);
+        if (write_replacement(Buffer<enc>((char *)i1s.buf, i1s.size),
+                              Buffer<enc>((char *)i2s.buf, i2s.size),
+                              Buffer<enc>((char *)i3s.buf, i3s.size),
+                              *(npy_int64 *)in4, shares_allocator, ops, oallocator) < 0) {
+            goto fail;
         }
       next_step:
 
@@ -2260,6 +2275,104 @@ slice_resolve_descriptors(PyArrayMethodObject *self,
     return NPY_NO_CASTING;
 }
 
+template <ENCODING enc>
+static int
+write_slice_impl(Buffer<enc> in, npy_intp lowest_idx, npy_intp slice_length, npy_intp step,
+                 npy_packed_static_string *ops, npy_string_allocator *oallocator)
+{
+    npy_static_string os = {0, NULL};
+    // an empty backwards slice can have lowest_idx == -1
+    if (slice_length > 0) {
+        in += lowest_idx;
+    }
+    char *first = in.buf;
+
+    if (step == 1) {
+        in += slice_length;
+        npy_intp outsize = in.buf - first;
+        if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
+            return -1;
+        }
+        /* explicitly discard const; initializing new buffer */
+        memcpy((char *)os.buf, first, outsize);
+        return 0;
+    }
+
+    bool reverse = step < 0;
+    npy_intp codepoint_stride = reverse ? -step : step;
+    npy_intp outsize = slice_length;
+    if (enc == ENCODING::UTF8) {
+        // UTF-8 codepoints have variable byte widths. Measure the selected
+        // characters before allocating exactly the final size.
+        outsize = 0;
+        for (npy_intp i = 0; i < slice_length; i++) {
+            char *cp = in.buf;
+            in++;
+            outsize += in.buf - cp;
+            if (i + 1 < slice_length) {
+                in += codepoint_stride - 1;
+            }
+        }
+    }
+    if (outsize == 0) {
+        return 0;
+    }
+
+    if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
+        return -1;
+    }
+    /* explicitly discard const; initializing new buffer */
+    char *dst = !reverse ? (char *)os.buf : (char *)os.buf + outsize;
+    in.buf = first;
+    for (npy_intp i = 0; i < slice_length; i++) {
+        char *cp = in.buf;
+        in++;
+        npy_intp num_bytes = in.buf - cp;
+        if (reverse) {
+            dst -= num_bytes;
+        }
+        memcpy(dst, cp, num_bytes);
+        if (!reverse) {
+            dst += num_bytes;
+        }
+        // Do not advance after the last selection: ASCII advancement is not
+        // bounds-checked, and an extreme step could leave the input buffer.
+        if (i + 1 < slice_length) {
+            in += codepoint_stride - 1;
+        }
+    }
+    return 0;
+}
+
+static int
+write_slice(npy_static_string is, npy_intp start, npy_intp stop, npy_intp step,
+            npy_packed_static_string *ops, npy_string_allocator *oallocator)
+{
+    if (step < -NPY_MAX_INTP) {
+        step = -NPY_MAX_INTP;
+    }
+    // UTF-8 codepoints start at non-continuation bytes.
+    npy_intp num_codepoints = 0;
+    for (size_t i = 0; i < is.size; i++) {
+        num_codepoints += ((unsigned char)is.buf[i] & 0xC0) != 0x80;
+    }
+    npy_intp slice_length = PySlice_AdjustIndices(num_codepoints, &start, &stop, step);
+    // walk the selected codepoints in increasing order, filling the
+    // output from the back for a negative step
+    npy_intp lowest_idx = start;
+    if (step < 0 && slice_length > 0) {
+        lowest_idx = start + (slice_length - 1) * step;
+    }
+    char *buf = (char *)is.buf;
+    // One byte per codepoint means the entire input is ASCII.
+    if ((size_t)num_codepoints == is.size) {
+        return write_slice_impl(Buffer<ENCODING::ASCII>(buf, is.size), lowest_idx,
+                                slice_length, step, ops, oallocator);
+    }
+    return write_slice_impl(Buffer<ENCODING::UTF8>(buf, is.size), lowest_idx,
+                            slice_length, step, ops, oallocator);
+}
+
 static int
 slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
                    npy_intp const dimensions[], npy_intp const strides[],
@@ -2278,10 +2391,6 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
     npy_string_allocator *iallocator = allocators[0];
     npy_string_allocator *oallocator = allocators[4];
 
-    // Build up an index mapping codepoint indices to locations in the encoded
-    // string.
-    std::vector<unsigned char *> codepoint_offsets;
-
     while (N--) {
         // get the slice
         npy_intp start = *(npy_intp *)start_ptr;
@@ -2295,7 +2404,6 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
 
         npy_static_string is = {0, NULL};
         const npy_packed_static_string *ips = (npy_packed_static_string *)iptr;
-        npy_static_string os = {0, NULL};
         npy_packed_static_string *ops = (npy_packed_static_string *)optr;
         int is_isnull = NpyString_load(iallocator, ips, &is);
         if (is_isnull == -1) {
@@ -2307,89 +2415,8 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
             goto fail;
         }
 
-        // number of codepoints in string
-        size_t num_codepoints = 0;
-        // leaves capacity the same as in previous loop iterations to avoid
-        // heap thrashing
-        codepoint_offsets.clear();
-        {
-            const char *inbuf_ptr = is.buf;
-            const char *inbuf_ptr_end = is.buf + is.size;
-
-            while (inbuf_ptr < inbuf_ptr_end) {
-                num_codepoints++;
-                int num_bytes = num_bytes_for_utf8_character(
-                        ((unsigned char *)inbuf_ptr));
-                // num_bytes is 0 for a malformed lead byte
-                if (num_bytes < 1) {
-                    // keep forward progress
-                    num_bytes = 1;
-                }
-                // never advance past the end
-                if (num_bytes > inbuf_ptr_end - inbuf_ptr) {
-                    num_bytes = (int)(inbuf_ptr_end - inbuf_ptr);
-                }
-                codepoint_offsets.push_back((unsigned char *)inbuf_ptr);
-                inbuf_ptr += num_bytes;
-            }
-            // trailing offset so offsets[i + 1] - offsets[i] is codepoint i's
-            // byte length below, including for the last codepoint
-            codepoint_offsets.push_back((unsigned char *)inbuf_ptr_end);
-        }
-
-        // adjust slice to string length in codepoints
-        // and handle negative indices
-        npy_intp slice_length = PySlice_AdjustIndices(num_codepoints, &start, &stop,
-                                                      step < -NPY_MAX_INTP ? -NPY_MAX_INTP : step);
-
-        if (step == 1) {
-            // step == 1 is the easy case, we can just use memcpy
-            unsigned char *start_bounded = codepoint_offsets[start];
-            unsigned char *stop_bounded = codepoint_offsets[stop];
-            npy_intp outsize = stop_bounded - start_bounded;
-            outsize = outsize < 0 ? 0 : outsize;
-
-            if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
-                goto fail;
-            }
-
-            /* explicitly discard const; initializing new buffer */
-            char *buf = (char *)os.buf;
-
-            memcpy(buf, start_bounded, outsize);
-        }
-        else {
-            // step != 1. Only add step when another iteration remains: for an
-            // extreme step the final i_idx += step would overflow npy_intp and
-            // index codepoint_offsets out of bounds.
-            npy_intp outsize = 0;
-            npy_intp i_idx = start;
-            for (npy_intp o_idx = 0; o_idx < slice_length; o_idx++) {
-                outsize += codepoint_offsets[i_idx + 1] - codepoint_offsets[i_idx];
-                if (o_idx + 1 < slice_length) {
-                    i_idx += step;
-                }
-            }
-
-            if (outsize > 0) {
-                if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
-                    goto fail;
-                }
-
-                /* explicitly discard const; initializing new buffer */
-                char *buf = (char *)os.buf;
-
-                i_idx = start;
-                for (npy_intp o_idx = 0; o_idx < slice_length; o_idx++) {
-                    npy_intp num_bytes =
-                            codepoint_offsets[i_idx + 1] - codepoint_offsets[i_idx];
-                    memcpy(buf, codepoint_offsets[i_idx], num_bytes);
-                    buf += num_bytes;
-                    if (o_idx + 1 < slice_length) {
-                        i_idx += step;
-                    }
-                }
-            }
+        if (write_slice(is, start, stop, step, ops, oallocator) < 0) {
+            goto fail;
         }
 
         // move to next step

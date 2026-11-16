@@ -5,7 +5,7 @@ import types
 import unittest
 import warnings
 from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath, Unused
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import _GeneratorContextManager
 from pathlib import Path
 from re import Pattern
@@ -530,6 +530,13 @@ def run_threaded(
     pass_barrier: L[True],
     outer_iterations: int = 1,
     prepare_args: None = None,
+) -> None: ...
+
+#
+def run_with_memory_limit(
+    func: Callable[..., Unused],
+    make_args: Callable[[], Mapping[str, tuple[Any, ...]]],
+    limit: int,
 ) -> None: ...
 
 #
