@@ -110,7 +110,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_ios_wheels:
-    name: Build wheels cp313-iOS-arm64-accelerate (device and simulator)
+    name: Build wheels cp314-iOS-arm64-accelerate (device and simulator)
     if: github.repository == 'numpy/numpy'
     runs-on: macos-26
     env:
@@ -129,15 +129,15 @@ jobs:
       - name: Build iOS device wheel
         uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         with:
-          only: cp313-ios_arm64_iphoneos
+          only: cp314-ios_arm64_iphoneos
 
       - name: Build and test iOS simulator wheel
         if: ${{ !cancelled() }}
         uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         with:
-          only: cp313-ios_arm64_iphonesimulator
+          only: cp314-ios_arm64_iphonesimulator
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: cp313-ios-arm64-accelerate
+          name: cp314-ios-arm64-accelerate
           path: ./wheelhouse/*.whl
