@@ -309,8 +309,10 @@ have its own return type. For example, this ``midpoint`` follows the promotion r
     reveal_type(midpoint(x64, x32))  # npt.Array1D[np.float64]
 
 A type parameter can't describe this promotion. If ``a`` and ``b`` were both annotated
-as ``npt.Array1D[ScalarT]``, then the type of ``midpoint(x32, x64)`` would be inferred
-as ``npt.Array1D[np.float32 | np.float64]`` instead of ``npt.Array1D[np.float64]``.
+as ``npt.Array1D[ScalarT]``, then the dtype of ``midpoint(x32, x64)`` wouldn't be
+inferred as ``np.float64``. Depending on the type-checker and the upper bound of
+``ScalarT``, it would be ``np.float32 | np.float64``, or a common supertype such as
+``np.floating``.
 
 ``ArrayLike`` and ``DTypeLike`` inputs
 --------------------------------------
