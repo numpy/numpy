@@ -12416,7 +12416,11 @@ class TestSubinterpreterTeardown:
         interp = interpreters.create()
         try:
             with pytest.raises(interpreters.ExecutionFailed) as exc:
-                interp.exec("import numpy")
+                # Ensure that the full site path of the parent interpreter
+                # is preserved in the subinterpreter. This is an issue on
+                # iOS, which can't install into the system site-packages.
+                interp.prepare_main(sys_path=tuple(sys.path))
+                interp.exec("import sys; sys.path[:] = sys_path; import numpy")
             # numpy rewraps every C-extension ImportError in a generic
             # message, so the type alone would also pass for a broken build.
             msg = exc.value.excinfo.msg
