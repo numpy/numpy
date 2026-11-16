@@ -81,11 +81,11 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     the j-th key. Depending on the comparison result, we adjust the base_j and
     halve the length of the interval.
 
-    To batch multiple queries, we process all bases with a fixed length. The
-    length is halved on each iteration of an outer loop and all bases are
-    updated in an inner loop. To avoid consuming extra memory, we use the
-    result array to store intermediate values of each base until they become
-    the final result in the last step.
+    To batch multiple queries, we process all bases with a fixed length in
+    groups of size `BATCH_SIZE`. The length is halved on each iteration of an
+    outer loop and all bases are updated in an inner loop. To avoid consuming
+    extra memory, we use the result array to store intermediate values of each
+    base until they become the final result in the last step.
 
     There are two benefits of this approach:
 
@@ -100,7 +100,8 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     keys, we compute each step for all keys before continuing on the next
     step. All the computations at a given step are independent across
     different keys. Meaning that the CPU can execute multiple keys
-    out-of-order in parallel.
+    out-of-order in parallel. Using limited batch sizes allows us to keep keys
+    and bases in the cache while still allowing for independent memory accesses.
 
     Invariant (for every j):
     - cmp(arr[i], key_val_j) == true  for all i < base_j
@@ -112,15 +113,9 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
 
     The insertion index candidates are in range [base, base+length] and
     on each iteration we shrink the range into either
-        [base, ceil(length / 2)]
+        [base, base + floor(length / 2)]
     or
-        [base + floor(length / 2), ceil(length / 2)]
-
-    The outer loop terminates when length = 1. At that point, for each j
-    the insertion order is either base_j or base_j + 1. An additional
-    comparison is required to determine which of the two values.
-    If cmp(arr[base_j], key_val_j) == true, insertion index is base_j + 1.
-    Otherwise the insertion order is base_j.
+        [base + ceil(length / 2), base + length]
 
     Optimization: we unroll the first iteration for the following reasons:
         1. ret is not initialized with the bases, so we save |keys| writes
@@ -131,45 +126,35 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
         median. So we can store it in a variable and use it for all keys.
 
     This initial block replaces the initialization loop that is used for the
-    arr_len==0 case. Note that when arr_len = 1, then half is 0 so the
-    following block initializes the array as with 0s.
+    arr_len==0 case. Note that when arr_len = 1, the following block already
+    writes the final result cmp(arr[0], key) and the loop is skipped.
     */
-    npy_intp interval_length = arr_len;
-    npy_intp half = interval_length >> 1;
-    interval_length -= half; // length -> ceil(length / 2)
 
-    npy_intp base = 0;
-    const T mid_val = *(const T *)(arr + (base + half) * arr_str);
+    const npy_intp BATCH_SIZE = 128;
 
-    for (npy_intp i = 0; i < key_len; ++i) {
-        const T key_val = *(const T *)(key + i * key_str);
-        *(npy_intp *)(ret + i * ret_str) = cmp(mid_val, key_val) * half;
-    }
+    const npy_intp first_half = arr_len - (arr_len >> 1);
+    const T median = *(const T *)(arr + (first_half - 1) * arr_str);
 
-    while (interval_length > 1) {
-        npy_intp half = interval_length >> 1;
-        interval_length -= half; // length -> ceil(length / 2)
+    for (npy_intp batch = 0; batch < key_len;) {
+        const npy_intp next_batch = batch + std::min(BATCH_SIZE, key_len - batch);
 
-        for (npy_intp i = 0; i < key_len; ++i) {
-            npy_intp &base = *(npy_intp *)(ret + i * ret_str);
-            const T mid_val = *(const T *)(arr + (base + half) * arr_str);
+        for (npy_intp i = batch; i < next_batch; ++i) {
             const T key_val = *(const T *)(key + i * key_str);
-            base += cmp(mid_val, key_val) * half;
+            *(npy_intp *)(ret + i * ret_str) = cmp(median, key_val) * first_half;
         }
-    }
 
-    /*
-    At this point interval_length == 1, so the candidates are in the 
-    interval [base, base + 1].
+        for (npy_intp len = arr_len >> 1; len > 0; len >>= 1) {
+            const npy_intp half = len - (len >> 1);  // ceil(len / 2)
+            const char *mid_offset = arr + (half - 1) * arr_str;
+            for (npy_intp i = batch; i < next_batch; ++i) {
+                npy_intp &base = *(npy_intp *)(ret + i * ret_str);
+                const T mid_val = *(const T *)(base * arr_str + mid_offset);
+                const T key_val = *(const T *)(key + i * key_str);
+                base += cmp(mid_val, key_val) * half;
+            }
+        }
 
-    We have two options:
-        If cmp(arr[base], key_val) == true, insertion index is base + 1
-        Otherwise the insertion order is just base
-    */
-    for (npy_intp i = 0; i < key_len; ++i) {
-        npy_intp &base = *(npy_intp *)(ret + i * ret_str);
-        const T key_val = *(const T *)(key + i * key_str);
-        base += cmp(*(const T *)(arr + base * arr_str), key_val);
+        batch = next_batch;
     }
 }
 
