@@ -1751,7 +1751,13 @@ def _unwrap_fallback(p, discont, period, axis):
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
     dtype = np.result_type(dd, period)
-    if _nx.issubdtype(dtype, _nx.integer):
+    # object arrays of Python ints (e.g. bigints) need exact integer math too
+    integral = (int, np.integer)
+    if _nx.issubdtype(dtype, _nx.integer) or (
+        dtype.kind == "O"
+        and isinstance(period, integral)
+        and builtins.all(isinstance(x, integral) for x in dd.flat)
+    ):
         interval_high, rem = divmod(period, 2)
         boundary_ambiguous = rem == 0
     else:
