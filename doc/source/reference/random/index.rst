@@ -150,102 +150,6 @@ a number of ways:
 Users with a very large amount of parallelism will want to consult
 :ref:`upgrading-pcg64`.
 
-API reference
--------------
-
-Recommended Generator interface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The `Generator` class is the recommended interface for generating
-random numbers. Use `default_rng` to create a new generator.
-
-.. autosummary::
-
-   default_rng
-   Generator
-
-Accessing the BitGenerator and spawning
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-
-   Generator.bit_generator
-   Generator.spawn
-
-Simple random data
-^^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-
-   Generator.integers
-   Generator.random
-   Generator.choice
-   Generator.bytes
-
-Permutations
-^^^^^^^^^^^^
-
-.. autosummary::
-
-   Generator.shuffle
-   Generator.permutation
-   Generator.permuted
-
-Distributions
-^^^^^^^^^^^^^
-
-.. autosummary::
-
-   Generator.beta
-   Generator.binomial
-   Generator.chisquare
-   Generator.dirichlet
-   Generator.exponential
-   Generator.f
-   Generator.gamma
-   Generator.geometric
-   Generator.gumbel
-   Generator.hypergeometric
-   Generator.laplace
-   Generator.logistic
-   Generator.lognormal
-   Generator.logseries
-   Generator.multinomial
-   Generator.multivariate_hypergeometric
-   Generator.multivariate_normal
-   Generator.negative_binomial
-   Generator.noncentral_chisquare
-   Generator.noncentral_f
-   Generator.normal
-   Generator.pareto
-   Generator.poisson
-   Generator.power
-   Generator.rayleigh
-   Generator.standard_cauchy
-   Generator.standard_exponential
-   Generator.standard_gamma
-   Generator.standard_normal
-   Generator.standard_t
-   Generator.triangular
-   Generator.uniform
-   Generator.vonmises
-   Generator.wald
-   Generator.weibull
-   Generator.zipf
-
-Legacy interface
-~~~~~~~~~~~~~~~~
-
-The `RandomState` class provides the legacy interface for generating
-random numbers and is retained for compatibility. New code should use
-`Generator`.
-
-.. autosummary::
-
-   RandomState
-   random_sample
-   randint
-
 Concepts
 --------
 .. toctree::
@@ -274,3 +178,56 @@ Original Source of the Generator and BitGenerators
 
 This package was developed independently of NumPy and was integrated in version
 1.17.0. The original repo is at https://github.com/bashtage/randomgen.
+
+API reference
+-------------
+
+Recommended Generator interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `Generator` class is the recommended interface for generating
+random numbers. Use `default_rng` to create a new generator.
+See :doc:`generator` for all of its methods and distributions.
+
+.. autosummary::
+
+   default_rng
+   Generator
+
+BitGenerators
+~~~~~~~~~~~~~
+
+BitGenerators provide the stream of random bits used by `Generator`.
+See :doc:`bit_generators/index` for the attributes and methods of each.
+
+.. autosummary::
+
+   BitGenerator
+   MT19937
+   PCG64
+   PCG64DXSM
+   Philox
+   SFC64
+
+Seeding
+~~~~~~~
+
+`SeedSequence` turns a seed into high-quality initial states for
+BitGenerators. See :ref:`seeding_and_entropy` for usage.
+
+.. autosummary::
+
+   SeedSequence
+
+Legacy interface
+~~~~~~~~~~~~~~~~
+
+The `RandomState` class is the legacy interface for generating random
+numbers. It is frozen and kept for backward compatibility; new code
+should use `Generator`. See :doc:`legacy` for the methods of
+`RandomState` and the functions in `numpy.random` that use a global
+`RandomState` instance.
+
+.. autosummary::
+
+   RandomState
