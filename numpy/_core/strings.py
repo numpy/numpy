@@ -17,6 +17,8 @@ from numpy import (
     multiply as _multiply_ufunc,
     not_equal,
 )
+from numpy._core._exceptions import _UFuncNoLoopError
+from numpy._core._multiarray_umath import _has_array_ufunc_override
 from numpy._core.multiarray import _vec_string
 from numpy._core.overrides import array_function_dispatch, set_module
 from numpy._core.umath import (
@@ -113,6 +115,8 @@ def _to_bytes_or_str_array(result, output_dtype_like):
     with the appropriate dtype if an object array must be used
     as an intermediary.
     """
+    if isinstance(result.dtype, np.dtypes.StringDType):
+        return result
     output_dtype_like = np.asarray(output_dtype_like)
     if result.size == 0:
         # Calling asarray & tolist in an empty array would result
@@ -122,6 +126,61 @@ def _to_bytes_or_str_array(result, output_dtype_like):
     if isinstance(output_dtype_like.dtype, np.dtypes.StringDType):
         return ret.astype(type(output_dtype_like.dtype))
     return ret.astype(type(output_dtype_like.dtype)(_get_num_chars(ret)))
+
+
+def _string_array_and_dtype(a, *, subok=True):
+    if type(a) is str:
+        # Discover the dtype without allocating an array or losing trailing NULs.
+        return a, np.dtypes.StrDType(len(a) or 1)
+    a = np.asanyarray(a) if subok else np.asarray(a)
+    return a, a.dtype
+
+
+def _prepare_string_operands(*args):
+    # Defer conversion of Python strings: a Unicode array can lose trailing NULs.
+    operands = [arg if type(arg) is str else np.asanyarray(arg) for arg in args]
+    chars = ["U" if type(arg) is str else arg.dtype.char for arg in operands]
+    if "S" in chars and "T" in chars:
+        raise TypeError("Cannot mix bytes and stringdtype; decode bytes explicitly")
+
+    needs_sizing = "T" not in chars
+    if needs_sizing and "U" in chars:
+        operands = [np.asanyarray(arg) for arg in operands]
+    if all(char in "STU" for char in chars):
+        return operands, needs_sizing
+
+    # At least one operand has a non-string dtype, possibly from a Python scalar.
+    if "S" in chars:
+        # Fixed-width wrappers handle S/U mixing. Validate the remaining dtypes.
+        np.result_type(*(arg.dtype for arg in operands if arg.dtype.char != "U"))
+        return operands, True
+
+    # Promote the text operands. Including an object operand would select
+    # object, and including a numeric operand can prevent promotion entirely.
+    # Unsized Unicode lets each cast infer its required width.
+    text_dtypes = [np.dtype("U") if char == "U" else arg.dtype
+                   for arg, char in zip(operands, chars) if char in "TU"]
+    if not text_dtypes:
+        return operands, True
+    target = np.result_type(*text_dtypes)
+    for i, char in enumerate(chars):
+        if char not in "TU":
+            # The object cast checks individual values against the target dtype.
+            casting = "unsafe" if char == "O" else "safe"
+            operands[i] = operands[i].astype(target, casting=casting)
+    return operands, needs_sizing
+
+
+def _call_string_ufunc(ufunc, *args):
+    try:
+        return ufunc(*args)
+    except _UFuncNoLoopError as exc:
+        # An override can raise a no-loop error for this same ufunc.
+        if exc.ufunc is not ufunc or _has_array_ufunc_override(args):
+            raise
+    a, b, *bounds = args
+    (a, b), _ = _prepare_string_operands(a, b)
+    return ufunc(a, b, *bounds)
 
 
 def _clean_args(*args):
@@ -248,8 +307,10 @@ def mod(a, values):
     array([b'8 bytes', b'64 bits'], dtype='|S7')
 
     """
+    a, dtype = _string_array_and_dtype(a)
+    output_dtype = dtype if dtype.char == "T" else np.object_
     return _to_bytes_or_str_array(
-        _vec_string(a, np.object_, '__mod__', (values,)), a)
+        _vec_string(a, output_dtype, '__mod__', (values,)), a)
 
 
 @set_module("numpy.strings")
@@ -287,7 +348,7 @@ def find(a, sub, start=0, end=None):
 
     """
     end = end if end is not None else MAX
-    return _find_ufunc(a, sub, start, end)
+    return _call_string_ufunc(_find_ufunc, a, sub, start, end)
 
 
 @set_module("numpy.strings")
@@ -330,7 +391,7 @@ def rfind(a, sub, start=0, end=None):
 
     """
     end = end if end is not None else MAX
-    return _rfind_ufunc(a, sub, start, end)
+    return _call_string_ufunc(_rfind_ufunc, a, sub, start, end)
 
 
 @set_module("numpy.strings")
@@ -364,7 +425,7 @@ def index(a, sub, start=0, end=None):
 
     """
     end = end if end is not None else MAX
-    return _index_ufunc(a, sub, start, end)
+    return _call_string_ufunc(_index_ufunc, a, sub, start, end)
 
 
 @set_module("numpy.strings")
@@ -398,7 +459,7 @@ def rindex(a, sub, start=0, end=None):
 
     """
     end = end if end is not None else MAX
-    return _rindex_ufunc(a, sub, start, end)
+    return _call_string_ufunc(_rindex_ufunc, a, sub, start, end)
 
 
 @set_module("numpy.strings")
@@ -443,7 +504,7 @@ def count(a, sub, start=0, end=None):
 
     """
     end = end if end is not None else MAX
-    return _count_ufunc(a, sub, start, end)
+    return _call_string_ufunc(_count_ufunc, a, sub, start, end)
 
 
 @set_module("numpy.strings")
@@ -484,7 +545,7 @@ def startswith(a, prefix, start=0, end=None):
 
     """
     end = end if end is not None else MAX
-    return _startswith_ufunc(a, prefix, start, end)
+    return _call_string_ufunc(_startswith_ufunc, a, prefix, start, end)
 
 
 @set_module("numpy.strings")
@@ -525,7 +586,7 @@ def endswith(a, suffix, start=0, end=None):
 
     """
     end = end if end is not None else MAX
-    return _endswith_ufunc(a, suffix, start, end)
+    return _call_string_ufunc(_endswith_ufunc, a, suffix, start, end)
 
 
 def _code_dispatcher(a, encoding=None, errors=None):
@@ -684,6 +745,14 @@ def expandtabs(a, tabsize=8):
     return _expandtabs(a, tabsize, out=out)
 
 
+def _prepare_just(a, fillchar):
+    (a, fillchar), needs_sizing = _prepare_string_operands(a, fillchar)
+    length = len(fillchar) if type(fillchar) is str else str_len(fillchar)
+    if np.any(length != 1):
+        raise TypeError("The fill character must be exactly one character long")
+    return a, fillchar, needs_sizing
+
+
 def _just_dispatcher(a, width, fillchar=None):
     return (a,)
 
@@ -738,14 +807,8 @@ def center(a, width, fillchar=' '):
     if not np.issubdtype(width.dtype, np.integer):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
-    a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
-
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
-
-    if np.result_type(a, fillchar).char == "T":
+    a, fillchar, needs_sizing = _prepare_just(a, fillchar)
+    if not needs_sizing:
         return _center(a, width, fillchar)
 
     fillchar = fillchar.astype(a.dtype, copy=False)
@@ -803,14 +866,8 @@ def ljust(a, width, fillchar=' '):
     if not np.issubdtype(width.dtype, np.integer):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
-    a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
-
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
-
-    if np.result_type(a, fillchar).char == "T":
+    a, fillchar, needs_sizing = _prepare_just(a, fillchar)
+    if not needs_sizing:
         return _ljust(a, width, fillchar)
 
     fillchar = fillchar.astype(a.dtype, copy=False)
@@ -868,14 +925,8 @@ def rjust(a, width, fillchar=' '):
     if not np.issubdtype(width.dtype, np.integer):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
-    a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
-
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
-
-    if np.result_type(a, fillchar).char == "T":
+    a, fillchar, needs_sizing = _prepare_just(a, fillchar)
+    if not needs_sizing:
         return _rjust(a, width, fillchar)
 
     fillchar = fillchar.astype(a.dtype, copy=False)
@@ -984,7 +1035,7 @@ def lstrip(a, chars=None):
     """
     if chars is None:
         return _lstrip_whitespace(a)
-    return _lstrip_chars(a, chars)
+    return _call_string_ufunc(_lstrip_chars, a, chars)
 
 
 @set_module("numpy.strings")
@@ -1027,7 +1078,7 @@ def rstrip(a, chars=None):
     """
     if chars is None:
         return _rstrip_whitespace(a)
-    return _rstrip_chars(a, chars)
+    return _call_string_ufunc(_rstrip_chars, a, chars)
 
 
 @set_module("numpy.strings")
@@ -1074,7 +1125,7 @@ def strip(a, chars=None):
     """
     if chars is None:
         return _strip_whitespace(a)
-    return _strip_chars(a, chars)
+    return _call_string_ufunc(_strip_chars, a, chars)
 
 
 def _unary_op_dispatcher(a):
@@ -1329,22 +1380,16 @@ def replace(a, old, new, count=-1):
     if not np.issubdtype(count.dtype, np.integer):
         raise TypeError(f"unsupported type {count.dtype} for operand 'count'")
 
-    arr = np.asanyarray(a)
+    (arr, old_arr, new_arr), needs_sizing = _prepare_string_operands(a, old, new)
+    if not needs_sizing:
+        return _replace(arr, old_arr, new_arr, count)
+
     old_dtype = getattr(old, 'dtype', None)
-    old_arr = np.asanyarray(old)
     new_dtype = getattr(new, 'dtype', None)
-    new_arr = np.asanyarray(new)
-
-    if np.result_type(arr, old_arr, new_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else arr
-        old = old if type(old) is str else old_arr
-        new = new if type(new) is str else new_arr
-        return _replace(a, old, new, count)
-
-    a_dt = arr.dtype
-    old = old_arr.astype(old_dtype or a_dt.char, copy=False)
-    new = new_arr.astype(new_dtype or a_dt.char, copy=False)
+    old = old_arr.astype(old_arr.dtype if old_dtype is not None else arr.dtype.char,
+                         copy=False)
+    new = new_arr.astype(new_arr.dtype if new_dtype is not None else arr.dtype.char,
+                         copy=False)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
@@ -1392,8 +1437,13 @@ def _join(sep, seq):
     array(['g-h-c', 'o.s.d'], dtype='<U5')  # doctest: +SKIP
 
     """
+    sep, sep_dtype = _string_array_and_dtype(sep)
+    seq, seq_dtype = _string_array_and_dtype(seq)
+    output_dtype = np.object_
+    if sep_dtype.char == "T" or seq_dtype.char == "T":
+        output_dtype = np.result_type(sep_dtype, seq_dtype)
     return _to_bytes_or_str_array(
-        _vec_string(sep, np.object_, 'join', (seq,)), seq)
+        _vec_string(sep, output_dtype, 'join', (seq,)), seq)
 
 
 def _split_dispatcher(a, sep=None, maxsplit=None):
@@ -1581,14 +1631,9 @@ def partition(a, sep):
      array(['is nice!'], dtype='<U8'))
 
     """
-    a_arr = np.asanyarray(a)
-    sep_arr = np.asanyarray(sep)
-
-    if np.result_type(a_arr, sep_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else a_arr
-        sep = sep if type(sep) is str else sep_arr
-        return _partition(a, sep)
+    (a_arr, sep_arr), needs_sizing = _prepare_string_operands(a, sep)
+    if not needs_sizing:
+        return _partition(a_arr, sep_arr)
 
     a = a_arr
     sep = sep_arr.astype(a_arr.dtype.char, copy=False)
@@ -1654,14 +1699,9 @@ def rpartition(a, sep):
      array(['', '  ', 'Bba'], dtype='<U3'))
 
     """
-    a_arr = np.asanyarray(a)
-    sep_arr = np.asanyarray(sep)
-
-    if np.result_type(a_arr, sep_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else a_arr
-        sep = sep if type(sep) is str else sep_arr
-        return _rpartition(a, sep)
+    (a_arr, sep_arr), needs_sizing = _prepare_string_operands(a, sep)
+    if not needs_sizing:
+        return _rpartition(a_arr, sep_arr)
 
     a = a_arr
     sep = sep_arr.astype(a_arr.dtype.char, copy=False)
@@ -1726,17 +1766,12 @@ def translate(a, table, deletechars=None):
     array(['112 3', '1231', '2311'], dtype='<U5')
 
     """
-    a_arr = np.asarray(a)
-    if issubclass(a_arr.dtype.type, np.str_):
-        return _vec_string(
-            a_arr, a_arr.dtype, 'translate', (table,))
+    a, dtype = _string_array_and_dtype(a, subok=False)
+    if issubclass(dtype.type, np.str_):
+        return _vec_string(a, dtype, 'translate', (table,))
     else:
         return _vec_string(
-            a_arr,
-            a_arr.dtype,
-            'translate',
-            [table] + _clean_args(deletechars)
-        )
+            a, dtype, 'translate', [table] + _clean_args(deletechars))
 
 @set_module("numpy.strings")
 def slice(a, start=None, stop=np._NoValue, step=None, /):
