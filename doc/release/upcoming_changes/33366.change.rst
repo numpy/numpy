@@ -1,0 +1,5 @@
+- When `numpy.einsum` extracts a diagonal or transposes an array, it now copies
+  the selected values directly into ``out``. This fixes an issue where copying
+  strings into ``out`` added a ``'False'`` prefix. Numeric casts such as NaN to
+  integer now warn or raise according to `numpy.seterr`. Reductions that would
+  use a string ``out`` as their running total now raise ``TypeError``.
