@@ -745,7 +745,10 @@ def array_split(ary, indices_or_sections, axis=0):
 
     """
     sary = _nx.swapaxes(ary, axis, 0)
-    Ntotal = sary.shape[0]
+    try:
+        Ntotal = sary.shape[0]
+    except AttributeError:
+        Ntotal = len(sary)
     try:
         # handle array case.
         Nsections = len(indices_or_sections) + 1
