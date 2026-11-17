@@ -73,6 +73,8 @@ class TestEinsum:
                       np.arange(6).reshape(2, 3), optimize=do_opt)
         assert_raises(ValueError, einsum_fn, "ii->i",
                       np.arange(6).reshape(2, 3), optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "ii->i",
+                      np.empty((0, 3)), optimize=do_opt)
 
         with assert_raises_regex(ValueError, "'b'"):
             # gh-11221 - 'c' erroneously appeared in the error message
@@ -396,6 +398,32 @@ class TestEinsum:
             b = np.einsum(a, [0, 1, 2], [1, 0, 2], optimize=do_opt)
             assert_(b.base is a.base)
             assert_equal(b, a.swapaxes(0, 1))
+
+    @pytest.mark.parametrize("dtype", ["U10", "T"])
+    def test_einsum_string_out(self, dtype):
+        a = np.array([["a", "bc"], ["x", "y"]], dtype=object)
+        out = np.empty(2, dtype=dtype)
+        res = np.einsum("ii->i", a, out=out, casting="unsafe")
+        assert res is out
+        assert_array_equal(out, ["a", "y"])
+        with pytest.raises(TypeError, match="cannot accumulate"):
+            np.einsum("ij->i", a, out=out, casting="unsafe")
+        assert_array_equal(out, ["a", "y"])
+
+    def test_einsum_view_out(self):
+        # out overlaps the input with a larger stride
+        b = np.arange(40.)
+        np.einsum("ii->i", b[:16].reshape(4, 4), out=b[::10])
+        assert_array_equal(b[::10], [0, 5, 10, 15])
+
+        out = np.empty(2)
+        np.einsum("i->i", [1.5, 2.5], out=out, dtype=np.int32, casting="unsafe")
+        assert_array_equal(out, [1, 2])
+
+        # an unsized dtype takes its size from the input
+        out = np.empty(2, dtype="U10")
+        np.einsum("i->i", ["alpha", "bravo"], out=out, dtype=str)
+        assert_array_equal(out, ["alpha", "bravo"])
 
     def check_einsum_sums(self, dtype, do_opt=False):
         dtype = np.dtype(dtype)

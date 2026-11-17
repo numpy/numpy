@@ -17,10 +17,10 @@
 #include <numpy/npy_common.h>
 #include <numpy/arrayobject.h>
 
-#include <array_assign.h>   //PyArray_AssignRawScalar
-
 #include <ctype.h>
 extern "C" {
+#include <array_assign.h>   //PyArray_AssignRawScalar
+#include "array_coercion.h"
 #include "convert.h"
 #include "common.h"
 #include "ctors.h"
@@ -259,9 +259,9 @@ get_single_op_view(PyArrayObject *op, char *labels,
 
     ndim = PyArray_NDIM(op);
 
-    /* Initialize the dimensions and strides to zero */
+    /* Initialize the dimensions to -1 and strides to zero */
     for (idim = 0; idim < ndim_output; ++idim) {
-        new_dims[idim] = 0;
+        new_dims[idim] = -1;
         new_strides[idim] = 0;
     }
 
@@ -303,7 +303,7 @@ get_single_op_view(PyArrayObject *op, char *labels,
             }
             /* Update the dimensions and strides of the output */
             i = out_label - output_labels;
-            if (new_dims[i] != 0 && new_dims[i] != PyArray_DIM(op, idim)) {
+            if (new_dims[i] != -1 && new_dims[i] != PyArray_DIM(op, idim)) {
                 PyErr_Format(PyExc_ValueError,
                         "dimensions in single operand for collapsing "
                         "index '%c' don't match (%d != %d)",
@@ -332,6 +332,54 @@ get_single_op_view(PyArrayObject *op, char *labels,
     /* Return success, but that we couldn't make a view */
     *ret = NULL;
     return 0;
+}
+
+
+/*
+ * Copies a single-operand view into 'out', through a temporary of 'dtype' if it is given.
+ * Steals a reference to 'view'. Returns a new reference to 'out', or NULL on error.
+ */
+static PyArrayObject *
+copy_single_op_view(PyArrayObject *view, PyArrayObject *out,
+                    PyArray_Descr *dtype, NPY_CASTING casting)
+{
+    /* AssignArray does not check this when 'out' is identical to the view */
+    if (PyArray_FailUnlessWriteable(out, "output array") < 0) {
+        Py_DECREF(view);
+        return NULL;
+    }
+    if (dtype == PyArray_DESCR(view)) {
+        dtype = NULL;
+    }
+    /*
+     * AssignArray skips its overlap copy for same-direction 1-D strides,
+     * even when a diagonal and 'out' have different strides.
+     */
+    if (dtype != NULL || arrays_overlap(view, out)) {
+        if (dtype != NULL) {
+            /* Sizes an unsized dtype such as str from the view */
+            dtype = PyArray_AdaptDescriptorToArray(view, NULL, dtype);
+            if (dtype == NULL) {
+                Py_DECREF(view);
+                return NULL;
+            }
+        }
+        PyArrayObject *tmp = (PyArrayObject *)PyArray_NewLikeArray(view, NPY_KEEPORDER, dtype, 0);
+        if (tmp != NULL && PyArray_AssignArray(tmp, view, NULL, casting) < 0) {
+            Py_CLEAR(tmp);
+        }
+        Py_SETREF(view, tmp);
+        if (view == NULL) {
+            return NULL;
+        }
+    }
+    int res = PyArray_AssignArray(out, view, NULL, casting);
+    Py_DECREF(view);
+    if (res < 0) {
+        return NULL;
+    }
+    Py_INCREF(out);
+    return out;
 }
 
 
@@ -937,8 +985,9 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
      * If there's just one operand and no output parameter,
      * first try remapping the axes to the output to return
      * a view instead of a copy.
+     * With an output parameter, the view is copied into it.
      */
-    if (nop == 1 && out == NULL) {
+    if (nop == 1) {
         ret = NULL;
 
         if (get_single_op_view(op_in[0], op_labels[0], ndim_output,
@@ -946,9 +995,19 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
             return NULL;
         }
 
+        if (ret != NULL && out != NULL) {
+            return copy_single_op_view(ret, out, dtype, casting);
+        }
+
         if (ret != NULL) {
             return ret;
         }
+    }
+
+    /* The sum-of-products loop uses out as its running total. */
+    if (out != NULL && (PyArray_ISSTRING(out) || PyArray_TYPE(out) == NPY_VSTRING)) {
+        PyErr_SetString(PyExc_TypeError, "einsum cannot accumulate into a string output");
+        return NULL;
     }
 
     /* Set all the op references to NULL */
