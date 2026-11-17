@@ -1438,6 +1438,10 @@ class TestMethodsWithUnicode:
 
 
 class TestMixedTypeMethods:
+    def test_partition_bytes_requires_promotable_separator(self):
+        with pytest.raises(np.exceptions.DTypePromotionError):
+            np.strings.partition(np.array(b"2020"), np.datetime64("2020"))
+
     def test_center(self):
         buf = np.array("😊", dtype="U")
         fill = np.array("*", dtype="S")
@@ -1587,11 +1591,23 @@ class TestOverride:
     def test_override_function(self, func, kwargs):
         assert func(self.override, **kwargs) == "function"
 
+    def test_find_propagates_override_error(self):
+        class Override:
+            def __array_ufunc__(self, ufunc, method, *args, **kwargs):
+                raise _UFuncNoLoopError(ufunc, (None,) * ufunc.nargs)
+
+            def __array__(self, *args, **kwargs):
+                pytest.fail("find retried conversion after the override raised")
+
+        with pytest.raises(_UFuncNoLoopError):
+            np.strings.find(Override(), "x")
+
     @pytest.mark.parametrize("func, args, kwargs", [
         (np.strings.add, (None, ), {}),
         (np.strings.lstrip, (), {}),
         (np.strings.rstrip, (), {}),
         (np.strings.strip, (), {}),
+        (np.strings.strip, ("x",), {}),
         (np.strings.equal, (None, ), {}),
         (np.strings.not_equal, (None, ), {}),
         (np.strings.greater_equal, (None, ), {}),

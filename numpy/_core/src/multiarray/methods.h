@@ -7,6 +7,9 @@
 
 extern NPY_NO_EXPORT PyMethodDef array_methods[];
 
+NPY_NO_EXPORT PyObject *
+array__has_array_ufunc_override(PyObject *self, PyObject *args);
+
 
 /*
  * Pathlib support, takes a borrowed reference and returns a new one.

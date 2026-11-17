@@ -1103,6 +1103,21 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
 
 
 NPY_NO_EXPORT PyObject *
+array__has_array_ufunc_override(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    if (!PyTuple_Check(args)) {
+        PyErr_SetString(PyExc_TypeError, "expected a tuple of ufunc inputs");
+        return NULL;
+    }
+    int result = any_array_ufunc_overrides(args, NULL);
+    if (result < 0) {
+        return NULL;
+    }
+    return PyBool_FromLong(result);
+}
+
+
+NPY_NO_EXPORT PyObject *
 array_ufunc(PyArrayObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
