@@ -28,6 +28,8 @@
 #mesondefine NPY_ABI_VERSION
 #mesondefine NPY_API_VERSION
 
+#mesondefine NPY_HAVE_HIGHWAY
+
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS 1
 #endif

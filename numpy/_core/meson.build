@@ -107,6 +107,7 @@ if host_machine.cpu_family() == 'loongarch64'
 endif
 
 use_highway = not get_option('disable-highway')
+cdata.set10('NPY_HAVE_HIGHWAY', use_highway)
 if use_highway and not fs.exists('src/highway/README.md')
   error('Missing the `highway` git submodule! Run `git submodule update --init` to fix this.')
 endif
@@ -1064,6 +1065,13 @@ foreach gen_mtargets : [
     ]
   ],
   [
+    'loops_arithmetic_floor_hwy.dispatch.h',
+    'src/umath/loops_arithmetic_floor_hwy.dispatch.cpp',
+    use_highway ? [
+      SVE, ASIMD, NEON
+    ] : []
+  ],
+  [
     'loops_comparison.dispatch.h',
     src_file.process('src/umath/loops_comparison.dispatch.c.src'),
     [
@@ -1360,6 +1368,9 @@ src_umath = umath_gen_headers + [
   'src/umath/stringdtype_ufuncs.cpp',
   'src/umath/wrapping_array_method.c',
   # For testing. Eventually, should use public API and be separate:
+  # Highway SIMD floor division (dispatched via multi_targets below)
+  'src/umath/loops_arithmetic_floor_hwy.h',
+  'src/umath/loops_arithmetic_floor_hwy_avail.c',
   'src/umath/_scaled_float_dtype.c',
 ]
 
