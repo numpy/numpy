@@ -15,7 +15,10 @@ from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import ComplexWarning
 from numpy.testing import IS_PYPY, assert_array_equal
-from numpy.testing._private.utils import assert_memory_growth_below, run_with_memory_limit
+from numpy.testing._private.utils import (
+    assert_memory_growth_below,
+    run_with_memory_limit,
+)
 
 
 def random_unicode_string_list():

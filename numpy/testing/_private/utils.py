@@ -3106,4 +3106,3 @@ def _assert_memory_growth_below(func_location, limit, repeat):
     assert growth() < limit, (
         f"memory grew by {growth()} bytes after {repeat} calls, "
         f"limit is {limit}")
-
