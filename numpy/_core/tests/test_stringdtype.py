@@ -2565,7 +2565,8 @@ def test_mod_output_follows_format_dtype():
     # Fixed-width output includes the trailing NUL when sizing the field.
     for fmt, expected in [("%s\0", "U13"), (np.array("%s", dtype=dtype), dtype)]:
         result = np.strings.mod(fmt, payload)
-        assert_array_equal(result, np.array(["long payload"], dtype=expected), strict=True)
+        assert_array_equal(result, np.array(["long payload"], dtype=expected),
+                           strict=True)
 
 
 def test_replace_casts_object_to_promoted_dtype():
