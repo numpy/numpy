@@ -2419,7 +2419,7 @@ class TestUfunc:
     @pytest.mark.parametrize("axis", [0, 1])
     @pytest.mark.parametrize("view", ["contiguous", "strided", "reversed",
                                       "transposed"])
-    def test_ufunc_at_subarrays(self, dtype, ufunc, axis, view):
+    def test_ufunc_at_rows_and_columns(self, dtype, ufunc, axis, view):
         # one index array selecting whole rows (or columns) of a 2-D array,
         # compared with applying the ufunc one index at a time
         rng = np.random.default_rng(0)

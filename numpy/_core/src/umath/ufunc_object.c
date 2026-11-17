@@ -6457,9 +6457,9 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
 }
 
 /*
- * Like ufunc_at__fast_iter, but for indices that select subarrays (e.g. rows
- * of a 2-D op1): call the inner loop once per run of the last dimension
- * instead of once per element.
+ * Like ufunc_at__fast_iter, but for indices that leave some dimensions of op1
+ * unindexed (e.g. that select rows of a 2-D op1): call the inner loop once
+ * per run of the last dimension instead of once per element.
  */
 static int
 ufunc_at__subspace_iter(PyArrayMethodObject *ufuncimpl,
@@ -6984,9 +6984,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         }
         /*
-         * The indices select subarrays (some dimensions of op1 are not
-         * indexed by an array). The last iteration dimension is then the
-         * last dimension of these subarrays, and the inner loop can be
+         * Some dimensions of op1 are not indexed by an array (e.g. the
+         * indices select rows). The last iteration dimension is then the
+         * last of these unindexed dimensions, and the inner loop can be
          * called once per run along it. With runs of length 1 this would
          * gain nothing over the per-element path below.
          */
