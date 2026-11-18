@@ -905,10 +905,10 @@ def outer(x1, x2, /):
     Parameters
     ----------
     x1 : (M,) array_like
-        One-dimensional input array of size ``N``.
+        One-dimensional input array of size ``M``.
         Must have a numeric data type.
     x2 : (N,) array_like
-        One-dimensional input array of size ``M``.
+        One-dimensional input array of size ``N``.
         Must have a numeric data type.
 
     Returns
