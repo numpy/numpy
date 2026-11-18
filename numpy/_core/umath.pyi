@@ -736,7 +736,7 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
         x: _Array[ShapeT, _to_number | _time],
         /,
         *,
-        out: EllipsisType | None = None,
+        out: EllipsisType | None | tuple[None] = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> _Array[ShapeT, np.bool]: ...
@@ -746,7 +746,7 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
         x: complex | _to_number | _time,
         /,
         *,
-        out: None = None,
+        out: None | tuple[None] = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> np.bool: ...
@@ -766,7 +766,7 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
         x: Sequence[complex | _to_number | _time],
         /,
         *,
-        out: EllipsisType | None = None,
+        out: EllipsisType | None | tuple[None] = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> Array1D[np.bool]: ...
@@ -776,7 +776,7 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
         x: Sequence[Sequence[complex | _to_number | _time]],
         /,
         *,
-        out: EllipsisType | None = None,
+        out: EllipsisType | None | tuple[None] = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> Array2D[np.bool]: ...
@@ -786,7 +786,7 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
         x: Sequence[Sequence[Sequence[complex | _to_number | _time]]],
         /,
         *,
-        out: EllipsisType | None = None,
+        out: EllipsisType | None | tuple[None] = None,
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> Array3D[np.bool]: ...
@@ -797,6 +797,16 @@ class _ufunc_11_bifgcm_b(_ufunc_11):  # type: ignore[misc]
         /,
         out: OutT,
         *,
+        dtype: _DTypeLikeBool | None = None,
+        **kwargs: Unpack[_Kwargs11],
+    ) -> OutT: ...
+    @overload  # out=tuple
+    def __call__[OutT: np.ndarray](
+        self,
+        x: _ArrayLikeNumber_co | _ArrayLike[_time],
+        /,
+        *,
+        out: tuple[OutT],
         dtype: _DTypeLikeBool | None = None,
         **kwargs: Unpack[_Kwargs11],
     ) -> OutT: ...
