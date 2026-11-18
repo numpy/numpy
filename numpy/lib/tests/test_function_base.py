@@ -2325,18 +2325,20 @@ class TestUnwrap:
         assert out.dtype == dtype
         assert_array_equal(out, [0, 1, 2, 3, 4])
 
-    def test_object_bigint(self):
+    @pytest.mark.parametrize("period, step", [(4, 1), (7, -2)])
+    def test_object_bigint(self, period, step):
         # gh-27686: Python ints in an object array are unwrapped exactly
         p = np.arange(0, 30, 5).astype(object) + 10**50
-        out = unwrap(p, period=4)
+        out = unwrap(p, period=period)
         assert all(type(v) is int for v in out)
-        assert_array_equal(np.diff(out), [1] * 5)
+        assert_array_equal(np.diff(out), [step] * 5)
         assert out[0] == 10**50
 
-    def test_object_float_int_period(self):
+    @pytest.mark.parametrize("period, expected", [(5, -2.3), (4, -1.3)])
+    def test_object_float_int_period(self, period, expected):
         # floats in an object array keep the float interval [-period/2, period/2)
         p = np.array([0.0, 2.7], dtype=object)
-        assert_allclose(unwrap(p, period=5).astype(float), [0.0, -2.3])
+        assert_allclose(unwrap(p, period=period).astype(float), [0.0, expected])
 
     @pytest.mark.parametrize("dtype", [np.int8, np.int32, np.int64])
     def test_int_float_period_promotes(self, dtype):

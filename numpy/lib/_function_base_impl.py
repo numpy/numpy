@@ -1751,13 +1751,16 @@ def _unwrap_fallback(p, discont, period, axis):
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
     dtype = np.result_type(dd, period)
-    # object arrays of Python ints (e.g. bigints) need exact integer math too
+    use_int = _nx.issubdtype(dtype, _nx.integer)
     integral = (int, np.integer)
-    if _nx.issubdtype(dtype, _nx.integer) or (
-        dtype.kind == "O"
-        and isinstance(period, integral)
-        and builtins.all(isinstance(x, integral) for x in dd.flat)
-    ):
+    if dtype.kind == "O" and isinstance(period, integral):
+        # object arrays of Python ints (e.g. bigints) need exact integer math.
+        # With an even period the integer interval is exact for any element
+        # type, so only an odd period needs every element to be an integer.
+        use_int = period % 2 == 0 or builtins.all(
+            isinstance(x, integral) for x in dd.flat
+        )
+    if use_int:
         interval_high, rem = divmod(period, 2)
         boundary_ambiguous = rem == 0
     else:
