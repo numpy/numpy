@@ -1,0 +1,8 @@
+Python ints convert to ``float32`` with a single rounding
+---------------------------------------------------------
+Converting a Python ``int`` to ``float32`` or ``complex64`` (for example
+``np.float32(2**54 - 2**29 - 1)``, or assigning one into a ``float32`` array)
+used to round through ``float64`` first. For ints with more than 53
+significant bits this double rounding could give the neighbouring ``float32``
+value. The conversion is now correctly rounded, and matches casting an
+``int64`` or ``uint64`` array to ``float32``.
