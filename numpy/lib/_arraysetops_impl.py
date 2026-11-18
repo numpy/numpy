@@ -972,6 +972,12 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
 
 def _isin_sorting(ar1, ar2, assume_unique, invert):
+    # Avoid lossy float64 promotion; out-of-range targets cannot match ar1.
+    if ar1.dtype.kind == "u" and ar1.dtype.itemsize == 8 and ar2.dtype.kind == "i":
+        ar2 = ar2[ar2 >= 0].astype(ar1.dtype)
+    elif ar1.dtype.kind == "i" and ar2.dtype.kind == "u" and ar2.dtype.itemsize == 8:
+        ar2 = ar2[ar2 <= np.iinfo(ar1.dtype).max].astype(ar1.dtype)
+
     if not assume_unique:
         ar1, rev_idx = np.unique(ar1, return_inverse=True)
         ar2 = np.unique(ar2)

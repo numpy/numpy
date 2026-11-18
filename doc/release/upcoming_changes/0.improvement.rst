@@ -1,0 +1,4 @@
+Exact membership tests for mixed signed and unsigned integers
+------------------------------------------------------------
+``np.isin`` and ``np.setdiff1d`` no longer report false matches for large
+integers when their inputs mix signed integer types with ``uint64``.
