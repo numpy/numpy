@@ -294,7 +294,9 @@ assert_type(np.isinf(_td_ns_1d), npt.Array1D[np.bool])
 assert_type(np.isinf(_td_ns_2d), npt.Array2D[np.bool])
 assert_type(np.isinf(_td_ns_nd), npt.NDArray[np.bool])
 
+assert_type(np.isfinite(_py_f_2d, out=(None,)), npt.Array2D[np.bool])  # type: ignore[assert-type, call-overload]
 assert_type(np.isinf(_py_i_2d, out=_f32_2d), npt.Array2D[np.float32])
+assert_type(np.isnan(_py_i_1d, out=(_f32_2d,)), npt.Array2D[np.float32])  # type: ignore[assert-type, call-overload]
 
 # _ufunc_11_io
 # (bitwise_count)
