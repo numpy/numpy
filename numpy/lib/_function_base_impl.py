@@ -1322,7 +1322,15 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         slice4[axis] = slice(2, None)
 
         if uniform_spacing:
-            out[tuple(slice1)] = (f[tuple(slice4)] - f[tuple(slice2)]) / (2. * ax_dx)
+            slice1_t = tuple(slice1)
+            slice2_t = tuple(slice2)
+            slice4_t = tuple(slice4)
+
+            if f.strides[axis] != f.itemsize:
+                np.subtract(f[slice4_t], f[slice2_t], out=out[slice1_t])
+                out[slice1_t] /= (2. * ax_dx)
+            else:
+                out[slice1_t] = (f[slice4_t] - f[slice2_t]) / (2. * ax_dx)
         else:
             dx1 = ax_dx[0:-1]
             dx2 = ax_dx[1:]
