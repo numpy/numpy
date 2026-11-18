@@ -4,8 +4,12 @@ import numpy as np
 cimport numpy as np
 
 from libc.stdint cimport uint32_t, uint64_t
+from cpython.pycapsule cimport PyCapsule_New
 from ._common cimport uint64_to_double
-from numpy.random cimport BitGenerator
+from numpy.random cimport (
+    BITGEN_BULK_ABI_VERSION, BITGEN_BULK_DOUBLE, BITGEN_BULK_UINT32,
+    BITGEN_BULK_UINT64, BitGenerator, bitgen_bulk_v1,
+)
 
 __all__ = ['SFC64']
 
@@ -18,6 +22,9 @@ cdef extern from "src/sfc64/sfc64.h":
     ctypedef s_sfc64_state sfc64_state
     uint64_t sfc64_next64(sfc64_state *state)  nogil
     uint32_t sfc64_next32(sfc64_state *state)  nogil
+    void sfc64_fill_uint32(sfc64_state *state, size_t count, uint32_t *out) nogil
+    void sfc64_fill_uint64(sfc64_state *state, size_t count, uint64_t *out) nogil
+    void sfc64_fill_double(sfc64_state *state, size_t count, double *out) nogil
     void sfc64_set_seed(sfc64_state *state, uint64_t *seed)
     void sfc64_get_state(sfc64_state *state, uint64_t *state_arr, int *has_uint32, uint32_t *uinteger)
     void sfc64_set_state(sfc64_state *state, uint64_t *state_arr, int has_uint32, uint32_t uinteger)
@@ -31,6 +38,30 @@ cdef uint32_t sfc64_uint32(void *st) noexcept nogil:
 
 cdef double sfc64_double(void* st) noexcept nogil:
     return uint64_to_double(sfc64_next64(<sfc64_state *>st))
+
+
+cdef void sfc64_uint32_fill(void *state, size_t count, uint32_t *out) noexcept nogil:
+    sfc64_fill_uint32(<sfc64_state *>state, count, out)
+
+cdef void sfc64_uint64_fill(void *state, size_t count, uint64_t *out) noexcept nogil:
+    sfc64_fill_uint64(<sfc64_state *>state, count, out)
+
+cdef void sfc64_double_fill(void *state, size_t count, double *out) noexcept nogil:
+    sfc64_fill_double(<sfc64_state *>state, count, out)
+
+cdef bitgen_bulk_v1 _sfc64_bulk_v1
+_sfc64_bulk_v1.abi_version = BITGEN_BULK_ABI_VERSION
+_sfc64_bulk_v1.struct_size = sizeof(bitgen_bulk_v1)
+_sfc64_bulk_v1.capabilities = (
+    BITGEN_BULK_UINT32 | BITGEN_BULK_UINT64 | BITGEN_BULK_DOUBLE
+)
+_sfc64_bulk_v1.fill_uint32 = &sfc64_uint32_fill
+_sfc64_bulk_v1.fill_uint64 = &sfc64_uint64_fill
+_sfc64_bulk_v1.fill_double = &sfc64_double_fill
+
+cdef object _sfc64_bulk_capsule = PyCapsule_New(
+    <void *>&_sfc64_bulk_v1, "BitGeneratorBulkV1", NULL
+)
 
 
 cdef class SFC64(BitGenerator):
@@ -85,6 +116,11 @@ cdef class SFC64(BitGenerator):
     """
 
     cdef sfc64_state rng_state
+
+    @property
+    def bulk_capsule(self):
+        """Optional bulk-generation C interface."""
+        return _sfc64_bulk_capsule
 
     def __init__(self, seed=None):
         BitGenerator.__init__(self, seed)

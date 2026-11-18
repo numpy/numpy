@@ -6,7 +6,11 @@ import numpy as np
 cimport numpy as np
 
 from libc.stdint cimport uint32_t, uint64_t
-from numpy.random cimport BitGenerator, SeedSequence
+from cpython.pycapsule cimport PyCapsule_New
+from numpy.random cimport (
+    BITGEN_BULK_ABI_VERSION, BITGEN_BULK_DOUBLE, BITGEN_BULK_UINT32,
+    BITGEN_BULK_UINT64, BitGenerator, SeedSequence, bitgen_bulk_v1,
+)
 
 __all__ = ['MT19937']
 
@@ -23,6 +27,9 @@ cdef extern from "src/mt19937/mt19937.h":
     uint64_t mt19937_next64(mt19937_state *state)  nogil
     uint32_t mt19937_next32(mt19937_state *state)  nogil
     double mt19937_next_double(mt19937_state *state)  nogil
+    void mt19937_fill_uint32(mt19937_state *state, size_t count, uint32_t *out) nogil
+    void mt19937_fill_uint64(mt19937_state *state, size_t count, uint64_t *out) nogil
+    void mt19937_fill_double(mt19937_state *state, size_t count, double *out) nogil
     void mt19937_init_by_array(mt19937_state *state, uint32_t *init_key, int key_length)
     void mt19937_seed(mt19937_state *state, uint32_t seed)
     void mt19937_jump(mt19937_state *state)
@@ -41,6 +48,29 @@ cdef double mt19937_double(void *st) noexcept nogil:
 
 cdef uint64_t mt19937_raw(void *st) noexcept nogil:
     return <uint64_t>mt19937_next32(<mt19937_state *> st)
+
+cdef void mt19937_uint32_fill(void *state, size_t count, uint32_t *out) noexcept nogil:
+    mt19937_fill_uint32(<mt19937_state *>state, count, out)
+
+cdef void mt19937_uint64_fill(void *state, size_t count, uint64_t *out) noexcept nogil:
+    mt19937_fill_uint64(<mt19937_state *>state, count, out)
+
+cdef void mt19937_double_fill(void *state, size_t count, double *out) noexcept nogil:
+    mt19937_fill_double(<mt19937_state *>state, count, out)
+
+cdef bitgen_bulk_v1 _mt19937_bulk_v1
+_mt19937_bulk_v1.abi_version = BITGEN_BULK_ABI_VERSION
+_mt19937_bulk_v1.struct_size = sizeof(bitgen_bulk_v1)
+_mt19937_bulk_v1.capabilities = (
+    BITGEN_BULK_UINT32 | BITGEN_BULK_UINT64 | BITGEN_BULK_DOUBLE
+)
+_mt19937_bulk_v1.fill_uint32 = &mt19937_uint32_fill
+_mt19937_bulk_v1.fill_uint64 = &mt19937_uint64_fill
+_mt19937_bulk_v1.fill_double = &mt19937_double_fill
+
+cdef object _mt19937_bulk_capsule = PyCapsule_New(
+    <void *>&_mt19937_bulk_v1, "BitGeneratorBulkV1", NULL
+)
 
 cdef class MT19937(BitGenerator):
     # the first line is used to populate `__text_signature__`
@@ -126,6 +156,11 @@ cdef class MT19937(BitGenerator):
 
     """
     cdef mt19937_state rng_state
+
+    @property
+    def bulk_capsule(self):
+        """Optional bulk-generation C interface."""
+        return _mt19937_bulk_capsule
 
     def __init__(self, seed=None):
         BitGenerator.__init__(self, seed)
