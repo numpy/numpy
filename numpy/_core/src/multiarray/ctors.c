@@ -3197,7 +3197,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 static npy_intp
 _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)
 {
-    npy_intp len, tmp;
+    npy_intp len;
     PyObject *zero, *val;
     int next_is_nonzero, val_is_zero;
     double value;
@@ -3243,27 +3243,23 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         return -1;
     }
 
-    if (cmplx && PyComplex_Check(val)) {
-        value = PyComplex_RealAsDouble(val);
-        if (error_converting(value)) {
-            Py_DECREF(val);
-            return -1;
-        }
-        len = _arange_safe_ceil_to_intp(value);
-        if (error_converting(len)) {
-            Py_DECREF(val);
-            return -1;
-        }
-        value = PyComplex_ImagAsDouble(val);
+    if (cmplx) {
+        Py_complex cval = PyComplex_AsCComplex(val);
         Py_DECREF(val);
-        if (error_converting(value)) {
+        if (cval.real == -1.0 && PyErr_Occurred()) {
             return -1;
         }
-        tmp = _arange_safe_ceil_to_intp(value);
-        if (error_converting(tmp)) {
+        if (cval.imag != 0.0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "arange: cannot compute length when (stop - start) / step "
+                    "has a nonzero imaginary part; use numpy.linspace to "
+                    "generate evenly spaced complex values.");
             return -1;
         }
-        len = PyArray_MIN(len, tmp);
+        len = _arange_safe_ceil_to_intp(cval.real);
+        if (error_converting(len)) {
+            return -1;
+        }
     }
     else {
         value = PyFloat_AsDouble(val);
