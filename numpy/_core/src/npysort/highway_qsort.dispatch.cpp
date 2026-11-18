@@ -10,7 +10,18 @@ template <typename T>
 void NPY_CPU_DISPATCH_CURFX(QSort)(T *arr, npy_intp size, bool reverse)
 {
 #if VQSORT_ENABLED
-    if (reverse) {
+    // Only floating point keys can have signed zeros.
+    if constexpr (std::is_floating_point_v<T>) {
+        SignedZeroGuard<T> guard(arr, size);
+        if (reverse) {
+            hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortDescending());
+        }
+        else {
+            hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
+        }
+        guard.Restore(arr, size);
+    }
+    else if (reverse) {
         hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortDescending());
     }
     else {

@@ -11,7 +11,18 @@ void NPY_CPU_DISPATCH_CURFX(QSort)(T *arr, npy_intp size, bool reverse)
 {
 #if VQSORT_ENABLED
     using THwy = std::conditional_t<std::is_same_v<T, Half>, hwy::float16_t, T>;
-    if (reverse) {
+    // Half has signed zeros, see SignedZeroGuard.
+    if constexpr (std::is_same_v<T, Half>) {
+        SignedZeroGuard<uint16_t> guard(reinterpret_cast<const uint16_t*>(arr), size);
+        if (reverse) {
+            hwy::HWY_NAMESPACE::VQSortStatic(reinterpret_cast<THwy*>(arr), size, hwy::SortDescending());
+        }
+        else {
+            hwy::HWY_NAMESPACE::VQSortStatic(reinterpret_cast<THwy*>(arr), size, hwy::SortAscending());
+        }
+        guard.Restore(reinterpret_cast<uint16_t*>(arr), size);
+    }
+    else if (reverse) {
         hwy::HWY_NAMESPACE::VQSortStatic(reinterpret_cast<THwy*>(arr), size, hwy::SortDescending());
     }
     else {
