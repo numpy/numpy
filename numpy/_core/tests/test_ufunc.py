@@ -2333,6 +2333,21 @@ class TestUfunc:
             np.add.at(arr, index, value)
             assert_array_equal(arr, np.full_like(arr, 2 * value))
 
+    @pytest.mark.parametrize("dtype",
+            np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
+    @pytest.mark.parametrize("transpose", [False, True])
+    def test_ufunc_at_nd_index_broadcast_values(self, dtype, transpose):
+        # gh-33370
+        index = np.array([[0, 1, 2], [1, 1, 1], [0, 0, 0]])
+        if transpose:
+            index = index.T
+        values = np.array([1, 2, 3], dtype=dtype)
+        expected = np.zeros(4, dtype=dtype)
+        np.add.at(expected, index, np.broadcast_to(values, index.shape))
+        arr = np.zeros(4, dtype=dtype)
+        np.add.at(arr, index, values)
+        assert_array_equal(arr, expected)
+
     def test_ufunc_at_multiD(self):
         a = np.arange(9).reshape(3, 3)
         b = np.array([[100, 100, 100], [200, 200, 200], [300, 300, 300]])
