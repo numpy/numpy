@@ -1353,6 +1353,11 @@ class TestEinsumPath:
         assert_raises(
             RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
 
+    def test_path_type_input_unknown_name(self):
+        path_test = self.build_operands('ab,bc,cd->ad')
+        with pytest.raises(KeyError, match="Path name unknown not found"):
+            np.einsum_path(*path_test, optimize='unknown')
+
     def test_spaces(self):
         # gh-10794
         arr = np.array([[1]])
