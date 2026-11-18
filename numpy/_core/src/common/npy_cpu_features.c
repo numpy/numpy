@@ -371,7 +371,7 @@ npy__cpu_check_env(int disable, const char *env) {
         }
     }
 #else
-    if (PyErr_WarnFormat(PyExc_ImportWarning, 1,
+    if (PyErr_WarnFormat(PyExc_UserWarning, 1,
             "%s"
             "You cannot use environment variable '%s', since "
         #ifdef NPY_DISABLE_OPTIMIZATION
