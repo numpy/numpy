@@ -47,6 +47,7 @@ option('test-simd', type: 'array',
          'NEON', 'ASIMD',
          'VX', 'VXE', 'VXE2',
          'LSX',
+         'E2K_SSE', 'E2K_AVX'
        ],
        description: 'CPU SIMD feature sets to be tested by the NumPy SIMD test module')
 option('test-simd-args', type: 'string', value: '',
