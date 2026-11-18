@@ -1708,6 +1708,122 @@ class TestNorm_NonSystematic:
         d = d.astype(np.complex64)
         old_assert_almost_equal(np.linalg.norm(d, ord=3), res, decimal=5)
 
+    def test_overflow(self):
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            # float16: 600**2 + 800**2 overflows float16, but the norm (1000) fits.
+            x16 = np.array([600, 800], dtype=np.float16)
+            assert_allclose(norm(x16), 1000.0, rtol=1e-3)
+            assert norm(x16).dtype == np.float16
+            assert_allclose(norm(np.array([1e200, 1e200])), np.sqrt(2) * 1e200)
+            # Frobenius norm of a 2-D matrix uses the same fast path (gh-19097).
+            assert_allclose(norm(np.array([[1e200, 1e200], [1e200, 1e200]])), 2e200)
+            assert_allclose(norm(np.array([1e200 + 1e200j])), np.sqrt(2) * 1e200)
+            assert_allclose(norm(np.array([1e-200, 1e-200])), np.sqrt(2) * 1e-200)
+            x32 = np.array([1e-30, 1e-30], dtype=np.float32)
+            assert_allclose(norm(x32), np.sqrt(2) * 1e-30, rtol=1e-3)
+            assert norm(x32).dtype == np.float32
+            assert_allclose(norm(np.array([1e-200 + 1e-200j])), np.sqrt(2) * 1e-200)
+            # A subnormal (but non-zero) sum of squares loses precision in the
+            # naive path; the rescale recovers the full-precision norm.
+            assert_allclose(norm(np.full(10, 1e-161)), np.sqrt(10) * 1e-161)
+            assert np.isinf(norm(np.array([np.inf, 1.0])))
+            assert np.isnan(norm(np.array([np.nan, 1.0])))
+            assert norm(np.zeros(5)) == 0.0
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                       np.longdouble, np.complex64,
+                                       np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("factor", [0.01, 0.25, 0.5, 1, 2])
+    def test_norm_near_subnormal_boundary(self, dtype, factor):
+        # Four equal elements put the sum of squares on either side of the
+        # dtype's normal/subnormal boundary. The norm remains representable.
+        real_dtype = np.empty((), dtype=dtype).real.dtype
+        info = np.finfo(real_dtype)
+        value = np.sqrt(info.smallest_normal) * real_dtype.type(factor)
+        x = np.full(4, value, dtype=dtype)
+        expected = 2 * value
+        with np.errstate(under="ignore"):
+            for result in (norm(x), norm(x, axis=0),
+                           norm(x.reshape(2, 2), axis=(0, 1))):
+                assert_allclose(result, expected, rtol=8 * info.eps, atol=0)
+                assert isinstance(result, np.floating)
+                assert result.dtype == real_dtype
+
+    @pytest.mark.parametrize("order", [None, 2, 3])
+    def test_float16_large_reduction(self, order):
+        # Even after max-scaling, a sum of 65536 ones overflows float16.
+        x = np.ones(65536, dtype=np.float16)
+        expected = np.float16(x.size ** (1 / (2 if order is None else order)))
+        with np.errstate(over="ignore", invalid="ignore"):
+            for axis in (None, 0):
+                result = norm(x, ord=order, axis=axis)
+                assert result.dtype == np.float16
+                assert isinstance(result, np.floating)
+                assert_allclose(result, expected, rtol=2e-3)
+            matrix = x.reshape(256, 256)
+            if order is None:
+                assert_equal(norm(matrix, axis=(0, 1)), np.float16(256))
+                assert_equal(norm(matrix, axis=(0, 1), keepdims=True),
+                             np.array([[256]], dtype=np.float16))
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                       np.longdouble, np.complex64,
+                                       np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("keepdims", [False, True])
+    @pytest.mark.parametrize("shape,axis,order", [
+        ((0, 4), 1, None), ((4, 0), 1, None),
+        ((0, 4), 1, 3), ((4, 0), 1, 3),
+        ((0, 2, 4), (1, 2), "fro"), ((3, 0, 4), (1, 2), "fro"),
+    ])
+    def test_norm_empty_axis_results(self, dtype, keepdims, shape, axis, order):
+        # Distinguish empty outputs from nonempty outputs of empty reductions.
+        x = np.empty(shape, dtype=dtype)
+        axes = (axis,) if isinstance(axis, int) else axis
+        expected_shape = tuple(1 if i in axes else n
+                               for i, n in enumerate(shape)) if keepdims else (
+            tuple(n for i, n in enumerate(shape) if i not in axes))
+        expected = np.zeros(expected_shape, dtype=x.real.dtype)
+        result = norm(x, ord=order, axis=axis, keepdims=keepdims)
+        assert_array_equal(result, expected, strict=True)
+
+    def test_overflow_axis(self):
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            a = np.array([[600, 800], [3, 4]], dtype=np.float16)
+            assert_allclose(norm(a, axis=1), [1000.0, 5.0], rtol=1e-3)
+            assert norm(a, axis=1).dtype == np.float16
+            assert_allclose(norm(a, axis=0), [np.hypot(600, 3), np.hypot(800, 4)],
+                            rtol=1e-3)
+            assert norm(a, axis=1, keepdims=True).shape == (2, 1)
+            assert_allclose(norm(np.array([[1e-200, 1e-200]]), axis=1),
+                            [np.sqrt(2) * 1e-200])
+            u32 = np.array([[1e-30, 1e-30]], dtype=np.float32)
+            assert_allclose(norm(u32, axis=1), [np.sqrt(2) * 1e-30], rtol=1e-3)
+            assert_allclose(norm(np.full((2, 10), 1e-161), axis=1),
+                            [np.sqrt(10) * 1e-161, np.sqrt(10) * 1e-161])
+            p = np.array([[1e200, 1e200], [3.0, 4.0]])
+            assert_allclose(norm(p, ord=3, axis=1),
+                            [1e200 * 2 ** (1 / 3), (3.0 ** 3 + 4.0 ** 3) ** (1 / 3)])
+            f = np.array([[[1e200, 1e200], [1e200, 1e200]],
+                          [[1.0, 2.0], [3.0, 4.0]]])
+            assert_allclose(norm(f, axis=(1, 2)), [2e200, norm(f[1])])
+            assert norm(f, axis=(1, 2), keepdims=True).shape == (2, 1, 1)
+            g = np.array([[np.inf, 1.0], [np.nan, 1.0], [3.0, 4.0], [0.0, 0.0]])
+            r = norm(g, axis=1)
+            assert np.isinf(r[0]) and np.isnan(r[1])
+            assert_allclose(r[2], 5.0)
+            assert r[3] == 0.0
+
+    def test_overflow_rescale_returns_scalar(self):
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            for a in (np.zeros(4),
+                      np.array([1e200, 1e200]),
+                      np.array([1e-200, 1e-200]),
+                      np.array([3.0, 4.0])):
+                assert isinstance(norm(a, axis=0), np.floating)
+                assert isinstance(norm(a), np.floating)
+            assert isinstance(norm(np.full((2, 2), 1e200)), np.floating)
+            assert isinstance(norm(np.full((2, 2), 1e200), axis=1), np.ndarray)
+
 
 # Separate definitions so we can use them for matrix tests.
 class _TestNormDoubleBase(_TestNormBase):
