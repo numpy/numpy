@@ -382,9 +382,14 @@ def buildmodules(lst):
     cfuncs.buildcfuncs()
     outmess('Building modules...\n')
     modules, mnames, isusedby = [], [], {}
+    # __user__ python modules hold callback signatures; keep them available
+    # for F90 wrapper generation even though they are not extension modules
+    # themselves (gh-20157 / ``.pyf`` rebuild path).
+    user_modules = {}
     for item in lst:
         if '__user__' in item['name']:
             cb_rules.buildcallbacks(item)
+            user_modules[item['name']] = item
         else:
             if 'use' in item:
                 for u in item['use'].keys():
@@ -402,7 +407,9 @@ def buildmodules(lst):
             um = []
             if 'use' in module:
                 for u in module['use'].keys():
-                    if u in isusedby and u in mnames:
+                    if u in user_modules:
+                        um.append(user_modules[u])
+                    elif u in isusedby and u in mnames:
                         um.append(modules[mnames.index(u)])
                     else:
                         outmess(
