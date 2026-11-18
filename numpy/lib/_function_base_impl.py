@@ -587,7 +587,13 @@ def average(a, axis=None, weights=None, returned=False, *,
     if weights is None:
         avg = a.mean(axis, **keepdims_kw)
         avg_as_array = np.asanyarray(avg)
-        scl = avg_as_array.dtype.type(a.size / avg_as_array.size)
+        if avg_as_array.dtype.kind in 'mM':
+            # datetime64/timedelta64 have no scalar type, so the sum of the
+            # (all-ones) weights is kept as a float instead of being cast to
+            # the array's dtype.
+            scl = np.float64(a.size / avg_as_array.size)
+        else:
+            scl = avg_as_array.dtype.type(a.size / avg_as_array.size)
     else:
         wgt = _weights_are_valid(weights=weights, a=a, axis=axis)
 
