@@ -2931,12 +2931,17 @@ def run_with_memory_limit(func, make_args, limit):
     ``make_args()`` returns a mapping of labels to argument tuples, and
     ``func(*args)`` runs for each of them.  Both run in a fresh subprocess, so
     they must be module-level functions, and each call runs in its own forked
-    child of that subprocess.  Skips on platforms other than Linux and macOS.
+    child of that subprocess.  Runs on Linux and on arm64 macOS 26 or later.
     """
     import pytest
 
     if sys.platform not in ("linux", "darwin"):
         pytest.skip("needs fork and an enforced RLIMIT_AS")
+    if sys.platform == "darwin":
+        # Legacy malloc can map 128 MiB for a small allocation (gh-33369).
+        major = int(platform.mac_ver()[0].split(".")[0] or 0)
+        if major < 26 or platform.machine() != "arm64":
+            pytest.skip("memory-limit tests require arm64 on macOS 26 or later")
     cflags = sysconfig.get_config_var('CFLAGS') or ''
     config_args = sysconfig.get_config_var('CONFIG_ARGS') or ''
     address_sanitizer = (
