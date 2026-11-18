@@ -285,7 +285,8 @@ def do_generate_api(targets, sources):
         index = val[0]
         internal_type = None if len(val) == 1 else val[1]
         multiarray_api_dict[name] = TypeApi(
-            name, index, 'PyTypeObject', api_name, internal_type)
+            name, index, 'PyTypeObject', api_name, internal_type,
+            heap_type=name in numpy_api.multiarray_heap_types)
 
     for name, (index, c_type, min_version) in genapi.order_dict(dtype_api):
         item = TypeApi(name, index, c_type, api_name)
