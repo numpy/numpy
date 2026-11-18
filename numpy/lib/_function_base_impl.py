@@ -45,8 +45,6 @@ from numpy._core.umath import (
     exp,
     floor,
     frompyfunc,
-    isfinite,
-    isinf,
     isnan,
     less_equal,
     minimum,
@@ -4623,27 +4621,20 @@ def _lerp(a, b, t, out=None):
     out : array_like
         Output array.
     """
-    # An infinite endpoint makes the arithmetic below produce nan (``inf - inf``
-    # or ``inf * 0``) even where the result is well defined; those entries are
-    # fixed up afterwards, so the "invalid" warning is not useful here.
+    # gh-21091: an infinite endpoint makes this arithmetic compute inf - inf
+    # or inf * 0. The exact result is the endpoint the weight selects, and
+    # strictly between the endpoints it is the infinite one. a / 2 + b / 2
+    # gives that (nan for -inf and inf) and cannot overflow on finite values.
     with np.errstate(invalid="ignore"):
         diff_b_a = b - a
-        lerp_interpolation = add(
-            a, diff_b_a * t, out=... if out is None else out)
+        lerp_interpolation = add(a, diff_b_a * t, out=... if out is None else out)
         subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5,
                  casting='unsafe', dtype=type(lerp_interpolation.dtype))
-    if lerp_interpolation.dtype.kind == "f":
-        # ``a <= b`` always holds here.
-        invalid = isnan(lerp_interpolation)
-        if invalid.any():
-            invalid &= ~isnan(a) & ~isnan(b)
-            # A weight of exactly 0 or 1 selects one endpoint (the discrete
-            # methods set ``t`` to 1); otherwise the infinite endpoint wins.
-            use_a = (t == 0) | (a == b) | (isinf(a) & isfinite(b) & (t != 1))
-            use_b = (t == 1) | (isinf(b) & isfinite(a))
-            # ``use_a`` wins over ``use_b`` when the weight of ``b`` is zero
-            np.copyto(lerp_interpolation, b, where=invalid & use_b)
-            np.copyto(lerp_interpolation, a, where=invalid & use_a)
+        if lerp_interpolation.dtype.kind == "f":
+            lost = isnan(lerp_interpolation) & ~isnan(a) & ~isnan(b)
+            np.copyto(lerp_interpolation,
+                      np.where(t == 0, a, np.where(t == 1, b, a / 2 + b / 2)),
+                      where=lost)
     if lerp_interpolation.ndim == 0 and out is None:
         lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
     return lerp_interpolation
