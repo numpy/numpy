@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Any, assert_type
+from typing import Any, Self, assert_type, type_check_only
 
 import numpy as np
 import numpy.typing as npt
@@ -73,6 +73,22 @@ AR_LIKE_c: list[complex]
 AR_LIKE_m: list[np.timedelta64[int]]
 AR_LIKE_M: list[np.datetime64[int]]
 AR_LIKE_O: list[np.object_[int]]
+
+@type_check_only
+class _DuckArray:
+    def __array__(self, dtype: None = None, /, *, copy: bool | None = None) -> npt.NDArray[np.float64]: ...
+    def __array_ufunc__(self, ufunc: np.ufunc, method: str, /, *inputs: Any, **kwargs: Any) -> Self: ...
+    def __radd__(self, other: npt.NDArray[np.float64], /) -> Self: ...
+    def __rsub__(self, other: npt.NDArray[np.float64], /) -> Self: ...
+    def __rmul__(self, other: npt.NDArray[np.float64], /) -> Self: ...
+    def __rpow__(self, other: npt.NDArray[np.float64], /) -> Self: ...
+    def __rtruediv__(self, other: npt.NDArray[np.float64], /) -> Self: ...
+    def __rfloordiv__(self, other: npt.NDArray[np.float64], /) -> Self: ...
+    def __rmod__(self, other: npt.NDArray[np.float64], /) -> Self: ...
+    def __rdivmod__(self, other: npt.NDArray[np.float64], /) -> tuple[Self, Self]: ...
+    def __rmatmul__(self, other: npt.NDArray[np.float64], /) -> Self: ...
+
+_duck_array: _DuckArray
 
 ###
 
@@ -475,6 +491,8 @@ assert_type(AR_m + AR_LIKE_M, npt.NDArray[np.datetime64])
 assert_type(AR_M + AR_LIKE_m, npt.NDArray[np.datetime64])
 assert_type(AR_O + 1, npt.NDArray[np.object_])
 
+assert_type(AR_f64_2d + _duck_array, _DuckArray)
+
 # __radd__
 
 assert_type(1 + AR_Any_2d, npt.Array2D[Any])
@@ -529,6 +547,8 @@ assert_type(AR_c128_2d - AR_f64_2d, npt.Array2D[np.complex128])
 assert_type(AR_M8_2d - m8_int, npt.Array2D[np.datetime64])
 assert_type(AR_M8_2d - AR_M8_2d, npt.Array2D[np.timedelta64])
 assert_type(AR_O - 1, npt.NDArray[np.object_])
+
+assert_type(AR_f64_2d - _duck_array, _DuckArray)
 
 # __rsub__
 
@@ -599,6 +619,7 @@ assert_type(AR_f * AR_LIKE_O, npt.NDArray[np.object_])
 assert_type(AR_c * AR_LIKE_c, npt.NDArray[np.complex128])
 assert_type(AR_m * AR_LIKE_f, npt.NDArray[np.timedelta64])
 assert_type(AR_O * 1, npt.NDArray[np.object_])
+assert_type(AR_f64_2d * _duck_array, _DuckArray)
 
 # __rmul__
 
@@ -667,6 +688,8 @@ assert_type(AR_f ** AR_LIKE_O, npt.NDArray[np.object_])
 assert_type(AR_c ** AR_LIKE_c, npt.NDArray[np.complex128])
 assert_type(AR_O ** 1, npt.NDArray[np.object_])
 
+assert_type(AR_f64_2d ** _duck_array, _DuckArray)
+
 # __rpow__
 
 assert_type(1 ** AR_Any_2d, npt.Array2D[Any])
@@ -727,6 +750,8 @@ assert_type(AR_m / AR_LIKE_f, npt.NDArray[np.timedelta64])
 assert_type(AR_m / AR_LIKE_m, npt.NDArray[np.float64])
 assert_type(AR_O / 1, npt.NDArray[np.object_])
 
+assert_type(AR_f64_2d / _duck_array, _DuckArray)
+
 # __rtruediv__
 
 assert_type(1 / AR_Any_2d, npt.Array2D[Any])
@@ -786,6 +811,8 @@ assert_type(AR_m // AR_LIKE_f, npt.NDArray[np.timedelta64])
 assert_type(AR_m // AR_LIKE_m, npt.NDArray[np.int64])
 assert_type(AR_O // 1, npt.NDArray[np.object_])
 
+assert_type(AR_f64_2d // _duck_array, _DuckArray)
+
 # __rfloordiv__
 
 assert_type(1 // AR_Any_2d, npt.Array2D[Any])
@@ -842,6 +869,8 @@ assert_type(AR_f % AR_LIKE_O, npt.NDArray[np.object_])
 assert_type(AR_m % AR_LIKE_m, npt.NDArray[np.timedelta64])
 assert_type(AR_O % 1, npt.NDArray[np.object_])
 
+assert_type(AR_f64_2d % _duck_array, _DuckArray)
+
 # __rmod__
 
 assert_type(1 % AR_Any_2d, npt.Array2D[Any])
@@ -895,6 +924,8 @@ assert_type(AR_i.__divmod__(AR_LIKE_f), tuple[npt.NDArray[np.float64], npt.NDArr
 assert_type(AR_f.__divmod__(AR_LIKE_f), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(AR_m.__divmod__(AR_LIKE_m), tuple[npt.NDArray[np.int64], npt.NDArray[np.timedelta64]])
 
+assert_type(AR_f64_2d.__divmod__(_duck_array), tuple[_DuckArray, _DuckArray])
+
 # __rdivmod__
 
 assert_type(divmod(1, AR_Any_2d), tuple[npt.Array2D[Any], npt.Array2D[Any]])
@@ -914,3 +945,7 @@ assert_type(divmod(AR_LIKE_f, AR_b), tuple[npt.NDArray[np.float64], npt.NDArray[
 assert_type(divmod(AR_LIKE_b, AR_f), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(divmod(AR_LIKE_f, AR_f), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(divmod(AR_LIKE_m, AR_m), tuple[npt.NDArray[np.int64], npt.NDArray[np.timedelta64]])
+
+# __matmul__
+
+assert_type(AR_f64_2d @ _duck_array, _DuckArray)
