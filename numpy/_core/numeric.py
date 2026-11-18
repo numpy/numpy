@@ -2180,11 +2180,13 @@ def base_repr(number, base=2, padding=0):
     while num:
         res.append(digits[num % base])
         num //= base
+    if not res:
+        res.append('0')
     if padding:
         res.append('0' * padding)
     if number < 0:
         res.append('-')
-    return ''.join(reversed(res or '0'))
+    return ''.join(reversed(res))
 
 
 # These are all essentially abbreviations

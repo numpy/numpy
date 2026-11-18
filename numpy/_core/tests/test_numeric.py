@@ -2145,6 +2145,12 @@ class TestBaseRepr:
     def test_base3(self):
         assert_equal(np.base_repr(3**5, 3), '100000')
 
+    def test_zero(self):
+        assert_equal(np.base_repr(0), '0')
+        assert_equal(np.base_repr(0, 10, 4), '00000')
+        assert_equal(np.base_repr(0, 2, 1), '00')
+        assert_equal(np.base_repr(np.int64(0), padding=3), '0000')
+
     def test_positive(self):
         assert_equal(np.base_repr(12, 10), '12')
         assert_equal(np.base_repr(12, 10, 4), '000012')
