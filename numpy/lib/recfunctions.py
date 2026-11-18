@@ -681,6 +681,25 @@ def append_fields(base, names, data, dtypes=None,
     asrecarray : {False, True}, optional
         Whether to return a recarray (MaskedRecords) or not.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from numpy.lib.recfunctions import append_fields
+    >>> base = np.array([(1, 2.0), (3, 4.0)], dtype=[('x', int), ('y', float)])
+    >>> new_field = np.array([10, 20])
+    >>> append_fields(base, 'z', new_field, usemask=False)
+    array([(1, 2., 10), (3, 4., 20)],
+          dtype=[('x', '<i4'), ('y', '<f8'), ('z', '<i4')])
+
+    Append multiple fields at once:
+
+    >>> a = np.array([1, 2, 3])
+    >>> b = np.array([4.0, 5.0, 6.0])
+    >>> base = np.array([(1,), (2,), (3,)], dtype=[('x', int)])
+    >>> append_fields(base, ['a', 'b'], [a, b], usemask=False)
+    array([(1, 1, 4.), (2, 2, 5.), (3, 3, 6.)],
+          dtype=[('x', '<i4'), ('a', '<i4'), ('b', '<f8')])
+
     """
     # Check the names
     if isinstance(names, (tuple, list)):
@@ -1253,6 +1272,29 @@ def assign_fields_by_name(dst, src, zero_unassigned=True):
         field in the src are filled with the value 0 (zero). This
         was the behavior of numpy <= 1.13. If False, those fields
         are not modified.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from numpy.lib.recfunctions import assign_fields_by_name
+    >>> dst = np.zeros(3, dtype=[('x', int), ('y', float), ('z', int)])
+    >>> src = np.array([(1, 2.0), (3, 4.0), (5, 6.0)],
+    ...                dtype=[('x', int), ('y', float)])
+    >>> assign_fields_by_name(dst, src)
+    >>> dst
+    array([(1, 2., 0), (3, 4., 0), (5, 6., 0)],
+          dtype=[('x', '<i4'), ('y', '<f8'), ('z', '<i4')])
+
+    Fields with no match in src are set to zero by default.
+    Setting ``zero_unassigned=False`` leaves unmatched fields unchanged:
+
+    >>> dst2 = np.array([(9, 9.0, 9), (9, 9.0, 9), (9, 9.0, 9)],
+    ...                 dtype=[('x', int), ('y', float), ('z', int)])
+    >>> assign_fields_by_name(dst2, src, zero_unassigned=False)
+    >>> dst2
+    array([(1, 2., 9), (3, 4., 9), (5, 6., 9)],
+          dtype=[('x', '<i4'), ('y', '<f8'), ('z', '<i4')])
+
     """
 
     if dst.dtype.names is None:
