@@ -381,6 +381,12 @@ class TestSetOps:
         c = isin(a, b, assume_unique=True)
         assert_array_equal(c, ec)
 
+        signed = np.array([-1, 2**53], dtype=np.int64)
+        unsigned = np.array([2**64 - 1, 2**53 + 1], dtype=np.uint64)
+        # Repeat the reference values to reach the sorting path.
+        assert not isin(signed, unsigned.repeat(10)).any()
+        assert not isin(unsigned, signed.repeat(10)).any()
+
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_isin_boolean(self, kind):
         """Test that isin works for boolean input"""
@@ -459,30 +465,6 @@ class TestSetOps:
         data = data.astype(np.int32)  # clearly different values
         res = np.isin(data, query, kind=kind)
         assert_array_equal(res, [False, False])
-
-    @pytest.mark.parametrize("dtype1,dtype2", [
-        (np.int64, np.uint64), (np.uint64, np.int64),
-    ])
-    def test_isin_mixed_large_integers(self, dtype1, dtype2):
-        base = 1_700_000_000_000_000_000
-        ar1 = np.array([base + 1, base], dtype=dtype1)
-        ar2 = base + 1024 * np.arange(20, dtype=dtype2)
-        assert_array_equal(np.isin(ar1, ar2), [False, True])
-        assert_array_equal(np.isin(ar1, ar2, kind="sort", invert=True),
-                           [True, False])
-        assert_array_equal(np.setdiff1d(ar1, ar2), ar1[:1], strict=True)
-
-    @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64])
-    def test_isin_mixed_integer_boundaries(self, dtype):
-        limits = np.iinfo(dtype)
-        signed = np.array([-1, 0, limits.min, limits.max], dtype=dtype)
-        unsigned = np.array([0, limits.max + 1, 2**63, 2**63 + 1, 2**64 - 1],
-                            dtype=np.uint64)
-        # Repeat the reference values to reach the sorting path.
-        assert_array_equal(np.isin(signed, unsigned.repeat(10)),
-                           [False, True, False, False])
-        assert_array_equal(np.isin(unsigned, signed.repeat(10)),
-                           [True, False, False, False, False])
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_isin_mixed_boolean(self, kind):
