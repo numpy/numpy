@@ -15,7 +15,10 @@ from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import ComplexWarning
 from numpy.testing import IS_PYPY, assert_array_equal
-from numpy.testing._private.utils import run_with_memory_limit
+from numpy.testing._private.utils import (
+    assert_memory_growth_below,
+    run_with_memory_limit,
+)
 
 
 def random_unicode_string_list():
@@ -981,6 +984,39 @@ def test_invalid_numeric_casts_error(dtype, invalid):
 
     with pytest.raises(ValueError):
         arr.astype(dtype)
+
+
+@pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
+def test_failed_cast_to_unaligned_releases_buffer():
+    # the unaligned destination makes the cast copy the strings into a
+    # temporary buffer that it has to free. The bad reading also runs the
+    # cleanup for a failed cast.
+    def fill():
+        readings = np.array([f"{i / 7:.20f}" for i in range(300)], dtype="T")
+        readings[-1] = "sensor offline"
+        table = np.zeros(300, dtype=[("valid", "?"), ("reading", "f8")])
+        assert not table["reading"].flags.aligned
+        with pytest.raises(ValueError):
+            table["reading"] = readings
+
+    assert_memory_growth_below(fill, limit=1024)
+
+
+@pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
+def test_ufunc_fixed_width_out_releases_buffer():
+    # the ufunc computes its StringDType results into a temporary buffer and
+    # then casts them to the output array. The strings in the buffer leak
+    # unless that cast frees them.
+    def add():
+        n = 2 * np.getbufsize()
+        first = np.array([f"first name {i}" for i in range(n)], dtype="T")
+        last = np.array([f"a longer last name, number {i}" for i in range(n)],
+                        dtype="T")
+        full = np.empty(n, dtype="U60")
+        np.strings.add(first, last, out=full)
+        assert full[-1] == first[-1] + last[-1]
+
+    assert_memory_growth_below(add, limit=1024)
 
 
 def test_insert_scalar(dtype, string_list):

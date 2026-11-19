@@ -33,6 +33,7 @@
 #include "shape.h"
 #include "dtype_transfer.h"
 #include "dtype_traversal.h"
+#include "refcount.h"
 #include "alloc.h"
 #include "dtypemeta.h"
 #include "array_method.h"
@@ -2763,6 +2764,7 @@ _strided_to_strided_multistep_cast(
 
     char *main_src, *main_dst;
     npy_intp main_src_stride, main_dst_stride;
+    NPY_ALLOW_C_API_DEF
 
     npy_intp block_size = castdata->block_size;
     while (N > 0) {
@@ -2778,8 +2780,7 @@ _strided_to_strided_multistep_cast(
                     data, &block_size,
                     strides,
                     castdata->from.auxdata) != 0) {
-                /* TODO: Internal buffer may require cleanup on error. */
-                return -1;
+                goto fail;
             }
             main_src = castdata->from_buffer;
             main_src_stride = out_stride;
@@ -2804,8 +2805,7 @@ _strided_to_strided_multistep_cast(
                 data, &block_size,
                 strides,
                 castdata->main.auxdata) != 0) {
-            /* TODO: Internal buffer may require cleanup on error. */
-            return -1;
+            goto fail;
         }
 
         if (castdata->to.func != NULL) {
@@ -2815,7 +2815,7 @@ _strided_to_strided_multistep_cast(
                     data, &block_size,
                     strides,
                     castdata->to.auxdata) != 0) {
-                return -1;
+                goto fail;
             }
         }
 
@@ -2824,6 +2824,31 @@ _strided_to_strided_multistep_cast(
         dst += block_size * dst_stride;
     }
     return 0;
+
+  fail:
+    /*
+     * A failed cast can leave references behind in the elements of either
+     * buffer that were used for the current block.
+     */
+    NPY_ALLOW_C_API;
+    PyObject *exc = PyErr_GetRaisedException();
+    if (castdata->from.func != NULL) {
+        PyArray_Descr *descr = castdata->main.descriptors[0];
+        if (PyArray_ClearBuffer(descr, castdata->from_buffer,
+                descr->elsize, block_size, 1) < 0) {
+            PyErr_WriteUnraisable(NULL);
+        }
+    }
+    if (castdata->to.func != NULL) {
+        PyArray_Descr *descr = castdata->main.descriptors[1];
+        if (PyArray_ClearBuffer(descr, castdata->to_buffer,
+                descr->elsize, block_size, 1) < 0) {
+            PyErr_WriteUnraisable(NULL);
+        }
+    }
+    PyErr_SetRaisedException(exc);
+    NPY_DISABLE_C_API;
+    return -1;
 }
 
 
