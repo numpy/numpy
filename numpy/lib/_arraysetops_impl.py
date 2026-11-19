@@ -376,12 +376,26 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             return (conv.wrap(hash_unique),)
 
+    # Stable sort is faster for bools and small integers (radixsort) and
+    # StringDType (timsort does fewer comparisons), if returning indices
+    # for a complex array with NaNs, stable sorts preserve order between NaNs,
+    # for float with NaNs (quicksort skips SIMD),
+    # for small arrays (picking the first index of each group
+    # costs more than a stable sort saves).
+    stable = (
+        (return_index and ar.size < 1000) or
+        ar.dtype.type in (np.bool, np.int8, np.uint8, np.int16, np.uint16) or
+        (optional_indices and ar.dtype.kind == "T") or
+        (return_index and ar.dtype.kind == "c" and np.isnan(ar).any()) or
+        (optional_indices and ar.dtype.kind == "f" and np.isnan(ar).any())
+    )
+
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
-        perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
+        perm = ar.argsort(kind='stable' if stable else 'quicksort')
         aux = ar[perm]
     else:
-        ar.sort()
+        ar.sort(kind='stable' if stable else 'quicksort')
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool)
     mask[:1] = True
@@ -401,9 +415,19 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     else:
         mask[1:] = aux[1:] != aux[:-1]
 
-    ret = (aux[mask],)
+    ret = ()
+    if optional_indices and not stable:
+        unique_pos = np.flatnonzero(mask)
+        # If sort was unstable, the group is in arbitrary order, so pick it
+        # smallest original position.
+        first_indexes = np.minimum.reduceat(perm, unique_pos)
+        ret += (ar[first_indexes],)
+    else:
+        ret += (aux[mask],)
+
     if return_index:
-        ret += (perm[mask],)
+        ret += (perm[mask] if stable else first_indexes,)
+
     if return_inverse:
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)
