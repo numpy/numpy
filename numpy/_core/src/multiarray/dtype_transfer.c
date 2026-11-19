@@ -2820,16 +2820,22 @@ _strided_to_strided_multistep_cast(
      * buffer that were used for the current block.
      */
     NPY_ALLOW_C_API;
+    PyObject *exc = PyErr_GetRaisedException();
     if (castdata->from.func != NULL) {
         PyArray_Descr *descr = castdata->main.descriptors[0];
-        PyArray_ClearBuffer(descr, castdata->from_buffer,
-                descr->elsize, block_size, 1);
+        if (PyArray_ClearBuffer(descr, castdata->from_buffer,
+                descr->elsize, block_size, 1) < 0) {
+            PyErr_WriteUnraisable(NULL);
+        }
     }
     if (castdata->to.func != NULL) {
         PyArray_Descr *descr = castdata->main.descriptors[1];
-        PyArray_ClearBuffer(descr, castdata->to_buffer,
-                descr->elsize, block_size, 1);
+        if (PyArray_ClearBuffer(descr, castdata->to_buffer,
+                descr->elsize, block_size, 1) < 0) {
+            PyErr_WriteUnraisable(NULL);
+        }
     }
+    PyErr_SetRaisedException(exc);
     NPY_DISABLE_C_API;
     return -1;
 }

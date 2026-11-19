@@ -1831,10 +1831,13 @@ the functions that must be implemented for each slot.
    access for the loop is aligned (1) or unaligned (0). *move_references*
    is only set for casts. A cast normally leaves its input untouched. If
    *move_references* is nonzero, the cast is a move instead of a copy: NumPy
-   will discard or overwrite the input without cleaning it up, so the loop
-   must free whatever the input elements own, for example by decrementing
-   the reference count of objects or freeing heap-allocated buffers, once it
-   has converted them. NumPy sets it when the input is one of its own
+   does not clean up the input after a successful cast, so once the loop has
+   converted an input element it must release whatever the element owns, for
+   example by decrementing the reference count of an object or freeing a
+   heap-allocated buffer, or transfer it to the output. The loop must leave
+   each converted element safe to clear again, for example by zeroing it,
+   because NumPy reuses its temporary buffers and clears the whole input if
+   the loop fails. NumPy sets it when the input is one of its own
    temporary buffers, such as the buffer a ufunc computes its results into
    when the output array has a different dtype, or the intermediate buffer
    of a cast that takes more than one step. When ``NPY_METH_get_loop`` is

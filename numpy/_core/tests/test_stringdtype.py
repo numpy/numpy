@@ -987,18 +987,19 @@ def test_invalid_numeric_casts_error(dtype, invalid):
 
 
 @pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
-def test_failed_bytes_cast_releases_buffer():
-    # the cast decodes into a temporary buffer of StringDType strings. When
-    # an element can't be decoded, the strings already in the buffer leak
-    # unless the cast frees them.
-    def decode():
-        names = np.array([f"customer number {i} from region {i % 7}".encode()
-                          for i in range(1000)])
-        names[-1] = b"\xff"
-        with pytest.raises(UnicodeDecodeError):
-            names.astype("T")
+def test_failed_cast_to_unaligned_releases_buffer():
+    # the unaligned destination makes the cast copy the strings into a
+    # temporary buffer that it has to free. The bad reading also runs the
+    # cleanup for a failed cast.
+    def fill():
+        readings = np.array([f"{i / 7:.20f}" for i in range(300)], dtype="T")
+        readings[-1] = "sensor offline"
+        table = np.zeros(300, dtype=[("valid", "?"), ("reading", "f8")])
+        assert not table["reading"].flags.aligned
+        with pytest.raises(ValueError):
+            table["reading"] = readings
 
-    assert_memory_growth_below(decode, limit=1024)
+    assert_memory_growth_below(fill, limit=1024)
 
 
 @pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
