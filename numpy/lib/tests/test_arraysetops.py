@@ -381,11 +381,13 @@ class TestSetOps:
         c = isin(a, b, assume_unique=True)
         assert_array_equal(c, ec)
 
-        signed = np.array([-1, 2**53], dtype=np.int64)
-        unsigned = np.array([2**64 - 1, 2**53 + 1], dtype=np.uint64)
+        signed = np.array([-1, 2**53, 2**53 + 2], dtype=np.int64)
+        unsigned = np.array([2**64 - 1, 2**53 + 1, 2**53 + 2], dtype=np.uint64)
         # Repeat the reference values to reach the sorting path.
-        assert not isin(signed, unsigned.repeat(10)).any()
-        assert not isin(unsigned, signed.repeat(10)).any()
+        assert_array_equal(isin(signed, unsigned.repeat(10)),
+                           [False, False, True])
+        assert_array_equal(isin(unsigned, signed.repeat(10)),
+                           [False, False, True])
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_isin_boolean(self, kind):
