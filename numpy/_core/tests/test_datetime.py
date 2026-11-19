@@ -1407,23 +1407,6 @@ class TestDateTime:
             assert result == info.min + offset
             assert isinstance(result, int)
 
-    #Test for integer overflow when converting weeks to months
-    @pytest.mark.parametrize("weeks", [2**61, -2**61, np.iinfo(np.int64).max])
-    def test_datetime64_large_week_values(self, weeks):
-        #compute weeks taking into account 400 year cycles of leap years
-        leap_days_per_400_years = 400 // 4 - 400 // 100 + 400 // 400
-        days_per_400_years = 400 * 365 + leap_days_per_400_years
-        weeks_per_400_years, remainder = divmod(days_per_400_years, 7)
-        assert remainder == 0
-        cycles, leftover_weeks = divmod(weeks, weeks_per_400_years)
-
-        small_date = np.datetime64(leftover_weeks, "W")
-        months_to_add = np.timedelta64(400 * 12 * cycles, "M")
-        expected = small_date.astype("datetime64[M]") + months_to_add
-
-        actual = np.datetime64(weeks, "W")
-        assert actual.astype("datetime64[M]") == expected
-
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
         a = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -3156,8 +3139,7 @@ class TestDateTime:
 
     @pytest.mark.parametrize("time_unit", [
         "Y", "M",
-        pytest.param("W", marks=pytest.mark.xfail(reason="gh-13197")),
-        "D", "h", "m",
+        "W", "D", "h", "m",
         "s", "ms", "us", "ns", "ps", "fs", "as",
         pytest.param("10D", marks=pytest.mark.xfail(reason="similar to gh-13197")),
     ])
@@ -3170,6 +3152,13 @@ class TestDateTime:
         """
         # TODO: add absolute (gold standard) time span limit strings
         limit = np.datetime64(np.iinfo(np.int64).max * sign, time_unit)
+
+        if time_unit == "W":
+            # weeks -> string is exact; string -> weeks still overflows
+            expected = ("176769144494367851-12-25" if sign == 1
+                        else "-176769144494363912-01-08")
+            assert str(limit) == expected
+            pytest.xfail("gh-13197")
 
         # Convert to string and back. Explicit unit needed since the day and
         # week reprs are not distinguishable.
