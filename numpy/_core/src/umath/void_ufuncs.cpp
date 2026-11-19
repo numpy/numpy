@@ -87,8 +87,8 @@ void_bitwise_resolve_descriptors(
                 (PyDataType_HASFIELDS(given_descrs[i]) ||
                  PyDataType_HASSUBARRAY(given_descrs[i]))) {
             PyErr_SetString(PyExc_TypeError,
-                    "bitwise operations are not supported for structured "
-                    "void dtypes");
+                    "bitwise operations are not supported for structured or "
+                    "subarray void dtypes");
             return _NPY_ERROR_OCCURRED_IN_CAST;
         }
     }

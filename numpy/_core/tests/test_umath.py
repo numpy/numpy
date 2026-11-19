@@ -3196,7 +3196,7 @@ class TestBitwiseUFuncs:
         np.bitwise_or,
         np.bitwise_xor,
     ])
-    def test_structured_void_unsupported(self, ufunc):
+    def test_structured_or_subarray_void_unsupported(self, ufunc):
         structured = np.array([(1, 2), (3, 4)], dtype="u1,u1")
         with pytest.raises(TypeError):
             ufunc(structured, structured, casting="unsafe")
@@ -3207,6 +3207,10 @@ class TestBitwiseUFuncs:
                 unstructured, unstructured,
                 out=np.empty_like(structured), casting="unsafe",
             )
+
+        subarray = np.dtype(("V1", (2,)))
+        with pytest.raises(TypeError, match="structured or subarray"):
+            ufunc.resolve_dtypes((subarray, subarray, None))
 
     @pytest.mark.parametrize("ufunc", [
         np.bitwise_and,
