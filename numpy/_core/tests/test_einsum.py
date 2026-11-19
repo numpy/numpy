@@ -1355,7 +1355,7 @@ class TestEinsumPath:
 
     def test_path_type_input_unknown_name(self):
         path_test = self.build_operands('ab,bc,cd->ad')
-        with pytest.raises(KeyError, match="Path name unknown not found"):
+        with pytest.raises(KeyError, match="Path name 'unknown' not found"):
             np.einsum_path(*path_test, optimize='unknown')
 
     def test_spaces(self):

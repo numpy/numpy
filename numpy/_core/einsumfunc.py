@@ -836,7 +836,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
             input_sets, output_set, dimension_dict, memory_arg
         )
     else:
-        raise KeyError(f"Path name {path_type} not found")
+        raise KeyError(f"Path name {path_type!r} not found")
 
     cost_list, scale_list, size_list, contraction_list = [], [], [], []
 
