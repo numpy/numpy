@@ -193,9 +193,12 @@ abs_ptrdiff(char *a, char *b)
  * unfortunately gcc 6/7 regressed and we need to give it additional hints to
  * vectorize inplace operations (PR80198)
  * must only be used after op1 == ip1 or ip2 has been checked
- * TODO: using ivdep might allow other compilers to vectorize too
+ * clang needs the same hint: without it the runtime overlap check always
+ * fails for inplace operations and the scalar loop is used
  */
-#if __GNUC__ >= 6
+#if defined(__clang__)
+#define IVDEP_LOOP _Pragma("clang loop vectorize(assume_safety)")
+#elif __GNUC__ >= 6
 #define IVDEP_LOOP _Pragma("GCC ivdep")
 #else
 #define IVDEP_LOOP
