@@ -3156,6 +3156,8 @@ class TestDateTime:
         # compare against independently computed limits (gh-13197).
         # TODO: add these gold standard strings for the other units
         if time_unit == "W":
+            # +/-(2**63 - 1) weeks from 1970-01-01. Computed with Python's
+            # datetime by removing whole 400-year cycles (146097 days each).
             expected = ("176769144494367851-12-25" if sign == 1
                         else "-176769144494363912-01-08")
             assert str(limit) == expected
