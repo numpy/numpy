@@ -7,7 +7,7 @@ import os
 import sys
 
 from numpy._core import dtype, numerictypes as _numerictypes
-from numpy._core.function_base import add_newdoc
+from numpy._core._add_docstring import add_newdoc
 
 ##############################################################################
 #
