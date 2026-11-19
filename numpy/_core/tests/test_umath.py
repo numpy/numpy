@@ -3089,6 +3089,168 @@ class TestBitwiseUFuncs:
         max(_all_ints_bits) + 1,  # Object_ type
     ]
 
+    @staticmethod
+    def _as_void_array(data):
+        data = np.ascontiguousarray(data, dtype=np.uint8)
+        dtype = np.dtype((np.void, data.shape[-1]))
+        return data.view(dtype).reshape(data.shape[:-1])
+
+    @staticmethod
+    def _void_bitwise_reference(left, right, operation):
+        left, right = np.broadcast_arrays(left, right)
+        assert left.dtype == right.dtype
+
+        raw = bytearray()
+        for left_value, right_value in zip(left.flat, right.flat):
+            raw.extend(
+                operation(a, b)
+                for a, b in zip(bytes(left_value), bytes(right_value))
+            )
+        return np.frombuffer(raw, dtype=left.dtype).reshape(left.shape).copy()
+
+    @pytest.mark.parametrize("itemsize", [1, 2, 8, 16])
+    @pytest.mark.parametrize("ufunc,operation", [
+        (np.bitwise_and, operator.and_),
+        (np.bitwise_or, operator.or_),
+        (np.bitwise_xor, operator.xor),
+    ])
+    def test_unstructured_void(self, itemsize, ufunc, operation):
+        values = np.arange(3 * itemsize).reshape(3, itemsize)
+        left = self._as_void_array((values * 37 + 11) % 256)
+        right = self._as_void_array((values * 91 + 53) % 256)
+        expected = self._void_bitwise_reference(left, right, operation)
+
+        result = ufunc(left, right)
+
+        assert result.dtype == left.dtype
+        assert_array_equal(result, expected)
+
+    @pytest.mark.parametrize("ufunc,operation", [
+        (np.bitwise_and, operator.and_),
+        (np.bitwise_or, operator.or_),
+        (np.bitwise_xor, operator.xor),
+    ])
+    def test_unstructured_void_broadcast_strided_out(self, ufunc, operation):
+        itemsize = 8
+        left_values = np.arange(6 * 4 * itemsize).reshape(6, 4, itemsize)
+        right_values = np.arange(4 * itemsize).reshape(4, itemsize)
+        left = self._as_void_array((left_values * 37 + 11) % 256)[::2, ::2]
+        right = self._as_void_array((right_values * 91 + 53) % 256)[::2]
+
+        out_values = np.full((6, 2, itemsize), 0xaa, dtype=np.uint8)
+        out_storage = self._as_void_array(out_values)
+        out = out_storage[::2]
+        untouched = out_storage[1::2].copy()
+
+        expected = self._void_bitwise_reference(left, right, operation)
+        result = ufunc(left, right, out=out, casting="no")
+
+        assert result is out
+        assert_array_equal(out, expected)
+        assert_array_equal(out_storage[1::2], untouched)
+
+    @pytest.mark.parametrize("ufunc", [
+        np.bitwise_and,
+        np.bitwise_or,
+        np.bitwise_xor,
+    ])
+    def test_unstructured_void_casting(self, ufunc):
+        left = self._as_void_array([[0x31, 0x72], [0xc4, 0x1f]])
+
+        result = ufunc(left, left, casting="no")
+        assert result.dtype == left.dtype
+
+        larger_out = np.full((2, 3), 0xaa, dtype=np.uint8).view("V3").ravel()
+        with pytest.raises(TypeError):
+            ufunc(left, left, out=larger_out, casting="no")
+
+        result = ufunc(left, left, out=larger_out, casting="safe")
+        assert result is larger_out
+        assert_array_equal(result, ufunc(left, left).astype("V3"))
+
+        storage = np.full(4, 0xaa, dtype=np.uint8)
+        smaller_out = storage[1:3].view("V1")
+        with pytest.raises(TypeError):
+            ufunc(left, left, out=smaller_out, casting="safe")
+
+        result = ufunc(left, left, out=smaller_out, casting="unsafe")
+        assert result is smaller_out
+        assert_array_equal(result, ufunc(left, left).astype("V1"))
+        assert storage[0] == storage[-1] == 0xaa
+
+    @pytest.mark.parametrize("ufunc", [
+        np.bitwise_and,
+        np.bitwise_or,
+        np.bitwise_xor,
+    ])
+    @pytest.mark.parametrize("casting", ["no", "safe", "same_kind", "unsafe"])
+    def test_unstructured_void_mismatched_itemsize(self, ufunc, casting):
+        left = np.empty(3, dtype="V2")
+        right = np.empty(3, dtype="V3")
+
+        with pytest.raises(TypeError):
+            ufunc(left, right, casting=casting)
+
+    @pytest.mark.parametrize("ufunc", [
+        np.bitwise_and,
+        np.bitwise_or,
+        np.bitwise_xor,
+    ])
+    def test_structured_void_unsupported(self, ufunc):
+        structured = np.array([(1, 2), (3, 4)], dtype="u1,u1")
+        with pytest.raises(TypeError):
+            ufunc(structured, structured, casting="unsafe")
+
+        unstructured = structured.view("V2")
+        with pytest.raises(TypeError):
+            ufunc(
+                unstructured, unstructured,
+                out=np.empty_like(structured), casting="unsafe",
+            )
+
+    @pytest.mark.parametrize("ufunc", [
+        np.bitwise_and,
+        np.bitwise_or,
+        np.bitwise_xor,
+    ])
+    def test_unstructured_void_empty_and_zero_itemsize(self, ufunc):
+        empty = np.empty((2, 0), dtype="V8")
+        result = ufunc(empty, empty)
+        assert result.shape == empty.shape
+        assert result.dtype == empty.dtype
+
+        zero_itemsize = np.empty((2, 3), dtype="V0")
+        result = ufunc(zero_itemsize, zero_itemsize[:1])
+        assert result.shape == zero_itemsize.shape
+        assert result.dtype == zero_itemsize.dtype
+        assert result.nbytes == 0
+
+    @pytest.mark.parametrize("ufunc,operation,identity", [
+        (np.bitwise_and, operator.and_, 0xff),
+        (np.bitwise_or, operator.or_, 0x00),
+        (np.bitwise_xor, operator.xor, 0x00),
+    ])
+    def test_unstructured_void_reductions(self, ufunc, operation, identity):
+        raw = np.array([
+            [0xf0, 0x0f],
+            [0xcc, 0x33],
+            [0xaa, 0x55],
+        ], dtype=np.uint8)
+        values = self._as_void_array(raw)
+
+        expected_raw = raw.copy()
+        for i in range(1, len(expected_raw)):
+            expected_raw[i] = [
+                operation(int(a), int(b))
+                for a, b in zip(expected_raw[i - 1], expected_raw[i])
+            ]
+        expected = self._as_void_array(expected_raw)
+
+        assert_array_equal(ufunc.accumulate(values), expected)
+        assert ufunc.reduce(values) == expected[-1]
+        assert bytes(ufunc.reduce(np.empty(0, dtype="V2"))) == bytes([identity] * 2)
+        assert bytes(ufunc.reduce(np.empty(0, dtype="V0"))) == b""
+
     def test_values(self):
         for dt in self.bitwise_types:
             zeros = np.array([0], dtype=dt)

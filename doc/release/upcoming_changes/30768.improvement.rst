@@ -1,0 +1,5 @@
+Bitwise ufuncs support unstructured void arrays
+------------------------------------------------
+`numpy.bitwise_and`, `numpy.bitwise_or`, and `numpy.bitwise_xor` now operate
+bytewise on unstructured void arrays with matching item sizes. Structured void
+dtypes remain unsupported.
