@@ -333,7 +333,19 @@ NpyDatetime_ConvertDatetimeStructToDatetime64(PyArray_DatetimeMetaData *meta,
     }
     else {
         /* Otherwise calculate the number of days to start */
-        npy_int64 days = get_datetimestruct_days(dts);
+        npy_datetimestruct dts_reduced = *dts;
+        npy_int64 cycles = 0; // gregorian calendar 400 year cycles
+
+        if (base == NPY_FR_W) {
+            /*
+             * Avoid overflow in days by first removing whole 400-year
+             * Gregorian cycles (146097 days == 20871 weeks).
+             */
+            dts_reduced.year -= 1970;
+            cycles = extract_unit_64(&dts_reduced.year, 400);
+            dts_reduced.year += 1970;
+        }
+        npy_int64 days = get_datetimestruct_days(&dts_reduced);
 
         switch (base) {
             case NPY_FR_W:
@@ -344,6 +356,7 @@ NpyDatetime_ConvertDatetimeStructToDatetime64(PyArray_DatetimeMetaData *meta,
                 else {
                     ret = (days - 6) / 7;
                 }
+                ret += 20871 * cycles;
                 break;
             case NPY_FR_D:
                 ret = days;

@@ -3154,11 +3154,9 @@ class TestDateTime:
         limit = np.datetime64(np.iinfo(np.int64).max * sign, time_unit)
 
         if time_unit == "W":
-            # weeks -> string is exact; string -> weeks still overflows
             expected = ("176769144494367851-12-25" if sign == 1
                         else "-176769144494363912-01-08")
             assert str(limit) == expected
-            pytest.xfail("gh-13197")
 
         # Convert to string and back. Explicit unit needed since the day and
         # week reprs are not distinguishable.
