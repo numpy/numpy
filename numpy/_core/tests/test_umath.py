@@ -3251,6 +3251,15 @@ class TestBitwiseUFuncs:
         assert bytes(ufunc.reduce(np.empty(0, dtype="V2"))) == bytes([identity] * 2)
         assert bytes(ufunc.reduce(np.empty(0, dtype="V0"))) == b""
 
+        matrix = np.stack([values, values[::-1]])
+        expected = bytes([identity] * matrix.dtype.itemsize)
+        for value in matrix.flat:
+            expected = bytes(
+                operation(a, b) for a, b in zip(expected, bytes(value))
+            )
+        assert bytes(ufunc.reduce(matrix, axis=(0, 1))) == expected
+        assert bytes(ufunc.reduce(matrix, axis=None)) == expected
+
     def test_values(self):
         for dt in self.bitwise_types:
             zeros = np.array([0], dtype=dt)

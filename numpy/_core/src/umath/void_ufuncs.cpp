@@ -154,7 +154,8 @@ add_void_bitwise_loop(
     spec.nin = 2;
     spec.nout = 1;
     spec.casting = NPY_SAME_KIND_CASTING;
-    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    spec.flags = (NPY_ARRAYMETHOD_FLAGS)(
+            NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_IS_REORDERABLE);
     spec.dtypes = dtypes;
     spec.slots = slots;
     result = PyUFunc_AddLoopFromSpec_int(ufunc, &spec, 1);
