@@ -309,7 +309,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         slices of `arr` along the specified axis.
     axis : integer
         Axis along which `arr` is sliced.
-    arr : ndarray (Ni..., M, Nk...)
+    arr : array_like (Ni..., M, Nk...)
         Input array.
     args : any
         Additional arguments to `func1d`.
