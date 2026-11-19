@@ -244,6 +244,41 @@ npy_ObjectClip(PyObject *arr, PyObject *min, PyObject *max) {
 
 /*
  *****************************************************************************
+ **                            FLOAT FUNCTIONS                              **
+ *****************************************************************************
+ */
+
+/**begin repeat
+ *
+ * #type = npy_float, npy_longdouble#
+ * #c = f, l#
+ * #int_min = 16777216.0f, 1.329227995784915872903807060280344576e36L#
+ */
+
+/*
+ * Normalized sinc, sin(pi*x) / (pi*x), evaluated as sin(pi*r) / (pi*|x|)
+ * with the exact reduction r = (-1)**n * (|x| - n), n = rint(|x|). See
+ * loops_trigonometric.dispatch.cpp for the float and double loops.
+ */
+static @type@
+npy_sinc@c@(@type@ x)
+{
+    if (x == 0) {
+        return 1;
+    }
+    const @type@ ax = isgreater(npy_fabs@c@(x), @int_min@) ?
+                      @int_min@ : npy_fabs@c@(x);
+    const @type@ n = npy_rint@c@(ax);
+    const @type@ half_n = 0.5@c@ * n;
+    const @type@ sgn = 1 - 4 * (half_n - npy_floor@c@(half_n));
+    const @type@ r = sgn * ax - sgn * n;
+    return npy_sin@c@(NPY_PI@c@ * r) / (NPY_PI@c@ * ax);
+}
+
+/**end repeat**/
+
+/*
+ *****************************************************************************
  **                           COMPLEX FUNCTIONS                             **
  *****************************************************************************
  */
@@ -430,6 +465,43 @@ nc_sinh@c@(@ctype@ *x, @ctype@ *r)
 {
     *r = npy_csinh@c@(*x);
     return;
+}
+
+/*
+ * Normalized sinc, sin(pi*z) / (pi*z), using the exact reduction
+ * sin(pi*z) = (-1)**n * sin(pi*(z - n)) with n = rint(Re(z)).
+ */
+static void
+nc_sinc@c@(@ctype@ *x, @ctype@ *r)
+{
+    const @ftype@ xr = npy_creal@c@(*x);
+    const @ftype@ xi = npy_cimag@c@(*x);
+    if (xr == 0 && xi == 0) {
+        *r = npy_cpack@c@(1, 0);
+        return;
+    }
+    if (npy_isinf(xr) && npy_isfinite(xi)) {
+        *r = npy_cpack@c@(0, 0);
+        return;
+    }
+    const @ftype@ n = npy_rint@c@(xr);
+    const @ftype@ half_n = 0.5@c@ * n;
+    const @ftype@ sgn = 1 - 4 * (half_n - npy_floor@c@(half_n));
+    const @ctype@ s = npy_csin@c@(
+            npy_cpack@c@(NPY_PI@c@ * (xr - n), NPY_PI@c@ * xi));
+    /* (s / pi) / z, using the same algorithm as complex division */
+    const @ftype@ ar = sgn * NPY_1_PI@c@ * npy_creal@c@(s);
+    const @ftype@ ai = sgn * NPY_1_PI@c@ * npy_cimag@c@(s);
+    if (npy_fabs@c@(xr) >= npy_fabs@c@(xi)) {
+        const @ftype@ rat = xi / xr;
+        const @ftype@ scl = 1.0@c@ / (xr + xi * rat);
+        *r = npy_cpack@c@((ar + ai * rat) * scl, (ai - ar * rat) * scl);
+    }
+    else {
+        const @ftype@ rat = xr / xi;
+        const @ftype@ scl = 1.0@c@ / (xi + xr * rat);
+        *r = npy_cpack@c@((ar * rat + ai) * scl, (ai * rat - ar) * scl);
+    }
 }
 
 static void

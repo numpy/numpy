@@ -49,7 +49,6 @@ np.hanning(1j)  # type: ignore[arg-type]
 np.hamming(1j)  # type: ignore[arg-type]
 np.hamming(AR_c16)  # type: ignore[arg-type]
 np.kaiser(1j, 1)  # type: ignore[arg-type]
-np.sinc(AR_O)  # type: ignore[type-var]
 np.median(AR_M)  # type: ignore[arg-type]
 
 np.percentile(AR_f8, 50j)  # type: ignore[call-overload]

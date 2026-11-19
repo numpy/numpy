@@ -885,6 +885,15 @@ defdict = {
           TD('g' + cmplx, f='sin'),
           TD(P, f='sin'),
           ),
+'sinc':
+    Ufunc(1, 1, None,
+          docstrings.get('numpy._core.umath.sinc'),
+          None,
+          TD('e', f='sinc', astype={'e': 'f'}),
+          TD('fd', dispatch=[('loops_trigonometric', 'fd')]),
+          TD('g' + cmplx, f='sinc'),
+          TD(P, f='sinc'),
+          ),
 'tan':
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.tan'),
