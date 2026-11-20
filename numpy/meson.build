@@ -342,6 +342,10 @@ meson.add_dist_script(
    ['_build_utils/gitversion.py', '--meson-dist', '--write',
      'numpy/version.py']
 )
+
+# Leave the documentation, tests and CI files of git submodules out of the sdist
+meson.add_dist_script('_build_utils/trim_submodules.py')
+
 if not fs.exists('version.py')
   generate_version = custom_target(
     'generate-version',
