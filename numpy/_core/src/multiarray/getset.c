@@ -661,10 +661,6 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     Py_INCREF(typecode);
     arr = (PyArrayObject *)PyArray_FromAny(val, typecode,
                   0, 0, NPY_ARRAY_FORCECAST | PyArray_FORTRAN_IF(self), NULL);
-    if (arr != NULL && arrays_overlap(self, arr)) {
-        Py_SETREF(arr, (PyArrayObject *)PyArray_FromArray(arr, NULL,
-                NPY_ARRAY_ENSURECOPY | NPY_ARRAY_ENSUREARRAY));
-    }
     if (arr == NULL) {
         return -1;
     }

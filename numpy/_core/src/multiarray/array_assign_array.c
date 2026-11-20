@@ -26,6 +26,7 @@
 
 #include "array_assign.h"
 #include "dtype_transfer.h"
+#include "mem_overlap.h"
 
 #include "umathmodule.h"
 
@@ -295,23 +296,6 @@ fail:
     return -1;
 }
 
-/* The raw direction check handles equal-step shifts. Each transfer must
- * read and write disjoint bytes, and the elements must fit within a step. */
-static int
-is_simple_1d_shift(PyArrayObject *dst, PyArrayObject *src)
-{
-    if (PyArray_NDIM(dst) != 1 || PyArray_NDIM(src) != 1 ||
-            PyArray_DIM(dst, 0) != PyArray_DIM(src, 0) ||
-            PyArray_STRIDE(dst, 0) != PyArray_STRIDE(src, 0)) {
-        return 0;
-    }
-    npy_intp step = PyArray_STRIDE(dst, 0);
-    npy_intp width = PyArray_MAX(PyArray_ITEMSIZE(dst), PyArray_ITEMSIZE(src));
-    npy_uintp d = (npy_uintp)PyArray_DATA(dst), s = (npy_uintp)PyArray_DATA(src);
-    return (step >= width || step <= -width) &&
-            (d > s ? d - s : s - d) >= (npy_uintp)width;
-}
-
 /*
  * An array assignment function for copying arrays, broadcasting 'src' into
  * 'dst'. This function makes a temporary copy of 'src' if 'src' and
@@ -385,14 +369,55 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
         goto fail;
     }
 
-    if ((!is_simple_1d_shift(dst, src) || PyArray_HASFIELDS(dst)) &&
-            arrays_overlap(src, dst)) {
-        /* Keep the input dtype for the eventual masked or checked cast. */
-        src = (PyArrayObject *)PyArray_FromArray(src, NULL,
-                NPY_ARRAY_ENSURECOPY | NPY_ARRAY_ENSUREARRAY);
-        if (src == NULL) {
+    int src_crosses_dst = 0;
+    int src_axis = PyArray_NDIM(src) - 1;
+    int dst_is_1d = PyArray_NDIM(dst) == 1;
+    /* Equal strides keep the distance between paired elements constant. */
+    if (dst_is_1d && PyArray_STRIDE(dst, 0) != PyArray_STRIDE(src, src_axis) &&
+            PyArray_DIM(dst, 0) > 1 &&
+            PyArray_DIM(src, src_axis) == PyArray_DIM(dst, 0)) {
+        npy_uintp last = PyArray_DIM(dst, 0) - 1;
+        npy_uintp src_first = (npy_uintp)PyArray_DATA(src);
+        npy_uintp dst_first = (npy_uintp)PyArray_DATA(dst);
+        npy_uintp src_last = src_first + last * PyArray_STRIDE(src, src_axis);
+        npy_uintp dst_last = dst_first + last * PyArray_STRIDE(dst, 0);
+        src_crosses_dst = (src_first >= dst_first) != (src_last >= dst_last);
+    }
+
+    /*
+     * When ndim is 1 and the strides point in the same direction,
+     * the lower-level inner loop handles copying
+     * of overlapping data. For bigger ndim and opposite-strided 1D
+     * data, we make a temporary copy of 'src' if 'src' and 'dst' overlap.
+     * A single copy direction is only guaranteed safe when the source stays
+     * on one side of the destination from first element to last. If the views
+     * may cross and overlap, we also take the temporary.
+     */
+    int needs_copy = ((dst_is_1d && PyArray_NDIM(src) >= 1 &&
+                    PyArray_STRIDES(dst)[0] *
+                            PyArray_STRIDES(src)[PyArray_NDIM(src) - 1] < 0) ||
+                    PyArray_NDIM(dst) > 1 || PyArray_HASFIELDS(dst)) &&
+                    arrays_overlap(src, dst);
+    if (needs_copy || (src_crosses_dst &&
+            PyArray_SIZE(src) == PyArray_DIM(dst, 0) &&
+            solve_may_share_memory(src, dst, 1) != 0)) {
+        PyArrayObject *tmp;
+
+        /*
+         * Allocate a temporary copy array.
+         */
+        tmp = (PyArrayObject *)PyArray_NewLikeArray(dst,
+                                        NPY_KEEPORDER, NULL, 0);
+        if (tmp == NULL) {
             goto fail;
         }
+
+        if (PyArray_AssignArray(tmp, src, NULL, NPY_UNSAFE_CASTING) < 0) {
+            Py_DECREF(tmp);
+            goto fail;
+        }
+
+        src = tmp;
         copied_src = 1;
     }
 

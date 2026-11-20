@@ -22,6 +22,7 @@
 #include "array_coercion.h"
 #include "item_selection.h"
 #include "lowlevel_strided_loops.h"
+#include "mem_overlap.h"
 #include "array_assign.h"
 #include "npy_pycompat.h"
 
@@ -860,9 +861,10 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     Py_INCREF(dtype);
     arrval = (PyArrayObject *)PyArray_FromAny(val, dtype, 0, 0,
                                               NPY_ARRAY_FORCECAST, NULL);
-    if (arrval != NULL && arrays_overlap(self->ao, arrval)) {
-        Py_SETREF(arrval, (PyArrayObject *)PyArray_FromArray(arrval, NULL,
-                NPY_ARRAY_ENSURECOPY | NPY_ARRAY_ENSUREARRAY));
+    if (arrval != NULL &&
+            solve_may_share_memory(self->ao, arrval, 1) != 0) {
+        Py_SETREF(arrval, (PyArrayObject *)PyArray_NewCopy(arrval,
+                NPY_ANYORDER));
     }
     if (arrval == NULL) {
         goto finish;
