@@ -811,6 +811,8 @@ class TestUnique:
         assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+        assert_equal(np.unique(a, equal_nan=False), ua + [nat])
+        assert_equal(np.sort(np.unique_values(a)), ua + [nat])
 
         # test for ticket 2111 - timedelta
         nat = np.timedelta64('nat', 's')
@@ -1290,3 +1292,15 @@ class TestUnique:
         z = np.array(values, dtype=dt)
         u = np.unique(z)
         assert len(u) == len(values) - 1
+
+    @pytest.mark.parametrize('dt', np.typecodes['Complex'])
+    @pytest.mark.parametrize('equal_nan', [True, False])
+    def test_unique_complex_byteswapped(self, dt, equal_nan):
+        parts = [0.0, -0.0, 1.5, np.nan]
+        native = np.array([complex(re, im) for re in parts for im in parts], dtype=dt)
+        swapped = native.astype(native.dtype.newbyteorder())
+        expected = np.unique(native, equal_nan=equal_nan)
+        result = np.unique(swapped, equal_nan=equal_nan)
+        assert result.dtype == swapped.dtype
+        assert_array_equal(result.real, expected.real)
+        assert_array_equal(result.imag, expected.imag)

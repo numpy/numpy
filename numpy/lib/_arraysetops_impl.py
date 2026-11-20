@@ -369,10 +369,27 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         conv = _array_converter(ar)
         ar_, = conv
 
+        dtype = ar_.dtype
+        swapped = dtype.kind == "c" and not dtype.isnative
+        if swapped:
+            # complex values can only be compared in native byte order
+            ar_ = ar_.astype(dtype.newbyteorder("="))
+
         if (hash_unique := _unique_hash(ar_, equal_nan=equal_nan)) \
             is not NotImplemented:
             if sorted:
                 hash_unique.sort()
+            if swapped:
+                hash_unique = hash_unique.astype(dtype)
+            if (dtype.kind == "M" and not equal_nan
+                    and np.isnat(hash_unique).any()):
+                # hashing merges every NaT into one
+                num_nat = np.count_nonzero(np.isnat(ar_))
+                if num_nat > 1:
+                    merged = hash_unique
+                    hash_unique = np.empty(merged.size + num_nat - 1, dtype)
+                    hash_unique[:merged.size] = merged
+                    hash_unique[merged.size:] = "NaT"
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             return (conv.wrap(hash_unique),)
 
