@@ -1588,7 +1588,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 raise AttributeError(f'fmt has wrong shape.  {str(fmt)}')
             format = delimiter.join(fmt)
         elif isinstance(fmt, str):
-            n_fmt_chars = fmt.count('%')
+            # a literal percent sign (``%%``) is not a conversion specifier
+            n_fmt_chars = fmt.replace('%%', '').count('%')
             error = ValueError(f'fmt has wrong number of % formats:  {fmt}')
             if n_fmt_chars == 1:
                 if iscomplex_X:
