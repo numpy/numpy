@@ -86,9 +86,10 @@ To address this, set the baseline to ``none``::
 
   python -m build --wheel -Csetup-args=-Dcpu-baseline="none"
 
-This will create a build that is compatible with all x86 CPUs, but 
-without any manual optimizations or SIMD code paths for the baseline.
-The build will rely only on dispatched code paths for optimization.
+.. note::
+    Setting ``cpu-baseline="none"`` disables all baseline SIMD optimizations.
+    Only dispatched code paths will be generated and used at runtime.
+    This differs from ``min``, which includes basic CPU features for performance.
 
 .. note::
   Setting ``cpu-baseline`` to ``none`` does not disable CPU dispatch.
