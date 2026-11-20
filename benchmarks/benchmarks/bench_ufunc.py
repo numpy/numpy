@@ -20,7 +20,7 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'logical_xor', 'matmul', 'matvec', 'maximum', 'minimum', 'mod',
           'modf', 'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
           'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
-          'right_shift', 'rint', 'sign', 'signbit', 'sin',
+          'right_shift', 'rint', 'sign', 'signbit', 'sin', 'sinc',
           'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
           'true_divide', 'trunc', 'vecdot', 'vecmat']
 arrayfuncdisp = ['real', 'round']
