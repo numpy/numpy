@@ -2104,6 +2104,39 @@ class TestVectorize:
             def foo():
                 return "bar"
 
+    def test_keywords_unusual_names(self):
+        # Keyword names that are not identifiers, or are Python keywords, are
+        # only possible for functions taking **kwargs.
+        def foo(a, **kwargs):
+            return a + kwargs["x-y"] + kwargs["lambda"]
+
+        f = vectorize(foo)
+        assert_array_equal(f(np.arange(3), **{"x-y": 1, "lambda": 10}),
+                           [11, 12, 13])
+        f = vectorize(foo, excluded={"lambda"})
+        assert_array_equal(f(np.arange(3), **{"x-y": 1, "lambda": 10}),
+                           [11, 12, 13])
+
+    def test_keywords_not_normalized(self):
+        # Identifiers in source code are NFKC normalized, keyword names
+        # passed via ** are not.
+        def foo(a, **kwargs):
+            return a + kwargs["\ufb01"]
+
+        f = vectorize(foo)
+        kwargs = {"\ufb01": 1}
+        assert_array_equal(f(np.arange(3), **kwargs), [1, 2, 3])
+
+    def test_keywords_default_not_vectorized(self):
+        # gh-30117: a default value is not an argument of the ufunc, so e.g. a
+        # sequence default is not iterated over.
+        def foo(a, b=1, weights=(1, 2, 3)):
+            return a + b + len(weights)
+
+        f = vectorize(foo)
+        assert_array_equal(f(np.arange(3), b=1), [4, 5, 6])
+        assert_array_equal(f(a=np.arange(3)), [4, 5, 6])
+
     def test_positional_regression_9477(self):
         # This supplies the first keyword argument as a positional,
         # to ensure that they are still properly forwarded after the
