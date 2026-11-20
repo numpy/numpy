@@ -804,6 +804,7 @@ class TestUnique:
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
         assert_equal(np.unique(a, equal_nan=False), ua + [nat])
+        assert_equal(np.sort(np.unique_values(a)), ua + [nat])
 
         # test for ticket 2111 - timedelta
         nat = np.timedelta64('nat', 's')
