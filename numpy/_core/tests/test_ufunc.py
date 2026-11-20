@@ -2413,6 +2413,15 @@ class TestUfunc:
               [121, 222, 323],
               [124, 225, 326]]])
 
+        # gh-33370
+        a = np.zeros(4, dtype=int)
+        np.add.at(a, [[0, 1, 2], [1, 1, 1], [0, 0, 0]], [1, 2, 3])
+        assert_equal(a, [7, 8, 3, 0])
+
+        a = np.zeros(3, dtype=int)
+        np.add.at(a, [[0, 1, 2]], [2, 3, 5])
+        assert_equal(a, [2, 3, 5])
+
     def test_ufunc_at_0D(self):
         a = np.array(0)
         np.add.at(a, (), 1)
