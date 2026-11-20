@@ -63,7 +63,7 @@ env:
 jobs:
   openblas32_nightly:
     if: github.repository == 'numpy/numpy' && github.base_ref == 'main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: "Test Linux (nightly OpenBLAS)"
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
