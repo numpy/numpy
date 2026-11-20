@@ -6885,8 +6885,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
          * - the matching info has a indexed loop
          * - idx must be exactly one integer index array
          * - all operands are 1d
-         * - op2 has a single element or the index is 1d, since op2 is
-         *   walked linearly alongside the index iteration
+         * - op2 has a single element or one element per index, since
+         *   op2 is walked linearly alongside the index iteration
          * A future enhancement could loosen the restriction on 1d operands
          * by adding an iteration loop inside trivial_at_loop
          */
@@ -6894,7 +6894,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                 (PyArray_NDIM(op1_array) == 1)  &&
                 (op2_array == NULL || PyArray_NDIM(op2_array) == 0 ||
                 (PyArray_NDIM(op2_array) == 1 &&
-                (PyArray_DIM(op2_array, 0) <= 1 || iter->nd == 1))) &&
+                (PyArray_DIM(op2_array, 0) <= 1 ||
+                 iter->size == PyArray_DIM(op2_array, 0)))) &&
                 (iter->subspace_iter == NULL) && (iter->num_fancy == 1)) {
             res = trivial_at_loop(ufuncimpl, flags, iter, op1_array,
                         op2_array, &context);
