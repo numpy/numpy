@@ -76,6 +76,70 @@ def test_overlapping_assignments():
         _check_assignment(srcidx, dstidx)
 
 
+@pytest.mark.parametrize("dtype", [np.uint8, np.int32, np.float64, object])
+@pytest.mark.parametrize("src,dst", [
+    (slice(0, 5), slice(0, 9, 2)),       # Must read backwards.
+    (slice(8, 3, -1), slice(8, None, -2)),
+    (slice(9, None, -3), slice(6, 2, -1)),  # Neither direction is safe.
+])
+def test_unequal_stride_assignment(dtype, src, dst):
+    a = np.arange(10).astype(dtype)
+    expected = a.copy()
+    expected[dst] = a[src]
+    a[dst] = a[src]
+    assert_array_equal(a, expected)
+
+
+@pytest.mark.parametrize("how", ["masked", "flat_slice", "flat_property"])
+def test_overlapping_assignment_routes(how):
+    a = np.arange(5)
+    if how == "masked":
+        np.copyto(a[::2], a[:3], where=[True, True, True])
+    elif how == "flat_slice":
+        a.flat[::2] = a[:3]
+    else:
+        a[::2].flat = a[:3]
+    assert_array_equal(a, [0, 1, 1, 3, 2])
+
+
+@pytest.mark.parametrize("how", ["flat_slice", "flat_property"])
+def test_flat_assignment_cycles_original_values(how):
+    a = np.arange(6)
+    if how == "flat_slice":
+        a.flat[1:] = a[:2]
+    else:
+        a[1:].flat = a[:2]
+    assert_array_equal(a, [0, 0, 1, 0, 1, 0])
+
+
+def test_flat_assignment_subclass():
+    class Array(np.ndarray):
+        def __array_finalize__(self, other):
+            if isinstance(other, Array):
+                raise AssertionError("flat assignment created a subclass view")
+
+    a = np.arange(5)
+    a.view(Array).flat[::2] = a[:3]
+    assert_array_equal(a, [0, 1, 1, 3, 2])
+
+
+def test_partial_byte_overlap_with_cast_and_mask():
+    a = np.arange(12, dtype=np.uint8)
+    src = a[:6]
+    expected = a.copy()
+    mask = [True, False, True, True, False, True]
+    np.copyto(expected.view(np.uint16), src, where=mask)
+    np.copyto(a.view(np.uint16), src, where=mask)
+    assert_array_equal(a, expected)
+
+
+def test_overlapping_broadcast_with_equal_nominal_strides():
+    a = np.array([0x0102, 0, 0], dtype=">u2")
+    dst = a.view("<u2")
+    dst[:] = a[:1]
+    assert_array_equal(dst, [0x0102] * 3)
+
+
 @pytest.mark.slow
 def test_diophantine_fuzz():
     # Fuzz test the diophantine solver

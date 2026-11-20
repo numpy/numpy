@@ -295,6 +295,23 @@ fail:
     return -1;
 }
 
+/* The raw direction check handles equal-step shifts. Each transfer must
+ * read and write disjoint bytes, and the elements must fit within a step. */
+static int
+is_simple_1d_shift(PyArrayObject *dst, PyArrayObject *src)
+{
+    if (PyArray_NDIM(dst) != 1 || PyArray_NDIM(src) != 1 ||
+            PyArray_DIM(dst, 0) != PyArray_DIM(src, 0) ||
+            PyArray_STRIDE(dst, 0) != PyArray_STRIDE(src, 0)) {
+        return 0;
+    }
+    npy_intp step = PyArray_STRIDE(dst, 0);
+    npy_intp width = PyArray_MAX(PyArray_ITEMSIZE(dst), PyArray_ITEMSIZE(src));
+    npy_uintp d = (npy_uintp)PyArray_DATA(dst), s = (npy_uintp)PyArray_DATA(src);
+    return (step >= width || step <= -width) &&
+            (d > s ? d - s : s - d) >= (npy_uintp)width;
+}
+
 /*
  * An array assignment function for copying arrays, broadcasting 'src' into
  * 'dst'. This function makes a temporary copy of 'src' if 'src' and
@@ -368,34 +385,14 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
         goto fail;
     }
 
-    /*
-     * When ndim is 1 and the strides point in the same direction,
-     * the lower-level inner loop handles copying
-     * of overlapping data. For bigger ndim and opposite-strided 1D
-     * data, we make a temporary copy of 'src' if 'src' and 'dst' overlap.'
-     */
-    if (((PyArray_NDIM(dst) == 1 && PyArray_NDIM(src) >= 1 &&
-                    PyArray_STRIDES(dst)[0] *
-                            PyArray_STRIDES(src)[PyArray_NDIM(src) - 1] < 0) ||
-                    PyArray_NDIM(dst) > 1 || PyArray_HASFIELDS(dst)) &&
-                    arrays_overlap(src, dst)) {
-        PyArrayObject *tmp;
-
-        /*
-         * Allocate a temporary copy array.
-         */
-        tmp = (PyArrayObject *)PyArray_NewLikeArray(dst,
-                                        NPY_KEEPORDER, NULL, 0);
-        if (tmp == NULL) {
+    if ((!is_simple_1d_shift(dst, src) || PyArray_HASFIELDS(dst)) &&
+            arrays_overlap(src, dst)) {
+        /* Keep the input dtype for the eventual masked or checked cast. */
+        src = (PyArrayObject *)PyArray_FromArray(src, NULL,
+                NPY_ARRAY_ENSURECOPY | NPY_ARRAY_ENSUREARRAY);
+        if (src == NULL) {
             goto fail;
         }
-
-        if (PyArray_AssignArray(tmp, src, NULL, NPY_UNSAFE_CASTING) < 0) {
-            Py_DECREF(tmp);
-            goto fail;
-        }
-
-        src = tmp;
         copied_src = 1;
     }
 
