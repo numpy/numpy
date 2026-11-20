@@ -706,7 +706,7 @@ class chararray(ndarray):
 
     def __mod__(self, i):
         """
-        Return (self % i), that is pre-Python 2.6 string formatting
+        Return (self % i), that is printf-style string formatting
         (interpolation), element-wise for a pair of array_likes of `str`
         or `bytes`.
 

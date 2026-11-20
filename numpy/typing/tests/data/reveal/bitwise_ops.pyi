@@ -1,4 +1,4 @@
-from typing import Any, Literal as L, assert_type
+from typing import Any, Literal as L, Self, assert_type, type_check_only
 
 import numpy as np
 import numpy.typing as npt
@@ -317,3 +317,23 @@ assert_type(_u8_1d << _i64_1d, npt.NDArray[np.int64])
 assert_type(_u8_2d << _i64_1d, npt.NDArray[np.int64])
 assert_type(_i64 << _i64_1d, npt.Array1D[np.int64])
 assert_type(_i64_2d << _i64_1d, npt.NDArray[np.int64])
+
+# `__array_ufunc__` takes precedence over `__array__`
+
+@type_check_only
+class _DuckArray:
+    def __array__(self, dtype: None = None, /, *, copy: bool | None = None) -> npt.NDArray[np.int64]: ...
+    def __array_ufunc__(self, ufunc: np.ufunc, method: str, /, *inputs: Any, **kwargs: Any) -> Self: ...
+    def __rand__(self, other: npt.NDArray[np.int64], /) -> Self: ...
+    def __rxor__(self, other: npt.NDArray[np.int64], /) -> Self: ...
+    def __ror__(self, other: npt.NDArray[np.int64], /) -> Self: ...
+    def __rlshift__(self, other: npt.NDArray[np.int64], /) -> Self: ...
+    def __rrshift__(self, other: npt.NDArray[np.int64], /) -> Self: ...
+
+_duck_array: _DuckArray
+
+assert_type(_i64_1d & _duck_array, _DuckArray)
+assert_type(_i64_1d ^ _duck_array, _DuckArray)
+assert_type(_i64_1d | _duck_array, _DuckArray)
+assert_type(_i64_1d << _duck_array, _DuckArray)
+assert_type(_i64_1d >> _duck_array, _DuckArray)

@@ -1,0 +1,3 @@
+* `numpy.insert` now supports 1D boolean sequences (such as Python lists or
+  tuples of booleans) as the ``obj`` parameter, treating them as boolean masks
+  analogous to boolean ndarrays.

@@ -1,0 +1,6 @@
+Weighted ``bincount`` with empty input
+--------------------------------------
+When ``x`` is empty, `numpy.bincount` now returns a `numpy.float64`
+array if weights are given. The weights must have the same shape as
+``x`` and be convertible to `numpy.float64`. Previously, the function
+ignored the weights in this case and returned a `numpy.intp` array.

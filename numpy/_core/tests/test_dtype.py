@@ -20,6 +20,7 @@ from numpy._core._rational_tests import rational, rational2
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
+    IS_PYPY,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -1452,6 +1453,15 @@ class TestPickling:
             ):
                 dt.__setstate__(extended)
 
+    def test_setstate_invalid_tuple_size_for_version(self):
+        # 6-element state tuples only exist for pickle versions 0 and 1;
+        # versions 2+ require at least 7 elements (including `names`).
+        dt = np.dtype([('a', 'f4')])
+        with pytest.raises(
+            ValueError, match="6-tuple state requires version 0 or 1"
+        ):
+            dt.__setstate__((2, "<", None, {}, -1, -1))
+
     @pytest.mark.parametrize('spec, align', [
         ([('a', 'i4'), ('b', 'f8')], False),
         ('i4, i1', True),
@@ -2235,6 +2245,7 @@ def test_creating_dtype_with_dtype_class_errors():
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestDTypeSignatures:
     def test_signature_dtype(self):
         sig = inspect.signature(np.dtype)

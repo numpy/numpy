@@ -617,6 +617,12 @@ class TestInsert:
         assert_equal(insert(a, np.array([True] * 4), 9), [9, 1, 9, 2, 9, 3, 9])
         assert_equal(insert(a, np.array([True, False, True, False]), 9),
                      [9, 1, 2, 9, 3])
+        assert_equal(insert(a, [True, False, True, False], 9),
+                     [9, 1, 2, 9, 3])
+        assert_equal(insert(a, (True, False, True, False), 9),
+                     [9, 1, 2, 9, 3])
+        m = np.ma.array([False, True, False], mask=[False, True, False])
+        assert_equal(insert([10, 20, 30], m, 99), [10, 20, 30])
 
     def test_multidim(self):
         a = [[1, 1, 1]]
@@ -709,6 +715,11 @@ class TestInsert:
     def test_index_out_of_bounds(self, idx, values):
         with pytest.raises(IndexError, match='out of bounds'):
             np.insert([0, 1, 2], idx, values)
+
+    @pytest.mark.parametrize("obj", [True, False, [[True, False]]])
+    def test_boolean_obj_invalid(self, obj):
+        with pytest.raises(ValueError, match="must be one dimensional"):
+            np.insert([1, 2, 3], obj, 0)
 
 
 class TestAmax:
@@ -3359,7 +3370,32 @@ class TestBincount:
     @pytest.mark.parametrize('minlength', [0, 3])
     def test_empty_list(self, minlength):
         assert_array_equal(np.bincount([], minlength=minlength),
-                           np.zeros(minlength, dtype=int))
+                           np.zeros(minlength, dtype=np.intp), strict=True)
+
+    def test_empty_list_with_weights(self):
+        actual = np.bincount([], weights=[])
+        expected = np.array([], dtype=np.float64)
+        assert_array_equal(actual, expected, strict=True)
+
+    @pytest.mark.parametrize("weight_dtype", [np.float64, np.intp])
+    def test_empty_array_with_weights(self, weight_dtype):
+        x = np.array([], dtype=np.intp)
+        weights = np.array([], dtype=weight_dtype)
+        actual = np.bincount(x, weights=weights, minlength=3)
+        expected = np.zeros(3, dtype=np.float64)
+        assert_array_equal(actual, expected, strict=True)
+
+    def test_empty_with_nonempty_weights(self):
+        with pytest.raises(ValueError):
+            np.bincount([], weights=[1.0])
+
+    def test_empty_with_2d_weights(self):
+        with pytest.raises(ValueError):
+            np.bincount([], weights=np.empty((0, 1)))
+
+    def test_empty_with_complex_weights(self):
+        with pytest.raises(TypeError):
+            np.bincount([], weights=np.array([], dtype=np.complex128))
 
     def test_with_incorrect_minlength(self):
         x = np.array([], dtype=int)
@@ -3415,6 +3451,20 @@ class TestBincount:
         expected = [1, 3, 1, 1, 0, 0, 0, 1]
         assert_array_equal(actual, expected)
 
+    def test_max_intp_overflow(self):
+        # gh-33305: mx + 1 overflowed and the loop wrote out of bounds
+        with assert_raises(ValueError):
+            np.bincount([np.iinfo(np.intp).max])
+        with assert_raises(ValueError):
+            np.bincount([np.iinfo(np.intp).max], weights=[1.0])
+
+    @pytest.mark.parametrize("val", [np.iinfo(np.intp).max,
+                                     np.iinfo(np.intp).max + 1,
+                                     np.iinfo(np.uintp).max])
+    def test_too_large_unsigned(self, val):
+        with pytest.raises(ValueError, match="too large"):
+            np.bincount(np.array([val], dtype=np.uintp))
+
     def test_contiguous_handling(self):
         # check for absence of hard crash
         np.bincount(np.arange(10000)[::2])
@@ -3428,35 +3478,6 @@ class TestBincount:
         actual = np.bincount(a)
         expected = [1, 3, 1, 1, 0, 0, 0, 1]
         assert_array_equal(actual, expected)
-
-    @pytest.mark.parametrize(
-        "x, weights, minlength",
-        [
-            ([], [], 0),
-            (np.array([], dtype=np.intp),
-             np.array([], dtype=np.float64), 3),
-            (np.array([], dtype=np.intp),
-             np.array([], dtype=np.intp), 3),
-        ],
-    )
-    def test_empty_with_weights(self, x, weights, minlength):
-        # gh-33203
-        actual = np.bincount(x, weights=weights, minlength=minlength)
-        assert actual.dtype == np.dtype(np.float64)
-        assert_array_equal(actual, np.zeros(minlength, dtype=np.float64))
-
-    @pytest.mark.parametrize(
-        "weights, error",
-        [
-            ([1.0], ValueError),
-            (np.empty((0, 1)), ValueError),
-            (np.array([], dtype=np.complex128), TypeError),
-        ],
-    )
-    def test_empty_with_invalid_weights(self, weights, error):
-        # gh-33203
-        with pytest.raises(error):
-            np.bincount([], weights=weights)
 
 
 class TestInterp:

@@ -117,6 +117,15 @@ is_short_string(const npy_packed_static_string *s)
     return STRING_FLAGS(s) == (NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA);
 }
 
+static inline int
+has_heap_allocation(const npy_packed_static_string *s)
+{
+    const _npy_static_string_u *string = (const _npy_static_string_u *)s;
+    return (STRING_FLAGS(s) & (NPY_STRING_OUTSIDE_ARENA | NPY_STRING_LONG))
+            == (NPY_STRING_OUTSIDE_ARENA | NPY_STRING_LONG)
+            && VSTRING_SIZE(string) > 0;
+}
+
 typedef struct npy_string_arena {
     size_t cursor;
     size_t size;
@@ -143,6 +152,13 @@ set_vstring_size(_npy_static_string_u *str, size_t size)
     str->direct_buffer.size_and_flags = current_flags;
 }
 
+static inline void
+clear_flags_for_reuse(_npy_static_string_u *str)
+{
+    // Only the missing marker describes the old value.
+    str->direct_buffer.size_and_flags &= ~NPY_STRING_MISSING;
+}
+
 static char *
 vstring_buffer(npy_string_arena *arena, _npy_static_string_u *string)
 {
@@ -154,6 +170,8 @@ vstring_buffer(npy_string_arena *arena, _npy_static_string_u *string)
     }
     return (char *)((size_t)arena->buffer + string->vstring.offset);
 }
+
+#define ARENA_DOUBLING_THRESHOLD 256
 
 static char *
 arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
@@ -171,8 +189,17 @@ arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
         if (minsize < arena->cursor) {
             return NULL;  // overflow means out of memory
         }
-        // Allocate 25% more than needed for this string.
-        size_t newsize = minsize + minsize / 4;
+        // Double a small arena so that it doesn't have to grow for every
+        // string that is added to it, and ease into allocating 25% more
+        // than needed for a large one. This is the rule Go uses for slices:
+        // https://github.com/golang/go/blob/go1.27.0/src/runtime/slice.go#L326-L358
+        size_t newsize;
+        if (minsize < ARENA_DOUBLING_THRESHOLD) {
+            newsize = 2 * minsize;
+        }
+        else {
+            newsize = minsize + (minsize + 3 * ARENA_DOUBLING_THRESHOLD) / 4;
+        }
         if (newsize < minsize) {
             return NULL;  // overflow means out of memory
         }
@@ -514,9 +541,12 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
         if (arena == NULL) {
             return NULL;
         }
-        if (*flags == 0) {
+        if (!(*flags & NPY_STRING_INITIALIZED)) {
             // string isn't previously allocated, so add to existing arena allocation
             char *ret = arena_malloc(arena, allocator->realloc, sizeof(char) * size);
+            if (ret == NULL) {
+                return NULL;
+            }
             if (size <= NPY_MEDIUM_STRING_MAX_SIZE) {
                 *flags = NPY_STRING_INITIALIZED;
             }
@@ -534,8 +564,7 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
         size_t alloc_size;
         if (*flags & NPY_STRING_LONG) {
             // Long string size not necessarily memory-aligned, so use memcpy.
-            size_t *size_loc = (size_t *)((uintptr_t)buf - sizeof(size_t));
-            memcpy(&alloc_size, size_loc, sizeof(size_t));
+            memcpy(&alloc_size, buf - sizeof(size_t), sizeof(size_t));
         }
         else {
             // medium string size is stored in a char so direct access is OK.
@@ -543,14 +572,18 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
         }
         if (size <= alloc_size) {
             // we have room!
+            clear_flags_for_reuse(to_init_u);
             return buf;
         }
         // No room, fall through to heap allocation.
     }
     // Heap allocate
     *on_heap = 1;
-    *flags = NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA | NPY_STRING_LONG;
-    return allocator->malloc(sizeof(char) * size);
+    char *buf = allocator->malloc(sizeof(char) * size);
+    if (buf != NULL) {
+        *flags = NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA | NPY_STRING_LONG;
+    }
+    return buf;
 }
 
 static int
@@ -582,11 +615,12 @@ heap_or_arena_deallocate(npy_string_allocator *allocator,
 // A regular empty string is just a short string with a size of 0.  But if a
 // string was already initialized on the arena, we just set the vstring size to
 // 0, so that we still can use the arena if the string gets reset again.
-NPY_NO_EXPORT int
+static inline int
 NpyString_pack_empty(npy_packed_static_string *out)
 {
     _npy_static_string_u *out_u = (_npy_static_string_u *)out;
     unsigned char *flags = &out_u->direct_buffer.size_and_flags;
+    clear_flags_for_reuse(out_u);
     if (*flags & NPY_STRING_OUTSIDE_ARENA) {
         // This also sets short string size to 0.
         *flags = NPY_STRING_INITIALIZED | NPY_STRING_OUTSIDE_ARENA;
@@ -597,7 +631,7 @@ NpyString_pack_empty(npy_packed_static_string *out)
     return 0;
 }
 
-NPY_NO_EXPORT int
+static int
 NpyString_newemptysize(size_t size, npy_packed_static_string *out,
                        npy_string_allocator *allocator)
 {
@@ -643,7 +677,7 @@ NpyString_newemptysize(size_t size, npy_packed_static_string *out,
     return 0;
 }
 
-NPY_NO_EXPORT int
+static inline int
 NpyString_newsize(const char *init, size_t size,
                   npy_packed_static_string *to_init,
                   npy_string_allocator *allocator)
@@ -673,6 +707,25 @@ NpyString_newsize(const char *init, size_t size,
 }
 
 NPY_NO_EXPORT int
+NpyString_replace(const char *init, size_t size,
+                  npy_packed_static_string *out,
+                  npy_string_allocator *allocator)
+{
+    _npy_static_string_u *out_u = (_npy_static_string_u *)out;
+    char *old_buffer = has_heap_allocation(out)
+            ? vstring_buffer(&allocator->arena, out_u) : NULL;
+    int ret = init == NULL ? NpyString_newemptysize(size, out, allocator)
+                           : NpyString_newsize(init, size, out, allocator);
+    if (ret < 0) {
+        return -1;
+    }
+    if (old_buffer != NULL) {
+        allocator->free(old_buffer);
+    }
+    return 0;
+}
+
+NPY_NO_EXPORT int
 NpyString_free(npy_packed_static_string *str, npy_string_allocator *allocator)
 {
     _npy_static_string_u *str_u = (_npy_static_string_u *)str;
@@ -680,7 +733,7 @@ NpyString_free(npy_packed_static_string *str, npy_string_allocator *allocator)
     // Unconditionally remove flag indicating something was missing.
     // For that case, the string should have been deallocated already, but test
     // anyway in case we later implement the option to mask the string.
-    *flags &= ~NPY_STRING_MISSING;
+    clear_flags_for_reuse(str_u);
     if (is_short_string(str)) {
         if (SHORT_STRING_SIZE(str_u) > 0) {
             // zero buffer and set flags for initialized out-of-arena empty string.
@@ -732,10 +785,13 @@ NpyString_dup(const npy_packed_static_string *in,
         return NpyString_pack_null(out_allocator, out);
     }
     size_t size = NpyString_size(in);
-    if (size == 0) {
-        return NpyString_pack_empty(out);
-    }
-    if (is_short_string(in)) {
+    if (size == 0 || is_short_string(in)) {
+        if (has_heap_allocation(out)) {
+            heap_or_arena_deallocate(out_allocator, (_npy_static_string_u *)out);
+        }
+        if (size == 0) {
+            return NpyString_pack_empty(out);
+        }
         memcpy(out, in, sizeof(_npy_static_string_u));
         return 0;
     }
@@ -743,7 +799,7 @@ NpyString_dup(const npy_packed_static_string *in,
     char *in_buf = NULL;
     npy_string_arena *arena = &in_allocator->arena;
     int used_malloc = 0;
-    if (in_allocator == out_allocator && !is_short_string(in)) {
+    if (in_allocator == out_allocator) {
         in_buf = in_allocator->malloc(size);
         if (in_buf == NULL) {
             return -1;
@@ -754,8 +810,7 @@ NpyString_dup(const npy_packed_static_string *in,
     else {
         in_buf = vstring_buffer(arena, in_u);
     }
-    int ret =
-            NpyString_newsize(in_buf, size, out, out_allocator);
+    int ret = NpyString_replace(in_buf, size, out, out_allocator);
     if (used_malloc) {
         in_allocator->free(in_buf);
     }
@@ -823,10 +878,7 @@ NpyString_pack(npy_string_allocator *allocator,
                npy_packed_static_string *packed_string, const char *buf,
                size_t size)
 {
-    if (NpyString_free(packed_string, allocator) < 0) {
-        return -1;
-    }
-    return NpyString_newsize(buf, size, packed_string, allocator);
+    return NpyString_replace(buf, size, packed_string, allocator);
 }
 
 NPY_NO_EXPORT int

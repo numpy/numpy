@@ -27,7 +27,7 @@ It is possible to access the array differently by just changing certain
 metadata like :term:`stride` and :term:`dtype` without changing the
 data buffer. This creates a new way of looking at the data and these new
 arrays are called views. The data buffer remains the same, so any changes made
-to a view reflects in the original copy. A view can be forced through the
+to a view reflect in the original array. A view can be forced through the
 :meth:`.ndarray.view` method.
 
 Copy

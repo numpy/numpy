@@ -76,10 +76,10 @@ typedef struct PyArrayMethodObject_tag {
     void *cached_loop_data;
     /*
      * Optional dedicated reduction loop (NPY_METH_get_reduction_loop), used
-     * by `ufunc.reduce` and `ufunc.reduceat` instead of `get_strided_loop`
-     * when set.  Required for `nout > 1` since the forward loop's arity
-     * cannot be used as the reduction's loop which requires an
-     * (nout+1)->nout signature.
+     * by the reduce-like ufunc methods instead of `get_strided_loop` when
+     * set.  Required for `nout > 1` since the forward loop's arity cannot be
+     * used as the reduction's loop which requires an (nout+1)->nout
+     * signature.
      */
     PyArrayMethod_GetLoop *get_reduction_loop;
     /*
@@ -92,9 +92,9 @@ typedef struct PyArrayMethodObject_tag {
 } PyArrayMethodObject;
 
 
-/* Returns the loop `ufunc.reduce` and `ufunc.reduceat` should use: the
- * dedicated reduction loop if the method registered one, otherwise the
- * forward `get_strided_loop` (only valid when nout == 1). */
+/* Returns the loop the reduce-like ufunc methods should use: the dedicated
+ * reduction loop if the method registered one, otherwise the forward
+ * `get_strided_loop` (only valid when nout == 1). */
 static inline PyArrayMethod_GetLoop *
 reduction_get_loop_func(PyArrayMethodObject *meth)
 {
@@ -149,7 +149,7 @@ extern NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type;
 NPY_NO_EXPORT int
 npy_default_get_strided_loop(
         PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
+        int aligned, int move_references, const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 

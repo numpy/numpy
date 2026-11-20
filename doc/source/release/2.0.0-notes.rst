@@ -1307,7 +1307,7 @@ However, if ``np.bool_`` is used as a converter the result will change.
 
 The change does affect ``np.fromregex`` as it uses direct assignments.
 
-(`gh-23871 <https://github.com/numpy/numpy/pull/23871>`__)
+(`gh-23898 <https://github.com/numpy/numpy/pull/23898>`__)
 
 
 A ``mean`` keyword was added to var and std function

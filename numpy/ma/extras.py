@@ -49,6 +49,7 @@ from .core import (  # noqa: F401
     mask_or,
     masked,
     masked_array,
+    minmax,
     nomask,
     ones,
     sort,
@@ -989,9 +990,9 @@ def compress_rows(a):
 
     Parameters
     ----------
-    x : array_like, MaskedArray
+    a : array_like, MaskedArray
         The array to operate on. If not a MaskedArray instance (or if no array
-        elements are masked), `x` is interpreted as a MaskedArray with
+        elements are masked), `a` is interpreted as a MaskedArray with
         `mask` set to `nomask`. Must be a 2D array.
 
     Returns
@@ -1028,9 +1029,9 @@ def compress_cols(a):
 
     Parameters
     ----------
-    x : array_like, MaskedArray
+    a : array_like, MaskedArray
         The array to operate on.  If not a MaskedArray instance (or if no array
-        elements are masked), `x` is interpreted as a MaskedArray with
+        elements are masked), `a` is interpreted as a MaskedArray with
         `mask` set to `nomask`. Must be a 2D array.
 
     Returns
@@ -2113,8 +2114,9 @@ def notmasked_edges(a, axis=None):
         return flatnotmasked_edges(a)
     m = getmaskarray(a)
     idx = array(np.indices(a.shape), mask=np.asarray([m] * a.ndim))
-    return [tuple(idx[i].min(axis).compressed() for i in range(a.ndim)),
-            tuple(idx[i].max(axis).compressed() for i in range(a.ndim)), ]
+    edges = [minmax(idx[i], axis) for i in range(a.ndim)]
+    return [tuple(edge[0].compressed() for edge in edges),
+            tuple(edge[1].compressed() for edge in edges), ]
 
 
 def flatnotmasked_contiguous(a):

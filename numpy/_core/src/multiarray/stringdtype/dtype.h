@@ -23,7 +23,7 @@ init_string_dtype(void);
 // descriptors
 NPY_NO_EXPORT int
 _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
-         PyArray_StringDTypeObject *descr_b);
+         PyArray_StringDTypeObject *descr_b, int *cmp);
 
 NPY_NO_EXPORT int
 stringdtype_binsearch_compare(const void *a, const void *b,
@@ -37,10 +37,10 @@ stringdtype_setitem(PyArray_StringDTypeObject *descr, PyObject *obj, char **data
 
 // the locks on both allocators must be acquired before calling this function
 NPY_NO_EXPORT int
-free_and_copy(npy_string_allocator *in_allocator,
-              npy_string_allocator *out_allocator,
-              const npy_packed_static_string *in,
-              npy_packed_static_string *out, const char *location);
+copy_string(npy_string_allocator *in_allocator,
+            npy_string_allocator *out_allocator,
+            const npy_packed_static_string *in,
+            npy_packed_static_string *out, const char *location);
 
 NPY_NO_EXPORT int
 load_new_string(npy_packed_static_string *out, npy_static_string *out_ss,

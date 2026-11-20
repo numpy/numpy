@@ -30,13 +30,13 @@
 static inline double
 nan_min(double a, double b)
 {
-    return (a <= b || npy_isnan(a)) ? a : b;
+    return (npy_isnan(a) || (!npy_isnan(b) && a <= b)) ? a : b;
 }
 
 static inline double
 nan_max(double a, double b)
 {
-    return (a >= b || npy_isnan(a)) ? a : b;
+    return (npy_isnan(a) || (!npy_isnan(b) && a >= b)) ? a : b;
 }
 
 
@@ -74,11 +74,9 @@ double_minimummaximum_reduce_loop(PyArrayMethod_Context *NPY_UNUSED(context),
     npy_intp s_omin = strides[3], s_omax = strides[4];
 
     for (npy_intp i = 0; i < n; i++) {
-        double cur_min = *(double *)acc_min;
-        double cur_max = *(double *)acc_max;
         double val = *(double *)x;
-        *(double *)out_min = nan_min(cur_min, val);
-        *(double *)out_max = nan_max(cur_max, val);
+        *(double *)out_min = nan_min(*(double *)acc_min, val);
+        *(double *)out_max = nan_max(*(double *)acc_max, val);
         acc_min += s_amin; acc_max += s_amax; x += s_x;
         out_min += s_omin; out_max += s_omax;
     }

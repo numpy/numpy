@@ -1,4 +1,5 @@
 import fnmatch
+import gc
 import inspect
 import itertools
 import operator
@@ -17,6 +18,7 @@ from numpy._core import _umath_tests as ncu_tests, sctypes
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_MUSL,
+    IS_PYPY,
     IS_WASM,
     _gen_alignment_data,
     assert_,
@@ -492,6 +494,7 @@ class TestAdd:
         victim_array[0] = Victim()
 
         assert_equal(np.add(left, victim_array)[0], 42)
+        gc.collect()  # PyPy: finalizers are not refcount-driven
         assert victim_deleted  # the slot really was cleared re-entrantly
 
 
@@ -2753,6 +2756,11 @@ class TestMinimumMaximum(_FilterInvalids):
         assert_equal(lo, np.minimum.reduce(a, **kwargs))
         assert_equal(hi, np.maximum.reduce(a, **kwargs))
 
+    def check_accumulate(self, a, **kwargs):
+        lo, hi = ncu.minimummaximum.accumulate(a, **kwargs)
+        assert_equal(lo, np.minimum.accumulate(a, **kwargs))
+        assert_equal(hi, np.maximum.accumulate(a, **kwargs))
+
     def test_dtypes(self):
         dtypes = (np.typecodes['AllInteger'] + np.typecodes['AllFloat']
                   + np.typecodes['Complex'] + '?')
@@ -2775,6 +2783,7 @@ class TestMinimumMaximum(_FilterInvalids):
                 a = np.arange(n).astype(dt)
                 b = a[::-1].copy()
                 self.check(a, b)
+                self.check_accumulate(a)
                 if n > 0:
                     self.check_reduce(a)
 
@@ -2794,6 +2803,8 @@ class TestMinimumMaximum(_FilterInvalids):
             arg1 = np.array([0, cnan, cnan], dtype=complex)
             arg2 = np.array([cnan, 0, cnan], dtype=complex)
             self.check(arg1, arg2)
+            with np.errstate(invalid="raise"):
+                self.check_accumulate(arg1)
 
     def test_object_array(self):
         arg1 = np.arange(5, dtype=object)
@@ -2859,6 +2870,7 @@ class TestMinimumMaximum(_FilterInvalids):
         self.check_reduce(a, axis=1, keepdims=True)
         for view in (a[::2], a[:, ::2], a.T, np.asfortranarray(a)):
             self.check_reduce(view, axis=1)
+            self.check_accumulate(view, axis=1)
 
     def test_reduce_out(self):
         a = np.arange(12.0).reshape(3, 4)
@@ -3368,7 +3380,8 @@ class TestAbsoluteNegative:
 
     @pytest.mark.parametrize("dtype", ['d', 'f', 'int32', 'int64'])
     @pytest.mark.parametrize("big", [True, False])
-    def test_noncontiguous(self, dtype, big):
+    @pytest.mark.parametrize("stride", [2, 4, 8])
+    def test_noncontiguous(self, dtype, big, stride):
         data = np.array([-1.0, 1.0, -0.0, 0.0, 2.2251e-308, -2.5, 2.5, -6,
                             6, -2.2251e-308, -8, 10], dtype=dtype)
         expect = np.array([1.0, -1.0, 0.0, -0.0, -2.2251e-308, 2.5, -2.5, 6,
@@ -3377,19 +3390,19 @@ class TestAbsoluteNegative:
             data = np.repeat(data, 10)
             expect = np.repeat(expect, 10)
         out = np.ndarray(data.shape, dtype=dtype)
-        ncontig_in = data[1::2]
-        ncontig_out = out[1::2]
+        ncontig_in = data[1::stride]
+        ncontig_out = out[1::stride]
         contig_in = np.array(ncontig_in)
         # contig in, contig out
-        assert_array_equal(np.negative(contig_in), expect[1::2])
+        assert_array_equal(np.negative(contig_in), expect[1::stride])
         # contig in, ncontig out
         assert_array_equal(np.negative(contig_in, out=ncontig_out),
-                                expect[1::2])
+                                expect[1::stride])
         # ncontig in, contig out
-        assert_array_equal(np.negative(ncontig_in), expect[1::2])
+        assert_array_equal(np.negative(ncontig_in), expect[1::stride])
         # ncontig in, ncontig out
         assert_array_equal(np.negative(ncontig_in, out=ncontig_out),
-                                expect[1::2])
+                                expect[1::stride])
         # contig in, contig out, nd stride
         data_split = np.array(np.array_split(data, 2))
         expect_split = np.array(np.array_split(expect, 2))
@@ -4458,6 +4471,7 @@ class TestRationalFunctions:
 
     def test_gcd(self):
         self._test_gcd_inner(np.int16)
+        self._test_gcd_inner(np.uint16)
         self._test_lcm_inner(np.uint16)
 
     def test_gcd_object(self):
@@ -4479,6 +4493,18 @@ class TestRationalFunctions:
         a = np.array([3, 12, 20], dtype=dtype)
         assert_equal(np.lcm.reduce([3, 12, 20]), 60)
 
+        # reduction reaches 0 before processing the remaining elements
+        a = np.array([3, 4, 0, 5, 7], dtype=dtype)
+        assert_equal(np.lcm.reduce(a), 0)
+
+        # one output reaches 0 before the others
+        a = np.array([[3, 4, 5], [0, 6, 10], [2, 0, 3]], dtype=dtype)
+        assert_equal(np.lcm.reduce(a, axis=0), [0, 0, 30])
+        f = np.asfortranarray([[3, 0, 5], [4, 6, 10], [5, 10, 3]]).astype(dtype)
+        assert_equal(np.lcm.reduce(f, axis=1), [0, 60, 30])
+        b = np.array([[3, 4], [0, 6], [5, 10]], dtype=dtype)
+        assert_equal(np.lcm.accumulate(b, axis=0), [[3, 4], [0, 12], [0, 60]])
+
         # broadcasting, and a test including 0
         a = np.arange(6).astype(dtype)
         b = 20
@@ -4499,6 +4525,18 @@ class TestRationalFunctions:
         # reduce
         a = np.array([15, 25, 35], dtype=dtype)
         assert_equal(np.gcd.reduce(a), 5)
+
+        # reduction reaches 1 before processing the remaining elements
+        a = np.array([12, 18, 1, 0, 42], dtype=dtype)
+        assert_equal(np.gcd.reduce(a), 1)
+
+        # one output reaches 1 before the others
+        a = np.array([[4, 6, 10], [3, 9, 15], [2, 3, 5]], dtype=dtype)
+        assert_equal(np.gcd.reduce(a, axis=0), [1, 3, 5])
+        f = np.asfortranarray([[2, 3, 5], [4, 6, 10], [3, 9, 15]]).astype(dtype)
+        assert_equal(np.gcd.reduce(f, axis=1), [1, 2, 3])
+        b = np.array([[6, 8], [5, 12], [9, 20]], dtype=dtype)
+        assert_equal(np.gcd.accumulate(b, axis=0), [[6, 8], [1, 4], [1, 4]])
 
         # broadcasting, and a test including 0
         a = np.arange(6).astype(dtype)
@@ -4549,6 +4587,7 @@ class TestRationalFunctions:
         victim_array[0] = Victim()
 
         assert_equal(np.gcd(left, victim_array)[0], 4)
+        gc.collect()  # PyPy: finalizers are not refcount-driven
         assert victim_deleted  # the slot really was cleared re-entrantly
 
     def test_lcm_object_reentrant_mutation(self):
@@ -4580,6 +4619,7 @@ class TestRationalFunctions:
         victim_array[0] = Victim()
 
         assert_equal(np.lcm(left, victim_array)[0], 24)
+        gc.collect()  # PyPy: finalizers are not refcount-driven
         assert victim_deleted
 
     def test_decimal(self):
@@ -5486,6 +5526,7 @@ class TestReplaceLoopBySignature:
 
 class TestAddDocstring:
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_same_docstring(self):
         # test for attributes (which are C-level defined)
         ncu.add_docstring(np.ndarray.flat, np.ndarray.flat.__doc__)

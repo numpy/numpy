@@ -156,7 +156,7 @@ _import_array(void)
 #if (SWIG_VERSION < 0x040400)
 #define _RETURN_VALUE NULL
 #else
-#define _RETURN_VALUE 0
+#define _RETURN_VALUE -1
 #endif
 
 #define import_array() { \
