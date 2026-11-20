@@ -88,11 +88,15 @@ def test_overlapping_strided_assignment(use_copyto):
     assert_array_equal(x, expected)
 
 
-def test_overlapping_flat_assignment():
+@pytest.mark.parametrize("use_setter", [False, True], ids=["setitem", "setter"])
+def test_overlapping_flat_assignment(use_setter):
     x = np.arange(6)
     expected = x.copy()
     expected[1:].flat[:] = expected[:-1].copy()
-    x[1:].flat[:] = x[:-1]
+    if use_setter:
+        x[1:].flat = x[:-1]
+    else:
+        x[1:].flat[:] = x[:-1]
     assert_array_equal(x, expected)
 
 
