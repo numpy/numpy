@@ -492,6 +492,23 @@ class TestTimeScalars:
         assert ass[()] == expected
 
 class TestNested:
+    def test_ndmax_explicit_maxdims(self):
+        class ArrayLike:
+            def __array__(self, dtype=None, copy=None):
+                raise RuntimeError("array protocol was accessed")
+
+        obj = ArrayLike()
+        nested = obj
+        for _ in range(ncu.MAXDIMS):
+            nested = [nested]
+
+        with pytest.raises(RuntimeError, match="array protocol was accessed"):
+            np.array(nested, dtype=object)
+
+        arr = np.array(nested, dtype=object, ndmax=ncu.MAXDIMS)
+        assert arr.ndim == ncu.MAXDIMS
+        assert arr.item() is obj
+
     def test_nested_simple(self):
         initial = [1.2]
         nested = initial
