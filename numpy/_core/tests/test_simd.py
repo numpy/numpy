@@ -594,6 +594,40 @@ class _SIMD_FP(_Test_Utility):
             intrin(v)
             assert check_floatstatus(invalid=True) is False
 
+    @pytest.mark.parametrize("intrin_name", [
+        "cmplt", "cmple", "cmpgt", "cmpge", "cmpeq", "cmpneq"
+    ])
+    @pytest.mark.parametrize("kind", ["finite", "qnan", "snan"])
+    def test_comparison_invalid_fpexception(self, intrin_name, kind):
+        # NEON ordered comparisons signal for qNaN, unlike some other SIMD
+        # targets. Equality comparisons must remain quiet (gh-32159).
+        if not re.search(r"NEON|ASIMD", self._cpu_features()):
+            pytest.skip("NEON floating-point exception semantics")
+        intrin = getattr(self, intrin_name)
+        ordered = intrin_name not in ("cmpeq", "cmpneq")
+        if self.sfx == "f32":
+            bits = {"finite": 0x3f800000, "qnan": 0x7fc00000,
+                    "snan": 0x7f800001}
+        else:
+            bits = {"finite": 0x3ff0000000000000,
+                    "qnan": 0x7ff8000000000000, "snan": 0x7ff0000000000001}
+        load = getattr(self.npyv, "load_u" + self.sfx[1:])
+        reinterpret = getattr(self.npyv, f"reinterpret_{self.sfx}_u{self.sfx[1:]}")
+        expected = kind == "snan" or (ordered and kind == "qnan")
+        for lane in range(self.nlanes):
+            data = [bits["finite"]] * self.nlanes
+            data[lane] = bits[kind]
+            # Avoid quieting sNaN while converting Python floats to vectors.
+            a, b = reinterpret(load(data)), self.setall(0.0)
+            for args in ((a, b), (b, a), (a, a)):
+                clear_floatstatus()
+                try:
+                    intrin(*args)
+                    invalid = check_floatstatus(invalid=True)
+                finally:
+                    clear_floatstatus()
+                assert invalid == expected
+
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, "cmplt"),
         (operator.le, "cmple"),

@@ -172,8 +172,29 @@
 #define npyv_cmpgt_s16 vcgtq_s16
 #define npyv_cmpgt_u32 vcgtq_u32
 #define npyv_cmpgt_s32 vcgtq_s32
-#define npyv_cmpgt_f32 vcgtq_f32
-#define npyv_cmpgt_f64 vcgtq_f64
+
+#if defined(__clang__) && defined(__aarch64__) && defined(NPY_HAVE_CLANG_FPSTRICT)
+// Clang scalarizes ordered NEON comparisons with -ftrapping-math (gh-32159).
+// Keep the vector instructions, which signal invalid for NaNs just like the
+// scalar comparisons. Volatile preserves this side effect if the mask is unused.
+NPY_FINLINE npyv_b32 npyv_cmpgt_f32(npyv_f32 a, npyv_f32 b)
+{
+    npyv_b32 ret;
+    __asm__ __volatile__("fcmgt %0.4s, %1.4s, %2.4s"
+                         : "=w" (ret) : "w" (a), "w" (b));
+    return ret;
+}
+NPY_FINLINE npyv_b64 npyv_cmpgt_f64(npyv_f64 a, npyv_f64 b)
+{
+    npyv_b64 ret;
+    __asm__ __volatile__("fcmgt %0.2d, %1.2d, %2.2d"
+                         : "=w" (ret) : "w" (a), "w" (b));
+    return ret;
+}
+#else
+    #define npyv_cmpgt_f32 vcgtq_f32
+    #define npyv_cmpgt_f64 vcgtq_f64
+#endif
 
 #ifdef __aarch64__
     #define npyv_cmpgt_u64 vcgtq_u64
@@ -203,8 +224,26 @@
 #define npyv_cmpge_s16 vcgeq_s16
 #define npyv_cmpge_u32 vcgeq_u32
 #define npyv_cmpge_s32 vcgeq_s32
-#define npyv_cmpge_f32 vcgeq_f32
-#define npyv_cmpge_f64 vcgeq_f64
+
+#if defined(__clang__) && defined(__aarch64__) && defined(NPY_HAVE_CLANG_FPSTRICT)
+NPY_FINLINE npyv_b32 npyv_cmpge_f32(npyv_f32 a, npyv_f32 b)
+{
+    npyv_b32 ret;
+    __asm__ __volatile__("fcmge %0.4s, %1.4s, %2.4s"
+                         : "=w" (ret) : "w" (a), "w" (b));
+    return ret;
+}
+NPY_FINLINE npyv_b64 npyv_cmpge_f64(npyv_f64 a, npyv_f64 b)
+{
+    npyv_b64 ret;
+    __asm__ __volatile__("fcmge %0.2d, %1.2d, %2.2d"
+                         : "=w" (ret) : "w" (a), "w" (b));
+    return ret;
+}
+#else
+    #define npyv_cmpge_f32 vcgeq_f32
+    #define npyv_cmpge_f64 vcgeq_f64
+#endif
 
 #ifdef __aarch64__
     #define npyv_cmpge_u64 vcgeq_u64

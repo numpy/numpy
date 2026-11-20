@@ -295,6 +295,43 @@ class TestOut:
 class TestComparisons:
     import operator
 
+    @pytest.mark.parametrize("dtype, uint_dtype, nan_bits", [
+        (np.float32, np.uint32, 0x7fc00000),
+        (np.float32, np.uint32, 0x7f800001),
+        (np.float64, np.uint64, 0x7ff8000000000000),
+        (np.float64, np.uint64, 0x7ff0000000000001),
+    ], ids=["float32-qnan", "float32-snan", "float64-qnan", "float64-snan"])
+    @pytest.mark.parametrize("op", [
+        np.less, np.less_equal, np.greater, np.greater_equal,
+        np.equal, np.not_equal,
+    ])
+    @pytest.mark.parametrize("size", [1, 15, 16, 17, 33])
+    @pytest.mark.parametrize("layout", ["array", "scalar1", "scalar2", "strided"])
+    def test_comparison_nan_floatstatus(self, dtype, uint_dtype, nan_bits,
+                                       op, size, layout):
+        # Comparison ufuncs clear FP status, even when their SIMD or scalar
+        # ordered comparisons signal invalid for NaNs (gh-32159).
+        stride = 2 if layout == "strided" else 1
+        for operand in (0, 1):
+            for index in {0, size // 2, size - 1}:
+                a = np.zeros(size * stride, dtype=dtype)[::stride]
+                b = np.ones(size * stride, dtype=dtype)[::stride]
+                if layout == "scalar1":
+                    a = a[:1]
+                elif layout == "scalar2":
+                    b = b[:1]
+                expected = np.full(size, op(0.0, 1.0), dtype=np.bool)
+                arg = (a, b)[operand]
+                pos = 0 if arg.size == 1 else index
+                # Set NaN bits without quieting signaling NaNs in a cast.
+                arg.view(uint_dtype)[pos] = nan_bits
+                expected[slice(None) if arg.size == 1 else pos] = (
+                    op is np.not_equal
+                )
+                with np.errstate(invalid="raise"):
+                    result = op(a, b)
+                assert_array_equal(result, expected)
+
     @pytest.mark.parametrize('dtype', sctypes['uint'] + sctypes['int'] +
                              sctypes['float'] + [np.bool])
     @pytest.mark.parametrize('py_comp,np_comp', [
