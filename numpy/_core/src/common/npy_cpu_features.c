@@ -347,7 +347,7 @@ npy__cpu_check_env(int disable, const char *env) {
 
     *nexist_cur = '\0';
     if (nexist[0] != '\0') {
-        if (PyErr_WarnFormat(PyExc_ImportWarning, 1,
+        if (PyErr_WarnFormat(PyExc_UserWarning, 1,
             "%sYou cannot %s CPU features (%s), since "
             "they are not part of the dispatched optimizations\n"
             "(" NPY_WITH_CPU_DISPATCH ").",
@@ -371,7 +371,7 @@ npy__cpu_check_env(int disable, const char *env) {
         }
     }
 #else
-    if (PyErr_WarnFormat(PyExc_ImportWarning, 1,
+    if (PyErr_WarnFormat(PyExc_UserWarning, 1,
             "%s"
             "You cannot use environment variable '%s', since "
         #ifdef NPY_DISABLE_OPTIMIZATION

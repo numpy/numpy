@@ -1073,6 +1073,13 @@ template <ENCODING enc>
 static inline npy_intp
 string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
+    // a UTF-8 search over the whole string doesn't need codepoint offsets
+    if (enc == ENCODING::UTF8 && start == 0 && end >= buf1.after - buf1.buf &&
+            buf2.after > buf2.buf) {
+        npy_intp count = fastsearch(buf1.buf, buf1.after - buf1.buf, buf2.buf,
+                                    buf2.after - buf2.buf, PY_SSIZE_T_MAX, FAST_COUNT);
+        return count < 0 ? 0 : count;
+    }
     size_t len1 = buf1.num_codepoints();
     size_t len2 = buf2.num_codepoints();
 

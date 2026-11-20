@@ -87,7 +87,7 @@ jobs:
   clang_TSAN:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
         image: ghcr.io/nascheme/numpy-tsan:3.14t@sha256:1ec427e2e480cc373d0fecbf21b8ac590fb94119fb81d18489945cd0afd04dd3
         options: --shm-size=2g # increase memory for large matrix ops

@@ -15,6 +15,10 @@ from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import ComplexWarning
 from numpy.testing import IS_PYPY, assert_array_equal
+from numpy.testing._private.utils import (
+    assert_memory_growth_below,
+    run_with_memory_limit,
+)
 
 
 def random_unicode_string_list():
@@ -487,19 +491,25 @@ def test_embedded_null_string_like_casts(dtype):
     assert roundtripped.tolist() == strings
 
 
-def test_string_too_large_error():
-    arr = np.array(["a", "b", "c"], dtype=StringDType())
+@pytest.mark.parametrize("old", ["short", "a" * 20, "heap", None])
+def test_string_too_large_error(old):
+    arr = np.array(["a", "b", "c"], dtype=StringDType(na_object=None))
     with pytest.raises(OverflowError):
         arr * (sys.maxsize + 1)
     arr[0] = 'b'
     np.testing.assert_array_equal(arr, ["b", "b", "c"])
 
     # Tries to allocate on 64 bit. On 32-bit, still above sys.maxsize.
-    out = np.empty_like(arr)
+    out = np.full_like(arr, old)
+    if old == "heap":
+        # Growing an existing element moves it out of the arena.
+        old = "a" * 100
+        out[:] = old
     with pytest.raises((MemoryError, OverflowError)):
         np.multiply(arr, 2**55, out=out)
-    out[:] = "a" * 20
-    assert_array_equal(out, "a" * 20)
+    assert_array_equal(out, np.full_like(out, old))
+    out[:] = "a" * 200
+    assert_array_equal(out, "a" * 200)
 
 
 @pytest.mark.parametrize(
@@ -974,6 +984,39 @@ def test_invalid_numeric_casts_error(dtype, invalid):
 
     with pytest.raises(ValueError):
         arr.astype(dtype)
+
+
+@pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
+def test_failed_cast_to_unaligned_releases_buffer():
+    # the unaligned destination makes the cast copy the strings into a
+    # temporary buffer that it has to free. The bad reading also runs the
+    # cleanup for a failed cast.
+    def fill():
+        readings = np.array([f"{i / 7:.20f}" for i in range(300)], dtype="T")
+        readings[-1] = "sensor offline"
+        table = np.zeros(300, dtype=[("valid", "?"), ("reading", "f8")])
+        assert not table["reading"].flags.aligned
+        with pytest.raises(ValueError):
+            table["reading"] = readings
+
+    assert_memory_growth_below(fill, limit=1024)
+
+
+@pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
+def test_ufunc_fixed_width_out_releases_buffer():
+    # the ufunc computes its StringDType results into a temporary buffer and
+    # then casts them to the output array. The strings in the buffer leak
+    # unless that cast frees them.
+    def add():
+        n = 2 * np.getbufsize()
+        first = np.array([f"first name {i}" for i in range(n)], dtype="T")
+        last = np.array([f"a longer last name, number {i}" for i in range(n)],
+                        dtype="T")
+        full = np.empty(n, dtype="U60")
+        np.strings.add(first, last, out=full)
+        assert full[-1] == first[-1] + last[-1]
+
+    assert_memory_growth_below(add, limit=1024)
 
 
 def test_insert_scalar(dtype, string_list):
@@ -2780,11 +2823,21 @@ BINARY_FUNCTIONS = [
     ("rsplit", (None, "A")),
     ("rstrip", (None, "A")),
     ("rpartition", (None, "A")),
+    ("slice", (None, 1, 5)),
     ("split", (None, "A")),
     ("strip", (None, "A")),
     ("startswith", (None, "A")),
+    ("translate", (None, {ord("A"): "B"})),
     ("zfill", (None, 12)),
 ]
+
+
+def test_function_tables_cover_np_strings():
+    names = {*UNARY_FUNCTIONS, *(name for name, _ in BINARY_FUNCTIONS),
+             *(op.__name__ for op in comparison_operators)}
+    # decode only accepts bytes
+    assert set(np.strings.__all__) - names == {"decode"}
+
 
 PASSES_THROUGH_NAN_NULLS = [
     "add",
@@ -2877,6 +2930,38 @@ def test_binary(string_array, unicode_array, function_name, args):
     else:
         # shouldn't ever get here
         assert 0
+
+
+# _vec_string calls a Python str method on each element, so it holds the string
+# as Python objects (four bytes per character here), and case mapping reserves
+# three codepoints per character
+LARGE_STRING_KNOWN_ISSUES = {
+    "capitalize", "encode", "lower", "mod", "swapcase", "title", "translate", "upper"
+}
+LARGE_STRING_FUNCTIONS = {
+    name: args for name, args in [
+        *((name, (None,)) for name in UNARY_FUNCTIONS),
+        *BINARY_FUNCTIONS,
+        *((op.__name__, (None, None)) for op in comparison_operators),
+        # an empty pattern matches between every pair of characters, but with
+        # count=1 the output only needs room for one insertion
+        ("replace", (None, "", "prefix: ", 1)),
+    ]
+    if name not in ONLY_IN_NP_CHAR and name not in LARGE_STRING_KNOWN_ISSUES
+}
+
+
+def _large_string_args():
+    arr = np.array([UFUNC_TEST_DATA[1] * 2**12], dtype="T")  # about 1.2 MiB
+    return {name: (getattr(np.strings, name),
+                   *(arr if arg is None else arg for arg in args))
+            for name, args in LARGE_STRING_FUNCTIONS.items()}
+
+
+def test_large_string_memory_limit():
+    # run all string operations under a tight memory limit to check for large
+    # temporary allocations
+    run_with_memory_limit(operator.call, _large_string_args, 6 * 1024**2)
 
 
 @pytest.mark.parametrize("function, expected", [

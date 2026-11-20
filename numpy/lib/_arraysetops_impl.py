@@ -369,10 +369,27 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         conv = _array_converter(ar)
         ar_, = conv
 
+        dtype = ar_.dtype
+        swapped = dtype.kind == "c" and not dtype.isnative
+        if swapped:
+            # complex values can only be compared in native byte order
+            ar_ = ar_.astype(dtype.newbyteorder("="))
+
         if (hash_unique := _unique_hash(ar_, equal_nan=equal_nan)) \
             is not NotImplemented:
             if sorted:
                 hash_unique.sort()
+            if swapped:
+                hash_unique = hash_unique.astype(dtype)
+            if (dtype.kind == "M" and not equal_nan
+                    and np.isnat(hash_unique).any()):
+                # hashing merges every NaT into one
+                num_nat = np.count_nonzero(np.isnat(ar_))
+                if num_nat > 1:
+                    merged = hash_unique
+                    hash_unique = np.empty(merged.size + num_nat - 1, dtype)
+                    hash_unique[:merged.size] = merged
+                    hash_unique[merged.size:] = "NaT"
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             return (conv.wrap(hash_unique),)
 
@@ -972,6 +989,17 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
 
 def _isin_sorting(ar1, ar2, assume_unique, invert):
+    # A signed integer and uint64 only promote to float64, which merges
+    # distinct large values. Sort in ar1's dtype instead: values of ar2
+    # outside its range cannot match, so drop them first.
+    if (ar1.dtype.kind in "iu" and ar2.dtype.kind in "iu"
+            and np.result_type(ar1.dtype, ar2.dtype).kind == "f"):
+        if ar2.dtype.kind == "i":
+            in_range = ar2 >= 0
+        else:
+            in_range = ar2 <= np.iinfo(ar1.dtype).max
+        ar2 = ar2[in_range].astype(ar1.dtype)
+
     if not assume_unique:
         ar1, rev_idx = np.unique(ar1, return_inverse=True)
         ar2 = np.unique(ar2)

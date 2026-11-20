@@ -279,9 +279,8 @@ def inc2_cfloat_struct(cnp.ndarray[cnp.cfloat_t] arr):
     arr[1].imag = arr[1].imag + 1
 
 
-def npystring_pack(arr):
+def npystring_pack(arr, size_t size=11):
     cdef char *string = "Hello world"
-    cdef size_t size = 11
 
     allocator = cnp.NpyString_acquire_allocator(
         <cnp.PyArray_StringDTypeObject *>cnp.PyArray_DESCR(arr)

@@ -218,8 +218,8 @@ string_to_string(PyArrayMethod_Context *context, char *const data[],
                     goto fail;
                 }
             }
-            else if (free_and_copy(iallocator, oallocator, s, os,
-                                   "string to string cast") < 0) {
+            else if (copy_string(iallocator, oallocator, s, os,
+                                 "string to string cast") < 0) {
                 goto fail;
             }
         }

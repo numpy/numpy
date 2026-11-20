@@ -19,7 +19,7 @@ import tempfile
 import textwrap
 import warnings
 import weakref
-from contextlib import ExitStack, contextmanager
+from contextlib import contextmanager
 
 # Need to test an object that does not fully implement math interface
 from datetime import datetime, timedelta
@@ -64,6 +64,7 @@ from numpy.testing._private.utils import (
     longdouble_fpe_mark,
     requires_deep_recursion,
     requires_memory,
+    trace_memory_growth,
 )
 
 
@@ -1083,18 +1084,10 @@ class TestCreation:
 
     @pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
     def test_tracemalloc(self):
-        tracemalloc = pytest.importorskip("tracemalloc")
-        with ExitStack() as ctx:
-            if not tracemalloc.is_tracing():
-                tracemalloc.start()
-                ctx.callback(tracemalloc.stop)
-            pre_snapshot = tracemalloc.take_snapshot()
+        with trace_memory_growth() as growth:
             arr = np.zeros(1000000, dtype="uint8")
-            post_snapshot = tracemalloc.take_snapshot()
-            diff = post_snapshot.compare_to(pre_snapshot, "filename")
-        allocated_bytes = sum(d.size_diff for d in diff)
         # Allow for some non-data allocations
-        assert_allclose(allocated_bytes, arr.nbytes, 1000)
+        assert_allclose(growth(), arr.nbytes, atol=1000)
 
     def test_zeros(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
