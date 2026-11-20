@@ -2751,6 +2751,33 @@ class TestTrapezoid:
         xm = np.ma.array(x, mask=mask)
         assert_almost_equal(trapezoid(y, xm), r)
 
+    @pytest.mark.parametrize("dtype", [np.bool, np.int8, np.uint8, np.int16, np.int32])
+    def test_small_int_no_overflow(self, dtype):
+        # The sum of neighbouring samples and the differences of
+        # `x` were computed in the (narrow) input dtype and wrapped around.
+        info = np.iinfo(np.uint8 if dtype is np.bool else dtype)
+        y = np.array([info.max, info.max, info.min, info.max], dtype=dtype)
+        expected = trapezoid(y.astype(np.float64))
+        assert_almost_equal(trapezoid(y), expected)
+        assert_almost_equal(trapezoid(y, dx=2), 2 * expected)
+
+        if dtype is not np.bool:
+            x = np.array([info.max, info.min, info.max, info.min], dtype=dtype)
+            expected = trapezoid(y.astype(np.float64), x.astype(np.float64))
+            assert_almost_equal(trapezoid(y, x), expected)
+            # n-d `x`
+            assert_almost_equal(trapezoid(y[None, :], x[None, :]), expected)
+
+    def test_small_int_literal(self):
+        assert_equal(trapezoid(np.array([200, 100], dtype=np.uint8)), 150.0)
+
+    def test_int64_x_untouched(self):
+        # 64-bit integer `x` (e.g. nanosecond timestamps) is not converted
+        # to float64, which would lose the small differences.
+        t0 = 1767225600000000000
+        assert_equal(trapezoid(np.ones(5), x=t0 + np.arange(5)), 4.0)
+        assert_equal(trapezoid(np.ones(7), x=t0 + 1000 * np.arange(7)), 6000)
+
 
 class TestSinc:
 
