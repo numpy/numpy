@@ -4273,6 +4273,10 @@ class MaskedArray(ndarray):
         else:
             # For regular arrays, just use the data as they come.
             sdata = self.data
+            # Keep Python scalars as Python scalars, so NumPy's NEP 50
+            # "weak scalar" rule applies, as it does for plain ndarrays.
+            if type(other) in (int, float, complex):
+                odata = other
 
         check = compare(sdata, odata)
 
