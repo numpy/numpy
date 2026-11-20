@@ -2800,7 +2800,14 @@ def norm(x, ord=None, axis=None, keepdims=False):
             raise ValueError(f"Invalid norm order '{ord}' for vectors")
         else:
             absx = abs(x)
-            absx **= ord
+            if ord < 0:
+                # For negative `ord`, a zero entry gives ``0**ord = inf``,
+                # and the result ``inf**(1/ord) = 0`` is correct; don't
+                # emit a divide-by-zero warning for it (gh-5422).
+                with errstate(divide='ignore'):
+                    absx **= ord
+            else:
+                absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
             ret **= reciprocal(ord, dtype=ret.dtype)
             return ret
