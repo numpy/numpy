@@ -130,29 +130,35 @@ inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
     else if constexpr (
         (std::is_same_v<Tag, npy::datetime_tag> ||
          std::is_same_v<Tag, npy::timedelta_tag>)
-        && !reverse && sizeof(T) == sizeof(int64_t)
+        && sizeof(T) == sizeof(int64_t)
         && sizeof(npy_intp) == sizeof(int64_t)
     ) {
         /*
-         * datetime64/timedelta64 are int64 with NaT (INT64_MIN) sorting last.
-         * Sort a copy of the keys remapped as key = (uint64)v - 1: NaT becomes
-         * INT64_MAX while all other values keep their relative order and stay
-         * distinct, so the int64 order of the keys is exactly the datetime
-         * order.  A SIMD key-value sort of (key, arg) is much faster than an
-         * indirect argsort since it works on contiguous memory.
+         * datetime64/timedelta64 are int64 with NaT (INT64_MIN) sorting last
+         * in both directions.  Sort a copy of the values as keys with a SIMD
+         * key-value sort of (key, arg), which is much faster than an indirect
+         * argsort since it works on contiguous memory.  Ascending remaps the
+         * keys as key = (uint64)v - 1: NaT becomes INT64_MAX while all other
+         * values keep their relative order and stay distinct.  Descending
+         * needs no remap since NaT is already the smallest int64.
          */
-        void (*dispfunc)(int64_t*, npy_intp*, npy_intp) = nullptr;
+        void (*dispfunc)(int64_t*, npy_intp*, npy_intp, bool) = nullptr;
         #include "x86_simd_argsort.dispatch.h"
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template KVQSort, <int64_t>);
         if (dispfunc && num > 1) {
             const int64_t *v = reinterpret_cast<const int64_t *>(start);
-            int64_t *key = (int64_t *)malloc(num * sizeof(int64_t));
+            int64_t *key = (int64_t *)PyMem_RawMalloc(num * sizeof(int64_t));
             if (key != NULL) {
-                for (npy_intp i = 0; i < num; i++) {
-                    key[i] = (int64_t)((uint64_t)v[i] - 1u);
+                if constexpr (reverse) {
+                    memcpy(key, v, num * sizeof(int64_t));
                 }
-                (*dispfunc)(key, arg, num);
-                free(key);
+                else {
+                    for (npy_intp i = 0; i < num; i++) {
+                        key[i] = (int64_t)((uint64_t)v[i] - 1u);
+                    }
+                }
+                (*dispfunc)(key, arg, num, reverse);
+                PyMem_RawFree(key);
                 return true;
             }
         }

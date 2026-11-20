@@ -33,9 +33,9 @@ namespace np { namespace qsort_simd {
  * The int64 key-value sort needs 64-bit indices, so it is only provided
  * where npy_intp is 64-bit; 32-bit builds keep the existing argsort path.
  */
-template<> void NPY_CPU_DISPATCH_CURFX(KVQSort)(int64_t* key, npy_intp *val, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(KVQSort)(int64_t* key, npy_intp *val, npy_intp size, bool reverse)
 {
-    x86simdsortStatic::keyvalue_qsort(key, reinterpret_cast<uint64_t*>(val), (size_t)size, false, false);
+    x86simdsortStatic::keyvalue_qsort(key, reinterpret_cast<uint64_t*>(val), (size_t)size, false, reverse);
 }
 #endif
 
