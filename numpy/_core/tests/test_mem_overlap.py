@@ -76,6 +76,30 @@ def test_overlapping_assignments():
         _check_assignment(srcidx, dstidx)
 
 
+@pytest.mark.parametrize("use_copyto", [False, True], ids=["setitem", "copyto"])
+def test_overlapping_strided_assignment(use_copyto):
+    x = np.arange(5)
+    expected = x.copy()
+    expected[::2] = expected[:3].copy()
+    if use_copyto:
+        np.copyto(x[::2], x[:3])
+    else:
+        x[::2] = x[:3]
+    assert_array_equal(x, expected)
+
+
+@pytest.mark.parametrize("use_setter", [False, True], ids=["setitem", "setter"])
+def test_overlapping_flat_assignment(use_setter):
+    x = np.arange(6)
+    expected = x.copy()
+    expected[1:].flat[:] = expected[:-1].copy()
+    if use_setter:
+        x[1:].flat = x[:-1]
+    else:
+        x[1:].flat[:] = x[:-1]
+    assert_array_equal(x, expected)
+
+
 @pytest.mark.slow
 def test_diophantine_fuzz():
     # Fuzz test the diophantine solver
