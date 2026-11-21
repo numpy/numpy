@@ -54,8 +54,9 @@ The default number of fractional digits displayed is 8. You can change this numb
 
 
 The ``floatmode`` option determines how the ``precision`` setting is interpreted. 
-By default, ``floatmode=maxprec_equal`` displays values with the minimal number of digits needed to uniquely represent them, 
-using the same number of digits across all elements.
+By default, ``floatmode=maxprec`` prints at most ``precision`` fractional digits, but
+uses fewer for any element that can be uniquely represented with fewer digits.
+``floatmode=maxprec_equal`` does the same, but uses the same number of digits for every element.
 If you want to show exactly the same number of digits specified by ``precision``, use ``floatmode=fixed``:
 
     >>> arr = np.array([0.1, 0.184, 0.173], dtype=np.float32)
