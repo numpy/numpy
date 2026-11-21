@@ -269,14 +269,15 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
          * the data to the buffer in the following order (also used by
          * FFTpack): R0,R1,I1,...Rn-1,In-1,Rn[,In] (last for npts odd only).
          */
-        op_or_buff[0] = ((T *)ip)[0];  /* copy R0 */
+        op_or_buff[0] = (nin == 0) ? (T)0 : ((T *)ip)[0];  /* copy R0 */
         if (nout > 1) {
             /*
              * Copy R1,I1... up to Rn-1,In-1 if possible, stopping earlier
              * if not all the input points are needed or if the input is short
              * (in the latter case, zeroing after).
              */
-            copy_input(ip + step_in, step_in, nin - 1,
+            size_t nin_tail = (nin > 0) ? nin - 1 : 0;
+            copy_input(ip + step_in, step_in, nin_tail,
                        (std::complex<T> *)&op_or_buff[1], (nout - 1) / 2);
             /* For even nout, we still need to set Rn. */
             if (nout % 2 == 0) {
