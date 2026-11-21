@@ -1270,7 +1270,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
                 d = np.diff(u)
                 diffx = d.astype(np.float64)
                 neg = distances[1:] < distances[:-1]
-                diffx[neg] = -(-d[neg]).astype(np.float64)
+                diffx[neg] = -diffx[neg]
             else:
                 diffx = np.diff(distances)
             # if distances are constant reduce to the scalar case
