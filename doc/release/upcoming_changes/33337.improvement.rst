@@ -1,0 +1,5 @@
+Clearer error for ``fromfile`` with a zero-size dtype
+-----------------------------------------------------
+`numpy.fromfile` now explains that it cannot infer a count for a dtype with
+itemsize zero. Specify a nonnegative ``count`` to create an array with such a
+dtype.
