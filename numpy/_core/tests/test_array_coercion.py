@@ -4,6 +4,7 @@ Note that other such tests exist, e.g., in `test_api.py` and many corner-cases
 are tested (sometimes indirectly) elsewhere.
 """
 
+import sys
 from itertools import permutations, product
 
 import pytest
@@ -13,6 +14,48 @@ import numpy as np
 import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational, rational2
 from numpy.testing import IS_64BIT, assert_array_equal
+from numpy.testing._private.utils import HAS_SUBPROCESSES, run_subprocess
+
+
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
+@pytest.mark.parametrize(
+    "cycle, values, match",
+    [
+        param("a.extend([a, a])", "a", "would exceed the maximum number", id="direct"),
+        param(
+            "a.append([a, a])", "a", "would exceed the maximum number", id="indirect"
+        ),
+        param(
+            "b = [a]\nc = [b]\nd = [c]\na.extend([d, d])",
+            "a", "would exceed the maximum number", id="four-list-cycle",
+        ),
+        param(
+            "a.extend([a, a])", "[np.broadcast_to(np.uint8(0), (2,) * 30), a]",
+            "inhomogeneous shape", id="limit-set-by-sibling",
+        ),
+    ],
+)
+def test_recursive_sequence_exceeds_dimension_limit(cycle, values, match):
+    code = f"""
+import numpy as np
+from numpy.testing import assert_raises_regex
+
+a = []
+{cycle}
+with assert_raises_regex(ValueError, {match!r}):
+    np.array({values})
+"""
+    run_subprocess([sys.executable, "-c", code], timeout=10)
+
+
+def test_nonbranching_recursive_sequence():
+    a = []
+    a.append(a)
+    with pytest.raises(ValueError, match="inhomogeneous shape after 1 dimensions"):
+        np.array([a, 0])
+    arr = np.array(a, dtype=object)
+    assert arr.shape == (1,) * ncu.MAXDIMS
+    assert arr.item() is a
 
 
 def arraylikes():
