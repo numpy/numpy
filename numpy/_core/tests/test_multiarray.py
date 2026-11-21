@@ -2309,6 +2309,24 @@ class TestMethods:
         a = np.zeros(2, [("x", "u1", 500_000)])
         a.sort(kind="stable")
 
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+    @pytest.mark.parametrize("n", [17, 32, 128, 1000])
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_sort_preserves_negative_zero_count(
+            self, dtype, n, stable, descending):
+        # gh-33286: unstable SIMD sorts must not create or destroy signed
+        # zeros when equal keys are reordered.
+        rng = np.random.default_rng(seed=12345)
+        a = rng.normal(size=n)
+        b = rng.normal(size=n)
+        a[np.abs(a) > 0.5] = 0
+        a = np.copysign(a, b).astype(dtype)
+
+        expected = np.count_nonzero(np.signbit(a) & (a == 0))
+        result = np.sort(a, stable=stable, descending=descending)
+        assert np.count_nonzero(np.signbit(result) & (result == 0)) == expected
+
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number
     # of sorted items must be greater than ~50 to check the actual
