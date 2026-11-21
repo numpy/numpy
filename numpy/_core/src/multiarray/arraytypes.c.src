@@ -123,9 +123,77 @@ MyPyFloat_AsDouble(PyObject *obj)
 }
 
 
+/*
+ * Convert an exact Python int to a correctly rounded float.  Going through
+ * the nearest double (as `float(obj)` does) rounds twice, which gives the
+ * wrong float when the int is just off a float midpoint (gh-20687).
+ * Ints that fit in a long long are cast by C, which rounds once.  For
+ * larger ints, the nearest double only rounds to the wrong float when it
+ * lands exactly on a float midpoint without being equal to the int; in that
+ * rare case the double is moved one ulp towards the int before the cast.
+ * Raises OverflowError where `float(obj)` would.
+ */
+static float
+MyPyLong_AsFloat(PyObject *obj)
+{
+    int overflow;
+    long long ll_val = PyLong_AsLongLongAndOverflow(obj, &overflow);
+    if (overflow == 0) {
+        if (error_converting(ll_val)) {
+            return -1;
+        }
+        return (float)ll_val;
+    }
+
+    /* PyLong_AsDouble rounds to nearest, ties to even. */
+    double d_val = PyLong_AsDouble(obj);
+    if (error_converting(d_val)) {
+        return -1;
+    }
+    /*
+     * A float midpoint has one more significant bit than a float, so as a
+     * double its significand ends in a one followed by 53 - 25 = 28 zeros.
+     */
+    const npy_uint64 midpoint_mask = ((npy_uint64)1 << 29) - 1;
+    const npy_uint64 midpoint_bits = (npy_uint64)1 << 28;
+    npy_uint64 bits;
+    memcpy(&bits, &d_val, sizeof(bits));
+    if (NPY_UNLIKELY((bits & midpoint_mask) == midpoint_bits)) {
+        PyObject *d_as_long = PyLong_FromDouble(d_val);
+        if (d_as_long == NULL) {
+            return -1;
+        }
+        int is_below = PyObject_RichCompareBool(obj, d_as_long, Py_LT);
+        int is_above = is_below == 0 ?
+                PyObject_RichCompareBool(obj, d_as_long, Py_GT) : 0;
+        Py_DECREF(d_as_long);
+        if (is_below < 0 || is_above < 0) {
+            return -1;
+        }
+        if (is_below) {
+            d_val = nextafter(d_val, -NPY_INFINITY);
+        }
+        else if (is_above) {
+            /* Cannot overflow: the largest double is not a midpoint. */
+            d_val = nextafter(d_val, NPY_INFINITY);
+        }
+    }
+    float res = (float)d_val;
+    if (NPY_UNLIKELY(npy_isinf(res))) {
+        if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
+            return -1;
+        }
+    }
+    return res;
+}
+
+
 static float
 MyPyFloat_AsFloat(PyObject *obj)
 {
+    if (PyLong_CheckExact(obj)) {
+        return MyPyLong_AsFloat(obj);
+    }
     double d_val = MyPyFloat_AsDouble(obj);
     if (error_converting(d_val)) {
         return -1;
@@ -467,6 +535,17 @@ NPY_NO_EXPORT int
     else if (PyArray_IsZeroDim(op)) {
         return convert_to_scalar_and_retry(descr, op, ov, @NAME@_setitem);
     }
+#if NPY_SIZEOF_@NAME@ < NPY_SIZEOF_CDOUBLE  /* really just float... */
+    else if (PyLong_CheckExact(op)) {
+        /* Round once rather than through a double (gh-20687) */
+        @ftype@ real = MyPyLong_AsFloat(op);
+        if (error_converting(real)) {
+            return -1;
+        }
+        npy_csetreal@suffix@(&temp, real);
+        npy_csetimag@suffix@(&temp, 0);
+    }
+#endif
     else {
         if (op == Py_None) {
             oop.real = NPY_NAN;
