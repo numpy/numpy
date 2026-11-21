@@ -19,6 +19,14 @@ _kind_to_stem = {
     'U': 'str',
 }
 
+# Fixed-size builtin numeric dtypes only depend on kind and itemsize.  Keep
+# their common names ready so dtype.name does not need to build a new string.
+_fixed_builtin_names = {
+    kind: {size: f"{stem}{size * 8}" for size in (1, 2, 4, 8, 10, 12, 16, 32)}
+    for kind, stem in (("i", "int"), ("u", "uint"),
+                       ("f", "float"), ("c", "complex"))
+}
+
 
 def _kind_name(dtype):
     try:
@@ -319,44 +327,49 @@ def _subarray_str(dtype):
     return f"({_construction_repr(base, short=True)}, {shape})"
 
 
-def _name_includes_bit_suffix(dtype):
-    if dtype.type == np.object_:
-        # pointer size varies by system, best to omit it
-        return False
-    elif dtype.type == np.bool:
-        # implied
-        return False
-    elif dtype.type is None:
-        return True
-    elif np.issubdtype(dtype, np.flexible) and _isunsized(dtype):
-        # unspecified
-        return False
-    else:
-        return True
-
-
 def _name_get(dtype):
     # provides dtype.name.__get__, documented as returning a "bit name"
 
-    if dtype.isbuiltin == 2:
+    builtin = dtype.isbuiltin
+    if builtin == 1:
+        kind = dtype.kind
+        if kind == 'b':
+            return 'bool'
+        if kind == 'O':
+            return 'object'
+        names = _fixed_builtin_names.get(kind)
+        if names is not None:
+            name = names.get(dtype.itemsize)
+            if name is not None:
+                return name
+        elif kind in ('S', 'U', 'V') and dtype.itemsize == 0:
+            # Unsized flexible dtypes also have fixed names.
+            return _kind_to_stem[kind]
+
+    scalar_type = dtype.type
+    if builtin == 2:
         # user dtypes don't promise to do anything special
-        return dtype.type.__name__
+        return scalar_type.__name__
 
-    if not type(dtype)._legacy:
-        name = type(dtype).__name__
+    dtype_type = type(dtype)
+    if not dtype_type._legacy:
+        name = dtype_type.__name__
 
-    elif issubclass(dtype.type, np.void):
+    elif issubclass(scalar_type, np.void):
         # historically, void subclasses preserve their name, eg `record64`
-        name = dtype.type.__name__
+        name = scalar_type.__name__
     else:
         name = _kind_name(dtype)
 
-    # append bit counts
-    if _name_includes_bit_suffix(dtype):
+    # Object and bool have no bit suffix.  The flexible check only matters for
+    # unsized dtypes, which avoids a subtype check for ordinary sized dtypes.
+    if (scalar_type != np.object_ and scalar_type != np.bool and
+            (scalar_type is None or dtype.itemsize != 0 or
+             not np.issubdtype(dtype, np.flexible))):
         name += f"{dtype.itemsize * 8}"
 
     # append metadata to datetimes
-    if dtype.type in (np.datetime64, np.timedelta64):
+    if scalar_type in (np.datetime64, np.timedelta64):
         name += _datetime_metadata_str(dtype)
 
     return name
