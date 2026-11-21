@@ -215,6 +215,7 @@ extern "C" {
     F(internal_gcd_func)                \
     F(_mean)                            \
     F(NO_NEP50_WARNING)                 \
+    F(_name_get)                        \
     F(npy_ctypes_check)                 \
     F(numpy_matrix)                     \
     F(_prod)                            \
