@@ -1,0 +1,8 @@
+Unstable SIMD sorts preserve signed zeros
+----------------------------------------
+``np.sort`` with ``stable=False`` (the default) could change the number of
+``-0.0`` values in a float array: the SIMD sorts treated ``-0.0`` and ``0.0``
+as equal keys and overwrote runs of equal keys with copies of one of them,
+changing the sign bit of some zeros (gh-33286). The ``highway`` and
+``x86-simd-sort`` submodules were updated to versions that preserve the sign
+of zero, so sorting no longer modifies the multiset of values.

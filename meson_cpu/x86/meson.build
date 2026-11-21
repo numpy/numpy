@@ -46,8 +46,14 @@ AVX512_ICL = mod_features.new(
   test_code: files(source_root + '/numpy/_core/src/_simd/checks/cpu_avx512_icl.c')[0]
 )
 AVX512_SPR = mod_features.new(
-  'AVX512_SPR', 35, implies: AVX512_ICL, 
-  args: ['-mavx512fp16', '-mavx512bf16'],
+  'AVX512_SPR', 35, implies: AVX512_ICL,
+  # Highway's AVX3_SPR target string (hwy/ops/set_macros-inl.h) also contains
+  # amx-tile, amx-bf16 and amx-int8 since google/highway@cea00b61, so the
+  # compile flags must match it, otherwise GCC fails with "target specific
+  # option mismatch" when instantiating the N_AVX3_SPR namespace (gh-33349,
+  # intel_sde_spr CI job).
+  args: ['-mavx512fp16', '-mavx512bf16',
+         '-mamx-tile', '-mamx-bf16', '-mamx-int8'],
   group: ['AVX512FP16', 'AVX512BF16'],
   detect: 'AVX512_SPR',
   test_code: files(source_root + '/numpy/_core/src/_simd/checks/cpu_avx512_spr.c')[0]
