@@ -10,6 +10,7 @@ import pytest
 import numpy as np
 from numpy._core._multiarray_tests import array_indexing
 from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
+from numpy.lib.stride_tricks import as_strided
 from numpy.testing import (
     HAS_REFCOUNT,
     assert_,
@@ -21,6 +22,12 @@ from numpy.testing import (
 
 
 class TestIndexing:
+    def test_integer_index_stride_overflow(self):
+        # gh-32219
+        big = 1 << (8 * np.dtype(np.intp).itemsize - 2)
+        a = as_strided(np.zeros(16, np.int8), shape=(4, 4), strides=(big, 1))
+        assert_raises(ValueError, lambda: a[3, 0])
+
     def test_index_no_floats(self):
         a = np.array([[[5]]])
 

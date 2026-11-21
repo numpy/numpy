@@ -26,6 +26,7 @@
 #include "mem_overlap.h"
 #include "array_assign.h"
 #include "array_coercion.h"
+#include "npy_extint128.h"  /* for safe_mul */
 /* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
@@ -828,7 +829,21 @@ get_item_pointer(PyArrayObject *self, char **ptr,
                                PyArray_DIMS(self)[i], i, NULL)) < 0) {
             return -1;
         }
-        *ptr += PyArray_STRIDE(self, i) * indices[i].value;
+        char overflow = 0;
+        npy_int64 offset = safe_mul(PyArray_STRIDE(self, i),
+                                    indices[i].value, &overflow);
+#if NPY_BITSOF_INTP < 64
+        if (offset < NPY_MIN_INTP || offset > NPY_MAX_INTP) {
+            overflow = 1;
+        }
+#endif
+        if (overflow) {
+            PyErr_SetString(PyExc_ValueError,
+                    "index computation would overflow the maximum "
+                    "pointer offset");
+            return -1;
+        }
+        *ptr += (npy_intp)offset;
     }
     return 0;
 }
