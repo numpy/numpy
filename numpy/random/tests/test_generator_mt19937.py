@@ -28,19 +28,19 @@ JUMP_TEST_DATA = [
         "seed": 0,
         "steps": 10,
         "initial": {"key_sha256": "bb1636883c2707b51c5b7fc26c6927af4430f2e0785a8c7bc886337f919f9edf", "pos": 9},    # noqa: E501
-        "jumped":  {"key_sha256": "ff682ac12bb140f2d72fba8d3506cf4e46817a0db27aae1683867629031d8d55", "pos": 598},  # noqa: E501
+        "jumped":  {"key_sha256": "8183c25a31bcb11689b3da3cf2620ce0671e73d9390d8176ad20deefcdd2864b", "pos": 9},  # noqa: E501
     },
     {
         "seed": 384908324,
         "steps": 312,
         "initial": {"key_sha256": "16b791a1e04886ccbbb4d448d6ff791267dc458ae599475d08d5cced29d11614", "pos": 311},  # noqa: E501
-        "jumped":  {"key_sha256": "a0110a2cf23b56be0feaed8f787a7fc84bef0cb5623003d75b26bdfa1c18002c", "pos": 276},  # noqa: E501
+        "jumped":  {"key_sha256": "0083c9ec3b313ebe34242e1102b6e87302eefe03fd539496819ae70e66332c24", "pos": 311},  # noqa: E501
     },
     {
         "seed": [839438204, 980239840, 859048019, 821],
         "steps": 511,
         "initial": {"key_sha256": "d306cf01314d51bd37892d874308200951a35265ede54d200f1e065004c3e9ea", "pos": 510},  # noqa: E501
-        "jumped":  {"key_sha256": "0e00ab449f01a5195a83b4aee0dfbc2ce8d46466a640b92e33977d2e42f777f8", "pos": 475},  # noqa: E501
+        "jumped":  {"key_sha256": "57303c4999e050a143c24ed8f89e3f4a289abdb216eb815b8b702d7aab80daf2", "pos": 510},  # noqa: E501
     },
 ]
 
@@ -2656,7 +2656,7 @@ def test_jumped(config):
     # Each config contains the initial seed, a number of raw steps
     # the sha256 hashes of the initial and the final states' keys and
     # the position of the initial and the final state.
-    # These were produced using the original C implementation.
+    # These hashes record the jumped state for each starting position.
     seed = config["seed"]
     steps = config["steps"]
 
@@ -2677,6 +2677,21 @@ def test_jumped(config):
     sha256 = hashlib.sha256(key)
     assert jumped.state["state"]["pos"] == config["jumped"]["pos"]
     assert sha256.hexdigest() == config["jumped"]["key_sha256"]
+
+
+@pytest.mark.parametrize("steps", [1, 10, 624, 1000])
+def test_jumped_commutes_with_generation(steps):
+    # Jumping should advance the stream by 2**128 draws independently
+    # of how many values have already been generated.
+    bg1 = MT19937(0)
+    bg1.random_raw(steps)
+    bg1 = bg1.jumped()
+
+    bg2 = MT19937(0)
+    bg2 = bg2.jumped()
+    bg2.random_raw(steps)
+
+    assert_array_equal(bg1.random_raw(2000), bg2.random_raw(2000))
 
 
 def test_broadcast_size_error():

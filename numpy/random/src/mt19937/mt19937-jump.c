@@ -98,18 +98,37 @@ void horner1(unsigned long *pf, mt19937_state *state) {
 
 void mt19937_jump_state(mt19937_state *state) {
   unsigned long *pf;
+  uint32_t rotated_key[_MT19937_N];
   int i;
+  int original_pos;
+  int jump_pos;
+
+  original_pos = state->pos;
 
   pf = (unsigned long *)PyMem_RawCalloc(P_SIZE, sizeof(unsigned long));
-  for (i = 0; i<P_SIZE; i++) {
+  for (i = 0; i < P_SIZE; i++) {
     pf[i] = poly_coef[i];
   }
 
-  if (state->pos >= _MT19937_N) {
-    state->pos = 0;
+  /*
+   * The polynomial jump operates on a circular view of the MT19937 state.
+   * Run it from position zero, then rotate the resulting key to restore
+   * NumPy's linear key layout and the caller's original position.
+   */
+  state->pos = 0;
+  horner1(pf, state);
+
+  jump_pos = state->pos;
+
+  for (i = 0; i < _MT19937_N; i++) {
+    rotated_key[i] = state->key[(i + jump_pos) % _MT19937_N];
   }
 
-  horner1(pf, state);
+  for (i = 0; i < _MT19937_N; i++) {
+    state->key[i] = rotated_key[i];
+  }
+
+  state->pos = original_pos;
 
   PyMem_RawFree(pf);
 }
