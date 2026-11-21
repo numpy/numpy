@@ -619,6 +619,15 @@ def test_irfft_with_n_1_regression():
     np.fft.irfft(np.array([0], complex), n=10)
 
 
+@pytest.mark.parametrize("fft", [np.fft.irfft, np.fft.hfft])
+@pytest.mark.parametrize("n", [1, 2, 4])
+def test_irfft_empty_input_zero_padding(fft, n):
+    # Regression test for gh-33396
+    # Empty inputs must be zero-padded rather than reading uninitialized memory
+    x = np.array([], dtype=np.complex128)
+    assert_array_equal(fft(x, n=n), np.zeros(n, dtype=np.float64))
+
+
 def test_irfft_with_n_large_regression():
     # Regression test for gh-25679
     x = np.arange(5) * (1 + 1j)
