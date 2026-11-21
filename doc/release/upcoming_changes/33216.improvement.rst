@@ -1,0 +1,6 @@
+Avoid overflow in masked medians of ``float16`` data
+--------------------------------------------------
+The masked-array median calculation used by `numpy.ma.median` and
+`numpy.nanmedian` now avoids overflow when averaging large, finite ``float16``
+values. Intermediate calculations use ``float32`` precision while the result
+retains the input dtype unless ``out`` is supplied.

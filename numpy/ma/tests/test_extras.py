@@ -916,6 +916,71 @@ class TestApplyOverAxes:
 
 
 class TestMedian:
+    @pytest.mark.parametrize('value', [40000, -40000, 65504])
+    @pytest.mark.parametrize('ndim', [1, 2])
+    @pytest.mark.parametrize('count', [2, 3])
+    @pytest.mark.parametrize('out_dtype', [None, np.float16, np.float32])
+    @pytest.mark.parametrize('overwrite_input', [False, True])
+    def test_float16_overflow(self, value, ndim, count, out_dtype,
+                              overwrite_input):
+        a = np.ma.array([value, value, value, 0], dtype=np.float16,
+                        mask=np.arange(4) >= count, ndmin=ndim)
+        original = a.copy()
+        out = None
+        if out_dtype is not None:
+            out = np.ma.empty(a.shape[:-1], dtype=out_dtype)
+
+        result = np.ma.median(a, axis=-1, out=out,
+                              overwrite_input=overwrite_input)
+
+        assert_equal(result, value)
+        assert_equal(result.dtype, out_dtype or np.float16)
+        assert_equal(np.ma.getmaskarray(result), False)
+        if out is not None:
+            assert result is out
+        if not overwrite_input:
+            assert_equal(a, original)
+            assert_equal(a.mask, original.mask)
+
+    @pytest.mark.parametrize('value', [np.finfo(np.float16).smallest_subnormal,
+                                       np.inf, -np.inf, np.nan])
+    @pytest.mark.parametrize('ndim', [1, 2])
+    def test_float16_small_and_nonfinite(self, value, ndim):
+        a = np.ma.array([value, value, 0], dtype=np.float16,
+                        mask=[False, False, True], ndmin=ndim)
+
+        result = np.ma.median(a, axis=-1)
+
+        assert_array_equal(result, value)
+        assert_equal(result.dtype, np.float16)
+        assert_equal(np.ma.getmaskarray(result), False)
+
+    @pytest.mark.parametrize('ndim', [1, 2])
+    @pytest.mark.parametrize('out_dtype', [None, np.float16, np.float32])
+    def test_float16_midpoint(self, ndim, out_dtype):
+        a = np.ma.array([40000, 60000, 0], dtype=np.float16,
+                        mask=[False, False, True], ndmin=ndim)
+        out = None
+        if out_dtype is not None:
+            out = np.empty(a.shape[:-1], dtype=out_dtype)
+
+        result = np.ma.median(a, axis=-1, out=out)
+
+        expected = np.array(50000, dtype=out_dtype or np.float16)
+        assert_equal(result, expected)
+        assert_equal(result.dtype, expected.dtype)
+        if out is not None:
+            assert result is out
+
+    def test_float16_non_native_byteorder(self):
+        dtype = np.dtype(np.float16).newbyteorder()
+        a = np.ma.array([[40000, 60000]], dtype=dtype)
+
+        result = np.ma.median(a, axis=-1)
+
+        assert_equal(result, np.float16(50000))
+        assert_equal(result.dtype, np.float16)
+
     def test_pytype(self):
         r = np.ma.median([[np.inf, np.inf], [np.inf, np.inf]], axis=-1)
         assert_equal(r, np.inf)
