@@ -56,6 +56,7 @@ from numpy.testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_equal,
+    assert_no_warnings,
     assert_raises,
     assert_raises_regex,
 )
@@ -1602,6 +1603,13 @@ def _foo2(x, y=1.0, z=0.0):
     return y * math.floor(x) + z
 
 
+def _leave_invalid_flag_set(x):
+    # inf - inf sets the CPU's "invalid" floating point flag, and plain
+    # Python code never clears it again.
+    float("inf") - float("inf")
+    return x
+
+
 class TestVectorize:
 
     def test_simple(self):
@@ -2118,6 +2126,27 @@ class TestVectorize:
                        dtype='datetime64[ns]')
         assert_array_equal(np.vectorize(lambda x: x, signature="(i)->(j)",
                                         otypes=[otype])(arr), arr)
+
+    def test_function_leaving_invalid_flag_does_not_warn(self):
+        """Calling a vectorized function that leaves the invalid flag set,
+        under ``errstate(invalid="warn")``, gives no warning.
+
+        The flag comes from the Python function, not numpy (gh-27760).
+        """
+        f = vectorize(_leave_invalid_flag_set)
+        with np.errstate(invalid="warn"), assert_no_warnings():
+            result = f(np.array([1.0, 2.0]))
+        assert_array_equal(result, [1.0, 2.0])
+
+    def test_otypes_function_leaving_invalid_flag_does_not_warn(self):
+        """Calling a vectorized function with ``otypes`` given that leaves
+        the invalid flag set, under ``errstate(invalid="warn")``, gives no
+        warning.
+        """
+        f = vectorize(_leave_invalid_flag_set, otypes=[float])
+        with np.errstate(invalid="warn"), assert_no_warnings():
+            result = f(np.array([1.0, 2.0]))
+        assert_array_equal(result, [1.0, 2.0])
 
 
 class TestLeaks:

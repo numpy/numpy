@@ -38,6 +38,7 @@
 #include "extobj.h"  /* for _extobject_contextvar exposure */
 #include "module_state.h"
 #include "ufunc_type_resolution.h"
+#include "ufunc_object.h"
 
 /* Automatically generated code to define all ufuncs: */
 #include "funcs.inc"
@@ -149,10 +150,10 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     /* Do a better job someday */
     doc = "dynamic ufunc based on a python function";
 
-    self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
+    self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(
             (PyUFuncGenericFunction *)pyfunc_functions, data,
             types, /* ntypes */ 1, nin, nout, identity ? PyUFunc_IdentityValue : PyUFunc_None,
-            str, doc, /* unused */ 0, NULL, identity);
+            str, doc, NULL, identity, UFUNC_NO_FLOATINGPOINT_ERRORS_ALL_LOOPS);
 
     if (self == NULL) {
         PyMem_RawFree(ptr);

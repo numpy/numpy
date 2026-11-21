@@ -347,6 +347,9 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
             !(flags & NPY_METH_REQUIRES_PYAPI)) {
         flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
     }
+    if (ufunc->_ufunc_flags & UFUNC_NO_FLOATINGPOINT_ERRORS_ALL_LOOPS) {
+        flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    }
 
     PyType_Slot slots[4] = {
         {NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
