@@ -4799,6 +4799,50 @@ class TestQuantile:
         value = np.quantile(a, np.float32(0.5), method=method)
         assert value.dtype == np.float32
 
+    @pytest.mark.parametrize("method", [
+        "linear", "lower", "higher", "midpoint", "nearest", "hazen",
+        "weibull", "median_unbiased", "normal_unbiased",
+        "interpolated_inverted_cdf", "inverted_cdf",
+        "averaged_inverted_cdf", "closest_observation",
+    ])
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+    def test_infinite_values(self, method, dtype):
+        # gh-21091: infinite values must not turn the result into nan when
+        # the quantile is well defined.
+        inf = dtype(np.inf)
+        for q in np.linspace(0, 1, 11):
+            for data in ([inf], [inf, inf], [-inf, -inf], [1, 2, inf],
+                         [1, inf, inf], [-inf, 1, 2], [-inf, -inf, 1]):
+                data = np.array(data, dtype=dtype)
+                res = np.quantile(data, q, method=method)
+                # monotonic in the data: the result is bounded by the extremes
+                # and is never nan for these inputs
+                assert not np.isnan(res), (data, q, method)
+                assert data.min() <= res <= data.max()
+
+    def test_infinite_values_exact(self):
+        assert np.percentile([1, 2, np.inf], 50) == 2.0
+        assert np.percentile([np.inf], 50) == np.inf
+        assert np.percentile([-np.inf], 50) == -np.inf
+        assert np.percentile([np.inf, np.inf], 25) == np.inf
+        assert np.percentile([1, 2, np.inf], 75) == np.inf
+        assert np.percentile([-np.inf, 1, 2], 25) == -np.inf
+        # consistent with median
+        for data in ([1, 2, np.inf], [1, np.inf, np.inf], [-np.inf, 1, 2]):
+            assert np.percentile(data, 50) == np.median(data)
+        # axis and array q
+        arr = np.array([[1, np.inf, -np.inf], [2, np.inf, 5], [np.inf, np.inf, 7]])
+        assert_equal(np.quantile(arr, 0.5, axis=0), [2, np.inf, 5])
+        assert_equal(np.quantile(arr, [0.0, 0.5], axis=0),
+                     [[1, np.inf, -np.inf], [2, np.inf, 5]])
+        # nan still wins and opposite infinities stay undefined
+        assert np.isnan(np.percentile([1, np.nan, np.inf], 50))
+        assert np.isnan(np.percentile([-np.inf, np.inf], 50))
+        assert np.nanpercentile([1, 2, np.inf, np.nan], 50) == 2.0
+        # discrete methods put the full weight on the upper neighbour
+        assert np.percentile([-np.inf, 1, 2], 60,
+                             method="averaged_inverted_cdf") == 1.0
+
 
 class TestLerp:
     @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")
@@ -4853,6 +4897,35 @@ class TestLerp:
         b = np.array(5)
         t = np.array(0.2)
         assert nfb._lerp(a, b, t) == 2.6
+
+    @pytest.mark.parametrize("a, b, t, expected", [
+        # equal infinite endpoints
+        (np.inf, np.inf, 0.0, np.inf),
+        (np.inf, np.inf, 0.5, np.inf),
+        (-np.inf, -np.inf, 0.3, -np.inf),
+        # one infinite endpoint, zero weight on it
+        (2.0, np.inf, 0.0, 2.0),
+        (-np.inf, 2.0, 0.0, -np.inf),
+        # one infinite endpoint, non-zero weight on it
+        (2.0, np.inf, 0.3, np.inf),
+        (2.0, np.inf, 0.5, np.inf),
+        (2.0, np.inf, 0.9, np.inf),
+        (-np.inf, 2.0, 0.3, -np.inf),
+        (-np.inf, 2.0, 0.5, -np.inf),
+        (-np.inf, 2.0, 0.9, -np.inf),
+        # full weight on the finite endpoint (discrete methods set t to 1)
+        (-np.inf, 2.0, 1.0, 2.0),
+        (2.0, np.inf, 1.0, np.inf),
+        (-np.inf, np.inf, 1.0, np.inf),
+        # opposite infinities with non-zero weights stay undefined
+        (-np.inf, np.inf, 0.5, np.nan),
+        (-np.inf, np.inf, 0.0, -np.inf),
+    ])
+    def test_linear_interpolation_infinite_endpoints(self, a, b, t, expected):
+        assert_equal(nfb._lerp(a, b, t), expected)
+        # vectorized, with an array of weights
+        res = nfb._lerp(np.array([a, a]), np.array([b, b]), np.array([t, t]))
+        assert_equal(res, [expected, expected])
 
 
 class TestMedian:

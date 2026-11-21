@@ -1,0 +1,6 @@
+``np.percentile`` and ``np.quantile`` handle infinite values
+-------------------------------------------------------------
+``np.percentile``, ``np.quantile`` and their ``nan`` variants now return
+the exact result instead of ``nan`` when the data contains ``inf`` or
+``-inf``. For example, ``np.percentile([1, 2, np.inf], 50)`` now returns
+``2.0``, matching ``np.median``.
