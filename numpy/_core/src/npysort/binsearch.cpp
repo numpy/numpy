@@ -11,6 +11,7 @@
 
 #include <array>
 #include <functional>  // for std::less and std::less_equal
+#include <type_traits>
 
 // Enumerators for the variant of binsearch
 enum arg_t
@@ -56,6 +57,73 @@ struct side_to_generic_cmp<right> {
  **                            NUMERIC SEARCHES                             **
  *****************************************************************************
  */
+/*
+ * Plain (non NaN-aware) comparators, used for floating point types when
+ * neither the haystack nor the current block of keys contains NaNs. In that
+ * case they give exactly the same answers as Tag::less / Tag::less_equal.
+ */
+template <class T, side_t side>
+struct plain_cmp;
+
+template <class T>
+struct plain_cmp<T, left> {
+    static inline int value(T a, T b) { return a < b; }
+};
+
+template <class T>
+struct plain_cmp<T, right> {
+    static inline int value(T a, T b) { return a <= b; }
+};
+
+/*
+ * Batched binary search over one block of keys (see the comment in
+ * `binsearch` below). The keys and the running bases are kept in small
+ * local buffers so every pass of the batched search stays in L1 cache.
+ */
+template <class T, class Cmp>
+static inline void
+binsearch_block(const char *arr, npy_intp arr_len, npy_intp arr_str,
+                const T *keys, npy_intp *bases, npy_intp nkeys, Cmp cmp)
+{
+    npy_intp interval_length = arr_len;
+    npy_intp half = interval_length >> 1;
+    interval_length -= half;  // length -> ceil(length / 2)
+
+    const T first_mid = *(const T *)(arr + half * arr_str);
+    for (npy_intp i = 0; i < nkeys; ++i) {
+        bases[i] = cmp(first_mid, keys[i]) * half;
+    }
+
+    if (arr_str == (npy_intp)sizeof(T)) {
+        const T *a = (const T *)arr;
+        while (interval_length > 1) {
+            npy_intp h = interval_length >> 1;
+            interval_length -= h;
+            for (npy_intp i = 0; i < nkeys; ++i) {
+                const npy_intp b = bases[i];
+                bases[i] = cmp(a[b + h], keys[i]) ? b + h : b;
+            }
+        }
+        for (npy_intp i = 0; i < nkeys; ++i) {
+            bases[i] += cmp(a[bases[i]], keys[i]);
+        }
+    }
+    else {
+        while (interval_length > 1) {
+            npy_intp h = interval_length >> 1;
+            interval_length -= h;
+            for (npy_intp i = 0; i < nkeys; ++i) {
+                const npy_intp b = bases[i];
+                const T mid_val = *(const T *)(arr + (b + h) * arr_str);
+                bases[i] = cmp(mid_val, keys[i]) ? b + h : b;
+            }
+        }
+        for (npy_intp i = 0; i < nkeys; ++i) {
+            bases[i] += cmp(*(const T *)(arr + bases[i] * arr_str), keys[i]);
+        }
+    }
+}
+
 template <class Tag, side_t side>
 static void
 binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
@@ -81,11 +149,10 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     the j-th key. Depending on the comparison result, we adjust the base_j and
     halve the length of the interval.
 
-    To batch multiple queries, we process all bases with a fixed length. The
-    length is halved on each iteration of an outer loop and all bases are
-    updated in an inner loop. To avoid consuming extra memory, we use the
-    result array to store intermediate values of each base until they become
-    the final result in the last step.
+    To batch multiple queries, we process all bases of a block of keys with a
+    fixed length. The length is halved on each iteration of an outer loop and
+    all bases of the block are updated in an inner loop. Blocks are small
+    enough that keys and bases stay in L1 cache for all passes.
 
     There are two benefits of this approach:
 
@@ -122,54 +189,72 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     If cmp(arr[base_j], key_val_j) == true, insertion index is base_j + 1.
     Otherwise the insertion order is base_j.
 
-    Optimization: we unroll the first iteration for the following reasons:
-        1. ret is not initialized with the bases, so we save |keys| writes
-        by not having to initialize it with 0s.
-        2. By assuming the initial base for every key is 0, we also save
-        |keys| reads.
-        3. In the first iteration, all elements are compared against the
-        median. So we can store it in a variable and use it for all keys.
-
-    This initial block replaces the initialization loop that is used for the
-    arr_len==0 case. Note that when arr_len = 1, then half is 0 so the
-    following block initializes the array as with 0s.
+    For floating point types, when neither the haystack nor a block of keys
+    contains NaN, the NaN-aware comparison reduces to the plain one, which
+    is cheaper and branch free.
     */
-    npy_intp interval_length = arr_len;
-    npy_intp half = interval_length >> 1;
-    interval_length -= half; // length -> ceil(length / 2)
+    constexpr npy_intp BLOCK = 256;
+    T keys[BLOCK];
+    npy_intp bases[BLOCK];
 
-    npy_intp base = 0;
-    const T mid_val = *(const T *)(arr + (base + half) * arr_str);
-
-    for (npy_intp i = 0; i < key_len; ++i) {
-        const T key_val = *(const T *)(key + i * key_str);
-        *(npy_intp *)(ret + i * ret_str) = cmp(mid_val, key_val) * half;
-    }
-
-    while (interval_length > 1) {
-        npy_intp half = interval_length >> 1;
-        interval_length -= half; // length -> ceil(length / 2)
-
-        for (npy_intp i = 0; i < key_len; ++i) {
-            npy_intp &base = *(npy_intp *)(ret + i * ret_str);
-            const T mid_val = *(const T *)(arr + (base + half) * arr_str);
-            const T key_val = *(const T *)(key + i * key_str);
-            base += cmp(mid_val, key_val) * half;
+    constexpr bool is_float = std::is_floating_point<T>::value;
+    /*
+     * Checking the haystack for NaNs is O(arr_len), so only do it when the
+     * searches themselves cost at least as much (many keys relative to the
+     * haystack size). Otherwise keep the NaN-aware comparison, which gives
+     * the same answers; this keeps few-key searches O(log arr_len).
+     */
+    bool arr_has_nan = true;
+    if constexpr (is_float) {
+        if (arr_len <= 8 * key_len) {
+            arr_has_nan = false;
+        }
+        for (npy_intp i = 0; !arr_has_nan && i < arr_len; ++i) {
+            const T v = *(const T *)(arr + i * arr_str);
+            if (v != v) {
+                arr_has_nan = true;
+                break;
+            }
         }
     }
 
-    /*
-    At this point interval_length == 1, so the candidates are in the 
-    interval [base, base + 1].
+    for (npy_intp start = 0; start < key_len; start += BLOCK) {
+        const npy_intp nkeys =
+                (key_len - start < BLOCK) ? key_len - start : BLOCK;
+        const char *kp = key + start * key_str;
+        bool block_has_nan = false;
+        if constexpr (is_float) {
+            int nan_count = 0;
+            for (npy_intp i = 0; i < nkeys; ++i) {
+                const T v = *(const T *)(kp + i * key_str);
+                keys[i] = v;
+                nan_count |= (v != v);
+            }
+            block_has_nan = nan_count != 0;
+        }
+        else {
+            for (npy_intp i = 0; i < nkeys; ++i) {
+                keys[i] = *(const T *)(kp + i * key_str);
+            }
+        }
 
-    We have two options:
-        If cmp(arr[base], key_val) == true, insertion index is base + 1
-        Otherwise the insertion order is just base
-    */
-    for (npy_intp i = 0; i < key_len; ++i) {
-        npy_intp &base = *(npy_intp *)(ret + i * ret_str);
-        const T key_val = *(const T *)(key + i * key_str);
-        base += cmp(*(const T *)(arr + base * arr_str), key_val);
+        bool done = false;
+        if constexpr (is_float) {
+            if (!arr_has_nan && !block_has_nan) {
+                binsearch_block<T>(arr, arr_len, arr_str, keys, bases, nkeys,
+                                   plain_cmp<T, side>::value);
+                done = true;
+            }
+        }
+        if (!done) {
+            binsearch_block<T>(arr, arr_len, arr_str, keys, bases, nkeys,
+                               cmp);
+        }
+
+        char *rp = ret + start * ret_str;
+        for (npy_intp i = 0; i < nkeys; ++i) {
+            *(npy_intp *)(rp + i * ret_str) = bases[i];
+        }
     }
 }
 
