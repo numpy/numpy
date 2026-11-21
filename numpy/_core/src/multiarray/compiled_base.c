@@ -67,7 +67,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
 {
     PyObject *list = NULL, *weight = Py_None, *mlength = NULL;
     PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
-    npy_intp *numbers, *ians, len, mx, mn, ans_size;
+    npy_intp *numbers, *ians, len, ans_size;
     npy_intp minlength = 0;
     npy_intp i;
     double *weights , *dans;
@@ -155,34 +155,25 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         goto fail;
     }
 
-    /* handle empty list */
-    if (len == 0) {
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &minlength, NPY_INTP, 0);
-        if (ans == NULL){
+    numbers = (npy_intp *)PyArray_DATA(lst);
+    ans_size = minlength;
+    if (len > 0) {
+        npy_intp mn, mx;
+        minmax(numbers, len, &mn, &mx);
+        if (mn < 0 && !unsigned_input) {
+            PyErr_SetString(PyExc_ValueError,
+                    "'list' argument must have no negative elements");
             goto fail;
         }
-        Py_DECREF(lst);
-        return (PyObject *)ans;
+        /* A large unsigned value can become negative when cast to intp. */
+        if (mn < 0 || mx == NPY_MAX_INTP) {
+            PyErr_SetString(PyExc_ValueError,
+                    "'list' argument contains a value too large for bincount");
+            goto fail;
+        }
+        ans_size = PyArray_MAX(mx + 1, minlength);
     }
 
-    numbers = (npy_intp *)PyArray_DATA(lst);
-    minmax(numbers, len, &mn, &mx);
-    if (mn < 0 && !unsigned_input) {
-        PyErr_SetString(PyExc_ValueError,
-                "'list' argument must have no negative elements");
-        goto fail;
-    }
-    if (mn < 0 || mx == NPY_MAX_INTP) {
-        PyErr_SetString(PyExc_ValueError,
-                "'list' argument contains a value too large for bincount");
-        goto fail;
-    }
-    ans_size = mx + 1;
-    if (mlength != Py_None) {
-        if (ans_size < minlength) {
-            ans_size = minlength;
-        }
-    }
     if (weight == Py_None) {
         ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_INTP, 0);
         if (ans == NULL) {
