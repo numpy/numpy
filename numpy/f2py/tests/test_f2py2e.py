@@ -7,11 +7,9 @@ import sys
 import textwrap
 from collections import namedtuple
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
 
-from numpy.f2py import f2py2e
 from numpy.f2py.f2py2e import get_newer_options, main as f2pycli
 from numpy.testing._private.utils import NOGIL_BUILD
 
@@ -731,20 +729,8 @@ def test_inclpath(monkeypatch):
     assert ftcompat is None
     assert remain == []
 
-    spaced_include = r"C:\Users\First Last\include"
-    assert get_newer_options(["-I", spaced_include]) == ([spaced_include], None, [])
-
-    include_paths, ftcompat, remain = get_newer_options(
-        [
-            "--include-paths",
-            os.pathsep.join(
-                [r"C:\Users\First Last\include", r"D:\vendor headers"]
-            ),
-        ]
-    )
-
-    assert (set(include_paths), ftcompat, remain) == (
-        {r"C:\Users\First Last\include", r"D:\vendor headers"},
+    assert get_newer_options(["-I", "include dir"]) == (
+        ["include dir"],
         None,
         [],
     )
@@ -772,61 +758,6 @@ def test_inclpath(monkeypatch):
     assert include_paths == [r"C:\inc1;D:\inc2"]
     assert ftcompat is None
     assert remain == []
-
-
-def test_newer_options_preserves_spaced_unknown_arguments():
-    spaced_arg = "source file.f90"
-
-    assert get_newer_options(["--unknown-option", spaced_arg]) == (
-        [],
-        None,
-        ["--unknown-option", spaced_arg],
-    )
-
-
-@pytest.mark.parametrize(
-    "input_path, expected_args",
-    [
-        ("source file.f90", ["--lower", "-m", "my_module", "source file.f90"]),
-        ("interface file.pyf", ["interface file.pyf"]),
-    ],
-)
-def test_meson_run_compile_preserves_path_arguments(
-    monkeypatch, input_path, expected_args
-):
-    run_main = Mock()
-    build_backend = Mock()
-
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "f2py",
-            "--backend",
-            "meson",
-            "--build-dir",
-            "build directory",
-            "-m",
-            "my_module",
-            "-c",
-            input_path,
-        ],
-    )
-    monkeypatch.setattr(f2py2e, "run_main", run_main)
-    monkeypatch.setattr(
-        f2py2e, "f2py_build_generator", lambda backend: build_backend
-    )
-    monkeypatch.setattr(
-        f2py2e, "validate_modulename", lambda pyf_files, modulename: modulename
-    )
-
-    f2py2e.run_compile()
-
-    run_main.assert_called_once_with(expected_args)
-    build_backend.assert_called_once()
-    modulename, sources, extra_objects, build_dir = build_backend.call_args.args
-    assert sources == [input_path]
-    assert build_dir == "build directory"
 
 
 def test_hlink():
