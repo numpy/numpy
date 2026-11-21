@@ -5915,6 +5915,19 @@ class MaskedArray(ndarray):
 
         self[...] = np.take_along_axis(self, sidx, axis=axis)
 
+    def _reduction_args(self, fill_value):
+        """
+        Return the data and keyword arguments with which a reduction skips
+        masked values; `fill_value` must not change the result.  Subclass
+        data is filled instead, as its methods may not accept ``where``.
+        """
+        m = self._mask
+        if m is nomask or fill_value is None or self._baseclass is not ndarray:
+            return self.filled(fill_value), {}
+        if not m.any():
+            return self._data, {}
+        return self._data, {'where': ~m, 'initial': fill_value}
+
     def min(self, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         """
         Return the minimum along a given axis.
@@ -5984,11 +5997,13 @@ class MaskedArray(ndarray):
         _mask = self._mask
         newmask = _check_mask_axis(_mask, axis, **kwargs)
         if fill_value is None:
-            fill_value = minimum_fill_value(self)
+            data, where_kwargs = self._reduction_args(minimum_fill_value(self))
+        else:
+            data, where_kwargs = self.filled(fill_value), {}
         # No explicit output
         if out is None:
-            result = self.filled(fill_value).min(
-                axis=axis, out=out, **kwargs).view(type(self))
+            result = data.min(
+                axis=axis, out=out, **where_kwargs, **kwargs).view(type(self))
             if result.ndim:
                 # Set the mask
                 result.__setmask__(newmask)
@@ -5999,7 +6014,7 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        self.filled(fill_value).min(axis=axis, out=out, **kwargs)
+        data.min(axis=axis, out=out, **where_kwargs, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
@@ -6089,11 +6104,13 @@ class MaskedArray(ndarray):
         _mask = self._mask
         newmask = _check_mask_axis(_mask, axis, **kwargs)
         if fill_value is None:
-            fill_value = maximum_fill_value(self)
+            data, where_kwargs = self._reduction_args(maximum_fill_value(self))
+        else:
+            data, where_kwargs = self.filled(fill_value), {}
         # No explicit output
         if out is None:
-            result = self.filled(fill_value).max(
-                axis=axis, out=out, **kwargs).view(type(self))
+            result = data.max(
+                axis=axis, out=out, **where_kwargs, **kwargs).view(type(self))
             if result.ndim:
                 # Set the mask
                 result.__setmask__(newmask)
@@ -6104,7 +6121,7 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        self.filled(fill_value).max(axis=axis, out=out, **kwargs)
+        data.max(axis=axis, out=out, **where_kwargs, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:

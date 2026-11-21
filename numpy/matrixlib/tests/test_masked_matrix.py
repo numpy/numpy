@@ -152,6 +152,18 @@ class TestMaskedMatrix:
         assert_equal(mXsmall.any(0), np.matrix([True, True, False]))
         assert_equal(mXsmall.any(1), np.matrix([True, True, False]).T)
 
+    def test_reductions_onmatrices(self):
+        x = np.array([[1., 2., 3.], [4., 5., 6.]])
+        m = np.array([[False, True, False], [True, False, False]])
+        mX = masked_array(np.matrix(x), mask=m)
+        for method, fill_value in [("sum", 0), ("prod", 1),
+                                   ("min", np.inf), ("max", -np.inf)]:
+            for axis in [None, 0]:
+                result = getattr(mX, method)(axis=axis)
+                expected = getattr(np.matrix(np.where(m, fill_value, x)),
+                                   method)(axis=axis)
+                assert_equal(result, expected)
+
     def test_compressed(self):
         a = masked_array(np.matrix([1, 2, 3, 4]), mask=[0, 0, 0, 0])
         b = a.compressed()
