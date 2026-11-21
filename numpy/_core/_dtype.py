@@ -27,6 +27,9 @@ _fixed_builtin_names = {
                        ("f", "float"), ("c", "complex"))
 }
 
+_no_suffix_kinds = "Ob"
+_datetime_kinds = "Mm"
+
 
 def _kind_name(dtype):
     try:
@@ -352,24 +355,23 @@ def _name_get(dtype):
         return scalar_type.__name__
 
     dtype_type = type(dtype)
-    if not dtype_type._legacy:
-        name = dtype_type.__name__
+    if dtype_type._legacy:
+        kind = dtype.kind
+        name = scalar_type.__name__ if kind == 'V' else _kind_to_stem[kind]
+        if kind in _no_suffix_kinds:  # bool/object that aren't the singleton
+            return name
+        itemsize = dtype.itemsize
+        if itemsize == 0:
+            return name
+        name = f"{name}{itemsize * 8}"
+        if kind in _datetime_kinds:
+            name += _datetime_metadata_str(dtype)
+        return name
 
-    elif issubclass(scalar_type, np.void):
-        # historically, void subclasses preserve their name, eg `record64`
-        name = scalar_type.__name__
-    else:
-        name = _kind_name(dtype)
-
-    # Object and bool have no bit suffix.  The flexible check only matters for
+    # The flexible check only matters for
     # unsized dtypes, which avoids a subtype check for ordinary sized dtypes.
-    if (scalar_type != np.object_ and scalar_type != np.bool and
-            (scalar_type is None or dtype.itemsize != 0 or
-             not np.issubdtype(dtype, np.flexible))):
+    name = dtype_type.__name__
+    if (scalar_type is None or dtype.itemsize != 0 or
+            not np.issubdtype(dtype, np.flexible)):
         name += f"{dtype.itemsize * 8}"
-
-    # append metadata to datetimes
-    if scalar_type in (np.datetime64, np.timedelta64):
-        name += _datetime_metadata_str(dtype)
-
     return name
