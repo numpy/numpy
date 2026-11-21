@@ -235,6 +235,22 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
 
     assert(nout > 0);
 
+    if (nin == 0) {
+        for (size_t i = 0; i < n_outer; i++) {
+            char *op_row = op;
+            for (size_t j = 0; j < nout; j++) {
+                *(T *)op_row = T(0);
+                if (j + 1 < nout) {
+                    op_row += step_out;
+                }
+            }
+            if (i + 1 < n_outer) {
+                op += so;
+            }
+        }
+        return;
+    }
+
 #ifndef POCKETFFT_NO_VECTORS
     /*
      * Call pocketfft directly if vectorization is possible.

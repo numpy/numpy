@@ -619,6 +619,111 @@ def test_irfft_with_n_1_regression():
     np.fft.irfft(np.array([0], complex), n=10)
 
 
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+@pytest.mark.parametrize("norm", [None, "backward", "ortho", "forward"])
+@pytest.mark.parametrize("n", [1, 2, 3, 4, 7])
+def test_irfft_empty_view(dtype, norm, n):
+    storage = np.array([12345 + 6789j], dtype=dtype)
+    empty = storage[:0]
+
+    result = np.fft.irfft(empty, n=n, norm=norm)
+
+    expected_dtype = np.empty(0, dtype=dtype).real.dtype
+    assert result.dtype == expected_dtype
+    assert_array_equal(result, np.zeros(n, dtype=expected_dtype))
+
+
+@pytest.mark.skipif(
+    np.dtype(np.clongdouble) == np.dtype(np.complex128),
+    reason="clongdouble aliases complex128",
+)
+def test_irfft_empty_clongdouble():
+    storage = np.array([12345 + 6789j], dtype=np.clongdouble)
+    empty = storage[:0]
+
+    result = np.fft.irfft(empty, n=4)
+
+    expected_dtype = np.empty(0, dtype=np.clongdouble).real.dtype
+    assert result.dtype == expected_dtype
+    assert_array_equal(result, np.zeros(4, dtype=expected_dtype))
+
+
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+def test_irfft_empty_independently_allocated(dtype):
+    empty = np.array([], dtype=dtype)
+
+    result = np.fft.irfft(empty, n=4)
+
+    expected_dtype = np.empty(0, dtype=dtype).real.dtype
+    assert result.dtype == expected_dtype
+    assert_array_equal(result, np.zeros(4, dtype=expected_dtype))
+
+
+def test_irfft_empty_noncontiguous_view():
+    storage = np.full((2, 6), 12345 + 6789j, dtype=np.complex128)
+    empty = storage[:, ::2][:, :0]
+    assert empty.shape == (2, 0)
+
+    result = np.fft.irfft(empty, n=4, axis=-1)
+
+    assert_array_equal(result, np.zeros((2, 4)))
+
+
+def test_irfft_empty_overlapping_out():
+    storage = np.array([12345 + 6789j], dtype=np.complex128)
+    empty = storage[:0]
+    out = storage.real[:1]
+
+    result = np.fft.irfft(empty, n=1, out=out)
+
+    assert result is out
+    assert_array_equal(out, np.zeros(1))
+
+
+def test_irfft_empty_negative_strides_out():
+    storage = np.full((2, 1), 12345 + 6789j, dtype=np.complex128)
+    empty = storage[:, :0]
+    out_storage = np.full((4, 4), 123.0)
+    out = out_storage[::-2, ::-1]
+
+    result = np.fft.irfft(empty, n=4, axis=-1, out=out)
+
+    assert result is out
+    assert_array_equal(out, np.zeros((2, 4)))
+    assert_array_equal(out_storage[::2], np.full((2, 4), 123.0))
+
+
+def test_irfft_empty_nonunit_outer_stride_out():
+    storage = np.full((2, 1), 12345 + 6789j, dtype=np.complex128)
+    empty = storage[:, :0]
+    out_storage = np.full((4, 4), 123.0)
+    out = out_storage[::2]
+
+    result = np.fft.irfft(empty, n=4, axis=-1, out=out)
+
+    assert result is out
+    assert_array_equal(out, np.zeros((2, 4)))
+    assert_array_equal(out_storage[1::2], np.full((2, 4), 123.0))
+
+
+def test_irfft_empty_zero_outer_dimension():
+    empty = np.empty((0, 0), dtype=np.complex128)
+
+    result = np.fft.irfft(empty, n=4, axis=-1)
+
+    assert result.shape == (0, 4)
+    assert result.dtype == np.float64
+
+
+def test_irfftn_empty_backing_view():
+    storage = np.full((2, 3), 12345 + 6789j, dtype=np.complex128)
+    empty = storage[:, :0]
+
+    result = np.fft.irfftn(empty, s=(2, 4), axes=(0, 1))
+
+    assert_array_equal(result, np.zeros((2, 4)))
+
+
 def test_irfft_with_n_large_regression():
     # Regression test for gh-25679
     x = np.arange(5) * (1 + 1j)
