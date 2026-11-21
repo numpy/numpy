@@ -7,6 +7,7 @@ import sys
 import textwrap
 from collections import namedtuple
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -730,13 +731,8 @@ def test_inclpath(monkeypatch):
     assert ftcompat is None
     assert remain == []
 
-    include_paths, ftcompat, remain = get_newer_options(
-        ["-I", r"C:\Users\First Last\include"]
-    )
-
-    assert include_paths == [r"C:\Users\First Last\include"]
-    assert ftcompat is None
-    assert remain == []
+    spaced_include = r"C:\Users\First Last\include"
+    assert get_newer_options(["-I", spaced_include]) == ([spaced_include], None, [])
 
     include_paths, ftcompat, remain = get_newer_options(
         [
@@ -747,12 +743,11 @@ def test_inclpath(monkeypatch):
         ]
     )
 
-    assert set(include_paths) == {
-        r"C:\Users\First Last\include",
-        r"D:\vendor headers",
-    }
-    assert ftcompat is None
-    assert remain == []
+    assert (set(include_paths), ftcompat, remain) == (
+        {r"C:\Users\First Last\include", r"D:\vendor headers"},
+        None,
+        [],
+    )
 
     include_paths, ftcompat, remain = get_newer_options(
         ["--include-paths", r"C:\inc1;D:\inc2"]
@@ -782,13 +777,11 @@ def test_inclpath(monkeypatch):
 def test_newer_options_preserves_spaced_unknown_arguments():
     spaced_arg = "source file.f90"
 
-    include_paths, ftcompat, remain = get_newer_options(
-        ["--unknown-option", spaced_arg]
+    assert get_newer_options(["--unknown-option", spaced_arg]) == (
+        [],
+        None,
+        ["--unknown-option", spaced_arg],
     )
-
-    assert include_paths == []
-    assert ftcompat is None
-    assert remain == ["--unknown-option", spaced_arg]
 
 
 @pytest.mark.parametrize(
@@ -801,16 +794,8 @@ def test_newer_options_preserves_spaced_unknown_arguments():
 def test_meson_run_compile_preserves_path_arguments(
     monkeypatch, input_path, expected_args
 ):
-    forwarded_args = []
-    backend_args = []
-
-    class DummyBuilder:
-        def compile(self):
-            pass
-
-    def build_backend(*args):
-        backend_args.extend(args)
-        return DummyBuilder()
+    run_main = Mock()
+    build_backend = Mock()
 
     monkeypatch.setattr(
         sys,
@@ -827,13 +812,9 @@ def test_meson_run_compile_preserves_path_arguments(
             input_path,
         ],
     )
+    monkeypatch.setattr(f2py2e, "run_main", run_main)
     monkeypatch.setattr(
-        f2py2e, "run_main", lambda args: forwarded_args.extend(args)
-    )
-    monkeypatch.setattr(
-        f2py2e,
-        "f2py_build_generator",
-        lambda backend: build_backend,
+        f2py2e, "f2py_build_generator", lambda backend: build_backend
     )
     monkeypatch.setattr(
         f2py2e, "validate_modulename", lambda pyf_files, modulename: modulename
@@ -841,9 +822,11 @@ def test_meson_run_compile_preserves_path_arguments(
 
     f2py2e.run_compile()
 
-    assert forwarded_args == expected_args
-    assert backend_args[1] == [input_path]
-    assert backend_args[3] == "build directory"
+    run_main.assert_called_once_with(expected_args)
+    build_backend.assert_called_once()
+    modulename, sources, extra_objects, build_dir = build_backend.call_args.args
+    assert sources == [input_path]
+    assert build_dir == "build directory"
 
 
 def test_hlink():
