@@ -1,0 +1,6 @@
+Corrected MT19937 jump streams
+------------------------------
+`numpy.random.MT19937.jumped` now advances the generator by
+``jumps * 2**128`` draws regardless of its position within the state block. This
+changes the random streams produced after jumping, including jumps from a
+newly seeded generator. Streams generated without jumping are unchanged.
