@@ -322,6 +322,7 @@ The ratio of degrees to radians is :math:`180^{\circ}/\pi.`
     sin
     cos
     tan
+    sinc
     arcsin
     arccos
     arctan

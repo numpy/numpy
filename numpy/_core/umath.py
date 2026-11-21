@@ -56,5 +56,6 @@ __all__ = [
     'logical_or', 'logical_xor', 'matmul', 'matvec', 'maximum', 'minimum', 'mod',
     'modf', 'multiply', 'negative', 'nextafter', 'not_equal', 'pi', 'positive',
     'power', 'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
-    'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt', 'square',
-    'subtract', 'tan', 'tanh', 'true_divide', 'trunc', 'vecdot', 'vecmat']
+    'rint', 'sign', 'signbit', 'sin', 'sinc', 'sinh', 'spacing', 'sqrt',
+    'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc', 'vecdot',
+    'vecmat']
