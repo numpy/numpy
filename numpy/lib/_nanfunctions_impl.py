@@ -1827,6 +1827,10 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims,
                      where=where)
 
+    if dtype is None and arr.dtype == np.object_ and arr.size == 0 and cnt.size:
+        # Object division raises on zero before the warning for empty slices.
+        arr = arr.astype(np.float64)
+
     if mean is not np._NoValue:
         avg = mean
     else:

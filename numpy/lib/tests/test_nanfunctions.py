@@ -814,6 +814,51 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
                     assert_equal(f(mat, axis=axis), np.zeros([]))
                     assert_(len(w) == 0)
 
+    @pytest.mark.parametrize("func", [np.nanvar, np.nanstd])
+    @pytest.mark.parametrize(("shape", "axis", "expected"), [
+        ((0,), None, np.nan),
+        ((0, 2), 0, [np.nan, np.nan]),
+    ])
+    def test_empty_object(self, func, shape, axis, expected):
+        with pytest.warns(RuntimeWarning, match="Degrees of freedom <= 0 for slice"):
+            result = func(np.empty(shape, dtype=object), axis=axis)
+        assert_equal(result, expected)
+
+    @pytest.mark.parametrize("func", [np.nanvar, np.nanstd])
+    def test_empty_object_out(self, func):
+        out = np.empty((1, 2), dtype=np.float32)
+        with pytest.warns(RuntimeWarning, match="Degrees of freedom <= 0 for slice"):
+            result = func(np.empty((0, 2), dtype=object), axis=0, keepdims=True,
+                          out=out)
+        assert result is out
+        assert_equal(out, [[np.nan, np.nan]])
+
+    @pytest.mark.parametrize("func", [np.nanvar, np.nanstd])
+    def test_empty_object_no_slices(self, func):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = func(np.empty((0, 2), dtype=object), axis=1)
+        assert_equal(result, np.empty(0, dtype=object))
+        assert result.dtype == np.dtype(object)
+
+    @pytest.mark.parametrize("func", [np.nanvar, np.nanstd])
+    def test_object_empty_complex_out(self, func):
+        out = np.empty(2, dtype=np.complex64)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = func(np.empty((0, 2), dtype=object), axis=0, ddof=-1,
+                          out=out)
+        assert result is out
+        assert_equal(out, [0, 0])
+
+    @pytest.mark.parametrize("func", [np.nanvar, np.nanstd])
+    def test_object_empty_explicit_dtype(self, func):
+        with pytest.warns(RuntimeWarning, match="Degrees of freedom <= 0 for slice"):
+            result = func(np.empty((0, 2), dtype=object), axis=0,
+                          dtype=np.float32)
+        assert_equal(result, [np.nan, np.nan])
+        assert result.dtype == np.dtype(np.float32)
+
     @pytest.mark.parametrize("dtype", [*np.typecodes["AllFloat"], "m8[s]"])
     def test_where(self, dtype):
         ar = np.arange(9.0).reshape(3, 3)
