@@ -59,7 +59,7 @@ _array_from_array_like(PyObject *op,
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                     PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
-                    int flags, int *was_scalar);
+                    npy_bool allow_skip_conversion, int flags, int *was_scalar);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,

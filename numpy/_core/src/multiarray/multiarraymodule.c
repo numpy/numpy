@@ -1610,7 +1610,8 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 static inline PyObject *
 _array_fromobject_generic(
         PyObject *op, PyArray_Descr *in_descr, PyArray_DTypeMeta *in_DType,
-        NPY_COPYMODE copy, NPY_ORDER order, npy_bool subok, int ndmin, int ndmax)
+        NPY_COPYMODE copy, NPY_ORDER order, npy_bool subok, int ndmin,
+        int ndmax, npy_bool allow_skip_conversion)
 {
     PyArrayObject *oparr = NULL, *ret = NULL;
     PyArray_Descr *oldtype = NULL;
@@ -1730,8 +1731,10 @@ _array_fromobject_generic(
 
     flags |= NPY_ARRAY_FORCECAST;
 
-    ret = (PyArrayObject *)PyArray_CheckFromAny_int(
-            op, dtype, in_DType, 0, ndmax, flags);
+    int was_scalar;
+    ret = (PyArrayObject *)PyArray_FromAny_int(
+            op, dtype, in_DType, 0, ndmax, allow_skip_conversion,
+            flags, &was_scalar);
 
 finish:
     Py_XDECREF(dtype);
@@ -1763,6 +1766,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
     NPY_COPYMODE copy = NPY_COPY_ALWAYS;
     int ndmin = 0;
     int ndmax = NPY_MAXDIMS;
+    PyObject *ndmax_obj = NULL;
     npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
     PyObject *like = Py_None;
@@ -1776,8 +1780,10 @@ array_array(PyObject *NPY_UNUSED(ignored),
                 {"$order", &PyArray_OrderConverter, &order},
                 {"$subok", &PyArray_BoolConverter, &subok},
                 {"$ndmin", &PyArray_PythonPyIntFromInt, &ndmin},
-                {"$ndmax", &PyArray_PythonPyIntFromInt, &ndmax},
-                {"$like", NULL, &like}) < 0) {
+                {"$ndmax", NULL, &ndmax_obj},
+                {"$like", NULL, &like}) < 0 ||
+                (ndmax_obj != NULL &&
+                 !PyArray_PythonPyIntFromInt(ndmax_obj, &ndmax))) {
             Py_XDECREF(dt_info.descr);
             Py_XDECREF(dt_info.dtype);
             return NULL;
@@ -1805,7 +1811,8 @@ array_array(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin, ndmax);
+            op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin,
+            ndmax, ndmax_obj != NULL);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1850,7 +1857,8 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, NPY_FALSE, 0, NPY_MAXDIMS);
+            op, dt_info.descr, dt_info.dtype, copy, order, NPY_FALSE, 0,
+            NPY_MAXDIMS, NPY_FALSE);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1895,7 +1903,8 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, NPY_TRUE, 0, NPY_MAXDIMS);
+            op, dt_info.descr, dt_info.dtype, copy, order, NPY_TRUE, 0,
+            NPY_MAXDIMS, NPY_FALSE);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1936,7 +1945,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_CORDER, NPY_FALSE,
-            1, NPY_MAXDIMS);
+            1, NPY_MAXDIMS, NPY_FALSE);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1977,7 +1986,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_FORTRANORDER,
-            NPY_FALSE, 1, NPY_MAXDIMS);
+            NPY_FALSE, 1, NPY_MAXDIMS, NPY_FALSE);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
