@@ -814,6 +814,12 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
                     assert_equal(f(mat, axis=axis), np.zeros([]))
                     assert_(len(w) == 0)
 
+    @pytest.mark.parametrize("func", [np.nanvar, np.nanstd])
+    def test_empty_object(self, func):
+        with pytest.warns(RuntimeWarning, match="Degrees of freedom <= 0 for slice"):
+            result = func(np.array([], dtype=object))
+        assert np.isnan(result)
+
     @pytest.mark.parametrize("dtype", [*np.typecodes["AllFloat"], "m8[s]"])
     def test_where(self, dtype):
         ar = np.arange(9.0).reshape(3, 3)
