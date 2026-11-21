@@ -479,6 +479,12 @@ class TestArraySplit:
                    np.arange(7, 10), np.array([]), np.array([])]
         compare_results(res, desired)
 
+    def test_array_like_multidim_axis(self):
+        a = [[1, 2], [3, 4], [5, 6]]
+        res = array_split(a, 2, axis=1)
+        desired = [np.array([[1], [3], [5]]), np.array([[2], [4], [6]])]
+        compare_results(res, desired)
+
 
 class TestSplit:
     # The split function is essentially the same as array_split,
@@ -494,6 +500,78 @@ class TestSplit:
     def test_unequal_split(self):
         a = np.arange(10)
         assert_raises(ValueError, split, a, 3)
+
+    def test_array_like_split(self):
+        # gh-17463: sequence inputs with integer sections
+        res1 = split([1, 2, 3, 4], 2)
+        desired1 = [np.array([1, 2]), np.array([3, 4])]
+        compare_results(res1, desired1)
+
+        res2 = split((1, 2, 3, 4), 2)
+        compare_results(res2, desired1)
+
+        res3 = split([[1, 2], [3, 4]], 2, axis=0)
+        desired3 = [np.array([[1, 2]]), np.array([[3, 4]])]
+        compare_results(res3, desired3)
+
+        res4 = split([[1, 2], [3, 4]], 2, axis=1)
+        desired4 = [np.array([[1], [3]]), np.array([[2], [4]])]
+        compare_results(res4, desired4)
+
+    def test_subclass_preservation(self):
+        m = np.ma.array([1, 2, 3, 4], mask=[0, 1, 0, 0])
+        res = split(m, 2)
+        assert isinstance(res[0], np.ma.MaskedArray)
+        assert isinstance(res[1], np.ma.MaskedArray)
+        assert_equal(res[0].mask, [False, True])
+        assert_equal(res[1].mask, [False, False])
+
+    def test_duck_array_preservation(self):
+        class DuckArray:
+            def __init__(self, data):
+                self.data = np.asarray(data)
+
+            @property
+            def shape(self):
+                return self.data.shape
+
+            @property
+            def ndim(self):
+                return self.data.ndim
+
+            def swapaxes(self, axis1, axis2):
+                return DuckArray(self.data.swapaxes(axis1, axis2))
+
+            def __getitem__(self, item):
+                return DuckArray(self.data[item])
+
+        d = DuckArray([[1, 2, 3, 4], [5, 6, 7, 8]])
+        res = split(d, 2)
+        assert isinstance(res[0], DuckArray)
+        assert isinstance(res[1], DuckArray)
+        assert_equal(res[0].data, [[1, 2, 3, 4]])
+        assert_equal(res[1].data, [[5, 6, 7, 8]])
+
+        res_h = hsplit(d, 2)
+        assert isinstance(res_h[0], DuckArray)
+        assert isinstance(res_h[1], DuckArray)
+        assert_equal(res_h[0].data, [[1, 2], [5, 6]])
+        assert_equal(res_h[1].data, [[3, 4], [7, 8]])
+
+        res_v = vsplit(d, 2)
+        assert isinstance(res_v[0], DuckArray)
+        assert isinstance(res_v[1], DuckArray)
+        assert_equal(res_v[0].data, [[1, 2, 3, 4]])
+        assert_equal(res_v[1].data, [[5, 6, 7, 8]])
+
+        d3 = DuckArray([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+        res_d = dsplit(d3, 2)
+        assert isinstance(res_d[0], DuckArray)
+        assert isinstance(res_d[1], DuckArray)
+
+        res_arr = array_split(d, 2)
+        assert isinstance(res_arr[0], DuckArray)
+        assert isinstance(res_arr[1], DuckArray)
 
 
 class TestColumnStack:
@@ -592,6 +670,15 @@ class TestHsplit:
         desired = [np.array([[1, 2], [1, 2]]), np.array([[3, 4], [3, 4]])]
         compare_results(res, desired)
 
+    def test_array_like(self):
+        res1 = hsplit([1, 2, 3, 4], 2)
+        desired1 = [np.array([1, 2]), np.array([3, 4])]
+        compare_results(res1, desired1)
+
+        res2 = hsplit([[1, 2, 3, 4], [1, 2, 3, 4]], 2)
+        desired2 = [np.array([[1, 2], [1, 2]]), np.array([[3, 4], [3, 4]])]
+        compare_results(res2, desired2)
+
 
 class TestVsplit:
     """Only testing for integer splits.
@@ -616,6 +703,11 @@ class TestVsplit:
         a = np.array([[1, 2, 3, 4],
                   [1, 2, 3, 4]])
         res = vsplit(a, 2)
+        desired = [np.array([[1, 2, 3, 4]]), np.array([[1, 2, 3, 4]])]
+        compare_results(res, desired)
+
+    def test_array_like(self):
+        res = vsplit([[1, 2, 3, 4], [1, 2, 3, 4]], 2)
         desired = [np.array([[1, 2, 3, 4]]), np.array([[1, 2, 3, 4]])]
         compare_results(res, desired)
 
@@ -647,6 +739,16 @@ class TestDsplit:
                    [1, 2, 3, 4]],
                   [[1, 2, 3, 4],
                    [1, 2, 3, 4]]])
+        res = dsplit(a, 2)
+        desired = [np.array([[[1, 2], [1, 2]], [[1, 2], [1, 2]]]),
+                   np.array([[[3, 4], [3, 4]], [[3, 4], [3, 4]]])]
+        compare_results(res, desired)
+
+    def test_array_like(self):
+        a = [[[1, 2, 3, 4],
+              [1, 2, 3, 4]],
+             [[1, 2, 3, 4],
+              [1, 2, 3, 4]]]
         res = dsplit(a, 2)
         desired = [np.array([[[1, 2], [1, 2]], [[1, 2], [1, 2]]]),
                    np.array([[[3, 4], [3, 4]], [[3, 4], [3, 4]]])]
