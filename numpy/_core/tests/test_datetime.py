@@ -3156,8 +3156,7 @@ class TestDateTime:
 
     @pytest.mark.parametrize("time_unit", [
         "Y", "M",
-        pytest.param("W", marks=pytest.mark.xfail(reason="gh-13197")),
-        "D", "h", "m",
+        "W", "D", "h", "m",
         "s", "ms", "us", "ns", "ps", "fs", "as",
         pytest.param("10D", marks=pytest.mark.xfail(reason="similar to gh-13197")),
     ])
@@ -3168,8 +3167,16 @@ class TestDateTime:
 
         This tests the conversion to and from npy_datetimestruct.
         """
-        # TODO: add absolute (gold standard) time span limit strings
         limit = np.datetime64(np.iinfo(np.int64).max * sign, time_unit)
+
+        # The roundtrip alone can't catch errors that cancel out, so also
+        # compare against independently computed limits (gh-13197).
+        # TODO: add these gold standard strings for the other units
+        if time_unit == "W":
+            # +/-(2**63 - 1) weeks from 1970-01-01.
+            expected = ("176769144494367851-12-25" if sign == 1
+                        else "-176769144494363912-01-08")
+            assert str(limit) == expected
 
         # Convert to string and back. Explicit unit needed since the day and
         # week reprs are not distinguishable.
