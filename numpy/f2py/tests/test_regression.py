@@ -100,7 +100,7 @@ def test_include_path():
 class TestIncludeFiles(util.F2PyTest):
     sources = [util.getpath("tests", "src", "regression", "incfile.f90")]
     options = [f"-I{util.getpath('tests', 'src', 'regression')}",
-               f"--include-paths {util.getpath('tests', 'src', 'regression')}"]
+               "--include-paths", util.getpath("tests", "src", "regression")]
 
     def test_gh25344(self):
         exp = 7.0

@@ -554,7 +554,6 @@ def f2py_parser():
     return parser
 
 def get_newer_options(iline):
-    iline = (' '.join(iline)).split()
     parser = f2py_parser()
     args, remain = parser.parse_known_args(iline)
     ipaths = args.include_paths
@@ -705,9 +704,9 @@ def run_compile():
         if not pyf_files:
             outmess('Using meson backend\nWill pass --lower to f2py\nSee https://numpy.org/doc/stable/f2py/buildtools/meson.html\n')
             f2py_flags.append('--lower')
-            run_main(f" {' '.join(f2py_flags)} -m {modulename} {' '.join(sources)}".split())
+            run_main(f2py_flags + ['-m', modulename] + sources)
         else:
-            run_main(f" {' '.join(f2py_flags)} {' '.join(pyf_files)}".split())
+            run_main(f2py_flags + pyf_files)
 
     # Order matters here, includes are needed for run_main above
     include_dirs, _, sources = get_newer_options(sources)
