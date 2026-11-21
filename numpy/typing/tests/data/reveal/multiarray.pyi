@@ -365,6 +365,11 @@ assert_type(np.frompyfunc(func21, n2, n1).reduceat([f8], AR_i8), npt.Array1D[np.
 assert_type(np.frompyfunc(func21, n2, n1).reduceat([[f8]], AR_i8), npt.Array2D[np.object_[int]])
 assert_type(np.frompyfunc(func21, n2, n1).reduceat(AR_f8, AR_i8, out=AR_f8), npt.NDArray[np.float64])
 assert_type(np.frompyfunc(func21, n2, n1).reduceat([AR_f8], AR_i8), npt.NDArray[np.object_[int]])
+assert_type(np.frompyfunc(func21, n2, n1).segmented_reduce(AR_f4_2d, AR_i8, AR_i8), npt.Array2D[np.object_[int]])
+assert_type(np.frompyfunc(func21, n2, n1).segmented_reduce([f8], AR_i8, AR_i8), npt.Array1D[np.object_[int]])
+assert_type(np.frompyfunc(func21, n2, n1).segmented_reduce([[f8]], AR_i8, AR_i8), npt.Array2D[np.object_[int]])
+assert_type(np.frompyfunc(func21, n2, n1).segmented_reduce(AR_f8, AR_i8, AR_i8, out=AR_f8), npt.NDArray[np.float64])
+assert_type(np.frompyfunc(func21, n2, n1).segmented_reduce([AR_f8], AR_i8, AR_i8), npt.NDArray[np.object_[int]])
 
 assert_type(np.frompyfunc(func21, n2, n1).outer(AR_f4_2d, f8), npt.Array2D[np.object_[int]])
 assert_type(np.frompyfunc(func21, n2, n1).outer(f8, AR_f4_2d), npt.Array2D[np.object_[int]])
