@@ -5556,10 +5556,13 @@ class MaskedArray(ndarray):
             danom = umath.absolute(danom) ** 2
         else:
             danom *= danom
-        dvar = divide(danom.sum(axis, **kwargs), cnt).view(type(self))
+        dsum = danom.sum(axis, **kwargs)
+        dvar = divide(dsum, cnt).view(type(self))
         # Apply the mask if it's not a scalar
         if dvar.ndim:
-            dvar._mask = mask_or(self._mask.all(axis, **kwargs), (cnt <= 0))
+            # The sum is also masked where the mean was, e.g. because of nan
+            dvar._mask = mask_or(
+                getmask(dsum), mask_or(self._mask.all(axis, **kwargs), (cnt <= 0)))
             dvar._update_from(self)
         elif getmask(dvar):
             # Make sure that masked is returned when the scalar is masked.
