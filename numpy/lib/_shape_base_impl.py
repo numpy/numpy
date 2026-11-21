@@ -71,9 +71,9 @@ def take_along_axis(arr, indices, axis=-1):
 
     Parameters
     ----------
-    arr : ndarray (Ni..., M, Nk...)
+    arr : array_like (Ni..., M, Nk...)
         Source array
-    indices : ndarray (Ni..., J, Nk...)
+    indices : array_like (Ni..., J, Nk...)
         Indices to take along each 1d slice of ``arr``. This must match the
         dimension of ``arr``, but dimensions Ni and Nj only need to broadcast
         against ``arr``.
@@ -165,6 +165,9 @@ def take_along_axis(arr, indices, axis=-1):
     array([[10, 30],
            [40, 60]])
     """
+    arr = asanyarray(arr)
+    indices = asanyarray(indices)
+
     # normalize inputs
     if axis is None:
         if indices.ndim != 1:
@@ -306,7 +309,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         slices of `arr` along the specified axis.
     axis : integer
         Axis along which `arr` is sliced.
-    arr : ndarray (Ni..., M, Nk...)
+    arr : array_like (Ni..., M, Nk...)
         Input array.
     args : any
         Additional arguments to `func1d`.
@@ -485,8 +488,8 @@ def apply_over_axes(func, a, axes):
             [124]]])
 
     """
-    val = asarray(a)
-    N = a.ndim
+    val = asanyarray(a)
+    N = val.ndim
     if array(axes).ndim == 0:
         axes = (axes,)
     for axis in axes:
