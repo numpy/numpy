@@ -281,6 +281,8 @@ python_sources = [
   '_distributor_init.pyi',
   '_globals.py',
   '_globals.pyi',
+  '_public_api.py',
+  '_smoke.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
   '_expired_attrs_2_0.py',

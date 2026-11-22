@@ -77,9 +77,10 @@ class PytestTester:
         self.__module__ = module_name
 
     def __call__(self, label='fast', verbose=1, extra_argv=None,
-                 doctests=False, coverage=False, durations=-1, tests=None):
+                 doctests=False, coverage=False, durations=-1, tests=None,
+                 *, smoke=False):
         """
-        Run tests for module using pytest.
+        Run tests using pytest, or check basic NumPy installation health.
 
         Parameters
         ----------
@@ -89,6 +90,8 @@ class PytestTester:
             is ignored.
         verbose : int, optional
             Verbosity value for test outputs, in the range 1-3. Default is 1.
+            In smoke mode, 0 is silent on success, 1 prints a summary, and
+            2 or greater prints each check's result. Failures are always printed.
         extra_argv : list, optional
             List with any extra arguments to pass to pytests.
         doctests : bool, optional
@@ -101,6 +104,10 @@ class PytestTester:
             report the time of the slowest `timer` tests. Default is -1.
         tests : test or list of tests
             Tests to be executed with pytest '--pyargs'
+        smoke : bool, optional
+            Check basic installation health without pytest. Supported only by
+            ``numpy.test``; this is not a complete correctness, ABI or
+            performance test. Pytest-specific options cannot be combined with it.
 
         Returns
         -------
@@ -122,7 +129,28 @@ class PytestTester:
         >>> result
         True
 
+        To check installation health without pytest:
+
+        >>> np.test(smoke=True, verbose=0)
+        True
+
+        In a shell, convert the result to an exit status for use in build or
+        packaging scripts::
+
+            python -c "import numpy, sys; sys.exit(not numpy.test(smoke=True))"
+
         """
+        if smoke:
+            if self.module_name != 'numpy':
+                raise ValueError('smoke=True is supported on numpy.test() only')
+            if (label != 'fast' or extra_argv or doctests or coverage
+                    or durations != -1 or tests is not None):
+                raise ValueError(
+                    'pytest-specific options cannot be used with smoke=True'
+                )
+            from numpy._smoke import run_smoke_checks
+            return run_smoke_checks(verbose=verbose)
+
         import pytest
 
         module = sys.modules[self.module_name]

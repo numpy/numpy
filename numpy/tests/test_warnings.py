@@ -35,7 +35,9 @@ class FindFuncs(ast.NodeVisitor):
 
         if p.ls[-1] == 'simplefilter' or p.ls[-1] == 'filterwarnings':
             if node.args and getattr(node.args[0], "value", None) == "ignore":
-                if not self.__filename.name.startswith("test_"):
+                # The runtime smoke checker deliberately tests deprecated imports.
+                is_smoke = self.__filename == Path(numpy.__file__).parent / "_smoke.py"
+                if not self.__filename.name.startswith("test_") and not is_smoke:
                     raise AssertionError(
                         "ignore filters should only be used in tests; "
                         f"found in {self.__filename} on line {node.lineno}")
