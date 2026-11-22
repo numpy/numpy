@@ -1806,7 +1806,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: ArrayLike,
+        a: ArrayLike | Sequence[Any],
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1993,7 +1993,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: ArrayLike,
+        a: ArrayLike | Sequence[Any],
         size: _ShapeLike,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
