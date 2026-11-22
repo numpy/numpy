@@ -627,6 +627,22 @@ def test_irfft_empty_input_zero_padding(fft, n):
     x = np.array([], dtype=np.complex128)
     assert_array_equal(fft(x, n=n), np.zeros(n, dtype=np.float64))
 
+    # Test empty array with non-zero/negative stride (gh-33397)
+    x_strided = np.zeros(2, dtype=complex)[::-1][:0]
+    assert_array_equal(fft(x_strided, n=n), np.zeros(n, dtype=np.float64))
+
+
+@pytest.mark.parametrize("fft", [np.fft.fft, np.fft.ifft])
+@pytest.mark.parametrize("n", [1, 2, 4])
+def test_fft_empty_input_zero_padding(fft, n):
+    # Regression test for gh-33396 & gh-33397
+    x = np.array([], dtype=np.complex128)
+    assert_array_equal(fft(x, n=n), np.zeros(n, dtype=np.complex128))
+
+    # Test empty array with non-zero/negative stride
+    x_strided = np.zeros(2, dtype=complex)[::-1][:0]
+    assert_array_equal(fft(x_strided, n=n), np.zeros(n, dtype=np.complex128))
+
 
 def test_irfft_with_n_large_regression():
     # Regression test for gh-25679

@@ -126,7 +126,7 @@ fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps,
     pocketfft::detail::arr<std::complex<T>> buff(buffered ? nout : 0);
     for (size_t i = 0; i < n_outer; i++, ip += si, fp += sf, op += so) {
         std::complex<T> *op_or_buff = buffered ? buff.data() : (std::complex<T> *)op;
-        if (ip != (char*)op_or_buff) {
+        if (nin < nout || ip != (char*)op_or_buff) {
             copy_input(ip, step_in, nin, op_or_buff, nout);
         }
         plan->exec((pocketfft::detail::cmplx<T> *)op_or_buff, *(T *)fp, direction);
@@ -277,7 +277,7 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
              * (in the latter case, zeroing after).
              */
             size_t nin_tail = (nin > 0) ? nin - 1 : 0;
-            copy_input(ip + step_in, step_in, nin_tail,
+            copy_input(nin_tail > 0 ? ip + step_in : ip, step_in, nin_tail,
                        (std::complex<T> *)&op_or_buff[1], (nout - 1) / 2);
             /* For even nout, we still need to set Rn. */
             if (nout % 2 == 0) {
