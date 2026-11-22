@@ -4943,7 +4943,7 @@ class MaskedArray(ndarray):
             mask = self._mask[indices]
             indices = narray(indices, copy=None)
             values = narray(values, copy=None, subok=True)
-            values.resize(indices.shape)
+            values = resize(values, indices.shape)
             indices = indices[~mask]
             values = values[~mask]
 
