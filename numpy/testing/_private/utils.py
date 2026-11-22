@@ -2924,6 +2924,25 @@ def run_subprocess(cmd, cwd=None, **kwargs):
     return res
 
 
+def run_function_with_args_in_subprocess(func, *args):
+    """Call ``func(*args)`` in a fresh Python subprocess, failing the test if
+    it raises.
+
+    ``func`` must be a module-level function and ``args`` must survive a
+    round trip through `repr`.
+    """
+    import pytest
+
+    if not HAS_SUBPROCESSES:
+        pytest.skip("requires subprocesses")
+    location = (func.__module__,
+                getattr(sys.modules[func.__module__], "__file__", None),
+                func.__qualname__)
+    code = ("from numpy.testing._private.utils import _load_function; "
+            f"_load_function(*{location!r})(*{args!r})")
+    run_subprocess([sys.executable, "-c", code])
+
+
 def run_with_memory_limit(func, make_args, limit):
     """Fail the test if any call needs more than ``limit`` bytes of address
     space beyond what the process already uses.
@@ -3064,13 +3083,27 @@ def assert_memory_growth_below(func, limit, repeat=10):
     """Fail if more than ``limit`` bytes are still allocated after calling
     ``func()`` ``repeat`` times.
 
-    ``func`` is called once before the measurement starts.  This uses
-    `tracemalloc` and is not thread-safe.
+    ``func`` is called once before the measurement starts.  It runs in a
+    fresh subprocess, so it must be a module-level function.
     """
+    import pytest
+
+    # not available on PyPy
+    pytest.importorskip("tracemalloc")
+    location = (func.__module__,
+                getattr(sys.modules[func.__module__], "__file__", None),
+                func.__qualname__)
+    run_function_with_args_in_subprocess(
+        _assert_memory_growth_below, location, limit, repeat)
+
+
+def _assert_memory_growth_below(func_location, limit, repeat):
+    func = _load_function(*func_location)
     func()
     with trace_memory_growth() as growth:
         for _ in range(repeat):
             func()
-    assert growth() < limit, (
-        f"memory grew by {growth()} bytes after {repeat} calls, "
-        f"limit is {limit}")
+    if growth() >= limit:
+        raise SystemExit(
+            f"memory grew by {growth()} bytes after {repeat} calls, "
+            f"limit is {limit}")
