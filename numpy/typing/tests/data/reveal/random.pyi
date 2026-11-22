@@ -1591,6 +1591,8 @@ assert_type(random_st.choice(5, 3), npt.NDArray[np.long])
 assert_type(random_st.choice(5, 3, replace=True), npt.NDArray[np.long])
 assert_type(random_st.choice(5, 3, p=[1 / 5] * 5), npt.NDArray[np.long])
 assert_type(random_st.choice(5, 3, p=[1 / 5] * 5, replace=False), npt.NDArray[np.long])
+assert_type(random_st.choice([object(), object()]), Any)
+assert_type(random_st.choice([object(), object()], 3), npt.NDArray[Any])
 
 assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"]), Any)
 assert_type(random_st.choice(["pooh", "rabbit", "piglet", "Christopher"], 3), npt.NDArray[Any])

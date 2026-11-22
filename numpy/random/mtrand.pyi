@@ -430,7 +430,7 @@ class RandomState:
     @overload
     def choice(
         self,
-        a: ArrayLike,
+        a: ArrayLike | MutableSequence[Any],
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -438,7 +438,7 @@ class RandomState:
     @overload
     def choice(
         self,
-        a: ArrayLike,
+        a: ArrayLike | MutableSequence[Any],
         size: _ShapeLike,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
