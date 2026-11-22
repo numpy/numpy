@@ -2931,17 +2931,16 @@ def run_with_memory_limit(func, make_args, limit):
     ``make_args()`` returns a mapping of labels to argument tuples, and
     ``func(*args)`` runs for each of them.  Both run in a fresh subprocess, so
     they must be module-level functions, and each call runs in its own forked
-    child of that subprocess.  Runs on Linux and on arm64 macOS 26 or later.
+    child of that subprocess.  Runs on Linux only.
     """
     import pytest
 
-    if sys.platform not in ("linux", "darwin"):
+    if sys.platform != "linux":
+        # macOS's legacy malloc can map 128 MiB for a small allocation
+        # (gh-33369). It is used before macOS 26, on Intel, and whenever the
+        # interpreter was linked against an SDK older than macOS 13, as
+        # conda-forge's Python is.
         pytest.skip("needs fork and an enforced RLIMIT_AS")
-    if sys.platform == "darwin":
-        # Legacy malloc can map 128 MiB for a small allocation (gh-33369).
-        major = int(platform.mac_ver()[0].split(".")[0] or 0)
-        if major < 26 or platform.machine() != "arm64":
-            pytest.skip("memory-limit tests require arm64 on macOS 26 or later")
     cflags = sysconfig.get_config_var('CFLAGS') or ''
     config_args = sysconfig.get_config_var('CONFIG_ARGS') or ''
     address_sanitizer = (
@@ -2982,7 +2981,6 @@ def _load_function(module_name, path, qualname):
 
 def _run_with_memory_limit(func_location, make_args_location, limit):
     import resource
-    import subprocess
     import traceback
 
     func = _load_function(*func_location)
@@ -2998,13 +2996,9 @@ def _run_with_memory_limit(func_location, make_args_location, limit):
             mapped = soft = hard = None
             try:
                 # Measure after fork: the child's mappings can differ from the
-                # parent's. macOS rejects limits below current address-space use.
-                if sys.platform == "darwin":
-                    ps = ["ps", "-o", "vsz=", "-p", str(os.getpid())]
-                    mapped = int(subprocess.check_output(ps)) * 1024
-                else:
-                    with open("/proc/self/statm") as f:
-                        mapped = int(f.read().split()[0]) * resource.getpagesize()
+                # parent's.
+                with open("/proc/self/statm") as f:
+                    mapped = int(f.read().split()[0]) * resource.getpagesize()
                 hard = resource.getrlimit(resource.RLIMIT_AS)[1]
                 soft = mapped + limit
                 if hard != resource.RLIM_INFINITY:
