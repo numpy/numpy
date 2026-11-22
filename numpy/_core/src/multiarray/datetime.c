@@ -17,6 +17,7 @@
 #include "numpyos.h"
 
 #include "npy_config.h"
+#include "npy_float_to_int.h"
 #include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 #include "npy_static_data.h"
 #include "module_state.h"

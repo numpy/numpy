@@ -16,6 +16,7 @@
 #include "loops_utils.h"
 #include "gil_utils.h"
 #include "npy_extint128.h"
+#include "npy_float_to_int.h"
 
 #include "npy_pycompat.h"
 

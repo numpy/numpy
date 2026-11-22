@@ -26,6 +26,7 @@
 
 #include "umathmodule.h"
 #include "gil_utils.h"
+#include "npy_float_to_int.h"
 
 /*
  * x86 platform works with unaligned access but the compiler is allowed to

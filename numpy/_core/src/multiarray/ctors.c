@@ -12,6 +12,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
+#include "npy_float_to_int.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
