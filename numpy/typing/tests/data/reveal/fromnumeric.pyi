@@ -50,6 +50,7 @@ _py_str_2d: list[list[str]]
 
 _dtype_list: list[np.dtype]
 _any_list: list[Any]
+_any_shape: tuple[Any, ...]
 
 # integer‑dtype subclass for argmin/argmax
 class NDArrayIntSubclass(np.ndarray[tuple[Any, ...], np.dtype[np.intp]]): ...
@@ -97,6 +98,8 @@ assert_type(np.reshape(f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
 assert_type(np.reshape(f, 1), np.ndarray[tuple[int], np.dtype])
 assert_type(np.reshape(AR_b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.reshape(AR_f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.reshape(f, _any_shape), np.ndarray[Any, Any])  # mypy fluke; pyright correctly infers NDArray[Any]
+assert_type(np.reshape(AR_f4, _any_shape), np.ndarray[Any, Any])  # mypy fluke; pyright correctly infers NDArray[float32]
 
 assert_type(np.choose(1, AR_f4), Any)
 assert_type(np.choose(AR_i8, AR_f4), npt.NDArray[np.float32])
