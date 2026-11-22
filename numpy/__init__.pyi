@@ -6666,8 +6666,17 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     # NOTE: reshape also accepts negative integers, so we can't use integer literals
     @overload  # (None)
     def reshape(self, shape: None, /, *, order: _OrderACF = "C", copy: py_bool | None = None) -> Self: ...
+    @overload  # (Any, ...)  (workaround; 9 * Never to avoid overlap with the <=8d shapes below)
+    def reshape(
+        self,
+        shape: tuple[Never, Never, Never, Never, Never, Never, Never, Never, Never],
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: py_bool | None = None,
+    ) -> ndarray[_AnyShape, _DTypeT_co]: ...
     @overload  # (empty_sequence)
-    def reshape(  # mypy false positive
+    def reshape(
         self,
         shape: Sequence[Never],
         /,
