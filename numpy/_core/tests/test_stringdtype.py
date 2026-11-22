@@ -1006,6 +1006,7 @@ def test_failed_cast_to_unaligned_releases_buffer():
 
 @pytest.mark.skipif(not HAS_SUBPROCESSES, reason="requires subprocesses")
 def test_ufunc_fixed_width_out_releases_buffer():
+    pytest.importorskip("tracemalloc")
     # Keep pytest-xdist's communication threads out of the memory measurement.
     code = (
         "from numpy._core.tests.test_stringdtype import "
