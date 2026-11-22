@@ -3094,13 +3094,14 @@ _arange_safe_ceil_to_intp(double value)
             "arange: cannot compute length");
         return -1;
     }
-    if (!((double)NPY_MIN_INTP <= ivalue && ivalue <= (double)NPY_MAX_INTP)) {
+    npy_intp result;
+    if (npy_double_to_intp(ivalue, &result) < 0) {
         PyErr_SetString(PyExc_OverflowError,
                 "arange: overflow while computing length");
         return -1;
     }
 
-    return (npy_intp)ivalue;
+    return result;
 }
 
 
