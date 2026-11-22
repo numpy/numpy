@@ -218,18 +218,6 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
     otypes: str | None
     excluded: set[int | str]
 
-    @overload  # decorator
-    def __init__(
-        self: vectorize[Never, _NoValueType],
-        /,
-        pyfunc: _NoValueType = ...,  # np._NoValue
-        *,
-        otypes: str | Iterable[DTypeLike] | None = None,
-        doc: str | None = None,
-        excluded: Iterable[int | str] | None = None,
-        cache: bool = False,
-        signature: str | None = None,
-    ) -> None: ...
     @overload  # ?, signature=<given>
     def __init__(
         self: vectorize[Any, Callable[[], object]],
@@ -386,6 +374,18 @@ class vectorize(Generic[_ScalarT_co, _PyFuncT_co]):
         excluded: Iterable[int | str] | None = None,
         cache: bool = False,
         signature: None = None,
+    ) -> None: ...
+    @overload  # decorator
+    def __init__(
+        self: vectorize[Never, _NoValueType],
+        /,
+        pyfunc: _NoValueType = ...,  # np._NoValue
+        *,
+        otypes: str | Iterable[DTypeLike] | None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        signature: str | None = None,
     ) -> None: ...
 
     #
