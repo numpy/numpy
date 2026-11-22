@@ -2925,7 +2925,7 @@ def run_subprocess(cmd, cwd=None, **kwargs):
 
 
 def run_function_with_args_in_subprocess(func, *args):
-    """Call ``func(*args)`` in a fresh Python subprocess, failing the test if
+    """Call ``func(*args)`` in a new Python subprocess, failing the test if
     it raises.
 
     ``func`` must be a module-level function and ``args`` must survive a
@@ -3084,7 +3084,7 @@ def assert_memory_growth_below(func, limit, repeat=10):
     ``func()`` ``repeat`` times.
 
     ``func`` is called once before the measurement starts.  It runs in a
-    fresh subprocess, so it must be a module-level function.
+    new subprocess, so it must be a module-level function.
     """
     import pytest
 

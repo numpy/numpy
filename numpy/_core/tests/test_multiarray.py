@@ -71,9 +71,9 @@ from numpy.testing._private.utils import (
 
 def _check_tracemalloc():
     with trace_memory_growth() as growth:
-        arr = np.zeros(1000000, dtype="uint8")
+        arr = np.zeros(1_000_000, dtype="uint8")
     # Allow for some non-data allocations
-    assert_allclose(growth(), arr.nbytes, atol=1000)
+    assert_allclose(growth(), arr.nbytes, atol=1_000)
 
 
 def assert_arg_sorted(arr, arg):
