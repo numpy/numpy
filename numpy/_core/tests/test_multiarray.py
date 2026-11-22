@@ -6968,7 +6968,7 @@ class TestIO:
                 pos = f.tell()
             assert_equal(pos, 10, err_msg=err_msg)
 
-    def test_load_object_array_fromfile(self, tmp_path, param_filename):
+    def test_fromfile_invalid_dtype(self, tmp_path, param_filename):
         # gh-12300
         tmp_filename = normalize_filename(tmp_path, param_filename)
         with open(tmp_filename, 'w') as f:
@@ -6981,6 +6981,10 @@ class TestIO:
 
         assert_raises_regex(ValueError, "Cannot read into object array",
                             np.fromfile, tmp_filename, dtype=object)
+        with pytest.raises(
+            ValueError, match="Cannot infer count for a dtype with itemsize 0"
+        ):
+            np.fromfile(tmp_filename, dtype="V0")
 
     def test_fromfile_offset(self, tmp_path, param_filename):
         tmp_filename = normalize_filename(tmp_path, param_filename)
