@@ -3713,6 +3713,12 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         return NULL;
     }
     if (dtype->elsize == 0) {
+        if (num < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot infer count for a dtype with itemsize 0");
+            Py_DECREF(dtype);
+            return NULL;
+        }
         /* Nothing to read, just create an empty array of the requested type */
         return PyArray_NewFromDescr_int(
                 &PyArray_Type, dtype,
