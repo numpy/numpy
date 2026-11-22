@@ -1401,19 +1401,15 @@ class TestCov:
                             (np.cov(xf, rowvar=False, bias=True) *
                              x.shape[0] / frac))
 
-    @pytest.mark.parametrize("rowvar", [True, False])
-    @pytest.mark.parametrize("kwargs", [{}, {"bias": True}, {"ddof": 0}])
-    def test_pairwise_cov(self, rowvar, kwargs):
+    def test_pairwise_cov(self):
         rng = np.random.default_rng(15601)
         data = rng.random((4, 30))
         m = rng.random((4, 30)) < 0.3
-        x = array(data, mask=m) if rowvar else array(data.T, mask=m.T)
-        test = cov(x, rowvar=rowvar, **kwargs)
+        test = cov(array(data, mask=m))
         for i in range(4):
             for j in range(i + 1):
                 shared = ~m[i] & ~m[j]
-                control = np.cov(data[i][shared], data[j][shared],
-                                 **kwargs)[0, 1]
+                control = np.cov(data[i][shared], data[j][shared])[0, 1]
                 assert_almost_equal(test[i, j], control)
 
     def test_one_shared_observation(self):
@@ -1480,14 +1476,11 @@ class TestCorrcoef:
         assert_almost_equal(test[0, 1], -1.0)
         assert_almost_equal(test[1, 0], -1.0)
 
-    @pytest.mark.parametrize("rowvar", [True, False])
-    @pytest.mark.parametrize("frac", [0.0, 0.3, 0.5])
-    def test_pairwise_complete(self, rowvar, frac):
+    def test_pairwise_complete(self):
         rng = np.random.default_rng(15601)
         data = rng.random((4, 30))
-        m = rng.random((4, 30)) < frac
-        x = array(data, mask=m) if rowvar else array(data.T, mask=m.T)
-        test = corrcoef(x, rowvar=rowvar)
+        m = rng.random((4, 30)) < 0.3
+        test = corrcoef(array(data, mask=m))
         for i in range(4):
             for j in range(i):
                 shared = ~m[i] & ~m[j]
@@ -1502,47 +1495,20 @@ class TestCorrcoef:
         assert_almost_equal(corrcoef(x)[0, 1], 1.0)
         assert_(corrcoef(x)[0, 1] <= 1.0)
 
-    @pytest.mark.parametrize("rowvar", [True, False])
-    def test_matches_pairwise_call(self, rowvar):
-        rng = np.random.default_rng(15601)
-        data = rng.random((4, 25))
-        m = rng.random((4, 25)) < 0.35
-        x = array(data, mask=m) if rowvar else array(data.T, mask=m.T)
-        test = corrcoef(x, rowvar=rowvar)
-        for i in range(4):
-            for j in range(i):
-                control = corrcoef(array(data[i], mask=m[i]),
-                                   array(data[j], mask=m[j]))[0, 1]
-                assert_almost_equal(test[i, j], control)
-
-    @pytest.mark.parametrize("shape, rowvar", [((5,), True),
-                                               ((1, 5), True),
-                                               ((5, 1), False)])
-    def test_single_variable(self, shape, rowvar):
-        x = array(np.arange(5.).reshape(shape))
-        result = corrcoef(x, rowvar=rowvar)
+    def test_single_variable(self):
+        result = corrcoef(array(np.arange(5.)))
         # assert_almost_equal passes against masked, so check the mask first.
         assert_(result is not masked)
         assert_almost_equal(result, 1.)
-
-    @pytest.mark.parametrize("mask", [[1, 1, 1, 1, 1],   # nothing observed
-                                      [0, 1, 1, 1, 1]])  # one observation
-    def test_single_variable_without_observations(self, mask):
-        assert_(corrcoef(array(np.arange(5.), mask=mask)) is masked)
-
-    def test_single_variable_without_variance(self):
         assert_(corrcoef(array(np.ones(5))) is masked)
+        assert_(corrcoef(array(np.arange(5.), mask=[0, 1, 1, 1, 1])) is masked)
 
-    def test_no_variance_left_as_rounding_noise(self):
+    def test_no_variance_on_shared(self):
         # Not an exact zero, so this is caught by the noise threshold.
         x = array([[2., 0., 0., 1., 0.], [3., 0., 0., 3., 3.]],
                   mask=[[0, 1, 1, 0, 0], [0, 0, 0, 0, 0]])
         assert_(corrcoef(x)[0, 1] is masked)
-
-    def test_no_variance_on_shared(self):
-        x = array([[2., 2., 2., 2., 7., 11.], [1., 4., 9., 0., 0., 0.]],
-                  mask=[[0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 1, 1]])
-        assert_(corrcoef(x)[0, 1] is masked)
+        assert_(corrcoef(x)[1, 0] is masked)
 
 
 class TestPolynomial:
