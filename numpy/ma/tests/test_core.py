@@ -3774,6 +3774,19 @@ class TestMaskedArrayMethods:
         xh.put([4, 2, 0, 1, 3], [1, 2, 3, 4, 5])
         assert_equal(xh._data, [3, 4, 2, 4, 5])
 
+    def test_put_hardmask_scalar_repeat(self):
+        # GitHub issue 33415: put() with a scalar must repeat it, not pad
+        # with zeros, when the target indices are repeated.
+        x = array([1, 2, 3], mask=[False, True, False], hard_mask=True)
+        x.put([0, 2], 7)
+        assert_equal(x._data, [7, 2, 7])
+        assert_equal(x.mask, [False, True, False])
+
+        # A masked scalar repeats the mask too.
+        y = array([1, 2, 3], mask=[False, True, False], hard_mask=True)
+        y.put([0, 2], masked_array(7, mask=True))
+        assert_equal(y.mask, [True, True, True])
+
     def test_putmask(self):
         x = arange(6) + 1
         mx = array(x, mask=[0, 0, 0, 1, 1, 1])
