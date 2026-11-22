@@ -3372,30 +3372,26 @@ class TestBincount:
         assert_array_equal(np.bincount([], minlength=minlength),
                            np.zeros(minlength, dtype=np.intp), strict=True)
 
-    def test_empty_list_with_weights(self):
-        actual = np.bincount([], weights=[])
-        expected = np.array([], dtype=np.float64)
+    @pytest.mark.parametrize("x, kwargs, expected_length", [
+        ([], {"weights": []}, 0),
+        (np.array([], dtype=np.intp),
+         {"weights": np.array([], dtype=np.float64), "minlength": 3}, 3),
+        (np.array([], dtype=np.intp),
+         {"weights": np.array([], dtype=np.intp), "minlength": 3}, 3),
+    ], ids=["list", "float-weights", "int-weights"])
+    def test_empty_with_weights(self, x, kwargs, expected_length):
+        actual = np.bincount(x, **kwargs)
+        expected = np.zeros(expected_length, dtype=np.float64)
         assert_array_equal(actual, expected, strict=True)
 
-    @pytest.mark.parametrize("weight_dtype", [np.float64, np.intp])
-    def test_empty_array_with_weights(self, weight_dtype):
-        x = np.array([], dtype=np.intp)
-        weights = np.array([], dtype=weight_dtype)
-        actual = np.bincount(x, weights=weights, minlength=3)
-        expected = np.zeros(3, dtype=np.float64)
-        assert_array_equal(actual, expected, strict=True)
-
-    def test_empty_with_nonempty_weights(self):
-        with pytest.raises(ValueError):
-            np.bincount([], weights=[1.0])
-
-    def test_empty_with_2d_weights(self):
-        with pytest.raises(ValueError):
-            np.bincount([], weights=np.empty((0, 1)))
-
-    def test_empty_with_complex_weights(self):
-        with pytest.raises(TypeError):
-            np.bincount([], weights=np.array([], dtype=np.complex128))
+    @pytest.mark.parametrize("weights, error", [
+        ([1.0], ValueError),
+        (np.empty((0, 1)), ValueError),
+        (np.array([], dtype=np.complex128), TypeError),
+    ], ids=["wrong-length", "2d", "complex"])
+    def test_empty_with_invalid_weights(self, weights, error):
+        with pytest.raises(error):
+            np.bincount([], weights=weights)
 
     def test_with_incorrect_minlength(self):
         x = np.array([], dtype=int)

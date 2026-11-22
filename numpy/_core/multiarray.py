@@ -906,10 +906,16 @@ def bincount(x, /, weights=None, minlength=0):
     """
     bincount(x, /, weights=None, minlength=0)
 
-    Count occurrences of each non-negative integer in `x`.
+    Count number of occurrences of each value in array of non-negative ints.
 
-    Each occurrence of an integer ``n`` adds one to ``out[n]``. With
-    weights, an occurrence at position ``i`` adds ``weights[i]``.
+    The number of bins (of size 1) is one larger than the largest value in
+    `x`. If `minlength` is specified, there will be at least this number
+    of bins in the output array (though it will be longer if necessary,
+    depending on the contents of `x`).
+    Each bin gives the number of occurrences of its index value in `x`.
+    If `weights` is specified the input array is weighted by it, i.e. if a
+    value ``n`` is found at position ``i``, ``out[n] += weight[i]`` instead
+    of ``out[n] += 1``.
 
     Parameters
     ----------
@@ -932,11 +938,11 @@ def bincount(x, /, weights=None, minlength=0):
     Raises
     ------
     ValueError
-        If `x` is not one-dimensional, or a value in `x` is negative or
-        too large to use as a bin index. Also raised if `minlength` is
-        negative or `weights` and `x` have different shapes.
+        If the input is not 1-dimensional, or contains elements with negative
+        values, or if `minlength` is negative. Also raised if `weights`
+        and `x` have different shapes.
     TypeError
-        If `x` has a floating-point or complex dtype, or if `weights` is
+        If the type of the input is float or complex, or if `weights` is
         an array whose dtype cannot be safely cast to ``float64``.
 
     See Also
