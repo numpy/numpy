@@ -1619,6 +1619,7 @@ assert_type(random_st.permutation(D_2D), npt.NDArray[Any])
 assert_type(random_st.shuffle(np.arange(10)), None)
 assert_type(random_st.shuffle([1, 2, 3, 4, 5]), None)
 assert_type(random_st.shuffle(D_2D), None)
+assert_type(random_st.shuffle([object(), object()]), None)  # gh-33413
 
 assert_type(np.random.RandomState(pcg64), np.random.RandomState)
 assert_type(np.random.RandomState(0), np.random.RandomState)

@@ -1,5 +1,5 @@
 from builtins import bytes as py_bytes
-from collections.abc import Callable
+from collections.abc import Callable, MutableSequence
 from typing import Any, Literal, SupportsIndex, overload
 from typing_extensions import disjoint_base
 
@@ -966,7 +966,7 @@ class RandomState:
     def dirichlet(self, alpha: _ArrayLikeFloat_co, size: _ShapeLike | None = None) -> NDArray[np.float64]: ...
 
     #
-    def shuffle(self, x: ArrayLike) -> None: ...
+    def shuffle(self, x: ArrayLike | MutableSequence[Any]) -> None: ...
 
     #
     @overload
