@@ -33,6 +33,7 @@ from numpy._core._multiarray_umath import _array_converter
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.tests._locales import CommaDecimalPointLocale
+from numpy._core.tests._marks import longdouble_fpe_mark
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib import stride_tricks
 from numpy.lib.recfunctions import repack_fields
@@ -61,7 +62,6 @@ from numpy.testing import (
 )
 from numpy.testing._private.utils import (
     _no_tracing,
-    longdouble_fpe_mark,
     requires_deep_recursion,
     requires_memory,
     trace_memory_growth,

@@ -15,6 +15,7 @@ import pytest
 import numpy as np
 import numpy._core.umath as ncu
 from numpy._core import _umath_tests as ncu_tests, sctypes
+from numpy._core.tests._marks import longdouble_fpe_mark
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_MUSL,
@@ -36,7 +37,6 @@ from numpy.testing import (
 from numpy.testing._private.utils import (
     LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
     _glibc_older_than,
-    longdouble_fpe_mark,
 )
 
 UFUNCS = [obj for obj in np._core.umath.__dict__.values()
