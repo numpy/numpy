@@ -16,7 +16,9 @@ from numpy.dtypes import StringDType
 from numpy.exceptions import ComplexWarning
 from numpy.testing import IS_PYPY, assert_array_equal
 from numpy.testing._private.utils import (
+    HAS_SUBPROCESSES,
     assert_memory_growth_below,
+    run_subprocess,
     run_with_memory_limit,
 )
 
@@ -1002,8 +1004,18 @@ def test_failed_cast_to_unaligned_releases_buffer():
     assert_memory_growth_below(fill, limit=1024)
 
 
-@pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="requires subprocesses")
 def test_ufunc_fixed_width_out_releases_buffer():
+    # Keep pytest-xdist's communication threads out of the memory measurement.
+    code = (
+        "from numpy._core.tests.test_stringdtype import "
+        "_check_ufunc_fixed_width_out_releases_buffer; "
+        "_check_ufunc_fixed_width_out_releases_buffer()"
+    )
+    run_subprocess([sys.executable, "-c", code])
+
+
+def _check_ufunc_fixed_width_out_releases_buffer():
     # the ufunc computes its StringDType results into a temporary buffer and
     # then casts them to the output array. The strings in the buffer leak
     # unless that cast frees them.
