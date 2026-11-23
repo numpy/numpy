@@ -74,6 +74,15 @@ constexpr npy_intp COUNT_RUNS_RATIO = 4;
 // tables in turn, as successive increments of one entry wait on each other.
 constexpr npy_uint64 COUNT_WINDOW = 256;
 constexpr npy_uint64 COUNT_LANES = 8;
+static_assert((COUNT_WINDOW & (COUNT_WINDOW - 1)) == 0, "COUNT_WINDOW must be a power of two");
+
+// The spelling is sensitive to a bug in VS 2022 for x86, which miscompiles
+// `offset < COUNT_WINDOW`.
+static inline bool
+in_count_window(npy_uint64 offset)
+{
+    return (offset & ~(COUNT_WINDOW - 1)) == 0;
+}
 
 /* Sorted input */
 
@@ -521,7 +530,7 @@ count_in_window(char *idata, npy_intp istride, npy_intp isize, T *table_min,
         bool in_window = true;
         for (npy_intp lane = 0; lane < lanes; lane++) {
             offsets[lane] = offset_at(i + lane);
-            in_window &= offsets[lane] < COUNT_WINDOW;
+            in_window &= in_count_window(offsets[lane]);
         }
         if (!in_window) {
             break;
@@ -531,7 +540,7 @@ count_in_window(char *idata, npy_intp istride, npy_intp isize, T *table_min,
             count(offsets[lane] * COUNT_LANES + lane, i + lane);
         }
     }
-    for (; i < isize && offset_at(i) < COUNT_WINDOW; i++) {
+    for (; i < isize && in_count_window(offset_at(i)); i++) {
         count(offset_at(i) * COUNT_LANES, i);
     }
     if (i == isize) {
@@ -593,8 +602,8 @@ unique_with_table(PyArrayObject *self, T min, npy_uint64 num_values, unique_want
             by_runs = changes * COUNT_RUNS_RATIO < sample;
             window = static_cast<npy_uint64>(low) - static_cast<npy_uint64>(min);
             windowed = !by_runs && sample == COUNT_SAMPLE_SIZE
-                       && static_cast<npy_uint64>(high) - static_cast<npy_uint64>(low)
-                                  < COUNT_WINDOW;
+                       && in_count_window(static_cast<npy_uint64>(high)
+                                          - static_cast<npy_uint64>(low));
         }
         npy_intp start = 0;
         try {

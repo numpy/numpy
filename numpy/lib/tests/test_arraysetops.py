@@ -750,6 +750,14 @@ class TestUnique:
             self.check_all(low, bb, [1, 0, 2 * n], [1, 0] * n + [2], [n, n, 1], dt)
             self.check_all(low[:-1], bb[:2], [1, 0], [1, 0] * n, [n, n], dt)
 
+        # test for signed values straddling zero, which VS 2022 for x86 got wrong
+        values = np.arange(-500, 500)
+        aa = np.random.default_rng(0).permutation(np.tile(values, 70))
+        idx = [np.flatnonzero(aa == v)[0] for v in values]
+        for dt in 'hilq':
+            self.check_all(aa.astype(dt), values.astype(dt), idx,
+                           aa - values[0], np.full(values.size, 70), dt)
+
         # test for many distinct values, which hashing leaves to sorting
         aa = np.random.default_rng(0).permutation(5000) * 1000
         idx, inv = np.argsort(aa), np.argsort(np.argsort(aa))

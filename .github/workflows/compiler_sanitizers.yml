@@ -201,8 +201,9 @@ jobs:
           echo "TSAN_OPTIONS=$TSAN_OPTIONS"
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/openblas-tsan/lib
           python -m spin run python -P -c "import numpy; numpy.show_config()"
+          # git grep leaves out the files of submodules, which are not installed
           python -m spin test \
-          `find numpy -name "test*.py" | xargs grep -E -l "import threading|ThreadPoolExecutor" | tr '\n' ' '` \
+          `git grep -l -E "import threading|ThreadPoolExecutor" -- ':(glob)numpy/**/test*.py' | tr '\n' ' '` \
            -- -v -s --timeout=600 --durations=10
 
   clang_ASAN:
