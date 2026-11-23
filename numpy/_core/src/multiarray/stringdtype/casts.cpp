@@ -260,10 +260,10 @@ unicode_to_string(PyArrayMethod_Context *context, char *const data[],
     long max_in_size = (descrs[0]->elsize) / sizeof(Py_UCS4);
 
     npy_intp N = dimensions[0];
-    Py_UCS4 *in = (Py_UCS4 *)data[0];
+    char *in = data[0];
     char *out = data[1];
 
-    npy_intp in_stride = strides[0] / sizeof(Py_UCS4);
+    npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
 
     while (N--) {
@@ -284,7 +284,7 @@ unicode_to_string(PyArrayMethod_Context *context, char *const data[],
         char *out_buf = (char *)out_ss.buf;
         for (size_t i = 0; i < num_codepoints; i++) {
             // get code point
-            Py_UCS4 code = in[i];
+            Py_UCS4 code = read_ucs4(in, i);
 
             // will be filled with UTF-8 bytes
             char utf8_c[4] = {0};
@@ -321,6 +321,7 @@ fail:
 static PyType_Slot u2s_slots[] = {{NPY_METH_resolve_descriptors,
                                    (void *)&any_to_string_resolve_descriptors<NPY_SAFE_CASTING>},
                                   {NPY_METH_strided_loop, (void *)&unicode_to_string},
+                                  {NPY_METH_unaligned_strided_loop, (void *)&unicode_to_string},
                                   {0, NULL}};
 
 // string to unicode
@@ -505,9 +506,9 @@ string_to_unicode(PyArrayMethod_Context *context, char *const data[],
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
     npy_intp N = dimensions[0];
     char *in = data[0];
-    Py_UCS4 *out = (Py_UCS4 *)data[1];
+    char *out = data[1];
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(Py_UCS4);
+    npy_intp out_stride = strides[1];
     // max number of UCS4 characters that can fit in the output
     size_t max_out_size = (context->descriptors[1]->elsize) / sizeof(Py_UCS4);
 
@@ -520,26 +521,20 @@ string_to_unicode(PyArrayMethod_Context *context, char *const data[],
         }
 
         unsigned char *this_string = (unsigned char *)(s.buf);
-        size_t n_bytes = s.size;
         size_t tot_n_bytes = 0;
 
-        if (n_bytes == 0) {
-            for (size_t i=0; i < max_out_size; i++) {
-                out[i] = (Py_UCS4)0;
-            }
-        }
-        else {
-            size_t i = 0;
-            for (; i < max_out_size && tot_n_bytes < n_bytes; i++) {
-                int num_bytes = utf8_char_to_ucs4_code(this_string, &out[i]);
+        size_t i = 0;
+        for (; i < max_out_size && tot_n_bytes < s.size; i++) {
+            Py_UCS4 code;
+            int num_bytes = utf8_char_to_ucs4_code(this_string, &code);
+            memcpy(out + i * sizeof(Py_UCS4), &code, sizeof(Py_UCS4));
 
-                // move to next character
-                this_string += num_bytes;
-                tot_n_bytes += num_bytes;
-            }
-            for(; i < max_out_size; i++) {
-                out[i] = (Py_UCS4)0;
-            }
+            // move to next character
+            this_string += num_bytes;
+            tot_n_bytes += num_bytes;
+        }
+        if (i < max_out_size) {
+            memset(out + i * sizeof(Py_UCS4), 0, (max_out_size - i) * sizeof(Py_UCS4));
         }
 
         in += in_stride;
@@ -559,6 +554,7 @@ fail:
 static PyType_Slot s2u_slots[] = {
         {NPY_METH_resolve_descriptors, (void *)&string_to_fixed_width_resolve_descriptors},
         {NPY_METH_strided_loop, (void *)&string_to_unicode},
+        {NPY_METH_unaligned_strided_loop, (void *)&string_to_unicode},
         {0, NULL}};
 
 // string to bool
@@ -2038,6 +2034,7 @@ fixed_width_bytes_to_string(PyArrayMethod_Context *context, char *const data[],
 static PyType_Slot v2s_slots[] = {
     {NPY_METH_resolve_descriptors, (void *)&void_to_string_resolve_descriptors},
     {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string},
+    {NPY_METH_unaligned_strided_loop, (void *)&fixed_width_bytes_to_string},
     {0, NULL}
 };
 
@@ -2136,12 +2133,14 @@ string_to_fixed_width_bytes(PyArrayMethod_Context *context, char *const data[],
 static PyType_Slot s2v_slots[] = {
     {NPY_METH_resolve_descriptors, (void *)&string_to_void_resolve_descriptors},
     {NPY_METH_strided_loop, (void *)&string_to_fixed_width_bytes<false>},
+    {NPY_METH_unaligned_strided_loop, (void *)&string_to_fixed_width_bytes<false>},
     {0, NULL}
 };
 
 static PyType_Slot s2bytes_slots[] = {
     {NPY_METH_resolve_descriptors, (void *)&string_to_fixed_width_resolve_descriptors},
     {NPY_METH_strided_loop, (void *)&string_to_fixed_width_bytes<true>},
+    {NPY_METH_unaligned_strided_loop, (void *)&string_to_fixed_width_bytes<true>},
     {0, NULL}
 };
 
@@ -2150,6 +2149,7 @@ static PyType_Slot s2bytes_slots[] = {
 static PyType_Slot bytes2s_slots[] = {
     {NPY_METH_resolve_descriptors, (void *)&any_to_string_resolve_descriptors<NPY_SAFE_CASTING>},
     {NPY_METH_strided_loop, (void *)&fixed_width_bytes_to_string},
+    {NPY_METH_unaligned_strided_loop, (void *)&fixed_width_bytes_to_string},
     {0, NULL}
 };
 
@@ -2235,13 +2235,16 @@ get_casts() {
     num_casts += 4;
 #endif
 
+    constexpr auto fixed_width_flags = static_cast<NPY_ARRAYMETHOD_FLAGS>(
+            NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_SUPPORTS_UNALIGNED);
+
     PyArray_DTypeMeta **u2s_dtypes = get_dtypes(
             &PyArray_UnicodeDType, &PyArray_StringDType);
 
     PyArrayMethod_Spec *UnicodeToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_UNICODE),
         NPY_SAFE_CASTING,
-        NPY_METH_NO_FLOATINGPOINT_ERRORS,
+        fixed_width_flags,
         u2s_dtypes,
         u2s_slots
     );
@@ -2252,7 +2255,7 @@ get_casts() {
     PyArrayMethod_Spec *StringToUnicodeCastSpec = get_cast_spec(
         make_s2type_name(NPY_UNICODE),
         NPY_SAME_KIND_CASTING,
-        NPY_METH_NO_FLOATINGPOINT_ERRORS,
+        fixed_width_flags,
         s2u_dtypes,
         s2u_slots
     );
@@ -2329,7 +2332,7 @@ get_casts() {
     PyArrayMethod_Spec *StringToVoidCastSpec = get_cast_spec(
         make_s2type_name(NPY_VOID),
         NPY_SAME_KIND_CASTING,
-        NPY_METH_NO_FLOATINGPOINT_ERRORS,
+        fixed_width_flags,
         s2v_dtypes,
         s2v_slots
     );
@@ -2340,7 +2343,7 @@ get_casts() {
     PyArrayMethod_Spec *VoidToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_VOID),
         NPY_SAME_KIND_CASTING,
-        NPY_METH_NO_FLOATINGPOINT_ERRORS,
+        fixed_width_flags,
         v2s_dtypes,
         v2s_slots
     );
@@ -2351,7 +2354,7 @@ get_casts() {
     PyArrayMethod_Spec *StringToBytesCastSpec = get_cast_spec(
         make_s2type_name(NPY_STRING),
         NPY_SAME_KIND_CASTING,
-        NPY_METH_NO_FLOATINGPOINT_ERRORS,
+        fixed_width_flags,
         s2bytes_dtypes,
         s2bytes_slots
     );
@@ -2362,7 +2365,7 @@ get_casts() {
     PyArrayMethod_Spec *BytesToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_STRING),
         NPY_SAFE_CASTING,
-        NPY_METH_NO_FLOATINGPOINT_ERRORS,
+        fixed_width_flags,
         bytes2s_dtypes,
         bytes2s_slots
     );

@@ -3103,7 +3103,6 @@ def _assert_memory_growth_below(func_location, limit, repeat):
     with trace_memory_growth() as growth:
         for _ in range(repeat):
             func()
-    if growth() >= limit:
-        raise SystemExit(
-            f"memory grew by {growth()} bytes after {repeat} calls, "
-            f"limit is {limit}")
+    assert growth() < limit, (
+        f"memory grew by {growth()} bytes after {repeat} calls, "
+        f"limit is {limit}")
