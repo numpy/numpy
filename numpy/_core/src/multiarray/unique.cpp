@@ -1057,9 +1057,14 @@ unique_few(PyArrayObject *self, unique_wanted want, npy_bool equal_nan, PyObject
         }
         counts[j] += seen_counts[k];
     }
-    std::sort(order, order + osize, [&](npy_intp a, npy_intp b) {
-        return keys.less(unique_keys[a], unique_keys[b]);
-    });
+    // few enough for an insertion sort
+    for (npy_intp i = 1; i < osize; i++) {
+        npy_intp entry = order[i], j = i;
+        for (; j > 0 && keys.less(unique_keys[entry], unique_keys[order[j - 1]]); j--) {
+            order[j] = order[j - 1];
+        }
+        order[j] = entry;
+    }
     *result = unique_results{}.finish(self, osize, want, [&](unique_results &out) {
         char *odata = PyArray_BYTES(out.values);
         npy_intp *out_counts = out.data(out.counts);
