@@ -130,7 +130,8 @@ type _3D = tuple[int, int, int]
 type _4D = tuple[int, int, int, int]
 
 # workaround for mypy's and pyright's typing spec non-compliance regarding overloads
-type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
+type _JustND = tuple[Never, Never, Never, Never]
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustND, np.dtype[ScalarT]]
 
 type _ToArray1D2[ScalarT: np.generic, T] = Array1D[ScalarT] | Sequence[T]
 type _ToArray2D2[ScalarT: np.generic, T] = Array2D[ScalarT] | Sequence[Sequence[T]]
@@ -540,6 +541,15 @@ def reshape[ScalarT: np.generic](
     *,
     copy: bool | None = None,
 ) -> Array1D[ScalarT]: ...
+@overload  # shape: (Any, ...)  (workaround)
+def reshape[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    /,
+    shape: _JustND,
+    order: _OrderACF = "C",
+    *,
+    copy: bool | None = None,
+) -> NDArray[ScalarT]: ...
 @overload  # shape: ~ShapeT
 def reshape[ScalarT: np.generic, ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     a: _ArrayLike[ScalarT],
@@ -567,6 +577,15 @@ def reshape(
     *,
     copy: bool | None = None,
 ) -> np.ndarray[_1D]: ...
+@overload  # shape: (Any, ...)  (workaround)
+def reshape(
+    a: ArrayLike,
+    /,
+    shape: _JustND,
+    order: _OrderACF = "C",
+    *,
+    copy: bool | None = None,
+) -> NDArray[Any]: ...
 @overload  # shape: ~ShapeT
 def reshape[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     a: ArrayLike,
@@ -1341,7 +1360,9 @@ def searchsorted(
 
 # keep in sync with `ma.core.resize`
 @overload
-def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: SupportsIndex | tuple[SupportsIndex]) -> Array1D[ScalarT]: ...
+def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: SupportsIndex) -> Array1D[ScalarT]: ...
+@overload
+def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: _JustND) -> NDArray[ScalarT]: ...
 @overload
 def resize[ScalarT: np.generic, AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](
     a: _ArrayLike[ScalarT],
@@ -1350,7 +1371,9 @@ def resize[ScalarT: np.generic, AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](
 @overload
 def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: _ShapeLike) -> NDArray[ScalarT]: ...
 @overload
-def resize(a: ArrayLike, new_shape: SupportsIndex | tuple[SupportsIndex]) -> np.ndarray[_1D]: ...
+def resize(a: ArrayLike, new_shape: SupportsIndex) -> np.ndarray[_1D]: ...
+@overload
+def resize(a: ArrayLike, new_shape: _JustND) -> NDArray[Any]: ...
 @overload
 def resize[AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](a: ArrayLike, new_shape: AnyShapeT) -> np.ndarray[AnyShapeT]: ...
 @overload
