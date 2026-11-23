@@ -100,6 +100,22 @@ def test_overlapping_flat_assignment(use_setter):
     assert_array_equal(x, expected)
 
 
+def test_copyto_overlapping_where_mask():
+    a = np.array([True, False, False, True, False])
+    s = a[::2]
+    expected = a.copy()
+    np.copyto(expected[2:], s.copy(), where=s.copy())
+    np.copyto(a[2:], s, where=s)
+    assert_array_equal(a, expected)
+
+
+def test_copyto_overlapping_masked_cast():
+    a = np.array([b'1', b'x', b'3', b'4', b'5'], dtype='S1')
+    np.copyto(a.view('u1')[::2], a[:3], casting='unsafe',
+              where=[True, False, True])
+    assert_array_equal(a.view('u1'), [1, 120, 51, 52, 3])
+
+
 @pytest.mark.slow
 def test_diophantine_fuzz():
     # Fuzz test the diophantine solver

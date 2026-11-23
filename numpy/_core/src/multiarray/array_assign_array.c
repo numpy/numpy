@@ -316,6 +316,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
                     NPY_CASTING casting)
 {
     int copied_src = 0;
+    PyArrayObject *mask_copy = NULL;
     npy_intp src_strides[NPY_MAXDIMS];
 
     /* Use array_assign_scalar if 'src' NDIM is 0 */
@@ -389,9 +390,9 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
      * the lower-level inner loop handles copying
      * of overlapping data. For bigger ndim and opposite-strided 1D
      * data, we make a temporary copy of 'src' if 'src' and 'dst' overlap.
-     * A single copy direction is only guaranteed safe when the source stays
-     * on one side of the destination from first element to last. If the views
-     * may cross and overlap, we also take the temporary.
+     * Compare the starts of paired source and destination elements. If their
+     * order changes between the first and last pair, also take the temporary
+     * when the arrays may overlap.
      */
     int needs_copy = ((dst_is_1d && PyArray_NDIM(src) >= 1 &&
                     PyArray_STRIDES(dst)[0] *
@@ -403,6 +404,38 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
             solve_may_share_memory(src, dst, 1) != 0)) {
         PyArrayObject *tmp;
 
+        if (!needs_copy && wheremask != NULL) {
+            if (PyArray_NDIM(wheremask) == 0 &&
+                    PyArray_TYPE(wheremask) == NPY_BOOL) {
+                if (!*(npy_bool *)PyArray_DATA(wheremask)) {
+                    return 0;
+                }
+                wheremask = NULL;
+            }
+            else {
+                npy_intp mask_stride;
+                if (broadcast_strides(1, PyArray_DIMS(dst),
+                        PyArray_NDIM(wheremask), PyArray_DIMS(wheremask),
+                        PyArray_STRIDES(wheremask), "where mask",
+                        &mask_stride) < 0) {
+                    goto fail;
+                }
+                /* Both passes must use the same selection, even if a
+                 * conversion callback changes the caller's mask. */
+                mask_copy = (PyArrayObject *)PyArray_FromArray(wheremask,
+                        NULL, NPY_ARRAY_ENSURECOPY | NPY_ARRAY_ENSUREARRAY);
+                if (mask_copy == NULL) {
+                    goto fail;
+                }
+                wheremask = mask_copy;
+                if (PyArray_SIZE(mask_copy) == 1 &&
+                        !*(npy_bool *)PyArray_DATA(mask_copy)) {
+                    /* Keep cast setup even though no elements are selected. */
+                    goto broadcast_src;
+                }
+            }
+        }
+
         /*
          * Allocate a temporary copy array.
          */
@@ -412,7 +445,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
             goto fail;
         }
 
-        if (PyArray_AssignArray(tmp, src, NULL, NPY_UNSAFE_CASTING) < 0) {
+        if (PyArray_AssignArray(tmp, src, mask_copy, NPY_UNSAFE_CASTING) < 0) {
             Py_DECREF(tmp);
             goto fail;
         }
@@ -421,6 +454,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
         copied_src = 1;
     }
 
+broadcast_src:
     /* Broadcast 'src' to 'dst' for raw iteration */
     if (PyArray_NDIM(src) > PyArray_NDIM(dst)) {
         int ndim_tmp = PyArray_NDIM(src);
@@ -514,9 +548,11 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     if (copied_src) {
         Py_DECREF(src);
     }
+    Py_XDECREF(mask_copy);
     return 0;
 
 fail:
+    Py_XDECREF(mask_copy);
     if (copied_src) {
         Py_DECREF(src);
     }
