@@ -990,7 +990,12 @@ static GCC_CAST_OPT_LEVEL int
 #   endif
 #   pragma GCC diagnostic ignored "-Wtautological-compare"
 #   endif
-#  if !@is_bool1@
+#  if @is_inexact1@ && !@is_inexact2@
+    /* The integer maximum can round up when compared as a float. */
+    if (!NPY_FLOAT_IN_INT_RANGE(_TO_RTYPE1(src_value), @type2min@, @type2max@)) {
+        _RETURN_SAME_VALUE_FAILURE;
+    }
+#  elif !@is_bool1@
    if (_TO_RTYPE1(src_value) > @type2max@) {
         _RETURN_SAME_VALUE_FAILURE;
    }
@@ -999,15 +1004,10 @@ static GCC_CAST_OPT_LEVEL int
         _RETURN_SAME_VALUE_FAILURE;
    }
 #  endif
-#  endif /* !is_bool1 */
+#  endif
     /* 3. Check that the value can round trip exactly */
-#if @is_inexact1@ && !@is_inexact2@
-    /* casting a float outside the integer's range is undefined */
-    if (!NPY_FLOAT_IN_INT_RANGE(_TO_RTYPE1(src_value), @type2min@, @type2max@)) {
-        _RETURN_SAME_VALUE_FAILURE;
-    }
-#elif !@is_inexact1@ && !@is_bool1@ && @is_inexact2@ && !@is_emu_half2@
-    /* so is casting back an integer that rounded up to max + 1 */
+#if !@is_inexact1@ && !@is_bool1@ && @is_inexact2@ && !@is_emu_half2@
+    /* Casting back an integer that rounded up to max + 1 is undefined. */
     if (!NPY_FLOAT_IN_INT_RANGE(_CONVERT_FN(src_value), @type1min@, NPY_MAX_@NAME1@)) {
         _RETURN_SAME_VALUE_FAILURE;
     }
