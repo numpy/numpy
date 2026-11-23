@@ -6884,7 +6884,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     if (nop == 3) {
         strides[2] = operation_descrs[2]->elsize;
     }
-    if (fast_path && (iter->subspace_iter != NULL) && (iter->nd > 0)) {
+    if (fast_path && (iter->subspace_iter != NULL) && (iter->nd > 0)
+            && (iter->dimensions[iter->nd - 1] > 1)) {
         /*
          * Some dimensions of op1 are not indexed by an array (e.g. the
          * indices select rows). The subspace is iterated in C order, so the
