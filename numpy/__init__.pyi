@@ -1282,17 +1282,6 @@ class _DTypeMeta(type):
 class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __hash__(self) -> int: ...
 
-    # `None` results in the default dtype
-    @overload
-    def __new__(
-        cls,
-        dtype: py_type[float64 | ct.c_double] | _Float64Codes | None,
-        align: py_bool = False,
-        copy: py_bool = False,
-        *,
-        metadata: dict[py_str, Any] = ...
-    ) -> dtype[float64]: ...
-
     # Overload for `dtype` instances, scalar types, and instances that have a
     # `dtype: dtype[ScalarT]` attribute
     @overload
@@ -1304,6 +1293,17 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
         *,
         metadata: dict[py_str, Any] = ...,
     ) -> dtype[ScalarT]: ...
+
+    # `None` results in the default dtype
+    @overload
+    def __new__(
+        cls,
+        dtype: py_type[float64 | ct.c_double] | _Float64Codes | None,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[py_str, Any] = ...
+    ) -> dtype[float64]: ...
 
     # Builtin types
     #

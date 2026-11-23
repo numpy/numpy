@@ -31,6 +31,10 @@ dt_string: StringDType
 dt_f8: np.dtypes.Float64DType
 dt_void: np.dtypes.VoidDType
 
+_tp_any: type[Any]
+
+assert_type(np.dtype(_tp_any), np.dtype[Any])
+
 assert_type(np.dtype(np.float64), np.dtype[np.float64])
 assert_type(np.dtype(np.float64, metadata={"test": "test"}), np.dtype[np.float64])
 assert_type(np.dtype(np.int64), np.dtype[np.int64])
