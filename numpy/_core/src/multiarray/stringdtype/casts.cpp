@@ -521,11 +521,10 @@ string_to_unicode(PyArrayMethod_Context *context, char *const data[],
         }
 
         unsigned char *this_string = (unsigned char *)(s.buf);
-        size_t n_bytes = s.size;
         size_t tot_n_bytes = 0;
 
         size_t i = 0;
-        for (; i < max_out_size && tot_n_bytes < n_bytes; i++) {
+        for (; i < max_out_size && tot_n_bytes < s.size; i++) {
             Py_UCS4 code;
             int num_bytes = utf8_char_to_ucs4_code(this_string, &code);
             memcpy(out + i * sizeof(Py_UCS4), &code, sizeof(Py_UCS4));
@@ -2236,13 +2235,16 @@ get_casts() {
     num_casts += 4;
 #endif
 
+    constexpr auto fixed_width_flags = static_cast<NPY_ARRAYMETHOD_FLAGS>(
+            NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_SUPPORTS_UNALIGNED);
+
     PyArray_DTypeMeta **u2s_dtypes = get_dtypes(
             &PyArray_UnicodeDType, &PyArray_StringDType);
 
     PyArrayMethod_Spec *UnicodeToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_UNICODE),
         NPY_SAFE_CASTING,
-        (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_SUPPORTS_UNALIGNED),
+        fixed_width_flags,
         u2s_dtypes,
         u2s_slots
     );
@@ -2253,7 +2255,7 @@ get_casts() {
     PyArrayMethod_Spec *StringToUnicodeCastSpec = get_cast_spec(
         make_s2type_name(NPY_UNICODE),
         NPY_SAME_KIND_CASTING,
-        (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_SUPPORTS_UNALIGNED),
+        fixed_width_flags,
         s2u_dtypes,
         s2u_slots
     );
@@ -2330,7 +2332,7 @@ get_casts() {
     PyArrayMethod_Spec *StringToVoidCastSpec = get_cast_spec(
         make_s2type_name(NPY_VOID),
         NPY_SAME_KIND_CASTING,
-        (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_SUPPORTS_UNALIGNED),
+        fixed_width_flags,
         s2v_dtypes,
         s2v_slots
     );
@@ -2341,7 +2343,7 @@ get_casts() {
     PyArrayMethod_Spec *VoidToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_VOID),
         NPY_SAME_KIND_CASTING,
-        (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_SUPPORTS_UNALIGNED),
+        fixed_width_flags,
         v2s_dtypes,
         v2s_slots
     );
@@ -2352,7 +2354,7 @@ get_casts() {
     PyArrayMethod_Spec *StringToBytesCastSpec = get_cast_spec(
         make_s2type_name(NPY_STRING),
         NPY_SAME_KIND_CASTING,
-        (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_SUPPORTS_UNALIGNED),
+        fixed_width_flags,
         s2bytes_dtypes,
         s2bytes_slots
     );
@@ -2363,7 +2365,7 @@ get_casts() {
     PyArrayMethod_Spec *BytesToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_STRING),
         NPY_SAFE_CASTING,
-        (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_SUPPORTS_UNALIGNED),
+        fixed_width_flags,
         bytes2s_dtypes,
         bytes2s_slots
     );
