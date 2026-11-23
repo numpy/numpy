@@ -541,7 +541,12 @@ def run_with_memory_limit(
 
 #
 def trace_memory_growth() -> _GeneratorContextManager[Callable[[], int]]: ...
-def assert_memory_growth_below(func: Callable[[], Unused], limit: int, repeat: int = 10) -> None: ...
+def assert_memory_growth_below(
+    func: Callable[..., Unused],
+    limit: int,
+    repeat: int = 10,
+    make_args: Callable[[], tuple[Any, ...]] | None = None,
+) -> None: ...
 
 #
 def runstring(astr: _StrLike | types.CodeType, dict: dict[str, Any] | None) -> Any: ...
