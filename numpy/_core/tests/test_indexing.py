@@ -620,6 +620,45 @@ class TestIndexing:
         with pytest.raises(IndexError):
             arr[(index,) * num] = 1.
 
+    @pytest.mark.parametrize("sign", [1, -1])
+    def test_view_stride_overflow(self, sign):
+        # gh-32219: stride * step/start/index must not silently overflow
+        big = np.iinfo(np.intp).max // 2 + 1  # 2**62 on 64-bit systems
+        buf = np.zeros(16, dtype=np.int8)
+        a = np.lib.stride_tricks.as_strided(
+            buf, shape=(5, 2), strides=(sign * big, 1), writeable=False)
+        # These don't overflow and are fine (the memory is never accessed).
+        # Only compare strides: printing these arrays would read bad memory.
+        strides = [a[1:].strides, a[1::-1].strides, a[1].strides]
+        assert strides == [(sign * big, 1), (-sign * big, 1), (1,)]
+        for index in [np.s_[::3], np.s_[3:], np.s_[-1:], np.s_[3], np.s_[-2]]:
+            with pytest.raises(OverflowError):
+                a[index].shape
+
+    @pytest.mark.parametrize("sign", [1, -1])
+    def test_view_offset_overflow(self, sign):
+        # gh-32219: each per-dimension offset fits, but their sum overflows
+        # (twice the stride overflows for both signs)
+        big = np.iinfo(np.intp).max // 4 * 3
+        buf = np.zeros(16, dtype=np.int8)
+        a = np.lib.stride_tricks.as_strided(
+            buf, shape=(2, 2, 2), strides=(sign * big, sign * big, 1),
+            writeable=False)
+        strides = a[1, :1].strides
+        assert strides == (sign * big, 1)
+        for index in [np.s_[1, 1:], np.s_[1, 1], np.s_[1:, 1]]:
+            with pytest.raises(OverflowError):
+                # don't let pytest repr the result, it points to bad memory
+                a[index].shape
+
+    @pytest.mark.parametrize("step", [2**62, sys.maxsize, -sys.maxsize])
+    def test_huge_step_length_one_slice(self, step):
+        # gh-32219: a huge step is fine if the result has length <= 1
+        a = np.arange(10)
+        start = 3 if step < 0 else 0
+        assert_array_equal(a[start::step], [start])
+        assert a[5:5:step].shape == (0,)
+
     def test_nontuple_ndindex(self):
         a = np.arange(25).reshape((5, 5))
         assert_equal(a[[0, 1]], np.array([a[0], a[1]]))
