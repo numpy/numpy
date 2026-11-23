@@ -638,13 +638,11 @@ def unstack(
     axis: int = 0,
 ) -> tuple[Any, ...]: ...
 
-#
+# NOTE: Some of these overloads could be merged, but that will confuse Pyright in case of mixed types (microsoft/pyright#11868)
 @overload  # known array
 def block[ArrayT: np.ndarray](arrays: ArrayT) -> ArrayT: ...
 @overload  # [?d T]  (workaround)
-def block(  # noqa: UP047
-    arrays: Sequence[_ToJustND[_AnyNotBytesT]] | _Sequence2[_ToJustND[_AnyNotBytesT]] | _Sequence3[_ToJustND[_AnyNotBytesT]],
-) -> NDArray[_AnyNotBytesT]: ...
+def block(arrays: Sequence[_ToJustND[_AnyNotBytesT]]) -> NDArray[_AnyNotBytesT]: ...  # noqa: UP047
 @overload  # [<=1d T]
 def block(arrays: Sequence[_To1D[_AnyNotBytesT]]) -> Array1D[_AnyNotBytesT]: ...  # noqa: UP047
 @overload  # [bool]
@@ -657,10 +655,12 @@ def block(arrays: list[float]) -> Array1D[np.float64]: ...
 def block(arrays: list[complex]) -> Array1D[np.complex128]: ...
 @overload  # [<=1d]
 def block(arrays: Sequence[complex | _To1D[np.number | np.bool]]) -> Array1D[Any]: ...
-@overload  # [2d T] | [[<=2d T]]
-def block(  # noqa: UP047
-    arrays: Sequence[Array2D[_AnyNotBytesT]] | _Sequence2[_To2D[_AnyNotBytesT]],
-) -> Array2D[_AnyNotBytesT]: ...
+@overload  # [2d T]
+def block(arrays: Sequence[Array2D[_AnyNotBytesT]]) -> Array2D[_AnyNotBytesT]: ...  # noqa: UP047
+@overload  # [[?d T]]  (workaround)
+def block(arrays: _Sequence2[_ToJustND[_AnyNotBytesT]]) -> NDArray[_AnyNotBytesT]: ...  # noqa: UP047
+@overload  # [[<=2d T]]
+def block(arrays: _Sequence2[_To2D[_AnyNotBytesT]]) -> Array2D[_AnyNotBytesT]: ...  # noqa: UP047
 @overload  # [[bool]]
 def block(arrays: _Sequence2[bool]) -> Array2D[np.bool]: ...
 @overload  # [[~int]]
@@ -671,10 +671,14 @@ def block(arrays: Sequence[list[float]]) -> Array2D[np.float64]: ...
 def block(arrays: Sequence[list[complex]]) -> Array2D[np.complex128]: ...
 @overload  # [[<=2d]]
 def block(arrays: _Sequence2[complex | _To2D[np.number | np.bool]]) -> Array2D[Any]: ...
-@overload  # [3d T] | [[3d T]] | [[[<=3d T]]]
-def block(  # noqa: UP047
-    arrays: Sequence[Array3D[_AnyNotBytesT]] | _Sequence2[Array3D[_AnyNotBytesT]] | _Sequence3[_To3D[_AnyNotBytesT]],
-) -> Array3D[_AnyNotBytesT]: ...
+@overload  # [3d T]
+def block(arrays: Sequence[Array3D[_AnyNotBytesT]]) -> Array3D[_AnyNotBytesT]: ...  # noqa: UP047
+@overload  # [[3d T]]
+def block(arrays: _Sequence2[Array3D[_AnyNotBytesT]]) -> Array3D[_AnyNotBytesT]: ...  # noqa: UP047
+@overload  # [[[?d T]]]  (workaround)
+def block(arrays: _Sequence3[_ToJustND[_AnyNotBytesT]]) -> NDArray[_AnyNotBytesT]: ...  # noqa: UP047
+@overload  # [[[<=3d T]]]
+def block(arrays: _Sequence3[_To3D[_AnyNotBytesT]]) -> Array3D[_AnyNotBytesT]: ...  # noqa: UP047
 @overload  # [[[bool]]]
 def block(arrays: _Sequence3[bool]) -> Array3D[np.bool]: ...
 @overload  # [[[~int]]]
