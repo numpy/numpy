@@ -64,8 +64,16 @@ from numpy.testing._private.utils import (
     longdouble_fpe_mark,
     requires_deep_recursion,
     requires_memory,
+    run_function_with_args_in_subprocess,
     trace_memory_growth,
 )
+
+
+def _check_tracemalloc():
+    with trace_memory_growth() as growth:
+        arr = np.zeros(1_000_000, dtype="uint8")
+    # Allow for some non-data allocations
+    assert_allclose(growth(), arr.nbytes, atol=1_000)
 
 
 def assert_arg_sorted(arr, arg):
@@ -1082,12 +1090,10 @@ class TestCreation:
         with assert_raises(np._core._exceptions._ArrayMemoryError):
             np.empty(np.iinfo(np.intp).max, dtype=np.uint8)
 
-    @pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
     def test_tracemalloc(self):
-        with trace_memory_growth() as growth:
-            arr = np.zeros(1000000, dtype="uint8")
-        # Allow for some non-data allocations
-        assert_allclose(growth(), arr.nbytes, atol=1000)
+        # not available on PyPy
+        pytest.importorskip("tracemalloc")
+        run_function_with_args_in_subprocess(_check_tracemalloc)
 
     def test_zeros(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
