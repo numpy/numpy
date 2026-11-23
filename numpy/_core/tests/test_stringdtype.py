@@ -2613,10 +2613,14 @@ def test_datetime_parse_error_bounded():
             assert "2023-01-02" not in str(excinfo.value)
 
 
+def _fixed_width_cast():
+    arr = np.array([f"{i:040d}" for i in range(1000)], dtype="T")
+    arr.astype("U40")
+
+
 @pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
 def test_fixed_width_cast_does_not_grow_arena():
-    arr = np.array([f"{i:040d}" for i in range(1000)], dtype="T")
-    assert_memory_growth_below(lambda: arr.astype("U40"), limit=1024)
+    assert_memory_growth_below(_fixed_width_cast, limit=1024)
 
 
 def test_unaligned_unicode_casts():
