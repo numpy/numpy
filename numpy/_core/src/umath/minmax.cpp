@@ -99,6 +99,28 @@ minimummaximum_get_reduction_loop(
 }
 
 
+NPY_NO_EXPORT PyArrayMethod_StridedLoop *
+npy_get_integer_minimummaximum_loop(int type_num)
+{
+    PyArrayMethod_StridedLoop *loop = NULL;
+
+    switch (type_num) {
+#define SIMD_CASE(TYPE) \
+        case NPY_##TYPE: \
+            NPY_CPU_DISPATCH_CALL(loop = TYPE##_minimummaximum_reduce); \
+            break;
+        SIMD_CASE(INT)
+        SIMD_CASE(UINT)
+        SIMD_CASE(LONG)
+        SIMD_CASE(ULONG)
+        SIMD_CASE(LONGLONG)
+        SIMD_CASE(ULONGLONG)
+#undef SIMD_CASE
+    }
+    return loop;
+}
+
+
 /*
  * Promotes to the common DType of the inputs.
  * A dtype without a `minimummaximum` loop reports no loop,

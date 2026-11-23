@@ -152,6 +152,11 @@ if not fs.exists('src/common/pythoncapi-compat')
         'Run `git submodule update --init` to fix this.')
 endif
 
+if not fs.exists('src/common/unordered_dense/include/ankerl/unordered_dense.h')
+  error('Missing the `unordered_dense` git submodule! ' +
+        'Run `git submodule update --init` to fix this.')
+endif
+
 # Check sizes of types. Note, some of these landed in config.h before, but were
 # unused. So clean that up and only define the NPY_SIZEOF flavors rather than
 # the SIZEOF ones
@@ -1331,7 +1336,6 @@ src_multiarray = multiarray_gen_headers + [
   # Remove this `arm64_exports.c` file once scipy macos arm64 build correctly
   # links to the arm64 npymath library, see gh-22673
   'src/npymath/arm64_exports.c',
-  'src/multiarray/fnv.c',
 ]
 
 src_umath = umath_gen_headers + [
@@ -1405,7 +1409,9 @@ unique_hash_so = static_library(
   include_directories: [
     'include',
     'src/common',
+    'src/common/unordered_dense/include',
     'src/npymath',
+    'src/umath',
   ],
   dependencies: [
     py_dep,

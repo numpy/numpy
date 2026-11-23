@@ -649,6 +649,7 @@ class TestUnique:
 
     def check_all(self, a, b, i1, i2, c, dt):
         base_msg = 'check {0} failed for type {1}'
+        original = a.copy()
 
         msg = base_msg.format('values', dt)
         v = unique(a)
@@ -702,6 +703,7 @@ class TestUnique:
         assert_array_equal(j2, i2, msg)
         assert_array_equal(j3, c, msg)
         assert type(v) is type(b)
+        assert_array_equal(a, original, 'the input was modified')
 
     def get_types(self):
 
@@ -727,6 +729,39 @@ class TestUnique:
             aa = np.array(a, dt)
             bb = np.array(b, dt)
             self.check_all(aa, bb, i1, i2, c, dt)
+
+        # test for the limits of the integer types, with enough elements for a
+        # lookup table of 16 bit integers, also byte-swapped and sorted
+        n = 16400
+        inv, cnt = [2, 0, 2, 1] * n, [n, n, 2 * n]
+        for dt in np.typecodes['AllInteger']:
+            info = np.iinfo(dt)
+            aa = np.array([info.max, info.min, info.max, info.min + 1] * n, dt)
+            bb = np.array([info.min, info.min + 1, info.max], dt)
+            self.check_all(aa, bb, [1, 3, 0], inv, cnt, dt)
+            swapped = aa.astype(aa.dtype.newbyteorder())
+            self.check_all(swapped, bb, [1, 3, 0], inv, cnt, dt)
+            self.check_all(np.sort(aa), bb, [0, n, 2 * n], np.sort(inv), cnt, dt)
+            # sorted, but for the last element
+            nearly, rolled = np.roll(np.sort(aa), -1), np.roll(np.sort(inv), -1)
+            self.check_all(nearly, bb, [0, n - 1, 2 * n - 1], rolled, cnt, dt)
+            # a narrow range of values, but for the last element
+            low = np.array([info.min + 1, info.min] * n + [info.max], dt)
+            self.check_all(low, bb, [1, 0, 2 * n], [1, 0] * n + [2], [n, n, 1], dt)
+            self.check_all(low[:-1], bb[:2], [1, 0], [1, 0] * n, [n, n], dt)
+
+        # test for many distinct values, which hashing leaves to sorting
+        aa = np.random.default_rng(0).permutation(5000) * 1000
+        idx, inv = np.argsort(aa), np.argsort(np.argsort(aa))
+        for dt in ('q', 'd', 'M8[s]', 'm8[s]'):
+            bb = np.sort(aa).astype(dt)
+            self.check_all(aa.astype(dt), bb, idx, inv, np.ones(5000), dt)
+            # 8 and 9 distinct values, the last of them appearing late
+            for d in (8, 9):
+                few = np.array([*range(d - 1)] * 300 + [d - 1], dt)
+                first, cnt = [*range(d - 1), few.size - 1], [300] * (d - 1) + [1]
+                self.check_all(
+                    few, np.arange(d).astype(dt), first, few.astype(int), cnt, dt)
 
         # test for object arrays
         dt = 'O'
@@ -812,6 +847,8 @@ class TestUnique:
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
         assert_equal(np.unique(a, equal_nan=False), ua + [nat])
+        assert_equal(np.unique(a, return_index=True, equal_nan=False),
+                     (ua + [nat], [2, 0, 1, 3]))
         assert_equal(np.sort(np.unique_values(a)), ua + [nat])
 
         # test for ticket 2111 - timedelta
@@ -825,6 +862,8 @@ class TestUnique:
         assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
+        assert_equal(np.unique(a, return_counts=True, equal_nan=False),
+                     (ua + [nat], [1, 1, 1, 1]))
 
         # test for gh-19300
         all_nans = [np.nan] * 4
@@ -865,6 +904,24 @@ class TestUnique:
             aa = Subclass(a.shape, dtype=dt, buffer=a)
             bb = Subclass(b.shape, dtype=dt, buffer=b)
             self.check_all(aa, bb, i1, i2, c, dt)
+            # the optional results of a subclass are found by sorting
+            masked = np.ma.MaskedArray(a, mask=np.zeros(a.shape, bool))
+            assert unique(masked, return_counts=True)[0].mask.ndim == 1
+            assert type(unique(aa, return_index=True)[1]) is Subclass
+
+        # many distinct values of a subclass are not left to sorting
+        aa = (np.arange(5000) * 10**6).view(np.recarray)
+        assert type(unique(aa)) is np.recarray
+
+        class RavelReturnsSelf(np.ndarray):
+            def ravel(self, order="C"):
+                return self
+
+        # the sort behind the counts of complex numbers leaves the input alone
+        aa = RavelReturnsSelf(3, dtype=complex)
+        aa[:] = [3, 1, 2]
+        unique(aa, return_counts=True)
+        assert_array_equal(aa, [3, 1, 2])
 
     def test_unique_byte_string_hash_based(self):
         # test for byte string arrays
@@ -875,6 +932,22 @@ class TestUnique:
         # the result varies depending on the impl of std::unordered_set,
         # so we check them by sorting
         assert_array_equal(sorted(a1.tolist()), unq_sorted)
+
+        # Short strings are hashed as integers, which are in another order,
+        # and this many two byte ones are looked up in a table.
+        for dt in ("S2", "S3"):
+            arr = np.array([b'az', b'ba', b'a\0x', b'a\0y'] * 20000, dtype=dt)
+            expected = np.array(sorted(set(arr.tolist())), dtype=dt)
+            assert_array_equal(unique(arr), expected, strict=True)
+
+        # the optional results come in the order of the strings
+        for dt, last in (("S2", "c"), ("S9", "c"), ("U1", "\u0101"), ("U3", "\u0101")):
+            arr = np.array([last, "b", "a", "b"], dtype=dt)
+            self.check_all(arr, arr[[2, 1, 0]], [2, 1, 0], [2, 1, 0, 1], [1, 2, 1], dt)
+
+        # many distinct strings, which hashing leaves to sorting
+        arr = np.arange(3000).astype("U")
+        assert_array_equal(unique(arr, return_counts=True)[0], np.sort(arr))
 
     def test_unique_unicode_string_hash_based(self):
         # test for unicode string arrays
@@ -981,6 +1054,8 @@ class TestUnique:
         expected = np.array([na_object, "value"], dtype=dtype)
         assert_array_equal(unique(a, equal_nan=equal_nan), expected)
         assert_array_equal(unique(a[::-1], equal_nan=equal_nan), expected)
+        assert_array_equal(
+            unique(a, return_counts=True, equal_nan=equal_nan)[1], [3, 2])
 
     def test_unique_vstring_nan_metadata(self, nan_string_dtype):
         a = np.array([np.nan, "b", "a", np.nan, "b", np.nan],
@@ -1187,6 +1262,18 @@ class TestUnique:
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
 
+    @pytest.mark.parametrize("dt", ["u1", "f8", "S2"])
+    def test_unique_memmap(self, tmp_path, dt):
+        (np.arange(900) % 7).astype(dt).tofile(tmp_path / "data")
+        arr = np.memmap(tmp_path / "data", dtype=dt, mode="r", shape=(30, 30))
+        values, inverse, counts = unique(
+            np.array(arr), return_inverse=True, return_counts=True)
+        results = (unique(arr), *unique(arr, return_counts=True),
+                   *unique(arr, return_inverse=True))
+        for res, exp in zip(results, (values, values, counts, values, inverse)):
+            assert type(res) is np.ndarray
+            assert_array_equal(res, exp)
+
     def test_unique_nanequals(self):
         # issue 20326
         a = np.array([1, 1, np.nan, np.nan, np.nan])
@@ -1194,6 +1281,24 @@ class TestUnique:
         not_unq = np.unique(a, equal_nan=False)
         assert_array_equal(unq, np.array([1, np.nan]))
         assert_array_equal(not_unq, np.array([1, np.nan, np.nan, np.nan]))
+
+        # the first zero and the first NaN stand for the others
+        a = np.array([1.5, -0.0, np.nan, 0.0, 1.5, -np.nan, -np.inf])
+        unq, idx, inv, cnt = np.unique(
+            a, return_index=True, return_inverse=True, return_counts=True)
+        assert_array_equal(unq, [-np.inf, 0.0, 1.5, np.nan])
+        assert_array_equal(np.signbit(unq), [True, True, False, False])
+        assert_array_equal(np.signbit(np.unique(a)), [True, True, False, False])
+        assert_array_equal(idx, [6, 1, 0, 2])
+        assert_array_equal(inv, [2, 1, 3, 1, 2, 3, 0])
+        assert_array_equal(cnt, [1, 2, 2, 2])
+        not_unq, cnt = np.unique(a, return_counts=True, equal_nan=False)
+        assert_array_equal(not_unq, [-np.inf, 0.0, 1.5, np.nan, np.nan])
+        assert_array_equal(cnt, [1, 2, 2, 1, 1])
+        # also with too many distinct values to find them by comparison
+        b = np.concatenate([a, np.arange(2.0, 12.0)])
+        assert np.signbit(np.unique(b)[1])
+        assert np.signbit(np.unique(b, return_counts=True)[0][1])
 
     def test_unique_array_api_functions(self):
         arr = np.array(
@@ -1302,5 +1407,12 @@ class TestUnique:
         expected = np.unique(native, equal_nan=equal_nan)
         result = np.unique(swapped, equal_nan=equal_nan)
         assert result.dtype == swapped.dtype
+        assert_array_equal(result.real, expected.real)
+        assert_array_equal(result.imag, expected.imag)
+
+        # Whichever NaN comes first, the one that sorts first is returned, as
+        # by the sort-based implementation that asking for the counts selects.
+        result = np.unique(native[::-1], equal_nan=equal_nan)
+        expected = np.unique(native[::-1], equal_nan=equal_nan, return_counts=True)[0]
         assert_array_equal(result.real, expected.real)
         assert_array_equal(result.imag, expected.imag)

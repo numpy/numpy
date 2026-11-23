@@ -14,6 +14,9 @@ import shutil
 UNUSED = {
     'doc/source/_static/scipy-mathjax': [],
     'numpy/_core/src/common/pythoncapi-compat': ['docs', 'tests'],
+    'numpy/_core/src/common/unordered_dense': [
+        'data', 'doc', 'example', 'notes', 'scripts', 'test',
+    ],
     'numpy/_core/src/highway': [
         'docs', 'g3doc', 'hwy/examples', 'hwy/tests',
     ],
