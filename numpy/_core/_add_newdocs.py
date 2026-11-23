@@ -2225,6 +2225,8 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     parameter is provided, a view into the operand is returned instead
     of a new array.  Thus, taking the diagonal as ``np.einsum('ii->i', a)``
     produces a view (changed in version 1.10.0).
+    If ``dtype`` is given and is not equivalent to the data type of the
+    operand, a copy with that data type is returned instead of a view.
 
     `einsum` also provides an alternative way to provide the subscripts
     and operands as ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``.

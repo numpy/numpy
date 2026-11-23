@@ -24,6 +24,7 @@ extern "C" {
 #include "convert.h"
 #include "common.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"
@@ -336,50 +337,69 @@ get_single_op_view(PyArrayObject *op, char *labels,
 
 
 /*
- * Copies a single-operand view into 'out', through a temporary of 'dtype' if it is given.
- * Steals a reference to 'view'. Returns a new reference to 'out', or NULL on error.
+ * Casts a single-operand view to 'dtype' and copies it into 'out', for those that are given.
+ * Steals a reference to 'view'. Returns a new reference to the result, or NULL on error.
  */
 static PyArrayObject *
-copy_single_op_view(PyArrayObject *view, PyArrayObject *out,
-                    PyArray_Descr *dtype, NPY_CASTING casting)
+finish_single_op_view(PyArrayObject *view, PyArrayObject *out,
+                      PyArray_Descr *dtype, NPY_CASTING casting)
 {
+    PyArrayObject *ret = NULL;
+
     /* AssignArray does not check this when 'out' is identical to the view */
-    if (PyArray_FailUnlessWriteable(out, "output array") < 0) {
-        Py_DECREF(view);
-        return NULL;
+    if (out != NULL && PyArray_FailUnlessWriteable(out, "output array") < 0) {
+        goto finish;
     }
-    if (dtype == PyArray_DESCR(view)) {
-        dtype = NULL;
+    if (dtype != NULL) {
+        /* Sizes an unsized dtype such as str from the view */
+        dtype = PyArray_AdaptDescriptorToArray(view, NULL, dtype);
+        if (dtype == NULL) {
+            goto finish;
+        }
+        if (PyArray_EquivTypes(dtype, PyArray_DESCR(view))) {
+            Py_CLEAR(dtype);
+        }
+        else if (out == NULL && !PyArray_CanCastArrayTo(view, dtype, casting)) {
+            Py_DECREF(dtype);
+            dtype = NULL;
+            /* Deprecated NumPy 2.6, 2026-11-23 */
+            if (DEPRECATE(
+                    "einsum ignored `dtype` and returned a view of the operand because "
+                    "`casting` does not allow the cast. This will raise a TypeError in "
+                    "the future. (Deprecated NumPy 2.6)") < 0) {
+                goto finish;
+            }
+        }
     }
     /*
      * AssignArray skips its overlap copy for same-direction 1-D strides,
      * even when a diagonal and 'out' have different strides.
      */
-    if (dtype != NULL || arrays_overlap(view, out)) {
-        if (dtype != NULL) {
-            /* Sizes an unsized dtype such as str from the view */
-            dtype = PyArray_AdaptDescriptorToArray(view, NULL, dtype);
-            if (dtype == NULL) {
-                Py_DECREF(view);
-                return NULL;
-            }
-        }
-        PyArrayObject *tmp = (PyArrayObject *)PyArray_NewLikeArray(view, NPY_KEEPORDER, dtype, 0);
+    if (dtype != NULL || (out != NULL && arrays_overlap(view, out))) {
+        PyArrayObject *tmp = (PyArrayObject *)PyArray_NewLikeArray(
+                view, NPY_KEEPORDER, dtype, out == NULL);
         if (tmp != NULL && PyArray_AssignArray(tmp, view, NULL, casting) < 0) {
             Py_CLEAR(tmp);
         }
         Py_SETREF(view, tmp);
         if (view == NULL) {
-            return NULL;
+            goto finish;
         }
     }
-    int res = PyArray_AssignArray(out, view, NULL, casting);
-    Py_DECREF(view);
-    if (res < 0) {
-        return NULL;
+    if (out == NULL) {
+        ret = view;
+        view = NULL;
+        goto finish;
+    }
+    if (PyArray_AssignArray(out, view, NULL, casting) < 0) {
+        goto finish;
     }
     Py_INCREF(out);
-    return out;
+    ret = out;
+
+  finish:
+    Py_XDECREF(view);
+    return ret;
 }
 
 
@@ -995,19 +1015,9 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
             return NULL;
         }
 
-        if (ret != NULL && out != NULL) {
-            return copy_single_op_view(ret, out, dtype, casting);
-        }
-
         if (ret != NULL) {
-            return ret;
+            return finish_single_op_view(ret, out, dtype, casting);
         }
-    }
-
-    /* The sum-of-products loop uses out as its running total. */
-    if (out != NULL && (PyArray_ISSTRING(out) || PyArray_TYPE(out) == NPY_VSTRING)) {
-        PyErr_SetString(PyExc_TypeError, "einsum cannot accumulate into a string output");
-        return NULL;
     }
 
     /* Set all the op references to NULL */
@@ -1120,6 +1130,13 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     if (!PyTypeNum_ISNUMBER(type_num) && !PyTypeNum_ISOBJECT(type_num)) {
         PyErr_SetString(PyExc_TypeError,
                     "invalid data type for einsum");
+        goto fail;
+    }
+
+    /* The sum-of-products loop uses out as its running total. */
+    if (out != NULL && !PyArray_ISOBJECT(out) &&
+            !NPY_DT_is_numeric(NPY_DTYPE(PyArray_DESCR(out)))) {
+        PyErr_SetString(PyExc_TypeError, "einsum cannot accumulate into a non-numeric output");
         goto fail;
     }
 

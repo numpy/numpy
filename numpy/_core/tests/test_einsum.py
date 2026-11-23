@@ -425,6 +425,14 @@ class TestEinsum:
         np.einsum("i->i", ["alpha", "bravo"], out=out, dtype=str)
         assert_array_equal(out, ["alpha", "bravo"])
 
+    def test_einsum_view_dtype(self):
+        a = np.arange(6, dtype=np.int32).reshape(2, 3)
+        res = np.einsum("ij->ji", a, dtype=np.float64)
+        assert_array_equal(res, a.T.astype(np.float64), strict=True)
+
+        res = np.einsum("i->i", [1.5, 2.5], dtype=np.int32, casting="unsafe")
+        assert_array_equal(res, np.array([1, 2], dtype=np.int32), strict=True)
+
     def check_einsum_sums(self, dtype, do_opt=False):
         dtype = np.dtype(dtype)
         # Check various sums.  Does many sizes to exercise unrolled loops.
