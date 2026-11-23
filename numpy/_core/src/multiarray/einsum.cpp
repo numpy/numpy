@@ -22,6 +22,7 @@ extern "C" {
 #include <array_assign.h>   //PyArray_AssignRawScalar
 #include "array_coercion.h"
 #include "convert.h"
+#include "convert_datatype.h"
 #include "common.h"
 #include "ctors.h"
 #include "dtypemeta.h"
@@ -356,7 +357,9 @@ finish_single_op_view(PyArrayObject *view, PyArrayObject *out,
         if (dtype == NULL) {
             goto finish;
         }
-        if (PyArray_EquivTypes(dtype, PyArray_DESCR(view))) {
+        npy_intp view_offset = NPY_MIN_INTP;
+        if (PyArray_SafeCast(PyArray_DESCR(view), dtype, &view_offset,
+                             NPY_NO_CASTING, 1) && view_offset == 0) {
             Py_CLEAR(dtype);
         }
         else if (out == NULL && !PyArray_CanCastArrayTo(view, dtype, casting)) {
