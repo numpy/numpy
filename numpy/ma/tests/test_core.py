@@ -4390,6 +4390,35 @@ class TestMaskedArrayMathMethods:
         m_arr = np.ma.masked_array(arr, False)
         assert_equal(arr.trace(axis1=1, axis2=2), m_arr.trace(axis1=1, axis2=2))
 
+        # gh-33432: trace should preserve complex/float dtypes and support out & dtype
+        c_arr = np.array([[1 + 2j, 3], [4, 5 + 6j]])
+        m_c_nomask = masked_array(c_arr)
+        assert_equal(m_c_nomask.trace(), 6 + 8j)
+        assert_equal(m_c_nomask.trace().dtype, c_arr.dtype)
+
+        m_c_masked = masked_array(c_arr, mask=[[False, False], [False, True]])
+        assert_equal(m_c_masked.trace(), 1 + 2j)
+        assert_equal(m_c_masked.trace().dtype, c_arr.dtype)
+
+        # float32 preservation
+        f_arr = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
+        m_f_nomask = masked_array(f_arr)
+        assert_equal(m_f_nomask.trace().dtype, np.float32)
+
+        m_f_masked = masked_array(f_arr, mask=[[True, False], [False, False]])
+        assert_equal(m_f_masked.trace(), 4.0)
+        assert_equal(m_f_masked.trace().dtype, np.float32)
+
+        # out parameter
+        out_buf = np.empty((), dtype=np.float32)
+        res = m_f_masked.trace(out=out_buf)
+        assert_(res is out_buf)
+        assert_equal(out_buf, 4.0)
+
+        # explicit dtype parameter
+        assert_equal(m_f_masked.trace(dtype=np.int64), 4)
+        assert_equal(m_f_masked.trace(dtype=np.int64).dtype, np.int64)
+
     def test_dot(self):
         # Tests dot on MaskedArrays.
         _, _, _, _, mx, mX, mXX, _, _, _ = self._create_data()
