@@ -207,13 +207,14 @@ days_to_yearsdays(npy_int64 *days_)
     return year + 2000;
 }
 
-/* Extracts the month number from a 'datetime64[D]' value */
-NPY_NO_EXPORT int
-days_to_month_number(npy_datetime days)
+/* Checks if two 'datetime64[D]' values are in the same calendar month */
+NPY_NO_EXPORT npy_bool
+days_in_same_month(npy_datetime days1, npy_datetime days2)
 {
-    npy_datetimestruct dts;
-    set_datetimestruct_days(days, &dts);
-    return dts.month;
+    npy_datetimestruct dts1, dts2;
+    set_datetimestruct_days(days1, &dts1);
+    set_datetimestruct_days(days2, &dts2);
+    return dts1.year == dts2.year && dts1.month == dts2.month;
 }
 
 /*

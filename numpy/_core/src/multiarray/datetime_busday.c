@@ -200,8 +200,7 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
 
                 if (roll == NPY_BUSDAY_MODIFIEDFOLLOWING) {
                     /* If we crossed a month boundary, do preceding instead */
-                    if (days_to_month_number(start_date) !=
-                                days_to_month_number(date)) {
+                    if (!days_in_same_month(start_date, date)) {
                         date = start_date;
                         day_of_week = start_day_of_week;
 
@@ -228,8 +227,7 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
 
                 if (roll == NPY_BUSDAY_MODIFIEDPRECEDING) {
                     /* If we crossed a month boundary, do following instead */
-                    if (days_to_month_number(start_date) !=
-                                days_to_month_number(date)) {
+                    if (!days_in_same_month(start_date, date)) {
                         date = start_date;
                         day_of_week = start_day_of_week;
 

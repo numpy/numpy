@@ -2698,6 +2698,18 @@ class TestDateTime:
         with pytest.raises(TypeError, match=msg):
             np.subtract.reduceat(arr, [0])
 
+    @pytest.mark.parametrize(
+        "roll, date, expected",
+        [
+            ("modifiedfollowing", "2024-01-08", "2024-01-05"),
+            ("modifiedpreceding", "2025-01-07", "2025-01-08"),
+        ],
+    )
+    def test_busday_offset_modified_roll_across_years(self, roll, date, expected):
+        holidays = np.arange("2024-01-08", "2025-01-08", dtype="datetime64[D]")
+        result = np.busday_offset(date, 0, roll=roll, holidays=holidays)
+        assert_equal(result, np.datetime64(expected))
+
     def test_datetime_busday_offset(self):
         # First Monday in June
         assert_equal(
