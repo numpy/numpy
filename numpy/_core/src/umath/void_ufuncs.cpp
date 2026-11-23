@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+#include "npy_pycompat.h"
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
