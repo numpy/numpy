@@ -140,6 +140,9 @@ assert_type(np.vectorize(_fn1_Any)(AR_LIKE_f8), npt.NDArray[Any])
 assert_type(np.vectorize(_fn1_f_i)(AR_f8_2d), Any)
 assert_type(np.vectorize(_fn1_f, signature="(n)->()")(AR_f8_2d), npt.NDArray[Any])
 
+_any: Any
+assert_type(np.vectorize(_any), np.vectorize[Any, Any])
+
 # rot90
 assert_type(np.rot90(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.rot90(AR_f8, k=2), npt.NDArray[np.float64])
