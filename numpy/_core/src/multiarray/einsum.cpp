@@ -363,10 +363,10 @@ finish_single_op_view(PyArrayObject *view, PyArrayObject *out,
             Py_DECREF(dtype);
             dtype = NULL;
             /* Deprecated NumPy 2.6, 2026-11-23 */
-            if (DEPRECATE(
+            if (PyErr_WarnEx(PyExc_DeprecationWarning,
                     "einsum ignored `dtype` and returned a view of the operand because "
                     "`casting` does not allow the cast. This will raise a TypeError in "
-                    "the future. (Deprecated NumPy 2.6)") < 0) {
+                    "the future. (Deprecated NumPy 2.6)", 2) < 0) {
                 goto finish;
             }
         }
