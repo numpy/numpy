@@ -23,3 +23,4 @@ jobs:
           api-token: ${{ secrets.CIRCLE_TOKEN }}
           artifact-path: 0/doc/build/html/index.html
           circleci-jobs: build
+          no-artifact-state: skip
