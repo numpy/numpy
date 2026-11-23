@@ -26,7 +26,6 @@
 #include "npy_cpu_dispatch.h"
 #include "numpy_tag.hpp"
 #include "raii_utils.hpp"
-#include "utils.hpp"
 extern "C" {
     #include "npy_argparse.h"
     #include "numpy/npy_math.h"
@@ -115,7 +114,7 @@ exact_set_size(npy_intp isize)
     return std::min(EXACT_SET_SIZE, static_cast<size_t>(isize / EXACT_SET_RATIO));
 }
 
-// log2 of the number of one byte registers, for an error of about 10%, and
+// log2 of the number of registers, for an error of about 10%, and
 // how often the estimate is checked on the way to the limit.
 constexpr int ESTIMATE_INDEX_BITS = 7;
 constexpr npy_intp ESTIMATES_PER_LIMIT = 8;
@@ -855,7 +854,8 @@ rules_for()
 struct hyperloglog {
     static constexpr int INDEX_BITS = ESTIMATE_INDEX_BITS;
     static constexpr size_t NUM_REGISTERS = size_t{1} << INDEX_BITS;
-    npy_uint8 registers[NUM_REGISTERS] = {};
+    // for each index, the largest lowest set bit among the hashes
+    npy_uint64 registers[NUM_REGISTERS] = {};
 
     void
     add(npy_uint64 key)
@@ -868,11 +868,12 @@ struct hyperloglog {
         hash *= 0xc4ceb9fe1a85ec53ULL;
         hash ^= hash >> 33;
         size_t index = hash >> (64 - INDEX_BITS);
-        npy_uint64 rest = (hash << INDEX_BITS) | (npy_uint64{1} << (INDEX_BITS - 1));
-        npy_uint8 rank = static_cast<npy_uint8>(64 - np::BitScanReverse(rest));
+        // a guard bit keeps the index bits from being the lowest set bit
+        npy_uint64 rest = hash | (npy_uint64{1} << (64 - INDEX_BITS));
+        npy_uint64 lowest = rest & (~rest + 1);
         // a write for every hash would make each wait for the one before
-        if (rank > registers[index]) {
-            registers[index] = rank;
+        if (lowest > registers[index]) {
+            registers[index] = lowest;
         }
     }
 
@@ -881,9 +882,9 @@ struct hyperloglog {
     {
         double sum = 0;
         npy_intp num_empty = 0;
-        for (npy_uint8 rank : registers) {
-            sum += 1.0 / static_cast<double>(npy_uint64{1} << rank);
-            num_empty += rank == 0;
+        for (npy_uint64 lowest : registers) {
+            sum += lowest == 0 ? 1.0 : 0.5 / static_cast<double>(lowest);
+            num_empty += lowest == 0;
         }
         constexpr double m = NUM_REGISTERS;
         double estimate = 0.7213 / (1 + 1.079 / m) * m * m / sum;
