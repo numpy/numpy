@@ -13,6 +13,7 @@ from numpy.random.bit_generator import SeedlessSeedSequence, SeedSequence
 
 _1d: tuple[int]
 _2d: tuple[int, int]
+_nd: tuple[Any, ...]
 
 _i64: np.int64
 
@@ -118,9 +119,11 @@ assert_type(def_gen.standard_normal(dtype="double"), float)
 assert_type(def_gen.standard_normal(dtype=np.float64), float)
 assert_type(def_gen.standard_normal(size=None), float)
 assert_type(def_gen.standard_normal(size=1), npt.Array1D[np.float64])
+assert_type(def_gen.standard_normal(size=_nd), np.ndarray[Any, Any])  # mypy quirk; pyright infers NDArray[float64]
 assert_type(def_gen.standard_normal(size=_2d), npt.Array2D[np.float64])
 assert_type(def_gen.standard_normal(size=1, dtype=np.float32), npt.Array1D[np.float32])
 assert_type(def_gen.standard_normal(size=1, dtype="f4"), npt.Array1D[np.float32])
+assert_type(def_gen.standard_normal(size=_nd, dtype=np.float32), np.ndarray[Any, Any])  # mypy quirk; pyright infers NDArray[float32]
 assert_type(def_gen.standard_normal(size=_2d, dtype=np.float32), npt.Array2D[np.float32])
 assert_type(def_gen.standard_normal(size=_2d, dtype="float32"), npt.Array2D[np.float32])
 assert_type(def_gen.standard_normal(size=1, dtype=np.float64), npt.Array1D[np.float64])
@@ -140,9 +143,11 @@ assert_type(def_gen.random(dtype="double"), float)
 assert_type(def_gen.random(dtype=np.float64), float)
 assert_type(def_gen.random(size=None), float)
 assert_type(def_gen.random(size=1), npt.Array1D[np.float64])
+assert_type(def_gen.random(size=_nd), np.ndarray[Any, Any])  # mypy quirk; pyright infers NDArray[float64]
 assert_type(def_gen.random(size=_2d), npt.Array2D[np.float64])
 assert_type(def_gen.random(size=1, dtype=np.float32), npt.Array1D[np.float32])
 assert_type(def_gen.random(size=1, dtype="f4"), npt.Array1D[np.float32])
+assert_type(def_gen.random(size=_nd, dtype=np.float32), np.ndarray[Any, Any])  # mypy quirk; pyright infers NDArray[float32]
 assert_type(def_gen.random(size=_2d, dtype=np.float32), npt.Array2D[np.float32])
 assert_type(def_gen.random(size=_2d, dtype="float32"), npt.Array2D[np.float32])
 assert_type(def_gen.random(size=1, dtype=np.float64), npt.Array1D[np.float64])
@@ -158,6 +163,7 @@ assert_type(def_gen.random(dtype=np.float32, out=S_out), npt.NDArray[np.float32]
 assert_type(def_gen.standard_cauchy(), float)
 assert_type(def_gen.standard_cauchy(size=None), float)
 assert_type(def_gen.standard_cauchy(size=1), npt.Array1D[np.float64])
+assert_type(def_gen.standard_cauchy(size=_nd), np.ndarray[Any, Any])  # mypy quirk; pyright infers NDArray[float64]
 assert_type(def_gen.standard_cauchy(size=_1d), npt.Array1D[np.float64])
 assert_type(def_gen.standard_cauchy(size=_2d), npt.Array2D[np.float64])
 assert_type(def_gen.standard_cauchy(size=[2, 3]), npt.NDArray[np.float64])
@@ -988,6 +994,7 @@ assert_type(def_gen.choice([object(), object()], 3), npt.NDArray[Any])
 assert_type(def_gen.dirichlet([0.5, 0.5]), npt.Array1D[np.float64])
 assert_type(def_gen.dirichlet(np.array([0.5, 0.5])), npt.Array1D[np.float64])
 assert_type(def_gen.dirichlet(np.array([0.5, 0.5]), size=3), npt.Array2D[np.float64])
+assert_type(def_gen.dirichlet([0.5, 0.5], _nd), np.ndarray[Any, Any])  # mypy quirk; pyright infers NDArray[float64]
 assert_type(def_gen.dirichlet([0.5, 0.5], _1d), npt.Array2D[np.float64])
 assert_type(def_gen.dirichlet([0.5, 0.5], _2d), npt.Array3D[np.float64])
 assert_type(def_gen.dirichlet([0.5, 0.5], size=_2d), npt.Array3D[np.float64])
@@ -999,6 +1006,7 @@ assert_type(def_gen.multinomial(_i64_1d, _f64_2d), npt.Array2D[np.int64])
 assert_type(def_gen.multinomial(_i64_1d, D_arr_0p5), npt.NDArray[np.int64])
 assert_type(def_gen.multinomial(I_arr_20, _f64_1d), npt.NDArray[np.int64])
 assert_type(def_gen.multinomial(20, [1 / 6.0] * 6, size=2), npt.Array2D[np.int64])
+assert_type(def_gen.multinomial(20, [1 / 6.0] * 6, size=_nd), np.ndarray[Any, Any])  # mypy quirk; pyright infers NDArray[int64]
 assert_type(def_gen.multinomial(20, [1 / 6.0] * 6, size=_1d), npt.Array2D[np.int64])
 assert_type(def_gen.multinomial(20, [1 / 6.0] * 6, size=_2d), npt.Array3D[np.int64])
 assert_type(def_gen.multinomial([[10], [20]], [1 / 6.0] * 6, size=(2, 2)), npt.Array3D[np.int64])
@@ -1008,8 +1016,9 @@ assert_type(def_gen.multinomial([[10], [20]], [1 / 6.0] * 6), npt.NDArray[np.int
 assert_type(def_gen.multivariate_hypergeometric([3, 5, 7], 2), npt.Array1D[np.int64])
 assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2), npt.Array1D[np.int64])
 assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=4), npt.Array2D[np.int64])
+assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=_nd), np.ndarray[Any, Any])  # mypy quirk; pyright infers NDArray[int64]
 assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=_1d), npt.Array2D[np.int64])
-assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=(4, 7)), npt.Array3D[np.int64])
+assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, size=_2d), npt.Array3D[np.int64])
 assert_type(def_gen.multivariate_hypergeometric([3, 5, 7], 2, method="count"), npt.Array1D[np.int64])
 assert_type(def_gen.multivariate_hypergeometric(np.array([3, 5, 7]), 2, method="marginals"), npt.Array1D[np.int64])
 
@@ -1018,6 +1027,7 @@ assert_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])), npt.Array1D[n
 assert_type(def_gen.multivariate_normal(np.array([0.0]), [[1.0]]), npt.Array1D[np.float64])
 assert_type(def_gen.multivariate_normal([0.0], np.array([[1.0]])), npt.Array1D[np.float64])
 assert_type(def_gen.multivariate_normal([0.0], [[1.0]], 3), npt.Array2D[np.float64])
+assert_type(def_gen.multivariate_normal([0.0], [[1.0]], _nd), np.ndarray[Any, Any])  # mypy quirk; pyright infers NDArray[float64]
 assert_type(def_gen.multivariate_normal([0.0], [[1.0]], _1d), npt.Array2D[np.float64])
 assert_type(def_gen.multivariate_normal([0.0], [[1.0]], _2d), npt.Array3D[np.float64])
 assert_type(def_gen.multivariate_normal([0.0], [[1.0]], size=_2d, method="eigh"), npt.Array3D[np.float64])
