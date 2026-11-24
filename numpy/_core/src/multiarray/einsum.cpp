@@ -17,13 +17,15 @@
 #include <numpy/npy_common.h>
 #include <numpy/arrayobject.h>
 
-#include <array_assign.h>   //PyArray_AssignRawScalar
-
 #include <ctype.h>
 extern "C" {
+#include <array_assign.h>   //PyArray_AssignRawScalar
+#include "array_coercion.h"
 #include "convert.h"
+#include "convert_datatype.h"
 #include "common.h"
 #include "ctors.h"
+#include "dtypemeta.h"
 
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"
@@ -259,9 +261,9 @@ get_single_op_view(PyArrayObject *op, char *labels,
 
     ndim = PyArray_NDIM(op);
 
-    /* Initialize the dimensions and strides to zero */
+    /* Initialize the dimensions to -1 and strides to zero */
     for (idim = 0; idim < ndim_output; ++idim) {
-        new_dims[idim] = 0;
+        new_dims[idim] = -1;
         new_strides[idim] = 0;
     }
 
@@ -303,7 +305,7 @@ get_single_op_view(PyArrayObject *op, char *labels,
             }
             /* Update the dimensions and strides of the output */
             i = out_label - output_labels;
-            if (new_dims[i] != 0 && new_dims[i] != PyArray_DIM(op, idim)) {
+            if (new_dims[i] != -1 && new_dims[i] != PyArray_DIM(op, idim)) {
                 PyErr_Format(PyExc_ValueError,
                         "dimensions in single operand for collapsing "
                         "index '%c' don't match (%d != %d)",
@@ -332,6 +334,75 @@ get_single_op_view(PyArrayObject *op, char *labels,
     /* Return success, but that we couldn't make a view */
     *ret = NULL;
     return 0;
+}
+
+
+/*
+ * Casts a single-operand view to 'dtype' and copies it into 'out', for those that are given.
+ * Steals a reference to 'view'. Returns a new reference to the result, or NULL on error.
+ */
+static PyArrayObject *
+finish_single_op_view(PyArrayObject *view, PyArrayObject *out,
+                      PyArray_Descr *dtype, NPY_CASTING casting)
+{
+    PyArrayObject *ret = NULL;
+
+    /* AssignArray does not check this when 'out' is identical to the view */
+    if (out != NULL && PyArray_FailUnlessWriteable(out, "output array") < 0) {
+        goto finish;
+    }
+    if (dtype != NULL) {
+        /* Sizes an unsized dtype such as str from the view */
+        dtype = PyArray_AdaptDescriptorToArray(view, NULL, dtype);
+        if (dtype == NULL) {
+            goto finish;
+        }
+        npy_intp view_offset = NPY_MIN_INTP;
+        if (PyArray_SafeCast(PyArray_DESCR(view), dtype, &view_offset,
+                             NPY_NO_CASTING, 1) && view_offset == 0) {
+            Py_CLEAR(dtype);
+        }
+        else if (out == NULL && !PyArray_CanCastArrayTo(view, dtype, casting)) {
+            Py_DECREF(dtype);
+            dtype = NULL;
+            /* Deprecated NumPy 2.6, 2026-11-23 */
+            if (PyErr_WarnEx(PyExc_DeprecationWarning,
+                    "einsum ignored `dtype` and returned a view of the operand because "
+                    "`casting` does not allow the cast. This will raise a TypeError in "
+                    "the future. (Deprecated NumPy 2.6)", 2) < 0) {
+                goto finish;
+            }
+        }
+    }
+    /*
+     * AssignArray skips its overlap copy for same-direction 1-D strides,
+     * even when a diagonal and 'out' have different strides.
+     */
+    if (dtype != NULL || (out != NULL && arrays_overlap(view, out))) {
+        PyArrayObject *tmp = (PyArrayObject *)PyArray_NewLikeArray(
+                view, NPY_KEEPORDER, dtype, out == NULL);
+        if (tmp != NULL && PyArray_AssignArray(tmp, view, NULL, casting) < 0) {
+            Py_CLEAR(tmp);
+        }
+        Py_SETREF(view, tmp);
+        if (view == NULL) {
+            goto finish;
+        }
+    }
+    if (out == NULL) {
+        ret = view;
+        view = NULL;
+        goto finish;
+    }
+    if (PyArray_AssignArray(out, view, NULL, casting) < 0) {
+        goto finish;
+    }
+    Py_INCREF(out);
+    ret = out;
+
+  finish:
+    Py_XDECREF(view);
+    return ret;
 }
 
 
@@ -937,8 +1008,9 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
      * If there's just one operand and no output parameter,
      * first try remapping the axes to the output to return
      * a view instead of a copy.
+     * With an output parameter, the view is copied into it.
      */
-    if (nop == 1 && out == NULL) {
+    if (nop == 1) {
         ret = NULL;
 
         if (get_single_op_view(op_in[0], op_labels[0], ndim_output,
@@ -947,7 +1019,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         }
 
         if (ret != NULL) {
-            return ret;
+            return finish_single_op_view(ret, out, dtype, casting);
         }
     }
 
@@ -1061,6 +1133,13 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     if (!PyTypeNum_ISNUMBER(type_num) && !PyTypeNum_ISOBJECT(type_num)) {
         PyErr_SetString(PyExc_TypeError,
                     "invalid data type for einsum");
+        goto fail;
+    }
+
+    /* The sum-of-products loop uses out as its running total. */
+    if (out != NULL && !PyArray_ISOBJECT(out) &&
+            !NPY_DT_is_numeric(NPY_DTYPE(PyArray_DESCR(out)))) {
+        PyErr_SetString(PyExc_TypeError, "einsum cannot accumulate into a non-numeric output");
         goto fail;
     }
 
