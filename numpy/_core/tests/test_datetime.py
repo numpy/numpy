@@ -890,6 +890,14 @@ class TestDateTime:
                 np.datetime64(datetime.datetime(2000, 1, 1, 0, tzinfo=tz)),
                 np.datetime64('2000-01-01T08'))
 
+        class InvalidTimezone(datetime.tzinfo):
+            def utcoffset(self, dt):
+                return datetime.timedelta(seconds=np.iinfo(np.intc).max + 1)
+
+        with pytest.warns(UserWarning, match=msg), pytest.raises(
+                ValueError, match="timezone offset is out of range"):
+            np.datetime64(datetime.datetime(2000, 1, 1, tzinfo=InvalidTimezone()))
+
     def test_datetime_string_conversion(self):
         a = ['2011-03-16', '1920-01-01', '2013-05-19']
         str_a = np.array(a, dtype='S')
@@ -1794,6 +1802,9 @@ class TestDateTime:
                 check(np.timedelta64(1, "s"), f, nat)
                 check(np.timedelta64(0, "s"), f, nat)
                 check(nat, f, nat)
+            # out of the int64 range
+            check(np.timedelta64(2**63 - 1, "s"), 1.5, nat)
+            check(np.timedelta64(2**63 - 1, "s"), -1.5, nat)
 
     @pytest.mark.parametrize("op1, op2, exp", [
         # m8 same units round down
@@ -2054,6 +2065,8 @@ class TestDateTime:
                 assert_equal(np.timedelta64(0) / tp(0), nat)
                 assert_equal(nat / tp(0), nat)
                 assert_equal(nat / tp(2), nat)
+            # out of the int64 range
+            assert_equal(np.timedelta64(2**62, "s") / 0.25, nat)
             # Division by inf
             assert_equal(np.timedelta64(1) / float('inf'), np.timedelta64(0))
             assert_equal(np.timedelta64(0) / float('inf'), np.timedelta64(0))

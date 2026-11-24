@@ -16,6 +16,7 @@
 #include "loops_utils.h"
 #include "gil_utils.h"
 #include "npy_extint128.h"
+#include "npy_float_to_int.h"
 
 #include "npy_pycompat.h"
 
@@ -1125,10 +1126,10 @@ TIMEDELTA_md_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
         }
         else {
             double result = in1 * in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            if (npy_double_to_int64(result, (npy_timedelta *)op1) < 0) {
+                if (npy_isfinite(result)) {
+                    npy_set_floatstatus_invalid();
+                }
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
@@ -1146,10 +1147,10 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
         }
         else {
             double result = in1 * in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            if (npy_double_to_int64(result, (npy_timedelta *)op1) < 0) {
+                if (npy_isfinite(result)) {
+                    npy_set_floatstatus_invalid();
+                }
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
@@ -1167,10 +1168,10 @@ TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
         }
         else {
             double result = in1 / in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            if (npy_double_to_int64(result, (npy_timedelta *)op1) < 0) {
+                if (npy_isfinite(result)) {
+                    npy_set_floatstatus_invalid();
+                }
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }

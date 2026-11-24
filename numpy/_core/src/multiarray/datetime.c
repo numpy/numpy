@@ -17,6 +17,7 @@
 #include "numpyos.h"
 
 #include "npy_config.h"
+#include "npy_float_to_int.h"
 #include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 #include "npy_static_data.h"
 #include "module_state.h"
@@ -2289,9 +2290,13 @@ validate_and_return:
             /* Rounding here is no worse than the integer division below.
              * Only whole minute offsets are supported by numpy anyway.
              */
-            seconds_offset = (int)PyFloat_AsDouble(total_seconds);
+            double seconds = PyFloat_AsDouble(total_seconds);
             Py_DECREF(total_seconds);
-            if (error_converting(seconds_offset)) {
+            if (error_converting(seconds)) {
+                return -1;
+            }
+            if (npy_double_to_int(seconds, &seconds_offset) < 0) {
+                PyErr_SetString(PyExc_ValueError, "timezone offset is out of range");
                 return -1;
             }
 

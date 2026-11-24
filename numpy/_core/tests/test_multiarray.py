@@ -11359,10 +11359,11 @@ class TestWritebackIfCopy:
 
 
 class TestArange:
-    def test_infinite(self):
+    @pytest.mark.parametrize("stop", [np.inf, float(np.iinfo(np.intp).max + 1)])
+    def test_size_exceeded(self, stop):
         assert_raises_regex(
             ValueError, "size exceeded",
-            np.arange, 0, np.inf
+            np.arange, 0, stop
         )
 
     def test_nan_step(self):
