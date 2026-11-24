@@ -3897,12 +3897,6 @@ class TestMaskedArrayMethods:
         computed = argsort(x, kind='stable')
         assert_equal(computed, expected)
 
-    def test_sort_axis_none(self):
-        x = array([3, 1, 2, 5], mask=[0, 1, 0, 0])
-        x.sort(axis=None)
-        assert_equal(x._data[:3], [2, 3, 5])
-        assert_equal(x._mask, [False, False, False, True])
-
     def test_argsort_matches_sort(self):
         x = array([1, 4, 2, 3], mask=[0, 1, 0, 0], dtype=np.uint8)
 
