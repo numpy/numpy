@@ -7,5 +7,6 @@
 - `numpy.char.join` returns `numpy.dtypes.StringDType` when either operand has
   that dtype, and rejects incompatible missing-value settings.
 
-- `numpy.strings.encode` rejects encoding and error-handler names containing NULs
-  for `numpy.dtypes.StringDType` input instead of silently truncating them.
+- `numpy.strings.encode` no longer truncates encoding and error-handler names
+  at a NUL for `numpy.dtypes.StringDType` input. On CPython such names now
+  raise ``ValueError``, as they do for `str.encode`.

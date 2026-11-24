@@ -360,6 +360,7 @@ def test_string_methods_preserve_nuls_with_python_str(name, value, args):
     assert result[0] == expected
 
 
+@pytest.mark.skipif(IS_PYPY, reason="str.encode accepts NULs in codec names")
 @pytest.mark.parametrize("args", [("utf-8\0",), ("ascii", "ignore\0")])
 def test_encode_rejects_nul_in_codec_names(args):
     arr = np.array(["abc"], dtype="T")
