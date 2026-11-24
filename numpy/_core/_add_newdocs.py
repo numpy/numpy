@@ -3634,8 +3634,9 @@ _array_method_doc('astype', "dtype, order='K', casting='unsafe', subok=True, cop
     scalar_doc="""
     Cast the scalar to a specified data type.
 
-    For immutable scalars, an equivalent ``dtype`` returns the original
-    scalar, regardless of the value of ``copy``.
+    For immutable scalars, the original scalar is returned if ``copy`` is
+    False and ``dtype`` is equivalent, or regardless of ``copy`` if the
+    scalar already has exactly the requested type.
     """)
 
 _array_method_doc('byteswap', "inplace=False",
