@@ -601,6 +601,14 @@ class TestSaveTxt:
         c = BytesIO()
         np.savetxt(c, np.array([1 + 2j]), fmt='%d%%%+dj%%')
         assert_equal(c.getvalue(), b'1%+2j%\n')
+        # a literal percent directly followed by a specifier ('%%' is paired
+        # from the left, so '%%%d' is '%' + '%d')
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%%%d')
+        assert_equal(c.getvalue(), b'%1 %2\n%3 %4\n')
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%%%%%d')
+        assert_equal(c.getvalue(), b'%%1 %%2\n%%3 %%4\n')
         # the number of conversion specifiers is still checked
         with pytest.raises(ValueError, match="wrong number of % formats"):
             np.savetxt(BytesIO(), a, fmt='%d%% %d %d')
