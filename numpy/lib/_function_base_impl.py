@@ -5065,14 +5065,14 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
                 x = x.astype(np.float64)
             elif x.size > 1:
                 # Any difference of two elements is bounded by the span.
-                # (``asarray``: a fully masked ``x`` has no max.)
-                xd = np.asarray(x)
-                span = int(xd.max()) - int(xd.min())
-                if span > np.iinfo(np.int64).max:
-                    x = x.astype(np.float64)
-                elif x.dtype.kind == "u":
-                    # uint64 differences wrap for decreasing ``x``
-                    x = x.astype(np.int64)
+                lo, hi = x.min(), x.max()
+                # a fully masked ``x`` has no min or max (a masked constant)
+                if isinstance(lo, np.integer):
+                    if int(hi) - int(lo) > np.iinfo(np.int64).max:
+                        x = x.astype(np.float64)
+                    elif x.dtype.kind == "u":
+                        # uint64 differences wrap for decreasing ``x``
+                        x = x.astype(np.int64)
         if x.ndim == 1:
             d = diff(x)
             # reshape to correct shape

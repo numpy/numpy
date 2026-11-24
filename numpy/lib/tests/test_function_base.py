@@ -2806,6 +2806,13 @@ class TestTrapezoid:
         xm = np.ma.array(np.array([1, 2, 3], dtype=dtype), mask=True)
         assert trapezoid(np.ones(3), xm) is np.ma.masked
 
+    def test_64bit_int_x_masked_sentinel(self):
+        # masked-out values (e.g. a NaT-like sentinel) do not count towards
+        # the span, so the exact int64 differences are kept
+        t0 = 1_700_000_000_000_000_000
+        x = np.ma.masked_equal([t0, t0 + 1, -2**63, t0 + 3, t0 + 4], -2**63)
+        assert_equal(trapezoid(np.ones(5), x), 2.0)
+
     def test_int64_x_untouched(self):
         # 64-bit integer `x` (e.g. nanosecond timestamps) is not converted
         # to float64, which would lose the small differences.
