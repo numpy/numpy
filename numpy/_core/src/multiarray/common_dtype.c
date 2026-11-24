@@ -63,7 +63,7 @@ common_dtype(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
 
 
 /*
- * Deprecated NumPy 2.6, 2026-10-13: implicit text/bytes promotion.
+ * Deprecated NumPy 2.7, 2026-10-13: implicit text/bytes promotion.
  * Check the final result, not intermediate pairs: another input may select
  * object or a user DType without requiring text/bytes conversion.
  */
@@ -89,7 +89,7 @@ check_promotion(npy_intp length, PyArray_DTypeMeta *const dtypes[],
                 "fall back to object dtype and other promotions will raise "
                 "TypeError. Use matching bytes or text inputs. Encode or "
                 "decode values with an explicit encoding before constructing "
-                "or combining arrays. (Deprecated NumPy 2.6)");
+                "or combining arrays. (Deprecated NumPy 2.7)");
     }
     return 0;
 }

@@ -266,7 +266,7 @@ typedef enum {
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
         /*
          * Marks casts that will require casting="unsafe" after a deprecation
-         * expires. Currently needed by the text/bytes deprecation from NumPy 2.6.
+         * expires. Currently needed by the text/bytes deprecation from NumPy 2.7.
          */
         _NPY_CAST_WILL_BE_UNSAFE=128,
 #endif

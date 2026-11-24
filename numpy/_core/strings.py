@@ -698,7 +698,7 @@ def expandtabs(a, tabsize=8):
 
 
 def _use_variable_stringdtype(*arrays):
-    # Deprecated NumPy 2.6, 2026-10-13: implicit S/U promotion.
+    # Deprecated NumPy 2.7, 2026-10-13: implicit S/U promotion.
     # Avoid legacy S/U promotion, including with numeric or object arguments.
     # After the warning period, delete this helper and use
     # np.result_type(*arrays).char in _VARIABLE_LENGTH at the call sites.
@@ -714,7 +714,7 @@ def _cast_string_arg(arg, dtype):
     # Call only after _use_variable_stringdtype returns False, so these casts
     # cannot hide the original dtypes from variable-width promotion and dispatch.
 
-    # Deprecated NumPy 2.6, 2026-10-13: implicit text/bytes casts in np.strings.
+    # Deprecated NumPy 2.7, 2026-10-13: implicit text/bytes casts in np.strings.
     # After this deprecation expires and C classifies text/bytes casts as unsafe,
     # delete this helper and use astype(..., casting="same_kind") for string
     # arguments at the call sites. Keep non-string coercion unchanged.
@@ -732,7 +732,7 @@ def _cast_string_arg(arg, dtype):
             "will raise TypeError in a future release. Use matching bytes or "
             "text arguments. Convert with numpy.strings.encode or "
             "numpy.strings.decode and an explicit encoding if needed. "
-            "(Deprecated NumPy 2.6)",
+            "(Deprecated NumPy 2.7)",
             DeprecationWarning,
             skip_file_prefixes=_STRING_WARNING_SKIP_PREFIXES,
         )

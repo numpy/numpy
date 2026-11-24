@@ -2360,7 +2360,7 @@ get_casts() {
             &PyArray_StringDType, &PyArray_BytesDType);
 
     /*
-     * Deprecated NumPy 2.6, 2026-10-13: S <-> T casts under
+     * Deprecated NumPy 2.7, 2026-10-13: S <-> T casts under
      * "safe" and "same_kind". After this deprecation expires, make both
      * casts below unsafe, including their descriptor resolvers.
      */

@@ -852,7 +852,7 @@ npy_cast_safety_to_bool(NPY_CASTING safety, NPY_CASTING casting, int warn)
                 "release. Use numpy.strings.encode or numpy.strings.decode "
                 "with an explicit encoding, or request casting='unsafe' "
                 "to retain the existing casting behavior. "
-                "(Deprecated NumPy 2.6)") < 0) {
+                "(Deprecated NumPy 2.7)") < 0) {
         return -1;
     }
     return 1;
@@ -2716,7 +2716,7 @@ add_other_to_and_from_string_cast(
         .slots = slots,
     };
     /*
-     * Deprecated NumPy 2.6, 2026-10-13: S -> U casts under "safe" and
+     * Deprecated NumPy 2.7, 2026-10-13: S -> U casts under "safe" and
      * "same_kind".
      * After this deprecation expires, make S -> U unsafe here and in
      * cast_to_string_resolve_descriptors and remove the cast flags used

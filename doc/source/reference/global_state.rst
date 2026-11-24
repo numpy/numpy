@@ -100,4 +100,4 @@ The only other accepted value is ``warn``, which is the default. Any other
 value raises ``ValueError`` when NumPy is imported. This variable is only
 checked on the first import.
 
-.. versionadded:: 2.6
+.. versionadded:: 2.7
