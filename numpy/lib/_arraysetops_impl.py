@@ -751,6 +751,11 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         ar1 = ar1.ravel()
         ar2 = ar2.ravel()
 
+    wrap = (ar1.dtype.kind in "iu" and ar2.dtype.kind in "iu"
+            and np.result_type(ar1.dtype, ar2.dtype).kind == "f")
+    if wrap:
+        ar1, ar2 = ar1.astype(np.int64), ar2.astype(np.int64)
+
     aux = np.concatenate((ar1, ar2))
     if return_indices:
         aux_sort_indices = np.argsort(aux, kind='mergesort')
@@ -759,6 +764,8 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         aux.sort()
 
     mask = aux[1:] == aux[:-1]
+    if wrap:
+        mask &= aux[:-1] >= 0
     int1d = aux[:-1][mask]
 
     if return_indices:

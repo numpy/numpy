@@ -87,6 +87,10 @@ class TestSetOps:
         assert_array_equal(ea, a[ui1])
         assert_array_equal(ea, b[ui2])
 
+        a = np.array([2**64 - 1, 2**53 + 1], dtype=np.uint64)
+        b = np.array([-1, 2**53, 2**53 + 1], dtype=np.int64)
+        assert_equal(intersect1d(a, b, return_indices=True), (b[2:], [1], [2]))
+
     def test_setxor1d(self):
         a = np.array([5, 7, 1, 2])
         b = np.array([2, 4, 3, 1, 5])
