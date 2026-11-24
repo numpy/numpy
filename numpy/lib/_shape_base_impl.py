@@ -173,7 +173,7 @@ def take_along_axis(arr, indices, axis=-1):
         if indices.ndim != 1:
             raise ValueError(
                 'when axis=None, `indices` must have a single dimension.')
-        arr = np.array(arr.flat)
+        arr = np.ravel(arr)
         axis = 0
     else:
         axis = normalize_axis_index(axis, arr.ndim)
