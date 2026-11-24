@@ -2771,6 +2771,15 @@ class TestTrapezoid:
     def test_small_int_literal(self):
         assert_equal(trapezoid(np.array([200, 100], dtype=np.uint8)), 150.0)
 
+    @pytest.mark.parametrize("dtype", [np.int64, np.uint64])
+    def test_64bit_int_y_no_overflow(self, dtype):
+        big = 2**62 if dtype is np.int64 else 2**64 - 1
+        y = np.array([big, big], dtype=dtype)
+        expected = trapezoid(y.astype(np.float64))
+        assert expected > 0
+        assert_equal(trapezoid(y), expected)
+        assert_equal(trapezoid(y, x=np.array([0, 1], dtype=dtype)), expected)
+
     def test_int64_x_untouched(self):
         # 64-bit integer `x` (e.g. nanosecond timestamps) is not converted
         # to float64, which would lose the small differences.

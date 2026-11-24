@@ -5049,11 +5049,11 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
     """
 
     y = asanyarray(y)
-    # Narrow integer and boolean samples must be converted before they are
-    # added or differenced, otherwise ``y[1:] + y[:-1]`` and ``diff(x)`` wrap
-    # around in the input dtype (or saturate to True for bool).  64-bit
-    # integers are left alone, e.g. nanosecond timestamps as ``x``.
-    if y.dtype.kind in "biu" and y.dtype.itemsize < 8:
+    # Integer and boolean samples are converted before they are added,
+    # otherwise ``y[1:] + y[:-1]`` wraps around in the input dtype (or
+    # saturates to True for bool).  ``x`` is only converted when narrower than
+    # 64 bits, so that e.g. nanosecond timestamps keep exact differences.
+    if y.dtype.kind in "biu":
         y = y.astype(np.float64)
     if x is None:
         d = dx
