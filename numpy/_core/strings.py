@@ -134,15 +134,21 @@ def _string_array_and_dtype(a, *, subok=True):
     return a, a.dtype
 
 
-def _check_no_stringdtype_coercion(**operands):
-    if all(arr.dtype.char != "T" for arr in operands.values()):
+def _check_no_stringdtype_coercion(func, **operands):
+    variable = next(
+        (name for name, arr in operands.items() if arr.dtype.char == "T"), None)
+    if variable is None:
         return
     for name, arr in operands.items():
         if arr.dtype.char not in "STU":
+            args = ", ".join(
+                n if operands[n].dtype.char in "STU"
+                else f"np.asarray({n}, dtype={variable}.dtype)"
+                for n in operands)
             raise TypeError(
-                f"operand {name!r} has dtype {arr.dtype}, which is not "
-                "converted to a string for StringDType operations; convert "
-                "it explicitly, for example with astype('T')")
+                f"operand {name!r} has dtype {arr.dtype}, which StringDType "
+                "operations do not convert to a string. Convert it "
+                f"explicitly, for example:\n    np.strings.{func}({args})")
 
 
 def _clean_args(*args):
@@ -1338,7 +1344,8 @@ def replace(a, old, new, count=-1):
     old_arr = np.asanyarray(old)
     new_dtype = getattr(new, 'dtype', None)
     new_arr = np.asanyarray(new)
-    _check_no_stringdtype_coercion(a=arr, old=old_arr, new=new_arr)
+    _check_no_stringdtype_coercion(
+        "replace", a=arr, old=old_arr, new=new_arr)
 
     if np.result_type(arr, old_arr, new_arr).char == "T":
         # pass exact str objects so the ufunc converts them directly
@@ -1545,10 +1552,10 @@ def _splitlines(a, keepends=None):
         a, np.object_, 'splitlines', _clean_args(keepends))
 
 
-def _prepare_partition(a, sep):
+def _prepare_partition(func, a, sep):
     a_arr = np.asanyarray(a)
     sep_arr = np.asanyarray(sep)
-    _check_no_stringdtype_coercion(a=a_arr, sep=sep_arr)
+    _check_no_stringdtype_coercion(func, a=a_arr, sep=sep_arr)
 
     if _use_variable_stringdtype(a_arr, sep_arr):
         # pass exact str objects so the ufunc converts them directly
@@ -1609,7 +1616,7 @@ def partition(a, sep):
      array(['is nice!'], dtype='<U8'))
 
     """
-    a, sep, variable = _prepare_partition(a, sep)
+    a, sep, variable = _prepare_partition("partition", a, sep)
     if variable:
         return _partition(a, sep)
 
@@ -1675,7 +1682,7 @@ def rpartition(a, sep):
      array(['', '  ', 'Bba'], dtype='<U3'))
 
     """
-    a, sep, variable = _prepare_partition(a, sep)
+    a, sep, variable = _prepare_partition("rpartition", a, sep)
     if variable:
         return _rpartition(a, sep)
 

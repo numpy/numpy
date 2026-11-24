@@ -360,6 +360,13 @@ def test_string_methods_preserve_nuls_with_python_str(name, value, args):
     assert result[0] == expected
 
 
+@pytest.mark.parametrize("args", [("utf-8\0",), ("ascii", "ignore\0")])
+def test_encode_rejects_nul_in_codec_names(args):
+    arr = np.array(["abc"], dtype="T")
+    with pytest.raises(ValueError, match="embedded null"):
+        np.strings.encode(arr, *args)
+
+
 def test_pystr_scalar_full_copyto_where_preserve_nulls(dtype):
     scalar = "x\0"
 
@@ -2525,7 +2532,7 @@ def test_partition_replace_reject_non_string_operands(operand):
         (np.strings.replace, (operand, "x")),
         (np.strings.replace, ("b", operand)),
     ]:
-        with pytest.raises(TypeError, match="convert it explicitly"):
+        with pytest.raises(TypeError, match="Convert it explicitly"):
             func(a, *args)
 
 
