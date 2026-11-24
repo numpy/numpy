@@ -2780,6 +2780,32 @@ class TestTrapezoid:
         assert_equal(trapezoid(y), expected)
         assert_equal(trapezoid(y, x=np.array([0, 1], dtype=dtype)), expected)
 
+    @pytest.mark.parametrize("dtype, x", [
+        (np.int64, [-2**63, 2**63 - 1]),
+        (np.uint64, [2**64 - 1, 0]),
+        # the span fits in int64, but uint64 differences wrap when
+        # `x` decreases
+        (np.uint64, [5, 3]),
+        (np.uint64, [2**63 + 5, 2**63 + 3]),
+    ])
+    def test_64bit_int_x_span(self, dtype, x):
+        # exact step, computed with Python integers
+        step = float(x[1] - x[0])
+        x = np.array(x, dtype=dtype)
+        y = np.array([0.0, 2.0])
+        assert_equal(trapezoid(y, x), step)
+        # `x` along `axis` of a larger `y`
+        y2 = np.stack([y, y + 1])
+        assert_equal(trapezoid(y2, x), [step, 2 * step])
+        assert_equal(trapezoid(y2.T, x, axis=0), [step, 2 * step])
+
+    @pytest.mark.parametrize("dtype", [np.int64, np.uint64])
+    def test_64bit_int_x_short(self, dtype):
+        assert_equal(trapezoid(np.array([]), np.array([], dtype=dtype)), 0.0)
+        assert_equal(trapezoid(np.array([1.0]), np.array([7], dtype=dtype)), 0.0)
+        xm = np.ma.array(np.array([1, 2, 3], dtype=dtype), mask=True)
+        assert trapezoid(np.ones(3), xm) is np.ma.masked
+
     def test_int64_x_untouched(self):
         # 64-bit integer `x` (e.g. nanosecond timestamps) is not converted
         # to float64, which would lose the small differences.
