@@ -2106,6 +2106,23 @@ class TestMethods:
         assert_equal(a.any(where=False), False)
         assert_equal(np.any(a, where=False), False)
 
+    def test_any_all_positional_args(self):
+        # The methods take their positional arguments as (axis, out, keepdims);
+        # the second positional argument is `out`, not `dtype` (gh-33267).
+        a = np.array([[True, False], [False, True]])
+        for method in (a.any, a.all):
+            out = np.empty(2, dtype=bool)
+            res = method(0, out)
+            assert res is out
+            assert_equal(out, method(0))
+
+            out = np.empty((1, 2), dtype=bool)
+            method(0, out, True)
+            assert_equal(out, method(0, keepdims=True))
+
+            with assert_raises(TypeError):
+                method(0, None, None, True)
+
     @pytest.mark.parametrize("dtype",
             ["i8", "U10", "object", "datetime64[ms]"])
     def test_any_and_all_result_dtype(self, dtype):
