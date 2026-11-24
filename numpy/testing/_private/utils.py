@@ -3079,30 +3079,41 @@ def trace_memory_growth():
             tracemalloc.stop()
 
 
-def assert_memory_growth_below(func, limit, repeat=10):
+def assert_memory_growth_below(func, limit, repeat=10, make_args=None):
     """Fail if more than ``limit`` bytes are still allocated after calling
     ``func()`` ``repeat`` times.
 
     ``func`` is called once before the measurement starts.  It runs in a
-    new subprocess, so it must be a module-level function.
+    new subprocess, so it must be a module-level function.  If ``make_args``
+    is given, it must be a module-level function too.  It is called once in
+    the subprocess before the measurement starts and returns a tuple of
+    arguments that is passed to every call of ``func``.
     """
     import pytest
 
     # not available on PyPy
     pytest.importorskip("tracemalloc")
-    location = (func.__module__,
-                getattr(sys.modules[func.__module__], "__file__", None),
-                func.__qualname__)
+    locations = [
+        None if f is None else (
+            f.__module__,
+            getattr(sys.modules[f.__module__], "__file__", None),
+            f.__qualname__)
+        for f in (func, make_args)]
     run_function_with_args_in_subprocess(
-        _assert_memory_growth_below, location, limit, repeat)
+        _assert_memory_growth_below, *locations, limit, repeat)
 
 
-def _assert_memory_growth_below(func_location, limit, repeat):
+def _assert_memory_growth_below(func_location, make_args_location, limit,
+                                repeat):
     func = _load_function(*func_location)
-    func()
+    args = ()
+    if make_args_location is not None:
+        args = _load_function(*make_args_location)()
+    func(*args)
     with trace_memory_growth() as growth:
         for _ in range(repeat):
-            func()
-    assert growth() < limit, (
-        f"memory grew by {growth()} bytes after {repeat} calls, "
-        f"limit is {limit}")
+            func(*args)
+    if growth() >= limit:
+        raise SystemExit(
+            f"memory grew by {growth()} bytes after {repeat} calls, "
+            f"limit is {limit}")
