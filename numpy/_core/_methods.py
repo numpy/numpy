@@ -52,23 +52,17 @@ def _prod(a, axis=None, dtype=None, out=None, keepdims=False,
           initial=_NoValue, where=True):
     return umr_prod(a, axis, dtype, out, keepdims, initial, where)
 
-def _any(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
-    # By default, return a boolean for any and all
-    if dtype is None:
-        dtype = bool_dt
+def _any(a, axis=None, out=None, keepdims=False, *, where=True):
     # Parsing keyword arguments is currently fairly slow, so avoid it for now
     if where is True:
-        return umr_any(a, axis, dtype, out, keepdims)
-    return umr_any(a, axis, dtype, out, keepdims, where=where)
+        return umr_any(a, axis, bool_dt, out, keepdims)
+    return umr_any(a, axis, bool_dt, out, keepdims, where=where)
 
-def _all(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
-    # By default, return a boolean for any and all
-    if dtype is None:
-        dtype = bool_dt
+def _all(a, axis=None, out=None, keepdims=False, *, where=True):
     # Parsing keyword arguments is currently fairly slow, so avoid it for now
     if where is True:
-        return umr_all(a, axis, dtype, out, keepdims)
-    return umr_all(a, axis, dtype, out, keepdims, where=where)
+        return umr_all(a, axis, bool_dt, out, keepdims)
+    return umr_all(a, axis, bool_dt, out, keepdims, where=where)
 
 def _count_reduce_items(arr, axis, keepdims=False, where=True):
     # fast-path for the default case

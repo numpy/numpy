@@ -2113,12 +2113,33 @@ class TestMethods:
         assert arr.any().dtype == np.bool
         assert arr.all().dtype == np.bool
 
-    def test_any_and_all_object_dtype(self):
-        # (seberg) Not sure we should even allow dtype here, but it is.
+    def test_any_and_all_no_dtype_argument(self):
+        # gh-33267: dtype is not a parameter of np.any/np.all, and dropping
+        # it from the ndarray methods makes out the second positional
+        # argument as documented.
         arr = np.ones(3, dtype=object)
-        # keepdims to prevent getting a scalar.
-        assert arr.any(dtype=object, keepdims=True).dtype == object
-        assert arr.all(dtype=object, keepdims=True).dtype == object
+        with pytest.raises(TypeError):
+            arr.any(dtype=object)
+        with pytest.raises(TypeError):
+            arr.all(dtype=object)
+
+    @pytest.mark.parametrize('method', ['any', 'all'])
+    def test_any_all_out_positional(self, method):
+        # gh-33267: out must be the second positional argument of the
+        # ndarray methods, matching the signature of np.any/np.all.
+        a = np.array([[True, False], [False, False], [True, True]])
+        out = np.zeros(2, dtype=bool)
+        res = getattr(a, method)(0, out)
+        assert_(res is out)
+        assert_equal(res, getattr(np, method)(a, axis=0))
+
+    @pytest.mark.parametrize('method', ['any', 'all'])
+    def test_any_all_keepdims_positional(self, method):
+        a = np.array([[True, False], [False, False], [True, True]])
+        out = np.zeros((1, 2), dtype=bool)
+        res = getattr(a, method)(0, out, True)
+        assert_(res is out)
+        assert_equal(res, getattr(np, method)(a, axis=0, keepdims=True))
 
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
