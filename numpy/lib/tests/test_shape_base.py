@@ -97,6 +97,13 @@ class TestTakeAlongAxis:
         assert_equal(take_along_axis(a, ai, axis=1), expected)
         assert_equal(take_along_axis(a, [3, 0], axis=None), [60, 10])
 
+    def test_axis_none_subclass(self):
+        a = np.ma.masked_array([[1, 2], [3, 4]], mask=[[0, 1], [0, 0]])
+        actual = take_along_axis(a, np.array([1, 2]), axis=None)
+        assert isinstance(actual, np.ma.MaskedArray)
+        assert_equal(actual.data, [2, 3])
+        assert_equal(actual.mask, [True, False])
+
 
 class TestPutAlongAxis:
     def test_replace_max(self):
