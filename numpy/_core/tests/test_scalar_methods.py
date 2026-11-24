@@ -145,6 +145,18 @@ class TestAsType:
         b = a.astype(np.float64, copy=True)
         assert a is b
 
+    @pytest.mark.parametrize("from_type, to_type", [
+        (np.double, np.longdouble),
+        (np.long, np.longlong),
+        (np.ulong, np.ulonglong),
+        (np.intc, np.long),
+        (np.cdouble, np.clongdouble),
+    ])
+    def test_equivalent_dtype_returns_requested_type(self, from_type, to_type):
+        a = from_type(3)
+        assert type(a.astype(to_type)) is to_type
+        assert type(np.astype(a, to_type)) is to_type
+
 class TestAsTypeStructuredCopy:
     # Regression test for gh-32379: astype on a structured scalar
     # must return an independent object, not a mutable view into the parent array.

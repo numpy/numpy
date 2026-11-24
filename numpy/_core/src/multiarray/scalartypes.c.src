@@ -2315,11 +2315,12 @@ gentype_astype(PyObject *self,
         return NULL;
     }
 
-    int equiv = (to != NULL) && PyArray_EquivTypes(from, to);
+    int equiv = PyArray_EquivTypes(from, to);
     Py_DECREF(from);
     if(equiv){
-        // Return self for immutables regardless of copy
-        if ((forcecopy == 0) | (! PyArray_IsScalar(self, Void))){
+        // Return self if copy=False, or if already exactly the requested type
+        if ((forcecopy == 0) || (!PyArray_IsScalar(self, Void) &&
+                                 Py_TYPE(self) == to->typeobj)) {
             Py_DECREF(to);
             Py_DECREF(temp);
             return Py_NewRef(self);
