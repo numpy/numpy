@@ -262,10 +262,11 @@ npy_default_get_strided_loop(
  * Validate that the input is usable to create a new ArrayMethod.
  *
  * @param spec Array method specification to be validated
+ * @param private Whether NumPy itself is registering the method.
  * @return 0 on success -1 on error.
  */
 static int
-validate_spec(PyArrayMethod_Spec *spec)
+validate_spec(PyArrayMethod_Spec *spec, int private)
 {
     int nargs = spec->nin + spec->nout;
     /* Check the passed spec for invalid fields/values */
@@ -275,7 +276,7 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch ((int)spec->casting & ~_NPY_CAST_WILL_BE_UNSAFE) {
+    switch ((int)spec->casting & ~(private ? _NPY_CAST_WILL_BE_UNSAFE : 0)) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
@@ -576,7 +577,7 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         spec->name = "<unknown>";
     }
 
-    if (validate_spec(spec) < 0) {
+    if (validate_spec(spec, private) < 0) {
         return NULL;
     }
 
