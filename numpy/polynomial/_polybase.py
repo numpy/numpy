@@ -1064,6 +1064,9 @@ class ABCPolyBase(abc.ABC):
         [roots] = pu.as_series([roots], trim=False)
         if domain is None:
             domain = pu.getdomain(roots)
+            if domain[0] == domain[1]:
+                domain[0] -= 1
+                domain[1] += 1
         elif isinstance(domain, list) and len(domain) == 0:
             domain = cls.domain
 

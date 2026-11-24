@@ -1,0 +1,7 @@
+``Polynomial.fromroots`` with a single root and ``domain=None``
+--------------------------------------------------------------
+`numpy.polynomial.polynomial.Polynomial.fromroots` and the other polynomial
+classes now widen a zero-width domain instead of returning a polynomial made of
+``nan`` coefficients. ``Polynomial.fromroots([2], domain=None)`` used to build a
+domain of ``[2, 2]``, which maps with a division by zero; the domain is now
+``[1, 3]``, the same rule `~.Polynomial.fit` already applies.

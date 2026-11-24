@@ -135,6 +135,12 @@ def test_fromroots(Poly):
     p2 = Polynomial.cast(p1, domain=pdom, window=pwin)
     assert_almost_equal(p2.coef[-1], 1)
 
+    # a single root would give a zero-width domain, which maps with a
+    # division by zero; widen it like fit does
+    p3 = Poly.fromroots([2.0], domain=None)
+    assert_equal(p3.domain, [1.0, 3.0])
+    assert_almost_equal(p3(3.0), 1.0)
+
 
 def test_bad_conditioned_fit(Poly):
 
