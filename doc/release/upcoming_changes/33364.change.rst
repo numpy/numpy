@@ -1,27 +1,11 @@
 - `numpy.strings.mod`, `numpy.char.join`, `numpy.char.split`,
   `numpy.char.rsplit`, and `numpy.strings.translate` preserve Python strings
-  containing NULs, and for Unicode (``U``) and stringdtype (``T``) inputs,
-  joining returns stringdtype when either operand is ``T`` and rejects
-  incompatible missing-value settings.
+  containing NULs. For `numpy.dtypes.StringDType` input, the fill character of
+  `numpy.strings.center`, `numpy.strings.ljust`, and `numpy.strings.rjust` may
+  also be a NUL.
 
-- `numpy.strings.partition`, `numpy.strings.rpartition`, `numpy.strings.replace`,
-  `numpy.strings.center`, `numpy.strings.ljust`, `numpy.strings.rjust`,
-  `numpy.strings.find`, `numpy.strings.rfind`, `numpy.strings.index`,
-  `numpy.strings.rindex`, `numpy.strings.count`, `numpy.strings.startswith`,
-  `numpy.strings.endswith`, `numpy.strings.strip`, `numpy.strings.lstrip`,
-  and `numpy.strings.rstrip` now accept safely castable operands and apply
-  the destination dtype's coercion and missing-value rules to object arrays
-  (bare bytes and byte-string arrays still need explicit decoding for stringdtype).
-  With a Unicode input and a stringdtype operand, `numpy.strings.replace`
-  also returns stringdtype when the other operand is an untyped value such as
-  ``None``.
-
-  To build one report path per year, pass the integer years directly::
-
-     >>> template = np.array("reports/{year}/summary.csv", dtype="T")
-     >>> np.strings.replace(template, "{year}", np.arange(2023, 2026))
-     array(['reports/2023/summary.csv', 'reports/2024/summary.csv',
-            'reports/2025/summary.csv'], dtype=StringDType())
+- `numpy.char.join` returns `numpy.dtypes.StringDType` when either operand has
+  that dtype, and rejects incompatible missing-value settings.
 
 - `numpy.strings.encode` rejects encoding and error-handler names containing NULs
-  for stringdtype input instead of silently truncating them.
+  for `numpy.dtypes.StringDType` input instead of silently truncating them.

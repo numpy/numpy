@@ -438,19 +438,16 @@ def test_pystr_scalar_concatenate_choose_object_preserve_nulls():
     assert np.choose(np.array([1]), (arr, scalar))[0] == scalar
 
 
-@pytest.mark.parametrize("dtypes", [("T", None), ("T", object), (object, "T")])
-def test_partition_str_sep(dtypes):
-    arr = np.array(["a-b\0c", "nosep"], dtype=dtypes[0])
-    sep = "-" if dtypes[1] is None else np.array("-", dtype=dtypes[1])
+def test_partition_str_sep():
+    arr = np.array(["a-b\0c", "nosep"], dtype="T")
 
-    parts = np.strings.partition(arr, sep)
+    parts = np.strings.partition(arr, "-")
     expected = [["a", "nosep"], ["-", ""], ["b\0c", ""]]
     for res, exp in zip(parts, expected):
         assert_array_equal(res, np.array(exp, dtype="T"))
 
-    rparts = np.strings.rpartition(
-        np.array(["a-b-c", "nosep"], dtype=dtypes[0]),
-        np.str_("-") if dtypes[1] is None else sep)
+    rparts = np.strings.rpartition(np.array(["a-b-c", "nosep"], dtype="T"),
+                                   np.str_("-"))
     expected = [["a-b", ""], ["-", ""], ["c", "nosep"]]
     for res, exp in zip(rparts, expected):
         assert_array_equal(res, np.array(exp, dtype="T"))
@@ -459,9 +456,8 @@ def test_partition_str_sep(dtypes):
     for res, exp in zip(parts, [["ab"], ["\0"], ["cd"]]):
         assert_array_equal(res, np.array(exp, dtype="T"))
 
-    for empty in ("", np.array("", dtype="T")):
-        with pytest.raises(ValueError, match="empty separator"):
-            np.strings.partition(np.array(arr, dtype="T"), empty)
+    with pytest.raises(ValueError, match="empty separator"):
+        np.strings.partition(arr, "")
 
 
 @pytest.mark.parametrize(
@@ -2479,7 +2475,7 @@ def test_findlike_promoters():
     l = "Where's Wally?"
     s = np.int32(3)
     e = np.int8(13)
-    for dtypes in [("T", "U"), ("U", "T"), ("T", object), ("U", object)]:
+    for dtypes in [("T", "U"), ("U", "T")]:
         for function, answer in [
             (np.strings.index, 8),
             (np.strings.endswith, True),
@@ -2493,22 +2489,22 @@ def test_strip_promoter():
     arg = ["Hello!!!!", "Hello??!!"]
     strip_char = "!"
     answer = ["Hello", "Hello??"]
-    for dtypes in [("T", "U"), ("U", "T"), ("T", object), ("U", object)]:
+    for dtypes in [("T", "U"), ("U", "T")]:
         result = np.strings.strip(
             np.array(arg, dtype=dtypes[0]),
             np.array(strip_char, dtype=dtypes[1])
         )
         assert_array_equal(result, answer)
-        assert result.dtype.char == ("T" if "T" in dtypes else "U")
+        assert result.dtype.char == "T"
 
 
-def test_replace_promoter(dtype):
+def test_replace_promoter():
     arg = ["Hello, planet!", "planet, Hello!"]
     old = "planet"
     new = "world"
     answer = ["Hello, world!", "world, Hello!"]
-    for dtypes in itertools.product((dtype, "U", object), repeat=3):
-        if dtype not in dtypes:
+    for dtypes in itertools.product("TU", repeat=3):
+        if dtypes == ("U", "U", "U"):
             continue
         answer_arr = np.strings.replace(
             np.array(arg, dtype=dtypes[0]),
@@ -2516,45 +2512,32 @@ def test_replace_promoter(dtype):
             np.array(new, dtype=dtypes[2]),
         )
         assert_array_equal(answer_arr, answer)
-        assert answer_arr.dtype == dtype
+        assert answer_arr.dtype.char == "T"
 
 
-def test_replace_output_dtype():
-    a = np.array(["a1"])
-    # Use the text of both numeric operands to size the result.
-    result = np.strings.replace(a, np.array([1]), np.array([22]))
-    assert_array_equal(result, np.array(["a22"]), strict=True)
-    result = np.strings.replace(a, np.array("1", dtype="T"), None)
-    assert_array_equal(result, np.array(["aNone"], dtype="T"), strict=True)
+@pytest.mark.parametrize("operand", [
+    np.array(["b", "x"], dtype=object), None, 1])
+def test_partition_replace_reject_non_string_operands(operand):
+    a = np.array(["abc", "xbx"], dtype="T")
+    for func, args in [
+        (np.strings.partition, (operand,)),
+        (np.strings.rpartition, (operand,)),
+        (np.strings.replace, (operand, "x")),
+        (np.strings.replace, ("b", operand)),
+    ]:
+        with pytest.raises(TypeError, match="convert it explicitly"):
+            func(a, *args)
 
 
-@pytest.mark.parametrize("name", ["center", "ljust", "rjust"])
-def test_padding_promoters(name):
+def test_center_promoter():
     arg = ["Hello", "planet!"]
     fillchar = "/"
-    for dtypes in [("T", "U"), ("U", "T"), ("T", object), (object, "T")]:
-        answer = getattr(np.strings, name)(
+    for dtypes in [("T", "U"), ("U", "T")]:
+        answer = np.strings.center(
             np.array(arg, dtype=dtypes[0]), 9, np.array(fillchar, dtype=dtypes[1])
         )
-        assert_array_equal(answer, [getattr(s, name)(9, fillchar) for s in arg])
+        assert_array_equal(answer, ["//Hello//", "/planet!/"])
         assert answer.dtype.char == "T"
-
-
-def test_find_rejects_bytes_but_respects_object_coercion(coerce):
-    a = np.array(["café"], dtype=StringDType(coerce=coerce))
-    sep = "é".encode()
-    # Typed bytes require an explicit decoding choice.
-    for operand in (sep, np.array([sep], dtype="S")):
-        with pytest.raises(TypeError, match="decode bytes explicitly"):
-            np.strings.find(a, operand)
-
-    # The object cast follows the receiver's coerce setting.
-    obj = np.array([sep], dtype=object)
-    if coerce:
-        assert_array_equal(np.strings.find(a, obj), [3])
-    else:
-        with pytest.raises(ValueError, match="coercion is disabled"):
-            np.strings.find(a, obj)
 
 
 def test_mod_output_follows_format_dtype():
@@ -2567,15 +2550,6 @@ def test_mod_output_follows_format_dtype():
         result = np.strings.mod(fmt, payload)
         assert_array_equal(result, np.array(["long payload"], dtype=expected),
                            strict=True)
-
-
-def test_replace_casts_object_to_promoted_dtype():
-    a = np.array(["a1"], dtype="T")
-    new = np.array("x", dtype=StringDType(na_object=None, coerce=False))
-    with pytest.raises(ValueError, match="coercion is disabled"):
-        np.strings.replace(a, np.array(1, object), new)
-    with pytest.raises(ValueError, match="[Nn]ull"):
-        np.strings.replace(a, None, new)
 
 
 DATETIME_INPUT = [
@@ -2985,21 +2959,6 @@ def call_func(func, args, array, sanitize=True):
         return func(args[0], array)
     # shouldn't ever happen
     assert 0
-
-
-@pytest.mark.parametrize("value", [
-    1, 1.5, True, 1 + 2j, np.datetime64("2020"), np.timedelta64(1, "D"),
-])
-def test_find_uses_safe_cast_to_string_dtype(value):
-    text = np.asarray(value).astype("T").item()
-    for dtype in ("U", "T"):
-        array = np.array(["a" + text + "b"], dtype=dtype)
-        # The wrapper casts to an unsized string dtype, independent of input width.
-        if np.can_cast(np.asarray(value).dtype, dtype, casting="safe"):
-            assert_array_equal(np.strings.find(array, value), [1])
-        else:
-            with pytest.raises(TypeError, match="safe"):
-                np.strings.find(array, value)
 
 
 @pytest.mark.parametrize("function_name, args", BINARY_FUNCTIONS)
