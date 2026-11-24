@@ -90,6 +90,13 @@ class TestTakeAlongAxis:
         actual = take_along_axis(a, ai, axis=1)
         assert_equal(actual.shape, (3, 2, 5))
 
+    def test_array_like(self):
+        a = [[10, 30, 20], [60, 40, 50]]
+        ai = [[0, 2, 1], [1, 2, 0]]
+        expected = take_along_axis(np.array(a), np.array(ai), axis=1)
+        assert_equal(take_along_axis(a, ai, axis=1), expected)
+        assert_equal(take_along_axis(a, [3, 0], axis=None), [60, 10])
+
 
 class TestPutAlongAxis:
     def test_replace_max(self):
@@ -304,6 +311,17 @@ class TestApplyOverAxes:
         a = np.arange(24).reshape(2, 3, 4)
         aoa_a = apply_over_axes(np.sum, a, [0, 2])
         assert_array_equal(aoa_a, np.array([[[60], [92], [124]]]))
+
+    def test_array_like(self):
+        a = np.arange(24).reshape(2, 3, 4)
+        assert_array_equal(apply_over_axes(np.sum, a.tolist(), [0, 2]),
+                           apply_over_axes(np.sum, a, [0, 2]))
+
+    def test_subclass_preservation(self):
+        a = np.ma.masked_array([[1, 2], [3, 4]], mask=[[0, 1], [0, 0]])
+        res = apply_over_axes(np.sum, a, [0])
+        assert isinstance(res, np.ma.MaskedArray)
+        assert_array_equal(res, [[4, 4]])
 
 
 class TestExpandDims:
