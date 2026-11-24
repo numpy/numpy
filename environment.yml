@@ -29,8 +29,7 @@ dependencies:
   # For building docs
   - sphinx>=8.0
   - sphinx-copybutton
-  # TODO: see gh-33279
-  - sphinx-design<0.8
+  - sphinx-design>=0.8.0
   - numpydoc=1.11.0
   - ipython
   - scipy
