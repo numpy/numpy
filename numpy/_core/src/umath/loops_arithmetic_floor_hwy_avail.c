@@ -11,7 +11,7 @@
 
 int npy_highway_floor_divide_available(int element_size)
 {
-#if defined(NPY_HAVE_HIGHWAY) && (defined(NPY_HAVE_SVE) || defined(NPY_HAVE_NEON) || defined(NPY_HAVE_ASIMD))
+#if defined(NPY_HAVE_HIGHWAY)
     return (element_size == 1 || element_size == 2 || element_size == 4) ? 1 : 0;
 #else
     (void)element_size;
@@ -21,7 +21,7 @@ int npy_highway_floor_divide_available(int element_size)
 
 int npy_highway_floor_divide_unsigned_available(int element_size)
 {
-#if defined(NPY_HAVE_HIGHWAY) && (defined(NPY_HAVE_SVE) || defined(NPY_HAVE_NEON) || defined(NPY_HAVE_ASIMD))
+#if defined(NPY_HAVE_HIGHWAY)
     return (element_size == 1 || element_size == 2 || element_size == 4) ? 1 : 0;
 #else
     (void)element_size;
@@ -31,7 +31,7 @@ int npy_highway_floor_divide_unsigned_available(int element_size)
 
 int npy_highway_floor_divide_scalar_available(int element_size)
 {
-#if defined(NPY_HAVE_HIGHWAY) && (defined(NPY_HAVE_SVE) || defined(NPY_HAVE_NEON) || defined(NPY_HAVE_ASIMD))
+#if defined(NPY_HAVE_HIGHWAY)
     return (element_size == 1 || element_size == 2 || element_size == 4 || element_size == 8) ? 1 : 0;
 #else
     (void)element_size;
@@ -41,7 +41,7 @@ int npy_highway_floor_divide_scalar_available(int element_size)
 
 int npy_highway_floor_divide_scalar_unsigned_available(int element_size)
 {
-#if defined(NPY_HAVE_HIGHWAY) && (defined(NPY_HAVE_SVE) || defined(NPY_HAVE_NEON) || defined(NPY_HAVE_ASIMD))
+#if defined(NPY_HAVE_HIGHWAY)
     return (element_size == 4) ? 1 : 0;
 #else
     (void)element_size;
