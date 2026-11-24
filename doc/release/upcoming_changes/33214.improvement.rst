@@ -1,0 +1,5 @@
+* `numpy.minimum` and `numpy.maximum` for StringDType arrays, and `numpy.argmin`
+  and `numpy.argmax` for StringDType and object arrays, now stop on comparison
+  errors instead of continuing to write to ``out``. StringDType ``argmin`` and
+  ``argmax`` also propagate the original exception instead of raising
+  ``SystemError``.

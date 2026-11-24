@@ -1085,6 +1085,83 @@ class _SupportsGT(Protocol):
 class _SupportsGE(Protocol):
     def __ge__(self, other: Any, /) -> Any: ...
 
+# `__array_ufunc__` takes precedence over `__array__`, and `method: str` ensures `ndarray` isn't assignable
+@type_check_only
+class _CanArrayUFuncR[T](Protocol):
+    def __array_ufunc__(self, ufunc: ufunc, method: str, x1: T, x2: Self, /) -> Any: ...
+
+@type_check_only
+class _CanArrayUFuncRAdd[T, R](_CanArrayUFuncR[T], Protocol):
+    def __radd__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRSub[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rsub__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRMul[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rmul__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRPow[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rpow__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRTruediv[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rtruediv__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRFloordiv[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rfloordiv__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRMod[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rmod__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRDivmod[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rdivmod__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRLshift[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rlshift__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRRshift[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rrshift__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRAnd[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rand__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRXor[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rxor__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncROr[T, R](_CanArrayUFuncR[T], Protocol):
+    def __ror__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncRMatmul[T, R](_CanArrayUFuncR[T], Protocol):
+    def __rmatmul__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncGT[T, R](_CanArrayUFuncR[T], Protocol):
+    def __gt__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncGE[T, R](_CanArrayUFuncR[T], Protocol):
+    def __ge__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncLT[T, R](_CanArrayUFuncR[T], Protocol):
+    def __lt__(self, other: T, /) -> R: ...
+
+@type_check_only
+class _CanArrayUFuncLE[T, R](_CanArrayUFuncR[T], Protocol):
+    def __le__(self, other: T, /) -> R: ...
+
 @type_check_only
 class _SupportsFileMethods(SupportsFlush, Protocol):
     # Protocol for representing file-like-objects accepted by `ndarray.tofile` and `fromfile`
@@ -1205,17 +1282,6 @@ class _DTypeMeta(type):
 class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __hash__(self) -> int: ...
 
-    # `None` results in the default dtype
-    @overload
-    def __new__(
-        cls,
-        dtype: py_type[float64 | ct.c_double] | _Float64Codes | None,
-        align: py_bool = False,
-        copy: py_bool = False,
-        *,
-        metadata: dict[py_str, Any] = ...
-    ) -> dtype[float64]: ...
-
     # Overload for `dtype` instances, scalar types, and instances that have a
     # `dtype: dtype[ScalarT]` attribute
     @overload
@@ -1227,6 +1293,17 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
         *,
         metadata: dict[py_str, Any] = ...,
     ) -> dtype[ScalarT]: ...
+
+    # `None` results in the default dtype
+    @overload
+    def __new__(
+        cls,
+        dtype: py_type[float64 | ct.c_double] | _Float64Codes | None,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[py_str, Any] = ...
+    ) -> dtype[float64]: ...
 
     # Builtin types
     #
@@ -6589,8 +6666,17 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     # NOTE: reshape also accepts negative integers, so we can't use integer literals
     @overload  # (None)
     def reshape(self, shape: None, /, *, order: _OrderACF = "C", copy: py_bool | None = None) -> Self: ...
+    @overload  # (Any, ...)  (workaround; 9 * Never to avoid overlap with the <=8d shapes below)
+    def reshape(
+        self,
+        shape: tuple[Never, Never, Never, Never, Never, Never, Never, Never, Never],
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: py_bool | None = None,
+    ) -> ndarray[_AnyShape, _DTypeT_co]: ...
     @overload  # (empty_sequence)
-    def reshape(  # mypy false positive
+    def reshape(
         self,
         shape: Sequence[Never],
         /,
@@ -6852,6 +6938,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: str,
         /,
     ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # other.__array_ufunc__(np.less, "__call__", self, other)
+    def __lt__[R](self, other: _CanArrayUFuncGT[Self, R], /) -> R: ...
     @overload  # ?d +number
     def __lt__(self: _ArrayNumber_co, other: _ArrayLikeNumber_co, /) -> NDArray[bool_]: ...
     @overload  # ?d +timedelta64
@@ -6898,6 +6986,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: str,
         /,
     ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # other.__array_ufunc__(np.less_equal, "__call__", self, other)
+    def __le__[R](self, other: _CanArrayUFuncGE[Self, R], /) -> R: ...
     @overload  # ?d +number
     def __le__(self: _ArrayNumber_co, other: _ArrayLikeNumber_co, /) -> NDArray[bool_]: ...
     @overload  # ?d +timedelta64
@@ -6944,6 +7034,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: str,
         /,
     ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # other.__array_ufunc__(np.greater, "__call__", self, other)
+    def __gt__[R](self, other: _CanArrayUFuncLT[Self, R], /) -> R: ...
     @overload  # ?d +number
     def __gt__(self: _ArrayNumber_co, other: _ArrayLikeNumber_co, /) -> NDArray[bool_]: ...
     @overload  # ?d +timedelta64
@@ -6990,6 +7082,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: str,
         /,
     ) -> ndarray[ShapeT, _dtype[bool_]]: ...
+    @overload  # other.__array_ufunc__(np.greater_equal, "__call__", self, other)
+    def __ge__[R](self, other: _CanArrayUFuncLE[Self, R], /) -> R: ...
     @overload  # ?d +number
     def __ge__(self: _ArrayNumber_co, other: _ArrayLikeNumber_co, /) -> NDArray[bool_]: ...
     @overload  # ?d +timedelta64
@@ -7024,6 +7118,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     # Binary ops
 
     # keep in roughly in sync with `ndarray.dot`
+    @overload  # other.__array_ufunc__(np.matmul, "__call__", self, other)
+    def __matmul__[R](self, other: _CanArrayUFuncRMatmul[Self, R], /) -> R: ...
     @overload  # ?d _, Nd _  (workaround)
     def __matmul__(
         self: ndarray[_JustND, _dtype[number | bool_ | object_]],
@@ -7392,6 +7488,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: _TD64Like_co | ndarray[ShapeT, _dtype[timedelta64]],
         /,
     ) -> ndarray[ShapeT, _dtype[datetime64]]: ...
+    @overload  # other.__array_ufunc__(np.add, "__call__", self, other)
+    def __add__[R](self, other: _CanArrayUFuncRAdd[Self, R], /) -> R: ...
     @overload  # ?d ~bool, ?d +bool
     def __add__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[bool_]: ...
     @overload  # ?d ~bool, ?d T
@@ -7780,6 +7878,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: _TD64Like_co | ndarray[ShapeT, _dtype[timedelta64]],
         /,
     ) -> ndarray[ShapeT, _dtype[datetime64]]: ...
+    @overload  # other.__array_ufunc__(np.subtract, "__call__", self, other)
+    def __sub__[R](self, other: _CanArrayUFuncRSub[Self, R], /) -> R: ...
     @overload  # ?d ~bool, ?d T
     def __sub__[ScalarT: number](self: NDArray[bool_], other: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
     @overload  # ?d T, ?d T
@@ -8166,6 +8266,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: int | integer | ndarray[ShapeT, _dtype[integer]],
         /,
     ) -> ndarray[ShapeT, dtypes.StringDType]: ...
+    @overload  # other.__array_ufunc__(np.multiply, "__call__", self, other)
+    def __mul__[R](self, other: _CanArrayUFuncRMul[Self, R], /) -> R: ...
     @overload  # ?d ~bool, ?d +bool
     def __mul__(self: NDArray[bool_], other: _ArrayLikeBool_co, /) -> NDArray[bool_]: ...
     @overload  # ?d ~bool, ?d T
@@ -8551,6 +8653,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mod: None = None,
         /,
     ) -> ndarray[ShapeT, _dtype[complex64]]: ...
+    @overload  # other.__array_ufunc__(np.power, "__call__", self, other)
+    def __pow__[R](self, other: _CanArrayUFuncRPow[Self, R], mod: None = None, /) -> R: ...
     @overload  # ?d ~bool, ?d +bool
     def __pow__(
         self: NDArray[bool_],
@@ -8992,6 +9096,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: float | floating | integer | ndarray[ShapeT, _dtype[floating | integer]],
         /,
     ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
+    @overload  # other.__array_ufunc__(np.divide, "__call__", self, other)
+    def __truediv__[R](self, other: _CanArrayUFuncRTruediv[Self, R], /) -> R: ...
     @overload  # ?d ~bool, ?d T
     def __truediv__[ScalarT: inexact](
         self: NDArray[bool_],
@@ -9300,6 +9406,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: float | floating | integer | ndarray[ShapeT, _dtype[floating | integer]],
         /,
     ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
+    @overload  # other.__array_ufunc__(np.floor_divide, "__call__", self, other)
+    def __floordiv__[R](self, other: _CanArrayUFuncRFloordiv[Self, R], /) -> R: ...
     @overload  # ?d ~bool, ?d T
     def __floordiv__[ScalarT: floating | integer](
         self: NDArray[bool_],
@@ -9608,6 +9716,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
         /,
     ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
+    @overload  # other.__array_ufunc__(np.remainder, "__call__", self, other)
+    def __mod__[R](self, other: _CanArrayUFuncRMod[Self, R], /) -> R: ...
     @overload  # ?d ~bool, ?d T
     def __mod__[ScalarT: floating | integer](
         self: NDArray[bool_],
@@ -9914,6 +10024,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         rhs: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
         /,
     ) -> tuple[ndarray[ShapeT, _dtype[int64]], ndarray[ShapeT, _dtype[timedelta64]]]: ...
+    @overload  # rhs.__array_ufunc__(np.divmod, "__call__", self, rhs)
+    def __divmod__[R](self, rhs: _CanArrayUFuncRDivmod[Self, R], /) -> R: ...
     @overload  # ?d ~bool, ?d T
     def __divmod__[ScalarT: floating | integer](
         self: NDArray[bool_],
@@ -10114,6 +10226,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_ | object_]],
         /,
     ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # other.__array_ufunc__(np.left_shift, "__call__", self, other)
+    def __lshift__[R](self, other: _CanArrayUFuncRLshift[Self, R], /) -> R: ...
     @overload  # ?d T:integer, ?d bool|T
     def __lshift__[ScalarT: integer](
         self: NDArray[ScalarT],
@@ -10214,6 +10328,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_ | object_]],
         /,
     ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # other.__array_ufunc__(np.right_shift, "__call__", self, other)
+    def __rshift__[R](self, other: _CanArrayUFuncRRshift[Self, R], /) -> R: ...
     @overload  # ?d T:integer, ?d bool|T
     def __rshift__[ScalarT: integer](
         self: NDArray[ScalarT],
@@ -10314,6 +10430,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_ | object_]],
         /,
     ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # other.__array_ufunc__(np.bitwise_and, "__call__", self, other)
+    def __and__[R](self, other: _CanArrayUFuncRAnd[Self, R], /) -> R: ...
     @overload  # ?d T:+integer, ?d bool|T
     def __and__[ScalarT: integer | bool_](
         self: NDArray[ScalarT],
@@ -10410,6 +10528,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_ | object_]],
         /,
     ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # other.__array_ufunc__(np.bitwise_xor, "__call__", self, other)
+    def __xor__[R](self, other: _CanArrayUFuncRXor[Self, R], /) -> R: ...
     @overload  # ?d T:+integer, ?d bool|T
     def __xor__[ScalarT: integer | bool_](
         self: NDArray[ScalarT],
@@ -10506,6 +10626,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         other: _IntLike_co | ndarray[ShapeT, _dtype[integer | bool_ | object_]],
         /,
     ) -> ndarray[ShapeT, _dtype[object_]]: ...
+    @overload  # other.__array_ufunc__(np.bitwise_or, "__call__", self, other)
+    def __or__[R](self, other: _CanArrayUFuncROr[Self, R], /) -> R: ...
     @overload  # ?d T:+integer, ?d bool|T
     def __or__[ScalarT: integer | bool_](
         self: NDArray[ScalarT],

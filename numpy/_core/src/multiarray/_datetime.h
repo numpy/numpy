@@ -1,6 +1,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_
 #define NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_
 
+#include "gil_utils.h"
+
 extern NPY_NO_EXPORT char const *_datetime_strings[NPY_DATETIME_NUMUNITS];
 extern NPY_NO_EXPORT int _days_per_month_table[2][12];
 
@@ -362,7 +364,7 @@ _datetime_scale_with_overflow_check(
     npy_int64 neg_limit = (NPY_MAX_INT64 - denom + 1) / num;
 
     if (*dt > pos_limit || *dt < -neg_limit) {
-        PyErr_Format(PyExc_OverflowError,
+        npy_gil_error(PyExc_OverflowError,
                 "Overflow when converting between "
                 "%s units", type_name);
         return -1;

@@ -15,6 +15,7 @@ AR_f8: npt.NDArray[np.float64]
 AR_f16: npt.NDArray[np.longdouble]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
+AR_any: npt.NDArray[Any]
 
 AR_f8_0d: np.ndarray[tuple[()], np.dtype[np.float64]]
 AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
@@ -133,6 +134,8 @@ assert_type(np.typename("B"), Literal["unsigned char"])  # type: ignore[deprecat
 assert_type(np.typename("V"), Literal["void"])  # type: ignore[deprecated]
 assert_type(np.typename("S1"), Literal["character"])  # type: ignore[deprecated]
 
+assert_type(np.common_type(AR_any), Any)  # mypy quirk; other checkers infer type[Any]
+assert_type(np.common_type(AR_any, AR_i4), Any)  # mypy quirk; other checkers infer type[Any]
 assert_type(np.common_type(AR_i4), type[np.float64])
 assert_type(np.common_type(AR_f2), type[np.float16])
 assert_type(np.common_type(AR_f2, AR_i4), type[np.float64])

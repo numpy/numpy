@@ -15,6 +15,10 @@ from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.exceptions import ComplexWarning
 from numpy.testing import IS_PYPY, assert_array_equal
+from numpy.testing._private.utils import (
+    assert_memory_growth_below,
+    run_with_memory_limit,
+)
 
 
 def random_unicode_string_list():
@@ -487,10 +491,25 @@ def test_embedded_null_string_like_casts(dtype):
     assert roundtripped.tolist() == strings
 
 
-def test_string_too_large_error():
-    arr = np.array(["a", "b", "c"], dtype=StringDType())
+@pytest.mark.parametrize("old", ["short", "a" * 20, "heap", None])
+def test_string_too_large_error(old):
+    arr = np.array(["a", "b", "c"], dtype=StringDType(na_object=None))
     with pytest.raises(OverflowError):
         arr * (sys.maxsize + 1)
+    arr[0] = 'b'
+    np.testing.assert_array_equal(arr, ["b", "b", "c"])
+
+    # Tries to allocate on 64 bit. On 32-bit, still above sys.maxsize.
+    out = np.full_like(arr, old)
+    if old == "heap":
+        # Growing an existing element moves it out of the arena.
+        old = "a" * 100
+        out[:] = old
+    with pytest.raises((MemoryError, OverflowError)):
+        np.multiply(arr, 2**55, out=out)
+    assert_array_equal(out, np.full_like(out, old))
+    out[:] = "a" * 200
+    assert_array_equal(out, "a" * 200)
 
 
 @pytest.mark.parametrize(
@@ -672,6 +691,15 @@ def test_void_cast_rejects_invalid_utf8(bad):
     arr = np.array([bad], dtype=f"V{len(bad)}")
     with pytest.raises(UnicodeDecodeError):
         arr.astype(StringDType())
+
+
+@pytest.mark.parametrize("structured", ["i8,i8", "O,i8"])
+def test_structured_cast_rejected(dtype, structured):
+    match = "is a structured or subarray dtype"
+    with pytest.raises(TypeError, match=match):
+        np.zeros(1, dtype=structured).astype(dtype)
+    with pytest.raises(TypeError, match=match):
+        np.array(["a"], dtype=dtype).astype(structured)
 
 
 def test_bytes_cast_roundtrips_valid_utf8():
@@ -960,6 +988,39 @@ def test_invalid_numeric_casts_error(dtype, invalid):
         arr.astype(dtype)
 
 
+def _failed_cast_to_unaligned():
+    readings = np.array([f"{i / 7:.20f}" for i in range(300)], dtype="T")
+    readings[-1] = "sensor offline"
+    table = np.zeros(300, dtype=[("valid", "?"), ("reading", "f8")])
+    assert not table["reading"].flags.aligned
+    with pytest.raises(ValueError):
+        table["reading"] = readings
+
+
+def test_failed_cast_to_unaligned_releases_buffer():
+    # the unaligned destination makes the cast copy the strings into a
+    # temporary buffer that it has to free. The bad reading also runs the
+    # cleanup for a failed cast.
+    assert_memory_growth_below(_failed_cast_to_unaligned, limit=1024)
+
+
+def _ufunc_fixed_width_out():
+    n = 2 * np.getbufsize()
+    first = np.array([f"first name {i}" for i in range(n)], dtype="T")
+    last = np.array([f"a longer last name, number {i}" for i in range(n)],
+                    dtype="T")
+    full = np.empty(n, dtype="U60")
+    np.strings.add(first, last, out=full)
+    assert full[-1] == first[-1] + last[-1]
+
+
+def test_ufunc_fixed_width_out_releases_buffer():
+    # the ufunc computes its StringDType results into a temporary buffer and
+    # then casts them to the output array. The strings in the buffer leak
+    # unless that cast frees them.
+    assert_memory_growth_below(_ufunc_fixed_width_out, limit=1024)
+
+
 def test_insert_scalar(dtype, string_list):
     """Test that inserting a scalar works."""
     arr = np.array(string_list, dtype=dtype)
@@ -1127,6 +1188,23 @@ def test_sort(dtype, strings, stable):
                 match="Cannot compare null that is not a nan-like value",
             ):
                 np.argsort(arr, stable=stable)
+            for func, out_dtype in itertools.product(
+                [np.argmax, np.argmin], [np.intp, np.int32]
+            ):
+                out = np.full((), -1, dtype=out_dtype)
+                with pytest.raises(
+                    ValueError,
+                    match="Cannot compare null that is not a nan-like value",
+                ):
+                    func(arr, out=out)
+                assert out == -1
+            out = np.zeros_like(arr)
+            with pytest.raises(
+                ValueError,
+                match="Cannot compare null that is not a nan-like value",
+            ):
+                np.maximum(arr, arr, out=out)
+            assert_array_equal(out, np.zeros_like(arr))
             argsorted = None
         elif dtype._has_nan_na:
             argsorted = None
@@ -1452,6 +1530,12 @@ def test_fromiter_reused_dtype():
     assert_array_equal(arr1, arr2)
 
 
+def test_loadtxt_reused_dtype(string_list):
+    arr = np.array(string_list, dtype="T")
+    res = np.loadtxt(string_list, dtype=arr.dtype, delimiter=",")
+    assert_array_equal(res, arr)
+
+
 def test_flatiter_indexing():
     # see gh-29659
     arr = np.array(['hello', 'world'], dtype='T')
@@ -1588,6 +1672,16 @@ def test_argmax(strings):
     arr = np.array(strings, dtype="T")
     assert np.argmax(arr) == strings.index(max(strings))
     assert np.argmin(arr) == strings.index(min(strings))
+
+
+@pytest.mark.parametrize("method", [np.argmax, np.argmin])
+def test_argmin_argmax_error_stops_iteration(method):
+    arr = np.array([[None, "a"], ["a", "b"]], dtype=StringDType(na_object=None))
+    out = np.full(2, -1, dtype=np.intp)
+    with pytest.raises(ValueError):
+        method(arr, axis=1, out=out)
+    # The error in the first row must leave the second row's output untouched.
+    assert out[1] == -1
 
 
 @pytest.mark.parametrize(
@@ -1792,6 +1886,12 @@ def test_cfloat_to_string_nan_na(typename, nan_like_na_object):
     assert arr[1] == "(inf+1j)"
 
 
+def test_string_to_bytes_error_in_buffered_ufunc():
+    arr = np.full(2 * np.getbufsize(), "é", dtype="T")
+    with pytest.raises(UnicodeEncodeError):
+        np.add(arr, arr, out=np.empty(arr.shape, dtype="S4"))
+
+
 def test_cfloat_to_string_nan_na_strided_field_view(nan_like_na_object):
     # the field view's byte stride is aligned but not a multiple of the
     # itemsize; the NaN check and the value read must step in bytes
@@ -1973,6 +2073,9 @@ class TestFixedWidthCastSafety:
         assert np.can_cast(arr.dtype, "T", casting="safe")
         with pytest.raises(TypeError, match="Invalid unicode code point"):
             arr.astype("T")
+        big = np.full(2 * np.getbufsize(), "\ud800", dtype="U1")
+        with pytest.raises(TypeError, match="Invalid unicode code point"):
+            np.add(big, np.array("", dtype="T"))
 
     def test_bytes_to_stringdtype_valid_utf8(self):
         barr = np.array(["café".encode(), "😊".encode()], dtype="S5")
@@ -2495,6 +2598,48 @@ def test_nat_conversion():
             np.array(["a", nat], dtype=StringDType(coerce=False))
 
 
+@pytest.mark.filterwarnings("ignore:no explicit representation of timezones")
+def test_datetime_parse_error_bounded():
+    bad_timestamps = [
+        "not-a-date-but-long-enough",
+        "2023-13-01T00:00:00",
+        "2023-02-30T00:00:00",
+        "2023-01-01T25:00:00",
+        "2023-01-01T00:60:00",
+        "2023-01-01T00:00:60",
+        "2023-01-01T00:00+25:00",
+        "2023-01-01T00:00+01:60",
+    ]
+    for bad in bad_timestamps:
+        arr = np.array([bad, "2023-01-02T00:00:00"], dtype="T")
+        for a in [arr, arr[:1]]:
+            with pytest.raises(ValueError) as excinfo:
+                a.astype("M8[s]")
+            assert "2023-01-02" not in str(excinfo.value)
+
+
+def _make_fixed_width_cast_args():
+    return (np.array([f"{i:040d}" for i in range(1000)], dtype="T"),)
+
+
+def _fixed_width_cast(arr):
+    arr.astype("U40")
+
+
+def test_fixed_width_cast_does_not_grow_arena():
+    assert_memory_growth_below(
+        _fixed_width_cast, limit=1024, make_args=_make_fixed_width_cast_args)
+
+
+def test_unaligned_unicode_casts():
+    strings = ["abc", "a string that is not stored inline"]
+    unaligned = np.zeros(2, dtype=[("pad", "u1"), ("s", "U40")])["s"]
+    assert not unaligned.flags.aligned
+    unaligned[...] = np.array(strings, dtype="T")
+    assert unaligned.tolist() == strings
+    assert unaligned.astype("T").tolist() == strings
+
+
 def test_growing_strings(dtype):
     # growing a string leads to a heap allocation, this tests to make sure
     # we do that bookkeeping correctly for all possible starting cases
@@ -2702,11 +2847,21 @@ BINARY_FUNCTIONS = [
     ("rsplit", (None, "A")),
     ("rstrip", (None, "A")),
     ("rpartition", (None, "A")),
+    ("slice", (None, 1, 5)),
     ("split", (None, "A")),
     ("strip", (None, "A")),
     ("startswith", (None, "A")),
+    ("translate", (None, {ord("A"): "B"})),
     ("zfill", (None, 12)),
 ]
+
+
+def test_function_tables_cover_np_strings():
+    names = {*UNARY_FUNCTIONS, *(name for name, _ in BINARY_FUNCTIONS),
+             *(op.__name__ for op in comparison_operators)}
+    # decode only accepts bytes
+    assert set(np.strings.__all__) - names == {"decode"}
+
 
 PASSES_THROUGH_NAN_NULLS = [
     "add",
@@ -2799,6 +2954,38 @@ def test_binary(string_array, unicode_array, function_name, args):
     else:
         # shouldn't ever get here
         assert 0
+
+
+# _vec_string calls a Python str method on each element, so it holds the string
+# as Python objects (four bytes per character here), and case mapping reserves
+# three codepoints per character
+LARGE_STRING_KNOWN_ISSUES = {
+    "capitalize", "encode", "lower", "mod", "swapcase", "title", "translate", "upper"
+}
+LARGE_STRING_FUNCTIONS = {
+    name: args for name, args in [
+        *((name, (None,)) for name in UNARY_FUNCTIONS),
+        *BINARY_FUNCTIONS,
+        *((op.__name__, (None, None)) for op in comparison_operators),
+        # an empty pattern matches between every pair of characters, but with
+        # count=1 the output only needs room for one insertion
+        ("replace", (None, "", "prefix: ", 1)),
+    ]
+    if name not in ONLY_IN_NP_CHAR and name not in LARGE_STRING_KNOWN_ISSUES
+}
+
+
+def _large_string_args():
+    arr = np.array([UFUNC_TEST_DATA[1] * 2**12], dtype="T")  # about 1.2 MiB
+    return {name: (getattr(np.strings, name),
+                   *(arr if arg is None else arg for arg in args))
+            for name, args in LARGE_STRING_FUNCTIONS.items()}
+
+
+def test_large_string_memory_limit():
+    # run all string operations under a tight memory limit to check for large
+    # temporary allocations
+    run_with_memory_limit(operator.call, _large_string_args, 6 * 1024**2)
 
 
 @pytest.mark.parametrize("function, expected", [
@@ -3735,3 +3922,12 @@ def test_nditer_distinct_allocators():
     it = np.nditer([a], flags=["refs_ok", "buffered"], op_dtypes=[b.dtype],
                    casting="unsafe")
     assert_array_equal([str(x) for x in it.copy()], a_obj.tolist())
+
+    # a string buffer written back to an object array is released
+    res = np.array(["a"] * 20, dtype=object)
+    with np.nditer([res], flags=["refs_ok", "buffered", "external_loop"],
+                   op_flags=[["readwrite"]], op_dtypes=["T"],
+                   casting="unsafe") as it:
+        for chunk in it:
+            chunk[...] = a_obj[0]
+    assert res.tolist() == [a_obj[0]] * 20

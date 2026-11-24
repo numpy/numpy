@@ -1260,10 +1260,19 @@ def gradient(f, *varargs, axis=None, edge_order=1):
                 raise ValueError("when 1d, distances must match "
                                  "the length of the corresponding dimension")
             if np.issubdtype(distances.dtype, np.integer):
-                # Convert numpy integer types to float64 to avoid modular
-                # arithmetic in np.diff(distances).
-                distances = distances.astype(np.float64)
-            diffx = np.diff(distances)
+                # Differences of integers are exact modulo 2**64 in uint64,
+                # take the sign from a comparison in the original dtype since
+                # the true difference may need 65 bits.
+                if distances.dtype.itemsize == 8:
+                    u = distances.view(np.uint64)
+                else:
+                    u = distances.astype(np.uint64)
+                d = np.diff(u)
+                diffx = d.astype(np.float64)
+                neg = distances[1:] < distances[:-1]
+                diffx[neg] = -(-d[neg]).astype(np.float64)
+            else:
+                diffx = np.diff(distances)
             # if distances are constant reduce to the scalar case
             # since it brings a consistent speedup
             if (diffx == diffx[0]).all():
@@ -1965,8 +1974,7 @@ def _arg_trim_zeros(filt):
     if nonzero.size == 0:
         start = stop = np.array([], dtype=np.intp)
     else:
-        start = nonzero.min(axis=0)
-        stop = nonzero.max(axis=0)
+        start, stop = np.minmax(nonzero, axis=0)
     return start, stop
 
 
@@ -4549,8 +4557,14 @@ def _quantile_is_valid(q):
         for i in range(q.size):
             if not (0.0 <= q[i] <= 1.0):
                 return False
-    elif not (q.min() >= 0 and q.max() <= 1):
-        return False
+    else:
+        # subclasses may not support np.minmax
+        if type(q) is np.ndarray:
+            q_min, q_max = np.minmax(q)
+        else:
+            q_min, q_max = q.min(), q.max()
+        if not (q_min >= 0 and q_max <= 1):
+            return False
     return True
 
 
@@ -5536,7 +5550,7 @@ def insert(arr, obj, values, axis=None):
         # need to copy obj, because indices will be changed in-place
         indices = np.array(obj)
         if indices.dtype == bool:
-            if obj.ndim != 1:
+            if indices.ndim != 1:
                 raise ValueError('boolean array argument obj to insert '
                                 'must be one dimensional')
             indices = np.flatnonzero(obj)
@@ -5579,8 +5593,7 @@ def insert(arr, obj, values, axis=None):
         indices = indices.astype(intp)
 
     if indices.size > 0:
-        min_idx = indices.min()
-        max_idx = indices.max()
+        min_idx, max_idx = np.minmax(indices)
         if min_idx < -N or max_idx > N:
             oob = min_idx if min_idx < -N else max_idx
             raise IndexError(

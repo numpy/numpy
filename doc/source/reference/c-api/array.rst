@@ -1829,7 +1829,22 @@ the functions that must be implemented for each slot.
    Sets the loop to use for an operation at runtime. The *context* is the
    runtime context for the operation. *aligned* indicates whether the data
    access for the loop is aligned (1) or unaligned (0). *move_references*
-   indicates whether embedded references in the data should be copied. *strides*
+   is only set for casts. A cast normally leaves its input untouched. If
+   *move_references* is nonzero, the cast is a move instead of a copy: NumPy
+   does not clean up the input after a successful cast, so once the loop has
+   converted an input element it must release whatever the element owns, for
+   example by decrementing the reference count of an object or freeing a
+   heap-allocated buffer, or transfer it to the output. The loop must leave
+   each converted element safe to clear again, for example by zeroing it,
+   because NumPy reuses its temporary buffers and clears the whole input if
+   the loop fails. NumPy sets it when the input is one of its own
+   temporary buffers, such as the buffer a ufunc computes its results into
+   when the output array has a different dtype, or the intermediate buffer
+   of a cast that takes more than one step. When ``NPY_METH_get_loop`` is
+   not defined, NumPy handles this itself: it runs the
+   ``NPY_METH_strided_loop`` or ``NPY_METH_unaligned_strided_loop`` and then
+   clears the input elements with the ``NPY_DT_get_clear_loop`` of the input
+   DType. *strides*
    are the strides for the input array, *out_loop* is a pointer that must be
    filled in with a pointer to the loop implementation. *out_transferdata* can
    be optionally filled in to allow passing in extra user-defined context to an
@@ -2148,8 +2163,8 @@ with the rest of the ArrayMethod API.
 
 .. c:type:: int (PyArrayMethod_TranslateGivenDescriptors)( \
                     int nin, int nout, \
-                    PyArray_DTypeMeta *wrapped_dtypes[], \
-                    PyArray_Descr *given_descrs[], \
+                    PyArray_DTypeMeta *const wrapped_dtypes[], \
+                    PyArray_Descr *const given_descrs[], \
                     PyArray_Descr *new_descrs[]);
 
     The function to convert the given descriptors (passed in to
@@ -2167,8 +2182,9 @@ with the rest of the ArrayMethod API.
     unit from the input unit.
 
 .. c:type:: int (PyArrayMethod_TranslateLoopDescriptors)( \
-                    int nin, int nout, PyArray_DTypeMeta *new_dtypes[], \
-                    PyArray_Descr *given_descrs[], \
+                    int nin, int nout, \
+                    PyArray_DTypeMeta *const new_dtypes[], \
+                    PyArray_Descr *const given_descrs[], \
                     PyArray_Descr *original_descrs[], \
                     PyArray_Descr *loop_descrs[]);
 
@@ -2215,8 +2231,8 @@ code:
 
     static int
     translate_given_descrs(int nin, int nout,
-                           PyArray_DTypeMeta *NPY_UNUSED(wrapped_dtypes[]),
-                           PyArray_Descr *given_descrs[],
+                           PyArray_DTypeMeta *const NPY_UNUSED(wrapped_dtypes[]),
+                           PyArray_Descr *const given_descrs[],
                            PyArray_Descr *new_descrs[])
     {
         for (int i = 0; i < nin + nout; i++) {
@@ -2232,8 +2248,8 @@ code:
 
     static int
     translate_loop_descrs(int nin, int NPY_UNUSED(nout),
-                          PyArray_DTypeMeta *NPY_UNUSED(new_dtypes[]),
-                          PyArray_Descr *given_descrs[],
+                          PyArray_DTypeMeta *const NPY_UNUSED(new_dtypes[]),
+                          PyArray_Descr *const given_descrs[],
                           PyArray_Descr *original_descrs[],
                           PyArray_Descr *loop_descrs[])
     {

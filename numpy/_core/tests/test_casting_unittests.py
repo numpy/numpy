@@ -943,6 +943,11 @@ class TestCasting:
         with pytest.raises(ValueError):
             s1_66.astype(to_dtype, casting='same_value')
 
+        # The first integer beyond the upper bound is an exact power of two.
+        upper = np.array(np.iinfo(to_dtype).max + 1, dtype=from_dtype)
+        with np.errstate(all="raise"), pytest.raises(ValueError, match="same_value"):
+            upper.astype(to_dtype, casting="same_value")
+
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
     @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
@@ -976,6 +981,13 @@ class TestCasting:
         f = np.array(123, dtype=np.float64)
         assert i.astype(np.float64, casting='same_value') == f
         assert f.astype(np.int64, casting='same_value') == f
+
+        # Rounding int64.max to float64 puts the reverse cast out of range.
+        with np.errstate(all="raise"), pytest.raises(ValueError, match="same_value"):
+            np.array(np.iinfo(np.int64).max).astype(np.float64, casting="same_value")
+
+        inside = np.floor(np.nextafter(np.longdouble(2**63), np.longdouble(0)))
+        assert int(inside.astype(np.int64, casting="same_value")) == int(inside)
 
 
 def test_print_new_cast_table(capsys):

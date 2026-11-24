@@ -1,6 +1,6 @@
 import decimal
 import fractions
-from typing import assert_type
+from typing import Any, Self, assert_type, type_check_only
 
 import numpy as np
 import numpy.typing as npt
@@ -282,3 +282,21 @@ assert_type(AR != "x", np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(AR != AR, np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(AR != AR_2d, npt.NDArray[np.bool])
 assert_type(AR != SEQ, npt.NDArray[np.bool])
+
+# `__array_ufunc__` takes precedence over `__array__`
+
+@type_check_only
+class _DuckArray:
+    def __array__(self, dtype: None = None, /, *, copy: bool | None = None) -> npt.NDArray[np.int64]: ...
+    def __array_ufunc__(self, ufunc: np.ufunc, method: str, /, *inputs: Any, **kwargs: Any) -> Self: ...
+    def __gt__(self, other: npt.NDArray[np.int64], /) -> Self: ...
+    def __ge__(self, other: npt.NDArray[np.int64], /) -> Self: ...
+    def __lt__(self, other: npt.NDArray[np.int64], /) -> Self: ...
+    def __le__(self, other: npt.NDArray[np.int64], /) -> Self: ...
+
+_duck_array: _DuckArray
+
+assert_type(AR < _duck_array, _DuckArray)
+assert_type(AR <= _duck_array, _DuckArray)
+assert_type(AR > _duck_array, _DuckArray)
+assert_type(AR >= _duck_array, _DuckArray)

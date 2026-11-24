@@ -135,6 +135,54 @@ class TestIsInteger:
                 continue
             assert not value.is_integer()
 
+class TestAsType:
+    def test_copy(self) -> None:
+        a = np.float64(4.5)
+        b = a.astype(np.float64, copy=False)
+        assert a is b
+        b = np.astype(a, np.int64, copy=False)
+        assert a != b
+        b = a.astype(np.float64, copy=True)
+        assert a is b
+
+    @pytest.mark.parametrize("from_type, to_type", [
+        (np.double, np.longdouble),
+        (np.long, np.longlong),
+        (np.ulong, np.ulonglong),
+        (np.intc, np.long),
+        (np.cdouble, np.clongdouble),
+    ])
+    def test_equivalent_dtype_returns_requested_type(self, from_type, to_type):
+        a = from_type(3)
+        assert type(a.astype(to_type)) is to_type
+        assert type(np.astype(a, to_type)) is to_type
+
+class TestAsTypeStructuredCopy:
+    # Regression test for gh-32379: astype on a structured scalar
+    # must return an independent object, not a mutable view into the parent array.
+    def test_copy_true_is_independent(self) -> None:
+        a = np.array([('AB',), ('CD',)], dtype=[('name', 'U5')])
+        b = a[1]
+
+        c = b.astype(b, copy=True)
+        assert c is not b
+        c['name'] = 'ZZ'
+        assert a[1]['name'] == 'CD'
+
+    def test_default_copy_is_independent(self) -> None:
+        # copy defaults to True, so the same guarantee holds without the kwarg
+        a = np.array([('AB',), ('CD',)], dtype=[('name', 'U5')])
+        b = a[1]
+
+        c = b.astype(b)
+        c['name'] = 'ZZ'
+        assert a[1]['name'] == 'CD'
+
+    def test_subarray_dtype(self):
+        x = np.array(([1, 2],), dtype=[("f", "i4", (2,))])[()]
+        assert_equal(x.astype(np.dtype(("i4", (2,)))), [1, 2])
+        with pytest.raises(TypeError):
+            np.int64(128).astype(("i1", (2,)), casting="same_value")
 
 class TestClassGetItem:
     @pytest.mark.parametrize("cls", [

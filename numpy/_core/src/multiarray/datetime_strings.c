@@ -23,6 +23,7 @@
 #include "convert_datatype.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
+#include "gil_utils.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -268,8 +269,11 @@ NpyDatetime_ParseISO8601Datetime(
         return 0;
     }
 
+    /* cap echoed strings in error messages to a reasonable size */
+    int str_prec = (int)Py_MIN(len, 100);
+
     if (unit == NPY_FR_GENERIC) {
-        PyErr_SetString(PyExc_ValueError,
+        npy_gil_error(PyExc_ValueError,
                     "Cannot create a NumPy datetime other than NaT "
                     "with generic units");
         return -1;
@@ -316,10 +320,10 @@ NpyDatetime_ParseISO8601Datetime(
         /* Check the casting rule */
         if (unit != NPY_FR_ERROR &&
                 !can_cast_datetime64_units(bestunit, unit, casting)) {
-            PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
-                         "'%s' using casting rule %s",
-                         str, _datetime_strings[unit],
-                         npy_casting_to_string(casting));
+            npy_gil_error(PyExc_TypeError, "Cannot parse \"%.*s\" as unit "
+                          "'%s' using casting rule %s",
+                          str_prec, str, _datetime_strings[unit],
+                          npy_casting_to_string(casting));
             return -1;
         }
 
@@ -356,10 +360,10 @@ NpyDatetime_ParseISO8601Datetime(
         /* Check the casting rule */
         if (unit != NPY_FR_ERROR &&
                 !can_cast_datetime64_units(bestunit, unit, casting)) {
-            PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
-                         "'%s' using casting rule %s",
-                         str, _datetime_strings[unit],
-                         npy_casting_to_string(casting));
+            npy_gil_error(PyExc_TypeError, "Cannot parse \"%.*s\" as unit "
+                          "'%s' using casting rule %s",
+                          str_prec, str, _datetime_strings[unit],
+                          npy_casting_to_string(casting));
             return -1;
         }
 
@@ -381,7 +385,7 @@ NpyDatetime_ParseISO8601Datetime(
     }
 
     /* Leading '-' sign for negative year */
-    if (*substr == '-' || *substr == '+') {
+    if (sublen > 0 && (*substr == '-' || *substr == '+')) {
         ++substr;
         --sublen;
     }
@@ -428,8 +432,8 @@ NpyDatetime_ParseISO8601Datetime(
         out->month = 10 * (substr[0] - '0') + (substr[1] - '0');
 
         if (out->month < 1 || out->month > 12) {
-            PyErr_Format(PyExc_ValueError,
-                        "Month out of range in datetime string \"%s\"", str);
+            npy_gil_error(PyExc_ValueError,
+                        "Month out of range in datetime string \"%.*s\"", str_prec, str);
             goto error;
         }
         substr += 2;
@@ -463,8 +467,8 @@ NpyDatetime_ParseISO8601Datetime(
 
         if (out->day < 1 ||
                     out->day > _days_per_month_table[year_leap][out->month-1]) {
-            PyErr_Format(PyExc_ValueError,
-                        "Day out of range in datetime string \"%s\"", str);
+            npy_gil_error(PyExc_ValueError,
+                        "Day out of range in datetime string \"%.*s\"", str_prec, str);
             goto error;
         }
         substr += 2;
@@ -492,8 +496,8 @@ NpyDatetime_ParseISO8601Datetime(
         out->hour = 10 * (substr[0] - '0') + (substr[1] - '0');
 
         if (out->hour >= 24) {
-            PyErr_Format(PyExc_ValueError,
-                        "Hours out of range in datetime string \"%s\"", str);
+            npy_gil_error(PyExc_ValueError,
+                        "Hours out of range in datetime string \"%.*s\"", str_prec, str);
             goto error;
         }
         substr += 2;
@@ -523,8 +527,8 @@ NpyDatetime_ParseISO8601Datetime(
         out->min = 10 * (substr[0] - '0') + (substr[1] - '0');
 
         if (out->min >= 60) {
-            PyErr_Format(PyExc_ValueError,
-                        "Minutes out of range in datetime string \"%s\"", str);
+            npy_gil_error(PyExc_ValueError,
+                        "Minutes out of range in datetime string \"%.*s\"", str_prec, str);
             goto error;
         }
         substr += 2;
@@ -554,8 +558,8 @@ NpyDatetime_ParseISO8601Datetime(
         out->sec = 10 * (substr[0] - '0') + (substr[1] - '0');
 
         if (out->sec >= 60) {
-            PyErr_Format(PyExc_ValueError,
-                        "Seconds out of range in datetime string \"%s\"", str);
+            npy_gil_error(PyExc_ValueError,
+                        "Seconds out of range in datetime string \"%.*s\"", str_prec, str);
             goto error;
         }
         substr += 2;
@@ -645,12 +649,16 @@ parse_timezone:
 
     else {
         /* 2016-01-14, 1.11 */
+        NPY_ALLOW_C_API_DEF;
+        NPY_ALLOW_C_API;
         PyErr_Clear();
-        if (PyErr_WarnEx(PyExc_UserWarning,
+        int warn_ret = PyErr_WarnEx(PyExc_UserWarning,
             "no explicit representation of timezones available for np.datetime64",
-            1) < 0) {
-                return -1;
-            }
+            1);
+        NPY_DISABLE_C_API;
+        if (warn_ret < 0) {
+            return -1;
+        }
     }
 
 
@@ -680,9 +688,9 @@ parse_timezone:
             substr += 2;
             sublen -= 2;
             if (offset_hour >= 24) {
-                PyErr_Format(PyExc_ValueError,
-                            "Timezone hours offset out of range "
-                            "in datetime string \"%s\"", str);
+                npy_gil_error(PyExc_ValueError,
+                              "Timezone hours offset out of range "
+                              "in datetime string \"%.*s\"", str_prec, str);
                 goto error;
             }
         }
@@ -704,9 +712,9 @@ parse_timezone:
                 substr += 2;
                 sublen -= 2;
                 if (offset_minute >= 60) {
-                    PyErr_Format(PyExc_ValueError,
-                                "Timezone minutes offset out of range "
-                                "in datetime string \"%s\"", str);
+                    npy_gil_error(PyExc_ValueError,
+                                  "Timezone minutes offset out of range "
+                                  "in datetime string \"%.*s\"", str_prec, str);
                     goto error;
                 }
             }
@@ -741,19 +749,19 @@ finish:
     /* Check the casting rule */
     if (unit != NPY_FR_ERROR &&
             !can_cast_datetime64_units(bestunit, unit, casting)) {
-        PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
-                     "'%s' using casting rule %s",
-                     str, _datetime_strings[unit],
-                     npy_casting_to_string(casting));
+        npy_gil_error(PyExc_TypeError, "Cannot parse \"%.*s\" as unit "
+                      "'%s' using casting rule %s",
+                      str_prec, str, _datetime_strings[unit],
+                      npy_casting_to_string(casting));
         return -1;
     }
 
     return 0;
 
 parse_error:
-    PyErr_Format(PyExc_ValueError,
-            "Error parsing datetime string \"%s\" at position %zd",
-            str, substr - str);
+    npy_gil_error(PyExc_ValueError,
+            "Error parsing datetime string \"%.*s\" at position %zd",
+            str_prec, str, substr - str);
     return -1;
 
 error:

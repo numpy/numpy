@@ -12,6 +12,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
+#include "npy_float_to_int.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -3098,13 +3099,14 @@ _arange_safe_ceil_to_intp(double value)
             "arange: cannot compute length");
         return -1;
     }
-    if (!((double)NPY_MIN_INTP <= ivalue && ivalue <= (double)NPY_MAX_INTP)) {
+    npy_intp result;
+    if (npy_double_to_intp(ivalue, &result) < 0) {
         PyErr_SetString(PyExc_OverflowError,
                 "arange: overflow while computing length");
         return -1;
     }
 
-    return (npy_intp)ivalue;
+    return result;
 }
 
 
@@ -3717,6 +3719,12 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         return NULL;
     }
     if (dtype->elsize == 0) {
+        if (num < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot infer count for a dtype with itemsize 0");
+            Py_DECREF(dtype);
+            return NULL;
+        }
         /* Nothing to read, just create an empty array of the requested type */
         return PyArray_NewFromDescr_int(
                 &PyArray_Type, dtype,

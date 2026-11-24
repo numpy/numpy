@@ -50,6 +50,7 @@ _py_str_2d: list[list[str]]
 
 _dtype_list: list[np.dtype]
 _any_list: list[Any]
+_any_shape: tuple[Any, ...]
 
 # integer‑dtype subclass for argmin/argmax
 class NDArrayIntSubclass(np.ndarray[tuple[Any, ...], np.dtype[np.intp]]): ...
@@ -88,12 +89,17 @@ assert_type(np.top_k([[1.0]], 1), tuple[npt.Array2D[np.float64], npt.Array2D[np.
 assert_type(np.top_k([1j], 1), tuple[npt.Array1D[np.complex128], npt.Array1D[np.intp]])
 assert_type(np.top_k([[1j]], 1), tuple[npt.Array2D[np.complex128], npt.Array2D[np.intp]])
 assert_type(np.top_k(_py_str_1d, 1), tuple[npt.NDArray[Any], npt.NDArray[np.intp]])
+assert_type(np.top_k(AR_f4_2d, 1, axis=None), tuple[npt.Array1D[np.float32], npt.Array1D[np.intp]])
+assert_type(np.top_k([[1]], 1, axis=None), tuple[npt.Array1D[Any], npt.Array1D[np.intp]])
+assert_type(np.top_k(_py_str_1d, 1, axis=None), tuple[npt.Array1D[Any], npt.Array1D[np.intp]])
 
 assert_type(np.reshape(b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.reshape(f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
 assert_type(np.reshape(f, 1), np.ndarray[tuple[int], np.dtype])
 assert_type(np.reshape(AR_b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.reshape(AR_f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.reshape(f, _any_shape), np.ndarray[Any, Any])  # mypy fluke; pyright correctly infers NDArray[Any]
+assert_type(np.reshape(AR_f4, _any_shape), np.ndarray[Any, Any])  # mypy fluke; pyright correctly infers NDArray[float32]
 
 assert_type(np.choose(1, AR_f4), Any)
 assert_type(np.choose(AR_i8, AR_f4), npt.NDArray[np.float32])
@@ -260,6 +266,8 @@ assert_type(np.resize(f4, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.float
 assert_type(np.resize(f, (5, 5)), np.ndarray[tuple[int, int], np.dtype])
 assert_type(np.resize(AR_b, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 assert_type(np.resize(AR_f4, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.resize(f, _any_shape), np.ndarray[Any, Any])  # mypy fluke; pyright correctly infers NDArray[Any]
+assert_type(np.resize(AR_f4, _any_shape), np.ndarray[Any, Any])  # mypy fluke; pyright correctly infers NDArray[float32]
 
 assert_type(np.squeeze(b), np.bool)
 assert_type(np.squeeze(AR_b), npt.NDArray[np.bool])

@@ -75,8 +75,6 @@ This approach to the interface consists of the object having an
        The basic type character codes are:
 
        =====  ================================================================
-       ``t``  Bit field (following integer gives the number of
-              bits in the bit field).
        ``b``  Boolean (integer type where all values are only ``True`` or
               ``False``)
        ``i``  Integer
@@ -90,6 +88,9 @@ This approach to the interface consists of the object having an
        ``U``  Unicode (fixed-length sequence of :c:type:`Py_UCS4`)
        ``V``  Other (void \* -- each item is a fixed-size chunk of memory)
        =====  ================================================================
+
+       NumPy does not support bit-packed arrays through this interface.
+       Boolean elements use one byte each.
 
    **descr** (optional)
        A list of tuples providing a more detailed description of the

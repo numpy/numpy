@@ -1,0 +1,63 @@
+
+Contributors
+============
+
+A total of 12 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Anush Vishwakarma +
+* Arthur Lacote
+* Bharath Pranav +
+* Charles Harris
+* David King +
+* Iason Krommydas
+* Joren Hammudoglu
+* Kevin Sheppard
+* Matti Picus
+* Nathan Goldbaum
+* Peter Hawkins
+* Shubham Bansal +
+
+Pull requests merged
+====================
+
+A total of 37 pull requests were merged for this release.
+
+* `#32971 <https://github.com/numpy/numpy/pull/32971>`__: MAINT: Prepare 2.5.x for further development
+* `#33100 <https://github.com/numpy/numpy/pull/33100>`__: MAINT: Update OpenBLAS to 0.3.34.237.2
+* `#33114 <https://github.com/numpy/numpy/pull/33114>`__: MAINT: Update cibuildwheel to v4.3.3
+* `#33117 <https://github.com/numpy/numpy/pull/33117>`__: BUG: warm finfo cache with float64 on 2.5.x (gh-32947)
+* `#33130 <https://github.com/numpy/numpy/pull/33130>`__: MAINT: Update pixi workflow from main.
+* `#33141 <https://github.com/numpy/numpy/pull/33141>`__: MAINT: Update cibuildwheel to v4.3.4 and uv to v0.13.5
+* `#33155 <https://github.com/numpy/numpy/pull/33155>`__: BUG: fix nanquantile dtype for all-NaN first slice (#32940)
+* `#33156 <https://github.com/numpy/numpy/pull/33156>`__: BUG: fix hang in ``ndarray.take`` for a zero-size axis (#32991)
+* `#33158 <https://github.com/numpy/numpy/pull/33158>`__: BUG: fix reference leak for multi-output ufuncs (#33011)
+* `#33159 <https://github.com/numpy/numpy/pull/33159>`__: BUG: fix ``ufunc.at`` segfaulting for ``nin=0`` (#33068)
+* `#33160 <https://github.com/numpy/numpy/pull/33160>`__: MAINT: Remove cygwin test.
+* `#33177 <https://github.com/numpy/numpy/pull/33177>`__: CI: clone eigen from github mirror for ml_dtypes test (#33164)
+* `#33179 <https://github.com/numpy/numpy/pull/33179>`__: BUG: fix complex sqrt rescaling (#33126)
+* `#33180 <https://github.com/numpy/numpy/pull/33180>`__: BUG: fix bytes/unicode counting mixups in startswith, endswith...
+* `#33181 <https://github.com/numpy/numpy/pull/33181>`__: BUG: fix bytes/codepoint confusion in string fastsearch (#33176)
+* `#33182 <https://github.com/numpy/numpy/pull/33182>`__: TYP: ``dtype.descr``\ : fix item type (#33037)
+* `#33225 <https://github.com/numpy/numpy/pull/33225>`__: BUG: make SeedSequence.spawn thread safe (#32889)
+* `#33226 <https://github.com/numpy/numpy/pull/33226>`__: BUG: bounds check before writing values in StringDType to integer...
+* `#33228 <https://github.com/numpy/numpy/pull/33228>`__: BUG: fix error checks done without the GIL in sorting functions...
+* `#33229 <https://github.com/numpy/numpy/pull/33229>`__: BUG: acquire the GIL to set errors and warnings in bytes to datetime...
+* `#33231 <https://github.com/numpy/numpy/pull/33231>`__: MAINT: Update macos_14 to macos_15.
+* `#33234 <https://github.com/numpy/numpy/pull/33234>`__: BUG: acquire the GIL in nditer and ufunc error paths (#33224)
+* `#33238 <https://github.com/numpy/numpy/pull/33238>`__: BUG: avoid out-of-bounds reads in datetime parsing API errors...
+* `#33265 <https://github.com/numpy/numpy/pull/33265>`__: REV: "BUG: make SeedSequence.spawn thread safe (#32889)"
+* `#33284 <https://github.com/numpy/numpy/pull/33284>`__: DOC: pin sphinx-design to < 0.8
+* `#33293 <https://github.com/numpy/numpy/pull/33293>`__: BUG: check for allocation failure in StringDType string allocation...
+* `#33294 <https://github.com/numpy/numpy/pull/33294>`__: BUG: release the input of casts to object when move_references...
+* `#33295 <https://github.com/numpy/numpy/pull/33295>`__: BUG: reject 6-tuple dtype pickle states with version > 1 (#33257)
+* `#33311 <https://github.com/numpy/numpy/pull/33311>`__: MAINT: update circleci redirector action (#33304)
+* `#33313 <https://github.com/numpy/numpy/pull/33313>`__: BUG: fix loadtxt crash with existing StringDType dtype (#33266)
+* `#33314 <https://github.com/numpy/numpy/pull/33314>`__: BUG: reject casts from structured dtypes to StringDType (#33298)
+* `#33315 <https://github.com/numpy/numpy/pull/33315>`__: BUG: ufunc.at: raise on a non-writeable first operand (#33285)
+* `#33316 <https://github.com/numpy/numpy/pull/33316>`__: BUG: Prevent MT19937 and Philox from accepting invalid buffer...
+* `#33317 <https://github.com/numpy/numpy/pull/33317>`__: BUG: Correct numel calculation in random_raw (#33309)
+* `#33338 <https://github.com/numpy/numpy/pull/33338>`__: CI: pin ubuntu 24.04 where 26.04 is broken (#33335)
+* `#33339 <https://github.com/numpy/numpy/pull/33339>`__: BUG: fix np.negative with strided input and output (#33327)
+* `#33340 <https://github.com/numpy/numpy/pull/33340>`__: MAINT: Update cibuildwheel to 4.3.5.
+

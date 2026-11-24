@@ -866,7 +866,8 @@ class TestAppendScalarPromotion(_DeprecationTestCase):
             change = "these inputs have no common dtype and will raise an error"
         else:
             change = f"use dtype {dtype}, which may round values differently"
-        self.message += (
+        self.message = (
+            type(self).message +
             rf".*producing dtype {re.escape(str(expected.dtype))}.*"
             rf"{re.escape(change)}.*np\.concatenate.*"
             rf"dtype={re.escape(repr(str(expected.dtype)))}")
@@ -890,3 +891,12 @@ class TestAppendScalarPromotion(_DeprecationTestCase):
         a = np.array([1], dtype=dtype)
         args = (scalar, a) if reverse else (a, scalar)
         self.assert_not_deprecated(np.append, args=args)
+
+
+class TestEinsumIgnoredDType(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-11
+    message = "einsum ignored `dtype`"
+
+    def test_deprecated(self):
+        a = np.array([1.5, 2.5])
+        self.assert_deprecated(np.einsum, args=("i->i", a), kwargs={"dtype": np.int32})

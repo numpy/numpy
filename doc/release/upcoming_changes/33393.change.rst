@@ -1,0 +1,5 @@
+``np.base_repr`` now includes the zero digit when padding zero
+--------------------------------------------------------------
+``np.base_repr(0, padding=n)`` now returns ``n + 1`` zeros, consistent with
+other values, instead of ``n``. As a result, ``np.base_repr(0, 2, -1)`` now
+returns ``'0'`` instead of ``''``.

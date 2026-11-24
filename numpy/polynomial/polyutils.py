@@ -232,11 +232,11 @@ def getdomain(x):
     """
     [x] = as_series([x], trim=False)
     if x.dtype.char in np.typecodes['Complex']:
-        rmin, rmax = x.real.min(), x.real.max()
-        imin, imax = x.imag.min(), x.imag.max()
+        rmin, rmax = np.minmax(x.real)
+        imin, imax = np.minmax(x.imag)
         return np.array((complex(rmin, imin), complex(rmax, imax)))
     else:
-        return np.array((x.min(), x.max()))
+        return np.array(np.minmax(x))
 
 def mapparms(old, new):
     """

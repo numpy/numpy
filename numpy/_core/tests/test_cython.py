@@ -8,7 +8,7 @@ from datetime import datetime
 import pytest
 
 import numpy as np
-from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, assert_array_equal
+from numpy.testing import HAS_SUBPROCESSES, IS_64BIT, IS_EDITABLE, assert_array_equal
 from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
@@ -315,7 +315,14 @@ def test_npystring_pack(install_temp):
     """Check that the cython API can write to a vstring array."""
     import checks
 
-    arr = np.array(['a', 'b', 'c'], dtype='T')
+    arr = np.array(['a' * 20, 'b', 'c'], dtype='T')
+    # Exceeds StringDType's per-string size limit.
+    assert checks.npystring_pack(arr, sys.maxsize) == -1
+    assert_array_equal(arr, ['a' * 20, 'b', 'c'])
+    if IS_64BIT:
+        # Requests an impossible allocation below the per-string size limit.
+        assert checks.npystring_pack(arr, 2**55) == -1
+        assert_array_equal(arr, ['a' * 20, 'b', 'c'])
     assert checks.npystring_pack(arr) == 0
 
     # checks.npystring_pack writes to the beginning of the array

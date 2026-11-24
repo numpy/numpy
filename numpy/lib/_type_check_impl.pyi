@@ -1,5 +1,5 @@
 from collections.abc import Container, Iterable, Sequence
-from typing import Any, Literal as L, Protocol, overload, type_check_only
+from typing import Any, Literal as L, Never, Protocol, overload, type_check_only
 from typing_extensions import deprecated
 
 import numpy as np
@@ -426,9 +426,11 @@ def typename(char: L["V"]) -> L["void"]: ...
 @deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["O"]) -> L["object"]: ...
 
-# NOTE: The [overload-overlap] mypy errors are false positives
+#
 @overload
 def common_type() -> type[np.float16]: ...
+@overload  # workaround for microsoft/pyright#10232
+def common_type(a0: _HasDType[Never], /, *ai: _HasDType[Any]) -> type[Any]: ...
 @overload
 def common_type(a0: _HasDType[np.float16], /, *ai: _HasDType[np.float16]) -> type[np.float16]: ...
 @overload

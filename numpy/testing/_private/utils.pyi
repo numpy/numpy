@@ -5,7 +5,7 @@ import types
 import unittest
 import warnings
 from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath, Unused
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import _GeneratorContextManager
 from pathlib import Path
 from re import Pattern
@@ -480,7 +480,6 @@ def run_threaded(
     pass_barrier: L[False] = False,
     outer_iterations: int = 1,
     prepare_args: None = None,
-    switch_interval: float | None = 1e-5,
 ) -> None: ...
 @overload  # prepare_args=<given>
 def run_threaded(
@@ -491,7 +490,6 @@ def run_threaded(
     outer_iterations: int = 1,
     *,
     prepare_args: Callable[[], list[Any]],
-    switch_interval: float | None = 1e-5,
 ) -> None: ...
 @overload  # pass_count=True
 def run_threaded(
@@ -502,7 +500,6 @@ def run_threaded(
     pass_barrier: L[False] = False,
     outer_iterations: int = 1,
     prepare_args: None = None,
-    switch_interval: float | None = 1e-5,
 ) -> None: ...
 @overload  # pass_count=True, prepare_args=<given>
 def run_threaded(
@@ -513,7 +510,6 @@ def run_threaded(
     pass_barrier: bool = False,
     outer_iterations: int = 1,
     prepare_args: Callable[[], list[Any]],
-    switch_interval: float | None = 1e-5,
 ) -> None: ...
 @overload  # pass_barrier=True
 def run_threaded(
@@ -524,7 +520,6 @@ def run_threaded(
     pass_barrier: L[True],
     outer_iterations: int = 1,
     prepare_args: None = None,
-    switch_interval: float | None = 1e-5,
 ) -> None: ...
 @overload  # pass_count=True, pass_barrier=True
 def run_threaded(
@@ -535,7 +530,22 @@ def run_threaded(
     pass_barrier: L[True],
     outer_iterations: int = 1,
     prepare_args: None = None,
-    switch_interval: float | None = 1e-5,
+) -> None: ...
+
+#
+def run_with_memory_limit(
+    func: Callable[..., Unused],
+    make_args: Callable[[], Mapping[str, tuple[Any, ...]]],
+    limit: int,
+) -> None: ...
+
+#
+def trace_memory_growth() -> _GeneratorContextManager[Callable[[], int]]: ...
+def assert_memory_growth_below(
+    func: Callable[..., Unused],
+    limit: int,
+    repeat: int = 10,
+    make_args: Callable[[], tuple[Any, ...]] | None = None,
 ) -> None: ...
 
 #
