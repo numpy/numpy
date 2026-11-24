@@ -676,6 +676,11 @@ def unique_values(x):
     )
 
 
+def promotes_to_float(dt1, dt2):
+    return (dt1.kind in "iu" and dt2.kind in "iu"
+            and np.result_type(dt1, dt2).kind == "f")
+
+
 def _intersect1d_dispatcher(
         ar1, ar2, assume_unique=None, return_indices=None):
     return (ar1, ar2)
@@ -751,9 +756,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         ar1 = ar1.ravel()
         ar2 = ar2.ravel()
 
-    wrap = (ar1.dtype.kind in "iu" and ar2.dtype.kind in "iu"
-            and np.result_type(ar1.dtype, ar2.dtype).kind == "f")
-    if wrap:
+    if wrap := promotes_to_float(ar1.dtype, ar2.dtype):
         ar1, ar2 = ar1.astype(np.int64), ar2.astype(np.int64)
 
     aux = np.concatenate((ar1, ar2))
@@ -999,8 +1002,7 @@ def _isin_sorting(ar1, ar2, assume_unique, invert):
     # A signed integer and uint64 only promote to float64, which merges
     # distinct large values. Sort in ar1's dtype instead: values of ar2
     # outside its range cannot match, so drop them first.
-    if (ar1.dtype.kind in "iu" and ar2.dtype.kind in "iu"
-            and np.result_type(ar1.dtype, ar2.dtype).kind == "f"):
+    if promotes_to_float(ar1.dtype, ar2.dtype):
         if ar2.dtype.kind == "i":
             in_range = ar2 >= 0
         else:
