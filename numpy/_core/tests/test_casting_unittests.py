@@ -703,6 +703,10 @@ class TestCasting:
         with pytest.raises(TypeError, match="cannot cast"):
             np.array([], dtype="V5").astype("U")  # was U5
 
+    def test_text_to_bytes_cast_error_hint(self):
+        with pytest.raises(TypeError, match=r"numpy\.strings\.encode"):
+            np.array(["a"]).astype("S1", casting="same_kind")
+
     def test_object_to_parametric_internal_error(self):
         # We reject casting from object to a parametric type, without
         # figuring out the correct instance first.

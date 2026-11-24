@@ -696,11 +696,11 @@ def _check_coercion_policy(mode, size):
     text = a.astype("T")
     out = np.empty(a.shape, dtype="U1")
     add_out = np.empty(a.shape, dtype="U2")
-    with expect(category):
+    with expect(category, match=r"numpy\.strings\.decode"):
         a.astype("U1", casting="same_kind")
     with expect(category):
         a.astype("T", casting="same_kind")
-    with expect(category):
+    with expect(category, match=r"numpy\.strings\.encode"):
         text.astype("S1", casting="same_kind")
     with expect(category):
         np.copyto(out, a)
@@ -727,7 +727,7 @@ def _check_coercion_policy(mode, size):
         np.result_type("S1", "U1")
     with expect(category):
         np.promote_types("U1", "S1")
-    with expect(category):
+    with expect(category, match=r"numpy\.strings\.encode"):
         np.strings.replace(a, b"a", "b")
     with expect(category):
         np.strings.center(a, 3, "*")

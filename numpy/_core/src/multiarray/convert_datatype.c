@@ -1018,15 +1018,22 @@ npy_set_invalid_cast_error(
         NPY_CASTING casting, npy_bool scalar)
 {
     char *msg;
+    const char *hint = "";
 
     if (!scalar) {
-        msg = "Cannot cast array data from %R to %R according to the rule %s";
+        msg = "Cannot cast array data from %R to %R according to the rule %s%s";
     }
     else {
-        msg = "Cannot cast scalar from %R to %R according to the rule %s";
+        msg = "Cannot cast scalar from %R to %R according to the rule %s%s";
+    }
+    if (NPY_DT_is_text(NPY_DTYPE(src_dtype)) && NPY_DT_is_bytes(NPY_DTYPE(dst_dtype))) {
+        hint = ". Use numpy.strings.encode with an explicit encoding to convert text to bytes.";
+    }
+    else if (NPY_DT_is_bytes(NPY_DTYPE(src_dtype)) && NPY_DT_is_text(NPY_DTYPE(dst_dtype))) {
+        hint = ". Use numpy.strings.decode with an explicit encoding to convert bytes to text.";
     }
     PyErr_Format(PyExc_TypeError,
-            msg, src_dtype, dst_dtype, npy_casting_to_string(casting));
+            msg, src_dtype, dst_dtype, npy_casting_to_string(casting), hint);
 }
 
 
