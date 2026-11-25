@@ -199,6 +199,31 @@ class TestDateTime:
             assert np.can_cast(larger_unit, smaller_unit, casting='safe')
             assert np.can_cast(smaller_unit, larger_unit, casting='safe')
 
+    @pytest.mark.parametrize("kind", ["M8", "m8"])
+    @pytest.mark.parametrize("larger_unit, smaller_unit", [
+        ("s", "1000ms"), ("ns", "1000ps"), ("2ns", "2000ps"),
+        ("us", "1000000ps"), ("ns", "1000000000as")])
+    def test_datetime_prefix_equivalence_symmetric(
+            self, kind, larger_unit, smaller_unit):
+        # gh-33454
+        larger = np.dtype(f"{kind}[{larger_unit}]")
+        smaller = np.dtype(f"{kind}[{smaller_unit}]")
+        assert larger == smaller
+        assert smaller == larger
+        assert np.can_cast(larger, smaller, casting='no')
+        assert np.can_cast(smaller, larger, casting='no')
+
+    @pytest.mark.parametrize("kind", ["M8", "m8"])
+    def test_datetime_prefix_equivalence_exact(self, kind):
+        # gh-33454: 2001 ps is not 2 ns
+        larger = np.dtype(f"{kind}[2ns]")
+        smaller = np.dtype(f"{kind}[2001ps]")
+        assert larger != smaller
+        assert smaller != larger
+        arr = np.array([1_000_000], dtype=smaller)
+        expected = arr.astype(f"{kind}[ps]").astype(larger)
+        assert_equal(np.asarray(arr, dtype=larger), expected)
+
     @pytest.mark.parametrize("unit", [
         "s", "ms", "us", "ns", "ps", "fs", "as"])
     def test_prohibit_negative_datetime(self, unit):
