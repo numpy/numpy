@@ -100,3 +100,11 @@ class TestRegression:
             np.quantile(a, [0.1, 0.9]),
         ):
             assert_(np.all(np.ma.getmaskarray(res)))
+
+        # ufunc with out=... requests a writable 0-d array, not MaskedConstant
+        res_0d = np.add(np.ma.masked, 1.0, out=...)
+        assert_(isinstance(res_0d, np.ma.MaskedArray))
+        assert_(not isinstance(res_0d, np.ma.core.MaskedConstant))
+        assert_(res_0d.flags.writeable and res_0d.shape == ())
+        assert_(np.ma.is_masked(res_0d))
+        assert_(np.add(np.ma.masked, 1.0) is np.ma.masked)
