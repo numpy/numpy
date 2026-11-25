@@ -971,6 +971,28 @@ fail:
     return NULL;
 }
 
+/*
+ * Serve a legacy dot-like function through `gufunc(ap1, ap2, **kwargs)` for a
+ * DType without a dotfunc.  If the DType has no loop for the gufunc either,
+ * raise the ValueError the legacy function raised before this fallback.
+ */
+static PyObject *
+dot_via_gufunc(PyObject *gufunc, PyArrayObject *ap1, PyArrayObject *ap2,
+               PyObject *kwargs, const char *noloop_msg)
+{
+    PyObject *args = PyTuple_Pack(2, ap1, ap2);
+    if (args == NULL) {
+        return NULL;
+    }
+    PyObject *res = PyObject_Call(gufunc, args, kwargs);
+    Py_DECREF(args);
+    if (res == NULL && PyErr_ExceptionMatches(
+            _npy_module_state->static_pydata._UFuncNoLoopError)) {
+        PyErr_SetString(PyExc_ValueError, noloop_msg);
+    }
+    return res;
+}
+
 /*NUMPY_API
  * Numeric.matrixproduct(a,v)
  * just like inner product but does the swapaxes stuff on the fly
@@ -1062,6 +1084,15 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
         goto fail;
     }
 
+    if (PyDataType_GetArrFuncs(typec)->dotfunc == NULL
+            && PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
+        PyErr_SetString(PyExc_ValueError,
+                "dot with a.ndim >= 2 and b.ndim > 2 is not supported for "
+                "this dtype; use numpy.tensordot(a, b, axes=[-1, -2]) "
+                "instead.");
+        goto fail;
+    }
+
     /* Deprecated NumPy 2.6: warn when a.ndim >= 2 and b.ndim > 2 */
     if (funcname != NULL && PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
@@ -1098,21 +1129,20 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
                 && check_out_for_sum(out, nd, dimensions, typec) < 0) {
             goto fail;
         }
-        Py_DECREF(typec);
-        if (npy_cache_import_runtime(
-                "numpy._core.numeric", "_dot_fallback",
-                &_npy_module_state->runtime_imports._dot_fallback) == -1) {
-            Py_DECREF(ap1);
-            Py_DECREF(ap2);
-            return NULL;
+        PyObject *kwargs = Py_BuildValue(
+                "{s:O, s:s}", "out", out != NULL ? (PyObject *)out : Py_None,
+                "order", "C");
+        if (kwargs == NULL) {
+            goto fail;
         }
-        PyObject *fallback_res = PyObject_CallFunctionObjArgs(
-                _npy_module_state->runtime_imports._dot_fallback,
-                (PyObject *)ap1, (PyObject *)ap2,
-                out != NULL ? (PyObject *)out : Py_None, NULL);
+        PyObject *res = dot_via_gufunc(
+                _npy_module_state->n_ops.matmul, ap1, ap2, kwargs,
+                "dot not available for this type");
+        Py_DECREF(kwargs);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
-        return fallback_res;
+        Py_DECREF(typec);
+        return res;
     }
     is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1];
     is2 = PyArray_STRIDES(ap2)[matchDim];
@@ -2695,18 +2725,6 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     }
    Py_SETREF(type, NPY_DT_CALL_ensure_canonical(type));
 
-    if (PyDataType_GetArrFuncs(type)->dotfunc == NULL) {
-        Py_DECREF(type);
-        if (npy_cache_import_runtime(
-                "numpy._core.numeric", "_vdot_fallback",
-                &_npy_module_state->runtime_imports._vdot_fallback) == -1) {
-            return NULL;
-        }
-        return PyObject_CallFunctionObjArgs(
-                _npy_module_state->runtime_imports._vdot_fallback,
-                op1, op2, NULL);
-    }
-
     Py_INCREF(type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
     if (ap1 == NULL) {
@@ -2738,6 +2756,17 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
         PyErr_SetString(PyExc_ValueError,
                 "vectors have different lengths");
         goto fail;
+    }
+
+    if (PyDataType_GetArrFuncs(type)->dotfunc == NULL) {
+        /* vecdot conjugates the first operand, like vdot */
+        PyObject *res = dot_via_gufunc(
+                _npy_module_state->n_ops.vecdot, ap1, ap2, NULL,
+                "function not available for this data type");
+        Py_DECREF(ap1);
+        Py_DECREF(ap2);
+        Py_DECREF(type);
+        return res;
     }
 
     /* array scalar output */
