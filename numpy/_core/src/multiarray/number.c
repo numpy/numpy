@@ -119,6 +119,7 @@ _PyArray_SetNumericOps(PyObject *dict)
     SET(rint);
     SET(conjugate);
     SET(matmul);
+    SET(vecdot);
     SET(clip);
     SET(real);
     SET(imag);
