@@ -415,16 +415,6 @@ check_is_convertible_to_scalar(PyArrayObject *v);
 
 
 /*
- * Check that `out` can hold the result of a sum-of-products (dot, inner):
- * the right number of dimensions and shape, an equivalent dtype, and a
- * C-contiguous aligned writeable layout.  Sets a ValueError and returns -1
- * otherwise.
- */
-NPY_NO_EXPORT int
-check_out_for_sum(PyArrayObject *out, int nd, npy_intp dimensions[],
-                  PyArray_Descr *descr);
-
-/*
  * Make a new empty array, of the passed size, of a type that takes the
  * priority of ap1 and ap2 into account.
  *

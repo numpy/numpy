@@ -581,34 +581,6 @@ _check_compatibility_with_new_dtype(
 }
 
 /*
- * Check that `out` can hold the result of a sum-of-products (dot, inner):
- * the right number of dimensions and shape, an equivalent dtype, and a
- * C-contiguous aligned writeable layout.  Sets a ValueError and returns -1
- * otherwise.
- */
-NPY_NO_EXPORT int
-check_out_for_sum(PyArrayObject *out, int nd, npy_intp dimensions[],
-                  PyArray_Descr *descr)
-{
-    if (PyArray_NDIM(out) != nd ||
-        !PyArray_EquivTypes(PyArray_DESCR(out), descr) ||
-        !PyArray_ISCARRAY(out)) {
-        PyErr_SetString(PyExc_ValueError,
-            "output array is not acceptable (must have the right datatype, "
-            "number of dimensions, and be a C-Array)");
-        return -1;
-    }
-    for (int d = 0; d < nd; ++d) {
-        if (dimensions[d] != PyArray_DIM(out, d)) {
-            PyErr_SetString(PyExc_ValueError,
-                "output array has wrong dimensions");
-            return -1;
-        }
-    }
-    return 0;
-}
-
-/*
  * Make a new empty array, of the passed size, of a type that takes the
  * priority of ap1 and ap2 into account.
  *
@@ -624,8 +596,23 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
     PyArrayObject *out_buf;
 
     if (out) {
-        if (check_out_for_sum(out, nd, dimensions, descr) < 0) {
+        int d;
+
+        /* verify that out is usable */
+        if (PyArray_NDIM(out) != nd ||
+            !PyArray_EquivTypes(PyArray_DESCR(out), descr) ||
+            !PyArray_ISCARRAY(out)) {
+            PyErr_SetString(PyExc_ValueError,
+                "output array is not acceptable (must have the right datatype, "
+                "number of dimensions, and be a C-Array)");
             return 0;
+        }
+        for (d = 0; d < nd; ++d) {
+            if (dimensions[d] != PyArray_DIM(out, d)) {
+                PyErr_SetString(PyExc_ValueError,
+                    "output array has wrong dimensions");
+                return 0;
+            }
         }
 
         /* check for memory overlap */
