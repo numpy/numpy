@@ -2078,9 +2078,9 @@ def trim_zeros(filt, trim='fb', axis=None):
         # filt is 1D -> avoid multi-dimensional slicing to preserve
         # non-array input types
         return filt[sl[0]]
-    if isinstance(filt, np.ndarray):
-        return filt[sl]
-    return filt_[sl]
+    if isinstance(filt, (list, tuple)):
+        return filt_[sl]
+    return filt[sl]
 
 
 def _extract_dispatcher(condition, arr):
