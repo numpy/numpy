@@ -66,15 +66,14 @@ jobs:
         fetch-tags: true
         persist-credentials: false
     - name: Install debug Python
-      uses: deadsnakes/action@e640ac8743173a67cca4d7d77cd837e514bf98e8 # v3.2.0
+      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
-        python-version: '3.14'
-        debug: true
+        python-version: '3.14d'
+        activate-environment: true
     - name: Install dependencies
       run: |
         python --version
-        pip install -U pip
-        pip install --group dev-cli --group test-extending
+        uv pip install --group dev-cli --group test-extending
     - name: Build NumPy debug
       run: |
         spin build -- -Dbuildtype=debug -Dallow-noblas=true \
