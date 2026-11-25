@@ -1,2 +1,1 @@
-* For empty input, `numpy.bincount` now validates supplied weights and
-  returns a ``float64`` array when they are valid.
+* `numpy.bincount` no longer ignores ``weights`` when the input is empty.
