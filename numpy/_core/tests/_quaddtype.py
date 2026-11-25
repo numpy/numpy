@@ -11,6 +11,6 @@ def importorskip_quaddtype():
         installed = version("numpy_quaddtype")
     except PackageNotFoundError:
         pytest.skip("numpy_quaddtype is not installed")
-    if _pep440.Version(installed) < _pep440.Version(MIN_VERSION):
+    if _pep440.Version(installed) < _pep440.Version(MIN_VERSION + "rc0"):
         pytest.skip(f"numpy_quaddtype >= {MIN_VERSION} is required")
     return pytest.importorskip("numpy_quaddtype")
