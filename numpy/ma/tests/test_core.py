@@ -3774,6 +3774,12 @@ class TestMaskedArrayMethods:
         xh.put([4, 2, 0, 1, 3], [1, 2, 3, 4, 5])
         assert_equal(xh._data, [3, 4, 2, 4, 5])
 
+        # gh-33415: put with a scalar or shorter values should repeat
+        xh = array([1, 2, 3], mask=[False, True, False], hard_mask=True)
+        xh.put([0, 2], 7)
+        assert_equal(xh, [7, 2, 7])
+        assert_equal(xh.mask, [False, True, False])
+
     def test_putmask(self):
         x = arange(6) + 1
         mx = array(x, mask=[0, 0, 0, 1, 1, 1])
