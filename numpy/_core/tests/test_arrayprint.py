@@ -1348,8 +1348,8 @@ def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
     numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
 
     pi_str = "3.14159265358979323846264338327950288"
-    arr = np.array([pi_str], dtype=QuadPrecDType())
-    res = np.array(str(arr).strip("[] "), dtype=QuadPrecDType())
+    arr = np.array([pi_str], dtype=numpy_quaddtype.QuadPrecDType())
+    res = np.array(str(arr).strip("[] "), dtype=numpy_quaddtype.QuadPrecDType())
     # Check that the string representation round-trips correctly.
     assert_array_equal(res, arr)
 
