@@ -1122,7 +1122,8 @@ class TestCLongDoubleSetItem:
         "3j+3",
         "3+-1j",
         "1-j",
-        "1_000"
+        "1_000",
+        "1+2j\0",
     ])
     def test_error_on_bad_string(self, bad_str):
         x = np.zeros(1, dtype=np.clongdouble)

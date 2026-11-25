@@ -739,7 +739,7 @@ string_to_clong_double(PyObject *op)
             }
         }
         
-        if (*end != '\0') {
+        if (end != start + PyBytes_GET_SIZE(b)) {
             goto parse_failure;
         }
         
