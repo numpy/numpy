@@ -9017,45 +9017,45 @@ class TestDotFamilyFallback:
         assert_array_equal(got, np.dot(stacked, np.ones((5, 6))), strict=True)
         assert got.flags["C_CONTIGUOUS"]
 
-    @pytest.mark.parametrize("sa,sb", [
-        ((5,), (5,)), ((3,), (3, 4)), ((4, 3), (3,)), ((4, 3), (3, 5)),
-        ((2, 3, 4), (4, 5)), ((4,), (2, 4, 5)),
-    ])
-    def test_dot_fallback_out_matches_dot(self, sa, sb):
-        # `matmul` accepts `out` shapes, dtypes and layouts that `dot`
-        # rejects, so the fallback validates `out` itself; `dot` is the oracle.
-        a, b = np.ones(sa), np.ones(sb)
-        shape = np.dot(a, b).shape
-        readonly = np.empty(shape)
-        readonly.flags.writeable = False
-        outs = [np.empty(shape), np.empty((2, *shape)),
-                np.empty(shape, np.float32),
-                np.empty(shape, np.dtype(np.float64).newbyteorder()),
-                readonly]
-        if shape:
-            outs += [np.empty(tuple(s + 1 for s in shape)),
-                     np.empty(shape[:-1])]
-        if len(shape) >= 2:
-            outs += [np.asfortranarray(np.empty(shape)),
-                     np.empty(shape[:-1] + (2 * shape[-1],))[..., ::2]]
+    @pytest.mark.parametrize("defect", ["ndim", "shape", "forder", "dtype",
+                                        "strided", "unaligned"])
+    def test_dot_fallback_out_matches_dot(self, defect):
+        # dot and the fallback share one C validator, so a bad `out` must be
+        # reported identically whether or not the dtype has a dotfunc.
+        def bad_out(shape, dt):
+            count = int(np.prod(shape))
+            itemsize = np.dtype(dt).itemsize
+            if defect == "ndim":
+                return np.empty((2, *shape), dt)
+            if defect == "shape":
+                return np.empty(tuple(s + 1 for s in shape), dt)
+            if defect == "forder":
+                return np.asfortranarray(np.empty(shape, dt))
+            if defect == "dtype":
+                return np.empty(shape, np.int64)
+            if defect == "strided":
+                return np.empty(shape[:-1] + (2 * shape[-1],), dt)[..., ::2]
+            buf = np.empty(count * itemsize + itemsize, np.uint8)
+            return np.frombuffer(buf.data, dt, count=count,
+                                 offset=1).reshape(shape)
 
-        for out in outs:
-            try:
-                ref, ref_exc = np.array(np.dot(a, b, out)), None
-            except ValueError as exc:
-                ref, ref_exc = None, exc
-            try:
-                got, got_exc = np.array(_dot_fallback(a, b, out=out)), None
-            except ValueError as exc:
-                got, got_exc = None, exc
+        messages = []
+        for a, b, dt in [(np.ones((2, 3)), np.ones((3, 4)), np.float64),
+                         (np.full((2, 3), "a"), np.full((3, 4), "a"), "U1")]:
+            with pytest.raises(ValueError) as excinfo:
+                np.dot(a, b, bad_out((2, 4), dt))
+            messages.append(str(excinfo.value))
+        assert messages[0] == messages[1]
 
-            assert (ref_exc is None) == (got_exc is None), (
-                f"out shape={out.shape} dtype={out.dtype}: "
-                f"dot={ref_exc!r} fallback={got_exc!r}")
-            if ref_exc is None:
-                assert_array_equal(got, ref, strict=True)
+    def test_dot_fallback_accepts_valid_out(self):
+        # a usable `out` must reach the fallback rather than being rejected
+        s1, s2 = np.full((2, 3), "a"), np.full((3, 4), "a")
+        with pytest.raises(ValueError, match="dot not available"):
+            np.dot(s1, s2, np.empty((2, 4), "U1"))
 
-        out = np.empty(shape)
+        a = np.arange(12, dtype=np.float64).reshape(4, 3)
+        b = np.arange(15, dtype=np.float64).reshape(3, 5)
+        out = np.empty((4, 5))
         assert _dot_fallback(a, b, out=out) is out
         assert_array_equal(out, np.dot(a, b), strict=True)
 
