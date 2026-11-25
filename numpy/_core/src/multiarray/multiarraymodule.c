@@ -84,6 +84,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 #include "umathmodule.h"
 #include "dispatching.h"
+#include "ufunc_override.h"
 
 #include "unique.h"
 
@@ -979,7 +980,28 @@ uses_dot_gufunc(PyArray_Descr *descr)
            && !NPY_DT_is_legacy(NPY_DTYPE(descr));
 }
 
-/* `gufunc(ap1, ap2, out=result)` on base-class views, skipping overrides. */
+static PyObject *
+call_dot_gufunc(PyObject *gufunc, PyObject *a, PyObject *b, PyObject *out,
+                const char *noloop_msg)
+{
+    PyObject *res = PyObject_CallFunctionObjArgs(gufunc, a, b, out, NULL);
+    if (res == NULL && PyErr_ExceptionMatches(
+            _npy_module_state->static_pydata._UFuncNoLoopError)) {
+        PyErr_SetString(PyExc_ValueError, noloop_msg);
+    }
+    return res;
+}
+
+/* Classes overriding __array_ufunc__ get the gufunc call itself. */
+static int
+dot_has_override(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *out)
+{
+    return PyUFunc_HasOverride((PyObject *)ap1)
+           || PyUFunc_HasOverride((PyObject *)ap2)
+           || (out != NULL && PyUFunc_HasOverride((PyObject *)out));
+}
+
+/* `gufunc(ap1, ap2, out=result)` on base-class views. */
 static int
 dot_via_gufunc(PyObject *gufunc, PyArrayObject *ap1, PyArrayObject *ap2,
                PyArrayObject *result, const char *noloop_msg)
@@ -999,12 +1021,7 @@ dot_via_gufunc(PyObject *gufunc, PyArrayObject *ap1, PyArrayObject *ap2,
             }
         }
     }
-    res = PyObject_CallFunctionObjArgs(
-            gufunc, views[0], views[1], views[2], NULL);
-    if (res == NULL && PyErr_ExceptionMatches(
-            _npy_module_state->static_pydata._UFuncNoLoopError)) {
-        PyErr_SetString(PyExc_ValueError, noloop_msg);
-    }
+    res = call_dot_gufunc(gufunc, views[0], views[1], views[2], noloop_msg);
   finish:
     for (int i = 0; i < 3; i++) {
         Py_XDECREF(views[i]);
@@ -1129,6 +1146,16 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
                 funcname != NULL ? "dot" : "inner",
                 funcname != NULL ? "[-1, -2]" : "[-1, -1]");
         goto fail;
+    }
+    if (uses_dot_gufunc(typec) && dot_has_override(ap1, ap2, out)) {
+        PyObject *res = call_dot_gufunc(
+                _npy_module_state->n_ops.matmul, (PyObject *)ap1,
+                (PyObject *)ap2, (PyObject *)out,
+                "dot not available for this type");
+        Py_DECREF(ap1);
+        Py_DECREF(ap2);
+        Py_DECREF(typec);
+        return res;
     }
 
     /* Deprecated NumPy 2.6: warn when a.ndim >= 2 and b.ndim > 2 */
@@ -2777,6 +2804,17 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
         PyErr_SetString(PyExc_ValueError,
                 "vectors have different lengths");
         goto fail;
+    }
+
+    if (uses_dot_gufunc(type) && dot_has_override(ap1, ap2, NULL)) {
+        PyObject *res = call_dot_gufunc(
+                _npy_module_state->n_ops.vecdot, (PyObject *)ap1,
+                (PyObject *)ap2, NULL,
+                "function not available for this data type");
+        Py_DECREF(ap1);
+        Py_DECREF(ap2);
+        Py_DECREF(type);
+        return res;
     }
 
     /* array scalar output */
