@@ -1,0 +1,6 @@
+``np.maximum``/``np.minimum`` now support string arrays
+---------------------------------------------------------
+np.maximum, np.minimum, np.max, np.min now work on arrays of dtype
+``bytes_`` and ``str_``, comparing elements lexicographically.
+Previously these ufuncs raised a ``TypeError`` for string dtypes even
+though comparisons, ``sort``, and ``argmax``/``argmin`` already worked.
