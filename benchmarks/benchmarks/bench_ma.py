@@ -166,6 +166,28 @@ class MAMethod0v(Benchmark):
         getattr(mdat, method)()
 
 
+class Reductions(Benchmark):
+    param_names = ['method', 'mask', 'size']
+    params = [['sum', 'prod', 'min', 'max', 'all', 'any'],
+              ['none', 'random', 'blocks'],
+              [1000, 1000000]]
+
+    def setup(self, method, mask, size):
+        rng = np.random.default_rng(42)
+        data = rng.random(size) + 0.5
+        if mask == 'random':
+            m = rng.random(size) < 0.2
+        else:
+            m = np.zeros(size, dtype=bool)
+            if mask == 'blocks':
+                for start in range(0, size, size // 5):
+                    m[start:start + size // 25] = True
+        self.marr = np.ma.array(data, mask=m)
+
+    def time_reduction(self, method, mask, size):
+        getattr(self.marr, method)()
+
+
 class MAFunctions2v(Benchmark):
     param_names = ['mtype', 'func', 'msize']
     params = [['np', 'np.ma'],

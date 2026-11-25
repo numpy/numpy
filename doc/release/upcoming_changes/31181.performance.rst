@@ -1,0 +1,7 @@
+Faster ``MaskedArray.min`` and ``MaskedArray.max``
+--------------------------------------------------
+When some values are masked and no ``fill_value`` is given,
+``np.ma.MaskedArray.min`` and ``np.ma.MaskedArray.max`` now pass the mask as
+``where`` to the reduction instead of filling a copy of the data. This is
+faster for large arrays and for masks with long runs of masked or unmasked
+values. ``np.ma.min``, ``np.ma.max`` and ``np.ma.ptp`` also benefit.
