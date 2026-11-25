@@ -88,3 +88,15 @@ class TestRegression:
         a = np.ma.MaskedArray([np.nan, 3], mask=[True, True])
         for f in (np.nanmean, np.nanstd, np.nanvar):
             assert_(np.ma.is_masked(f(a)), f.__name__)
+        for q in (10, 90):
+            assert_(np.ma.is_masked(np.nanpercentile(a, q)))
+            assert_(np.ma.is_masked(np.percentile(a, q)))
+            assert_(np.ma.is_masked(np.nanquantile(a, q / 100)))
+            assert_(np.ma.is_masked(np.quantile(a, q / 100)))
+        for res in (
+            np.nanpercentile(a, [10, 90]),
+            np.percentile(a, [10, 90]),
+            np.nanquantile(a, [0.1, 0.9]),
+            np.quantile(a, [0.1, 0.9]),
+        ):
+            assert_(np.all(np.ma.getmaskarray(res)))

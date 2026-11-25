@@ -4631,8 +4631,21 @@ def _lerp(a, b, t, out=None):
     """
     diff_b_a = b - a
     lerp_interpolation = add(a, diff_b_a * t, out=... if out is None else out)
-    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5,
-             casting='unsafe', dtype=type(lerp_interpolation.dtype))
+    if out is None and not lerp_interpolation.flags.writeable:
+        # Some array subclasses (e.g. MaskedConstant, gh-29117) return a
+        # read-only result from ufuncs and cannot be written into in-place.
+        mask = t >= 0.5
+        if np.any(mask):
+            hi = subtract(
+                b, diff_b_a * (1 - t), casting='unsafe',
+                dtype=type(lerp_interpolation.dtype),
+            )
+            lerp_interpolation = (
+                hi if np.all(mask) else np.where(mask, hi, lerp_interpolation)
+            )
+    else:
+        subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5,
+                 casting='unsafe', dtype=type(lerp_interpolation.dtype))
     if lerp_interpolation.ndim == 0 and out is None:
         lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
     return lerp_interpolation
