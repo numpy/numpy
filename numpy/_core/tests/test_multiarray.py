@@ -33,7 +33,6 @@ from numpy._core._exceptions import _UFuncNoLoopError
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
-from numpy._core.numeric import _dot_fallback, _vdot_fallback
 from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy._core.tests._quaddtype import importorskip_quaddtype
 from numpy.exceptions import AxisError, ComplexWarning
@@ -9139,12 +9138,14 @@ class TestInner:
 
 
 class TestDotFamilyFallback:
-    # The dot family (dot/inner/vdot/tensordot/multi_dot) historically requires
-    # a legacy ``dotfunc`` ArrFuncs slot, which new-style user DTypes cannot
-    # provide.  For such DTypes numpy falls back to the ``matmul``/``multiply``
-    # gufuncs via the private helpers in ``numpy._core.numeric``.  These tests
-    # exercise the helpers directly (against the legacy ``np.dot`` oracle) and,
-    # when available, end-to-end through a real new-style DType (quaddtype).
+    # New-style user DTypes have no legacy ``dotfunc``, so ``dot`` and ``vdot``
+    # serve them with the ``matmul`` and ``vecdot`` gufuncs.  Strings have
+    # neither a dotfunc nor gufunc loops, so they exercise the error paths;
+    # quaddtype, when installed, exercises the results.
+
+    @staticmethod
+    def quad():
+        return importorskip_quaddtype().QuadPrecDType()
 
     @pytest.mark.parametrize("sa,sb", [
         ((5,), (5,)), ((3,), (3, 4)),
@@ -9152,40 +9153,36 @@ class TestDotFamilyFallback:
         ((2, 3, 4), (4, 5)), ((4,), (2, 4, 5)),
         ((0, 3), (3, 4)), ((4, 0), (0, 5)),
     ])
-    def test_dot_fallback_matches_dot(self, sa, sb):
+    def test_dot_matches_builtin(self, sa, sb):
+        qd = self.quad()
         rng = np.random.default_rng(1)
         a = rng.integers(-4, 5, sa).astype(np.float64)
         b = rng.integers(-4, 5, sb).astype(np.float64)
         ref = np.dot(a, b)
-        got = _dot_fallback(a, b)
-        assert_array_equal(got, ref, strict=True)
+        got = np.dot(a.astype(qd), b.astype(qd))
+        assert np.ndim(got) == ref.ndim
+        assert_array_equal(np.asarray(got).astype(np.float64), ref,
+                           strict=True)
 
     @pytest.mark.parametrize("sa,sb", [
         ((3, 4), (2, 4, 5)), ((2, 3), (5, 3, 4)), ((2, 3, 4), (6, 4, 5)),
     ])
-    def test_dot_fallback_rejects_stacked(self, sa, sb):
-        # For a.ndim >= 2 and b.ndim >= 3 np.dot takes the outer product over
-        # the batch axes (unlike matmul's broadcasting); we intentionally do
-        # not implement that for user dtypes and reject in favour of tensordot.
-        a = np.ones(sa, dtype=np.float64)
-        b = np.ones(sb, dtype=np.float64)
-        with assert_raises_regex(ValueError, "tensordot"):
-            _dot_fallback(a, b)
+    def test_dot_rejects_stacked(self, sa, sb):
+        # For a.ndim >= 2 and b.ndim > 2 np.dot takes the outer product over
+        # the batch axes (deprecated for builtin dtypes).  DTypes without a
+        # dotfunc reject it outright, without the deprecation warning.
+        a, b = np.full(sa, "a"), np.full(sb, "a")
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            with assert_raises_regex(ValueError, "tensordot"):
+                np.dot(a, b)
 
-    def test_dot_fallback_rejects_scalar_operands(self):
-        # matmul has no 0-D form; `dot` keeps 0-D on its own multiply path.
-        a = np.arange(6, dtype=np.float64).reshape(2, 3)
-        for x, y in [(np.array(3.0), a), (a, np.array(3.0)),
-                     (np.array(3.0), np.array(4.0))]:
-            with assert_raises_regex(ValueError, "enough dimensions"):
-                _dot_fallback(x, y)
-
-    def test_dot_fallback_unsupported_type(self):
-        s = np.array(["a", "b", "c"])
-        assert_raises(ValueError, _dot_fallback, s, s)
-        assert_raises(ValueError, np.dot, s, s)
-        assert_raises(ValueError, _vdot_fallback, s, s)
-        assert_raises(ValueError, np.vdot, s, s)
+    def test_dot_unsupported_type(self):
+        s1, s2 = np.array(["a", "b"]), np.array([["a", "b"], ["c", "d"]])
+        for x, y in [(s1, s1), (s1, s2), (s2, s1), (s2, s2)]:
+            assert_raises_regex(ValueError, "dot not available", np.dot, x, y)
+        assert_raises_regex(ValueError, "function not available",
+                            np.vdot, s2, s2)
 
     def test_dot_scalar_operands_bypass_fallback(self):
         # `dot` handles 0-D with `multiply`, casting to the common dtype
@@ -9206,38 +9203,28 @@ class TestDotFamilyFallback:
         td = np.array(1, dtype="m8[s]")
         assert_raises(_UFuncNoLoopError, np.dot, td, td)
 
-    def test_dot_fallback_unsupported_type_is_uniform(self):
-        # A dtype with no dotfunc and no matmul loop reports the same legacy
-        # ValueError whatever the shapes are.
-        s1, s2 = np.array(["a", "b"]), np.array([["a", "b"], ["c", "d"]])
-        for x, y in [(s1, s1), (s1, s2), (s2, s1), (s2, s2)]:
-            assert_raises(ValueError, _dot_fallback, x, y)
-            assert_raises(ValueError, np.dot, x, y)
-
-    def test_dot_fallback_noncontiguous_inputs(self):
+    def test_dot_noncontiguous_inputs(self):
+        qd = self.quad()
         a = np.arange(12, dtype=np.float64).reshape(4, 3)
         b = np.arange(15, dtype=np.float64).reshape(3, 5)
         inputs = [
             (np.asfortranarray(a), np.asfortranarray(b)),
             (np.arange(24.).reshape(4, 6)[:, ::2],
              np.arange(30.).reshape(6, 5)[::2]),
+            (np.arange(120.).reshape(2, 3, 4, 5).swapaxes(0, 1),
+             np.arange(30.).reshape(5, 6)),
         ]
         for x, y in inputs:
-            ref = np.dot(x, y)
-            got = _dot_fallback(x, y)
-            assert_array_equal(got, ref, strict=True)
-            assert got.flags["C_CONTIGUOUS"]
-
-        stacked = np.ones((2, 3, 4, 5)).swapaxes(0, 1)
-        got = _dot_fallback(stacked, np.ones((5, 6)))
-        assert_array_equal(got, np.dot(stacked, np.ones((5, 6))), strict=True)
-        assert got.flags["C_CONTIGUOUS"]
+            got = np.dot(x.astype(qd, order="K"), y.astype(qd, order="K"))
+            assert got.flags.c_contiguous
+            assert_array_equal(got.astype(np.float64), np.dot(x, y),
+                               strict=True)
 
     @pytest.mark.parametrize("defect", ["ndim", "shape", "forder", "dtype",
                                         "strided", "unaligned"])
-    def test_dot_fallback_out_matches_dot(self, defect):
-        # dot and the fallback share one C validator, so a bad `out` must be
-        # reported identically whether or not the dtype has a dotfunc.
+    def test_dot_out_errors_match_builtin(self, defect):
+        # dtypes with and without a dotfunc share dot's `out` validation, so
+        # a bad `out` is reported identically.
         def bad_out(shape, dt):
             count = int(np.prod(shape))
             itemsize = np.dtype(dt).itemsize
@@ -9263,17 +9250,23 @@ class TestDotFamilyFallback:
             messages.append(str(excinfo.value))
         assert messages[0] == messages[1]
 
-    def test_dot_fallback_accepts_valid_out(self):
-        # a usable `out` must reach the fallback rather than being rejected
+    def test_dot_valid_out_reaches_fallback(self):
         s1, s2 = np.full((2, 3), "a"), np.full((3, 4), "a")
         with pytest.raises(ValueError, match="dot not available"):
             np.dot(s1, s2, np.empty((2, 4), "U1"))
 
+    def test_dot_out(self):
+        qd = self.quad()
         a = np.arange(12, dtype=np.float64).reshape(4, 3)
         b = np.arange(15, dtype=np.float64).reshape(3, 5)
-        out = np.empty((4, 5))
-        assert _dot_fallback(a, b, out=out) is out
-        assert_array_equal(out, np.dot(a, b), strict=True)
+        out = np.empty((4, 5), dtype=qd)
+        assert np.dot(a.astype(qd), b.astype(qd), out) is out
+        assert_array_equal(out.astype(np.float64), np.dot(a, b), strict=True)
+        # 1-D . 1-D fills a 0-D out and, like builtin dtypes, returns a scalar
+        s = np.empty((), dtype=qd)
+        res = np.dot(a[0].astype(qd), b[:, 0].astype(qd), s)
+        assert type(res) is type(s[()])
+        assert float(s) == float(res) == np.dot(a[0], b[:, 0])
 
     def test_dot_does_not_repeat_array_conversion(self):
         class Counter:
@@ -9292,34 +9285,12 @@ class TestDotFamilyFallback:
         assert a.calls == 2
         assert b.calls == 2
 
-    def test_dot_fallback_does_not_conjugate(self):
-        # dot (unlike vdot) must not conjugate, even for complex input
-        a = np.array([1 + 2j, 3 + 4j])
-        b = np.array([5 + 6j, 7 + 8j])
-        assert _dot_fallback(a, b) == np.dot(a, b)
-
-    def test_dot_fallback_out(self):
-        a = np.arange(12, dtype=np.float64).reshape(4, 3)
-        b = np.arange(15, dtype=np.float64).reshape(3, 5)
-        out = np.empty((4, 5), dtype=np.float64)
-        ret = _dot_fallback(a, b, out=out)
-        assert ret is out
-        assert_array_equal(out, np.dot(a, b), strict=True)
-        # 1-D . 1-D writes the scalar result into a 0-D out
-        s = np.empty(())
-        assert _dot_fallback(a[0], b[:, 0], out=s) is s
-        assert s == np.dot(a[0], b[:, 0])
-        assert_raises(ValueError, _dot_fallback, a, b, out=np.empty((4, 4)))
-
-    def test_vdot_fallback_matches_vdot(self):
-        # vdot conjugates the first argument; vecdot reproduces that on 1-D
+    def test_vdot_matches_builtin(self):
+        qd = self.quad()
         rng = np.random.default_rng(2)
         a = rng.integers(-4, 5, (2, 3)).astype(np.float64)
         b = rng.integers(-4, 5, (2, 3)).astype(np.float64)
-        assert _vdot_fallback(a, b) == np.vdot(a, b)
-        ac = (a + 1j * b).astype(np.complex128)
-        bc = (b - 1j * a).astype(np.complex128)
-        assert _vdot_fallback(ac, bc) == np.vdot(ac, bc)
+        assert float(np.vdot(a.astype(qd), b.T.astype(qd))) == np.vdot(a, b.T)
 
     def test_quaddtype_dot_family(self):
         numpy_quaddtype = importorskip_quaddtype()
