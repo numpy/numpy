@@ -2315,6 +2315,94 @@ class TestMethods:
         a = np.zeros(2, [("x", "u1", 500_000)])
         a.sort(kind="stable")
 
+    @staticmethod
+    def _count_negative_zeros(a):
+        return np.count_nonzero(np.signbit(a) & (a == 0))
+
+    @staticmethod
+    def _make_mixed_zeros(rng, n):
+        # float array with a mix of +0.0, -0.0 and non-zero values
+        a = rng.normal(size=n)
+        b = rng.normal(size=n)
+        a[np.abs(a) > 0.5] = 0
+        return np.copysign(a, b)
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+    @pytest.mark.parametrize("n", [1, 8, 16, 17, 31, 32, 33, 64, 128, 129,
+                                   1000, 4096])
+    @pytest.mark.parametrize("stable", [True, False])
+    @pytest.mark.parametrize("descending", [True, False])
+    @pytest.mark.parametrize("all_zeros", [True, False])
+    def test_sort_preserves_negative_zero_count(
+            self, dtype, n, stable, descending, all_zeros):
+        # gh-33286: unstable SIMD sorts must not create or destroy signed
+        # zeros when equal keys are reordered. The sizes straddle the
+        # sorting-network and two-value-partition thresholds of VQSort
+        # (16/32), and all_zeros exercises the runs of identical keys that
+        # the partition used to overwrite with a single representative.
+        rng = np.random.default_rng(seed=12345)
+        if all_zeros:
+            a = np.zeros(n)
+            a[rng.random(n) < 0.5] = -0.0
+        else:
+            a = self._make_mixed_zeros(rng, n)
+        a = a.astype(dtype)
+
+        expected = self._count_negative_zeros(a)
+        result = np.sort(a, stable=stable, descending=descending)
+        assert self._count_negative_zeros(result) == expected
+        # the result must still be sorted (NaNs are sorted to the end)
+        finite = result[~np.isnan(result)]
+        if descending:
+            assert np.all(finite[1:] <= finite[:-1])
+        else:
+            assert np.all(finite[:-1] <= finite[1:])
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+    @pytest.mark.parametrize("n", [17, 128, 1000])
+    @pytest.mark.parametrize("descending", [True, False])
+    def test_sort_preserves_negative_zero_count_with_nans(
+            self, dtype, n, descending):
+        # gh-33286: NaNs (sorted to the end) must not perturb the count of
+        # -0.0 either, in the unstable SIMD path.
+        rng = np.random.default_rng(seed=999)
+        a = self._make_mixed_zeros(rng, n)
+        a[::5] = np.nan
+        a = a.astype(dtype)
+
+        expected = self._count_negative_zeros(a)
+        result = np.sort(a, stable=False, descending=descending)
+        assert self._count_negative_zeros(result) == expected
+        # NaNs are grouped at the end regardless of the sort direction
+        n_nan = int(np.isnan(result).sum())
+        assert np.isnan(result[n - n_nan:]).all()
+        assert not np.isnan(result[:n - n_nan]).any()
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+    def test_sort_preserves_negative_zero_count_inplace_2d(self, dtype):
+        # gh-33286: in-place and multi-dimensional sorts go through the same
+        # SIMD dispatch and must preserve the signed-zero count on every axis.
+        rng = np.random.default_rng(seed=54321)
+        a = self._make_mixed_zeros(rng, (7, 129))
+        a = a.astype(dtype)
+
+        expected = self._count_negative_zeros(a)
+        b = a.copy()
+        b.sort()  # in-place, default kind ("quicksort", unstable SIMD sort)
+        assert self._count_negative_zeros(b) == expected
+
+        for axis in (0, 1):
+            for descending in (True, False):
+                result = np.sort(a, axis=axis, stable=False,
+                                 descending=descending)
+                assert self._count_negative_zeros(result) == expected
+
+        # strided input exercises the non-contiguous SIMD loop
+        c = a[::2]
+        expected_c = self._count_negative_zeros(c)
+        result = np.sort(c, stable=False)
+        assert self._count_negative_zeros(result) == expected_c
+
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number
     # of sorted items must be greater than ~50 to check the actual
