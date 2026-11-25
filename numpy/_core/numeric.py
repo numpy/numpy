@@ -1234,21 +1234,12 @@ def tensordot(a, b, axes=2):
 
 def _dot_fallback(a, b, out=None):
     """``dot`` via ``matmul`` for dtypes without a legacy dotfunc."""
-    a_ndim, b_ndim = np.ndim(a), np.ndim(b)
-    if a_ndim >= 2 and b_ndim >= 3:
+    if np.ndim(a) >= 2 and np.ndim(b) >= 3:
         raise ValueError(
             "'dot' does not support the stacked outer-product semantics of "
             "'a.ndim >= 2 and b.ndim >= 3' for user-defined dtypes; "
             "use 'numpy.tensordot' instead."
         )
-    if out is not None:
-        expected_ndim = max(a_ndim + b_ndim - 2, 0)
-        if (out.ndim != expected_ndim or not out.flags.c_contiguous
-                or out.dtype != np.result_type(a, b)):
-            raise ValueError(
-                "output array is not acceptable (must have the right datatype, "
-                "number of dimensions, and be a C-Array)"
-            )
     try:
         return np.matmul(a, b, out=out, order="C")
     except _UFuncNoLoopError:
