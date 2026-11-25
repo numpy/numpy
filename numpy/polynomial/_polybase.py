@@ -319,6 +319,25 @@ class ABCPolyBase(abc.ABC):
 
         self._symbol = symbol
 
+    @classmethod
+    def _fromdata(cls, coef, domain, window, symbol):
+        """Create a polynomial from pre-validated data, skipping validation.
+
+        `coef`, `domain` and `window` must be 1-d ndarrays satisfying the
+        invariants that `__init__` establishes, and `coef` must be a fresh
+        array that is not referenced elsewhere.
+        """
+        if cls.__init__ is not ABCPolyBase.__init__:
+            # A subclass overriding __init__ may not uphold the same
+            # invariants, so use the public constructor.
+            return cls(coef, domain, window, symbol)
+        self = cls.__new__(cls)
+        self.coef = coef
+        self.domain = np.array(domain)
+        self.window = np.array(window)
+        self._symbol = symbol
+        return self
+
     def __repr__(self):
         coef = repr(self.coef)[6:-1]
         domain = repr(self.domain)[6:-1]
@@ -520,7 +539,7 @@ class ABCPolyBase(abc.ABC):
     # Numeric properties.
 
     def __neg__(self):
-        return self.__class__(
+        return self._fromdata(
             -self.coef, self.domain, self.window, self.symbol
         )
 
@@ -533,7 +552,7 @@ class ABCPolyBase(abc.ABC):
             coef = self._add(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self._fromdata(coef, self.domain, self.window, self.symbol)
 
     def __sub__(self, other):
         othercoef = self._get_coefficients(other)
@@ -541,7 +560,7 @@ class ABCPolyBase(abc.ABC):
             coef = self._sub(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self._fromdata(coef, self.domain, self.window, self.symbol)
 
     def __mul__(self, other):
         othercoef = self._get_coefficients(other)
@@ -549,7 +568,7 @@ class ABCPolyBase(abc.ABC):
             coef = self._mul(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self._fromdata(coef, self.domain, self.window, self.symbol)
 
     def __truediv__(self, other):
         # there is no true divide if the rhs is not a Number, although it
@@ -588,7 +607,7 @@ class ABCPolyBase(abc.ABC):
 
     def __pow__(self, other):
         coef = self._pow(self.coef, other, maxpower=self.maxpower)
-        res = self.__class__(coef, self.domain, self.window, self.symbol)
+        res = self._fromdata(coef, self.domain, self.window, self.symbol)
         return res
 
     def __radd__(self, other):
@@ -596,21 +615,21 @@ class ABCPolyBase(abc.ABC):
             coef = self._add(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self._fromdata(coef, self.domain, self.window, self.symbol)
 
     def __rsub__(self, other):
         try:
             coef = self._sub(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self._fromdata(coef, self.domain, self.window, self.symbol)
 
     def __rmul__(self, other):
         try:
             coef = self._mul(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self._fromdata(coef, self.domain, self.window, self.symbol)
 
     def __rtruediv__(self, other):
         # An instance of ABCPolyBase is not considered a
