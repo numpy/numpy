@@ -287,7 +287,6 @@ html_title = f"{project} v{version} Manual"
 html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
 html_css_files = ["numpy.css"]
-html_context = {"default_mode": "light"}
 html_use_modindex = True
 html_copy_source = False
 html_domain_indices = False
