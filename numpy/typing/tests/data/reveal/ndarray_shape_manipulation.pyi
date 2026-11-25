@@ -19,6 +19,8 @@ assert_type(_nd.reshape((2, 2)), np.ndarray[tuple[int, int], np.dtype[np.int64]]
 assert_type(_nd.reshape((2, 2), order="C"),  np.ndarray[tuple[int, int], np.dtype[np.int64]])
 assert_type(_nd.reshape(4, order="C"),  np.ndarray[tuple[int], np.dtype[np.int64]])
 
+assert_type(_nd.reshape(_nd.shape), npt.NDArray[np.int64])
+
 # resize does not return a value
 
 # transpose

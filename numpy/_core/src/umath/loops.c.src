@@ -16,6 +16,7 @@
 #include "loops_utils.h"
 #include "gil_utils.h"
 #include "npy_extint128.h"
+#include "npy_float_to_int.h"
 
 #include "npy_pycompat.h"
 
@@ -632,45 +633,37 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
- * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
- * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
- * #c    = ,,,l,ll#
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #c    = ,,,l,ll,u,u,u,ul,ull#
  */
 /**begin repeat1
  * #kind = gcd, lcm#
+ * #absorbing = 1, 0#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            if (io1 == @absorbing@) {
+                break;
+            }
+            io1 = npy_@kind@@c@(io1, *(@type@ *)ip2);
+        }
+        *((@type@ *)iop1) = io1;
+        return;
+    }
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
+        *((@type@ *)op1) = (in1 == @absorbing@) ? in1 : npy_@kind@@c@(in1, in2);
     }
 }
 /**end repeat1**/
 /**end repeat**/
-
-/**begin repeat
- * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
- * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
- * #c    = u,u,u,ul,ull#
- */
-/**begin repeat1
- * #kind = gcd, lcm#
- **/
-NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
-    }
-}
-/**end repeat1**/
-/**end repeat**/
-
 
 /*
  * NOTE: It may be nice to vectorize these, OTOH, these are still faster
@@ -1133,10 +1126,10 @@ TIMEDELTA_md_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
         }
         else {
             double result = in1 * in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            if (npy_double_to_int64(result, (npy_timedelta *)op1) < 0) {
+                if (npy_isfinite(result)) {
+                    npy_set_floatstatus_invalid();
+                }
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
@@ -1154,10 +1147,10 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
         }
         else {
             double result = in1 * in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            if (npy_double_to_int64(result, (npy_timedelta *)op1) < 0) {
+                if (npy_isfinite(result)) {
+                    npy_set_floatstatus_invalid();
+                }
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
@@ -1175,10 +1168,10 @@ TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
         }
         else {
             double result = in1 / in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            if (npy_double_to_int64(result, (npy_timedelta *)op1) < 0) {
+                if (npy_isfinite(result)) {
+                    npy_set_floatstatus_invalid();
+                }
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
@@ -2547,6 +2540,7 @@ NPY_NO_EXPORT int
         acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
         out_min += strides[3]; out_max += strides[4];
     }
+    npy_clear_floatstatus_barrier((char*)dimensions);
     return 0;
 }
 

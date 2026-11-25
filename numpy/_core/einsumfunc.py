@@ -836,7 +836,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
             input_sets, output_set, dimension_dict, memory_arg
         )
     else:
-        raise KeyError("Path name %s not found", path_type)
+        raise KeyError(f"Path name {path_type!r} not found")
 
     cost_list, scale_list, size_list, contraction_list = [], [], [], []
 
@@ -1397,6 +1397,8 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     parameter is provided, a view into the operand is returned instead
     of a new array.  Thus, taking the diagonal as ``np.einsum('ii->i', a)``
     produces a view (changed in version 1.10.0).
+    If ``dtype`` is given and is not equivalent to the data type of the
+    operand, a copy with that data type is returned instead of a view.
 
     `einsum` also provides an alternative way to provide the subscripts and
     operands as ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``.

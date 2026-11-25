@@ -17,6 +17,7 @@
 #include "numpyos.h"
 
 #include "npy_config.h"
+#include "npy_float_to_int.h"
 #include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 #include "npy_static_data.h"
 #include "module_state.h"
@@ -2289,9 +2290,13 @@ validate_and_return:
             /* Rounding here is no worse than the integer division below.
              * Only whole minute offsets are supported by numpy anyway.
              */
-            seconds_offset = (int)PyFloat_AsDouble(total_seconds);
+            double seconds = PyFloat_AsDouble(total_seconds);
             Py_DECREF(total_seconds);
-            if (error_converting(seconds_offset)) {
+            if (error_converting(seconds)) {
+                return -1;
+            }
+            if (npy_double_to_int(seconds, &seconds_offset) < 0) {
+                PyErr_SetString(PyExc_ValueError, "timezone offset is out of range");
                 return -1;
             }
 
@@ -3967,6 +3972,37 @@ find_object_datetime_type(PyObject *obj, int type_num)
 
 
 /*
+ * Returns true if both metadata describe the same time unit, either
+ * identically or through metric prefixes of seconds (e.g. 1000 ps and 1 ns).
+ * The result does not depend on the argument order.
+ */
+static npy_bool
+time_units_are_equivalent(PyArray_DatetimeMetaData *meta1,
+                          PyArray_DatetimeMetaData *meta2)
+{
+    if (meta1->base == meta2->base) {
+        return meta1->num == meta2->num;
+    }
+    PyArray_DatetimeMetaData *coarse = meta1, *fine = meta2;
+    if (meta1->base > meta2->base) {
+        coarse = meta2;
+        fine = meta1;
+    }
+    if (coarse->base < NPY_FR_s || fine->base == NPY_FR_GENERIC) {
+        return NPY_FALSE;
+    }
+    npy_int64 num = coarse->num;
+    for (int base = coarse->base; base < fine->base; base++) {
+        num *= 1000;
+        if (num > fine->num) {
+            return NPY_FALSE;
+        }
+    }
+    return num == fine->num;
+}
+
+
+/*
  * Describes casting within datetimes or timedelta
  */
 static NPY_CASTING
@@ -4005,17 +4041,7 @@ time_to_time_resolve_descriptors(
     meta2 = get_datetime_metadata_from_dtype(loop_descrs[1]);
     assert(meta2 != NULL);
 
-    if ((meta1->base == meta2->base && meta1->num == meta2->num) ||
-            // handle some common metric prefix conversions
-            // 1000 fold conversions
-            ((meta2->base >= 7) && (meta1->base - meta2->base == 1)
-              && ((meta1->num / meta2->num) == 1000)) ||
-            // 10^6 fold conversions
-            ((meta2->base >= 7) && (meta1->base - meta2->base == 2)
-              && ((meta1->num / meta2->num) == 1000000)) ||
-            // 10^9 fold conversions
-            ((meta2->base >= 7) && (meta1->base - meta2->base == 3)
-              && ((meta1->num / meta2->num) == 1000000000))) {
+    if (time_units_are_equivalent(meta1, meta2)) {
         if (byteorder_may_allow_view) {
             *view_offset = 0;
             return NPY_NO_CASTING;

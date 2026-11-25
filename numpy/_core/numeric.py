@@ -547,8 +547,10 @@ def isfortran(a):
     """
     Check if the array is Fortran contiguous but *not* C contiguous.
 
-    This function is obsolete. If you only want to check if an array is Fortran
-    contiguous use ``a.flags.f_contiguous`` instead.
+    .. deprecated:: 2.6
+        `numpy.isfortran` is deprecated. Use ``a.flags.fnc`` instead, or
+        ``a.flags.f_contiguous`` if you only need to check for Fortran
+        contiguity.
 
     Parameters
     ----------
@@ -573,14 +575,14 @@ def isfortran(a):
     >>> a
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(a)
+    >>> a.flags.fnc
     False
 
     >>> b = np.array([[1, 2, 3], [4, 5, 6]], order='F')
     >>> b
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(b)
+    >>> b.flags.fnc
     True
 
 
@@ -590,22 +592,28 @@ def isfortran(a):
     >>> a
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(a)
+    >>> a.flags.fnc
     False
     >>> b = a.T
     >>> b
     array([[1, 4],
            [2, 5],
            [3, 6]])
-    >>> np.isfortran(b)
+    >>> b.flags.fnc
     True
 
     C-ordered arrays evaluate as False even if they are also FORTRAN-ordered.
 
-    >>> np.isfortran(np.array([1, 2], order='F'))
+    >>> np.array([1, 2], order='F').flags.fnc
     False
 
     """
+    # Deprecated in NumPy 2.6, 2026-10-14
+    warnings.warn(
+        "numpy.isfortran is deprecated. Use a.flags.fnc instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return a.flags.fnc
 
 
@@ -2172,11 +2180,13 @@ def base_repr(number, base=2, padding=0):
     while num:
         res.append(digits[num % base])
         num //= base
+    if not res:
+        res.append('0')
     if padding:
         res.append('0' * padding)
     if number < 0:
         res.append('-')
-    return ''.join(reversed(res or '0'))
+    return ''.join(reversed(res))
 
 
 # These are all essentially abbreviations
@@ -2649,6 +2659,9 @@ def astype(x, dtype, /, *, copy=True, device=None):
         array must always be returned. If ``False`` and the specified dtype
         matches the data type of the input array, the input array must be
         returned; otherwise, a newly allocated array must be returned.
+        For immutable scalars, if the specified data type matches the data
+        type of the input, the input scalar is returned regardless of the value
+        of ``copy``.
         Defaults to ``True``.
     device : str, optional
         The device on which to place the returned array. Default: None.

@@ -718,10 +718,37 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
 def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None, out=None):
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
-    itl = list(range(len(axes)))
-    itl.reverse()
-    for ii in itl:
-        a = function(a, n=s[ii], axis=axes[ii], norm=norm, out=out)
+    axes = [normalize_axis_index(axis, a.ndim) for axis in axes]
+    # The 1-D transforms are done in reverse order, ending with the first
+    # axis. Since out has the shape of the final result, it can only be used
+    # from the last transform that changes the shape, so find that one.
+    steps = []
+    shape = list(a.shape)
+    last_change = 0
+    for axis, n in zip(axes[::-1], s[::-1]):
+        if n is None:
+            # Deprecated; same default as the 1-D transforms.
+            n = shape[axis]
+        n_out = n // 2 + 1 if function is rfft and not steps else n
+        if n_out != shape[axis]:
+            shape[axis] = n_out
+            last_change = len(steps)
+        steps.append((axis, n))
+    for i, (axis, n) in enumerate(steps):
+        if i == last_change:
+            # From here on the shape is final, so out can be used
+            # (if it is None, a new array of the right shape is created).
+            this_out = out
+        elif i > 0 and n == a.shape[axis]:
+            # No change in shape, so work in-place on the previous result
+            # (never on the input: for i == 0 we always get a new array).
+            this_out = a
+        else:
+            this_out = None
+        a = function(a, n=n, axis=axis, norm=norm, out=this_out)
+        if function is rfft:
+            # Only the first transform is real, the others are complex.
+            function = fft
     return a
 
 
@@ -785,8 +812,8 @@ def fftn(a, s=None, axes=None, norm=None, out=None):
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for all axes (and hence is
-        incompatible with passing in all but the trivial ``s``).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -922,8 +949,8 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for all axes (and hence is
-        incompatible with passing in all but the trivial ``s``).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -1042,8 +1069,8 @@ def fft2(a, s=None, axes=(-2, -1), norm=None, out=None):
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for all axes (and hence only the
-        last axis can have ``s`` not equal to the shape at that axis).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -1170,8 +1197,8 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for all axes (and hence is
-        incompatible with passing in all but the trivial ``s``).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -1281,8 +1308,8 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for all axes (and hence is
-        incompatible with passing in all but the trivial ``s``).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -1339,12 +1366,7 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
             [0.+0.j,  0.+0.j]]])
 
     """
-    a = asarray(a)
-    s, axes = _cook_nd_args(a, s, axes)
-    a = rfft(a, s[-1], axes[-1], norm, out=out)
-    for ii in range(len(axes) - 2, -1, -1):
-        a = fft(a, s[ii], axes[ii], norm, out=out)
-    return a
+    return _raw_fftnd(a, s, axes, rfft, norm, out=out)
 
 
 @array_function_dispatch(_fftn_dispatcher)
@@ -1389,8 +1411,8 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for the last inverse transform.
-        incompatible with passing in all but the trivial ``s``).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 

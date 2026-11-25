@@ -17,10 +17,9 @@ import subprocess
 import sys
 import tempfile
 import textwrap
-import tracemalloc
 import warnings
 import weakref
-from contextlib import ExitStack, contextmanager
+from contextlib import contextmanager
 
 # Need to test an object that does not fully implement math interface
 from datetime import datetime, timedelta
@@ -43,6 +42,7 @@ from numpy.testing import (
     HAS_SUBPROCESSES,
     IS_64BIT,
     IS_MUSL,
+    IS_PYPY,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -64,7 +64,16 @@ from numpy.testing._private.utils import (
     longdouble_fpe_mark,
     requires_deep_recursion,
     requires_memory,
+    run_function_with_args_in_subprocess,
+    trace_memory_growth,
 )
+
+
+def _check_tracemalloc():
+    with trace_memory_growth() as growth:
+        arr = np.zeros(1_000_000, dtype="uint8")
+    # Allow for some non-data allocations
+    assert_allclose(growth(), arr.nbytes, atol=1_000)
 
 
 def assert_arg_sorted(arr, arg):
@@ -622,6 +631,7 @@ class TestArrayConstruction:
         with pytest.raises(TypeError):
             func(1, 2, 3, 4, 5, 6, 7, 8)  # too many arguments
 
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     @pytest.mark.parametrize("func",
             [np.array,
              np.asarray,
@@ -1080,19 +1090,10 @@ class TestCreation:
         with assert_raises(np._core._exceptions._ArrayMemoryError):
             np.empty(np.iinfo(np.intp).max, dtype=np.uint8)
 
-    @pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
     def test_tracemalloc(self):
-        with ExitStack() as ctx:
-            if not tracemalloc.is_tracing():
-                tracemalloc.start()
-                ctx.callback(tracemalloc.stop)
-            pre_snapshot = tracemalloc.take_snapshot()
-            arr = np.zeros(1000000, dtype="uint8")
-            post_snapshot = tracemalloc.take_snapshot()
-            diff = post_snapshot.compare_to(pre_snapshot, "filename")
-        allocated_bytes = sum(d.size_diff for d in diff)
-        # Allow for some non-data allocations
-        assert_allclose(allocated_bytes, arr.nbytes, 1000)
+        # not available on PyPy
+        pytest.importorskip("tracemalloc")
+        run_function_with_args_in_subprocess(_check_tracemalloc)
 
     def test_zeros(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
@@ -2310,6 +2311,10 @@ class TestMethods:
         ):
             np.sort(a, kind="stable", stable=True)
 
+    def test_gh_32830_sort(self):
+        a = np.zeros(2, [("x", "u1", 500_000)])
+        a.sort(kind="stable")
+
     # all c scalar sorts use the same code with different types
     # so it suffices to run a quick check with one type. The number
     # of sorted items must be greater than ~50 to check the actual
@@ -3508,6 +3513,13 @@ class TestMethods:
         assert_equal([a.searchsorted(a[i], 'left') for i in ind], ind)
         assert_equal([a.searchsorted(a[i], 'right') for i in ind], ind + 1)
 
+    def test_argsort_searchsorted_c_api_compare_error(self):
+        a = np.array(["a", None], dtype=np.dtypes.StringDType(na_object=None))
+        with pytest.raises(ValueError, match="Cannot compare null"):
+            _multiarray_tests.argsort_c_api(a)
+        with pytest.raises(ValueError, match="Cannot compare null"):
+            _multiarray_tests.searchsorted_c_api(a, a)
+
     def test_searchsorted_with_invalid_sorter(self):
         a = np.array([5, 2, 1, 3, 4])
         s = np.argsort(a)
@@ -4062,12 +4074,6 @@ class TestMethods:
         ):
             np.top_k(a, 2, mode="invalid")
 
-        with pytest.raises(
-            ValueError,
-            match=r"axis=None is not supported. Please provide a valid axis."
-        ):
-            np.top_k(a, 2, axis=None)
-
         y = (
             np.array([[], [], []], dtype=np.int8),
             np.array([[], [], []], dtype=np.intp)
@@ -4095,6 +4101,12 @@ class TestMethods:
         )
         self.assert_top_k(a, 2, -1, y, mode="smallest", sorted=sorted)
         self.assert_top_k(a, 2, 1, y, mode="smallest", sorted=sorted)
+
+        y = (
+            np.array([[5, 5]], dtype=np.int8),
+            np.array([[4, 5]], dtype=np.intp)
+        )
+        self.assert_top_k(a, 2, None, y, sorted=sorted)
 
     @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
     def test_top_k_floating_nan(self, dtype):
@@ -4794,6 +4806,7 @@ class TestBinop:
     #   - defer if other has __array_ufunc__ and it is None
     #           or other is not a subclass and has higher array priority
     #   - else, call ufunc
+    @pytest.mark.xfail(IS_PYPY, reason="Bug in pypy, #24862")
     def test_ufunc_binop_interaction(self):
         # Python method name (without underscores)
         #   -> (numpy ufunc, has_in_place_version, preferred_dtype)
@@ -5833,6 +5846,22 @@ class TestArgmaxArgminCommon:
         ret = arg_method(axis=0, out=out)
         assert ret is out
 
+    def test_compare_error_with_out(self):
+        # a strided out is written through a temporary copy, which must be
+        # discarded rather than written back when a comparison fails
+        data = [['a', 'b', 'c'], ['b', None, 'a']]
+        out = np.full(4, -1, dtype=np.intp)
+
+        def check(dtype, exc, match):
+            a = np.array(data, dtype=dtype)
+            with pytest.raises(exc, match=match):
+                a.argmax(axis=1, out=out[::2])
+            assert_array_equal(out, -1)
+
+        check(object, TypeError, "not supported")
+        check(np.dtypes.StringDType(na_object=None), ValueError,
+              "Cannot compare null")
+
     @pytest.mark.parametrize('np_array, method, idx, val',
         [(np.zeros, 'argmax', 5942, "as"),
          (np.ones, 'argmin', 6001, "0")])
@@ -5863,6 +5892,15 @@ class TestArgmaxArgminCommon:
         assert_equal(arg_method(out=out1, axis=0),
                      np_method(a, out=out2, axis=0))
         assert_equal(out1, out2)
+
+    @pytest.mark.parametrize("method", [np.argmax, np.argmin])
+    def test_object_comparison_error_stops_iteration(self, method):
+        arr = np.array([[None, 1], [2, 3]], dtype=object)
+        out = np.full(2, -1, dtype=np.intp)
+        with pytest.raises(TypeError):
+            method(arr, axis=1, out=out)
+        # The error in the first row must leave the second row's output untouched.
+        assert out[1] == -1
 
     @pytest.mark.leaks_references(reason="replaces None with NULL.")
     @pytest.mark.parametrize('method, vals',
@@ -6708,6 +6746,8 @@ class TestLexsort:
             surnames = np.array(['Hertz',    'Galilei', 'Hertz'], dtype=dtype)
             first_names = np.array(['Heinrich', 'Galileo', 'Gustav'], dtype=dtype)
             assert_array_equal(np.lexsort((first_names, surnames)), [1, 2, 0])
+            assert_array_equal(
+                np.lexsort((first_names[::-1], surnames[::-1])), [1, 0, 2])
 
     def test_invalid_axis(self):  # gh-7528
         x = np.linspace(0., 1., 42 * 3).reshape(42, 3)
@@ -6934,7 +6974,7 @@ class TestIO:
                 pos = f.tell()
             assert_equal(pos, 10, err_msg=err_msg)
 
-    def test_load_object_array_fromfile(self, tmp_path, param_filename):
+    def test_fromfile_invalid_dtype(self, tmp_path, param_filename):
         # gh-12300
         tmp_filename = normalize_filename(tmp_path, param_filename)
         with open(tmp_filename, 'w') as f:
@@ -6947,6 +6987,10 @@ class TestIO:
 
         assert_raises_regex(ValueError, "Cannot read into object array",
                             np.fromfile, tmp_filename, dtype=object)
+        with pytest.raises(
+            ValueError, match="Cannot infer count for a dtype with itemsize 0"
+        ):
+            np.fromfile(tmp_filename, dtype="V0")
 
     def test_fromfile_offset(self, tmp_path, param_filename):
         tmp_filename = normalize_filename(tmp_path, param_filename)
@@ -7265,6 +7309,8 @@ class TestFromBuffer:
     def test_empty(self):
         assert_array_equal(np.frombuffer(b''), np.array([]))
 
+    @pytest.mark.skip(reason="TODO: segfaults on PyPy when this test fails, "
+                       "see failing-test repr crash in arrayprint.py")
     def test_mmap_close(self):
         # The old buffer protocol was not safe for some things that the new
         # one is.  But `frombuffer` always used the old one for a long time.
@@ -7410,7 +7456,10 @@ class TestResize:
     @_no_tracing
     def test_basic(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        x.resize((5, 5))
+        if IS_PYPY:
+            x.resize((5, 5), refcheck=False)
+        else:
+            x.resize((5, 5))
         assert_array_equal(x.flat[:9],
                 np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).flat)
         assert_array_equal(x[9:].flat, 0)
@@ -7435,11 +7484,16 @@ class TestResize:
             subprocess.check_output([sys.executable, "-c", code],
                                     stderr=subprocess.STDOUT, text=True)
         except subprocess.CalledProcessError as e:
-            assert sys.version_info >= (3, 14)
+            assert IS_PYPY or sys.version_info >= (3, 14)
             assert "ValueError" in e.stdout
-            assert "It is possible that this is a false positive." in e.stdout
+            if IS_PYPY:
+                assert "cannot resize an array with refcheck=True on PyPy" \
+                        in e.stdout
+            else:
+                assert "It is possible that this is a false positive." \
+                        in e.stdout
         else:
-            if sys.version_info >= (3, 14):
+            if IS_PYPY or sys.version_info >= (3, 14):
                 raise AssertionError("Unexpected success of resize refcheck")
 
     def test_check_reference_2(self):
@@ -7464,7 +7518,10 @@ class TestResize:
     @_no_tracing
     def test_int_shape(self):
         x = np.eye(3)
-        x.resize(3)
+        if IS_PYPY:
+            x.resize(3, refcheck=False)
+        else:
+            x.resize(3)
         assert_array_equal(x, np.eye(3)[0, :])
 
     def test_none_shape(self):
@@ -7495,13 +7552,19 @@ class TestResize:
     @_no_tracing
     def test_freeform_shape(self):
         x = np.eye(3)
-        x.resize(3, 2, 1)
+        if IS_PYPY:
+            x.resize(3, 2, 1, refcheck=False)
+        else:
+            x.resize(3, 2, 1)
         assert_(x.shape == (3, 2, 1))
 
     @_no_tracing
     def test_zeros_appended(self):
         x = np.eye(3)
-        x.resize(2, 3, 3)
+        if IS_PYPY:
+            x.resize(2, 3, 3, refcheck=False)
+        else:
+            x.resize(2, 3, 3)
         assert_array_equal(x[0], np.eye(3))
         assert_array_equal(x[1], np.zeros((3, 3)))
 
@@ -7514,7 +7577,10 @@ class TestResize:
     def test_obj_obj(self):
         # check memory is initialized on resize, gh-4857
         a = np.ones(10, dtype=[('k', object, 2)])
-        a.resize(15,)
+        if IS_PYPY:
+            a.resize(15, refcheck=False)
+        else:
+            a.resize(15,)
         assert_equal(a.shape, (15,))
         assert_array_equal(a['k'][-5:], 0)
         assert_array_equal(a['k'][:-5], 1)
@@ -10845,6 +10911,7 @@ class TestWhere:
             np.where(a, x=a, y=a)
 
 
+@pytest.mark.skipif(IS_PYPY, reason="sys.getsizeof() is not valid on PyPy")
 class TestSizeOf:
 
     def test_empty_array(self):
@@ -11144,6 +11211,8 @@ class TestCTypes:
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
+        if IS_PYPY:
+            break_cycles()
         assert_(
             arr_ref() is None,
             "unknowable whether ctypes pointer holds a reference",
@@ -11164,6 +11233,8 @@ class TestCTypes:
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
+        if IS_PYPY:
+            break_cycles()
         assert_(
             arr_ref() is None,
             "unknowable whether ctypes pointer holds a reference",
@@ -11288,10 +11359,11 @@ class TestWritebackIfCopy:
 
 
 class TestArange:
-    def test_infinite(self):
+    @pytest.mark.parametrize("stop", [np.inf, float(np.iinfo(np.intp).max + 1)])
+    def test_size_exceeded(self, stop):
         assert_raises_regex(
             ValueError, "size exceeded",
-            np.arange, 0, np.inf
+            np.arange, 0, stop
         )
 
     def test_nan_step(self):
@@ -11358,6 +11430,29 @@ class TestArange:
         with pytest.raises(TypeError,
                 match=rf"arange\(\) not supported for inputs .* {DType_name}"):
             np.arange("a", "b")
+
+    @pytest.mark.parametrize("args, kwargs", [
+        ((0, 4 + 4j), {}),
+        ((0, 4 + 0j), {}),
+        ((4 + 4j,), {}),
+        ((2 + 1j, 10), {}),
+        ((np.complex128(4 + 4j),), {}),
+        ((np.complex64(4 + 4j),), {}),
+        ((np.clongdouble(4 + 4j),), {}),
+        ((np.array(4 + 4j),), {}),
+        ((4 + 4j,), {"dtype": complex}),
+    ])
+    def test_complex_without_step_raises(self, args, kwargs):
+        with pytest.raises(ValueError, match="step must be specified"):
+            np.arange(*args, **kwargs)
+
+    def test_complex_with_real_values(self):
+        assert_array_equal(np.arange(5, dtype=complex),
+                           np.array([0, 1, 2, 3, 4], dtype=complex))
+        assert_array_equal(np.arange(0, 5, dtype=complex),
+                           np.array([0, 1, 2, 3, 4], dtype=complex))
+        assert_array_equal(np.arange(2.0, 10.0),
+                           np.array([2., 3., 4., 5., 6., 7., 8., 9.]))
 
     def test_byteswapped(self):
         res_be = np.arange(1, 1000, dtype=">i4")
@@ -12240,7 +12335,10 @@ class TestTextSignatures:
 
     @pytest.mark.parametrize(("func", "parameter_names"), [
         (np.arange, ("start_or_stop", "stop", "step", "dtype", "device", "like")),
-        (np.busdaycalendar, ("weekmask", "holidays")),
+        pytest.param(
+            np.busdaycalendar, ("weekmask", "holidays"),
+            marks=pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc"),
+        ),
         (np.char.compare_chararrays, ("a1", "a2", "cmp", "rstrip")),
         (np.datetime_data, ("dtype",)),
         (np.from_dlpack, ("x", "device", "copy")),
@@ -12322,7 +12420,11 @@ class TestSubinterpreterTeardown:
         interp = interpreters.create()
         try:
             with pytest.raises(interpreters.ExecutionFailed) as exc:
-                interp.exec("import numpy")
+                # Ensure that the full site path of the parent interpreter
+                # is preserved in the subinterpreter. This is an issue on
+                # iOS, which can't install into the system site-packages.
+                interp.prepare_main(sys_path=tuple(sys.path))
+                interp.exec("import sys; sys.path[:] = sys_path; import numpy")
             # numpy rewraps every C-extension ImportError in a generic
             # message, so the type alone would also pass for a broken build.
             msg = exc.value.excinfo.msg

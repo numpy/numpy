@@ -18,6 +18,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
+    IS_PYPY,
     IS_WASM,
     assert_,
     assert_almost_equal,
@@ -154,6 +155,17 @@ class TestNonarrayArgs:
     def test_ptp(self):
         a = [3, 4, 5, 10, -3, -5, 6.0]
         assert_equal(np.ptp(a, axis=0), 15.0)
+
+    @pytest.mark.parametrize("axis, out_index", [
+        (0, (0,)), (0, (1,)), (1, (slice(None), 0)), (1, (slice(None), 1)),
+    ])
+    def test_ptp_out_overlaps_input(self, axis, out_index):
+        a = np.array([[1., 2.], [5., 10.]])
+        expected = np.ptp(a, axis=axis)
+        out = a[out_index]
+        res = np.ptp(a, axis=axis, out=out)
+        assert res is out
+        assert_equal(res, expected)
 
     def test_prod(self):
         arr = [[1, 2, 3, 4],
@@ -2132,6 +2144,12 @@ class TestBinaryRepr:
 class TestBaseRepr:
     def test_base3(self):
         assert_equal(np.base_repr(3**5, 3), '100000')
+
+    def test_zero(self):
+        assert_equal(np.base_repr(0), '0')
+        assert_equal(np.base_repr(0, 10, 4), '00000')
+        assert_equal(np.base_repr(0, 2, 1), '00')
+        assert_equal(np.base_repr(np.int64(0), padding=3), '0000')
 
     def test_positive(self):
         assert_equal(np.base_repr(12, 10), '12')
@@ -4258,6 +4276,7 @@ class TestBroadcast:
             np.broadcast([[1, 2, 3]], [[4], [5]], [6, 7])
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_signatures(self):
         sig_new = inspect.signature(np.broadcast)
         assert len(sig_new.parameters) == 1

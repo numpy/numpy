@@ -87,12 +87,12 @@ num_utf8_bytes_for_codepoint(uint32_t code)
 // is the number of codepoints that are not trailing null codepoints. Returns
 // 0 on success and -1 when an invalid code point is found.
 NPY_NO_EXPORT int
-utf8_size(const Py_UCS4 *codepoints, long max_length, size_t *num_codepoints,
+utf8_size(const char *codepoints, long max_length, size_t *num_codepoints,
           size_t *utf8_bytes)
 {
     size_t ucs4len = max_length;
 
-    while (ucs4len > 0 && codepoints[ucs4len - 1] == 0) {
+    while (ucs4len > 0 && read_ucs4(codepoints, ucs4len - 1) == 0) {
         ucs4len--;
     }
     // ucs4len is now the number of codepoints that aren't trailing nulls.
@@ -100,7 +100,7 @@ utf8_size(const Py_UCS4 *codepoints, long max_length, size_t *num_codepoints,
     size_t num_bytes = 0;
 
     for (size_t i = 0; i < ucs4len; i++) {
-        Py_UCS4 code = codepoints[i];
+        Py_UCS4 code = read_ucs4(codepoints, i);
         int codepoint_bytes = num_utf8_bytes_for_codepoint((uint32_t)code);
         if (codepoint_bytes == -1) {
             return -1;

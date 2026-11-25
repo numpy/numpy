@@ -130,7 +130,8 @@ type _3D = tuple[int, int, int]
 type _4D = tuple[int, int, int, int]
 
 # workaround for mypy's and pyright's typing spec non-compliance regarding overloads
-type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
+type _JustND = tuple[Never, Never, Never, Never]
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustND, np.dtype[ScalarT]]
 
 type _ToArray1D2[ScalarT: np.generic, T] = Array1D[ScalarT] | Sequence[T]
 type _ToArray2D2[ScalarT: np.generic, T] = Array2D[ScalarT] | Sequence[Sequence[T]]
@@ -389,7 +390,7 @@ def take[ArrayT: np.ndarray](
 ) -> ArrayT: ...
 
 #
-@overload  # Nd T
+@overload  # Nd T, axis=<given>
 def top_k[ShapeT: _Shape, DTypeT: np.dtype](
     a: np.ndarray[ShapeT, DTypeT],
     k: int | np.integer,
@@ -399,6 +400,16 @@ def top_k[ShapeT: _Shape, DTypeT: np.dtype](
     mode: _TopKMode = "largest",
     sorted: bool = True,
 ) -> tuple[np.ndarray[ShapeT, DTypeT], np.ndarray[ShapeT, np.dtype[np.intp]]]: ...
+@overload  # Nd T, axis=None
+def top_k[DTypeT: np.dtype](
+    a: np.ndarray[Any, DTypeT],
+    k: int | np.integer,
+    /,
+    *,
+    axis: None,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[np.ndarray[tuple[int], DTypeT], Array1D[np.intp]]: ...
 @overload  # 1d bool
 def top_k(
     a: list[bool],
@@ -479,7 +490,7 @@ def top_k(
     mode: _TopKMode = "largest",
     sorted: bool = True,
 ) -> tuple[Array2D[np.complex128], Array2D[np.intp]]: ...
-@overload  # ?d T
+@overload  # ?d T, axis=<given>
 def top_k[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     k: int | np.integer,
@@ -489,7 +500,17 @@ def top_k[ScalarT: np.generic](
     mode: _TopKMode = "largest",
     sorted: bool = True,
 ) -> tuple[NDArray[ScalarT], NDArray[np.intp]]: ...
-@overload  # ?d  (fallback)
+@overload  # ?d T, axis=None
+def top_k[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    k: int | np.integer,
+    /,
+    *,
+    axis: None,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[Array1D[ScalarT], Array1D[np.intp]]: ...
+@overload  # ?d, axis=<given> (fallback)
 def top_k(
     a: ArrayLike,
     k: int | np.integer,
@@ -499,6 +520,16 @@ def top_k(
     mode: _TopKMode = "largest",
     sorted: bool = True,
 ) -> tuple[NDArray[Any], NDArray[np.intp]]: ...
+@overload  # ?d, axis=None    (fallback)
+def top_k(
+    a: ArrayLike,
+    k: int | np.integer,
+    /,
+    *,
+    axis: None,
+    mode: _TopKMode = "largest",
+    sorted: bool = True,
+) -> tuple[Array1D[Any], Array1D[np.intp]]: ...
 
 # keep in sync with `ma.core.reshape`
 @overload  # shape: index
@@ -510,6 +541,15 @@ def reshape[ScalarT: np.generic](
     *,
     copy: bool | None = None,
 ) -> Array1D[ScalarT]: ...
+@overload  # shape: (Any, ...)  (workaround)
+def reshape[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    /,
+    shape: _JustND,
+    order: _OrderACF = "C",
+    *,
+    copy: bool | None = None,
+) -> NDArray[ScalarT]: ...
 @overload  # shape: ~ShapeT
 def reshape[ScalarT: np.generic, ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     a: _ArrayLike[ScalarT],
@@ -537,6 +577,15 @@ def reshape(
     *,
     copy: bool | None = None,
 ) -> np.ndarray[_1D]: ...
+@overload  # shape: (Any, ...)  (workaround)
+def reshape(
+    a: ArrayLike,
+    /,
+    shape: _JustND,
+    order: _OrderACF = "C",
+    *,
+    copy: bool | None = None,
+) -> NDArray[Any]: ...
 @overload  # shape: ~ShapeT
 def reshape[ShapeT: (_0D, _1D, _2D, _3D, _4D)](
     a: ArrayLike,
@@ -1311,7 +1360,9 @@ def searchsorted(
 
 # keep in sync with `ma.core.resize`
 @overload
-def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: SupportsIndex | tuple[SupportsIndex]) -> Array1D[ScalarT]: ...
+def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: SupportsIndex) -> Array1D[ScalarT]: ...
+@overload
+def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: _JustND) -> NDArray[ScalarT]: ...
 @overload
 def resize[ScalarT: np.generic, AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](
     a: _ArrayLike[ScalarT],
@@ -1320,7 +1371,9 @@ def resize[ScalarT: np.generic, AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](
 @overload
 def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: _ShapeLike) -> NDArray[ScalarT]: ...
 @overload
-def resize(a: ArrayLike, new_shape: SupportsIndex | tuple[SupportsIndex]) -> np.ndarray[_1D]: ...
+def resize(a: ArrayLike, new_shape: SupportsIndex) -> np.ndarray[_1D]: ...
+@overload
+def resize(a: ArrayLike, new_shape: _JustND) -> NDArray[Any]: ...
 @overload
 def resize[AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](a: ArrayLike, new_shape: AnyShapeT) -> np.ndarray[AnyShapeT]: ...
 @overload

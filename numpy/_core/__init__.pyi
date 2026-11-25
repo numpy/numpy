@@ -77,7 +77,7 @@ from .fromnumeric import (
 from .function_base import geomspace, linspace, logspace
 from .getlimits import finfo, iinfo
 from .memmap import memmap
-from .numeric import (
+from .numeric import (  # type: ignore[deprecated]
     False_,
     True_,
     allclose,

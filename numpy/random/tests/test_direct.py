@@ -270,6 +270,20 @@ class Base:
         uints = bit_generator.random_raw(1000, output=False)
         assert uints is None
 
+    def test_raw_tuple_size(self):
+        # Fixes a bug where random_raw computed the size
+        # incorrectly when a tuple was passed in. It uses sum rather than prod.
+        bit_generator = self.bit_generator(*self.data1['seed'])
+        state = bit_generator.state
+        bit_generator.random_raw((3, 5), output=False)
+        next_uint = bit_generator.random_raw()
+        bit_generator.state = state
+        _ = bit_generator.random_raw((3, 5), output=True)
+        assert bit_generator.random_raw() == next_uint
+
+        with pytest.raises(ValueError, match="negative dimensions are not allowed"):
+            bit_generator.random_raw((-1, 5), output=False)
+
     def test_gauss_inv(self):
         n = 25
         rs = RandomState(self.bit_generator(*self.data1['seed']))
@@ -430,6 +444,19 @@ class TestPhilox(Base):
                                    key=state['state']['key'])
         assert_state_equal(bit_generator.state, keyed.state)
 
+    def test_valid_buffer_position(self):
+        bit_generator = self.bit_generator(*self.data1['seed'])
+        state = bit_generator.state
+        original_position = state["buffer_pos"]
+        state["buffer_pos"] = 0
+        with pytest.raises(ValueError, match="buffer_pos must be between 1 and 4"):
+            bit_generator.state = state
+        state["buffer_pos"] = 5
+        with pytest.raises(ValueError, match="buffer_pos must be between 1 and 4"):
+            bit_generator.state = state
+        state["buffer_pos"] = original_position
+        bit_generator.state = state  # Should not raise
+
 
 class TestPCG64(Base):
     @classmethod
@@ -543,6 +570,42 @@ class TestMT19937(Base):
         bit_generator.state = tup
         actual = rs.integers(2 ** 16)
         assert_equal(actual, desired)
+
+    def test_valid_state_pos(self):
+        # Ensures that buffer access after setting the state is valid for
+        # MT19937. The state position must be between 1 and 624 normally.
+        # After jumped, however, it can be 0, so we also allow this value.
+        bg = self.bit_generator(*self.data1['seed'])
+        state = bg.state
+        original_pos = state['state']['pos']
+        state['state']['pos'] = -1
+        with pytest.raises(
+            ValueError,
+            match='state position must be between 0 and 624'
+        ):
+            bg.state = state
+        state['state']['pos'] = 625
+        with pytest.raises(
+            ValueError,
+            match='state position must be between 0 and 624'
+        ):
+            bg.state = state
+        state['state']['pos'] = original_pos
+        bg.state = state  # Should not raise
+        assert bg.state['state']['pos'] == original_pos
+
+    def test_ordered_draws(self):
+        # Test that draws are ordered correctly when using the state tuple
+        rs = Generator(self.bit_generator(*self.data1['seed']))
+        bit_generator = rs.bit_generator
+        state = bit_generator.state
+        a, b = bit_generator.random_raw(2)
+        bit_generator.state = state
+        random_float64 = rs.random()
+        a = a >> 5
+        b = b >> 6
+        direct_float64 = (a * 67108864.0 + b) / 9007199254740992.0
+        assert_allclose(random_float64, direct_float64, rtol=1e-15, atol=0.0)
 
 
 class TestSFC64(Base):

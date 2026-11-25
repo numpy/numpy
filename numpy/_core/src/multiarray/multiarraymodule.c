@@ -5375,7 +5375,11 @@ multiarray_umath_free(void *m)
     multiarray_umath_state *state = get_module_state((PyObject *)m);
     multiarray_umath_clear((PyObject *)m);
     if (state->pytype_to_dtype_hash != NULL) {
-        /* TODO: release the references held for the entries */
+        /*
+         * NOTE: this only frees the table. The mapping owns a reference to
+         * each type and DType it stores, so enabling teardown also requires
+         * visiting these in traverse and releasing them in clear.
+         */
         PyArrayIdentityHash_Dealloc(state->pytype_to_dtype_hash);
         state->pytype_to_dtype_hash = NULL;
     }

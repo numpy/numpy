@@ -42,7 +42,8 @@ type _3D = tuple[int, int, int]
 type _4D = tuple[int, int, int, int]
 
 # workaround for mypy and pyright not following the typing spec for overloads
-type _ArrayJustND[ScalarT: np.generic] = np.ndarray[tuple[Never, Never, Never, Never], np.dtype[ScalarT]]
+type _JustAnyShape = tuple[Never, Never, Never, Never]
+type _ArrayJustND[ScalarT: np.generic] = np.ndarray[_JustAnyShape, np.dtype[ScalarT]]
 
 type _ToArray1D[ScalarT: np.generic] = Array1D[ScalarT] | Sequence[ScalarT]
 type _NestedList[T] = _NestedSequence[list[T]] | list[T]
@@ -91,6 +92,8 @@ class Generator:
     @overload
     def standard_cauchy(self, size: SupportsIndex) -> Array1D[np.float64]: ...
     @overload
+    def standard_cauchy(self, size: _JustAnyShape) -> NDArray[np.float64]: ...
+    @overload
     def standard_cauchy[ShapeT: (_0D, _1D, _2D, _3D)](self, size: ShapeT) -> _ArrayF64[ShapeT]: ...
     @overload
     def standard_cauchy(self, size: _ShapeLike) -> _ArrayF64: ...
@@ -106,10 +109,17 @@ class Generator:
     @overload  # size=<1d>, dtype=f64 (default)
     def random(
         self,
-        size: SupportsIndex | tuple[SupportsIndex],
+        size: SupportsIndex,
         dtype: _DTypeLikeF64 = np.float64,
         out: None = None,
     ) -> Array1D[np.float64]: ...
+    @overload  # size=<just unknown> (workaround), dtype=f64 (default)
+    def random(
+        self,
+        size: _JustAnyShape,
+        dtype: _DTypeLikeF64 = np.float64,
+        out: None = None,
+    ) -> NDArray[np.float64]: ...
     @overload  # size=<known>, dtype=f64 (default)
     def random[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
@@ -127,10 +137,17 @@ class Generator:
     @overload  # size=<1d>, dtype=f32
     def random(
         self,
-        size: SupportsIndex | tuple[SupportsIndex],
+        size: SupportsIndex,
         dtype: _DTypeLikeF32,
         out: None = None,
     ) -> Array1D[np.float32]: ...
+    @overload  # size=<just unknown> (workaround), dtype=f32
+    def random(
+        self,
+        size: _JustAnyShape,
+        dtype: _DTypeLikeF32,
+        out: None = None,
+    ) -> NDArray[np.float32]: ...
     @overload  # size=<known>, dtype=f32
     def random[ShapeT: (_0D, _1D, _2D, _3D)](
         self,
@@ -187,7 +204,14 @@ class Generator:
     @overload  # size=<1d>, dtype=f64 (default)
     def standard_normal(
         self,
-        size: SupportsIndex | tuple[SupportsIndex],
+        size: SupportsIndex,
+        dtype: _DTypeLikeF64 = np.float64,
+        out: None = None,
+    ) -> Array1D[np.float64]: ...
+    @overload  # size=<just unknown> (workaround), dtype=f64 (default)
+    def standard_normal(
+        self,
+        size: _JustAnyShape,
         dtype: _DTypeLikeF64 = np.float64,
         out: None = None,
     ) -> Array1D[np.float64]: ...
@@ -208,7 +232,14 @@ class Generator:
     @overload  # size=<1d>, dtype=f32
     def standard_normal(
         self,
-        size: SupportsIndex | tuple[SupportsIndex],
+        size: SupportsIndex,
+        dtype: _DTypeLikeF32,
+        out: None = None,
+    ) -> Array1D[np.float32]: ...
+    @overload  # size==<just unknown> (workaround), dtype=f32
+    def standard_normal(
+        self,
+        size: _JustAnyShape,
         dtype: _DTypeLikeF32,
         out: None = None,
     ) -> Array1D[np.float32]: ...
@@ -1466,6 +1497,8 @@ class Generator:
     #
     @overload  # size=None (default)
     def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: None = None) -> Array1D[np.float64]: ...
+    @overload  # size=<just unknown>  (workaround)
+    def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: _JustAnyShape) -> NDArray[np.float64]: ...
     @overload  # size=<1d>
     def dirichlet(self, /, alpha: _ArrayLikeFloat_co, size: int | tuple[int]) -> Array2D[np.float64]: ...
     @overload  # size=<2d>
@@ -1488,6 +1521,18 @@ class Generator:
         *,
         method: _MethodMVN = "svd",
     ) -> Array1D[np.float64]: ...
+    @overload  # size=<just unknown>  (workaround)
+    def multivariate_normal(
+        self,
+        /,
+        mean: _ArrayLikeFloat_co,
+        cov: _ArrayLikeFloat_co,
+        size: _JustAnyShape,
+        check_valid: _CheckValid = "warn",
+        tol: float = 1e-8,
+        *,
+        method: _MethodMVN = "svd",
+    ) -> NDArray[np.float64]: ...
     @overload  # size=<1d>
     def multivariate_normal(
         self,
@@ -1560,6 +1605,10 @@ class Generator:
     def multinomial(
         self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: None = None
     ) -> NDArray[np.int64]: ...
+    @overload  # size=<just unknown>  (workaround)
+    def multinomial(
+        self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: _JustAnyShape
+    ) -> NDArray[np.int64]: ...
     @overload  # size=<1d>
     def multinomial(
         self, /, n: _ArrayLikeInt_co, pvals: _ArrayLikeFloat_co, size: int | tuple[int]
@@ -1587,6 +1636,15 @@ class Generator:
         size: None = None,
         method: _MethodMVHG = "marginals",
     ) -> Array1D[np.int64]: ...
+    @overload  # size=<just unknown>  (workaround)
+    def multivariate_hypergeometric(
+        self,
+        /,
+        colors: _ArrayLikeInt_co,
+        nsample: int,
+        size: _JustAnyShape,
+        method: _MethodMVHG = "marginals",
+    ) -> NDArray[np.int64]: ...
     @overload  # size=<1d>
     def multivariate_hypergeometric(
         self,
@@ -1806,7 +1864,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: ArrayLike,
+        a: ArrayLike | Sequence[Any],
         size: None = None,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,
@@ -1993,7 +2051,7 @@ class Generator:
     def choice(
         self,
         /,
-        a: ArrayLike,
+        a: ArrayLike | Sequence[Any],
         size: _ShapeLike,
         replace: bool = True,
         p: _ArrayLikeFloat_co | None = None,

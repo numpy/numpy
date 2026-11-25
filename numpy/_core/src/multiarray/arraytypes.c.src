@@ -657,7 +657,7 @@ UNICODE_getitem(void *ip, void *vap)
             PyErr_NoMemory();
             return NULL;
         }
-        memcpy(buf, src, size);
+        memcpy(buf, ip, size);
         if (swap) {
             byte_swap_vector(buf, ucs4len, sizeof(npy_ucs4));
         }
@@ -2261,11 +2261,11 @@ OBJECT_copyswap(PyObject **dst, PyObject **src, int NPY_UNUSED(swap),
         }
         else {
             PyObject *tmp;
-            memcpy(&tmp, src, sizeof(tmp));
+            memcpy(&tmp, (char *)src, sizeof(tmp));
             Py_XINCREF(tmp);
-            memcpy(&tmp, dst, sizeof(tmp));
+            memcpy(&tmp, (char *)dst, sizeof(tmp));
             Py_XDECREF(tmp);
-            memcpy(dst, src, sizeof(tmp));
+            memcpy((char *)dst, (char *)src, sizeof(tmp));
         }
     }
 }

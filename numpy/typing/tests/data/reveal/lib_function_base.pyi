@@ -140,6 +140,9 @@ assert_type(np.vectorize(_fn1_Any)(AR_LIKE_f8), npt.NDArray[Any])
 assert_type(np.vectorize(_fn1_f_i)(AR_f8_2d), Any)
 assert_type(np.vectorize(_fn1_f, signature="(n)->()")(AR_f8_2d), npt.NDArray[Any])
 
+_any: Any
+assert_type(np.vectorize(_any), np.vectorize[Any, Any])
+
 # rot90
 assert_type(np.rot90(AR_f8_1d), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.rot90(AR_f8, k=2), npt.NDArray[np.float64])
@@ -621,9 +624,12 @@ assert_type(np.insert(AR_f8, np.s_[:5], 5), np.ndarray[tuple[int], np.dtype[np.f
 assert_type(np.insert(AR_LIKE_f8, [0, 4, 9], [0.5, 9.2, 7], axis=0), np.ndarray)
 
 # append
+assert_type(np.append(AR_u1, True), npt.Array1D[Any])
+assert_type(np.append(True, AR_u1), npt.Array1D[Any])
 assert_type(np.append(f8, f8), npt.Array1D[np.float64])
 assert_type(np.append(AR_f8, AR_i8), npt.Array1D[Any])
 assert_type(np.append(AR_f8, AR_f8), npt.Array1D[np.float64])
+assert_type(np.append([1.0], 1), npt.Array1D[Any])
 assert_type(np.append(AR_f8, AR_LIKE_f8, axis=0), npt.NDArray[Any])
 assert_type(np.append(AR_f8_2d, AR_i8_2d, axis=0), npt.Array2D[Any])
 assert_type(np.append(AR_f8_2d, AR_f8_2d, axis=0), npt.Array2D[np.float64])

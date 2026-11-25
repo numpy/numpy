@@ -229,11 +229,11 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     return ret
 
 def _ptp(a, axis=None, out=None, keepdims=False):
-    return um.subtract(
-        umr_maximum(a, axis, None, out, keepdims),
-        umr_minimum(a, axis, None, None, keepdims),
-        out
-    )
+    # TODO: use minimummaximum once downstream libraries that override
+    # __array_ufunc__, e.g. pandas, support it
+    min_value = umr_minimum(a, axis, None, None, keepdims)
+    max_value = umr_maximum(a, axis, None, out, keepdims)
+    return um.subtract(max_value, min_value, out)
 
 def _dump(self, file, protocol=2):
     if hasattr(file, 'write'):

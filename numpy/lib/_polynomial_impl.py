@@ -33,7 +33,7 @@ array_function_dispatch = functools.partial(
 
 
 def _poly_dispatcher(seq_of_zeros):
-    return seq_of_zeros
+    return (seq_of_zeros,)
 
 
 @array_function_dispatch(_poly_dispatcher)
@@ -162,7 +162,7 @@ def poly(seq_of_zeros):
 
 
 def _roots_dispatcher(p):
-    return p
+    return (p,)
 
 
 @array_function_dispatch(_roots_dispatcher)
@@ -1030,6 +1030,10 @@ def polydiv(u, v):
     ``u.ndim = v.ndim = 0``, ``u.ndim = v.ndim = 1``,
     ``u.ndim = 1, v.ndim = 0``, and ``u.ndim = 0, v.ndim = 1`` - work.
 
+    Coefficients are in descending degree order. Remove leading zeros from
+    the divisor's coefficient array before calling this function. A zero
+    first coefficient causes a division by zero.
+
     Examples
     --------
 
@@ -1041,6 +1045,14 @@ def polydiv(u, v):
     >>> y = np.array([2.0, 1.0])
     >>> np.polydiv(x, y)
     (array([1.5 , 1.75]), array([0.25]))
+
+    To divide :math:`x^2 + 2x + 1` by :math:`0x^2 + x + 1` without
+    trimming the divisor's leading zero yourself, use
+    :func:`numpy.polynomial.polynomial.polydiv`. It takes coefficients in
+    ascending degree order, so the zero goes at the end:
+
+    >>> np.polynomial.polynomial.polydiv([1, 2, 1], [1, 1, 0])
+    (array([1., 1.]), array([0.]))
 
     """
     truepoly = (isinstance(u, poly1d) or isinstance(v, poly1d))

@@ -43,6 +43,8 @@ class TestDateTime:
               "np.datetime64"
         with pytest.warns(UserWarning, match=msg):
             np.datetime64('2000-01-01T00+01')
+        with pytest.warns(UserWarning, match=msg):
+            np.array([b'2000-01-01T00+01'] * 1000).astype('M8[us]')
 
     def test_datetime(self):
         msg = "no explicit representation of timezones available for " \
@@ -196,6 +198,31 @@ class TestDateTime:
         for larger_unit, smaller_unit in zip(larger_units, smaller_units):
             assert np.can_cast(larger_unit, smaller_unit, casting='safe')
             assert np.can_cast(smaller_unit, larger_unit, casting='safe')
+
+    @pytest.mark.parametrize("kind", ["M8", "m8"])
+    @pytest.mark.parametrize("larger_unit, smaller_unit", [
+        ("s", "1000ms"), ("ns", "1000ps"), ("2ns", "2000ps"),
+        ("us", "1000000ps"), ("ns", "1000000000as")])
+    def test_datetime_prefix_equivalence_symmetric(
+            self, kind, larger_unit, smaller_unit):
+        # gh-33454
+        larger = np.dtype(f"{kind}[{larger_unit}]")
+        smaller = np.dtype(f"{kind}[{smaller_unit}]")
+        assert larger == smaller
+        assert smaller == larger
+        assert np.can_cast(larger, smaller, casting='no')
+        assert np.can_cast(smaller, larger, casting='no')
+
+    @pytest.mark.parametrize("kind", ["M8", "m8"])
+    def test_datetime_prefix_equivalence_exact(self, kind):
+        # gh-33454: 2001 ps is not 2 ns
+        larger = np.dtype(f"{kind}[2ns]")
+        smaller = np.dtype(f"{kind}[2001ps]")
+        assert larger != smaller
+        assert smaller != larger
+        arr = np.array([1_000_000], dtype=smaller)
+        expected = arr.astype(f"{kind}[ps]").astype(larger)
+        assert_equal(np.asarray(arr, dtype=larger), expected)
 
     @pytest.mark.parametrize("unit", [
         "s", "ms", "us", "ns", "ps", "fs", "as"])
@@ -888,6 +915,14 @@ class TestDateTime:
                 np.datetime64(datetime.datetime(2000, 1, 1, 0, tzinfo=tz)),
                 np.datetime64('2000-01-01T08'))
 
+        class InvalidTimezone(datetime.tzinfo):
+            def utcoffset(self, dt):
+                return datetime.timedelta(seconds=np.iinfo(np.intc).max + 1)
+
+        with pytest.warns(UserWarning, match=msg), pytest.raises(
+                ValueError, match="timezone offset is out of range"):
+            np.datetime64(datetime.datetime(2000, 1, 1, tzinfo=InvalidTimezone()))
+
     def test_datetime_string_conversion(self):
         a = ['2011-03-16', '1920-01-01', '2013-05-19']
         str_a = np.array(a, dtype='S')
@@ -1141,6 +1176,9 @@ class TestDateTime:
 
         # gh-16352: upconversion to finer units overflows
         arr = np.array(["2367-12-31 12:00:00"], dtype="datetime64[h]")
+        with pytest.raises(OverflowError, match="Overflow"):
+            arr.astype("datetime64[ns]")
+        arr = np.array(["2367-12-31 12:00:00"] * 1000, dtype="datetime64[h]")
         with pytest.raises(OverflowError, match="Overflow"):
             arr.astype("datetime64[ns]")
 
@@ -1789,6 +1827,9 @@ class TestDateTime:
                 check(np.timedelta64(1, "s"), f, nat)
                 check(np.timedelta64(0, "s"), f, nat)
                 check(nat, f, nat)
+            # out of the int64 range
+            check(np.timedelta64(2**63 - 1, "s"), 1.5, nat)
+            check(np.timedelta64(2**63 - 1, "s"), -1.5, nat)
 
     @pytest.mark.parametrize("op1, op2, exp", [
         # m8 same units round down
@@ -2049,6 +2090,8 @@ class TestDateTime:
                 assert_equal(np.timedelta64(0) / tp(0), nat)
                 assert_equal(nat / tp(0), nat)
                 assert_equal(nat / tp(2), nat)
+            # out of the int64 range
+            assert_equal(np.timedelta64(2**62, "s") / 0.25, nat)
             # Division by inf
             assert_equal(np.timedelta64(1) / float('inf'), np.timedelta64(0))
             assert_equal(np.timedelta64(0) / float('inf'), np.timedelta64(0))
@@ -2244,6 +2287,18 @@ class TestDateTime:
               "np.datetime64"
         # Arbitrary bad string
         assert_raises(ValueError, np.array, ['badvalue'], np.dtype('M8[us]'))
+        for s in [b'badvalue', b'1980-13', b'1980-01-32', b'1980-01-01T25',
+                  b'1980-01-01T00:60', b'1980-01-01T00:00:60']:
+            assert_raises(ValueError, np.array([s] * 1000).astype, 'M8[us]')
+        for s in [b'1980-01-01T00+25', b'1980-01-01T00+01:60']:
+            with pytest.warns(UserWarning, match=msg):
+                assert_raises(ValueError, np.array([s] * 1000).astype, 'M8[us]')
+        match = '^Error parsing datetime string "\ufffdbad" at position 0$'
+        with pytest.raises(ValueError, match=match):
+            np.array([b'\xffbad']).astype('M8[us]')
+        with pytest.raises(ValueError) as excinfo:
+            np.datetime64('x' * 200)
+        assert 'x' * 101 not in str(excinfo.value)
         # Character after year must be '-'
         assert_raises(ValueError, np.array, ['1980X'], np.dtype('M8[us]'))
         # Cannot have trailing '-'

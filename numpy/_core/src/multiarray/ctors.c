@@ -12,6 +12,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
+#include "npy_float_to_int.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -3094,13 +3095,14 @@ _arange_safe_ceil_to_intp(double value)
             "arange: cannot compute length");
         return -1;
     }
-    if (!((double)NPY_MIN_INTP <= ivalue && ivalue <= (double)NPY_MAX_INTP)) {
+    npy_intp result;
+    if (npy_double_to_intp(ivalue, &result) < 0) {
         PyErr_SetString(PyExc_OverflowError,
                 "arange: overflow while computing length");
         return -1;
     }
 
-    return (npy_intp)ivalue;
+    return result;
 }
 
 
@@ -3298,6 +3300,22 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
     return len;
 }
 
+/* Return 1 if obj has a complex dtype, 0 if not, -1 on error */
+static int
+_object_is_complex(PyObject *obj)
+{
+    if (obj == NULL || obj == Py_None) {
+        return 0;
+    }
+    PyArray_Descr *dt = PyArray_DescrFromObject(obj, NULL);
+    if (dt == NULL) {
+        return -1;
+    }
+    int is_complex = PyTypeNum_ISCOMPLEX(dt->type_num);
+    Py_DECREF(dt);
+    return is_complex;
+}
+
 /*NUMPY_API
  *
  * ArangeObj,
@@ -3378,11 +3396,28 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     }
 
     if (!step || step == Py_None) {
+        if (PyTypeNum_ISCOMPLEX(dtype->type_num)) {
+            int cplx = _object_is_complex(start);
+            if (cplx == 0) {
+                cplx = _object_is_complex(stop);
+            }
+            if (cplx < 0) {
+                goto fail;
+            }
+            if (cplx) {
+                PyErr_SetString(PyExc_ValueError,
+                        "arange: step must be specified when start or stop is "
+                        "complex; use numpy.linspace to generate evenly spaced "
+                        "complex values.");
+                goto fail;
+            }
+        }
         Py_XSETREF(step, PyLong_FromLong(1));
         if (step == NULL) {
             goto fail;
         }
     }
+
     if (!stop || stop == Py_None) {
         Py_XSETREF(stop, start);
         start = PyLong_FromLong(0);
@@ -3680,6 +3715,12 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
         return NULL;
     }
     if (dtype->elsize == 0) {
+        if (num < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot infer count for a dtype with itemsize 0");
+            Py_DECREF(dtype);
+            return NULL;
+        }
         /* Nothing to read, just create an empty array of the requested type */
         return PyArray_NewFromDescr_int(
                 &PyArray_Type, dtype,

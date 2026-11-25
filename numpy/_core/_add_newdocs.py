@@ -2225,6 +2225,8 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
     parameter is provided, a view into the operand is returned instead
     of a new array.  Thus, taking the diagonal as ``np.einsum('ii->i', a)``
     produces a view (changed in version 1.10.0).
+    If ``dtype`` is given and is not equivalent to the data type of the
+    operand, a copy with that data type is returned instead of a view.
 
     `einsum` also provides an alternative way to provide the subscripts
     and operands as ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``.
@@ -3421,14 +3423,14 @@ _METHOD_DOC_TEMPLATE = """{name}({params})
 
 {doc}"""
 
-def _array_method_doc(name: str, params: str, doc: str) -> None:
+def _array_method_doc(name: str, params: str, doc: str, *, scalar_doc: str | None = None) -> None:
     """
-    Interenal helper function for adding docstrings to a common method of
+    Internal helper function for adding docstrings to a common method of
     `numpy.ndarray` and `numpy.generic`.
 
     The provided docstring will be added to the given `numpy.ndarray` method.
-    For the  `numpy.generic` method, a shorter docstring indicating that it is
-    identical to the `ndarray` method will be created.
+    For the  `numpy.generic` method, a shorter docstring is generated unless
+    `scalar_doc` is provided.
     Both methods will have a proper and identical `__text_signature__`.
 
     Parameters
@@ -3442,6 +3444,8 @@ def _array_method_doc(name: str, params: str, doc: str) -> None:
         bytes, numbers, tuples, lists, dicts, sets, booleans, or None.
     doc : str
         The full docstring for the `ndarray` method.
+    scalar_doc : str, optional
+        The docstring body for the `numpy.generic` method.
     """
 
     # prepend the pos-only `$self` parameter to the method signature
@@ -3455,8 +3459,10 @@ def _array_method_doc(name: str, params: str, doc: str) -> None:
     add_newdoc("numpy._core.multiarray", "ndarray", (name, doc_array))
 
     # add docstring to `np.generic.{name}`
-    doc_scalar = f"Scalar method identical to `ndarray.{name}`."
-    doc_scalar = _METHOD_DOC_TEMPLATE.format(name=name, params=params, doc=doc_scalar)
+    if scalar_doc is None:
+        scalar_doc = f"Scalar method identical to `ndarray.{name}`."
+    scalar_doc = textwrap.dedent(scalar_doc).strip()
+    doc_scalar = _METHOD_DOC_TEMPLATE.format(name=name, params=params, doc=scalar_doc)
     add_newdoc("numpy._core.numerictypes", "generic", (name, doc_scalar))
 
 
@@ -3624,6 +3630,13 @@ _array_method_doc('astype', "dtype, order='K', casting='unsafe', subok=True, cop
 
     >>> x[:2].astype(np.int_, casting="same_value")
     array([1, 2])
+    """,
+    scalar_doc="""
+    Cast the scalar to a specified data type.
+
+    For immutable scalars, the original scalar is returned if ``copy`` is
+    False and ``dtype`` is equivalent, or regardless of ``copy`` if the
+    scalar already has exactly the requested type.
     """)
 
 _array_method_doc('byteswap', "inplace=False",
@@ -5446,7 +5459,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         (which is useful especially for object dtype), or a tuple with one
         entry per output (latter for consistency with ``ufunc.__call__``).
         For a ufunc with a single output, a 1-element tuple is also
-        accepted, as before.
+        accepted.
 
         .. versionadded:: 2.3
             Support for ``out=...`` was added.
@@ -5578,13 +5591,24 @@ add_newdoc('numpy._core', 'ufunc', ('accumulate',
         If not provided or None, a freshly-allocated array is returned.
         For consistency with ``ufunc.__call__``, if passed as a keyword
         argument, can be Ellipses (``out=...``, which has the same effect
-        as None as an array is always returned), or a 1-element tuple.
+        as None as an array is always returned), or a tuple with one entry
+        per output. For a ufunc with a single output, a 1-element tuple is
+        also accepted.
 
     Returns
     -------
-    r : ndarray
+    r : ndarray or tuple of ndarray
         The accumulated values. If `out` was supplied, `r` is a reference to
-        `out`.
+        `out`. For a ufunc with more than one output whose loop implementation
+        registers a reduction loop, `r` is instead a tuple with one array per
+        output.
+
+    Notes
+    -----
+    ``accumulate`` normally only supports ufuncs with a single output. A ufunc
+    with more than one output can still be used if its loop implementation
+    registers a dedicated reduction loop. Otherwise, calling it raises a
+    ``TypeError``.
 
     Examples
     --------

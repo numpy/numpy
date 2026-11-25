@@ -289,7 +289,7 @@ void free_cap(PyObject * cap)
     }
     else
     {
-      Py_INCREF(array_descr(ary));
+      Py_INCREF((PyObject*)array_descr(ary));
       result = (PyArrayObject*) PyArray_FromArray(ary,
                                                   array_descr(ary),
 %#if NPY_API_VERSION < NPY_1_7_API_VERSION
