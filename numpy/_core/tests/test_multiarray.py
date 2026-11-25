@@ -9282,8 +9282,8 @@ class TestDotFamilyFallback:
         assert messages[0] == messages[1]
 
     def test_subclasses(self, q):
-        class NoUfunc(np.ndarray):
-            __array_ufunc__ = None
+        class Sub(np.ndarray):
+            pass
 
         a = np.arange(6.).reshape(2, 3)
         b = np.arange(12.).reshape(3, 4)
@@ -9294,12 +9294,40 @@ class TestDotFamilyFallback:
                      np.ma.array(y))
         assert type(res) is np.ma.MaskedArray
         assert_array_equal(res.data.astype(np.float64), a @ b)
-        assert type(np.dot(x.view(NoUfunc), y.view(NoUfunc))) is NoUfunc
-        assert type(np.dot(x, y.view(NoUfunc))) is np.ndarray
-        vs = q(v).view(NoUfunc)
+        assert type(np.dot(x.view(Sub), y.view(Sub))) is Sub
+        assert type(np.dot(x, y.view(Sub))) is np.ndarray
+        vs = q(v).view(Sub)
         res = np.vdot(vs, vs)
         assert not isinstance(res, np.ndarray)
         assert float(res) == v @ v
+
+    def test_ufunc_override(self, q):
+        class Override(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                return ufunc.__name__, inputs, kwargs
+
+        class NoUfunc(np.ndarray):
+            __array_ufunc__ = None
+
+        x = q(np.arange(6.).reshape(2, 3))
+        y = q(np.arange(12.).reshape(3, 4))
+        xo = x.view(Override)
+
+        name, inputs, kwargs = np.dot(xo, y)
+        assert name == "matmul" and not kwargs
+        assert inputs[0] is xo and type(inputs[1]) is np.ndarray
+        assert np.inner(xo, x)[0] == "matmul"
+        name, inputs, _ = np.vdot(xo, xo)
+        assert name == "vecdot" and inputs[0].shape == (6,)
+
+        out = q(np.empty((2, 4))).view(Override)
+        name, _, kwargs = np.dot(x, y, out)
+        assert name == "matmul" and kwargs["out"] == (out,)
+
+        with pytest.raises(ValueError, match="tensordot"):
+            np.dot(xo, q(np.ones((2, 3, 4))))
+        for func, b in [(np.dot, y), (np.inner, x), (np.vdot, x)]:
+            assert_raises(TypeError, func, x.view(NoUfunc), b)
 
     def test_c_api_returns_array(self, q):
         v = q(np.arange(3.))
