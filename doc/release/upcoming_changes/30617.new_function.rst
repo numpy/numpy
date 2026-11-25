@@ -1,0 +1,7 @@
+New function `numpy.ma.assert_array_equal`
+------------------------------------------
+`numpy.ma.assert_array_equal` checks that two masked arrays have the same mask
+and that their data is equal wherever it is not masked. Unlike
+`numpy.testing.assert_array_equal`, which ignores masked values, a value that is
+masked in only one of the arrays is reported as a mismatch, and the error
+message lists the positions where the masks differ.

@@ -1,4 +1,5 @@
 from typing import Final, TypedDict, type_check_only
+from typing_extensions import deprecated
 
 import numpy as np
 from numpy._typing import NDArray
@@ -59,6 +60,12 @@ _ilp64: Final[bool] = ...
 
 class LapackError(Exception): ...
 
+@deprecated(
+    "The numpy.linalg.lapack_lite module is deprecated and will be removed in a future release. "
+    "It is an internal implementation detail of numpy.linalg. Users that need LAPACK or BLAS "
+    "routines should use scipy.linalg.lapack or scipy.linalg.blas instead. For users checking "
+    "BLAS/LAPACK library paths or configuration, use numpy.show_config() instead."
+)
 def dgelsd(
     m: int,
     n: int,
@@ -75,6 +82,13 @@ def dgelsd(
     iwork: NDArray[fortran_int],
     info: int,
 ) -> _DGELSD: ...
+
+@deprecated(
+    "The numpy.linalg.lapack_lite module is deprecated and will be removed in a future release. "
+    "It is an internal implementation detail of numpy.linalg. Users that need LAPACK or BLAS "
+    "routines should use scipy.linalg.lapack or scipy.linalg.blas instead. For users checking "
+    "BLAS/LAPACK library paths or configuration, use numpy.show_config() instead."
+)
 def zgelsd(
     m: int,
     n: int,
@@ -94,6 +108,12 @@ def zgelsd(
 ) -> _ZGELSD: ...
 
 #
+@deprecated(
+    "The numpy.linalg.lapack_lite module is deprecated and will be removed in a future release. "
+    "It is an internal implementation detail of numpy.linalg. Users that need LAPACK or BLAS "
+    "routines should use scipy.linalg.lapack or scipy.linalg.blas instead. For users checking "
+    "BLAS/LAPACK library paths or configuration, use numpy.show_config() instead."
+)
 def dgeqrf(
     m: int,
     n: int,
@@ -104,6 +124,13 @@ def dgeqrf(
     lwork: int,
     info: int,  # out
 ) -> _DGEQRF: ...
+
+@deprecated(
+    "The numpy.linalg.lapack_lite module is deprecated and will be removed in a future release. "
+    "It is an internal implementation detail of numpy.linalg. Users that need LAPACK or BLAS "
+    "routines should use scipy.linalg.lapack or scipy.linalg.blas instead. For users checking "
+    "BLAS/LAPACK library paths or configuration, use numpy.show_config() instead."
+)
 def zgeqrf(
     m: int,
     n: int,
@@ -116,6 +143,12 @@ def zgeqrf(
 ) -> _ZGEQRF: ...
 
 #
+@deprecated(
+    "The numpy.linalg.lapack_lite module is deprecated and will be removed in a future release. "
+    "It is an internal implementation detail of numpy.linalg. Users that need LAPACK or BLAS "
+    "routines should use scipy.linalg.lapack or scipy.linalg.blas instead. For users checking "
+    "BLAS/LAPACK library paths or configuration, use numpy.show_config() instead."
+)
 def dorgqr(
     m: int,  # >=0
     n: int,  # m >= n >= 0
@@ -127,6 +160,13 @@ def dorgqr(
     lwork: int,
     info: int,  # out
 ) -> _DORGQR: ...
+
+@deprecated(
+    "The numpy.linalg.lapack_lite module is deprecated and will be removed in a future release. "
+    "It is an internal implementation detail of numpy.linalg. Users that need LAPACK or BLAS "
+    "routines should use scipy.linalg.lapack or scipy.linalg.blas instead. For users checking "
+    "BLAS/LAPACK library paths or configuration, use numpy.show_config() instead."
+)
 def zungqr(
     m: int,
     n: int,
@@ -140,4 +180,10 @@ def zungqr(
 ) -> _ZUNGQR: ...
 
 #
+@deprecated(
+    "The numpy.linalg.lapack_lite module is deprecated and will be removed in a future release. "
+    "It is an internal implementation detail of numpy.linalg. Users that need LAPACK or BLAS "
+    "routines should use scipy.linalg.lapack or scipy.linalg.blas instead. For users checking "
+    "BLAS/LAPACK library paths or configuration, use numpy.show_config() instead."
+)
 def xerbla(srname: object, info: int) -> None: ...

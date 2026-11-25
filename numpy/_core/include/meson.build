@@ -1,6 +1,5 @@
 installed_headers = [
   'numpy/_neighborhood_iterator_imp.h',
-  'numpy/_public_dtype_api_table.h',
   'numpy/arrayobject.h',
   'numpy/arrayscalars.h',
   'numpy/dtype_api.h',
@@ -30,15 +29,6 @@ py.install_sources(
   [
     'numpy/random/bitgen.h',
     'numpy/random/distributions.h',
-  ],
-  subdir: 'numpy/_core/include/numpy/random'
-)
-
-
-py.install_sources(
-  [
-    'numpy/libdivide/libdivide.h',
-    'numpy/libdivide/LICENSE.txt',
   ],
   subdir: 'numpy/_core/include/numpy/random'
 )

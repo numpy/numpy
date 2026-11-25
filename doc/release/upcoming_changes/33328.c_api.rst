@@ -1,0 +1,1 @@
+* ``NpyString_pack`` now preserves the existing value when packing fails

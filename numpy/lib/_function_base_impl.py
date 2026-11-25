@@ -1,6 +1,8 @@
 import builtins
 import collections.abc
 import functools
+import math
+import operator
 import re
 import warnings
 
@@ -10,7 +12,6 @@ from numpy._core import overrides, transpose
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import any, mean, nonzero, partition, ravel, sum
 from numpy._core.multiarray import (
-    _monotonicity,
     _place,
     bincount,
     interp as compiled_interp,
@@ -37,6 +38,7 @@ from numpy._core.numeric import (
 )
 from numpy._core.numerictypes import typecodes
 from numpy._core.umath import (
+    _unwrap,
     add,
     arctan2,
     cos,
@@ -93,7 +95,7 @@ _QuantileMethods = {
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
     'inverted_cdf': {
-        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),  # noqa: PLW0108
+        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),
         'fix_gamma': None,  # should never be called
     },
     'averaged_inverted_cdf': {
@@ -105,7 +107,7 @@ _QuantileMethods = {
             where=gamma == 0),
     },
     'closest_observation': {
-        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),  # noqa: PLW0108
+        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),
         'fix_gamma': None,  # should never be called
     },
     # Continuous methods
@@ -246,6 +248,16 @@ def rot90(m, k=1, axes=(0, 1)):
     if (axes[0] >= m.ndim or axes[0] < -m.ndim
         or axes[1] >= m.ndim or axes[1] < -m.ndim):
         raise ValueError(f"Axes={axes} out of range for array of ndim={m.ndim}.")
+
+    try:
+        k = operator.index(k)
+    except TypeError:
+        # DEPRECATED 2026-04-27, NumPy 2.5
+        msg = (f"Passing a value for k ({k!r}) that is not an integer type has been "
+               "deprecated in NumPy 2.5. The value will be cast to an integer.  In "
+               "the future this will be an error.")
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        k = int(k)
 
     k %= 4
 
@@ -1248,10 +1260,19 @@ def gradient(f, *varargs, axis=None, edge_order=1):
                 raise ValueError("when 1d, distances must match "
                                  "the length of the corresponding dimension")
             if np.issubdtype(distances.dtype, np.integer):
-                # Convert numpy integer types to float64 to avoid modular
-                # arithmetic in np.diff(distances).
-                distances = distances.astype(np.float64)
-            diffx = np.diff(distances)
+                # Differences of integers are exact modulo 2**64 in uint64,
+                # take the sign from a comparison in the original dtype since
+                # the true difference may need 65 bits.
+                if distances.dtype.itemsize == 8:
+                    u = distances.view(np.uint64)
+                else:
+                    u = distances.astype(np.uint64)
+                d = np.diff(u)
+                diffx = d.astype(np.float64)
+                neg = distances[1:] < distances[:-1]
+                diffx[neg] = -(-d[neg]).astype(np.float64)
+            else:
+                diffx = np.diff(distances)
             # if distances are constant reduce to the scalar case
             # since it brings a consistent speedup
             if (diffx == diffx[0]).all():
@@ -1732,6 +1753,33 @@ def angle(z, deg=False):
         a *= 180 / pi
     return a
 
+def _unwrap_fallback(p, discont, period, axis):
+    nd = p.ndim
+    dd = diff(p, axis=axis)
+    slice1 = [slice(None, None)] * nd     # full slices
+    slice1[axis] = slice(1, None)
+    slice1 = tuple(slice1)
+    dtype = np.result_type(dd, period)
+    if _nx.issubdtype(dtype, _nx.integer):
+        interval_high, rem = divmod(period, 2)
+        boundary_ambiguous = rem == 0
+    else:
+        interval_high = period / 2
+        boundary_ambiguous = True
+    interval_low = -interval_high
+    ddmod = mod(dd - interval_low, period) + interval_low
+    if boundary_ambiguous:
+        # for `mask = (abs(dd) == period/2)`, the above line made
+        # `ddmod[mask] == -period/2`. correct these such that
+        # `ddmod[mask] == sign(dd[mask])*period/2`.
+        _nx.copyto(ddmod, interval_high,
+                   where=(ddmod == interval_low) & (dd > 0))
+    ph_correct = ddmod - dd
+    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
+    up = asanyarray(p, dtype=dtype, copy=True)
+    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
+    return up
+
 
 def _unwrap_dispatcher(p, discont=None, axis=None, *, period=None):
     return (p,)
@@ -1762,26 +1810,31 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         larger than ``period/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
-    period : float, optional
+    period : float or int, optional
         Size of the range over which the input wraps. By default, it is
         ``2 pi``.
-
-        .. versionadded:: 1.21.0
 
     Returns
     -------
     out : ndarray
-        Output array.
+        Output array. Its dtype is ``numpy.result_type(p, period)``.
+        In particular an integer array unwrapped with an integer `period`
+        keeps its integer dtype, while any float `period` (including the
+        default ``2 pi``) produces a floating-point result.
 
     See Also
     --------
     rad2deg, deg2rad
+    numpy.ma.unwrap : Mask-aware equivalent for masked arrays.
 
     Notes
     -----
     If the discontinuity in `p` is smaller than ``period/2``,
     but larger than `discont`, no unwrapping is done because taking
     the complement would only make the discontinuity larger.
+
+    This function does not work properly with masked arrays,
+    use `numpy.ma.unwrap` instead.
 
     Examples
     --------
@@ -1822,34 +1875,27 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     >>> plt.legend(framealpha=1, shadow=True)
     >>> plt.show()
     """
-    p = asarray(p)
-    nd = p.ndim
-    dd = diff(p, axis=axis)
+    p = asanyarray(p)
     if discont is None:
         discont = period / 2
-    slice1 = [slice(None, None)] * nd     # full slices
-    slice1[axis] = slice(1, None)
-    slice1 = tuple(slice1)
-    dtype = np.result_type(dd, period)
-    if _nx.issubdtype(dtype, _nx.integer):
-        interval_high, rem = divmod(period, 2)
-        boundary_ambiguous = rem == 0
-    else:
-        interval_high = period / 2
-        boundary_ambiguous = True
-    interval_low = -interval_high
-    ddmod = mod(dd - interval_low, period) + interval_low
-    if boundary_ambiguous:
-        # for `mask = (abs(dd) == period/2)`, the above line made
-        # `ddmod[mask] == -period/2`. correct these such that
-        # `ddmod[mask] == sign(dd[mask])*period/2`.
-        _nx.copyto(ddmod, interval_high,
-                   where=(ddmod == interval_low) & (dd > 0))
-    ph_correct = ddmod - dd
-    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-    up = array(p, copy=True, dtype=dtype)
-    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
-    return up
+    try:
+        dtype = np.result_type(p, period)
+        discont_type = (
+            type(dtype) if _nx.issubdtype(dtype, _nx.floating) else np.float64
+        )
+        return _unwrap(p, discont, period,
+                       signature=(type(dtype), discont_type, type(dtype), type(dtype)),
+                       axis=axis)
+    except np._core._exceptions._UFuncNoLoopError:
+        # object and user DTypes fall back. check p.dtype, not the promoted
+        # dtype, since a user DType can promote through a builtin
+        if p.dtype.isbuiltin == 1 and p.dtype != object:
+            raise
+        return _unwrap_fallback(p, discont, period, axis)
+    except TypeError:
+        # p's __array_ufunc__ declined the private _unwrap gufunc. the
+        # fallback only uses public ufuncs, which it may still implement
+        return _unwrap_fallback(p, discont, period, axis)
 
 
 def _sort_complex(a):
@@ -1928,8 +1974,7 @@ def _arg_trim_zeros(filt):
     if nonzero.size == 0:
         start = stop = np.array([], dtype=np.intp)
     else:
-        start = nonzero.min(axis=0)
-        stop = nonzero.max(axis=0)
+        start, stop = np.minmax(nonzero, axis=0)
     return start, stop
 
 
@@ -1956,7 +2001,7 @@ def trim_zeros(filt, trim='fb', axis=None):
         returned that still contains all values which are not zero.
         If an axis is specified, `filt` will be sliced in that dimension only
         on the sides specified by `trim`. The remaining area will be the
-        smallest that still contains all values wich are not zero.
+        smallest that still contains all values which are not zero.
 
         .. versionadded:: 2.2.0
 
@@ -2114,11 +2159,11 @@ def place(arr, mask, vals):
     arr : ndarray
         Array to put data into.
     mask : array_like
-        Boolean mask array. Must have the same size as `a`.
+        Boolean mask array. Must have the same size as `arr`.
     vals : 1-D sequence
-        Values to put into `a`. Only the first N elements are used, where
+        Values to put into `arr`. Only the first N elements are used, where
         N is the number of True values in `mask`. If `vals` is smaller
-        than N, it will be repeated, and if elements of `a` are to be masked,
+        than N, it will be repeated, and if elements of `arr` are to be masked,
         this sequence must be non-empty.
 
     See Also
@@ -2190,17 +2235,17 @@ def _update_dim_sizes(dim_sizes, arg, core_dims):
     num_core_dims = len(core_dims)
     if arg.ndim < num_core_dims:
         raise ValueError(
-            '%d-dimensional argument does not have enough '
-            'dimensions for all core dimensions %r'
-            % (arg.ndim, core_dims))
+            f'{arg.ndim}-dimensional argument does not have enough '
+            f'dimensions for all core dimensions {core_dims!r}')
 
     core_shape = arg.shape[-num_core_dims:]
     for dim, size in zip(core_dims, core_shape):
         if dim in dim_sizes:
             if size != dim_sizes[dim]:
                 raise ValueError(
-                    'inconsistent size for core dimension %r: %r vs %r'
-                    % (dim, size, dim_sizes[dim]))
+                    f'inconsistent size for core dimension {dim!r}: {size!r} vs '
+                    f'{dim_sizes[dim]!r}'
+                )
         else:
             dim_sizes[dim] = size
 
@@ -2610,9 +2655,10 @@ class vectorize:
         input_core_dims, output_core_dims = self._in_and_out_core_dims
 
         if len(args) != len(input_core_dims):
-            raise TypeError('wrong number of positional arguments: '
-                            'expected %r, got %r'
-                            % (len(input_core_dims), len(args)))
+            raise TypeError(
+                'wrong number of positional arguments: '
+                f'expected {len(input_core_dims)!r}, got {len(args)!r}'
+            )
         args = tuple(asanyarray(arg) for arg in args)
 
         broadcast_shape, dim_sizes = _parse_input_dimensions(
@@ -2633,8 +2679,9 @@ class vectorize:
 
             if nout != n_results:
                 raise ValueError(
-                    'wrong number of outputs from pyfunc: expected %r, got %r'
-                    % (nout, n_results))
+                    f'wrong number of outputs from pyfunc: expected {nout!r}, '
+                    f'got {n_results!r}'
+                )
 
             if nout == 1:
                 results = (results,)
@@ -2721,8 +2768,6 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     dtype : data-type, optional
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
-
-        .. versionadded:: 1.20
 
     Returns
     -------
@@ -2927,8 +2972,6 @@ def corrcoef(x, y=None, rowvar=True, *,
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
 
-        .. versionadded:: 1.20
-
     Returns
     -------
     R : ndarray
@@ -3071,15 +3114,14 @@ def blackman(M):
     "removing the foot", i.e. smoothing discontinuities at the beginning
     and end of the sampled signal) or tapering function. It is known as a
     "near optimal" tapering function, almost as good (by some measures)
-    as the kaiser window.
+    as the Kaiser window.
 
     References
     ----------
-    Blackman, R.B. and Tukey, J.W., (1958) The measurement of power spectra,
-    Dover Publications, New York.
-
-    Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
-    Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
+    .. [1] Blackman, R.B. and Tukey, J.W., (1958)
+           The measurement of power spectra, Dover Publications, New York.
+    .. [2] Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
+           Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
 
     Examples
     --------
@@ -3522,7 +3564,8 @@ def _i0_1(x):
 
 
 def _i0_2(x):
-    return exp(x) * _chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)
+    half_exp = exp(0.5 * x)
+    return half_exp * (_chbevl(32.0 / x - 2.0, _i0B) / sqrt(x)) * half_exp
 
 
 def _i0_dispatcher(x):
@@ -3587,7 +3630,7 @@ def i0(x):
     if x.dtype.kind != 'f':
         x = x.astype(float)
     x = np.abs(x)
-    return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
+    return piecewise(x, [x <= 8.0, np.isinf(x)], [_i0_1, lambda x: x, _i0_2])
 
 ## End of cephes code for i0
 
@@ -3864,7 +3907,7 @@ def _ureduce(a, func, keepdims=False, **kwargs):
                 # move axis that should not be reduced to front
                 a = np.moveaxis(a, keep, range(nkeep))
                 # merge reduced axis
-                return a.reshape(a.shape[:nkeep] + (-1,))
+                return a.reshape(a.shape[:nkeep] + (math.prod(a.shape[nkeep:]),))
 
             a = reshape_arr(a)
 
@@ -3936,10 +3979,9 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     Returns
     -------
     median : ndarray
-        A new array holding the result. If the input contains integers
-        or floats smaller than ``float64``, then the output data-type is
-        ``np.float64``.  Otherwise, the data-type of the output is the
-        same as that of the input. If `out` is specified, that array is
+        A new array holding the result. If the input contains integers,
+        the output data-type is ``float64``. Otherwise, the output data-type
+        is the same as that of the input. If `out` is specified, that array is
         returned instead.
 
     See Also
@@ -4107,10 +4149,6 @@ def percentile(a,
         * 'midpoint'
         * 'nearest'
 
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
-
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -4135,10 +4173,9 @@ def percentile(a,
         is a scalar. If multiple percentiles are given, first axis of
         the result corresponds to the percentiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out`
+        is specified, that array is returned instead.
 
     See Also
     --------
@@ -4310,10 +4347,6 @@ def quantile(a,
 
         See Notes for details.
 
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
-
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -4338,10 +4371,9 @@ def quantile(a,
         is a scalar. If multiple probability levels are given, first axis
         of the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out` is
+        specified, that array is returned instead.
 
     See Also
     --------
@@ -4525,8 +4557,14 @@ def _quantile_is_valid(q):
         for i in range(q.size):
             if not (0.0 <= q[i] <= 1.0):
                 return False
-    elif not (q.min() >= 0 and q.max() <= 1):
-        return False
+    else:
+        # subclasses may not support np.minmax
+        if type(q) is np.ndarray:
+            q_min, q_max = np.minmax(q)
+        else:
+            q_min, q_max = q.min(), q.max()
+        if not (q_min >= 0 and q_max <= 1):
+            return False
     return True
 
 
@@ -4555,7 +4593,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     ) - 1
 
 
-def _get_gamma(virtual_indexes, previous_indexes, method):
+def _get_gamma(virtual_indexes, method):
     """
     Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
@@ -4563,8 +4601,6 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     virtual_indexes : array_like
         The indexes where the percentile is supposed to be found in the sorted
         sample.
-    previous_indexes : array_like
-        The floor values of virtual_indexes.
     method : dict
         The interpolation method chosen, which may have a specific rule
         modifying gamma.
@@ -4572,11 +4608,11 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     gamma is usually the fractional part of virtual_indexes but can be modified
     by the interpolation method.
     """
-    gamma = np.asanyarray(virtual_indexes - previous_indexes)
+    gamma = np.asanyarray(virtual_indexes - np.floor(virtual_indexes))
     gamma = method["fix_gamma"](gamma, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
-    return np.asanyarray(gamma)
+    return np.asanyarray(gamma, dtype=virtual_indexes.dtype)
 
 
 def _lerp(a, b, t, out=None):
@@ -4751,11 +4787,17 @@ def _quantile(
         try:
             method_props = _QuantileMethods[method]
         except KeyError:
+            valid_methods = ", ".join(map(repr, _QuantileMethods))
             raise ValueError(
-                f"{method!r} is not a valid method. Use one of: "
-                f"{_QuantileMethods.keys()}") from None
+                f"{method!r} is not a valid method. "
+                f"Use one of: {valid_methods}") from None
+
+        idx_quantiles = quantiles
+        if quantiles.dtype.type is np.float16:
+            idx_quantiles = quantiles.astype(np.float64, copy=False)
+
         virtual_indexes = method_props["get_virtual_index"](values_count,
-                                                            quantiles)
+                                                            idx_quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
 
         if method_props["fix_gamma"] is None:
@@ -4797,11 +4839,12 @@ def _quantile(
             previous = arr[previous_indexes]
             next = arr[next_indexes]
             # --- Linear interpolation
-            gamma = _get_gamma(virtual_indexes, previous_indexes,
-                               method_props)
+            gamma = _get_gamma(virtual_indexes, method_props)
             if weak_q:
                 gamma = float(gamma)
             else:
+                if idx_quantiles.dtype != quantiles.dtype:
+                    gamma = gamma.astype(quantiles.dtype, copy=False)
                 result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
                 gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
@@ -4917,9 +4960,9 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
 
     Integrate `y` (`x`) along each 1d slice on the given axis, compute
     :math:`\int y(x) dx`.
-    When `x` is specified, this integrates along the parametric curve,
-    computing :math:`\int_t y(t) dt =
-    \int_t y(t) \left.\frac{dx}{dt}\right|_{x=x(t)} dt`.
+    When `x` is specified, this integrates along the parametric curve
+    :math:`C` given by :math:`(x(t), y(t))`, computing the line integral
+    :math:`\int_C y \, dx = \int y(t) \frac{dx}{dt} \, dt`.
 
     .. versionadded:: 2.0.0
 
@@ -5069,7 +5112,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
         ``(1, ..., 1, Ni, 1, ..., 1)``.  These sparse coordinate grids are
         intended to be used with :ref:`basics.broadcasting`.  When all
         coordinates are used in an expression, broadcasting still leads to a
-        fully-dimensonal result array.
+        fully-dimensional result array.
 
         Default is False.
 
@@ -5195,6 +5238,9 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     if copy:
         output = tuple(x.copy() for x in output)
 
+    if sparse and not copy:
+        return tuple(output)
+
     return output
 
 
@@ -5215,11 +5261,7 @@ def delete(arr, obj, axis=None):
         Input array.
     obj : slice, int, array-like of ints or bools
         Indicate indices of sub-arrays to remove along the specified axis.
-
-        .. versionchanged:: 1.19.0
-            Boolean indices are now treated as a mask of elements to remove,
-            rather than being cast to the integers 0 and 1.
-
+        Boolean arrays are treated as a mask of elements to remove.
     axis : int, optional
         The axis along which to delete the subarray defined by `obj`.
         If `axis` is None, `obj` is applied to the flattened array.
@@ -5508,7 +5550,7 @@ def insert(arr, obj, values, axis=None):
         # need to copy obj, because indices will be changed in-place
         indices = np.array(obj)
         if indices.dtype == bool:
-            if obj.ndim != 1:
+            if indices.ndim != 1:
                 raise ValueError('boolean array argument obj to insert '
                                 'must be one dimensional')
             indices = np.flatnonzero(obj)
@@ -5550,6 +5592,14 @@ def insert(arr, obj, values, axis=None):
         # Can safely cast the empty list to intp
         indices = indices.astype(intp)
 
+    if indices.size > 0:
+        min_idx, max_idx = np.minmax(indices)
+        if min_idx < -N or max_idx > N:
+            oob = min_idx if min_idx < -N else max_idx
+            raise IndexError(
+                f"index {oob} is out of bounds "
+                f"for axis {axis} with size {N}"
+            )
     indices[indices < 0] += N
 
     numnew = len(indices)
@@ -5604,6 +5654,15 @@ def append(arr, values, axis=None):
     insert : Insert elements into an array.
     delete : Delete elements from an array.
 
+    Notes
+    -----
+    .. deprecated:: 2.6
+        When ``axis=None``, Python numeric scalars currently promote as if
+        converted to arrays. A future release will use the scalar promotion
+        rules of ``np.concatenate((arr, values), axis=None)``. Call
+        `concatenate` directly to use the future behavior, or pass its
+        ``dtype=`` argument to choose the result dtype explicitly.
+
     Examples
     --------
     >>> import numpy as np
@@ -5635,13 +5694,34 @@ def append(arr, values, axis=None):
     `float64` when appended with dtype `int64`
 
     """
-    arr = asanyarray(arr)
-    if axis is None:
-        if arr.ndim != 1:
-            arr = arr.ravel()
-        values = ravel(values)
-        axis = arr.ndim - 1
-    return concatenate((arr, values), axis=axis)
+    if axis is not None:
+        return concatenate((arr, values), axis=axis)
+    conv = _array_converter(arr, values)
+    arrays = conv.as_arrays(pyscalars="convert")
+    if conv.has_pyscalars:
+        # DEPRECATED 2026-09-15, NumPy 2.6
+        result = concatenate(arrays, axis=None)
+        try:
+            future_dtype = conv.result_type()
+        except np.exceptions.DTypePromotionError:
+            change = "these inputs have no common dtype and will raise an error"
+        else:
+            if future_dtype == result.dtype:
+                return result
+            change = (
+                f"these inputs will use dtype {future_dtype}, which may "
+                "round values differently or raise an error")
+        warnings.warn(
+            "np.append converted Python numeric scalars to arrays before "
+            f"choosing the result dtype, producing dtype {result.dtype}. "
+            "This behavior will change in a future release, "
+            f"{change}. Use np.concatenate((arr, values), axis=None) for the "
+            f"future behavior; add dtype={str(result.dtype)!r} to that call to "
+            "keep the current result.", FutureWarning, stacklevel=2)
+        return result
+    inputs = tuple(obj if scalar else a for obj, scalar, a in
+                   zip((arr, values), conv.scalar_input, arrays))
+    return concatenate(inputs, axis=None)
 
 
 def _digitize_dispatcher(x, bins, right=None):
@@ -5701,8 +5781,6 @@ def digitize(x, bins, right=False):
     attempting to index `bins` with the indices that `digitize` returns
     will result in an IndexError.
 
-    .. versionadded:: 1.10.0
-
     `numpy.digitize` is  implemented in terms of `numpy.searchsorted`.
     This means that a binary search is used to bin the values, which scales
     much better for larger number of bins than the previous linear search.
@@ -5746,9 +5824,15 @@ def digitize(x, bins, right=False):
     # here for compatibility, searchsorted below is happy to take this
     if np.issubdtype(x.dtype, _nx.complexfloating):
         raise TypeError("x may not be complex")
-
-    mono = _monotonicity(bins)
-    if mono == 0:
+    if np.issubdtype(bins.dtype, _nx.complexfloating):
+        raise TypeError("bins may not be complex")
+    if bins.ndim != 1:
+        raise ValueError("bins must be one-dimensional")
+    if (bins[1:] >= bins[:-1]).all():
+        mono = 1
+    elif (bins[1:] <= bins[:-1]).all():
+        mono = -1
+    else:
         raise ValueError("bins must be monotonically increasing or decreasing")
 
     # this is backwards because the arguments below are swapped

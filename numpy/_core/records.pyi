@@ -1,5 +1,3 @@
-# ruff: noqa: ANN401
-# pyright: reportSelfClsParameterName=false
 from _typeshed import Incomplete, StrOrBytesPath
 from collections.abc import Buffer, Iterable, Sequence
 from typing import (
@@ -55,7 +53,7 @@ class _SupportsReadInto(Protocol):
 # exported in `numpy.rec`
 class record(np.void):  # type: ignore[misc]
     __name__: ClassVar[Literal["record"]] = "record"
-    __module__: Literal["numpy"] = "numpy"
+    __module__: Literal["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
 
     def pprint(self) -> str: ...
 
@@ -64,14 +62,14 @@ class record(np.void):  # type: ignore[misc]
 
     #
     @overload  # type: ignore[override]
-    def __getitem__(self, key: str | SupportsIndex, /) -> Incomplete: ...
+    def __getitem__(self, key: str | SupportsIndex, /) -> Incomplete: ...  # pyrefly: ignore[bad-override]
     @overload
     def __getitem__(self, key: list[str], /) -> record: ...
 
 # exported in `numpy.rec`
 class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
     __name__: ClassVar[Literal["recarray"]] = "recarray"
-    __module__: Literal["numpy.rec"] = "numpy.rec"
+    __module__: Literal["numpy.rec"] = "numpy.rec"  # pyrefly: ignore[bad-override]
 
     @overload
     def __new__(
@@ -146,14 +144,14 @@ def fromarrays(
     arrayList: Iterable[ArrayLike],
     dtype: None = None,
     shape: _ShapeLike | None = None,
-    *,
-    formats: DTypeLike | None,
+    formats: DTypeLike | None = None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,
     byteorder: _ByteOrder | None = None,
 ) -> _RecArray[record]: ...
 
+# exported in `numpy.rec`
 @overload
 def fromrecords(
     recList: _ArrayLikeVoid_co | tuple[object, ...] | _NestedSequence[tuple[object, ...]],
@@ -170,8 +168,7 @@ def fromrecords(
     recList: _ArrayLikeVoid_co | tuple[object, ...] | _NestedSequence[tuple[object, ...]],
     dtype: None = None,
     shape: _ShapeLike | None = None,
-    *,
-    formats: DTypeLike | None,
+    formats: DTypeLike | None = None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,
@@ -270,6 +267,20 @@ def array(
     strides: tuple[int, ...] | None = None,
     *,
     formats: DTypeLike | None,
+    names: str | Sequence[str] | None = None,
+    titles: str | Sequence[str] | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    copy: bool = True,
+) -> _RecArray[record]: ...
+@overload
+def array(
+    obj: list[Any] | tuple[Any, ...],
+    dtype: None = None,
+    shape: _ShapeLike | None = None,
+    offset: int = 0,
+    strides: tuple[int, ...] | None = None,
+    formats: DTypeLike | None = None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,

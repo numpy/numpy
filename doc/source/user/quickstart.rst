@@ -1380,8 +1380,8 @@ and then use it as::
 The advantage of this version of reduce compared to the normal
 ufunc.reduce is that it makes use of the
 :ref:`broadcasting rules <broadcasting-rules>`
-in order to avoid creating an argument array the size of the output
-times the number of vectors.
+in order to avoid creating a temporary array that needs as much memory
+as the output array multiplied by the number of vectors.
 
 Indexing with strings
 ---------------------
@@ -1441,7 +1441,7 @@ strange.
 
 .. seealso::
 
-   :doc:`numpy-for-matlab-users`
+   `NumPy for MATLAB users <https://numpy.org/numpy-tutorials/numpy-for-matlab-users/>`__
 
 Histograms
 ----------

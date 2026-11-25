@@ -16,7 +16,7 @@ NumPy as of version ``2.0`` requires C11 and C++17 compliant compilers.
 Having compiled code also means that importing NumPy from the development
 sources needs some additional steps, which are explained below.  For the rest
 of this chapter we assume that you have set up your git repo as described in
-:ref:`using-git`.
+:ref:`development-process-summary`.
 
 .. note::
 
@@ -27,9 +27,8 @@ of this chapter we assume that you have set up your git repo as described in
    environments and deal with incompatible dependencies.
 
    If you have good internet connectivity and want a temporary set-up, it is
-   often faster to work on NumPy in a Codespaces environment. For documentation
-   on how to get started with Codespaces, see
-   `the Codespaces docs <https://docs.github.com/en/codespaces>`__.
+   often faster to work on NumPy in a Codespaces environment. For a
+   step-by-step guide, see :ref:`development_ghcodespaces`.
    When creating a codespace for the ``numpy/numpy`` repository, the default
    2-core machine type works; 4-core will build and work a bit faster (but of
    course at a cost of halving your number of free usage hours). Once your
@@ -58,12 +57,12 @@ once)::
 
 If you installed Python some other way than conda, first install
 `virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named ``numpy-dev`` here), activate it, and install all project 
+virtualenv (named ``numpy-dev`` here), activate it, and install all project
 dependencies with::
 
     $ virtualenv numpy-dev
     $ source numpy-dev/bin/activate # activate virtual environment
-    $ python -m pip install -r requirements/all_requirements.txt
+    $ python -m pip install --group all
 
 Now, whenever you want to switch to the virtual environment, you can use the
 command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
@@ -81,7 +80,7 @@ Testing builds
 
 Before running the tests, first install the test dependencies::
 
-    $ python -m pip install -r requirements/test_requirements.txt
+    $ python -m pip install --group test-extending
     $ python -m pip install asv # only for running benchmarks
 
 To build the development version of NumPy and run tests, spawn
@@ -116,7 +115,7 @@ argument to pytest::
     $ spin test -v -t numpy/_core/tests/test_multiarray.py -- -k "MatMul and not vector"
 
 To run "doctests" -- to check that the code examples in the documentation is correct --
-use the `check-docs` spin command. It relies on the `scipy-docs` package, which
+use the `check-docs` spin command. It relies on the `scipy-doctest` package, which
 provides several additional features on top of the standard library ``doctest``
 package. Install ``scipy-doctest`` and run one of::
 
@@ -177,9 +176,9 @@ That also takes extra arguments, like ``--pdb`` which drops you into the Python
 debugger when a test fails or an exception is raised.
 
 Running tests with `tox`_ is also supported.  For example, to build NumPy and
-run the test suite with Python 3.9, use::
+run the test suite with Python 3.12, use::
 
-    $ tox -e py39
+    $ tox -e py312
 
 For more extensive information, see :ref:`testing-guidelines`.
 
@@ -202,22 +201,86 @@ Lint checks can be performed on newly added lines of Python code.
 
 Install all dependent packages using pip::
 
-    $ python -m pip install -r requirements/linter_requirements.txt
+    $ python -m pip install --group linter
 
 To run lint checks before committing new code, run::
 
-    $ python tools/linter.py
+    $ spin lint
 
-To check all changes in newly added Python code of current branch with target branch, run::
+If there are no errors, the output will look like::
 
-    $ python tools/linter.py
+    $ spin lint
+    Running Ruff Check...
+    All checks passed!
 
-If there are no errors, the script exits with no message. In case of errors,
-check the error message for details::
+    Running C API borrow-reference linter...
+    Scanning 548 C/C++ source files...
 
-    $ python tools/linter.py
-    ./numpy/_core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
-    1       E303 too many blank lines (3)
+    All checks passed! C API borrow-ref linter found no issues.
+
+
+    Running cython-lint...
+
+In case of errors, check the error message for details::
+
+    $ spin lint
+    Running Ruff Check...
+    I001 [*] Import block is un-sorted or un-formatted
+    --> numpy/matlib.py:12:1
+       |
+    10 |                 PendingDeprecationWarning, stacklevel=2)
+    11 |
+    12 | / import numpy as np
+    13 | |
+    14 | | # Matlib.py contains all functions in the numpy namespace with a few
+    15 | | # replacements. See doc/source/reference/routines.matlib.rst for details.
+    16 | | # Need * as we're copying the numpy namespace.
+    17 | | from numpy import *  # noqa: F403
+    18 | | from numpy.matrixlib.defmatrix import matrix, asmatrix
+       | |______________________________________________________^
+    19 |
+    20 |   __version__ = np.__version__
+       |
+       help: Organize imports
+    15 | # replacements. See doc/source/reference/routines.matlib.rst for details.
+    16 | # Need * as we're copying the numpy namespace.
+    17 | from numpy import *  # noqa: F403
+       - from numpy.matrixlib.defmatrix import matrix, asmatrix
+    18 + from numpy.matrixlib.defmatrix import asmatrix, matrix
+    19 |
+    20 | __version__ = np.__version__
+    21 |
+
+    E501 Line too long (127 > 88)
+    --> numpy/matlib.py:214:89
+        |
+    212 |     -------
+    213 |     I : matrix
+    214 |         A `n` x `M` matrix where all elements are equal to zero, except for the `k`-th diagonal, whose values are equal to one.
+        |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    215 |
+    216 |     See Also
+        |
+
+    Found 2 errors.
+    [*] 1 fixable with the `--fix` option.
+
+To automatically fix issues that can be fixed, run::
+
+    $ spin lint --fix
+    Running Ruff Check...
+    E501 Line too long (127 > 88)
+    --> numpy/matlib.py:214:89
+        |
+    212 |     -------
+    213 |     I : matrix
+    214 |         A `n` x `M` matrix where all elements are equal to zero, except for the `k`-th diagonal, whose values are equal to one.
+        |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    215 |
+    216 |     See Also
+        |
+
+    Found 2 errors (1 fixed, 1 remaining).
 
 It is advisable to run lint checks before pushing commits to a remote branch
 since the linter runs as part of the CI pipeline.

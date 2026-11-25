@@ -51,9 +51,7 @@ needs and then changes in the Python ecosystem.
 Support for strings was added to NumPy to support users of the NumArray
 ``chararray`` type. Remnants of this are still visible in the NumPy API:
 string-related functionality lives in ``np.char``, to support the
-``np.char.chararray`` class. This class is not formally deprecated, but has a
-had comment in the module docstring suggesting to use string dtypes instead
-since NumPy 1.4.
+``np.char.chararray`` class, which was deprecated in NumPy 2.5.
 
 NumPy's ``bytes_`` DType was originally used to represent the Python 2 ``str``
 type before Python 3 support was added to NumPy. The bytes DType makes the most

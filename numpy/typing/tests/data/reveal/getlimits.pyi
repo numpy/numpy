@@ -7,6 +7,8 @@ f8: np.float64
 c8: np.complex64
 c16: np.complex128
 
+_dtype_c16: np.dtype[np.complex128]
+
 i: int
 i8: np.int64
 u4: np.uint32
@@ -18,6 +20,7 @@ assert_type(np.finfo(f), np.finfo[np.float64])
 assert_type(np.finfo(f8), np.finfo[np.float64])
 assert_type(np.finfo(c8), np.finfo[np.float32])
 assert_type(np.finfo(c16), np.finfo[np.float64])
+assert_type(np.finfo(_dtype_c16), np.finfo[np.float64])
 assert_type(np.finfo("f2"), np.finfo[np.float16])
 
 assert_type(finfo_f8.dtype, np.dtype[np.float64])

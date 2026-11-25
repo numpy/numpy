@@ -1,0 +1,7 @@
+``numpy.linalg.lapack_lite`` is deprecated
+-------------------------------------------
+
+Importing ``numpy.linalg.lapack_lite`` is deprecated. The module is an
+internal implementation detail of `numpy.linalg` and was never intended
+as a public API. Users that need LAPACK or BLAS routines should use
+``scipy.linalg.lapack`` or ``scipy.linalg.blas`` instead.

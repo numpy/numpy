@@ -3,7 +3,6 @@ Test the scalar constructors, which also do type-coercion
 """
 import fractions
 import inspect
-import platform
 import sys
 import types
 from typing import Any, Literal
@@ -12,7 +11,8 @@ import pytest
 
 import numpy as np
 from numpy._core import sctypes
-from numpy.testing import IS_PYPY, assert_equal, assert_raises
+from numpy.testing import HAS_REFCOUNT, IS_PYPY, assert_equal, assert_raises
+from numpy.testing._private.utils import LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE
 
 
 class TestAsIntegerRatio:
@@ -84,10 +84,10 @@ class TestAsIntegerRatio:
             [0, -7400, 14266, -7822, -8721],
             marks=[
                 pytest.mark.skipif(
-                    np.finfo(np.double) == np.finfo(np.longdouble),
+                    np.dtype(np.double) == np.dtype(np.longdouble),
                     reason="long double is same as double"),
                 pytest.mark.skipif(
-                    platform.machine().startswith("ppc"),
+                    LONG_DOUBLE_IS_IBM_DOUBLE_DOUBLE,
                     reason="IBM double double"),
             ]
         )
@@ -135,6 +135,54 @@ class TestIsInteger:
                 continue
             assert not value.is_integer()
 
+class TestAsType:
+    def test_copy(self) -> None:
+        a = np.float64(4.5)
+        b = a.astype(np.float64, copy=False)
+        assert a is b
+        b = np.astype(a, np.int64, copy=False)
+        assert a != b
+        b = a.astype(np.float64, copy=True)
+        assert a is b
+
+    @pytest.mark.parametrize("from_type, to_type", [
+        (np.double, np.longdouble),
+        (np.long, np.longlong),
+        (np.ulong, np.ulonglong),
+        (np.intc, np.long),
+        (np.cdouble, np.clongdouble),
+    ])
+    def test_equivalent_dtype_returns_requested_type(self, from_type, to_type):
+        a = from_type(3)
+        assert type(a.astype(to_type)) is to_type
+        assert type(np.astype(a, to_type)) is to_type
+
+class TestAsTypeStructuredCopy:
+    # Regression test for gh-32379: astype on a structured scalar
+    # must return an independent object, not a mutable view into the parent array.
+    def test_copy_true_is_independent(self) -> None:
+        a = np.array([('AB',), ('CD',)], dtype=[('name', 'U5')])
+        b = a[1]
+
+        c = b.astype(b, copy=True)
+        assert c is not b
+        c['name'] = 'ZZ'
+        assert a[1]['name'] == 'CD'
+
+    def test_default_copy_is_independent(self) -> None:
+        # copy defaults to True, so the same guarantee holds without the kwarg
+        a = np.array([('AB',), ('CD',)], dtype=[('name', 'U5')])
+        b = a[1]
+
+        c = b.astype(b)
+        c['name'] = 'ZZ'
+        assert a[1]['name'] == 'CD'
+
+    def test_subarray_dtype(self):
+        x = np.array(([1, 2],), dtype=[("f", "i4", (2,))])[()]
+        assert_equal(x.astype(np.dtype(("i4", (2,)))), [1, 2])
+        with pytest.raises(TypeError):
+            np.int64(128).astype(("i1", (2,)), casting="same_value")
 
 class TestClassGetItem:
     @pytest.mark.parametrize("cls", [
@@ -173,12 +221,16 @@ class TestClassGetItem:
     @pytest.mark.parametrize("code", np.typecodes["All"])
     def test_concrete(self, code: str) -> None:
         cls = np.dtype(code).type
-        if cls in {np.bool, np.datetime64}:
+        if cls in {np.bool, np.datetime64, np.object_}:
             # these are intentionally subscriptable
             assert cls[Any]
         else:
             with pytest.raises(TypeError):
                 cls[Any]
+
+    def test_object(self) -> None:
+        # returns itself, not a generic alias, so it stays dtype-like
+        assert np.object_[int] is np.object_
 
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tuple(self, arg_len: int) -> None:
@@ -215,6 +267,16 @@ class TestBitCount:
             assert np.uint64((a - 1) ^ 510).bit_count() == exp - 8
 
 
+class TestMethodForwarding:
+    def test_many_forwarded_arguments(self):
+        # more forwarded arguments than fit the on-stack buffer, so that the
+        # heap fallback is exercised
+        scalar = np.float64(1.5)
+        shape = (1,) * 13
+        assert scalar.reshape(*shape).shape == shape
+        assert scalar.reshape(*shape, order="C").shape == shape
+
+
 class TestDevice:
     """
     Test scalar.device attribute and scalar.to_device() method.
@@ -233,6 +295,45 @@ class TestDevice:
     @pytest.mark.parametrize("scalar", scalars)
     def test___array_namespace__(self, scalar):
         assert scalar.__array_namespace__() is np
+
+
+class TestByteswap:
+    @pytest.mark.parametrize("scalar", [
+        np.bytes_(b"abcd"),
+        # pick characters that are valid UCS-4 after being byteswapped
+        # otherwise we trip a sanity check in debug Python builds
+        np.str_("\u0100\u0200\u0300"),
+        np.void(b"\x01\x02\x03\x04"),
+        np.array([(1, 2.5)], dtype="i4,f8")[0],
+        np.array([([1, 2], b"xy")], dtype=[("a", "i4", (2,)), ("b", "S2")])[0],
+    ])
+    def test_matches_array_byteswap(self, scalar):
+        arr = np.array([scalar], dtype=scalar.dtype)
+        assert scalar.byteswap().tobytes() == arr.byteswap()[0].tobytes()
+        assert scalar.byteswap().byteswap().tobytes() == scalar.tobytes()
+
+    def test_object_field(self):
+        sentinel = object()
+        scalar = np.array([(1, sentinel)], dtype=[("a", "i4"), ("b", "O")])[0]
+        swapped = scalar.byteswap()
+        assert swapped["b"] is sentinel
+        assert swapped["a"] == np.int32(1).byteswap()
+
+        if HAS_REFCOUNT:
+            count = sys.getrefcount(sentinel)
+            scalar.byteswap()
+            assert sys.getrefcount(sentinel) == count
+
+    @pytest.mark.parametrize("scalar", [
+        np.bytes_(b""),
+        np.str_(""),
+        np.void(b""),
+        np.zeros(1, dtype=[])[0],
+    ])
+    def test_empty(self, scalar):
+        swapped = scalar.byteswap()
+        assert swapped == scalar
+        assert swapped.dtype == scalar.dtype
 
 
 @pytest.mark.parametrize("scalar", [np.bool(True), np.int8(1), np.float64(1)])

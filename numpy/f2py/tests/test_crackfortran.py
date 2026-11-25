@@ -7,12 +7,14 @@ import time
 import pytest
 
 import numpy as np
-from numpy.f2py import crackfortran
+from numpy.f2py import capi_maps, crackfortran
+from numpy.f2py.auxfuncs import getargs2
 from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
 
 from . import util
 
 
+@pytest.mark.slow
 class TestNoSpace(util.F2PyTest):
     # issue gh-15035: add handling for endsubroutine, endfunction with no space
     # between "end" and the block name
@@ -60,12 +62,12 @@ class TestPublicPrivate:
         assert set(tt['b_']['attrspec']) == {'public', 'bind(c)'}
         assert set(tt['c']['attrspec']) == {'public'}
 
-    def test_nowrap_private_proceedures(self, tmp_path):
+    def test_nowrap_private_procedures(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "gh23879.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         pyf = crackfortran.crack2fortran(mod)
-        assert 'bar' not in pyf
+        assert 'bar1337baz' not in pyf
 
 class TestModuleProcedure:
     def test_moduleOperators(self, tmp_path):
@@ -96,6 +98,7 @@ class TestModuleProcedure:
         assert mod['vars']['seta']['attrspec'] == ['public', ]
 
 
+@pytest.mark.slow
 class TestExternal(util.F2PyTest):
     # issue gh-17859: add external attribute support
     sources = [util.getpath("tests", "src", "crackfortran", "gh17859.f")]
@@ -115,6 +118,7 @@ class TestExternal(util.F2PyTest):
         assert r == 123
 
 
+@pytest.mark.slow
 class TestCrackFortran(util.F2PyTest):
     # gh-2848: commented lines between parameters in subroutine parameter lists
     sources = [util.getpath("tests", "src", "crackfortran", "gh2848.f90"),
@@ -149,6 +153,7 @@ class TestMarkinnerspaces:
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
 
+@pytest.mark.slow
 class TestDimSpec(util.F2PyTest):
     """This test suite tests various expressions that are used as dimension
     specifications.
@@ -218,7 +223,6 @@ class TestDimSpec(util.F2PyTest):
         )
 
     @pytest.mark.parametrize("dimspec", all_dimspecs)
-    @pytest.mark.slow
     def test_array_size(self, dimspec):
 
         count = self.all_dimspecs.index(dimspec)
@@ -260,6 +264,116 @@ class TestModuleDeclaration:
         assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
 
 
+class TestStringLiteralDepend:
+    # gh-28700: identifiers inside a character parameter's literal value
+    # must not be harvested as dependencies (a self-dependency crashes the
+    # dependency sort during a -c build).
+    def test_mask_string_literals(self):
+        mask = crackfortran.mask_string_literals
+        assert mask("'mkdir '") == "''"
+        assert mask('"badvar2"') == "''"
+        assert mask("'mkdir '//badvar2") == "''//badvar2"
+        assert mask("a + b") == "a + b"
+
+    def test_no_self_depend_from_literal(self):
+        fpath = util.getpath("tests", "src", "crackfortran", "gh28700.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        m1 = next(b for b in mod if b.get("name") == "mod1")
+        vs = m1["vars"]
+        # string-only values gain no dependency at all
+        assert "depend" not in vs["mkdir"]
+        assert "depend" not in vs["badvar2"]
+        # a real identifier outside the quotes is still a dependency,
+        # while the one inside the literal is dropped
+        assert vs["realdep"]["depend"] == ["badvar2"]
+
+    def test_trcon_literal_masking_and_sort_order(self):
+        # SciPy flapack ?trcon regression: masking ``diag = 'N'`` must not
+        # harvest ``n`` from the literal. Cycle fallback must order
+        # ``a`` then ``n = shape(a, 1)`` then ``work`` so getarrdims keeps
+        # ``work_Dims[0]=3*n`` (not blanked to assumed-shape).
+        fpath = util.getpath("tests", "src", "crackfortran", "gh28700_trcon.pyf")
+        mod = crackfortran.crackfortran([str(fpath)])
+        iface = next(b for b in mod if b.get("name") == "gh28700_trcon")["body"][0]
+        trcon = next(b for b in iface["body"] if b.get("name") == "trcon")
+        vs = trcon["vars"]
+        assert "depend" not in vs["diag"]
+        assert vs["work"]["dimension"] == ["3 * n"]
+        assert vs["work"]["depend"] == ["n"]
+        order = trcon["sortvars"]
+        assert order.index("a") < order.index("n")
+        assert order.index("n") < order.index("work")
+        assert order.index("n") < order.index("lda")
+
+        lwork_case = next(b for b in iface["body"] if b.get("name") == "trcon_lwork")
+        lvs = lwork_case["vars"]
+        # depend harvest order follows vars dict iteration; compare as a set
+        assert set(lvs["lwork"]["depend"]) == {"norm", "n"}
+        assert lvs["lwork"]["="] == "(*norm=='i'?3*n:n)"
+        assert lvs["work"]["dimension"] == ["lwork"]
+
+    def test_lda_declared_before_n(self):
+        # Declaration order must not put ``lda = MAX(1, n)`` ahead of
+        # ``n = shape(a, 1)``. getarrdims blanks a dimension that names a
+        # later depargs entry, so ``work`` must follow ``n`` as well.
+        fpath = util.getpath("tests", "src", "crackfortran",
+                             "gh28700_lda_before_n.pyf")
+        mod = crackfortran.crackfortran([str(fpath)])
+        iface = next(b for b in mod
+                     if b.get("name") == "gh28700_lda_before_n")["body"][0]
+        probe = next(b for b in iface["body"] if b.get("name") == "probe")
+        order = probe["sortvars"]
+        assert order.index("a") < order.index("n")
+        assert order.index("n") < order.index("lda")
+        assert order.index("n") < order.index("work")
+        _, depargs = getargs2(probe)
+        capi_maps.depargs = depargs
+        work_dims = capi_maps.getarrdims("work", probe["vars"]["work"])
+        assert work_dims["setdims"] == "#varname#_Dims[0]=3 * n"
+        assert capi_maps.getarrdims("a", probe["vars"]["a"])["setdims"] == ""
+
+    def test_true_cycle_does_not_recurse(self, tmp_path, capsys):
+        # Names inside character literals, and a genuine parameter cycle,
+        # must be reported instead of blowing the stack in _get_depend_dict.
+        src = tmp_path / "cycle.f90"
+        src.write_text(
+            "module nonchar_literal_cycle\n"
+            "  integer, parameter :: n = len('m')\n"
+            "  integer, parameter :: m = len('n')\n"
+            "end module nonchar_literal_cycle\n"
+            "module char_real_cycle\n"
+            "  character(len=8), parameter :: aaa = bbb\n"
+            "  character(len=8), parameter :: bbb = aaa\n"
+            "end module char_real_cycle\n"
+            "subroutine uses_cycle\n"
+            "  use char_real_cycle\n"
+            "end subroutine uses_cycle\n"
+        )
+        mod = crackfortran.crackfortran([str(src)])
+        assert any(b.get("name") == "nonchar_literal_cycle" for b in mod)
+        err = capsys.readouterr().err
+        assert "cyclic dependencies" in err
+
+
+@pytest.mark.slow
+class TestLdaBeforeNRuntime(util.F2PyTest):
+    # Fortran-order array shape (5, 4): shape(a, 1) is a_Dims[1] == 4,
+    # and lda = MAX(1, n) must be computed from that n, not from 0.
+    # The .pyf names the extension; f2py ignores -m in that case.
+    module_name = "gh28700_lda_before_n"
+    sources = [
+        util.getpath("tests", "src", "crackfortran", "gh28700_lda_before_n.pyf"),
+        util.getpath("tests", "src", "crackfortran", "gh28700_lda_before_n.f90"),
+    ]
+
+    def test_shape_then_lda(self):
+        a = np.ones((5, 4), dtype=np.float32, order="F")
+        gotn, gotlda = self.module.probe(a)
+        assert gotn == 4
+        assert gotlda == 4
+
+
+@pytest.mark.slow
 class TestEval(util.F2PyTest):
     def test_eval_scalar(self):
         eval_scalar = crackfortran._eval_scalar
@@ -270,6 +384,7 @@ class TestEval(util.F2PyTest):
         assert eval_scalar('"123"', {}) == "'123'"
 
 
+@pytest.mark.slow
 class TestFortranReader(util.F2PyTest):
     @pytest.mark.parametrize("encoding",
                              ['ascii', 'utf-8', 'utf-16', 'utf-32'])
@@ -333,15 +448,16 @@ class TestNameArgsPatternBacktracking:
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
 
+@pytest.mark.slow
 class TestFunctionReturn(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
 
-    @pytest.mark.slow
     def test_function_rettype(self):
         # gh-23598
         assert self.module.intproduct(3, 4) == 12
 
 
+@pytest.mark.slow
 class TestFortranGroupCounters(util.F2PyTest):
     def test_end_if_comment(self):
         # gh-23533
@@ -410,6 +526,42 @@ class TestParamEval:
         dimspec = '(0:4, 3:12, 5)'
         pytest.raises(ValueError, crackfortran.param_eval, v, g_params, params,
                       dimspec=dimspec)
+
+
+class TestParamParseNestedParens:
+    # issue gh-28095: grouping parens in a dimension expression such as
+    # (mx_supply_curves + mx_intl_curves) must fold to a concrete size,
+    # not be mistaken for pa(index) array-parameter indexing.
+    def test_grouping_parens_fold(self):
+        params = {"mx_supply_curves": 14, "mx_intl_curves": 12}
+        out = crackfortran.param_parse(
+            "(mx_supply_curves + mx_intl_curves)", params)
+        assert out.replace(" ", "") == "(14+12)"
+
+    def test_grouping_parens_with_trailing_factor(self):
+        # A grouping paren need not span the whole token; the factor
+        # outside the parentheses must survive substitution.
+        params = {"n": 3, "m": 1800}
+        out = crackfortran.param_parse("(n + 1)*m", params)
+        assert out.replace(" ", "") == "(3+1)*1800"
+
+    def test_array_index_still_works(self):
+        params = {"pa": {1: 3, 2: 5}}
+        assert crackfortran.param_parse("pa(1)", params) == "3"
+        assert crackfortran.param_parse("pa(2)", params) == "5"
+
+    def test_nested_array_index(self):
+        params = {"dim": 2, "nested": {1: 1, 2: 2, 3: 3},
+                  "myparamarray": {1: 10, 2: 20, 3: 30}}
+        assert crackfortran.param_parse(
+            "myparamarray(nested(dim))", params) == "20"
+
+    def test_dimension_substituted_in_module(self):
+        fpath = util.getpath("tests", "src", "crackfortran", "gh28095.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        vs = mod[0]["vars"]["cmm_cl_btus"]
+        assert vs["dimension"] == ["26", "1800"]
+
 
 @pytest.mark.slow
 class TestLowerF2PYDirective(util.F2PyTest):

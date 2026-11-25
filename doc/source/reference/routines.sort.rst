@@ -15,6 +15,7 @@ Sorting
    sort_complex
    partition
    argpartition
+   top_k
 
 Searching
 ---------

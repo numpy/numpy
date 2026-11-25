@@ -23,7 +23,7 @@ import pytest
 import numpy
 from numpy._utils import asunicode
 from numpy.f2py._backends._meson import MesonBackend
-from numpy.testing import IS_WASM, temppath
+from numpy.testing import IS_IOS, IS_WASM, temppath
 
 #
 # Check if compilers are available at all...
@@ -53,7 +53,7 @@ def check_language(lang, code_snippet=None):
                 cwd=tmpdir,
                 capture_output=True,
             )
-        except subprocess.CalledProcessError:
+        except OSError:
             pytest.skip("meson not present, skipping compiler dependent test", allow_module_level=True)
         return runmeson.returncode == 0
     finally:
@@ -89,7 +89,7 @@ class CompilerChecker:
         self.has_f90 = False
 
     def check_compilers(self):
-        if (not self.compilers_checked) and (not sys.platform == "cygwin"):
+        if (not self.compilers_checked):
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [
                     executor.submit(check_language, "c"),
@@ -104,7 +104,7 @@ class CompilerChecker:
             self.compilers_checked = True
 
 
-if not IS_WASM:
+if not IS_WASM and not IS_IOS:
     checker = CompilerChecker()
     checker.check_compilers()
 
@@ -161,7 +161,7 @@ def get_temp_module_name():
     # Assume single-threaded, and the module dir usable only by this thread
     global _module_num
     get_module_dir()
-    name = "_test_ext_module_%d" % _module_num
+    name = f"_test_ext_module_{_module_num}"
     _module_num += 1
     if name in sys.modules:
         # this should not be possible, but check anyway
@@ -358,9 +358,9 @@ def build_meson(source_files, module_name=None, **kwargs):
 class F2PyTest:
     code = None
     sources = None
-    options = []
-    skip = []
-    only = []
+    options = []  # noqa: RUF012
+    skip = []  # noqa: RUF012
+    only = []  # noqa: RUF012
     suffix = ".f"
     module = None
     _has_c_compiler = None

@@ -14,7 +14,8 @@ from numpy.testing import assert_, assert_equal
 class TestStrUnicodeSuperSubscripts:
 
     @pytest.fixture(scope='class', autouse=True)
-    def use_unicode(self):
+    @classmethod
+    def use_unicode(cls):
         poly.set_default_printstyle('unicode')
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
@@ -97,7 +98,8 @@ class TestStrUnicodeSuperSubscripts:
 class TestStrAscii:
 
     @pytest.fixture(scope='class', autouse=True)
-    def use_ascii(self):
+    @classmethod
+    def use_ascii(cls):
         poly.set_default_printstyle('ascii')
 
     @pytest.mark.parametrize(('inp', 'tgt'), (
@@ -183,7 +185,8 @@ class TestStrAscii:
 class TestLinebreaking:
 
     @pytest.fixture(scope='class', autouse=True)
-    def use_ascii(self):
+    @classmethod
+    def use_ascii(cls):
         poly.set_default_printstyle('ascii')
 
     def test_single_line_one_less(self):
@@ -507,7 +510,8 @@ class TestPrintOptions:
     """
 
     @pytest.fixture(scope='class', autouse=True)
-    def use_ascii(self):
+    @classmethod
+    def use_ascii(cls):
         poly.set_default_printstyle('ascii')
 
     def test_str(self):
@@ -551,7 +555,7 @@ class TestPrintOptions:
     def test_non_finite(self):
         p = poly.Polynomial([nan, inf])
         assert str(p) == 'nan + inf x'
-        assert p._repr_latex_() == r'$x \mapsto \text{nan} + \text{inf}\,x$'  # noqa: RUF027
+        assert p._repr_latex_() == r'$x \mapsto \text{nan} + \text{inf}\,x$'
         with printoptions(nanstr='NAN', infstr='INF'):
             assert str(p) == 'NAN + INF x'
             assert p._repr_latex_() == \

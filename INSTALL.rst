@@ -86,7 +86,7 @@ compiler is available.
 
 For more options including selecting compilers, setting custom compiler flags
 and controlling parallelism, see
-https://scipy.github.io/devdocs/building/compilers_and_options.html
+https://scipy.github.io/devdocs/dev/building/compilers_and_options.html
 
 Windows
 -------
@@ -112,7 +112,7 @@ Configuring which BLAS/LAPACK is used if you have multiple libraries installed
 is done via a ``--config-settings`` CLI flag - if not given, the default choice
 is OpenBLAS. If your installed library is in a non-standard location, selecting
 that location is done via a pkg-config ``.pc`` file.
-See https://scipy.github.io/devdocs/building/blas_lapack.html for more details.
+See https://scipy.github.io/devdocs/dev/building/blas_lapack.html for more details.
 
 Windows
 -------

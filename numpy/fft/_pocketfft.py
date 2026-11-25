@@ -72,7 +72,7 @@ def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
     elif norm == "forward":
         fct = reciprocal(n, dtype=real_dtype)
     else:
-        raise ValueError(f'Invalid norm value {norm}; should be "backward",'
+        raise ValueError(f'Invalid norm value {norm}; should be "backward", '
                          '"ortho" or "forward".')
 
     n_out = n
@@ -143,9 +143,6 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype.
@@ -257,10 +254,6 @@ def ifft(a, n=None, axis=-1, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype.
@@ -346,10 +339,6 @@ def rfft(a, n=None, axis=-1, norm=None, out=None):
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
-
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
@@ -453,10 +442,6 @@ def irfft(a, n=None, axis=-1, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype.
@@ -494,7 +479,7 @@ def irfft(a, n=None, axis=-1, norm=None, out=None):
 
     If you specify an `n` such that `a` must be zero-padded or truncated, the
     extra/removed values will be added/removed at high frequencies. One can
-    thus resample a series to `m` points via Fourier interpolation by:
+    thus resample a series to ``m`` points via Fourier interpolation by:
     ``a_resamp = irfft(rfft(a), m)``.
 
     The correct interpretation of the hermitian input depends on the length of
@@ -550,10 +535,6 @@ def hfft(a, n=None, axis=-1, norm=None, out=None):
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
-
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
 
     out : ndarray, optional
         If provided, the result will be placed in this array. It should be
@@ -625,7 +606,7 @@ def hfft(a, n=None, axis=-1, norm=None, out=None):
     if n is None:
         n = (a.shape[axis] - 1) * 2
     new_norm = _swap_direction(norm)
-    output = irfft(conjugate(a), n, axis, norm=new_norm, out=None)
+    output = irfft(conjugate(a), n, axis, norm=new_norm, out=out)
     return output
 
 
@@ -651,10 +632,6 @@ def ihfft(a, n=None, axis=-1, norm=None, out=None):
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
-
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
 
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
@@ -741,10 +718,37 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
 def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None, out=None):
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
-    itl = list(range(len(axes)))
-    itl.reverse()
-    for ii in itl:
-        a = function(a, n=s[ii], axis=axes[ii], norm=norm, out=out)
+    axes = [normalize_axis_index(axis, a.ndim) for axis in axes]
+    # The 1-D transforms are done in reverse order, ending with the first
+    # axis. Since out has the shape of the final result, it can only be used
+    # from the last transform that changes the shape, so find that one.
+    steps = []
+    shape = list(a.shape)
+    last_change = 0
+    for axis, n in zip(axes[::-1], s[::-1]):
+        if n is None:
+            # Deprecated; same default as the 1-D transforms.
+            n = shape[axis]
+        n_out = n // 2 + 1 if function is rfft and not steps else n
+        if n_out != shape[axis]:
+            shape[axis] = n_out
+            last_change = len(steps)
+        steps.append((axis, n))
+    for i, (axis, n) in enumerate(steps):
+        if i == last_change:
+            # From here on the shape is final, so out can be used
+            # (if it is None, a new array of the right shape is created).
+            this_out = out
+        elif i > 0 and n == a.shape[axis]:
+            # No change in shape, so work in-place on the previous result
+            # (never on the input: for i == 0 we always get a new array).
+            this_out = a
+        else:
+            this_out = None
+        a = function(a, n=n, axis=axis, norm=norm, out=this_out)
+        if function is rfft:
+            # Only the first transform is real, the others are complex.
+            function = fft
     return a
 
 
@@ -806,14 +810,10 @@ def fftn(a, s=None, axes=None, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for all axes (and hence is
-        incompatible with passing in all but the trivial ``s``).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -947,14 +947,10 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for all axes (and hence is
-        incompatible with passing in all but the trivial ``s``).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -1071,14 +1067,10 @@ def fft2(a, s=None, axes=(-2, -1), norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for all axes (and hence only the
-        last axis can have ``s`` not equal to the shape at that axis).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -1203,14 +1195,10 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for all axes (and hence is
-        incompatible with passing in all but the trivial ``s``).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -1260,7 +1248,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None, out=None):
            [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
-    return _raw_fftnd(a, s, axes, ifft, norm, out=None)
+    return _raw_fftnd(a, s, axes, ifft, norm, out=out)
 
 
 @array_function_dispatch(_fftn_dispatcher)
@@ -1318,14 +1306,10 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for all axes (and hence is
-        incompatible with passing in all but the trivial ``s``).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -1382,12 +1366,7 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
             [0.+0.j,  0.+0.j]]])
 
     """
-    a = asarray(a)
-    s, axes = _cook_nd_args(a, s, axes)
-    a = rfft(a, s[-1], axes[-1], norm, out=out)
-    for ii in range(len(axes) - 2, -1, -1):
-        a = fft(a, s[ii], axes[ii], norm, out=out)
-    return a
+    return _raw_fftnd(a, s, axes, rfft, norm, out=out)
 
 
 @array_function_dispatch(_fftn_dispatcher)
@@ -1430,14 +1409,10 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : complex ndarray, optional
         If provided, the result will be placed in this array. It should be
-        of the appropriate shape and dtype for the last inverse transform.
-        incompatible with passing in all but the trivial ``s``).
+        of the appropriate shape and dtype for the final result (i.e.,
+        taking into account ``s``, if given).
 
         .. versionadded:: 2.0.0
 
@@ -1520,7 +1495,7 @@ def irfftn(a, s=None, axes=None, norm=None, out=None):
 
     axes : sequence of ints, optional
         Axes over which to compute the inverse FFT. If not given, the last
-        `len(s)` axes are used, or all axes if `s` is also not specified.
+        ``len(s)`` axes are used, or all axes if `s` is also not specified.
         Repeated indices in `axes` means that the inverse transform over that
         axis is performed multiple times.
 
@@ -1533,10 +1508,6 @@ def irfftn(a, s=None, axes=None, norm=None, out=None):
         Normalization mode (see `numpy.fft`). Default is "backward".
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
-
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
 
     out : ndarray, optional
         If provided, the result will be placed in this array. It should be
@@ -1650,10 +1621,6 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
         Indicates which direction of the forward/backward pair of transforms
         is scaled and with what normalization factor.
 
-        .. versionadded:: 1.20.0
-
-            The "backward", "forward" values were added.
-
     out : ndarray, optional
         If provided, the result will be placed in this array. It should be
         of the appropriate shape and dtype for the last transformation.
@@ -1690,4 +1657,4 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None, out=None):
            [3., 3., 3., 3., 3.],
            [4., 4., 4., 4., 4.]])
     """
-    return irfftn(a, s, axes, norm, out=None)
+    return irfftn(a, s, axes, norm, out=out)

@@ -32,3 +32,5 @@ np.hstack({1, 2})  # type: ignore[call-overload]
 np.vstack(1)  # type: ignore[call-overload]
 
 np.array([1], like=1)  # type: ignore[call-overload]
+
+np.fromfunction(lambda i: i, (3, 3))  # type: ignore[arg-type]

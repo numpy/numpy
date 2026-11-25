@@ -10,6 +10,7 @@ project(
     'c_std=c11',
     'cpp_std=c++17',
     'pkgconfig.relocatable=true',
+    'python.allow_limited_api=false',
   ],
 )
 
@@ -21,21 +22,38 @@ cy = meson.get_compiler('cython')
 
 # Check compiler is recent enough (see the SciPy Toolchain Roadmap for details)
 if cc.get_id() == 'gcc'
-  if not cc.version().version_compare('>=9.3')
-    error('NumPy requires GCC >= 9.3')
+  if not cc.version().version_compare('>=10.3')
+    error('NumPy requires GCC >= 10.3')
   endif
 elif cc.get_id() == 'msvc'
   if not cc.version().version_compare('>=19.35')
-    error('NumPy requires at least vc142 (default with Visual Studio 2019) ' + \
+    error('NumPy requires at least vc143 (default with Visual Studio 2022) ' + \
           'when building with MSVC')
   endif
   add_project_arguments('/experimental:c11atomics', language: 'c')
 endif
-if not cy.version().version_compare('>=3.0.6')
-  error('NumPy requires Cython >= 3.0.6')
+if not cy.version().version_compare('>=3.1.0')
+  error('NumPy requires Cython >= 3.1.0')
 endif
 
 py = import('python').find_installation(pure: false)
+
+# Target version for the Limited C API, used by extension modules that
+# have been ported. Controlled by python.allow_limited_api (default: false).
+# The hex form is the same version, for targets that must define
+# `Py_LIMITED_API` themselves; keep the two in sync.
+#
+# `Py_LIMITED_API` selects abi3, which is non-free-threaded only; the
+# free-threaded ABI (abi3t) needs Python 3.15. Leave both empty on a
+# free-threaded build, where a `limited_api:` kwarg would otherwise be acted
+# on and produce a module that cannot be built.
+if py.get_variable('Py_GIL_DISABLED', 0) == 0
+  py_limited_api = '3.13'
+  py_limited_api_hex = '0x030d0000'
+else
+  py_limited_api = ''
+  py_limited_api_hex = ''
+endif
 py_dep = py.dependency()
 
 if not cc.has_header('Python.h', dependencies: py_dep)

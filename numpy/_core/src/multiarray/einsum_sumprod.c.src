@@ -19,6 +19,7 @@
 #include "einsum_debug.h"
 #include "simd/simd.h"
 #include "common.h"
+#include "npy_pycompat.h"
 
 // ARM/Neon don't have instructions for aligned memory access
 #ifdef NPY_HAVE_NEON
@@ -1261,7 +1262,8 @@ get_sum_of_products_function(int nop, int type_num,
 {
     int iop;
 
-    if (type_num >= NPY_NTYPES_LEGACY) {
+    /* New-style DTypes have type_num -1 and no entry in the tables below */
+    if (type_num < 0 || type_num >= NPY_NTYPES_LEGACY) {
         return NULL;
     }
 

@@ -227,7 +227,7 @@ Our experience of the past four years says that bugs with "invalid instruction"
 type crashes are invariably due to issues with feature detection - most often
 because users are running under emulation, and sometimes because there are
 actual issues with our CPU feature detection code. There is little evidence
-we're aware of of the linker pulling in a function which is compiled multiple
+we're aware of the linker pulling in a function which is compiled multiple
 times for different architectures and picking the one with unsupported
 instructions. To ensure to avoid the issue, it's advisable to keep numerical
 kernels inside the source code and refrain from defining non-inlined functions

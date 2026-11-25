@@ -33,6 +33,7 @@ from numpy.f2py.symbolic import (
 from . import util
 
 
+@pytest.mark.slow
 class TestSymbolic(util.F2PyTest):
     def test_eliminate_quotes(self):
         def worker(s):

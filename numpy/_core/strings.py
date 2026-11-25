@@ -99,8 +99,8 @@ array_function_dispatch = functools.partial(
 def _get_num_chars(a):
     """
     Helper function that returns the number of characters per field in
-    a string or unicode array.  This is to abstract out the fact that
-    for a unicode array this is itemsize / 4.
+    a ``str_`` or ``bytes_`` array.  This is to abstract out the fact that
+    for a ``str_`` array this is itemsize / 4.
     """
     if issubclass(a.dtype.type, np.str_):
         return a.itemsize // 4
@@ -218,13 +218,13 @@ def _mod_dispatcher(a, values):
 @array_function_dispatch(_mod_dispatcher)
 def mod(a, values):
     """
-    Return (a % i), that is pre-Python 2.6 string formatting
-    (interpolation), element-wise for a pair of array_likes of str
-    or unicode.
+    Return (a % i), that is printf-style string formatting
+    (interpolation), element-wise for a pair of array_likes of ``str``
+    or ``bytes``.
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``bytes_`` or ``str_`` dtype
 
     values : array_like of values
        These values will be element-wise interpolated into the string.
@@ -263,7 +263,7 @@ def find(a, sub, start=0, end=None):
     ----------
     a : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
 
-    sub : array_like, with `np.bytes_` or `np.str_` dtype
+    sub : array_like, with ``bytes_`` or ``str_`` dtype
         The substring to search for.
 
     start, end : array_like, with any integer dtype
@@ -375,9 +375,9 @@ def rindex(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array-like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``bytes_`` or ``str_`` dtype
 
-    sub : array-like, with `np.bytes_` or `np.str_` dtype
+    sub : array-like, with ``bytes_`` or ``str_`` dtype
 
     start, end : array-like, with any integer dtype, optional
 
@@ -550,7 +550,7 @@ def decode(a, encoding=None, errors=None):
        The name of an encoding
 
     errors : str, optional
-       Specifies how to handle encoding errors
+       Specifies how to handle decoding errors
 
     Returns
     -------
@@ -584,7 +584,7 @@ def decode(a, encoding=None, errors=None):
 @set_module("numpy.strings")
 @array_function_dispatch(_code_dispatcher)
 def encode(a, encoding=None, errors=None):
-    """
+    r"""
     Calls :meth:`str.encode` element-wise.
 
     The set of available codecs comes from the Python standard library,
@@ -1243,7 +1243,7 @@ def capitalize(a):
 @array_function_dispatch(_unary_op_dispatcher)
 def title(a):
     """
-    Return element-wise title cased version of string or unicode.
+    Return element-wise title cased version of ``str`` or ``bytes``.
 
     Title case words start with uppercase characters, all remaining cased
     characters are lowercase.
@@ -1331,16 +1331,20 @@ def replace(a, old, new, count=-1):
 
     arr = np.asanyarray(a)
     old_dtype = getattr(old, 'dtype', None)
-    old = np.asanyarray(old)
+    old_arr = np.asanyarray(old)
     new_dtype = getattr(new, 'dtype', None)
-    new = np.asanyarray(new)
+    new_arr = np.asanyarray(new)
 
-    if np.result_type(arr, old, new).char == "T":
-        return _replace(arr, old, new, count)
+    if np.result_type(arr, old_arr, new_arr).char == "T":
+        # pass exact str objects so the ufunc converts them directly
+        a = a if type(a) is str else arr
+        old = old if type(old) is str else old_arr
+        new = new if type(new) is str else new_arr
+        return _replace(a, old, new, count)
 
     a_dt = arr.dtype
-    old = old.astype(old_dtype or a_dt, copy=False)
-    new = new.astype(new_dtype or a_dt, copy=False)
+    old = old_arr.astype(old_dtype or a_dt.char, copy=False)
+    new = new_arr.astype(new_dtype or a_dt.char, copy=False)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
@@ -1408,7 +1412,7 @@ def _split(a, sep=None, maxsplit=None):
     ----------
     a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    sep : str or unicode, optional
+    sep : {str, bytes}, optional
        If `sep` is not specified or None, any whitespace string is a
        separator.
 
@@ -1456,7 +1460,7 @@ def _rsplit(a, sep=None, maxsplit=None):
     ----------
     a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
 
-    sep : str or unicode, optional
+    sep : {str, bytes}, optional
         If `sep` is not specified or None, any whitespace string
         is a separator.
     maxsplit : int, optional
@@ -1577,13 +1581,17 @@ def partition(a, sep):
      array(['is nice!'], dtype='<U8'))
 
     """
-    a = np.asanyarray(a)
-    sep = np.asanyarray(sep)
+    a_arr = np.asanyarray(a)
+    sep_arr = np.asanyarray(sep)
 
-    if np.result_type(a, sep).char == "T":
+    if np.result_type(a_arr, sep_arr).char == "T":
+        # pass exact str objects so the ufunc converts them directly
+        a = a if type(a) is str else a_arr
+        sep = sep if type(sep) is str else sep_arr
         return _partition(a, sep)
 
-    sep = sep.astype(a.dtype, copy=False)
+    a = a_arr
+    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1646,13 +1654,17 @@ def rpartition(a, sep):
      array(['', '  ', 'Bba'], dtype='<U3'))
 
     """
-    a = np.asanyarray(a)
-    sep = np.asanyarray(sep)
+    a_arr = np.asanyarray(a)
+    sep_arr = np.asanyarray(sep)
 
-    if np.result_type(a, sep).char == "T":
+    if np.result_type(a_arr, sep_arr).char == "T":
+        # pass exact str objects so the ufunc converts them directly
+        a = a if type(a) is str else a_arr
+        sep = sep if type(sep) is str else sep_arr
         return _rpartition(a, sep)
 
-    sep = sep.astype(a.dtype, copy=False)
+    a = a_arr
+    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1689,7 +1701,7 @@ def translate(a, table, deletechars=None):
 
     Parameters
     ----------
-    a : array-like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``bytes_`` or ``str_`` dtype
 
     table : str of length 256
 
@@ -1698,7 +1710,7 @@ def translate(a, table, deletechars=None):
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``str_`` or ``bytes_`` dtype, depending on input type
 
     See Also
     --------

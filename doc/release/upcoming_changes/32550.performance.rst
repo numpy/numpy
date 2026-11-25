@@ -1,0 +1,6 @@
+Faster casts from fixed-width strings and faster ``str_`` scalars
+-----------------------------------------------------------------
+Casting fixed-width string arrays (``S`` and ``U`` dtypes) to numeric dtypes,
+for example ``np.array(["1", "2"]).astype(int)``, is now 1.4-3x faster.
+Creating `numpy.str_` scalars, for instance when indexing or iterating over a
+``U`` array, is about 1.5x faster.

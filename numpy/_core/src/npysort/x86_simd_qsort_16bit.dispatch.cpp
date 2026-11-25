@@ -15,43 +15,43 @@ namespace np { namespace qsort_simd {
 /*
  * QSelect dispatch functions:
  */
-template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(Half *arr, npy_intp num, npy_intp kth)
+template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(Half *arr, npy_intp num, npy_intp kth, bool reverse)
 {
 #if defined(NPY_HAVE_AVX512_SPR)
-    x86simdsortStatic::qselect(reinterpret_cast<_Float16*>(arr), kth, num, true);
+    x86simdsortStatic::qselect(reinterpret_cast<_Float16*>(arr), kth, num, true, reverse);
 #else
-    avx512_qselect_fp16(reinterpret_cast<uint16_t*>(arr), kth, num, true, false);
+    avx512_qselect_fp16(reinterpret_cast<uint16_t*>(arr), kth, num, true, reverse);
 #endif
 }
 
-template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(uint16_t *arr, npy_intp num, npy_intp kth)
+template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(uint16_t *arr, npy_intp num, npy_intp kth, bool reverse)
 {
-    x86simdsortStatic::qselect(arr, kth, num);
+    x86simdsortStatic::qselect(arr, kth, num, false, reverse);
 }
 
-template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(int16_t *arr, npy_intp num, npy_intp kth)
+template<> void NPY_CPU_DISPATCH_CURFX(QSelect)(int16_t *arr, npy_intp num, npy_intp kth, bool reverse)
 {
-    x86simdsortStatic::qselect(arr, kth, num);
+    x86simdsortStatic::qselect(arr, kth, num, false, reverse);
 }
 
 /*
  * QSort dispatch functions:
  */
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, npy_intp size, bool reverse)
 {
 #if defined(NPY_HAVE_AVX512_SPR)
-    x86simdsortStatic::qsort(reinterpret_cast<_Float16*>(arr), size, true);
+    x86simdsortStatic::qsort(reinterpret_cast<_Float16*>(arr), size, true, reverse);
 #else
-    avx512_qsort_fp16(reinterpret_cast<uint16_t*>(arr), size, true, false);
+    avx512_qsort_fp16(reinterpret_cast<uint16_t*>(arr), size, true, reverse);
 #endif
 }
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint16_t *arr, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint16_t *arr, npy_intp size, bool reverse)
 {
-    x86simdsortStatic::qsort(arr, size);
+    x86simdsortStatic::qsort(arr, size, false, reverse);
 }
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, npy_intp size)
+template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, npy_intp size, bool reverse)
 {
-    x86simdsortStatic::qsort(arr, size);
+    x86simdsortStatic::qsort(arr, size, false, reverse);
 }
 
 }} // namespace np::qsort_simd

@@ -4,8 +4,10 @@
 
 typedef struct {
     PyObject *ufunc;
-    PyObject *in;
-    PyObject *out;
+    PyObject *const *in;
+    int nin;
+    PyObject *const *out;
+    int nout;
     int out_i;
 } NpyUFuncContext;
 

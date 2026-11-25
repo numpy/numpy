@@ -132,12 +132,34 @@ def isreal(var):
 
 def get_kind(var):
     try:
-        return var['kindselector']['*']
+        result = var['kindselector']['*']
     except KeyError:
         try:
-            return var['kindselector']['kind']
+            result = var['kindselector']['kind']
         except KeyError:
-            pass
+            result = None
+    if result is not None:
+        try:
+            int(result)
+        except ValueError:
+            from .capi_maps import f2cmap_all
+            var_typespec = var.get('typespec', "real")
+            f2cmap_for_type = f2cmap_all.get(var_typespec, {})
+            c_type = f2cmap_for_type.get(result)
+            do_neg = False
+            if var_typespec == "integer":
+                do_neg = True
+            for kind_exp in range(5):
+                test_kind = str(2 ** kind_exp)
+                if c_type == f2cmap_for_type.get(test_kind, ""):
+                    result = test_kind
+                    break
+                if do_neg:
+                    test_kind = f"-{test_kind:s}"
+                    if c_type == f2cmap_for_type.get(test_kind, ""):
+                        result = test_kind
+                        break
+        return result
 
 
 def isint1(var):
@@ -627,16 +649,16 @@ class throw_error:
 def l_and(*f):
     l1, l2 = 'lambda v', []
     for i in range(len(f)):
-        l1 = '%s,f%d=f[%d]' % (l1, i, i)
-        l2.append('f%d(v)' % (i))
+        l1 = f'{l1},f{i}=f[{i}]'
+        l2.append(f'f{i}(v)')
     return eval(f"{l1}:{' and '.join(l2)}")
 
 
 def l_or(*f):
     l1, l2 = 'lambda v', []
     for i in range(len(f)):
-        l1 = '%s,f%d=f[%d]' % (l1, i, i)
-        l2.append('f%d(v)' % (i))
+        l1 = f'{l1},f{i}=f[{i}]'
+        l2.append(f'f{i}(v)')
     return eval(f"{l1}:{' or '.join(l2)}")
 
 
@@ -988,17 +1010,18 @@ def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose=False):
             if v1 in c2py_map:
                 if k1 in f2cmap_all[k]:
                     outmess(
-                        "\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n"
-                        % (k, k1, f2cmap_all[k][k1], v1)
+                        "\tWarning: redefinition of "
+                        f"{{'{k}':{{'{k1}':'{f2cmap_all[k][k1]}'->'{v1}'}}}}\n"
                     )
                 f2cmap_all[k][k1] = v1
                 if verbose:
                     outmess(f'\tMapping "{k}(kind={k1})" to "{v1}\"\n')
                 f2cmap_mapped.append(v1)
             elif verbose:
+                c2py_map_keys = list(c2py_map.keys())
                 errmess(
-                    "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
-                    % (k, k1, v1, v1, list(c2py_map.keys()))
+                    f"\tIgnoring map {{'{k}':{{'{k1}':'{v1}'}}}}: '{v1}' "
+                    f"must be in {c2py_map_keys}\n"
                 )
 
     return f2cmap_all, f2cmap_mapped

@@ -216,6 +216,12 @@ class TestFFT1D:
         assert_allclose(np.fft.ifft2(x) * (30. * 20.),
                         np.fft.ifft2(x, norm="forward"), atol=1e-6)
 
+    def test_ifft2_out(self):
+        z = np.array([[1 + 2j, 3 - 4j], [0.5 - 2j, 4 + 1j]])
+        out = np.zeros_like(z)
+        result = np.fft.ifft2(z, out=out)
+        assert result is out
+
     def test_fftn(self):
         x = random((30, 20, 10)) + 1j * random((30, 20, 10))
         assert_allclose(
@@ -298,6 +304,13 @@ class TestFFT1D:
         assert_allclose(x, np.fft.irfft2(np.fft.rfft2(x, norm="forward"),
                         norm="forward"), atol=1e-6)
 
+    def test_irfft2_out(self):
+        z = np.array([[7, 1 + 4j, -5], [2 - 1j, -2 - 1j, -8 + 1j],
+                      [-3, 1 + 2j, 5], [2 + 1j, 4 - 1j, -8 - 1j]])
+        out = np.zeros((4, 4), dtype=np.float64)
+        result = np.fft.irfft2(z, out=out)
+        assert result is out
+
     def test_rfftn(self):
         x = random((30, 20, 10))
         assert_allclose(np.fft.fftn(x)[:, :, :6], np.fft.rfftn(x), atol=1e-6)
@@ -337,6 +350,13 @@ class TestFFT1D:
                         np.fft.hfft(x_herm, norm="ortho"), atol=1e-6)
         assert_allclose(np.fft.hfft(x_herm) / 30.,
                         np.fft.hfft(x_herm, norm="forward"), atol=1e-6)
+
+    def test_hfft_out(self):
+        a = np.array([1, 2, 3, 4, 3, 2], dtype=complex)
+        n = (len(a) - 1) * 2
+        out = np.zeros(n, dtype=np.float64)
+        result = np.fft.hfft(a, n=n, out=out)
+        assert result is out
 
     def test_ihfft(self):
         x = random(14) + 1j * random(14)
@@ -438,15 +458,51 @@ class TestFFT1D:
         assert_array_equal(result2, expected2)
 
     @pytest.mark.parametrize("fft", [np.fft.fftn, np.fft.ifftn, np.fft.rfftn])
-    def test_fftn_out_and_s_interaction(self, fft):
-        # With s, shape varies, so generally one cannot pass in out.
+    @pytest.mark.parametrize("axes", [(0, 1, 2), (2, 0, 1), (-1, 0, 1),
+                                      (1, -1), (0, 0)])
+    @pytest.mark.parametrize("s", [(12, 7, 8), (3, 2, 3), (12, 3, 6),
+                                   (4, 5, 6), (10, 7, 6)])
+    def test_fftn_out_and_s_interaction(self, fft, s, axes):
+        # With s, the shape varies between the 1-D transforms, but out
+        # should still be used for the final result.
+        if fft is np.fft.rfftn:
+            x = random((10, 5, 6))
+        else:
+            x = random((10, 5, 6)) + 1j * random((10, 5, 6))
+        # Intermediate results are reused, but the input should never be.
+        x.flags.writeable = False
+        s = s[:len(axes)]
+        expected = fft(x, s=s, axes=axes)
+        out = np.zeros_like(expected)
+        result = fft(x, s=s, axes=axes, out=out)
+        assert result is out
+        assert_array_equal(result, expected)
+
+    @pytest.mark.parametrize("fft", [np.fft.fft2, np.fft.ifft2, np.fft.rfft2])
+    @pytest.mark.parametrize("axes", [(-2, -1), (0, 1), (-1, 0)])
+    @pytest.mark.parametrize("s", [(12, 8), (3, 3), (12, 3), (4, 6)])
+    def test_fft2_out_and_s_interaction(self, fft, s, axes):
+        if fft is np.fft.rfft2:
+            x = random((10, 5, 6))
+        else:
+            x = random((10, 5, 6)) + 1j * random((10, 5, 6))
+        x.flags.writeable = False
+        expected = fft(x, s=s, axes=axes)
+        out = np.zeros_like(expected)
+        result = fft(x, s=s, axes=axes, out=out)
+        assert result is out
+        assert_array_equal(result, expected)
+
+    @pytest.mark.parametrize("fft", [np.fft.fftn, np.fft.ifftn, np.fft.rfftn])
+    def test_fftn_out_and_s_shape(self, fft):
+        # out should have the shape of the result, not that of the input.
         if fft is np.fft.rfftn:
             x = random((10, 5, 6))
         else:
             x = random((10, 5, 6)) + 1j * random((10, 5, 6))
         with pytest.raises(ValueError, match="has wrong shape"):
             fft(x, out=np.zeros_like(x), s=(3, 3, 3), axes=(0, 1, 2))
-        # Except on the first axis done (which is the last of axes).
+        # Only the first axis done (which is the last of axes) changes.
         s = (10, 5, 5)
         expected = fft(x, s=s, axes=(0, 1, 2))
         out = np.zeros_like(expected)

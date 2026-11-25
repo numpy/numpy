@@ -2,28 +2,21 @@
 """
 refguide_check.py [OPTIONS] [-- ARGS]
 
-- Check for a NumPy submodule whether the objects in its __all__ dict
-  correspond to the objects included in the reference guide.
-- Check docstring examples
-- Check example blocks in RST files
+Check for a NumPy submodule whether the objects in its __all__ dict
+correspond to the objects included in the reference guide.
 
 Example of usage::
 
     $ python tools/refguide_check.py
+    $ python tools/refguide_check.py ma        # check only numpy.ma
+    $ python tools/refguide_check.py -v linalg # verbose output
 
 Note that this is a helper script to be able to check if things are missing;
 the output of this script does need to be checked manually.  In some cases
 objects are left out of the refguide for a good reason (it's an alias of
 another function, or deprecated, or ...)
 
-Another use of this helper script is to check validity of code samples
-in docstrings::
-
-    $ python tools/refguide_check.py --doctests ma
-
-or in RST-based documentations::
-
-    $ python tools/refguide_check.py --rst doc/source
+To check docstring examples, use ``spin check-docs`` instead.
 
 """
 import copy
@@ -34,17 +27,33 @@ import re
 import sys
 import warnings
 from argparse import ArgumentParser
+from typing import ClassVar
 
 import docutils.core
 from docutils.parsers.rst import directives
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
+# Enable specific Sphinx directives (Sphinx 8+)
+# Make seealso more lenient for numpydoc content (Sphinx 8+)
+from docutils.parsers.rst.directives.misc import Directive
 from numpydoc.docscrape_sphinx import get_doc_object
 
-# Enable specific Sphinx directives
-from sphinx.directives.other import Only, SeeAlso
 
-directives.register_directive('seealso', SeeAlso)
+class LenientSeeAlso(Directive):
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 1
+    final_argument_whitespace = True
+    option_spec: ClassVar[dict] = {}
+
+    def run(self):
+        return []
+
+
+directives.register_directive('seealso', LenientSeeAlso)
+
+from sphinx.directives.other import Only
+
 directives.register_directive('only', Only)
 
 
@@ -460,7 +469,7 @@ def validate_rst_syntax(text, name, dots=True):
     if not success:
         output += "    " + "-" * 72 + "\n"
         for lineno, line in enumerate(text.splitlines()):
-            output += "    %-4d    %s\n" % (lineno + 1, line)
+            output += f"    {lineno + 1:<4}    {line}\n"
         output += "    " + "-" * 72 + "\n\n"
 
     if dots:
@@ -520,10 +529,10 @@ def check_rest(module, names, dots=True):
                                 traceback.format_exc()))
                 continue
 
-        m = re.search("([\x00-\x09\x0b-\x1f])", text)  # noqa: RUF039
+        m = re.search("([\x00-\x09\x0b-\x1f])", text)
         if m:
-            msg = ("Docstring contains a non-printable character %r! "
-                   "Maybe forgot r\"\"\"?" % (m.group(1),))
+            msg = (f"Docstring contains a non-printable character {m.group(1)!r}! "
+                   "Maybe forgot r\"\"\"?")
             results.append((full_name, False, msg))
             continue
 

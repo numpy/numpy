@@ -7,7 +7,7 @@ Floating point error handling
 
 Error handling settings are stored in :py:mod:`python:contextvars`
 allowing different threads or async tasks to have independent configurations.
-For more information, see :ref:`thread_safety`.
+For more information, see :ref:`context_local`.
 
 .. _misc-error-handling:
 

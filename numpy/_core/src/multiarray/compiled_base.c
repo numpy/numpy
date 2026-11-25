@@ -16,7 +16,9 @@
 #include "ctors.h"
 #include "common.h"
 #include "dtypemeta.h"
+#include "dtype_transfer.h"
 #include "simd/simd.h"
+#include "module_state.h"
 
 #include <string.h>
 
@@ -24,57 +26,6 @@ typedef enum {
     PACK_ORDER_LITTLE = 0,
     PACK_ORDER_BIG
 } PACK_ORDER;
-
-/*
- * Returns -1 if the array is monotonic decreasing,
- * +1 if the array is monotonic increasing,
- * and 0 if the array is not monotonic.
- */
-static int
-check_array_monotonic(const double *a, npy_intp lena)
-{
-    npy_intp i;
-    double next;
-    double last;
-
-    if (lena == 0) {
-        /* all bin edges hold the same value */
-        return 1;
-    }
-    last = a[0];
-
-    /* Skip repeated values at the beginning of the array */
-    for (i = 1; (i < lena) && (a[i] == last); i++);
-
-    if (i == lena) {
-        /* all bin edges hold the same value */
-        return 1;
-    }
-
-    next = a[i];
-    if (last < next) {
-        /* Possibly monotonic increasing */
-        for (i += 1; i < lena; i++) {
-            last = next;
-            next = a[i];
-            if (last > next) {
-                return 0;
-            }
-        }
-        return 1;
-    }
-    else {
-        /* last > next, possibly monotonic decreasing */
-        for (i += 1; i < lena; i++) {
-            last = next;
-            next = a[i];
-            if (last < next) {
-                return 0;
-            }
-        }
-        return -1;
-    }
-}
 
 /* Find the minimum and maximum of an integer array */
 static void
@@ -120,13 +71,13 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     npy_intp minlength = 0;
     npy_intp i;
     double *weights , *dans;
+    int unsigned_input = 0;
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("bincount", args, len_args, kwnames,
-                "list", NULL, &list,
-                "|weights", NULL, &weight,
-                "|minlength", NULL, &mlength,
-                NULL, NULL, NULL) < 0) {
+                {"list", NULL, &list},
+                {"|weights", NULL, &weight},
+                {"|minlength", NULL, &mlength}) < 0) {
         return NULL;
     }
 
@@ -153,6 +104,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
             int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
             if (PyArray_ISINTEGER(tmp1)) {
                 flags = flags | NPY_ARRAY_FORCECAST;
+                unsigned_input = PyArray_ISUNSIGNED(tmp1);
             }
             PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
             lst = (PyArrayObject *)PyArray_FromAny((PyObject *)tmp1, local_dtype, 1, 1, flags, NULL);
@@ -172,6 +124,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         if (PyArray_Check((PyObject *)list) &&
             PyArray_ISINTEGER((PyArrayObject *)list)) {
             flags = flags | NPY_ARRAY_FORCECAST;
+            unsigned_input = PyArray_ISUNSIGNED((PyArrayObject *)list);
         }
         PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
         lst = (PyArrayObject *)PyArray_FromAny(list, local_dtype, 1, 1, flags, NULL);
@@ -214,9 +167,14 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
 
     numbers = (npy_intp *)PyArray_DATA(lst);
     minmax(numbers, len, &mn, &mx);
-    if (mn < 0) {
+    if (mn < 0 && !unsigned_input) {
         PyErr_SetString(PyExc_ValueError,
                 "'list' argument must have no negative elements");
+        goto fail;
+    }
+    if (mn < 0 || mx == NPY_MAX_INTP) {
+        PyErr_SetString(PyExc_ValueError,
+                "'list' argument contains a value too large for bincount");
         goto fail;
     }
     ans_size = mx + 1;
@@ -269,43 +227,6 @@ fail:
     Py_XDECREF(wts);
     Py_XDECREF(ans);
     return NULL;
-}
-
-/* Internal function to expose check_array_monotonic to python */
-NPY_NO_EXPORT PyObject *
-arr__monotonicity(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
-{
-    static char *kwlist[] = {"x", NULL};
-    PyObject *obj_x = NULL;
-    PyArrayObject *arr_x = NULL;
-    long monotonic;
-    npy_intp len_x;
-    NPY_BEGIN_THREADS_DEF;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:_monotonicity", kwlist,
-                                     &obj_x)) {
-        return NULL;
-    }
-
-    /*
-     * TODO:
-     *  `x` could be strided, needs change to check_array_monotonic
-     *  `x` is forced to double for this check
-     */
-    arr_x = (PyArrayObject *)PyArray_FROMANY(
-        obj_x, NPY_DOUBLE, 1, 1, NPY_ARRAY_CARRAY_RO);
-    if (arr_x == NULL) {
-        return NULL;
-    }
-
-    len_x = PyArray_SIZE(arr_x);
-    NPY_BEGIN_THREADS_THRESHOLDED(len_x)
-    monotonic = check_array_monotonic(
-        (const double *)PyArray_DATA(arr_x), len_x);
-    NPY_END_THREADS
-    Py_DECREF(arr_x);
-
-    return PyLong_FromLong(monotonic);
 }
 
 /*
@@ -394,18 +315,66 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     j = 0;
 
     copyswap = PyDataType_GetArrFuncs(PyArray_DESCR(array))->copyswap;
-    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
-    for (i = 0; i < ni; i++) {
-        if (mask_data[i]) {
-            if (j >= nv) {
-                j = 0;
-            }
+    if (copyswap == NULL || PyDataType_REFCHK(PyArray_DESCR(array))) {
+        NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS flags;
+        const npy_intp one = 1;
+        const npy_intp elsize = chunk;
+        const npy_intp strides[2] = {elsize, elsize};
 
-            copyswap(dest + i*chunk, src + j*chunk, 0, array);
-            j++;
+        NPY_cast_info_init(&cast_info);
+        if (PyArray_GetDTypeTransferFunction(
+                PyArray_ISALIGNED(values) && PyArray_ISALIGNED(array),
+                strides[0], strides[1],
+                PyArray_DESCR(values), PyArray_DESCR(array), 0,
+                &cast_info, &flags) < 0) {
+            goto fail;
+        }
+        if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS;
+        }
+        for (i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                if (j >= nv) {
+                    j = 0;
+                }
+
+                char *data[2] = {src + j*chunk, dest + i*chunk};
+                if (cast_info.func(
+                        &cast_info.context, data, &one, strides,
+                        cast_info.auxdata) < 0) {
+                    NPY_END_THREADS;
+                    NPY_cast_info_xfree(&cast_info);
+                    goto fail;
+                }
+                j++;
+            }
+        }
+        NPY_END_THREADS;
+        NPY_cast_info_xfree(&cast_info);
+    }
+    else {
+        int needs_api = PyDataType_FLAGCHK(PyArray_DESCR(array), NPY_NEEDS_PYAPI);
+        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(array));
+        for (i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                if (j >= nv) {
+                    j = 0;
+                }
+
+                copyswap(dest + i*chunk, src + j*chunk, 0, array);
+                if (needs_api && PyErr_Occurred()) {
+                    /* e.g. a structured dtype field that does not support copyswap */
+                    break;
+                }
+                j++;
+            }
+        }
+        NPY_END_THREADS;
+        if (PyErr_Occurred()) {
+            goto fail;
         }
     }
-    NPY_END_THREADS;
 
     Py_XDECREF(values);
     Py_XDECREF(mask);
@@ -415,7 +384,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
  fail:
     Py_XDECREF(mask);
-    PyArray_ResolveWritebackIfCopy(array);
+    PyArray_DiscardWritebackIfCopy(array);
     Py_XDECREF(array);
     Py_XDECREF(values);
     return NULL;
@@ -553,12 +522,11 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("interp", args, len_args, kwnames,
-                "x", NULL, &x,
-                "xp", NULL, &xp,
-                "fp", NULL, &fp,
-                "|left", NULL, &left,
-                "|right", NULL, &right,
-                NULL, NULL, NULL) < 0) {
+                {"x", NULL, &x},
+                {"xp", NULL, &xp},
+                {"fp", NULL, &fp},
+                {"|left", NULL, &left},
+                {"|right", NULL, &right}) < 0) {
         return NULL;
     }
 
@@ -575,7 +543,8 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
         goto fail;
     }
     lenxp = PyArray_SIZE(axp);
-    if (lenxp == 0) {
+    lenx = PyArray_SIZE(ax);
+    if (lenxp == 0 && lenx != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "array of sample points is empty");
         goto fail;
@@ -591,7 +560,9 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
     if (af == NULL) {
         goto fail;
     }
-    lenx = PyArray_SIZE(ax);
+    if (lenx == 0) {
+        goto finish;
+    }
 
     dy = (const npy_double *)PyArray_DATA(afp);
     dx = (const npy_double *)PyArray_DATA(axp);
@@ -635,7 +606,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_double));
+            slopes = PyMem_RawMalloc((lenxp - 1) * sizeof(npy_double));
             if (slopes == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -691,7 +662,9 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
         NPY_END_THREADS;
     }
 
-    PyArray_free(slopes);
+    PyMem_RawFree(slopes);
+
+finish:
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
@@ -725,12 +698,11 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("interp_complex", args, len_args, kwnames,
-                "x", NULL, &x,
-                "xp", NULL, &xp,
-                "fp", NULL, &fp,
-                "|left", NULL, &left,
-                "|right", NULL, &right,
-                NULL, NULL, NULL) < 0) {
+                {"x", NULL, &x},
+                {"xp", NULL, &xp},
+                {"fp", NULL, &fp},
+                {"|left", NULL, &left},
+                {"|right", NULL, &right}) < 0) {
         return NULL;
     }
 
@@ -749,7 +721,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         goto fail;
     }
     lenxp = PyArray_SIZE(axp);
-    if (lenxp == 0) {
+    lenx = PyArray_SIZE(ax);
+    if (lenxp == 0 && lenx != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "array of sample points is empty");
         goto fail;
@@ -760,7 +733,6 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
         goto fail;
     }
 
-    lenx = PyArray_SIZE(ax);
     dx = (const npy_double *)PyArray_DATA(axp);
     dz = (const npy_double *)PyArray_DATA(ax);
 
@@ -768,6 +740,9 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
                                             PyArray_DIMS(ax), NPY_CDOUBLE);
     if (af == NULL) {
         goto fail;
+    }
+    if (lenx == 0) {
+        goto finish;
     }
 
     dy = (const npy_cdouble *)PyArray_DATA(afp);
@@ -819,7 +794,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
-            slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_cdouble));
+            slopes = PyMem_RawMalloc((lenxp - 1) * sizeof(npy_cdouble));
             if (slopes == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -892,8 +867,9 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t
 
         NPY_END_THREADS;
     }
-    PyArray_free(slopes);
+    PyMem_RawFree(slopes);
 
+finish:
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
@@ -1447,27 +1423,33 @@ fail:
 
 /* Can only be called if doc is currently NULL */
 NPY_NO_EXPORT PyObject *
-arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
+arr_add_docstring(PyObject *module, PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *obj;
     PyObject *str;
     const char *docstr;
     static const char msg[] = "already has a different docstring";
+    /* CPython's separator between a docstring's signature line and its body */
+    static const char SIGNATURE_END[] = "\n--\n\n";
 
     /* Don't add docstrings */
 #if PY_VERSION_HEX > 0x030b0000
-    if (npy_static_cdata.optimize > 1) {
+    {
+        multiarray_umath_state *st = get_module_state(module);
+        if (st->static_cdata.optimize > 1) {
+            Py_RETURN_NONE;
+        }
+    }
 #else
     if (Py_OptimizeFlag > 1) {
-#endif
         Py_RETURN_NONE;
     }
+#endif
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("add_docstring", args, len_args, NULL,
-            "", NULL, &obj,
-            "", NULL, &str,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &obj},
+            {"", NULL, &str}) < 0) {
         return NULL;
     }
     if (!PyUnicode_Check(str)) {
@@ -1476,7 +1458,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
         return NULL;
     }
 
-    docstr = PyUnicode_AsUTF8(str);
+    docstr = PyUnicode_AsUTF8AndSize(str, NULL);
     if (docstr == NULL) {
         return NULL;
     }
@@ -1497,21 +1479,36 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
     }
     else if (PyObject_TypeCheck(obj, &PyType_Type)) {
         /*
-         * We add it to both `tp_doc` and `__doc__` here.  Note that in theory
-         * `tp_doc` extracts the signature line, but we currently do not use
-         * it.  It may make sense to only add it as `__doc__` and
-         * `__text_signature__` to the dict in the future.
-         * The dictionary path is only necessary for heaptypes (currently not
-         * used) and metaclasses.
-         * If `__doc__` as stored in `tp_dict` is None, we assume this was
-         * filled in by `PyType_Ready()` and should also be replaced.
+         * We add it to both `tp_doc` and `__doc__` here.  `tp_doc` keeps the
+         * leading signature line, which is where `__text_signature__` comes
+         * from.  `__doc__` in `tp_dict` is what a heap type reports, so it
+         * gets the docstring with that line removed, matching what a static
+         * type reports from `tp_doc`.
+         * The dictionary path is only necessary for heaptypes and
+         * metaclasses.  If `__doc__` as stored in `tp_dict` is None, we
+         * assume this was filled in by `PyType_Ready()` and should also be
+         * replaced.
          */
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
         if (new->tp_dict != NULL && PyDict_CheckExact(new->tp_dict) &&
                 PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) { // noqa: borrowed-ref - manual fix needed
+            PyObject *body;
+            const char *after_signature = strstr(docstr, SIGNATURE_END);
+            if (after_signature == NULL) {
+                body = Py_NewRef(str);
+            }
+            else {
+                body = PyUnicode_FromString(
+                        after_signature + strlen(SIGNATURE_END));
+                if (body == NULL) {
+                    return NULL;
+                }
+            }
             /* Warning: Modifying `tp_dict` is not generally safe! */
-            if (PyDict_SetItemString(new->tp_dict, "__doc__", str) < 0) {
+            int ret = PyDict_SetItemString(new->tp_dict, "__doc__", body);
+            Py_DECREF(body);
+            if (ret < 0) {
                 return NULL;
             }
         }
@@ -1615,9 +1612,29 @@ pack_inner(const char *inptr,
             #else
                 npy_uint64 arr[4] = {bb[0], bb[1], bb[2], bb[3]};
             #endif
+
+            #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+                #if NPY_SIMD_WIDTH == 16
+                arr[0] = npy_bswap8(arr[0]);
+                #elif NPY_SIMD_WIDTH == 32
+                arr[0] = npy_bswap8(arr[0]);
+                arr[1] = npy_bswap8(arr[1]);
+                #else
+                arr[0] = npy_bswap8(arr[0]);
+                arr[1] = npy_bswap8(arr[1]);
+                arr[2] = npy_bswap8(arr[2]);
+                arr[3] = npy_bswap8(arr[3]);
+                #endif
+            #endif
                 memcpy(outptr, arr, sizeof(arr));
                 outptr += vstepx4;
             } else {
+                #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+                bb[0] = npy_bswap8(bb[0]);
+                bb[1] = npy_bswap8(bb[1]);
+                bb[2] = npy_bswap8(bb[2]);
+                bb[3] = npy_bswap8(bb[3]);
+                #endif
                 for(int i = 0; i < 4; i++) {
                     for (int j = 0; j < vstep; j++) {
                         memcpy(outptr, (char*)&bb[i] + j, 1);
@@ -1632,6 +1649,11 @@ pack_inner(const char *inptr,
                 va = npyv_rev64_u8(va);
             }
             npy_uint64 bb = npyv_tobits_b8(npyv_cmpneq_u8(va, v_zero));
+
+            #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+            bb = npy_bswap8(bb);
+            #endif
+
             for (int i = 0; i < vstep; ++i) {
                 memcpy(outptr, (char*)&bb + i, 1);
                 outptr += out_stride;
@@ -1887,6 +1909,8 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_Size((PyObject *)out) / 8);
 
+    npy_static_cdata_struct *cdata = &_npy_module_state->static_cdata;
+
     while (PyArray_ITER_NOTDONE(it)) {
         npy_intp index;
         unsigned const char *inptr = PyArray_ITER_DATA(it);
@@ -1896,7 +1920,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             /* for unity stride we can just copy out of the lookup table */
             if (order == 'b') {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                     memcpy(outptr, &v, 8);
                     outptr += 8;
                     inptr += in_stride;
@@ -1904,7 +1928,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             else {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                     if (order != 'b') {
                         v = npy_bswap8(v);
                     }
@@ -1915,7 +1939,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             /* Clean up the tail portion */
             if (in_tail) {
-                npy_uint64 v = npy_static_cdata.unpack_lookup_big[*inptr].uint64;
+                npy_uint64 v = cdata->unpack_lookup_big[*inptr].uint64;
                 if (order != 'b') {
                     v = npy_bswap8(v);
                 }

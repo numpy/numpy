@@ -63,7 +63,18 @@ from numpy import (
 )
 from numpy._typing import DTypeLike
 
-from ._type_aliases import sctypeDict as sctypeDict
+from ._string_helpers import (
+    LOWER_TABLE as LOWER_TABLE,
+    UPPER_TABLE as UPPER_TABLE,
+    english_capitalize as english_capitalize,
+    english_lower as english_lower,
+    english_upper as english_upper,
+)
+from ._type_aliases import (
+    allTypes as allTypes,
+    sctypeDict as sctypeDict,
+    sctypes as sctypes,
+)
 from .multiarray import (
     busday_count,
     busday_offset,
@@ -71,6 +82,7 @@ from .multiarray import (
     datetime_as_string,
     datetime_data,
     is_busday,
+    issubdtype,
 )
 
 __all__ = [
@@ -155,7 +167,6 @@ class _TypeCodes(TypedDict):
     All: L["?bhilqnpBHILQNPefdgFDGSUVOMm"]
 
 def isdtype(dtype: dtype | type, kind: DTypeLike | tuple[DTypeLike, ...]) -> py_bool: ...
-def issubdtype(arg1: DTypeLike | None, arg2: DTypeLike | None) -> py_bool: ...
 
 typecodes: Final[_TypeCodes] = ...
 ScalarType: Final[

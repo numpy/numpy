@@ -25,7 +25,6 @@ details are found in :ref:`reference`.
 .. toctree::
    :maxdepth: 1
 
-   numpy-for-matlab-users
    NumPy tutorials <https://numpy.org/numpy-tutorials/>
    howtos_index
 
@@ -37,6 +36,7 @@ details are found in :ref:`reference`.
    ../f2py/index
    ../dev/underthehood
    basics.interoperability
+   basics.performant_code
 
 .. Links to these files are placed directly in the top-level html
    (doc/source/_templates/indexcontent.html, which appears for the URLs

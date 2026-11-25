@@ -78,7 +78,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 
     if legacy is False:
         options['legacy'] = sys.maxsize
-    elif legacy == False:  # noqa: E712
+    elif legacy == False:
         warnings.warn(
             f"Passing `legacy={legacy!r}` is deprecated.",
             FutureWarning, stacklevel=3
@@ -194,7 +194,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     floatmode : str, optional
         Controls the interpretation of the `precision` option for
         floating-point types. Can take the following values
-        (default maxprec_equal):
+        (default `maxprec`):
 
         * 'fixed': Always print exactly `precision` fractional digits,
                 even if this would print more or fewer digits than
@@ -237,12 +237,13 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         Unrecognized strings will be ignored with a warning for forward
         compatibility.
 
-        .. versionchanged:: 1.22.0
         .. versionchanged:: 2.2
 
     override_repr: callable, optional
         If set a passed function will be used for generating arrays' repr.
         Other options will be ignored.
+
+        .. versionadded:: 2.1
 
     See Also
     --------
@@ -353,6 +354,7 @@ def get_printoptions():
         - formatter : dict of callables
         - floatmode : str
         - legacy : str or False
+        - override_repr : callable
 
         For a full description of these options, see `set_printoptions`.
 
@@ -530,8 +532,16 @@ def _get_format_function(data, **options):
     dtype_ = data.dtype
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
+
     if dtypeobj is None:
         return formatdict["numpystr"]()
+    elif (getattr(dtypeobj, "__module__", None) != "numpy"
+            and not issubclass(dtypeobj, str)):
+        # Use `str()` as a default format for non-NumPy dtypes. This should be
+        # improved.  We use `str` assuming that `repr` is likely to duplicate
+        # information that is contained in the dtype.
+        # (Do this early, because e.g. quaddtype subclasses floating.)
+        return formatdict['void']()
     elif issubclass(dtypeobj, _nt.bool):
         return formatdict['bool']()
     elif issubclass(dtypeobj, _nt.integer):
@@ -964,7 +974,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
     finally:
         # recursive closures have a cyclic reference to themselves, which
         # requires gc to collect (gh-10620). To avoid this problem, for
-        # performance and PyPy friendliness, we break the cycle:
+        # performance, we break the cycle:
         recurser = None
 
 def _none_or_positive_arg(x, name):
@@ -1009,8 +1019,7 @@ class FloatingFormat:
         # choose exponential mode based on the non-zero finite values:
         abs_non_zero = absolute(finite_vals[finite_vals != 0])
         if len(abs_non_zero) != 0:
-            max_val = np.max(abs_non_zero)
-            min_val = np.min(abs_non_zero)
+            min_val, max_val = np.minmax(abs_non_zero)
             if self._legacy <= 202:
                 exp_cutoff_max = 1.e8
             else:
@@ -1176,8 +1185,6 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         `unique=True`. In that case more digits than necessary to uniquely
         identify the value may be printed and rounded unbiased.
 
-        .. versionadded:: 1.21.0
-
     Returns
     -------
     rep : string
@@ -1264,8 +1271,6 @@ def format_float_positional(x, precision=None, unique=True,
         in which case additional digits past those necessary to uniquely
         identify the value may be printed, rounding the last additional digit.
 
-        .. versionadded:: 1.21.0
-
     Returns
     -------
     rep : string
@@ -1304,8 +1309,7 @@ def format_float_positional(x, precision=None, unique=True,
 class IntegerFormat:
     def __init__(self, data, sign='-'):
         if data.size > 0:
-            data_max = np.max(data)
-            data_min = np.min(data)
+            data_min, data_max = np.minmax(data)
             data_max_str_len = len(str(data_max))
             if sign == ' ' and data_min < 0:
                 sign = '-'
@@ -1368,8 +1372,9 @@ class _TimelikeFormat:
         non_nat = data[~isnat(data)]
         if len(non_nat) > 0:
             # Max str length of non-NaT elements
-            max_str_len = max(len(self._format_non_nat(np.max(non_nat))),
-                              len(self._format_non_nat(np.min(non_nat))))
+            non_nat_min, non_nat_max = np.minmax(non_nat)
+            max_str_len = max(len(self._format_non_nat(non_nat_max)),
+                              len(self._format_non_nat(non_nat_min)))
         else:
             max_str_len = 0
         if len(non_nat) < data.size:
@@ -1415,10 +1420,11 @@ class DatetimeFormat(_TimelikeFormat):
         return super().__call__(x)
 
     def _format_non_nat(self, x):
-        return "'%s'" % datetime_as_string(x,
-                                    unit=self.unit,
-                                    timezone=self.timezone,
-                                    casting=self.casting)
+        datetime_str = datetime_as_string(x,
+                                          unit=self.unit,
+                                          timezone=self.timezone,
+                                          casting=self.casting)
+        return f"'{datetime_str}'"
 
 
 class TimedeltaFormat(_TimelikeFormat):
@@ -1567,7 +1573,7 @@ def dtype_short_repr(dtype):
     >>> dt = np.int64([1, 2]).dtype
     >>> assert eval(dtype_short_repr(dt)) == dt
     """
-    if type(dtype).__repr__ != np.dtype.__repr__:
+    if not type(dtype)._legacy:
         # TODO: Custom repr for user DTypes, logic should likely move.
         return repr(dtype)
     if dtype.names is not None:

@@ -81,6 +81,17 @@ class TestTake:
 
         assert_array_equal(a, a_original)
 
+    @pytest.mark.parametrize("dtype",
+            [np.int8, np.int16, np.int32, np.int64,
+             np.float16, np.float32, np.float64, np.longdouble])
+    def test_out_dtype(self, dtype):
+        # In reference to github issue #25588
+        a = np.arange(3).astype(np.int32)
+        indices = np.arange(2)
+        out = np.zeros_like(indices, dtype=dtype)
+        np.take(a, indices, out=out)
+        assert_array_equal(a[indices], out)
+
     def test_empty_argpartition(self):
         # In reference to github issue #6530
         a = np.array([0, 2, 4, 6, 8, 10])
@@ -165,3 +176,15 @@ class TestPut:
         # Allowing empty values like this is weird...
         np.put(arr, [1, 2, 3], [])
         assert_array_equal(arr, arr_copy)
+
+    @pytest.mark.parametrize("array_type, indices_type", [
+        (np.int32, np.int32), (np.int32, np.int64),
+        (np.int64, np.int32), (np.int64, np.int64),
+        (np.int32, np.uint32), (np.int32, np.uint64),
+        (np.int64, np.uint32), (np.int64, np.uint64)
+    ])
+    def test_put_integer_dtypes(self, array_type, indices_type):
+        x = np.zeros(5, dtype=array_type)
+        indices = np.array([0, 2, 4], dtype=indices_type)
+        np.put(x, indices, [1, 2, 3])
+        assert_array_equal(x, np.array([1, 0, 2, 0, 3], dtype=array_type))

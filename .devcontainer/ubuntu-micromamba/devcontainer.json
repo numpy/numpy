@@ -1,0 +1,32 @@
+{
+  "name": "NumPy Dev : ubuntu-micromamba",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  
+  "features": {
+    // install sshd to enable ssh connection
+    "ghcr.io/devcontainers/features/sshd:1": {},
+    
+    // install python for base python tooling, but disabled global package installs
+    "ghcr.io/devcontainers/features/python:1": {
+      "installTools": false
+    },
+    // install conda
+    "ghcr.io/devcontainers/features/conda:1": {}
+  },
+
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/home/vscode/micromamba/envs/numpy-dev/bin/python"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "charliermarsh.ruff"
+      ]
+    }
+  }
+}

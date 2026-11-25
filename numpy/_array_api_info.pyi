@@ -10,6 +10,7 @@ _Capabilities = TypedDict(
     {
         "boolean indexing": Literal[True],
         "data-dependent shapes": Literal[True],
+        "max dimensions": Literal[64],
     },
 )
 
@@ -97,7 +98,7 @@ type _EmptyDict = dict[Never, Never]
 
 @final
 class __array_namespace_info__:
-    __module__: Literal["numpy"] = "numpy"
+    __module__: Literal["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
 
     def capabilities(self) -> _Capabilities: ...
     def default_device(self) -> _Device: ...

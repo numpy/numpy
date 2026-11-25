@@ -113,8 +113,8 @@ Options:
                    --no-freethreading-compatible, as f2py does not analyze
                    fortran code for thread safety issues.
 
-  --include-paths <path1>:<path2>:...   Search include files from the given
-                   directories.
+  --include-paths <path1><pathsep><path2>...
+                  Search include files from the given directories.
 
   --f2cmap <filename>  Load Fortran-to-Python KIND specification from the given
                    file. Default: .f2py_f2cmap in current directory.
@@ -155,9 +155,9 @@ with the meson backend or above Python 3.12:
 
   --backend            <backend_type>
                        Specify the build backend for the compilation process.
-                       The supported backends are 'meson' and 'distutils'.
-                       If not specified, defaults to 'distutils'. On
-                       Python 3.12 or higher, the default is 'meson'.
+                       The only supported backend is 'meson', which is the
+                       default. The 'distutils' backend has been removed;
+                       requesting it falls back to 'meson'.
 
 Extra options (only effective with -c):
 
@@ -396,8 +396,8 @@ def buildmodules(lst):
     ret = {}
     for module, name in zip(modules, mnames):
         if name in isusedby:
-            outmess('\tSkipping module "%s" which is used by %s.\n' % (
-                name, ','.join('"%s"' % s for s in isusedby[name])))
+            using_modules = ','.join(f'"{s}"' for s in isusedby[name])
+            outmess(f'\tSkipping module "{name}" which is used by {using_modules}.\n')
         else:
             um = []
             if 'use' in module:
@@ -498,8 +498,8 @@ def run_main(comline_list):
             if 'python module' not in options:
                 errmess(
                     'Tip: If your original code is Fortran source then you must use -m option.\n')
-            raise TypeError('All blocks must be python module blocks but got %s' % (
-                repr(plist['block'])))
+            raise TypeError('All blocks must be python module blocks but got '
+                            f'{plist["block"]!r}')
     auxfuncs.debugoptions = options['debug']
     f90mod_rules.options = options
     auxfuncs.wrapfuncs = options['wrapfuncs']
@@ -540,7 +540,7 @@ class CombineIncludePaths(argparse.Action):
         if option_string == "--include_paths":
             outmess("Use --include-paths or -I instead of --include_paths which will be removed")
         if option_string in {"--include-paths", "--include_paths"}:
-            include_paths_set.update(values.split(':'))
+            include_paths_set.update(values.split(os.pathsep))
         else:
             include_paths_set.add(values)
         namespace.include_paths = list(include_paths_set)
@@ -627,7 +627,7 @@ def run_compile():
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'--((no-|)(wrap-functions|lower|freethreading-compatible)|debug-capi|quiet|skip-empty-wrappers)|-include')
+        r'--((no-|)(wrap-functions|lower|freethreading-compatible|latex-doc)|debug-capi|quiet|skip-empty-wrappers)|-include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
@@ -659,7 +659,7 @@ def run_compile():
         v = '--fcompiler='
         if s[:len(v)] == v:
             outmess(
-                "--fcompiler cannot be used with meson,"
+                "--fcompiler cannot be used with meson, "
                 "set compiler with the FC environment variable\n"
                 )
     for s in del_list:

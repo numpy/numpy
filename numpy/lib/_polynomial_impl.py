@@ -5,7 +5,6 @@ Functions to operate on polynomials.
 __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
            'polyfit']
-
 import functools
 import re
 import warnings
@@ -34,7 +33,7 @@ array_function_dispatch = functools.partial(
 
 
 def _poly_dispatcher(seq_of_zeros):
-    return seq_of_zeros
+    return (seq_of_zeros,)
 
 
 @array_function_dispatch(_poly_dispatcher)
@@ -141,8 +140,7 @@ def poly(seq_of_zeros):
         seq_of_zeros = eigvals(seq_of_zeros)
     elif len(sh) == 1:
         dt = seq_of_zeros.dtype
-        # Let object arrays slip through, e.g. for arbitrary precision
-        if dt != object:
+        if dt.type is not NX.object_:
             seq_of_zeros = seq_of_zeros.astype(mintypecode(dt.char))
     else:
         raise ValueError("input must be 1d or non-empty square 2d array.")
@@ -164,7 +162,7 @@ def poly(seq_of_zeros):
 
 
 def _roots_dispatcher(p):
-    return p
+    return (p,)
 
 
 @array_function_dispatch(_roots_dispatcher)
@@ -252,6 +250,10 @@ def roots(p):
         A = diag(NX.ones((N - 2,), p.dtype), -1)
         A[0, :] = -p[1:] / p[0]
         roots = eigvals(A)
+
+        # backwards compat: return real values if possible
+        from numpy.linalg._linalg import _to_real_if_imag_zero
+        roots = _to_real_if_imag_zero(roots, A)
     else:
         roots = NX.array([])
 
@@ -1028,6 +1030,10 @@ def polydiv(u, v):
     ``u.ndim = v.ndim = 0``, ``u.ndim = v.ndim = 1``,
     ``u.ndim = 1, v.ndim = 0``, and ``u.ndim = 0, v.ndim = 1`` - work.
 
+    Coefficients are in descending degree order. Remove leading zeros from
+    the divisor's coefficient array before calling this function. A zero
+    first coefficient causes a division by zero.
+
     Examples
     --------
 
@@ -1039,6 +1045,14 @@ def polydiv(u, v):
     >>> y = np.array([2.0, 1.0])
     >>> np.polydiv(x, y)
     (array([1.5 , 1.75]), array([0.25]))
+
+    To divide :math:`x^2 + 2x + 1` by :math:`0x^2 + x + 1` without
+    trimming the divisor's leading zero yourself, use
+    :func:`numpy.polynomial.polynomial.polydiv`. It takes coefficients in
+    ascending degree order, so the zero goes at the end:
+
+    >>> np.polynomial.polynomial.polydiv([1, 2, 1], [1, 1, 0])
+    (array([1., 1.]), array([0.]))
 
     """
     truepoly = (isinstance(u, poly1d) or isinstance(v, poly1d))
@@ -1091,7 +1105,7 @@ def _raise_power(astr, wrap=70):
 
 
 @set_module('numpy')
-class poly1d:
+class poly1d[T]:
     """
     A one-dimensional polynomial class.
 
@@ -1325,9 +1339,9 @@ class poly1d:
             elif coefstr == '0':
                 newstr = ''
             elif coefstr == 'b':
-                newstr = '%s**%d' % (var, power,)
+                newstr = f'{var}**{power}'
             else:
-                newstr = '%s %s**%d' % (coefstr, var, power)
+                newstr = f'{coefstr} {var}**{power}'
 
             if k > 0:
                 if newstr != '':

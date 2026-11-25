@@ -10,6 +10,8 @@
  */
 #include "include/legacy-distributions.h"
 
+#include <stdlib.h>
+
 
 static inline double legacy_double(aug_bitgen_t *aug_state) {
   return aug_state->bit_generator->next_double(aug_state->bit_generator->state);
@@ -127,7 +129,7 @@ double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
     const double n = legacy_gauss(aug_state) + sqrt(nonc);
     return Chi2 + n * n;
   } else {
-    const long i = random_poisson(aug_state->bit_generator, nonc / 2.0);
+    const long i = legacy_random_poisson(aug_state->bit_generator, nonc / 2.0);
     out = legacy_chisquare(aug_state, df + 2 * i);
     /* Insert nan guard here to avoid changing the stream */
     if (npy_isnan(nonc)){
@@ -178,7 +180,7 @@ double legacy_standard_t(aug_bitgen_t *aug_state, double df) {
 
 int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) {
   double Y = legacy_gamma(aug_state, n, (1 - p) / p);
-  return (int64_t)random_poisson(aug_state->bit_generator, Y);
+  return legacy_random_poisson(aug_state->bit_generator, Y);
 }
 
 double legacy_standard_cauchy(aug_bitgen_t *aug_state) {
@@ -267,6 +269,156 @@ static RAND_INT_TYPE legacy_random_binomial_inversion(
   return X;
 }
 
+/*
+ * BTPE implementation preserved for compatibility. The last two error terms of
+ * the Stirling approximation are incorrectly added
+ */
+static RAND_INT_TYPE legacy_random_binomial_btpe(bitgen_t *bitgen_state,
+                                                 RAND_INT_TYPE n,
+                                                 double p,
+                                                 binomial_t *binomial) {
+  double r, q, fm, p1, xm, xl, xr, c, laml, lamr, p2, p3, p4;
+  double a, u, v, s, F, rho, t, A, nrq, x1, x2, f1, f2, z, z2, w, w2, x;
+  RAND_INT_TYPE m, y, k, i;
+
+  if (!(binomial->has_binomial) || (binomial->nsave != n) ||
+      (binomial->psave != p)) {
+    /* initialize */
+    binomial->nsave = n;
+    binomial->psave = p;
+    binomial->has_binomial = 1;
+    binomial->r = r = MIN(p, 1.0 - p);
+    binomial->q = q = 1.0 - r;
+    binomial->fm = fm = n * r + r;
+    binomial->m = m = (RAND_INT_TYPE)floor(binomial->fm);
+    binomial->p1 = p1 = floor(2.195 * sqrt(n * r * q) - 4.6 * q) + 0.5;
+    binomial->xm = xm = m + 0.5;
+    binomial->xl = xl = xm - p1;
+    binomial->xr = xr = xm + p1;
+    binomial->c = c = 0.134 + 20.5 / (15.3 + m);
+    a = (fm - xl) / (fm - xl * r);
+    binomial->laml = laml = a * (1.0 + a / 2.0);
+    a = (xr - fm) / (xr * q);
+    binomial->lamr = lamr = a * (1.0 + a / 2.0);
+    binomial->p2 = p2 = p1 * (1.0 + 2.0 * c);
+    binomial->p3 = p3 = p2 + c / laml;
+    binomial->p4 = p4 = p3 + c / lamr;
+  } else {
+    r = binomial->r;
+    q = binomial->q;
+    fm = binomial->fm;
+    m = binomial->m;
+    p1 = binomial->p1;
+    xm = binomial->xm;
+    xl = binomial->xl;
+    xr = binomial->xr;
+    c = binomial->c;
+    laml = binomial->laml;
+    lamr = binomial->lamr;
+    p2 = binomial->p2;
+    p3 = binomial->p3;
+    p4 = binomial->p4;
+  }
+
+/* sigh ... */
+Step10:
+  nrq = n * r * q;
+  u = next_double(bitgen_state) * p4;
+  v = next_double(bitgen_state);
+  if (u > p1)
+    goto Step20;
+  y = (RAND_INT_TYPE)floor(xm - p1 * v + u);
+  goto Step60;
+
+Step20:
+  if (u > p2)
+    goto Step30;
+  x = xl + (u - p1) / c;
+  v = v * c + 1.0 - fabs(m - x + 0.5) / p1;
+  if (v > 1.0)
+    goto Step10;
+  y = (RAND_INT_TYPE)floor(x);
+  goto Step50;
+
+Step30:
+  if (u > p3)
+    goto Step40;
+  y = (RAND_INT_TYPE)floor(xl + log(v) / laml);
+  /* Reject if v==0.0 since previous cast is undefined */
+  if ((y < 0) || (v == 0.0))
+    goto Step10;
+  v = v * (u - p2) * laml;
+  goto Step50;
+
+Step40:
+  y = (RAND_INT_TYPE)floor(xr - log(v) / lamr);
+  /* Reject if v==0.0 since previous cast is undefined */
+  if ((y > n) || (v == 0.0))
+    goto Step10;
+  v = v * (u - p3) * lamr;
+
+Step50:
+  k = llabs(y - m);
+  if ((k > 20) && (k < ((nrq) / 2.0 - 1)))
+    goto Step52;
+
+  s = r / q;
+  a = s * (n + 1);
+  F = 1.0;
+  if (m < y) {
+    for (i = m + 1; i <= y; i++) {
+      F *= (a / i - s);
+    }
+  } else if (m > y) {
+    for (i = y + 1; i <= m; i++) {
+      F /= (a / i - s);
+    }
+  }
+  if (v > F)
+    goto Step10;
+  goto Step60;
+
+Step52:
+  rho =
+      (k / (nrq)) * ((k * (k / 3.0 + 0.625) + 0.16666666666666666) / nrq + 0.5);
+  t = -k * k / (2 * nrq);
+  /* log(0.0) ok here */
+  A = log(v);
+  if (A < (t - rho))
+    goto Step60;
+  if (A > (t + rho))
+    goto Step10;
+
+  x1 = (double)y + 1;
+  f1 = (double)m + 1;
+  z = (double)n + 1 - (double)m;
+  w = (double)n - (double)y + 1;
+  x2 = x1 * x1;
+  f2 = f1 * f1;
+  z2 = z * z;
+  w2 = w * w;
+  /* The last two terms are subtracted in the corrected version */
+  if (A > (xm * log(f1 / x1) + (n - m + 0.5) * log(z / w) +
+           (y - m) * log(w * r / (x1 * q)) +
+           (13680. - (462. - (132. - (99. - 140. / f2) / f2) / f2) / f2) / f1 /
+               166320. +
+           (13680. - (462. - (132. - (99. - 140. / z2) / z2) / z2) / z2) / z /
+               166320. +
+           (13680. - (462. - (132. - (99. - 140. / x2) / x2) / x2) / x2) / x1 /
+               166320. +
+           (13680. - (462. - (132. - (99. - 140. / w2) / w2) / w2) / w2) / w /
+               166320.)) {
+    goto Step10;
+  }
+
+Step60:
+  if (p > 0.5) {
+    y = n - y;
+  }
+
+  return y;
+}
+
 static RAND_INT_TYPE legacy_random_binomial_original(bitgen_t *bitgen_state,
                                                      double p,
                                                      RAND_INT_TYPE n,
@@ -277,14 +429,14 @@ static RAND_INT_TYPE legacy_random_binomial_original(bitgen_t *bitgen_state,
     if (p * n <= 30.0) {
       return legacy_random_binomial_inversion(bitgen_state, n, p, binomial);
     } else {
-      return random_binomial_btpe(bitgen_state, n, p, binomial);
+      return legacy_random_binomial_btpe(bitgen_state, n, p, binomial);
     }
   } else {
     q = 1.0 - p;
     if (q * n <= 30.0) {
       return n - legacy_random_binomial_inversion(bitgen_state, n, q, binomial);
     } else {
-      return n - random_binomial_btpe(bitgen_state, n, q, binomial);
+      return n - legacy_random_binomial_btpe(bitgen_state, n, q, binomial);
     }
   }
 }
@@ -421,8 +573,70 @@ int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good,
 }
 
 
+static RAND_INT_TYPE legacy_random_poisson_mult(bitgen_t *bitgen_state,
+                                                double lam) {
+  RAND_INT_TYPE X;
+  double prod, U, enlam;
+
+  enlam = exp(-lam);
+  X = 0;
+  prod = 1.0;
+  while (1) {
+    U = next_double(bitgen_state);
+    prod *= U;
+    if (prod > enlam) {
+      X += 1;
+    } else {
+      return X;
+    }
+  }
+}
+
+/*
+ * The transformed rejection method for generating Poisson random variables
+ * W. Hoermann
+ * Insurance: Mathematics and Economics 12, 39-45 (1993)
+ */
+static RAND_INT_TYPE legacy_random_poisson_ptrs(bitgen_t *bitgen_state,
+                                                double lam) {
+  RAND_INT_TYPE k;
+  double U, V, slam, loglam, a, b, invalpha, vr, us;
+
+  slam = sqrt(lam);
+  loglam = log(lam);
+  b = 0.931 + 2.53 * slam;
+  a = -0.059 + 0.02483 * b;
+  invalpha = 1.1239 + 1.1328 / (b - 3.4);
+  vr = 0.9277 - 3.6224 / (b - 2);
+
+  while (1) {
+    U = next_double(bitgen_state) - 0.5;
+    V = next_double(bitgen_state);
+    us = 0.5 - fabs(U);
+    k = (RAND_INT_TYPE)floor((2 * a / us + b) * U + lam + 0.43);
+    if ((us >= 0.07) && (V <= vr)) {
+      return k;
+    }
+    if ((k < 0) || ((us < 0.013) && (V > us))) {
+      continue;
+    }
+    /* log(V) == log(0.0) ok here */
+    /* if U==0.0 so that us==0.0, log is ok since always returns */
+    if ((log(V) + log(invalpha) - log(a / (us * us) + b)) <=
+        (-lam + (double)k * loglam - random_loggam((double)k + 1))) {
+      return k;
+    }
+  }
+}
+
 int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) {
-  return (int64_t)random_poisson(bitgen_state, lam);
+  if (lam >= 10) {
+    return (int64_t)legacy_random_poisson_ptrs(bitgen_state, lam);
+  } else if (lam == 0) {
+    return 0;
+  } else {
+    return (int64_t)legacy_random_poisson_mult(bitgen_state, lam);
+  }
 }
 
 int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) {
@@ -469,7 +683,26 @@ int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) {
 void legacy_random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
                                RAND_INT_TYPE *mnix, double *pix, npy_intp d,
                                binomial_t *binomial) {
-  random_multinomial(bitgen_state, n, mnix, pix, d, binomial);
+  /*
+   * Mirrors random_multinomial but dispatches to legacy_random_binomial,
+   * since bug fixes to random_binomial would otherwise change the
+   * RandomState stream.
+   */
+  double remaining_p = 1.0;
+  npy_intp j;
+  RAND_INT_TYPE dn = n;
+  for (j = 0; j < (d - 1); j++) {
+    mnix[j] = (RAND_INT_TYPE)legacy_random_binomial(
+        bitgen_state, pix[j] / remaining_p, dn, binomial);
+    dn = dn - mnix[j];
+    if (dn <= 0) {
+      break;
+    }
+    remaining_p -= pix[j];
+  }
+  if (dn > 0) {
+      mnix[d - 1] = dn;
+  }
 }
 
 double legacy_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {

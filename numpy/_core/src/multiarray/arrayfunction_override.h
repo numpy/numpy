@@ -1,7 +1,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_ARRAYFUNCTION_OVERRIDE_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_ARRAYFUNCTION_OVERRIDE_H_
 
-extern NPY_NO_EXPORT PyTypeObject PyArrayFunctionDispatcher_Type;
+NPY_NO_EXPORT int
+init_array_function_dispatcher_type(PyObject *module);
 
 NPY_NO_EXPORT PyObject *
 array__get_implementing_args(

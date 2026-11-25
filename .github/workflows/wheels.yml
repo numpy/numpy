@@ -39,35 +39,36 @@ jobs:
           - [ubuntu-22.04, musllinux_x86_64, ""]
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
-          - [macos-15-intel, macosx_x86_64, openblas]
-          - [macos-14, macosx_arm64, openblas]
+          - [macos-15, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
           - [windows-11-arm, win_arm64, ""]
-        python: ["cp312"]
+          # GitHub Actions doesn’t currently support the Android emulator on any ARM
+          # runner. So we build for ARM on a non-ARM runner, which will skip the tests.
+          - [ubuntu-24.04, android_arm64_v8a]
+          - [ubuntu-24.04, android_x86_64]
+        python: ["cp313"]
+        include:
+          # Cover free-threaded wheel packaging and OpenBLAS on Intel macOS.
+          - buildplat: [macos-15-intel, macosx_x86_64, openblas]
+            python: "cp314t"
 
-    env:
-      IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
           persist-credentials: false
 
-      - name: Setup MSVC (32-bit)
-        if: ${{ matrix.buildplat[1] == 'win32' }}
-        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
-        with:
-          architecture: 'x86'
-
-      - name: Setup LLVM for Windows ARM64
+      - name: win_arm64 - set environment variables
         if: ${{ matrix.buildplat[1] == 'win_arm64' }}
-        uses: ./.github/windows_arm64_steps
+        run: |
+            echo "CC=clang-cl" >> $env:GITHUB_ENV
+            echo "CXX=clang-cl" >> $env:GITHUB_ENV
+            echo "FC=flang" >> $env:GITHUB_ENV
 
       - name: pkg-config-for-win
         if: runner.os == 'windows'
         run: |
-          choco install -y --no-progress --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
           $CIBW = "${{ github.workspace }}/.openblas"
           # pkgconfig needs a complete path, and not just "./openblas since the
           # build is run in a tmp dir (?)
@@ -77,10 +78,10 @@ jobs:
           echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV
 
       - name: Setup macOS
-        if: matrix.buildplat[0] == 'macos-15-intel' || matrix.buildplat[0] == 'macos-14'
+        if: matrix.buildplat[1] == 'macosx_x86_64' || matrix.buildplat[1] == 'macosx_arm64'
         run: |
           # Needed due to https://github.com/actions/runner-images/issues/3371
-          # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
+          # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md
           echo "FC=gfortran-13" >> "$GITHUB_ENV"
           echo "F77=gfortran-13" >> "$GITHUB_ENV"
           echo "F90=gfortran-13" >> "$GITHUB_ENV"
@@ -99,11 +100,44 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e  # v3.3.1
-        env:
-          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
+        with:
+          only: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
+          path: ./wheelhouse/*.whl
+
+  build_ios_wheels:
+    name: Build wheels cp314-iOS-arm64-accelerate (device and simulator)
+    if: github.repository == 'numpy/numpy'
+    runs-on: macos-26
+    env:
+      # ACCELERATE_NEW_LAPACK with ILP64 requires iOS 16.4 or higher.
+      CIBW_ENVIRONMENT_IOS: IPHONEOS_DEPLOYMENT_TARGET=17.0
+      # Meson's build directory must not be shared across cross-compilation targets.
+      CIBW_BEFORE_BUILD_IOS: rm -rf build
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+
+      # Together these take about 14 minutes, so share a runner and checkout.
+      - name: Build iOS device wheel
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
+        with:
+          only: cp314-ios_arm64_iphoneos
+
+      - name: Build and test iOS simulator wheel
+        if: ${{ !cancelled() }}
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
+        with:
+          only: cp314-ios_arm64_iphonesimulator
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cp314-ios-arm64-accelerate
           path: ./wheelhouse/*.whl

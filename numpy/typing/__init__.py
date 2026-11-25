@@ -3,8 +3,6 @@
 Typing (:mod:`numpy.typing`)
 ============================
 
-.. versionadded:: 1.20
-
 Large parts of the NumPy API have :pep:`484`-style type annotations. In
 addition a number of type aliases are available to users, most prominently
 the two below:
@@ -12,16 +10,11 @@ the two below:
 - `ArrayLike`: objects that can be converted to arrays
 - `DTypeLike`: objects that can be converted to dtypes
 
+See the :ref:`user guide on static typing <basics.typing>`.
+
 .. _typing-extensions: https://pypi.org/project/typing-extensions/
 
-Mypy plugin
------------
-
-.. versionadded:: 1.21
-
-.. automodule:: numpy.typing.mypy_plugin
-
-.. currentmodule:: numpy.typing
+.. _typing.differences:
 
 Differences from the runtime NumPy API
 --------------------------------------
@@ -44,7 +37,7 @@ example,
     array(<generator object <genexpr> at ...>, dtype=object)
 
 is valid NumPy code which will create a 0-dimensional object
-array. Type checkers will complain about the above example when using
+array. Type-checkers will complain about the above example when using
 the NumPy types however. If you really intended to do the above, then
 you can either use a ``# type: ignore`` comment:
 
@@ -61,21 +54,6 @@ or explicitly type the array like object as `~typing.Any`:
     >>> np.array(array_like)
     array(<generator object <genexpr> at ...>, dtype=object)
 
-ndarray
-~~~~~~~
-
-It's possible to mutate the dtype of an array at runtime. For example,
-the following code is valid:
-
-.. code-block:: python
-
-    >>> x = np.array([1, 2])
-    >>> x.dtype = np.bool
-
-This sort of mutation is not allowed by the types. Users who want to
-write statically typed code should instead use the `numpy.ndarray.view`
-method to create a view of the array with a different dtype.
-
 DTypeLike
 ~~~~~~~~~
 
@@ -86,7 +64,7 @@ dictionary of fields like below:
 
     >>> x = np.dtype({"field1": (float, 1), "field2": (int, 3)})
 
-Although this is valid NumPy code, the type checker will complain about it,
+Although this is valid NumPy code, the type-checker will complain about it,
 since its usage is discouraged.
 Please see : :ref:`Data type objects <arrays.dtypes>`
 
@@ -106,10 +84,6 @@ involving precision-based casting.
     >>> T = TypeVar("T", bound=npt.NBitBase)
     >>> def func(a: np.floating[T], b: np.floating[T]) -> np.floating[T]:
     ...     ...
-
-Consequently, the likes of `~numpy.float16`, `~numpy.float32` and
-`~numpy.float64` are still sub-types of `~numpy.floating`, but, contrary to
-runtime, they're not necessarily considered as sub-classes.
 
 .. deprecated:: 2.3
     The :class:`~numpy.typing.NBitBase` helper is deprecated and will be
@@ -150,20 +124,6 @@ The `~numpy.timedelta64` class is not considered a subclass of
 `~numpy.signedinteger`, the former only inheriting from `~numpy.generic`
 while static type checking.
 
-0D arrays
-~~~~~~~~~
-
-During runtime numpy aggressively casts any passed 0D arrays into their
-corresponding `~numpy.generic` instance. Until the introduction of shape
-typing (see :pep:`646`) it is unfortunately not possible to make the
-necessary distinction between 0D and >0D arrays. While thus not strictly
-correct, all operations that can potentially perform a 0D-array -> scalar
-cast are currently annotated as exclusively returning an `~numpy.ndarray`.
-
-If it is known in advance that an operation *will* perform a
-0D-array -> scalar cast, then one can consider manually remedying the
-situation with either `typing.cast` or a ``# type: ignore`` comment.
-
 Record array dtypes
 ~~~~~~~~~~~~~~~~~~~
 
@@ -180,8 +140,98 @@ While this mutual exclusivity is not (strictly) enforced during runtime,
 combining both dtype specifiers can lead to unexpected or even downright
 buggy behavior.
 
+Scalar type sizes
+~~~~~~~~~~~~~~~~~
+
+NumPy's stubs assume a 64-bit platform, and a 32-bit C ``int``:
+
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Scalar types
+     - Type-checkers see
+   * - ``np.intp``, ``np.int_``, ``np.longlong``
+     - ``np.int64``
+   * - ``np.uintp``, ``np.uint``, ``np.ulonglong``
+     - ``np.uint64``
+   * - ``np.long``
+     - ``np.int64``, or ``np.int32`` on Windows
+   * - ``np.ulong``
+     - ``np.uint64``, or ``np.uint32`` on Windows
+   * - ``np.intc``
+     - ``np.int32``
+   * - ``np.uintc``
+     - ``np.uint32``
+
+``np.long`` and ``np.ulong`` depend on `sys.platform`.
+
+On 32-bit platforms, ``np.intp``, ``np.int_``, ``np.long``, and their unsigned
+counterparts are 32-bit at runtime. On the rare platforms where C ``int`` isn't
+32-bit, ``np.intc`` and ``np.uintc`` have a different size. On these platforms, the
+types above are incorrect.
+
+The sizes of `np.longdouble <numpy.longdouble>` and
+`np.clongdouble <numpy.clongdouble>` depend on the platform, so they are separate
+types, not aliases of other scalar types. ``np.float96``, ``np.float128``,
+``np.complex192``, and ``np.complex256`` are aliases of these two types. The stubs
+always define all four, but at runtime a platform has at most one of ``np.float96``
+and ``np.float128``, and at most one of ``np.complex192`` and ``np.complex256``. For
+example, x86-64 Linux has ``np.float128`` but not ``np.float96``. On some platforms,
+such as Windows and arm64 macOS, ``np.longdouble`` is a 64-bit float, like
+``np.float64``, and none of the four aliases exist. Type-checkers still treat
+``np.longdouble`` and ``np.float64`` as different types there.
+
+Supported type-checkers
+-----------------------
+
+NumPy's stubs follow the `Python typing specification`_, rather than the behavior of
+a specific type-checker, and support all modern type-checkers. No plugins are needed.
+
+Where a type-checker deviates from the typing specification in a way that would
+degrade inference, the stubs can contain workarounds, such as a specific order of
+overloads, or extra overloads for a specific type-checker. This explains some unusual
+overloads in the stubs.
+
+These deviations can also affect your code. For example, if an argument is
+(partially) ``Any``, several overloads can match it. If several of these remain after
+the specification's filtering steps, and their return types aren't equivalent, the
+call is ambiguous (see `overload call evaluation`_). The specification then requires
+a result type that is assignable to each of these return types, such as ``Any``. Some
+type-checkers pick the first matching overload instead, so type-checkers can infer
+different types, especially for arrays with an unknown dtype. Arrays with a known
+dtype avoid most of these differences.
+
+If you find an incorrect type, or type-checkers that disagree about a type, please
+`open an issue <https://github.com/numpy/numpy/issues>`__.
+
+.. _Python typing specification: https://typing.python.org/en/latest/spec/
+.. _overload call evaluation:
+   https://typing.python.org/en/latest/spec/overload.html#step-5
+
 API
 ---
+
+.. rubric:: ndarray
+
+The `numpy.ndarray` class is a `generic type`_ that accepts two type arguments:
+
+1. The type of `numpy.ndarray.shape`, which must be a `tuple` of `int`, e.g.
+   ``tuple[int, int]`` (2-D shape) or ``tuple[()]`` (0-D shape).
+   The default shape is ``tuple[Any, ...]``, which represents an unknown shape with
+   *any* number of dimensions.
+   Currently, ``Literal`` ints or other more specific types are not supported.
+2. The type of `numpy.ndarray.dtype`, which must be a subtype of `numpy.dtype` such as
+   ``numpy.dtype[numpy.float64]``. If omitted, it will default to ``numpy.dtype[Any]``.
+
+.. code-block:: python
+
+    >>> import numpy as np
+
+    >>> type ImageRGB = np.ndarray[tuple[int, int, int], np.dtype[np.uint8]]
+    >>> type Vector[S: np.generic] = np.ndarray[tuple[int], np.dtype[S]]
+
+.. _generic type: https://typing.python.org/en/latest/spec/generics.html
 
 """
 # NOTE: The API section will be appended with additional entries
@@ -189,9 +239,29 @@ API
 
 # pyright: reportDeprecated=false
 
-from numpy._typing import ArrayLike, DTypeLike, NBitBase, NDArray
+from numpy._typing import (  # type: ignore[deprecated]
+    Array0D,
+    Array1D,
+    Array2D,
+    Array3D,
+    Array4D,
+    ArrayLike,
+    DTypeLike,
+    NBitBase,
+    NDArray,
+)
 
-__all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
+__all__ = [
+    "Array0D",
+    "Array1D",
+    "Array2D",
+    "Array3D",
+    "Array4D",
+    "ArrayLike",
+    "DTypeLike",
+    "NBitBase",
+    "NDArray",
+]
 
 
 __DIR = __all__ + [k for k in globals() if k.startswith("__") and k.endswith("__")]

@@ -15,6 +15,7 @@ domains of the input.
 For example, for functions like `log` with branch cuts, the versions in this
 module provide the mathematically valid answers in the complex plane::
 
+  >>> import numpy as np
   >>> import math
   >>> np.emath.log(-math.exp(1)) == (1+1j*math.pi)
   True

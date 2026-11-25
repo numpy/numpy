@@ -9,8 +9,6 @@ import click
 import spin
 from spin.cmds import meson
 
-IS_PYPY = (sys.implementation.name == 'pypy')
-
 # Check that the meson git submodule is present
 curdir = pathlib.Path(__file__).parent
 meson_import_dir = curdir.parent / 'vendored-meson' / 'meson' / 'mesonbuild'
@@ -79,10 +77,14 @@ def changelog(token, revision_range):
     help="Build with pre-installed scipy-openblas32 or scipy-openblas64 wheel"
 )
 @spin.util.extend_command(spin.cmds.meson.build)
-def build(*, parent_callback, with_scipy_openblas, **kwargs):
+def build(*, parent_callback, meson_args, with_scipy_openblas, **kwargs):
     if with_scipy_openblas:
         _config_openblas(with_scipy_openblas)
-    parent_callback(**kwargs)
+
+    # Avoid byte-compiling on every rebuild/reinstall, that's very expensive
+    meson_args += ("-Dpython.bytecompile=-1",)
+
+    parent_callback(**{'meson_args': meson_args, **kwargs})
 
 
 @spin.util.extend_command(spin.cmds.meson.docs)
@@ -117,7 +119,10 @@ def docs(*, parent_callback, **kwargs):
     # Run towncrier without staging anything for commit. This is the way to get
     # release notes snippets included in a local doc build.
     cmd = ['towncrier', 'build', '--version', '2.x.y', '--keep', '--draft']
-    p = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    p = subprocess.run(cmd, check=True, capture_output=True, text=True,
+                       encoding="utf-8", env=env)
     outfile = curdir.parent / 'doc' / 'source' / 'release' / 'notes-towncrier.rst'
     with open(outfile, 'w') as f:
         f.write(p.stdout)
@@ -129,10 +134,7 @@ def docs(*, parent_callback, **kwargs):
 jobs_param = next(p for p in docs.params if p.name == 'jobs')
 jobs_param.default = 1
 
-if IS_PYPY:
-    default = "not slow and not slow_pypy"
-else:
-    default = "not slow"
+default = "not slow and not slow_pypy"
 
 @click.option(
     "-m",
@@ -159,7 +161,7 @@ def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **k
 
     When pytest-run-parallel is avaliable, use `spin test -p auto` or
     `spin test -p <num_of_threads>` to run tests sequentional in parallel threads.
-    """  # noqa: E501
+    """
     if (not pytest_args) and (not tests):
         pytest_args = ('--pyargs', 'numpy')
 
@@ -169,6 +171,11 @@ def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **k
 
     if parallel_threads != "1":
         pytest_args = ('--parallel-threads', parallel_threads) + pytest_args
+
+    if kwargs.get('coverage'):
+        coveragerc = curdir.parent / '.coveragerc'
+        pytest_args = (f'--cov-config={coveragerc}',) + pytest_args
+        os.environ['COVERAGE_FILE'] = str(curdir.parent / '.coverage')
 
     kwargs['pytest_args'] = pytest_args
     parent_callback(**{'pytest_args': pytest_args, 'tests': tests, **kwargs})
@@ -206,10 +213,10 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
      - This command only doctests public objects: those which are accessible
        from the top-level `__init__.py` file.
 
-    """  # noqa: E501
+    """
     try:
         # prevent obscure error later
-        import scipy_doctest  # noqa: F401
+        import scipy_doctest
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError("scipy-doctest not installed") from e
     if scipy_doctest.__version__ < '1.8.0':
@@ -252,7 +259,7 @@ def check_tutorials(*, parent_callback, pytest_args, **kwargs):
      - This command only doctests public objects: those which are accessible
        from the top-level `__init__.py` file.
 
-    """  # noqa: E501
+    """
     # handle all of
     #   - `spin check-tutorials` (pytest_args == ())
     #   - `spin check-tutorials path/to/rst`, and
@@ -365,7 +372,7 @@ def lint(ctx, fix):
         linter = _get_numpy_tools(pathlib.Path('linter.py'))
     except ModuleNotFoundError as e:
         raise click.ClickException(
-            f"{e.msg}. Install using requirements/linter_requirements.txt"
+            f"{e.msg}. Install using 'pip install --group linter'"
         )
 
     linter.DiffLinter().run_lint(fix)
@@ -399,7 +406,7 @@ def lint(ctx, fix):
 )
 @click.option(
     '--cpu-affinity', default=None, multiple=False,
-    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3."
+    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3. "
          "Default: not set"
 )
 @click.argument(
@@ -550,6 +557,13 @@ def mypy(ctx):
     ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
     ctx.params['markexpr'] = 'full'
     ctx.forward(test)
+
+
+@click.command()
+def pyrefly() -> None:
+    """🪲 Type-check the stubs with Pyrefly
+    """
+    spin.util.run(['pyrefly', 'check'])
 
 
 @click.command()

@@ -26,6 +26,7 @@
 
 #include "umathmodule.h"
 #include "gil_utils.h"
+#include "npy_float_to_int.h"
 
 /*
  * x86 platform works with unaligned access but the compiler is allowed to
@@ -798,6 +799,8 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
  * #is_double1 = 0*13, 1, 0, 0, 1, 0#
  * #is_complex1 = 0*15, 1*3#
  * #is_unsigned1 = 1*6, 0*12#
+ * #is_inexact1 = 0*11, 1*7#
+ * #type1min = 0*6, SCHAR_MIN, SHRT_MIN, INT_MIN, LONG_MIN, LLONG_MIN, 0*7#
  */
 
 /**begin repeat1
@@ -838,6 +841,7 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
  * #is_float2 = 0*12, 1, 0, 0, 1, 0, 0#
  * #is_double2 = 0*13, 1, 0, 0, 1, 0#
  * #is_complex2 = 0*15, 1*3#
+ * #is_inexact2 = 0*11, 1*7#
  */
 
 /**begin repeat2
@@ -913,7 +917,8 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
 #    define _ROUND_TRIP(x) (x)
 #  else
 #    define _CONVERT_FN(x) npy_float_to_half((float)x)
-#    define _ROUND_TRIP(x) ((@rtype1@)npy_half_to_float(_CONVERT_FN(x)))
+     /* compare as float: casting e.g. 32768.0 back to short is undefined */
+#    define _ROUND_TRIP(x) npy_half_to_float(_CONVERT_FN(x))
 #  endif
 
 #else
@@ -981,10 +986,16 @@ static GCC_CAST_OPT_LEVEL int
 #   pragma GCC diagnostic push
 #   ifdef __clang__
 #   pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+#   pragma GCC diagnostic ignored "-Wimplicit-const-int-float-conversion"
 #   endif
 #   pragma GCC diagnostic ignored "-Wtautological-compare"
 #   endif
-#  if !@is_bool1@
+#  if @is_inexact1@ && !@is_inexact2@
+    /* The integer maximum can round up when compared as a float. */
+    if (!NPY_FLOAT_IN_INT_RANGE(_TO_RTYPE1(src_value), @type2min@, @type2max@)) {
+        _RETURN_SAME_VALUE_FAILURE;
+    }
+#  elif !@is_bool1@
    if (_TO_RTYPE1(src_value) > @type2max@) {
         _RETURN_SAME_VALUE_FAILURE;
    }
@@ -993,8 +1004,14 @@ static GCC_CAST_OPT_LEVEL int
         _RETURN_SAME_VALUE_FAILURE;
    }
 #  endif
-#  endif /* !is_bool1 */
+#  endif
     /* 3. Check that the value can round trip exactly */
+#if !@is_inexact1@ && !@is_bool1@ && @is_inexact2@ && !@is_emu_half2@
+    /* Casting back an integer that rounded up to max + 1 is undefined. */
+    if (!NPY_FLOAT_IN_INT_RANGE(_CONVERT_FN(src_value), @type1min@, NPY_MAX_@NAME1@)) {
+        _RETURN_SAME_VALUE_FAILURE;
+    }
+#endif
     if (src_value != _ROUND_TRIP(src_value)) {
         _RETURN_SAME_VALUE_FAILURE;
     }
@@ -1356,22 +1373,77 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
     /* Finish off dimension 1 */
     M = (shape1 - coord1 - 1);
     N = shape0*M;
-    for (i = 0; i < M; ++i) {
-        args[0] = src; args[1] = dst;
-        if (shape0 >= count) {
-            return cast_info->func(&cast_info->context,
-                    args, &count, strides, cast_info->auxdata);
+
+    /*
+     * The source does not advance along this dimension, so all repetitions are
+     * identical: fill the rest by copying the initial chunk, which also avoids
+     * repeating the cast.  The copy grows by doubling the written region.
+     */
+    if (M > 0 && count > 0 && src_stride1 == 0
+            && dst_stride == cast_info->context.descriptors[1]->elsize
+            && PyDataType_ISTRIVIALLYCOPYABLE(
+                    cast_info->context.descriptors[1])) {
+        /* Number of items this dimension still has to write */
+        npy_intp to_write = shape0 * M;
+        /* Start and length of the repetition that is copied from */
+        char *copy_start;
+        npy_intp filled;
+
+        if (to_write > count) {
+            to_write = count;
+        }
+
+        if (coord0 == 0) {
+            /* The transfer above wrote a full row, so copy that one */
+            copy_start = dst - shape0*dst_stride;
+            filled = shape0;
         }
         else {
-            res = cast_info->func(&cast_info->context,
-                    args, &shape0, strides, cast_info->auxdata);
-            if (res < 0) {
+            /* It wrote a partial row, so one full row has to be produced */
+            filled = (shape0 < to_write) ? shape0 : to_write;
+            args[0] = src; args[1] = dst;
+            if (cast_info->func(&cast_info->context,
+                    args, &filled, strides, cast_info->auxdata) < 0) {
                 return -1;
             }
+            copy_start = dst;
+            dst += filled*dst_stride;
+            count -= filled;
+            to_write -= filled;
         }
-        count -= shape0;
-        src += src_stride1;
-        dst += shape0*dst_stride;
+
+        while (to_write > 0) {
+            npy_intp chunk = (filled < to_write) ? filled : to_write;
+            memmove(dst, copy_start, chunk*dst_stride);
+            dst += chunk*dst_stride;
+            count -= chunk;
+            to_write -= chunk;
+            filled += chunk;
+        }
+
+        if (count == 0) {
+            return 0;
+        }
+        /* `src` is unchanged because `src_stride1 == 0` */
+    }
+    else {
+        for (i = 0; i < M; ++i) {
+            args[0] = src; args[1] = dst;
+            if (shape0 >= count) {
+                return cast_info->func(&cast_info->context,
+                        args, &count, strides, cast_info->auxdata);
+            }
+            else {
+                res = cast_info->func(&cast_info->context,
+                        args, &shape0, strides, cast_info->auxdata);
+                if (res < 0) {
+                    return -1;
+                }
+            }
+            count -= shape0;
+            src += src_stride1;
+            dst += shape0*dst_stride;
+        }
     }
 
     /* If it's 2-dimensional, there's no more to copy */
@@ -2152,6 +2224,11 @@ mapiter_@name@(
             NPY_END_THREADS;
         }
 /**end repeat1**/
+    }
+
+    /* Check if the above iteration ended with an error */
+    if (PyErr_Occurred()) {
+        return -1;
     }
     return 0;
 }

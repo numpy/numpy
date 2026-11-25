@@ -7,20 +7,6 @@ How to contribute to the NumPy documentation
 This guide will help you decide what to contribute and how to submit it to the
 official NumPy documentation.
 
-***************************
-Documentation team meetings
-***************************
-
-The NumPy community has set a firm goal of improving its documentation. We
-hold regular documentation meetings on Zoom (dates are announced on the
-`numpy-discussion mailing list
-<https://mail.python.org/mailman/listinfo/numpy-discussion>`__), and everyone
-is welcome. Reach out if you have questions or need
-someone to guide you through your first steps -- we're happy to help.
-Minutes are taken `on hackmd.io <https://hackmd.io/oB_boakvRqKR-_2jRV-Qjg>`__
-and stored in the `NumPy Archive repository
-<https://github.com/numpy/archive>`__.
-
 *************
 What's needed
 *************
@@ -464,6 +450,33 @@ instead of a *submodule*, you can use an optional argument::
 This will create the following output:
 
 .. legacy:: function
+
+.. _version_directives:
+
+Version directives
+==================
+
+``versionadded`` and ``versionchanged`` directives should normally be
+retained for at least five years after the release they reference,
+which roughly tracks CPython's support window.
+
+After five years, they may be removed as routine documentation
+maintenance when the version information is no longer useful for
+understanding the current API.
+
+This cleanup is normally batched with the removal of expired
+deprecations at the start of a release cycle.
+
+Directives may be retained longer when the historical information
+remains useful, for example when it explains otherwise surprising
+behavior or remains relevant to commonly supported downstream versions.
+
+Historical information remains available in release notes, versioned
+documentation, and the repository history.
+
+``deprecated`` directives are governed separately by NumPy's
+`backwards compatibility and deprecation policy
+<https://numpy.org/neps/nep-0023-backwards-compatibility.html>`_.
 
 *********************
 Documentation reading

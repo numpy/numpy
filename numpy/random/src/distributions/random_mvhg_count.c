@@ -71,7 +71,7 @@ int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
         return 0;
     }
 
-    choices = malloc(total * (sizeof *choices));
+    choices = PyMem_RawMalloc(total * (sizeof *choices));
     if (choices == NULL) {
         return -1;
     }
@@ -125,7 +125,7 @@ int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
         }
     }
 
-    free(choices);
+    PyMem_RawFree(choices);
 
     return 0;
 }

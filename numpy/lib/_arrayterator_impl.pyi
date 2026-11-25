@@ -28,12 +28,13 @@ class Arrayterator(np.ndarray[_ShapeT_co, _DTypeT_co]):
     step: Final[list[int]]
 
     @property  # type: ignore[misc]
-    def shape(self) -> _ShapeT_co: ...
-    @property
+    def shape(self) -> _ShapeT_co: ...  # pyrefly: ignore[bad-override]
+    @property  # type:ignore[misc]
     def flat[ScalarT: np.generic](self: Arrayterator[Any, np.dtype[ScalarT]]) -> Generator[ScalarT]: ...  # type: ignore[override]
 
     #
     def __init__(self, /, var: np.ndarray[_ShapeT_co, _DTypeT_co], buf_size: int | None = None) -> None: ...
+    def __getattr__(self, attr: str, /) -> Any: ...
     def __getitem__(self, index: _AnyIndex, /) -> Arrayterator[_AnyShape, _DTypeT_co]: ...  # type: ignore[override]
     def __iter__(self) -> Generator[np.ndarray[_AnyShape, _DTypeT_co]]: ...
 

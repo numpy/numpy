@@ -9,13 +9,16 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
+    IS_64BIT,
     assert_,
+    assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
     assert_equal,
     assert_raises,
     temppath,
 )
+from numpy.testing._private.utils import requires_memory
 
 
 class TestFromrecords:
@@ -107,6 +110,42 @@ class TestFromrecords:
         fd.close()
         assert_equal(r1, r2)
         assert_equal(r2, r3)
+
+    def test_recarray_read_with_references_raises(self):
+        with temppath(suffix=".bin") as path:
+            with open(path, "wb") as fd:
+                fd.write(b"dummy data")
+            with pytest.raises(
+                ValueError, match="Arrays containing references are not supported"
+            ):
+                np.rec.fromfile(path, formats="O", shape=1)
+
+        with pytest.raises(
+            ValueError, match="Arrays containing references are not supported"
+        ):
+            np.rec.fromstring(b"dummy data", formats="O", shape=1)
+
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=4.3e9)
+    def test_recarray_fromfile_massive(self, tmpdir):
+        kind = [("x", np.float64, 2 ** 29)]
+        kind_dtype = np.dtype(kind)
+        rec_arr = np.array((1,), dtype=kind_dtype)
+        with tmpdir.as_cwd():
+            rec_arr.tofile("f.data")
+            actual = np.fromfile("f.data", dtype=kind_dtype)
+            assert actual.itemsize == 2 ** 29 * 8
+            item = actual["x"][0][1]
+            assert_allclose(item, 1)
+
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @requires_memory(free_bytes=4.3e9)
+    def test_recarray_massive_byteswap_err(self):
+        kind = [("x", np.float64, 2 ** 29)]
+        kind_dtype = np.dtype(kind)
+        rec_arr = np.array((1,), dtype=kind_dtype)
+        with pytest.raises(TypeError, match="itemsize larger than"):
+            rec_arr.byteswap(inplace=True)
 
     def test_recarray_from_obj(self):
         count = 10
@@ -271,7 +310,9 @@ class TestFromrecords:
         assert_(type(ra.mean) is type(ra.var))
         ra = ra.reshape((1, 3))
         assert_(ra.shape == (1, 3))
-        ra.shape = ['A', 'B', 'C']
+        # gh-29536: setting .shape on an ndarray is deprecated
+        with pytest.warns(DeprecationWarning, match="Setting the shape"):
+            ra.shape = ['A', 'B', 'C']
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
@@ -497,7 +538,8 @@ class TestRecord:
         assert dt.type != np.record
 
         # ensure that the dtype remains a record even when assigned
-        data.dtype = dt
+        with pytest.warns(DeprecationWarning, match="Setting the dtype"):
+            data.dtype = dt
         assert data.dtype.type == np.record
 
     @pytest.mark.parametrize('nfields', [0, 1, 2])

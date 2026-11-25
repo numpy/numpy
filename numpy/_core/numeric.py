@@ -191,8 +191,6 @@ def ones(shape, dtype=None, order='C', *, device=None, like=None):
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -345,8 +343,6 @@ def full(shape, fill_value, dtype=None, order='C', *, device=None, like=None):
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -485,15 +481,10 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     """
     Counts the number of non-zero values in the array ``a``.
 
-    The word "non-zero" is in reference to the Python 2.x
-    built-in method ``__nonzero__()`` (renamed ``__bool__()``
-    in Python 3.x) of Python objects that tests an object's
-    "truthfulness". For example, any number is considered
-    truthful if it is nonzero, whereas any string is considered
-    truthful if it is not the empty string. Thus, this function
-    (recursively) counts how many elements in ``a`` (and in
-    sub-arrays thereof) have their ``__nonzero__()`` or ``__bool__()``
-    method evaluated to ``True``.
+    A non-zero value is one that evaluates to truthful in a boolean
+    context, including any non-zero number and any string that
+    is not empty. This function recursively counts how many elements
+    in ``a`` (and its sub-arrays) are non-zero values.
 
     Parameters
     ----------
@@ -541,7 +532,8 @@ def count_nonzero(a, axis=None, *, keepdims=False):
 
     a = asanyarray(a)
 
-    # TODO: this works around .astype(bool) not working properly (gh-9847)
+    # This is a performance optimization for character dtypes
+    # TODO: this can be removed if the legacy fixed-width string dtypes are ever removed
     if np.issubdtype(a.dtype, np.character):
         a_bool = a != a.dtype.type()
     else:
@@ -555,8 +547,10 @@ def isfortran(a):
     """
     Check if the array is Fortran contiguous but *not* C contiguous.
 
-    This function is obsolete. If you only want to check if an array is Fortran
-    contiguous use ``a.flags.f_contiguous`` instead.
+    .. deprecated:: 2.6
+        `numpy.isfortran` is deprecated. Use ``a.flags.fnc`` instead, or
+        ``a.flags.f_contiguous`` if you only need to check for Fortran
+        contiguity.
 
     Parameters
     ----------
@@ -581,14 +575,14 @@ def isfortran(a):
     >>> a
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(a)
+    >>> a.flags.fnc
     False
 
     >>> b = np.array([[1, 2, 3], [4, 5, 6]], order='F')
     >>> b
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(b)
+    >>> b.flags.fnc
     True
 
 
@@ -598,22 +592,28 @@ def isfortran(a):
     >>> a
     array([[1, 2, 3],
            [4, 5, 6]])
-    >>> np.isfortran(a)
+    >>> a.flags.fnc
     False
     >>> b = a.T
     >>> b
     array([[1, 4],
            [2, 5],
            [3, 6]])
-    >>> np.isfortran(b)
+    >>> b.flags.fnc
     True
 
     C-ordered arrays evaluate as False even if they are also FORTRAN-ordered.
 
-    >>> np.isfortran(np.array([1, 2], order='F'))
+    >>> np.array([1, 2], order='F').flags.fnc
     False
 
     """
+    # Deprecated in NumPy 2.6, 2026-10-14
+    warnings.warn(
+        "numpy.isfortran is deprecated. Use a.flags.fnc instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return a.flags.fnc
 
 
@@ -762,6 +762,17 @@ def correlate(a, v, mode='valid'):
     .. math:: c'_k = \sum_n a_{n} \cdot \overline{v_{n+k}}
 
     which is related to :math:`c_k` by :math:`c'_k = c_{-k}`.
+    For example:
+
+    >>> np.correlate([1, 1], [1, 2, 3, 4, 5, 6], "valid")
+    array([11,  9,  7,  5,  3])
+
+    Using NumPy's definition, the valid correlation values correspond to
+    the lags -4, -3, -2, -1, and 0, so the returned values correspond to
+    :math:`[c_{-4}, c_{-3}, c_{-2}, c_{-1}, c_0]`.
+
+    Under the alternative definition, :math:`c'_k = c_{-k}`, the same
+    correlation values are associated with the opposite lag sign.
 
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5)
     because it does not use the FFT to compute the convolution; in that case,
@@ -1024,6 +1035,7 @@ def tensordot(a, b, axes=2):
           second to `b`. Both elements array_like must be of the same length.
           Each axis may appear at most once; repeated axes are not allowed.
           For example, ``axes=([1, 1], [0, 0])`` is invalid.
+
     Returns
     -------
     output : ndarray
@@ -1671,7 +1683,10 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     b = asarray(b)
 
     if (a.ndim < 1) or (b.ndim < 1):
-        raise ValueError("At least one array has zero dimension")
+        raise ValueError(
+            "Input arrays must be at least 1-dimensional, but "
+            f"a.ndim = {a.ndim} and b.ndim = {b.ndim}"
+        )
 
     # Check axisa and axisb are within bounds
     axisa = normalize_axis_index(axisa, a.ndim, msg_prefix='axisa')
@@ -1835,26 +1850,28 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
     Construct an array by executing a function over each coordinate.
 
-    The resulting array therefore has a value ``fn(x, y, z)`` at
-    coordinate ``(x, y, z)``.
+    The function is called once with one coordinate array for each dimension
+    of `shape` instead of once per coordinate.
+
+    For functions that operate elementwise on array arguments, the resulting
+    array has a value ``fn(x, y, z)`` at coordinate ``(x, y, z)``.
 
     Parameters
     ----------
     function : callable
-        The function is called with N parameters, where N is the rank of
-        `shape`.  Each parameter represents the coordinates of the array
-        varying along a specific axis.  For example, if `shape`
-        were ``(2, 2)``, then the parameters would be
+        The function is called once with N coordinate arrays as parameters,
+        where N is the length of `shape`. Each array represents the
+        coordinates along a specific axis.  For example,
+        if `shape` were ``(2, 2)``, then the parameters would be
         ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
     shape : (N,) tuple of ints
-        Shape of the output array, which also determines the shape of
-        the coordinate arrays passed to `function`.
+        Shape of the coordinate arrays passed to `function`. The shape of the output
+        is determined by the value returned by `function` and may be different from
+        `shape`
     dtype : data-type, optional
         Data-type of the coordinate arrays passed to `function`.
         By default, `dtype` is float.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1871,6 +1888,12 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     Notes
     -----
     Keywords other than `dtype` and `like` are passed to `function`.
+
+    .. warning::
+        `shape` determines the shape of the coordinate arrays passed to
+        `function`. It does not enforce that the function returns a result
+        with that shape. If `function` returns a scalar, the result is a scalar
+        rather than an array with the given `shape`.
 
     Examples
     --------
@@ -2010,7 +2033,7 @@ def binary_repr(num, width=None):
 
     In a two's-complement system negative numbers are represented by the two's
     complement of the absolute value. This is the most common method of
-    representing signed integers on computers [1]_. A N-bit two's-complement
+    representing signed integers on computers [1]_. An N-bit two's-complement
     system can represent every integer in the range
     :math:`-2^{N-1}` to :math:`+2^{N-1}-1`.
 
@@ -2157,11 +2180,13 @@ def base_repr(number, base=2, padding=0):
     while num:
         res.append(digits[num % base])
         num //= base
+    if not res:
+        res.append('0')
     if padding:
         res.append('0' * padding)
     if number < 0:
         res.append('-')
-    return ''.join(reversed(res or '0'))
+    return ''.join(reversed(res))
 
 
 # These are all essentially abbreviations
@@ -2195,8 +2220,6 @@ def identity(n, dtype=None, *, like=None):
     dtype : data-type, optional
         Data-type of the output.  Defaults to ``float``.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -2549,13 +2572,13 @@ def array_equal(a1, a2, equal_nan=False):
     if cannot_have_nan:
         return builtins.bool(asarray(a1 == a2).all())
 
-    # Handling NaN values if equal_nan is True
-    a1nan, a2nan = isnan(a1), isnan(a2)
-    # NaN's occur at different locations
-    if not (a1nan == a2nan).all():
-        return False
-    # Shapes of a1, a2 and masks are guaranteed to be consistent by this point
-    return builtins.bool((a1[~a1nan] == a2[~a1nan]).all())
+    # Fast path for a1 and a2 being all NaN arrays
+    a1nan = isnan(a1)
+    if a1nan.all():
+        return builtins.bool(isnan(a2).all())
+
+    equal_or_both_nan = (a1 == a2) | (a1nan & isnan(a2))
+    return builtins.bool(equal_or_both_nan.all())
 
 
 def _array_equiv_dispatcher(a1, a2):
@@ -2636,6 +2659,9 @@ def astype(x, dtype, /, *, copy=True, device=None):
         array must always be returned. If ``False`` and the specified dtype
         matches the data type of the input array, the input array must be
         returned; otherwise, a newly allocated array must be returned.
+        For immutable scalars, if the specified data type matches the data
+        type of the input, the input scalar is returned regardless of the value
+        of ``copy``.
         Defaults to ``True``.
     device : str, optional
         The device on which to place the returned array. Default: None.

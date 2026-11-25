@@ -281,7 +281,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
             tmp_src_data = (char *)&scalarbuffer[0];
         }
         else {
-            tmp_src_data = PyArray_malloc(PyArray_ITEMSIZE(dst));
+            tmp_src_data = PyMem_RawMalloc(PyArray_ITEMSIZE(dst));
             if (tmp_src_data == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -336,14 +336,14 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
     }
 
     if (allocated_src_data) {
-        PyArray_free(src_data);
+        PyMem_RawFree(src_data);
     }
 
     return 0;
 
 fail:
     if (allocated_src_data) {
-        PyArray_free(src_data);
+        PyMem_RawFree(src_data);
     }
 
     return -1;

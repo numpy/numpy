@@ -69,10 +69,12 @@ def _nan_mask(a, out=None):
 
 def _replace_nan(a, val):
     """
-    If `a` is of inexact type, make a copy of `a`, replace NaNs with
-    the `val` value, and return the copy together with a boolean mask
-    marking the locations where NaNs were present. If `a` is not of
-    inexact type, do nothing and return `a` together with a mask of None.
+    If `a` is of inexact type, or of datetime64 or timedelta64 type with
+    NaTs, make a copy of `a`, replace NaNs (or NaTs) with the `val` value,
+    and return the copy together with a boolean mask marking the locations
+    where NaNs were present. Otherwise, do nothing and return `a` together
+    with a mask of None. For datetime64 and timedelta64, a `val` of +-inf is
+    replaced by the largest/smallest representable value.
 
     Note that scalars will end up as array scalars, which is important
     for using the result as the value of the out argument in some
@@ -102,11 +104,23 @@ def _replace_nan(a, val):
         mask = np.not_equal(a, a, dtype=bool)
     elif issubclass(a.dtype.type, np.inexact):
         mask = np.isnan(a)
+    elif issubclass(a.dtype.type, (np.datetime64, np.timedelta64)):
+        mask = np.isnan(a)
+        if not mask.any():
+            return a, None
     else:
         mask = None
 
     if mask is not None:
         a = np.array(a, subok=True, copy=True)
+        if a.dtype.kind in "mM":
+            # NaT is the minimum int64, so the extremes of the remaining
+            # range stand in for +-inf.
+            if val == np.inf:
+                val = np.iinfo(np.int64).max
+            elif val == -np.inf:
+                val = np.iinfo(np.int64).min + 1
+            val = np.array(val).astype(a.dtype)
         np.copyto(a, val, where=mask)
 
     return a, mask
@@ -137,8 +151,16 @@ def _copyto(a, val, mask):
     if isinstance(a, np.ndarray):
         np.copyto(a, val, where=mask, casting='unsafe')
     else:
-        a = a.dtype.type(val)
+        a = np.array(val).astype(a.dtype)[()]
     return a
+
+
+def _all_nan_message(dtype, where="slice"):
+    """
+    Message for an all-NaN slice, naming NaT for datetime64 and timedelta64.
+    """
+    nan = "NaT" if dtype.kind in "mM" else "NaN"
+    return f"All-{nan} {where} encountered"
 
 
 def _remove_nan_1d(arr1d, second_arr1d=None, overwrite_input=False):
@@ -174,7 +196,7 @@ def _remove_nan_1d(arr1d, second_arr1d=None, overwrite_input=False):
 
     s = np.nonzero(c)[0]
     if s.size == arr1d.size:
-        warnings.warn("All-NaN slice encountered", RuntimeWarning,
+        warnings.warn(_all_nan_message(arr1d.dtype), RuntimeWarning,
                       stacklevel=6)
         if second_arr1d is None:
             return arr1d[:0], None, True
@@ -229,6 +251,11 @@ def _divide_by_count(a, b, out=None):
     with np.errstate(invalid='ignore', divide='ignore'):
         if isinstance(a, np.ndarray):
             if out is None:
+                # `a` is normally a temporary we can divide into, but
+                # some reductions return a read-only result (gh-29117).
+                # Allocate then, keeping the dtype the in-place divide gives.
+                if not a.flags.writeable:
+                    return np.divide(a, b, dtype=a.dtype, casting='unsafe')
                 return np.divide(a, b, out=a, casting='unsafe')
             else:
                 return np.divide(a, b, out=out, casting='unsafe')
@@ -282,13 +309,9 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     initial : scalar, optional
         The maximum value of an output element. Must be present to allow
         computation on empty slice. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
     where : array_like of bool, optional
         Elements to compare for the minimum. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -355,7 +378,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         # which do not implement isnan (gh-9009), or fmin correctly (gh-8975)
         res = np.fmin.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
-            warnings.warn("All-NaN slice encountered", RuntimeWarning,
+            warnings.warn(_all_nan_message(a.dtype), RuntimeWarning,
                           stacklevel=2)
     else:
         # Slow, but safe for subclasses of ndarray
@@ -369,7 +392,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
             res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning,
+            warnings.warn(_all_nan_message(a.dtype, "axis"), RuntimeWarning,
                           stacklevel=2)
     return res
 
@@ -411,13 +434,9 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     initial : scalar, optional
         The minimum value of an output element. Must be present to allow
         computation on empty slice. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
     where : array_like of bool, optional
         Elements to compare for the maximum. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -484,7 +503,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
         res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
-            warnings.warn("All-NaN slice encountered", RuntimeWarning,
+            warnings.warn(_all_nan_message(a.dtype), RuntimeWarning,
                           stacklevel=2)
     else:
         # Slow, but safe for subclasses of ndarray
@@ -498,7 +517,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
             res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning,
+            warnings.warn(_all_nan_message(a.dtype, "axis"), RuntimeWarning,
                           stacklevel=2)
     return res
 
@@ -523,14 +542,10 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype.
-
-        .. versionadded:: 1.22.0
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -557,9 +572,14 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     """
     a, mask = _replace_nan(a, np.inf)
     if mask is not None and mask.size:
-        mask = np.all(mask, axis=axis)
-        if np.any(mask):
-            raise ValueError("All-NaN slice encountered")
+        if np.any(np.all(mask, axis=axis)):
+            raise ValueError(_all_nan_message(a.dtype))
+        if a.dtype.kind in "mM":
+            # NaT is replaced by a valid value that it can tie with. As int64,
+            # moving all other values down by one makes room above them.
+            a = a.view(a.dtype.byteorder + "i8")
+            a -= 1
+            np.copyto(a, np.iinfo(np.int64).max, where=mask)
     res = np.argmin(a, axis=axis, out=out, keepdims=keepdims)
     return res
 
@@ -585,14 +605,10 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     out : array, optional
         If provided, the result will be inserted into this array. It should
         be of the appropriate shape and dtype.
-
-        .. versionadded:: 1.22.0
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -619,9 +635,13 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     """
     a, mask = _replace_nan(a, -np.inf)
     if mask is not None and mask.size:
-        mask = np.all(mask, axis=axis)
-        if np.any(mask):
-            raise ValueError("All-NaN slice encountered")
+        if np.any(np.all(mask, axis=axis)):
+            raise ValueError(_all_nan_message(a.dtype))
+        if a.dtype.kind in "mM":
+            # NaT is replaced by a valid value that it can tie with. As int64,
+            # the smallest value is below all others.
+            a = a.view(a.dtype.byteorder + "i8")
+            np.copyto(a, np.iinfo(np.int64).min, where=mask)
     res = np.argmax(a, axis=axis, out=out, keepdims=keepdims)
     return res
 
@@ -673,12 +693,8 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         does not implement `keepdims` any exceptions will be raised.
     initial : scalar, optional
         Starting value for the sum. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
     where : array_like of bool, optional
         Elements to include in the sum. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -751,7 +767,7 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         the product of the flattened array.
     dtype : data-type, optional
         The type of the returned array and of the accumulator in which the
-        elements are summed.  By default, the dtype of `a` is used.  An
+        elements are multiplied.  By default, the dtype of `a` is used.  An
         exception is when `a` has an integer type with less precision than
         the platform (u)intp. In that case, the default will be either
         (u)int32 or (u)int64 depending on whether the platform is 32 or 64
@@ -769,13 +785,9 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     initial : scalar, optional
         The starting value for this product. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.22.0
     where : array_like of bool, optional
         Elements to include in the product. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -990,8 +1002,6 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     where : array_like of bool, optional
         Elements to include in the mean. See `~numpy.ufunc.reduce` for details.
 
-        .. versionadded:: 1.22.0
-
     Returns
     -------
     m : ndarray, see dtype parameter above
@@ -1035,10 +1045,11 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     if dtype is not None:
         dtype = np.dtype(dtype)
-    if dtype is not None and not issubclass(dtype.type, np.inexact):
-        raise TypeError("If a is inexact, then dtype must be inexact")
-    if out is not None and not issubclass(out.dtype.type, np.inexact):
-        raise TypeError("If a is inexact, then out must be inexact")
+    if arr.dtype.kind != "m":
+        if dtype is not None and not issubclass(dtype.type, np.inexact):
+            raise TypeError("If a is inexact, then dtype must be inexact")
+        if out is not None and not issubclass(out.dtype.type, np.inexact):
+            raise TypeError("If a is inexact, then out must be inexact")
 
     cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=keepdims,
                  where=where)
@@ -1107,7 +1118,7 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     a = np.ma.masked_array(a, np.isnan(a))
     m = np.ma.median(a, axis=axis, overwrite_input=overwrite_input)
     for i in range(np.count_nonzero(m.mask.ravel())):
-        warnings.warn("All-NaN slice encountered", RuntimeWarning,
+        warnings.warn(_all_nan_message(a.dtype), RuntimeWarning,
                       stacklevel=5)
 
     fill_value = np.timedelta64("NaT") if m.dtype.kind == "m" else np.nan
@@ -1163,10 +1174,9 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     Returns
     -------
     median : ndarray
-        A new array holding the result. If the input contains integers
-        or floats smaller than ``float64``, then the output data-type is
-        ``np.float64``.  Otherwise, the data-type of the output is the
-        same as that of the input. If `out` is specified, that array is
+        A new array holding the result. If the input contains integers,
+        the output data-type is ``float64``. Otherwise, the output data-type
+        is the same as that of the input. If `out` is specified, that array is
         returned instead.
 
     See Also
@@ -1286,10 +1296,6 @@ def nanpercentile(
         * 'midpoint'
         * 'nearest'
 
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
-
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -1319,10 +1325,9 @@ def nanpercentile(
         is a scalar. If multiple percentiles are given, first axis of
         the result corresponds to the percentiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out` is
+        specified, that array is returned instead.
 
     See Also
     --------
@@ -1463,10 +1468,6 @@ def nanquantile(
         * 'midpoint'
         * 'nearest'
 
-        .. versionchanged:: 1.22.0
-            This argument was previously called "interpolation" and only
-            offered the "linear" default and last four options.
-
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -1496,15 +1497,14 @@ def nanquantile(
         is a scalar. If multiple probability levels are given, first axis of
         the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
-        contains integers or floats smaller than ``float64``, the output
-        data-type is ``float64``. Otherwise, the output data-type is the
-        same as that of the input. If `out` is specified, that array is
-        returned instead.
+        contains integers, the output data-type is ``float64``. Otherwise,
+        the output data-type is the same as that of the input. If `out` is specified,
+        that array is returned instead.
 
     See Also
     --------
     quantile
-    nanmean, nanmedian
+    nanmean
     nanmedian : equivalent to ``nanquantile(..., 0.5)``
     nanpercentile : same as nanquantile, but with q in the range [0, 100].
 
@@ -1603,9 +1603,9 @@ def _nanquantile_unchecked(
 
 
 def _nanquantile_ureduce_func(
-        a: np.array,
-        q: np.array,
-        weights: np.array,
+        a: np.ndarray,
+        q: np.ndarray,
+        weights: np.ndarray,
         axis: int | None = None,
         out=None,
         overwrite_input: bool = False,
@@ -1671,8 +1671,9 @@ def _nanquantile_1d(
     arr1d, weights, overwrite_input = _remove_nan_1d(arr1d,
         second_arr1d=weights, overwrite_input=overwrite_input)
     if arr1d.size == 0:
-        # convert to scalar
-        return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
+        # Use the quantile implementation to preserve its output dtype.
+        arr1d = np.full(1, np.nan, dtype=arr1d.dtype)
+        weights = None
 
     return fnb._quantile_unchecked(
         arr1d,
@@ -1730,9 +1731,6 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     where : array_like of bool, optional
         Elements to include in the variance. See `~numpy.ufunc.reduce` for
         details.
-
-        .. versionadded:: 1.22.0
-
     mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
         a shape as if it was calculated with ``keepdims=True``.
@@ -1828,6 +1826,10 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
     cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims,
                      where=where)
+
+    if dtype is None and arr.dtype.type is np.object_ and arr.size == 0 and cnt.size:
+        # Object division raises on zero before the warning for empty slices.
+        arr = arr.astype(np.float64)
 
     if mean is not np._NoValue:
         avg = mean
@@ -1927,9 +1929,6 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     where : array_like of bool, optional
         Elements to include in the standard deviation.
         See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.22.0
-
     mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
         a shape as if it was calculated with ``keepdims=True``.
@@ -1998,7 +1997,9 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
                  keepdims=keepdims, where=where, mean=mean,
                  correction=correction)
     if isinstance(var, np.ndarray):
-        std = np.sqrt(var, out=var)
+        # Take the square root in place, unless `var` came back read-only
+        # (gh-29117), in which case we have to allocate.
+        std = np.sqrt(var, out=var if var.flags.writeable else None)
     elif hasattr(var, 'dtype'):
         std = var.dtype.type(np.sqrt(var))
     else:

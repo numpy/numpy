@@ -4,6 +4,8 @@
 NumPy 2.4.1 Release Notes
 =========================
 
+*Released on 2026-01-10.*
+
 The NumPy 2.4.1 is a patch release that fixes bugs discovered after the
 2.4.0 release. In particular, the typo `SeedlessSequence` is preserved to
 enable wheels using the random Cython API and built against NumPy < 2.4.0

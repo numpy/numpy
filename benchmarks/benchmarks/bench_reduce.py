@@ -112,8 +112,42 @@ class ArgMin(Benchmark):
 
 
 class SmallReduction(Benchmark):
-    def setup(self):
-        self.d = np.ones(100, dtype=np.float32)
+    params = [[4, 100]]
+    param_names = ['size']
 
-    def time_small(self):
+    def setup(self, size):
+        self.d = np.ones(size, dtype=np.float32)
+        self.b = np.ones(size, dtype=bool)
+
+    def time_sum(self, size):
         np.sum(self.d)
+
+    def time_any(self, size):
+        np.any(self.b)
+
+    def time_max(self, size):
+        np.max(self.d)
+
+
+class SmallReduction2D(Benchmark):
+    def setup(self):
+        self.d = np.ones((4, 4), dtype=np.float32)
+
+    def time_sum_axis_1(self):
+        np.sum(self.d, axis=1)
+
+
+class GCDReduce(Benchmark):
+    params = [1_000, 100_000, 1_000_000, 10_000_000]
+    param_names = ['size']
+
+    def setup(self, size):
+        self.early = np.full(size, 6, dtype=np.int64)
+        self.early[:3] = [12, 18, 1]
+        self.normal = np.full(size, 6, dtype=np.int64)
+
+    def time_early_termination(self, size):
+        np.gcd.reduce(self.early)
+
+    def time_no_early_termination(self, size):
+        np.gcd.reduce(self.normal)

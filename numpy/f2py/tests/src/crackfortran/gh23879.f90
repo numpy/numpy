@@ -5,14 +5,14 @@ module gh23879
 
  contains
 
-    subroutine foo(a, b)
+    subroutine foo42bar(a, b)
        integer, intent(in) :: a
        integer, intent(out) :: b
        b = a
        call bar(b)
     end subroutine
 
-    subroutine bar(x)
+    subroutine bar1337baz(x)
         integer, intent(inout) :: x
         x = 2*x
      end subroutine

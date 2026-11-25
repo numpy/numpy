@@ -132,13 +132,9 @@ class AxisError(ValueError, IndexError):
         The out of bounds axis or ``None`` if a custom exception
         message was provided. This should be the axis as passed by
         the user, before any normalization to resolve negative indices.
-
-        .. versionadded:: 1.22
     ndim : int, optional
         The number of array dimensions or ``None`` if a custom exception
         message was provided.
-
-        .. versionadded:: 1.22
 
 
     Examples

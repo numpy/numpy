@@ -7,7 +7,7 @@
 
 #include "npy_binsearch.h"
 #include "npy_sort.h"
-#include "numpy_tag.h"
+#include "numpy_tag.hpp"
 
 #include <array>
 #include <functional>  // for std::less and std::less_equal
@@ -60,7 +60,8 @@ template <class Tag, side_t side>
 static void
 binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
           npy_intp key_len, npy_intp arr_str, npy_intp key_str,
-          npy_intp ret_str, PyArrayObject *)
+          npy_intp ret_str, PyArrayObject *, PyArrayObject *,
+          PyArray_BinSearchCompareFunc *)
 {
     using T = typename Tag::type;
     auto cmp = side_to_cmp<Tag, side>::value;
@@ -75,15 +76,16 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
 
     /*
     In this binary search implementation, the candidate insertion indices for
-    the jth key are in the range [base_j, base_j+length] and on each iteration
-    we pick a pivot at the mid-point of the range to compare against the jth
-    key. Depending on the comparison result, we adjust the base_j and halve
-    the length of the interval.
+    the j-th key are in the range [base_j, base_j+length] and on each
+    iteration we pick a pivot at the mid-point of the range to compare against
+    the j-th key. Depending on the comparison result, we adjust the base_j and
+    halve the length of the interval.
 
-    To batch multiple queries, we do one pivot pass for each different length
-    for all keys, storing intermediate values of base_j for every key_j. To
-    avoid consuming extra memory, we use the ret array to store intermediate
-    values of each base until they become the final result in the last step.
+    To batch multiple queries, we process all bases with a fixed length. The
+    length is halved on each iteration of an outer loop and all bases are
+    updated in an inner loop. To avoid consuming extra memory, we use the
+    result array to store intermediate values of each base until they become
+    the final result in the last step.
 
     There are two benefits of this approach:
 
@@ -100,9 +102,13 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     different keys. Meaning that the CPU can execute multiple keys
     out-of-order in parallel.
 
-    Invariant:
-    - cmp(arr[i], key_val) == true  for all i < base
-    - cmp(arr[i], key_val) == false for all i >= base + length
+    Invariant (for every j):
+    - cmp(arr[i], key_val_j) == true  for all i < base_j
+    - cmp(arr[i], key_val_j) == false for all i >= base_j + length
+
+    where cmp(a, b) operator depends on side input:
+    - For side = "left", cmp operator is <
+    - For side = "right", cmp operator is <=
 
     The insertion index candidates are in range [base, base+length] and
     on each iteration we shrink the range into either
@@ -110,9 +116,15 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     or
         [base + floor(length / 2), ceil(length / 2)]
 
+    The outer loop terminates when length = 1. At that point, for each j
+    the insertion order is either base_j or base_j + 1. An additional
+    comparison is required to determine which of the two values.
+    If cmp(arr[base_j], key_val_j) == true, insertion index is base_j + 1.
+    Otherwise the insertion order is base_j.
+
     Optimization: we unroll the first iteration for the following reasons:
         1. ret is not initialized with the bases, so we save |keys| writes
-        by not having to intialize it with 0s.
+        by not having to initialize it with 0s.
         2. By assuming the initial base for every key is 0, we also save
         |keys| reads.
         3. In the first iteration, all elements are compared against the
@@ -166,7 +178,7 @@ static int
 argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
              npy_intp arr_len, npy_intp key_len, npy_intp arr_str,
              npy_intp key_str, npy_intp sort_str, npy_intp ret_str,
-             PyArrayObject *)
+             PyArrayObject *, PyArrayObject *, PyArray_BinSearchCompareFunc *)
 {
     using T = typename Tag::type;
     auto cmp = side_to_cmp<Tag, side>::value;
@@ -233,10 +245,10 @@ template <side_t side>
 static void
 npy_binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
               npy_intp key_len, npy_intp arr_str, npy_intp key_str,
-              npy_intp ret_str, PyArrayObject *cmp)
+              npy_intp ret_str, PyArrayObject *key_arr, PyArrayObject *arr_arr,
+              PyArray_BinSearchCompareFunc *compare)
 {
     using Cmp = typename side_to_generic_cmp<side>::type;
-    PyArray_CompareFunc *compare = PyDataType_GetArrFuncs(PyArray_DESCR(cmp))->compare;
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
     const char *last_key = key;
@@ -247,7 +259,8 @@ npy_binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
          * gives the search a big boost when keys are sorted, but slightly
          * slows down things for purely random ones.
          */
-        if (Cmp{}(compare(last_key, key, cmp), 0)) {
+        /* last_key and key are both elements of the key array */
+        if (Cmp{}(compare(last_key, key, key_arr, key_arr), 0)) {
             max_idx = arr_len;
         }
         else {
@@ -261,7 +274,8 @@ npy_binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
             const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
             const char *arr_ptr = arr + mid_idx * arr_str;
 
-            if (Cmp{}(compare(arr_ptr, key, cmp), 0)) {
+            /* arr_ptr belongs to the haystack, key to the key array */
+            if (Cmp{}(compare(arr_ptr, key, arr_arr, key_arr), 0)) {
                 min_idx = mid_idx + 1;
             }
             else {
@@ -277,10 +291,10 @@ static int
 npy_argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
                  npy_intp arr_len, npy_intp key_len, npy_intp arr_str,
                  npy_intp key_str, npy_intp sort_str, npy_intp ret_str,
-                 PyArrayObject *cmp)
+                 PyArrayObject *key_arr, PyArrayObject *arr_arr,
+                 PyArray_BinSearchCompareFunc *compare)
 {
     using Cmp = typename side_to_generic_cmp<side>::type;
-    PyArray_CompareFunc *compare = PyDataType_GetArrFuncs(PyArray_DESCR(cmp))->compare;
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
     const char *last_key = key;
@@ -291,7 +305,8 @@ npy_argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
          * gives the search a big boost when keys are sorted, but slightly
          * slows down things for purely random ones.
          */
-        if (Cmp{}(compare(last_key, key, cmp), 0)) {
+        /* last_key and key are both elements of the key array */
+        if (Cmp{}(compare(last_key, key, key_arr, key_arr), 0)) {
             max_idx = arr_len;
         }
         else {
@@ -312,7 +327,8 @@ npy_argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
 
             arr_ptr = arr + sort_idx * arr_str;
 
-            if (Cmp{}(compare(arr_ptr, key, cmp), 0)) {
+            /* arr_ptr belongs to the haystack, key to the key array */
+            if (Cmp{}(compare(arr_ptr, key, arr_arr, key_arr), 0)) {
                 min_idx = mid_idx + 1;
             }
             else {

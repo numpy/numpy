@@ -47,7 +47,6 @@ Author: Pearu Peterson <pearu@cens.ioc.ee>
 */
 
 #define F2PY_MAX_DIMS 40
-#define F2PY_MESSAGE_BUFFER_SIZE 300  // Increase on "stack smashing detected"
 
 typedef void (*f2py_set_data_func)(char *, npy_intp *);
 typedef void (*f2py_void_func)(void);
@@ -130,9 +129,9 @@ F2PyGetThreadLocalCallbackPtr(char *key);
              : (F2PY_ALIGN8(intent) ? 8 : (F2PY_ALIGN16(intent) ? 16 : 1)))
 #define F2PY_CHECK_ALIGNMENT(arr, intent) \
     ARRAY_ISALIGNED(arr, F2PY_GET_ALIGNMENT(intent))
-#define F2PY_ARRAY_IS_CHARACTER_COMPATIBLE(arr) ((PyArray_DESCR(arr)->type_num == NPY_STRING && PyArray_ITEMSIZE(arr) >= 1) \
-                                                 || PyArray_DESCR(arr)->type_num == NPY_UINT8)
-#define F2PY_IS_UNICODE_ARRAY(arr) (PyArray_DESCR(arr)->type_num == NPY_UNICODE)
+#define F2PY_ARRAY_IS_CHARACTER_COMPATIBLE(arr) ((PyDataType_TYPENUM(PyArray_DESCR(arr)) == NPY_STRING && PyArray_ITEMSIZE(arr) >= 1) \
+                                                 || PyDataType_TYPENUM(PyArray_DESCR(arr)) == NPY_UINT8)
+#define F2PY_IS_UNICODE_ARRAY(arr) (PyDataType_TYPENUM(PyArray_DESCR(arr)) == NPY_UNICODE)
 
 extern PyArrayObject *
 ndarray_from_pyobj(const int type_num, const int elsize_, npy_intp *dims,
@@ -150,7 +149,7 @@ extern void
 dump_attrs(const PyArrayObject *arr);
 #endif
 
-  extern int f2py_describe(PyObject *obj, char *buf);
+extern PyObject *f2py_describe_obj(PyObject *obj);
 
   /* Utility CPP macros and functions that can be used in signature file
      expressions. See signature-file.rst for documentation.

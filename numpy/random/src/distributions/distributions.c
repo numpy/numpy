@@ -7,6 +7,7 @@
 #endif
 
 #include <assert.h>
+#include <stdlib.h>
 
 /* Inline generators for internal use */
 static inline uint32_t next_uint32(bitgen_t *bitgen_state) {
@@ -19,6 +20,13 @@ static inline uint64_t next_uint64(bitgen_t *bitgen_state) {
 static inline float next_float(bitgen_t *bitgen_state) {
   return (next_uint32(bitgen_state) >> 8) * (1.0f / 16777216.0f);
 }
+
+/* Multiplying by +/-1.0 is exact in IEEE-754 for every finite value, including
+ * the 0.0 -> -0.0 case, so indexing these tables with the random sign bit
+ * reproduces `if (sign) x = -x;` bit for bit while avoiding a branch on a
+ * uniformly distributed (hence unpredictable) bit. */
+static const double sign_double[2] = {1.0, -1.0};
+static const float sign_float[2] = {1.0f, -1.0f};
 
 /* Random generators for external use */
 float random_standard_uniform_f(bitgen_t *bitgen_state) {
@@ -136,7 +144,6 @@ void random_standard_exponential_inv_fill_f(bitgen_t * bitgen_state, npy_intp cn
 
 double random_standard_normal(bitgen_t *bitgen_state) {
   uint64_t r;
-  int sign;
   uint64_t rabs;
   int idx;
   double x, xx, yy;
@@ -145,11 +152,8 @@ double random_standard_normal(bitgen_t *bitgen_state) {
     r = next_uint64(bitgen_state);
     idx = r & 0xff;
     r >>= 8;
-    sign = r & 0x1;
     rabs = (r >> 1) & 0x000fffffffffffff;
-    x = rabs * wi_double[idx];
-    if (sign & 0x1)
-      x = -x;
+    x = rabs * wi_double[idx] * sign_double[r & 0x1];
     if (rabs < ki_double[idx])
       return x; /* 99.3% of the time return here */
     if (idx == 0) {
@@ -178,7 +182,6 @@ void random_standard_normal_fill(bitgen_t *bitgen_state, npy_intp cnt, double *o
 
 float random_standard_normal_f(bitgen_t *bitgen_state) {
   uint32_t r;
-  int sign;
   uint32_t rabs;
   int idx;
   float x, xx, yy;
@@ -186,11 +189,8 @@ float random_standard_normal_f(bitgen_t *bitgen_state) {
     /* r = n23sb8 */
     r = next_uint32(bitgen_state);
     idx = r & 0xff;
-    sign = (r >> 8) & 0x1;
     rabs = (r >> 9) & 0x0007fffff;
-    x = rabs * wi_float[idx];
-    if (sign & 0x1)
-      x = -x;
+    x = rabs * wi_float[idx] * sign_float[(r >> 8) & 0x1];
     if (rabs < ki_float[idx])
       return x; /* # 99.3% of the time return here */
     if (idx == 0) {
@@ -498,15 +498,13 @@ double random_laplace(bitgen_t *bitgen_state, double loc, double scale) {
   double U;
 
   U = next_double(bitgen_state);
-  if (U >= 0.5) {
-    U = loc - scale * log(2.0 - U - U);
-  } else if (U > 0.0) {
-    U = loc + scale * log(U + U);
-  } else {
-    /* Reject U == 0.0 and call again to get next value */
-    U = random_laplace(bitgen_state, loc, scale);
+  if (U > 0.0) {
+    const double lo = U + U;
+    const double hi = 2.0 - U - U;
+    return loc + sign_double[U >= 0.5] * scale * log(lo < hi ? lo : hi);
   }
-  return U;
+  /* Reject U == 0.0 and call again to get next value */
+  return random_laplace(bitgen_state, loc, scale);
 }
 
 double random_gumbel(bitgen_t *bitgen_state, double loc, double scale) {
@@ -572,12 +570,91 @@ static RAND_INT_TYPE random_poisson_mult(bitgen_t *bitgen_state, double lam) {
  */
 #define LS2PI 0.91893853320467267
 #define TWELFTH 0.083333333333333333333333
+
+/*
+ * Stable Poisson probability evaluation based on:
+ * C. Loader, "Fast and Accurate Computation of Binomial Probabilities",
+ * 2002, equations 4, 6, and 7.
+ */
+
+/* Stirling's error: log(n!) - log(sqrt(2*pi*n) * (n/e)^n). */
+static double random_stirlerr(RAND_INT_TYPE n) {
+  static const double sfe[16] = {
+      0.0,
+      0.081061466795327258219670264,
+      0.041340695955409294093822081,
+      0.0276779256849983391487892927,
+      0.020790672103765093111522771,
+      0.0166446911898211921631948653,
+      0.013876128823070747998745727,
+      0.0118967099458917700950557241,
+      0.010411265261972096497478567,
+      0.0092554621827127329177286366,
+      0.008330563433362871256469318,
+      0.0075736754879518407949720242,
+      0.006942840107209529865664152,
+      0.0064089941880042070684396310,
+      0.005951370112758847735624416,
+      0.0055547335519628013710386899};
+  const double S0 = 0.083333333333333333333;
+  const double S1 = 0.00277777777777777777778;
+  const double S2 = 0.00079365079365079365079365;
+  const double S3 = 0.000595238095238095238095238;
+  const double S4 = 0.0008417508417508417508417508;
+  double nn;
+
+  if (n < 16) {
+    return sfe[n];
+  }
+  nn = (double)n * (double)n;
+  if (n > 500) {
+    return (S0 - S1 / nn) / (double)n;
+  }
+  if (n > 80) {
+    return (S0 - (S1 - S2 / nn) / nn) / (double)n;
+  }
+  if (n > 35) {
+    return (S0 - (S1 - (S2 - S3 / nn) / nn) / nn) / (double)n;
+  }
+  return (S0 - (S1 - (S2 - (S3 - S4 / nn) / nn) / nn) / nn) /
+         (double)n;
+}
+
+/* Compute x*log(x/np) + np - x without cancellation when x is near np. */
+static double random_bd0(double x, double np) {
+  double ej, s, s1, v;
+  int j;
+
+  if (fabs(x - np) < 0.1 * (x + np)) {
+    s = (x - np) * (x - np) / (x + np);
+    v = (x - np) / (x + np);
+    ej = 2.0 * x * v;
+    v *= v;
+    for (j = 1;; ++j) {
+      ej *= v;
+      s1 = s + ej / (2 * j + 1);
+      if (s1 == s) {
+        return s1;
+      }
+      s = s1;
+    }
+  }
+  return x * log(x / np) + np - x;
+}
+
+static double random_poisson_logpmf(RAND_INT_TYPE k, double lam) {
+  if (k == 0) {
+    return -lam;
+  }
+  return -random_stirlerr(k) - random_bd0((double)k, lam) - LS2PI -
+         0.5 * log((double)k);
+}
+
 static RAND_INT_TYPE random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
   RAND_INT_TYPE k;
-  double U, V, slam, loglam, a, b, invalpha, vr, us;
+  double U, V, slam, a, b, invalpha, vr, us;
 
   slam = sqrt(lam);
-  loglam = log(lam);
   b = 0.931 + 2.53 * slam;
   a = -0.059 + 0.02483 * b;
   invalpha = 1.1239 + 1.1328 / (b - 3.4);
@@ -597,7 +674,7 @@ static RAND_INT_TYPE random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
     /* log(V) == log(0.0) ok here */
     /* if U==0.0 so that us==0.0, log is ok since always returns */
     if ((log(V) + log(invalpha) - log(a / (us * us) + b)) <=
-        (-lam + (double)k * loglam - random_loggam((double)k + 1))) {
+        random_poisson_logpmf(k, lam)) {
       return k;
     }
   }
@@ -741,15 +818,21 @@ Step52:
   f2 = f1 * f1;
   z2 = z * z;
   w2 = w * w;
+  /*
+   * Note that the third and fourth error terms are subtracted.
+   * This is a correction from the original 1988 paper
+   * (Kachitvichyanukul & Schmeiser) which erroneously adds
+   * all four terms
+   */
   if (A > (xm * log(f1 / x1) + (n - m + 0.5) * log(z / w) +
            (y - m) * log(w * r / (x1 * q)) +
-           (13680. - (462. - (132. - (99. - 140. / f2) / f2) / f2) / f2) / f1 /
+           (13860. - (462. - (132. - (99. - 140. / f2) / f2) / f2) / f2) / f1 /
                166320. +
-           (13680. - (462. - (132. - (99. - 140. / z2) / z2) / z2) / z2) / z /
-               166320. +
-           (13680. - (462. - (132. - (99. - 140. / x2) / x2) / x2) / x2) / x1 /
-               166320. +
-           (13680. - (462. - (132. - (99. - 140. / w2) / w2) / w2) / w2) / w /
+           (13860. - (462. - (132. - (99. - 140. / z2) / z2) / z2) / z2) / z /
+               166320. -
+           (13860. - (462. - (132. - (99. - 140. / x2) / x2) / x2) / x2) / x1 /
+               166320. -
+           (13860. - (462. - (132. - (99. - 140. / w2) / w2) / w2) / w2) / w /
                166320.)) {
     goto Step10;
   }

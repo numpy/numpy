@@ -198,7 +198,11 @@ cdef class PCG64(BitGenerator):
         -------
         state : dict
             Dictionary containing the information required to describe the
-            state of the PRNG
+            state of the PRNG. The returned dictionary is a new object, not a
+            view of the generator's internal state: later changes to the
+            generator do not affect it, and modifying it does not affect the
+            generator, so it can be stored and passed back to the setter
+            without copying.
         """
         cdef np.ndarray state_vec
         cdef int has_uint32
@@ -206,9 +210,10 @@ cdef class PCG64(BitGenerator):
 
         # state_vec is state.high, state.low, inc.high, inc.low
         state_vec = <np.ndarray>np.empty(4, dtype=np.uint64)
-        pcg64_get_state(&self.rng_state,
-                        <uint64_t *>np.PyArray_DATA(state_vec),
-                        &has_uint32, &uinteger)
+        with self.lock:
+            pcg64_get_state(&self.rng_state,
+                            <uint64_t *>np.PyArray_DATA(state_vec),
+                            &has_uint32, &uinteger)
         state = int(state_vec[0]) * 2**64 + int(state_vec[1])
         inc = int(state_vec[2]) * 2**64 + int(state_vec[3])
         return {'bit_generator': self.__class__.__name__,
@@ -233,9 +238,10 @@ cdef class PCG64(BitGenerator):
         state_vec[3] = value['state']['inc'] % 2 ** 64
         has_uint32 = value['has_uint32']
         uinteger = value['uinteger']
-        pcg64_set_state(&self.rng_state,
-                        <uint64_t *>np.PyArray_DATA(state_vec),
-                        has_uint32, uinteger)
+        with self.lock:
+            pcg64_set_state(&self.rng_state,
+                            <uint64_t *>np.PyArray_DATA(state_vec),
+                            has_uint32, uinteger)
 
     def advance(self, delta):
         """
@@ -256,7 +262,18 @@ cdef class PCG64(BitGenerator):
 
         Notes
         -----
-        Advancing a RNG updates the underlying RNG state as-if a given
+        Avoid a ``delta`` that is, or is close to, a multiple of a large
+        power of two. The state is a 128-bit linear congruential generator,
+        and advancing it by a multiple of ``2**N`` leaves the lowest ``N``
+        bits of the state unchanged. The original and advanced streams then
+        share those bits at every later draw, and their outputs are
+        correlated even though ``delta`` is large. An odd ``delta`` with
+        well-mixed bits avoids this. A simple choice is the odd integer
+        nearest to the required distance divided by the golden ratio, which
+        is how :meth:`jumped` chooses its step. See :ref:`upgrading-pcg64`
+        for more on this weakness of the underlying generator.
+
+        Advancing an RNG updates the underlying RNG state as-if a given
         number of calls to the underlying RNG have been made. In general
         there is not a one-to-one relationship between the number output
         random values from a particular distribution and the number of
@@ -272,14 +289,35 @@ cdef class PCG64(BitGenerator):
 
         Advancing the RNG state resets any pre-computed random numbers.
         This is required to ensure exact reproducibility.
+
+        Examples
+        --------
+        Advance a generator by about ``2**48`` steps, using the odd integer
+        nearest to ``2**48 / phi``, where ``phi`` is the golden ratio. The
+        step is about 62% of ``2**48``. Integer arithmetic keeps the
+        calculation exact at any scale, including ``2**128``.
+
+        >>> import math
+        >>> from numpy.random import Generator, PCG64
+        >>> bg = PCG64(20261114)
+        >>> scale = 2**48
+        >>> delta = ((math.isqrt(5 * scale**2) - scale) // 2) | 1
+        >>> delta
+        173961102589771
+
+        ``advance`` modifies ``bg`` in place and returns it, so it can be
+        passed straight to `Generator`.
+
+        >>> rg = Generator(bg.advance(delta))
         """
         delta = wrap_int(delta, 128)
 
         cdef np.ndarray d = np.empty(2, dtype=np.uint64)
         d[0] = delta // 2**64
         d[1] = delta % 2**64
-        pcg64_advance(&self.rng_state, <uint64_t *>np.PyArray_DATA(d))
-        self._reset_state_variables()
+        with self.lock:
+            pcg64_advance(&self.rng_state, <uint64_t *>np.PyArray_DATA(d))
+            self._reset_state_variables()
         return self
 
 
@@ -432,7 +470,11 @@ cdef class PCG64DXSM(BitGenerator):
         -------
         state : dict
             Dictionary containing the information required to describe the
-            state of the PRNG
+            state of the PRNG. The returned dictionary is a new object, not a
+            view of the generator's internal state: later changes to the
+            generator do not affect it, and modifying it does not affect the
+            generator, so it can be stored and passed back to the setter
+            without copying.
         """
         cdef np.ndarray state_vec
         cdef int has_uint32
@@ -440,9 +482,10 @@ cdef class PCG64DXSM(BitGenerator):
 
         # state_vec is state.high, state.low, inc.high, inc.low
         state_vec = <np.ndarray>np.empty(4, dtype=np.uint64)
-        pcg64_get_state(&self.rng_state,
-                        <uint64_t *>np.PyArray_DATA(state_vec),
-                        &has_uint32, &uinteger)
+        with self.lock:
+            pcg64_get_state(&self.rng_state,
+                            <uint64_t *>np.PyArray_DATA(state_vec),
+                            &has_uint32, &uinteger)
         state = int(state_vec[0]) * 2**64 + int(state_vec[1])
         inc = int(state_vec[2]) * 2**64 + int(state_vec[3])
         return {'bit_generator': self.__class__.__name__,
@@ -467,9 +510,10 @@ cdef class PCG64DXSM(BitGenerator):
         state_vec[3] = value['state']['inc'] % 2 ** 64
         has_uint32 = value['has_uint32']
         uinteger = value['uinteger']
-        pcg64_set_state(&self.rng_state,
-                        <uint64_t *>np.PyArray_DATA(state_vec),
-                        has_uint32, uinteger)
+        with self.lock:
+            pcg64_set_state(&self.rng_state,
+                            <uint64_t *>np.PyArray_DATA(state_vec),
+                            has_uint32, uinteger)
 
     def advance(self, delta):
         """
@@ -490,7 +534,18 @@ cdef class PCG64DXSM(BitGenerator):
 
         Notes
         -----
-        Advancing a RNG updates the underlying RNG state as-if a given
+        Avoid a ``delta`` that is, or is close to, a multiple of a large
+        power of two. The state is a 128-bit linear congruential generator,
+        and advancing it by a multiple of ``2**N`` leaves the lowest ``N``
+        bits of the state unchanged. The original and advanced streams then
+        share those bits at every later draw, and their outputs are
+        correlated even though ``delta`` is large. An odd ``delta`` with
+        well-mixed bits avoids this. A simple choice is the odd integer
+        nearest to the required distance divided by the golden ratio, which
+        is how :meth:`jumped` chooses its step. See :ref:`upgrading-pcg64`
+        for more on this weakness of the underlying generator.
+
+        Advancing an RNG updates the underlying RNG state as-if a given
         number of calls to the underlying RNG have been made. In general
         there is not a one-to-one relationship between the number output
         random values from a particular distribution and the number of
@@ -506,12 +561,33 @@ cdef class PCG64DXSM(BitGenerator):
 
         Advancing the RNG state resets any pre-computed random numbers.
         This is required to ensure exact reproducibility.
+
+        Examples
+        --------
+        Advance a generator by about ``2**48`` steps, using the odd integer
+        nearest to ``2**48 / phi``, where ``phi`` is the golden ratio. The
+        step is about 62% of ``2**48``. Integer arithmetic keeps the
+        calculation exact at any scale, including ``2**128``.
+
+        >>> import math
+        >>> from numpy.random import Generator, PCG64
+        >>> bg = PCG64(20261114)
+        >>> scale = 2**48
+        >>> delta = ((math.isqrt(5 * scale**2) - scale) // 2) | 1
+        >>> delta
+        173961102589771
+
+        ``advance`` modifies ``bg`` in place and returns it, so it can be
+        passed straight to `Generator`.
+
+        >>> rg = Generator(bg.advance(delta))
         """
         delta = wrap_int(delta, 128)
 
         cdef np.ndarray d = np.empty(2, dtype=np.uint64)
         d[0] = delta // 2**64
         d[1] = delta % 2**64
-        pcg64_cm_advance(&self.rng_state, <uint64_t *>np.PyArray_DATA(d))
-        self._reset_state_variables()
+        with self.lock:
+            pcg64_cm_advance(&self.rng_state, <uint64_t *>np.PyArray_DATA(d))
+            self._reset_state_variables()
         return self

@@ -1,0 +1,7 @@
+Faster reductions for exact ndarrays
+------------------------------------
+`numpy.sum`, `numpy.prod`, `numpy.min`, `numpy.max`, `numpy.amin`, `numpy.amax`,
+`numpy.any`, and `numpy.all` now avoid Python dispatch overhead for exact
+`numpy.ndarray` inputs, reducing call times for benchmarked small-array
+reductions by approximately 30%-50%. Subclasses and custom array types
+continue to use the original ``__array_function__`` dispatch path.

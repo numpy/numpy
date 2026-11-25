@@ -203,7 +203,7 @@ foreach opt_name, conf : parse_options
           warning('CPU Feature "@0@" is no longer explicitly supported, redirecting to "@1@".'.format(tok, ntok))
         endif
         warning('Please check the latest documentation for build options.')
-        if ntok == '' or not append # redirected features not safe to be execluded
+        if ntok == '' or not append # redirected features not safe to be excluded
           continue
         endif
         tok = ntok

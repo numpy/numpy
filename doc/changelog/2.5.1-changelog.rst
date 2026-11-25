@@ -1,0 +1,44 @@
+
+Contributors
+============
+
+A total of 10 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Adhyan Gupta +
+* Ankit Ahlawat
+* Charles Harris
+* Iason Krommydas
+* Joren Hammudoglu
+* Kumar Aditya
+* Nathan Goldbaum
+* Sebastian Berg
+* Ties Jan Hefting +
+* Vineet Kumar
+
+Pull requests merged
+====================
+
+A total of 20 pull requests were merged for this release.
+
+* `#31707 <https://github.com/numpy/numpy/pull/31707>`__: MAINT: Prepare 2.5.x for further development
+* `#31721 <https://github.com/numpy/numpy/pull/31721>`__: CI: fix new ``cython-lint`` errors (#31711)
+* `#31723 <https://github.com/numpy/numpy/pull/31723>`__: MAINT: Update meson to match main
+* `#31729 <https://github.com/numpy/numpy/pull/31729>`__: TST: use setup-sde instead of curl to get SDE binaries (#31727)
+* `#31829 <https://github.com/numpy/numpy/pull/31829>`__: BUG: Relax finfo to be easier accessible for all user dtypes...
+* `#31831 <https://github.com/numpy/numpy/pull/31831>`__: TYP: Fix ``flatiter.__next__`` return type for ``object_`` and...
+* `#31832 <https://github.com/numpy/numpy/pull/31832>`__: BUG: avoid deadlocks using NpyString API (#31682)
+* `#31833 <https://github.com/numpy/numpy/pull/31833>`__: BUG: fix out array leak in reduceat and accumulate when dtype...
+* `#31835 <https://github.com/numpy/numpy/pull/31835>`__: BUG: fix numpy datetime cython APIs to be compatible with older...
+* `#31836 <https://github.com/numpy/numpy/pull/31836>`__: TYP: Fix incorrect dtype inference of ``asarray([])`` (#31732)
+* `#31837 <https://github.com/numpy/numpy/pull/31837>`__: TYP: Fix ``np.ma.masked_array`` 2.5.0 regression
+* `#31838 <https://github.com/numpy/numpy/pull/31838>`__: FIX: Refactor error handling in array_setstate to prevent typecode...
+* `#31839 <https://github.com/numpy/numpy/pull/31839>`__: TST: xfail multithreaded BLAS test more generously
+* `#31840 <https://github.com/numpy/numpy/pull/31840>`__: MAINT: Rename subroutine for crackfortran tests
+* `#31842 <https://github.com/numpy/numpy/pull/31842>`__: BUG: fix leak in reductions when a ufunc override errors or is...
+* `#31849 <https://github.com/numpy/numpy/pull/31849>`__: BLD: set minimum required gcc version to 10.3 (#31843)
+* `#31855 <https://github.com/numpy/numpy/pull/31855>`__: CI: fix hangs on MacOS ASan CI (#31853)
+* `#31856 <https://github.com/numpy/numpy/pull/31856>`__: BUG: fix several bugs in StringDType operations (#31846)
+* `#31857 <https://github.com/numpy/numpy/pull/31857>`__: BUG: Fix segfault in MT19937 by preventing recursive seed lists...
+* `#31858 <https://github.com/numpy/numpy/pull/31858>`__: BUG: Fix signed integer overflow in datetime.c (#31688)
+

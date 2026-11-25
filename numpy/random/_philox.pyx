@@ -1,5 +1,7 @@
 #cython: binding=True
 
+import operator
+
 import numpy as np
 cimport numpy as np
 
@@ -210,25 +212,30 @@ cdef class Philox(BitGenerator):
         -------
         state : dict
             Dictionary containing the information required to describe the
-            state of the PRNG
+            state of the PRNG. The returned dictionary is a new object, not a
+            view of the generator's internal state: later changes to the
+            generator do not affect it, and modifying it does not affect the
+            generator, so it can be stored and passed back to the setter
+            without copying.
         """
         ctr = np.empty(4, dtype=np.uint64)
         key = np.empty(2, dtype=np.uint64)
         buffer = np.empty(PHILOX_BUFFER_SIZE, dtype=np.uint64)
-        for i in range(4):
-            ctr[i] = self.rng_state.ctr.v[i]
-            if i < 2:
-                key[i] = self.rng_state.key.v[i]
-        for i in range(PHILOX_BUFFER_SIZE):
-            buffer[i] = self.rng_state.buffer[i]
+        with self.lock:
+            for i in range(4):
+                ctr[i] = self.rng_state.ctr.v[i]
+                if i < 2:
+                    key[i] = self.rng_state.key.v[i]
+            for i in range(PHILOX_BUFFER_SIZE):
+                buffer[i] = self.rng_state.buffer[i]
 
-        state = {'counter': ctr, 'key': key}
-        return {'bit_generator': self.__class__.__name__,
-                'state': state,
-                'buffer': buffer,
-                'buffer_pos': self.rng_state.buffer_pos,
-                'has_uint32': self.rng_state.has_uint32,
-                'uinteger': self.rng_state.uinteger}
+            state = {'counter': ctr, 'key': key}
+            return {'bit_generator': self.__class__.__name__,
+                    'state': state,
+                    'buffer': buffer,
+                    'buffer_pos': self.rng_state.buffer_pos,
+                    'has_uint32': self.rng_state.has_uint32,
+                    'uinteger': self.rng_state.uinteger}
 
     @state.setter
     def state(self, value):
@@ -237,16 +244,20 @@ cdef class Philox(BitGenerator):
         bitgen = value.get('bit_generator', '')
         if bitgen != self.__class__.__name__:
             raise ValueError(f'state must be for a {self.__class__.__name__} PRNG')
-        for i in range(4):
-            self.rng_state.ctr.v[i] = <uint64_t> value['state']['counter'][i]
-            if i < 2:
-                self.rng_state.key.v[i] = <uint64_t> value['state']['key'][i]
-        for i in range(PHILOX_BUFFER_SIZE):
-            self.rng_state.buffer[i] = <uint64_t> value['buffer'][i]
+        with self.lock:
+            for i in range(4):
+                self.rng_state.ctr.v[i] = <uint64_t> value['state']['counter'][i]
+                if i < 2:
+                    self.rng_state.key.v[i] = <uint64_t> value['state']['key'][i]
+            for i in range(PHILOX_BUFFER_SIZE):
+                self.rng_state.buffer[i] = <uint64_t> value['buffer'][i]
 
-        self.rng_state.has_uint32 = value['has_uint32']
-        self.rng_state.uinteger = value['uinteger']
-        self.rng_state.buffer_pos = value['buffer_pos']
+            self.rng_state.has_uint32 = value['has_uint32']
+            self.rng_state.uinteger = value['uinteger']
+            buffer_pos = operator.index(value['buffer_pos'])
+            if buffer_pos < 1 or buffer_pos > PHILOX_BUFFER_SIZE:
+                raise ValueError(f'buffer_pos must be between 1 and {PHILOX_BUFFER_SIZE}')
+            self.rng_state.buffer_pos = buffer_pos
 
     cdef jump_inplace(self, iter):
         """
@@ -307,7 +318,7 @@ cdef class Philox(BitGenerator):
 
         Notes
         -----
-        Advancing a RNG updates the underlying RNG state as-if a given
+        Advancing an RNG updates the underlying RNG state as-if a given
         number of calls to the underlying RNG have been made. In general
         there is not a one-to-one relationship between the number output
         random values from a particular distribution and the number of
@@ -328,6 +339,7 @@ cdef class Philox(BitGenerator):
 
         cdef np.ndarray delta_a
         delta_a = int_to_array(delta, 'step', 256, 64)
-        philox_advance(<uint64_t *> delta_a.data, &self.rng_state)
-        self._reset_state_variables()
+        with self.lock:
+            philox_advance(<uint64_t *> delta_a.data, &self.rng_state)
+            self._reset_state_variables()
         return self

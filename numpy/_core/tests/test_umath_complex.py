@@ -8,6 +8,7 @@ import numpy as np
 # import the c-extension module directly since _arg is not exported via umath
 import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
+    assert_allclose,
     assert_almost_equal,
     assert_array_equal,
     assert_array_max_ulp,
@@ -140,6 +141,17 @@ class TestClog:
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
         y = np.log(x)
         assert_almost_equal(y, y_r)
+
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128, np.clongdouble])
+    @pytest.mark.parametrize("value", [complex(np.nan, 1),
+                                       complex(np.nan, np.nan),
+                                       complex(1, np.nan)])
+    def test_nan_components(self, dtype, value):
+        x = np.array(value, dtype=dtype)
+        with np.errstate(invalid='raise'):
+            y = np.log(x)
+        assert np.isnan(y.real)
+        assert np.isnan(y.imag)
 
     @platform_skip
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
@@ -292,6 +304,19 @@ class TestCsqrt:
         # sqrt(-1)
         check_complex_value(np.sqrt, -1, 0, 0, 1)
 
+    @pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
+    def test_large_imaginary_rescaling(self, dtype):
+        real_dtype = np.empty((), dtype=dtype).real.dtype
+        max_value = np.finfo(real_dtype).max
+
+        value = np.array(1j * max_value, dtype=dtype)
+        result = np.sqrt(value)
+
+        expected = np.sqrt(max_value / 2)
+
+        assert_allclose(result.real, expected, rtol=5e-6)
+        assert_allclose(result.imag, expected, rtol=5e-6)
+
     def test_simple_conjugate(self):
         ref = np.conj(np.sqrt(complex(1, 1)))
 
@@ -389,7 +414,7 @@ class TestCpow:
 
         n_r = [x[i] ** y[i] for i in lx]
         for i in lx:
-            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+            assert_almost_equal(n_r[i], p_r[i], err_msg=f'Loop {i}\n')
 
     def test_array(self):
         x = np.array([1, 1j,         2,  2.5 + .37j, np.inf, np.nan])
@@ -409,7 +434,7 @@ class TestCpow:
 
         n_r = x ** y
         for i in lx:
-            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+            assert_almost_equal(n_r[i], p_r[i], err_msg=f'Loop {i}\n')
 
 class TestCabs:
     def setup_method(self):
@@ -610,15 +635,15 @@ class TestComplexAbsoluteMixedDTypes:
                  ('cont_chisq', '<f4'), ('psd_var_val', '<f4'), ('sg_chisq', '<f4'),
                  ('mycomplex', astype), ('time_index', '<i8')]
         vec = np.array([
-                (0, 0., 0, -31.666483, 200, 0., 0.,  1.      ,  3.0 + 4.0j  ,  613090),   # noqa: E203,E501
-                (1, 0., 0, 260.91525 ,  42, 0., 0.,  1.      ,  5.0 + 12.0j ,  787315),   # noqa: E203,E501
-                (1, 0., 0,  52.15155 ,  42, 0., 0.,  1.      ,  8.0 + 15.0j ,  806641),   # noqa: E203,E501
-                (1, 0., 0,  52.430195,  42, 0., 0.,  1.      ,  7.0 + 24.0j , 1363540),   # noqa: E203,E501
-                (2, 0., 0, 304.43646 ,  58, 0., 0.,  1.      ,  20.0 + 21.0j,  787323),   # noqa: E203,E501
-                (3, 0., 0, 299.42108 ,  52, 0., 0.,  1.      ,  12.0 + 35.0j,  787332),   # noqa: E203,E501
-                (4, 0., 0,  39.4836  ,  28, 0., 0.,  9.182192,  9.0 + 40.0j ,  787304),   # noqa: E203,E501
-                (4, 0., 0,  76.83787 ,  28, 0., 0.,  1.      ,  28.0 + 45.0j, 1321869),   # noqa: E203,E501
-                (5, 0., 0, 143.26366 ,  24, 0., 0., 10.996129,  11.0 + 60.0j,  787299)],  # noqa: E203,E501
+                (0, 0., 0, -31.666483, 200, 0., 0.,  1.      ,  3.0 + 4.0j  ,  613090),   # noqa: E203
+                (1, 0., 0, 260.91525 ,  42, 0., 0.,  1.      ,  5.0 + 12.0j ,  787315),   # noqa: E203
+                (1, 0., 0,  52.15155 ,  42, 0., 0.,  1.      ,  8.0 + 15.0j ,  806641),   # noqa: E203
+                (1, 0., 0,  52.430195,  42, 0., 0.,  1.      ,  7.0 + 24.0j , 1363540),   # noqa: E203
+                (2, 0., 0, 304.43646 ,  58, 0., 0.,  1.      ,  20.0 + 21.0j,  787323),   # noqa: E203
+                (3, 0., 0, 299.42108 ,  52, 0., 0.,  1.      ,  12.0 + 35.0j,  787332),   # noqa: E203
+                (4, 0., 0,  39.4836  ,  28, 0., 0.,  9.182192,  9.0 + 40.0j ,  787304),   # noqa: E203
+                (4, 0., 0,  76.83787 ,  28, 0., 0.,  1.      ,  28.0 + 45.0j, 1321869),   # noqa: E203
+                (5, 0., 0, 143.26366 ,  24, 0., 0., 10.996129,  11.0 + 60.0j,  787299)],  # noqa: E203
             dtype=dtype)
         myfunc = getattr(np, func)
         a = vec['mycomplex']

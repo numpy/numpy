@@ -1,7 +1,7 @@
 :orphan:
 
 ===========================
-Array broadcasting in Numpy
+Array broadcasting in NumPy
 ===========================
 
 .. 

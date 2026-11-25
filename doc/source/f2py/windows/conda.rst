@@ -25,10 +25,4 @@ Now we will setup a ``conda`` environment.
 
 ``conda`` pulls packages from ``msys2``, however, the UX is sufficiently different enough to warrant a separate discussion.
 
-.. warning::
 
-	As of 30-01-2022, the `MSYS2 binaries`_ shipped with ``conda`` are **outdated** and this approach is **not preferred**.
-
-
-
-.. _MSYS2 binaries: https://github.com/conda-forge/conda-forge.github.io/issues/1044

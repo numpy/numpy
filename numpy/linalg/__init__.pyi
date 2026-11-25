@@ -1,3 +1,7 @@
+from typing import Final
+
+from numpy._pytesttester import PytestTester
+
 from . import _linalg as _linalg, _umath_linalg as _umath_linalg
 from ._linalg import (
     cholesky,
@@ -69,3 +73,5 @@ __all__ = [
 ]
 
 class LinAlgError(ValueError): ...
+
+test: Final[PytestTester] = ...

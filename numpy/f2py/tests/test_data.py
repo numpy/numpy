@@ -6,11 +6,11 @@ from numpy.f2py.crackfortran import crackfortran
 from . import util
 
 
+@pytest.mark.slow
 class TestData(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "data_stmts.f90")]
 
     # For gh-23276
-    @pytest.mark.slow
     def test_data_stmts(self):
         assert self.module.cmplxdat.i == 2
         assert self.module.cmplxdat.j == 3
@@ -35,6 +35,7 @@ class TestData(util.F2PyTest):
         assert mod[0]['vars']['my_array']['='] == '(/(1.0d0, 2.0d0), (-3.0d0, 4.0d0)/)'
         assert mod[0]['vars']['z']['='] == '(/3.5,  7.0/)'
 
+@pytest.mark.slow
 class TestDataF77(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "data_common.f")]
 
@@ -48,6 +49,7 @@ class TestDataF77(util.F2PyTest):
         assert mod[0]['vars']['mydata']['='] == '0'
 
 
+@pytest.mark.slow
 class TestDataMultiplierF77(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "data_multiplier.f")]
 
@@ -60,6 +62,7 @@ class TestDataMultiplierF77(util.F2PyTest):
         assert self.module.mycom.evar5 == 0
 
 
+@pytest.mark.slow
 class TestDataWithCommentsF77(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "data_with_comments.f")]
 

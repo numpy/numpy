@@ -1,0 +1,7 @@
+Faster Laplace sampling
+-----------------------
+`numpy.random.Generator.laplace` and `numpy.random.RandomState.laplace` now
+select between the two halves of the inverse CDF without branching on an
+unpredictable bit, and evaluate a single logarithm rather than one per branch.
+This reduces the time per variate by roughly 20% on x86-64 and 40% on aarch64.
+The generated stream is unchanged.

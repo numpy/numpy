@@ -110,4 +110,4 @@ def test_dtypes_invalid_device():
 
 
 def test_devices():
-    assert info.devices() == ["cpu"]
+    assert info.devices() == ("cpu",)

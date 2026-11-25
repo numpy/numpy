@@ -18,10 +18,11 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     # By default, use scipy-openblas64
     # On 32-bit platforms and on win-arm64, use scipy-openblas32
     OPENBLAS=openblas64
-    # Possible values for RUNNER_ARCH in GitHub Actions are: X86, X64, ARM, or ARM64
-    if [[ $RUNNER_ARCH == "X86" || $RUNNER_ARCH == "ARM" ]] ; then
-        OPENBLAS=openblas32
-    elif [[ $RUNNER_ARCH == "ARM64" && $RUNNER_OS == "Windows" ]] ; then
+    if [[ $CIBUILDWHEEL_BUILD_IDENTIFIER == *-win32 ]] || \
+       [[ $CIBUILDWHEEL_BUILD_IDENTIFIER == *_i686 ]] || \
+       [[ $CIBUILDWHEEL_BUILD_IDENTIFIER == *_armv7l ]] || \
+       [[ $CIBUILDWHEEL_BUILD_IDENTIFIER == *-win_arm64 ]]
+    then
         OPENBLAS=openblas32
     fi
 
@@ -32,22 +33,20 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     echo pkgconf_path is $pkgconf_path, OPENBLAS is ${OPENBLAS}
     rm -rf $pkgconf_path
     mkdir -p $pkgconf_path
-    python -m pip install -r $PROJECT_DIR/requirements/ci_requirements.txt
+
+    pushd $PROJECT_DIR
+    python -m pip install --group $OPENBLAS
+    popd
     python -c "import scipy_${OPENBLAS}; print(scipy_${OPENBLAS}.get_pkg_config())" > $pkgconf_path/scipy-openblas.pc
 
     # Copy scipy-openblas DLL's to a fixed location so we can point delvewheel
     # at it in `repair_windows.sh` (needed only on Windows because of the lack
     # of RPATH support).
-    if [[ $RUNNER_OS == "Windows" ]]; then
+    if [[ $CIBUILDWHEEL_BUILD_IDENTIFIER == *-win* ]]; then
         python <<EOF
 import os, scipy_${OPENBLAS}, shutil
 srcdir = os.path.join(os.path.dirname(scipy_${OPENBLAS}.__file__), "lib")
 shutil.copytree(srcdir, os.path.join("$pkgconf_path", "lib"))
 EOF
     fi
-fi
-
-if [[ $RUNNER_OS == "Windows" ]]; then
-    # delvewheel is the equivalent of delocate/auditwheel for windows.
-    python -m pip install delvewheel wheel
 fi

@@ -1,0 +1,1 @@
+* The minimum supported GCC version has been updated from 9.3.0 to 10.3.0

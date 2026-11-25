@@ -258,21 +258,36 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    which represents boolean.  The item size must correspond to an existing
    type, or an error will be raised.  The supported kinds are
 
-   =================  ========================
-   ``'?'``, ``'b1'``  boolean
-   ``'b'``            (signed) byte
-   ``'B'``            unsigned byte
-   ``'i'``            (signed) integer
-   ``'u'``            unsigned integer
-   ``'f'``            floating-point
-   ``'c'``            complex-floating point
-   ``'m'``            timedelta
-   ``'M'``            datetime
-   ``'O'``            (Python) objects
-   ``'S'``, ``'a'``   zero-terminated bytes (not recommended)
-   ``'U'``            Unicode string
-   ``'V'``            raw data (:class:`void`)
-   =================  ========================
+   ==================  ========================
+   ``'?'``             boolean
+   ``'b'``             (signed) byte
+   ``'B'``             unsigned byte
+   ``'h'``             (signed) short
+   ``'H'``             unsigned short
+   ``'i'``             (signed) integer
+   ``'I'``             unsigned integer
+   ``'l'``             (signed) long integer
+   ``'L'``             unsigned long integer
+   ``'q'``             (signed) long long integer
+   ``'Q'``             unsigned long long integer
+   ``'n'``             signed :class:`intp`
+   ``'N'``             unsigned :class:`uintp`
+   ``'p'``             signed integer large enough for pointers
+   ``'P'``             unsigned integer large enough for pointers
+   ``'e'``             half precision
+   ``'f'``             single precision
+   ``'F'``             complex single precision
+   ``'d'``             double precision
+   ``'D'``             complex double precision
+   ``'g'``             long precision
+   ``'G'``             complex long double precision
+   ``'S'``             zero-terminated bytes (not recommended)
+   ``'U'``             Unicode string
+   ``'V'``             raw data (:class:`void`)
+   ``'O'``             (Python) objects
+   ``'M'``             :class:`datetime64`
+   ``'m'``             :class:`timedelta64`
+   ==================  ========================
 
    .. admonition:: Example
 
@@ -285,15 +300,6 @@ Array-protocol type strings (see :ref:`arrays.interface`)
          >>> dt = np.dtype('c16')  # 128-bit complex floating-point number
          >>> dt = np.dtype('S25')  # 25-length zero-terminated bytes
          >>> dt = np.dtype('U25')  # 25-character string
-
-   .. _string-dtype-note:
-
-   .. admonition:: Note on string types
-
-    For backward compatibility with existing code originally written to support
-    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes.
-    For unicode strings, use ``U``, `numpy.str_`.  For signed bytes that do not
-    need zero-termination ``b`` or ``i1`` can be used.
 
 String with comma-separated fields
    A short-hand notation for specifying the format of a structured data type is
@@ -391,7 +397,7 @@ Type strings
    The first element, *field_name*, is the field name (if this is
    ``''`` then a standard field name, ``'f#'``, is assigned).  The
    field name may also be a 2-tuple of strings where the first string
-   is either a "title" (which may be any string or unicode string) or
+   is either a "title" (which may be any ``str``) or
    meta-data for the field which can be any object, and the second
    string is the "name" which must be a valid Python identifier.
 
@@ -480,7 +486,7 @@ Type strings
     This style allows passing in the :attr:`fields <dtype.fields>`
     attribute of a data-type object.
 
-    *obj* should contain string or unicode keys that refer to
+    *obj* should contain string keys that refer to
     ``(data-type, offset)`` or ``(data-type, offset, title)`` tuples.
 
     .. admonition:: Example

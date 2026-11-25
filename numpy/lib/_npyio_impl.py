@@ -121,19 +121,21 @@ class NpzFile(Mapping):
     archive provided on construction.
 
     `NpzFile` is used to load files in the NumPy ``.npz`` data archive
-    format. It assumes that files in the archive have a ``.npy`` extension,
-    other files are ignored.
+    format. Files containing arrays in ``.npy`` format are loaded as arrays;
+    other files are returned as bytes.
 
-    The arrays and file strings are lazily loaded on either
+    The arrays and bytes are lazily loaded on either
     getitem access using ``obj['key']`` or attribute lookup using
-    ``obj.f.key``. A list of all files (without ``.npy`` extensions) can
-    be obtained with ``obj.files`` and the ZipFile object itself using
-    ``obj.zip``.
+    ``obj.f.key``. Full file names, including the ``.npy`` suffix, can also
+    be used for getitem access and membership tests. A list of all file names,
+    with the ``.npy`` suffix removed where present, can be obtained with
+    ``obj.files`` and the ZipFile object itself using ``obj.zip``.
 
     Attributes
     ----------
     files : list of str
-        List of all files in the archive with a ``.npy`` extension.
+        List of all file names in the archive, with the ``.npy`` suffix removed
+        where present.
     zip : ZipFile instance
         The ZipFile object initialized with the zipped archive.
     f : BagObj instance
@@ -180,6 +182,10 @@ class NpzFile(Mapping):
     ['x', 'y']
     >>> npz['x']  # getitem access
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> npz['x.npy']  # full file name
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> 'x.npy' in npz
+    True
     >>> npz.f.x  # attribute lookup
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -389,6 +395,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     - If the file is a ``.npz`` file, then a dictionary-like object is
       returned, containing ``{filename: array}`` key-value pairs, one for
       each file in the archive.
+    - If the file is a ``.npz`` file, then arrays are read lazily on
+      key access, so the file should not be modified before then.
     - If the file is a ``.npz`` file, the returned value supports the
       context manager protocol in a similar fashion to the open function::
 
@@ -466,11 +474,11 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         fid.seek(-min(N, len(magic)), 1)  # back-up
         if magic.startswith((_ZIP_PREFIX, _ZIP_SUFFIX)):
             # zip-file (assume .npz)
-            # Potentially transfer file ownership to NpzFile
-            stack.pop_all()
             ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,
                           pickle_kwargs=pickle_kwargs,
                           max_header_size=max_header_size)
+            # Transfer file ownership to ret
+            stack.pop_all()
             return ret
         elif magic == format.MAGIC_PREFIX:
             # .npy file
@@ -765,7 +773,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
 
     namedict = kwds
     for i, val in enumerate(args):
-        key = 'arr_%d' % i
+        key = f'arr_{i}'
         if key in namedict.keys():
             raise ValueError(
                 f"Cannot use un-named variables and keyword {key}")
@@ -841,7 +849,7 @@ def _preprocess_comments(iterable, comments, encoding):
     Generator that consumes a line iterated iterable and strips out the
     multiple (or multi-character) comments from lines.
     This is a pre-processing step to achieve feature parity with loadtxt
-    (we assume that this feature is a nieche feature).
+    (we assume that this feature is a niche feature).
     """
     for line in iterable:
         if isinstance(line, bytes):
@@ -1209,8 +1217,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         .. versionadded:: 1.23.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     out : ndarray
@@ -1561,7 +1567,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         # Handle 1-dimensional arrays
         if X.ndim == 0 or X.ndim > 2:
             raise ValueError(
-                "Expected 1D or 2D array, got %dD array instead" % X.ndim)
+                f"Expected 1D or 2D array, got {X.ndim}D array instead")
         elif X.ndim == 1:
             # Common case -- 1d array of numbers
             if X.dtype.names is None:
@@ -1614,9 +1620,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 try:
                     v = format % tuple(row) + newline
                 except TypeError as e:
-                    raise TypeError("Mismatch between array dtype ('%s') and "
-                                    "format specifier ('%s')"
-                                    % (str(X.dtype), format)) from e
+                    raise TypeError(
+                        f"Mismatch between array dtype ('{str(X.dtype)}') and "
+                        f"format specifier ('{format}')"
+                    ) from e
                 fh.write(v)
 
         if len(footer) > 0:
@@ -1639,11 +1646,7 @@ def fromregex(file, regexp, dtype, encoding=None):
     Parameters
     ----------
     file : file, str, or pathlib.Path
-        Filename or file object to read.
-
-        .. versionchanged:: 1.22.0
-            Now accepts `os.PathLike` implementations.
-
+        Filename, file or :term:`python:path-like object` to read.
     regexp : str or regexp
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
@@ -1755,8 +1758,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
         Data type of the resulting array.
-        If None, the dtypes will be determined by the contents of each
-        column, individually.
+        If a structured dtype, the output array will be 1D and structured where
+        each field corresponds to one column.
+        If None, the dtype of each column will be inferred automatically, and
+        the output array will be structured only if either the dtypes are not
+        all the same or if `names` is not None.
     comments : str, optional
         The character used to indicate the start of a comment.
         All the characters occurring on a line after a comment are discarded.
@@ -1785,13 +1791,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
-        If `names` is True, the field names are read from the first line after
-        the first `skip_header` lines. This line can optionally be preceded
-        by a comment delimiter. Any content before the comment delimiter is
-        discarded. If `names` is a sequence or a single-string of
-        comma-separated names, the names will be used to define the field
-        names in a structured dtype. If `names` is None, the names of the
-        dtype fields will be used, if any.
+        If `names` is True, the output will be a structured array whose field
+        names are read from the first line after the first `skip_header` lines.
+        This line can optionally be preceded by a comment delimiter. Any content
+        before the comment delimiter is discarded.
+        If `names` is a sequence or a single string of comma-separated names,
+        the output is a structured array whose field names are taken from
+        `names`.
+        If `names` is None, the output is structured only if `dtype` is
+        structured, in which case the field names are taken from `dtype`.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended with an
@@ -1846,8 +1854,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
         .. versionadded:: 1.23.0
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -1960,7 +1966,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if not isinstance(user_converters, dict):
         raise TypeError(
             "The input argument 'converter' should be a valid dictionary "
-            "(got '%s' instead)" % type(user_converters))
+            f"(got '{type(user_converters)}' instead)"
+        )
 
     if encoding == 'bytes':
         encoding = None

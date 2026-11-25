@@ -97,7 +97,7 @@ class _CopyMode(enum.Enum):
 
 
 class _SignatureDescriptor:
-    # A descriptor to store on the ufunc __dict__ that avoids definig a
+    # A descriptor to store on the ufunc __dict__ that avoids defining a
     # signature for the ufunc class/type but allows the instance to have one.
     # This is needed because inspect.signature() chokes on normal properties
     # (as of 3.14 at least).

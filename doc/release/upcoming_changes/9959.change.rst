@@ -1,0 +1,10 @@
+``numpy.unwrap`` behavior changes for edge cases
+-------------------------------------------------
+An explicitly typed ``discont`` argument passed to `numpy.unwrap` wider than the
+result dtype is now compared at the result dtype rather than promoting. This may
+change the result of `numpy.unwrap` by ~1 ULP.
+
+Calling `numpy.unwrap` with an unsigned integer ``period`` that cannot represent
+the values needed internally now raises a `TypeError` ("no loop found" ufunc
+error, reporting the mismatched dtypes) instead of the ``OverflowError``
+raised by the previous Python implementation.

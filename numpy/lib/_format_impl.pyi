@@ -1,14 +1,14 @@
 import os
 from _typeshed import SupportsRead, SupportsWrite
-from typing import Any, BinaryIO, Final, TypeGuard
+from collections.abc import Sequence
+from typing import Any, BinaryIO, Final, TypeGuard, overload
 
 import numpy as np
 import numpy.typing as npt
+from numpy.dtypes import StringDType
 from numpy.lib._utils_impl import drop_metadata as drop_metadata
 
 __all__: list[str] = []
-
-type _DTypeDescr = list[tuple[str, str]] | list[tuple[str, str, tuple[int, ...]]]
 
 ###
 
@@ -22,8 +22,24 @@ _MAX_HEADER_SIZE: Final = 10_000
 
 def magic(major: int, minor: int) -> bytes: ...
 def read_magic(fp: SupportsRead[bytes]) -> tuple[int, int]: ...
-def dtype_to_descr(dtype: np.dtype) -> _DTypeDescr: ...
-def descr_to_dtype(descr: _DTypeDescr) -> np.dtype: ...
+
+#
+@overload  # void  (workaround)
+def dtype_to_descr(dtype: np.dtype[np.void]) -> str | list[tuple[Any, ...]]: ...
+@overload  # non-void
+def dtype_to_descr(
+    dtype: np.dtype[np.bool | np.number | np.character | np.datetime64 | np.timedelta64 | np.object_] | StringDType,
+) -> str: ...
+@overload  # fallback
+def dtype_to_descr(dtype: np.dtype) -> str | list[tuple[Any, ...]]: ...
+
+#
+@overload  # dtype.str
+def descr_to_dtype(descr: str) -> np.dtype[Any]: ...
+@overload  # dtype.descr
+def descr_to_dtype(descr: Sequence[tuple[Any, ...]]) -> np.dtype[np.void]: ...
+
+#
 def header_data_from_array_1_0(array: np.ndarray) -> dict[str, Any]: ...
 def write_array_header_1_0(fp: SupportsWrite[bytes], d: dict[str, Any]) -> None: ...
 def write_array_header_2_0(fp: SupportsWrite[bytes], d: dict[str, Any]) -> None: ...

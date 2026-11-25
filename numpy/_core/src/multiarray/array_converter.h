@@ -3,7 +3,9 @@
 
 
 #include "numpy/ndarraytypes.h"
-extern NPY_NO_EXPORT PyTypeObject PyArrayArrayConverter_Type;
+
+NPY_NO_EXPORT int
+init_array_converter_type(PyObject *module);
 
 typedef enum {
     NPY_CH_ALL_SCALARS = 1 << 0,

@@ -1,0 +1,16 @@
+`numpy.random.Generator` shape-typing
+-------------------------------------
+The random sampling methods of `numpy.random.Generator` now use the ``size`` parameter
+to infer the shape-type of the returned array.
+
+.. code-block:: python
+
+    rng = np.random.default_rng()
+
+    reveal_type(rng.normal(size=(2, 3)))
+    # before: ndarray[tuple[Any, ...], dtype[float64]]
+    # after:  ndarray[tuple[int, int], dtype[float64]]
+
+    reveal_type(rng.dirichlet([0.3, 0.7], size=(2, 3)))  # appends a dimension
+    # before: ndarray[tuple[Any, ...], dtype[float64]]
+    # after:  ndarray[tuple[int, int, int], dtype[float64]]

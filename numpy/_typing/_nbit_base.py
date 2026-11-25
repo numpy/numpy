@@ -15,8 +15,6 @@ class NBitBase:
     Each subsequent subclass is herein used for representing a lower level
     of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
 
-    .. versionadded:: 1.20
-
     .. deprecated:: 2.3
         Use ``@typing.overload`` or a ``TypeVar`` with a scalar-type as upper
         bound, instead.

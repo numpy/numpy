@@ -323,7 +323,7 @@ class TestIndexing:
 class TestNewScalarIndexing:
     a = matrix([[1, 2], [3, 4]])
 
-    def test_dimesions(self):
+    def test_dimensions(self):
         a = self.a
         x = a[0]
         assert_equal(x.ndim, 2)

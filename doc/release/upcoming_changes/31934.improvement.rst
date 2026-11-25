@@ -1,0 +1,4 @@
+``f2py`` handles platform-specific separators in ``--include-paths``
+--------------------------------------------------------------------
+``f2py --include-paths`` now splits include directories using the platform
+path separator, fixing parsing of Windows paths containing drive letters.

@@ -2,7 +2,6 @@
 
 from ._nbit_base import _8Bit, _16Bit, _32Bit, _64Bit, _96Bit, _128Bit
 
-# To-be replaced with a `npt.NBitBase` subclass by numpy's mypy plugin
 type _NBitByte = _8Bit
 type _NBitShort = _16Bit
 type _NBitIntC = _32Bit

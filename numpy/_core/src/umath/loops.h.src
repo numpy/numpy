@@ -740,8 +740,9 @@ TIMEDELTA_md_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
 NPY_NO_EXPORT void
 TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
-NPY_NO_EXPORT void
-TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+#include "loops_arithmetic_timedelta.dispatch.h"
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void TIMEDELTA_mq_m_divide,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
 
 NPY_NO_EXPORT void
 TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -749,8 +750,8 @@ TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
 NPY_NO_EXPORT void
 TIMEDELTA_mm_d_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
-NPY_NO_EXPORT void
-TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void TIMEDELTA_mm_q_floor_divide,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
 
 NPY_NO_EXPORT void
 TIMEDELTA_mm_m_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -759,7 +760,6 @@ NPY_NO_EXPORT void
 TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 /* Special case equivalents to above functions */
-#define TIMEDELTA_mq_m_floor_divide TIMEDELTA_mq_m_divide
 #define TIMEDELTA_md_m_floor_divide TIMEDELTA_md_m_divide
 /* #define TIMEDELTA_mm_d_floor_divide TIMEDELTA_mm_d_divide */
 
@@ -833,6 +833,32 @@ PyUFunc_OOO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
  NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
 /**end repeat1**/
+/**end repeat**/
+
+//---------- Fused minimummaximum ----------
+
+/**begin repeat
+ * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         FLOAT, DOUBLE, LONGDOUBLE#
+ */
+ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_minimummaximum,
+   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
+ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT int @TYPE@_minimummaximum_reduce,
+   (PyArrayMethod_Context *context, char *const *data, npy_intp const *dimensions,
+    npy_intp const *strides, NpyAuxData *auxdata))
+/**end repeat**/
+
+/**begin repeat
+ * #TYPE = BOOL, HALF, CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *         DATETIME, TIMEDELTA, OBJECT#
+ */
+NPY_NO_EXPORT void
+@TYPE@_minimummaximum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT int
+@TYPE@_minimummaximum_reduce(PyArrayMethod_Context *context, char *const *data,
+    npy_intp const *dimensions, npy_intp const *strides, NpyAuxData *auxdata);
 /**end repeat**/
 
 /*

@@ -126,11 +126,9 @@ public:
 //
 // Instead of
 //
-//   Py_INCREF(descr);
 //   npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
 //   [code that uses allocator]
 //   NpyString_release_allocator(allocator);
-//   Py_DECREF(descr);
 //
 // use
 //
@@ -141,19 +139,16 @@ public:
 //
 class NpyStringAcquireAllocator
 {
-    PyArray_StringDTypeObject *_descr;
     npy_string_allocator *_allocator;
 
 public:
 
-    NpyStringAcquireAllocator(PyArray_StringDTypeObject *descr) : _descr(descr) {
-        Py_INCREF(_descr);
-        _allocator = NpyString_acquire_allocator(_descr);
+    NpyStringAcquireAllocator(PyArray_StringDTypeObject *descr) {
+        _allocator = NpyString_acquire_allocator(descr);
     }
 
     ~NpyStringAcquireAllocator() {
-        NpyString_release_allocator(_allocator);
-        Py_DECREF(_descr);
+        release();
     }
 
     NpyStringAcquireAllocator(const NpyStringAcquireAllocator&) = delete;
@@ -163,6 +158,18 @@ public:
 
     npy_string_allocator *allocator() {
         return _allocator;
+    }
+
+    // Release the allocator lock early, before this object goes out of scope.
+    // Use this when a scope must drop the lock partway through, e.g. before
+    // running Python C API code that must not hold the allocator lock (which
+    // could otherwise deadlock on re-entrancy). Idempotent: the destructor
+    // also calls it, so an explicit call never double-releases.
+    void release() {
+        if (_allocator != NULL) {
+            NpyString_release_allocator(_allocator);
+            _allocator = NULL;
+        }
     }
 };
 

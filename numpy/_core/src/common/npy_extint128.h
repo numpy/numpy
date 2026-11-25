@@ -8,17 +8,41 @@ typedef struct {
 } npy_extint128_t;
 
 
+/*
+ * Integer add/sub/mul with overflow checking.
+ *
+ * On overflow, *overflow_flag is set to 1 and the return value is
+ * unspecified (callers must not use it).  The arithmetic itself is
+ * never performed on values that would overflow signed `npy_int64`,
+ * so these helpers are free of the signed-overflow undefined behavior
+ * that an unguarded `a + b` / `a - b` / `a * b` would have.
+ *
+ * `__builtin_{add,sub,mul}_overflow` are probed independently by the
+ * meson build (see `numpy/_core/meson.build`); fall back to a
+ * branch-and-skip implementation otherwise.
+ */
+
 /* Integer addition with overflow checking */
 static inline npy_int64
 safe_add(npy_int64 a, npy_int64 b, char *overflow_flag)
 {
+#ifdef HAVE___BUILTIN_ADD_OVERFLOW
+    npy_int64 result;
+    if (__builtin_add_overflow(a, b, &result)) {
+        *overflow_flag = 1;
+    }
+    return result;
+#else
     if (a > 0 && b > NPY_MAX_INT64 - a) {
         *overflow_flag = 1;
+        return 0;
     }
-    else if (a < 0 && b < NPY_MIN_INT64 - a) {
+    if (a < 0 && b < NPY_MIN_INT64 - a) {
         *overflow_flag = 1;
+        return 0;
     }
     return a + b;
+#endif
 }
 
 
@@ -26,13 +50,23 @@ safe_add(npy_int64 a, npy_int64 b, char *overflow_flag)
 static inline npy_int64
 safe_sub(npy_int64 a, npy_int64 b, char *overflow_flag)
 {
+#ifdef HAVE___BUILTIN_SUB_OVERFLOW
+    npy_int64 result;
+    if (__builtin_sub_overflow(a, b, &result)) {
+        *overflow_flag = 1;
+    }
+    return result;
+#else
     if (a >= 0 && b < a - NPY_MAX_INT64) {
         *overflow_flag = 1;
+        return 0;
     }
-    else if (a < 0 && b > a - NPY_MIN_INT64) {
+    if (a < 0 && b > a - NPY_MIN_INT64) {
         *overflow_flag = 1;
+        return 0;
     }
     return a - b;
+#endif
 }
 
 
@@ -40,20 +74,31 @@ safe_sub(npy_int64 a, npy_int64 b, char *overflow_flag)
 static inline npy_int64
 safe_mul(npy_int64 a, npy_int64 b, char *overflow_flag)
 {
+#ifdef HAVE___BUILTIN_MUL_OVERFLOW
+    npy_int64 result;
+    if (__builtin_mul_overflow(a, b, &result)) {
+        *overflow_flag = 1;
+    }
+    return result;
+#else
     if (a > 0) {
         if (b > NPY_MAX_INT64 / a || b < NPY_MIN_INT64 / a) {
             *overflow_flag = 1;
+            return 0;
         }
     }
     else if (a < 0) {
         if (b > 0 && a < NPY_MIN_INT64 / b) {
             *overflow_flag = 1;
+            return 0;
         }
-        else if (b < 0 && a < NPY_MAX_INT64 / b) {
+        if (b < 0 && a < NPY_MAX_INT64 / b) {
             *overflow_flag = 1;
+            return 0;
         }
     }
     return a * b;
+#endif
 }
 
 

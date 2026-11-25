@@ -12,6 +12,8 @@ from numpy._core._multiarray_umath import (
     __cpu_dispatch__,
     __cpu_features__,
 )
+from numpy.testing import HAS_SUBPROCESSES
+from numpy.testing._private.utils import run_subprocess
 
 
 def assert_features_equal(actual, desired, fname):
@@ -53,13 +55,12 @@ f"""
 {auxv}
 """, prefix='\r')
 
-    raise AssertionError((
+    raise AssertionError(
         "Failure Detection\n"
-        " NAME: '%s'\n"
-        " ACTUAL: %s\n"
-        " DESIRED: %s\n"
-        "%s"
-    ) % (fname, actual, desired, error_report))
+        f" NAME: '{fname}'\n"
+        f" ACTUAL: {actual}\n"
+        f" DESIRED: {desired}\n"
+        f"{error_report}")
 
 def _text_to_list(txt):
     out = txt.strip("][\n").replace("'", "").split(', ')
@@ -79,7 +80,11 @@ class AbstractTest:
         self.load_flags()
         for gname, features in self.features_groups.items():
             test_features = [self.cpu_have(f) for f in features]
-            assert_features_equal(__cpu_features__.get(gname), all(test_features), gname)
+            assert_features_equal(
+                __cpu_features__.get(gname),
+                all(test_features),
+                gname,
+            )
 
         for feature_name in self.features:
             cpu_have = self.cpu_have(feature_name)
@@ -117,20 +122,16 @@ class AbstractTest:
                     hwcap_value[1].upper().decode().split()
                 )
 
-@pytest.mark.skipif(
-    sys.platform == 'emscripten',
-    reason=(
-        "The subprocess module is not available on WASM platforms and"
-        " therefore this test class cannot be properly executed."
-    ),
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
+@pytest.mark.thread_unsafe(
+    reason="setup & tmp_path_factory threads-unsafe, modifies environment variables",
 )
-@pytest.mark.thread_unsafe(reason="setup & tmp_path_factory threads-unsafe, modifies environment variables")
 class TestEnvPrivation:
     cwd = pathlib.Path(__file__).parent.resolve()
     env = os.environ.copy()
     _enable = os.environ.pop('NPY_ENABLE_CPU_FEATURES', None)
     _disable = os.environ.pop('NPY_DISABLE_CPU_FEATURES', None)
-    SUBPROCESS_ARGS = {"cwd": cwd, "capture_output": True, "text": True, "check": True}
+    SUBPROCESS_ARGS = {"cwd": cwd, "check": True}
     unavailable_feats = [
         feat for feat in __cpu_dispatch__ if not __cpu_features__[feat]
     ]
@@ -161,7 +162,7 @@ if __name__ == "__main__":
         self.file = file
 
     def _run(self):
-        return subprocess.run(
+        return run_subprocess(
             [sys.executable, self.file],
             env=self.env,
             **self.SUBPROCESS_ARGS,
@@ -276,6 +277,44 @@ if __name__ == "__main__":
             "`__cpu_dispatch__` is non-empty"
         )
     )
+    @pytest.mark.parametrize("action", ["ENABLE", "DISABLE"])
+    def test_max_length_nonexistent_feature(self, action):
+        """
+        Test that the maximum accepted environment variable length can be
+        processed even if the whole value is an invalid feature name.
+        """
+        MAX_VAR_LENGTH = 1024
+        self.env[f'NPY_{action}_CPU_FEATURES'] = "t" * (MAX_VAR_LENGTH - 1)
+        self._run()
+
+    @pytest.mark.skipif(
+        not __cpu_dispatch__,
+        reason=(
+            "NPY_*_CPU_FEATURES only parsed if "
+            "`__cpu_dispatch__` is non-empty"
+        ),
+    )
+    @pytest.mark.parametrize("action", ["ENABLE", "DISABLE"])
+    def test_unknown_feature_warning_is_visible(self, action):
+        feature = "NOT_A_CPU_FEATURE"
+        self.env[f"NPY_{action}_CPU_FEATURES"] = feature
+        self.env.pop("PYTHONWARNINGS", None)
+
+        out = self._run()
+
+        assert re.search(
+            rf"UserWarning:.*{re.escape(feature)}",
+            out.stderr,
+            flags=re.DOTALL,
+        )
+
+    @pytest.mark.skipif(
+        not __cpu_dispatch__,
+        reason=(
+            "NPY_*_CPU_FEATURES only parsed if "
+            "`__cpu_dispatch__` is non-empty"
+        )
+    )
     def test_impossible_feature_disable(self):
         """
         Test that a RuntimeError is thrown if an impossible feature-disabling
@@ -330,13 +369,36 @@ if __name__ == "__main__":
             )
             self._expect_error(msg, err_type)
 
+    @pytest.mark.parametrize("action", ["ENABLE", "DISABLE"])
+    def test_repeated_unavailable_feature(self, action):
+        """
+        Test that repeated unavailable features can be processed without
+        overflowing the diagnostic buffer.
+        """
+        if self.UNAVAILABLE_FEAT is None:
+            pytest.skip("There are no unavailable features to test with")
+
+        bad_feature = self.UNAVAILABLE_FEAT
+        feature_repeats = 1024 // (len(bad_feature) + 1)
+        self.env[f'NPY_{action}_CPU_FEATURES'] = ",".join(
+            [bad_feature] * feature_repeats
+        )
+
+        if action == "ENABLE":
+            msg = "You cannot enable CPU features"
+            err_type = "RuntimeError"
+            self._expect_error(msg, err_type)
+        else:
+            self._run()
+
 
 is_linux = sys.platform.startswith('linux')
 is_cygwin = sys.platform.startswith('cygwin')
 machine = platform.machine()
 is_x86 = re.match(r"^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
 @pytest.mark.skipif(
-    not (is_linux or is_cygwin) or not is_x86, reason="Only for Linux and x86"
+    not (is_linux or is_cygwin) or not is_x86,
+    reason="Only for Linux and x86",
 )
 class Test_X86_Features(AbstractTest):
     features = []
@@ -359,7 +421,9 @@ class Test_X86_Features(AbstractTest):
         "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ",
         "VAES", "VPCLMULQDQ", "GFNI"
     ]
-    features_groups["AVX512_SPR"] = features_groups["AVX512_ICL"] + ["AVX512FP16", "AVX512BF16"]
+    features_groups["AVX512_SPR"] = (
+        features_groups["AVX512_ICL"] + ["AVX512FP16", "AVX512BF16"]
+    )
 
     features_map = {
         "SSE3": "PNI", "SSE41": "SSE4_1", "SSE42": "SSE4_2", "FMA3": "FMA",
@@ -378,10 +442,42 @@ is_power = re.match(r"^(powerpc|ppc)64", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_power, reason="Only for Linux and Power")
 class Test_POWER_Features(AbstractTest):
     features = ["VSX", "VSX2", "VSX3", "VSX4"]
-    features_map = {"VSX2": "ARCH_2_07", "VSX3": "ARCH_3_00", "VSX4": "ARCH_3_1"}
+    features_map = {
+        "VSX":  "ARCH_2_06",
+        "VSX2": "ARCH_2_07",
+        "VSX3": "ARCH_3_00",
+        "VSX4": "ARCH_3_1B"
+    }
 
     def load_flags(self):
         self.load_flags_auxv()
+        platform = self._get_platform()
+
+        if platform:
+            power_match = re.search(r'power(\d+)', platform, re.IGNORECASE)
+            if power_match:
+                power_gen = int(power_match.group(1))
+                if power_gen >= 7:
+                    self.features_flags.add("ARCH_2_06")
+                if power_gen >= 8:
+                    self.features_flags.add("ARCH_2_07")
+                if power_gen >= 9:
+                    self.features_flags.add("ARCH_3_00")
+                if power_gen >= 10:
+                    self.features_flags.add("ARCH_3_1B")
+
+    def _get_platform(self):
+        """Get the AT_PLATFORM value from AUXV"""
+        try:
+            auxv = subprocess.check_output(['/bin/true'], env={"LD_SHOW_AUXV": "1"})
+            for line in auxv.split(b'\n'):
+                if line.startswith(b'AT_PLATFORM'):
+                    parts = line.split(b':', 1)
+                    if len(parts) == 2:
+                        return parts[1].strip().decode().lower()
+        except Exception:
+            pass
+        return None
 
 
 is_zarch = re.match(r"^(s390x)", machine, re.IGNORECASE)
@@ -391,7 +487,7 @@ class Test_ZARCH_Features(AbstractTest):
     features = ["VX", "VXE", "VXE2"]
 
     def load_flags(self):
-        self.load_flags_auxv()
+        self.load_flags_cpuinfo("features")
 
 
 is_arm = re.match(r"^(arm|aarch64)", machine, re.IGNORECASE)
@@ -420,14 +516,18 @@ class Test_ARM_Features(AbstractTest):
         else:
             self.features_map = {
                 # ELF auxiliary vector and /proc/cpuinfo on Linux kernel(armv8 aarch32)
-                # doesn't provide information about ASIMD, so we assume that ASIMD is supported
+                # doesn't provide information about ASIMD
+                # so we assume that ASIMD is supported
                 # if the kernel reports any one of the following ARM8 features.
                 "ASIMD": ("AES", "SHA1", "SHA2", "PMULL", "CRC32")
             }
 
 
 is_loongarch = re.match(r"^(loongarch)", machine, re.IGNORECASE)
-@pytest.mark.skipif(not is_linux or not is_loongarch, reason="Only for Linux and LoongArch")
+@pytest.mark.skipif(
+    not is_linux or not is_loongarch,
+    reason="Only for Linux and LoongArch",
+)
 class Test_LOONGARCH_Features(AbstractTest):
     features = ["LSX"]
 

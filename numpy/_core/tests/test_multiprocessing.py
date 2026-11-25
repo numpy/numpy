@@ -1,7 +1,9 @@
+import multiprocessing
+
 import pytest
 
 import numpy as np
-from numpy.testing import IS_WASM
+from numpy.testing import IS_IOS, IS_WASM
 
 pytestmark = pytest.mark.thread_unsafe(
     reason="tests in this module are explicitly multi-processed"
@@ -26,8 +28,9 @@ def bool_array_reader(shm_name, n):
         while not arr[i]:
             pass
 
-@pytest.mark.skipif(IS_WASM,
-                    reason="WASM does not support _posixshmem")
+@pytest.mark.skipif(IS_WASM or IS_IOS,
+                    reason="platform does not support _posixshmem")
+@pytest.mark.slow
 def test_read_write_bool_array():
     # See: gh-30389
     #
@@ -43,7 +46,8 @@ def test_read_write_bool_array():
     from multiprocessing import shared_memory
     n = 10000
     shm = shared_memory.SharedMemory(create=True, size=n)
-    with ProcessPoolExecutor(max_workers=2) as executor:
+    ctx = multiprocessing.get_context("spawn")
+    with ProcessPoolExecutor(max_workers=2, mp_context=ctx) as executor:
         f_writer = executor.submit(bool_array_writer, shm.name, n)
         f_reader = executor.submit(bool_array_reader, shm.name, n)
     shm.unlink()

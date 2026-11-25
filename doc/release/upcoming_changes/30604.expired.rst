@@ -1,1 +1,0 @@
-* The ``numpy.chararray`` re-export of ``numpy.char.chararray`` has been removed (deprecated since 2.0).

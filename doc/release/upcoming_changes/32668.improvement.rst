@@ -1,0 +1,4 @@
+``np.searchsorted`` accepts any integer dtype as ``sorter``
+-----------------------------------------------------------
+`numpy.searchsorted` now casts ``sorter`` with same-kind casting, like `numpy.take`.
+Integer arrays such as ``uint64``, or ``int64`` on 32-bit platforms, no longer raise an error.
