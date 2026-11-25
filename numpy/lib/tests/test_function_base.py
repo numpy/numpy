@@ -1511,6 +1511,22 @@ class TestTrimZeros:
         res = trim_zeros(self.a.tolist())
         assert isinstance(res, list)
 
+    @pytest.mark.parametrize("axis, expected", [(None, [[1]]), (0, [[0, 1, 0]])])
+    def test_nd_list(self, axis, expected):
+        # gh-33460
+        res = trim_zeros([[0, 0, 0], [0, 1, 0], [0, 0, 0]], axis=axis)
+        assert_array_equal(res, expected)
+
+    def test_nd_subclass(self):
+        class MyArray(np.ndarray):
+            pass
+
+        a = np.zeros((3, 3)).view(MyArray)
+        a[1, 1] = 1
+        res = trim_zeros(a)
+        assert type(res) is MyArray
+        assert_array_equal(res, [[1]])
+
     @pytest.mark.parametrize("ndim", (0, 1, 2, 3, 10))
     def test_nd_basic(self, ndim):
         a = np.ones((2,) * ndim)
