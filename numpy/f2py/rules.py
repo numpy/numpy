@@ -1354,12 +1354,24 @@ def buildmodule(m, um):
     Return
     """
     outmess(f"    Building module \"{m['name']}\"...\n")
+    # Make __user__ modules visible to callback iface generation even when
+    # crackfortran.usermodules is empty (``.pyf`` rebuild path, gh-20157).
+    from . import func2subr as _func2subr
+    _func2subr.set_active_user_modules(um)
+    try:
+        return _buildmodule_body(m, um, vrd=None)
+    finally:
+        _func2subr.set_active_user_modules([])
+
+
+def _buildmodule_body(m, um, vrd=None):
     ret = {}
     mod_rules = defmod_rules[:]
     vrd = capi_maps.modsign2map(m)
     rd = dictappend({'f2py_version': f2py_version}, vrd)
     funcwrappers = []
     funcwrappers2 = []  # F90 codes
+    funcwrappers2_modules = []  # F90 callback interface modules (gh-20157)
     for n in m['interfaced']:
         nb = None
         for bi in m['body']:
@@ -1405,10 +1417,20 @@ def buildmodule(m, um):
                     Path(f'{b_path}/{m_name}-f2pywrappers.f').touch()
             api, wrap = buildapi(nb)
             if wrap:
-                if isf90:
-                    funcwrappers2.append(wrap)
+                # assubr may return (module_src, wrapper_src) for F90
+                # callback interface modules (gh-20157).
+                if isinstance(wrap, tuple):
+                    mod_src, wrap_src = wrap
                 else:
-                    funcwrappers.append(wrap)
+                    mod_src, wrap_src = '', wrap
+                if isf90:
+                    if mod_src:
+                        funcwrappers2_modules.append(mod_src)
+                    if wrap_src:
+                        funcwrappers2.append(wrap_src)
+                else:
+                    if wrap_src:
+                        funcwrappers.append(wrap_src)
             ar = applyrules(api, vrd)
             rd = dictappend(rd, ar)
 
@@ -1422,7 +1444,14 @@ def buildmodule(m, um):
     # Construct F90 module support
     mr, wrap = f90mod_rules.buildhooks(m)
     if wrap:
-        funcwrappers2.append(wrap)
+        if isinstance(wrap, tuple):
+            mod_src, wrap_src = wrap
+            if mod_src:
+                funcwrappers2_modules.append(mod_src)
+            if wrap_src:
+                funcwrappers2.append(wrap_src)
+        else:
+            funcwrappers2.append(wrap)
     ar = applyrules(mr, vrd)
     rd = dictappend(rd, ar)
 
@@ -1521,7 +1550,7 @@ def buildmodule(m, um):
             lines = ''.join(lines).replace('\n     &\n', '\n')
             f.write(lines)
         outmess(f'    Fortran 77 wrappers are saved to "{wn}\"\n')
-    if funcwrappers2:
+    if funcwrappers2 or funcwrappers2_modules:
         wn = os.path.join(
             options['buildpath'], f"{vrd['modulename']}-f2pywrappers2.f90")
         ret['fsrc'] = wn
@@ -1532,7 +1561,9 @@ def buildmodule(m, um):
             f.write(
                 '!     It contains Fortran 90 wrappers to fortran functions.\n')
             lines = []
-            for l in ('\n\n'.join(funcwrappers2) + '\n').split('\n'):
+            # Modules first so wrappers can USE them (gh-20157).
+            f90_parts = list(funcwrappers2_modules) + list(funcwrappers2)
+            for l in ('\n\n'.join(f90_parts) + '\n').split('\n'):
                 if 0 <= l.find('!') < 72:
                     # don't split comment lines
                     lines.append(l + '\n')
