@@ -4390,6 +4390,35 @@ class TestMaskedArrayMathMethods:
         m_arr = np.ma.masked_array(arr, False)
         assert_equal(arr.trace(axis1=1, axis2=2), m_arr.trace(axis1=1, axis2=2))
 
+    def test_trace_dtype_and_out(self):
+        # 1. Complex input preserves imaginary part
+        a = np.array([[1 + 2j, 3], [4, 5 - 1j]])
+        ma_a = np.ma.array(a)
+        assert_equal(ma_a.trace(), np.trace(a))
+        assert_equal(ma_a.trace().dtype, np.complex128)
+
+        # 2. Integer and float32 preservation
+        b = np.arange(4).reshape(2, 2)
+        assert_equal(np.ma.array(b).trace().dtype, np.trace(b).dtype)
+
+        c = np.ones((2, 2), dtype=np.float32)
+        assert_equal(np.ma.array(c).trace().dtype, np.float32)
+
+        # 3. Masked values
+        m = np.ma.array([[1, 2], [3, 4]], mask=[[0, 0], [0, 1]])
+        assert_equal(m.trace(), 1)
+        assert_equal(m.trace().dtype, m.dtype)
+
+        # 4. out parameter with and without mask
+        out_c = np.zeros((), dtype=np.complex128)
+        res = ma_a.trace(out=out_c)
+        assert res is out_c
+        assert_equal(res, 6 + 1j)
+        out_m = np.zeros((), dtype=m.dtype)
+        res_masked = m.trace(out=out_m)
+        assert res_masked is out_m
+        assert_equal(res_masked, 1)
+        
     def test_dot(self):
         # Tests dot on MaskedArrays.
         _, _, _, _, mx, mX, mXX, _, _, _ = self._create_data()
