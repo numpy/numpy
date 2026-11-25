@@ -54,7 +54,8 @@ static inline uint32_t mt19937_next32(mt19937_state *state) {
 }
 
 static inline double mt19937_next_double(mt19937_state *state) {
-  int32_t a = mt19937_next(state) >> 5, b = mt19937_next(state) >> 6;
+  int32_t a = mt19937_next(state) >> 5;
+  int32_t b = mt19937_next(state) >> 6;
   return (a * 67108864.0 + b) / 9007199254740992.0;
 }
 

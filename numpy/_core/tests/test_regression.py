@@ -19,6 +19,7 @@ from numpy.lib.stride_tricks import as_strided
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
+    IS_PYPY,
     IS_WASM,
     _assert_valid_refcount,
     assert_,
@@ -1301,9 +1302,15 @@ class TestRegression:
                 for k in range(3):
                     # Try to ensure that x->data contains non-zero floats
                     x = np.array([123456789e199], dtype=np.float64)
-                    x.resize((m, 0))
+                    if IS_PYPY:
+                        x.resize((m, 0), refcheck=False)
+                    else:
+                        x.resize((m, 0))
                     y = np.array([123456789e199], dtype=np.float64)
-                    y.resize((0, n))
+                    if IS_PYPY:
+                        y.resize((0, n), refcheck=False)
+                    else:
+                        y.resize((0, n))
 
                     # `dot` should just return zero (m, n) matrix
                     z = np.dot(x, y)
@@ -2010,6 +2017,7 @@ class TestRegression:
         a[...] = [[1, 2]]
         assert_equal(a, [[1, 2], [1, 2]])
 
+    @pytest.mark.slow_pypy
     def test_memoryleak(self):
         # Ticket #1917 - ensure that array data doesn't leak
         for i in range(1000):
@@ -2568,6 +2576,22 @@ class TestRegression:
         )
         result = pickle.loads(test_data, encoding='bytes')
         assert result is np.add
+
+    def test_load_core_pickle_globals(self):
+        # numpy 1.x pickles arrays and scalars with paths in numpy.core,
+        # which must be loadable without warning despite np.core being
+        # deprecated in 2.0.
+        test_data = b'\x80\x04\x95&\x00\x00\x00\x00\x00\x00\x00\x8c\x12numpy.core.numeric\x94\x8c\x0b_frombuffer\x94\x93\x94.'  # noqa: E501
+        result = pickle.loads(test_data, encoding='bytes')
+        assert result is np._core.numeric._frombuffer
+
+        test_data = b'\x80\x04\x95*\x00\x00\x00\x00\x00\x00\x00\x8c\x15numpy.core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94.'  # noqa: E501
+        result = pickle.loads(test_data, encoding='bytes')
+        assert result is np._core.multiarray._reconstruct
+
+        test_data = b'\x80\x04\x95$\x00\x00\x00\x00\x00\x00\x00\x8c\x15numpy.core.multiarray\x94\x8c\x06scalar\x94\x93\x94.'  # noqa: E501
+        result = pickle.loads(test_data, encoding='bytes')
+        assert result is np._core.multiarray.scalar
 
     def test__array_namespace__(self):
         arr = np.arange(2)

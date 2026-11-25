@@ -890,7 +890,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
         elif isvstring(x) and isvstring(y):
             dt = x.dtype
-            if equal_nan and dt == y.dtype and hasattr(dt, 'na_object'):
+            if equal_nan and dt == y.dtype and dt._has_nan_na:
                 # Let the dtype determine which values are NaN-like.
                 flagged = func_assert_same_pos(
                     x, y, func=isnan, hasval=dt.na_object)
@@ -1848,13 +1848,21 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     import numpy as np
     ax = np.abs(x)
     ay = np.abs(y)
-    ref = nulp * np.spacing(np.where(ax > ay, ax, ay))
-    if not np.all(np.abs(x - y) <= ref):
+    spacing = np.spacing(np.where(ax > ay, ax, ay))
+    ref = nulp * spacing
+    diff = np.abs(x - y)
+
+    if not np.all(diff <= ref):
         if np.iscomplexobj(x) or np.iscomplexobj(y):
             msg = f"Arrays are not equal to {nulp} ULP"
         else:
-            max_nulp = np.max(nulp_diff(x, y))
-            msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
+            dtype = np.dtype(np.common_type(np.asarray(x), np.asarray(y)))
+            if dtype in (np.float16, np.float32, np.float64):
+                max_nulp = np.max(nulp_diff(x, y))
+                msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
+            else:
+                msg = f"Arrays are not equal to {nulp} ULP"
+
         raise AssertionError(msg)
 
 
@@ -2914,3 +2922,198 @@ def run_subprocess(cmd, cwd=None, **kwargs):
             f"----- stderr -----\n{res.stderr}",
             pytrace=False)
     return res
+
+
+def run_function_with_args_in_subprocess(func, *args):
+    """Call ``func(*args)`` in a new Python subprocess, failing the test if
+    it raises.
+
+    ``func`` must be a module-level function and ``args`` must survive a
+    round trip through `repr`.
+    """
+    import pytest
+
+    if not HAS_SUBPROCESSES:
+        pytest.skip("requires subprocesses")
+    location = (func.__module__,
+                getattr(sys.modules[func.__module__], "__file__", None),
+                func.__qualname__)
+    code = ("from numpy.testing._private.utils import _load_function; "
+            f"_load_function(*{location!r})(*{args!r})")
+    run_subprocess([sys.executable, "-c", code])
+
+
+def run_with_memory_limit(func, make_args, limit):
+    """Fail the test if any call needs more than ``limit`` bytes of address
+    space beyond what the process already uses.
+
+    ``make_args()`` returns a mapping of labels to argument tuples, and
+    ``func(*args)`` runs for each of them.  Both run in a fresh subprocess, so
+    they must be module-level functions, and each call runs in its own forked
+    child of that subprocess.  Runs on Linux only.
+    """
+    import pytest
+
+    if sys.platform != "linux":
+        # macOS's legacy malloc can map 128 MiB for a small allocation
+        # (gh-33369). It is used before macOS 26, on Intel, and whenever the
+        # interpreter was linked against an SDK older than macOS 13, as
+        # conda-forge's Python is.
+        pytest.skip("needs fork and an enforced RLIMIT_AS")
+    cflags = sysconfig.get_config_var('CFLAGS') or ''
+    config_args = sysconfig.get_config_var('CONFIG_ARGS') or ''
+    address_sanitizer = (
+        '-fsanitize=address' in cflags or
+        '--with-address-sanitizer' in config_args
+    )
+    thread_sanitizer = (
+        '-fsanitize=thread' in cflags or
+        '--with-thread-sanitizer' in config_args
+    )
+    if address_sanitizer or thread_sanitizer:
+        pytest.skip("sanitizer memory overhead is incompatible with RLIMIT_AS tests")
+    locations = [(f.__module__, getattr(sys.modules[f.__module__], "__file__", None),
+                  f.__qualname__) for f in (func, make_args)]
+    code = ("from numpy.testing._private.utils import _run_with_memory_limit; "
+            f"_run_with_memory_limit(*{locations!r}, {limit!r})")
+    # Avoid starting an OpenBLAS thread pool before the subprocess forks.
+    # Set this before importing NumPy, without changing the parent's environment.
+    env = dict(os.environ, OPENBLAS_NUM_THREADS="1")
+    run_subprocess([sys.executable, "-c", code], env=env)
+
+
+def _load_function(module_name, path, qualname):
+    import importlib
+
+    try:
+        obj = importlib.import_module(module_name)
+    except ImportError:
+        # a test module pytest imported by its bare name; mirror what pytest
+        # does and put the file's directory on sys.path. Mutating sys.path is
+        # safe because this runs in a subprocess that exits after the test.
+        sys.path.insert(0, os.path.dirname(path))
+        obj = importlib.import_module(module_name)
+    for attr in qualname.split("."):
+        obj = getattr(obj, attr)
+    return obj
+
+
+def _run_with_memory_limit(func_location, make_args_location, limit):
+    import resource
+    import traceback
+
+    func = _load_function(*func_location)
+    calls = _load_function(*make_args_location)()
+    failed = []
+    for label, args in calls.items():
+        # fork so memory the allocator kept from one call can't hide another;
+        # safe because this process only runs this loop and each child makes
+        # one call before os._exit
+        pid = os.fork()
+        if pid == 0:
+            stage = "measuring address space"
+            mapped = soft = hard = None
+            try:
+                # Measure after fork: the child's mappings can differ from the
+                # parent's.
+                with open("/proc/self/statm") as f:
+                    mapped = int(f.read().split()[0]) * resource.getpagesize()
+                hard = resource.getrlimit(resource.RLIMIT_AS)[1]
+                soft = mapped + limit
+                if hard != resource.RLIM_INFINITY:
+                    soft = min(soft, hard)
+                stage = "setting RLIMIT_AS"
+                resource.setrlimit(resource.RLIMIT_AS, (soft, hard))
+                stage = "running the check"
+                func(*args)
+            except BaseException:
+                print(f"Memory-limit check {label!r} failed while {stage}.\n"
+                      f"Requested limits: soft={soft}, hard={hard} bytes; "
+                      f"measured address space={mapped} bytes; "
+                      f"additional allowance={limit} bytes.",
+                      file=sys.stderr, flush=True)
+                traceback.print_exc()
+                sys.stderr.flush()
+                os._exit(1)
+            os._exit(0)
+        exitcode = os.waitstatus_to_exitcode(os.waitpid(pid, 0)[1])
+        if exitcode < 0:
+            failed.append(f"{label}: killed by signal {-exitcode}")
+        elif exitcode:
+            failed.append(f"{label}: exited with status {exitcode}")
+    if failed:
+        raise SystemExit(
+            "Memory-limit checks failed (see child diagnostics above):\n"
+            + "\n".join(f"  {failure}" for failure in failed))
+
+
+@contextlib.contextmanager
+def trace_memory_growth():
+    """Context manager that measures memory growth with `tracemalloc`.
+
+    Yields a function that returns the number of bytes that were allocated
+    since entering the block and are still allocated.  After the block
+    exits it returns the growth at exit.  `tracemalloc` is not thread-safe,
+    so tests that use this need the ``thread_unsafe`` marker.
+    """
+    import pytest
+
+    # not available on PyPy
+    tracemalloc = pytest.importorskip("tracemalloc")
+    started = not tracemalloc.is_tracing()
+    if started:
+        tracemalloc.start()
+    before = tracemalloc.get_traced_memory()[0]
+    final = None
+
+    def growth():
+        if final is not None:
+            return final
+        return tracemalloc.get_traced_memory()[0] - before
+
+    try:
+        yield growth
+    finally:
+        final = growth()
+        if started:
+            tracemalloc.stop()
+
+
+def assert_memory_growth_below(func, limit, repeat=10, make_args=None):
+    """Fail if more than ``limit`` bytes are still allocated after calling
+    ``func()`` ``repeat`` times.
+
+    ``func`` is called once before the measurement starts.  It runs in a
+    new subprocess, so it must be a module-level function.  If ``make_args``
+    is given, it must be a module-level function too.  It is called once in
+    the subprocess before the measurement starts and returns a tuple of
+    arguments that is passed to every call of ``func``.
+    """
+    import pytest
+
+    # not available on PyPy
+    pytest.importorskip("tracemalloc")
+    locations = [
+        None if f is None else (
+            f.__module__,
+            getattr(sys.modules[f.__module__], "__file__", None),
+            f.__qualname__)
+        for f in (func, make_args)]
+    run_function_with_args_in_subprocess(
+        _assert_memory_growth_below, *locations, limit, repeat)
+
+
+def _assert_memory_growth_below(func_location, make_args_location, limit,
+                                repeat):
+    func = _load_function(*func_location)
+    args = ()
+    if make_args_location is not None:
+        args = _load_function(*make_args_location)()
+    func(*args)
+    with trace_memory_growth() as growth:
+        for _ in range(repeat):
+            func(*args)
+    if growth() >= limit:
+        raise SystemExit(
+            f"memory grew by {growth()} bytes after {repeat} calls, "
+            f"limit is {limit}")

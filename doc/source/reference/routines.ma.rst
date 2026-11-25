@@ -421,6 +421,7 @@ Miscellanea
    ma.apply_along_axis
    ma.apply_over_axes
    ma.arange
+   ma.assert_array_equal
    ma.choose
    ma.compress_nd
    ma.convolve

@@ -263,7 +263,11 @@ cdef class MT19937(BitGenerator):
         -------
         state : dict
             Dictionary containing the information required to describe the
-            state of the PRNG
+            state of the PRNG. The returned dictionary is a new object, not a
+            view of the generator's internal state: later changes to the
+            generator do not affect it, and modifying it does not affect the
+            generator, so it can be stored and passed back to the setter
+            without copying.
         """
         key = np.zeros(624, dtype=np.uint32)
         with self.lock:
@@ -290,4 +294,7 @@ cdef class MT19937(BitGenerator):
         with self.lock:
             for i in range(624):
                 self.rng_state.key[i] = key[i]
-            self.rng_state.pos = value['state']['pos']
+            pos = operator.index(value['state']['pos'])
+            if pos < 0 or pos > 624:
+                raise ValueError('state position must be between 0 and 624')
+            self.rng_state.pos = pos

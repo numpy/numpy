@@ -16,6 +16,7 @@
 #include "loops_utils.h"
 #include "gil_utils.h"
 #include "npy_extint128.h"
+#include "npy_float_to_int.h"
 
 #include "npy_pycompat.h"
 
@@ -334,7 +335,8 @@ PyUFunc_OO_O_method(char **args, npy_intp const *dimensions, npy_intp const *ste
         /* hold the operands: the call can clear their array slots */
         PyObject *obj = Py_NewRef(in1 ? in1 : Py_None);
         PyObject *arg = Py_NewRef(in2 ? in2 : Py_None);
-        PyObject *ret = PyObject_CallMethodOneArg(obj, meth_name, arg);
+        PyObject *call_args[2] = {obj, arg};
+        PyObject *ret = PyObject_VectorcallMethod(meth_name, call_args, 2, NULL);
         Py_DECREF(obj);
         Py_DECREF(arg);
         if (ret == NULL) {
@@ -631,45 +633,37 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
- * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
- * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
- * #c    = ,,,l,ll#
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #c    = ,,,l,ll,u,u,u,ul,ull#
  */
 /**begin repeat1
  * #kind = gcd, lcm#
+ * #absorbing = 1, 0#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(@type@) {
+            if (io1 == @absorbing@) {
+                break;
+            }
+            io1 = npy_@kind@@c@(io1, *(@type@ *)ip2);
+        }
+        *((@type@ *)iop1) = io1;
+        return;
+    }
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
+        *((@type@ *)op1) = (in1 == @absorbing@) ? in1 : npy_@kind@@c@(in1, in2);
     }
 }
 /**end repeat1**/
 /**end repeat**/
-
-/**begin repeat
- * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
- * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
- * #c    = u,u,u,ul,ull#
- */
-/**begin repeat1
- * #kind = gcd, lcm#
- **/
-NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_@kind@@c@(in1, in2);
-    }
-}
-/**end repeat1**/
-/**end repeat**/
-
 
 /*
  * NOTE: It may be nice to vectorize these, OTOH, these are still faster
@@ -1132,10 +1126,10 @@ TIMEDELTA_md_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
         }
         else {
             double result = in1 * in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            if (npy_double_to_int64(result, (npy_timedelta *)op1) < 0) {
+                if (npy_isfinite(result)) {
+                    npy_set_floatstatus_invalid();
+                }
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
@@ -1153,10 +1147,10 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
         }
         else {
             double result = in1 * in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            if (npy_double_to_int64(result, (npy_timedelta *)op1) < 0) {
+                if (npy_isfinite(result)) {
+                    npy_set_floatstatus_invalid();
+                }
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
@@ -1174,10 +1168,10 @@ TIMEDELTA_md_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
         }
         else {
             double result = in1 / in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            if (npy_double_to_int64(result, (npy_timedelta *)op1) < 0) {
+                if (npy_isfinite(result)) {
+                    npy_set_floatstatus_invalid();
+                }
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
@@ -2214,7 +2208,7 @@ NPY_NO_EXPORT void
         const @ftype@ in2r_abs = npy_fabs@c@(in2r);
         const @ftype@ in2i_abs = npy_fabs@c@(in2i);
         if (in2r_abs >= in2i_abs) {
-            if (in2r_abs == 0 && in2i_abs == 0) {
+            if (in2r_abs == 0) {
                 /* divide by zero should yield a complex inf or nan */
                 ((@ftype@ *)op1)[0] = in1r/in2r_abs;
                 ((@ftype@ *)op1)[1] = in1i/in2i_abs;
@@ -2332,11 +2326,20 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        if (npy_fabs@c@(in1i) <= npy_fabs@c@(in1r)) {
-            const @ftype@ r = in1i/in1r;
-            const @ftype@ d = in1r + in1i*r;
-            ((@ftype@ *)op1)[0] = 1/d;
-            ((@ftype@ *)op1)[1] = -r/d;
+        const @ftype@ in1r_abs = npy_fabs@c@(in1r);
+        const @ftype@ in1i_abs = npy_fabs@c@(in1i);
+        if (in1i_abs <= in1r_abs) {
+            if (in1r_abs == 0) {
+                /* divide by zero should yield a complex inf or nan */
+                ((@ftype@ *)op1)[0] = 1/in1r_abs;
+                ((@ftype@ *)op1)[1] = 0/in1i_abs;
+            }
+            else {
+                const @ftype@ r = in1i/in1r;
+                const @ftype@ d = in1r + in1i*r;
+                ((@ftype@ *)op1)[0] = 1/d;
+                ((@ftype@ *)op1)[1] = -r/d;
+            }
         } else {
             const @ftype@ r = in1r/in1i;
             const @ftype@ d = in1r*r + in1i;
@@ -2537,6 +2540,7 @@ NPY_NO_EXPORT int
         acc_min += strides[0]; acc_max += strides[1]; x += strides[2];
         out_min += strides[3]; out_max += strides[4];
     }
+    npy_clear_floatstatus_barrier((char*)dimensions);
     return 0;
 }
 

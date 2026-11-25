@@ -113,7 +113,7 @@ np.timedelta64(0, b"D")
 np.timedelta64("3")  # type: ignore[deprecated]
 np.timedelta64(b"5")  # type: ignore[deprecated]
 np.timedelta64(np.timedelta64(2))  # type: ignore[deprecated]
-np.timedelta64(dt.timedelta(2))  # type: ignore[deprecated]
+np.timedelta64(dt.timedelta(2))
 np.timedelta64(None)  # type: ignore[deprecated]
 np.timedelta64(None, "D")
 

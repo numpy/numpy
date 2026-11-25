@@ -17,6 +17,9 @@
 #include "nditer_impl.h"
 #include "templ_common.h"
 #include "ctors.h"
+#include "descriptor.h"
+
+#include <stdio.h>
 
 
 /*NUMPY_API
@@ -1472,7 +1475,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     printf("| DTypes: ");
     for (iop = 0; iop < nop; ++iop) {
         if (NIT_DTYPES(iter)[iop] != NULL)
-            PyObject_Print((PyObject*)NIT_DTYPES(iter)[iop], stdout, 0);
+            arraydescr_debug_print(NIT_DTYPES(iter)[iop]);
         else
             printf("(nil) ");
         printf(" ");
@@ -1515,7 +1518,7 @@ NpyIter_DebugPrint(NpyIter *iter)
         if (NIT_OPERANDS(iter)[iop] != NULL) {
             dtype = PyArray_DESCR(NIT_OPERANDS(iter)[iop]);
             if (dtype != NULL)
-                PyObject_Print((PyObject *)dtype, stdout, 0);
+                arraydescr_debug_print(dtype);
             else
                 printf("(nil) ");
         }
@@ -1746,7 +1749,10 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
             }
             if (buffer == NULL) {
                 if (errmsg == NULL) {
+                    NPY_ALLOW_C_API_DEF;
+                    NPY_ALLOW_C_API;
                     PyErr_NoMemory();
+                    NPY_DISABLE_C_API;
                 }
                 else {
                     *errmsg = "out of memory";
@@ -2276,6 +2282,8 @@ npyiter_clear_buffers(NpyIter *iter)
      * In that case, further cleanup may be necessary and we clear buffers
      * explicitly.
      */
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
     PyObject *type, *value, *traceback;
     PyErr_Fetch(&type,  &value, &traceback);
 
@@ -2296,7 +2304,7 @@ npyiter_clear_buffers(NpyIter *iter)
         /* Buffer cannot be re-used (not that we should ever try!) */
         op_itflags[iop] &= ~NPY_OP_ITFLAG_BUF_REUSABLE;
 
-        int itemsize = dtypes[iop]->elsize;
+        npy_intp itemsize = dtypes[iop]->elsize;
         if (transferinfo[iop].clear.func(NULL,
                 dtypes[iop], *buffers, NBF_SIZE(bufferdata), itemsize,
                 transferinfo[iop].clear.auxdata) < 0) {
@@ -2307,6 +2315,7 @@ npyiter_clear_buffers(NpyIter *iter)
     /* Signal that the buffers are empty */
     NBF_SIZE(bufferdata) = 0;
     PyErr_Restore(type, value, traceback);
+    NPY_DISABLE_C_API;
 }
 
 

@@ -11,7 +11,7 @@ def mode_func(
     width: tuple[int, int],
     iaxis: SupportsIndex,
     kwargs: Mapping[str, Any],
-) -> None: ...
+) -> npt.NDArray[np.number]: ...
 
 AR_i8: npt.NDArray[np.int64]
 AR_f8: npt.NDArray[np.float64]
@@ -38,6 +38,7 @@ assert_type(np.pad(AR_i8, (2, 3), "reflect", reflect_type="odd"), npt.NDArray[np
 assert_type(np.pad(AR_i8, (2, 3), "edge"), npt.NDArray[np.int64])
 
 assert_type(np.pad(AR_f8, (2, 3), mode_func), npt.NDArray[np.float64])
+assert_type(np.pad(AR_f8, (2, 3), mode_func, padder=100), npt.NDArray[np.float64])
 
 assert_type(np.pad(AR_i8, {-1: (2, 3)}), npt.NDArray[np.int64])
 assert_type(np.pad(AR_i8, {-2: 4}), npt.NDArray[np.int64])

@@ -22,6 +22,7 @@
 #include "templ_common.h"
 #include "array_assign.h"
 #include "dtype_traversal.h"
+#include "npy_pycompat.h"
 
 
 /* Internal helper functions private to this file */

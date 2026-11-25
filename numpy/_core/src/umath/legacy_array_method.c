@@ -8,6 +8,8 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "numpy/ndarraytypes.h"
 
@@ -22,6 +24,7 @@
 
 #include "ufunc_object.h"
 #include "ufunc_type_resolution.h"
+#include "npy_pycompat.h"
 
 
 /*

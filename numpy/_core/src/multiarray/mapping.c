@@ -150,7 +150,7 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
  * that doesn't always want the overhead of allocating a tuple.
  */
 static inline npy_intp
-unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
+unpack_tuple(PyObject *index, PyObject **result, npy_intp result_n)
 {
     npy_intp n, i;
     n = PyTuple_GET_SIZE(index);
@@ -202,7 +202,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
 
     /* Fast route for passing a tuple */
     if (PyTuple_CheckExact(index)) {
-        return unpack_tuple((PyTupleObject *)index, result, result_n);
+        return unpack_tuple(index, result, result_n);
     }
 
     /*
@@ -212,7 +212,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
      * called.
      */
     if (PyTuple_Check(index)) {
-        PyTupleObject *tup = (PyTupleObject *) PySequence_Tuple(index);
+        PyObject *tup = PySequence_Tuple(index);
         if (tup == NULL) {
             return -1;
         }
@@ -2804,14 +2804,18 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /* create new MapIter object */
-    mit = (PyArrayMapIterObject *)PyObject_Malloc(
-            sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
+    size_t mit_size = sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info);
+    mit = (PyArrayMapIterObject *)PyObject_Malloc(mit_size);
     if (mit == NULL) {
         Py_DECREF(intp_descr);
+        PyErr_NoMemory();
         return NULL;
     }
-    /* set all attributes of mapiter to zero */
-    memset(mit, 0, sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
+    /*
+     * Zero everything past the object header. Clearing the header would be
+     * wrong on PyPy, since PyObject_Malloc sets ob_refcnt.
+     */
+    memset((char *)mit + sizeof(PyObject), 0, mit_size - sizeof(PyObject));
     PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
 
     Py_INCREF(arr);

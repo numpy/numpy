@@ -203,8 +203,6 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
         .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
-        .. versionadded:: 1.20.0
-
     Returns
     -------
     I : ndarray of shape (N,M)
@@ -407,8 +405,6 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     dtype : dtype, optional
         Data type of the returned array.  The default is float.
     ${ARRAY_FUNCTION_LIKE}
-
-        .. versionadded:: 1.20.0
 
     Returns
     -------
@@ -856,8 +852,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
         N = 1
 
     if N not in {1, 2}:
-        xedges = yedges = asarray(bins)
-        bins = [xedges, yedges]
+        bins = [bins, bins]
     hist, edges = histogramdd([x, y], bins, range, density, weights)
     return hist, edges[0], edges[1]
 

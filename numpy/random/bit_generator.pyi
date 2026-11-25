@@ -16,6 +16,7 @@ from typing_extensions import CapsuleType, disjoint_base
 
 import numpy as np
 from numpy._typing import (
+    Array1D,
     NDArray,
     _ArrayLikeInt_co,
     _DTypeLike,
@@ -28,7 +29,8 @@ __all__ = ["BitGenerator", "SeedSequence"]
 
 ###
 
-type _DTypeLikeUint_ = _DTypeLike[np.uint32 | np.uint64] | _UInt32Codes | _UInt64Codes
+type _DTypeLikeU32 = _DTypeLike[np.uint32] | _UInt32Codes
+type _DTypeLikeU64 = _DTypeLike[np.uint64] | _UInt64Codes
 
 @type_check_only
 class _SeedSeqState(TypedDict):
@@ -53,13 +55,20 @@ class _CythonMixin:
 
 @type_check_only
 class _GenerateStateMixin(_CythonMixin):
-    def generate_state(self, /, n_words: int, dtype: _DTypeLikeUint_ = ...) -> NDArray[np.uint32 | np.uint64]: ...
+    @overload
+    def generate_state(self, /, n_words: int, dtype: _DTypeLikeU32 = ...) -> Array1D[np.uint32]: ...
+    @overload
+    def generate_state(self, /, n_words: int, dtype: _DTypeLikeU64) -> Array1D[np.uint64]: ...
 
 ###
 
 class ISeedSequence(abc.ABC):
+    @overload
     @abc.abstractmethod
-    def generate_state(self, /, n_words: int, dtype: _DTypeLikeUint_ = ...) -> NDArray[np.uint32 | np.uint64]: ...
+    def generate_state(self, /, n_words: int, dtype: _DTypeLikeU32 = ...) -> Array1D[np.uint32]: ...
+    @overload
+    @abc.abstractmethod
+    def generate_state(self, /, n_words: int, dtype: _DTypeLikeU64) -> Array1D[np.uint64]: ...
 
 class ISpawnableSeedSequence(ISeedSequence, abc.ABC):
     @abc.abstractmethod

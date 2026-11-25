@@ -1,0 +1,4 @@
+Generic ``numpy.poly1d`` and improved type inference
+----------------------------------------------------
+``numpy.poly1d`` is now generic over the scalar type of its coefficients, to allow for
+more precise type inference.

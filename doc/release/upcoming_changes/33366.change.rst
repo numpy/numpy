@@ -1,0 +1,14 @@
+- When `numpy.einsum` extracts a diagonal or transposes an array, it now copies
+  the selected values directly into ``out``. This fixes an issue where copying
+  strings into ``out`` added a ``'False'`` prefix. The values are copied
+  unchanged, so ``-0.0`` keeps its sign and booleans copied into an object
+  ``out`` stay booleans. Numeric casts such as NaN to
+  integer now warn or raise according to `numpy.seterr`. Reductions that would
+  use a non-numeric ``out`` as their running total now raise ``TypeError``.
+  This applies to string, void and timedelta outputs, and to user-defined
+  DTypes that do not set ``NPY_DT_NUMERIC``.
+- `numpy.einsum` now respects the ``dtype`` keyword argument when it extracts a
+  diagonal or transposes an array without ``out``. It returns a copy with that
+  dtype where it used to return a view with the dtype of the input and ignore
+  the requested ``dtype``. A ``dtype`` equivalent to that of the input still
+  returns a view.

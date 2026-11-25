@@ -81,10 +81,8 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
         void (*dispfunc)(TF*, intptr_t, bool) = nullptr;
         if constexpr (sizeof(T) == sizeof(uint16_t)) {
         #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
-            if constexpr (!reverse) { // x86 SIMD sort is ascending-only
-                #include "x86_simd_qsort_16bit.dispatch.h"
-                NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
-            }
+            #include "x86_simd_qsort_16bit.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
         #else
             #include "highway_qsort_16bit.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
@@ -92,10 +90,8 @@ inline bool quicksort_dispatch(T *start, npy_intp num)
         }
         else if constexpr (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
         #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
-            if constexpr (!reverse) { // x86 SIMD sort is ascending-only
-                #include "x86_simd_qsort.dispatch.h"
-                NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
-            }
+            #include "x86_simd_qsort.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
         #else
             #include "highway_qsort.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
@@ -116,10 +112,9 @@ inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
 {
 #if !defined(__CYGWIN__)
     if constexpr (
-        ((std::is_base_of_v<npy::floating_point_tag, Tag>
+        (std::is_base_of_v<npy::floating_point_tag, Tag>
             && !std::is_same_v<Tag, npy::longdouble_tag>) ||
-        std::is_base_of_v<npy::integral_tag, Tag>)
-        && !reverse // x86 SIMD argsort is ascending-only
+        std::is_base_of_v<npy::integral_tag, Tag>
     ) {
         using TF = typename np::meta::FixedWidth<T>::Type;
         void (*dispfunc)(TF*, npy_intp*, npy_intp, bool) = nullptr;

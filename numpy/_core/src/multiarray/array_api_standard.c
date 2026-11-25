@@ -2,6 +2,7 @@
 #define _MULTIARRAYMODULE
 
 #include <numpy/ndarraytypes.h>
+#include <string.h>
 
 
 NPY_NO_EXPORT PyObject *

@@ -466,6 +466,22 @@ def test_core_shims_coherence():
             assert member is getattr(core, member_name)
 
 
+def test_core_shims_no_leaked_names():
+    """
+    Check that helper names used to set up the `numpy.core` shims are not
+    left behind, so they cannot be accessed without a deprecation warning.
+    """
+    import numpy.core.multiarray as core_multiarray
+    import numpy.core.numeric as core_numeric
+
+    for module, names in [
+        (core_multiarray, ["multiarray", "item"]),
+        (core_numeric, ["numeric", "item"]),
+    ]:
+        for name in names:
+            assert name not in vars(module), f"{module.__name__}.{name}"
+
+
 @pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
 def test_functions_single_location():
     """

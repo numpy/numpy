@@ -102,7 +102,7 @@ For maintainers
   Remember, a PR is a collaboration between a contributor and a reviewer/s, 
   sometimes a direct push is the best way to finish it.
 - The maintainer team can add contributors to the list of accounts allowed
-  to have more than one non-draft PR open for review at a time (see
+  to have more than two non-draft PRs open for review at a time (see
   :ref:`pull-request-limit`). We liberally add contributors who attend the
   community and triage meetings.
 

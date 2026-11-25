@@ -5,8 +5,15 @@ import pytest
 
 import numpy as np
 from numpy._core._exceptions import _UFuncNoLoopError
+from numpy._core.tests.test_stringdtype import (
+    BINARY_FUNCTIONS,
+    ONLY_IN_NP_CHAR,
+    UFUNC_TEST_DATA,
+    UNARY_FUNCTIONS,
+    comparison_operators,
+)
 from numpy.testing import assert_array_equal, assert_raises
-from numpy.testing._private.utils import requires_memory
+from numpy.testing._private.utils import requires_memory, run_with_memory_limit
 
 COMPARISONS = [
     (operator.eq, np.equal, "=="),
@@ -18,6 +25,9 @@ COMPARISONS = [
 ]
 
 MAX = np.iinfo(np.int64).max
+# Long enough to exercise the two-way search path with this needle.
+LONG_NEAR_MATCH_HAYSTACK = ("c" + "b" * 99 + "aa") * 26
+LONG_NEAR_MATCH_NEEDLE = "b" * 100 + "a"
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
 def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
@@ -190,6 +200,91 @@ def test_large_string_cast():
     # (this happens due clunky code and/or buffer setup.)
     with pytest.raises((TypeError, MemoryError)):
         a.astype("U")
+
+
+# _vec_string calls a Python str or bytes method on each element, so it holds
+# the string as Python objects, and case mapping reserves three codepoints per
+# character
+FIXED_WIDTH_KNOWN_ISSUES = {
+    "capitalize", "encode", "lower", "mod", "swapcase", "title", "translate", "upper"
+}
+
+
+def _large_fixed_width_args():
+    arrays = {
+        "S": np.array([(UFUNC_TEST_DATA[0] * 2**14).encode()]),  # about 0.8 MiB
+        "U": np.array([UFUNC_TEST_DATA[1] * 2**11]),  # about 1.1 MiB
+    }
+    cases = {
+        **dict.fromkeys(UNARY_FUNCTIONS, (None,)),
+        **dict(BINARY_FUNCTIONS),
+        **{op.__name__: (None, None) for op in comparison_operators},
+        # an empty pattern matches between every pair of characters, but with
+        # count=1 the output only needs room for one insertion
+        "replace": (None, "", "prefix: ", 1),
+    }
+    calls = {}
+    for dt, arr in arrays.items():
+        for name, args in cases.items():
+            if name in ONLY_IN_NP_CHAR or name in FIXED_WIDTH_KNOWN_ISSUES:
+                continue
+            if dt == "S":
+                if name in ("isdecimal", "isnumeric"):
+                    continue
+                args = tuple(a.encode() if isinstance(a, str) else a for a in args)
+            calls[f"{dt} {name}"] = (getattr(np.strings, name),
+                                     *(arr if a is None else a for a in args))
+    return calls
+
+
+def test_large_fixed_width_string_memory_limit():
+    # run all string operations under a tight memory limit to check for large
+    # temporary allocations
+    run_with_memory_limit(operator.call, _large_fixed_width_args, 6 * 1024**2)
+
+
+def _large_string_cast_args():
+    # One MiB per fixed-width element, but only a short value to convert.
+    string_dtypes = [np.dtype("S1048576"), np.dtype("U262144"),
+                     np.dtype("U262144").newbyteorder("S"), np.dtype("T")]
+    numeric_arrays = [np.array([123], dtype=dt) for dt in ("i8", "f8", "c16", "?")]
+    calls = {}
+    for src_dtype in string_dtypes:
+        arr = np.array(["123"], dtype=src_dtype)
+        for dst_dtype in string_dtypes:
+            expected = b"123" if dst_dtype.kind == "S" else "123"
+            calls[f"{src_dtype} -> {dst_dtype}"] = (arr, dst_dtype, expected)
+        for numeric in numeric_arrays:
+            calls[f"{src_dtype} -> {numeric.dtype}"] = (
+                arr, numeric.dtype, numeric[0])
+
+    for arr in numeric_arrays:
+        text = arr.astype("U")[0]
+        for dst_dtype in string_dtypes:
+            expected = text.encode() if dst_dtype.kind == "S" else text
+            calls[f"{arr.dtype} -> {dst_dtype}"] = (arr, dst_dtype, expected)
+    return calls
+
+
+def _check_large_string_cast(arr, dtype, expected):
+    result = arr.astype(dtype)
+    assert result.dtype == dtype
+    assert result[0] == expected
+
+
+def test_large_string_cast_memory_limit():
+    # The output and any conversion buffers should fit in a few MiB, even
+    # when the fixed-width source or destination has a large itemsize.
+    run_with_memory_limit(_check_large_string_cast, _large_string_cast_args,
+                          6 * 1024**2)
+
+
+@pytest.mark.parametrize("dtype", ["S16384", "U4096",
+                                  np.dtype("U4096").newbyteorder("S")])
+def test_large_string_cast_multiple_blocks(dtype):
+    # Exercise multiple cast-buffer blocks and a partial final block.
+    arr = np.arange(130)
+    assert_array_equal(arr.astype(dtype).astype(arr.dtype), arr)
 
 
 @pytest.mark.parametrize("dt", ["S1", "U1"])
@@ -437,6 +532,11 @@ class TestMethods:
         ("Ae¢☃€ 😊" * 2, "😊", 7, None, 13),
         pytest.param("A" * (2 ** 17), r"[\w]+\Z", 0, None, -1,
                      id=r"A*2**17-[\w]+\Z-0-None--1"),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK, LONG_NEAR_MATCH_NEEDLE,
+                     0, None, -1, id="long-near-match"),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK + LONG_NEAR_MATCH_NEEDLE,
+                     LONG_NEAR_MATCH_NEEDLE, 0, None,
+                     len(LONG_NEAR_MATCH_HAYSTACK), id="long-near-match-found"),
     ])
     def test_find(self, a, sub, start, end, out, dt):
         if "😊" in a and dt == "S":
@@ -505,6 +605,11 @@ class TestMethods:
         ("", "xx", MAX, 0, 0),
         (["aaa", ""], ["a", ""], [0, 0], None, [3, 1]),
         ("Ae¢☃€ 😊" * 100, "😊", 0, None, 100),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK, LONG_NEAR_MATCH_NEEDLE,
+                     0, None, 0, id="long-near-match"),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK + LONG_NEAR_MATCH_NEEDLE,
+                     LONG_NEAR_MATCH_NEEDLE, 0, None, 1,
+                     id="long-near-match-found"),
     ])
     def test_count(self, a, sub, start, end, out, dt):
         if "😊" in a and dt == "S":
@@ -541,8 +646,12 @@ class TestMethods:
         ("hello", "", -3, -3, True),
         ("hello", "lo", -9, None, False),
         (["hello", ""], ["he", ""], [0, 0], None, [True, True]),
+        ("a" * 64, "a" + "😀" * 62 + "a", 0, None, False),
+        ("éa😀a中", "a😀a", 1, 4, True),
     ])
     def test_startswith(self, a, prefix, start, end, out, dt):
+        if dt == "S" and "😀" in prefix:
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         prefix = np.array(prefix, dtype=dt)
         assert_array_equal(np.strings.startswith(a, prefix, start, end), out)
@@ -580,8 +689,12 @@ class TestMethods:
         ("helloworld", "lowo", -8, -2, False),
         (["hello", "helloworld"], ["lo", "worl"], [0, -6], None,
          [True, False]),
+        ("a" * 64, "a" + "😀" * 62 + "a", 0, None, False),
+        ("éa😀a中", "a😀a", 1, 4, True),
     ])
     def test_endswith(self, a, suffix, start, end, out, dt):
+        if dt == "S" and "😀" in suffix:
+            pytest.skip("Bytes dtype does not support non-ascii input")
         a = np.array(a, dtype=dt)
         suffix = np.array(suffix, dtype=dt)
         assert_array_equal(np.strings.endswith(a, suffix, start, end), out)
@@ -664,6 +777,22 @@ class TestMethods:
             chars = np.array(chars, dtype=dt)
         out = np.array(out, dtype=dt)
         assert_array_equal(np.strings.strip(a, chars), out)
+
+    @pytest.mark.parametrize("a,chars,left,right,both", [
+        ("a", "éa", "", "", ""),
+        ("a", "aé", "", "", ""),       # this one already worked
+        ("a", "中a", "", "", ""),       # 3-byte lead char
+        ("a", "😀a", "", "", ""),       # 4-byte lead char
+        ("aaaé", "éx", "aaaé", "aaa", "aaa"),  # asymmetric, must not over-strip
+    ])
+    def test_strip_multibyte_chars(self, a, chars, left, right, both, dt):
+        if dt == "S":
+            pytest.skip("Bytes dtype does not support non-ascii input")
+        a = np.array([a], dtype=dt)
+        chars = np.array([chars], dtype=dt)
+        assert_array_equal(np.strings.lstrip(a, chars), np.array([left], dtype=dt))
+        assert_array_equal(np.strings.rstrip(a, chars), np.array([right], dtype=dt))
+        assert_array_equal(np.strings.strip(a, chars), np.array([both], dtype=dt))
 
     @pytest.mark.parametrize("buf,old,new,count,res", [
         ("", "", "", -1, ""),
@@ -787,6 +916,9 @@ class TestMethods:
         ("abc", "ab", "--", 0, "abc"),
         ("abc", "xy", "--", -1, "abc"),
         (["abbc", "abbd"], "b", "z", [1, 2], ["azbc", "azzd"]),
+        pytest.param(LONG_NEAR_MATCH_HAYSTACK, LONG_NEAR_MATCH_NEEDLE,
+                     "X" * 101, -1, LONG_NEAR_MATCH_HAYSTACK,
+                     id="long-near-match"),
     ])
     def test_replace(self, buf, old, new, count, res, dt):
         if "😊" in buf and dt == "S":
@@ -853,11 +985,18 @@ class TestMethods:
         ("abc\r\nab\tdef\ng\thi", 4, "abc\r\nab  def\ng   hi"),
         ("abc\r\nab\r\ndef\ng\r\nhi", 4, "abc\r\nab\r\ndef\ng\r\nhi"),
         (" \ta\n\tb", 1, "  a\n b"),
+        ("é\t中😀", 4, "é   中😀"),
     ])
     def test_expandtabs(self, buf, tabsize, res, dt):
+        if dt == "S" and "😀" in buf:
+            pytest.skip("Bytes dtype does not support non-ascii input")
         buf = np.array(buf, dtype=dt)
         res = np.array(res, dtype=dt)
-        assert_array_equal(np.strings.expandtabs(buf, tabsize), res)
+        result = np.strings.expandtabs(buf, tabsize)
+        assert_array_equal(result, res)
+        if dt != "T":
+            # StringDType has `str` scalars with no `dtype` attribute
+            assert result.dtype == res.dtype
 
     def test_expandtabs_raises_overflow(self, dt):
         with pytest.raises(OverflowError, match="new string is too long"):

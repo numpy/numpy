@@ -8,7 +8,7 @@ import sysconfig
 import pytest
 
 import numpy as np
-from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, NOGIL_BUILD
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, IS_PYPY, NOGIL_BUILD
 from numpy.testing._private.utils import run_subprocess
 
 # This import is copied from random.tests.test_extending
@@ -215,6 +215,7 @@ def _module_names(prefix):
 @pytest.mark.skipif(
     not HAS_SUBPROCESSES, reason="platform cannot start subprocesses"
 )
+@pytest.mark.skipif(IS_PYPY, reason="no support for limited API in PyPy")
 def test_limited_api(tmpdir_factory, subtests):
     # Keep these conditions in sync with the ones in meson.build: the abi3
     # modules are only built on GIL-enabled interpreters (and Py_LIMITED_API

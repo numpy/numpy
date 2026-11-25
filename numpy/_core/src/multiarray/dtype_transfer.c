@@ -33,6 +33,7 @@
 #include "shape.h"
 #include "dtype_transfer.h"
 #include "dtype_traversal.h"
+#include "refcount.h"
 #include "alloc.h"
 #include "dtypemeta.h"
 #include "array_method.h"
@@ -41,6 +42,8 @@
 #include "umathmodule.h"
 
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
+/* fewer elements per block when they are large, but always at least one */
+#define NPY_LOWLEVEL_BUFFER_MAXBYTES  (1024 * 1024)
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_DT_DBG_TRACING 0
@@ -205,6 +208,7 @@ _strided_to_strided_any_to_object(
 
     PyObject *dst_ref = NULL;
     char *orig_src = src;
+    int res = 0;
     while (N > 0) {
         memcpy(&dst_ref, dst, sizeof(dst_ref));
         Py_XDECREF(dst_ref);
@@ -212,7 +216,8 @@ _strided_to_strided_any_to_object(
         memcpy(dst, &dst_ref, sizeof(PyObject *));
 
         if (dst_ref == NULL) {
-            return -1;
+            res = -1;
+            break;
         }
         src += src_stride;
         dst += dst_stride;
@@ -221,11 +226,12 @@ _strided_to_strided_any_to_object(
     if (data->decref_src.func != NULL) {
         /* If necessary, clear the input buffer (`move_references`) */
         if (data->decref_src.func(NULL, data->decref_src.descr,
-                orig_src, N, src_stride, data->decref_src.auxdata) < 0) {
+                orig_src, dimensions[0], src_stride,
+                data->decref_src.auxdata) < 0) {
             return -1;
         }
     }
-    return 0;
+    return res;
 }
 
 
@@ -2284,7 +2290,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     npy_int i;
     size_t structsize;
     Py_ssize_t field_count;
-    int src_offset, dst_offset;
+    npy_intp src_offset, dst_offset;
     _field_transfer_data *data;
 
     /*
@@ -2313,7 +2319,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         for (i = 0; i < field_count; ++i) {
             key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
             tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key); // noqa: borrowed-ref OK
-            if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
+            if (!PyArg_ParseTuple(tup, "On|O", &dst_fld_dtype,
                                                     &dst_offset, &title)) {
                 PyMem_Free(data);
                 return NPY_FAIL;
@@ -2377,7 +2383,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
 
         key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), 0);
         tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key); // noqa: borrowed-ref OK
-        if (!PyArg_ParseTuple(tup, "Oi|O",
+        if (!PyArg_ParseTuple(tup, "On|O",
                               &src_fld_dtype, &src_offset, &title)) {
             PyMem_Free(data);
             return NPY_FAIL;
@@ -2429,14 +2435,14 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     for (i = 0; i < field_count; ++i) {
         key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
         tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key); // noqa: borrowed-ref OK
-        if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
+        if (!PyArg_ParseTuple(tup, "On|O", &dst_fld_dtype,
                                                 &dst_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
         key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), i);
         tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key); // noqa: borrowed-ref OK
-        if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
+        if (!PyArg_ParseTuple(tup, "On|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
@@ -2628,6 +2634,7 @@ typedef struct {
     NPY_cast_info to;
     char *from_buffer;
     char *to_buffer;
+    npy_intp block_size;
 } _multistep_castdata;
 
 
@@ -2657,17 +2664,24 @@ _multistep_cast_auxdata_clone_int(_multistep_castdata *castdata, int move_info)
     /* Round up the structure size to 16-byte boundary for the buffers */
     Py_ssize_t datasize = (sizeof(_multistep_castdata) + 15) & ~0xf;
 
-    Py_ssize_t from_buffer_offset = datasize;
+    Py_ssize_t src_itemsize = 0, dst_itemsize = 0;
     if (castdata->from.func != NULL) {
-        Py_ssize_t src_itemsize = castdata->main.context.descriptors[0]->elsize;
-        datasize += NPY_LOWLEVEL_BUFFER_BLOCKSIZE * src_itemsize;
-        datasize = (datasize + 15) & ~0xf;
+        src_itemsize = castdata->main.context.descriptors[0]->elsize;
     }
-    Py_ssize_t to_buffer_offset = datasize;
     if (castdata->to.func != NULL) {
-        Py_ssize_t dst_itemsize = castdata->main.context.descriptors[1]->elsize;
-        datasize += NPY_LOWLEVEL_BUFFER_BLOCKSIZE * dst_itemsize;
+        dst_itemsize = castdata->main.context.descriptors[1]->elsize;
     }
+    Py_ssize_t max_itemsize = Py_MAX(src_itemsize, dst_itemsize);
+    npy_intp block_size = NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
+    if (max_itemsize > 0) {
+        block_size = Py_MIN(block_size, Py_MAX(1, NPY_LOWLEVEL_BUFFER_MAXBYTES / max_itemsize));
+    }
+
+    Py_ssize_t from_buffer_offset = datasize;
+    datasize += block_size * src_itemsize;
+    datasize = (datasize + 15) & ~0xf;
+    Py_ssize_t to_buffer_offset = datasize;
+    datasize += block_size * dst_itemsize;
 
     char *char_data = PyMem_Malloc(datasize);
     if (char_data == NULL) {
@@ -2682,6 +2696,7 @@ _multistep_cast_auxdata_clone_int(_multistep_castdata *castdata, int move_info)
     /* And buffer information: */
     newdata->from_buffer = char_data + from_buffer_offset;
     newdata->to_buffer = char_data + to_buffer_offset;
+    newdata->block_size = block_size;
 
     /* Initialize funcs to NULL to signal no-cleanup in case of an error. */
     newdata->from.func = NULL;
@@ -2749,8 +2764,9 @@ _strided_to_strided_multistep_cast(
 
     char *main_src, *main_dst;
     npy_intp main_src_stride, main_dst_stride;
+    NPY_ALLOW_C_API_DEF
 
-    npy_intp block_size = NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
+    npy_intp block_size = castdata->block_size;
     while (N > 0) {
         if (block_size > N) {
             block_size = N;
@@ -2764,8 +2780,7 @@ _strided_to_strided_multistep_cast(
                     data, &block_size,
                     strides,
                     castdata->from.auxdata) != 0) {
-                /* TODO: Internal buffer may require cleanup on error. */
-                return -1;
+                goto fail;
             }
             main_src = castdata->from_buffer;
             main_src_stride = out_stride;
@@ -2790,8 +2805,7 @@ _strided_to_strided_multistep_cast(
                 data, &block_size,
                 strides,
                 castdata->main.auxdata) != 0) {
-            /* TODO: Internal buffer may require cleanup on error. */
-            return -1;
+            goto fail;
         }
 
         if (castdata->to.func != NULL) {
@@ -2801,7 +2815,7 @@ _strided_to_strided_multistep_cast(
                     data, &block_size,
                     strides,
                     castdata->to.auxdata) != 0) {
-                return -1;
+                goto fail;
             }
         }
 
@@ -2810,6 +2824,31 @@ _strided_to_strided_multistep_cast(
         dst += block_size * dst_stride;
     }
     return 0;
+
+  fail:
+    /*
+     * A failed cast can leave references behind in the elements of either
+     * buffer that were used for the current block.
+     */
+    NPY_ALLOW_C_API;
+    PyObject *exc = PyErr_GetRaisedException();
+    if (castdata->from.func != NULL) {
+        PyArray_Descr *descr = castdata->main.descriptors[0];
+        if (PyArray_ClearBuffer(descr, castdata->from_buffer,
+                descr->elsize, block_size, 1) < 0) {
+            PyErr_WriteUnraisable(NULL);
+        }
+    }
+    if (castdata->to.func != NULL) {
+        PyArray_Descr *descr = castdata->main.descriptors[1];
+        if (PyArray_ClearBuffer(descr, castdata->to_buffer,
+                descr->elsize, block_size, 1) < 0) {
+            PyErr_WriteUnraisable(NULL);
+        }
+    }
+    PyErr_SetRaisedException(exc);
+    NPY_DISABLE_C_API;
+    return -1;
 }
 
 

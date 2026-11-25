@@ -134,7 +134,7 @@ def docs(*, parent_callback, **kwargs):
 jobs_param = next(p for p in docs.params if p.name == 'jobs')
 jobs_param.default = 1
 
-default = "not slow"
+default = "not slow and not slow_pypy"
 
 @click.option(
     "-m",
@@ -372,7 +372,7 @@ def lint(ctx, fix):
         linter = _get_numpy_tools(pathlib.Path('linter.py'))
     except ModuleNotFoundError as e:
         raise click.ClickException(
-            f"{e.msg}. Install using requirements/linter_requirements.txt"
+            f"{e.msg}. Install using 'pip install --group linter'"
         )
 
     linter.DiffLinter().run_lint(fix)

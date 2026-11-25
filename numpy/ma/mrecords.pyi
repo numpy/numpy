@@ -9,7 +9,7 @@ from numpy._typing import (
     ArrayLike,
     DTypeLike,
     _AnyShape,
-    _ArrayLikeBool_co,
+    _ArrayLikeInt_co,
     _DTypeLike,
     _HasDType,
     _ScalarLike_co,
@@ -49,7 +49,7 @@ class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co], Generic[_ShapeT_co, _DT
         titles: _Names | None = None,
         byteorder: _ByteOrder | None = None,
         aligned: bool = False,
-        mask: _ArrayLikeBool_co = ...,
+        mask: _ArrayLikeInt_co = ...,
         hard_mask: bool = False,
         fill_value: _ScalarLike_co | None = None,
         keep_mask: bool = True,
@@ -207,7 +207,7 @@ def fromrecords[DTypeT: np.dtype, ShapeT: _Shape](
     aligned: bool = False,
     byteorder: _ByteOrder | None = None,
     fill_value: _ScalarLike_co | None = None,
-    mask: _ArrayLikeBool_co = ...,
+    mask: _ArrayLikeInt_co = ...,
 ) -> MaskedRecords[ShapeT, DTypeT]: ...
 @overload  # known dtype, unknown shape
 def fromrecords[DTypeT: np.dtype](
@@ -220,7 +220,7 @@ def fromrecords[DTypeT: np.dtype](
     aligned: bool = False,
     byteorder: _ByteOrder | None = None,
     fill_value: _ScalarLike_co | None = None,
-    mask: _ArrayLikeBool_co = ...,
+    mask: _ArrayLikeInt_co = ...,
 ) -> MaskedRecords[_AnyShape, DTypeT]: ...
 @overload  # known scalar-type, known shape
 def fromrecords[ScalarT: np.generic, ShapeT: _Shape](
@@ -233,7 +233,7 @@ def fromrecords[ScalarT: np.generic, ShapeT: _Shape](
     aligned: bool = False,
     byteorder: _ByteOrder | None = None,
     fill_value: _ScalarLike_co | None = None,
-    mask: _ArrayLikeBool_co = ...,
+    mask: _ArrayLikeInt_co = ...,
 ) -> MaskedRecords[ShapeT, np.dtype[ScalarT]]: ...
 @overload  # known scalar-type, unknown shape
 def fromrecords[ScalarT: np.generic](
@@ -246,7 +246,7 @@ def fromrecords[ScalarT: np.generic](
     aligned: bool = False,
     byteorder: _ByteOrder | None = None,
     fill_value: _ScalarLike_co | None = None,
-    mask: _ArrayLikeBool_co = ...,
+    mask: _ArrayLikeInt_co = ...,
 ) -> MaskedRecords[_AnyShape, np.dtype[ScalarT]]: ...
 @overload  # unknown dtype, known shape (positional)
 def fromrecords[ShapeT: _Shape](
@@ -259,7 +259,7 @@ def fromrecords[ShapeT: _Shape](
     aligned: bool = False,
     byteorder: _ByteOrder | None = None,
     fill_value: _ScalarLike_co | None = None,
-    mask: _ArrayLikeBool_co = ...,
+    mask: _ArrayLikeInt_co = ...,
 ) -> MaskedRecords[ShapeT, np.dtype[Incomplete]]: ...
 @overload  # unknown dtype, known shape (keyword)
 def fromrecords[ShapeT: _Shape](
@@ -273,7 +273,7 @@ def fromrecords[ShapeT: _Shape](
     aligned: bool = False,
     byteorder: _ByteOrder | None = None,
     fill_value: _ScalarLike_co | None = None,
-    mask: _ArrayLikeBool_co = ...,
+    mask: _ArrayLikeInt_co = ...,
 ) -> MaskedRecords[ShapeT, np.dtype[Incomplete]]: ...
 @overload  # unknown dtype, unknown shape
 def fromrecords(
@@ -286,7 +286,7 @@ def fromrecords(
     aligned: bool = False,
     byteorder: _ByteOrder | None = None,
     fill_value: _ScalarLike_co | None = None,
-    mask: _ArrayLikeBool_co = ...,
+    mask: _ArrayLikeInt_co = ...,
 ) -> MaskedRecords[_AnyShape, np.dtype[Incomplete]]: ...
 
 # undocumented

@@ -1,0 +1,5 @@
+Faster broadcasting in ufuncs
+-----------------------------
+Ufunc calls such as ``a + v`` with ``a.shape == (n, 3)`` and ``v.shape == (3,)``
+that include broadcasts now re-use iterator buffer more reliably.
+This can lead to significant speed-ups for such operations.

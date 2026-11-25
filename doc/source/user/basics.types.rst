@@ -72,8 +72,13 @@ become 44 ``(300 - 256)``. If you wish to avoid such overflows, you can specify 
 overflow action fail by using ``same_value`` for the ``casting`` argument (see also
 :ref:`overflow-errors`)::
 
-    >>> z.astype(np.float64, casting="same_value")   #doctest: +NORMALIZE_WHITESPACE
-    array([0.,  1.,  2.])
+    >>> w = np.array([300], dtype=np.int64)
+    >>> w.astype(np.int8)
+    array([44], dtype=int8)
+    >>> w.astype(np.int8, casting="same_value")
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ValueError: could not cast 'same_value' long to byte
 
 
 Numerical Data Types
@@ -94,7 +99,7 @@ Data Types for Strings and Bytes
 --------------------------------
 
 In addition to numerical types, NumPy also supports storing unicode strings, via
-the `numpy.str_` dtype (``U`` character code), null-terminated byte sequences via
+the `numpy.str_` dtype (``U`` character code), null-padded byte sequences via
 `numpy.bytes_` (``S`` character code), and arbitrary byte sequences, via
 `numpy.void` (``V`` character code).
 
@@ -133,7 +138,7 @@ nulls::
   >>> x = [b"hello\0\0", b"world"]
   >>> a = np.array(x, dtype="S7")
   >>> print(a[0])
-  b"hello"
+  b'hello'
   >>> a[0] == x[0]
   False
 

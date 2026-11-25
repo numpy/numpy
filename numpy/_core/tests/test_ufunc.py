@@ -924,6 +924,12 @@ class TestUfunc:
         assert c is b
         assert_allclose(c, expected)
 
+    def test_matvec_object_empty_is_zero(self):
+        A = np.empty((3, 0), dtype=object)
+        v = np.empty((0,), dtype=object)
+        result = np.matvec(A, v)
+        assert_array_equal(result, np.zeros(3, dtype=object))
+
     def test_vecdot_subclass(self):
         class MySubclass(np.ndarray):
             pass
@@ -2267,6 +2273,24 @@ class TestUfunc:
 
         assert_array_equal(a, expected)
 
+    def test_ufunc_at_readonly(self):
+        # gh-33275: `at` writes into its first operand, so a non-writeable
+        # array must raise, as it does for `out=`.
+        a = np.arange(3.0)
+        a.flags.writeable = False
+        with pytest.raises(ValueError, match="read-only"):
+            np.add.at(a, [0], 1.0)
+        with pytest.raises(ValueError, match="read-only"):
+            np.negative.at(a, [1])
+        assert_array_equal(a, np.arange(3.0))
+
+        # an array over an immutable bytes object must stay untouched
+        buf = bytes(16)
+        b = np.frombuffer(buf, dtype=np.float64)
+        with pytest.raises(ValueError, match="read-only"):
+            np.add.at(b, [0], 1.0)
+        assert buf == bytes(16)
+
     def test_ufunc_at_ellipsis(self):
         # Make sure the indexed loop check does not choke on iters
         # with subspaces
@@ -2389,6 +2413,15 @@ class TestUfunc:
               [121, 222, 323],
               [124, 225, 326]]])
 
+        # gh-33370
+        a = np.zeros(4, dtype=int)
+        np.add.at(a, [[0, 1, 2], [1, 1, 1], [0, 0, 0]], [1, 2, 3])
+        assert_equal(a, [7, 8, 3, 0])
+
+        a = np.zeros(3, dtype=int)
+        np.add.at(a, [[0, 1, 2]], [2, 3, 5])
+        assert_equal(a, [2, 3, 5])
+
     def test_ufunc_at_0D(self):
         a = np.array(0)
         np.add.at(a, (), 1)
@@ -2482,6 +2515,16 @@ class TestUfunc:
         arr = np.arange(5)
         with pytest.raises(ValueError):
             np.add.at(arr, [0, 1], [1, 2, 3])
+
+    @pytest.mark.parametrize("nin, nout, match", [
+        (0, 1, "unary and binary"),
+        (3, 1, "unary and binary"),
+        (1, 0, "single output"),
+    ])
+    def test_at_bad_nin_nout(self, nin, nout, match):
+        f = np.frompyfunc(lambda *args: 0, nin, nout)
+        with pytest.raises(ValueError, match=match):
+            f.at(np.arange(3), [0])
 
     def test_reduce_arguments(self):
         f = np.add.reduce
@@ -2691,6 +2734,54 @@ class TestUfunc:
         single_res = np.zeros((), dtype=np.float32)
         np.multiply.reduce(arr, out=single_res, dtype=np.float32)
         assert single_res != res
+
+    @pytest.mark.parametrize("bufsize", [32, 1024])
+    @pytest.mark.parametrize("variant",
+                             ["plain", "initial", "keepdims", "where"])
+    def test_reduce_out_cast_keeps_computation_precision(self, variant,
+                                                         bufsize):
+        # With a `dtype=` wider than `out`, the running result used to be
+        # written to `out` and read back at every buffer refill, accumulating
+        # float32 rounding.  It is now kept in float64 and cast once, which is
+        # exactly what reducing without `out=` and casting at the end does.
+        x = np.full(100_000, 1e-3)
+        kwargs = {}
+        if variant == "initial":
+            kwargs["initial"] = 5.0
+        elif variant == "keepdims":
+            kwargs["keepdims"] = True
+        elif variant == "where":
+            kwargs["where"] = np.arange(x.size) % 2 == 0
+        out = np.zeros((1,) if variant == "keepdims" else (),
+                       dtype=np.float32)
+
+        with np.errstate():
+            np.setbufsize(bufsize)
+            expected = np.add.reduce(x, dtype=np.float64, **kwargs)
+            np.add.reduce(x, dtype=np.float64, out=out, **kwargs)
+
+        assert out == expected.astype(np.float32)
+
+    @pytest.mark.parametrize("bufsize", [32, 128, 8192])
+    @pytest.mark.parametrize("trailing", [1, 3, 7])
+    def test_broadcast_where_buffer_reuse(self, trailing, bufsize):
+        # `where=` makes the output writemasked while the broadcast operand's
+        # buffer is re-used; masked-out elements must keep their values.
+        rows = 1001
+        a = np.arange(rows * trailing, dtype="f8").reshape(rows, trailing)
+        v = np.arange(1, trailing + 1, dtype="f8")
+        mask = (np.arange(rows * trailing).reshape(rows, trailing) % 3) == 0
+        v_full = np.broadcast_to(v, a.shape).copy()
+
+        expected = a.copy()
+        np.add(expected, v_full, out=expected, where=mask)
+
+        got = a.copy()
+        with np.errstate():
+            np.setbufsize(bufsize)
+            np.add(got, v, out=got, where=mask)
+
+        assert_array_equal(got, expected)
 
     def test_reducelike_output_needs_identical_cast(self):
         # Checks the case where a simple byte-swap works, mainly tests that
@@ -3117,8 +3208,8 @@ def test_reduce_casterrors(offset):
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-def test_reduction_no_reference_leak():
-    # Test that the generic reduction does not leak references.
+def test_ufunc_no_reference_leak():
+    # Test that ufunc calls and reductions do not leak references.
     # gh-29358
     arr = np.array([1, 2, 3], dtype=np.int32)
     count = sys.getrefcount(arr)
@@ -3153,6 +3244,14 @@ def test_reduction_no_reference_leak():
     np.add.reduceat(arr, [0, 1], dtype=np.int32, out=out)
     assert count == sys.getrefcount(arr)
     assert out_count == sys.getrefcount(out)
+
+    # Initializing a dtype with metadata creates a fresh descriptor instead of
+    # a reference to a builtin dtype singleton
+    dtype = np.dtype(np.int32, metadata={})
+    out = np.empty(arr.shape, dtype=dtype)
+    dtype_count = sys.getrefcount(dtype)
+    np.divmod(arr, 2, out=(None, out))
+    assert sys.getrefcount(dtype) == dtype_count
 
 
 def test_object_reduce_cleanup_on_failure():

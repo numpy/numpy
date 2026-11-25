@@ -4,6 +4,7 @@ import warnings
 import pytest
 
 import numpy as np
+from numpy._utils import _pep440
 from numpy.testing import (
     assert_,
     assert_allclose,
@@ -72,6 +73,8 @@ class TestEinsum:
                       np.arange(6).reshape(2, 3), optimize=do_opt)
         assert_raises(ValueError, einsum_fn, "ii->i",
                       np.arange(6).reshape(2, 3), optimize=do_opt)
+        assert_raises(ValueError, einsum_fn, "ii->i",
+                      np.empty((0, 3)), optimize=do_opt)
 
         with assert_raises_regex(ValueError, "'b'"):
             # gh-11221 - 'c' erroneously appeared in the error message
@@ -83,6 +86,36 @@ class TestEinsum:
             a = np.arange(3)
             # einsum_path does not yet accept kwarg 'casting'
             np.einsum('ij->j', [a, a], casting='same_value')
+
+    def test_einsum_unsupported_dtype(self):
+        out = np.ones((), dtype="m8[s]")
+        with pytest.raises(TypeError, match="invalid data type"):
+            np.einsum("i->", np.ones(3, dtype="m8[s]"), out=out)
+        assert out == np.timedelta64(1, "s")
+
+    def test_einsum_writeback_error(self):
+        a = np.full(3, 100, dtype=np.int8)
+        with pytest.raises(OverflowError):
+            np.einsum("i,i->i", a.astype(object), a, out=a, casting="unsafe")
+
+    def test_einsum_unsupported_new_style_dtype(self):
+        # gh-32671: new-style DTypes have type_num -1, which indexed the
+        # kernel tables out of bounds.
+        from importlib.metadata import version
+
+        try:
+            quaddtype_version = version("numpy_quaddtype")
+        except Exception:
+            pytest.skip("numpy_quaddtype not installed")
+        else:
+            if _pep440.Version(quaddtype_version) <= _pep440.Version("1.0.0"):
+                pytest.skip("critical bug in quaddtype during import")
+
+        numpy_quaddtype = pytest.importorskip("numpy_quaddtype")
+
+        a = np.ones((3, 3), dtype=numpy_quaddtype.QuadPrecDType())
+        with pytest.raises(TypeError, match="invalid data type"):
+            np.einsum("ij->", a)
 
     def test_einsum_sorting_behavior(self):
         # Case 1: 26 dimensions (all lowercase indices)
@@ -365,6 +398,54 @@ class TestEinsum:
             b = np.einsum(a, [0, 1, 2], [1, 0, 2], optimize=do_opt)
             assert_(b.base is a.base)
             assert_equal(b, a.swapaxes(0, 1))
+
+    @pytest.mark.parametrize("dtype", ["U10", "T"])
+    def test_einsum_string_out(self, dtype):
+        a = np.array([["a", "bc"], ["x", "y"]], dtype=object)
+        out = np.empty(2, dtype=dtype)
+        res = np.einsum("ii->i", a, out=out, casting="unsafe")
+        assert res is out
+        assert_array_equal(out, ["a", "y"])
+        with pytest.raises(TypeError, match="cannot accumulate"):
+            np.einsum("ij->i", a, out=out, casting="unsafe")
+        assert_array_equal(out, ["a", "y"])
+
+    def test_einsum_view_out(self):
+        # out overlaps the input with a larger stride
+        b = np.arange(40.)
+        np.einsum("ii->i", b[:16].reshape(4, 4), out=b[::10])
+        assert_array_equal(b[::10], [0, 5, 10, 15])
+
+        out = np.empty(2)
+        np.einsum("i->i", [1.5, 2.5], out=out, dtype=np.int32, casting="unsafe")
+        assert_array_equal(out, [1, 2])
+
+        # an unsized dtype takes its size from the input
+        out = np.empty(2, dtype="U10")
+        np.einsum("i->i", ["alpha", "bravo"], out=out, dtype=str)
+        assert_array_equal(out, ["alpha", "bravo"])
+
+    def test_einsum_view_dtype(self):
+        a = np.arange(6, dtype=np.int32).reshape(2, 3)
+        res = np.einsum("ij->ji", a, dtype=np.float64)
+        assert_array_equal(res, a.T.astype(np.float64), strict=True)
+
+        res = np.einsum("i->i", [1.5, 2.5], dtype=np.int32, casting="unsafe")
+        assert_array_equal(res, np.array([1, 2], dtype=np.int32), strict=True)
+
+        a = np.array(["alpha", "bravo"], dtype="U5")
+        res = np.einsum("i->i", a, dtype=np.dtype("U5"))
+        assert np.shares_memory(res, a)
+
+    def test_einsum_view_dtype_na_object(self):
+        a = np.array([None], dtype=np.dtypes.StringDType(na_object=None))
+        dtype = np.dtypes.StringDType(na_object=np.nan)
+        res = np.einsum("i->i", a, dtype=dtype)
+        assert_equal(res[0], np.nan)
+
+        out = np.empty(1, dtype=object)
+        np.einsum("i->i", a, dtype=dtype, out=out)
+        assert_equal(out[0], np.nan)
 
     def check_einsum_sums(self, dtype, do_opt=False):
         dtype = np.dtype(dtype)
@@ -1321,6 +1402,11 @@ class TestEinsumPath:
         assert_raises(RuntimeError, np.einsum, *path_test, optimize=exp_path)
         assert_raises(
             RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
+
+    def test_path_type_input_unknown_name(self):
+        path_test = self.build_operands('ab,bc,cd->ad')
+        with pytest.raises(KeyError, match="Path name 'unknown' not found"):
+            np.einsum_path(*path_test, optimize='unknown')
 
     def test_spaces(self):
         # gh-10794

@@ -1,8 +1,15 @@
 """Private counterpart of ``numpy.typing``."""
 
+from ._array import (
+    Array0D as Array0D,
+    Array1D as Array1D,
+    Array2D as Array2D,
+    Array3D as Array3D,
+    Array4D as Array4D,
+    NDArray as NDArray,
+)
 from ._array_like import (
     ArrayLike as ArrayLike,
-    NDArray as NDArray,
     _ArrayLike as _ArrayLike,
     _ArrayLikeAnyString_co as _ArrayLikeAnyString_co,
     _ArrayLikeBool_co as _ArrayLikeBool_co,

@@ -1,0 +1,12 @@
+Abstract DType classes
+----------------------
+The `numpy.dtypes` namespace now exposes new abstract DType classes:
+``NumberAbstractDType``, ``IntegerAbstractDType``, ``SignedIntegerAbstractDType``,
+``UnsignedIntegerAbstractDType``, ``InexactAbstractDType``, ``FloatingAbstractDType``,
+and ``ComplexFloatingAbstractDType``.
+These support checks such as ``isinstance(arr.dtype, np.dtypes.NumberAbstractDType)``
+and can be passed as the ``kind`` argument to `numpy.isdtype`.
+
+They are also exposed through the C API, for example for promotion rules (some of
+these previously already existed in C).
+Custom DTypes can opt in by inheriting from the appropriate abstract class.

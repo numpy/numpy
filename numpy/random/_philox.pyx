@@ -1,5 +1,7 @@
 #cython: binding=True
 
+import operator
+
 import numpy as np
 cimport numpy as np
 
@@ -210,7 +212,11 @@ cdef class Philox(BitGenerator):
         -------
         state : dict
             Dictionary containing the information required to describe the
-            state of the PRNG
+            state of the PRNG. The returned dictionary is a new object, not a
+            view of the generator's internal state: later changes to the
+            generator do not affect it, and modifying it does not affect the
+            generator, so it can be stored and passed back to the setter
+            without copying.
         """
         ctr = np.empty(4, dtype=np.uint64)
         key = np.empty(2, dtype=np.uint64)
@@ -248,7 +254,10 @@ cdef class Philox(BitGenerator):
 
             self.rng_state.has_uint32 = value['has_uint32']
             self.rng_state.uinteger = value['uinteger']
-            self.rng_state.buffer_pos = value['buffer_pos']
+            buffer_pos = operator.index(value['buffer_pos'])
+            if buffer_pos < 1 or buffer_pos > PHILOX_BUFFER_SIZE:
+                raise ValueError(f'buffer_pos must be between 1 and {PHILOX_BUFFER_SIZE}')
+            self.rng_state.buffer_pos = buffer_pos
 
     cdef jump_inplace(self, iter):
         """

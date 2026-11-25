@@ -4,6 +4,8 @@
 NumPy 2.5.1 Release Notes
 =========================
 
+*Released on 2026-07-04.*
+
 The NumPy 2.5.1 is a patch release that fixes bugs discovered after the 2.5.0
 release. The most noticeable is the fix is to the numpy datetime cython API
 which should allow downstream to support NumPy versions older than 2.5.

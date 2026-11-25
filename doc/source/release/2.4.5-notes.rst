@@ -4,6 +4,8 @@
 NumPy 2.4.5 Release Notes
 =========================
 
+*Released on 2026-05-15.*
+
 NumPy 2.4.5 is a patch release that fixes bugs discovered after the 2.4.4
 release, has some typing improvements, and maintains infrastructure.
 

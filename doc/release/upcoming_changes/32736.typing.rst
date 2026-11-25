@@ -1,0 +1,16 @@
+`numpy.lib.stride_tricks` shape-typing
+--------------------------------------
+The `numpy.lib.stride_tricks` functions now use the ``shape`` and ``window_shape``
+argument types to infer the shape-type of the returned array.
+
+.. code-block:: python
+
+    x = np.arange(6.0)
+
+    reveal_type(np.lib.stride_tricks.as_strided(x, shape=(2, 3)))
+    # before: ndarray[tuple[Any, ...], dtype[float64]]
+    # after:  ndarray[tuple[int, int], dtype[float64]]
+
+    reveal_type(np.lib.stride_tricks.sliding_window_view(x, 3))
+    # before: ndarray[tuple[Any, ...], dtype[float64]]
+    # after:  ndarray[tuple[int, int], dtype[float64]]

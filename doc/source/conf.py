@@ -307,6 +307,11 @@ plot_html_show_source_link = False
 # sphinx-copybutton configurations
 copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
 copybutton_prompt_is_regexp = True
+
+# Cards use explicit headers and footers instead of legacy separators.
+# https://sphinx-design.readthedocs.io/en/latest/cards.html#legacy-separator-syntax
+sd_card_legacy_separators = False
+
 # -----------------------------------------------------------------------------
 # LaTeX output
 # -----------------------------------------------------------------------------
@@ -592,7 +597,12 @@ def linkcode_resolve(domain, info):
         obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if 'dev' in numpy.__version__:
-        return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"
+        # Pin dev docs to the commit they were built from, so that the line
+        # numbers in ``linespec`` stay valid as ``main`` moves on.
+        # ``git_revision`` is empty when the tree has no git history (e.g.,
+        # a GitHub tarball). In that case fall back to ``main``.
+        ref = numpy.version.git_revision or 'main'
+        return f"https://github.com/numpy/numpy/blob/{ref}/numpy/{fn}{linespec}"
     else:
         return (f"https://github.com/numpy/numpy/blob/v{numpy.__version__}/"
                 f"numpy/{fn}{linespec}")

@@ -77,7 +77,10 @@ _readtext_from_stream(stream *s,
 
   finish:
     Py_XDECREF(out_dtype);
-    field_types_xclear(num_fields, ft);
+    /* On failure, field_types_create() already cleaned up `ft` */
+    if (num_fields >= 0) {
+        field_types_xclear(num_fields, ft);
+    }
     return (PyObject *)arr;
 }
 
@@ -249,7 +252,7 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
                     "encoding must be a unicode string.");
             return NULL;
         }
-        encoding = PyUnicode_AsUTF8(encoding_obj);
+        encoding = PyUnicode_AsUTF8AndSize(encoding_obj, NULL);
         if (encoding == NULL) {
             return NULL;
         }

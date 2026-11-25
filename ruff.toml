@@ -2,6 +2,7 @@ extend-exclude = [
     "numpy/__config__.py",
     "numpy/typing/_char_codes.py",
     "spin/cmds.py",
+    "doc/source/_contents",
     # Submodules.
     "doc/source/_static/scipy-mathjax",
     "vendored-meson/meson",

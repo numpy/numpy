@@ -14,11 +14,15 @@ np.polydiv(AR_f8, AR_U)  # type: ignore[type-var]
 np.polydiv(AR_O, AR_O)  # type: ignore[type-var]
 
 5**poly_obj  # type: ignore[operator]
+poly_obj**1.0  # type: ignore[operator]
+poly_obj.coeffs = AR_f8  # type: ignore[assignment]
+poly_obj.deriv(1.0)  # type: ignore[call-overload]
+poly_obj.integ(1.0)  # type: ignore[call-overload]
 
-np.polyint(AR_U)  # type: ignore[arg-type]
+np.polyint(AR_U)  # type: ignore[type-var]
 np.polyint(AR_f8, m=1j)  # type: ignore[call-overload]
 
-np.polyder(AR_U)  # type: ignore[arg-type]
+np.polyder(AR_U)  # type: ignore[type-var]
 np.polyder(AR_f8, m=1j)  # type: ignore[call-overload]
 
 np.polyfit(AR_O, AR_f8, 1)  # type: ignore[arg-type]
@@ -27,5 +31,5 @@ np.polyfit(AR_f8, AR_f8, 1, w=AR_c16)  # type: ignore[arg-type]
 np.polyfit(AR_f8, AR_f8, 1, cov="bob")  # type: ignore[call-overload]
 
 np.polyval(AR_f8, AR_U)  # type: ignore[type-var]
-np.polyadd(AR_f8, AR_U)  # type: ignore[arg-type]
-np.polysub(AR_f8, AR_U)  # type: ignore[arg-type]
+np.polyadd(AR_f8, AR_U)  # type: ignore[type-var]
+np.polysub(AR_f8, AR_U)  # type: ignore[type-var]

@@ -150,20 +150,20 @@ npy_ObjectLogicalNot(PyObject *i1)
 
 static PyObject *
 npy_ObjectFloor(PyObject *obj) {
-    return PyObject_CallOneArg(
-            _npy_module_state->static_pydata.math_floor_func, obj);
+    return PyObject_Vectorcall(
+            _npy_module_state->static_pydata.math_floor_func, &obj, 1, NULL);
 }
 
 static PyObject *
 npy_ObjectCeil(PyObject *obj) {
-    return PyObject_CallOneArg(
-            _npy_module_state->static_pydata.math_ceil_func, obj);
+    return PyObject_Vectorcall(
+            _npy_module_state->static_pydata.math_ceil_func, &obj, 1, NULL);
 }
 
 static PyObject *
 npy_ObjectTrunc(PyObject *obj) {
-    return PyObject_CallOneArg(
-            _npy_module_state->static_pydata.math_trunc_func, obj);
+    return PyObject_Vectorcall(
+            _npy_module_state->static_pydata.math_trunc_func, &obj, 1, NULL);
 }
 
 static PyObject *

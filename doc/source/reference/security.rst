@@ -22,7 +22,8 @@ to have the same privileges as the process/Python interpreter.
 If one can already execute Python code, there are far worse things one can do
 than use all available CPU cycles, or provoke a symptom of a bug in Code like
 use-after-free or a segfault. Therefore, while such issues may be bugs, they
-are not security issues.
+are not security issues. Please report them as regular bugs on the
+`issue tracker <https://github.com/numpy/numpy/issues/new/choose>`_.
 
 Before reporting a security issue, please consider and describe the attack
 vector in detail - and in particular whether that attack vector assumes being

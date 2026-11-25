@@ -1,0 +1,5 @@
+``np.log`` no longer warns when propagating complex NaNs
+--------------------------------------------------------
+For complex inputs with at least one NaN component and no infinite component,
+`numpy.log` now returns ``NaN + NaN j`` without emitting an invalid
+floating-point warning.

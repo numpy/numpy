@@ -7,6 +7,7 @@ for item in _multiarray_umath.__dir__():
     attr = getattr(_multiarray_umath, item)
     if isinstance(attr, ufunc):
         globals()[item] = attr
+del item, attr
 
 
 def __getattr__(attr_name):

@@ -172,14 +172,23 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
         }
     }
 
+    int needs_pyapi = PyDataType_FLAGCHK(PyArray_DESCR(ap), NPY_NEEDS_PYAPI);
+    int rcode = 0;
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap));
     n = PyArray_SIZE(ap)/m;
     rptr = (npy_intp *)PyArray_DATA(rp);
     for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
-        arg_func(ip, m, rptr, ap);
+        rcode = arg_func(ip, m, rptr, ap);
+        if (rcode < 0 || (needs_pyapi && PyErr_Occurred())) {
+            break;
+        }
         rptr += 1;
     }
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
+    if (rcode < 0 || PyErr_Occurred()) {
+        PyArray_DiscardWritebackIfCopy(rp);
+        goto fail;
+    }
 
     Py_DECREF(ap);
     /* Trigger the WRITEBACKIFCOPY if necessary */
@@ -651,7 +660,8 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
                 PyObject *args[2] = {(PyObject *)a, (PyObject *)out};
                 return PyObject_Vectorcall(state->n_ops.rint, args, 2, NULL);
             }
-            return PyObject_CallOneArg(state->n_ops.rint, (PyObject *)a);
+            PyObject *arg = (PyObject *)a;
+            return PyObject_Vectorcall(state->n_ops.rint, &arg, 1, NULL);
         }
         op1 = state->n_ops.multiply;
         op2 = state->n_ops.true_divide;

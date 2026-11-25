@@ -1,0 +1,4 @@
+- When `numpy.einsum` extracts a diagonal or transposes an array without
+  ``out``, it ignores a ``dtype`` that ``casting`` does not allow and returns a
+  view. This now gives a `DeprecationWarning` and will raise ``TypeError`` in
+  the future, as other subscripts already do.
