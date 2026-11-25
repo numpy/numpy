@@ -14,6 +14,13 @@ import warnings
 from ._conversions import asbytes, asunicode
 
 
+def _get_warn_skip_file_prefixes(*filenames):
+    # CPython 3.12/3.13 omit the filename's last character when matching
+    # skip_file_prefixes: https://github.com/python/cpython/issues/126209
+    # Shorter prefixes work on both affected and fixed versions.
+    return tuple(filename[:-1] for filename in filenames)
+
+
 def set_module(module):
     """Private decorator for overriding __module__ on a function or class.
 

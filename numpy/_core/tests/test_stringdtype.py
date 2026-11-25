@@ -908,6 +908,8 @@ class TestUnsizedCastMissingValues:
 
 
 class TestStringDTypeNditer:
+    @pytest.mark.filterwarnings(
+        "ignore:Casting between strings and bytes:DeprecationWarning")
     def test_infer_width_for_existing_operand(self):
         arr = np.array(["abc", "defgh"], dtype="T")
         for kind, expected in [("S", "S5"), ("U", "U5"), ("V", "V5")]:
@@ -1887,7 +1889,7 @@ def test_cfloat_to_string_nan_na(typename, nan_like_na_object):
 def test_string_to_bytes_error_in_buffered_ufunc():
     arr = np.full(2 * np.getbufsize(), "é", dtype="T")
     with pytest.raises(UnicodeEncodeError):
-        np.add(arr, arr, out=np.empty(arr.shape, dtype="S4"))
+        np.add(arr, arr, out=np.empty(arr.shape, dtype="S4"), casting="unsafe")
 
 
 def test_cfloat_to_string_nan_na_strided_field_view(nan_like_na_object):

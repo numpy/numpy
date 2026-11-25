@@ -262,10 +262,11 @@ npy_default_get_strided_loop(
  * Validate that the input is usable to create a new ArrayMethod.
  *
  * @param spec Array method specification to be validated
+ * @param private Whether NumPy itself is registering the method.
  * @return 0 on success -1 on error.
  */
 static int
-validate_spec(PyArrayMethod_Spec *spec)
+validate_spec(PyArrayMethod_Spec *spec, int private)
 {
     int nargs = spec->nin + spec->nout;
     /* Check the passed spec for invalid fields/values */
@@ -275,7 +276,7 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch ((int)spec->casting) {
+    switch ((int)spec->casting & ~(private ? _NPY_CAST_WILL_BE_UNSAFE : 0)) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
@@ -576,7 +577,7 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
         spec->name = "<unknown>";
     }
 
-    if (validate_spec(spec) < 0) {
+    if (validate_spec(spec, private) < 0) {
         return NULL;
     }
 
@@ -805,8 +806,9 @@ boundarraymethod__resolve_descriptors(
     }
     if (self->method->casting != -1) {
         NPY_CASTING cast = casting;
-        if (self->method->casting !=
-                PyArray_MinCastSafety(cast, self->method->casting)) {
+        if ((self->method->casting & ~_NPY_CAST_WILL_BE_UNSAFE) !=
+                (PyArray_MinCastSafety(cast, self->method->casting) &
+                 ~_NPY_CAST_WILL_BE_UNSAFE)) {
             PyErr_Format(PyExc_RuntimeError,
                     "resolve_descriptors cast level did not match stored one. "
                     "(set level is %d, got %d for method %s)",

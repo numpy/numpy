@@ -17,6 +17,7 @@
 #include "numpy/ufuncobject.h"
 
 #include "common.h"
+#include "convert_datatype.h"
 #include "numpyos.h"
 #include "umathmodule.h"
 #include "gil_utils.h"
@@ -139,6 +140,9 @@ any_to_string_resolve_descriptors(
         return (NPY_CASTING)-1;
     }
 
+    if (NPY_DT_is_bytes(NPY_DTYPE(given_descrs[0]))) {
+        return static_cast<NPY_CASTING>(safety | _NPY_CAST_WILL_BE_UNSAFE);
+    }
     return safety;
 }
 
@@ -356,6 +360,10 @@ string_to_fixed_width_resolve_descriptors(
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
+    if (NPY_DT_is_bytes(NPY_DTYPE(given_descrs[1]))) {
+        return static_cast<NPY_CASTING>(
+                NPY_SAME_KIND_CASTING | _NPY_CAST_WILL_BE_UNSAFE);
+    }
     return NPY_SAME_KIND_CASTING;
 }
 
@@ -2351,9 +2359,14 @@ get_casts() {
     PyArray_DTypeMeta **s2bytes_dtypes = get_dtypes(
             &PyArray_StringDType, &PyArray_BytesDType);
 
+    /*
+     * Deprecated NumPy 2.7, 2026-10-13: S <-> T casts under
+     * "safe" and "same_kind". After this deprecation expires, make both
+     * casts below unsafe, including their descriptor resolvers.
+     */
     PyArrayMethod_Spec *StringToBytesCastSpec = get_cast_spec(
         make_s2type_name(NPY_STRING),
-        NPY_SAME_KIND_CASTING,
+        static_cast<NPY_CASTING>(NPY_SAME_KIND_CASTING | _NPY_CAST_WILL_BE_UNSAFE),
         fixed_width_flags,
         s2bytes_dtypes,
         s2bytes_slots
@@ -2364,7 +2377,7 @@ get_casts() {
 
     PyArrayMethod_Spec *BytesToStringCastSpec = get_cast_spec(
         make_type2s_name(NPY_STRING),
-        NPY_SAFE_CASTING,
+        static_cast<NPY_CASTING>(NPY_SAFE_CASTING | _NPY_CAST_WILL_BE_UNSAFE),
         fixed_width_flags,
         bytes2s_dtypes,
         bytes2s_slots

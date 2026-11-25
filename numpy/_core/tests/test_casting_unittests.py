@@ -84,6 +84,7 @@ class Casting(enum.IntEnum):
     same_kind = 3
     unsafe = 4
     same_value = 64
+    will_be_unsafe = 128
 
 
 same_value_dtypes = tuple(type(np.dtype(c)) for c in "?bhilqBHILQefdgFDG")
@@ -636,6 +637,9 @@ class TestCasting:
         assert res_dt.itemsize == expected_length * fact
         assert isinstance(res_dt, string_DT)
 
+        flags = 0
+        if other_dt.char == "S" and string_char == "U":
+            flags = Casting.will_be_unsafe
         expected_view_off = None
         if other_dt.char == string_char:
             if other_dt.isnative:
@@ -644,7 +648,7 @@ class TestCasting:
             else:
                 expected_safety = Casting.equiv
         elif string_char == "U":
-            expected_safety = Casting.safe
+            expected_safety = Casting.safe | flags
         else:
             expected_safety = Casting.unsafe
 
@@ -664,11 +668,11 @@ class TestCasting:
             if expected_safety == Casting.unsafe:
                 assert safety == expected_safety
             elif change_length < 0:
-                assert safety == Casting.same_kind
+                assert safety == Casting.same_kind | flags
             elif change_length == 0:
                 assert safety == expected_safety
             elif change_length > 0:
-                assert safety == Casting.safe
+                assert safety == Casting.safe | flags
 
     @pytest.mark.parametrize("order1", [">", "<"])
     @pytest.mark.parametrize("order2", [">", "<"])
@@ -698,6 +702,10 @@ class TestCasting:
             np.array([], dtype="V5").astype("S")  # was S5
         with pytest.raises(TypeError, match="cannot cast"):
             np.array([], dtype="V5").astype("U")  # was U5
+
+    def test_text_to_bytes_cast_error_hint(self):
+        with pytest.raises(TypeError, match=r"numpy\.strings\.encode"):
+            np.array(["a"]).astype("S1", casting="same_kind")
 
     def test_object_to_parametric_internal_error(self):
         # We reject casting from object to a parametric type, without

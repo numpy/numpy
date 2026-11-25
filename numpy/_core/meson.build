@@ -1510,6 +1510,8 @@ python_sources = [
   '_add_newdocs_scalars.pyi',
   '_asarray.py',
   '_asarray.pyi',
+  '_coercion_policy.py',
+  '_coercion_policy.pyi',
   '_dtype.py',
   '_dtype.pyi',
   '_dtype_ctypes.py',

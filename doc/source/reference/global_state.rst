@@ -70,3 +70,34 @@ and set the ``ndarray.base``.
 
 .. versionchanged:: 1.25.2
     This variable is only checked on the first import.
+
+
+Testing planned future behavior
+===============================
+
+Strict text/bytes coercion
+--------------------------
+
+Implicit promotion and ``"safe"`` or ``"same_kind"`` casts between bytes
+(``np.bytes_``) and text (``np.str_`` and ``StringDType``) are deprecated.
+By default NumPy emits a ``DeprecationWarning`` for these operations. Setting
+the environment variable::
+
+    NPY_COERCION_POLICY=strict
+
+enables the behavior planned for after the deprecation expires:
+
+* Promotion between bytes and text, for example
+  ``np.result_type("S1", "U1")``, raises
+  `numpy.exceptions.DTypePromotionError`.
+* Array construction from mixed bytes and text, for example
+  ``np.array([b"a", "b"])``, returns an ``object`` array.
+* ``np.can_cast("S1", "U1")`` returns ``False``, and operations that need a
+  ``"safe"`` or ``"same_kind"`` cast between bytes and text raise
+  ``TypeError``.
+
+The only other accepted value is ``warn``, which is the default. Any other
+value raises ``ValueError`` when NumPy is imported. This variable is only
+checked on the first import.
+
+.. versionadded:: 2.7
