@@ -6,7 +6,7 @@ import functools
 import itertools
 import operator
 
-from numpy._core.multiarray import c_einsum, matmul
+from numpy._core.multiarray import c_einsum, matmul, result_type
 from numpy._core.numeric import asanyarray, reshape
 from numpy._core.overrides import array_function_dispatch
 from numpy._core.umath import multiply
@@ -1184,17 +1184,19 @@ def bmm_einsum(eq, a, b, out=None, **kwargs):
         kwargs.pop("order", "K"), a.flags.f_contiguous, b.flags.f_contiguous
     )
 
+    prep_kwargs = {k: kwargs[k] for k in ("dtype", "casting") if k in kwargs}
+
     # prepare left
     if eq_a is not None:
         # diagonals, sums, and transpose
-        a = c_einsum(eq_a, a)
+        a = c_einsum(eq_a, a, **prep_kwargs)
     if new_shape_a is not None:
         a = reshape(a, new_shape_a)
 
     # prepare right
     if eq_b is not None:
         # diagonals, sums, and transpose
-        b = c_einsum(eq_b, b)
+        b = c_einsum(eq_b, b, **prep_kwargs)
     if new_shape_b is not None:
         b = reshape(b, new_shape_b)
 
@@ -1631,6 +1633,11 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     # Build the contraction list and operand
     operands, contraction_list = einsum_path(*operands, optimize=optimize,
                                              einsum_call=True)
+
+    if kwargs.get("dtype") is None and len({op.dtype for op in operands}) > 1:
+        kwargs["dtype"] = result_type(*operands)
+    if kwargs.get("dtype") is not None:
+        kwargs.setdefault("casting", "safe")
 
     # Start contraction loop
     for num, contraction in enumerate(contraction_list):
