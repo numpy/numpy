@@ -196,16 +196,21 @@ Tier 2
 
 Tier 2 platforms:
 
-+---------------------------+-------+------------------------------------------+
-| Platform                  | Notes | Contacts                                 |
-+===========================+=======+==========================================+
-| Linux x86-64 (musllinux)  |       | Ralf Gommers                             |
-+---------------------------+-------+------------------------------------------+
-| Linux aarch64 (musllinux) |       | Ralf Gommers                             |
-+---------------------------+-------+------------------------------------------+
-| Free-threaded CPython     |       | Nathan Goldbaum, Kumar Aditya,           |
-|                           |       | Ralf Gommers                             |
-+---------------------------+-------+------------------------------------------+
++---------------------------+------------------------------------+------------------------+
+| Platform                  | Notes                              | Contacts               |
++===========================+====================================+========================+
+| Linux x86-64 (musllinux)  |                                    | Ralf Gommers           |
++---------------------------+------------------------------------+------------------------+
+| Linux aarch64 (musllinux) |                                    | Ralf Gommers           |
++---------------------------+------------------------------------+------------------------+
+| Emscripten/Pyodide        | See gh-33365_. Nightly wheels are  | Agriya Khetarpal,      |
+|                           | also provided, used for            | Gyeongjae Choi,        |
+|                           | interactive docs                   | Hood Chatham           |
++---------------------------+------------------------------------+------------------------+
+| Free-threaded CPython     |                                    | Nathan Goldbaum,       |
+|                           |                                    | Kumar Aditya,          |
+|                           |                                    | Ralf Gommers           |
++---------------------------+------------------------------------+------------------------+
 
 
 Tier 3
@@ -227,9 +232,6 @@ Tier 3 platforms:
 +====================+========================================+==================================+
 | Linux ppc64le      | Runs on IBM-provided self-hosted       | Sandeep Gupta                    |
 |                    | runners, see gh-22318_                 |                                  |
-+--------------------+----------------------------------------+----------------------------------+
-| Emscripten/Pyodide | We currently provide nightly wheels,   | Agriya Khetarpal, Gyeongjae Choi |
-|                    | used for interactive docs              |                                  |
 +--------------------+----------------------------------------+----------------------------------+
 | Windows x86        | 32-bit Python, see the                 | Nathan Goldbaum                  |
 |                    | `discussion board`_ for more details   |                                  |
@@ -305,6 +307,7 @@ Discussion
 - `ENH: Build and distribute manylinux wheels for riscv64 <https://github.com/numpy/numpy/issues/30216>`__
 - `BLD: Add support for building iOS wheels (numpy#28759) <https://github.com/numpy/numpy/pull/28759>`__
 - `BLD: Add Android support <https://github.com/numpy/numpy/pull/30412>`__
+- `Promoting Emscripten/Pyodide to a Tier 2 platform (numpy#33365) <https://github.com/numpy/numpy/issues/33365>`__
 - `ENH: WASI Build <https://github.com/numpy/numpy/issues/25859>`__
 - `PEP 11 - CPython platform support <https://peps.python.org/pep-0011/>`__
 - `Debian's supported architectures <https://wiki.debian.org/SupportedArchitectures>`__
@@ -323,6 +326,7 @@ References and footnotes
 .. _gh-30216: https://github.com/numpy/numpy/issues/30216
 .. _gh-30412: https://github.com/numpy/numpy/pull/30412
 .. _gh-30416: https://github.com/numpy/numpy/issues/30416
+.. _gh-33365: https://github.com/numpy/numpy/issues/33365
 .. _discussion board: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/FGVCDS5JICVIUVBISGWZNQ46QZ3XX5PB/#TTSOQQ3XLXXK52CZYMN7MALJQEI65U
 
 
