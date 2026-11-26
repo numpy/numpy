@@ -136,6 +136,24 @@ def test_fromroots(Poly):
     assert_almost_equal(p2.coef[-1], 1)
 
 
+def test_fromroots_degenerate_domain(Poly):
+    # gh-33437: domain=None with a single root or identical roots must not produce NaN
+    p_single = Poly.fromroots([2], domain=None)
+    assert_almost_equal(p_single(2), 0)
+    assert_almost_equal(p_single(3), 1)
+    assert_equal(p_single.domain, [1, 3])
+
+    p_mult = Poly.fromroots([2, 2], domain=None)
+    assert_almost_equal(p_mult(2), 0)
+    assert_almost_equal(p_mult(3), 1)
+    assert_equal(p_mult.domain, [1, 3])
+
+    p_complex = Poly.fromroots([2 + 3j], domain=None)
+    assert_almost_equal(p_complex(2 + 3j), 0)
+    assert_almost_equal(p_complex(3 + 3j), 1)
+    assert_equal(p_complex.domain, [1 + 3j, 3 + 3j])
+
+
 def test_bad_conditioned_fit(Poly):
 
     x = [0., 0., 1.]
