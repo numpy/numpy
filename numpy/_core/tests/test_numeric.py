@@ -4190,6 +4190,13 @@ class TestRequire:
         a = self.generate_all_false('f8')
         assert_raises(KeyError, np.require, a, None, 'Q')
 
+    @pytest.mark.parametrize("flag", flag_names)
+    def test_string_requirement(self, flag):
+        # gh-33469
+        a = self.generate_all_false('f8')
+        b = np.require(a, None, flag)
+        assert_(b.flags[flag])
+
     def test_non_array_input(self):
         a = np.require([1, 2, 3, 4], 'i4', ['C', 'A', 'O'])
         assert_(a.flags['O'])

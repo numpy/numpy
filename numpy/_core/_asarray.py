@@ -99,6 +99,8 @@ def require(a, dtype=None, requirements=None, *, like=None):
     if not requirements:
         return asanyarray(a, dtype=dtype)
 
+    if isinstance(requirements, str) and requirements.upper() in POSSIBLE_FLAGS:
+        requirements = [requirements]
     requirements = {POSSIBLE_FLAGS[x.upper()] for x in requirements}
 
     if 'E' in requirements:
