@@ -9300,7 +9300,8 @@ class TestDotFamilyFallback:
         assert type(np.dot(x, y.view(Sub))) is Sub
         vs = q(v).view(Sub)
         res = np.vdot(vs, vs)
-        assert not isinstance(res, np.ndarray)
+        assert type(res) is Sub
+        assert res.shape == ()
         assert float(res) == v @ v
 
     def test_ufunc_override(self, q):
