@@ -3774,6 +3774,31 @@ class TestMaskedArrayMethods:
         xh.put([4, 2, 0, 1, 3], [1, 2, 3, 4, 5])
         assert_equal(xh._data, [3, 4, 2, 4, 5])
 
+        # gh-33415: put with a scalar or shorter values should repeat
+        xh = array([1, 2, 3], mask=[False, True, False], hard_mask=True)
+        xh.put([0, 2], 7)
+        assert_equal(xh, [7, 2, 7])
+        assert_equal(xh.mask, [False, True, False])
+
+        xh = array([1, 2, 3, 4], mask=[0, 1, 0, 0], hard_mask=True)
+        xh.put([0, 2, 3], [7, 8])
+        assert_equal(xh, [7, 2, 8, 7])
+
+        xh = array([1, 2, 3, 4], mask=[0, 1, 0, 0], hard_mask=True)
+        xh.put([0, 2, 3], array([7, 8], mask=[0, 1]))
+        assert_equal(xh.mask, [False, True, True, False])
+
+        # N-D arrays and mode with hard mask
+        a = array([[1, 2], [3, 4]], mask=[[0, 1], [0, 0]], hard_mask=True)
+        a.put([1, 3], 9)
+        assert_equal(a._data, [[1, 2], [3, 9]])
+        assert_equal(a.mask, [[False, True], [False, False]])
+
+        b = array([1, 2, 3], mask=[0, 1, 0], hard_mask=True)
+        b.put([5], 9, mode="clip")
+        assert_equal(b._data, [1, 2, 9])
+        assert_equal(b.mask, [False, True, False])
+
     def test_putmask(self):
         x = arange(6) + 1
         mx = array(x, mask=[0, 0, 0, 1, 1, 1])

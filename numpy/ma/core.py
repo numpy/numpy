@@ -4958,10 +4958,10 @@ class MaskedArray(ndarray):
         """
         # Hard mask: Get rid of the values/indices that fall on masked data
         if self._hardmask and self._mask is not nomask:
-            mask = self._mask[indices]
+            mask = np.take(self._mask, indices, mode=mode)
             indices = narray(indices, copy=None)
             values = narray(values, copy=None, subok=True)
-            values.resize(indices.shape)
+            values = resize(values, indices.shape)
             indices = indices[~mask]
             values = values[~mask]
 
