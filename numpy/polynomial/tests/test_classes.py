@@ -136,22 +136,20 @@ def test_fromroots(Poly):
     assert_almost_equal(p2.coef[-1], 1)
 
 
-def test_fromroots_degenerate_domain(Poly):
+@pytest.mark.parametrize(
+    ("roots", "expected_domain"),
+    [
+        ([2], [1, 3]),
+        ([2, 2], [1, 3]),
+        ([2 + 3j], [1 + 3j, 3 + 3j]),
+    ],
+)
+def test_fromroots_degenerate_domain(Poly, roots, expected_domain):
     # gh-33437: domain=None with a single root or identical roots must not produce NaN
-    p_single = Poly.fromroots([2], domain=None)
-    assert_almost_equal(p_single(2), 0)
-    assert_almost_equal(p_single(3), 1)
-    assert_equal(p_single.domain, [1, 3])
-
-    p_mult = Poly.fromroots([2, 2], domain=None)
-    assert_almost_equal(p_mult(2), 0)
-    assert_almost_equal(p_mult(3), 1)
-    assert_equal(p_mult.domain, [1, 3])
-
-    p_complex = Poly.fromroots([2 + 3j], domain=None)
-    assert_almost_equal(p_complex(2 + 3j), 0)
-    assert_almost_equal(p_complex(3 + 3j), 1)
-    assert_equal(p_complex.domain, [1 + 3j, 3 + 3j])
+    p = Poly.fromroots(roots, domain=None)
+    assert_almost_equal(p(roots[0]), 0)
+    assert_almost_equal(p(roots[0] + 1), 1)
+    assert_equal(p.domain, expected_domain)
 
 
 def test_bad_conditioned_fit(Poly):
