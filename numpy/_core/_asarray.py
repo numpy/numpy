@@ -3,6 +3,8 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 
 `require` fits this category despite its name not matching this pattern.
 """
+import warnings
+
 from .multiarray import array, asanyarray
 from .overrides import array_function_dispatch, finalize_array_function_like, set_module
 
@@ -99,8 +101,18 @@ def require(a, dtype=None, requirements=None, *, like=None):
     if not requirements:
         return asanyarray(a, dtype=dtype)
 
-    if isinstance(requirements, str) and requirements.upper() in POSSIBLE_FLAGS:
-        requirements = [requirements]
+    if isinstance(requirements, str):
+        if requirements.upper() in POSSIBLE_FLAGS:
+            requirements = [requirements]
+        elif all(x.upper() in POSSIBLE_FLAGS for x in requirements):
+            # Deprecated in NumPy 2.6, 2026-11-26
+            warnings.warn(
+                "Passing several requirements as one string to numpy.require "
+                "is deprecated. Pass them as a list instead, for example "
+                "requirements=['C', 'A', 'W'].",
+                DeprecationWarning,
+                stacklevel=2,
+            )
     requirements = {POSSIBLE_FLAGS[x.upper()] for x in requirements}
 
     if 'E' in requirements:

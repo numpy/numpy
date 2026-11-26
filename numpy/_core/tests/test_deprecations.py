@@ -714,3 +714,15 @@ class TestEinsumIgnoredDType(_DeprecationTestCase):
     def test_deprecated(self):
         a = np.array([1.5, 2.5])
         self.assert_deprecated(np.einsum, args=("i->i", a), kwargs={"dtype": np.int32})
+
+
+class TestRequireStringOfRequirements(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-11
+    message = "Passing several requirements as one string"
+
+    def test_deprecated(self):
+        self.assert_deprecated(np.require, args=(np.ones(3), None, "CAW"))
+
+    @pytest.mark.parametrize("requirements", ["C", "F_CONTIGUOUS", ["C", "A", "W"]])
+    def test_not_deprecated(self, requirements):
+        self.assert_not_deprecated(np.require, args=(np.ones(3), None, requirements))

@@ -1,0 +1,7 @@
+Passing several requirements as one string to ``np.require`` is deprecated
+--------------------------------------------------------------------------
+`numpy.require` accepted a string such as ``"CAW"`` as shorthand for
+``["C", "A", "W"]`` only because strings are iterable. This was never
+documented and is now deprecated. Pass a list of requirements instead.
+A single requirement, such as ``"C"`` or ``"F_CONTIGUOUS"``, can still be
+passed as a string.
