@@ -3213,7 +3213,7 @@ class MaskedArray(ndarray):
                         m = (m | d)
 
             # Make sure the mask has the proper size
-            if return_scalar and result is not self and result.shape == () and m:
+            if return_scalar and m:
                 return masked
             else:
                 result._mask = m

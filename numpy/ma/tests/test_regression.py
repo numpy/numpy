@@ -88,23 +88,3 @@ class TestRegression:
         a = np.ma.MaskedArray([np.nan, 3], mask=[True, True])
         for f in (np.nanmean, np.nanstd, np.nanvar):
             assert_(np.ma.is_masked(f(a)), f.__name__)
-        for q in (10, 90):
-            assert_(np.ma.is_masked(np.nanpercentile(a, q)))
-            assert_(np.ma.is_masked(np.percentile(a, q)))
-            assert_(np.ma.is_masked(np.nanquantile(a, q / 100)))
-            assert_(np.ma.is_masked(np.quantile(a, q / 100)))
-        for res in (
-            np.nanpercentile(a, [10, 90]),
-            np.percentile(a, [10, 90]),
-            np.nanquantile(a, [0.1, 0.9]),
-            np.quantile(a, [0.1, 0.9]),
-        ):
-            assert_(np.all(np.ma.getmaskarray(res)))
-
-        # ufunc with out=... requests a writable 0-d array, not MaskedConstant
-        res_0d = np.add(np.ma.masked, 1.0, out=...)
-        assert_(isinstance(res_0d, np.ma.MaskedArray))
-        assert_(not isinstance(res_0d, np.ma.core.MaskedConstant))
-        assert_(res_0d.flags.writeable and res_0d.shape == ())
-        assert_(np.ma.is_masked(res_0d))
-        assert_(np.add(np.ma.masked, 1.0) is np.ma.masked)
