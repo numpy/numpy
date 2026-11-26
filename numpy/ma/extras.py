@@ -812,14 +812,22 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer = tuple(indexer)
         return np.ma.mean(asorted[indexer], axis=axis, out=out)
 
+    # Scale in float32 before summing, including when out has dtype float16.
+    is_float16 = asorted.dtype.type is np.float16
     if asorted.ndim == 1:
         idx, odd = divmod(count(asorted), 2)
         mid = asorted[idx + odd - 1:idx + 1]
         if np.issubdtype(asorted.dtype, np.inexact) and asorted.size > 0:
             # avoid inf / x = masked
+            if is_float16:
+                mid = mid.astype(np.float32)
+                if not odd:
+                    mid.data[...] /= 2
             s = mid.sum(out=out)
-            if not odd:
+            if not odd and not is_float16:
                 s = np.true_divide(s, 2., casting='safe', out=out)
+            if is_float16 and out is None:
+                s = s.astype(np.float16)
             s = np.lib._utils_impl._median_nancheck(asorted, s, axis)
         else:
             s = mid.mean(out=out)
@@ -857,8 +865,14 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
     if np.issubdtype(asorted.dtype, np.inexact):
         # avoid inf / x = masked
+        if is_float16:
+            low_high = low_high.astype(np.float32)
+            low_high.data[...] /= 2
         s = np.ma.sum(low_high, axis=axis, out=out)
-        np.true_divide(s.data, 2., casting='unsafe', out=s.data)
+        if not is_float16:
+            np.true_divide(s.data, 2., casting='unsafe', out=s.data)
+        elif out is None:
+            s = s.astype(np.float16)
 
         s = np.lib._utils_impl._median_nancheck(asorted, s, axis)
     else:
