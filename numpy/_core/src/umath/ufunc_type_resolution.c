@@ -2218,10 +2218,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
 {
     int nin = self->nin, nop = nin + self->nout;
     int specified_types[NPY_MAXARGS];
-    const char *ufunc_name;
     int no_castable_output = 0;
-
-    ufunc_name = ufunc_get_name_cstr(self);
 
     int use_min_scalar = should_use_min_scalar_weak_literals(nin, op);
 
@@ -2312,12 +2309,15 @@ type_tuple_type_resolver(PyUFuncObject *self,
         }
     }
 
-    /* If no function was found, throw an error */
-    PyErr_Format(PyExc_TypeError,
-            "No loop matching the specified signature and casting "
-            "was found for ufunc %s", ufunc_name);
-
-    return -1;
+    /* No loop matched; fill unspecified signature entries from the operands. */
+    PyObject *dtypes[NPY_MAXARGS];
+    for (int i = 0; i < nop; i++) {
+        dtypes[i] = PyTuple_GET_ITEM(type_tup, i);
+        if (dtypes[i] == Py_None && op[i] != NULL) {
+            dtypes[i] = (PyObject *)PyArray_DESCR(op[i]);
+        }
+    }
+    return raise_no_loop_found_error(self, dtypes);
 }
 
 NPY_NO_EXPORT int

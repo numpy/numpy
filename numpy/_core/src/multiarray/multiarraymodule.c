@@ -83,8 +83,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "npy_dlpack.h"
 
 #include "umathmodule.h"
-#include "dispatching.h"
-#include "ufunc_override.h"
 
 #include "unique.h"
 
@@ -972,65 +970,21 @@ fail:
     return NULL;
 }
 
-/* New-style DTypes without a dotfunc use the matmul/vecdot gufuncs. */
-static inline int
-uses_dot_gufunc(PyArray_Descr *descr)
-{
-    return PyDataType_GetArrFuncs(descr)->dotfunc == NULL
-           && !NPY_DT_is_legacy(NPY_DTYPE(descr));
-}
-
 static PyObject *
-call_dot_gufunc(PyObject *gufunc, PyObject *a, PyObject *b, PyObject *out,
-                const char *noloop_msg)
+call_dot_gufunc(PyObject *gufunc, PyArrayObject *a, PyArrayObject *b,
+                PyArray_Descr *dtype, PyObject *out, const char *noloop_msg)
 {
-    PyObject *res = PyObject_CallFunctionObjArgs(gufunc, a, b, out, NULL);
+    PyObject *args[] = {
+        (PyObject *)a, (PyObject *)b, (PyObject *)NPY_DTYPE(dtype), out};
+    PyObject *kwnames = out == NULL
+            ? _npy_module_state->static_pydata.kwnames_dtype
+            : _npy_module_state->static_pydata.kwnames_dtype_out;
+    PyObject *res = PyObject_Vectorcall(gufunc, args, 2, kwnames);
     if (res == NULL && PyErr_ExceptionMatches(
             _npy_module_state->static_pydata._UFuncNoLoopError)) {
         PyErr_SetString(PyExc_ValueError, noloop_msg);
     }
     return res;
-}
-
-/* Classes overriding __array_ufunc__ get the gufunc call itself. */
-static int
-dot_has_override(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *out)
-{
-    return PyUFunc_HasOverride((PyObject *)ap1)
-           || PyUFunc_HasOverride((PyObject *)ap2)
-           || (out != NULL && PyUFunc_HasOverride((PyObject *)out));
-}
-
-/* `gufunc(ap1, ap2, out=result)` on base-class views. */
-static int
-dot_via_gufunc(PyObject *gufunc, PyArrayObject *ap1, PyArrayObject *ap2,
-               PyArrayObject *result, const char *noloop_msg)
-{
-    PyArrayObject *arrs[3] = {ap1, ap2, result};
-    PyObject *views[3] = {NULL, NULL, NULL};
-    PyObject *res = NULL;
-    for (int i = 0; i < 3; i++) {
-        if (PyArray_CheckExact(arrs[i])) {
-            Py_INCREF(arrs[i]);
-            views[i] = (PyObject *)arrs[i];
-        }
-        else {
-            views[i] = PyArray_View(arrs[i], NULL, &PyArray_Type);
-            if (views[i] == NULL) {
-                goto finish;
-            }
-        }
-    }
-    res = call_dot_gufunc(gufunc, views[0], views[1], views[2], noloop_msg);
-  finish:
-    for (int i = 0; i < 3; i++) {
-        Py_XDECREF(views[i]);
-    }
-    if (res == NULL) {
-        return -1;
-    }
-    Py_DECREF(res);
-    return 0;
 }
 
 /*NUMPY_API
@@ -1126,36 +1080,17 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
         goto fail;
     }
 
-    if (uses_dot_gufunc(typec)
-            && PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
-        PyObject *loop = get_info_no_cast(
-                (PyUFuncObject *)_npy_module_state->n_ops.matmul,
-                NPY_DTYPE(typec), 3);
-        if (loop == NULL) {
-            goto fail;
-        }
-        if (loop == Py_None) {
-            PyErr_SetString(PyExc_ValueError,
-                            "dot not available for this type");
-            goto fail;
-        }
+    int use_gufunc = PyDataType_GetArrFuncs(typec)->dotfunc == NULL;
+
+    if (use_gufunc && PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
         /* np.inner passes funcname == NULL and an already transposed b */
+        // This error may also be raised even the dtypes do not make sense
         PyErr_Format(PyExc_ValueError,
                 "%s with a.ndim >= 2 and b.ndim > 2 is not supported for "
                 "this dtype; use numpy.tensordot(a, b, axes=%s) instead.",
                 funcname != NULL ? "dot" : "inner",
                 funcname != NULL ? "[-1, -2]" : "[-1, -1]");
         goto fail;
-    }
-    if (uses_dot_gufunc(typec) && dot_has_override(ap1, ap2, out)) {
-        PyObject *res = call_dot_gufunc(
-                _npy_module_state->n_ops.matmul, (PyObject *)ap1,
-                (PyObject *)ap2, (PyObject *)out,
-                "dot not available for this type");
-        Py_DECREF(ap1);
-        Py_DECREF(ap2);
-        Py_DECREF(typec);
-        return res;
     }
 
     /* Deprecated NumPy 2.6: warn when a.ndim >= 2 and b.ndim > 2 */
@@ -1180,26 +1115,29 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
         dimensions[j++] = PyArray_DIMS(ap2)[PyArray_NDIM(ap2)-1];
     }
 
+    /* Must stay after the 0-D path, which casts before multiply. */
+    if (use_gufunc) {
+        /* Keep dot's stricter out validation for now. */
+        if (out != NULL && check_out_for_sum(out, nd, dimensions, typec) < 0) {
+            goto fail;
+        }
+        /* out=... lets the gufunc allocate but keeps 0-D C-API results arrays. */
+        PyObject *res = call_dot_gufunc(
+                _npy_module_state->n_ops.matmul, ap1, ap2, typec,
+                out == NULL ? Py_Ellipsis : (PyObject *)out,
+                "dot not available for this type");
+        Py_DECREF(ap1);
+        Py_DECREF(ap2);
+        Py_DECREF(typec);
+        return res;
+    }
+
     is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1];
     is2 = PyArray_STRIDES(ap2)[matchDim];
     /* Choose which subtype to return */
     out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typec, &result);
     if (out_buf == NULL) {
         goto fail;
-    }
-    /* Must stay after the 0-D path, which casts before multiply. */
-    if (uses_dot_gufunc(typec)) {
-        if (dot_via_gufunc(_npy_module_state->n_ops.matmul, ap1, ap2, out_buf,
-                           "dot not available for this type") < 0) {
-            PyArray_DiscardWritebackIfCopy(out_buf);
-            goto fail;
-        }
-        Py_DECREF(ap1);
-        Py_DECREF(ap2);
-        PyArray_ResolveWritebackIfCopy(out_buf);
-        Py_DECREF(out_buf);
-        Py_DECREF(typec);
-        return (PyObject *)result;
     }
     /* Ensure that multiarray.dot(<Nx0>,<0xM>) -> zeros((N,M)) */
     if (PyArray_SIZE(ap1) == 0 && PyArray_SIZE(ap2) == 0) {
@@ -2806,10 +2744,10 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
         goto fail;
     }
 
-    if (uses_dot_gufunc(type) && dot_has_override(ap1, ap2, NULL)) {
+    if (PyDataType_GetArrFuncs(type)->dotfunc == NULL) {
+        /* vecdot conjugates the first operand, like vdot. */
         PyObject *res = call_dot_gufunc(
-                _npy_module_state->n_ops.vecdot, (PyObject *)ap1,
-                (PyObject *)ap2, NULL,
+                _npy_module_state->n_ops.vecdot, ap1, ap2, type, NULL,
                 "function not available for this data type");
         Py_DECREF(ap1);
         Py_DECREF(ap2);
@@ -2821,18 +2759,6 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     ret = new_array_for_sum(ap1, ap2, NULL, 0, (npy_intp *)NULL, type, NULL);
     if (ret == NULL) {
         goto fail;
-    }
-
-    if (uses_dot_gufunc(type)) {
-        /* vecdot conjugates the first operand, like vdot */
-        if (dot_via_gufunc(_npy_module_state->n_ops.vecdot, ap1, ap2, ret,
-                           "function not available for this data type") < 0) {
-            goto fail;
-        }
-        Py_DECREF(ap1);
-        Py_DECREF(ap2);
-        Py_DECREF(type);
-        return PyArray_Return(ret);
     }
 
     n = PyArray_DIM(ap1, 0);

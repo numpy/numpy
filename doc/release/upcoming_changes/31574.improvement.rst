@@ -2,10 +2,11 @@
 ----------------------------------------------------------------
 `numpy.dot`, `numpy.vdot`, `numpy.inner`, and code paths built on them (such
 as `numpy.tensordot` and `numpy.cov`) previously required the legacy
-``dotfunc`` slot.  New-style DTypes without it now fall back to the
-`numpy.matmul` gufunc (`numpy.vecdot` for `numpy.vdot`), so these functions
-work whenever the DType implements those.  Results keep the usual ``dot``
-result type and subclass, and floating point errors are reported by the
-gufunc.  Array subclasses that override ``__array_ufunc__`` receive the
-gufunc call itself.  The stacked case ``a.ndim >= 2`` with ``b.ndim >= 3`` is not
-reproduced and raises a ``ValueError`` pointing to `numpy.tensordot`.
+``dotfunc`` slot.  DTypes without it now fall back to the `numpy.matmul`
+gufunc (`numpy.vecdot` for `numpy.vdot`), so these functions work whenever
+the DType implements those.  The gufunc is called with ``dot``'s common
+DType and handles output allocation, subclass wrapping, and floating point
+errors.  Explicit ``out`` arrays retain ``dot``'s validation rules.  Array
+subclasses that override ``__array_ufunc__`` receive the gufunc call itself.
+The stacked case ``a.ndim >= 2`` with ``b.ndim >= 3`` is not reproduced and
+raises a ``ValueError`` pointing to `numpy.tensordot`.

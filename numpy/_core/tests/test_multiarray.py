@@ -9189,9 +9189,10 @@ class TestDotFamilyFallback:
         s = np.zeros((2, 3), np.dtypes.StringDType())
         with warnings.catch_warnings():
             warnings.simplefilter("error")
-            for a, b in [(s, s.T), (s, np.zeros((2, 3, 4), s.dtype))]:
-                assert_raises_regex(ValueError, "dot not available",
-                                    np.dot, a, b)
+            assert_raises_regex(ValueError, "dot not available",
+                                np.dot, s, s.T)
+            assert_raises_regex(ValueError, "tensordot",
+                                np.dot, s, np.zeros((2, 3, 4), s.dtype))
         assert_raises_regex(ValueError, "function not available",
                             np.vdot, s, s)
 
@@ -9235,7 +9236,6 @@ class TestDotFamilyFallback:
             qx = fx(q(x))
             assert not qx.flags.c_contiguous
             got = np.dot(qx, fy(q(y)))
-            assert got.flags.c_contiguous
             assert_array_equal(got.astype(np.float64), np.dot(fx(x), fy(y)),
                                strict=True)
 
@@ -9290,12 +9290,14 @@ class TestDotFamilyFallback:
         v = np.arange(3.)
         x, y = q(a), q(b)
 
-        res = np.dot(np.ma.array(x, mask=[[0, 1, 0], [0, 0, 0]]),
-                     np.ma.array(y))
+        # MaskedArray's gufunc wrapping combines input masks elementwise.
+        mx = np.ma.array(x[:, :2], mask=[[0, 1], [0, 0]])
+        my = np.ma.array(y[:2, :2])
+        res = np.dot(mx, my)
         assert type(res) is np.ma.MaskedArray
-        assert_array_equal(res.data.astype(np.float64), a @ b)
+        assert_array_equal(res.data.astype(np.float64), a[:, :2] @ b[:2, :2])
         assert type(np.dot(x.view(Sub), y.view(Sub))) is Sub
-        assert type(np.dot(x, y.view(Sub))) is np.ndarray
+        assert type(np.dot(x, y.view(Sub))) is Sub
         vs = q(v).view(Sub)
         res = np.vdot(vs, vs)
         assert not isinstance(res, np.ndarray)
@@ -9314,15 +9316,17 @@ class TestDotFamilyFallback:
         xo = x.view(Override)
 
         name, inputs, kwargs = np.dot(xo, y)
-        assert name == "matmul" and not kwargs
+        assert name == "matmul" and kwargs == {"dtype": type(x.dtype)}
         assert inputs[0] is xo and type(inputs[1]) is np.ndarray
         assert np.inner(xo, x)[0] == "matmul"
-        name, inputs, _ = np.vdot(xo, xo)
+        name, inputs, kwargs = np.vdot(xo, xo)
         assert name == "vecdot" and inputs[0].shape == (6,)
+        assert kwargs == {"dtype": type(x.dtype)}
 
         out = q(np.empty((2, 4))).view(Override)
         name, _, kwargs = np.dot(x, y, out)
-        assert name == "matmul" and kwargs["out"] == (out,)
+        assert name == "matmul" and kwargs["out"][0] is out
+        assert kwargs["dtype"] is type(x.dtype)
 
         with pytest.raises(ValueError, match="tensordot"):
             np.dot(xo, q(np.ones((2, 3, 4))))
