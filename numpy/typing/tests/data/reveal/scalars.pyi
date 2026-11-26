@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Any, Literal, assert_type
+from typing import Any, Literal, assert_type, type_check_only
 
 import numpy as np
 
@@ -306,3 +306,15 @@ assert_type(np.datetime64(np.datetime64("now", "Y"), "Y"), np.datetime64[dt.date
 # assert_type(np.object_(object()), object)
 # assert_type(np.object_({False, True, NotADirectoryError}), set[Any])
 # assert_type(np.object_({'spam': 'food', 'ham': 'food'}), dict[str, str])
+
+###
+# void
+
+@type_check_only
+class subvoid(np.void): ...  # type:ignore[misc]
+
+assert_type(subvoid(0), subvoid)
+# the following only fail in mypy; pyright/pyrefly/ty correctly infer `np.void`:
+assert_type(subvoid(0, dtype=[("x", np.int8)]), np.void)  # type:ignore[assert-type]
+assert_type(subvoid(b""), np.void)  # type:ignore[assert-type]
+assert_type(subvoid(np.bytes_(b"")), np.void)  # type:ignore[assert-type]
