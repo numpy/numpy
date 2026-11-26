@@ -714,3 +714,45 @@ class TestEinsumIgnoredDType(_DeprecationTestCase):
     def test_deprecated(self):
         a = np.array([1.5, 2.5])
         self.assert_deprecated(np.einsum, args=("i->i", a), kwargs={"dtype": np.int32})
+
+
+class TestAnyAllDtype(_DeprecationTestCase):
+    # Deprecated in NumPy 2.6, 2026-11
+    # See https://github.com/numpy/numpy/issues/33267
+    message = "The `dtype` argument of `ndarray."
+
+    @pytest.mark.parametrize("method", ["any", "all"])
+    def test_deprecated(self, method):
+        a = np.array([[True, False, True], [False, False, True]])
+        out = np.zeros(3, dtype=bool)
+        func = getattr(a, method)
+        self.assert_deprecated(lambda: func(dtype=bool))
+        self.assert_deprecated(lambda: func(dtype=None))
+        self.assert_deprecated(lambda: func(0, bool))
+        self.assert_deprecated(lambda: func(0, None))
+        self.assert_deprecated(lambda: func(0, None, out))
+        self.assert_deprecated(lambda: func(0, None, None, True))
+        self.assert_deprecated(lambda: func(0, None, out=out))
+        self.assert_deprecated(lambda: getattr(np.True_, method)(None, None))
+
+    @pytest.mark.parametrize("method", ["any", "all"])
+    def test_not_deprecated(self, method):
+        a = np.array([[True, False, True], [False, False, True]])
+        out = np.zeros(3, dtype=bool)
+        func = getattr(a, method)
+        self.assert_not_deprecated(lambda: func())
+        self.assert_not_deprecated(lambda: func(0))
+        self.assert_not_deprecated(lambda: func(0, out=out, keepdims=False))
+        self.assert_not_deprecated(lambda: func(axis=0, keepdims=True, where=True))
+        self.assert_not_deprecated(lambda: getattr(np.True_, method)())
+        # numpy itself must not trigger the warning
+        self.assert_not_deprecated(
+            lambda: getattr(np, method)(a.view(np.recarray), 0, out))
+        self.assert_not_deprecated(lambda: getattr(np.matrix(a), method)(0))
+        self.assert_not_deprecated(lambda: getattr(np.ma.array(a), method)(0))
+
+    @pytest.mark.parametrize("method", ["any", "all"])
+    def test_behavior_unchanged(self, method):
+        a = np.ones(3, dtype=object)
+        with pytest.warns(DeprecationWarning, match=re.escape(self.message)):
+            assert getattr(a, method)(dtype=object, keepdims=True).dtype == object

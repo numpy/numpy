@@ -572,7 +572,7 @@ class matrix(N.ndarray):
                 returns `ndarray`
 
         """
-        return N.ndarray.any(self, axis, out, keepdims=True)._collapse(axis)
+        return N.ndarray.any(self, axis, out=out, keepdims=True)._collapse(axis)
 
     def all(self, axis=None, out=None):
         """
@@ -612,7 +612,7 @@ class matrix(N.ndarray):
                 [False]])
 
         """
-        return N.ndarray.all(self, axis, out, keepdims=True)._collapse(axis)
+        return N.ndarray.all(self, axis, out=out, keepdims=True)._collapse(axis)
 
     def max(self, axis=None, out=None):
         """

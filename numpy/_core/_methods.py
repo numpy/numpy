@@ -52,19 +52,34 @@ def _prod(a, axis=None, dtype=None, out=None, keepdims=False,
           initial=_NoValue, where=True):
     return umr_prod(a, axis, dtype, out, keepdims, initial, where)
 
-def _any(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
+def _any_all_dtype_deprecated(name, dtype):
+    ufunc = "logical_or" if name == "any" else "logical_and"
+    warnings.warn(
+        f"The `dtype` argument of `ndarray.{name}()` is deprecated and will be "
+        f"removed in a future version. Use "
+        f"`np.{ufunc}.reduce(..., dtype=..., ...)` instead. Until then, "
+        "`dtype` is the second positional argument, so pass `out` and "
+        "`keepdims` by keyword. (Deprecated NumPy 2.6)",
+        DeprecationWarning, stacklevel=3)
+    return bool_dt if dtype is None else dtype
+
+def _any(a, axis=None, dtype=_NoValue, out=None, keepdims=False, *, where=True):
     # By default, return a boolean for any and all
-    if dtype is None:
+    if dtype is _NoValue:
         dtype = bool_dt
+    else:
+        dtype = _any_all_dtype_deprecated("any", dtype)
     # Parsing keyword arguments is currently fairly slow, so avoid it for now
     if where is True:
         return umr_any(a, axis, dtype, out, keepdims)
     return umr_any(a, axis, dtype, out, keepdims, where=where)
 
-def _all(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
+def _all(a, axis=None, dtype=_NoValue, out=None, keepdims=False, *, where=True):
     # By default, return a boolean for any and all
-    if dtype is None:
+    if dtype is _NoValue:
         dtype = bool_dt
+    else:
+        dtype = _any_all_dtype_deprecated("all", dtype)
     # Parsing keyword arguments is currently fairly slow, so avoid it for now
     if where is True:
         return umr_all(a, axis, dtype, out, keepdims)

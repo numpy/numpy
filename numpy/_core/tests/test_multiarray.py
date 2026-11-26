@@ -2113,13 +2113,6 @@ class TestMethods:
         assert arr.any().dtype == np.bool
         assert arr.all().dtype == np.bool
 
-    def test_any_and_all_object_dtype(self):
-        # (seberg) Not sure we should even allow dtype here, but it is.
-        arr = np.ones(3, dtype=object)
-        # keepdims to prevent getting a scalar.
-        assert arr.any(dtype=object, keepdims=True).dtype == object
-        assert arr.all(dtype=object, keepdims=True).dtype == object
-
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
         arr = np.arange(10).reshape(2, 5)

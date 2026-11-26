@@ -3491,7 +3491,7 @@ _array_method_doc('__deepcopy__', "memo, /",
 
 _array_method_doc('all', "axis=None, out=None, keepdims=False, *, where=True",
     """
-    a.all(axis=None, out=None, *, keepdims=<no value>, where=<no value>)
+    a.all(axis=None, out=None, keepdims=<no value>, *, where=<no value>)
 
     Returns True if all elements evaluate to True.
 
@@ -3504,7 +3504,7 @@ _array_method_doc('all', "axis=None, out=None, keepdims=False, *, where=True",
 
 _array_method_doc('any', "axis=None, out=None, keepdims=False, *, where=True",
     """
-    a.any(axis=None, out=None, *, keepdims=<no value>, where=<no value>)
+    a.any(axis=None, out=None, keepdims=<no value>, *, where=<no value>)
 
     Returns True if any of the elements of `a` evaluate to True.
 
