@@ -1695,6 +1695,12 @@ class TestMaskedArrayArithmetic:
         assert_(t[0] == 'abc')
         assert_(t[1] == 2)
         assert_(t[2] == 3)
+        # Test inner with object array (gh-31736)
+        ao = array([1, 2, 3], object)
+        bo = array([0, 1, 0], object)
+        assert_equal(inner(ao, bo), 2)
+        ao[1] = masked
+        assert_equal(inner(ao, bo), 0)
 
     def test_imag_real(self):
         # Check complex

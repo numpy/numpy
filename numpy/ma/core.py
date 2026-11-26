@@ -8458,7 +8458,10 @@ def inner(a, b):
         fa = fa.reshape((1,))
     if fb.ndim == 0:
         fb = fb.reshape((1,))
-    return np.inner(fa, fb).view(MaskedArray)
+    res = np.inner(fa, fb)
+    if hasattr(res, 'view'):
+        return res.view(get_masked_subclass(a, b))
+    return res
 
 
 inner.__doc__ = doc_note(np.inner.__doc__,
