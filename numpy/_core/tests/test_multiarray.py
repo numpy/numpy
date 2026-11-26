@@ -9123,6 +9123,7 @@ class TestRepeat:
     @pytest.mark.parametrize("repeats", [
         np.iinfo(np.intp).max // 2,
         [np.iinfo(np.intp).max // 2] * 3,
+        [np.iinfo(np.intp).max, np.iinfo(np.intp).max, 2],
     ])
     def test_size_overflow(self, repeats):
         # gh-33080
