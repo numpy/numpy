@@ -4085,43 +4085,73 @@ compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-_vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
+_vec_string_with_args(PyObject* input, PyArray_Descr* type,
                       PyObject* method, PyObject* args)
 {
-    PyObject* broadcast_args[NPY_MAXARGS];
+    PyObject* broadcast_args[NPY_MAXARGS] = {NULL};
     PyArrayMultiIterObject* in_iter = NULL;
     PyArrayObject* result = NULL;
     PyArrayIterObject* out_iter = NULL;
-    Py_ssize_t i, n, nargs;
+    Py_ssize_t i, n, nargs = 0;
 
-    nargs = PySequence_Size(args) + 1;
-    if (nargs == -1 || nargs > NPY_MAXARGS) {
+    n = PySequence_Size(args);
+    if (n < 0) {
+        goto err;
+    }
+    if (n >= NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
                 "len(args) must be < %d", NPY_MAXARGS - 1);
-        Py_DECREF(type);
         goto err;
     }
 
-    broadcast_args[0] = (PyObject*)char_array;
-    for (i = 1; i < nargs; i++) {
-        PyObject* item = PySequence_GetItem(args, i-1);
+    nargs = n + 1;
+    int has_stringdtype = 0;
+    for (i = 0; i < nargs; i++) {
+        PyObject *item = i == 0 ? Py_NewRef(input)
+                               : PySequence_GetItem(args, i-1);
         if (item == NULL) {
-            Py_DECREF(type);
             goto err;
         }
+        /* Keep Python strings intact until we know the other operands. */
+        if (!PyUnicode_CheckExact(item)) {
+            PyArrayObject *array = (PyArrayObject *)PyArray_FROM_O(item);
+            Py_DECREF(item);
+            if (array == NULL) {
+                goto err;
+            }
+            has_stringdtype |= NPY_DTYPE(PyArray_DESCR(array)) == &PyArray_StringDType;
+            item = (PyObject *)array;
+        }
         broadcast_args[i] = item;
-        Py_DECREF(item);
     }
-    in_iter = (PyArrayMultiIterObject*)PyArray_MultiIterFromObjects
-        (broadcast_args, nargs, 0);
+    if (has_stringdtype) {
+        /* Object scalars retain Python strings without copying or losing NULs.
+         * They are only broadcast operands; output dtype selection is unchanged.
+         */
+        for (i = 0; i < nargs; i++) {
+            if (!PyUnicode_CheckExact(broadcast_args[i])) {
+                continue;
+            }
+            PyObject *array = PyArray_FROM_OT(broadcast_args[i], NPY_OBJECT);
+            if (array == NULL) {
+                goto err;
+            }
+            Py_SETREF(broadcast_args[i], array);
+        }
+    }
+    in_iter = (PyArrayMultiIterObject*)PyArray_MultiIterFromObjects(
+            broadcast_args, nargs, 0);
     if (in_iter == NULL) {
-        Py_DECREF(type);
         goto err;
+    }
+    for (i = 0; i < nargs; i++) {
+        Py_CLEAR(broadcast_args[i]);
     }
     n = in_iter->numiter;
 
     result = (PyArrayObject*)PyArray_SimpleNewFromDescr(in_iter->nd,
             in_iter->dimensions, type);
+    type = NULL;  /* PyArray_SimpleNewFromDescr steals type. */
     if (result == NULL) {
         goto err;
     }
@@ -4173,6 +4203,10 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
     return (PyObject*)result;
 
  err:
+    for (i = 0; i < nargs; i++) {
+        Py_XDECREF(broadcast_args[i]);
+    }
+    Py_XDECREF(type);
     Py_XDECREF(in_iter);
     Py_XDECREF(out_iter);
     Py_XDECREF(result);
@@ -4295,7 +4329,12 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
         result = _vec_string_no_args(char_array, type, method);
     }
     else if (PySequence_Check(args_seq)) {
-        result = _vec_string_with_args(char_array, type, method, args_seq);
+        /* Pass the original Python string so broadcasting can preserve it. */
+        PyObject *input = PyTuple_GET_ITEM(args, 0);
+        if (!PyUnicode_CheckExact(input)) {
+            input = (PyObject *)char_array;
+        }
+        result = _vec_string_with_args(input, type, method, args_seq);
     }
     else {
         Py_DECREF(type);

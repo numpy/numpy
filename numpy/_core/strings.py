@@ -113,6 +113,8 @@ def _to_bytes_or_str_array(result, output_dtype_like):
     with the appropriate dtype if an object array must be used
     as an intermediary.
     """
+    if isinstance(result.dtype, np.dtypes.StringDType):
+        return result
     output_dtype_like = np.asarray(output_dtype_like)
     if result.size == 0:
         # Calling asarray & tolist in an empty array would result
@@ -122,6 +124,31 @@ def _to_bytes_or_str_array(result, output_dtype_like):
     if isinstance(output_dtype_like.dtype, np.dtypes.StringDType):
         return ret.astype(type(output_dtype_like.dtype))
     return ret.astype(type(output_dtype_like.dtype)(_get_num_chars(ret)))
+
+
+def _string_array_and_dtype(a, *, subok=True):
+    if type(a) is str:
+        # Discover the dtype without allocating an array or losing trailing NULs.
+        return a, np.dtypes.StrDType(len(a) or 1)
+    a = np.asanyarray(a) if subok else np.asarray(a)
+    return a, a.dtype
+
+
+def _check_no_stringdtype_coercion(func, **operands):
+    variable = next(
+        (name for name, arr in operands.items() if arr.dtype.char == "T"), None)
+    if variable is None:
+        return
+    for name, arr in operands.items():
+        if arr.dtype.char not in "STU":
+            args = ", ".join(
+                n if operands[n].dtype.char in "STU"
+                else f"np.asarray({n}, dtype={variable}.dtype)"
+                for n in operands)
+            raise TypeError(
+                f"operand {name!r} has dtype {arr.dtype}, which StringDType "
+                "operations do not convert to a string. Convert it "
+                f"explicitly, for example:\n    np.strings.{func}({args})")
 
 
 def _clean_args(*args):
@@ -248,8 +275,10 @@ def mod(a, values):
     array([b'8 bytes', b'64 bits'], dtype='|S7')
 
     """
+    a, dtype = _string_array_and_dtype(a)
+    output_dtype = dtype if dtype.char == "T" else np.object_
     return _to_bytes_or_str_array(
-        _vec_string(a, np.object_, '__mod__', (values,)), a)
+        _vec_string(a, output_dtype, '__mod__', (values,)), a)
 
 
 @set_module("numpy.strings")
@@ -684,6 +713,48 @@ def expandtabs(a, tabsize=8):
     return _expandtabs(a, tabsize, out=out)
 
 
+def _use_variable_stringdtype(*arrays):
+    return np.result_type(*arrays).char == "T"
+
+
+def _cast_string_arg(arg, dtype):
+    # This is questionable: None is used as "None" and 1 as "1", where the
+    # str methods raise TypeError.
+    return arg.astype(dtype, copy=False)
+
+
+def _get_fillchar(a, fillchar):
+    if type(fillchar) is str and a.dtype.char == "T":
+        # A fixed-width array would drop a trailing NUL.
+        fillchar = np.array(fillchar, dtype=a.dtype)
+    else:
+        fillchar = np.asanyarray(fillchar)
+    if np.any(str_len(fillchar) != 1):
+        raise TypeError(
+            "The fill character must be exactly one character long")
+    return fillchar
+
+
+def _just(ufunc, a, width, fillchar):
+    width = np.asanyarray(width)
+    if not np.issubdtype(width.dtype, np.integer):
+        raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
+
+    a = np.asanyarray(a)
+    fillchar = _get_fillchar(a, fillchar)
+
+    if _use_variable_stringdtype(a, fillchar):
+        return ufunc(a, width, fillchar)
+
+    fillchar = _cast_string_arg(fillchar, a.dtype)
+    width = np.maximum(str_len(a), width)
+    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
+    out_dtype = f"{a.dtype.char}{width.max()}"
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
+
+    return ufunc(a, width, fillchar, out=out)
+
+
 def _just_dispatcher(a, width, fillchar=None):
     return (a,)
 
@@ -733,28 +804,7 @@ def center(a, width, fillchar=' '):
     array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
 
     """
-    width = np.asanyarray(width)
-
-    if not np.issubdtype(width.dtype, np.integer):
-        raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
-
-    a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
-
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
-
-    if np.result_type(a, fillchar).char == "T":
-        return _center(a, width, fillchar)
-
-    fillchar = fillchar.astype(a.dtype, copy=False)
-    width = np.maximum(str_len(a), width)
-    out_dtype = f"{a.dtype.char}{width.max()}"
-    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
-    out = np.empty_like(a, shape=shape, dtype=out_dtype)
-
-    return _center(a, width, fillchar, out=out)
+    return _just(_center, a, width, fillchar)
 
 
 @set_module("numpy.strings")
@@ -799,27 +849,7 @@ def ljust(a, width, fillchar=' '):
     array(['aAaAaA   ', '  aA     ', 'abBABba  '], dtype='<U9')
 
     """
-    width = np.asanyarray(width)
-    if not np.issubdtype(width.dtype, np.integer):
-        raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
-
-    a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
-
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
-
-    if np.result_type(a, fillchar).char == "T":
-        return _ljust(a, width, fillchar)
-
-    fillchar = fillchar.astype(a.dtype, copy=False)
-    width = np.maximum(str_len(a), width)
-    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
-    out_dtype = f"{a.dtype.char}{width.max()}"
-    out = np.empty_like(a, shape=shape, dtype=out_dtype)
-
-    return _ljust(a, width, fillchar, out=out)
+    return _just(_ljust, a, width, fillchar)
 
 
 @set_module("numpy.strings")
@@ -864,27 +894,7 @@ def rjust(a, width, fillchar=' '):
     array(['   aAaAaA', '     aA  ', '  abBABba'], dtype='<U9')
 
     """
-    width = np.asanyarray(width)
-    if not np.issubdtype(width.dtype, np.integer):
-        raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
-
-    a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar)
-
-    if np.any(str_len(fillchar) != 1):
-        raise TypeError(
-            "The fill character must be exactly one character long")
-
-    if np.result_type(a, fillchar).char == "T":
-        return _rjust(a, width, fillchar)
-
-    fillchar = fillchar.astype(a.dtype, copy=False)
-    width = np.maximum(str_len(a), width)
-    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
-    out_dtype = f"{a.dtype.char}{width.max()}"
-    out = np.empty_like(a, shape=shape, dtype=out_dtype)
-
-    return _rjust(a, width, fillchar, out=out)
+    return _just(_rjust, a, width, fillchar)
 
 
 def _zfill_dispatcher(a, width):
@@ -1334,6 +1344,8 @@ def replace(a, old, new, count=-1):
     old_arr = np.asanyarray(old)
     new_dtype = getattr(new, 'dtype', None)
     new_arr = np.asanyarray(new)
+    _check_no_stringdtype_coercion(
+        "replace", a=arr, old=old_arr, new=new_arr)
 
     if np.result_type(arr, old_arr, new_arr).char == "T":
         # pass exact str objects so the ufunc converts them directly
@@ -1342,9 +1354,11 @@ def replace(a, old, new, count=-1):
         new = new if type(new) is str else new_arr
         return _replace(a, old, new, count)
 
+    # `old` and `new` are cast to the dtype of `a` unless they are arrays or
+    # NumPy scalars. This is questionable, see _cast_string_arg.
     a_dt = arr.dtype
-    old = old_arr.astype(old_dtype or a_dt.char, copy=False)
-    new = new_arr.astype(new_dtype or a_dt.char, copy=False)
+    old = _cast_string_arg(old_arr, old_dtype or a_dt.char)
+    new = _cast_string_arg(new_arr, new_dtype or a_dt.char)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
@@ -1392,8 +1406,13 @@ def _join(sep, seq):
     array(['g-h-c', 'o.s.d'], dtype='<U5')  # doctest: +SKIP
 
     """
+    sep, sep_dtype = _string_array_and_dtype(sep)
+    seq, seq_dtype = _string_array_and_dtype(seq)
+    output_dtype = np.object_
+    if sep_dtype.char == "T" or seq_dtype.char == "T":
+        output_dtype = np.result_type(sep_dtype, seq_dtype)
     return _to_bytes_or_str_array(
-        _vec_string(sep, np.object_, 'join', (seq,)), seq)
+        _vec_string(sep, output_dtype, 'join', (seq,)), seq)
 
 
 def _split_dispatcher(a, sep=None, maxsplit=None):
@@ -1533,6 +1552,22 @@ def _splitlines(a, keepends=None):
         a, np.object_, 'splitlines', _clean_args(keepends))
 
 
+def _prepare_partition(func, a, sep):
+    a_arr = np.asanyarray(a)
+    sep_arr = np.asanyarray(sep)
+    _check_no_stringdtype_coercion(func, a=a_arr, sep=sep_arr)
+
+    if _use_variable_stringdtype(a_arr, sep_arr):
+        # pass exact str objects so the ufunc converts them directly
+        a = a if type(a) is str else a_arr
+        sep = sep if type(sep) is str else sep_arr
+        return a, sep, True
+
+    # Any `sep` is cast to the dtype of `a`. This is questionable, see
+    # _cast_string_arg.
+    return a_arr, _cast_string_arg(sep_arr, a_arr.dtype.char), False
+
+
 def _partition_dispatcher(a, sep):
     return (a,)
 
@@ -1581,17 +1616,10 @@ def partition(a, sep):
      array(['is nice!'], dtype='<U8'))
 
     """
-    a_arr = np.asanyarray(a)
-    sep_arr = np.asanyarray(sep)
-
-    if np.result_type(a_arr, sep_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else a_arr
-        sep = sep if type(sep) is str else sep_arr
+    a, sep, variable = _prepare_partition("partition", a, sep)
+    if variable:
         return _partition(a, sep)
 
-    a = a_arr
-    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1654,17 +1682,10 @@ def rpartition(a, sep):
      array(['', '  ', 'Bba'], dtype='<U3'))
 
     """
-    a_arr = np.asanyarray(a)
-    sep_arr = np.asanyarray(sep)
-
-    if np.result_type(a_arr, sep_arr).char == "T":
-        # pass exact str objects so the ufunc converts them directly
-        a = a if type(a) is str else a_arr
-        sep = sep if type(sep) is str else sep_arr
+    a, sep, variable = _prepare_partition("rpartition", a, sep)
+    if variable:
         return _rpartition(a, sep)
 
-    a = a_arr
-    sep = sep_arr.astype(a_arr.dtype.char, copy=False)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1726,17 +1747,12 @@ def translate(a, table, deletechars=None):
     array(['112 3', '1231', '2311'], dtype='<U5')
 
     """
-    a_arr = np.asarray(a)
-    if issubclass(a_arr.dtype.type, np.str_):
-        return _vec_string(
-            a_arr, a_arr.dtype, 'translate', (table,))
+    a, dtype = _string_array_and_dtype(a, subok=False)
+    if issubclass(dtype.type, np.str_):
+        return _vec_string(a, dtype, 'translate', (table,))
     else:
         return _vec_string(
-            a_arr,
-            a_arr.dtype,
-            'translate',
-            [table] + _clean_args(deletechars)
-        )
+            a, dtype, 'translate', [table] + _clean_args(deletechars))
 
 @set_module("numpy.strings")
 def slice(a, start=None, stop=np._NoValue, step=None, /):
