@@ -1,0 +1,12 @@
+- `numpy.strings.mod`, `numpy.char.join`, `numpy.char.split`,
+  `numpy.char.rsplit`, and `numpy.strings.translate` preserve Python strings
+  containing NULs. For `numpy.dtypes.StringDType` input, the fill character of
+  `numpy.strings.center`, `numpy.strings.ljust`, and `numpy.strings.rjust` may
+  also be a NUL.
+
+- `numpy.char.join` returns `numpy.dtypes.StringDType` when either operand has
+  that dtype, and rejects incompatible missing-value settings.
+
+- `numpy.strings.encode` no longer truncates encoding and error-handler names
+  at a NUL for `numpy.dtypes.StringDType` input. On CPython such names now
+  raise ``ValueError``, as they do for `str.encode`.

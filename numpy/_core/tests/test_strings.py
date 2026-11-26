@@ -1530,6 +1530,10 @@ class TestMethodsWithUnicode:
 
 
 class TestMixedTypeMethods:
+    def test_partition_bytes_requires_promotable_separator(self):
+        with pytest.raises(np.exceptions.DTypePromotionError):
+            np.strings.partition(np.array(b"2020"), np.datetime64("2020"))
+
     def test_center(self):
         buf = np.array("😊", dtype="U")
         fill = np.array("*", dtype="S")

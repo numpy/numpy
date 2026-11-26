@@ -336,6 +336,38 @@ def test_pystr_scalar_ufunc_operand_any_instance(dtype):
     assert (arr + "x\0")[0] == "abc\0x\0"
 
 
+@pytest.mark.parametrize("name, value, args", [
+    ("join", "abc\0", ("\0", None)),
+    ("join", "abc\0", (None, "ab\0")),
+    ("split", "abc\0", (None, "c\0")),
+    ("rsplit", "abc\0", (None, "c\0")),
+    ("translate", "abc\0", (None, "x" * ord("a") + "\0")),
+    ("translate", "x" * ord("a") + "b", ("a\0", None)),
+    ("center", "abc\0", (None, 8, "\0")),
+    ("ljust", "abc\0", (None, 8, "\0")),
+    ("rjust", "abc\0", (None, 8, "\0")),
+    ("mod", "%s", (None, "v\0")),
+    ("mod", "%04d\0", (None, 12)),
+])
+def test_string_methods_preserve_nuls_with_python_str(name, value, args):
+    # Use the corresponding Python method as the reference for the exact string.
+    array = np.array([value], dtype="T")
+    func = getattr(np.char if name in ONLY_IN_NP_CHAR else np.strings, name)
+    pyfunc = operator.mod if name == "mod" else getattr(str, name)
+    expected = call_func(pyfunc, args, value, sanitize=False)
+    result = call_func(func, args, array, sanitize=False)
+    # Split results are lists stored in individual object-array elements.
+    assert result[0] == expected
+
+
+@pytest.mark.skipif(IS_PYPY, reason="str.encode accepts NULs in codec names")
+@pytest.mark.parametrize("args", [("utf-8\0",), ("ascii", "ignore\0")])
+def test_encode_rejects_nul_in_codec_names(args):
+    arr = np.array(["abc"], dtype="T")
+    with pytest.raises(ValueError, match="embedded null"):
+        np.strings.encode(arr, *args)
+
+
 def test_pystr_scalar_full_copyto_where_preserve_nulls(dtype):
     scalar = "x\0"
 
@@ -2491,6 +2523,20 @@ def test_replace_promoter():
         assert answer_arr.dtype.char == "T"
 
 
+@pytest.mark.parametrize("operand", [
+    np.array(["b", "x"], dtype=object), None, 1])
+def test_partition_replace_reject_non_string_operands(operand):
+    a = np.array(["abc", "xbx"], dtype="T")
+    for func, args in [
+        (np.strings.partition, (operand,)),
+        (np.strings.rpartition, (operand,)),
+        (np.strings.replace, (operand, "x")),
+        (np.strings.replace, ("b", operand)),
+    ]:
+        with pytest.raises(TypeError, match="Convert it explicitly"):
+            func(a, *args)
+
+
 def test_center_promoter():
     arg = ["Hello", "planet!"]
     fillchar = "/"
@@ -2500,6 +2546,18 @@ def test_center_promoter():
         )
         assert_array_equal(answer, ["//Hello//", "/planet!/"])
         assert answer.dtype.char == "T"
+
+
+def test_mod_output_follows_format_dtype():
+    # Like Python %, the format supplies the string and the payload supplies
+    # substitution values. NumPy uses the format dtype to store the result.
+    dtype = StringDType(na_object=None, coerce=False)
+    payload = np.array(["long payload"], dtype=StringDType(na_object="NA"))
+    # Fixed-width output includes the trailing NUL when sizing the field.
+    for fmt, expected in [("%s\0", "U13"), (np.array("%s", dtype=dtype), dtype)]:
+        result = np.strings.mod(fmt, payload)
+        assert_array_equal(result, np.array(["long payload"], dtype=expected),
+                           strict=True)
 
 
 DATETIME_INPUT = [
@@ -3095,12 +3153,16 @@ def test_unset_na_coercion():
         res = op + arr
         assert_array_equal(res, ["2hello", "2world"])
         assert res.dtype == expected
+        assert np.char.join(arr, op).dtype == expected
+        assert np.char.join(op, arr).dtype == expected
 
     # dtype instances with distinct explicitly set NA objects are incompatible
     for op_dtype in [StringDType(na_object=pd_NA), StringDType(na_object="")]:
         op = np.array("2", dtype=op_dtype)
         with pytest.raises(TypeError):
             arr + op
+        with pytest.raises(TypeError, match="incompatible"):
+            np.char.join(arr, op)
 
     # comparisons only consider the na_object
     for op_dtype in [None, StringDType(), StringDType(coerce=True),
@@ -3165,6 +3227,7 @@ def test_mixed_instance_null_handling():
 
 @pytest.mark.parametrize("op", [
     lambda a, b: np.add(a, b),
+    lambda a, b: np.char.join(a, b),
     lambda a, b: np.maximum(a, b),
     lambda a, b: np.minimum(a, b),
     lambda a, b: a == b,
