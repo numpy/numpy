@@ -6310,10 +6310,10 @@ class MaskedArray(ndarray):
         maskindices = getmask(indices)
         if maskindices is not nomask:
             indices = indices.filled(0)
-        # Get the data, promoting scalars to 0d arrays with [...] so that
+        # Get the data, promoting scalars to 0d arrays so that
         # .view works correctly
         if out is None:
-            out = _data.take(indices, axis=axis, mode=mode)[...].view(cls)
+            out = np.asanyarray(_data.take(indices, axis=axis, mode=mode)).view(cls)
         else:
             np.take(_data, indices, axis=axis, mode=mode, out=out)
         # Get the mask

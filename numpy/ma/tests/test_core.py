@@ -1695,6 +1695,13 @@ class TestMaskedArrayArithmetic:
         assert_(t[0] == 'abc')
         assert_(t[1] == 2)
         assert_(t[2] == 3)
+        # Test take on string and bytes arrays with scalar index (gh-9206)
+        s = array(['hello', 'world'], mask=[False, True])
+        assert_equal(take(s, 0), 'hello')
+        assert_equal(take(s, 1), masked)
+        b = array([b'hello', b'world'], mask=[False, True])
+        assert_equal(take(b, 0), b'hello')
+        assert_equal(take(b, 1), masked)
 
     def test_imag_real(self):
         # Check complex
