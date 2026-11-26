@@ -1,0 +1,8 @@
+Faster in-place integer binary ufuncs on clang builds
+-----------------------------------------------------
+Integer binary ufuncs such as `numpy.add`, `numpy.subtract` and
+`numpy.bitwise_and` are now vectorized when the output is the same array as
+one of the inputs (e.g. ``a += b``) on builds compiled with clang, which
+includes the macOS wheels. These operations were previously 4-19x slower than
+their out-of-place equivalents. Expressions that NumPy evaluates in place
+through temporary elision also benefit.
