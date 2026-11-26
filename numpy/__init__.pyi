@@ -3002,6 +3002,28 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         keepdims: py_bool = False,
         where: _ArrayLikeBool_co = True,
     ) -> ArrayT: ...
+    @overload  # dtype=<given>  (positional, deprecated)
+    @deprecated("The `dtype` argument of `ndarray.all()` is deprecated and will be removed in a future version. Use `np.logical_and.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
+    def all(
+        self,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
+        dtype: DTypeLike | None,
+        out: ndarray | None = None,
+        keepdims: py_bool = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> Any: ...
+    @overload  # dtype=<given>  (keyword, deprecated)
+    @deprecated("The `dtype` argument of `ndarray.all()` is deprecated and will be removed in a future version. Use `np.logical_and.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
+    def all(
+        self,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
+        *,
+        dtype: DTypeLike | None,
+        out: ndarray | None = None,
+        keepdims: py_bool = False,
+        where: _ArrayLikeBool_co = True,
+    ) -> Any: ...
 
     # keep in sync with `ndarray.all` (above)
     @overload  # axis=None (default)
@@ -3112,6 +3134,28 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         keepdims: py_bool = False,
         where: _ArrayLikeBool_co = True,
     ) -> ArrayT: ...
+    @overload  # dtype=<given>  (positional, deprecated)
+    @deprecated("The `dtype` argument of `ndarray.any()` is deprecated and will be removed in a future version. Use `np.logical_or.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
+    def any(
+        self,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
+        dtype: DTypeLike | None,
+        out: ndarray | None = None,
+        keepdims: py_bool = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> Any: ...
+    @overload  # dtype=<given>  (keyword, deprecated)
+    @deprecated("The `dtype` argument of `ndarray.any()` is deprecated and will be removed in a future version. Use `np.logical_or.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
+    def any(
+        self,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
+        *,
+        dtype: DTypeLike | None,
+        out: ndarray | None = None,
+        keepdims: py_bool = False,
+        where: _ArrayLikeBool_co = True,
+    ) -> Any: ...
 
     # keep in sync with `sum` below (but without `timedelta64`)
     @override  # type: ignore[override]
@@ -11160,6 +11204,30 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         keepdims: SupportsIndex = False,
         where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
     ) -> ScalarT: ...
+    @overload
+    @deprecated("The `dtype` argument of `ndarray.all()` is deprecated and will be removed in a future version. Use `np.logical_and.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
+    def all(
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None,
+        dtype: DTypeLike | None,
+        out: ndarray | None = None,
+        keepdims: SupportsIndex = False,
+        *,
+        where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
+    ) -> Any: ...
+    @overload
+    @deprecated("The `dtype` argument of `ndarray.all()` is deprecated and will be removed in a future version. Use `np.logical_and.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
+    def all(
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None = None,
+        *,
+        dtype: DTypeLike | None,
+        out: ndarray | None = None,
+        keepdims: SupportsIndex = False,
+        where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
+    ) -> Any: ...
 
     @overload
     def any(
@@ -11181,6 +11249,30 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         keepdims: SupportsIndex = False,
         where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
     ) -> ScalarT: ...
+    @overload
+    @deprecated("The `dtype` argument of `ndarray.any()` is deprecated and will be removed in a future version. Use `np.logical_or.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
+    def any(
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None,
+        dtype: DTypeLike | None,
+        out: ndarray | None = None,
+        keepdims: SupportsIndex = False,
+        *,
+        where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
+    ) -> Any: ...
+    @overload
+    @deprecated("The `dtype` argument of `ndarray.any()` is deprecated and will be removed in a future version. Use `np.logical_or.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
+    def any(
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None = None,
+        *,
+        dtype: DTypeLike | None,
+        out: ndarray | None = None,
+        keepdims: SupportsIndex = False,
+        where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
+    ) -> Any: ...
 
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property
