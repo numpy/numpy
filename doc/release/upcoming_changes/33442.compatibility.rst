@@ -1,0 +1,2 @@
+* `numpy.intersect1d` now returns ``int64`` instead of ``float64`` for a signed
+  integer array and a ``uint64`` array, so the result is numerically exact.
