@@ -8459,7 +8459,7 @@ def inner(a, b):
     if fb.ndim == 0:
         fb = fb.reshape((1,))
     res = np.inner(fa, fb)
-    if hasattr(res, 'view'):
+    if isinstance(res, np.ndarray):
         return res.view(get_masked_subclass(a, b))
     return res
 
