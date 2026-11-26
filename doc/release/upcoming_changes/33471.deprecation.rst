@@ -1,8 +1,8 @@
 ``dtype`` argument of ``ndarray.any`` and ``ndarray.all`` is deprecated
 -----------------------------------------------------------------------
-The undocumented ``dtype`` argument of ``ndarray.any`` and ``ndarray.all`` is
-deprecated. Use ``np.logical_or.reduce(..., dtype=..., ...)`` or
-``np.logical_and.reduce(..., dtype=..., ...)`` instead.
+The previously undocumented ``dtype`` argument of ``ndarray.any`` and
+``ndarray.all`` is deprecated. Use ``np.logical_or.reduce(..., dtype=..., ...)``
+or ``np.logical_and.reduce(..., dtype=..., ...)`` instead.
 
 Until it is removed, ``dtype`` is the second positional argument, so passing
 ``out`` or ``keepdims`` positionally (e.g. ``a.any(axis, None, out)``) also
