@@ -31,7 +31,7 @@ jobs:
     name: Build wheel ${{ matrix.python }}-manylinux_riscv64-
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-24.04-riscv
+    runs-on: [ubuntu-24.04-riscv, rvv]
     strategy:
       fail-fast: false
       matrix:
