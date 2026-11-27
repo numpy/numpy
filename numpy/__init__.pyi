@@ -11838,7 +11838,16 @@ class integer(_IntegralMixin, _RoundMixin, number[_NBitT, int]):
     def __rxor__(self, other: _IntLike_co, /) -> integer: ...
 
 class signedinteger(integer[_NBitT]):
-    def __new__(cls, value: _ConvertibleToInt = 0, /) -> Self: ...
+    @overload
+    def __new__[ShapeT: _AtLeast1D](cls, value: ndarray[ShapeT, _dtype], /) -> ndarray[ShapeT, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
+    def __new__(cls, value: _FloatLike_co | _CharLike_co = 0, /) -> Self: ...
+    @overload
+    def __new__(cls, value: Sequence[_FloatLike_co | _CharLike_co], /) -> ndarray[_1D, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
+    def __new__(cls, value: Sequence[Sequence[_FloatLike_co]], /) -> ndarray[_2D, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
+    def __new__(cls, value: _NestedSequence[_ConvertibleToInt], /) -> NDArray[Self]: ...  # type: ignore[misc]
 
     # arithmetic ops
 
@@ -13181,7 +13190,16 @@ else:
 longlong = int64
 
 class unsignedinteger(integer[_NBitT]):
-    def __new__(cls, value: _ConvertibleToInt = 0, /) -> Self: ...
+    @overload
+    def __new__[ShapeT: _AtLeast1D](cls, value: ndarray[ShapeT, _dtype], /) -> ndarray[ShapeT, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
+    def __new__(cls, value: _FloatLike_co | _CharLike_co = 0, /) -> Self: ...
+    @overload
+    def __new__(cls, value: Sequence[_FloatLike_co | _CharLike_co], /) -> ndarray[_1D, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
+    def __new__(cls, value: Sequence[Sequence[_FloatLike_co]], /) -> ndarray[_2D, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
+    def __new__(cls, value: _NestedSequence[_ConvertibleToInt], /) -> NDArray[Self]: ...  # type: ignore[misc]
 
     # arithmetic ops
 
@@ -14404,7 +14422,16 @@ class inexact(number[_NBitT, _InexactItemT_co], Generic[_NBitT, _InexactItemT_co
     def __new__(cls, value: _ConvertibleToFloat | None = 0, /) -> Self: ...
 
 class floating(_RealMixin, _RoundMixin, inexact[_NBitT, float]):
+    @overload
+    def __new__[ShapeT: _AtLeast1D](cls, value: ndarray[ShapeT, _dtype], /) -> ndarray[ShapeT, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
     def __new__(cls, value: _ConvertibleToFloat | None = 0, /) -> Self: ...
+    @overload
+    def __new__(cls, value: Sequence[_FloatLike_co | _CharLike_co | None], /) -> ndarray[_1D, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
+    def __new__(cls, value: Sequence[Sequence[_FloatLike_co | None]], /) -> ndarray[_2D, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
+    def __new__(cls, value: _NestedSequence[_ConvertibleToFloat | None], /) -> NDArray[Self]: ...  # type: ignore[misc]
 
     # arithmetic ops
 
@@ -15210,6 +15237,8 @@ float128 = longdouble
 
 class complexfloating(inexact[_NBitT1, complex], Generic[_NBitT1, _NBitT2]):
     @overload
+    def __new__[ShapeT: _AtLeast1D](cls, real: ndarray[ShapeT, _dtype], /) -> ndarray[ShapeT, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
     def __new__(
         cls,
         real: complex | SupportsComplex | SupportsFloat | SupportsIndex = 0,
@@ -15218,6 +15247,12 @@ class complexfloating(inexact[_NBitT1, complex], Generic[_NBitT1, _NBitT2]):
     ) -> Self: ...
     @overload
     def __new__(cls, real: _ConvertibleToComplex | None = 0, /) -> Self: ...
+    @overload
+    def __new__(cls, real: Sequence[_NumberLike_co | _CharLike_co | None], /) -> ndarray[_1D, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
+    def __new__(cls, real: Sequence[Sequence[_NumberLike_co | None]], /) -> ndarray[_2D, _dtype[Self]]: ...  # type: ignore[misc]
+    @overload
+    def __new__(cls, real: _NestedSequence[_ConvertibleToComplex | None], /) -> NDArray[Self]: ...  # type: ignore[misc]
 
     @property
     def real(self) -> floating[_NBitT1]: ...
