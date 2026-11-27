@@ -80,6 +80,33 @@ to use these file formats but use an extension specific to the
 application. In the absence of an obvious alternative, however,
 we suggest using ``.npy`` and ``.npz``.
 
+NPZ container format
+--------------------
+
+The ``.npz`` format is a ZIP archive containing one ``.npy`` file for each
+array. The member name is formed by appending ``.npy`` to the array name.
+Arrays passed as keyword arguments use their keyword names. Arrays passed as
+positional arguments use the names ``arr_0``, ``arr_1``, and so on. Keyword
+arguments are written before positional arguments, and each group follows the
+order in which the arguments are supplied.
+
+The :func:`numpy.savez` function stores each member without compression,
+using ``ZIP_STORED``. The :func:`numpy.savez_compressed` function stores each
+member using DEFLATE compression, using the default compression settings of
+Python's :mod:`zipfile` module.
+
+NumPy enables ZIP64 support for the archive and forces ZIP64 support when
+writing each member. The ZIP member metadata, including timestamps and other
+platform-dependent fields, is otherwise provided by Python's
+:mod:`zipfile` implementation. These metadata fields are not part of the
+NumPy ``.npz`` array representation.
+
+Consequently, NumPy does not guarantee that independently created ``.npz``
+files are byte-for-byte identical, even when they contain equivalent arrays.
+Applications that require reproducible byte streams should create and
+normalize the ZIP container explicitly rather than relying on the incidental
+metadata produced by ``savez`` or ``savez_compressed``.
+
 Version numbering
 -----------------
 
