@@ -1,0 +1,8 @@
+python module gh33220sig
+    interface
+        subroutine foo(s)
+            character*(*) intent(in) :: s
+            callstatement printf("a\"!b %s\n", s); (*f2py_func)(s, slen(s)) ! comment
+        end subroutine foo
+    end interface
+end python module gh33220sig

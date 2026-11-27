@@ -563,6 +563,62 @@ class TestParamParseNestedParens:
         assert vs["dimension"] == ["26", "1800"]
 
 
+class TestBackslashInLiteral:
+    # gh-33220: a backslash is not an escape in a Fortran character
+    # literal, so 'c:\\' ends at its closing quote.
+    def test_mask_string_literals(self):
+        mask = crackfortran.mask_string_literals
+        assert mask(r"len('c:\'//n//'x')") == "len(''//n//'')"
+        assert mask(r'"c:\"//n') == "''//n"
+        # a doubled quote is the Fortran escape
+        assert mask("'it''s'//n") == "''//n"
+
+    def test_split_by_unquoted_fortran(self):
+        split = crackfortran.split_by_unquoted
+        line = r"p = 'c:\' ! windows"
+        assert split(line, "!", c_escapes=False) == (r"p = 'c:\' ", "! windows")
+        assert split("p = 'it''s' ! x", "!", c_escapes=False) == (
+            "p = 'it''s' ", "! x")
+
+    def test_split_by_unquoted_c(self):
+        # C snippets in signature files keep the backslash escape
+        split = crackfortran.split_by_unquoted
+        line = r'printf("a\"!b") ! comment'
+        assert split(line, "!", c_escapes=True) == (
+            r'printf("a\"!b") ', "! comment")
+
+    @pytest.mark.parametrize("fname", ["gh33220.f90", "gh33220.f"])
+    def test_length_with_trailing_backslash(self, fname):
+        fpath = util.getpath("tests", "src", "crackfortran", fname)
+        mod = crackfortran.crackfortran([str(fpath)])
+        assert mod[0]["name"] in ("probe", "fixedprobe")
+        assert sorted(mod[0]["vars"]) == ["got", "n"]
+
+    def test_signature_file_keeps_c_escapes(self):
+        fpath = util.getpath("tests", "src", "crackfortran", "gh33220.pyf")
+        mod = crackfortran.crackfortran([str(fpath)])
+        foo = mod[0]["body"][0]["body"][0]
+        assert foo["name"] == "foo"
+        call = foo["f2pyenhancements"]["callstatement"]
+        assert r'"a\"!b %s\n"' in call
+        assert "comment" not in call
+
+
+@pytest.mark.slow
+class TestBackslashInLiteralBuild(util.F2PyTest):
+    # gh-33220
+    sources = [util.getpath("tests", "src", "crackfortran", "gh33220.f90"),
+               util.getpath("tests", "src", "crackfortran", "gh33220.f")]
+
+    def test_free_form(self):
+        assert self.module.probe("ABCD") == 7
+        assert self.module.probe("Z") == 4
+        assert self.module.doubled("ABCD") == 8
+
+    def test_fixed_form(self):
+        assert self.module.fixedprobe("ABCD") == 7
+
+
 @pytest.mark.slow
 class TestLowerF2PYDirective(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh27697.f90")]
