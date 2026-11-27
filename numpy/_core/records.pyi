@@ -5,6 +5,7 @@ from typing import (
     ClassVar,
     Literal,
     Protocol,
+    Self,
     SupportsIndex,
     overload,
     type_check_only,
@@ -19,6 +20,7 @@ from numpy._typing import (
     NDArray,
     _AnyShape,
     _ArrayLikeVoid_co,
+    _DTypeLikeVoid,
     _NestedSequence,
     _Shape,
     _ShapeLike,
@@ -55,6 +57,15 @@ class record(np.void):  # type: ignore[misc]
     __name__: ClassVar[Literal["record"]] = "record"
     __module__: Literal["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
 
+    # these __new__ overrides are only needed as a mypy workaround
+    @overload
+    def __new__(cls, length: int | np.integer, /, dtype: None = None) -> Self: ...
+    @overload
+    def __new__(cls, data: bytes | np.void | np.bool_, /, dtype: None = None) -> np.void: ...  # type:ignore[misc]
+    @overload
+    def __new__(cls, length_or_data: object, /, dtype: _DTypeLikeVoid | str) -> np.void: ...  # type:ignore[misc]
+
+    #
     def pprint(self) -> str: ...
 
     def __getattribute__(self, attr: str, /) -> Any: ...
