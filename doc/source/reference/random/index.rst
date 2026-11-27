@@ -178,3 +178,56 @@ Original Source of the Generator and BitGenerators
 
 This package was developed independently of NumPy and was integrated in version
 1.17.0. The original repo is at https://github.com/bashtage/randomgen.
+
+API reference
+-------------
+
+Recommended Generator interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `Generator` class is the recommended interface for generating
+random numbers. Use `default_rng` to create a new generator.
+See :doc:`generator` for all of its methods and distributions.
+
+.. autosummary::
+
+   default_rng
+   Generator
+
+BitGenerators
+~~~~~~~~~~~~~
+
+BitGenerators provide the stream of random bits used by `Generator`.
+See :doc:`bit_generators/index` for the attributes and methods of each.
+
+.. autosummary::
+
+   BitGenerator
+   MT19937
+   PCG64
+   PCG64DXSM
+   Philox
+   SFC64
+
+Seeding
+~~~~~~~
+
+`SeedSequence` turns a seed into high-quality initial states for
+BitGenerators. See :ref:`seeding_and_entropy` for usage.
+
+.. autosummary::
+
+   SeedSequence
+
+Legacy interface
+~~~~~~~~~~~~~~~~
+
+The `RandomState` class is the legacy interface for generating random
+numbers. It is frozen and kept for backward compatibility; new code
+should use `Generator`. See :doc:`legacy` for the methods of
+`RandomState` and the functions in `numpy.random` that use a global
+`RandomState` instance.
+
+.. autosummary::
+
+   RandomState
