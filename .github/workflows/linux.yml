@@ -53,7 +53,7 @@ jobs:
     - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: ${{ matrix.version }}
-    - uses: ./.github/meson_actions
+    - uses: $/.github/meson_actions
 
   debug:
     needs: [smoke_test]
@@ -102,7 +102,7 @@ jobs:
     - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: ${{ matrix.version }}
-    - uses: ./.github/meson_actions
+    - uses: $/.github/meson_actions
 
   full:
     # Install as editable, then run the full test suite with code coverage

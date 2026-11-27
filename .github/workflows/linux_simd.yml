@@ -71,7 +71,7 @@ jobs:
     - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: '3.12'
-    - uses: ./.github/meson_actions
+    - uses: $/.github/meson_actions
       name: Build/Test
 
   old_gcc:
@@ -102,7 +102,7 @@ jobs:
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 2
         sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 2
 
-    - uses: ./.github/meson_actions
+    - uses: $/.github/meson_actions
       name: Build/Test against gcc-10
 
   arm64_simd:
@@ -177,7 +177,7 @@ jobs:
     - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
         python-version: "${{ matrix.BUILD_PROP[2] }}"
-    - uses: ./.github/meson_actions
+    - uses: $/.github/meson_actions
       name: Build/Test
 
   intel_sde_avx512:
