@@ -217,7 +217,7 @@ cdef class MT19937(BitGenerator):
         Returns a new bit generator with the state jumped
 
         The state of the returned bit generator is jumped as-if
-        2**(128 * jumps) random numbers have been generated.
+        jumps * 2**128 random numbers have been generated.
 
         Parameters
         ----------
