@@ -9236,6 +9236,7 @@ class TestDotFamilyFallback:
             qx = fx(q(x))
             assert not qx.flags.c_contiguous
             got = np.dot(qx, fy(q(y)))
+            assert got.flags.c_contiguous
             assert_array_equal(got.astype(np.float64), np.dot(fx(x), fy(y)),
                                strict=True)
 
@@ -9291,11 +9292,10 @@ class TestDotFamilyFallback:
         x, y = q(a), q(b)
 
         # MaskedArray's gufunc wrapping combines input masks elementwise.
-        mx = np.ma.array(x[:, :2], mask=[[0, 1], [0, 0]])
-        my = np.ma.array(y[:2, :2])
-        res = np.dot(mx, my)
-        assert type(res) is np.ma.MaskedArray
-        assert_array_equal(res.data.astype(np.float64), a[:, :2] @ b[:2, :2])
+        mx = np.ma.array(x, mask=[[0, 1, 0], [0, 0, 0]])
+        my = np.ma.array(y)
+        with pytest.raises(ValueError, match="broadcast"):
+            np.dot(mx, my)
         assert type(np.dot(x.view(Sub), y.view(Sub))) is Sub
         assert type(np.dot(x, y.view(Sub))) is Sub
         vs = q(v).view(Sub)
@@ -9304,7 +9304,12 @@ class TestDotFamilyFallback:
         assert res.shape == ()
         assert float(res) == v @ v
 
-    def test_ufunc_override(self, q):
+    @pytest.mark.parametrize("dtype", ["quad", "U1", "S1", "V1", "M8[s]"])
+    def test_ufunc_override(self, dtype):
+        if dtype == "quad":
+            dtype = importorskip_quaddtype().QuadPrecDType()
+        q = lambda x: np.asarray(x).astype(dtype)
+
         class Override(np.ndarray):
             def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
                 return ufunc.__name__, inputs, kwargs
@@ -9317,12 +9322,13 @@ class TestDotFamilyFallback:
         xo = x.view(Override)
 
         name, inputs, kwargs = np.dot(xo, y)
-        assert name == "matmul" and kwargs == {"dtype": type(x.dtype)}
+        assert name == "matmul" and kwargs == {
+            "dtype": type(x.dtype), "order": "C"}
         assert inputs[0] is xo and type(inputs[1]) is np.ndarray
         assert np.inner(xo, x)[0] == "matmul"
         name, inputs, kwargs = np.vdot(xo, xo)
         assert name == "vecdot" and inputs[0].shape == (6,)
-        assert kwargs == {"dtype": type(x.dtype)}
+        assert kwargs == {"dtype": type(x.dtype), "order": "C"}
 
         out = q(np.empty((2, 4))).view(Override)
         name, _, kwargs = np.dot(x, y, out)
@@ -9333,6 +9339,20 @@ class TestDotFamilyFallback:
             np.dot(xo, q(np.ones((2, 3, 4))))
         for func, b in [(np.dot, y), (np.inner, x), (np.vdot, x)]:
             assert_raises(TypeError, func, x.view(NoUfunc), b)
+
+    @pytest.mark.parametrize("func", [np.dot, np.inner, np.vdot])
+    @pytest.mark.parametrize("hook", ["__array_ufunc__", "__array_wrap__"])
+    def test_subclass_no_loop_error_chained(self, q, func, hook):
+        def fail(*args, **kwargs):
+            np.multiply(np.array("a"), np.array("b"))
+
+        sub = type("Sub", (np.ndarray,), {hook: fail})
+        a = q([1, 2]).view(sub)
+        with pytest.raises(ValueError, match="not available") as excinfo:
+            func(a, a)
+        context = excinfo.value.__context__
+        assert isinstance(context, _UFuncNoLoopError)
+        assert context.ufunc is np.multiply
 
     def test_c_api_returns_array(self, q):
         v = q(np.arange(3.))

@@ -36,6 +36,8 @@ extern "C" {
     F(convert_if_no_array)  \
     F(cpu)                  \
     F(dtype)                \
+    F(order)                \
+    F(C)                    \
     F(array_err_msg_substr) \
     F(out)                  \
     F(__dlpack__)           \
@@ -165,6 +167,7 @@ extern "C" {
     F(kwnames_dtype)                                                            \
     F(kwnames_out)                                                              \
     F(kwnames_dtype_out)                                                        \
+    F(kwnames_dtype_order_out)                                                  \
                                                                                 \
     /*                                                                          \
      * Used in __imatmul__ to avoid building tuples inline                      \

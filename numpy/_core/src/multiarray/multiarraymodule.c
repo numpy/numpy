@@ -974,15 +974,18 @@ static PyObject *
 call_dot_gufunc(PyObject *gufunc, PyArrayObject *a, PyArrayObject *b,
                 PyArray_Descr *dtype, PyObject *out, const char *noloop_msg)
 {
+    /* Keep allocation consistent with dot's C-contiguous out rule. */
     PyObject *args[] = {
-        (PyObject *)a, (PyObject *)b, (PyObject *)NPY_DTYPE(dtype), out};
-    PyObject *kwnames = out == NULL
-            ? _npy_module_state->static_pydata.kwnames_dtype
-            : _npy_module_state->static_pydata.kwnames_dtype_out;
+        (PyObject *)a, (PyObject *)b, (PyObject *)NPY_DTYPE(dtype),
+        _npy_module_state->interned_str.C, out == NULL ? Py_None : out};
+    PyObject *kwnames = _npy_module_state->static_pydata.kwnames_dtype_order_out;
     PyObject *res = PyObject_Vectorcall(gufunc, args, 2, kwnames);
     if (res == NULL && PyErr_ExceptionMatches(
             _npy_module_state->static_pydata._UFuncNoLoopError)) {
+        PyObject *exc, *val, *tb;
+        PyErr_Fetch(&exc, &val, &tb);
         PyErr_SetString(PyExc_ValueError, noloop_msg);
+        npy_PyErr_ChainExceptions(exc, val, tb);
     }
     return res;
 }
