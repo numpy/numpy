@@ -442,6 +442,53 @@ class TestHistogram:
         assert edges[0] == Z[0]
         assert edges[-1] == Z[-1]
 
+    @pytest.mark.parametrize("bins", [1, 10, "auto", "scott", "fd", "sturges"])
+    @pytest.mark.parametrize("value, dtype", [
+        (1e15, np.float64),
+        (1e16, np.float64),
+        (-1e20, np.float64),
+        (1e8, np.float32),
+        (1000, np.float16),
+        (2**60, np.int64),
+        (np.iinfo(np.int64).min, np.int64),
+        (np.iinfo(np.uint64).max, np.uint64),
+    ])
+    def test_constant_large_values(self, value, dtype, bins):
+        # gh-33498: expanding the range of constant data by 0.5 had no
+        # effect when 0.5 is below the floating point resolution
+        arr = np.full(10, value, dtype=dtype)
+        hist, edges = histogram(arr, bins=bins)
+        assert hist.sum() == arr.size
+        assert np.all(np.diff(edges) > 0)
+        assert edges[0] <= arr.min()
+        assert edges[-1] >= arr.max()
+
+    # 'scott' is left out, since np.std overflows for such large values
+    @pytest.mark.parametrize("bins", [1, 10, "auto", "fd", "sturges"])
+    @pytest.mark.parametrize("value, dtype", [
+        (1e300, np.float64),
+        (np.finfo(np.float64).max, np.float64),
+        (-np.finfo(np.float64).max, np.float64),
+        (np.finfo(np.float32).max, np.float32),
+        (np.finfo(np.float16).max, np.float16),
+    ])
+    def test_constant_extreme_values(self, value, dtype, bins):
+        # the expanded range must not overflow to inf
+        self.test_constant_large_values(value, dtype, bins)
+
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                       np.int8, np.int64])
+    def test_constant_small_values(self, dtype):
+        # for small values the range is still expanded by exactly 0.5
+        hist, edges = histogram(np.ones(10, dtype=dtype), bins=10)
+        assert_array_equal(hist, [0] * 5 + [10] + [0] * 4)
+        assert_allclose(edges[[0, -1]], [0.5, 1.5])
+
+    def test_constant_large_values_range(self):
+        hist, edges = histogram([1e20], bins=10, range=(1e20, 1e20))
+        assert hist.sum() == 1
+        assert np.all(np.diff(edges) > 0)
+
 class TestHistogramOptimBinNums:
     """
     Provide test coverage when using provided estimators for optimal number of
@@ -734,6 +781,14 @@ class TestHistogramdd:
         x = np.zeros((10, 2), int)
         hist, edges = histogramdd(x, bins=2)
         assert_array_equal(edges[0], np.array([-0.5, 0., 0.5]))
+
+    def test_identical_samples_large_values(self):
+        # gh-33498
+        x = np.full((10, 2), 1e20)
+        hist, edges = histogramdd(x, bins=2)
+        assert hist.sum() == 10
+        for e in edges:
+            assert np.all(np.diff(e) > 0)
 
     def test_empty(self):
         a, b = histogramdd([[], []], bins=([0, 1], [0, 1]))

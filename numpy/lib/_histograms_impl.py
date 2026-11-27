@@ -330,8 +330,28 @@ def _get_outer_edges(a, range):
 
     # expand empty range to avoid divide by zero
     if first_edge == last_edge:
-        first_edge = first_edge - 0.5
-        last_edge = last_edge + 0.5
+        dtype = np.result_type(first_edge, 1.0)
+        if np.issubdtype(dtype, np.inexact):
+            # Expand by 0.5 on each side, unless the value is so large that
+            # 0.5 is (close to) below the floating point resolution. In that
+            # case expand by a few units in the last place instead, which
+            # leaves room for at least the default 10 bins (gh-33498).
+            value = dtype.type(first_edge)
+            # spacing towards zero, which cannot overflow
+            abs_value = np.abs(value)
+            ulp = abs_value - np.nextafter(abs_value, 0)
+            half_width = np.maximum(dtype.type(0.5), 16 * ulp)
+            with np.errstate(over='ignore'):
+                first_edge = value - half_width
+                last_edge = value + half_width
+            # do not expand beyond the largest finite value
+            if not np.isfinite(first_edge):
+                first_edge = value
+            if not np.isfinite(last_edge):
+                last_edge = value
+        else:
+            first_edge = first_edge - 0.5
+            last_edge = last_edge + 0.5
 
     return first_edge, last_edge
 
