@@ -2898,89 +2898,89 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def all(
         self,
         axis: None = None,
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> bool_: ...
     @overload  # ?d, axis=<given>  (workaround overload)
     def all(
         self: ndarray[_JustND],
         axis: SupportsIndex | tuple[SupportsIndex, ...],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> NDArray[bool_]: ...
     @overload  # <=1d, axis=<single>
     def all(
         self: ndarray[_0D | _1D],
         axis: SupportsIndex | tuple[SupportsIndex],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> bool_: ...
     @overload  # 2d, axis=<single>
     def all(
         self: ndarray[_2D],
         axis: SupportsIndex | tuple[SupportsIndex],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_1D, _dtype[bool_]]: ...
     @overload  # 2d, axis=<double>
     def all(
         self: ndarray[_2D],
         axis: tuple[int, int],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> bool_: ...
     @overload  # 3d, axis=<single>
     def all(
         self: ndarray[_3D],
         axis: SupportsIndex | tuple[SupportsIndex],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_2D, _dtype[bool_]]: ...
     @overload  # 3d, axis=<double>
     def all(
         self: ndarray[_3D],
         axis: tuple[int, int],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_1D, _dtype[bool_]]: ...
     @overload  # 4d, axis=<single>
     def all(
         self: ndarray[_4D],
         axis: SupportsIndex | tuple[SupportsIndex],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_3D, _dtype[bool_]]: ...
     @overload  # 4d, axis=<double>
     def all(
         self: ndarray[_4D],
         axis: tuple[int, int],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_2D, _dtype[bool_]]: ...
     @overload  # keepdims=True
     def all(
         self,
         axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
-        *,
         out: None = None,
+        *,
         keepdims: L[True],
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_ShapeT_co, _dtype[bool_]]: ...
@@ -2988,11 +2988,20 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def all(
         self,
         axis: SupportsIndex | tuple[SupportsIndex, ...],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> NDArray[bool_] | Any: ...
+    @overload  # out=<given>  (positional)
+    def all[ArrayT: ndarray](
+        self,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
+        out: ArrayT,
+        keepdims: py_bool = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> ArrayT: ...
     @overload  # out=<given>  (keyword)
     def all[ArrayT: ndarray](
         self,
@@ -3002,117 +3011,95 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         keepdims: py_bool = False,
         where: _ArrayLikeBool_co = True,
     ) -> ArrayT: ...
-    @overload  # dtype=<given>  (positional, deprecated)
-    @deprecated("The `dtype` argument of `ndarray.all()` is deprecated and will be removed in a future version. Use `np.logical_and.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
-    def all(
-        self,
-        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
-        dtype: DTypeLike | None,
-        out: ndarray | None = None,
-        keepdims: py_bool = False,
-        *,
-        where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
-    @overload  # dtype=<given>  (keyword, deprecated)
-    @deprecated("The `dtype` argument of `ndarray.all()` is deprecated and will be removed in a future version. Use `np.logical_and.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
-    def all(
-        self,
-        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
-        *,
-        dtype: DTypeLike | None,
-        out: ndarray | None = None,
-        keepdims: py_bool = False,
-        where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
 
     # keep in sync with `ndarray.all` (above)
     @overload  # axis=None (default)
     def any(
         self,
         axis: None = None,
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> bool_: ...
     @overload  # ?d, axis=<given>  (workaround overload)
     def any(
         self: ndarray[_JustND],
         axis: SupportsIndex | tuple[SupportsIndex, ...],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> NDArray[bool_]: ...
     @overload  # <=1d, axis=<single>
     def any(
         self: ndarray[_0D | _1D],
         axis: SupportsIndex | tuple[SupportsIndex],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> bool_: ...
     @overload  # 2d, axis=<single>
     def any(
         self: ndarray[_2D],
         axis: SupportsIndex | tuple[SupportsIndex],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_1D, _dtype[bool_]]: ...
     @overload  # 2d, axis=<double>
     def any(
         self: ndarray[_2D],
         axis: tuple[int, int],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> bool_: ...
     @overload  # 3d, axis=<single>
     def any(
         self: ndarray[_3D],
         axis: SupportsIndex | tuple[SupportsIndex],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_2D, _dtype[bool_]]: ...
     @overload  # 3d, axis=<double>
     def any(
         self: ndarray[_3D],
         axis: tuple[int, int],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_1D, _dtype[bool_]]: ...
     @overload  # 4d, axis=<single>
     def any(
         self: ndarray[_4D],
         axis: SupportsIndex | tuple[SupportsIndex],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_3D, _dtype[bool_]]: ...
     @overload  # 4d, axis=<double>
     def any(
         self: ndarray[_4D],
         axis: tuple[int, int],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_2D, _dtype[bool_]]: ...
     @overload  # keepdims=True
     def any(
         self,
         axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
-        *,
         out: None = None,
+        *,
         keepdims: L[True],
         where: _ArrayLikeBool_co = True,
     ) -> ndarray[_ShapeT_co, _dtype[bool_]]: ...
@@ -3120,11 +3107,20 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def any(
         self,
         axis: SupportsIndex | tuple[SupportsIndex, ...],
-        *,
         out: None = None,
         keepdims: L[False] = False,
+        *,
         where: _ArrayLikeBool_co = True,
     ) -> NDArray[bool_] | Any: ...
+    @overload  # out=<given>  (positional)
+    def any[ArrayT: ndarray](
+        self,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
+        out: ArrayT,
+        keepdims: py_bool = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> ArrayT: ...
     @overload  # out=<given>  (keyword)
     def any[ArrayT: ndarray](
         self,
@@ -3134,28 +3130,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         keepdims: py_bool = False,
         where: _ArrayLikeBool_co = True,
     ) -> ArrayT: ...
-    @overload  # dtype=<given>  (positional, deprecated)
-    @deprecated("The `dtype` argument of `ndarray.any()` is deprecated and will be removed in a future version. Use `np.logical_or.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
-    def any(
-        self,
-        axis: SupportsIndex | tuple[SupportsIndex, ...] | None,
-        dtype: DTypeLike | None,
-        out: ndarray | None = None,
-        keepdims: py_bool = False,
-        *,
-        where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
-    @overload  # dtype=<given>  (keyword, deprecated)
-    @deprecated("The `dtype` argument of `ndarray.any()` is deprecated and will be removed in a future version. Use `np.logical_or.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
-    def any(
-        self,
-        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
-        *,
-        dtype: DTypeLike | None,
-        out: ndarray | None = None,
-        keepdims: py_bool = False,
-        where: _ArrayLikeBool_co = True,
-    ) -> Any: ...
 
     # keep in sync with `sum` below (but without `timedelta64`)
     @override  # type: ignore[override]
@@ -11189,11 +11163,21 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         self,
         /,
         axis: L[0, -1] | tuple[()] | None = None,
-        *,
         out: None = None,
         keepdims: SupportsIndex = False,
+        *,
         where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True
     ) -> bool_: ...
+    @overload
+    def all[ScalarT: generic](
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None,
+        out: ndarray[tuple[()], _dtype[ScalarT]],
+        keepdims: SupportsIndex = False,
+        *,
+        where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
+    ) -> ScalarT: ...
     @overload
     def all[ScalarT: generic](
         self,
@@ -11204,41 +11188,27 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         keepdims: SupportsIndex = False,
         where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
     ) -> ScalarT: ...
-    @overload
-    @deprecated("The `dtype` argument of `ndarray.all()` is deprecated and will be removed in a future version. Use `np.logical_and.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
-    def all(
-        self,
-        /,
-        axis: L[0, -1] | tuple[()] | None,
-        dtype: DTypeLike | None,
-        out: ndarray | None = None,
-        keepdims: SupportsIndex = False,
-        *,
-        where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
-    ) -> Any: ...
-    @overload
-    @deprecated("The `dtype` argument of `ndarray.all()` is deprecated and will be removed in a future version. Use `np.logical_and.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
-    def all(
-        self,
-        /,
-        axis: L[0, -1] | tuple[()] | None = None,
-        *,
-        dtype: DTypeLike | None,
-        out: ndarray | None = None,
-        keepdims: SupportsIndex = False,
-        where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
-    ) -> Any: ...
 
     @overload
     def any(
         self,
         /,
         axis: L[0, -1] | tuple[()] | None = None,
-        *,
         out: None = None,
         keepdims: SupportsIndex = False,
+        *,
         where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True
     ) -> bool_: ...
+    @overload
+    def any[ScalarT: generic](
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None,
+        out: ndarray[tuple[()], _dtype[ScalarT]],
+        keepdims: SupportsIndex = False,
+        *,
+        where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
+    ) -> ScalarT: ...
     @overload
     def any[ScalarT: generic](
         self,
@@ -11249,30 +11219,6 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         keepdims: SupportsIndex = False,
         where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
     ) -> ScalarT: ...
-    @overload
-    @deprecated("The `dtype` argument of `ndarray.any()` is deprecated and will be removed in a future version. Use `np.logical_or.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
-    def any(
-        self,
-        /,
-        axis: L[0, -1] | tuple[()] | None,
-        dtype: DTypeLike | None,
-        out: ndarray | None = None,
-        keepdims: SupportsIndex = False,
-        *,
-        where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
-    ) -> Any: ...
-    @overload
-    @deprecated("The `dtype` argument of `ndarray.any()` is deprecated and will be removed in a future version. Use `np.logical_or.reduce(..., dtype=..., ...)` instead. Until then, `dtype` is the second positional argument, so pass `out` and `keepdims` by keyword. (Deprecated NumPy 2.6)")
-    def any(
-        self,
-        /,
-        axis: L[0, -1] | tuple[()] | None = None,
-        *,
-        dtype: DTypeLike | None,
-        out: ndarray | None = None,
-        keepdims: SupportsIndex = False,
-        where: py_bool | bool_ | ndarray[tuple[()], _dtype[bool_]] = True,
-    ) -> Any: ...
 
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property

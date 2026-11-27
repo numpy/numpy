@@ -3489,9 +3489,9 @@ _array_method_doc('__deepcopy__', "memo, /",
     Used if :func:`copy.deepcopy` is called on an array.
     """)
 
-_array_method_doc('all', "axis=None, dtype=None, out=None, keepdims=False, *, where=True",
+_array_method_doc('all', "axis=None, out=None, keepdims=False, *, where=True",
     """
-    a.all(axis=None, dtype=<no value>, out=None, keepdims=<no value>, *, where=<no value>)
+    a.all(axis=None, out=None, keepdims=<no value>, *, where=<no value>)
 
     Returns True if all elements evaluate to True.
 
@@ -3500,19 +3500,11 @@ _array_method_doc('all', "axis=None, dtype=None, out=None, keepdims=False, *, wh
     See Also
     --------
     numpy.all : equivalent function
-
-    Notes
-    -----
-    .. deprecated:: 2.6
-        The ``dtype`` argument is deprecated. Use
-        ``np.logical_and.reduce(..., dtype=..., ...)`` instead. Until it is
-        removed, ``dtype`` is the second positional argument, so pass ``out``
-        and ``keepdims`` by keyword.
     """)
 
-_array_method_doc('any', "axis=None, dtype=None, out=None, keepdims=False, *, where=True",
+_array_method_doc('any', "axis=None, out=None, keepdims=False, *, where=True",
     """
-    a.any(axis=None, dtype=<no value>, out=None, keepdims=<no value>, *, where=<no value>)
+    a.any(axis=None, out=None, keepdims=<no value>, *, where=<no value>)
 
     Returns True if any of the elements of `a` evaluate to True.
 
@@ -3521,14 +3513,6 @@ _array_method_doc('any', "axis=None, dtype=None, out=None, keepdims=False, *, wh
     See Also
     --------
     numpy.any : equivalent function
-
-    Notes
-    -----
-    .. deprecated:: 2.6
-        The ``dtype`` argument is deprecated. Use
-        ``np.logical_or.reduce(..., dtype=..., ...)`` instead. Until it is
-        removed, ``dtype`` is the second positional argument, so pass ``out``
-        and ``keepdims`` by keyword.
     """)
 
 _array_method_doc('argmax', "axis=None, out=None, *, keepdims=False",
