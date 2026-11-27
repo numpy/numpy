@@ -2351,6 +2351,12 @@ class TestTensorsolve:
         x = np.linalg.tensorsolve(a, b)
         assert_allclose(np.tensordot(a, x, axes=len(x.shape)), b)
 
+    def test_negative_axes(self):
+        # gh-33488
+        a = np.eye(4).reshape(2, 2, 2, 2)
+        b = np.arange(4.).reshape(2, 2)
+        assert_allclose(linalg.tensorsolve(a, b, axes=(-1, -2)), b.T)
+
 
 def test_unsupported_commontype():
     # linalg gracefully handles unsupported type
