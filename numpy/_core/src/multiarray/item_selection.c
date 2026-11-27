@@ -953,7 +953,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     if (broadcast) {
         if (counts[0] < 0) {
             PyErr_SetString(PyExc_ValueError,
-                            "repeats may not contain negative values.");
+                            "repeats may not contain negative values");
             goto fail;
         }
         if (counts[0] > 0 && n > NPY_MAX_INTP / counts[0]) {
