@@ -958,8 +958,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
         }
         if (counts[0] > 0 && n > NPY_MAX_INTP / counts[0]) {
             PyErr_SetString(PyExc_ValueError,
-                    "array is too big; `arr.size * arr.dtype.itemsize` "
-                    "is larger than the maximum possible size.");
+                            "total number of repeats is too large");
             goto fail;
         }
         total = counts[0] * n;
@@ -973,8 +972,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
             }
             if (total > NPY_MAX_INTP - counts[j]) {
                 PyErr_SetString(PyExc_ValueError,
-                        "array is too big; `arr.size * arr.dtype.itemsize` "
-                        "is larger than the maximum possible size.");
+                                "total number of repeats is too large");
                 goto fail;
             }
             total += counts[j];
