@@ -1,0 +1,9 @@
+``searchsorted`` rejects mixed string/non-string inputs
+-------------------------------------------------------
+`numpy.searchsorted` (and `numpy.ndarray.searchsorted`) now raises a
+``TypeError`` when one input is a string array and the other a non-string
+array, for example ``np.searchsorted([1, 2, 3], ["1"])``.  Previously both
+inputs were silently promoted to a string dtype, so the values were compared
+as strings and incorrect indices were returned.  Pairings that promote to a
+non-legacy-string dtype (such as ``StringDType`` or ``object``) are
+unaffected.
