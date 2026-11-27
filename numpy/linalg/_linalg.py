@@ -309,7 +309,8 @@ def tensorsolve(a, b, axes=None):
     b : array_like
         Right-hand tensor, which can be of any shape.
     axes : tuple of ints, optional
-        Axes in `a` to reorder to the right, before inversion.
+        Axes in `a` to reorder to the right, before inversion. Negative
+        values count from the last axis.
         If None (default), no reordering is done.
 
     Returns
@@ -343,6 +344,7 @@ def tensorsolve(a, b, axes=None):
     an = a.ndim
 
     if axes is not None:
+        axes = normalize_axis_tuple(axes, an, argname="axes")
         allaxes = list(range(an))
         for k in axes:
             allaxes.remove(k)

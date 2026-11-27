@@ -2351,6 +2351,20 @@ class TestTensorsolve:
         x = np.linalg.tensorsolve(a, b)
         assert_allclose(np.tensordot(a, x, axes=len(x.shape)), b)
 
+    def test_negative_axes(self):
+        # gh-33488
+        a = np.random.randn(2, 3, 2, 3)
+        b = np.random.randn(2, 3)
+        expected = linalg.tensorsolve(a, b, axes=(0, 1))
+        for axes in [(-4, -3), (0, -3), (-4, 1)]:
+            assert_allclose(linalg.tensorsolve(a, b, axes=axes), expected)
+
+    @pytest.mark.parametrize("axes", [(0, 4), (-5, 1)])
+    def test_axes_out_of_bounds(self, axes):
+        a = np.ones((2, 3, 2, 3))
+        with assert_raises(np.exceptions.AxisError):
+            linalg.tensorsolve(a, np.ones((2, 3)), axes=axes)
+
 
 def test_unsupported_commontype():
     # linalg gracefully handles unsupported type
