@@ -131,7 +131,7 @@ jobs:
           echo "CCACHE_MAXSIZE=500M" >> "$GITHUB_ENV"
 
       - name: Set up ccache
-        uses: ./.github/ccache
+        uses: $/.github/ccache
         with:
           workflow_name: ${{ github.workflow }}
           job_name: ${{ github.job }}

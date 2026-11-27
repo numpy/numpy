@@ -114,7 +114,7 @@ jobs:
           python -m pip install . -v -Ccompile-args="-j2" -Csetup-args="-Dallow-noblas=true" 2>&1 | tee build.log
 
       - name: Check warnings
-        uses: ./.github/check-warnings
+        uses: $/.github/check-warnings
         with:
           log-file: ./build.log
           allowlist: ./.github/check-warnings/msvc-allowed-warnings.txt
