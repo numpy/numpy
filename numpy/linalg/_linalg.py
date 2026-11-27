@@ -345,6 +345,7 @@ def tensorsolve(a, b, axes=None):
     if axes is not None:
         allaxes = list(range(an))
         for k in axes:
+            k = normalize_axis_index(k, an)
             allaxes.remove(k)
             allaxes.insert(an, k)
         a = a.transpose(allaxes)
