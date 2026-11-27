@@ -94,9 +94,16 @@ class At(Benchmark):
         self.vals = rng.random(10_000_000, dtype=np.float64)
         self.idx = rng.integers(1000, size=10_000_000).astype(np.intp)
         self.res = np.zeros(1000, dtype=self.vals.dtype)
+        # rows summed per label, as in mini-batch k-means
+        self.rows = rng.random((16384, 200), dtype=np.float32)
+        self.labels = rng.integers(256, size=16384).astype(np.intp)
+        self.row_sums = np.zeros((256, 200), dtype=np.float32)
 
     def time_sum_at(self):
         np.add.at(self.res, self.idx, self.vals)
+
+    def time_sum_at_rows(self):
+        np.add.at(self.row_sums, self.labels, self.rows)
 
     def time_maximum_at(self):
         np.maximum.at(self.res, self.idx, self.vals)

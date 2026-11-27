@@ -6390,7 +6390,8 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
                     PyArrayObject *op1_array, PyArrayObject *op2_array,
                     PyArrayMethod_StridedLoop *strided_loop,
                     PyArrayMethod_Context *context,
-                    NpyAuxData *auxdata
+                    NpyAuxData *auxdata,
+                    npy_intp count, npy_intp const *strides
                     )
 {
     int buffersize;
@@ -6411,16 +6412,13 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
         NPY_BEGIN_THREADS;
     }
 
-    npy_intp strides[3] = {0, 0, 0};
     /*
-     * Iterate over first and second operands and call ufunc
-     * for each pair of inputs
+     * Iterate over first and second operands and call ufunc for each run of
+     * `count` elements (one element at a time unless `iter` has a subspace)
      */
-    for (npy_intp i = iter->size; i > 0; i--)
+    for (npy_intp i = 0; i < iter->size; i += count)
     {
         char *dataptr[3];
-        /* one element at a time, no stride required but read by innerloop */
-        npy_intp count = 1;
 
         /*
          * Set up data pointers for either one or two input operands.
@@ -6428,6 +6426,9 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
          */
         dataptr[0] = iter->dataptr;
         if (iter2 != NULL) {
+            if (count > 1) {
+                PyArray_ITER_GOTO1D(iter2, i);
+            }
             dataptr[1] = PyArray_ITER_DATA(iter2);
             dataptr[2] = iter->dataptr;
         }
@@ -6441,10 +6442,15 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
             break;
         }
 
-        PyArray_MapIterNext(iter);
-        if (iter2 != NULL) {
+        if (count > 1) {
+            /* move to the last element of the run, to then step past it */
+            iter->iter_count -= count - 1;
+            iter->subspace_ptrs[0] += (count - 1) * strides[0];
+        }
+        else if (iter2 != NULL) {
             PyArray_ITER_NEXT(iter2);
         }
+        PyArray_MapIterNext(iter);
     }
 
     NPY_END_THREADS;
@@ -6847,18 +6853,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     context.caller = (PyObject *)ufunc;
     context.method = ufuncimpl;
 
-    /* Use contiguous strides; if there is such a loop it may be faster */
-    npy_intp strides[3] = {
-            operation_descrs[0]->elsize, operation_descrs[1]->elsize, 0};
-    if (nop == 3) {
-        strides[2] = operation_descrs[2]->elsize;
-    }
-
-    NPY_ARRAYMETHOD_FLAGS flags;
-    if (ufuncimpl->get_strided_loop(&context, 1, 0, strides,
-            &strided_loop, &auxdata, &flags) < 0) {
-        goto fail;
-    }
     int fast_path = 1;
     /* check no casting, alignment */
     if (PyArray_DESCR(op1_array) != operation_descrs[0]) {
@@ -6879,6 +6873,41 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             fast_path = 0;
         }
     }
+
+    /*
+     * The inner loop is normally called for one element at a time. Use
+     * contiguous strides then; if there is such a loop it may be faster.
+     */
+    npy_intp count = 1;
+    npy_intp strides[3] = {
+            operation_descrs[0]->elsize, operation_descrs[1]->elsize, 0};
+    if (nop == 3) {
+        strides[2] = operation_descrs[2]->elsize;
+    }
+    if (fast_path && (iter->subspace_iter != NULL) && (iter->nd > 0)
+            && (iter->dimensions[iter->nd - 1] > 1)) {
+        /*
+         * Some dimensions of op1 are not indexed by an array (e.g. the
+         * indices select rows). The subspace is iterated in C order, so the
+         * last iteration dimension is the last of these unindexed dimensions.
+         * Its elements are distinct and evenly strided in both operands, so
+         * the inner loop can be called once per run along it.
+         */
+        count = iter->dimensions[iter->nd - 1];
+        strides[0] = iter->subspace_strides[0];
+        strides[1] = strides[0];
+        if (nop == 3) {
+            strides[1] = iter2->strides[iter->nd - 1];
+            strides[2] = strides[0];
+        }
+    }
+
+    NPY_ARRAYMETHOD_FLAGS flags;
+    if (ufuncimpl->get_strided_loop(&context, 1, 0, strides,
+            &strided_loop, &auxdata, &flags) < 0) {
+        goto fail;
+    }
+
     if (fast_path == 1) {
         /*
          * Try to use trivial loop (1d, no casting, aligned) if
@@ -6904,7 +6933,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         else {
             /* Couldn't use the fastest path, use the faster path */
             res = ufunc_at__fast_iter(ufunc, flags, iter, iter2, op1_array,
-                        op2_array, strided_loop, &context, auxdata);
+                        op2_array, strided_loop, &context, auxdata,
+                        count, strides);
         }
     } else {
         res = ufunc_at__slow_iter(ufunc, flags, iter, iter2, op1_array,

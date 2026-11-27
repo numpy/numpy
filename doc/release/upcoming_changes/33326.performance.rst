@@ -1,0 +1,6 @@
+``ufunc.at`` is faster when the indices select whole rows
+---------------------------------------------------------
+``ufunc.at`` now calls the inner loop once per selected row instead of once
+per element when at least one dimension of the target is not indexed by an
+array, as in ``np.add.at(sums, labels, rows)`` with a 2-D ``sums``, and no
+casting is needed. This case can be up to 30x faster.
