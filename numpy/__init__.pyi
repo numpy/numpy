@@ -6915,7 +6915,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[bool_]]: ...
     @overload  # 0d +timedelta64
-    def __lt__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+    def __lt__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
         other: _TD64Like_co,
         /,
@@ -6963,7 +6963,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[bool_]]: ...
     @overload  # 0d +timedelta64
-    def __le__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+    def __le__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
         other: _TD64Like_co,
         /,
@@ -7011,7 +7011,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[bool_]]: ...
     @overload  # 0d +timedelta64
-    def __gt__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+    def __gt__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
         other: _TD64Like_co,
         /,
@@ -7059,7 +7059,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[bool_]]: ...
     @overload  # 0d +timedelta64
-    def __ge__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+    def __ge__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
         other: _TD64Like_co,
         /,
@@ -7649,13 +7649,13 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[complex64]]: ...
     @overload  # Nd +m8, 0d|Nd ~m8
-    def __radd__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+    def __radd__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
         other: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
         /,
     ) -> ndarray[ShapeT, _dtype[timedelta64]]: ...
     @overload  # Nd ~M8, 0d|Nd +m8
-    def __radd__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+    def __radd__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[datetime64]],
         other: _TD64Like_co | ndarray[ShapeT, _dtype[timedelta64]],
         /,
@@ -8033,7 +8033,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[ShapeT, _dtype[complex64]]: ...
     @overload  # Nd +m8, 0d|Nd ~m8
-    def __rsub__[ShapeT: _Shape](  # type:ignore[has-type]  # mypy bug
+    def __rsub__[ShapeT: _Shape](
         self: ndarray[ShapeT, _dtype[timedelta64 | integer | bool_]],
         other: timedelta64 | ndarray[ShapeT, _dtype[timedelta64]],
         /,
@@ -12002,61 +12002,61 @@ class signedinteger(integer[_NBitT]):
 
     # bitwise ops
 
-    @override  # type: ignore[override]
+    @override
     @overload
     def __lshift__(self, other: int | int8 | bool_ | Self, /) -> Self: ...
     @overload
     def __lshift__(self, other: integer, /) -> signedinteger: ...
 
-    @override  # type: ignore[override]
+    @override
     @overload
     def __rlshift__(self, other: int | int8 | bool_, /) -> Self: ...
     @overload
     def __rlshift__(self, other: integer, /) -> signedinteger: ...
 
-    @override  # type: ignore[override]
+    @override
     @overload
     def __rshift__(self, other: int | int8 | bool_ | Self, /) -> Self: ...
     @overload
     def __rshift__(self, other: integer, /) -> signedinteger: ...
 
-    @override  # type: ignore[override]
+    @override
     @overload
     def __rrshift__(self, other: int | int8 | bool_, /) -> Self: ...
     @overload
     def __rrshift__(self, other: integer, /) -> signedinteger: ...
 
-    @override  # type: ignore[override]
+    @override
     @overload
     def __and__(self, other: int | int8 | bool_ | Self, /) -> Self: ...
     @overload
     def __and__(self, other: integer, /) -> signedinteger: ...
 
-    @override  # type: ignore[override]
+    @override
     @overload
     def __rand__(self, other: int | int8 | bool_, /) -> Self: ...
     @overload
     def __rand__(self, other: integer, /) -> signedinteger: ...
 
-    @override  # type: ignore[override]
+    @override
     @overload
     def __xor__(self, other: int | int8 | bool_ | Self, /) -> Self: ...
     @overload
     def __xor__(self, other: integer, /) -> signedinteger: ...
 
-    @override  # type: ignore[override]
+    @override
     @overload
     def __rxor__(self, other: int | int8 | bool_, /) -> Self: ...
     @overload
     def __rxor__(self, other: integer, /) -> signedinteger: ...
 
-    @override  # type: ignore[override]
+    @override
     @overload
     def __or__(self, other: int | int8 | bool_ | Self, /) -> Self: ...
     @overload
     def __or__(self, other: integer, /) -> signedinteger: ...
 
-    @override  # type: ignore[override]
+    @override
     @overload
     def __ror__(self, other: int | int8 | bool_, /) -> Self: ...
     @overload
@@ -15006,11 +15006,11 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
 
     #
     @overload
-    def __radd__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
+    def __radd__(self, other: _Float64_co, /) -> float64: ...
     @overload
     def __radd__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __radd__(self, other: complex64, /) -> complex128: ...  # type: ignore[misc]
+    def __radd__(self, other: complex64, /) -> complex128: ...
     @overload
     def __radd__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
@@ -15026,11 +15026,11 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
 
     #
     @overload
-    def __rsub__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
+    def __rsub__(self, other: _Float64_co, /) -> float64: ...
     @overload
     def __rsub__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __rsub__(self, other: complex64, /) -> complex128: ...  # type: ignore[misc]
+    def __rsub__(self, other: complex64, /) -> complex128: ...
     @overload
     def __rsub__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
@@ -15046,11 +15046,11 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
 
     #
     @overload
-    def __rmul__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
+    def __rmul__(self, other: _Float64_co, /) -> float64: ...
     @overload
     def __rmul__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __rmul__(self, other: complex64, /) -> complex128: ...  # type: ignore[misc]
+    def __rmul__(self, other: complex64, /) -> complex128: ...
     @overload
     def __rmul__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
@@ -15066,17 +15066,17 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
 
     #
     @overload
-    def __rtruediv__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
+    def __rtruediv__(self, other: _Float64_co, /) -> float64: ...
     @overload
     def __rtruediv__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, /) -> ScalarT: ...
     @overload
-    def __rtruediv__(self, other: complex64, /) -> complex128: ...  # type: ignore[misc]
+    def __rtruediv__(self, other: complex64, /) -> complex128: ...
     @overload
     def __rtruediv__(self, other: complex, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     def __floordiv__(self, other: _Float64_co, /) -> float64: ...
-    def __rfloordiv__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
+    def __rfloordiv__(self, other: _Float64_co, /) -> float64: ...
 
     #
     @overload  # type: ignore[override]
@@ -15090,20 +15090,20 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
 
     #
     @overload
-    def __rpow__(self, other: _Float64_co, mod: None = None, /) -> float64: ...  # type: ignore[misc]
+    def __rpow__(self, other: _Float64_co, mod: None = None, /) -> float64: ...
     @overload
     def __rpow__[ScalarT: longdouble | complex128 | clongdouble](self, other: ScalarT, mod: None = None, /) -> ScalarT: ...
     @overload
-    def __rpow__(self, other: complex64, mod: None = None, /) -> complex128: ...  # type: ignore[misc]
+    def __rpow__(self, other: complex64, mod: None = None, /) -> complex128: ...
     @overload
     def __rpow__(self, other: complex, mod: None = None, /) -> complex128 | Any: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     def __mod__(self, other: _Float64_co, /) -> float64: ...
-    def __rmod__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
+    def __rmod__(self, other: _Float64_co, /) -> float64: ...
 
     def __divmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...
-    def __rdivmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[misc]
+    def __rdivmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...
 
 @disjoint_base
 class longdouble(floating[_NBitLongDouble]):
@@ -15811,9 +15811,8 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __rfloordiv__(self: timedelta64[dt.timedelta], a: dt.timedelta, /) -> int: ...
 
-    # these mypy `has_type` errors appear to be false positives
     @overload
-    def __lt__(self, other: timedelta64, /) -> bool_: ...  # type: ignore[has-type]
+    def __lt__(self, other: timedelta64, /) -> bool_: ...
     @overload
     @deprecated("Comparing NumPy timedelta with bare integers is deprecated, and will raise an error in the future.")
     def __lt__(self, other: _IntLike_co, /) -> bool_: ...
@@ -15826,7 +15825,7 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     def __lt__(self, other: _SupportsGT, /) -> bool_: ...
 
     @overload
-    def __le__(self, other: timedelta64, /) -> bool_: ...  # type: ignore[has-type]
+    def __le__(self, other: timedelta64, /) -> bool_: ...
     @overload
     @deprecated("Comparing NumPy timedelta with bare integers is deprecated, and will raise an error in the future.")
     def __le__(self, other: _IntLike_co, /) -> bool_: ...
