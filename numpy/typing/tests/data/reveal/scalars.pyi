@@ -289,23 +289,17 @@ assert_type(np.datetime64(np.datetime64("now", "ns"), "Y"), np.datetime64[dt.dat
 assert_type(np.datetime64(np.datetime64("now", "s"), "Y"), np.datetime64[dt.date])
 assert_type(np.datetime64(np.datetime64("now", "Y"), "Y"), np.datetime64[dt.date])
 
-# These fail fail because of a mypy __new__ bug:
-# https://github.com/python/mypy/issues/15182
-# According to the typing spec, the following statements are valid, see
-# https://typing.readthedocs.io/en/latest/spec/constructors.html#new-method
+###
+# object_
 
-# assert_type(np.object_(), None)
-# assert_type(np.object_(None), None)
-# assert_type(np.object_(array_nd), np.ndarray[Any, np.dtype[np.object_]])
-# assert_type(np.object_([]), npt.NDArray[np.object_])
-# assert_type(np.object_(()), npt.NDArray[np.object_])
-# assert_type(np.object_(range(4)), npt.NDArray[np.object_])
-# assert_type(np.object_(+42), int)
-# assert_type(np.object_(1 / 137), float)
-# assert_type(np.object_('Developers! ' * (1 << 6)), str)
-# assert_type(np.object_(object()), object)
-# assert_type(np.object_({False, True, NotADirectoryError}), set[Any])
-# assert_type(np.object_({'spam': 'food', 'ham': 'food'}), dict[str, str])
+assert_type(np.object_(), None)
+assert_type(np.object_(None), None)
+assert_type(np.object_(42), int)
+assert_type(np.object_(1 / 137), float)
+assert_type(np.object_("Developers! " * 0x1337), str)
+assert_type(np.object_(object()), object)
+assert_type(np.object_({1, 2, 4, 8, 16, 31}), set[int])  # oeis.org/A000127
+assert_type(np.object_({"spam": "food", "ham": "food"}), dict[str, str])
 
 ###
 # void
