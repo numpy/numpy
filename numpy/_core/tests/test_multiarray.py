@@ -9130,6 +9130,11 @@ class TestRepeat:
         with pytest.raises(ValueError, match="array is too big"):
             np.repeat(np.arange(3), repeats)
 
+    @pytest.mark.parametrize("repeats", [-1, -2**62])
+    def test_negative_scalar(self, repeats):
+        with pytest.raises(ValueError, match="repeats may not contain negative"):
+            np.repeat(np.arange(4), repeats)
+
 
 # TODO: test for multidimensional
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}

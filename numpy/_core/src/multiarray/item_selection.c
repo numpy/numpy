@@ -951,8 +951,16 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
         goto fail;
     }
     if (broadcast) {
+        if (counts[0] < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                            "repeats may not contain negative values.");
+            goto fail;
+        }
         if (counts[0] > 0 && n > NPY_MAX_INTP / counts[0]) {
-            goto too_big;
+            PyErr_SetString(PyExc_ValueError,
+                    "array is too big; `arr.size * arr.dtype.itemsize` "
+                    "is larger than the maximum possible size.");
+            goto fail;
         }
         total = counts[0] * n;
     }
@@ -964,7 +972,10 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
                 goto fail;
             }
             if (total > NPY_MAX_INTP - counts[j]) {
-                goto too_big;
+                PyErr_SetString(PyExc_ValueError,
+                        "array is too big; `arr.size * arr.dtype.itemsize` "
+                        "is larger than the maximum possible size.");
+                goto fail;
             }
             total += counts[j];
         }
@@ -1031,10 +1042,6 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     NPY_cast_info_xfree(&cast_info);
     return (PyObject *)ret;
 
- too_big:
-    PyErr_SetString(PyExc_ValueError,
-            "array is too big; `arr.size * arr.dtype.itemsize` "
-            "is larger than the maximum possible size.");
  fail:
     Py_DECREF(repeats);
     Py_XDECREF(aop);
