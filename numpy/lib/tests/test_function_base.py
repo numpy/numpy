@@ -536,6 +536,19 @@ class TestAverage:
         m = average(a)
         assert m == decimal.Decimal('4.5')
 
+    def test_object_no_weights_returned(self):
+        # gh-33487
+        a = np.array([[1, 2], [3, 4]], dtype=object)
+        avg, scl = average(a, axis=1, returned=True)
+        assert_equal(avg, np.array([1.5, 3.5], dtype=object))
+        assert_equal(scl, np.array([2, 2], dtype=object))
+        assert scl.dtype == object
+        avg, scl = average(a, returned=True)
+        assert avg == 2.5
+        assert scl == 4
+        # np.cov uses average(..., returned=True)
+        assert np.cov([1, 2], dtype=object) == 0.5
+
     def test_average_class_without_dtype(self):
         # see gh-21988
         a = np.array([Fraction(1, 5), Fraction(3, 5)])

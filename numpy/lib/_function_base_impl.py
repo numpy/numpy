@@ -605,7 +605,11 @@ def average(a, axis=None, weights=None, returned=False, *,
                           dtype=result_dtype).sum(axis, **keepdims_kw) / scl
 
     if returned:
-        if scl.shape != avg_as_array.shape:
+        if np.shape(scl) != avg_as_array.shape:
+            if weights is None:
+                # For object arrays, ``np.object_(x)`` returns ``x`` itself,
+                # so ``scl`` can be a Python scalar here.
+                scl = np.asanyarray(scl, dtype=avg_as_array.dtype)
             scl = np.broadcast_to(scl, avg_as_array.shape, subok=True).copy()
         return avg, scl
     else:
