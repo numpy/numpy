@@ -6,6 +6,7 @@ import numpy as np
 cimport numpy as np
 
 from numpy.random cimport bitgen_t
+from numpy.random._bitgen_bulk cimport bitgen_bulk_v1
 
 cdef double POISSON_LAM_MAX
 cdef double LEGACY_POISSON_LAM_MAX
@@ -44,12 +45,14 @@ cdef extern from "include/aligned_malloc.h":
     cdef void PyArray_free_aligned(void *p)
 
 ctypedef void (*random_double_fill)(bitgen_t *state, np.npy_intp count, double* out)  noexcept nogil
+ctypedef void (*random_double_fill_bulk)(bitgen_t *state, const bitgen_bulk_v1 *bulk, np.npy_intp count, double* out) noexcept nogil
 ctypedef double (*random_double_0)(void *state)  noexcept nogil
 ctypedef double (*random_double_1)(void *state, double a)  noexcept nogil
 ctypedef double (*random_double_2)(void *state, double a, double b)  noexcept nogil
 ctypedef double (*random_double_3)(void *state, double a, double b, double c)  noexcept nogil
 
 ctypedef void (*random_float_fill)(bitgen_t *state, np.npy_intp count, float* out)  noexcept nogil
+ctypedef void (*random_float_fill_bulk)(bitgen_t *state, const bitgen_bulk_v1 *bulk, np.npy_intp count, float* out) noexcept nogil
 ctypedef float (*random_float_0)(bitgen_t *state)  noexcept nogil
 ctypedef float (*random_float_1)(bitgen_t *state, float a)  noexcept nogil
 
@@ -72,8 +75,10 @@ cdef inline double uint64_to_double(uint64_t rnd) noexcept nogil:
     return (rnd >> 11) * (1.0 / 9007199254740992.0)
 
 cdef object double_fill(void *func, bitgen_t *state, object size, object lock, object out)
+cdef object double_fill_bulk(void *func, bitgen_t *state, const bitgen_bulk_v1 *bulk, object size, object lock, object out)
 
 cdef object float_fill(void *func, bitgen_t *state, object size, object lock, object out)
+cdef object float_fill_bulk(void *func, bitgen_t *state, const bitgen_bulk_v1 *bulk, object size, object lock, object out)
 
 cdef object float_fill_from_double(void *func, bitgen_t *state, object size, object lock, object out)
 

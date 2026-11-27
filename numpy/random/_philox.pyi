@@ -1,5 +1,5 @@
 from typing import TypedDict, type_check_only
-from typing_extensions import disjoint_base
+from typing_extensions import CapsuleType, disjoint_base
 
 from numpy import uint64
 from numpy._typing import _ArrayLikeInt_co
@@ -24,6 +24,8 @@ class _PhiloxState(TypedDict):
 
 @disjoint_base
 class Philox(BitGenerator):
+    @property
+    def bulk_capsule(self) -> CapsuleType: ...
     def __init__(
         self,
         seed: _ArrayLikeInt_co | SeedSequence | None = ...,

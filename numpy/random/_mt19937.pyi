@@ -1,5 +1,5 @@
 from typing import TypedDict, type_check_only
-from typing_extensions import disjoint_base
+from typing_extensions import CapsuleType, disjoint_base
 
 from numpy import uint32
 from numpy._typing import _ArrayLikeInt_co
@@ -20,6 +20,8 @@ class _MT19937State(TypedDict):
 
 @disjoint_base
 class MT19937(BitGenerator):
+    @property
+    def bulk_capsule(self) -> CapsuleType: ...
     def __init__(self, seed: _ArrayLikeInt_co | SeedSequence | None = ...) -> None: ...
     def _legacy_seeding(self, seed: _ArrayLikeInt_co) -> None: ...
     def jumped(self, jumps: int = 1) -> MT19937: ...
