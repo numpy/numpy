@@ -103,6 +103,7 @@ enum _dtype_discovery_flags {
     MAX_DIMS_WAS_REACHED = 1 << 5,
     DESCRIPTOR_WAS_SET = 1 << 6,
     COPY_WAS_CREATED_BY__ARRAY__ = 1 << 7,
+    FOUND_BRANCHING_CYCLE = 1 << 8,
 };
 
 
@@ -976,6 +977,8 @@ PyArray_AdaptDescriptorToArray(
  *        (Initially it is a pointer to the user-provided head pointer).
  * @param fixed_DType User provided fixed DType class
  * @param flags Discovery flags (reporting and behaviour flags, see def.)
+ * @param sequence_path Original sequences on the current recursion path.
+ * @param last_branch_dim Deepest ancestor with more than one item.
  * @param copy Specifies the copy behavior. -1 is corresponds to copy=None,
  *        0 to copy=False, and 1 to copy=True in the Python API.
  * @return The updated number of maximum dimensions (i.e. scalars will set
@@ -987,7 +990,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj ***coercion_cache_tail_ptr,
         PyArray_DTypeMeta *fixed_DType, enum _dtype_discovery_flags *flags,
-        int copy)
+        PyObject *sequence_path[NPY_MAXDIMS], int last_branch_dim, int copy)
 {
     PyArrayObject *arr = NULL;
     PyObject *seq;
@@ -1135,6 +1138,16 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         is_sequence = NPY_FALSE;
     }
     if (curr_dims == max_dims || !is_sequence) {
+        if (NPY_UNLIKELY(is_sequence) &&
+                (fixed_DType == NULL || fixed_DType->type_num != NPY_OBJECT)) {
+            /* This branch already makes non-object conversion fail. */
+            for (int i = last_branch_dim; i >= 0; i--) {
+                if (sequence_path[i] == obj) {
+                    *flags |= FOUND_RAGGED_ARRAY | FOUND_BRANCHING_CYCLE;
+                    return max_dims;
+                }
+            }
+        }
         /* Clear any PySequence_Size error which would corrupts further calls */
         max_dims = handle_scalar(
                 obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
@@ -1206,14 +1219,20 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         copy = -1;
     }
 
+    /* Track only original sequences that the cache owns. */
+    sequence_path[curr_dims] = seq == obj ? seq : NULL;
+    if (size > 1) {
+        last_branch_dim = curr_dims;
+    }
     /* Recursive call for each sequence item */
     for (Py_ssize_t i = 0; i < size; i++) {
         max_dims = PyArray_DiscoverDTypeAndShape_Recursive(
                 objects[i], curr_dims + 1, max_dims,
                 out_descr, out_shape, coercion_cache_tail_ptr, fixed_DType,
-                flags, copy);
+                flags, sequence_path, last_branch_dim, copy);
 
-        if (max_dims < 0) {
+        if (max_dims < 0 || (*flags & FOUND_BRANCHING_CYCLE)) {
+            ret = max_dims;
             goto finish;
         }
     }
@@ -1319,9 +1338,10 @@ PyArray_DiscoverDTypeAndShape(
         }
     }
 
+    PyObject *sequence_path[NPY_MAXDIMS];
     int ndim = PyArray_DiscoverDTypeAndShape_Recursive(
             obj, 0, max_dims, out_descr, out_shape, &coercion_cache,
-            fixed_DType, &flags, copy);
+            fixed_DType, &flags, sequence_path, -1, copy);
     if (ndim < 0) {
         goto fail;
     }

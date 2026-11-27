@@ -15,6 +15,16 @@ from numpy._core._rational_tests import rational, rational2
 from numpy.testing import IS_64BIT, assert_array_equal
 
 
+def test_nonbranching_recursive_sequence():
+    a = []
+    a.append(a)
+    with pytest.raises(ValueError, match="inhomogeneous shape after 1 dimensions"):
+        np.array([a, 0])
+    arr = np.array(a, dtype=object)
+    assert arr.shape == (1,) * ncu.MAXDIMS
+    assert arr.item() is a
+
+
 def arraylikes():
     """Test parameters for functions converting an array into various array-likes."""
 
