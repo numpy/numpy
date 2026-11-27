@@ -861,6 +861,14 @@ def test_cumulative_include_initial():
         np.cumulative_prod(np.array([2, 2]), include_initial=True), expected
     )
 
+    arr = np.array(["a", "b"], dtype="T")
+    expected = np.array(["", "a", "ab"], dtype="T")
+    assert_array_equal(np.cumulative_sum(arr, include_initial=True), expected)
+
+    out = np.empty(3, dtype="T")
+    np.cumulative_sum(arr, out=out, include_initial=True)
+    assert_array_equal(out, expected)
+
 
 class TestDiff:
 
