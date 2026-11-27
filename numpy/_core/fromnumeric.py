@@ -2814,7 +2814,7 @@ def _cumulative_func(x, func, axis, dtype, out, include_initial):
         item[axis] = slice(1, None)
         func.accumulate(x, axis=axis, dtype=dtype, out=out[tuple(item)])
         item[axis] = 0
-        out[tuple(item)] = _cumulative_initial(func, out, ())
+        out[tuple(item)] = _cumulative_initial(func, out, ())[()]
         return out
 
     res = func.accumulate(x, axis=axis, dtype=dtype, out=out)
