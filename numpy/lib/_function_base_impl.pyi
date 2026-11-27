@@ -3713,7 +3713,7 @@ def append(  # noqa: UP047
     arr: _ArrayLike[_AnyScalarT],
     values: _ArrayLike[_AnyScalarT],
     axis: None = None,
-    dtype: DTypeLike | None = None,
+    dtype: None = None,
 ) -> Array1D[_AnyScalarT]: ...
 @overload  # >=1d T, axis=<given>
 def append(  # noqa: UP047
