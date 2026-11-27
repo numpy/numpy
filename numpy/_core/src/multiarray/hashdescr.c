@@ -96,10 +96,10 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
 
     if (PyTypeNum_ISDATETIME(descr->type_num)) {
         /*
-         * Hash the time unit so that different units, such as m8[ns] and
-         * m8[2ns], hash differently. Normalize it the way dtype equality
-         * does, so that equal dtypes such as m8[ns] and m8[1000ps] still
-         * hash equal.
+         * Hash the time unit so that different units, such as m8[Y] and
+         * m8[s], or m8[ns] and m8[2ns], hash differently. Normalize it the
+         * way dtype equality does, so that equal dtypes such as m8[ns] and
+         * m8[1000ps] still hash equal.
          */
         PyArray_DatetimeMetaData *meta = get_datetime_metadata_from_dtype(descr);
         if (meta == NULL) {
