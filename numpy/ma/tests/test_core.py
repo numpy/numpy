@@ -1702,6 +1702,10 @@ class TestMaskedArrayArithmetic:
         b = array([b'hello', b'world'], mask=[False, True])
         assert_equal(take(b, 0), b'hello')
         assert_equal(take(b, 1), masked)
+        obj_list = array(np.array([[1, 2, 3], None], dtype=object),
+                         mask=[False, True])
+        assert_equal(take(obj_list, 0), [1, 2, 3])
+        assert_equal(take(obj_list, 1), masked)
 
     def test_imag_real(self):
         # Check complex
