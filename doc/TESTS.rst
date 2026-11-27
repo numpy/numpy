@@ -435,16 +435,20 @@ follow the guidelines stated so far, especially when it comes to `setup methods
 Explicit setup and the usage of local RNG are thread-safe practices. Here are tips
 for some other common problems you may run into.
 
-Using ``pytest.mark.parametrize`` may occasionally cause thread-safety issues.
-To fix this, you can use ``copy()``::
+When running tests in multiple threads, parameter values passed by
+``pytest.mark.parametrize`` are shared between threads. If a test modifies a
+mutable parameter, such as a NumPy array, copy it before modifying it::
 
-  @pytest.mark.parametrize('dimensionality', [3, 10, 25])
-  @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-  def test_solve(dimensionality, dtype):
-      dimen = dimensionality.copy()
-      d = dtype.copy()
-      # use these copied variables instead
-      ...
+  @pytest.mark.parametrize('array', [
+      np.array([3, 1, 2]),
+      np.array([2, 3, 1]),
+  ])
+  def test_sort(array):
+      array = array.copy()
+      array.sort()
+      np.testing.assert_array_equal(array, [1, 2, 3])
+
+Immutable parameters, such as integers, do not need to be copied.
 
 If you are testing something that is inherently thread-unsafe, you can label your
 test with ``pytest.mark.thread_unsafe`` so that it will run under a single thread
