@@ -354,50 +354,73 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     Uses a hash table to find the unique elements if possible.
     """
-    ar = np.asanyarray(ar).flatten()
+    ar = np.asanyarray(ar)
+    if type(ar) is np.memmap:
+        # every result for a memory map is a plain array
+        ar = ar.view(np.ndarray)
+    kind = ar.dtype.kind
+    optional_indices = return_index or return_inverse
+    values_only = not optional_indices and not return_counts
+    # These types are hashed by value, so no private copy of the input is needed.
+    by_value = kind in "iufMmc" or (
+        kind in "SU" and ar.dtype.itemsize <= 8 and values_only)
+    ar = ar.ravel() if by_value else ar.flatten()
     if len(ar.shape) != 1:
         # np.matrix, and maybe some other array subclasses, insist on keeping
         # two dimensions for all operations. Coerce to an ndarray in such cases.
-        ar = np.asarray(ar).flatten()
+        ar = np.asarray(ar)
+        ar = ar.ravel() if by_value else ar.flatten()
+    is_ndarray = type(ar) is np.ndarray
 
-    optional_indices = return_index or return_inverse
-
-    # masked arrays are not supported yet.
-    if not optional_indices and not return_counts and not np.ma.is_masked(ar):
-        # First we convert the array to a numpy array, later we wrap it back
-        # in case it was a subclass of numpy.ndarray.
-        conv = _array_converter(ar)
-        ar_, = conv
+    # masked arrays are not supported yet, nor the optional results for
+    # complex numbers. The sorting below does not wrap its results, so a
+    # subclass cannot give up on hashing: it is hashed only for its values,
+    # and not for floats and timedeltas, which often have to give up.
+    if (is_ndarray and (values_only or kind in "iufMmSUT")) or (
+            values_only and kind not in "fm" and not np.ma.is_masked(ar)):
+        ar_ = ar
+        if not is_ndarray:
+            # First we convert the array to a numpy array, later we wrap it
+            # back in case it was a subclass of numpy.ndarray.
+            conv = _array_converter(ar)
+            ar_, = conv
 
         dtype = ar_.dtype
-        swapped = dtype.kind == "c" and not dtype.isnative
+        swapped = not dtype.isnative and kind != "V"
         if swapped:
-            # complex values can only be compared in native byte order
+            # the values are hashed and compared in native byte order
             ar_ = ar_.astype(dtype.newbyteorder("="))
 
-        if (hash_unique := _unique_hash(ar_, equal_nan=equal_nan)) \
-            is not NotImplemented:
-            if sorted:
-                hash_unique.sort()
+        if (found := _unique_hash(
+                ar_, equal_nan=equal_nan, sorted=sorted, give_up=is_ndarray,
+                return_index=return_index, return_inverse=return_inverse,
+                return_counts=return_counts)) is not NotImplemented:
+            hash_unique, index, inverse, counts = (
+                (found, None, None, None) if values_only else found)
             if swapped:
                 hash_unique = hash_unique.astype(dtype)
-            if (dtype.kind == "M" and not equal_nan
-                    and np.isnat(hash_unique).any()):
-                # hashing merges every NaT into one
-                num_nat = np.count_nonzero(np.isnat(ar_))
-                if num_nat > 1:
-                    merged = hash_unique
-                    hash_unique = np.empty(merged.size + num_nat - 1, dtype)
-                    hash_unique[:merged.size] = merged
-                    hash_unique[merged.size:] = "NaT"
-            # We wrap the result back in case it was a subclass of numpy.ndarray.
-            return (conv.wrap(hash_unique),)
+            if not is_ndarray:
+                # We wrap the result back in case it was a subclass of
+                # numpy.ndarray.
+                hash_unique = conv.wrap(hash_unique)
+            ret = (hash_unique,)
+            if return_index:
+                ret += (index,)
+            if return_inverse:
+                ret += (inverse.reshape(inverse_shape) if axis is None
+                        else inverse,)
+            if return_counts:
+                ret += (counts,)
+            return ret
 
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
         aux = ar[perm]
     else:
+        if by_value and not (is_ndarray and ar.flags.owndata):
+            # ravel may have returned a view of the input
+            ar = ar.copy()
         ar.sort()
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool)

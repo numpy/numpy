@@ -11,6 +11,7 @@ extend-exclude = [
     "numpy/_core/src/npysort/x86-simd-sort",
     "numpy/_core/src/highway",
     "numpy/_core/src/common/pythoncapi-compat",
+    "numpy/_core/src/common/unordered_dense",
 ]
 
 line-length = 88

@@ -84,9 +84,10 @@ def get_files(dir_to_check, kind='test'):
         relpath = os.path.relpath(path, dir_to_check)
         files[relpath] = path
 
-    # ignore python files in vendored pythoncapi-compat submodule
+    # ignore python files in the vendored submodules
+    vendored = ('pythoncapi-compat', 'unordered_dense')
     files = {
-        k: v for k, v in files.items() if 'pythoncapi-compat' not in k
+        k: v for k, v in files.items() if not any(name in k for name in vendored)
     }
 
     return files

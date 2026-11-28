@@ -51,6 +51,7 @@ license = 'BSD-3-Clause AND 0BSD AND MIT AND CC0-1.0'
 license-files = [
     'LICENSE.txt',                                       # BSD-3-Clause
     'numpy/_core/src/common/pythoncapi-compat/COPYING',  # 0BSD
+    'numpy/_core/src/common/unordered_dense/LICENSE',    # MIT
     'numpy/_core/src/highway/LICENSE',                   # Dual-licensed: Apache 2.0 or BSD 3-Clause
     'numpy/_core/src/multiarray/dragon4_LICENSE.txt',    # MIT
     'numpy/_core/src/npysort/x86-simd-sort/LICENSE.md',  # BSD-3-Clause

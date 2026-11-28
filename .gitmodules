@@ -1,6 +1,5 @@
-# see numpy/_build_utils/trim_submodules.py and exclude unnecessary folders
-# after adding a new entry here
-
+# A new submodule needs an entry in numpy/_build_utils/trim_submodules.py,
+# which keeps the files NumPy does not use out of the sdist.
 [submodule "doc/source/_static/scipy-mathjax"]
 	path = doc/source/_static/scipy-mathjax
 	url = https://github.com/scipy/scipy-mathjax.git
@@ -22,3 +21,6 @@
 [submodule "numpy/_core/src/common/pythoncapi-compat"]
 	path = numpy/_core/src/common/pythoncapi-compat
 	url = https://github.com/python/pythoncapi-compat
+[submodule "numpy/_core/src/common/unordered_dense"]
+	path = numpy/_core/src/common/unordered_dense
+	url = https://github.com/martinus/unordered_dense
