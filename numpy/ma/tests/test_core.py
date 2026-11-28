@@ -4537,6 +4537,15 @@ class TestMaskedArrayMathMethods:
         assert_equal(test.filled(0), [0, 0, 0])
         assert_equal(test.mask, [1, 1, 1])
 
+    def test_varstd_nan_with_mask(self):
+        # gh-12461: a row with nan is masked, as when it is reduced alone
+        a = array([[1, 2, 4, 9], [np.nan, 1, 4, 16]], mask=[[0, 0, 0, 1], [0] * 4])
+        assert_equal(getmaskarray(a.var(axis=1)), [False, True])
+        assert_equal(getmaskarray(a.std(axis=1)), [False, True])
+        # a large finite variance stays unmasked
+        b = array([[0., 1e154], [1., 2.]], mask=[[0, 0], [0, 1]])
+        assert_equal(b.var(axis=1, ddof=1)[0], 5e307)
+
     def test_diag(self):
         # Test diag
         x = arange(9).reshape((3, 3))
