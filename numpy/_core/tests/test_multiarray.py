@@ -12016,6 +12016,23 @@ def test_sort_float16():
             np.sort(data_backup, kind='heap'))
 
 
+# Sizes span the small-array and partitioning paths of the SIMD sorts
+@pytest.mark.parametrize("N", [17, 32, 64, 65, 100, 128, 256, 1000])
+@pytest.mark.parametrize("dtype", ['f', 'd'])
+@pytest.mark.parametrize("stable", [False, True])
+def test_sort_signed_zeros(N, dtype, stable):
+    # gh-33286: sorting must not turn 0.0 into -0.0 or vice versa. The
+    # bug needs a value other than zero in the array and depends on the
+    # random pivots, so check several arrays.
+    rng = np.random.default_rng(33286)
+    for _ in range(20):
+        arr = np.where(rng.random(N) < 0.5, -0.0, 0.0).astype(dtype)
+        arr[rng.integers(N)] = rng.choice([-1.0, 1.0])
+        res = np.sort(arr, stable=stable)
+        assert_equal(res, np.sort(arr, stable=True))
+        assert_equal(np.signbit(res).sum(), np.signbit(arr).sum())
+
+
 @pytest.mark.parametrize("N", np.arange(1, 512))
 @pytest.mark.parametrize("dtype", ['h', 'H', 'i', 'I', 'l', 'L'])
 def test_sort_int(N, dtype):
