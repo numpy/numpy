@@ -75,6 +75,12 @@ class TestBuiltin:
         assert_(left == right)
         assert_(hash(left) == hash(right))
 
+    def test_time_dtype_hashing(self):
+        assert_dtype_not_equal(np.dtype("m8[s]"), np.dtype("m8[ns]"))
+        assert_dtype_not_equal(np.dtype("m8[Y]"), np.dtype("m8[s]"))
+        assert_dtype_not_equal(np.dtype("M8[s]"), np.dtype("M8[2s]"))
+        assert_dtype_equal(np.dtype("m8[ns]"), np.dtype("m8[1000ps]"))
+
     def test_invalid_types(self):
         # Make sure invalid type strings raise an error
 

@@ -12,6 +12,7 @@
 
 
 
+#include "_datetime.h"
 #include "hashdescr.h"
 
 /*
@@ -91,6 +92,34 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
             goto clean_t;
         }
         PyList_Append(l, item);
+    }
+
+    if (PyTypeNum_ISDATETIME(descr->type_num)) {
+        /*
+         * Hash the time unit so that different units, such as m8[Y] and
+         * m8[s], or m8[ns] and m8[2ns], hash differently. Normalize it the
+         * way dtype equality does, so that equal dtypes such as m8[ns] and
+         * m8[1000ps] still hash equal.
+         */
+        PyArray_DatetimeMetaData *meta = get_datetime_metadata_from_dtype(descr);
+        if (meta == NULL) {
+            goto clean_t;
+        }
+        int base = meta->base;
+        npy_int64 num = meta->num;
+        while (base > NPY_FR_s && base != NPY_FR_GENERIC && num % 1000 == 0) {
+            num /= 1000;
+            base--;
+        }
+        item = Py_BuildValue("(iL)", base, (long long)num);
+        if (item == NULL) {
+            goto clean_t;
+        }
+        int res = PyList_Append(l, item);
+        Py_DECREF(item);
+        if (res < 0) {
+            goto clean_t;
+        }
     }
 
     Py_DECREF(t);
