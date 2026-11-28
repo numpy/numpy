@@ -4809,6 +4809,23 @@ class TestQuantile:
         value = np.quantile(a, np.float32(0.5), method=method)
         assert value.dtype == np.float32
 
+    @pytest.mark.parametrize(
+        "func, qs",
+        [
+            (np.nanpercentile, (10, 90, [10, 90])),
+            (np.percentile, (10, 90, [10, 90])),
+            (np.nanquantile, (0.1, 0.9, [0.1, 0.9])),
+            (np.quantile, (0.1, 0.9, [0.1, 0.9])),
+        ],
+    )
+    def test_all_masked(self, func, qs):
+        # gh-29117
+        a = np.ma.masked_array([1.0, 2.0, 3.0], mask=True)
+        for q in qs:
+            with pytest.warns(UserWarning, match="'partition' will ignore the 'mask'"):
+                res = func(a, q)
+            assert np.all(np.ma.getmaskarray(res))
+
 
 class TestLerp:
     @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis is not installed")

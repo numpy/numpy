@@ -3213,7 +3213,7 @@ class MaskedArray(ndarray):
                         m = (m | d)
 
             # Make sure the mask has the proper size
-            if result is not self and result.shape == () and m:
+            if return_scalar and m:
                 return masked
             else:
                 result._mask = m
@@ -6840,7 +6840,9 @@ class MaskedConstant(MaskedArray):
             MaskedArray.__array_finalize__(self, obj)
 
     def __array_wrap__(self, obj, context=None, return_scalar=False):
-        return self.view(MaskedArray).__array_wrap__(obj, context)
+        return self.view(MaskedArray).__array_wrap__(
+            obj, context, return_scalar=return_scalar
+        )
 
     def __str__(self):
         return str(masked_print_option._display)

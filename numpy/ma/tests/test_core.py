@@ -5845,6 +5845,20 @@ class TestMaskedConstant:
     def test_ufunc(self):
         self._do_add_test(np.add)
 
+    def test_ufunc_out(self):
+        # gh-29117: ufuncs with out= pass return_scalar=False to __array_wrap__
+        # and must return a writable 0-d MaskedArray, not the read-only masked
+        # singleton.
+        out = np.ma.array(0.0, mask=False)
+        res = np.add(np.ma.masked, 1.0, out=out)
+        assert_(res is out)
+        assert_(res is not np.ma.masked)
+        assert_(res.flags.writeable)
+        assert_(bool(res.mask))
+        res[...] = 2.0
+        assert_equal(res.data, 2.0)
+        assert_(np.add(np.ma.masked, 1.0) is np.ma.masked)
+
     def test_operator(self):
         self._do_add_test(lambda a, b: a + b)
 
