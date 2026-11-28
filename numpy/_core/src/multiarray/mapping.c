@@ -17,6 +17,7 @@
 #include "npy_import.h"
 
 #include "common.h"
+#include "templ_common.h"
 #include "ctors.h"
 #include "descriptor.h"
 #include "iterators.h"
@@ -860,10 +861,13 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
     int i, j;
     int new_dim = 0;
     int orig_dim = 0;
-    char *data_ptr = PyArray_BYTES(self);
+    /* total byte offset of the view's data relative to self's data */
+    npy_intp data_offset = 0;
 
     /* for slice parsing */
     npy_intp start, stop, step, n_steps;
+    /* byte offset of an integer index or slice start */
+    npy_intp offset;
 
     for (i=0; i < index_num; i++) {
         switch (indices[i].type) {
@@ -873,7 +877,12 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                                 NULL)) < 0) {
                     return -1;
                 }
-                data_ptr += PyArray_STRIDE(self, orig_dim) * indices[i].value;
+                if (npy_mul_with_overflow_intp(&offset,
+                        PyArray_STRIDE(self, orig_dim), indices[i].value) ||
+                        npy_add_with_overflow_intp(&data_offset,
+                            data_offset, offset)) {
+                    goto stride_overflow;
+                }
 
                 new_dim += 0;
                 orig_dim += 1;
@@ -899,8 +908,23 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
                     start = 0;
                 }
 
-                data_ptr += PyArray_STRIDE(self, orig_dim) * start;
-                new_strides[new_dim] = PyArray_STRIDE(self, orig_dim) * step;
+                if (npy_mul_with_overflow_intp(&offset,
+                            PyArray_STRIDE(self, orig_dim), start) ||
+                        npy_add_with_overflow_intp(&data_offset,
+                            data_offset, offset)) {
+                    goto stride_overflow;
+                }
+                if (npy_mul_with_overflow_intp(&new_strides[new_dim],
+                            PyArray_STRIDE(self, orig_dim), step)) {
+                    if (n_steps > 1) {
+                        goto stride_overflow;
+                    }
+                    /*
+                     * The stride of a length 1 dimension is never used, so
+                     * a huge step (e.g. `arr[::sys.maxsize]`) is fine.
+                     */
+                    new_strides[new_dim] = PyArray_STRIDE(self, orig_dim);
+                }
                 new_shape[new_dim] = n_steps;
                 new_dim += 1;
                 orig_dim += 1;
@@ -925,7 +949,8 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
     *view = (PyArrayObject *)PyArray_NewFromDescr_int(
             ensure_array ? &PyArray_Type : Py_TYPE(self),
             PyArray_DESCR(self),
-            new_dim, new_shape, new_strides, data_ptr,
+            new_dim, new_shape, new_strides,
+            PyArray_BYTES(self) + data_offset,
             PyArray_FLAGS(self),
             ensure_array ? NULL : (PyObject *)self,
             (PyObject *)self, _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
@@ -934,6 +959,12 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
     }
 
     return 0;
+
+  stride_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+            "integer overflow computing the strides or offset of the "
+            "indexing result");
+    return -1;
 }
 
 
