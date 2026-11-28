@@ -2761,6 +2761,75 @@ class TestTrapezoid:
         xm = np.ma.array(x, mask=mask)
         assert_almost_equal(trapezoid(y, xm), r)
 
+    @pytest.mark.parametrize("dtype", [np.bool, np.int8, np.uint8, np.int16, np.int32])
+    def test_small_int_no_overflow(self, dtype):
+        # The sum of neighbouring samples and the differences of
+        # `x` were computed in the (narrow) input dtype and wrapped around.
+        info = np.iinfo(np.uint8 if dtype is np.bool else dtype)
+        y = np.array([info.max, info.max, info.min, info.max], dtype=dtype)
+        expected = trapezoid(y.astype(np.float64))
+        assert_almost_equal(trapezoid(y), expected)
+        assert_almost_equal(trapezoid(y, dx=2), 2 * expected)
+
+        if dtype is not np.bool:
+            x = np.array([info.max, info.min, info.max, info.min], dtype=dtype)
+            expected = trapezoid(y.astype(np.float64), x.astype(np.float64))
+            assert_almost_equal(trapezoid(y, x), expected)
+            # n-d `x`
+            assert_almost_equal(trapezoid(y[None, :], x[None, :]), expected)
+
+    def test_small_int_literal(self):
+        assert_equal(trapezoid(np.array([200, 100], dtype=np.uint8)), 150.0)
+
+    @pytest.mark.parametrize("dtype", [np.int64, np.uint64])
+    def test_64bit_int_y_no_overflow(self, dtype):
+        big = 2**62 if dtype is np.int64 else 2**64 - 1
+        y = np.array([big, big], dtype=dtype)
+        expected = trapezoid(y.astype(np.float64))
+        assert expected > 0
+        assert_equal(trapezoid(y), expected)
+        assert_equal(trapezoid(y, x=np.array([0, 1], dtype=dtype)), expected)
+
+    @pytest.mark.parametrize("dtype, x", [
+        (np.int64, [-2**63, 2**63 - 1]),
+        (np.uint64, [2**64 - 1, 0]),
+        # the span fits in int64, but uint64 differences wrap when
+        # `x` decreases
+        (np.uint64, [5, 3]),
+        (np.uint64, [2**63 + 5, 2**63 + 3]),
+    ])
+    def test_64bit_int_x_span(self, dtype, x):
+        # exact step, computed with Python integers
+        step = float(x[1] - x[0])
+        x = np.array(x, dtype=dtype)
+        y = np.array([0.0, 2.0])
+        assert_equal(trapezoid(y, x), step)
+        # `x` along `axis` of a larger `y`
+        y2 = np.stack([y, y + 1])
+        assert_equal(trapezoid(y2, x), [step, 2 * step])
+        assert_equal(trapezoid(y2.T, x, axis=0), [step, 2 * step])
+
+    @pytest.mark.parametrize("dtype", [np.int64, np.uint64])
+    def test_64bit_int_x_short(self, dtype):
+        assert_equal(trapezoid(np.array([]), np.array([], dtype=dtype)), 0.0)
+        assert_equal(trapezoid(np.array([1.0]), np.array([7], dtype=dtype)), 0.0)
+        xm = np.ma.array(np.array([1, 2, 3], dtype=dtype), mask=True)
+        assert trapezoid(np.ones(3), xm) is np.ma.masked
+
+    def test_64bit_int_x_masked_sentinel(self):
+        # masked-out values (e.g. a NaT-like sentinel) do not count towards
+        # the span, so the exact int64 differences are kept
+        t0 = 1_700_000_000_000_000_000
+        x = np.ma.masked_equal([t0, t0 + 1, -2**63, t0 + 3, t0 + 4], -2**63)
+        assert_equal(trapezoid(np.ones(5), x), 2.0)
+
+    def test_int64_x_untouched(self):
+        # 64-bit integer `x` (e.g. nanosecond timestamps) is not converted
+        # to float64, which would lose the small differences.
+        t0 = 1767225600000000000
+        assert_equal(trapezoid(np.ones(5), x=t0 + np.arange(5)), 4.0)
+        assert_equal(trapezoid(np.ones(7), x=t0 + 1000 * np.arange(7)), 6000)
+
 
 class TestSinc:
 
