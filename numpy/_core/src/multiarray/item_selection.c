@@ -327,9 +327,22 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             flags |= NPY_ARRAY_FORCECAST;
         }
         Py_INCREF(dtype);
-        obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
-        if (obj == NULL) {
-            goto fail;
+        if (PyArray_EquivTypes(out_dtype, dtype)) {
+            obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
+            if (obj == NULL) {
+                goto fail;
+            }
+        }
+        else {
+            /* The result replaces every element, so skip casting old values. */
+            obj = (PyArrayObject *)PyArray_NewLikeArray(out, NPY_CORDER, dtype, 1);
+            if (obj == NULL) {
+                goto fail;
+            }
+            Py_INCREF(out);
+            if (PyArray_SetWritebackIfCopyBase(obj, out) < 0) {
+                goto fail;
+            }
         }
     }
 

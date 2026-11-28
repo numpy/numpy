@@ -6670,6 +6670,14 @@ class TestTake:
         y = np.take(x, [1, 2, 3], out=x[2:5], mode='wrap')
         assert_equal(y, np.array([1, 2, 3]))
 
+    def test_take_out_ignores_previous_values(self):
+        x = np.array([1, 2, 3], dtype=np.int64)
+        out = np.full(2, np.nan)
+        with np.errstate(invalid="raise"):
+            result = np.take(x, [0, 1], out=out)
+        assert result is out
+        assert_array_equal(out, [1.0, 2.0])
+
     @pytest.mark.parametrize('shape', [(1, 2), (1,), ()])
     def test_ret_is_out(self, shape):
         # 0d arrays should not be an exception to this rule
