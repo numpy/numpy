@@ -31,6 +31,7 @@
 #include "dispatching.h"
 #include "string_ufuncs.h"
 #include "stringdtype_ufuncs.h"
+#include "void_ufuncs.h"
 #include "special_integer_comparisons.h"
 #include "minmax.h"
 #include "real_imag_ufuncs.h"
@@ -298,6 +299,10 @@ int initumath(PyObject *m)
     }
 
     if (init_string_ufuncs(d) < 0) {
+        return -1;
+    }
+
+    if (init_void_ufuncs(d) < 0) {
         return -1;
     }
 

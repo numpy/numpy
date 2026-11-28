@@ -1358,6 +1358,7 @@ src_umath = umath_gen_headers + [
   'src/umath/special_integer_comparisons.cpp',
   'src/umath/string_ufuncs.cpp',
   'src/umath/stringdtype_ufuncs.cpp',
+  'src/umath/void_ufuncs.cpp',
   'src/umath/wrapping_array_method.c',
   # For testing. Eventually, should use public API and be separate:
   'src/umath/_scaled_float_dtype.c',
