@@ -1,0 +1,43 @@
+name: "Issue Labeler"
+
+on:
+  issues:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  issue-labeler:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write  # to create and add the label
+    steps:
+    - name: Label the issue
+      continue-on-error: true
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+      with:
+        script: |
+          const label = {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            name: 'needs triage',
+          };
+          try {
+            await github.rest.issues.getLabel(label);
+          } catch (error) {
+            if (error.status !== 404) {
+              throw error;
+            }
+            await github.rest.issues.createLabel({
+              ...label,
+              color: 'fbca04',
+              description: 'Not ready for work yet',
+            });
+          }
+          await github.rest.issues.addLabels({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.payload.issue.number,
+            labels: [label.name],
+          });
