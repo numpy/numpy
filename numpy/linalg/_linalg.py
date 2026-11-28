@@ -2034,7 +2034,8 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     Parameters
     ----------
     A : {(M,), (..., M, N)} array_like
-        Input vector or stack of matrices.
+        Input vector or stack of matrices. A vector is treated as a
+        ``(1, M)`` matrix, whose only singular value is ``norm(A)``.
     tol : (...) array_like, float, optional
         Threshold below which SVD values are considered zero. If `tol` is
         None, and ``S`` is an array with singular values for `M`, and
@@ -2043,7 +2044,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     hermitian : bool, optional
         If True, `A` is assumed to be Hermitian (symmetric if real-valued),
         enabling a more efficient method for finding singular values.
-        Defaults to False.
+        Defaults to False. Ignored for vector input.
     rtol : (...) array_like, float, optional
         Parameter for the relative tolerance component. Only ``tol`` or
         ``rtol`` can be set at a time. Defaults to ``max(M, N) * eps``.
@@ -2120,7 +2121,36 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
 
     A = asarray(A)
     if A.ndim < 2:
-        return int(not all(A == 0))
+        # A vector (or scalar) is treated as a 1 x N matrix, whose only
+        # singular value S is its 2-norm.
+
+        # Default tolerance: S > S * N * eps holds for any nonzero vector,
+        # so the rank is 1 unless all entries are zero.
+        if tol is None and rtol is None:
+            return int(not all(A == 0))
+
+        # Compute in floating point.
+        if not issubclass(A.dtype.type, inexact):
+            A = A.astype(float)
+
+        # Largest absolute entry (0 for an empty input).
+        amax = abs(A).max(initial=0)
+
+        # 2-norm, scaled by amax to avoid overflow/underflow.
+        if amax == 0:
+            # all zeros (or empty)
+            S = amax
+        elif not isfinite(amax):
+            # inf or nan entries: scaling is not possible
+            S = amax
+        else:
+            S = amax * norm(A / amax)
+
+        # A relative tolerance is scaled by the singular value.
+        if tol is None:
+            tol = S * rtol
+
+        return int(S > tol)
 
     S = svd(A, compute_uv=False, hermitian=hermitian)
 

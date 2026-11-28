@@ -1764,6 +1764,43 @@ class TestMatrixRank:
         ):
             matrix_rank(I, tol=0.01, rtol=0.01)
 
+    def test_vector_tol(self):
+        # gh-7906: `tol` and `rtol` were ignored for 1-D input.  A vector
+        # is treated as a 1 x N matrix whose only singular value is its
+        # 2-norm, so it must agree with the explicit 2-D row vector.
+        v = np.array([0., 0., 1e-14])
+        assert_equal(matrix_rank(v, tol=1e-13), 0)
+        assert_equal(matrix_rank(v, tol=1e-15), 1)
+        assert_equal(matrix_rank(v, rtol=0.5), 1)
+        for tol in [1e-15, 1e-14, 1e-13]:
+            assert_equal(matrix_rank(v, tol=tol),
+                         matrix_rank(v[np.newaxis, :], tol=tol))
+        # the singular value is the 2-norm, not the max-norm: ||w|| = 5
+        w = np.array([3., 4.])
+        assert_equal(matrix_rank(w, tol=4.99), 1)
+        assert_equal(matrix_rank(w, tol=5.0), 0)
+        assert_equal(matrix_rank(w, tol=5.0),
+                     matrix_rank(w[np.newaxis, :], tol=5.0))
+        # complex and integer input
+        assert_equal(matrix_rank(np.array([3j, 4]), tol=4.99), 1)
+        assert_equal(matrix_rank(np.array([3, 4]), tol=5), 0)
+        # no overflow/underflow in the norm
+        assert_equal(matrix_rank(np.array([1e300, 1e300]), tol=1e300), 1)
+        assert_equal(matrix_rank(np.array([1e-300, 1e-300]), tol=1e-300), 1)
+        # all zeros has rank 0 for any tolerance
+        assert_equal(matrix_rank(np.zeros(3), tol=0), 0)
+        assert_equal(matrix_rank(np.zeros(3), rtol=0.5), 0)
+        # rtol >= 1 makes every vector rank deficient, as in the 2-D case
+        assert_equal(matrix_rank(w, rtol=1.0), 0)
+        assert_equal(matrix_rank(w[np.newaxis, :], rtol=1.0), 0)
+        # scalars are treated as 1 x 1 matrices
+        assert_equal(matrix_rank(1e-14, tol=1e-13), 0)
+        assert_equal(matrix_rank(-2.0, tol=1.0), 1)
+        with assert_raises_regex(
+            ValueError, "`tol` and `rtol` can\'t be both set."
+        ):
+            matrix_rank(w, tol=0.01, rtol=0.01)
+
     def test_symmetric_rank(self):
         assert_equal(4, matrix_rank(np.eye(4), hermitian=True))
         assert_equal(1, matrix_rank(np.ones((4, 4)), hermitian=True))
