@@ -1401,6 +1401,23 @@ class TestCov:
                             (np.cov(xf, rowvar=False, bias=True) *
                              x.shape[0] / frac))
 
+    def test_pairwise_cov(self):
+        rng = np.random.default_rng(15601)
+        data = rng.random((4, 30))
+        m = rng.random((4, 30)) < 0.3
+        test = cov(array(data, mask=m))
+        for i in range(4):
+            for j in range(i + 1):
+                shared = ~m[i] & ~m[j]
+                control = np.cov(data[i][shared], data[j][shared])[0, 1]
+                assert_almost_equal(test[i, j], control)
+
+    def test_one_shared_observation(self):
+        x = array([[1., 5., 9.], [3., 7., 2.]],
+                  mask=[[0, 0, 1], [0, 1, 0]])
+        assert_(cov(x)[0, 1] is masked)
+        assert_almost_equal(cov(x, ddof=0)[0, 1], 0.0)
+
 
 class TestCorrcoef:
 
@@ -1450,6 +1467,48 @@ class TestCorrcoef:
         test = corrcoef(x)
         control = np.corrcoef(x)
         assert_almost_equal(test[:-1, :-1], control[:-1, :-1])
+
+    def test_gh_15601(self):
+        d = np.array([[6., 8.], [6., 4.], [3., 9.], [1., 7.], [9., 5.]])
+        m = np.array([[0, 1], [0, 1], [0, 0], [1, 0], [0, 0]], dtype=bool)
+        # rows 2 and 4 are the only ones the two variables share
+        test = corrcoef(array(d, mask=m), rowvar=False)
+        assert_almost_equal(test[0, 1], -1.0)
+        assert_almost_equal(test[1, 0], -1.0)
+
+    def test_pairwise_complete(self):
+        rng = np.random.default_rng(15601)
+        data = rng.random((4, 30))
+        m = rng.random((4, 30)) < 0.3
+        test = corrcoef(array(data, mask=m))
+        for i in range(4):
+            for j in range(i):
+                shared = ~m[i] & ~m[j]
+                control = np.corrcoef(data[i][shared], data[j][shared])[0, 1]
+                assert_almost_equal(test[i, j], control)
+                assert_almost_equal(test[j, i], control)
+
+    def test_two_shared_observations(self):
+        # Two points give exactly +-1; this pair reaches 1 + 1e-14 before the clip.
+        x = array([[7., -6., 1., 6., 0.], [8., 5., 7., 7., -1.]],
+                  mask=[[0, 0, 1, 0, 1], [0, 1, 1, 0, 0]])
+        assert_almost_equal(corrcoef(x)[0, 1], 1.0)
+        assert_(corrcoef(x)[0, 1] <= 1.0)
+
+    def test_single_variable(self):
+        result = corrcoef(array(np.arange(5.)))
+        # assert_almost_equal passes against masked, so check the mask first.
+        assert_(result is not masked)
+        assert_almost_equal(result, 1.)
+        assert_(corrcoef(array(np.ones(5))) is masked)
+        assert_(corrcoef(array(np.arange(5.), mask=[0, 1, 1, 1, 1])) is masked)
+
+    def test_no_variance_on_shared(self):
+        # Not an exact zero, so this is caught by the noise threshold.
+        x = array([[2., 0., 0., 1., 0.], [3., 0., 0., 3., 3.]],
+                  mask=[[0, 1, 1, 0, 0], [0, 0, 0, 0, 0]])
+        assert_(corrcoef(x)[0, 1] is masked)
+        assert_(corrcoef(x)[1, 0] is masked)
 
 
 class TestPolynomial:
