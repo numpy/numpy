@@ -781,12 +781,30 @@ NPY_NO_EXPORT void
     npy_intp n_inner = dimensions[1];
     npy_intp is1=steps[3], is2=steps[4];
 
-    for (npy_intp i = 0; i < n_outer; i++, args[0] += s0, args[1] += s1, args[2] += s2) {
+    char *ip1 = args[0], *ip2 = args[1], *op = args[2];
+#if defined(HAVE_CBLAS)
+    const npy_bool short_double = NPY_@TYPE@ == NPY_DOUBLE &&
+            n_inner >= 2 && n_inner <= 4 &&
+            is1 == sizeof(npy_double) && is2 == sizeof(npy_double);
+#endif
+
+    for (npy_intp i = 0; i < n_outer; i++, ip1 += s0, ip2 += s1, op += s2) {
+#if defined(HAVE_CBLAS)
+        if (short_double) {
+            const npy_double *x = (const npy_double *)ip1;
+            const npy_double *y = (const npy_double *)ip2;
+            npy_double sum = 0;
+            for (npy_intp j = 0; j < n_inner; j++) {
+                sum += x[j] * y[j];
+            }
+            *(npy_double *)op = sum;
+            continue;
+        }
+#endif
         /*
          * TODO: use new API to select inner loop with get_loop and
          * improve error treatment.
          */
-        char *ip1=args[0], *ip2=args[1], *op=args[2];
         @TYPE@_@DOT@(ip1, is1, ip2, is2, op, n_inner, NULL);
 #if @CHECK_PYERR@
         if (PyErr_Occurred()) {
