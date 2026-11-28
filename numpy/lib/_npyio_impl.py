@@ -2059,6 +2059,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         if names is not None:
             names = list(names)
 
+        # Whether `names` was reduced to the columns in `usecols`
+        names_reduced = False
         if usecols:
             for (i, current) in enumerate(usecols):
                 # if usecols is a list of names, convert to a list of indices
@@ -2071,9 +2073,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 descr = dtype.descr
                 dtype = np.dtype([descr[_] for _ in usecols])
                 names = list(dtype.names)
+                names_reduced = True
             # If `names` is not None, update the names
             elif (names is not None) and (len(names) > nbcols):
                 names = [names[_] for _ in usecols]
+                names_reduced = True
         elif (names is not None) and (dtype is not None):
             names = list(dtype.names)
 
@@ -2098,12 +2102,20 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     except ValueError:
                         # We couldn't find it: the name must have been dropped
                         continue
+                    # Unless `names` was reduced to `usecols`, the index
+                    # still refers to a column of the file
+                    remap = not names_reduced
+                else:
+                    remap = key is not None
                 # Redefine the key as needed if it's a column number
-                if usecols:
+                if usecols and remap:
+                    if key < 0:
+                        key += len(first_values)
                     try:
                         key = usecols.index(key)
                     except ValueError:
-                        pass
+                        # The column is not used
+                        continue
                 # Transform the value as a list of string
                 if isinstance(val, (list, tuple)):
                     val = [str(_) for _ in val]
@@ -2149,13 +2161,21 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     except ValueError:
                         # We couldn't find it: the name must have been dropped
                         continue
+                    # Unless `names` was reduced to `usecols`, the index
+                    # still refers to a column of the file
+                    remap = not names_reduced
+                else:
+                    remap = key is not None
                 # Redefine the key if it's a column number
                 # and usecols is defined
-                if usecols:
+                if usecols and remap:
+                    if key < 0:
+                        key += len(first_values)
                     try:
                         key = usecols.index(key)
                     except ValueError:
-                        pass
+                        # The column is not used
+                        continue
                 # Add the value to the list
                 filling_values[key] = val
         # We have a sequence : update on a one-to-one basis
