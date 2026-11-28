@@ -15,4 +15,6 @@ class PytestTester:
         coverage: bool = False,
         durations: int = -1,
         tests: Iterable[str] | None = None,
+        *,
+        smoke: bool = False,
     ) -> bool: ...

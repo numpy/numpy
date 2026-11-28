@@ -11,6 +11,7 @@ import pytest
 
 import numpy
 import numpy as np
+from numpy._public_api import PUBLIC_ALIASED_MODULES, PUBLIC_MODULES
 from numpy.testing import HAS_SUBPROCESSES
 from numpy.testing._private.utils import run_subprocess
 
@@ -95,60 +96,10 @@ def test_NPY_NO_EXPORT():
                       "NPY_NO_EXPORT does not work")
 
 
-# Historically NumPy has not used leading underscores for private submodules
-# much.  This has resulted in lots of things that look like public modules
-# (i.e. things that can be imported as `import numpy.somesubmodule.somefile`),
-# but were never intended to be public.  The PUBLIC_MODULES list contains
-# modules that are either public because they were meant to be, or because they
-# contain public functions/objects that aren't present in any other namespace
-# for whatever reason and therefore should be treated as public.
-#
 # The PRIVATE_BUT_PRESENT_MODULES list contains modules that look public (lack
-# of underscores) but should not be used.  For many of those modules the
-# current status is fine.  For others it may make sense to work on making them
-# private, to clean up our public API and avoid confusion.
-PUBLIC_MODULES = ['numpy.' + s for s in [
-    "ctypeslib",
-    "dtypes",
-    "exceptions",
-    "f2py",
-    "fft",
-    "lib",
-    "lib.array_utils",
-    "lib.format",
-    "lib.introspect",
-    "lib.mixins",
-    "lib.npyio",
-    "lib.recfunctions",  # note: still needs cleaning, was forgotten for 2.0
-    "lib.scimath",
-    "lib.stride_tricks",
-    "linalg",
-    "ma",
-    "ma.extras",
-    "ma.mrecords",
-    "polynomial",
-    "polynomial.chebyshev",
-    "polynomial.hermite",
-    "polynomial.hermite_e",
-    "polynomial.laguerre",
-    "polynomial.legendre",
-    "polynomial.polynomial",
-    "random",
-    "strings",
-    "testing",
-    "testing.overrides",
-    "typing",
-    "version",
-]]
-
-
-PUBLIC_ALIASED_MODULES = [
-    "numpy.char",
-    "numpy.emath",
-    "numpy.rec",
-]
-
-
+# of underscores) but should not be used. For many of those modules the
+# current status is fine. For others it may make sense to make them private,
+# to clean up our public API and avoid confusion.
 PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "conftest",
     "core",

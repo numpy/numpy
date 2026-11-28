@@ -1,18 +1,12 @@
-# This script is used by .github/workflows/wheels.yml to run the full test
-# suite, and that the openblas version is correct.
+# Run smoke checks and the full test suite for built wheels.
 set -xe
 
 PROJECT_DIR="$1"
 
-python -c "import numpy; numpy.show_config()"
-
-if [[ $CIBUILDWHEEL_BUILD_IDENTIFIER == *-win32 ]] ; then
-  # Avoid this in GHA: "ERROR: Found GNU link.exe instead of MSVC link.exe"
-  rm /c/Program\ Files/Git/usr/bin/link.EXE
-fi
-
-# Set available memory value to avoid OOM problems on aarch64 (see gh-22418)
-export NPY_AVAILABLE_MEM="4 GB"
+# cibuildwheel has installed the final repaired wheel into its clean test
+# environment. Smoke test it before installing anything from the test group.
+echo "Phase A: isolated runtime smoke test"
+python -c "import numpy, sys; sys.exit(not numpy.test(smoke=True))"
 
 FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
 if [[ $FREE_THREADED_BUILD == "True" ]]; then
@@ -24,6 +18,19 @@ if [[ $FREE_THREADED_BUILD == "True" ]]; then
         exit 1
     fi
 fi
+
+echo "Phase B: installing test requirements"
+python -m pip install --group "$PROJECT_DIR/pyproject.toml:test"
+
+python -c "import numpy; numpy.show_config()"
+
+if [[ $CIBUILDWHEEL_BUILD_IDENTIFIER == *-win32 ]] ; then
+  # Avoid this in GHA: "ERROR: Found GNU link.exe instead of MSVC link.exe"
+  rm /c/Program\ Files/Git/usr/bin/link.EXE
+fi
+
+# Set available memory value to avoid OOM problems on aarch64 (see gh-22418)
+export NPY_AVAILABLE_MEM="4 GB"
 
 # Run full tests with -n=auto. This makes pytest-xdist distribute tests across
 # the available N CPU cores. Also print the durations for the 10 slowest tests

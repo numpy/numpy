@@ -2,8 +2,8 @@ import pytest
 from pytest import param
 
 import numpy as np
+from numpy._core.tests._marks import longdouble_fpe_mark
 from numpy.testing import IS_WASM
-from numpy.testing._private.utils import longdouble_fpe_mark
 
 
 def values_and_dtypes():

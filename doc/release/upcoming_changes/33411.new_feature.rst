@@ -1,0 +1,8 @@
+A new installation smoke test
+-----------------------------
+
+``numpy.test(smoke=True)`` was added; it runs a short set of import and
+numerical checks without pytest or NumPy's test suite. It checks basic
+installation health; it is not a comprehensive correctness, ABI, or performance
+test. This can replace, for example, manually maintained lists of public
+modules in distro build/test scripts for NumPy.

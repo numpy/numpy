@@ -13,6 +13,7 @@ from numpy import ma
 from numpy._core import sctypes
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.numerictypes import obj2sctype
+from numpy._core.tests._marks import longdouble_fpe_mark
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
@@ -30,7 +31,7 @@ from numpy.testing import (
     assert_raises_regex,
 )
 from numpy.testing._private.hypothesis_helpers import HAS_HYPOTHESIS, given, hynp, st
-from numpy.testing._private.utils import longdouble_fpe_mark, requires_memory
+from numpy.testing._private.utils import requires_memory
 
 
 class TestResize:
