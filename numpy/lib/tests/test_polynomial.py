@@ -237,6 +237,28 @@ class TestPolynomial:
         assert_allclose(mean.std(), 0.5, atol=0.01)
         assert_almost_equal(np.sqrt(cov.mean()), 0.25)
 
+    def test_polyfit_cov_ill_conditioned(self):
+        # gh-33154: polyfit covariance should be stable for full-rank
+        # but ill-conditioned fits
+        t = 1.7e9 + 3600.0 * np.arange(48)
+        rng = np.random.default_rng(0)
+        y = 20 + 1e-5 * (t - t[0]) + 0.1 * rng.standard_normal(48)
+        _, C = np.polyfit(t, y, 2, cov=True)
+        diag = np.diag(C)
+        assert_(np.all(np.isfinite(diag)))
+        assert_(np.all(diag > 0))
+        # reference values from exact rational arithmetic on the same inputs
+        assert_allclose(diag, [2.80408433e-23, 3.24184412e-04, 2.34246550e14],
+                        rtol=1e-5)
+
+        # second case from gh-33154: should not raise or return NaN
+        x = 1e3 + np.linspace(0, 1, 10)
+        y = np.sin(x)
+        _, C = np.polyfit(x, y, 3, cov=True)
+        diag = np.diag(C)
+        assert_(np.all(np.isfinite(diag)))
+        assert_(np.all(diag > 0))
+
     def test_objects(self):
         from decimal import Decimal
         p = np.poly1d([Decimal('4.0'), Decimal('3.0'), Decimal('2.0')])
