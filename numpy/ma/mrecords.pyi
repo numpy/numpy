@@ -31,7 +31,6 @@ type _Ignored = object
 type _Names = str | Sequence[str]
 
 ###
-# mypy: disable-error-code=no-untyped-def
 
 class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co], Generic[_ShapeT_co, _DTypeT_co]):
     _mask: Any

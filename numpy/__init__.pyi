@@ -1369,12 +1369,6 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
         *,
         metadata: dict[py_str, Any] = ...,
     ) -> dtype[str_]: ...
-    # NOTE: These `memoryview` overloads assume PEP 688, which requires mypy to
-    # be run with the (undocumented) `--disable-memoryview-promotion` flag,
-    # This will be the default in a future mypy release, see:
-    # https://github.com/python/mypy/issues/15313
-    # Pyright / Pylance requires setting `disableBytesTypePromotions=true`,
-    # which is the default in strict mode
     @overload
     def __new__(
         cls,
@@ -1808,9 +1802,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     @overload
     def __mul__(self, value: SupportsIndex, /) -> dtype[void]: ...
 
-    # NOTE: `__rmul__` seems to be broken when used in combination with
-    # literals as of mypy 0.902. Set the return-type to `dtype` for
-    # now for non-flexible dtypes.
+    #
     @overload
     def __rmul__[FlexibleDTypeT: dtype[flexible]](self: FlexibleDTypeT, value: SupportsIndex, /) -> FlexibleDTypeT: ...
     @overload
@@ -6847,9 +6839,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __len__(self) -> int: ...
     def __contains__(self, value: object, /) -> py_bool: ...
 
-    # NOTE: This weird `Never` tuple works around a strange mypy issue where it assigns
-    # `tuple[int]` to `tuple[Never]` or `tuple[int, int]` to `tuple[Never, Never]`.
-    # This way the bug only occurs for 9-D arrays, which are probably not very common.
+    # Without this overload, mypy selects the 1-d overload for arrays with unknown shape-type.
     @overload
     def __iter__(
         self: ndarray[tuple[Never, Never, Never, Never, Never, Never, Never, Never, Never], Any], /
@@ -10856,9 +10846,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 # NOTE: while `np.generic` is not technically an instance of `ABCMeta`,
 # the `@abstractmethod` decorator is herein used to (forcefully) deny
 # the creation of `np.generic` instances.
-# The `# type: ignore` comments are necessary to silence mypy errors regarding
-# the missing `ABCMeta` metaclass.
-# See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @abstractmethod
     def __new__(cls, /, *args: Any, **kwargs: Any) -> Self: ...
@@ -11377,7 +11364,9 @@ class bool(generic[_BoolItemT_co], Generic[_BoolItemT_co]):
     @property
     def imag(self) -> bool_[L[False]]: ...
 
-    @overload  # mypy bug workaround: https://github.com/numpy/numpy/issues/29245
+    # The `Never` overload is a workaround so that mypy doesn't infer `bool_[L[False]]`
+    # for `np.ma.MaskType` and `Callable[[Any], T]` when `bool_` is passed.
+    @overload
     def __new__(cls, value: Never, /) -> bool_[py_bool]: ...
     @overload
     def __new__(cls, value: _Falsy = ..., /) -> bool_[L[False]]: ...
@@ -15712,7 +15701,6 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     ) -> timedelta64[AnyItemT]: ...
 
     # NOTE: subtraction is not commutative, so __rsub__ differs from __sub__.
-    # This confuses mypy, so we ignore the [misc] errors it reports.
     @overload
     def __rsub__(self: timedelta64[Never], a: timedelta64[int | dt.timedelta], /) -> timedelta64: ...
     @overload
@@ -16037,7 +16025,7 @@ class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     @overload
     def __sub__(self, x: datetime64, /) -> timedelta64: ...
 
-    # NOTE: mypy gets confused by the non-commutativity of subtraction here
+    #
     @overload
     def __rsub__(self: datetime64[Never], x: datetime64, /) -> timedelta64: ...
     @overload
