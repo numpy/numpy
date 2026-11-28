@@ -922,23 +922,28 @@ def bincount(x, /, weights=None, minlength=0):
     x : array_like, 1 dimension, nonnegative ints
         Input array.
     weights : array_like, optional
-        Weights, array of the same shape as `x`.
+        Weights must have the same shape as `x` and be convertible to
+        ``float64``.
     minlength : int, optional
         A minimum number of bins for the output array.
 
     Returns
     -------
-    out : ndarray of ints
-        The result of binning the input array.
-        The length of `out` is equal to ``np.amax(x)+1``.
+    out : ndarray
+        Bin counts with dtype ``intp``, or weighted sums with dtype
+        ``float64`` if `weights` is given. The length is one more than the
+        largest value in `x`, or `minlength` if that is larger. If `x` is
+        empty, the length is `minlength`.
 
     Raises
     ------
     ValueError
         If the input is not 1-dimensional, or contains elements with negative
-        values, or if `minlength` is negative.
+        values, or if `minlength` is negative. Also raised if `weights`
+        and `x` have different shapes.
     TypeError
-        If the type of the input is float or complex.
+        If the type of the input is float or complex, or if `weights` is
+        an array whose dtype cannot be safely cast to ``float64``.
 
     See Also
     --------

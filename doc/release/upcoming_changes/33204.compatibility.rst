@@ -1,0 +1,1 @@
+* `numpy.bincount` no longer ignores ``weights`` when the input is empty.
