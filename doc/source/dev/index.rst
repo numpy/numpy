@@ -34,6 +34,9 @@ These issues can either be:
 Additionally, depending on your prior experience, some "Sprintable"
 issues might be easy, while others could be more challenging for you.
 
+Before you start working on an issue, check that it does not have the
+``needs triage`` label, see :ref:`issue-triage`.
+
 The rest of this document discusses working on the NumPy code base and documentation.
 We're in the process of updating our descriptions of other activities and roles.
 If you are interested in these other activities, please contact us!
@@ -44,6 +47,34 @@ relevant issue). These are our preferred communication channels (open source is 
 by nature!), however if you prefer to discuss in a more private space first,
 you can do so on Slack (see `numpy.org/contribute
 <https://numpy.org/contribute/>`__ for details).
+
+.. _issue-triage:
+
+Issue triage
+============
+
+Every new issue automatically gets the ``needs triage`` label. The label means
+that a maintainer still needs to review the issue and confirm it. Until the
+label is removed, the issue is not ready to be worked on.
+
+After you open an issue, it moves forward as follows:
+
+1. A maintainer reviews the issue and may ask you for more information. An
+   issue that cannot be confirmed may be closed, for example when it is a
+   duplicate.
+2. Once the issue is confirmed and it is clear how to proceed, the maintainer
+   removes the ``needs triage`` label.
+3. The issue is now ready to be worked on. We do not assign issues, so you do
+   not need to ask first. Before you start, check that nobody has already
+   opened a pull request for it.
+
+If you would like to work on an issue that still has the ``needs triage``
+label, please comment on the issue first and wait for a maintainer to respond.
+This way you do not spend time on a change that may not be needed.
+
+Issues that were opened before this label was introduced do not have it. For
+those, check the discussion on the issue to see whether a maintainer has
+confirmed it.
 
 .. _development-process-summary:
 
