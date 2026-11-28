@@ -1489,3 +1489,49 @@ def test_pad_dict_pad_width(input_shape, pad_width, expected_shape):
     a = np.zeros(input_shape)
     result = np.pad(a, pad_width)
     assert result.shape == expected_shape
+
+
+@pytest.mark.parametrize("pad_width, expected_shape", [
+    ({0: np.int32(1)}, (4, 3)),
+    ({0: np.int64(1)}, (4, 3)),
+    ({0: (np.int32(1), np.int32(2))}, (5, 3)),
+    ({0: (np.int64(1), np.int64(2))}, (5, 3)),
+    ({0: [1, 2]}, (5, 3)),
+    ({0: np.array(1)}, (4, 3)),
+    ({0: np.array([1, 2])}, (5, 3)),
+])
+def test_pad_dict_pad_width_int_variants(pad_width, expected_shape):
+    a = np.zeros((2, 3))
+    assert np.pad(a, pad_width).shape == expected_shape
+
+
+@pytest.mark.parametrize("bad_width", [
+    True,
+    False,
+    (True, False),
+    1.5,
+    (1.0, 2.0),
+    np.uint8(2),
+    (np.uint8(1), np.uint8(2)),
+    "2",
+    None,
+    (),
+])
+def test_pad_dict_pad_width_bad_type(bad_width):
+    a = np.zeros((2, 3))
+    with pytest.raises(TypeError, match="`pad_width` must be of integral type."):
+        np.pad(a, {0: bad_width})
+
+
+@pytest.mark.parametrize("bad_width", [
+    -1,
+    (1, -1),
+    (1,),
+    [1],
+    (1, 2, 3),
+    [[1, 2]],
+])
+def test_pad_dict_pad_width_bad_value(bad_width):
+    a = np.zeros((2, 3))
+    with pytest.raises(ValueError):
+        np.pad(a, {0: bad_width})

@@ -3,8 +3,6 @@ The arraypad module contains a group of functions to pad values onto the edges
 of an n-dimensional array.
 
 """
-import typing
-
 import numpy as np
 from numpy._core.overrides import array_function_dispatch
 from numpy.lib._index_tricks_impl import ndindex
@@ -807,13 +805,19 @@ def pad(array, pad_width, mode='constant', **kwargs):
     if isinstance(pad_width, dict):
         seq = [(0, 0)] * array.ndim
         for axis, width in pad_width.items():
-            match width:
-                case int(both):
-                    seq[axis] = both, both
-                case tuple((int(before), int(after))):
-                    seq[axis] = before, after
-                case _ as invalid:
-                    typing.assert_never(invalid)
+            w = np.asarray(width)
+            if w.dtype.kind != 'i':
+                raise TypeError('`pad_width` must be of integral type.')
+            if w.ndim == 0:
+                val = int(w)
+                seq[axis] = (val, val)
+            elif w.shape == (2,):
+                seq[axis] = (int(w[0]), int(w[1]))
+            else:
+                raise ValueError(
+                    f"`pad_width` value for axis {axis} must be an int or "
+                    f"a 2-element sequence, got shape {w.shape}."
+                )
         pad_width = seq
     pad_width = np.asarray(pad_width)
 
