@@ -11396,6 +11396,18 @@ class TestArange:
         assert len(keyword_start_stop) == 6
         assert_array_equal(keyword_stop, keyword_zerotostop)
 
+    def test_arange_uint8_underflow(self):
+        result = np.arange(np.uint8(5), np.uint8(2))
+        assert_array_equal(result, np.array([], dtype=np.uint8))
+
+    def test_arange_int8_overflow(self):
+        result = np.arange(np.int8(-100), np.int8(100))
+        assert_array_equal(result, np.arange(-100, 100, dtype=np.int8))
+
+    def test_arange_uint8_negative_step(self):
+        result = np.arange(np.uint8(10), np.uint8(0), -1)
+        assert_array_equal(result, np.arange(10, 0, -1, dtype=np.uint8))
+
     def test_arange_booleans(self):
         # Arange makes some sense for booleans and works up to length 2.
         # But it is weird since `arange(2, 4, dtype=bool)` works.
