@@ -5213,12 +5213,11 @@ class MaskedArray(ndarray):
         # !!!: implement out + test!
         m = self._mask
         if m is nomask:
-            result = super().trace(offset=offset, axis1=axis1, axis2=axis2,
-                                   out=out)
-            return result.astype(dtype)
+            return super().trace(offset=offset, axis1=axis1, axis2=axis2,
+                                 dtype=dtype, out=out)
         else:
             D = self.diagonal(offset=offset, axis1=axis1, axis2=axis2)
-            return D.astype(dtype).filled(0).sum(axis=-1, out=out)
+            return D.filled(0).sum(axis=-1, dtype=dtype, out=out)
     trace.__doc__ = ndarray.trace.__doc__
 
     def dot(self, b, out=None, strict=False):
