@@ -1,0 +1,13 @@
+Undocumented ``dtype`` argument of ``ndarray.any`` and ``ndarray.all`` removed
+------------------------------------------------------------------------------
+Since NumPy 1.7, ``ndarray.any`` and ``ndarray.all`` accidentally accepted an
+undocumented ``dtype`` argument in the second positional position, which
+contradicted their documented signature ``(axis=None, out=None, keepdims=False)``.
+As a result, ``a.any(axis, out)`` raised a ``TypeError`` instead of writing to
+``out``, which also broke NumPy's own ``np.matrix.any`` and ``np.matrix.all``
+when called with ``out``. The argument has been removed, so the methods now
+follow their documented signature.
+
+Code that relied on it now raises a ``TypeError``. Use
+``np.logical_or.reduce(..., dtype=..., ...)`` or
+``np.logical_and.reduce(..., dtype=..., ...)`` instead.
