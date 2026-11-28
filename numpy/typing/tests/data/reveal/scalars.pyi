@@ -2,6 +2,7 @@ import datetime as dt
 from typing import Any, Literal, assert_type, type_check_only
 
 import numpy as np
+import numpy.typing as npt
 
 b: np.bool
 u8: np.uint64
@@ -15,9 +16,8 @@ S: np.bytes_
 V: np.void
 O: np.object_  # cannot exists at runtime
 
-array_nd: np.ndarray[Any, Any]
-array_0d: np.ndarray[tuple[()], Any]
-array_2d_2x2: np.ndarray[tuple[Literal[2], Literal[2]], Any]
+_array_0d: npt.Array0D[np.int8]
+_array_3d: npt.Array3D[np.int32]
 
 assert_type(c8.real, np.float32)
 assert_type(c8.imag, np.float32)
@@ -319,3 +319,31 @@ assert_type(subvoid(np.bytes_(b"")), np.void)  # type:ignore[assert-type]
 assert_type(np.record(0, dtype=[("x", np.int8)]), np.void)
 assert_type(np.record(b""), np.void)
 assert_type(np.record(np.bytes_(b"")), np.void)
+
+###
+# scalar -> ndarray construction
+
+assert_type(np.int8(_array_3d), npt.Array3D[np.int8])
+assert_type(np.int8(b"1"), np.int8)
+assert_type(np.int8([b"1", b"2"]), npt.Array1D[np.int8])
+assert_type(np.int8([[1, 2]]), npt.Array2D[np.int8])
+assert_type(np.int8([[[1]]]), npt.NDArray[np.int8])
+
+assert_type(np.uint16(_array_3d), npt.Array3D[np.uint16])
+assert_type(np.uint16("12"), np.uint16)
+assert_type(np.uint16((1, 2)), npt.Array1D[np.uint16])
+assert_type(np.uint16(((1, 2),)), npt.Array2D[np.uint16])
+assert_type(np.uint16([[[1]]]), npt.NDArray[np.uint16])
+
+assert_type(np.float32(_array_3d), npt.Array3D[np.float32])
+assert_type(np.float32(_array_0d), np.float32)
+assert_type(np.float32(["1.5"]), npt.Array1D[np.float32])
+assert_type(np.float32([[1.0]]), npt.Array2D[np.float32])
+assert_type(np.float32([[[1.0]]]), npt.NDArray[np.float32])
+
+assert_type(np.complex64(_array_3d), npt.Array3D[np.complex64])
+assert_type(np.complex64(1, 2), np.complex64)
+assert_type(np.complex64("1j"), np.complex64)
+assert_type(np.complex64([]), npt.Array1D[np.complex64])
+assert_type(np.complex64([[1j]]), npt.Array2D[np.complex64])
+assert_type(np.complex64([[[1j]]]), npt.NDArray[np.complex64])
