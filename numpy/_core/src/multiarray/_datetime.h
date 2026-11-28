@@ -52,12 +52,9 @@ find_string_array_datetime64_type(PyArrayObject *arr,
 NPY_NO_EXPORT PyArray_Descr *
 datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2);
 
-/*
- * Extracts the month number, within the current year,
- * from a 'datetime64[D]' value. January is 1, etc.
- */
-NPY_NO_EXPORT int
-days_to_month_number(npy_datetime days);
+/* Checks if two 'datetime64[D]' values are in the same calendar month */
+NPY_NO_EXPORT npy_bool
+days_in_same_month(npy_datetime days1, npy_datetime days2);
 
 /*
  * Parses the metadata string into the metadata C structure.
