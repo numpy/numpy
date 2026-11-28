@@ -26,6 +26,7 @@
 #include "mem_overlap.h"
 #include "array_assign.h"
 #include "array_coercion.h"
+#include "npy_extint128.h"  /* for safe_add, safe_mul */
 /* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
@@ -822,14 +823,60 @@ static int
 get_item_pointer(PyArrayObject *self, char **ptr,
                     npy_index_info *indices, int index_num) {
     int i;
-    *ptr = PyArray_BYTES(self);
-    for (i=0; i < index_num; i++) {
-        if ((check_and_adjust_index(&(indices[i].value),
-                               PyArray_DIMS(self)[i], i, NULL)) < 0) {
+    npy_int64 total_offset = 0;
+
+    for (i = 0; i < index_num; i++) {
+        if (check_and_adjust_index(&(indices[i].value),
+                PyArray_DIMS(self)[i], i, NULL) < 0) {
             return -1;
         }
-        *ptr += PyArray_STRIDE(self, i) * indices[i].value;
+
+        char overflow = 0;
+        npy_int64 offset = safe_mul(
+                PyArray_STRIDE(self, i),
+                indices[i].value, &overflow);
+
+        if (overflow) {
+            PyErr_SetString(PyExc_ValueError,
+                    "index computation would overflow the maximum "
+                    "pointer offset");
+            return -1;
+        }
+
+#if NPY_BITSOF_INTP < 64
+        if (offset < NPY_MIN_INTP || offset > NPY_MAX_INTP) {
+            PyErr_SetString(PyExc_ValueError,
+                    "index computation would overflow the maximum "
+                    "pointer offset");
+            return -1;
+        }
+#endif
+
+        overflow = 0;
+        npy_int64 new_total_offset = safe_add(
+                total_offset, offset, &overflow);
+
+        if (overflow) {
+            PyErr_SetString(PyExc_ValueError,
+                    "index computation would overflow the maximum "
+                    "pointer offset");
+            return -1;
+        }
+
+        total_offset = new_total_offset;
     }
+
+#if NPY_BITSOF_INTP < 64
+    if (total_offset < NPY_MIN_INTP ||
+            total_offset > NPY_MAX_INTP) {
+        PyErr_SetString(PyExc_ValueError,
+                "index computation would overflow the maximum "
+                "pointer offset");
+        return -1;
+    }
+#endif
+
+    *ptr = PyArray_BYTES(self) + (npy_intp)total_offset;
     return 0;
 }
 
