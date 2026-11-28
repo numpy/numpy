@@ -26,7 +26,7 @@ from numpy.exceptions import RankWarning
 from numpy.lib._function_base_impl import trim_zeros
 from numpy.lib._twodim_base_impl import diag, vander
 from numpy.lib._type_check_impl import imag, iscomplex, mintypecode, real
-from numpy.linalg import eigvals, inv, lstsq
+from numpy.linalg import eigvals, inv, lstsq, qr
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -685,8 +685,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     if full:
         return c, resids, rank, s, rcond
     elif cov:
-        Vbase = inv(dot(lhs.T, lhs))
-        Vbase /= NX.outer(scale, scale)
+        r = qr(lhs, mode='r')
+        rinv = inv(r)
+        Vbase = dot(rinv, rinv.T.conj())
+        Vbase /= NX.outer(scale, scale.conj())
         if cov == "unscaled":
             fac = 1
         else:
