@@ -6,6 +6,9 @@
 #include "simd/simd.hpp" 
 #include <hwy/highway.h>
 
+#include <cmath>
+#include <iterator>
+
 namespace hn = hwy::HWY_NAMESPACE;
 
 /*
@@ -294,6 +297,187 @@ NPY_CPU_DISPATCH_CURFX(FLOAT_cos)(char **args, npy_intp const *dimensions,
     {
         const npy_float in1 = *(npy_float *)ip1;
         *(npy_float *)op1 = npy_cosf(in1);
+    }
+#endif
+}
+
+/*
+ * Normalized sinc, sin(pi*x) / (pi*x).
+ *
+ * |x| = n + r is split exactly with n = rint(|x|) and |r| <= 1/2, and the
+ * sign (-1)**n is folded into r as sgn*|x| - sgn*n, which is +0 rather than
+ * -0 at odd integers. With t = r*r, sin(pi*r) / (pi*r) = 1 + t*Q(t) where Q
+ * is a truncated Taylor series, so that sinc(x) = 1 + t*Q(t) for n == 0 and
+ * (r + r*t*Q(t)) / |x| otherwise. All values above int_min are integers, so
+ * |x| is clamped to it to avoid overflow, which also maps +-inf to +0.
+ */
+template <typename T>
+struct sinc_data;
+
+template <>
+struct sinc_data<npy_float> {
+    static constexpr npy_float int_min = 0x1.0p+24f;
+    // (-1)**k * pi**(2k) / (2k+1)!, highest degree first
+    static constexpr npy_float coef[] = {
+        0x1.37471ap-13f, -0x1.33816ap-9f, 0x1.ac6806p-6f,
+        -0x1.86a8e4p-3f, 0x1.9f9cb4p-1f, -0x1.a51a66p+0f,
+    };
+};
+
+template <>
+struct sinc_data<npy_double> {
+    static constexpr npy_double int_min = 0x1.0p+53;
+    // (-1)**k * pi**(2k) / (2k+1)!, highest degree first
+    static constexpr npy_double coef[] = {
+        0x1.79788684225eap-33, -0x1.f5f9d970ca6dfp-28, 0x1.0fc992ff39e13p-22,
+        -0x1.d42498d1ce099p-18, 0x1.374719fab3915p-13, -0x1.33816aa4607abp-9,
+        0x1.ac6805cf350a6p-6, -0x1.86a8e4720db67p-3, 0x1.9f9cb402bc46cp-1,
+        -0x1.a51a6625307d3p+0,
+    };
+};
+
+template <typename T>
+static inline T
+scalar_sinc(T x)
+{
+    using D = sinc_data<T>;
+    const T ax = std::isgreater(std::fabs(x), D::int_min) ?
+                 D::int_min : std::fabs(x);
+    const T n = std::rint(ax);
+    const T half_n = T(0.5) * n;
+    const T sgn = 1 - 4 * (half_n - std::floor(half_n));
+    const T r = sgn * ax - sgn * n;
+    const T t = r * r;
+    T q = D::coef[0];
+    for (size_t i = 1; i < std::size(D::coef); i++) {
+        q = q * t + D::coef[i];
+    }
+    const T tq = t * q;
+    return n == 0 ? 1 + tq : (r + r * tq) / ax;
+}
+
+#if NPY_SIMD_FMA3
+template <typename T>
+static void HWY_ATTR SIMD_MSVC_NOINLINE
+simd_sinc(const T *src, npy_intp ssrc, T *dst, npy_intp sdst, npy_intp len)
+{
+    using D = sinc_data<T>;
+    const hn::ScalableTag<T> d;
+    const hn::RebindToSigned<decltype(d)> di;
+    using vec_t = hn::Vec<decltype(d)>;
+    using TI = hn::TFromD<decltype(di)>;
+
+    const vec_t zeros = hn::Zero(d);
+    const vec_t ones = hn::Set(d, T(1));
+    const vec_t halfs = hn::Set(d, T(0.5));
+    const vec_t fours = hn::Set(d, T(4));
+    const vec_t int_min = hn::Set(d, D::int_min);
+
+    const int lanes = hn::Lanes(d);
+    const auto src_index = hn::Mul(hn::Iota(di, 0), hn::Set(di, (TI)ssrc));
+    const auto dst_index = hn::Mul(hn::Iota(di, 0), hn::Set(di, (TI)sdst));
+
+    for (; len > 0; len -= lanes, src += ssrc * lanes, dst += sdst * lanes) {
+        vec_t x;
+        if (ssrc == 1) {
+            x = hn::LoadN(d, src, len);
+        }
+        else {
+            x = hn::GatherIndexN(d, src, src_index, len);
+        }
+        // Eliminate NaN to avoid FP invalid exception
+        const auto nan_mask = hn::IsNaN(x);
+        const vec_t ax = hn::Min(hn::Abs(hn::IfThenZeroElse(nan_mask, x)),
+                                 int_min);
+        const vec_t n = hn::Round(ax);
+        const vec_t half_n = hn::Mul(n, halfs);
+        const vec_t sgn = hn::NegMulAdd(
+                fours, hn::Sub(half_n, hn::Floor(half_n)), ones);
+        const vec_t r = hn::Sub(hn::Mul(sgn, ax), hn::Mul(sgn, n));
+        const vec_t t = hn::Mul(r, r);
+        vec_t q = hn::Set(d, D::coef[0]);
+        for (size_t i = 1; i < std::size(D::coef); i++) {
+            q = hn::MulAdd(q, t, hn::Set(d, D::coef[i]));
+        }
+        const vec_t tq = hn::Mul(t, q);
+        // n == 0 includes x == 0 and the unused lanes of the tail
+        const auto n_zero = hn::Eq(n, zeros);
+        vec_t out = hn::Div(hn::MulAdd(r, tq, r),
+                            hn::IfThenElse(n_zero, ones, ax));
+        out = hn::IfThenElse(n_zero, hn::Add(ones, tq), out);
+        out = hn::IfThenElse(nan_mask, x, out);
+
+        if (sdst == 1) {
+            hn::StoreN(out, d, dst, len);
+        }
+        else {
+            hn::ScatterIndexN(out, d, dst, dst_index, len);
+        }
+        npyv_cleanup();
+    }
+}
+#endif  // NPY_SIMD_FMA3
+
+NPY_NO_EXPORT void
+NPY_CPU_DISPATCH_CURFX(FLOAT_sinc)(char **args, npy_intp const *dimensions,
+                                   npy_intp const *steps,
+                                   void *NPY_UNUSED(data))
+{
+#if NPY_SIMD_FMA3
+    npy_intp len = dimensions[0];
+
+    if (is_mem_overlap(args[0], steps[0], args[1], steps[1], len) ||
+        !npyv_loadable_stride_f32(steps[0]) ||
+        !npyv_storable_stride_f32(steps[1])) {
+        UNARY_LOOP
+        {
+            simd_sinc((npy_float *)ip1, 1, (npy_float *)op1, 1, 1);
+        }
+    }
+    else {
+        const npy_float *src = (npy_float *)args[0];
+        npy_float *dst = (npy_float *)args[1];
+        const npy_intp ssrc = steps[0] / sizeof(npy_float);
+        const npy_intp sdst = steps[1] / sizeof(npy_float);
+
+        simd_sinc(src, ssrc, dst, sdst, len);
+    }
+#else
+    UNARY_LOOP
+    {
+        *(npy_float *)op1 = scalar_sinc(*(npy_float *)ip1);
+    }
+#endif
+}
+
+NPY_NO_EXPORT void
+NPY_CPU_DISPATCH_CURFX(DOUBLE_sinc)(char **args, npy_intp const *dimensions,
+                                    npy_intp const *steps,
+                                    void *NPY_UNUSED(data))
+{
+#if NPY_SIMD_FMA3 && NPY_SIMD_F64
+    npy_intp len = dimensions[0];
+
+    if (is_mem_overlap(args[0], steps[0], args[1], steps[1], len) ||
+        !npyv_loadable_stride_f64(steps[0]) ||
+        !npyv_storable_stride_f64(steps[1])) {
+        UNARY_LOOP
+        {
+            simd_sinc((npy_double *)ip1, 1, (npy_double *)op1, 1, 1);
+        }
+    }
+    else {
+        const npy_double *src = (npy_double *)args[0];
+        npy_double *dst = (npy_double *)args[1];
+        const npy_intp ssrc = steps[0] / sizeof(npy_double);
+        const npy_intp sdst = steps[1] / sizeof(npy_double);
+
+        simd_sinc(src, ssrc, dst, sdst, len);
+    }
+#else
+    UNARY_LOOP
+    {
+        *(npy_double *)op1 = scalar_sinc(*(npy_double *)ip1);
     }
 #endif
 }

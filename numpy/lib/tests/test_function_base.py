@@ -55,6 +55,7 @@ from numpy.testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    assert_array_max_ulp,
     assert_equal,
     assert_raises,
     assert_raises_regex,
@@ -2783,7 +2784,7 @@ class TestSinc:
         actual = sinc(x)
         expected = sinc(x.astype(np.float64))
         assert_allclose(actual, expected)
-        assert actual.dtype == np.float64
+        assert actual.dtype == np.sin(x).dtype
 
     @pytest.mark.parametrize('dtype', [np.uint8, np.int16, np.uint64])
     def test_int_dtypes(self, dtype):
@@ -2791,7 +2792,7 @@ class TestSinc:
         actual = sinc(x)
         expected = sinc(x.astype(np.float64))
         assert_allclose(actual, expected)
-        assert actual.dtype == np.float64
+        assert actual.dtype == np.sin(x).dtype
 
     @pytest.mark.parametrize(
             'dtype',
@@ -2806,6 +2807,58 @@ class TestSinc:
         # before gh-27784, fill value for 0 in input would underflow float16,
         # resulting in nan
         assert_array_equal(sinc(x), np.asarray(1.0))
+
+    def test_accuracy(self):
+        # reference values computed with mpmath at 60 digits
+        x = np.array([1e-300, 1e-8, 0.25, 0.5, 0.75, 1.5, 1 + 2**-52,
+                      3.000022083469023, 9.000039129512828, 12345.6789,
+                      2.0**52 - 0.5, -761442529114881.1])
+        expected = np.array([
+            1.0, 0.9999999999999999, 0.9003163161571061, 0.6366197723675814,
+            0.30010543871903533, -0.2122065907891938, -2.2204460492503126e-16,
+            -7.361102148942857e-06, -4.347704734002287e-06,
+            -2.181700427892498e-05, -7.067899292141149e-17,
+            -1.5997519857756192e-16])
+        assert_array_max_ulp(sinc(x), expected, maxulp=2)
+        assert_array_max_ulp(sinc(-x), expected, maxulp=2)
+
+    @pytest.mark.parametrize("stride", [1, 3, -2])
+    def test_float32(self, stride):
+        x = np.linspace(-50, 50, 2001, dtype=np.float32)[::stride]
+        expected = sinc(x.astype(np.float64)).astype(np.float32)
+        assert_array_max_ulp(sinc(x), expected, maxulp=3)
+
+    @pytest.mark.parametrize("dtype", np_floats)
+    def test_integers(self, dtype):
+        # sinc is exactly +0 at all nonzero integers
+        info = np.finfo(dtype)
+        x = np.array([1, -1, 2, -3, 255, 1 / info.eps, 1 / info.eps + 1,
+                      info.max, -info.max], dtype=dtype)
+        res = sinc(x)
+        assert_array_equal(res, 0)
+        assert not np.signbit(res).any()
+
+    @pytest.mark.parametrize("dtype", np_floats)
+    def test_special_values(self, dtype):
+        x = np.array([0.0, -0.0, np.inf, -np.inf, np.nan], dtype=dtype)
+        with np.errstate(all="raise"):
+            res = sinc(x)
+        assert_array_equal(res, [1, 1, 0, 0, np.nan])
+        assert not np.signbit(res[2:4]).any()
+
+    def test_complex(self):
+        # reference values computed with mpmath at 60 digits
+        z = np.array([0.5 + 0.5j, 2.5 - 3j, 9.000039129512828 + 1e-8j,
+                      1e6 + 1e-3 + 0.5j])
+        expected = np.array([
+            0.7986963159564631 - 0.7986963159564631j,
+            323.3101663159867 + 387.972199579184j,
+            -4.347704734003524e-06 - 1.1111014411707648e-09j,
+            2.5095407291837937e-09 + 7.325225748117916e-07j])
+        assert_allclose(sinc(z), expected, rtol=4 * np.finfo(np.float64).eps)
+        assert_equal(sinc(np.complex128(0)), 1)
+        assert_equal(sinc(np.complex128(complex(np.inf, 1))), 0)
+        assert_equal(sinc(np.complex128(complex(-np.inf, -1))), 0)
 
 
 class TestUnique:
