@@ -2137,6 +2137,20 @@ class TestFromCTypes:
         self.check(ctypes.c_uint8.__ctype_le__, np.dtype('u1'))
         self.check(ctypes.c_uint8.__ctype_be__, np.dtype('u1'))
 
+    @pytest.mark.parametrize(("name", "dtype"), [
+        ("c_float_complex", np.complex64),
+        ("c_double_complex", np.complex128),
+        ("c_longdouble_complex", np.clongdouble),
+    ])
+    def test_complex_types(self, name, dtype):
+        if (ctype := getattr(ctypes, name, None)) is None:
+            pytest.skip(f"ctypes does not provide {name}")
+
+        self.check(ctype, dtype)
+        for side, byteorder in [("le", "<"), ("be", ">")]:
+            if endian_ctype := getattr(ctype, f"__ctype_{side}__", None):
+                self.check(endian_ctype, np.dtype(dtype).newbyteorder(byteorder))
+
     all_types = set(np.typecodes['All'])
     all_pairs = list(permutations(all_types, 2))
 

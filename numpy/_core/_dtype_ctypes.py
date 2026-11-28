@@ -71,16 +71,22 @@ def _from_ctypes_structure(t):
         return np.dtype(fields, align=True)
 
 
+# ctypes uses these PEP 3118 codes for complex scalars starting in Python 3.15.
+_CTYPES_COMPLEX_CODES = {'Zf': 'F', 'Zd': 'D', 'Zg': 'G'}
+
+
 def _from_ctypes_scalar(t):
     """
     Return the dtype type with endianness included if it's the case
     """
+    code = t._type_
+    code = _CTYPES_COMPLEX_CODES.get(code, code)
     if getattr(t, '__ctype_be__', None) is t:
-        return np.dtype('>' + t._type_)
+        return np.dtype('>' + code)
     elif getattr(t, '__ctype_le__', None) is t:
-        return np.dtype('<' + t._type_)
+        return np.dtype('<' + code)
     else:
-        return np.dtype(t._type_)
+        return np.dtype(code)
 
 
 def _from_ctypes_union(t):
