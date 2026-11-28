@@ -619,6 +619,24 @@ def test_irfft_with_n_1_regression():
     np.fft.irfft(np.array([0], complex), n=10)
 
 
+@pytest.mark.parametrize("fft", [np.fft.irfft, np.fft.hfft])
+@pytest.mark.parametrize("n", [1, 2, 4])
+def test_irfft_empty_input_zero_padding(fft, n):
+    # Regression test for gh-33396
+    # Empty inputs with non-zero/negative stride must be zero-padded
+    # rather than reading out-of-bounds memory
+    x = np.ones(2, dtype=complex)[::-1][:0]
+    assert_array_equal(fft(x, n=n), np.zeros(n, dtype=np.float64))
+
+
+@pytest.mark.parametrize("fft", [np.fft.fft, np.fft.ifft])
+@pytest.mark.parametrize("n", [1, 2, 4])
+def test_fft_empty_input_zero_padding(fft, n):
+    # Regression test for gh-33396
+    x = np.ones(2, dtype=complex)[::-1][:0]
+    assert_array_equal(fft(x, n=n), np.zeros(n, dtype=np.complex128))
+
+
 def test_irfft_with_n_large_regression():
     # Regression test for gh-25679
     x = np.arange(5) * (1 + 1j)
