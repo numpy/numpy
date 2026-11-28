@@ -651,7 +651,7 @@ PyArray_AddLegacyWrapping_CastingImpl(
 {
     if (casting < 0) {
         if (from == to) {
-            casting = NPY_NO_CASTING;
+            casting = NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG;
         }
         else if (PyArray_LegacyCanCastTypeTo(
                 from->singleton, to->singleton, NPY_SAFE_CASTING)) {

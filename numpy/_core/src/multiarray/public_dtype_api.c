@@ -107,6 +107,15 @@ PyArrayInitDTypeMeta_FromSpec(
         }
     }
 
+    if (is_legacy && NPY_DT_SLOTS(DType)->within_dtype_castingimpl == NULL
+            && NPY_DT_SLOTS(DType)->f.copyswapn != NULL) {
+        PyObject *cast = PyArray_GetCastingImpl(DType, DType);
+        if (cast == NULL) {
+            return -1;
+        }
+        Py_DECREF(cast);
+    }
+
     if (NPY_DT_SLOTS(DType)->within_dtype_castingimpl == NULL) {
         /*
          * We expect this for now. We should have a default for DType that
