@@ -2794,6 +2794,12 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
                                   keepdims, where)
 
 
+def _cumulative_initial(func, like, shape):
+    if func is um.add:
+        return np.zeros_like(like, shape=shape)
+    return np.full_like(like, func.identity, shape=shape)
+
+
 def _cumulative_func(x, func, axis, dtype, out, include_initial):
     x = np.atleast_1d(x)
     x_ndim = x.ndim
@@ -2808,7 +2814,7 @@ def _cumulative_func(x, func, axis, dtype, out, include_initial):
         item[axis] = slice(1, None)
         func.accumulate(x, axis=axis, dtype=dtype, out=out[tuple(item)])
         item[axis] = 0
-        out[tuple(item)] = func.identity
+        out[tuple(item)] = _cumulative_initial(func, out, ())[()]
         return out
 
     res = func.accumulate(x, axis=axis, dtype=dtype, out=out)
@@ -2816,7 +2822,7 @@ def _cumulative_func(x, func, axis, dtype, out, include_initial):
         initial_shape = list(x.shape)
         initial_shape[axis] = 1
         res = np.concat(
-            [np.full_like(res, func.identity, shape=initial_shape), res],
+            [_cumulative_initial(func, res, initial_shape), res],
             axis=axis,
         )
 
