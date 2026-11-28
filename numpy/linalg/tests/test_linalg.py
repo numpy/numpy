@@ -1420,12 +1420,9 @@ class _TestNormGeneral(_TestNormBase):
             self.check_dtype(at, an)
             assert_almost_equal(an, 0.0)
 
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    'ignore', "divide by zero encountered", RuntimeWarning)
-                an = norm(at, -1)
-                self.check_dtype(at, an)
-                assert_almost_equal(an, 0.0)
+            an = norm(at, -1)
+            self.check_dtype(at, an)
+            assert_almost_equal(an, 0.0)
 
             an = norm(at, 0)
             self.check_dtype(at, an)
@@ -1476,6 +1473,32 @@ class _TestNormGeneral(_TestNormBase):
         for v in (array(a, dtype=self.dt), array(b, dtype=self.dt),
                   array(c, dtype=self.dt)):
             _test(v)
+
+    @pytest.mark.parametrize("order", [-0.5, -1, -2, -3, -np.inf])
+    def test_vector_negative_ord_with_zero(self, order):
+        # gh-5422: a zero entry makes any negative-order vector norm 0,
+        # and this should not emit a divide-by-zero RuntimeWarning.
+        v = array([0, 1, 2], dtype=self.dt)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            assert_equal(norm(v, order), 0.0)
+            # along an axis, only the rows/columns containing a zero vanish
+            A = array([[0, 1, 2], [3, 4, 5]], dtype=self.dt)
+            res = norm(A, order, axis=1)
+            assert_equal(res[0], 0.0)
+            np.testing.assert_almost_equal(res[1], norm(A[1], order),
+                                           decimal=self.dec)
+            res = norm(A, order, axis=0)
+            assert_equal(res[0], 0.0)
+            assert_(np.all(res[1:] > 0))
+        # vectors without zeros are unchanged
+        w = array([1, 2, 4], dtype=self.dt)
+        if order == -np.inf:
+            expected = 1.0
+        else:
+            expected = (1 + 2.0**order + 4.0**order) ** (1 / order)
+        np.testing.assert_almost_equal(norm(w, order), expected,
+                                       decimal=self.dec)
 
     def test_axis(self):
         # Vector norms.
