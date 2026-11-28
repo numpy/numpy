@@ -458,6 +458,22 @@ be selected::
 This difference is the most important thing to remember about
 indexing with multiple advanced indices.
 
+.. note::
+
+   An integer in the index also counts as an advanced index when it is
+   combined with an integer array. If such advanced indices are separated
+   by a slice, the broadcast dimensions are placed first in the result::
+
+       >>> x = np.ones((4, 5, 6))
+       >>> x[:, 0, [1, 2]].shape
+       (4, 2)
+       >>> x[0, :, [1, 2]].shape
+       (2, 5)
+       >>> x[0][:, [1, 2]].shape
+       (5, 2)
+
+   See :ref:`combining-advanced-and-basic-indexing` for the full rules.
+
 .. rubric:: Example
 
 A real-life example of where advanced indexing may be useful is for a color
