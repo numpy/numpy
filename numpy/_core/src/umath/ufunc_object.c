@@ -3317,10 +3317,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr,
         }
     }
 
-    if (iter != NULL) {
-        flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
-    }
-
+    /* The outer iterator never buffers, so it adds no transfer flags. */
     int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
@@ -3828,10 +3825,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             flags = PyArrayMethod_COMBINED_FLAGS(flags, copy_flags);
         }
     }
-    if (iter != NULL) {
-        flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
-    }
-
+    /* The outer iterator never buffers, so it adds no transfer flags. */
     int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
@@ -5528,6 +5522,25 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
                                      const int unused, const char *signature,
                                      PyObject *identity_value)
 {
+    return PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(
+        func, data, types, ntypes, nin, nout, identity, name, doc,
+        signature, identity_value, 0);
+}
+
+/*
+ * Same as PyUFunc_FromFuncAndDataAndSignatureAndIdentity, but also takes the
+ * initial `_ufunc_flags`.  The flags are read when the loops are wrapped,
+ * which happens here, so setting them on the returned ufunc is too late.
+ */
+NPY_NO_EXPORT PyObject *
+PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(
+        PyUFuncGenericFunction *func, void *const *data,
+        const char *types, int ntypes,
+        int nin, int nout, int identity,
+        const char *name, const char *doc,
+        const char *signature, PyObject *identity_value,
+        int ufunc_flags)
+{
     PyUFuncObject *ufunc;
     if (nin + nout > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
@@ -5572,7 +5585,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->userloops = NULL;
     ufunc->ptr = NULL;
     ufunc->vectorcall = &ufunc_generic_vectorcall;
-    ufunc->_ufunc_flags = 0;
+    ufunc->_ufunc_flags = ufunc_flags;
     ufunc->iter_flags = 0;
 
     /* Type resolution and inner loop selection functions */
