@@ -1,0 +1,24 @@
+! Defines F2PY_USE_PYTHON_TLS in the module itself because the meson
+! backend does not pass -D options to the compiler (gh-28648).
+python module __user__routines
+    interface
+        subroutine array_cb(n, x)
+            integer intent(in) :: n
+            double precision dimension(n), intent(out) :: x
+        end subroutine array_cb
+    end interface
+end python module __user__routines
+
+python module callback_python_tls
+    usercode '''
+#define F2PY_USE_PYTHON_TLS
+'''
+    interface
+        subroutine array_result(array_cb, n, x)
+            use __user__routines
+            external array_cb
+            integer intent(in) :: n
+            double precision dimension(n), intent(out), depend(n) :: x
+        end subroutine array_result
+    end interface
+end python module callback_python_tls
