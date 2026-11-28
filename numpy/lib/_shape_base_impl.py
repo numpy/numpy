@@ -747,10 +747,11 @@ def array_split(ary, indices_or_sections, axis=0):
     [array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8])]
 
     """
+    sary = _nx.swapaxes(ary, axis, 0)
     try:
-        Ntotal = ary.shape[axis]
+        Ntotal = sary.shape[0]
     except AttributeError:
-        Ntotal = len(ary)
+        Ntotal = len(sary)
     try:
         # handle array case.
         Nsections = len(indices_or_sections) + 1
@@ -767,7 +768,6 @@ def array_split(ary, indices_or_sections, axis=0):
         div_points = _nx.array(section_sizes, dtype=_nx.intp).cumsum()
 
     sub_arys = []
-    sary = _nx.swapaxes(ary, axis, 0)
     for i in range(Nsections):
         st = div_points[i]
         end = div_points[i + 1]
@@ -787,7 +787,7 @@ def split(ary, indices_or_sections, axis=0):
 
     Parameters
     ----------
-    ary : ndarray
+    ary : array_like
         Array to be divided into sub-arrays.
     indices_or_sections : int or 1-D array
         If `indices_or_sections` is an integer, N, the array will be divided
@@ -852,7 +852,7 @@ def split(ary, indices_or_sections, axis=0):
         len(indices_or_sections)
     except TypeError:
         sections = indices_or_sections
-        N = ary.shape[axis]
+        N = _nx.shape(ary)[axis]
         if N % sections:
             raise ValueError(
                 'array split does not result in an equal division') from None
@@ -926,9 +926,10 @@ def hsplit(ary, indices_or_sections):
     [array([0, 1, 2]), array([3, 4, 5])]
 
     """
-    if _nx.ndim(ary) == 0:
+    ndim = _nx.ndim(ary)
+    if ndim == 0:
         raise ValueError('hsplit only works on arrays of 1 or more dimensions')
-    if ary.ndim > 1:
+    if ndim > 1:
         return split(ary, indices_or_sections, 1)
     else:
         return split(ary, indices_or_sections, 0)
