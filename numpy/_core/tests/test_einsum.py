@@ -843,6 +843,13 @@ class TestEinsum:
         # see issue gh-15776 and issue gh-15256
         assert_equal(np.einsum('i,j', [1], [2], out=None), [[2]])
 
+        mask = np.ones((2, 3), bool)
+        assert_equal(np.einsum('ij,k->k', mask, [.5, .25], optimize=True), [3, 1.5])
+        assert_equal(np.einsum('i,j->j', np.uint8([200, 200]), [0, 1, 2],
+                               optimize=True), [0, 400, 800])
+        assert_raises(TypeError, np.einsum, 'ij,k->k', mask, [.5, .25], dtype='f4',
+                      optimize=True)
+
     def test_einsum_0d_out(self):
         # Issue gh-31350, a zero-dimensional out must not cause an error
         # with optimize='optimal'
