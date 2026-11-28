@@ -221,7 +221,7 @@ class TestClassGetItem:
     @pytest.mark.parametrize("code", np.typecodes["All"])
     def test_concrete(self, code: str) -> None:
         cls = np.dtype(code).type
-        if cls in {np.bool, np.datetime64, np.object_}:
+        if cls in {np.bool, np.datetime64, np.timedelta64, np.object_}:
             # these are intentionally subscriptable
             assert cls[Any]
         else:
