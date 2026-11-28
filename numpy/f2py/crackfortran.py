@@ -661,20 +661,46 @@ multilinepattern = re.compile(
     r"\s*(?P<before>''')(?P<this>.*?)(?P<after>''')\s*\Z", re.S), 'multiline'
 ##
 
-def split_by_unquoted(line, characters):
+# Quoted strings in Fortran source: a quote is escaped by doubling it and a
+# backslash is an ordinary character [F2018 7.4.4.3].
+_fortran_single_quoted = r"('([^']|'')*')"
+_fortran_double_quoted = r'("([^"]|"")*")'
+# Quoted strings in signature files: the expressions there (check, depend,
+# callstatement, initial values, ...) are C, where a backslash is an escape.
+_c_single_quoted = r"('([^'\\]|(\\.))*')"
+_c_double_quoted = r'("([^"\\]|(\\.))*")'
+
+
+def _reading_signature_file():
+    """Whether the file being read is a signature (``.pyf``) file."""
+    return str(currentfilename).lower().endswith(('.pyf', '.pyf.src'))
+
+
+def split_by_unquoted(line, characters, c_escapes=None):
     """
     Splits the line into (line[:i], line[i:]),
     where i is the index of first occurrence of one of the characters
     not within quotes, or len(line) if no such index exists
+
+    Quotes follow the C rules (backslash escapes) when ``c_escapes`` is
+    true and the Fortran rules (doubled quotes, no backslash escape)
+    otherwise. By default the C rules are used for signature files only.
     """
     assert not (set('"\'') & set(characters)), "cannot split by unquoted quotes"
+    if c_escapes is None:
+        c_escapes = _reading_signature_file()
+    if c_escapes:
+        single_quoted, double_quoted = _c_single_quoted, _c_double_quoted
+    else:
+        single_quoted, double_quoted = (_fortran_single_quoted,
+                                        _fortran_double_quoted)
     r = re.compile(
         r"\A(?P<before>({single_quoted}|{double_quoted}|{not_quoted})*)"
         r"(?P<after>{char}.*)\Z".format(
             not_quoted=f"[^\"'{re.escape(characters)}]",
             char=f"[{re.escape(characters)}]",
-            single_quoted=r"('([^'\\]|(\\.))*')",
-            double_quoted=r'("([^"\\]|(\\.))*")'))
+            single_quoted=single_quoted,
+            double_quoted=double_quoted))
     m = r.match(line)
     if m:
         d = m.groupdict()
@@ -683,7 +709,7 @@ def split_by_unquoted(line, characters):
 
 
 _quoted_string_re = re.compile(
-    r"('([^'\\]|(\\.))*')|(\"([^\"\\]|(\\.))*\")")
+    f"{_fortran_single_quoted}|{_fortran_double_quoted}")
 
 
 def mask_string_literals(expr):
