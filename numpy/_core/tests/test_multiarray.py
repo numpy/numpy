@@ -9276,6 +9276,21 @@ class TestRepeat:
         assert_equal(out, tgt)
         assert_equal(out.dtype, tgt.dtype)
 
+    @pytest.mark.parametrize("repeats", [
+        np.iinfo(np.intp).max // 2,
+        [np.iinfo(np.intp).max // 2] * 3,
+        [np.iinfo(np.intp).max, np.iinfo(np.intp).max, 2],
+    ])
+    def test_size_overflow(self, repeats):
+        # gh-33080
+        with pytest.raises(ValueError, match="total number of repeats is too large"):
+            np.repeat(np.arange(3), repeats)
+
+    @pytest.mark.parametrize("repeats", [-1, np.iinfo(np.intp).min // 2])
+    def test_negative_scalar(self, repeats):
+        with pytest.raises(ValueError, match="repeats may not contain negative"):
+            np.repeat(np.arange(4), repeats)
+
 
 # TODO: test for multidimensional
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}

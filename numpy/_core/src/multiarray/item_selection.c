@@ -951,6 +951,16 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
         goto fail;
     }
     if (broadcast) {
+        if (counts[0] < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                            "repeats may not contain negative values");
+            goto fail;
+        }
+        if (counts[0] > 0 && n > NPY_MAX_INTP / counts[0]) {
+            PyErr_SetString(PyExc_ValueError,
+                            "total number of repeats is too large");
+            goto fail;
+        }
         total = counts[0] * n;
     }
     else {
@@ -958,6 +968,11 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
             if (counts[j] < 0) {
                 PyErr_SetString(PyExc_ValueError,
                                 "repeats may not contain negative values.");
+                goto fail;
+            }
+            if (total > NPY_MAX_INTP - counts[j]) {
+                PyErr_SetString(PyExc_ValueError,
+                                "total number of repeats is too large");
                 goto fail;
             }
             total += counts[j];
