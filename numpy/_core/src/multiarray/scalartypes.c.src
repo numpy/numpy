@@ -3078,7 +3078,7 @@ static PyMethodDef numbertype_methods[] = {
 };
 
 /**begin repeat
- * #name = boolean,datetime#
+ * #name = boolean,datetime,timedelta#
  */
 static PyMethodDef @name@type_methods[] = {
     /* for typing */
@@ -3147,17 +3147,13 @@ static PyMethodDef @name@type_methods[] = {
 };
 /**end repeat**/
 
-/**begin repeat
- * #name = timedelta, cdouble#
- */
-static PyMethodDef @name@type_methods[] = {
+static PyMethodDef cdoubletype_methods[] = {
     /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
         METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}
 };
-/**end repeat**/
 
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
