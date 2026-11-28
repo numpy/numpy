@@ -5,8 +5,8 @@ Static typing
 *************
 
 The ``numpy`` package includes `type stubs`_ (``.pyi`` files) for static type-checkers.
-The stubs have no effect at runtime. This page covers type inference, annotations, and
-shape-typing.
+The stubs have no effect at runtime. This page covers type inference, annotations,
+shape-typing, and datetime types.
 
 The public typing aliases, which can also be used at runtime, are documented in
 `numpy.typing`, together with the assumptions that the stubs make about the platform and
@@ -630,6 +630,105 @@ The reasons are:
 - **Type-checker differences:** Type-checkers handle literals differently, while NumPy
   aims for the same inference in all of them. Literal shape-types would also make error
   messages longer.
+
+
+.. _basics.typing.datetime:
+
+``datetime64`` and ``timedelta64``
+==================================
+
+`np.datetime64 <numpy.datetime64>` and `np.timedelta64 <numpy.timedelta64>` are
+`generic classes <generic class_>`__ with one type parameter. Rather than the NumPy
+time unit itself, this type parameter is the Python type returned by ``.item()`` (and
+the element type of ``.tolist()``), where ``dt`` is :mod:`datetime`:
+
+.. list-table::
+   :header-rows: 1
+   :widths: auto
+
+   * - Unit or value
+     - ``T`` in ``np.datetime64[T]``
+     - ``T`` in ``np.timedelta64[T]``
+   * - ``Y``, ``M``
+     - :class:`dt.date <datetime.date>`
+     - :class:`int`
+   * - ``W``, ``D``
+     - :class:`dt.date <datetime.date>`
+     - :class:`dt.timedelta <datetime.timedelta>`
+   * - ``h``, ``m``, ``s``, ``ms``, ``us`` (``μs``)
+     - :class:`dt.datetime <datetime.datetime>`
+     - :class:`dt.timedelta <datetime.timedelta>`
+   * - ``ns``, ``ps``, ``fs``, ``as``
+     - :class:`int`
+     - :class:`int`
+   * - ``NaT``
+     - ``None``
+     - ``None``
+
+This follows NumPy's :ref:`datetime conversion rules <arrays.datetime.conversion>`:
+years (``Y``) and months (``M``) don't have a fixed duration, so ``np.timedelta64``
+converts them to :class:`int`, whereas ``np.datetime64`` represents calendar dates and
+converts them to :class:`dt.date <datetime.date>`. Python's
+:class:`dt.datetime <datetime.datetime>` and
+:class:`dt.timedelta <datetime.timedelta>` have microsecond (``us``) resolution, so
+finer units (``ns`` through ``as``) convert to :class:`int` for both.
+
+Static type-checkers infer this type parameter from the unit passed to
+``np.datetime64`` or ``np.timedelta64``, or from the dtype string passed to
+`np.dtype <numpy.dtype>`:
+
+.. code-block:: python
+
+    import numpy as np
+
+    reveal_type(np.dtype("timedelta64[ns]"))  # np.dtype[np.timedelta64[int]]
+    reveal_type(np.dtype("timedelta64[s]"))   # np.dtype[np.timedelta64[dt.timedelta]]
+    reveal_type(np.dtype("timedelta64[Y]"))   # np.dtype[np.timedelta64[int]]
+
+    reveal_type(np.datetime64("2025-01-01", "D"))   # np.datetime64[dt.date]
+    reveal_type(np.datetime64("2025-01-01", "s"))   # np.datetime64[dt.datetime]
+    reveal_type(np.datetime64("2025-01-01", "ns"))  # np.datetime64[int]
+
+Because the type parameter groups units by their ``.item()`` return type,
+type-checkers don't distinguish between units in the same group. For example,
+``np.dtype("timedelta64[s]")`` and ``np.dtype("timedelta64[ms]")`` both infer
+``np.dtype[np.timedelta64[dt.timedelta]]``.
+
+To create an array with a specific unit and keep its inferred dtype, pass an
+``np.dtype`` object rather than a string (which infers ``Any``, see
+`dtype arguments`_):
+
+.. code-block:: python
+
+    import numpy as np
+
+    durations = np.zeros(5, dtype=np.dtype("timedelta64[s]"))
+    reveal_type(durations)            # npt.Array1D[np.timedelta64[dt.timedelta]]
+    reveal_type(durations[0].item())  # dt.timedelta
+    reveal_type(durations.tolist())   # list[dt.timedelta]
+
+Without a type argument, ``np.datetime64`` and ``np.timedelta64`` are equivalent to
+``np.datetime64[Any]`` and ``np.timedelta64[Any]``, which are `assignable`_ to and
+from any parameterized form. Use the unparameterized type when the unit varies or
+doesn't matter, and parameterize it when you rely on the Python type from ``.item()``
+or ``.tolist()``:
+
+.. code-block:: python
+
+    import datetime as dt
+
+    import numpy as np
+    import numpy.typing as npt
+
+
+    def first_timestamp(
+        times: npt.Array1D[np.datetime64[dt.datetime]],
+    ) -> dt.datetime:
+        return times[0].item()
+
+
+    def count_events(times: npt.Array1D[np.datetime64]) -> int:
+        return len(times)
 
 .. _Python typing documentation: https://typing.python.org/en/latest/
 .. _type stubs: https://typing.python.org/en/latest/spec/distributing.html#stub-files

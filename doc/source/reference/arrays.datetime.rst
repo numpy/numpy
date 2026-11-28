@@ -336,6 +336,8 @@ us / μs    microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
 ======== ================ ======================= ==========================
 
 
+.. _arrays.datetime.conversion:
+
 Converting datetime and timedelta to Python Object
 ==================================================
 
