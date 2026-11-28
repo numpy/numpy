@@ -20,7 +20,7 @@ class NDArrayOperatorsMixin(ABC):
     def __array_ufunc__(
         self,
         ufunc: ufunc,
-        method: L["__call__", "reduce", "reduceat", "accumulate", "outer", "at"],
+        method: L["__call__", "reduce", "reduceat", "segmented_reduce", "accumulate", "outer", "at"],
         /,
         *inputs: Any,
         **kwargs: Any,

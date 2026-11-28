@@ -1,0 +1,6 @@
+``ufunc.reduceat`` checks the shape of ``out``
+----------------------------------------------
+`~numpy.ufunc.reduceat` now raises a ``ValueError`` when ``out`` does not have
+the shape of the result.  Before, a single index or the input could be
+broadcast to a larger ``out``, so that the result was repeated or parts of
+``out`` were left unchanged.

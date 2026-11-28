@@ -67,10 +67,15 @@ def method_args(method, a, axis=0):
     """
     Positional and keyword arguments for ``ufunc.<method>`` over `a`.
     `reduceat` gets two segments along `axis`, or one if it has length 1.
+    `segmented_reduce` gets two overlapping segments, or one.
     """
     if method in ("reduce", "accumulate"):
         return (a,), {"axis": axis}
     n = a.shape[axis]
+    if method == "segmented_reduce":
+        if n == 1:
+            return (a, [0], [1]), {"axis": axis}
+        return (a, [n // 2, 0], [n, n // 2 + 1]), {"axis": axis}
     return (a, [0] if n == 1 else [0, n // 2]), {"axis": axis}
 
 
@@ -137,7 +142,8 @@ class TestReductionLoop:
             np.testing.assert_array_equal(red_min, np.minimum.reduce(a))
             np.testing.assert_array_equal(red_max, np.maximum.reduce(a))
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_reduce_like(self, method, shape):
         a = make_array(shape, seed=3)
@@ -145,12 +151,14 @@ class TestReductionLoop:
             args, kwargs = method_args(method, a, axis)
             check_minmax(method, *args, **kwargs)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     def test_single_element(self, method):
         args, kwargs = method_args(method, np.array([7.0]))
         check_minmax(method, *args, **kwargs)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_strided(self, method, shape):
         a = make_array(shape, seed=15)[::-1]
@@ -158,14 +166,16 @@ class TestReductionLoop:
             args, kwargs = method_args(method, a, axis)
             check_minmax(method, *args, **kwargs)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     @pytest.mark.parametrize("kind", list(SPECIALS))
     def test_specials(self, method, kind):
         vals = [1.0, -2.0, 3.5, 0.0, -1.0] + SPECIALS[kind]
         args, kwargs = method_args(method, np.array(vals, dtype=np.float64))
         check_minmax(method, *args, **kwargs)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_out_tuple(self, method, shape):
         a = make_array(shape, seed=8)
@@ -175,7 +185,8 @@ class TestReductionLoop:
             out = (np.empty(out_shape), np.empty(out_shape))
             check_minmax(method, *args, **kwargs, out=out)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     def test_out_overlapping_input(self, method):
         # `out` views into the reduced array make the iterator use a writeback
         # temporary, but the arrays that were passed in must still be the ones
@@ -189,7 +200,8 @@ class TestReductionLoop:
                flat[n + 1:2 * n + 1].reshape(out_shape))
         check_minmax(method, *args, **kwargs, out=out)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     @pytest.mark.parametrize("which", [0, 1])
     def test_out_partial(self, method, which):
         # Only some entries of the `out` tuple given, the rest allocated.
@@ -198,14 +210,16 @@ class TestReductionLoop:
         out[which] = np.empty(method_out_shape(method, args, kwargs))
         check_minmax(method, *args, **kwargs, out=tuple(out))
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     def test_no_reduction_loop_raises(self, method):
         args, kwargs = method_args(method, np.array([1, 2, 3]))
         with pytest.raises(
                 TypeError, match="resolved loop does not register a reduction loop"):
             getattr(np.divmod, method)(*args, **kwargs)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     @pytest.mark.parametrize("shape", SHAPES, ids=str)
     def test_object(self, method, shape):
         # Offset past the immortal small ints, so refcount bugs are visible.
@@ -217,7 +231,8 @@ class TestReductionLoop:
 
     # The second output of the mixed ufuncs is the maximum as intp/object, so
     # the first element of each reduction is cast from float64 into it.
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     @pytest.mark.parametrize("ufunc, max_dtype", [
         (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
         ids=["intp", "object"])
@@ -233,7 +248,8 @@ class TestReductionLoop:
             check_minmax(method, *args, **kwargs, ufunc=ufunc,
                          max_dtype=max_dtype)
 
-    @pytest.mark.parametrize("method", ["reduce", "reduceat", "accumulate"])
+    @pytest.mark.parametrize(
+        "method", ["reduce", "reduceat", "segmented_reduce", "accumulate"])
     @pytest.mark.parametrize("ufunc, max_dtype", [
         (minimum_intp_maximum, np.intp), (minimum_object_maximum, object)],
         ids=["intp", "object"])
@@ -521,6 +537,110 @@ class TestReduceat:
         out = (np.full(2, None, object), np.full(2, None, object))
         with pytest.raises(TypeError):
             mm.reduceat(a, [0, 2], out=out)
+        assert out[0][1] is None and out[1][1] is None
+
+
+class TestSegmentedReduce:
+    def test_segmented_reduce_empty(self):
+        check_minmax("segmented_reduce", np.array([], np.float64), [], [])
+
+    @pytest.mark.parametrize("ufunc, max_dtype", [
+        (mm, np.float64),
+        (minimum_intp_maximum, np.intp),
+        (minimum_object_maximum, object),
+    ])
+    def test_segmented_reduce_segment_boundaries(self, ufunc, max_dtype):
+        # Overlapping, skipping, negative and out-of-bounds offsets.
+        a = make_array((6,), seed=29)
+        check_minmax(
+            "segmented_reduce", a, [0, -2, 4, 2, 3], [6, 10, 5, 4, 4],
+            ufunc=ufunc, max_dtype=max_dtype,
+        )
+
+    @pytest.mark.parametrize("shape", SHAPES, ids=str)
+    def test_segmented_reduce_initial_scalar(self, shape):
+        # A scalar initial seeds every output, including empty segments.
+        a = make_array(shape, seed=5)
+        initial = float(a.max()) + 1.0
+        for axis in method_axes("segmented_reduce", a.ndim):
+            n = a.shape[axis]
+            args = (a, [0, 1, n - 1], [n, 1, n])
+            check_minmax("segmented_reduce", *args, axis=axis, initial=initial)
+
+    @pytest.mark.parametrize("ufunc, max_dtype", [
+        (mm, np.float64),
+        (minimum_intp_maximum, np.intp),
+        (minimum_object_maximum, object),
+    ])
+    def test_segmented_reduce_initial_tuple(self, ufunc, max_dtype):
+        # The initial values are packed into the output dtypes, also where
+        # these differ from the dtype of the reduced array.
+        a = make_array((6,), seed=6)
+        starts, stops = [0, 2, 3, 6], [6, 2, 5, 9]
+        got_min, got_max = ufunc.segmented_reduce(
+            a, starts, stops, initial=(-100.0, 7))
+        assert got_max.dtype == max_dtype
+        np.testing.assert_array_equal(
+            got_min, np.minimum.segmented_reduce(a, starts, stops, initial=-100.0))
+        np.testing.assert_array_equal(
+            got_max,
+            np.maximum.segmented_reduce(a, starts, stops, initial=7).astype(max_dtype))
+
+    def test_segmented_reduce_initial_wrong_length_raises(self):
+        a = make_array((4,), seed=7)
+        with pytest.raises(ValueError, match="one entry per reduction output"):
+            mm.segmented_reduce(a, [0], [4], initial=(1.0, 2.0, 3.0))
+
+    @pytest.mark.parametrize("initial", [(None, 5.0), (5.0, None), (None, None)])
+    def test_segmented_reduce_initial_tuple_none_raises(self, initial):
+        a = make_array((4,), seed=7)
+        with pytest.raises(ValueError, match="cannot be None"):
+            mm.segmented_reduce(a, [0], [4], initial=initial)
+
+    @pytest.mark.parametrize("initial", [None, np._NoValue])
+    def test_segmented_reduce_empty_segment_raises(self, initial):
+        a = make_array((4,), seed=8)
+        with pytest.raises(ValueError, match="zero-size segment"):
+            mm.segmented_reduce(a, [0, 2], [2, 2], initial=initial)
+
+    def test_segmented_reduce_uses_registered_identity(self):
+        a = make_array((6,), seed=9)
+        starts, stops = [0, 2, 3], [6, 2, 5]
+        got_min, got_max = mmi.segmented_reduce(a, starts, stops)
+        np.testing.assert_array_equal(
+            got_min, np.minimum.segmented_reduce(a, starts, stops, initial=np.inf))
+        np.testing.assert_array_equal(
+            got_max, np.maximum.segmented_reduce(a, starts, stops, initial=-np.inf))
+        # `initial=None` disables the identity, so empty segments are an error.
+        with pytest.raises(ValueError, match="zero-size segment"):
+            mmi.segmented_reduce(a, starts, stops, initial=None)
+
+    def test_segmented_reduce_object_initial(self):
+        # `initial` is packed into refcounted buffers, which seed the segments
+        # and have to be cleared again.
+        a = np.random.default_rng(31).integers(-50, 51, size=12).astype(object)
+        a += 1000
+        starts, stops = [0, 4, 4], [12, 4, 8]
+        got_min, got_max = mm.segmented_reduce(a, starts, stops,
+                                               initial=(2000, -2000))
+        assert got_min.tolist() == np.minimum.segmented_reduce(
+            a, starts, stops, initial=2000).tolist()
+        assert got_max.tolist() == np.maximum.segmented_reduce(
+            a, starts, stops, initial=-2000).tolist()
+
+    def test_segmented_reduce_out_wrong_length_raises(self):
+        a = make_array((6,), seed=10)
+        out = (np.empty(2), np.empty(3))
+        with pytest.raises(ValueError, match="the number of segments"):
+            mm.segmented_reduce(a, [0, 2], [2, 6], out=out)
+
+    def test_segmented_reduce_error_stops_later_segments(self):
+        # The loop error in the first segment must stop the reduction, so
+        # the second segment of `out` is never written.
+        a = np.array([1, "x", 2, 3], dtype=object)
+        out = (np.full(2, None, object), np.full(2, None, object))
+        with pytest.raises(TypeError):
+            mm.segmented_reduce(a, [0, 2], [2, 4], out=out)
         assert out[0][1] is None and out[1][1] is None
 
 

@@ -224,6 +224,7 @@ Methods
    ufunc.reduce
    ufunc.accumulate
    ufunc.reduceat
+   ufunc.segmented_reduce
    ufunc.outer
    ufunc.at
 
