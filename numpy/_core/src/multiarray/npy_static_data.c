@@ -49,6 +49,8 @@ intern_strings(void)
     INTERN_STRING(convert_if_no_array, "convert_if_no_array");
     INTERN_STRING(cpu, "cpu");
     INTERN_STRING(dtype, "dtype");
+    INTERN_STRING(order, "order");
+    INTERN_STRING(C, "C");
     INTERN_STRING(
             array_err_msg_substr,
             "__array__() got an unexpected keyword argument 'copy'");
@@ -249,6 +251,12 @@ initialize_static_globals(void)
     static_pydata->kwnames_dtype_out = PyTuple_Pack(
             2, interned_str->dtype, interned_str->out);
     if (static_pydata->kwnames_dtype_out == NULL) {
+        return -1;
+    }
+
+    static_pydata->kwnames_dtype_order_out = PyTuple_Pack(
+            3, interned_str->dtype, interned_str->order, interned_str->out);
+    if (static_pydata->kwnames_dtype_order_out == NULL) {
         return -1;
     }
 

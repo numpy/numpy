@@ -15,6 +15,7 @@ import pytest
 import numpy as np
 import numpy._core.umath as ncu
 from numpy._core import _umath_tests as ncu_tests, sctypes
+from numpy._core._exceptions import _UFuncNoLoopError
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_MUSL,
@@ -392,10 +393,10 @@ class TestComparisons:
         assert np.equal(1, [1], dtype=bool).dtype == bool
 
         # but the following are examples do not have a loop:
-        with pytest.raises(TypeError, match="No loop matching"):
+        with pytest.raises(_UFuncNoLoopError, match="did not contain a loop"):
             np.equal(1, 1, dtype=np.int64)
 
-        with pytest.raises(TypeError, match="No loop matching"):
+        with pytest.raises(_UFuncNoLoopError, match="did not contain a loop"):
             np.equal(1, 1, sig=(None, None, "l"))
 
     @pytest.mark.parametrize("dtypes", ["qQ", "Qq"])

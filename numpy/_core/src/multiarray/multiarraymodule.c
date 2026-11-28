@@ -921,7 +921,6 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
                                            NPY_ARRAY_ALIGNED, NULL);
     if (ap1 == NULL) {
-        Py_DECREF(typec);
         goto fail;
     }
 
@@ -969,6 +968,26 @@ fail:
     Py_XDECREF(ret);
     Py_XDECREF(typec);
     return NULL;
+}
+
+static PyObject *
+call_dot_gufunc(PyObject *gufunc, PyArrayObject *a, PyArrayObject *b,
+                PyArray_Descr *dtype, PyObject *out, const char *noloop_msg)
+{
+    /* Keep allocation consistent with dot's C-contiguous out rule. */
+    PyObject *args[] = {
+        (PyObject *)a, (PyObject *)b, (PyObject *)NPY_DTYPE(dtype),
+        _npy_module_state->interned_str.C, out == NULL ? Py_None : out};
+    PyObject *kwnames = _npy_module_state->static_pydata.kwnames_dtype_order_out;
+    PyObject *res = PyObject_Vectorcall(gufunc, args, 2, kwnames);
+    if (res == NULL && PyErr_ExceptionMatches(
+            _npy_module_state->static_pydata._UFuncNoLoopError)) {
+        PyObject *exc, *val, *tb;
+        PyErr_Fetch(&exc, &val, &tb);
+        PyErr_SetString(PyExc_ValueError, noloop_msg);
+        npy_PyErr_ChainExceptions(exc, val, tb);
+    }
+    return res;
 }
 
 /*NUMPY_API
@@ -1024,6 +1043,7 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
+        Py_DECREF(typec);
         return NULL;
     }
 
@@ -1031,7 +1051,9 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
     if (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2 &&
             (NPY_DOUBLE == typec->type_num || NPY_CDOUBLE == typec->type_num ||
              NPY_FLOAT == typec->type_num || NPY_CFLOAT == typec->type_num)) {
-        return cblas_matrixproduct(typec, ap1, ap2, out);
+        PyObject *res = cblas_matrixproduct(typec, ap1, ap2, out);
+        Py_DECREF(typec);
+        return res;
     }
 #endif
 
@@ -1040,8 +1062,10 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
                 _npy_module_state->n_ops.multiply, ap1, ap2, out, NULL);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
+        Py_DECREF(typec);
         return mul_res;
     }
+
     l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
     if (PyArray_NDIM(ap2) > 1) {
         matchDim = PyArray_NDIM(ap2) - 2;
@@ -1056,6 +1080,19 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
     nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
     if (nd > NPY_MAXDIMS) {
         PyErr_SetString(PyExc_ValueError, "dot: too many dimensions in result");
+        goto fail;
+    }
+
+    int use_gufunc = PyDataType_GetArrFuncs(typec)->dotfunc == NULL;
+
+    if (use_gufunc && PyArray_NDIM(ap1) >= 2 && PyArray_NDIM(ap2) > 2) {
+        /* np.inner passes funcname == NULL and an already transposed b */
+        // This error may also be raised even the dtypes do not make sense
+        PyErr_Format(PyExc_ValueError,
+                "%s with a.ndim >= 2 and b.ndim > 2 is not supported for "
+                "this dtype; use numpy.tensordot(a, b, axes=%s) instead.",
+                funcname != NULL ? "dot" : "inner",
+                funcname != NULL ? "[-1, -2]" : "[-1, -1]");
         goto fail;
     }
 
@@ -1079,6 +1116,23 @@ PyArray_MatrixProduct_int(PyObject *op1, PyObject *op2, PyArrayObject* out,
     }
     if (PyArray_NDIM(ap2) > 1) {
         dimensions[j++] = PyArray_DIMS(ap2)[PyArray_NDIM(ap2)-1];
+    }
+
+    /* Must stay after the 0-D path, which casts before multiply. */
+    if (use_gufunc) {
+        /* Keep dot's stricter out validation for now. */
+        if (out != NULL && check_out_for_sum(out, nd, dimensions, typec) < 0) {
+            goto fail;
+        }
+        /* out=... lets the gufunc allocate but keeps 0-D C-API results arrays. */
+        PyObject *res = call_dot_gufunc(
+                _npy_module_state->n_ops.matmul, ap1, ap2, typec,
+                out == NULL ? Py_Ellipsis : (PyObject *)out,
+                "dot not available for this type");
+        Py_DECREF(ap1);
+        Py_DECREF(ap2);
+        Py_DECREF(typec);
+        return res;
     }
 
     is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1];
@@ -2665,13 +2719,11 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     Py_INCREF(type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
     if (ap1 == NULL) {
-        Py_DECREF(type);
         goto fail;
     }
 
     op1 = PyArray_Newshape(ap1, &newdims, NPY_CORDER);
     if (op1 == NULL) {
-        Py_DECREF(type);
         goto fail;
     }
     Py_DECREF(ap1);
@@ -2693,6 +2745,17 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
         PyErr_SetString(PyExc_ValueError,
                 "vectors have different lengths");
         goto fail;
+    }
+
+    if (PyDataType_GetArrFuncs(type)->dotfunc == NULL) {
+        /* vecdot conjugates the first operand, like vdot. */
+        PyObject *res = call_dot_gufunc(
+                _npy_module_state->n_ops.vecdot, ap1, ap2, type, NULL,
+                "function not available for this data type");
+        Py_DECREF(ap1);
+        Py_DECREF(ap2);
+        Py_DECREF(type);
+        return res;
     }
 
     /* array scalar output */

@@ -29,10 +29,12 @@ import pytest
 
 import numpy as np
 import numpy._core._multiarray_tests as _multiarray_tests
+from numpy._core._exceptions import _UFuncNoLoopError
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core._rational_tests import rational, rational2
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.tests._locales import CommaDecimalPointLocale
+from numpy._core.tests._quaddtype import importorskip_quaddtype
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib import stride_tricks
 from numpy.lib.recfunctions import repack_fields
@@ -9133,6 +9135,304 @@ class TestInner:
             ).astype(dt)
             assert_equal(np.inner(a, b), desired)
             assert_equal(np.inner(b, a).transpose(2, 3, 0, 1), desired)
+
+
+class TestDotFamilyFallback:
+    # quaddtype has matmul/vecdot loops but no dotfunc; StringDType has neither.
+    @pytest.fixture
+    def q(self):
+        qd = importorskip_quaddtype().QuadPrecDType()
+        return lambda x: np.asarray(x, dtype=np.float64).astype(qd)
+
+    @pytest.mark.parametrize("sa,sb", [
+        ((5,), (5,)), ((3,), (3, 4)),
+        ((4, 3), (3,)), ((4, 3), (3, 5)), ((2, 3, 4), (4,)),
+        ((2, 3, 4), (4, 5)), ((4,), (2, 4, 5)),
+        ((0, 3), (3, 4)), ((4, 0), (0, 5)),
+    ])
+    @pytest.mark.parametrize("func", [np.dot, np.inner])
+    def test_matches_builtin(self, q, func, sa, sb):
+        if func is np.inner:
+            sb = sb[:-2] + sb[:-3:-1]
+            if len(sa) >= 2 and len(sb) >= 3:
+                return
+        rng = np.random.default_rng(1)
+        a = rng.integers(-4, 5, sa).astype(np.float64)
+        b = rng.integers(-4, 5, sb).astype(np.float64)
+        ref = func(a, b)
+        got = func(q(a), q(b))
+        assert np.ndim(got) == ref.ndim
+        if ref.ndim:
+            assert got.dtype == q(0).dtype
+        assert_array_equal(np.asarray(got).astype(np.float64), ref,
+                           strict=True)
+
+    def test_vdot_matches_builtin(self, q):
+        a = np.arange(6.).reshape(2, 3)
+        b = np.arange(6., 12.).reshape(3, 2).T
+        assert float(np.vdot(q(a), q(b))) == np.vdot(a, b)
+
+    @pytest.mark.parametrize("func,axes", [(np.dot, [-1, -2]),
+                                           (np.inner, [-1, -1])])
+    def test_stacked_rejected(self, q, func, axes):
+        a = np.arange(6.).reshape(2, 3)
+        b = np.arange(36.).reshape(4, 3, 3)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            with pytest.raises(ValueError, match=re.escape(f"axes={axes}")):
+                func(q(a), q(b))
+        got = np.tensordot(q(a), q(b), axes=axes)
+        assert_array_equal(got.astype(np.float64),
+                           np.tensordot(a, b, axes=axes))
+
+    def test_unsupported_dtype(self):
+        s = np.zeros((2, 3), np.dtypes.StringDType())
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            assert_raises_regex(ValueError, "dot not available",
+                                np.dot, s, s.T)
+            assert_raises_regex(ValueError, "tensordot",
+                                np.dot, s, np.zeros((2, 3, 4), s.dtype))
+        assert_raises_regex(ValueError, "function not available",
+                            np.vdot, s, s)
+
+    def test_legacy_user_dtype_unchanged(self):
+        class mytype:
+            pass
+
+        dt = _multiarray_tests.create_custom_field_dtype(
+            np.dtype([("field", object)]), mytype, 0)
+        a = np.zeros(3, dtype=dt)
+        assert_raises_regex(ValueError, "dot not available", np.dot, a, a)
+        assert_raises_regex(ValueError, "function not available",
+                            np.vdot, a, a)
+
+    def test_dot_scalar_operands_bypass_fallback(self):
+        # 0-D uses multiply after casting to the common dtype
+        s = np.array("ab")
+        assert_raises(_UFuncNoLoopError, np.dot, s, 3)
+        assert_raises(_UFuncNoLoopError, np.dot, 3, s)
+        assert_raises(_UFuncNoLoopError, np.dot, s, 3, np.empty((), "U6"))
+        assert_raises(_UFuncNoLoopError, np.dot, 3, s, np.empty((), "U6"))
+
+    def test_dot_scalar_operands(self, q):
+        a = np.arange(6.).reshape(2, 3)
+        assert_array_equal(np.dot(q(3.0), q(a)).astype(np.float64), 3 * a)
+        assert_array_equal(np.dot(q(a), q(3.0)).astype(np.float64), 3 * a)
+        out = q(np.empty_like(a))
+        assert np.dot(q(3.0), q(a), out) is out
+        assert_array_equal(out.astype(np.float64), 3 * a)
+
+    def test_dot_noncontiguous_inputs(self, q):
+        T = lambda m: m.T
+        inputs = [
+            (np.arange(12.).reshape(3, 4), np.arange(15.).reshape(5, 3), T, T),
+            (np.arange(24.).reshape(4, 6), np.arange(30.).reshape(6, 5),
+             lambda m: m[:, ::2], lambda m: m[::2]),
+            (np.arange(120.).reshape(2, 3, 4, 5), np.arange(30.).reshape(5, 6),
+             lambda m: m.swapaxes(0, 1), lambda m: m),
+        ]
+        for x, y, fx, fy in inputs:
+            qx = fx(q(x))
+            assert not qx.flags.c_contiguous
+            got = np.dot(qx, fy(q(y)))
+            assert got.flags.c_contiguous
+            assert_array_equal(got.astype(np.float64), np.dot(fx(x), fy(y)),
+                               strict=True)
+
+    def test_dot_out(self, q):
+        a = np.arange(12.).reshape(4, 3)
+        b = np.arange(15.).reshape(3, 5)
+        out = q(np.empty((4, 5)))
+        assert np.dot(q(a), q(b), out) is out
+        assert_array_equal(out.astype(np.float64), np.dot(a, b), strict=True)
+
+        out = q(a[:3])
+        np.dot(out, q(np.eye(3)), out)
+        assert_array_equal(out.astype(np.float64), a[:3])
+
+        # like builtin dtypes, a 0-D out gives a scalar result
+        s = q(np.empty(()))
+        res = np.dot(q(a[0]), q(b[:, 0]), s)
+        assert not isinstance(res, np.ndarray)
+        assert float(s) == float(res) == np.dot(a[0], b[:, 0])
+
+    @pytest.mark.parametrize("bad", ["ndim", "shape", "forder", "dtype",
+                                     "strided", "unaligned"])
+    def test_dot_out_errors_match_builtin(self, q, bad):
+        def bad_out(dt):
+            if bad == "ndim":
+                return np.empty((2, 2, 4), dt)
+            if bad == "shape":
+                return np.empty((3, 5), dt)
+            if bad == "forder":
+                return np.empty((2, 4), dt, order="F")
+            if bad == "dtype":
+                return np.empty((2, 4), np.int64)
+            if bad == "strided":
+                return np.empty((2, 8), dt)[:, ::2]
+            buf = np.zeros(8 * dt.itemsize + 1, np.uint8)[1:]
+            return buf.view(dt).reshape(2, 4)
+
+        messages = []
+        for a, b in [(np.ones((2, 3)), np.ones((3, 4))),
+                     (q(np.ones((2, 3))), q(np.ones((3, 4))))]:
+            with pytest.raises(ValueError) as excinfo:
+                np.dot(a, b, bad_out(a.dtype))
+            messages.append(str(excinfo.value))
+        assert messages[0] == messages[1]
+
+    def test_subclasses(self, q):
+        class Sub(np.ndarray):
+            pass
+
+        a = np.arange(6.).reshape(2, 3)
+        b = np.arange(12.).reshape(3, 4)
+        v = np.arange(3.)
+        x, y = q(a), q(b)
+
+        # MaskedArray's gufunc wrapping combines input masks elementwise.
+        mx = np.ma.array(x, mask=[[0, 1, 0], [0, 0, 0]])
+        my = np.ma.array(y)
+        with pytest.raises(ValueError, match="broadcast"):
+            np.dot(mx, my)
+        assert type(np.dot(x.view(Sub), y.view(Sub))) is Sub
+        assert type(np.dot(x, y.view(Sub))) is Sub
+        vs = q(v).view(Sub)
+        res = np.vdot(vs, vs)
+        assert type(res) is Sub
+        assert res.shape == ()
+        assert float(res) == v @ v
+
+    @pytest.mark.parametrize("dtype", ["quad", "U1", "S1", "V1", "M8[s]"])
+    def test_ufunc_override(self, dtype):
+        if dtype == "quad":
+            dtype = importorskip_quaddtype().QuadPrecDType()
+        q = lambda x: np.asarray(x).astype(dtype)
+
+        class Override(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                return ufunc.__name__, inputs, kwargs
+
+        class NoUfunc(np.ndarray):
+            __array_ufunc__ = None
+
+        x = q(np.arange(6.).reshape(2, 3))
+        y = q(np.arange(12.).reshape(3, 4))
+        xo = x.view(Override)
+
+        name, inputs, kwargs = np.dot(xo, y)
+        assert name == "matmul" and kwargs == {
+            "dtype": type(x.dtype), "order": "C"}
+        assert inputs[0] is xo and type(inputs[1]) is np.ndarray
+        assert np.inner(xo, x)[0] == "matmul"
+        name, inputs, kwargs = np.vdot(xo, xo)
+        assert name == "vecdot" and inputs[0].shape == (6,)
+        assert kwargs == {"dtype": type(x.dtype), "order": "C"}
+
+        out = q(np.empty((2, 4))).view(Override)
+        name, _, kwargs = np.dot(x, y, out)
+        assert name == "matmul" and kwargs["out"][0] is out
+        assert kwargs["dtype"] is type(x.dtype)
+
+        with pytest.raises(ValueError, match="tensordot"):
+            np.dot(xo, q(np.ones((2, 3, 4))))
+        for func, b in [(np.dot, y), (np.inner, x), (np.vdot, x)]:
+            assert_raises(TypeError, func, x.view(NoUfunc), b)
+
+    @pytest.mark.parametrize("func", [np.dot, np.inner, np.vdot])
+    @pytest.mark.parametrize("hook", ["__array_ufunc__", "__array_wrap__"])
+    def test_subclass_no_loop_error_chained(self, q, func, hook):
+        def fail(*args, **kwargs):
+            np.multiply(np.array("a"), np.array("b"))
+
+        sub = type("Sub", (np.ndarray,), {hook: fail})
+        a = q([1, 2]).view(sub)
+        with pytest.raises(ValueError, match="not available") as excinfo:
+            func(a, a)
+        context = excinfo.value.__context__
+        assert isinstance(context, _UFuncNoLoopError)
+        assert context.ufunc is np.multiply
+
+    def test_c_api_returns_array(self, q):
+        v = q(np.arange(3.))
+        for func in (_multiarray_tests.matrixproduct_c_api,
+                     _multiarray_tests.matrixproduct2_c_api):
+            res = func(v, v)
+            assert type(res) is np.ndarray and res.shape == ()
+
+    def test_dot_does_not_repeat_array_conversion(self, q):
+        class Counter:
+            def __init__(self):
+                self.calls = 0
+
+            def __array__(self, dtype=None, copy=None):
+                self.calls += 1
+                return q(np.ones((2, 2)))
+
+        a, b = Counter(), Counter()
+        assert_array_equal(np.dot(a, b).astype(np.float64), np.full((2, 2), 2.))
+        assert a.calls == 2
+        assert b.calls == 2
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    @pytest.mark.thread_unsafe(reason="checks reference counts")
+    @pytest.mark.parametrize("func", [np.vdot, np.inner])
+    def test_failed_conversion_keeps_dtype_alive(self, func):
+        # any descriptor works; a fresh one keeps the count local to the test
+        arr = np.ones(3, np.dtype(np.float64, metadata={"k": 1}))
+
+        class FailSecond:
+            calls = 0
+
+            def __array__(self, dtype=None, copy=None):
+                FailSecond.calls += 1
+                if FailSecond.calls % 2 == 0:
+                    raise RuntimeError
+                return arr
+
+        dt = arr.dtype
+        before = sys.getrefcount(dt)
+        for _ in range(10):
+            assert_raises(RuntimeError, func, FailSecond(), arr)
+        after = sys.getrefcount(dt)
+        assert after == before
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    @pytest.mark.thread_unsafe(reason="checks reference counts")
+    def test_blas_dot_releases_dtype(self):
+        a = np.ones((3, 3), np.dtype(np.float64, metadata={"k": 1}))
+        dt = a.dtype
+        before = sys.getrefcount(dt)
+        for _ in range(10):
+            np.dot(a, a)
+            np.inner(a, a)
+        after = sys.getrefcount(dt)
+        assert after == before
+
+    def test_tensordot_and_multi_dot(self, q):
+        rng = np.random.default_rng(3)
+        A = rng.integers(-4, 5, (4, 3)).astype(np.float64)
+        B = rng.integers(-4, 5, (3, 5)).astype(np.float64)
+        C = rng.integers(-4, 5, (5, 2)).astype(np.float64)
+        D = rng.integers(-4, 5, (2, 6)).astype(np.float64)
+        T = rng.integers(-4, 5, (2, 3, 4)).astype(np.float64)
+        U = rng.integers(-4, 5, (4, 3, 2)).astype(np.float64)
+        vL = rng.integers(-4, 5, (4,)).astype(np.float64)
+        vR = rng.integers(-4, 5, (5,)).astype(np.float64)
+
+        for axes in (0, 1):
+            assert_array_equal(
+                np.tensordot(q(A), q(B), axes=axes).astype(np.float64),
+                np.tensordot(A, B, axes=axes))
+        for axes in (([1, 2], [1, 0]), ([2], [0])):
+            assert_array_equal(
+                np.tensordot(q(T), q(U), axes=axes).astype(np.float64),
+                np.tensordot(T, U, axes=axes))
+        for chain in ([A, B, C], [A, B, C, D], [vL, A, B], [A, B, vR]):
+            got = np.linalg.multi_dot([q(m) for m in chain])
+            assert_array_equal(got.astype(np.float64),
+                               np.linalg.multi_dot(chain))
 
 
 class TestChoose:

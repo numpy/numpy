@@ -414,6 +414,12 @@ NPY_NO_EXPORT int
 check_is_convertible_to_scalar(PyArrayObject *v);
 
 
+/* Validate dot's output shape, dtype, and C-array requirements. */
+NPY_NO_EXPORT int
+check_out_for_sum(PyArrayObject *out, int nd, const npy_intp dimensions[],
+                  PyArray_Descr *descr);
+
+
 /*
  * Make a new empty array, of the passed size, of a type that takes the
  * priority of ap1 and ap2 into account.
