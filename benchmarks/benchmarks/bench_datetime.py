@@ -129,3 +129,29 @@ class DatetimeWideRange(Benchmark):
 
     def time_datetime_as_string(self, size, dtype):
         np.datetime_as_string(self.arr)
+
+
+class DatetimeArgsort(Benchmark):
+    """Default (quicksort) argsort of datetime64/timedelta64, with and
+    without NaT, which must sort to the end.
+    """
+    params = [
+        [10_000, 1_000_000],
+        ['datetime64[ms]', 'datetime64[ns]', 'timedelta64[s]'],
+        ['random', 'mostly_sorted_nat'],
+    ]
+    param_names = ['size', 'dtype', 'order']
+
+    def setup(self, size, dtype, order):
+        rng = np.random.default_rng(0xD47E)
+        if order == 'random':
+            vals = rng.integers(-(1 << 50), 1 << 50, size=size)
+        else:
+            vals = (np.sort(rng.integers(0, 1 << 40, size=size))
+                    + rng.integers(-(1 << 20), 1 << 20, size=size))
+        self.arr = vals.astype(dtype)
+        if order == 'mostly_sorted_nat':
+            self.arr[::997] = np.array('NaT', dtype=dtype)
+
+    def time_argsort(self, size, dtype, order):
+        np.argsort(self.arr)

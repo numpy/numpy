@@ -3458,3 +3458,36 @@ def test_comparisons_return_not_implemented():
         assert item.__lt__(obj) is NotImplemented
         assert item.__ge__(obj) is NotImplemented
         assert item.__gt__(obj) is NotImplemented
+
+
+@pytest.mark.parametrize("dtype", ["M8[ms]", "M8[s]", "M8[ns]",
+                                   "m8[ms]", "m8[s]"])
+@pytest.mark.parametrize("n", [0, 1, 2, 17, 1000, 200001])
+@pytest.mark.parametrize("nat", ["none", "some", "one", "ends", "all"])
+@pytest.mark.parametrize("descending", [False, True])
+def test_default_argsort_datetime_simd(dtype, n, nat, descending):
+    # Default datetime/timedelta argsort may use a SIMD key-value sort with
+    # NaT remapped to sort last; it must produce a valid sort permutation,
+    # with NaT last in both directions.
+    rng = np.random.default_rng(n)
+    a = rng.integers(-2**62, 2**62, n).view(dtype)
+    NaT = np.array("NaT", dtype=dtype)
+    if n > 3:
+        a[1] = np.array(-2**63 + 1, dtype="i8").view(dtype)
+        a[2] = np.array(2**63 - 1, dtype="i8").view(dtype)
+    if n:
+        if nat == "some":
+            a[::7] = NaT
+        elif nat == "one":
+            a[n // 2] = NaT
+        elif nat == "ends":
+            a[0] = a[-1] = NaT
+        elif nat == "all":
+            a[:] = NaT
+    p = np.argsort(a, descending=descending, stable=False)
+    assert_array_equal(np.sort(p), np.arange(n))
+    expected = np.sort(a, kind="stable")
+    if descending:
+        isnat = np.isnat(expected)
+        expected = np.concatenate([expected[~isnat][::-1], expected[isnat]])
+    assert_array_equal(a[p].view("i8"), expected.view("i8"))
