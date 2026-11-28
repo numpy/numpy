@@ -586,6 +586,33 @@ class TestSaveTxt:
             [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n',
              b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n'])
 
+    def test_literal_percent_in_fmt(self):
+        # "%%" is a literal percent sign, not a conversion specifier
+        a = np.array([[1, 2], [3, 4]])
+        # one specifier, applied to every column
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%d%%')
+        assert_equal(c.getvalue(), b'1% 2%\n3% 4%\n')
+        # one specifier per column
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%d %% %d%%')
+        assert_equal(c.getvalue(), b'1 % 2%\n3 % 4%\n')
+        # complex input: two specifiers per column
+        c = BytesIO()
+        np.savetxt(c, np.array([1 + 2j]), fmt='%d%%%+dj%%')
+        assert_equal(c.getvalue(), b'1%+2j%\n')
+        # a literal percent directly followed by a specifier ('%%' is paired
+        # from the left, so '%%%d' is '%' + '%d')
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%%%d')
+        assert_equal(c.getvalue(), b'%1 %2\n%3 %4\n')
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%%%%%d')
+        assert_equal(c.getvalue(), b'%%1 %%2\n%%3 %%4\n')
+        # the number of conversion specifiers is still checked
+        with pytest.raises(ValueError, match="wrong number of % formats"):
+            np.savetxt(BytesIO(), a, fmt='%d%% %d %d')
+
     def test_custom_writer(self):
 
         class CustomWriter(list):
