@@ -661,6 +661,9 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     Py_INCREF(typecode);
     arr = (PyArrayObject *)PyArray_FromAny(val, typecode,
                   0, 0, NPY_ARRAY_FORCECAST | PyArray_FORTRAN_IF(self), NULL);
+    if (arr != NULL && solve_may_share_memory(self, arr, 1) != 0) {
+        Py_SETREF(arr, (PyArrayObject *)PyArray_NewCopy(arr, NPY_ANYORDER));
+    }
     if (arr == NULL) {
         return -1;
     }
