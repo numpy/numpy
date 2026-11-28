@@ -729,6 +729,12 @@ def test_inclpath(monkeypatch):
     assert ftcompat is None
     assert remain == []
 
+    assert get_newer_options(["-I", "include dir"]) == (
+        ["include dir"],
+        None,
+        [],
+    )
+
     include_paths, ftcompat, remain = get_newer_options(
         ["--include-paths", r"C:\inc1;D:\inc2"]
     )
