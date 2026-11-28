@@ -3204,12 +3204,30 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
     int next_is_nonzero, val_is_zero;
     double value;
 
-    *next = PyNumber_Subtract(stop, start);
+    if (PyIndex_Check(start) && PyIndex_Check(stop)) {
+        PyObject *start_int = PyNumber_Index(start);
+        PyObject *stop_int = PyNumber_Index(stop);
+
+        if (start_int == NULL || stop_int == NULL) {
+            Py_XDECREF(start_int);
+            Py_XDECREF(stop_int);
+            return -1;
+        }
+
+        *next = PyNumber_Subtract(stop_int, start_int);
+
+        Py_DECREF(start_int);
+        Py_DECREF(stop_int);
+    }
+    else {
+        *next = PyNumber_Subtract(stop, start);
+    }
+
     if (!(*next)) {
         if (PyTuple_Check(stop)) {
             PyErr_Clear();
             PyErr_SetString(PyExc_TypeError,
-                            "arange: scalar arguments expected "\
+                            "arange: scalar arguments expected "
                             "instead of a tuple.");
         }
         return -1;
@@ -3292,11 +3310,30 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
     }
 
     if (len > 0) {
-        *next = PyNumber_Add(start, step);
+        if (PyIndex_Check(start) && PyIndex_Check(step)) {
+            PyObject *start_int = PyNumber_Index(start);
+            PyObject *step_int = PyNumber_Index(step);
+
+            if (start_int == NULL || step_int == NULL) {
+                Py_XDECREF(start_int);
+                Py_XDECREF(step_int);
+                return -1;
+            }
+
+            *next = PyNumber_Add(start_int, step_int);
+
+            Py_DECREF(start_int);
+            Py_DECREF(step_int);
+        }
+        else {
+            *next = PyNumber_Add(start, step);
+        }
+
         if (!*next) {
             return -1;
         }
     }
+
     return len;
 }
 
