@@ -247,7 +247,7 @@ do {                                                            \
     #define LDBL_SIGN_MASK      0x8000
     #define LDBL_SIGN_SHIFT     15
 
-    #define LDBL_NBIT           0x800000000
+    #define LDBL_NBIT           0x80000000
 
     typedef npy_uint32 ldouble_man_t;
     typedef npy_uint32 ldouble_exp_t;
