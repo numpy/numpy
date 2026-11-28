@@ -1,0 +1,6 @@
+``np.arange`` now validates complex arguments with a step
+------------------------------------------------------------
+Calling `numpy.arange` with complex ``start``, ``stop`` or ``step`` and a ``step``
+specified now computes the length from the real part of ``(stop - start) / step``
+and raises a ``ValueError`` when that value has a nonzero imaginary part, instead
+of returning an incorrect result.
