@@ -1086,10 +1086,12 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
     }
-    if (other->type_num > cls->type_num) {
+    if (other->type_num > cls->type_num || other->type_num == NPY_OBJECT) {
         /*
-         * Let the more generic (larger type number) DType handle this
-         * (note that half is after all others, which works out here.)
+         * Let the more generic DType handle this. Object has the highest
+         * priority even though its type number is below void, datetime,
+         * timedelta, and half.
+         * (Half is otherwise after all others, which works out here.)
          */
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
