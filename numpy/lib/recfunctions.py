@@ -357,7 +357,9 @@ def _fix_defaults(output, defaults=None):
 
 def _merge_arrays_dispatcher(seqarrays, fill_value=None, flatten=None,
                              usemask=None, asrecarray=None):
-    return seqarrays
+    if isinstance(seqarrays, (list, tuple)):
+        return seqarrays
+    return (seqarrays,)
 
 
 @array_function_dispatch(_merge_arrays_dispatcher)
@@ -1317,7 +1319,9 @@ def require_fields(array, required_dtype):
 
 def _stack_arrays_dispatcher(arrays, defaults=None, usemask=None,
                              asrecarray=None, autoconvert=None):
-    return arrays
+    if isinstance(arrays, (list, tuple)):
+        return arrays
+    return (arrays,)
 
 
 @array_function_dispatch(_stack_arrays_dispatcher)
