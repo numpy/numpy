@@ -81,6 +81,67 @@ class TestFromInt:
             np.uint64(-2)
 
 
+def _float32_pyint_cases():
+    # (int, correctly rounded float32 value as an int).  Each int is within
+    # one unit of a float32 midpoint, so rounding it to float64 first lands on
+    # the midpoint and the float64 -> float32 tie then picks the wrong side.
+    cases = []
+    for exp in [54, 62, 64, 65, 100, 127]:
+        lo = 2**exp - 2**(exp - 24)   # float32 neighbour below 2**exp
+        mid = 2**exp - 2**(exp - 25)  # midpoint; ties to even goes to 2**exp
+        cases += [(mid - 1, lo), (mid, 2**exp), (mid + 1, 2**exp)]
+        lo = 2**exp + 2**(exp - 23)   # odd significand
+        mid = lo + 2**(exp - 24)      # midpoint; ties to even goes up
+        cases += [(mid - 1, lo), (mid, lo + 2**(exp - 23)),
+                  (mid + 1, lo + 2**(exp - 23))]
+    return cases
+
+
+class TestFloat32FromPyInt:
+    # gh-20687: Python ints used to be rounded via float64, so they could
+    # convert to the wrong float32 neighbour.
+
+    @pytest.mark.parametrize("value, expected", _float32_pyint_cases())
+    @pytest.mark.parametrize("sign", [1, -1])
+    def test_correctly_rounded(self, value, expected, sign):
+        value, expected = sign * value, sign * expected
+        assert int(np.float32(value)) == expected
+        assert int(np.array(value, dtype=np.float32)) == expected
+        assert int(np.array([value], dtype=np.float32)[0]) == expected
+        arr = np.zeros(1, dtype=np.float32)
+        arr[0] = value
+        assert int(arr[0]) == expected
+        obj = np.array([value], dtype=object)
+        assert int(obj.astype(np.float32)[0]) == expected
+        c = np.complex64(value)
+        assert int(c.real) == expected and c.imag == 0
+        assert int(np.array([value], dtype=np.complex64)[0].real) == expected
+
+    @pytest.mark.parametrize("value", [2**54 - 2**29 - 1, 2**63 - 2**38 - 1,
+                                       2**64 - 2**39 - 1, -(2**63)])
+    def test_matches_integer_array_cast(self, value):
+        dtype = np.uint64 if value >= 2**63 else np.int64
+        from_array = np.array([value], dtype=dtype).astype(np.float32)[0]
+        assert np.float32(value) == from_array
+
+    def test_overflow(self):
+        # Rounds to infinity, as before, with a warning
+        with pytest.warns(RuntimeWarning, match="overflow"):
+            assert np.float32(2**128) == np.inf
+        with pytest.warns(RuntimeWarning, match="overflow"):
+            assert np.float32(-(2**200)) == -np.inf
+        # Too large for a float64, like float(value)
+        with pytest.raises(OverflowError):
+            np.float32(2**1024)
+
+    def test_float32_max_boundary(self):
+        fmax = int(np.finfo(np.float32).max)
+        half_ulp = 2**(127 - 24)
+        assert int(np.float32(fmax + half_ulp - 1)) == fmax
+        with pytest.warns(RuntimeWarning, match="overflow"):
+            assert np.float32(fmax + half_ulp) == np.inf
+
+
 int_types = [np.byte, np.short, np.intc, np.long, np.longlong]
 uint_types = [np.ubyte, np.ushort, np.uintc, np.ulong, np.ulonglong]
 float_types = [np.half, np.single, np.double, np.longdouble]
