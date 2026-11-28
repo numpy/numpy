@@ -230,6 +230,16 @@ class TestDateTime:
         with assert_raises(TypeError):
             np.array([1], dtype=f"M8[-1{unit}]")
 
+    @pytest.mark.parametrize("dtype", ["M8[0s]", "m8[0s]"])
+    def test_prohibit_zero_unit_multiplier(self, dtype):
+        with pytest.raises(TypeError):
+            np.dtype(dtype)
+
+    @pytest.mark.parametrize("dtype", ["m8[1s/0]", "M8[1s/-2]", "m8[1s/4294967298]"])
+    def test_prohibit_invalid_unit_divisor(self, dtype):
+        with pytest.raises(TypeError):
+            np.dtype(dtype)
+
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
         with pytest.warns(
