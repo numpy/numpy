@@ -966,7 +966,9 @@ PyArray_AdaptDescriptorToArray(
  *
  * @param obj The current (possibly nested) object
  * @param curr_dims The current depth, i.e. initially 0 and increasing.
- * @param max_dims Maximum number of dimensions, modified during discovery.
+ * @param max_dims Current depth limit, which can shrink during discovery.
+ * @param skip_conversion_depth Original depth limit for skipping array
+ *        conversion of eligible object inputs, or -1 for normal discovery.
  * @param out_descr dtype instance (or NULL) to promoted and update.
  * @param out_shape The current shape (updated)
  * @param coercion_cache_tail_ptr The tail of the linked list of coercion
@@ -983,8 +985,8 @@ PyArray_AdaptDescriptorToArray(
  */
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape_Recursive(
-        PyObject *obj, int curr_dims, int max_dims, PyArray_Descr**out_descr,
-        npy_intp out_shape[NPY_MAXDIMS],
+        PyObject *obj, int curr_dims, int max_dims, int skip_conversion_depth,
+        PyArray_Descr**out_descr, npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj ***coercion_cache_tail_ptr,
         PyArray_DTypeMeta *fixed_DType, enum _dtype_discovery_flags *flags,
         int copy)
@@ -1037,6 +1039,15 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     if (PyArray_Check(obj)) {
         arr = (PyArrayObject *)obj;
         Py_INCREF(arr);
+    }
+    else if (curr_dims == skip_conversion_depth &&
+             !PySequence_Check(obj) && !PyObject_CheckBuffer(obj)) {
+        /*
+         * The object array can store obj directly at this depth.  Sequence
+         * and buffer objects are excluded to preserve protocol precedence.
+         */
+        return handle_scalar(obj, curr_dims, &max_dims, out_descr, out_shape,
+                             fixed_DType, flags, NULL);
     }
     else {
         PyArray_Descr *requested_descr = NULL;
@@ -1209,7 +1220,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     /* Recursive call for each sequence item */
     for (Py_ssize_t i = 0; i < size; i++) {
         max_dims = PyArray_DiscoverDTypeAndShape_Recursive(
-                objects[i], curr_dims + 1, max_dims,
+                objects[i], curr_dims + 1, max_dims, skip_conversion_depth,
                 out_descr, out_shape, coercion_cache_tail_ptr, fixed_DType,
                 flags, copy);
 
@@ -1238,6 +1249,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  *
  * @param obj Scalar or nested sequences.
  * @param max_dims Maximum number of dimensions (after this scalars are forced)
+ * @param allow_skip_conversion Whether the caller allows skipping
+ *        array conversion at the original depth limit for object elements.
  * @param out_shape Will be filled with the output shape (more than the actual
  *        shape may be written).
  * @param coercion_cache NULL initialized reference to a cache pointer.
@@ -1269,7 +1282,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  */
 NPY_NO_EXPORT int
 PyArray_DiscoverDTypeAndShape(
-        PyObject *obj, int max_dims,
+        PyObject *obj, int max_dims, npy_bool allow_skip_conversion,
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj **coercion_cache,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
@@ -1289,6 +1302,7 @@ PyArray_DiscoverDTypeAndShape(
                 (PyObject *)fixed_DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     }
 
+    int skip_conversion_depth = -1;
     if (requested_descr != NULL) {
         if (fixed_DType != NULL) {
             assert(fixed_DType == NPY_DTYPE(requested_descr));
@@ -1297,6 +1311,11 @@ PyArray_DiscoverDTypeAndShape(
         Py_INCREF(requested_descr);
         *out_descr = requested_descr;
         flags |= DESCRIPTOR_WAS_SET;
+
+        if (requested_descr->type_num == NPY_OBJECT &&
+                allow_skip_conversion && max_dims > 0) {
+            skip_conversion_depth = max_dims;
+        }
     }
 
     /*
@@ -1320,7 +1339,8 @@ PyArray_DiscoverDTypeAndShape(
     }
 
     int ndim = PyArray_DiscoverDTypeAndShape_Recursive(
-            obj, 0, max_dims, out_descr, out_shape, &coercion_cache,
+            obj, 0, max_dims, skip_conversion_depth,
+            out_descr, out_shape, &coercion_cache,
             fixed_DType, &flags, copy);
     if (ndim < 0) {
         goto fail;
@@ -1441,7 +1461,7 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     coercion_cache_obj *coercion_cache = NULL;
     PyObject *out_dtype = NULL;
     int ndim = PyArray_DiscoverDTypeAndShape(
-            obj, NPY_MAXDIMS, shape,
+            obj, NPY_MAXDIMS, NPY_FALSE, shape,
             &coercion_cache,
             dt_info.dtype, dt_info.descr, (PyArray_Descr **)&out_dtype, 0, NULL);
     Py_XDECREF(dt_info.dtype);

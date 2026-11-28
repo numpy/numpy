@@ -1493,7 +1493,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     int was_scalar;
     PyObject* ret =  PyArray_FromAny_int(
             op, dt_info.descr, dt_info.dtype,
-            min_depth, max_depth, flags, &was_scalar);
+            min_depth, max_depth, NPY_FALSE, flags, &was_scalar);
 
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
@@ -1515,7 +1515,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                     PyArray_DTypeMeta *in_DType, int min_depth, int max_depth,
-                    int flags, int *was_scalar)
+                    npy_bool allow_skip_conversion, int flags, int *was_scalar)
 {
     /*
      * This is the main code to make a NumPy array from a Python
@@ -1549,8 +1549,8 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     }
 
     ndim = PyArray_DiscoverDTypeAndShape(
-            op, max_depth, dims, &cache, in_DType, in_descr, &dtype,
-            copy, &was_copied_by__array__);
+            op, max_depth, allow_skip_conversion, dims, &cache,
+            in_DType, in_descr, &dtype, copy, &was_copied_by__array__);
 
     if (ndim < 0) {
         goto cleanup;
@@ -1822,7 +1822,7 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
 
     int was_scalar;
     obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
-                              max_depth, requirements, &was_scalar);
+                              max_depth, NPY_FALSE, requirements, &was_scalar);
     Py_XDECREF(in_descr);
     if (obj == NULL) {
         return NULL;
