@@ -187,6 +187,47 @@ class TestHistogram:
             weights=[2, 1, 1, 1, 1, 1, 1, 1, 1], density=True)
         assert_almost_equal(a, [.2, .1, .1, .075])
 
+    @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64,
+                                       np.longdouble, np.complex64,
+                                       np.complex128, np.clongdouble])
+    def test_weighted_bins_do_not_share_roundoff(self, dtype):
+        real_dtype = np.empty(0, dtype=dtype).real.dtype
+        large = 2.0**(np.finfo(real_dtype).nmant + 2)
+        if np.issubdtype(dtype, np.complexfloating):
+            large *= 1 + 2j
+            one = 1 - 2j
+        else:
+            one = 1
+        # The left edge excludes the first large weight, and the rightmost
+        # edge includes x == 4 but not the final large weight.
+        a = [-4, 0, 1, 2, 3, 4, 5]
+        bins = [0, 1, 1, 2, 4]
+        weights = np.array([large, large, one, 2*one, 3*one, 4*one, large],
+                           dtype=dtype)
+        hist, edges = np.histogram(a, bins=bins, weights=weights)
+        assert_equal(hist, np.array([large, 0, one, 9*one], dtype=dtype))
+        assert_equal(hist.dtype, weights.dtype)
+        assert_equal(edges, bins)
+
+    def test_weighted_bins_across_blocks(self):
+        # Offset weights excluded by the range must not leak into any bin.
+        data = np.full(140_000, -1.0)
+        weights = np.full(data.shape, 2.0**55)
+        rows = np.arange(0, data.size, 5000)
+        data[rows] = 0.5
+        data[rows[1::2]] = 2.0
+        weights[rows] = 1.0
+        hist, _ = np.histogram(data, bins=[0, 1, 2], weights=weights)
+        assert_equal(hist, [14, 14])
+
+    def test_weighted_density_without_prefix_loss(self):
+        a = [-1.0, 0.5, 2., 3.]
+        bins = [0, 1, 3]
+        weights = np.array([2.0**55, 2., 1., 3.])
+        hist, _ = np.histogram(a, bins=bins, weights=weights, density=True)
+        assert_allclose(hist, [1/3, 1/3], rtol=0, atol=1e-15)
+        assert_equal(np.dot(hist, np.diff(bins)), 1)
+
     def test_exotic_weights(self):
 
         # Test the use of weights that are not integer or floats, but e.g.

@@ -882,6 +882,22 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
             else:
                 n += np.bincount(indices, weights=tmp_w,
                                  minlength=n_equal_bins).astype(ntype)
+    elif weights is not None and ntype.kind in 'fc':
+        # Sum each bin in isolation: differencing cumulative weights loses
+        # small bin totals that follow a much larger out-of-bin prefix.
+        n = np.zeros_like(bin_edges[1:], dtype=ntype)
+        for i in _range(0, len(a), BLOCK):
+            tmp_a = a[i:i + BLOCK]
+            tmp_w = weights[i:i + BLOCK]
+            sorting_index = np.argsort(tmp_a)
+            bin_index = _search_sorted_inclusive(
+                tmp_a[sorting_index], bin_edges)
+            occupied = np.flatnonzero(bin_index[:-1] < bin_index[1:])
+            if occupied.size:
+                # reduceat stops the final sum at the end of its input.
+                sw = tmp_w[sorting_index[:bin_index[-1]]]
+                n[occupied] += np.add.reduceat(
+                    sw, bin_index[occupied], dtype=ntype)
     else:
         # Compute via cumulative histogram
         cum_n = np.zeros(bin_edges.shape, ntype)
